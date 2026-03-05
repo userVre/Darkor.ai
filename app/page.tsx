@@ -4,6 +4,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import LandingMediaSections from "./components/LandingMediaSections";
+import AuthNavActions from "./components/AuthNavActions";
 
 type PlanKey = "monthly" | "yearly";
 
@@ -109,9 +110,7 @@ export default function Home() {
               FAQ
             </a>
           </div>
-          <button className="rounded-full border border-white/20 px-4 py-2 text-sm transition hover:border-cyan-300 hover:text-cyan-200">
-            Start for free
-          </button>
+          <AuthNavActions />
         </nav>
       </header>
 
@@ -349,6 +348,8 @@ function PriceCard({
     </article>
   );
 }
+
+
 
 
 
