@@ -11,6 +11,7 @@ import afterLuxuryMinimalist from "@/public/media/after-luxury-minimalist.png";
 import sketchBefore from "@/public/media/sketch-before.png";
 import renderAfter from "@/public/media/render-after.png";
 import gardenEmpty from "@/public/media/garden-empty.png";
+import PremiumVideoPlayer from "./PremiumVideoPlayer";
 
 const reveal = {
   initial: { opacity: 0, y: 50, filter: "blur(10px)" },
@@ -124,51 +125,38 @@ export default function LandingMediaSections() {
         >
           <div className="space-y-6">
             <h3 className="text-balance text-4xl font-bold leading-tight text-white md:text-5xl">
-              Transform empty spaces into stunning interiors
+              Breathe Life into Empty Spaces
             </h3>
             <p className="text-lg leading-relaxed text-zinc-400">
-              Start with a completely empty room or raw construction space and watch
-              Darkor.ai transform it step by step. Add wallpaper, flooring, furniture,
-              lighting, and even people to bring your space to life.
+              Watch your raw, unfurnished rooms transform into breathtaking masterpieces in real-time. Darkor.ai
+              seamlessly adds luxurious flooring, ambient lighting, and high-end furniture to bare walls. Don&apos;t
+              just imagine the potential—see it unfold before your eyes in a captivating before-and-after experience.
             </p>
           </div>
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            className="h-[360px] w-full rounded-2xl border border-white/10 object-cover shadow-2xl shadow-black/40 lg:h-[420px]"
-          >
-            <source src="/media/virtual-staging.mp4" type="video/mp4" />
-          </video>
+
+          <PremiumVideoPlayer
+            src="/media/feature-breathe-life.mp4"
+            className="h-[360px] lg:h-[420px]"
+          />
         </motion.article>
 
         <motion.article
           {...reveal}
           className="grid items-center gap-16 lg:grid-cols-2 lg:gap-24"
         >
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            className="h-[360px] w-full rounded-2xl border border-white/10 object-cover shadow-2xl shadow-black/40 lg:h-[420px]"
-          >
-            <source src="/media/walkthrough-3d.mp4" type="video/mp4" />
-          </video>
+          <PremiumVideoPlayer
+            src="/media/feature-immersive-3d.mp4"
+            className="h-[360px] lg:h-[420px]"
+          />
 
           <div className="space-y-6">
             <h3 className="text-balance text-4xl font-bold leading-tight text-white md:text-5xl">
-              Walk inside your interior designs in 3D
+              Step Inside Your Dream Space in Immersive 3D
             </h3>
             <p className="text-lg leading-relaxed text-zinc-400">
-              Experience your interior designs like never before. Turn any of your
-              interior designs of a real space into a fully immersive 3D environment
-              that you can explore from every angle. Darkor.ai is an official launch
-              partner of state-of-the-art AI world models that make this feature
-              possible.
+              Move beyond static images. Darkor.ai turns your 2D renders into fully explorable 3D environments.
+              Wander through your newly designed rooms, inspect the textures up close, and feel the exact proportions
+              of your future home. Powered by next-gen spatial AI.
             </p>
           </div>
         </motion.article>
@@ -242,5 +230,4 @@ export default function LandingMediaSections() {
     </section>
   );
 }
-
 
