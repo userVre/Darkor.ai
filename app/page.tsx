@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 /* eslint-disable @next/next/no-img-element */
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -20,6 +20,8 @@ const masonryImages = [
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1617103996702-96ff29b1c467?auto=format&fit=crop&w=900&q=80",
 ];
+
+const heroRows = [0, 1, 2, 3, 4];
 
 const featureBlocks = [
   {
@@ -141,17 +143,27 @@ export default function Home() {
 
       <main id="top" className="pb-32 pt-24">
         <section className="relative min-h-screen">
-          <div className="absolute inset-0 columns-2 gap-2 overflow-hidden md:columns-4">
-            {masonryImages.map((src, index) => (
-              <img
-                key={src}
-                src={src}
-                alt={`Interior ${index + 1}`}
-                className="mb-2 h-auto w-full rounded-md object-cover opacity-45 saturate-50 brightness-[0.6]"
-              />
-            ))}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="hero-tilt-wall">
+              {heroRows.map((row) => (
+                <div
+                  key={row}
+                  className={`hero-row ${row % 2 === 0 ? "hero-row-forward" : "hero-row-reverse"}`}
+                  style={{ animationDuration: `${90 + row * 10}s` }}
+                >
+                  {masonryImages.concat(masonryImages, masonryImages).map((src, index) => (
+                    <img
+                      key={`${row}-${src}-${index}`}
+                      src={src}
+                      alt={`AI room ${index + 1}`}
+                      className="hero-room-card"
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-[#04070d]/95 via-[#04070d]/75 to-[#04070d]/95" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#04070d]/96 via-[#04070d]/72 to-[#04070d]/96" />
 
           <div className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center gap-10 px-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl space-y-7">
@@ -159,35 +171,40 @@ export default function Home() {
                 AI Interior Revolution
               </p>
               <h1 className="text-5xl leading-[1.05] font-black sm:text-7xl">
-                <span className="text-cyan-300">?? Fire your</span> interior designer
+                <span className="text-cyan-300">🔥 Fire your</span> interior designer
               </h1>
               <p className="max-w-xl text-lg text-zinc-300">
-                Generate breathtaking interiors from one room photo in seconds. Perfect for real-estate teams,
-                architects, and design studios.
+                Upload a photo of your interior and transform it completely. Instantly redesign, furnish, reimagine
+                any home interior, exterior or garden. Interior AI brings the expertise of an interior designer right
+                into your pocket!
               </p>
               <ul className="space-y-2 text-zinc-200">
-                <li>? Instant redesigns in 55+ styles</li>
-                <li>?? Furniture-aware rendering precision</li>
-                <li>?? Commercial usage rights on all paid plans</li>
+                <li>🎶 Take a photo of your current interior and let AI redesign it in seconds</li>
+                <li>🎨 Choose an interior style from Modern, Minimalist to Contemporary</li>
+                <li>⚡ Transform your sketches and SketchUp files into photorealistic renders</li>
+                <li>🏠 Use Virtual Staging AI to furnish empty homes for real estate</li>
+                <li>🎥 Turn your renders into 3d flythrough videos</li>
               </ul>
             </div>
 
             <div className="relative w-full max-w-md">
-              <div className="absolute -right-4 -top-4 rounded-full border border-emerald-200/50 bg-emerald-300/20 px-3 py-1 text-xs font-semibold text-emerald-100 shadow-lg shadow-emerald-500/30">
-                3,100+ active creators
+              <div className="absolute -top-5 left-8 z-10 rotate-6 rounded-full border border-emerald-200/50 bg-emerald-300 px-6 py-2 text-lg font-semibold text-emerald-950 shadow-lg shadow-emerald-500/35">
+                ✨ Get your first redesigns in less than a minute!
               </div>
-              <div className="space-y-4 rounded-3xl border border-white/15 bg-white/10 p-6 shadow-2xl shadow-black/40 backdrop-blur-2xl">
-                <h3 className="text-xl font-semibold">Create your first render</h3>
-                <p className="text-sm text-zinc-300">Start free. No credit card required.</p>
+              <div className="space-y-4 rounded-3xl border border-white/20 bg-black/65 p-6 shadow-2xl shadow-black/50 backdrop-blur-2xl">
                 <input
                   type="email"
-                  placeholder="you@company.com"
-                  className="w-full rounded-xl border border-white/20 bg-black/40 px-4 py-3 text-sm outline-none ring-cyan-300 transition focus:ring"
+                  placeholder="Type your email..."
+                  className="w-full rounded-xl border border-white/20 bg-white px-4 py-3 text-lg text-black outline-none ring-cyan-300 transition focus:ring"
                 />
-                <button className="w-full rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-3 font-semibold text-[#041018] shadow-lg shadow-cyan-500/30 transition hover:scale-[1.01]">
-                  Generate stunning interiors
+                <button className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 px-4 py-3 font-semibold text-white shadow-lg shadow-cyan-500/30 transition hover:scale-[1.01]">
+                  Redesign your interior now →
                 </button>
-                <button className="w-full rounded-xl border border-white/25 bg-white/5 px-4 py-3 font-medium transition hover:bg-white/10">
+                <div className="relative py-1 text-center text-sm text-zinc-400">
+                  <span className="relative z-10 bg-black/65 px-2">or</span>
+                  <span className="absolute left-0 right-0 top-1/2 h-px bg-white/15" />
+                </div>
+                <button className="w-full rounded-xl border border-white/25 bg-white px-4 py-3 text-lg font-semibold text-black transition hover:bg-zinc-100">
                   Continue with Google
                 </button>
               </div>
@@ -205,7 +222,7 @@ export default function Home() {
                 className="h-[340px] w-full rounded-2xl object-cover grayscale"
               />
             </div>
-            <div className="flex items-center justify-center text-5xl text-cyan-300">?</div>
+            <div className="flex items-center justify-center text-5xl text-cyan-300">→</div>
             <div className="group relative h-[340px]">
               <p className="mb-4 text-xs tracking-[0.18em] text-zinc-400 uppercase">After</p>
               {[0, 1, 2].map((i) => (
@@ -270,13 +287,17 @@ export default function Home() {
             <div className="inline-flex rounded-full border border-white/15 bg-white/5 p-1">
               <button
                 onClick={() => setPlan("monthly")}
-                className={`rounded-full px-4 py-2 text-sm transition ${plan === "monthly" ? "bg-cyan-300 text-[#031118]" : "text-zinc-300"}`}
+                className={`rounded-full px-4 py-2 text-sm transition ${
+                  plan === "monthly" ? "bg-cyan-300 text-[#031118]" : "text-zinc-300"
+                }`}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setPlan("yearly")}
-                className={`rounded-full px-4 py-2 text-sm transition ${plan === "yearly" ? "bg-cyan-300 text-[#031118]" : "text-zinc-300"}`}
+                className={`rounded-full px-4 py-2 text-sm transition ${
+                  plan === "yearly" ? "bg-cyan-300 text-[#031118]" : "text-zinc-300"
+                }`}
               >
                 Yearly (Get 2 months free)
               </button>
@@ -315,7 +336,7 @@ export default function Home() {
                   className="flex w-full items-center justify-between px-6 py-5 text-left"
                 >
                   <span className="font-medium">{faq.question}</span>
-                  <span className="text-xl text-cyan-200">{openFaq === index ? "-" : "+"}</span>
+                  <span className="text-xl text-cyan-200">{openFaq === index ? "−" : "+"}</span>
                 </button>
                 <AnimatePresence initial={false}>
                   {openFaq === index && (
@@ -384,7 +405,7 @@ function PriceCard({
       </p>
       <ul className="mt-5 space-y-2 text-zinc-300">
         {points.map((point) => (
-          <li key={point}>? {point}</li>
+          <li key={point}>✓ {point}</li>
         ))}
       </ul>
       <button

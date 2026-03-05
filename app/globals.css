@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 :root {
   --background: #04070d;
@@ -27,4 +27,62 @@ body {
 
 * {
   border-color: #ffffff20;
+}
+
+.hero-tilt-wall {
+  position: absolute;
+  top: -18%;
+  left: -22%;
+  width: 150%;
+  transform: rotate(-14deg) scale(1.1);
+  display: grid;
+  gap: 18px;
+}
+
+.hero-row {
+  display: flex;
+  gap: 18px;
+  width: max-content;
+  will-change: transform;
+}
+
+.hero-row-forward {
+  animation-name: driftForward;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.hero-row-reverse {
+  animation-name: driftReverse;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.hero-room-card {
+  width: 220px;
+  height: 145px;
+  border-radius: 16px;
+  border: 1px solid #ffffff26;
+  object-fit: cover;
+  opacity: 0.5;
+  filter: saturate(0.75) brightness(0.55);
+  box-shadow: 0 14px 28px #00000066;
+}
+
+@keyframes driftForward {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-25%);
+  }
+}
+
+@keyframes driftReverse {
+  from {
+    transform: translateX(-25%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
