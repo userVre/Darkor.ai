@@ -3,7 +3,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
-import FeaturesShowcase from "./components/FeaturesShowcase";
+import LandingMediaSections from "./components/LandingMediaSections";
 
 type PlanKey = "monthly" | "yearly";
 
@@ -186,49 +186,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="gallery" className="mx-auto mt-24 w-full max-w-7xl px-6">
-  <div className="rounded-3xl border border-white/10 bg-[#090d16] p-8 md:p-12">
-    <h2 className="mx-auto max-w-5xl text-center text-3xl font-bold leading-tight text-white md:text-5xl">
-      Take a photo and redesign your interior in seconds using AI
-    </h2>
+        <LandingMediaSections />
 
-    <div className="mt-14 grid items-center gap-10 lg:grid-cols-[1fr_auto_1fr]">
-      <div className="justify-self-center lg:justify-self-start">
-        <img
-          src="https://images.unsplash.com/photo-1616594039964-3f9f4a6cc7f3?auto=format&fit=crop&w=1200&q=80"
-          alt="Original bedroom before redesign"
-          className="h-[280px] w-[360px] rounded-2xl border border-white/15 object-cover shadow-2xl shadow-black/40 sm:h-[320px] sm:w-[430px]"
-        />
-      </div>
-
-      <div className="relative flex items-center justify-center text-5xl text-white/90">
-        <span className="-rotate-12 text-6xl leading-none">↝</span>
-      </div>
-
-      <div className="group relative h-[440px] w-[380px] justify-self-center sm:w-[430px] lg:justify-self-end">
-        <img
-          src="https://images.unsplash.com/photo-1616486701797-0f33f61038c9?auto=format&fit=crop&w=1200&q=80"
-          alt="Redesigned bedroom modern style"
-          className="absolute right-0 top-0 h-[240px] w-[320px] rounded-2xl border border-white/15 object-cover shadow-2xl shadow-black/40 transition duration-500 ease-out rotate-[-6deg] group-hover:-translate-y-4 group-hover:translate-x-3 group-hover:rotate-[-11deg]"
-        />
-        <img
-          src="https://images.unsplash.com/photo-1617104551722-3b2d51366497?auto=format&fit=crop&w=1200&q=80"
-          alt="Redesigned bedroom warm boho style"
-          className="absolute right-4 top-[140px] h-[240px] w-[330px] rounded-2xl border border-white/15 object-cover shadow-2xl shadow-black/40 transition duration-500 ease-out rotate-[5deg] group-hover:translate-y-1 group-hover:translate-x-2 group-hover:rotate-[10deg]"
-        />
-        <img
-          src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=80"
-          alt="Redesigned bedroom minimal style"
-          className="absolute right-0 top-[250px] h-[180px] w-[320px] rounded-2xl border border-white/15 object-cover shadow-2xl shadow-black/40 transition duration-500 ease-out rotate-[-8deg] group-hover:translate-y-4 group-hover:-translate-x-2 group-hover:rotate-[-14deg]"
-        />
-      </div>
-    </div>
-  </div>
-</section>
-
-        <FeaturesShowcase />
-
-        <section className="mx-auto mt-24 w-full max-w-7xl px-6">
+<section className="mx-auto mt-24 w-full max-w-7xl px-6">
           <div className="mb-8 flex items-end justify-between">
             <h2 className="text-3xl font-bold">55+ interior design styles</h2>
             <p className="text-sm text-zinc-400">Curated style packs for every market</p>
@@ -389,6 +349,8 @@ function PriceCard({
     </article>
   );
 }
+
+
 
 
 
