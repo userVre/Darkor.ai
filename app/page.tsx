@@ -162,7 +162,7 @@ export default function Home() {
             </div>
 
             <div className="relative w-full max-w-md">
-              <div className="absolute -top-5 left-8 z-10 rotate-6 rounded-full border border-emerald-200/50 bg-emerald-300 px-6 py-2 text-lg font-semibold text-emerald-950 shadow-lg shadow-emerald-500/35">
+              <div className="absolute -top-4 left-9 z-10 rotate-[5deg] rounded-full border border-emerald-200/50 bg-emerald-300 px-4 py-1.5 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-500/30">
                 ✨ Get your first redesigns in less than a minute!
               </div>
               <div className="space-y-4 rounded-3xl border border-white/20 bg-black/65 p-6 shadow-2xl shadow-black/50 backdrop-blur-2xl">
@@ -187,34 +187,44 @@ export default function Home() {
         </section>
 
         <section id="gallery" className="mx-auto mt-24 w-full max-w-7xl px-6">
-          <div className="grid gap-8 rounded-3xl border border-white/10 bg-white/5 p-8 lg:grid-cols-[1fr_auto_1fr]">
-            <div className="space-y-4">
-              <p className="text-xs tracking-[0.18em] text-zinc-400 uppercase">Before</p>
-              <img
-                src="https://images.unsplash.com/photo-1617098900591-3f90928e8c54?auto=format&fit=crop&w=900&q=80"
-                alt="Empty room"
-                className="h-[340px] w-full rounded-2xl object-cover grayscale"
-              />
-            </div>
-            <div className="flex items-center justify-center text-5xl text-cyan-300">→</div>
-            <div className="group relative h-[340px]">
-              <p className="mb-4 text-xs tracking-[0.18em] text-zinc-400 uppercase">After</p>
-              {[0, 1, 2].map((i) => (
-                <img
-                  key={i}
-                  src={styleImages[i + 3]}
-                  alt={`Styled room ${i + 1}`}
-                  className={`absolute left-1/2 top-1/2 h-[260px] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/20 object-cover shadow-xl transition-all duration-500 ease-out ${
-                    i === 0 ? "group-hover:-translate-x-[65%] group-hover:-rotate-12" : ""
-                  } ${i === 1 ? "group-hover:rotate-2" : ""} ${
-                    i === 2 ? "group-hover:translate-x-[-5%] group-hover:rotate-12" : ""
-                  }`}
-                  style={{ zIndex: 10 - i }}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
+  <div className="rounded-3xl border border-white/10 bg-[#090d16] p-8 md:p-12">
+    <h2 className="mx-auto max-w-5xl text-center text-3xl font-bold leading-tight text-white md:text-5xl">
+      Take a photo and redesign your interior in seconds using AI
+    </h2>
+
+    <div className="mt-14 grid items-center gap-10 lg:grid-cols-[1fr_auto_1fr]">
+      <div className="justify-self-center lg:justify-self-start">
+        <img
+          src="https://images.unsplash.com/photo-1616594039964-3f9f4a6cc7f3?auto=format&fit=crop&w=1200&q=80"
+          alt="Original bedroom before redesign"
+          className="h-[280px] w-[360px] rounded-2xl border border-white/15 object-cover shadow-2xl shadow-black/40 sm:h-[320px] sm:w-[430px]"
+        />
+      </div>
+
+      <div className="relative flex items-center justify-center text-5xl text-white/90">
+        <span className="-rotate-12 text-6xl leading-none">↝</span>
+      </div>
+
+      <div className="group relative h-[440px] w-[380px] justify-self-center sm:w-[430px] lg:justify-self-end">
+        <img
+          src="https://images.unsplash.com/photo-1616486701797-0f33f61038c9?auto=format&fit=crop&w=1200&q=80"
+          alt="Redesigned bedroom modern style"
+          className="absolute right-0 top-0 h-[240px] w-[320px] rounded-2xl border border-white/15 object-cover shadow-2xl shadow-black/40 transition duration-500 ease-out rotate-[-6deg] group-hover:-translate-y-4 group-hover:translate-x-3 group-hover:rotate-[-11deg]"
+        />
+        <img
+          src="https://images.unsplash.com/photo-1617104551722-3b2d51366497?auto=format&fit=crop&w=1200&q=80"
+          alt="Redesigned bedroom warm boho style"
+          className="absolute right-4 top-[140px] h-[240px] w-[330px] rounded-2xl border border-white/15 object-cover shadow-2xl shadow-black/40 transition duration-500 ease-out rotate-[5deg] group-hover:translate-y-1 group-hover:translate-x-2 group-hover:rotate-[10deg]"
+        />
+        <img
+          src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=80"
+          alt="Redesigned bedroom minimal style"
+          className="absolute right-0 top-[250px] h-[180px] w-[320px] rounded-2xl border border-white/15 object-cover shadow-2xl shadow-black/40 transition duration-500 ease-out rotate-[-8deg] group-hover:translate-y-4 group-hover:-translate-x-2 group-hover:rotate-[-14deg]"
+        />
+      </div>
+    </div>
+  </div>
+</section>
 
         <FeaturesShowcase />
 
@@ -379,6 +389,7 @@ function PriceCard({
     </article>
   );
 }
+
 
 
 
