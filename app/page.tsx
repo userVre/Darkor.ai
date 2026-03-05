@@ -30,6 +30,30 @@ const masonryImages = [
 
 const heroRows = [0, 1, 2, 3, 4];
 
+const sectionReveal = {
+  initial: { opacity: 0, y: 50, filter: "blur(10px)" },
+  whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+  viewport: { once: false, amount: 0.15 },
+  transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 30, filter: "blur(10px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
+  },
+};
+
 const prices: Record<PlanKey, { pro: number; premium: number; ultra: number }> = {
   monthly: { pro: 29, premium: 69, ultra: 149 },
   yearly: { pro: 24, premium: 57, ultra: 124 },
@@ -270,7 +294,7 @@ export default function Home() {
       </header>
 
       <main id="top" className="pb-32 pt-24">
-        <section className="relative min-h-screen">
+        <motion.section className="relative min-h-screen" {...sectionReveal}>
           <div className="absolute inset-0 overflow-hidden">
             <div className="hero-tilt-wall">
               {heroRows.map((row) => (
@@ -386,13 +410,13 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         <LandingMediaSections />
 
         <StyleGallery />
 
-        <section id="pricing" className="mx-auto mt-24 w-full max-w-7xl px-6">
+        <motion.section id="pricing" className="mx-auto mt-24 w-full max-w-7xl px-6" {...sectionReveal}>
           <div className="mb-8 flex flex-col items-center gap-5 text-center">
             <h2 className="text-4xl font-bold">Pricing that scales with your studio</h2>
             <div className="inline-flex rounded-full border border-white/15 bg-white/5 p-1">
@@ -415,7 +439,13 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <motion.div
+            className="grid gap-6 lg:grid-cols-3"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.15 }}
+          >
             <PriceCard
               name="Pro"
               price={prices[plan].pro}
@@ -437,14 +467,24 @@ export default function Home() {
               points={["Unlimited renders", "API access", "4K exports", "Dedicated support"]}
               onChoose={triggerPrimaryCta}
             />
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
-        <section id="faq" className="mx-auto mt-24 w-full max-w-4xl px-6">
+        <motion.section id="faq" className="mx-auto mt-24 w-full max-w-4xl px-6" {...sectionReveal}>
           <h2 className="mb-8 text-center text-4xl font-bold">Frequently asked questions</h2>
-          <div className="space-y-3">
+          <motion.div
+            className="space-y-3"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.15 }}
+          >
             {faqs.map((faq, index) => (
-              <div key={faq.question} className="rounded-2xl border border-white/10 bg-white/5">
+              <motion.div
+                key={faq.question}
+                variants={staggerItem}
+                className="rounded-2xl border border-white/10 bg-white/5"
+              >
                 <button
                   onClick={() => setOpenFaq(openFaq === index ? -1 : index)}
                   className="flex w-full items-center justify-between px-6 py-5 text-left"
@@ -466,10 +506,10 @@ export default function Home() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+              </motion.div>
             ))}
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
       </main>
 
       <div className="fixed inset-x-0 bottom-0 z-50 border-t border-white/15 bg-black/65 p-3 backdrop-blur-2xl">
@@ -521,7 +561,7 @@ function PriceCard({
   onChoose: () => void;
 }) {
   return (
-    <article
+    <motion.article variants={staggerItem}
       className={`relative rounded-3xl border p-7 ${
         featured
           ? "scale-[1.03] border-cyan-300/60 bg-cyan-300/10 shadow-[0_0_80px_-20px_rgba(56,189,248,0.5)]"
@@ -553,9 +593,11 @@ function PriceCard({
       >
         Choose {name}
       </button>
-    </article>
+    </motion.article>
   );
 }
+
+
 
 
 

@@ -13,10 +13,10 @@ import {
 import { useState } from "react";
 
 const reveal = {
-  initial: { opacity: 0, y: 48 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.25 },
-  transition: { duration: 0.7, ease: "easeOut" as const },
+  initial: { opacity: 0, y: 50, filter: "blur(10px)" },
+  whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+  viewport: { once: false, amount: 0.15 },
+  transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
 };
 
 const sliderImages = [
@@ -119,7 +119,6 @@ export default function FeaturesShowcase() {
 
         <motion.article
           {...reveal}
-          transition={{ ...reveal.transition, delay: 0.1 }}
           className="grid items-center gap-16 lg:grid-cols-2 lg:gap-24"
         >
           <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900">
@@ -180,3 +179,5 @@ export default function FeaturesShowcase() {
     </section>
   );
 }
+
+

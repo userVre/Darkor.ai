@@ -13,10 +13,10 @@ import renderAfter from "@/public/media/render-after.png";
 import gardenEmpty from "@/public/media/garden-empty.png";
 
 const reveal = {
-  initial: { opacity: 0, y: 36 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.25 },
-  transition: { duration: 0.65, ease: "easeOut" as const },
+  initial: { opacity: 0, y: 50, filter: "blur(10px)" },
+  whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+  viewport: { once: false, amount: 0.15 },
+  transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
 };
 
 export default function LandingMediaSections() {
@@ -242,3 +242,5 @@ export default function LandingMediaSections() {
     </section>
   );
 }
+
+

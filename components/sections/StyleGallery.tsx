@@ -1,4 +1,7 @@
-﻿import Image from "next/image";
+﻿"use client";
+
+import Image from "next/image";
+import { motion } from "framer-motion";
 
 const STYLES_GALLERY = [
   {
@@ -131,9 +134,37 @@ const STYLES_GALLERY = [
   },
 ] as const;
 
+const sectionReveal = {
+  initial: { opacity: 0, y: 50, filter: "blur(10px)" },
+  whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+  viewport: { once: false, amount: 0.15 },
+  transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
+};
+
+const gridStagger = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const cardReveal = {
+  hidden: { opacity: 0, y: 30, filter: "blur(10px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
+  },
+};
+
 export default function StyleGallery() {
   return (
-    <section id="gallery" className="mx-auto w-full max-w-7xl px-6 py-24">
+    <motion.section
+      id="gallery"
+      className="mx-auto w-full max-w-7xl px-6 py-24"
+      {...sectionReveal}
+    >
       <div className="mx-auto mb-12 max-w-4xl text-center">
         <h2 className="text-4xl font-black text-white sm:text-5xl">Choose from 55+ interior design styles</h2>
         <p className="mt-4 text-zinc-400">
@@ -145,10 +176,17 @@ export default function StyleGallery() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+      <motion.div
+        className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+        variants={gridStagger}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: false, amount: 0.15 }}
+      >
         {STYLES_GALLERY.map((style) => (
-          <article
+          <motion.article
             key={style.id}
+            variants={cardReveal}
             className="group overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/50 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-zinc-800 hover:shadow-2xl hover:shadow-purple-500/10"
           >
             <div className="relative h-56 overflow-hidden rounded-t-2xl">
@@ -169,9 +207,9 @@ export default function StyleGallery() {
               </h3>
               <p className="mt-2 line-clamp-3 text-sm text-zinc-400">{style.description}</p>
             </div>
-          </article>
+          </motion.article>
         ))}
-      </div>
-    </section>
+      </motion.div>
+    </motion.section>
   );
 }
