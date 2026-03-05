@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import StyleGallery from "@/components/sections/StyleGallery";
+import VirtualStaging from "./components/VirtualStaging";
 import Hero from "./components/Hero";
 import LandingMediaSections from "./components/LandingMediaSections";
 import Navbar from "./components/Navbar";
@@ -420,6 +421,8 @@ export default function Home() {
 
         <StyleGallery />
 
+        <VirtualStaging />
+
         <motion.section id="pricing" className="mx-auto mt-24 w-full max-w-7xl px-6" {...sectionReveal}>
           <div className="mb-8 flex flex-col items-center gap-5 text-center">
             <h2 className="text-4xl font-bold">Pricing that scales with your studio</h2>
@@ -576,3 +579,4 @@ function PriceCard({
     </motion.article>
   );
 }
+
