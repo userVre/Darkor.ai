@@ -1,34 +1,19 @@
 ﻿"use client";
-/* eslint-disable @next/next/no-img-element */
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
 import { useRouter } from "next/navigation";
-import LandingMediaSections from "./components/LandingMediaSections";
-import AuthNavActions from "./components/AuthNavActions";
+import { useEffect, useRef, useState } from "react";
+
 import StyleGallery from "@/components/sections/StyleGallery";
+import Hero from "./components/Hero";
+import LandingMediaSections from "./components/LandingMediaSections";
+import Navbar from "./components/Navbar";
+import StickyBottomBar from "./components/StickyBottomBar";
 
 type PlanKey = "monthly" | "yearly";
-type AuthMode = "idle" | "pending_verification_sign_in" | "pending_verification_sign_up";
-
-const masonryImages = [
-  "https://images.unsplash.com/photo-1493666438817-866a91353ca9?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1616593969747-4797dc75033e?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1616594039964-3f9f4a6cc7f3?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1600210492486-724fe5c67fb3?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1617104551722-3b2d51366497?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1600121848594-d8644e57abab?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1617103996702-96ff29b1c467?auto=format&fit=crop&w=900&q=80",
-];
-
-const heroRows = [0, 1, 2, 3, 4];
+type AuthStep = "credentials" | "verification";
 
 const sectionReveal = {
   initial: { opacity: 0, y: 50, filter: "blur(10px)" },
@@ -82,27 +67,107 @@ const faqs = [
   },
 ];
 
+type ClerkErrorShape = {
+  errors?: Array<{ longMessage?: string; message?: string }>;
+};
+
+function getClerkErrorMessage(error: unknown, fallback: string): string {
+  const err = error as ClerkErrorShape;
+  const first = err?.errors?.[0];
+  return first?.longMessage || first?.message || fallback;
+}
+
 export default function Home() {
-  const [plan, setPlan] = useState<PlanKey>("monthly");
-  const [openFaq, setOpenFaq] = useState(0);
   const router = useRouter();
   const { isSignedIn } = useAuth();
   const { setActive } = useClerk();
   const { isLoaded: signInReady, signIn } = useSignIn();
   const { isLoaded: signUpReady, signUp } = useSignUp();
 
+  const [plan, setPlan] = useState<PlanKey>("monthly");
+  const [openFaq, setOpenFaq] = useState(0);
+
+  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [authStep, setAuthStep] = useState<AuthStep>("credentials");
   const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
-  const [authMode, setAuthMode] = useState<AuthMode>("idle");
   const [authError, setAuthError] = useState("");
   const [authMessage, setAuthMessage] = useState("");
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
+  const [pendingSignInEmailId, setPendingSignInEmailId] = useState<string | null>(null);
 
-  const startEmailFlow = async (emailValue?: string) => {
-    const normalizedEmail = (emailValue ?? authEmail).trim().toLowerCase();
+  const [stickyEmail, setStickyEmail] = useState("");
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const authCardRef = useRef<HTMLDivElement | null>(null);
 
-    if (!normalizedEmail) {
-      setAuthError("Please enter your email address first.");
+  useEffect(() => {
+    if (authStep !== "verification" || resendSeconds <= 0) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setResendSeconds((current) => {
+        if (current <= 1) {
+          window.clearInterval(timer);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [authStep, resendSeconds]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const authCard = authCardRef.current;
+      if (!authCard) {
+        setShowStickyBar(false);
+        return;
+      }
+      const rect = authCard.getBoundingClientRect();
+      setShowStickyBar(rect.bottom < 0);
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const resetMessages = () => {
+    setAuthError("");
+    setAuthMessage("");
+  };
+
+  const startResendCountdown = () => {
+    setResendSeconds(30);
+  };
+
+  const scrollToAuthCard = () => {
+    authCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const handleStartForFree = () => {
+    scrollToAuthCard();
+  };
+
+  const handleModeToggle = () => {
+    setIsLoginMode((current) => !current);
+    setAuthStep("credentials");
+    setVerificationCode("");
+    setPendingSignInEmailId(null);
+    setResendSeconds(0);
+    resetMessages();
+  };
+
+  const submitCredentials = async () => {
+    const email = authEmail.trim().toLowerCase();
+    const password = authPassword.trim();
+
+    if (!email || !password) {
+      setAuthError("Please fill in both email and password.");
       return;
     }
 
@@ -111,72 +176,79 @@ export default function Home() {
       return;
     }
 
-    setAuthError("");
-    setAuthMessage("");
+    resetMessages();
     setIsAuthLoading(true);
 
     try {
-      const signInResource = signIn as unknown as {
-        create: (params: { identifier: string }) => Promise<{
-          status: string;
-          supportedFirstFactors?: Array<{ strategy?: string; emailAddressId?: string }>;
-          createdSessionId?: string;
-        }>;
-        prepareFirstFactor: (params: { strategy: "email_code"; emailAddressId: string }) => Promise<void>;
-      };
+      if (isLoginMode) {
+        const signInResource = signIn as unknown as {
+          create: (params: { identifier: string; password: string }) => Promise<{
+            status: string;
+            createdSessionId?: string;
+            supportedFirstFactors?: Array<{ strategy?: string; emailAddressId?: string }>;
+          }>;
+          prepareFirstFactor: (params: { strategy: "email_code"; emailAddressId: string }) => Promise<void>;
+        };
 
-      const signInAttempt = await signInResource.create({ identifier: normalizedEmail });
+        const attempt = await signInResource.create({ identifier: email, password });
 
-      if (signInAttempt.status === "complete" && signInAttempt.createdSessionId) {
-        await setActive?.({ session: signInAttempt.createdSessionId });
-        router.push("/studio");
-        return;
-      }
+        if (attempt.status === "complete" && attempt.createdSessionId) {
+          await setActive?.({ session: attempt.createdSessionId });
+          router.push("/studio");
+          return;
+        }
 
-      if (signInAttempt.status === "needs_first_factor") {
-        const emailFactor = signInAttempt.supportedFirstFactors?.find(
-          (factor) => factor.strategy === "email_code" && factor.emailAddressId,
-        );
+        if (attempt.status === "needs_first_factor") {
+          const emailFactor = attempt.supportedFirstFactors?.find(
+            (factor) => factor.strategy === "email_code" && factor.emailAddressId,
+          );
 
-        if (emailFactor?.emailAddressId) {
+          if (!emailFactor?.emailAddressId) {
+            setAuthError("This account requires another verification method.");
+            return;
+          }
+
           await signInResource.prepareFirstFactor({
             strategy: "email_code",
             emailAddressId: emailFactor.emailAddressId,
           });
-          setAuthEmail(normalizedEmail);
-          setAuthMode("pending_verification_sign_in");
-          setAuthMessage("We sent a verification code to your email.");
+
+          setPendingSignInEmailId(emailFactor.emailAddressId);
+          setAuthStep("verification");
+          setVerificationCode("");
+          startResendCountdown();
+          setAuthMessage("Verification code sent to your email.");
           return;
         }
-      }
-    } catch {
-      // If sign-in is not available for this email yet, continue with sign-up flow.
-    }
 
-    try {
+        setAuthError("Unable to continue with this login flow.");
+        return;
+      }
+
       const signUpResource = signUp as unknown as {
-        create: (params: { emailAddress: string }) => Promise<unknown>;
+        create: (params: { emailAddress: string; password: string }) => Promise<unknown>;
         prepareEmailAddressVerification: (params: { strategy: "email_code" }) => Promise<void>;
       };
 
-      await signUpResource.create({ emailAddress: normalizedEmail });
+      await signUpResource.create({ emailAddress: email, password });
       await signUpResource.prepareEmailAddressVerification({ strategy: "email_code" });
 
-      setAuthEmail(normalizedEmail);
-      setAuthMode("pending_verification_sign_up");
-      setAuthMessage("Check your inbox for the verification code.");
-    } catch {
-      setAuthError("Unable to start email verification. Please try Google or try again.");
+      setAuthStep("verification");
+      setVerificationCode("");
+      startResendCountdown();
+      setAuthMessage("Verification code sent to your email.");
+    } catch (error) {
+      setAuthError(getClerkErrorMessage(error, "Authentication failed. Please try again."));
     } finally {
       setIsAuthLoading(false);
     }
   };
 
-  const verifyCodeAndContinue = async () => {
+  const verifyCode = async () => {
     const code = verificationCode.trim();
 
-    if (!code) {
-      setAuthError("Please enter the verification code.");
+    if (code.length !== 6) {
+      setAuthError("Please enter the 6-digit verification code.");
       return;
     }
 
@@ -185,11 +257,11 @@ export default function Home() {
       return;
     }
 
-    setAuthError("");
+    resetMessages();
     setIsAuthLoading(true);
 
     try {
-      if (authMode === "pending_verification_sign_in") {
+      if (isLoginMode) {
         const signInResource = signIn as unknown as {
           attemptFirstFactor: (params: { strategy: "email_code"; code: string }) => Promise<{
             status: string;
@@ -197,35 +269,81 @@ export default function Home() {
           }>;
         };
 
-        const result = await signInResource.attemptFirstFactor({ strategy: "email_code", code });
+        const attempt = await signInResource.attemptFirstFactor({ strategy: "email_code", code });
 
-        if (result.status === "complete" && result.createdSessionId) {
-          await setActive?.({ session: result.createdSessionId });
+        if (attempt.status === "complete" && attempt.createdSessionId) {
+          await setActive?.({ session: attempt.createdSessionId });
           router.push("/studio");
           return;
         }
+
+        setAuthError("Verification failed. Please try again.");
+        return;
       }
 
-      if (authMode === "pending_verification_sign_up") {
-        const signUpResource = signUp as unknown as {
-          attemptEmailAddressVerification: (params: { code: string }) => Promise<{
-            status: string;
-            createdSessionId?: string;
-          }>;
+      const signUpResource = signUp as unknown as {
+        attemptEmailAddressVerification: (params: { code: string }) => Promise<{
+          status: string;
+          createdSessionId?: string;
+        }>;
+      };
+
+      const attempt = await signUpResource.attemptEmailAddressVerification({ code });
+
+      if (attempt.status === "complete" && attempt.createdSessionId) {
+        await setActive?.({ session: attempt.createdSessionId });
+        router.push("/studio");
+        return;
+      }
+
+      setAuthError("Verification failed. Please try again.");
+    } catch (error) {
+      setAuthError(getClerkErrorMessage(error, "Invalid or expired code."));
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const resendCode = async () => {
+    if (resendSeconds > 0 || isAuthLoading) {
+      return;
+    }
+
+    if (!signInReady || !signUpReady) {
+      setAuthError("Authentication is still loading. Please try again.");
+      return;
+    }
+
+    resetMessages();
+    setIsAuthLoading(true);
+
+    try {
+      if (isLoginMode) {
+        if (!pendingSignInEmailId) {
+          setAuthError("Please restart the login flow.");
+          return;
+        }
+
+        const signInResource = signIn as unknown as {
+          prepareFirstFactor: (params: { strategy: "email_code"; emailAddressId: string }) => Promise<void>;
         };
 
-        const result = await signUpResource.attemptEmailAddressVerification({ code });
+        await signInResource.prepareFirstFactor({
+          strategy: "email_code",
+          emailAddressId: pendingSignInEmailId,
+        });
+      } else {
+        const signUpResource = signUp as unknown as {
+          prepareEmailAddressVerification: (params: { strategy: "email_code" }) => Promise<void>;
+        };
 
-        if (result.status === "complete" && result.createdSessionId) {
-          await setActive?.({ session: result.createdSessionId });
-          router.push("/studio");
-          return;
-        }
+        await signUpResource.prepareEmailAddressVerification({ strategy: "email_code" });
       }
 
-      setAuthError("Verification failed. Please check the code and try again.");
-    } catch {
-      setAuthError("Invalid or expired code. Please request a new one.");
+      startResendCountdown();
+      setAuthMessage("A new verification code has been sent.");
+    } catch (error) {
+      setAuthError(getClerkErrorMessage(error, "Unable to resend code right now."));
     } finally {
       setIsAuthLoading(false);
     }
@@ -252,18 +370,19 @@ export default function Home() {
     });
   };
 
-  const triggerPrimaryCta = () => {
+  const handleStickyAction = () => {
+    if (stickyEmail.trim()) {
+      setAuthEmail(stickyEmail.trim().toLowerCase());
+    }
+    scrollToAuthCard();
+  };
+
+  const handleChoosePlan = () => {
     if (isSignedIn) {
       router.push("/studio");
       return;
     }
-
-    if (authMode === "pending_verification_sign_in" || authMode === "pending_verification_sign_up") {
-      void verifyCodeAndContinue();
-      return;
-    }
-
-    void startEmailFlow();
+    scrollToAuthCard();
   };
 
   return (
@@ -273,144 +392,29 @@ export default function Home() {
         <div className="absolute bottom-[-18rem] right-[-12rem] h-[30rem] w-[30rem] rounded-full bg-fuchsia-500/20 blur-[140px]" />
       </div>
 
-      <header className="fixed top-0 z-40 w-full border-b border-white/10 bg-black/30 backdrop-blur-xl">
-        <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
-          <a href="#top" className="text-xl font-semibold tracking-tight">
-            Darkor<span className="text-cyan-300">.ai</span>
-          </a>
-          <div className="hidden items-center gap-7 text-sm text-zinc-300 md:flex">
-            <a className="transition hover:text-white" href="#pricing">
-              Pricing
-            </a>
-            <a className="transition hover:text-white" href="#gallery">
-              Gallery
-            </a>
-            <a className="transition hover:text-white" href="#faq">
-              FAQ
-            </a>
-          </div>
-          <AuthNavActions />
-        </nav>
-      </header>
+      <Navbar onStartFree={handleStartForFree} />
 
       <main id="top" className="pb-32 pt-24">
-        <motion.section className="relative min-h-screen" {...sectionReveal}>
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="hero-tilt-wall">
-              {heroRows.map((row) => (
-                <div
-                  key={row}
-                  className={`hero-row ${row % 2 === 0 ? "hero-row-forward" : "hero-row-reverse"}`}
-                  style={{ animationDuration: `${90 + row * 10}s` }}
-                >
-                  {masonryImages.concat(masonryImages, masonryImages).map((src, index) => (
-                    <img
-                      key={`${row}-${src}-${index}`}
-                      src={src}
-                      alt={`AI room ${index + 1}`}
-                      className="hero-room-card"
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-[#04070d]/96 via-[#04070d]/72 to-[#04070d]/96" />
-
-          <div className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center gap-10 px-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-2xl space-y-7">
-              <p className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-xs tracking-[0.14em] text-cyan-200 uppercase">
-                AI Interior Revolution
-              </p>
-              <h1 className="text-5xl leading-[1.05] font-black sm:text-7xl">
-                <span className="text-cyan-300">?? Fire your</span> interior designer
-              </h1>
-              <p className="max-w-xl text-lg text-zinc-300">
-                Upload a photo of your interior and transform it completely. Instantly redesign, furnish, reimagine
-                any home interior, exterior or garden. Interior AI brings the expertise of an interior designer right
-                into your pocket!
-              </p>
-              <ul className="space-y-2 text-zinc-200">
-                <li>?? Take a photo of your current interior and let AI redesign it in seconds</li>
-                <li>?? Choose an interior style from Modern, Minimalist to Contemporary</li>
-                <li>? Transform your sketches and SketchUp files into photorealistic renders</li>
-                <li>?? Use Virtual Staging AI to furnish empty homes for real estate</li>
-                <li>?? Turn your renders into 3d flythrough videos</li>
-              </ul>
-            </div>
-
-            <div className="relative w-full max-w-md">
-              <div className="absolute -top-4 left-9 z-10 rotate-[5deg] rounded-full border border-emerald-200/50 bg-emerald-300 px-4 py-1.5 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-500/30">
-                ? Get your first redesigns in less than a minute!
-              </div>
-              <div className="space-y-4 rounded-3xl border border-white/20 bg-black/65 p-6 shadow-2xl shadow-black/50 backdrop-blur-2xl">
-                {authMode === "pending_verification_sign_in" || authMode === "pending_verification_sign_up" ? (
-                  <>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      value={verificationCode}
-                      onChange={(e) => setVerificationCode(e.target.value)}
-                      placeholder="Enter verification code"
-                      className="w-full rounded-xl border border-white/20 bg-white px-4 py-3 text-lg text-black outline-none ring-cyan-300 transition focus:ring"
-                    />
-                    <button
-                      onClick={verifyCodeAndContinue}
-                      disabled={isAuthLoading}
-                      className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 px-4 py-3 font-semibold text-white shadow-lg shadow-cyan-500/30 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
-                    >
-                      {isAuthLoading ? "Verifying..." : "Verify & Continue"}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setAuthMode("idle");
-                        setVerificationCode("");
-                        setAuthError("");
-                        setAuthMessage("");
-                      }}
-                      className="w-full rounded-xl border border-white/25 bg-white px-4 py-3 text-lg font-semibold text-black transition hover:bg-zinc-100"
-                    >
-                      Use another email
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <input
-                      type="email"
-                      value={authEmail}
-                      onChange={(e) => setAuthEmail(e.target.value)}
-                      placeholder="Type your email..."
-                      className="w-full rounded-xl border border-white/20 bg-white px-4 py-3 text-lg text-black outline-none ring-cyan-300 transition focus:ring"
-                    />
-                    <button
-                      onClick={() => void startEmailFlow()}
-                      disabled={isAuthLoading}
-                      className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 px-4 py-3 font-semibold text-white shadow-lg shadow-cyan-500/30 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
-                    >
-                      {isAuthLoading ? "Sending code..." : "Redesign your interior now ?"}
-                    </button>
-                    <div className="relative py-1 text-center text-sm text-zinc-400">
-                      <span className="relative z-10 bg-black/65 px-2">or</span>
-                      <span className="absolute left-0 right-0 top-1/2 h-px bg-white/15" />
-                    </div>
-                    <button
-                      onClick={() => void continueWithGoogle()}
-                      className="w-full rounded-xl border border-white/25 bg-white px-4 py-3 text-lg font-semibold text-black transition hover:bg-zinc-100"
-                    >
-                      Continue with Google
-                    </button>
-                  </>
-                )}
-                {(authMessage || authError) && (
-                  <p className={`text-sm ${authError ? "text-red-300" : "text-emerald-300"}`}>
-                    {authError || authMessage}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </motion.section>
+        <Hero
+          authCardRef={authCardRef}
+          email={authEmail}
+          password={authPassword}
+          verificationCode={verificationCode}
+          isLoginMode={isLoginMode}
+          step={authStep}
+          isLoading={isAuthLoading}
+          authError={authError}
+          authMessage={authMessage}
+          resendSeconds={resendSeconds}
+          onEmailChange={setAuthEmail}
+          onPasswordChange={setAuthPassword}
+          onVerificationCodeChange={setVerificationCode}
+          onSubmitCredentials={() => void submitCredentials()}
+          onVerifyCode={() => void verifyCode()}
+          onGoogle={() => void continueWithGoogle()}
+          onResendCode={() => void resendCode()}
+          onToggleMode={handleModeToggle}
+        />
 
         <LandingMediaSections />
 
@@ -451,21 +455,21 @@ export default function Home() {
               price={prices[plan].pro}
               featured={false}
               points={["80 renders / month", "Basic staging", "HD exports"]}
-              onChoose={triggerPrimaryCta}
+              onChoose={handleChoosePlan}
             />
             <PriceCard
               name="Premium"
               price={prices[plan].premium}
               featured
               points={["350 renders / month", "All design styles", "Priority queue", "Commercial license"]}
-              onChoose={triggerPrimaryCta}
+              onChoose={handleChoosePlan}
             />
             <PriceCard
               name="Ultra"
               price={prices[plan].ultra}
               featured={false}
               points={["Unlimited renders", "API access", "4K exports", "Dedicated support"]}
-              onChoose={triggerPrimaryCta}
+              onChoose={handleChoosePlan}
             />
           </motion.div>
         </motion.section>
@@ -512,37 +516,12 @@ export default function Home() {
         </motion.section>
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-white/15 bg-black/65 p-3 backdrop-blur-2xl">
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 sm:flex-row">
-          <input
-            type={authMode === "pending_verification_sign_in" || authMode === "pending_verification_sign_up" ? "text" : "email"}
-            inputMode={authMode === "pending_verification_sign_in" || authMode === "pending_verification_sign_up" ? "numeric" : "email"}
-            value={authMode === "pending_verification_sign_in" || authMode === "pending_verification_sign_up" ? verificationCode : authEmail}
-            onChange={(e) =>
-              authMode === "pending_verification_sign_in" || authMode === "pending_verification_sign_up"
-                ? setVerificationCode(e.target.value)
-                : setAuthEmail(e.target.value)
-            }
-            placeholder={
-              authMode === "pending_verification_sign_in" || authMode === "pending_verification_sign_up"
-                ? "Enter verification code"
-                : "Enter your email"
-            }
-            className="flex-1 rounded-xl border border-white/25 bg-white/5 px-4 py-3 text-sm outline-none ring-cyan-300 focus:ring"
-          />
-          <button
-            onClick={triggerPrimaryCta}
-            disabled={isAuthLoading}
-            className="rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-3 font-semibold text-[#041018] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isAuthLoading
-              ? "Please wait..."
-              : authMode === "pending_verification_sign_in" || authMode === "pending_verification_sign_up"
-                ? "Verify & Continue"
-                : "Start redesigning now"}
-          </button>
-        </div>
-      </div>
+      <StickyBottomBar
+        visible={showStickyBar}
+        email={stickyEmail}
+        onEmailChange={setStickyEmail}
+        onAction={handleStickyAction}
+      />
     </div>
   );
 }
@@ -561,7 +540,8 @@ function PriceCard({
   onChoose: () => void;
 }) {
   return (
-    <motion.article variants={staggerItem}
+    <motion.article
+      variants={staggerItem}
       className={`relative rounded-3xl border p-7 ${
         featured
           ? "scale-[1.03] border-cyan-300/60 bg-cyan-300/10 shadow-[0_0_80px_-20px_rgba(56,189,248,0.5)]"
@@ -596,27 +576,3 @@ function PriceCard({
     </motion.article>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
