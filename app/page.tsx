@@ -8,6 +8,7 @@ import { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
 import { useRouter } from "next/navigation";
 import LandingMediaSections from "./components/LandingMediaSections";
 import AuthNavActions from "./components/AuthNavActions";
+import StyleGallery from "@/components/sections/StyleGallery";
 
 type PlanKey = "monthly" | "yearly";
 type AuthMode = "idle" | "pending_verification_sign_in" | "pending_verification_sign_up";
@@ -28,36 +29,6 @@ const masonryImages = [
 ];
 
 const heroRows = [0, 1, 2, 3, 4];
-
-const styleCards = [
-  "Minimalist",
-  "Japandi",
-  "Scandinavian",
-  "Industrial",
-  "Modern Farmhouse",
-  "Mediterranean",
-  "Boho",
-  "Art Deco",
-  "Mid-century",
-  "Wabi-sabi",
-  "Contemporary",
-  "Rustic",
-];
-
-const styleImages = [
-  "https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1616048056617-93b94a339009?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1616627452052-89f0c30a0f56?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1615874959474-d609969a20ed?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1600121848594-d8644e57abab?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1618220179428-22790b461013?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1616594039964-3f9f4a6cc7f3?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1615529162924-f86053884682?auto=format&fit=crop&w=700&q=80",
-];
 
 const prices: Record<PlanKey, { pro: number; premium: number; ultra: number }> = {
   monthly: { pro: 29, premium: 69, ultra: 149 },
@@ -419,27 +390,7 @@ export default function Home() {
 
         <LandingMediaSections />
 
-<section className="mx-auto mt-24 w-full max-w-7xl px-6">
-          <div className="mb-8 flex items-end justify-between">
-            <h2 className="text-3xl font-bold">55+ interior design styles</h2>
-            <p className="text-sm text-zinc-400">Curated style packs for every market</p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {styleCards.map((style, index) => (
-              <article key={style} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-black/40">
-                <img
-                  src={styleImages[index]}
-                  alt={style}
-                  className="h-60 w-full object-cover transition duration-500 group-hover:scale-110 group-hover:brightness-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-                <p className="absolute bottom-4 left-4 text-lg font-semibold transition duration-300 group-hover:-translate-y-1">
-                  {style}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
+        <StyleGallery />
 
         <section id="pricing" className="mx-auto mt-24 w-full max-w-7xl px-6">
           <div className="mb-8 flex flex-col items-center gap-5 text-center">
@@ -605,6 +556,8 @@ function PriceCard({
     </article>
   );
 }
+
+
 
 
 
