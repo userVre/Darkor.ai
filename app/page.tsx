@@ -3,6 +3,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
+import FeaturesShowcase from "./components/FeaturesShowcase";
 
 type PlanKey = "monthly" | "yearly";
 
@@ -22,33 +23,6 @@ const masonryImages = [
 ];
 
 const heroRows = [0, 1, 2, 3, 4];
-
-const featureBlocks = [
-  {
-    title: "Virtual staging in one click",
-    description:
-      "Turn empty spaces into premium listings with photorealistic furniture packs tailored to each room type.",
-    image:
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1300&q=80",
-    reverse: false,
-  },
-  {
-    title: "Cinematic 3D walkthroughs",
-    description:
-      "Generate smooth camera paths and realistic lighting to present your redesign concept from every angle.",
-    image:
-      "https://images.unsplash.com/photo-1616046229478-9901c5536a45?auto=format&fit=crop&w=1300&q=80",
-    reverse: true,
-  },
-  {
-    title: "SketchUp-ready renders",
-    description:
-      "Move from concept to client-ready presentation with export options that fit your rendering pipeline.",
-    image:
-      "https://images.unsplash.com/photo-1616137466211-f939a420be84?auto=format&fit=crop&w=1300&q=80",
-    reverse: false,
-  },
-];
 
 const styleCards = [
   "Minimalist",
@@ -242,22 +216,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mx-auto mt-24 w-full max-w-7xl space-y-14 px-6">
-          {featureBlocks.map((feature) => (
-            <article
-              key={feature.title}
-              className={`grid items-center gap-8 rounded-3xl border border-white/10 bg-white/5 p-7 lg:grid-cols-2 ${
-                feature.reverse ? "lg:[&>*:first-child]:order-2" : ""
-              }`}
-            >
-              <img src={feature.image} alt={feature.title} className="h-[320px] w-full rounded-2xl object-cover" />
-              <div className="space-y-4">
-                <h2 className="text-3xl font-bold">{feature.title}</h2>
-                <p className="text-zinc-300">{feature.description}</p>
-              </div>
-            </article>
-          ))}
-        </section>
+        <FeaturesShowcase />
 
         <section className="mx-auto mt-24 w-full max-w-7xl px-6">
           <div className="mb-8 flex items-end justify-between">
@@ -420,3 +379,6 @@ function PriceCard({
     </article>
   );
 }
+
+
+
