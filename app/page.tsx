@@ -7,13 +7,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import StyleGallery from "@/components/sections/StyleGallery";
-import VirtualStaging from "./components/VirtualStaging";
+import type { PricingTierName } from "./components/PricingSection";
 import CompetitorComparisonGrid from "./components/CompetitorComparisonGrid";
-import PricingSection from "./components/PricingSection";
 import Hero from "./components/Hero";
 import LandingMediaSections from "./components/LandingMediaSections";
 import Navbar from "./components/Navbar";
+import PricingSection from "./components/PricingSection";
 import StickyBottomBar from "./components/StickyBottomBar";
+import VirtualStaging from "./components/VirtualStaging";
 
 type AuthStep = "credentials" | "verification";
 
@@ -79,7 +80,9 @@ export default function Home() {
   const { isSignedIn } = useAuth();
   const { setActive } = useClerk();
   const { isLoaded: signInReady, signIn } = useSignIn();
-  const { isLoaded: signUpReady, signUp } = useSignUp();  const [openFaq, setOpenFaq] = useState(0);
+  const { isLoaded: signUpReady, signUp } = useSignUp();
+
+  const [openFaq, setOpenFaq] = useState(0);
 
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [authStep, setAuthStep] = useState<AuthStep>("credentials");
@@ -371,11 +374,22 @@ export default function Home() {
     scrollToAuthCard();
   };
 
-  const handleChoosePlan = () => {
+  const handleChoosePlan = (tier: PricingTierName) => {
+    if (tier === "Pro") {
+      if (isSignedIn) {
+        router.push("/dashboard/pro");
+        return;
+      }
+
+      router.push("/sign-up?redirect_url=/dashboard/pro");
+      return;
+    }
+
     if (isSignedIn) {
       router.push("/studio");
       return;
     }
+
     scrollToAuthCard();
   };
 
@@ -417,6 +431,7 @@ export default function Home() {
         <VirtualStaging />
 
         <CompetitorComparisonGrid />
+
         <PricingSection onSubscribe={handleChoosePlan} />
 
         <motion.section id="faq" className="mx-auto mt-24 w-full max-w-4xl px-6" {...sectionReveal}>
@@ -470,4 +485,3 @@ export default function Home() {
     </div>
   );
 }
-

@@ -7,6 +7,8 @@ import { useState } from "react";
 type BillingCycle = "monthly" | "yearly";
 type PillTone = "green" | "red" | "yellow";
 
+export type PricingTierName = "Pro" | "Premium" | "Ultra";
+
 type FeatureRow = {
   text: string;
   pill?: PillTone;
@@ -14,7 +16,7 @@ type FeatureRow = {
 };
 
 type PricingTier = {
-  name: "Pro" | "Premium" | "Ultra";
+  name: PricingTierName;
   monthlyPrice: number;
   yearlyPrice: number;
   yearlyCaption: string;
@@ -122,7 +124,7 @@ function pillClasses(tone: PillTone): string {
 }
 
 type PricingSectionProps = {
-  onSubscribe: () => void;
+  onSubscribe: (tier: PricingTierName) => void;
 };
 
 export default function PricingSection({ onSubscribe }: PricingSectionProps) {
@@ -220,7 +222,11 @@ export default function PricingSection({ onSubscribe }: PricingSectionProps) {
                     {feature.note ? (
                       <span className="text-sm font-medium text-zinc-400">-- {feature.text}</span>
                     ) : feature.pill ? (
-                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${pillClasses(feature.pill)}`}>
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${pillClasses(
+                          feature.pill,
+                        )}`}
+                      >
                         {feature.text}
                       </span>
                     ) : (
@@ -231,7 +237,7 @@ export default function PricingSection({ onSubscribe }: PricingSectionProps) {
               </ul>
 
               <button
-                onClick={onSubscribe}
+                onClick={() => onSubscribe(tier.name)}
                 className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition ${
                   tier.isPopular
                     ? "bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 hover:brightness-110"
