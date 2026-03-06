@@ -9,12 +9,12 @@ import { useEffect, useRef, useState } from "react";
 import StyleGallery from "@/components/sections/StyleGallery";
 import VirtualStaging from "./components/VirtualStaging";
 import CompetitorComparisonGrid from "./components/CompetitorComparisonGrid";
+import PricingSection from "./components/PricingSection";
 import Hero from "./components/Hero";
 import LandingMediaSections from "./components/LandingMediaSections";
 import Navbar from "./components/Navbar";
 import StickyBottomBar from "./components/StickyBottomBar";
 
-type PlanKey = "monthly" | "yearly";
 type AuthStep = "credentials" | "verification";
 
 const sectionReveal = {
@@ -39,11 +39,6 @@ const staggerItem = {
     filter: "blur(0px)",
     transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
   },
-};
-
-const prices: Record<PlanKey, { pro: number; premium: number; ultra: number }> = {
-  monthly: { pro: 29, premium: 69, ultra: 149 },
-  yearly: { pro: 24, premium: 57, ultra: 124 },
 };
 
 const faqs = [
@@ -84,10 +79,7 @@ export default function Home() {
   const { isSignedIn } = useAuth();
   const { setActive } = useClerk();
   const { isLoaded: signInReady, signIn } = useSignIn();
-  const { isLoaded: signUpReady, signUp } = useSignUp();
-
-  const [plan, setPlan] = useState<PlanKey>("monthly");
-  const [openFaq, setOpenFaq] = useState(0);
+  const { isLoaded: signUpReady, signUp } = useSignUp();  const [openFaq, setOpenFaq] = useState(0);
 
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [authStep, setAuthStep] = useState<AuthStep>("credentials");
@@ -425,60 +417,7 @@ export default function Home() {
         <VirtualStaging />
 
         <CompetitorComparisonGrid />
-
-        <motion.section id="pricing" className="mx-auto mt-24 w-full max-w-7xl px-6" {...sectionReveal}>
-          <div className="mb-8 flex flex-col items-center gap-5 text-center">
-            <h2 className="text-4xl font-bold">Pricing that scales with your studio</h2>
-            <div className="inline-flex rounded-full border border-white/15 bg-white/5 p-1">
-              <button
-                onClick={() => setPlan("monthly")}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  plan === "monthly" ? "bg-cyan-300 text-[#031118]" : "text-zinc-300"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setPlan("yearly")}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  plan === "yearly" ? "bg-cyan-300 text-[#031118]" : "text-zinc-300"
-                }`}
-              >
-                Yearly (Get 2 months free)
-              </button>
-            </div>
-          </div>
-
-          <motion.div
-            className="grid gap-6 lg:grid-cols-3"
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, amount: 0.15 }}
-          >
-            <PriceCard
-              name="Pro"
-              price={prices[plan].pro}
-              featured={false}
-              points={["80 renders / month", "Basic staging", "HD exports"]}
-              onChoose={handleChoosePlan}
-            />
-            <PriceCard
-              name="Premium"
-              price={prices[plan].premium}
-              featured
-              points={["350 renders / month", "All design styles", "Priority queue", "Commercial license"]}
-              onChoose={handleChoosePlan}
-            />
-            <PriceCard
-              name="Ultra"
-              price={prices[plan].ultra}
-              featured={false}
-              points={["Unlimited renders", "API access", "4K exports", "Dedicated support"]}
-              onChoose={handleChoosePlan}
-            />
-          </motion.div>
-        </motion.section>
+        <PricingSection onSubscribe={handleChoosePlan} />
 
         <motion.section id="faq" className="mx-auto mt-24 w-full max-w-4xl px-6" {...sectionReveal}>
           <h2 className="mb-8 text-center text-4xl font-bold">Frequently asked questions</h2>
@@ -531,56 +470,4 @@ export default function Home() {
     </div>
   );
 }
-
-function PriceCard({
-  name,
-  price,
-  points,
-  featured,
-  onChoose,
-}: {
-  name: string;
-  price: number;
-  points: string[];
-  featured: boolean;
-  onChoose: () => void;
-}) {
-  return (
-    <motion.article
-      variants={staggerItem}
-      className={`relative rounded-3xl border p-7 ${
-        featured
-          ? "scale-[1.03] border-cyan-300/60 bg-cyan-300/10 shadow-[0_0_80px_-20px_rgba(56,189,248,0.5)]"
-          : "border-white/10 bg-white/5"
-      }`}
-    >
-      {featured && (
-        <span className="absolute -top-3 left-6 rounded-full bg-cyan-300 px-3 py-1 text-xs font-semibold text-[#021018]">
-          Most popular
-        </span>
-      )}
-      <h3 className="text-2xl font-bold">{name}</h3>
-      <p className="mt-3 text-4xl font-black">
-        ${price}
-        <span className="text-sm font-medium text-zinc-400"> / month</span>
-      </p>
-      <ul className="mt-5 space-y-2 text-zinc-300">
-        {points.map((point) => (
-          <li key={point}>- {point}</li>
-        ))}
-      </ul>
-      <button
-        onClick={onChoose}
-        className={`mt-6 w-full rounded-xl px-4 py-3 font-semibold transition ${
-          featured
-            ? "bg-cyan-300 text-[#031118] hover:brightness-105"
-            : "border border-white/20 hover:border-cyan-300 hover:text-cyan-100"
-        }`}
-      >
-        Choose {name}
-      </button>
-    </motion.article>
-  );
-}
-
 
