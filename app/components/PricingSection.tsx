@@ -20,7 +20,6 @@ type PricingTier = {
   name: PricingTierName;
   monthlyPrice: number;
   yearlyPrice: number;
-  yearlyCaption?: string;
   yearlyBadge?: string;
   corePrefix: string;
   coreBadge?: string;
@@ -86,6 +85,12 @@ const tiers: PricingTier[] = [
     ],
   },
 ];
+
+const yearlyEffectiveRate: Record<PricingTierName, string> = {
+  Pro: "7.50",
+  Premium: "24.16",
+  Ultra: "65.83",
+};
 
 const containerVariants = {
   hidden: {},
@@ -199,7 +204,8 @@ export default function PricingSection() {
         className="grid gap-6 lg:grid-cols-3"
       >
         {tiers.map((tier) => {
-          const price = billing === "monthly" ? tier.monthlyPrice : tier.yearlyPrice;
+          const isYearly = billing === "yearly";
+          const mainPrice = isYearly ? yearlyEffectiveRate[tier.name] : String(tier.monthlyPrice);
 
           return (
             <motion.article
@@ -221,7 +227,7 @@ export default function PricingSection() {
 
               <h3 className="text-2xl font-bold text-white">{tier.name}</h3>
 
-              <div className="mt-4 min-h-[78px]">
+              <div className="mt-4 min-h-[94px]">
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={`${tier.name}-${billing}`}
@@ -232,17 +238,19 @@ export default function PricingSection() {
                     transition={{ duration: 0.25, ease: "easeOut" }}
                   >
                     <p className="text-4xl font-black text-white">
-                      ${price}
-                      <span className="text-base font-medium text-zinc-400"> / {billing === "monthly" ? "month" : "year"}</span>
+                      ${mainPrice}
+                      <span className="text-base font-medium text-zinc-400"> / mo</span>
                     </p>
-                    {billing === "yearly" && tier.yearlyBadge && (
+                    {isYearly ? (
+                      <p className="mt-1 text-xs text-zinc-500">Billed annually at ${tier.yearlyPrice}</p>
+                    ) : (
+                      <p className="mt-1 text-xs text-zinc-500">Billed monthly at ${tier.monthlyPrice}</p>
+                    )}
+                    {isYearly && tier.yearlyBadge ? (
                       <span className="mt-2 inline-flex rounded-full border border-emerald-300/40 bg-emerald-400/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-100">
                         {tier.yearlyBadge}
                       </span>
-                    )}
-                    {billing === "yearly" && tier.yearlyCaption && (
-                      <p className="mt-1 text-xs text-zinc-500">{tier.yearlyCaption}</p>
-                    )}
+                    ) : null}
                   </motion.div>
                 </AnimatePresence>
               </div>

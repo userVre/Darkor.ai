@@ -20,6 +20,8 @@ const tabItems: { id: TabKey; label: string; premiumOnly: boolean }[] = [
   { id: "edit", label: "Edit", premiumOnly: true },
 ];
 
+const resultActions = ["Upscale", "Google Lens", "VR"] as const;
+
 const styles = ["Modern", "Minimalist", "Scandinavian", "Bohemian", "Cyberpunk"];
 const promptChips = [
   { label: "Paint walls", text: "Paint the walls " },
@@ -114,6 +116,10 @@ export default function WorkspacePage() {
 
   const onLockedUltra = () => {
     showToast("Upgrade to Ultra for dedicated server speed and Hyper-Realism™.");
+  };
+
+  const onLockedPremiumResultAction = () => {
+    showToast("Upgrade to Premium to unlock Upscale, Google Lens, and VR tools.");
   };
 
   const handleFileSelection = (file?: File) => {
@@ -235,10 +241,7 @@ export default function WorkspacePage() {
           <div className="border-b border-white/10 px-6 py-5">
             <h1 className="text-lg font-semibold tracking-tight">Workspace</h1>
             <p className="mt-1 text-sm text-zinc-400">Premium interior generation with strict plan access.</p>
-            <motion.div
-              layout
-              className="mt-4 rounded-2xl border border-fuchsia-400/20 bg-zinc-900/70 p-3"
-            >
+            <motion.div layout className="mt-4 rounded-2xl border border-fuchsia-400/20 bg-zinc-900/70 p-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs uppercase tracking-wide text-zinc-400">Current Plan</span>
                 <span className="text-xs font-semibold text-fuchsia-200">{PLAN_LABEL[currentPlan]}</span>
@@ -438,6 +441,32 @@ export default function WorkspacePage() {
           {workspaceState === "success" && generatedImageUrl ? (
             <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/70">
               <img src={generatedImageUrl} alt="Generated interior" className="h-full w-full object-cover" />
+              <div className="absolute bottom-10 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/20 bg-black/45 px-2 py-1.5 backdrop-blur-xl">
+                {resultActions.map((action) => {
+                  const locked = !hasPremium;
+                  return (
+                    <button
+                      key={action}
+                      type="button"
+                      onClick={() => {
+                        if (locked) {
+                          onLockedPremiumResultAction();
+                          return;
+                        }
+                        showToast(`${action} is enabled for your plan.`);
+                      }}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                        locked
+                          ? "border-amber-400/35 bg-amber-500/10 text-amber-100"
+                          : "border-white/20 bg-white/5 text-zinc-100 hover:bg-white/10"
+                      }`}
+                    >
+                      {action}
+                      {locked ? <Lock className="h-3 w-3 text-amber-300" /> : null}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ) : workspaceState === "loading" ? (
             <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-white/10 bg-zinc-900/40">
