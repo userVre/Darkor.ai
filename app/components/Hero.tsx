@@ -113,7 +113,7 @@ export default function Hero({
           </ul>
         </div>
 
-        <div ref={authCardRef} className="relative w-full max-w-md scroll-mt-32">
+        <div id="auth-flow" ref={authCardRef} className="relative w-full max-w-md scroll-mt-32">
           <div className="absolute -top-4 left-9 z-10 rotate-[5deg] rounded-full border border-emerald-200/50 bg-emerald-300 px-4 py-1.5 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-500/30">
             Get your first redesigns in less than a minute!
           </div>
@@ -229,3 +229,4 @@ export default function Hero({
     </section>
   );
 }
+

@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 
 import beforeImage from "@/public/media/before-empty-room.png";
@@ -15,17 +16,15 @@ const reveal = {
 
 export default function VirtualStaging() {
   return (
-    <motion.section
-      {...reveal}
-      className="mx-auto w-full max-w-7xl px-6 py-24"
-    >
+    <motion.section {...reveal} className="mx-auto w-full max-w-7xl px-6 py-24">
       <div className="rounded-3xl border border-white/10 bg-zinc-950/70 p-8 md:p-12">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-bold text-white md:text-5xl">
             Virtual Staging AI: Turn Empty Listings into High-Value Homes
           </h2>
           <p className="mx-auto mt-6 max-w-4xl text-center text-base leading-relaxed text-zinc-400 md:text-lg">
-            Data shows that virtually staged properties sell 87% faster and command up to 15% higher offers than vacant ones. For a real estate agent, this means larger commissions and quicker closings-averaging $35,000+ in extra yearly income for top producers. With Darkor.ai&apos;s Pro plan, you can stage up to 1,000 photos every month with our Virtual Staging AI feature for only $390/year. Maximize your ROI without the heavy costs of traditional physical furniture staging.
+            Data shows virtually staged properties sell faster and convert better. Darkor.ai helps you stage listings
+            instantly with realistic furniture, lighting, and premium atmosphere.
           </p>
         </div>
 
@@ -42,25 +41,9 @@ export default function VirtualStaging() {
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
             className="flex items-center justify-center"
           >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 170 90"
-              className="h-16 w-24 text-white md:h-20 md:w-32"
-              fill="none"
-            >
-              <path
-                d="M6 45c26 0 34 22 62 22 20 0 34-11 50-24"
-                stroke="currentColor"
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-              <path
-                d="M97 23l26 17-30 12"
-                stroke="currentColor"
-                strokeWidth="4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+            <svg aria-hidden="true" viewBox="0 0 170 90" className="h-16 w-24 text-white md:h-20 md:w-32" fill="none">
+              <path d="M6 45c26 0 34 22 62 22 20 0 34-11 50-24" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+              <path d="M97 23l26 17-30 12" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </motion.div>
 
@@ -70,6 +53,15 @@ export default function VirtualStaging() {
             placeholder="blur"
             className="h-[250px] w-full max-w-[520px] rounded-xl border border-white/10 object-cover shadow-[0_0_30px_rgba(217,70,239,0.2)] md:h-[320px]"
           />
+        </div>
+
+        <div className="mt-10 text-center">
+          <Link
+            href="#auth-flow"
+            className="rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(168,85,247,0.35)] transition hover:brightness-110"
+          >
+            Start for free
+          </Link>
         </div>
       </div>
     </motion.section>

@@ -13,6 +13,7 @@ import Hero from "./components/Hero";
 import LandingMediaSections from "./components/LandingMediaSections";
 import Navbar from "./components/Navbar";
 import PricingSection from "./components/PricingSection";
+import Testimonials from "./components/Testimonials";
 import StickyBottomBar from "./components/StickyBottomBar";
 import VirtualStaging from "./components/VirtualStaging";
 
@@ -409,6 +410,8 @@ export default function Home() {
 
         <VirtualStaging />
 
+        <Testimonials />
+
         <CompetitorComparisonGrid />
 
         <PricingSection />
@@ -464,6 +467,9 @@ export default function Home() {
     </div>
   );
 }
+
+
+
 
 
 
