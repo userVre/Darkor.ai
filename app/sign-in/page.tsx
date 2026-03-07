@@ -1,9 +1,0 @@
-﻿import { SignIn } from "@clerk/nextjs";
-
-export default function SignInPage() {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-[#04070d] px-6 py-16">
-      <SignIn forceRedirectUrl="/dashboard/pro" fallbackRedirectUrl="/dashboard/pro" />
-    </main>
-  );
-}

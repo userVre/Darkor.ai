@@ -31,8 +31,8 @@ export default function RootLayout({
           }}
           signInUrl="/sign-in"
           signUpUrl="/sign-up"
-          signInFallbackRedirectUrl="/studio"
-          signUpFallbackRedirectUrl="/studio"
+          signInFallbackRedirectUrl="/dashboard/workspace"
+          signUpFallbackRedirectUrl="/dashboard/workspace"
         >
           <ConvexClientProvider>{children}</ConvexClientProvider>
         </ClerkProvider>
@@ -40,3 +40,4 @@ export default function RootLayout({
     </html>
   );
 }
+
