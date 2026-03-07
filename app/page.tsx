@@ -1,65 +1,23 @@
-﻿"use client";
+"use client";
 
-import { AnimatePresence, motion } from "framer-motion";
-import { useAuth, useClerk } from "@clerk/nextjs";
+import { useClerk } from "@clerk/nextjs";
 import { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import StyleGallery from "@/components/sections/StyleGallery";
 import CompetitorComparisonGrid from "./components/CompetitorComparisonGrid";
+import FaqSection from "./components/FaqSection";
+import FeaturesSection from "./components/FeaturesSection";
 import Hero from "./components/Hero";
-import LandingMediaSections from "./components/LandingMediaSections";
 import Navbar from "./components/Navbar";
 import PricingSection from "./components/PricingSection";
-import Testimonials from "./components/Testimonials";
 import StickyBottomBar from "./components/StickyBottomBar";
+import Testimonials from "./components/Testimonials";
+import TransformationSection from "./components/TransformationSection";
 import VirtualStaging from "./components/VirtualStaging";
 
 type AuthStep = "credentials" | "verification";
-
-const sectionReveal = {
-  initial: { opacity: 0, y: 50, filter: "blur(10px)" },
-  whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
-  viewport: { once: false, amount: 0.15 },
-  transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
-};
-
-const staggerContainer = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const staggerItem = {
-  hidden: { opacity: 0, y: 30, filter: "blur(10px)" },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
-
-const faqs = [
-  {
-    question: "How does Darkor.ai work?",
-    answer:
-      "Upload a room photo, choose your style, and Darkor.ai generates premium redesigns in seconds with realistic lighting and materials.",
-  },
-  {
-    question: "Which plan is right for me?",
-    answer:
-      "Pro is ideal to start quickly, Premium unlocks advanced creation workflows, and Ultra is built for teams needing speed and maximum quality.",
-  },
-  {
-    question: "Can I cancel anytime?",
-    answer:
-      "Yes. You can manage or cancel your subscription from your billing portal at any time.",
-  },
-];
 
 type ClerkErrorShape = {
   errors?: Array<{ longMessage?: string; message?: string }>;
@@ -73,12 +31,9 @@ function getClerkErrorMessage(error: unknown, fallback: string): string {
 
 export default function Home() {
   const router = useRouter();
-  const { isSignedIn } = useAuth();
   const { setActive } = useClerk();
   const { isLoaded: signInReady, signIn } = useSignIn();
   const { isLoaded: signUpReady, signUp } = useSignUp();
-
-  const [openFaq, setOpenFaq] = useState(0);
 
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [authStep, setAuthStep] = useState<AuthStep>("credentials");
@@ -360,7 +315,7 @@ export default function Home() {
     await signInResource.authenticateWithRedirect({
       strategy: "oauth_google",
       redirectUrl: "/sso-callback",
-      redirectUrlComplete: "/studio",
+      redirectUrlComplete: "/dashboard/workspace",
     });
   };
 
@@ -371,9 +326,8 @@ export default function Home() {
     scrollToAuthCard();
   };
 
-  
   return (
-    <div className="relative overflow-hidden bg-[#04070d] text-zinc-100">
+    <div className="relative overflow-hidden bg-zinc-950 text-zinc-100">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute left-1/2 top-[-25rem] h-[42rem] w-[42rem] -translate-x-1/2 rounded-full bg-cyan-500/20 blur-[160px]" />
         <div className="absolute bottom-[-18rem] right-[-12rem] h-[30rem] w-[30rem] rounded-full bg-fuchsia-500/20 blur-[140px]" />
@@ -404,58 +358,14 @@ export default function Home() {
           onToggleMode={handleModeToggle}
         />
 
-        <LandingMediaSections />
-
+        <TransformationSection />
+        <FeaturesSection />
         <StyleGallery />
-
         <VirtualStaging />
-
         <Testimonials />
-
         <CompetitorComparisonGrid />
-
         <PricingSection />
-
-        <motion.section id="faq" className="mx-auto mt-24 w-full max-w-4xl px-6" {...sectionReveal}>
-          <h2 className="mb-8 text-center text-4xl font-bold">Frequently asked questions</h2>
-          <motion.div
-            className="space-y-3"
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, amount: 0.15 }}
-          >
-            {faqs.map((faq, index) => (
-              <motion.div
-                key={faq.question}
-                variants={staggerItem}
-                className="rounded-2xl border border-white/10 bg-white/5"
-              >
-                <button
-                  onClick={() => setOpenFaq(openFaq === index ? -1 : index)}
-                  className="flex w-full items-center justify-between px-6 py-5 text-left"
-                >
-                  <span className="font-medium">{faq.question}</span>
-                  <span className="text-xl text-cyan-200">{openFaq === index ? "-" : "+"}</span>
-                </button>
-                <AnimatePresence initial={false}>
-                  {openFaq === index && (
-                    <motion.div
-                      key="answer"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.28, ease: "easeOut" }}
-                      className="overflow-hidden"
-                    >
-                      <p className="px-6 pb-5 text-zinc-300">{faq.answer}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.section>
+        <FaqSection onStartFree={handleStartForFree} />
       </main>
 
       <StickyBottomBar
@@ -467,17 +377,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

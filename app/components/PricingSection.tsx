@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Sparkles, X } from "lucide-react";
@@ -33,7 +33,7 @@ const tiers: PricingTier[] = [
     monthlyPrice: 9,
     yearlyPrice: 90,
     yearlyBadge: "Save 17%",
-    corePrefix: "Create 1,000 interior designs, Flux™ model.",
+    corePrefix: "Create 1,000 interior designs, Flux model.",
     features: [
       { text: "Low quality renders", pill: "red" },
       { text: "Realistic interiors" },
@@ -49,7 +49,7 @@ const tiers: PricingTier[] = [
     monthlyPrice: 29,
     yearlyPrice: 290,
     corePrefix: "Create 5,000 interior designs,",
-    coreBadge: "Hyper Realism™",
+    coreBadge: "Hyper Realism",
     isPopular: true,
     features: [
       { text: "All Pro features, plus:", note: true },
@@ -73,7 +73,7 @@ const tiers: PricingTier[] = [
     monthlyPrice: 79,
     yearlyPrice: 790,
     corePrefix: "Create 25,000 interior designs,",
-    coreBadge: "Hyper Realism™",
+    coreBadge: "Hyper Realism",
     features: [
       { text: "All Premium features, plus:", note: true },
       { text: "Ultra quality renders", pill: "green" },
@@ -168,13 +168,19 @@ export default function PricingSection() {
 
   return (
     <section id="pricing" className="mx-auto mt-24 w-full max-w-7xl px-6">
-      <div className="mb-10 text-center">
-        <h2 className="text-4xl font-bold text-white md:text-5xl">Plans &amp; pricing</h2>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: false, amount: 0.15 }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        className="mb-10 text-center"
+      >
+        <h2 className="text-4xl font-bold text-white md:text-5xl">Plans and pricing</h2>
         <div className="mt-6 inline-flex items-center rounded-full border border-white/10 bg-zinc-900/70 p-1 backdrop-blur-md">
           <motion.button
             whileTap={{ scale: 0.96 }}
             onClick={() => setBilling("monthly")}
-            className={`rounded-full px-5 py-2 text-sm font-medium transition ${
+            className={`cursor-pointer rounded-full px-5 py-2 text-sm font-medium transition ${
               billing === "monthly" ? "bg-white/15 text-white" : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
@@ -183,7 +189,7 @@ export default function PricingSection() {
           <motion.button
             whileTap={{ scale: 0.96 }}
             onClick={() => setBilling("yearly")}
-            className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
+            className={`cursor-pointer rounded-full px-5 py-2 text-sm font-semibold transition ${
               billing === "yearly"
                 ? "bg-gradient-to-r from-emerald-500/35 to-cyan-500/35 text-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.18)]"
                 : "text-zinc-300 hover:text-zinc-100"
@@ -192,7 +198,7 @@ export default function PricingSection() {
             Yearly
           </motion.button>
         </div>
-      </div>
+      </motion.div>
 
       {error && <p className="mb-6 text-center text-sm text-rose-300">{error}</p>}
 
@@ -271,9 +277,7 @@ export default function PricingSection() {
                       <span className="text-sm font-medium text-zinc-400">-- {feature.text}</span>
                     ) : feature.pill ? (
                       <span
-                        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${pillClasses(
-                          feature.pill,
-                        )}`}
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${pillClasses(feature.pill)}`}
                       >
                         {feature.text}
                       </span>
@@ -288,7 +292,7 @@ export default function PricingSection() {
                 whileTap={{ scale: 0.96 }}
                 onClick={() => void openCheckout(tier.name)}
                 disabled={checkoutLoading === tier.name}
-                className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition disabled:opacity-70 ${
+                className={`mt-7 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition disabled:opacity-70 ${
                   tier.isPopular
                     ? "bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 hover:brightness-110"
                     : "border border-white/20 bg-white/5 text-zinc-100 hover:border-cyan-300/50 hover:bg-white/10"
@@ -317,7 +321,7 @@ export default function PricingSection() {
             >
               <button
                 onClick={() => setCheckoutUrl(null)}
-                className="absolute right-3 top-3 z-20 rounded-full border border-white/20 bg-black/40 p-2 text-zinc-200 hover:text-white"
+                className="absolute right-3 top-3 z-20 cursor-pointer rounded-full border border-white/20 bg-black/40 p-2 text-zinc-200 hover:text-white"
               >
                 <X className="h-4 w-4" />
               </button>

@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
+import type { SyntheticEvent } from "react";
 
 const reveal = {
   initial: { opacity: 0, y: 40, filter: "blur(8px)" },
@@ -10,25 +10,31 @@ const reveal = {
   transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const },
 };
 
+function withFallback(event: SyntheticEvent<HTMLImageElement>, fallback: string) {
+  const target = event.currentTarget;
+  if (target.src.endsWith(fallback)) {
+    return;
+  }
+  target.src = fallback;
+}
+
 export default function VirtualStaging() {
   return (
-    <motion.section {...reveal} className="mx-auto w-full max-w-7xl px-6 py-24">
-      <div className="rounded-3xl border border-white/10 bg-zinc-950/70 p-8 md:p-12">
+    <motion.section id="virtual-staging" {...reveal} className="mx-auto w-full max-w-7xl px-6 py-24">
+      <div className="rounded-3xl border border-white/10 bg-zinc-900/45 p-8 md:p-12">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl font-bold text-white md:text-5xl">
-            Virtual Staging AI: Turn Empty Listings into High-Value Homes
-          </h2>
+          <h2 className="text-3xl font-bold text-white md:text-5xl">Virtual Staging AI for Darkor.ai listings</h2>
           <p className="mx-auto mt-6 max-w-4xl text-center text-base leading-relaxed text-zinc-400 md:text-lg">
-            Darkor.ai transforms empty rooms into premium staged interiors in seconds, helping agents and homeowners present
-            spaces with confidence and close faster.
+            Turn empty spaces into fully staged interiors in seconds while keeping dimensions and architecture faithful to the original room.
           </p>
         </div>
 
-        <div className="mt-16 flex flex-col items-center justify-center gap-6 md:flex-row">
+        <div className="mt-14 grid items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
           <img
             src="/media/empty-room.png"
             alt="Empty room before virtual staging"
-            className="h-[250px] w-full max-w-[520px] rounded-2xl border border-white/10 object-cover md:h-[320px]"
+            onError={(event) => withFallback(event, "/media/before-empty-room.png")}
+            className="h-[250px] w-full rounded-2xl border border-white/5 object-cover md:h-[320px]"
           />
 
           <motion.div
@@ -45,17 +51,9 @@ export default function VirtualStaging() {
           <img
             src="/media/staged-room.png"
             alt="Staged room after virtual staging"
-            className="h-[250px] w-full max-w-[520px] rounded-2xl border border-white/10 object-cover shadow-2xl shadow-purple-500/20 md:h-[320px]"
+            onError={(event) => withFallback(event, "/media/after-luxury-minimalist.png")}
+            className="h-[250px] w-full rounded-2xl border border-white/5 object-cover shadow-2xl shadow-purple-500/20 md:h-[320px]"
           />
-        </div>
-
-        <div className="mt-10 text-center">
-          <Link
-            href="#auth-flow"
-            className="rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(168,85,247,0.35)] transition hover:brightness-110"
-          >
-            Start for free
-          </Link>
         </div>
       </div>
     </motion.section>

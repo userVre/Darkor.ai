@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { motion } from "framer-motion";
 
@@ -29,7 +29,7 @@ export default function Navbar({ onStartFree }: NavbarProps) {
         <motion.button
           whileTap={{ scale: 0.96 }}
           onClick={onStartFree}
-          className="rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_30px_rgba(168,85,247,0.45)] transition hover:brightness-110"
+          className="cursor-pointer rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_30px_rgba(168,85,247,0.45)] transition hover:brightness-110"
         >
           Start for free
         </motion.button>

@@ -1,6 +1,5 @@
-﻿"use client";
+"use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 
@@ -8,7 +7,7 @@ const testimonials = [
   {
     name: "Sarah Collins",
     role: "Real Estate Broker",
-    quote: "Darkor AI saved me over $2,000 in design fees and helped listings close faster.",
+    quote: "Darkor.ai saved me over $2,000 in design fees and helped listings close faster.",
   },
   {
     name: "Amir Rahmani",
@@ -28,7 +27,7 @@ const testimonials = [
   {
     name: "Maya Chen",
     role: "Airbnb Host",
-    quote: "I used Darkor to test multiple looks and picked the one that booked instantly.",
+    quote: "I used Darkor.ai to test multiple looks and picked the one that booked instantly.",
   },
   {
     name: "Nadia Bell",
@@ -59,7 +58,7 @@ export default function Testimonials() {
           <motion.article
             key={item.name}
             whileHover={{ y: -4 }}
-            className="mb-5 break-inside-avoid rounded-2xl border border-white/10 bg-zinc-900/60 p-5 shadow-[0_0_24px_rgba(217,70,239,0.08)]"
+            className="mb-5 break-inside-avoid rounded-2xl border border-white/5 bg-zinc-900/60 p-5 shadow-[0_0_24px_rgba(217,70,239,0.08)]"
           >
             <div className="mb-4 flex items-center gap-1">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -84,15 +83,6 @@ export default function Testimonials() {
             </div>
           </motion.article>
         ))}
-      </div>
-
-      <div className="mt-8 text-center">
-        <Link
-          href="#auth-flow"
-          className="rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(168,85,247,0.35)] transition hover:brightness-110"
-        >
-          Start for free
-        </Link>
       </div>
     </motion.section>
   );

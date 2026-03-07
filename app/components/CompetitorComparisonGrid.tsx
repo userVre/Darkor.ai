@@ -1,6 +1,5 @@
-﻿"use client";
+"use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { CheckCircle2, Sparkles, XCircle } from "lucide-react";
 
@@ -104,7 +103,13 @@ function FeatureIcon({ state }: { state: ItemState }) {
 
 export default function CompetitorComparisonGrid() {
   return (
-    <section className="mx-auto w-full max-w-7xl px-6 py-24">
+    <motion.section
+      className="mx-auto w-full max-w-7xl px-6 py-24"
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: false, amount: 0.15 }}
+      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="mb-12 text-center">
         <h2 className="text-3xl font-bold text-white md:text-5xl">How Darkor.ai compares for bedroom redesigns</h2>
         <p className="mx-auto mt-4 max-w-3xl text-zinc-400">
@@ -126,7 +131,7 @@ export default function CompetitorComparisonGrid() {
             className={`flex h-full min-h-[520px] flex-col overflow-hidden rounded-2xl border ${
               card.isWinner
                 ? "z-10 scale-[1.02] border-emerald-400/60 bg-zinc-900 ring-2 ring-emerald-500/50 shadow-[0_0_35px_rgba(16,185,129,0.25)]"
-                : "border-white/10 bg-zinc-900/50"
+                : "border-white/5 bg-zinc-900/50"
             }`}
           >
             <div className="relative">
@@ -136,11 +141,7 @@ export default function CompetitorComparisonGrid() {
                   Industry Leader
                 </span>
               ) : null}
-              <img
-                src={card.image}
-                alt={card.title}
-                className="h-56 w-full rounded-t-2xl object-cover"
-              />
+              <img src={card.image} alt={card.title} className="h-56 w-full rounded-t-2xl border-b border-white/5 object-cover" />
             </div>
 
             <div className="flex flex-1 flex-col p-5">
@@ -157,15 +158,6 @@ export default function CompetitorComparisonGrid() {
           </motion.article>
         ))}
       </motion.div>
-
-      <div className="mt-8 text-center">
-        <Link
-          href="#auth-flow"
-          className="rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(168,85,247,0.35)] transition hover:brightness-110"
-        >
-          Redesign yours now
-        </Link>
-      </div>
-    </section>
+    </motion.section>
   );
 }
