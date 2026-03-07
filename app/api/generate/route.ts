@@ -21,18 +21,12 @@ function stripBase64Prefix(value: string) {
 
 function planPromptSuffix(plan: PlanUsed) {
   if (plan === "pro") {
-    return ", standard quality, basic lighting";
+    return ", high quality interior redesign, realistic lighting";
   }
   if (plan === "premium") {
-    return ", high resolution, hyper-realistic, raytracing";
+    return ", photorealistic premium interior redesign, realistic materials, cinematic lighting";
   }
-  return ", 8k resolution, ultra-photorealistic masterpiece, Unreal Engine 5, pristine details";
-}
-
-function planDelayMs(plan: PlanUsed) {
-  if (plan === "pro") return 4000;
-  if (plan === "premium") return 1500;
-  return 0;
+  return ", ultra photorealistic 8k interior redesign, hyper detailed materials, cinematic ray traced lighting";
 }
 
 function extractImageData(response: any): string | null {
@@ -63,11 +57,6 @@ export async function POST(req: NextRequest) {
     const style = (body.style ?? "Modern").trim();
     const mergedPrompt = `${prompt}. Style: ${style}${planPromptSuffix(planUsed)}`;
 
-    const delay = planDelayMs(planUsed);
-    if (delay > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-
     const parts: Array<Record<string, unknown>> = [{ text: mergedPrompt }];
 
     if (body.imageBase64) {
@@ -81,6 +70,8 @@ export async function POST(req: NextRequest) {
       parts.push({
         text: `Use this reference image URL as input: ${body.imageUrl}`,
       });
+    } else {
+      return NextResponse.json({ error: "Missing source image" }, { status: 400 });
     }
 
     const geminiResponse = await fetch(
@@ -118,3 +109,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+

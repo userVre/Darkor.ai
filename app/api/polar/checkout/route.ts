@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+﻿import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 type Billing = "monthly" | "yearly";
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     const origin = req.nextUrl.origin;
 
     let products: string[] = [];
-    let metadata: Record<string, string> = { clerkId: userId };
+    let metadata: Record<string, string> = { userId, clerkId: userId };
     let successUrl = `${origin}/dashboard/workspace?checkout=success`;
     let cancelUrl = `${origin}/#pricing`;
 
@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
 
       products = [packPriceId];
       metadata = {
+        userId,
         clerkId: userId,
         purchaseType,
         creditsPack: pack,
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest) {
 
       products = [SUBSCRIPTION_PRICE_IDS[billing][tier]];
       metadata = {
+        userId,
         clerkId: userId,
         purchaseType,
         plan: tier,
@@ -114,3 +116,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
