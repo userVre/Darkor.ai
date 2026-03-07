@@ -191,7 +191,7 @@ export default function Home() {
 
         if (attempt.status === "complete" && attempt.createdSessionId) {
           await setActive?.({ session: attempt.createdSessionId });
-          router.push("/studio");
+          router.push("/dashboard/pro");
           return;
         }
 
@@ -270,7 +270,7 @@ export default function Home() {
 
         if (attempt.status === "complete" && attempt.createdSessionId) {
           await setActive?.({ session: attempt.createdSessionId });
-          router.push("/studio");
+          router.push("/dashboard/pro");
           return;
         }
 
@@ -289,7 +289,7 @@ export default function Home() {
 
       if (attempt.status === "complete" && attempt.createdSessionId) {
         await setActive?.({ session: attempt.createdSessionId });
-        router.push("/studio");
+        router.push("/dashboard/pro");
         return;
       }
 
@@ -386,7 +386,7 @@ export default function Home() {
     }
 
     if (isSignedIn) {
-      router.push("/studio");
+      router.push("/dashboard/pro");
       return;
     }
 
@@ -485,3 +485,4 @@ export default function Home() {
     </div>
   );
 }
+
