@@ -1,9 +1,8 @@
 ﻿"use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { CheckCircle, Sparkles, XCircle } from "lucide-react";
+import { CheckCircle2, Sparkles, XCircle } from "lucide-react";
 
 type ItemState = "good" | "bad";
 
@@ -21,58 +20,58 @@ type ComparisonCard = {
 
 const cards: ComparisonCard[] = [
   {
-    title: "Input Image",
-    image: "/media/before-empty-room.png",
+    title: "Input",
+    image: "/media/bedroom-input.png",
     items: [
-      { label: "Original room geometry", state: "good" },
-      { label: "No staging or redesign", state: "bad" },
-      { label: "Raw lighting conditions", state: "bad" },
+      { label: "Maintains original construction", state: "good" },
+      { label: "No staged furnishing", state: "bad" },
+      { label: "No premium visual polish", state: "bad" },
     ],
   },
   {
     title: "Darkor.ai",
-    image: "/media/after-luxury-minimalist.png",
+    image: "/media/bedroom-darkor-japandi.png",
     isWinner: true,
     items: [
-      { label: "Preserves architecture", state: "good" },
+      { label: "Maintains construction", state: "good" },
       { label: "High photorealism", state: "good" },
-      { label: "Commercial-grade quality", state: "good" },
+      { label: "Premium material quality", state: "good" },
     ],
   },
   {
-    title: "Competitor A",
-    image: "/media/after-boho-chic.png",
+    title: "Decorify",
+    image: "/media/bedroom-decorify-window-shift.png",
     items: [
-      { label: "Geometry drift", state: "bad" },
-      { label: "Inconsistent object placement", state: "bad" },
-      { label: "Partial realism", state: "bad" },
+      { label: "Maintains construction", state: "bad" },
+      { label: "High photorealism", state: "bad" },
+      { label: "Architectural consistency", state: "bad" },
     ],
   },
   {
-    title: "Competitor B",
-    image: "/media/after-cyberpunk.png",
+    title: "AI Room Planner",
+    image: "/media/bedroom-airoomplanner-blurry.png",
     items: [
-      { label: "Over-stylized output", state: "bad" },
-      { label: "Low brand usability", state: "bad" },
-      { label: "Unstable results", state: "bad" },
+      { label: "Maintains construction", state: "good" },
+      { label: "Sharp output", state: "bad" },
+      { label: "Fine texture detail", state: "bad" },
     ],
   },
   {
-    title: "Competitor C",
-    image: "/media/sketch-before.png",
+    title: "RoomGPT",
+    image: "/media/bedroom-roomgpt-flat.png",
     items: [
-      { label: "Weak detail rendering", state: "bad" },
-      { label: "Poor material consistency", state: "bad" },
-      { label: "Low conversion quality", state: "bad" },
+      { label: "Maintains construction", state: "good" },
+      { label: "Natural materials", state: "bad" },
+      { label: "Premium realism", state: "bad" },
     ],
   },
   {
-    title: "Competitor D",
-    image: "/media/garden-empty.png",
+    title: "Dreamstudio",
+    image: "/media/bedroom-dreamstudio-melted.png",
     items: [
-      { label: "Limited context understanding", state: "bad" },
-      { label: "Uneven depth and shadows", state: "bad" },
-      { label: "Needs heavy manual fixes", state: "bad" },
+      { label: "Maintains construction", state: "bad" },
+      { label: "Object integrity", state: "bad" },
+      { label: "Production-ready quality", state: "bad" },
     ],
   },
 ];
@@ -96,19 +95,20 @@ const cardVariants = {
 };
 
 function FeatureIcon({ state }: { state: ItemState }) {
-  if (state === "good") {
-    return <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />;
-  }
-  return <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-rose-400" />;
+  return state === "good" ? (
+    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
+  ) : (
+    <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-rose-400" />
+  );
 }
 
 export default function CompetitorComparisonGrid() {
   return (
     <section className="mx-auto w-full max-w-7xl px-6 py-24">
       <div className="mb-12 text-center">
-        <h2 className="text-3xl font-bold text-white md:text-5xl">How Darkor.ai compares</h2>
+        <h2 className="text-3xl font-bold text-white md:text-5xl">How Darkor.ai compares for bedroom redesigns</h2>
         <p className="mx-auto mt-4 max-w-3xl text-zinc-400">
-          Compare results side by side. Darkor.ai consistently delivers cleaner architecture preservation and higher-quality output.
+          Side-by-side bedroom outputs show why Darkor.ai leads in construction preservation, realism, and production-ready quality.
         </p>
       </div>
 
@@ -123,7 +123,7 @@ export default function CompetitorComparisonGrid() {
           <motion.article
             key={card.title}
             variants={cardVariants}
-            className={`overflow-hidden rounded-2xl border ${
+            className={`flex h-full min-h-[520px] flex-col overflow-hidden rounded-2xl border ${
               card.isWinner
                 ? "z-10 scale-[1.02] border-emerald-400/60 bg-zinc-900 ring-2 ring-emerald-500/50 shadow-[0_0_35px_rgba(16,185,129,0.25)]"
                 : "border-white/10 bg-zinc-900/50"
@@ -136,16 +136,14 @@ export default function CompetitorComparisonGrid() {
                   Industry Leader
                 </span>
               ) : null}
-              <Image
+              <img
                 src={card.image}
                 alt={card.title}
-                width={900}
-                height={675}
-                className="aspect-[4/3] w-full rounded-t-2xl object-cover"
+                className="h-56 w-full rounded-t-2xl object-cover"
               />
             </div>
 
-            <div className="p-5">
+            <div className="flex flex-1 flex-col p-5">
               <h3 className="mb-4 text-lg font-bold text-white">{card.title}</h3>
               <ul className="space-y-3">
                 {card.items.map((item) => (
