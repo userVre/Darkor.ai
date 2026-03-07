@@ -30,12 +30,29 @@ export const saveGeneration = mutationGeneric({
       throw new Error("Unauthorized");
     }
 
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("No billing profile found. Please subscribe to continue.");
+    }
+
+    if (user.credits <= 0) {
+      throw new Error("No credits left. Please refill to continue.");
+    }
+
+    await ctx.db.patch(user._id, {
+      credits: user.credits - 1,
+    });
+
     return await ctx.db.insert("generations", {
       userId: identity.subject,
       imageUrl: args.imageUrl,
       prompt: args.prompt,
       style: args.style,
-      planUsed: args.planUsed,
+      planUsed: user.plan !== "free" ? user.plan : args.planUsed,
     });
   },
 });

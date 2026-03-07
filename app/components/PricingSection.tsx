@@ -1,7 +1,8 @@
 ﻿"use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, X } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
 
 type BillingCycle = "monthly" | "yearly";
@@ -123,12 +124,43 @@ function pillClasses(tone: PillTone): string {
   return "border-rose-400/50 bg-rose-400/10 text-rose-200";
 }
 
-type PricingSectionProps = {
-  onSubscribe: (tier: PricingTierName) => void;
-};
-
-export default function PricingSection({ onSubscribe }: PricingSectionProps) {
+export default function PricingSection() {
+  const { isSignedIn } = useAuth();
   const [billing, setBilling] = useState<BillingCycle>("yearly");
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState<PricingTierName | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const openCheckout = async (tier: PricingTierName) => {
+    if (!isSignedIn) {
+      window.location.href = "/sign-up?redirect_url=/dashboard/workspace";
+      return;
+    }
+
+    setError(null);
+    setCheckoutLoading(tier);
+
+    try {
+      const response = await fetch("/api/polar/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ tier, billing }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data?.checkoutUrl) {
+        throw new Error(data?.error ?? "Could not open checkout");
+      }
+
+      setCheckoutUrl(data.checkoutUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not open checkout");
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   return (
     <section id="pricing" className="mx-auto mt-24 w-full max-w-7xl px-6">
@@ -155,6 +187,8 @@ export default function PricingSection({ onSubscribe }: PricingSectionProps) {
           </button>
         </div>
       </div>
+
+      {error && <p className="mb-6 text-center text-sm text-rose-300">{error}</p>}
 
       <motion.div
         variants={containerVariants}
@@ -237,19 +271,46 @@ export default function PricingSection({ onSubscribe }: PricingSectionProps) {
               </ul>
 
               <button
-                onClick={() => onSubscribe(tier.name)}
-                className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition ${
+                onClick={() => void openCheckout(tier.name)}
+                disabled={checkoutLoading === tier.name}
+                className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition disabled:opacity-70 ${
                   tier.isPopular
                     ? "bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 hover:brightness-110"
                     : "border border-white/20 bg-white/5 text-zinc-100 hover:border-cyan-300/50 hover:bg-white/10"
                 }`}
               >
-                Subscribe <ArrowRight className="h-4 w-4" />
+                {checkoutLoading === tier.name ? "Opening checkout..." : "Subscribe"} <ArrowRight className="h-4 w-4" />
               </button>
             </motion.article>
           );
         })}
       </motion.div>
+
+      <AnimatePresence>
+        {checkoutUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 10 }}
+              className="relative h-[85vh] w-full max-w-5xl overflow-hidden rounded-2xl border border-white/15 bg-zinc-950 shadow-2xl"
+            >
+              <button
+                onClick={() => setCheckoutUrl(null)}
+                className="absolute right-3 top-3 z-20 rounded-full border border-white/20 bg-black/40 p-2 text-zinc-200 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <iframe src={checkoutUrl} className="h-full w-full" title="Polar Checkout" />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

@@ -2,6 +2,15 @@
 import { v } from "convex/values";
 
 export default defineSchema({
+  users: defineTable({
+    clerkId: v.string(),
+    credits: v.int64(),
+    plan: v.string(),
+    polarCustomerId: v.optional(v.string()),
+  })
+    .index("by_clerkId", ["clerkId"])
+    .index("by_polarCustomerId", ["polarCustomerId"]),
+
   generations: defineTable({
     userId: v.string(),
     imageUrl: v.string(),

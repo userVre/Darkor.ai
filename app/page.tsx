@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import StyleGallery from "@/components/sections/StyleGallery";
-import type { PricingTierName } from "./components/PricingSection";
 import CompetitorComparisonGrid from "./components/CompetitorComparisonGrid";
 import Hero from "./components/Hero";
 import LandingMediaSections from "./components/LandingMediaSections";
@@ -374,25 +373,7 @@ export default function Home() {
     scrollToAuthCard();
   };
 
-  const handleChoosePlan = (tier: PricingTierName) => {
-    if (tier === "Pro") {
-      if (isSignedIn) {
-        router.push("/dashboard/pro");
-        return;
-      }
-
-      router.push("/sign-up?redirect_url=/dashboard/pro");
-      return;
-    }
-
-    if (isSignedIn) {
-      router.push("/dashboard/pro");
-      return;
-    }
-
-    scrollToAuthCard();
-  };
-
+  
   return (
     <div className="relative overflow-hidden bg-[#04070d] text-zinc-100">
       <div className="pointer-events-none fixed inset-0 -z-10">
@@ -432,7 +413,7 @@ export default function Home() {
 
         <CompetitorComparisonGrid />
 
-        <PricingSection onSubscribe={handleChoosePlan} />
+        <PricingSection />
 
         <motion.section id="faq" className="mx-auto mt-24 w-full max-w-4xl px-6" {...sectionReveal}>
           <h2 className="mb-8 text-center text-4xl font-bold">Frequently asked questions</h2>
@@ -485,4 +466,5 @@ export default function Home() {
     </div>
   );
 }
+
 
