@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { Download, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Download, Sparkles, Trash2 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 
@@ -47,15 +48,15 @@ export default function GalleryPage() {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-10 text-zinc-100 md:px-10">
+    <main className="min-h-[calc(100vh-72px)] bg-zinc-950 px-6 py-10 text-zinc-100 md:px-10">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">My Gallery</h1>
-          <p className="mt-2 text-zinc-400">Your personal archive of generated interiors.</p>
+          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Gallery</h1>
+          <p className="mt-2 text-zinc-400">Your generated interiors are saved here.</p>
         </div>
 
         {toast && (
-          <div className="fixed right-6 top-6 z-50 rounded-xl border border-white/15 bg-zinc-900/95 px-4 py-2 text-sm shadow-xl backdrop-blur">
+          <div className="fixed right-6 top-24 z-50 rounded-xl border border-white/15 bg-zinc-900/95 px-4 py-2 text-sm shadow-xl backdrop-blur">
             {toast}
           </div>
         )}
@@ -81,8 +82,15 @@ export default function GalleryPage() {
           <div className="flex min-h-[50vh] flex-col items-center justify-center rounded-3xl border border-white/10 bg-zinc-900/40 text-center">
             <p className="text-xl font-medium text-zinc-200">No generations yet</p>
             <p className="mt-2 max-w-md text-zinc-400">
-              Your generated interiors will appear here once you start creating in the workspace.
+              Generate your first design in the workspace.
             </p>
+            <Link
+              href="/dashboard/workspace"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl border border-fuchsia-300/35 bg-fuchsia-500/15 px-4 py-2.5 text-sm font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/25"
+            >
+              <Sparkles className="h-4 w-4" />
+              Generate your first design
+            </Link>
           </div>
         )}
 

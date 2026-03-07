@@ -190,7 +190,7 @@ export default function Home() {
 
         if (attempt.status === "complete" && attempt.createdSessionId) {
           await setActive?.({ session: attempt.createdSessionId });
-          router.push("/dashboard/pro");
+          router.push("/dashboard/workspace");
           return;
         }
 
@@ -269,7 +269,7 @@ export default function Home() {
 
         if (attempt.status === "complete" && attempt.createdSessionId) {
           await setActive?.({ session: attempt.createdSessionId });
-          router.push("/dashboard/pro");
+          router.push("/dashboard/workspace");
           return;
         }
 
@@ -288,7 +288,7 @@ export default function Home() {
 
       if (attempt.status === "complete" && attempt.createdSessionId) {
         await setActive?.({ session: attempt.createdSessionId });
-        router.push("/dashboard/pro");
+        router.push("/dashboard/workspace");
         return;
       }
 
@@ -466,5 +466,6 @@ export default function Home() {
     </div>
   );
 }
+
 
 

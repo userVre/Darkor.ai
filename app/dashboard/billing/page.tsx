@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { motion } from "framer-motion";
 import { ArrowUpRight, CreditCard, Receipt, RefreshCcw } from "lucide-react";
@@ -217,7 +217,7 @@ export default function BillingPage() {
                     <div>
                       <p className="text-sm font-medium text-zinc-100">{invoice.description ?? "Darkor Billing"}</p>
                       <p className="text-xs text-zinc-400">
-                        {invoice.invoiceNumber ? `${invoice.invoiceNumber} � ` : ""}
+                        {invoice.invoiceNumber ? `${invoice.invoiceNumber} • ` : ""}
                         {paidAt.toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
@@ -253,3 +253,4 @@ export default function BillingPage() {
     </main>
   );
 }
+
