@@ -146,7 +146,7 @@ export default function PricingSection() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ tier, billing }),
+        body: JSON.stringify({ purchaseType: "subscription", tier, billing }),
       });
 
       const data = await response.json();
@@ -314,3 +314,4 @@ export default function PricingSection() {
     </section>
   );
 }
+

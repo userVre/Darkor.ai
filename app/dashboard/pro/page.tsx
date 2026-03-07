@@ -174,7 +174,7 @@ export default function ProDashboardPage() {
   }, [upgradeHint]);
 
   return (
-    <main className="relative h-screen overflow-hidden bg-zinc-950 text-zinc-100">
+    <main className="relative h-[calc(100vh-72px)] overflow-hidden bg-zinc-950 text-zinc-100">
       <div className="pointer-events-none absolute left-1/2 top-4 z-50 -translate-x-1/2">
         <div className="pointer-events-auto inline-flex rounded-full border border-white/10 bg-zinc-900/90 p-1 backdrop-blur">
           {(["pro", "premium", "ultra"] as const).map((plan) => (
@@ -502,3 +502,4 @@ export default function ProDashboardPage() {
     </main>
   );
 }
+

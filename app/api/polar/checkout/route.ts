@@ -1,10 +1,12 @@
-﻿import { auth } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 type Billing = "monthly" | "yearly";
 type Tier = "Pro" | "Premium" | "Ultra";
+type PurchaseType = "subscription" | "credits";
+type CreditsPack = "starter" | "growth" | "scale";
 
-const PRICE_IDS: Record<Billing, Record<Tier, string>> = {
+const SUBSCRIPTION_PRICE_IDS: Record<Billing, Record<Tier, string>> = {
   monthly: {
     Pro: process.env.POLAR_PRICE_PRO_MONTHLY ?? "e63d860f-e646-4964-a52b-6d19ef5d0551",
     Premium: process.env.POLAR_PRICE_PREMIUM_MONTHLY ?? "b286c1c2-73c8-449f-99aa-1c6a276f5cc2",
@@ -15,6 +17,12 @@ const PRICE_IDS: Record<Billing, Record<Tier, string>> = {
     Premium: process.env.POLAR_PRICE_PREMIUM_YEARLY ?? "6a101e3a-b0e2-4bfa-9695-c4e47f3c90ba",
     Ultra: process.env.POLAR_PRICE_ULTRA_YEARLY ?? "f2652c80-3808-452f-9024-141ac7bc2309",
   },
+};
+
+const CREDIT_PACK_PRICE_IDS: Record<CreditsPack, string | undefined> = {
+  starter: process.env.POLAR_PRICE_CREDITS_STARTER,
+  growth: process.env.POLAR_PRICE_CREDITS_GROWTH,
+  scale: process.env.POLAR_PRICE_CREDITS_SCALE,
 };
 
 export async function POST(req: NextRequest) {
@@ -30,26 +38,48 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const tier = body?.tier as Tier;
-    const billing = body?.billing as Billing;
-
-    if (!tier || !billing || !PRICE_IDS[billing]?.[tier]) {
-      return NextResponse.json({ error: "Invalid tier or billing" }, { status: 400 });
-    }
-
-    const priceId = PRICE_IDS[billing][tier];
+    const purchaseType = (body?.purchaseType as PurchaseType) ?? "subscription";
     const origin = req.nextUrl.origin;
 
-    const polarBody = {
-      products: [priceId],
-      success_url: `${origin}/dashboard/workspace?checkout=success`,
-      cancel_url: `${origin}/#pricing`,
-      metadata: {
+    let products: string[] = [];
+    let metadata: Record<string, string> = { clerkId: userId };
+    let successUrl = `${origin}/dashboard/workspace?checkout=success`;
+    let cancelUrl = `${origin}/#pricing`;
+
+    if (purchaseType === "credits") {
+      const pack = body?.pack as CreditsPack;
+      const packPriceId = pack ? CREDIT_PACK_PRICE_IDS[pack] : undefined;
+      if (!pack || !packPriceId) {
+        return NextResponse.json(
+          { error: "Invalid credits pack. Configure POLAR_PRICE_CREDITS_* env vars." },
+          { status: 400 },
+        );
+      }
+
+      products = [packPriceId];
+      metadata = {
         clerkId: userId,
+        purchaseType,
+        creditsPack: pack,
+      };
+      successUrl = `${origin}/dashboard/billing?checkout=success`;
+      cancelUrl = `${origin}/dashboard/billing`;
+    } else {
+      const tier = body?.tier as Tier;
+      const billing = body?.billing as Billing;
+
+      if (!tier || !billing || !SUBSCRIPTION_PRICE_IDS[billing]?.[tier]) {
+        return NextResponse.json({ error: "Invalid tier or billing" }, { status: 400 });
+      }
+
+      products = [SUBSCRIPTION_PRICE_IDS[billing][tier]];
+      metadata = {
+        clerkId: userId,
+        purchaseType,
         plan: tier,
         billing,
-      },
-    };
+      };
+    }
 
     const polarResponse = await fetch("https://api.polar.sh/v1/checkouts", {
       method: "POST",
@@ -57,7 +87,12 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(polarBody),
+      body: JSON.stringify({
+        products,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata,
+      }),
     });
 
     const data = await polarResponse.json();

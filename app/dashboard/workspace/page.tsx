@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Brush, Lock, ScanSearch, Sofa, Sparkles, UploadCloud, WandSparkles } from "lucide-react";
@@ -28,10 +28,10 @@ const generatedFallbacks = [
 ];
 
 const promptChips = [
-  { label: "🖌️ Paint walls", text: "Paint the walls " },
-  { label: "🛋️ Add furniture", text: "Add modern furniture " },
-  { label: "💡 Change lighting", text: "Change lighting to warm cinematic mood " },
-  { label: "👤 Add people", text: "Add realistic people " },
+  { label: "??? Paint walls", text: "Paint the walls " },
+  { label: "??? Add furniture", text: "Add modern furniture " },
+  { label: "?? Change lighting", text: "Change lighting to warm cinematic mood " },
+  { label: "?? Add people", text: "Add realistic people " },
 ];
 
 export default function WorkspacePage() {
@@ -283,8 +283,8 @@ export default function WorkspacePage() {
             </select>
           </div>
 
-          {renderLockedToggle("Auto-Declutter (Remove debris/clutter first)", isAutoDeclutter, () => setIsAutoDeclutter((prev) => !prev), "🧹")}
-          {renderLockedToggle("Preserve Architecture (Keep exact walls/floors)", preserveArchitecture, () => setPreserveArchitecture((prev) => !prev), "🧱")}
+          {renderLockedToggle("Auto-Declutter (Remove debris/clutter first)", isAutoDeclutter, () => setIsAutoDeclutter((prev) => !prev), "??")}
+          {renderLockedToggle("Preserve Architecture (Keep exact walls/floors)", preserveArchitecture, () => setPreserveArchitecture((prev) => !prev), "??")}
         </motion.div>
       );
     }
@@ -324,7 +324,7 @@ export default function WorkspacePage() {
   );
 
   return (
-    <main className="h-screen overflow-hidden bg-zinc-950 text-zinc-100">
+    <main className="h-[calc(100vh-72px)] overflow-hidden bg-zinc-950 text-zinc-100">
       <div className="flex h-full w-full">
         <aside className="flex w-[380px] shrink-0 flex-col border-r border-white/5 bg-zinc-950">
           <div className="border-b border-white/5 px-6 py-5">
@@ -426,10 +426,10 @@ export default function WorkspacePage() {
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 to-transparent opacity-0 transition group-hover:opacity-100" />
 
                 <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 flex-wrap items-center justify-center gap-2 rounded-full border border-white/20 bg-black/45 px-2 py-2 opacity-0 backdrop-blur-xl transition group-hover:opacity-100">
-                  {renderPremiumActionButton("✨ Upscale to 4K", true)}
-                  {renderPremiumActionButton("🔍 Google Lens Match", true)}
-                  {renderPremiumActionButton("🥽 View in VR", true)}
-                  {renderPremiumActionButton("⬇️ Download", false)}
+                  {renderPremiumActionButton("? Upscale to 4K", true)}
+                  {renderPremiumActionButton("?? Google Lens Match", true)}
+                  {renderPremiumActionButton("?? View in VR", true)}
+                  {renderPremiumActionButton("?? Download", false)}
                 </div>
               </div>
 
@@ -511,3 +511,4 @@ export default function WorkspacePage() {
     </main>
   );
 }
+
