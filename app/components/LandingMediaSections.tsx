@@ -95,17 +95,15 @@ export default function LandingMediaSections() {
 
         <motion.article {...reveal} className="grid items-center gap-16 lg:grid-cols-2 lg:gap-24">
           <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
-            <Image
-              src={gardenEmpty}
+            <img
+              src="/media/garden-before.png"
               alt="Garden before redesign"
-              placeholder="blur"
               className="h-[260px] w-full rounded-2xl border border-white/10 object-cover shadow-2xl shadow-black/40"
             />
             <span className="text-center text-3xl text-zinc-300">→</span>
-            <Image
-              src={renderAfter}
+            <img
+              src="/media/garden-after.png"
               alt="Garden after redesign"
-              placeholder="blur"
               className="h-[260px] w-full rounded-2xl border border-white/10 object-cover shadow-2xl shadow-black/40"
             />
           </div>
@@ -115,7 +113,7 @@ export default function LandingMediaSections() {
               Outdoor &amp; Garden Design.
             </h3>
             <p className="text-lg leading-relaxed text-zinc-400">
-              Turn underwhelming exteriors into premium outdoor experiences with AI-generated landscaping, seating zones, and visual harmony.
+              Darkor.ai turns underwhelming exteriors into premium outdoor experiences with AI-generated landscaping, seating zones, and visual harmony.
             </p>
             <Link href="#auth-flow" className={ctaClass}>
               Start for free
@@ -126,3 +124,4 @@ export default function LandingMediaSections() {
     </section>
   );
 }
+
