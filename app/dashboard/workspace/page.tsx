@@ -14,10 +14,10 @@ type CurrentUser = {
   credits: number;
 };
 
-const tabItems: { id: TabKey; label: string; premium: boolean }[] = [
-  { id: "redesign", label: "Redesign", premium: false },
-  { id: "virtual-staging", label: "Virtual Staging", premium: true },
-  { id: "edit", label: "Edit", premium: false },
+const tabItems: { id: TabKey; label: string; premiumOnly: boolean }[] = [
+  { id: "redesign", label: "Redesign", premiumOnly: false },
+  { id: "virtual-staging", label: "Virtual Staging", premiumOnly: true },
+  { id: "edit", label: "Edit", premiumOnly: true },
 ];
 
 const styles = ["Modern", "Minimalist", "Scandinavian", "Bohemian", "Cyberpunk"];
@@ -42,9 +42,17 @@ const PLAN_ALLOWANCE: Record<UserPlan, number> = {
   ultra: 2000,
 };
 
+const RENDER_CAP: Record<UserPlan, number> = {
+  free: 4,
+  pro: 4,
+  premium: 8,
+  ultra: 16,
+};
+
 export default function WorkspacePage() {
   const [activeTab, setActiveTab] = useState<TabKey>("redesign");
   const [is3DMode, setIs3DMode] = useState(false);
+  const [isTurboMode, setIsTurboMode] = useState(false);
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>("idle");
 
   const [style, setStyle] = useState(styles[0]);
@@ -64,25 +72,48 @@ export default function WorkspacePage() {
 
   const normalizedPlan = ((me?.plan ?? "free").toLowerCase() as UserPlan) || "free";
   const currentPlan: UserPlan = normalizedPlan in PLAN_LABEL ? normalizedPlan : "free";
-  const isPremiumOrAbove = currentPlan !== "free";
-  const credits = Number(me?.credits ?? 0);
 
+  const hasPremium = currentPlan === "premium" || currentPlan === "ultra";
+  const hasUltra = currentPlan === "ultra";
+
+  const credits = Number(me?.credits ?? 0);
   const creditsAllowance = PLAN_ALLOWANCE[currentPlan];
   const creditsProgress = creditsAllowance > 0 ? Math.min(100, (credits / creditsAllowance) * 100) : 0;
+  const renderCap = RENDER_CAP[currentPlan];
 
   useEffect(() => {
     void ensureProfile({}).catch(() => {
-      // Ignore profile bootstrap errors here; generation will surface actionable errors.
+      // Profile bootstrap is best-effort in UI.
     });
   }, [ensureProfile]);
 
+  useEffect(() => {
+    if (!hasPremium && activeTab !== "redesign") {
+      setActiveTab("redesign");
+    }
+    if (!hasPremium) {
+      setIs3DMode(false);
+    }
+    if (!hasUltra) {
+      setIsTurboMode(false);
+    }
+  }, [activeTab, hasPremium, hasUltra]);
+
   const showToast = (message: string) => {
     setToast(message);
-    window.setTimeout(() => setToast(null), 2200);
+    window.setTimeout(() => setToast(null), 2400);
   };
 
-  const handleFeatureGate = (feature: string) => {
-    showToast(`${feature} is available on paid plans.`);
+  const onLockedPremiumTab = () => {
+    showToast("Upgrade to Premium to unlock Virtual Staging and conversational editing.");
+  };
+
+  const onLocked3D = () => {
+    showToast("Upgrade to Premium to unlock 3D Walkthroughs.");
+  };
+
+  const onLockedUltra = () => {
+    showToast("Upgrade to Ultra for dedicated server speed and Hyper-Realism™.");
   };
 
   const handleFileSelection = (file?: File) => {
@@ -203,8 +234,11 @@ export default function WorkspacePage() {
         <aside className="flex w-[380px] shrink-0 flex-col border-r border-white/10 bg-zinc-950">
           <div className="border-b border-white/10 px-6 py-5">
             <h1 className="text-lg font-semibold tracking-tight">Workspace</h1>
-            <p className="mt-1 text-sm text-zinc-400">Real-time controls powered by your active subscription.</p>
-            <div className="mt-4 rounded-2xl border border-fuchsia-400/20 bg-zinc-900/70 p-3">
+            <p className="mt-1 text-sm text-zinc-400">Premium interior generation with strict plan access.</p>
+            <motion.div
+              layout
+              className="mt-4 rounded-2xl border border-fuchsia-400/20 bg-zinc-900/70 p-3"
+            >
               <div className="flex items-center justify-between">
                 <span className="text-xs uppercase tracking-wide text-zinc-400">Current Plan</span>
                 <span className="text-xs font-semibold text-fuchsia-200">{PLAN_LABEL[currentPlan]}</span>
@@ -221,14 +255,14 @@ export default function WorkspacePage() {
                   className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-violet-500"
                 />
               </div>
-            </div>
+            </motion.div>
           </div>
 
           <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
             <div className="rounded-2xl border border-white/10 bg-zinc-900/60 p-1">
               <div className="relative grid grid-cols-3 gap-1">
                 {tabItems.map((tab) => {
-                  const locked = tab.premium && !isPremiumOrAbove;
+                  const locked = tab.premiumOnly && !hasPremium;
                   const active = activeTab === tab.id;
                   return (
                     <button
@@ -236,24 +270,30 @@ export default function WorkspacePage() {
                       type="button"
                       onClick={() => {
                         if (locked) {
-                          handleFeatureGate(tab.label);
+                          onLockedPremiumTab();
                           return;
                         }
                         setActiveTab(tab.id);
                       }}
-                      className={`relative z-10 inline-flex items-center justify-center gap-1 rounded-xl px-2 py-2.5 text-xs font-semibold transition ${
+                      className={`relative z-10 inline-flex items-center justify-center gap-1 rounded-xl px-2 py-2.5 text-xs font-semibold transition-all duration-200 ${
                         active ? "text-white" : locked ? "text-zinc-500" : "text-zinc-400 hover:text-zinc-200"
                       }`}
                     >
                       {tab.label}
-                      {locked ? <Lock className="h-3 w-3 text-amber-300" /> : null}
+                      <AnimatePresence>
+                        {locked ? (
+                          <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            <Lock className="h-3 w-3 text-amber-300" />
+                          </motion.span>
+                        ) : null}
+                      </AnimatePresence>
                     </button>
                   );
                 })}
                 <motion.div
                   layout
                   layoutId="activeTabPill"
-                  className="absolute bottom-1 top-1 w-[calc(33.333%-0.333rem)] rounded-xl border border-fuchsia-400/30 bg-gradient-to-r from-fuchsia-500/20 to-purple-500/20"
+                  className="absolute bottom-1 top-1 w-[calc(33.333%-0.333rem)] rounded-xl border border-fuchsia-400/30 bg-gradient-to-r from-fuchsia-500/20 to-purple-500/20 shadow-[0_0_14px_rgba(217,70,239,0.2)]"
                   animate={{ x: activeTab === "redesign" ? "0%" : activeTab === "virtual-staging" ? "102%" : "204%" }}
                   transition={{ type: "spring", stiffness: 340, damping: 28 }}
                 />
@@ -307,30 +347,61 @@ export default function WorkspacePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4">
+            <motion.div layout className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-zinc-200">3D Video Walkthrough</p>
-                  <p className="text-xs text-zinc-500">Paid plans only</p>
+                  <p className="inline-flex items-center gap-1 text-sm font-medium text-zinc-200">
+                    3D Video Walkthrough
+                    {!hasPremium ? <Lock className="h-3.5 w-3.5 text-amber-300" /> : null}
+                  </p>
+                  <p className="text-xs text-zinc-500">Premium and Ultra only</p>
                 </div>
                 <button
                   type="button"
-                  disabled={!isPremiumOrAbove}
+                  disabled={!hasPremium}
                   onClick={() => {
-                    if (!isPremiumOrAbove) {
-                      handleFeatureGate("3D Video Walkthrough");
+                    if (!hasPremium) {
+                      onLocked3D();
                       return;
                     }
                     setIs3DMode((prev) => !prev);
                   }}
-                  className={`relative inline-flex h-7 w-12 items-center rounded-full border transition ${
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full border transition-all duration-200 ${
                     is3DMode ? "border-fuchsia-300/70 bg-fuchsia-500/70" : "border-white/20 bg-zinc-800"
-                  } ${!isPremiumOrAbove ? "cursor-not-allowed opacity-50" : ""}`}
+                  } ${!hasPremium ? "cursor-not-allowed opacity-55" : ""}`}
                 >
                   <span className={`h-5 w-5 rounded-full bg-white transition ${is3DMode ? "translate-x-6" : "translate-x-1"}`} />
                 </button>
               </div>
-            </div>
+            </motion.div>
+
+            <motion.div layout className="rounded-2xl border border-white/10 bg-zinc-900/70 p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="inline-flex items-center gap-1 text-sm font-medium text-zinc-200">
+                    Turbo &amp; Hyper Realism Mode
+                    {!hasUltra ? <Lock className="h-3.5 w-3.5 text-amber-300" /> : null}
+                  </p>
+                  <p className="text-xs text-zinc-500">Ultra only</p>
+                </div>
+                <button
+                  type="button"
+                  disabled={!hasUltra}
+                  onClick={() => {
+                    if (!hasUltra) {
+                      onLockedUltra();
+                      return;
+                    }
+                    setIsTurboMode((prev) => !prev);
+                  }}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full border transition-all duration-200 ${
+                    isTurboMode ? "border-violet-300/70 bg-violet-500/70" : "border-white/20 bg-zinc-800"
+                  } ${!hasUltra ? "cursor-not-allowed opacity-55" : ""}`}
+                >
+                  <span className={`h-5 w-5 rounded-full bg-white transition ${isTurboMode ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+              </div>
+            </motion.div>
           </div>
 
           <div className="border-t border-white/10 p-5">
@@ -338,14 +409,12 @@ export default function WorkspacePage() {
               type="button"
               onClick={handleGenerate}
               disabled={workspaceState === "loading"}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 px-4 py-3.5 text-sm font-semibold text-white shadow-[0_14px_38px_rgba(168,85,247,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+              className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-[0_14px_38px_rgba(168,85,247,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70 ${
+                isTurboMode ? "bg-gradient-to-r from-violet-500 to-fuchsia-500" : "bg-gradient-to-r from-fuchsia-600 to-purple-600"
+              }`}
             >
               <Sparkles className="h-4 w-4" />
-              {workspaceState === "loading"
-                ? "Generating..."
-                : is3DMode
-                  ? "Generate 3D Walkthrough"
-                  : "Generate Interior Render"}
+              {workspaceState === "loading" ? "Generating..." : `Generate ${renderCap} Renders`}
             </button>
           </div>
         </aside>
@@ -367,10 +436,8 @@ export default function WorkspacePage() {
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
 
           {workspaceState === "success" && generatedImageUrl ? (
-            <div className="flex h-full flex-col gap-4">
-              <div className="relative h-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/70">
-                <img src={generatedImageUrl} alt="Generated interior" className="h-full w-full object-cover" />
-              </div>
+            <div className="h-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/70">
+              <img src={generatedImageUrl} alt="Generated interior" className="h-full w-full object-cover" />
             </div>
           ) : workspaceState === "loading" ? (
             <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-white/10 bg-zinc-900/40">
@@ -443,7 +510,7 @@ export default function WorkspacePage() {
 
                   <div>
                     <h2 className="text-2xl font-semibold tracking-tight text-white">Your Canvas is Empty</h2>
-                    <p className="mt-2 max-w-xl text-zinc-400">Upload a room photo to generate your first design.</p>
+                    <p className="mt-2 max-w-xl text-zinc-400">Upload a room photo to generate your next design.</p>
                   </div>
 
                   <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/70 px-4 py-2 text-sm text-zinc-300">

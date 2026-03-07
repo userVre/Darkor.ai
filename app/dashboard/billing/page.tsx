@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowUpRight, CreditCard, Receipt, RefreshCcw } from "lucide-react";
 import { useQuery } from "convex/react";
@@ -27,17 +28,26 @@ type CreditsPack = {
   credits: number;
 };
 
+type UserPlan = "free" | "pro" | "premium" | "ultra";
+
 const packs: CreditsPack[] = [
   { key: "starter", label: "Starter", credits: 50 },
   { key: "growth", label: "Growth", credits: 150 },
   { key: "scale", label: "Scale", credits: 400 },
 ];
 
-const PLAN_ALLOWANCE: Record<string, number> = {
+const PLAN_ALLOWANCE: Record<UserPlan, number> = {
+  free: 0,
   pro: 100,
   premium: 500,
   ultra: 2000,
-  free: 0,
+};
+
+const PLAN_LABEL: Record<UserPlan, string> = {
+  free: "Free",
+  pro: "Pro",
+  premium: "Premium",
+  ultra: "Ultra",
 };
 
 export default function BillingPage() {
@@ -48,10 +58,14 @@ export default function BillingPage() {
   const me = useQuery("users:me" as any) as CurrentUser | null | undefined;
   const invoices = useQuery("billing:getMyInvoices" as any) as BillingInvoice[] | undefined;
 
-  const normalizedPlan = (me?.plan ?? "free").toLowerCase();
-  const planCredits = PLAN_ALLOWANCE[normalizedPlan] ?? 0;
+  const normalizedPlan = ((me?.plan ?? "free").toLowerCase() as UserPlan) || "free";
+  const currentPlan: UserPlan = normalizedPlan in PLAN_LABEL ? normalizedPlan : "free";
+  const planCredits = PLAN_ALLOWANCE[currentPlan];
   const currentCredits = Number(me?.credits ?? 0);
   const creditsProgress = planCredits > 0 ? Math.min(100, (currentCredits / planCredits) * 100) : 0;
+
+  const nextTierLabel = currentPlan === "premium" ? "Ultra" : "Premium";
+  const shouldShowUpgrade = currentPlan !== "ultra";
 
   const money = useMemo(
     () =>
@@ -120,21 +134,30 @@ export default function BillingPage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-fuchsia-200/80">Current Plan</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">
-                {(me?.plan ?? "Free").toString().charAt(0).toUpperCase() + (me?.plan ?? "Free").toString().slice(1)}
-              </h2>
+              <h2 className="mt-2 text-2xl font-semibold text-white">{PLAN_LABEL[currentPlan]}</h2>
               <p className="mt-1 text-sm text-zinc-300">Your billing and subscriptions are managed securely with Polar.</p>
             </div>
 
-            <button
-              type="button"
-              onClick={openPortal}
-              disabled={isPortalLoading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-fuchsia-300/35 bg-gradient-to-r from-fuchsia-500/80 to-purple-500/80 px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <CreditCard className="h-4 w-4" />
-              {isPortalLoading ? "Opening Portal..." : "Manage Subscription"}
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              {shouldShowUpgrade ? (
+                <Link
+                  href="/#pricing"
+                  className="inline-flex items-center justify-center rounded-xl border border-amber-300/45 bg-amber-400/15 px-4 py-3 text-sm font-semibold text-amber-100 transition hover:bg-amber-400/25"
+                >
+                  Upgrade to {nextTierLabel}
+                </Link>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={openPortal}
+                disabled={isPortalLoading}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-fuchsia-300/35 bg-gradient-to-r from-fuchsia-500/80 to-purple-500/80 px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <CreditCard className="h-4 w-4" />
+                {isPortalLoading ? "Opening Portal..." : "Manage Subscription"}
+              </button>
+            </div>
           </div>
         </section>
 
@@ -253,4 +276,3 @@ export default function BillingPage() {
     </main>
   );
 }
-
