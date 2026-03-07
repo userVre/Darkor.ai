@@ -20,7 +20,8 @@ type PricingTier = {
   name: PricingTierName;
   monthlyPrice: number;
   yearlyPrice: number;
-  yearlyCaption: string;
+  yearlyCaption?: string;
+  yearlyBadge?: string;
   corePrefix: string;
   coreBadge?: string;
   features: FeatureRow[];
@@ -30,9 +31,9 @@ type PricingTier = {
 const tiers: PricingTier[] = [
   {
     name: "Pro",
-    monthlyPrice: 49,
-    yearlyPrice: 29,
-    yearlyCaption: "billed yearly $349, 6+ months free",
+    monthlyPrice: 9,
+    yearlyPrice: 90,
+    yearlyBadge: "Save 17%",
     corePrefix: "Create 1,000 interior designs, Flux™ model.",
     features: [
       { text: "Low quality renders", pill: "red" },
@@ -46,9 +47,8 @@ const tiers: PricingTier[] = [
   },
   {
     name: "Premium",
-    monthlyPrice: 99,
-    yearlyPrice: 49,
-    yearlyCaption: "billed yearly $599, 6+ months free",
+    monthlyPrice: 29,
+    yearlyPrice: 290,
     corePrefix: "Create 5,000 interior designs,",
     coreBadge: "Hyper Realism™",
     isPopular: true,
@@ -71,9 +71,8 @@ const tiers: PricingTier[] = [
   },
   {
     name: "Ultra",
-    monthlyPrice: 199,
-    yearlyPrice: 99,
-    yearlyCaption: "billed yearly $1199, 6+ months free",
+    monthlyPrice: 79,
+    yearlyPrice: 790,
     corePrefix: "Create 25,000 interior designs,",
     coreBadge: "Hyper Realism™",
     features: [
@@ -165,17 +164,19 @@ export default function PricingSection() {
   return (
     <section id="pricing" className="mx-auto mt-24 w-full max-w-7xl px-6">
       <div className="mb-10 text-center">
-        <h2 className="text-4xl font-bold text-white md:text-5xl">Plans & pricing</h2>
+        <h2 className="text-4xl font-bold text-white md:text-5xl">Plans &amp; pricing</h2>
         <div className="mt-6 inline-flex items-center rounded-full border border-white/10 bg-zinc-900/70 p-1 backdrop-blur-md">
-          <button
+          <motion.button
+            whileTap={{ scale: 0.96 }}
             onClick={() => setBilling("monthly")}
             className={`rounded-full px-5 py-2 text-sm font-medium transition ${
               billing === "monthly" ? "bg-white/15 text-white" : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
             Monthly
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.96 }}
             onClick={() => setBilling("yearly")}
             className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
               billing === "yearly"
@@ -183,8 +184,8 @@ export default function PricingSection() {
                 : "text-zinc-300 hover:text-zinc-100"
             }`}
           >
-            Yearly: get 6+ months free
-          </button>
+            Yearly
+          </motion.button>
         </div>
       </div>
 
@@ -205,7 +206,7 @@ export default function PricingSection() {
               key={tier.name}
               variants={cardVariants}
               whileHover={{ y: -6 }}
-              className={`relative rounded-3xl border p-6 transition duration-300 ${
+              className={`relative cursor-pointer rounded-3xl border p-6 transition duration-300 ${
                 tier.isPopular
                   ? "z-10 scale-[1.02] border-cyan-300/30 bg-zinc-900 shadow-2xl shadow-[0_0_50px_rgba(56,189,248,0.16)]"
                   : "border-white/10 bg-zinc-900/60 backdrop-blur-md"
@@ -232,9 +233,14 @@ export default function PricingSection() {
                   >
                     <p className="text-4xl font-black text-white">
                       ${price}
-                      <span className="text-base font-medium text-zinc-400"> / month</span>
+                      <span className="text-base font-medium text-zinc-400"> / {billing === "monthly" ? "month" : "year"}</span>
                     </p>
-                    {billing === "yearly" && (
+                    {billing === "yearly" && tier.yearlyBadge && (
+                      <span className="mt-2 inline-flex rounded-full border border-emerald-300/40 bg-emerald-400/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-100">
+                        {tier.yearlyBadge}
+                      </span>
+                    )}
+                    {billing === "yearly" && tier.yearlyCaption && (
                       <p className="mt-1 text-xs text-zinc-500">{tier.yearlyCaption}</p>
                     )}
                   </motion.div>
@@ -270,7 +276,8 @@ export default function PricingSection() {
                 ))}
               </ul>
 
-              <button
+              <motion.button
+                whileTap={{ scale: 0.96 }}
                 onClick={() => void openCheckout(tier.name)}
                 disabled={checkoutLoading === tier.name}
                 className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition disabled:opacity-70 ${
@@ -280,7 +287,7 @@ export default function PricingSection() {
                 }`}
               >
                 {checkoutLoading === tier.name ? "Opening checkout..." : "Subscribe"} <ArrowRight className="h-4 w-4" />
-              </button>
+              </motion.button>
             </motion.article>
           );
         })}
@@ -314,4 +321,3 @@ export default function PricingSection() {
     </section>
   );
 }
-

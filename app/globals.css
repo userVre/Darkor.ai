@@ -86,3 +86,14 @@ body {
     transform: translateX(0);
   }
 }
+
+button,
+a,
+input,
+select,
+textarea,
+summary,
+[role="button"],
+[data-interactive="true"] {
+  cursor: pointer;
+}

@@ -1,5 +1,7 @@
 ﻿"use client";
 
+import { motion } from "framer-motion";
+
 type StickyBottomBarProps = {
   visible: boolean;
   email: string;
@@ -30,12 +32,13 @@ export default function StickyBottomBar({
           placeholder="Type your email..."
           className={premiumInputClass}
         />
-        <button
+        <motion.button
+          whileTap={{ scale: 0.96 }}
           onClick={onAction}
           className="rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 px-6 py-3 font-semibold text-white transition hover:brightness-110"
         >
           Log in to your account -&gt;
-        </button>
+        </motion.button>
       </div>
     </div>
   );

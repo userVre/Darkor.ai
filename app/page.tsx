@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -43,24 +44,19 @@ const staggerItem = {
 
 const faqs = [
   {
-    question: "How realistic are the generated designs?",
+    question: "How does Darkor.ai work?",
     answer:
-      "Darkor.ai uses lighting-aware scene synthesis and material-aware rendering to produce portfolio-quality previews.",
+      "Upload a room photo, choose your style, and Darkor.ai generates premium redesigns in seconds with realistic lighting and materials.",
   },
   {
-    question: "Can I upload low-quality room photos?",
+    question: "Which plan is right for me?",
     answer:
-      "Yes. We auto-enhance contrast, perspective, and exposure before generating your styled interior outputs.",
+      "Pro is ideal to start quickly, Premium unlocks advanced creation workflows, and Ultra is built for teams needing speed and maximum quality.",
   },
   {
-    question: "Do I keep commercial usage rights?",
+    question: "Can I cancel anytime?",
     answer:
-      "All paid plans include commercial rights, so agencies and real-estate teams can use results in listings and ads.",
-  },
-  {
-    question: "How fast is generation?",
-    answer:
-      "Most rooms render in 12 to 25 seconds depending on output resolution and style complexity.",
+      "Yes. You can manage or cancel your subscription from your billing portal at any time.",
   },
 ];
 
@@ -97,6 +93,7 @@ export default function Home() {
   const [stickyEmail, setStickyEmail] = useState("");
   const [showStickyBar, setShowStickyBar] = useState(false);
   const authCardRef = useRef<HTMLDivElement | null>(null);
+  const heroSectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (authStep !== "verification" || resendSeconds <= 0) {
@@ -118,13 +115,13 @@ export default function Home() {
 
   useEffect(() => {
     const onScroll = () => {
-      const authCard = authCardRef.current;
-      if (!authCard) {
+      const hero = heroSectionRef.current;
+      if (!hero) {
         setShowStickyBar(false);
         return;
       }
-      const rect = authCard.getBoundingClientRect();
-      setShowStickyBar(rect.bottom < 0);
+      const rect = hero.getBoundingClientRect();
+      setShowStickyBar(rect.bottom <= 0);
     };
 
     onScroll();
@@ -385,6 +382,7 @@ export default function Home() {
 
       <main id="top" className="pb-32 pt-24">
         <Hero
+          sectionRef={heroSectionRef}
           authCardRef={authCardRef}
           email={authEmail}
           password={authPassword}
@@ -466,6 +464,14 @@ export default function Home() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
 
 
 

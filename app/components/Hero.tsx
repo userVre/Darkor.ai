@@ -6,6 +6,7 @@ import { RefObject } from "react";
 type AuthStep = "credentials" | "verification";
 
 type HeroProps = {
+  sectionRef: RefObject<HTMLElement | null>;
   authCardRef: RefObject<HTMLDivElement | null>;
   email: string;
   password: string;
@@ -47,6 +48,7 @@ const masonryImages = [
 const heroRows = [0, 1, 2, 3, 4];
 
 export default function Hero({
+  sectionRef,
   authCardRef,
   email,
   password,
@@ -67,7 +69,7 @@ export default function Hero({
   onToggleMode,
 }: HeroProps) {
   return (
-    <section className="relative min-h-screen">
+    <section ref={sectionRef} className="relative min-h-screen">
       <div className="absolute inset-0 overflow-hidden">
         <div className="hero-tilt-wall">
           {heroRows.map((row) => (
@@ -141,7 +143,8 @@ export default function Hero({
                     placeholder="Type your password..."
                     className={premiumInputClass}
                   />
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
                     onClick={onSubmitCredentials}
                     disabled={isLoading}
                     className="w-full rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 px-4 py-3 font-semibold text-white shadow-lg shadow-fuchsia-500/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
@@ -151,19 +154,20 @@ export default function Hero({
                       : isLoginMode
                         ? "Log in to your account ->"
                         : "Create your account ->"}
-                  </button>
+                  </motion.button>
 
                   <div className="relative py-1 text-center text-sm text-zinc-400">
                     <span className="relative z-10 bg-black/65 px-2">or</span>
                     <span className="absolute left-0 right-0 top-1/2 h-px bg-white/15" />
                   </div>
 
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
                     onClick={onGoogle}
                     className="w-full rounded-xl border border-white/25 bg-white px-4 py-3 text-lg font-semibold text-black transition hover:bg-zinc-100"
                   >
                     Continue with Google
-                  </button>
+                  </motion.button>
                 </motion.div>
               ) : (
                 <motion.div
@@ -184,13 +188,14 @@ export default function Hero({
                     placeholder="000000"
                     className={`${premiumInputClass} text-center tracking-[0.35em]`}
                   />
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
                     onClick={onVerifyCode}
                     disabled={isLoading}
                     className="w-full rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 px-4 py-3 font-semibold text-white shadow-lg shadow-fuchsia-500/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {isLoading ? "Verifying..." : "Verify & Continue"}
-                  </button>
+                  </motion.button>
 
                   <button
                     onClick={onResendCode}
