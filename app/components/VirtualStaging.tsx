@@ -1,11 +1,7 @@
 ﻿"use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-
-import beforeImage from "@/public/media/before-empty-room.png";
-import afterImage from "@/public/media/after-luxury-minimalist.png";
 
 const reveal = {
   initial: { opacity: 0, y: 40, filter: "blur(8px)" },
@@ -23,17 +19,16 @@ export default function VirtualStaging() {
             Virtual Staging AI: Turn Empty Listings into High-Value Homes
           </h2>
           <p className="mx-auto mt-6 max-w-4xl text-center text-base leading-relaxed text-zinc-400 md:text-lg">
-            Data shows virtually staged properties sell faster and convert better. Darkor.ai helps you stage listings
-            instantly with realistic furniture, lighting, and premium atmosphere.
+            Darkor.ai transforms empty rooms into premium staged interiors in seconds, helping agents and homeowners present
+            spaces with confidence and close faster.
           </p>
         </div>
 
         <div className="mt-16 flex flex-col items-center justify-center gap-6 md:flex-row">
-          <Image
-            src={beforeImage}
-            alt="Before virtual staging empty room"
-            placeholder="blur"
-            className="h-[250px] w-full max-w-[520px] rounded-xl border border-white/10 object-cover md:h-[320px]"
+          <img
+            src="/media/empty-room.png"
+            alt="Empty room before virtual staging"
+            className="h-[250px] w-full max-w-[520px] rounded-2xl border border-white/10 object-cover md:h-[320px]"
           />
 
           <motion.div
@@ -47,11 +42,10 @@ export default function VirtualStaging() {
             </svg>
           </motion.div>
 
-          <Image
-            src={afterImage}
-            alt="After virtual staging beautifully furnished room"
-            placeholder="blur"
-            className="h-[250px] w-full max-w-[520px] rounded-xl border border-white/10 object-cover shadow-[0_0_30px_rgba(217,70,239,0.2)] md:h-[320px]"
+          <img
+            src="/media/staged-room.png"
+            alt="Staged room after virtual staging"
+            className="h-[250px] w-full max-w-[520px] rounded-2xl border border-white/10 object-cover shadow-2xl shadow-purple-500/20 md:h-[320px]"
           />
         </div>
 
