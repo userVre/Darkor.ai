@@ -1,22 +1,15 @@
-"use client";
+﻿"use client";
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Brush,
-  ImagePlus,
   ScanSearch,
   Sofa,
   Sparkles,
   UploadCloud,
   WandSparkles,
 } from "lucide-react";
-import {
-  ChangeEvent,
-  DragEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { ChangeEvent, DragEvent, useEffect, useRef, useState } from "react";
 
 type TabKey = "redesign" | "virtual-staging" | "edit";
 
@@ -40,10 +33,8 @@ export default function WorkspacePage() {
 
   const [roomType, setRoomType] = useState(roomTypes[0]);
   const [furnitureStyle, setFurnitureStyle] = useState(furnitureStyles[0]);
-  const [keepWallColors, setKeepWallColors] = useState(true);
 
   const [brushSize, setBrushSize] = useState(45);
-  const [inpaintPrompt, setInpaintPrompt] = useState("");
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -132,6 +123,20 @@ export default function WorkspacePage() {
           className="space-y-5"
         >
           <div className="space-y-2">
+            <label className="text-xs font-medium uppercase tracking-wide text-zinc-400">Style Picker</label>
+            <select
+              value={style}
+              onChange={(event) => setStyle(event.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none transition focus:border-fuchsia-500/70 focus:ring-2 focus:ring-fuchsia-500/30"
+            >
+              {styles.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
             <label className="text-xs font-medium uppercase tracking-wide text-zinc-400">Room Type</label>
             <select
               value={roomType}
@@ -146,7 +151,7 @@ export default function WorkspacePage() {
             </select>
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-zinc-400">Furniture Style</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-zinc-400">Furniture Type</label>
             <select
               value={furnitureStyle}
               onChange={(event) => setFurnitureStyle(event.target.value)}
@@ -158,26 +163,6 @@ export default function WorkspacePage() {
                 </option>
               ))}
             </select>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-zinc-900/70 px-3 py-3">
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-sm text-zinc-200">Keep original wall colors</p>
-              <button
-                type="button"
-                onClick={() => setKeepWallColors((prev) => !prev)}
-                className={`relative inline-flex h-7 w-12 items-center rounded-full border transition ${
-                  keepWallColors
-                    ? "border-fuchsia-400/80 bg-fuchsia-500/70"
-                    : "border-white/20 bg-zinc-800"
-                }`}
-              >
-                <span
-                  className={`h-5 w-5 rounded-full bg-white transition ${
-                    keepWallColors ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
           </div>
         </motion.div>
       );
@@ -193,6 +178,29 @@ export default function WorkspacePage() {
         className="space-y-5"
       >
         <div className="space-y-2">
+          <label className="text-xs font-medium uppercase tracking-wide text-zinc-400">Style Picker</label>
+          <select
+            value={style}
+            onChange={(event) => setStyle(event.target.value)}
+            className="w-full rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none transition focus:border-fuchsia-500/70 focus:ring-2 focus:ring-fuchsia-500/30"
+          >
+            {styles.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs font-medium uppercase tracking-wide text-zinc-400">Custom Prompt</label>
+          <textarea
+            value={customPrompt}
+            onChange={(event) => setCustomPrompt(event.target.value)}
+            placeholder="Describe what should replace the selected area..."
+            className="min-h-[120px] w-full resize-none rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-fuchsia-500/70 focus:ring-2 focus:ring-fuchsia-500/30"
+          />
+        </div>
+        <div className="space-y-2">
           <label className="text-xs font-medium uppercase tracking-wide text-zinc-400">Brush Size: {brushSize}px</label>
           <input
             type="range"
@@ -201,15 +209,6 @@ export default function WorkspacePage() {
             value={brushSize}
             onChange={(event) => setBrushSize(Number(event.target.value))}
             className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-zinc-800 accent-fuchsia-500"
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-xs font-medium uppercase tracking-wide text-zinc-400">Inpaint Prompt</label>
-          <textarea
-            value={inpaintPrompt}
-            onChange={(event) => setInpaintPrompt(event.target.value)}
-            placeholder="Describe what should replace the masked area..."
-            className="min-h-[120px] w-full resize-none rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-fuchsia-500/70 focus:ring-2 focus:ring-fuchsia-500/30"
           />
         </div>
       </motion.div>
@@ -277,7 +276,7 @@ export default function WorkspacePage() {
 
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-zinc-200">?? Turbo &amp; Hyper Realism Mode</p>
+                  <p className="text-sm font-medium text-zinc-200">Turbo &amp; Hyper Realism Mode</p>
                   <p className="text-xs text-zinc-500">Maximum quality and speed rendering</p>
                 </div>
                 <button
@@ -309,7 +308,7 @@ export default function WorkspacePage() {
               }`}
             >
               {is3DMode ? <ScanSearch className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-              {is3DMode ? "?? Generate 3D Walkthrough" : "? Generate Interior Renders"}
+              {is3DMode ? "Generate 3D Walkthrough" : "Generate Interior Renders"}
             </button>
           </div>
         </aside>
@@ -344,6 +343,11 @@ export default function WorkspacePage() {
                   alt="Workspace uploaded preview"
                   className="h-full w-full rounded-2xl object-cover"
                 />
+                {activeTab === "edit" && (
+                  <div className="pointer-events-none absolute inset-x-6 top-6 rounded-xl border border-fuchsia-400/40 bg-black/45 px-4 py-2 text-sm font-medium text-fuchsia-100 backdrop-blur">
+                    🖌️ Draw over the area you want to change
+                  </div>
+                )}
                 <div className="pointer-events-none absolute inset-x-6 bottom-6 rounded-xl border border-white/15 bg-black/40 p-3 backdrop-blur">
                   <p className="text-xs text-zinc-200">Drag and drop a new image or click to replace this one.</p>
                 </div>
