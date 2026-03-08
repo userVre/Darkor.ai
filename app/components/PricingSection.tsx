@@ -128,8 +128,26 @@ function pillClasses(tone: PillTone): string {
 
 export default function PricingSection() {
   const [billing, setBilling] = useState<BillingCycle>("yearly");
-  const { checkoutLoadingTier, pendingSubscription, error, authGateMessage, startSubscription } =
+  const { checkoutLoadingTier, pendingIntent, error, authGateMessage, startSubscription } =
     useSubscriptionCheckout();
+
+  const handleSubscription = async (planName: PricingTierName, cycle: BillingCycle) => {
+    try {
+      console.log("[Pricing] Subscribe clicked", {
+        planName,
+        billing: cycle,
+      });
+      await startSubscription(planName, cycle);
+    } catch (submitError) {
+      const message = submitError instanceof Error ? submitError.message : "Unknown subscription error";
+      console.error("[Pricing] handleSubscription failed", {
+        error: submitError,
+        planName,
+        billing: cycle,
+      });
+      alert(`Subscription failed: ${message}`);
+    }
+  };
 
   return (
     <section id="pricing" className="mx-auto mt-24 w-full max-w-7xl px-6">
@@ -166,9 +184,9 @@ export default function PricingSection() {
       </motion.div>
 
       {authGateMessage && <p className="mb-3 text-center text-sm text-cyan-200">{authGateMessage}</p>}
-      {pendingSubscription && (
+      {pendingIntent && (
         <p className="mb-3 text-center text-xs text-zinc-400">
-          Pending subscription: {pendingSubscription.tier} ({pendingSubscription.billing})
+          Pending subscription: {pendingIntent.planName} ({pendingIntent.billing})
         </p>
       )}
       {error && <p className="mb-6 text-center text-sm text-rose-300">{error}</p>}
@@ -261,7 +279,7 @@ export default function PricingSection() {
 
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                onClick={() => void startSubscription(tier.name, billing)}
+                onClick={() => void handleSubscription(tier.name, billing)}
                 disabled={checkoutLoadingTier === tier.name}
                 className={`mt-7 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition disabled:opacity-70 ${
                   tier.isPopular

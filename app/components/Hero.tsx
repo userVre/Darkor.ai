@@ -31,12 +31,12 @@ const premiumInputClass =
   "w-full rounded-xl border border-white/20 bg-white px-4 py-3 text-lg text-black placeholder:text-zinc-500 focus:outline-none focus:ring-[3px] focus:ring-fuchsia-500/40 focus:border-fuchsia-500 transition-all";
 
 const masonryImages = [
-  "/media/hero-masonry.jpg",
-  "/media/hero-gallery.jpg",
-  "/media/render-after.png",
-  "/media/after-luxury-minimalist.png",
-  "/media/after-boho-chic.png",
-  "/media/after-cyberpunk.png",
+  "/media/empty-room.jpg",
+  "/media/after-luxury.jpg",
+  "/media/after-cyberpunk.jpg",
+  "/media/after-boho.jpg",
+  "/media/render.jpg",
+  "/media/garden-after.jpg",
 ];
 
 const heroRows = [0, 1, 2, 3, 4];
@@ -230,3 +230,4 @@ export default function Hero({
     </section>
   );
 }
+

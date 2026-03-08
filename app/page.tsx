@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useClerk } from "@clerk/nextjs";
 import { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
@@ -70,19 +70,26 @@ export default function Home() {
   }, [authStep, resendSeconds]);
 
   useEffect(() => {
-    const onScroll = () => {
-      const hero = heroSectionRef.current;
-      if (!hero) {
-        setShowStickyBar(false);
-        return;
-      }
-      const rect = hero.getBoundingClientRect();
-      setShowStickyBar(rect.bottom <= 0);
-    };
+    const hero = heroSectionRef.current;
+    if (!hero) {
+      setShowStickyBar(false);
+      return;
+    }
 
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowStickyBar(!entry.isIntersecting);
+      },
+      {
+        threshold: 0.05,
+      },
+    );
+
+    observer.observe(hero);
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   const resetMessages = () => {
@@ -381,5 +388,6 @@ export default function Home() {
     </div>
   );
 }
+
 
 

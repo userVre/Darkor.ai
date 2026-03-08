@@ -39,7 +39,7 @@ export default function TransformationSection() {
         <img
           src="/media/empty-room.jpg"
           onError={withFallback("/media/empty-room.jpg", "/media/before-empty-room.png")}
-          alt="Before room"
+          alt="Empty room before redesign"
           className="h-[270px] w-full rounded-2xl border border-white/5 object-cover shadow-2xl shadow-black/35 md:h-[340px]"
         />
 
@@ -62,10 +62,10 @@ export default function TransformationSection() {
           <motion.img
             src="/media/after-luxury.jpg"
             onError={withFallback("/media/after-luxury.jpg", "/media/after-luxury-minimalist.png")}
-            alt="Ultra-Luxury Penthouse redesign"
+            alt="Luxury redesign"
             animate={hovered ? { rotate: 15, x: 40, y: 20 } : { rotate: 12, x: 16, y: 0 }}
             transition={spring}
-            className="absolute left-0 top-10 z-10 h-[250px] w-[84%] rounded-2xl border-4 border-white object-cover shadow-2xl md:h-[320px]"
+            className="absolute left-0 top-10 z-10 h-[250px] w-[84%] rounded-2xl border border-white/5 object-cover shadow-2xl md:h-[320px]"
           />
 
           <motion.img
@@ -74,16 +74,16 @@ export default function TransformationSection() {
             alt="Cyberpunk redesign"
             animate={hovered ? { rotate: 0, x: 0, y: 0 } : { rotate: 2, x: 0, y: 0 }}
             transition={spring}
-            className="absolute left-4 top-6 z-20 h-[250px] w-[84%] rounded-2xl border-4 border-white object-cover shadow-2xl md:h-[320px]"
+            className="absolute left-4 top-6 z-20 h-[250px] w-[84%] rounded-2xl border border-white/5 object-cover shadow-2xl md:h-[320px]"
           />
 
           <motion.img
             src="/media/after-boho.jpg"
             onError={withFallback("/media/after-boho.jpg", "/media/after-boho-chic.png")}
-            alt="Boho Chic redesign"
+            alt="Boho redesign"
             animate={hovered ? { rotate: -15, x: -40, y: -20 } : { rotate: -6, x: -16, y: 0 }}
             transition={spring}
-            className="absolute left-8 top-2 z-30 h-[250px] w-[84%] rounded-2xl border-4 border-white object-cover shadow-2xl md:h-[320px]"
+            className="absolute left-8 top-2 z-30 h-[250px] w-[84%] rounded-2xl border border-white/5 object-cover shadow-2xl md:h-[320px]"
           />
         </div>
       </div>

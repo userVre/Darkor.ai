@@ -33,7 +33,7 @@ export default function StickyBottomBar({
           className={premiumInputClass}
         />
         <motion.button
-          whileTap={{ scale: 0.96 }}
+          whileTap={{ scale: 0.95 }}
           onClick={onAction}
           className="cursor-pointer rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 px-6 py-3 font-semibold text-white transition hover:brightness-110"
         >

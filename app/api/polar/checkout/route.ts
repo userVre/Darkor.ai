@@ -6,18 +6,24 @@ type Tier = "Pro" | "Premium" | "Ultra";
 type PurchaseType = "subscription" | "credits";
 type CreditsPack = "starter" | "growth" | "scale";
 
-const SUBSCRIPTION_PRICE_IDS: Record<Billing, Record<Tier, string>> = {
-  monthly: {
-    Pro: process.env.POLAR_PRICE_PRO_MONTHLY ?? "e63d860f-e646-4964-a52b-6d19ef5d0551",
-    Premium: process.env.POLAR_PRICE_PREMIUM_MONTHLY ?? "b286c1c2-73c8-449f-99aa-1c6a276f5cc2",
-    Ultra: process.env.POLAR_PRICE_ULTRA_MONTHLY ?? "8e5fe8a8-3aa5-4333-96d0-4e8461c9ff2e",
+const FIXED_SUBSCRIPTION_PRICE_IDS: Record<Tier, Record<Billing, string>> = {
+  Pro: {
+    monthly: "e63d860f-e646-4964-a52b-6d19ef5d0551",
+    yearly: "94ebd3e5-d8ea-4bab-bb1e-e4288fc0340e",
   },
-  yearly: {
-    Pro: process.env.POLAR_PRICE_PRO_YEARLY ?? "94ebd3e5-d8ea-4bab-bb1e-e4288fc0340e",
-    Premium: process.env.POLAR_PRICE_PREMIUM_YEARLY ?? "6a101e3a-b0e2-4bfa-9695-c4e47f3c90ba",
-    Ultra: process.env.POLAR_PRICE_ULTRA_YEARLY ?? "f2652c80-3808-452f-9024-141ac7bc2309",
+  Premium: {
+    monthly: "b286c1c2-73c8-449f-99aa-1c6a276f5cc2",
+    yearly: "6a101e3a-b0e2-4bfa-9695-c4e47f3c90ba",
+  },
+  Ultra: {
+    monthly: "8e5fe8a8-3aa5-4333-96d0-4e8461c9ff2e",
+    yearly: "f2652c80-3808-452f-9024-141ac7bc2309",
   },
 };
+
+const ALLOWED_SUBSCRIPTION_PRICE_IDS = new Set(
+  Object.values(FIXED_SUBSCRIPTION_PRICE_IDS).flatMap((entry) => Object.values(entry)),
+);
 
 const CREDIT_PACK_PRICE_IDS: Record<CreditsPack, string | undefined> = {
   starter: process.env.POLAR_PRICE_CREDITS_STARTER,
@@ -55,6 +61,7 @@ export async function POST(req: NextRequest) {
     if (purchaseType === "credits") {
       const pack = body?.pack as CreditsPack;
       const packPriceId = pack ? CREDIT_PACK_PRICE_IDS[pack] : undefined;
+
       if (!pack || !packPriceId) {
         return NextResponse.json(
           { error: "Invalid credits pack. Configure POLAR_PRICE_CREDITS_* env vars." },
@@ -72,20 +79,24 @@ export async function POST(req: NextRequest) {
       successUrl = `${origin}/dashboard/billing?checkout=success`;
       cancelUrl = `${origin}/dashboard/billing`;
     } else {
-      const tier = body?.tier as Tier;
-      const billing = body?.billing as Billing;
+      const planName = body?.planName as Tier | undefined;
+      const billing = body?.billing as Billing | undefined;
+      const priceId = body?.priceId as string | undefined;
 
-      if (!tier || !billing || !SUBSCRIPTION_PRICE_IDS[billing]?.[tier]) {
-        return NextResponse.json({ error: "Invalid tier or billing" }, { status: 400 });
+      const resolvedPriceId = priceId ?? (planName && billing ? FIXED_SUBSCRIPTION_PRICE_IDS[planName][billing] : null);
+
+      if (!resolvedPriceId || !ALLOWED_SUBSCRIPTION_PRICE_IDS.has(resolvedPriceId)) {
+        return NextResponse.json({ error: "Invalid subscription priceId" }, { status: 400 });
       }
 
-      products = [SUBSCRIPTION_PRICE_IDS[billing][tier]];
+      products = [resolvedPriceId];
       metadata = {
         userId,
         clerkId: userId,
         purchaseType,
-        plan: tier,
-        billing,
+        planName: planName ?? "Unknown",
+        billing: billing ?? "unknown",
+        priceId: resolvedPriceId,
       };
     }
 

@@ -23,7 +23,7 @@ const cards: ComparisonCard[] = [
   {
     title: "Input",
     image: "/media/comp-1.jpg",
-    fallbackImage: "/media/before-empty-room.png",
+    fallbackImage: "/media/empty-room.jpg",
     items: [
       { label: "Maintains original construction", state: "good" },
       { label: "No staged furnishing", state: "bad" },
@@ -33,7 +33,7 @@ const cards: ComparisonCard[] = [
   {
     title: "Darkor.ai",
     image: "/media/comp-2.jpg",
-    fallbackImage: "/media/after-luxury-minimalist.png",
+    fallbackImage: "/media/after-luxury.jpg",
     isWinner: true,
     items: [
       { label: "Maintains construction", state: "good" },
@@ -42,9 +42,9 @@ const cards: ComparisonCard[] = [
     ],
   },
   {
-    title: "Decorify",
+    title: "Competitor A",
     image: "/media/comp-3.jpg",
-    fallbackImage: "/media/after-boho-chic.png",
+    fallbackImage: "/media/after-boho.jpg",
     items: [
       { label: "Maintains construction", state: "bad" },
       { label: "High photorealism", state: "bad" },
@@ -52,9 +52,9 @@ const cards: ComparisonCard[] = [
     ],
   },
   {
-    title: "AI Room Planner",
+    title: "Competitor B",
     image: "/media/comp-4.jpg",
-    fallbackImage: "/media/after-cyberpunk.png",
+    fallbackImage: "/media/after-cyberpunk.jpg",
     items: [
       { label: "Maintains construction", state: "good" },
       { label: "Sharp output", state: "bad" },
@@ -62,9 +62,9 @@ const cards: ComparisonCard[] = [
     ],
   },
   {
-    title: "RoomGPT",
+    title: "Competitor C",
     image: "/media/comp-5.jpg",
-    fallbackImage: "/media/render-after.png",
+    fallbackImage: "/media/render.jpg",
     items: [
       { label: "Maintains construction", state: "good" },
       { label: "Natural materials", state: "bad" },
@@ -72,9 +72,9 @@ const cards: ComparisonCard[] = [
     ],
   },
   {
-    title: "Dreamstudio",
+    title: "Competitor D",
     image: "/media/comp-6.jpg",
-    fallbackImage: "/media/after-luxury-minimalist.png",
+    fallbackImage: "/media/staging-after.jpg",
     items: [
       { label: "Maintains construction", state: "bad" },
       { label: "Object integrity", state: "bad" },
@@ -128,9 +128,9 @@ export default function CompetitorComparisonGrid() {
       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="mb-12 text-center">
-        <h2 className="text-3xl font-bold text-white md:text-5xl">How Darkor.ai compares for bedroom redesigns</h2>
+        <h2 className="text-3xl font-bold text-white md:text-5xl">How Darkor.ai compares for interior redesigns</h2>
         <p className="mx-auto mt-4 max-w-3xl text-zinc-400">
-          Side-by-side bedroom outputs show why Darkor.ai leads in construction preservation, realism, and production-ready quality.
+          Side-by-side outputs show why Darkor.ai leads in construction preservation, realism, and production-ready quality.
         </p>
       </div>
 

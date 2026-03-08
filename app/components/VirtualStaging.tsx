@@ -50,7 +50,7 @@ export default function VirtualStaging() {
           </motion.div>
 
           <img
-            src="/media/after-luxury.jpg"
+            src="/media/staging-after.jpg"
             onError={(event) => fallback(event, "/media/after-luxury-minimalist.png")}
             alt="Staged room after virtual staging"
             className="h-[250px] w-full rounded-2xl border border-white/5 object-cover shadow-2xl shadow-purple-500/20 md:h-[320px]"
