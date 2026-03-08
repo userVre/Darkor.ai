@@ -7,16 +7,12 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { getPriceId, PLAN_PRICING, planTitle, type BillingCycle, type PlanKey } from "@/lib/pricing";
 import { openPolarCheckout } from "@/lib/polar";
 import { saveSubscriptionIntent } from "@/lib/subscription-intent";
+import HeroTransformation from "@/app/components/HeroTransformation";
+import OutdoorTransformation from "@/app/components/OutdoorTransformation";
 
 const media = {
-  emptyRoom: require("../../assets/media/empty-room.jpg"),
-  afterLuxury: require("../../assets/media/after-luxury.jpg"),
-  afterCyberpunk: require("../../assets/media/after-cyberpunk.jpg"),
-  afterBoho: require("../../assets/media/after-boho.jpg"),
   sketch: require("../../assets/media/sketch.jpg"),
   render: require("../../assets/media/render.jpg"),
-  gardenBefore: require("../../assets/media/garden-before.jpg"),
-  gardenAfter: require("../../assets/media/garden-after.jpg"),
   stagingBefore: require("../../assets/media/staging-before.jpg"),
   stagingAfter: require("../../assets/media/staging-after.jpg"),
   comp1: require("../../assets/media/comp-1.jpg"),
@@ -82,43 +78,13 @@ export default function HomeScreen() {
         </Text>
       </View>
 
-      <View className="mt-8 px-5">
-        <View className="rounded-3xl border border-white/10 bg-zinc-900 p-3">
-          <View className="relative h-64 overflow-hidden rounded-2xl border border-white/5 bg-black">
-            <MotiImage source={media.emptyRoom} className="h-full w-full" resizeMode="cover" from={{ opacity: 0 }} animate={{ opacity: 1 }} />
-            <MotiView
-              className="absolute -right-3 bottom-5 h-48 w-44"
-              from={{ opacity: 0, rotate: "0deg", translateY: 12 }}
-              animate={{ opacity: 1, rotate: "-16deg", translateY: 0 }}
-              transition={{ delay: 300 }}
-            >
-              <MotiImage source={media.afterLuxury} className="h-full w-full rounded-2xl border border-white/10" resizeMode="cover" />
-            </MotiView>
-            <MotiView
-              className="absolute right-10 bottom-7 h-48 w-44"
-              from={{ opacity: 0, rotate: "0deg", translateY: 18 }}
-              animate={{ opacity: 1, rotate: "-7deg", translateY: 0 }}
-              transition={{ delay: 500 }}
-            >
-              <MotiImage source={media.afterCyberpunk} className="h-full w-full rounded-2xl border border-white/10" resizeMode="cover" />
-            </MotiView>
-            <MotiView
-              className="absolute right-20 bottom-8 h-48 w-44"
-              from={{ opacity: 0, rotate: "0deg", translateY: 24 }}
-              animate={{ opacity: 1, rotate: "3deg", translateY: 0 }}
-              transition={{ delay: 650 }}
-            >
-              <MotiImage source={media.afterBoho} className="h-full w-full rounded-2xl border border-white/10" resizeMode="cover" />
-            </MotiView>
-          </View>
-        </View>
-      </View>
+      <HeroTransformation />
 
       <View className="mt-8 gap-4 px-5">
+        <OutdoorTransformation />
         {[
           { title: "Sketch2Image", before: media.sketch, after: media.render },
-          { title: "Outdoor", before: media.gardenBefore, after: media.gardenAfter },
-          { title: "Virtual Staging", before: media.stagingBefore, after: media.stagingAfter },
+                    { title: "Virtual Staging", before: media.stagingBefore, after: media.stagingAfter },
         ].map((section, idx) => (
           <MotiView
             key={section.title}
@@ -182,3 +148,9 @@ export default function HomeScreen() {
     </ScrollView>
   );
 }
+
+
+
+
+
+
