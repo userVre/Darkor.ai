@@ -1,10 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle2, Sparkles, XCircle } from "lucide-react";
+import { CheckCircle2, Circle, Sparkles, XCircle } from "lucide-react";
 import { SyntheticEvent } from "react";
 
-type ItemState = "good" | "bad";
+type ItemState = "good" | "bad" | "neutral";
 
 type ComparisonItem = {
   label: string;
@@ -21,64 +21,65 @@ type ComparisonCard = {
 
 const cards: ComparisonCard[] = [
   {
-    title: "Input",
+    title: "Challenging Raw Input",
     image: "/media/comp-1.jpg",
     fallbackImage: "/media/empty-room.jpg",
     items: [
-      { label: "Maintains original construction", state: "good" },
-      { label: "No staged furnishing", state: "bad" },
-      { label: "No premium visual polish", state: "bad" },
+      { label: "Complex lighting", state: "neutral" },
+      { label: "Wide-angle perspective", state: "neutral" },
+      { label: "Bare concrete textures", state: "neutral" },
     ],
   },
   {
-    title: "Darkor.ai",
+    title: "Darkor.ai (Premium)",
     image: "/media/comp-2.jpg",
     fallbackImage: "/media/after-luxury.jpg",
     isWinner: true,
     items: [
-      { label: "Maintains construction", state: "good" },
-      { label: "High photorealism", state: "good" },
-      { label: "Premium material quality", state: "good" },
+      { label: "Perfect Architectural Integrity", state: "good" },
+      { label: "8K Ultra-Photorealistic", state: "good" },
+      { label: "Masterful Material Physics", state: "good" },
+      { label: "Cinematic Natural Lighting", state: "good" },
     ],
   },
   {
-    title: "Competitor A",
+    title: "Structural Failure",
     image: "/media/comp-3.jpg",
     fallbackImage: "/media/after-boho.jpg",
     items: [
-      { label: "Maintains construction", state: "bad" },
-      { label: "High photorealism", state: "bad" },
-      { label: "Architectural consistency", state: "bad" },
+      { label: "Alters Walls & Windows", state: "bad" },
+      { label: "Sharp Quality", state: "good" },
+      { label: "Lost Room Context", state: "bad" },
     ],
   },
   {
-    title: "Competitor B",
+    title: "Low-Tier Preview",
     image: "/media/comp-4.jpg",
     fallbackImage: "/media/after-cyberpunk.jpg",
     items: [
-      { label: "Maintains construction", state: "good" },
-      { label: "Sharp output", state: "bad" },
-      { label: "Fine texture detail", state: "bad" },
+      { label: "Compressed Textures", state: "bad" },
+      { label: "Blurry/Soft Details", state: "bad" },
+      { label: "Correct Layout", state: "good" },
     ],
   },
   {
-    title: "Competitor C",
+    title: "Artificial 3D Model",
     image: "/media/comp-5.jpg",
     fallbackImage: "/media/render.jpg",
     items: [
-      { label: "Maintains construction", state: "good" },
-      { label: "Natural materials", state: "bad" },
-      { label: "Premium realism", state: "bad" },
+      { label: "Plastic Material Look", state: "bad" },
+      { label: "Unrealistic Shadows", state: "bad" },
+      { label: "No Real-World Depth", state: "bad" },
     ],
   },
   {
-    title: "Competitor D",
+    title: "AI Hallucinations",
     image: "/media/comp-6.jpg",
     fallbackImage: "/media/staging-after.jpg",
     items: [
-      { label: "Maintains construction", state: "bad" },
-      { label: "Object integrity", state: "bad" },
-      { label: "Production-ready quality", state: "bad" },
+      { label: "Distorted Furniture", state: "bad" },
+      { label: "Impossible Physics", state: "bad" },
+      { label: "High Sharpness", state: "good" },
     ],
   },
 ];
@@ -102,6 +103,10 @@ const cardVariants = {
 };
 
 function FeatureIcon({ state }: { state: ItemState }) {
+  if (state === "neutral") {
+    return <Circle className="mt-0.5 h-5 w-5 shrink-0 text-zinc-400" />;
+  }
+
   return state === "good" ? (
     <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
   ) : (
@@ -121,16 +126,16 @@ function setFallback(event: SyntheticEvent<HTMLImageElement>, target: string) {
 export default function CompetitorComparisonGrid() {
   return (
     <motion.section
-      className="mx-auto w-full max-w-7xl px-6 py-24"
+      className="mx-auto w-full max-w-7xl cursor-pointer px-6 py-24"
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: false, amount: 0.15 }}
       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="mb-12 text-center">
-        <h2 className="text-3xl font-bold text-white md:text-5xl">How Darkor.ai compares for interior redesigns</h2>
+        <h2 className="text-3xl font-bold text-white md:text-5xl">Why premium teams choose Darkor.ai for high-value interiors</h2>
         <p className="mx-auto mt-4 max-w-3xl text-zinc-400">
-          Side-by-side outputs show why Darkor.ai leads in construction preservation, realism, and production-ready quality.
+          One input. Six outputs. Darkor.ai is the only system that preserves architectural truth while delivering cinematic luxury realism.
         </p>
       </div>
 
