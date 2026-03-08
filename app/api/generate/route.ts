@@ -1,4 +1,6 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+﻿import { auth } from "@clerk/nextjs/server";
+import { ConvexHttpClient } from "convex/browser";
+import { NextRequest, NextResponse } from "next/server";
 
 type PlanUsed = "pro" | "premium" | "ultra";
 
@@ -8,6 +10,17 @@ type GeneratePayload = {
   prompt?: string;
   style?: string;
   planUsed?: PlanUsed;
+};
+
+type GeminiInlineData = {
+  data?: string;
+  mimeType?: string;
+  mime_type?: string;
+};
+
+type GeminiPart = {
+  inlineData?: GeminiInlineData;
+  inline_data?: GeminiInlineData;
 };
 
 const MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash-image-preview";
@@ -29,14 +42,24 @@ function planPromptSuffix(plan: PlanUsed) {
   return ", ultra photorealistic 8k interior redesign, hyper detailed materials, cinematic ray traced lighting";
 }
 
-function extractImageData(response: any): string | null {
-  const parts = response?.candidates?.[0]?.content?.parts;
+function extractGeneratedImage(response: unknown): { base64: string; mimeType: string } | null {
+  const root = response as {
+    candidates?: Array<{ content?: { parts?: GeminiPart[] } }>;
+  };
+
+  const parts = root?.candidates?.[0]?.content?.parts;
   if (!Array.isArray(parts)) return null;
 
   for (const part of parts) {
-    const base64 = part?.inlineData?.data ?? part?.inline_data?.data;
+    const inline = part?.inlineData ?? part?.inline_data;
+    const base64 = inline?.data;
+    const mimeType = inline?.mimeType ?? inline?.mime_type ?? "image/png";
+
     if (typeof base64 === "string" && base64.length > 0) {
-      return `data:image/png;base64,${base64}`;
+      return {
+        base64,
+        mimeType,
+      };
     }
   }
 
@@ -45,9 +68,38 @@ function extractImageData(response: any): string | null {
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+    if (!convexUrl) {
+      return NextResponse.json({ error: "NEXT_PUBLIC_CONVEX_URL is missing" }, { status: 500 });
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: "GEMINI_API_KEY is missing" }, { status: 500 });
+    }
+
+    const internalToken = process.env.CONVEX_INTERNAL_API_TOKEN;
+    const convexClient = new ConvexHttpClient(convexUrl);
+    const convexQuery = convexClient.query as unknown as (name: string, args: Record<string, unknown>) => Promise<unknown>;
+    const convexAction = convexClient.action as unknown as (name: string, args: Record<string, unknown>) => Promise<unknown>;
+
+    const currentUser = (await convexQuery("users:getByClerkIdInternal", {
+      clerkId: userId,
+      internalToken,
+    })) as { credits?: number } | null;
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "No billing profile found. Please subscribe to continue." }, { status: 403 });
+    }
+
+    const currentCredits = Number(currentUser.credits ?? 0);
+    if (currentCredits <= 0) {
+      return NextResponse.json({ error: "No credits left. Refill Credits to continue." }, { status: 402 });
     }
 
     const body = (await req.json()) as GeneratePayload;
@@ -67,9 +119,7 @@ export async function POST(req: NextRequest) {
         },
       });
     } else if (body.imageUrl) {
-      parts.push({
-        text: `Use this reference image URL as input: ${body.imageUrl}`,
-      });
+      parts.push({ text: `Use this reference image URL as input: ${body.imageUrl}` });
     } else {
       return NextResponse.json({ error: "Missing source image" }, { status: 400 });
     }
@@ -93,20 +143,33 @@ export async function POST(req: NextRequest) {
     const json = await geminiResponse.json();
     if (!geminiResponse.ok) {
       return NextResponse.json(
-        { error: json?.error?.message ?? "Gemini request failed", details: json },
+        { error: (json as { error?: { message?: string } })?.error?.message ?? "Gemini request failed", details: json },
         { status: 500 },
       );
     }
 
-    const imageUrl = extractImageData(json);
-    if (!imageUrl) {
+    const generated = extractGeneratedImage(json);
+    if (!generated) {
       return NextResponse.json({ error: "No generated image found in Gemini response", details: json }, { status: 500 });
     }
 
-    return NextResponse.json({ imageUrl });
+    const stored = (await convexAction("generations:storeGeneratedFromApi", {
+      clerkId: userId,
+      imageBase64: generated.base64,
+      mimeType: generated.mimeType,
+      prompt,
+      style,
+      internalToken,
+    })) as { imageUrl: string; remainingCredits: number };
+
+    return NextResponse.json({
+      imageUrl: stored.imageUrl,
+      remainingCredits: stored.remainingCredits,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown server error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
 

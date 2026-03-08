@@ -68,10 +68,8 @@ export default function WorkspacePage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const previousPreviewRef = useRef<string | null>(null);
 
-  const me = useQuery("users:me" as any) as CurrentUser | null | undefined;
-  const ensureProfile = useMutation("users:getOrCreateCurrentUser" as any);
-  const saveGeneration = useMutation("generations:saveGeneration" as any);
-
+  const me = useQuery("users:me" as never) as CurrentUser | null | undefined;
+  const ensureProfile = useMutation("users:getOrCreateCurrentUser" as never);
   const normalizedPlan = ((me?.plan ?? "free").toLowerCase() as UserPlan) || "free";
   const currentPlan: UserPlan = normalizedPlan in PLAN_LABEL ? normalizedPlan : "free";
 
@@ -79,6 +77,7 @@ export default function WorkspacePage() {
   const hasUltra = currentPlan === "ultra";
 
   const credits = Number(me?.credits ?? 0);
+  const outOfCredits = credits <= 0;
   const creditsAllowance = PLAN_ALLOWANCE[currentPlan];
   const creditsProgress = creditsAllowance > 0 ? Math.min(100, (credits / creditsAllowance) * 100) : 0;
   const renderCap = RENDER_CAP[currentPlan];
@@ -115,7 +114,7 @@ export default function WorkspacePage() {
   };
 
   const onLockedUltra = () => {
-    showToast("Upgrade to Ultra for dedicated server speed and Hyper-Realism™.");
+    showToast("Upgrade to Ultra for dedicated server speed and Hyper-Realism.");
   };
 
   const onLockedPremiumResultAction = () => {
@@ -179,8 +178,8 @@ export default function WorkspacePage() {
       return;
     }
 
-    if (credits <= 0) {
-      showToast("No credits left. Refill from Billing to continue.");
+    if (outOfCredits) {
+      showToast("Refill Credits");
       return;
     }
 
@@ -206,13 +205,6 @@ export default function WorkspacePage() {
 
       const imageUrl = data.imageUrl as string;
       setGeneratedImageUrl(imageUrl);
-
-      await saveGeneration({
-        imageUrl,
-        prompt: customPrompt || undefined,
-        style: style || undefined,
-        planUsed: PLAN_LABEL[currentPlan],
-      });
 
       setWorkspaceState("success");
     } catch (error) {
@@ -411,13 +403,21 @@ export default function WorkspacePage() {
             <button
               type="button"
               onClick={handleGenerate}
-              disabled={workspaceState === "loading"}
+              disabled={workspaceState === "loading"} aria-disabled={workspaceState === "loading" || outOfCredits}
               className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-[0_14px_38px_rgba(168,85,247,0.35)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70 ${
-                isTurboMode ? "bg-gradient-to-r from-violet-500 to-fuchsia-500" : "bg-gradient-to-r from-fuchsia-600 to-purple-600"
+                outOfCredits
+                  ? "cursor-not-allowed bg-zinc-700 text-zinc-300 shadow-none"
+                  : isTurboMode
+                    ? "bg-gradient-to-r from-violet-500 to-fuchsia-500"
+                    : "bg-gradient-to-r from-fuchsia-600 to-purple-600"
               }`}
             >
               <Sparkles className="h-4 w-4" />
-              {workspaceState === "loading" ? "Generating..." : `Generate ${renderCap} Renders`}
+              {workspaceState === "loading"
+                ? "Generating..."
+                : outOfCredits
+                  ? "Refill Credits"
+                  : `Generate ${renderCap} Renders`}
             </button>
           </div>
         </aside>
@@ -555,4 +555,9 @@ export default function WorkspacePage() {
     </main>
   );
 }
+
+
+
+
+
 

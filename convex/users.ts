@@ -1,5 +1,5 @@
 import { mutationGeneric, queryGeneric } from "convex/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 
 export const getOrCreateCurrentUser = mutationGeneric({
   args: {},
@@ -44,6 +44,24 @@ export const me = queryGeneric({
     return await ctx.db
       .query("users")
       .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+  },
+});
+
+export const getByClerkIdInternal = queryGeneric({
+  args: {
+    clerkId: v.string(),
+    internalToken: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const expectedInternalToken = process.env.CONVEX_INTERNAL_API_TOKEN;
+    if (expectedInternalToken && args.internalToken !== expectedInternalToken) {
+      throw new ConvexError("Forbidden");
+    }
+
+    return await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
       .unique();
   },
 });

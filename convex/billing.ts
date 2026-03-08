@@ -1,4 +1,4 @@
-﻿import { mutationGeneric, queryGeneric } from "convex/server";
+import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
 
 export const getMyInvoices = queryGeneric({
@@ -45,6 +45,13 @@ export const processPolarEvent = mutationGeneric({
       return { ok: true, duplicate: true };
     }
 
+    const existingInvoice = await ctx.db
+      .query("billingInvoices")
+      .withIndex("by_polarOrderId", (q) => q.eq("polarOrderId", args.polarOrderId))
+      .unique();
+
+    const shouldGrantCredits = !existingInvoice;
+
     const existingUser = await ctx.db
       .query("users")
       .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
@@ -52,23 +59,18 @@ export const processPolarEvent = mutationGeneric({
 
     if (existingUser) {
       await ctx.db.patch(existingUser._id, {
-        credits: existingUser.credits + args.credits,
+        credits: shouldGrantCredits ? existingUser.credits + args.credits : existingUser.credits,
         plan: args.plan ?? existingUser.plan,
         polarCustomerId: args.polarCustomerId ?? existingUser.polarCustomerId,
       });
     } else {
       await ctx.db.insert("users", {
         clerkId: args.clerkId,
-        credits: args.credits,
+        credits: shouldGrantCredits ? args.credits : 0,
         plan: args.plan ?? "free",
         polarCustomerId: args.polarCustomerId,
       });
     }
-
-    const existingInvoice = await ctx.db
-      .query("billingInvoices")
-      .withIndex("by_polarOrderId", (q) => q.eq("polarOrderId", args.polarOrderId))
-      .unique();
 
     if (existingInvoice) {
       await ctx.db.patch(existingInvoice._id, {
@@ -101,6 +103,6 @@ export const processPolarEvent = mutationGeneric({
       processedAtMs: Date.now(),
     });
 
-    return { ok: true, duplicate: false };
+    return { ok: true, duplicate: false, grantedCredits: shouldGrantCredits };
   },
 });

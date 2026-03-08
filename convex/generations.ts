@@ -1,5 +1,15 @@
-﻿import { mutationGeneric, queryGeneric } from "convex/server";
-import { v } from "convex/values";
+import { actionGeneric, mutationGeneric, queryGeneric } from "convex/server";
+import { ConvexError, v } from "convex/values";
+
+function decodeBase64ToBytes(base64: string): Uint8Array {
+  const cleaned = base64.replace(/^data:[^;]+;base64,/, "");
+  const binary = atob(cleaned);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
 
 export const getUserArchive = queryGeneric({
   args: {},
@@ -9,11 +19,121 @@ export const getUserArchive = queryGeneric({
       throw new Error("Unauthorized");
     }
 
-    return await ctx.db
+    const rows = await ctx.db
       .query("generations")
       .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
       .order("desc")
       .collect();
+
+    const hydrated = await Promise.all(
+      rows.map(async (row) => {
+        const storageUrl = row.storageId ? await ctx.storage.getUrl(row.storageId) : null;
+        return {
+          ...row,
+          imageUrl: storageUrl ?? row.imageUrl ?? "",
+        };
+      }),
+    );
+
+    return hydrated.filter((row) => row.imageUrl.length > 0);
+  },
+});
+
+export const finalizeStoredGeneration = mutationGeneric({
+  args: {
+    clerkId: v.string(),
+    storageId: v.id("_storage"),
+    prompt: v.optional(v.string()),
+    style: v.optional(v.string()),
+    internalToken: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const expectedInternalToken = process.env.CONVEX_INTERNAL_API_TOKEN;
+    if (expectedInternalToken && args.internalToken !== expectedInternalToken) {
+      throw new ConvexError("Forbidden");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .unique();
+
+    if (!user) {
+      throw new ConvexError("No billing profile found. Please subscribe to continue.");
+    }
+
+    if (user.credits <= 0) {
+      throw new ConvexError("No credits left. Please refill credits.");
+    }
+
+    const nextCredits = user.credits - 1;
+    await ctx.db.patch(user._id, {
+      credits: nextCredits,
+    });
+
+    const generationId = await ctx.db.insert("generations", {
+      userId: args.clerkId,
+      storageId: args.storageId,
+      imageUrl: undefined,
+      prompt: args.prompt,
+      style: args.style,
+      planUsed: user.plan,
+    });
+
+    return {
+      generationId,
+      remainingCredits: nextCredits,
+      planUsed: user.plan,
+    };
+  },
+});
+
+export const storeGeneratedFromApi = actionGeneric({
+  args: {
+    clerkId: v.string(),
+    imageBase64: v.string(),
+    mimeType: v.optional(v.string()),
+    prompt: v.optional(v.string()),
+    style: v.optional(v.string()),
+    internalToken: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const expectedInternalToken = process.env.CONVEX_INTERNAL_API_TOKEN;
+    if (expectedInternalToken && args.internalToken !== expectedInternalToken) {
+      throw new ConvexError("Forbidden");
+    }
+
+    const bytes = decodeBase64ToBytes(args.imageBase64);
+    const imageBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+    const blob = new Blob([imageBuffer], { type: args.mimeType ?? "image/png" });
+    const storageId = await ctx.storage.store(blob);
+
+    try {
+      const runMutation = ctx.runMutation as unknown as (name: string, args: Record<string, unknown>) => Promise<unknown>;
+      const finalized = (await runMutation("generations:finalizeStoredGeneration", {
+        clerkId: args.clerkId,
+        storageId,
+        prompt: args.prompt,
+        style: args.style,
+        internalToken: args.internalToken,
+      })) as { generationId: string; remainingCredits: number; planUsed: string };
+
+      const imageUrl = await ctx.storage.getUrl(storageId);
+      if (!imageUrl) {
+        throw new ConvexError("Could not generate storage URL");
+      }
+
+      return {
+        generationId: finalized.generationId,
+        storageId,
+        imageUrl,
+        remainingCredits: finalized.remainingCredits,
+        planUsed: finalized.planUsed,
+      };
+    } catch (error) {
+      await ctx.storage.delete(storageId);
+      throw error;
+    }
   },
 });
 
@@ -75,7 +195,12 @@ export const deleteGeneration = mutationGeneric({
       throw new Error("Forbidden");
     }
 
+    if (item.storageId) {
+      await ctx.storage.delete(item.storageId);
+    }
+
     await ctx.db.delete(args.id);
     return { ok: true };
   },
 });
+
