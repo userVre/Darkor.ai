@@ -1,11 +1,6 @@
-"use client";
+﻿"use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
-import type { SyntheticEvent } from "react";
-
-import sketchBefore from "@/public/media/sketch-before.png";
-import renderAfter from "@/public/media/render-after.png";
 
 const reveal = {
   initial: { opacity: 0, y: 46, filter: "blur(10px)" },
@@ -13,14 +8,6 @@ const reveal = {
   viewport: { once: false, amount: 0.2 },
   transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
 };
-
-function withFallback(event: SyntheticEvent<HTMLImageElement>, fallback: string) {
-  const target = event.currentTarget;
-  if (target.src.endsWith(fallback)) {
-    return;
-  }
-  target.src = fallback;
-}
 
 export default function FeaturesSection() {
   return (
@@ -34,20 +21,18 @@ export default function FeaturesSection() {
         </div>
 
         <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
-          <Image
-            src={sketchBefore}
+          <img
+            src="/media/sketch.jpg"
             alt="Sketch before"
-            placeholder="blur"
             className="h-[240px] w-full rounded-2xl border border-white/5 object-cover md:h-[310px]"
           />
           <svg aria-hidden="true" viewBox="0 0 170 90" className="mx-auto h-16 w-24 text-white md:h-20 md:w-32" fill="none">
             <path d="M6 45c26 0 34 22 62 22 20 0 34-11 50-24" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
             <path d="M97 23l26 17-30 12" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <Image
-            src={renderAfter}
+          <img
+            src="/media/render.jpg"
             alt="Render after"
-            placeholder="blur"
             className="h-[240px] w-full rounded-2xl border border-white/5 object-cover md:h-[310px]"
           />
         </div>
@@ -63,9 +48,8 @@ export default function FeaturesSection() {
 
         <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
           <img
-            src="/media/garden-before.png"
+            src="/media/garden-before.jpg"
             alt="Outdoor before redesign"
-            onError={(event) => withFallback(event, "/media/garden-empty.png")}
             className="h-[240px] w-full rounded-2xl border border-white/5 object-cover md:h-[310px]"
           />
           <svg aria-hidden="true" viewBox="0 0 170 90" className="mx-auto h-16 w-24 text-white md:h-20 md:w-32" fill="none">
@@ -73,9 +57,8 @@ export default function FeaturesSection() {
             <path d="M97 23l26 17-30 12" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <img
-            src="/media/garden-after.png"
+            src="/media/garden-after.jpg"
             alt="Outdoor after redesign"
-            onError={(event) => withFallback(event, "/media/garden-empty.png")}
             className="h-[240px] w-full rounded-2xl border border-white/5 object-cover md:h-[310px]"
           />
         </div>

@@ -1,12 +1,7 @@
 ﻿"use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
-
-import beforeEmptyRoom from "@/public/media/before-empty-room.png";
-import afterBohoChic from "@/public/media/after-boho-chic.png";
-import afterCyberpunk from "@/public/media/after-cyberpunk.png";
-import afterLuxuryMinimalist from "@/public/media/after-luxury-minimalist.png";
+import { useState } from "react";
 
 const reveal = {
   initial: { opacity: 0, y: 46, filter: "blur(10px)" },
@@ -15,24 +10,11 @@ const reveal = {
   transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
 };
 
-const topCard = {
-  rest: { x: 0, y: 0, rotate: -6 },
-  hover: { x: 20, y: -20, rotate: -15 },
-};
-
-const middleCard = {
-  rest: { x: 0, y: 0, rotate: 2 },
-  hover: { x: 40, y: 0, rotate: 0 },
-};
-
-const bottomCard = {
-  rest: { x: 0, y: 0, rotate: 12 },
-  hover: { x: 60, y: 20, rotate: 15 },
-};
-
-const cardTransition = { type: "spring", stiffness: 220, damping: 22 } as const;
+const spring = { type: "spring", stiffness: 220, damping: 20 } as const;
 
 export default function TransformationSection() {
+  const [hovered, setHovered] = useState(false);
+
   return (
     <motion.section id="transformation" className="mx-auto w-full max-w-7xl px-6 py-24" {...reveal}>
       <div className="mb-10 text-center">
@@ -43,10 +25,9 @@ export default function TransformationSection() {
       </div>
 
       <div className="grid items-center gap-8 lg:grid-cols-[1fr_auto_1fr]">
-        <Image
-          src={beforeEmptyRoom}
+        <img
+          src="/media/empty-room.jpg"
           alt="Before room"
-          placeholder="blur"
           className="h-[270px] w-full rounded-2xl border border-white/5 object-cover shadow-2xl shadow-black/35 md:h-[340px]"
         />
 
@@ -61,46 +42,35 @@ export default function TransformationSection() {
           </svg>
         </motion.div>
 
-        <motion.div initial="rest" whileHover="hover" className="relative h-[360px] w-full cursor-pointer">
-          <motion.div
-            variants={bottomCard}
-            transition={cardTransition}
-            className="absolute left-12 top-10 z-10 w-[84%]"
-          >
-            <Image
-              src={afterLuxuryMinimalist}
-              alt="Ultra-Luxury Penthouse redesign"
-              placeholder="blur"
-              className="h-[250px] w-full rounded-2xl border-4 border-white object-cover shadow-[0_28px_48px_rgba(0,0,0,0.55)] md:h-[320px]"
-            />
-          </motion.div>
+        <div
+          className="relative h-[360px] w-full cursor-pointer"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          <motion.img
+            src="/media/after-luxury.jpg"
+            alt="Ultra-Luxury Penthouse redesign"
+            animate={hovered ? { rotate: 15, x: 40, y: 20 } : { rotate: 12, x: 16, y: 0 }}
+            transition={spring}
+            className="absolute left-0 top-10 z-10 h-[250px] w-[84%] rounded-2xl border-4 border-white object-cover shadow-2xl md:h-[320px]"
+          />
 
-          <motion.div
-            variants={middleCard}
-            transition={cardTransition}
-            className="absolute left-6 top-6 z-20 w-[84%]"
-          >
-            <Image
-              src={afterCyberpunk}
-              alt="Cyberpunk redesign"
-              placeholder="blur"
-              className="h-[250px] w-full rounded-2xl border-4 border-white object-cover shadow-[0_28px_48px_rgba(0,0,0,0.55)] md:h-[320px]"
-            />
-          </motion.div>
+          <motion.img
+            src="/media/after-cyberpunk.jpg"
+            alt="Cyberpunk redesign"
+            animate={hovered ? { rotate: 0, x: 0, y: 0 } : { rotate: 2, x: 0, y: 0 }}
+            transition={spring}
+            className="absolute left-4 top-6 z-20 h-[250px] w-[84%] rounded-2xl border-4 border-white object-cover shadow-2xl md:h-[320px]"
+          />
 
-          <motion.div
-            variants={topCard}
-            transition={cardTransition}
-            className="absolute left-0 top-2 z-30 w-[84%]"
-          >
-            <Image
-              src={afterBohoChic}
-              alt="Boho Chic redesign"
-              placeholder="blur"
-              className="h-[250px] w-full rounded-2xl border-4 border-white object-cover shadow-[0_28px_48px_rgba(0,0,0,0.55)] md:h-[320px]"
-            />
-          </motion.div>
-        </motion.div>
+          <motion.img
+            src="/media/after-boho.jpg"
+            alt="Boho Chic redesign"
+            animate={hovered ? { rotate: -15, x: -40, y: -20 } : { rotate: -6, x: -16, y: 0 }}
+            transition={spring}
+            className="absolute left-8 top-2 z-30 h-[250px] w-[84%] rounded-2xl border-4 border-white object-cover shadow-2xl md:h-[320px]"
+          />
+        </div>
       </div>
     </motion.section>
   );

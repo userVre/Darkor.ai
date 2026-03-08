@@ -20,7 +20,7 @@ type ComparisonCard = {
 const cards: ComparisonCard[] = [
   {
     title: "Input",
-    image: "/media/bedroom-input.png",
+    image: "/media/comp-1.jpg",
     items: [
       { label: "Maintains original construction", state: "good" },
       { label: "No staged furnishing", state: "bad" },
@@ -29,7 +29,7 @@ const cards: ComparisonCard[] = [
   },
   {
     title: "Darkor.ai",
-    image: "/media/bedroom-darkor-japandi.png",
+    image: "/media/comp-2.jpg",
     isWinner: true,
     items: [
       { label: "Maintains construction", state: "good" },
@@ -39,7 +39,7 @@ const cards: ComparisonCard[] = [
   },
   {
     title: "Decorify",
-    image: "/media/bedroom-decorify-window-shift.png",
+    image: "/media/comp-3.jpg",
     items: [
       { label: "Maintains construction", state: "bad" },
       { label: "High photorealism", state: "bad" },
@@ -48,7 +48,7 @@ const cards: ComparisonCard[] = [
   },
   {
     title: "AI Room Planner",
-    image: "/media/bedroom-airoomplanner-blurry.png",
+    image: "/media/comp-4.jpg",
     items: [
       { label: "Maintains construction", state: "good" },
       { label: "Sharp output", state: "bad" },
@@ -57,7 +57,7 @@ const cards: ComparisonCard[] = [
   },
   {
     title: "RoomGPT",
-    image: "/media/bedroom-roomgpt-flat.png",
+    image: "/media/comp-5.jpg",
     items: [
       { label: "Maintains construction", state: "good" },
       { label: "Natural materials", state: "bad" },
@@ -66,7 +66,7 @@ const cards: ComparisonCard[] = [
   },
   {
     title: "Dreamstudio",
-    image: "/media/bedroom-dreamstudio-melted.png",
+    image: "/media/comp-6.jpg",
     items: [
       { label: "Maintains construction", state: "bad" },
       { label: "Object integrity", state: "bad" },
@@ -134,14 +134,14 @@ export default function CompetitorComparisonGrid() {
                 : "border-white/5 bg-zinc-900/50"
             }`}
           >
-            <div className="relative">
+            <div className="relative p-3 pb-0">
               {card.isWinner ? (
-                <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full border border-emerald-300/50 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-100 shadow-[0_0_12px_rgba(16,185,129,0.3)]">
+                <span className="absolute right-5 top-5 z-10 inline-flex items-center gap-1 rounded-full border border-emerald-300/50 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-100 shadow-[0_0_12px_rgba(16,185,129,0.3)]">
                   <Sparkles className="h-3.5 w-3.5" />
                   Industry Leader
                 </span>
               ) : null}
-              <img src={card.image} alt={card.title} onError={(event) => { event.currentTarget.src = "/media/before-empty-room.png"; }} className="h-56 w-full rounded-2xl border border-white/5 object-cover" />
+              <img src={card.image} alt={card.title} className="h-56 w-full rounded-2xl border border-white/5 object-cover" />
             </div>
 
             <div className="flex flex-1 flex-col p-5">
@@ -161,4 +161,3 @@ export default function CompetitorComparisonGrid() {
     </motion.section>
   );
 }
-

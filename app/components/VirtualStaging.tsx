@@ -1,7 +1,6 @@
-"use client";
+﻿"use client";
 
 import { motion } from "framer-motion";
-import type { SyntheticEvent } from "react";
 
 const reveal = {
   initial: { opacity: 0, y: 40, filter: "blur(8px)" },
@@ -9,14 +8,6 @@ const reveal = {
   viewport: { once: false, amount: 0.2 },
   transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const },
 };
-
-function withFallback(event: SyntheticEvent<HTMLImageElement>, fallback: string) {
-  const target = event.currentTarget;
-  if (target.src.endsWith(fallback)) {
-    return;
-  }
-  target.src = fallback;
-}
 
 export default function VirtualStaging() {
   return (
@@ -31,9 +22,8 @@ export default function VirtualStaging() {
 
         <div className="mt-14 grid items-center gap-4 md:grid-cols-[1fr_auto_1fr]">
           <img
-            src="/media/empty-room.png"
+            src="/media/staging-before.jpg"
             alt="Empty room before virtual staging"
-            onError={(event) => withFallback(event, "/media/before-empty-room.png")}
             className="h-[250px] w-full rounded-2xl border border-white/5 object-cover md:h-[320px]"
           />
 
@@ -49,9 +39,8 @@ export default function VirtualStaging() {
           </motion.div>
 
           <img
-            src="/media/staged-room.png"
+            src="/media/staging-after.jpg"
             alt="Staged room after virtual staging"
-            onError={(event) => withFallback(event, "/media/after-luxury-minimalist.png")}
             className="h-[250px] w-full rounded-2xl border border-white/5 object-cover shadow-2xl shadow-purple-500/20 md:h-[320px]"
           />
         </div>
