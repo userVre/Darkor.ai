@@ -1,4 +1,4 @@
-﻿import { auth } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 type Billing = "monthly" | "yearly";
@@ -39,7 +39,13 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const purchaseType = (body?.purchaseType as PurchaseType) ?? "subscription";
-    const origin = req.nextUrl.origin;
+    const expectedClerkId = body?.clerkId as string | undefined;
+
+    if (expectedClerkId && expectedClerkId !== userId) {
+      return NextResponse.json({ error: "Clerk identity mismatch" }, { status: 403 });
+    }
+
+    const origin = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
 
     let products: string[] = [];
     let metadata: Record<string, string> = { userId, clerkId: userId };
@@ -116,4 +122,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

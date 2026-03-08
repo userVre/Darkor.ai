@@ -2,8 +2,9 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Sparkles, X } from "lucide-react";
-import { useAuth } from "@clerk/nextjs";
-import { useState } from "react";
+import { useAuth, useClerk } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 type BillingCycle = "monthly" | "yearly";
 type PillTone = "green" | "red" | "yellow";
@@ -26,6 +27,16 @@ type PricingTier = {
   features: FeatureRow[];
   isPopular?: boolean;
 };
+
+type PendingCheckout = {
+  tier: PricingTierName;
+  billing: BillingCycle;
+  source: "pricing";
+  createdAt: number;
+};
+
+const PENDING_CHECKOUT_KEY = "darkor_pending_checkout";
+const PENDING_TTL_MS = 30 * 60 * 1000;
 
 const tiers: PricingTier[] = [
   {
@@ -128,19 +139,71 @@ function pillClasses(tone: PillTone): string {
   return "border-rose-400/50 bg-rose-400/10 text-rose-200";
 }
 
+function readPendingCheckout(): PendingCheckout | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const raw = window.localStorage.getItem(PENDING_CHECKOUT_KEY);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as PendingCheckout;
+    if (!parsed?.tier || !parsed?.billing || !parsed?.createdAt) {
+      window.localStorage.removeItem(PENDING_CHECKOUT_KEY);
+      return null;
+    }
+
+    if (Date.now() - parsed.createdAt > PENDING_TTL_MS) {
+      window.localStorage.removeItem(PENDING_CHECKOUT_KEY);
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    window.localStorage.removeItem(PENDING_CHECKOUT_KEY);
+    return null;
+  }
+}
+
+function writePendingCheckout(tier: PricingTierName, billing: BillingCycle): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const payload: PendingCheckout = {
+    tier,
+    billing,
+    source: "pricing",
+    createdAt: Date.now(),
+  };
+
+  window.localStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify(payload));
+}
+
+function clearPendingCheckout(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(PENDING_CHECKOUT_KEY);
+}
+
 export default function PricingSection() {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, isLoaded, userId } = useAuth();
+  const { openSignUp } = useClerk();
+  const router = useRouter();
+  const checkoutFrameRef = useRef<HTMLIFrameElement | null>(null);
+
   const [billing, setBilling] = useState<BillingCycle>("yearly");
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState<PricingTierName | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [authGateMessage, setAuthGateMessage] = useState<string | null>(null);
 
-  const openCheckout = async (tier: PricingTierName) => {
-    if (!isSignedIn) {
-      window.location.href = "/sign-up?redirect_url=/dashboard/workspace";
-      return;
-    }
-
+  const createCheckout = async (tier: PricingTierName, selectedBilling: BillingCycle) => {
     setError(null);
     setCheckoutLoading(tier);
 
@@ -150,7 +213,12 @@ export default function PricingSection() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ purchaseType: "subscription", tier, billing }),
+        body: JSON.stringify({
+          purchaseType: "subscription",
+          tier,
+          billing: selectedBilling,
+          clerkId: userId,
+        }),
       });
 
       const data = await response.json();
@@ -158,11 +226,75 @@ export default function PricingSection() {
         throw new Error(data?.error ?? "Could not open checkout");
       }
 
+      clearPendingCheckout();
       setCheckoutUrl(data.checkoutUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not open checkout");
     } finally {
       setCheckoutLoading(null);
+    }
+  };
+
+  const handleSubscribe = async (tier: PricingTierName) => {
+    if (!isLoaded) {
+      return;
+    }
+
+    if (!isSignedIn) {
+      writePendingCheckout(tier, billing);
+      setAuthGateMessage("Complete sign-up to continue directly to checkout.");
+
+      try {
+        const returnUrl = `${window.location.origin}/#pricing`;
+        await openSignUp?.({
+          forceRedirectUrl: returnUrl,
+          fallbackRedirectUrl: returnUrl,
+          signInForceRedirectUrl: returnUrl,
+          signUpForceRedirectUrl: returnUrl,
+        } as any);
+      } catch {
+        setError("Could not open sign-up. Please try again.");
+      }
+
+      return;
+    }
+
+    await createCheckout(tier, billing);
+  };
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || checkoutUrl || checkoutLoading) {
+      return;
+    }
+
+    const pending = readPendingCheckout();
+    if (!pending) {
+      return;
+    }
+
+    setAuthGateMessage("Authentication complete. Opening Polar checkout...");
+    void createCheckout(pending.tier, pending.billing);
+  }, [isLoaded, isSignedIn, checkoutUrl, checkoutLoading]);
+
+  const handleCheckoutFrameLoad = () => {
+    const frame = checkoutFrameRef.current;
+    if (!frame) {
+      return;
+    }
+
+    try {
+      const currentHref = frame.contentWindow?.location.href ?? "";
+      if (!currentHref) {
+        return;
+      }
+
+      if (currentHref.includes("/dashboard/workspace") || currentHref.includes("checkout=success")) {
+        setCheckoutUrl(null);
+        clearPendingCheckout();
+        router.push("/dashboard/workspace");
+      }
+    } catch {
+      // Cross-origin during Polar pages; expected until redirect returns to our origin.
     }
   };
 
@@ -200,6 +332,7 @@ export default function PricingSection() {
         </div>
       </motion.div>
 
+      {authGateMessage && <p className="mb-3 text-center text-sm text-cyan-200">{authGateMessage}</p>}
       {error && <p className="mb-6 text-center text-sm text-rose-300">{error}</p>}
 
       <motion.div
@@ -290,7 +423,7 @@ export default function PricingSection() {
 
               <motion.button
                 whileTap={{ scale: 0.96 }}
-                onClick={() => void openCheckout(tier.name)}
+                onClick={() => void handleSubscribe(tier.name)}
                 disabled={checkoutLoading === tier.name}
                 className={`mt-7 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition disabled:opacity-70 ${
                   tier.isPopular
@@ -325,7 +458,13 @@ export default function PricingSection() {
               >
                 <X className="h-4 w-4" />
               </button>
-              <iframe src={checkoutUrl} className="h-full w-full" title="Polar Checkout" />
+              <iframe
+                ref={checkoutFrameRef}
+                src={checkoutUrl}
+                onLoad={handleCheckoutFrameLoad}
+                className="h-full w-full"
+                title="Polar Checkout"
+              />
             </motion.div>
           </motion.div>
         )}
