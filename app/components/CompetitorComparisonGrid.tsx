@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { motion } from "framer-motion";
 import { CheckCircle2, Sparkles, XCircle } from "lucide-react";
@@ -141,7 +141,7 @@ export default function CompetitorComparisonGrid() {
                   Industry Leader
                 </span>
               ) : null}
-              <img src={card.image} alt={card.title} className="h-56 w-full rounded-t-2xl border-b border-white/5 object-cover" />
+              <img src={card.image} alt={card.title} onError={(event) => { event.currentTarget.src = "/media/before-empty-room.png"; }} className="h-56 w-full rounded-2xl border border-white/5 object-cover" />
             </div>
 
             <div className="flex flex-1 flex-col p-5">
@@ -161,3 +161,4 @@ export default function CompetitorComparisonGrid() {
     </motion.section>
   );
 }
+

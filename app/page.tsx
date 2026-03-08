@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useClerk } from "@clerk/nextjs";
 import { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
@@ -31,7 +31,7 @@ function getClerkErrorMessage(error: unknown, fallback: string): string {
 
 export default function Home() {
   const router = useRouter();
-  const { setActive } = useClerk();
+  const { setActive, openSignUp } = useClerk();
   const { isLoaded: signInReady, signIn } = useSignIn();
   const { isLoaded: signUpReady, signUp } = useSignUp();
 
@@ -98,8 +98,12 @@ export default function Home() {
     authCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const handleStartForFree = () => {
-    scrollToAuthCard();
+  const handleStartForFree = async () => {
+    try {
+      await openSignUp?.();
+    } catch {
+      scrollToAuthCard();
+    }
   };
 
   const handleModeToggle = () => {
@@ -377,3 +381,5 @@ export default function Home() {
     </div>
   );
 }
+
+
