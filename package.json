@@ -11,6 +11,7 @@
   "dependencies": {
     "@clerk/nextjs": "^7.0.1",
     "@clerk/themes": "^2.4.57",
+    "@polar-sh/checkout": "^0.2.0",
     "@polar-sh/sdk": "^0.46.3",
     "convex": "^1.32.0",
     "framer-motion": "^12.35.0",

@@ -1,15 +1,12 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Sparkles, X } from "lucide-react";
-import { useAuth, useClerk } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { useState } from "react";
 
-type BillingCycle = "monthly" | "yearly";
+import { BillingCycle, PricingTierName, useSubscriptionCheckout } from "@/app/hooks/useSubscriptionCheckout";
+
 type PillTone = "green" | "red" | "yellow";
-
-export type PricingTierName = "Pro" | "Premium" | "Ultra";
 
 type FeatureRow = {
   text: string;
@@ -27,16 +24,6 @@ type PricingTier = {
   features: FeatureRow[];
   isPopular?: boolean;
 };
-
-type PendingCheckout = {
-  tier: PricingTierName;
-  billing: BillingCycle;
-  source: "pricing";
-  createdAt: number;
-};
-
-const PENDING_CHECKOUT_KEY = "darkor_pending_checkout";
-const PENDING_TTL_MS = 30 * 60 * 1000;
 
 const tiers: PricingTier[] = [
   {
@@ -139,164 +126,10 @@ function pillClasses(tone: PillTone): string {
   return "border-rose-400/50 bg-rose-400/10 text-rose-200";
 }
 
-function readPendingCheckout(): PendingCheckout | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const raw = window.localStorage.getItem(PENDING_CHECKOUT_KEY);
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as PendingCheckout;
-    if (!parsed?.tier || !parsed?.billing || !parsed?.createdAt) {
-      window.localStorage.removeItem(PENDING_CHECKOUT_KEY);
-      return null;
-    }
-
-    if (Date.now() - parsed.createdAt > PENDING_TTL_MS) {
-      window.localStorage.removeItem(PENDING_CHECKOUT_KEY);
-      return null;
-    }
-
-    return parsed;
-  } catch {
-    window.localStorage.removeItem(PENDING_CHECKOUT_KEY);
-    return null;
-  }
-}
-
-function writePendingCheckout(tier: PricingTierName, billing: BillingCycle): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  const payload: PendingCheckout = {
-    tier,
-    billing,
-    source: "pricing",
-    createdAt: Date.now(),
-  };
-
-  window.localStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify(payload));
-}
-
-function clearPendingCheckout(): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.localStorage.removeItem(PENDING_CHECKOUT_KEY);
-}
-
 export default function PricingSection() {
-  const { isSignedIn, isLoaded, userId } = useAuth();
-  const { openSignUp } = useClerk();
-  const router = useRouter();
-  const checkoutFrameRef = useRef<HTMLIFrameElement | null>(null);
-
   const [billing, setBilling] = useState<BillingCycle>("yearly");
-  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
-  const [checkoutLoading, setCheckoutLoading] = useState<PricingTierName | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [authGateMessage, setAuthGateMessage] = useState<string | null>(null);
-
-  const createCheckout = async (tier: PricingTierName, selectedBilling: BillingCycle) => {
-    setError(null);
-    setCheckoutLoading(tier);
-
-    try {
-      const response = await fetch("/api/polar/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          purchaseType: "subscription",
-          tier,
-          billing: selectedBilling,
-          clerkId: userId,
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok || !data?.checkoutUrl) {
-        throw new Error(data?.error ?? "Could not open checkout");
-      }
-
-      clearPendingCheckout();
-      setCheckoutUrl(data.checkoutUrl);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not open checkout");
-    } finally {
-      setCheckoutLoading(null);
-    }
-  };
-
-  const handleSubscribe = async (tier: PricingTierName) => {
-    if (!isLoaded) {
-      return;
-    }
-
-    if (!isSignedIn) {
-      writePendingCheckout(tier, billing);
-      setAuthGateMessage("Complete sign-up to continue directly to checkout.");
-
-      try {
-        const returnUrl = `${window.location.origin}/#pricing`;
-        await openSignUp?.({
-          forceRedirectUrl: returnUrl,
-          fallbackRedirectUrl: returnUrl,
-          signInForceRedirectUrl: returnUrl,
-          signUpForceRedirectUrl: returnUrl,
-        } as any);
-      } catch {
-        setError("Could not open sign-up. Please try again.");
-      }
-
-      return;
-    }
-
-    await createCheckout(tier, billing);
-  };
-
-  useEffect(() => {
-    if (!isLoaded || !isSignedIn || checkoutUrl || checkoutLoading) {
-      return;
-    }
-
-    const pending = readPendingCheckout();
-    if (!pending) {
-      return;
-    }
-
-    setAuthGateMessage("Authentication complete. Opening Polar checkout...");
-    void createCheckout(pending.tier, pending.billing);
-  }, [isLoaded, isSignedIn, checkoutUrl, checkoutLoading]);
-
-  const handleCheckoutFrameLoad = () => {
-    const frame = checkoutFrameRef.current;
-    if (!frame) {
-      return;
-    }
-
-    try {
-      const currentHref = frame.contentWindow?.location.href ?? "";
-      if (!currentHref) {
-        return;
-      }
-
-      if (currentHref.includes("/dashboard/workspace") || currentHref.includes("checkout=success")) {
-        setCheckoutUrl(null);
-        clearPendingCheckout();
-        router.push("/dashboard/workspace");
-      }
-    } catch {
-      // Cross-origin during Polar pages; expected until redirect returns to our origin.
-    }
-  };
+  const { checkoutLoadingTier, pendingSubscription, error, authGateMessage, startSubscription } =
+    useSubscriptionCheckout();
 
   return (
     <section id="pricing" className="mx-auto mt-24 w-full max-w-7xl px-6">
@@ -310,7 +143,7 @@ export default function PricingSection() {
         <h2 className="text-4xl font-bold text-white md:text-5xl">Plans and pricing</h2>
         <div className="mt-6 inline-flex items-center rounded-full border border-white/10 bg-zinc-900/70 p-1 backdrop-blur-md">
           <motion.button
-            whileTap={{ scale: 0.96 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setBilling("monthly")}
             className={`cursor-pointer rounded-full px-5 py-2 text-sm font-medium transition ${
               billing === "monthly" ? "bg-white/15 text-white" : "text-zinc-400 hover:text-zinc-200"
@@ -319,7 +152,7 @@ export default function PricingSection() {
             Monthly
           </motion.button>
           <motion.button
-            whileTap={{ scale: 0.96 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setBilling("yearly")}
             className={`cursor-pointer rounded-full px-5 py-2 text-sm font-semibold transition ${
               billing === "yearly"
@@ -333,6 +166,11 @@ export default function PricingSection() {
       </motion.div>
 
       {authGateMessage && <p className="mb-3 text-center text-sm text-cyan-200">{authGateMessage}</p>}
+      {pendingSubscription && (
+        <p className="mb-3 text-center text-xs text-zinc-400">
+          Pending subscription: {pendingSubscription.tier} ({pendingSubscription.billing})
+        </p>
+      )}
       {error && <p className="mb-6 text-center text-sm text-rose-300">{error}</p>}
 
       <motion.div
@@ -422,53 +260,21 @@ export default function PricingSection() {
               </ul>
 
               <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={() => void handleSubscribe(tier.name)}
-                disabled={checkoutLoading === tier.name}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => void startSubscription(tier.name, billing)}
+                disabled={checkoutLoadingTier === tier.name}
                 className={`mt-7 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition disabled:opacity-70 ${
                   tier.isPopular
                     ? "bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 hover:brightness-110"
                     : "border border-white/20 bg-white/5 text-zinc-100 hover:border-cyan-300/50 hover:bg-white/10"
                 }`}
               >
-                {checkoutLoading === tier.name ? "Opening checkout..." : "Subscribe"} <ArrowRight className="h-4 w-4" />
+                {checkoutLoadingTier === tier.name ? "Opening checkout..." : "Subscribe"} <ArrowRight className="h-4 w-4" />
               </motion.button>
             </motion.article>
           );
         })}
       </motion.div>
-
-      <AnimatePresence>
-        {checkoutUrl && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 p-4"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 10 }}
-              className="relative h-[85vh] w-full max-w-5xl overflow-hidden rounded-2xl border border-white/15 bg-zinc-950 shadow-2xl"
-            >
-              <button
-                onClick={() => setCheckoutUrl(null)}
-                className="absolute right-3 top-3 z-20 cursor-pointer rounded-full border border-white/20 bg-black/40 p-2 text-zinc-200 hover:text-white"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              <iframe
-                ref={checkoutFrameRef}
-                src={checkoutUrl}
-                onLoad={handleCheckoutFrameLoad}
-                className="h-full w-full"
-                title="Polar Checkout"
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
   );
 }

@@ -1,7 +1,8 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import ConvexClientProvider from "./components/ConvexClientProvider";
+import { SubscriptionCheckoutProvider } from "./hooks/useSubscriptionCheckout";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -34,10 +35,11 @@ export default function RootLayout({
           signInFallbackRedirectUrl="/dashboard/workspace"
           signUpFallbackRedirectUrl="/dashboard/workspace"
         >
-          <ConvexClientProvider>{children}</ConvexClientProvider>
+          <ConvexClientProvider>
+            <SubscriptionCheckoutProvider>{children}</SubscriptionCheckoutProvider>
+          </ConvexClientProvider>
         </ClerkProvider>
       </body>
     </html>
   );
 }
-
