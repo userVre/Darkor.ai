@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import { motion } from "framer-motion";
+import { SyntheticEvent } from "react";
 
 const reveal = {
   initial: { opacity: 0, y: 46, filter: "blur(10px)" },
@@ -8,6 +9,15 @@ const reveal = {
   viewport: { once: false, amount: 0.2 },
   transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
 };
+
+function fallback(event: SyntheticEvent<HTMLImageElement>, target: string) {
+  const img = event.currentTarget;
+  if (img.dataset.fallbackApplied === "true") {
+    return;
+  }
+  img.dataset.fallbackApplied = "true";
+  img.src = target;
+}
 
 export default function FeaturesSection() {
   return (
@@ -23,6 +33,7 @@ export default function FeaturesSection() {
         <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
           <img
             src="/media/sketch.jpg"
+            onError={(event) => fallback(event, "/media/sketch-before.png")}
             alt="Sketch before"
             className="h-[240px] w-full rounded-2xl border border-white/5 object-cover md:h-[310px]"
           />
@@ -32,6 +43,7 @@ export default function FeaturesSection() {
           </svg>
           <img
             src="/media/render.jpg"
+            onError={(event) => fallback(event, "/media/render-after.png")}
             alt="Render after"
             className="h-[240px] w-full rounded-2xl border border-white/5 object-cover md:h-[310px]"
           />
@@ -49,6 +61,7 @@ export default function FeaturesSection() {
         <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
           <img
             src="/media/garden-before.jpg"
+            onError={(event) => fallback(event, "/media/garden-empty.png")}
             alt="Outdoor before redesign"
             className="h-[240px] w-full rounded-2xl border border-white/5 object-cover md:h-[310px]"
           />
@@ -58,6 +71,7 @@ export default function FeaturesSection() {
           </svg>
           <img
             src="/media/garden-after.jpg"
+            onError={(event) => fallback(event, "/media/render-after.png")}
             alt="Outdoor after redesign"
             className="h-[240px] w-full rounded-2xl border border-white/5 object-cover md:h-[310px]"
           />

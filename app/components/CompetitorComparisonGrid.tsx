@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import { motion } from "framer-motion";
 import { CheckCircle2, Sparkles, XCircle } from "lucide-react";
+import { SyntheticEvent } from "react";
 
 type ItemState = "good" | "bad";
 
@@ -13,6 +14,7 @@ type ComparisonItem = {
 type ComparisonCard = {
   title: string;
   image: string;
+  fallbackImage: string;
   items: ComparisonItem[];
   isWinner?: boolean;
 };
@@ -21,6 +23,7 @@ const cards: ComparisonCard[] = [
   {
     title: "Input",
     image: "/media/comp-1.jpg",
+    fallbackImage: "/media/before-empty-room.png",
     items: [
       { label: "Maintains original construction", state: "good" },
       { label: "No staged furnishing", state: "bad" },
@@ -30,6 +33,7 @@ const cards: ComparisonCard[] = [
   {
     title: "Darkor.ai",
     image: "/media/comp-2.jpg",
+    fallbackImage: "/media/after-luxury-minimalist.png",
     isWinner: true,
     items: [
       { label: "Maintains construction", state: "good" },
@@ -40,6 +44,7 @@ const cards: ComparisonCard[] = [
   {
     title: "Decorify",
     image: "/media/comp-3.jpg",
+    fallbackImage: "/media/after-boho-chic.png",
     items: [
       { label: "Maintains construction", state: "bad" },
       { label: "High photorealism", state: "bad" },
@@ -49,6 +54,7 @@ const cards: ComparisonCard[] = [
   {
     title: "AI Room Planner",
     image: "/media/comp-4.jpg",
+    fallbackImage: "/media/after-cyberpunk.png",
     items: [
       { label: "Maintains construction", state: "good" },
       { label: "Sharp output", state: "bad" },
@@ -58,6 +64,7 @@ const cards: ComparisonCard[] = [
   {
     title: "RoomGPT",
     image: "/media/comp-5.jpg",
+    fallbackImage: "/media/render-after.png",
     items: [
       { label: "Maintains construction", state: "good" },
       { label: "Natural materials", state: "bad" },
@@ -67,6 +74,7 @@ const cards: ComparisonCard[] = [
   {
     title: "Dreamstudio",
     image: "/media/comp-6.jpg",
+    fallbackImage: "/media/after-luxury-minimalist.png",
     items: [
       { label: "Maintains construction", state: "bad" },
       { label: "Object integrity", state: "bad" },
@@ -101,6 +109,15 @@ function FeatureIcon({ state }: { state: ItemState }) {
   );
 }
 
+function setFallback(event: SyntheticEvent<HTMLImageElement>, target: string) {
+  const img = event.currentTarget;
+  if (img.dataset.fallbackApplied === "true") {
+    return;
+  }
+  img.dataset.fallbackApplied = "true";
+  img.src = target;
+}
+
 export default function CompetitorComparisonGrid() {
   return (
     <motion.section
@@ -128,7 +145,7 @@ export default function CompetitorComparisonGrid() {
           <motion.article
             key={card.title}
             variants={cardVariants}
-            className={`flex h-full min-h-[520px] flex-col overflow-hidden rounded-2xl border ${
+            className={`flex h-full min-h-[520px] cursor-pointer flex-col overflow-hidden rounded-2xl border ${
               card.isWinner
                 ? "z-10 scale-[1.02] border-emerald-400/60 bg-zinc-900 ring-2 ring-emerald-500/50 shadow-[0_0_35px_rgba(16,185,129,0.25)]"
                 : "border-white/5 bg-zinc-900/50"
@@ -141,7 +158,12 @@ export default function CompetitorComparisonGrid() {
                   Industry Leader
                 </span>
               ) : null}
-              <img src={card.image} alt={card.title} className="h-56 w-full rounded-2xl border border-white/5 object-cover" />
+              <img
+                src={card.image}
+                onError={(event) => setFallback(event, card.fallbackImage)}
+                alt={card.title}
+                className="h-56 w-full rounded-2xl border border-white/5 object-cover"
+              />
             </div>
 
             <div className="flex flex-1 flex-col p-5">

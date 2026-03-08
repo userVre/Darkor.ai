@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { RefObject } from "react";
+import { RefObject, SyntheticEvent } from "react";
 
 type AuthStep = "credentials" | "verification";
 
@@ -31,18 +31,12 @@ const premiumInputClass =
   "w-full rounded-xl border border-white/20 bg-white px-4 py-3 text-lg text-black placeholder:text-zinc-500 focus:outline-none focus:ring-[3px] focus:ring-fuchsia-500/40 focus:border-fuchsia-500 transition-all";
 
 const masonryImages = [
-  "https://images.unsplash.com/photo-1493666438817-866a91353ca9?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1616593969747-4797dc75033e?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1616594039964-3f9f4a6cc7f3?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1600210492486-724fe5c67fb3?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1617104551722-3b2d51366497?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1600121848594-d8644e57abab?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1617103996702-96ff29b1c467?auto=format&fit=crop&w=900&q=80",
+  "/media/hero-masonry.jpg",
+  "/media/hero-gallery.jpg",
+  "/media/render-after.png",
+  "/media/after-luxury-minimalist.png",
+  "/media/after-boho-chic.png",
+  "/media/after-cyberpunk.png",
 ];
 
 const heroRows = [0, 1, 2, 3, 4];
@@ -68,6 +62,15 @@ export default function Hero({
   onResendCode,
   onToggleMode,
 }: HeroProps) {
+  const handleMediaFallback = (event: SyntheticEvent<HTMLImageElement>, fallback: string) => {
+    const img = event.currentTarget;
+    if (img.dataset.fallbackApplied === "true") {
+      return;
+    }
+    img.dataset.fallbackApplied = "true";
+    img.src = fallback;
+  };
+
   return (
     <section ref={sectionRef} className="relative min-h-screen">
       <div className="absolute inset-0 overflow-hidden">
@@ -83,6 +86,7 @@ export default function Hero({
                   key={`${row}-${src}-${index}`}
                   src={src}
                   alt={`AI room ${index + 1}`}
+                  onError={(event) => handleMediaFallback(event, "/media/render-after.png")}
                   className="hero-room-card"
                 />
               ))}
@@ -97,12 +101,9 @@ export default function Hero({
           <p className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-xs uppercase tracking-[0.14em] text-cyan-200">
             AI Interior Revolution
           </p>
-          <h1 className="text-5xl font-black leading-[1.05] sm:text-7xl">
-            <span className="text-cyan-300">Fire your</span> interior designer
-          </h1>
+          <h1 className="text-5xl font-black leading-[1.05] sm:text-7xl">Transform any room with Darkor.ai</h1>
           <p className="max-w-xl text-lg text-zinc-300">
-            Upload a photo of your interior and transform it completely. Instantly redesign, furnish, and reimagine
-            any home interior, exterior, or garden.
+            Upload one photo, keep your construction intact, and get premium redesign options instantly.
           </p>
           <ul className="space-y-2 text-zinc-200">
             <li>Take a photo of your current interior and let AI redesign it in seconds</li>
@@ -229,4 +230,3 @@ export default function Hero({
     </section>
   );
 }
-

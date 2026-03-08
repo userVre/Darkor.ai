@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { SyntheticEvent, useState } from "react";
 
 const reveal = {
   initial: { opacity: 0, y: 46, filter: "blur(10px)" },
@@ -11,6 +11,17 @@ const reveal = {
 };
 
 const spring = { type: "spring", stiffness: 220, damping: 20 } as const;
+
+function withFallback(primary: string, fallback: string) {
+  return (event: SyntheticEvent<HTMLImageElement>) => {
+    const img = event.currentTarget;
+    if (img.dataset.fallbackApplied === "true") {
+      return;
+    }
+    img.dataset.fallbackApplied = "true";
+    img.src = fallback;
+  };
+}
 
 export default function TransformationSection() {
   const [hovered, setHovered] = useState(false);
@@ -27,6 +38,7 @@ export default function TransformationSection() {
       <div className="grid items-center gap-8 lg:grid-cols-[1fr_auto_1fr]">
         <img
           src="/media/empty-room.jpg"
+          onError={withFallback("/media/empty-room.jpg", "/media/before-empty-room.png")}
           alt="Before room"
           className="h-[270px] w-full rounded-2xl border border-white/5 object-cover shadow-2xl shadow-black/35 md:h-[340px]"
         />
@@ -49,6 +61,7 @@ export default function TransformationSection() {
         >
           <motion.img
             src="/media/after-luxury.jpg"
+            onError={withFallback("/media/after-luxury.jpg", "/media/after-luxury-minimalist.png")}
             alt="Ultra-Luxury Penthouse redesign"
             animate={hovered ? { rotate: 15, x: 40, y: 20 } : { rotate: 12, x: 16, y: 0 }}
             transition={spring}
@@ -57,6 +70,7 @@ export default function TransformationSection() {
 
           <motion.img
             src="/media/after-cyberpunk.jpg"
+            onError={withFallback("/media/after-cyberpunk.jpg", "/media/after-cyberpunk.png")}
             alt="Cyberpunk redesign"
             animate={hovered ? { rotate: 0, x: 0, y: 0 } : { rotate: 2, x: 0, y: 0 }}
             transition={spring}
@@ -65,6 +79,7 @@ export default function TransformationSection() {
 
           <motion.img
             src="/media/after-boho.jpg"
+            onError={withFallback("/media/after-boho.jpg", "/media/after-boho-chic.png")}
             alt="Boho Chic redesign"
             animate={hovered ? { rotate: -15, x: -40, y: -20 } : { rotate: -6, x: -16, y: 0 }}
             transition={spring}
