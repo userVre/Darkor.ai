@@ -1,7 +1,7 @@
 import "react-native-reanimated";
 import "../global.css";
 
-import { ClerkProvider, useAuth, useUser } from "@clerk/clerk-expo";
+import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
@@ -86,3 +86,4 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
