@@ -1,8 +1,5 @@
-"use client";
-
-import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState } from "react";
+import { Image, Pressable, Text, View } from "react-native";
 
 type StyleItem = {
   id: string;
@@ -183,13 +180,6 @@ const STYLES_GALLERY: StyleItem[] = [
   },
 ];
 
-const sectionReveal = {
-  initial: { opacity: 0, y: 36, filter: "blur(8px)" },
-  whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
-  viewport: { once: false, amount: 0.12 },
-  transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const },
-};
-
 export default function StyleGallery() {
   const [expanded, setExpanded] = useState(false);
 
@@ -199,63 +189,37 @@ export default function StyleGallery() {
   );
 
   return (
-    <motion.section id="gallery" className="mx-auto w-full max-w-7xl px-6 py-24" {...sectionReveal}>
-      <div className="mx-auto mb-12 max-w-4xl text-center">
-        <h2 className="text-4xl font-black text-white sm:text-5xl">Explore 24 Signature Styles</h2>
-        <p className="mt-4 text-zinc-400">
+    <View className="mx-auto w-full px-5 py-10">
+      <View className="mb-8 items-center">
+        <Text className="text-center text-3xl font-black text-white">Explore 24 Signature Styles</Text>
+        <Text className="mt-3 text-center text-zinc-400">
           Create premium interiors in seconds across 24 distinct looks, from Industrial and Zen to Glam and Cyberpunk.
-        </p>
-      </div>
+        </Text>
+      </View>
 
-      <motion.div layout className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-        <AnimatePresence initial={false}>
-          {visibleStyles.map((style, index) => (
-            <motion.article
-              key={style.id}
-              layout
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 14 }}
-              transition={{
-                duration: 0.45,
-                ease: [0.16, 1, 0.3, 1],
-                delay: expanded ? index * 0.015 : 0,
-              }}
-              whileHover={{ y: -4 }}
-              className="group cursor-pointer overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/60 transition-all duration-300 hover:border-fuchsia-300/40 hover:shadow-2xl hover:shadow-fuchsia-500/15"
-            >
-              <div className="relative h-56 overflow-hidden rounded-t-2xl">
-                <Image
-                  src={style.image}
-                  alt={`${style.title} interior style`}
-                  fill
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                />
-              </div>
+      <View className="flex-row flex-wrap justify-between">
+        {visibleStyles.map((style) => (
+          <View
+            key={style.id}
+            className="mb-4 w-[48%] overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/60"
+          >
+            <Image source={{ uri: style.image }} className="h-32 w-full" resizeMode="cover" />
+            <View className="p-4">
+              <Text className="text-base font-bold text-white">{style.title}</Text>
+              <Text className="mt-1 text-sm text-zinc-400">{style.description}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
 
-              <div className="space-y-2 p-5">
-                <h3 className="text-lg font-bold text-white">
-                  <span className="mr-2">{style.emoji}</span>
-                  {style.title}
-                </h3>
-                <p className="text-sm text-zinc-400">{style.description}</p>
-              </div>
-            </motion.article>
-          ))}
-        </AnimatePresence>
-      </motion.div>
-
-      <div className="mt-10 text-center">
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          type="button"
-          onClick={() => setExpanded((prev) => !prev)}
-          className="cursor-pointer rounded-xl border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-semibold text-zinc-100 transition hover:border-fuchsia-300/40 hover:text-white"
+      <View className="mt-6 items-center">
+        <Pressable
+          onPress={() => setExpanded((prev) => !prev)}
+          className="rounded-xl border border-white/20 bg-white/5 px-5 py-2.5"
         >
-          {expanded ? "Show less" : "View all styles"}
-        </motion.button>
-      </div>
-    </motion.section>
+          <Text className="text-sm font-semibold text-zinc-100">{expanded ? "Show less" : "View all styles"}</Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }

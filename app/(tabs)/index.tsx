@@ -26,6 +26,7 @@ const media = {
 const plans: PlanKey[] = ["pro", "premium", "ultra"];
 
 export default function HomeScreen() {
+  console.log("APP IS RUNNING");
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const router = useRouter();
@@ -148,6 +149,7 @@ export default function HomeScreen() {
     </ScrollView>
   );
 }
+
 
 
 
