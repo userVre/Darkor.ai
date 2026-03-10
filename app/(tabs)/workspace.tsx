@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/expo";
 import { useMutation, useQuery } from "convex/react";
 import * as ImagePicker from "expo-image-picker";
 import { MotiImage, MotiView } from "moti";
@@ -147,3 +147,4 @@ export default function WorkspaceScreen() {
     </ScrollView>
   );
 }
+

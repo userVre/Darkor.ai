@@ -1,4 +1,4 @@
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/expo";
 import { useRouter } from "expo-router";
 import { MotiImage, MotiView } from "moti";
 import { useMemo, useState } from "react";
@@ -148,6 +148,7 @@ export default function HomeScreen() {
     </ScrollView>
   );
 }
+
 
 
 

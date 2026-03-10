@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/expo";
 import { useQuery } from "convex/react";
 import { MotiImage } from "moti";
 import { FlatList, Text, View } from "react-native";
@@ -45,3 +45,4 @@ export default function GalleryScreen() {
     </View>
   );
 }
+

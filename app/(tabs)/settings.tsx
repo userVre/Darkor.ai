@@ -1,4 +1,4 @@
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/expo";
 import { useQuery } from "convex/react";
 import * as WebBrowser from "expo-web-browser";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -56,3 +56,4 @@ export default function SettingsScreen() {
     </ScrollView>
   );
 }
+
