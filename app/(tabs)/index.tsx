@@ -1,9 +1,11 @@
 import { useAuth, useUser } from "@clerk/expo";
 import { useRouter } from "expo-router";
-import { MotiImage, MotiView } from "moti";
+import { MotiImage } from "moti";
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, { useAnimatedScrollHandler, useSharedValue } from "react-native-reanimated";
 
+import ScrollReveal from "../../components/scroll-reveal";
 import { getPriceId, PLAN_PRICING, planTitle, type BillingCycle, type PlanKey } from "../../lib/pricing";
 import { openPolarCheckout } from "../../lib/polar";
 import { saveSubscriptionIntent } from "../../lib/subscription-intent";
@@ -31,6 +33,13 @@ export default function HomeScreen() {
   const router = useRouter();
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
+  const scrollY = useSharedValue(0);
+
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
 
   const pricingCards = useMemo(
     () =>
@@ -68,91 +77,153 @@ export default function HomeScreen() {
     }
   };
 
+  const handleStart = () => {
+    if (isSignedIn) {
+      router.push("/workspace");
+      return;
+    }
+    router.push("/sign-up");
+  };
+
+  const handleLogin = () => {
+    router.push("/sign-in");
+  };
+
   return (
-    <ScrollView className="flex-1 bg-zinc-950" contentContainerStyle={{ paddingBottom: 120 }}>
-      <View className="px-5 pt-16">
-        <Text className="text-xs uppercase tracking-[3px] text-cyan-300">Darkor.ai</Text>
-        <Text className="mt-3 text-4xl font-bold leading-tight text-zinc-100">AI staging that sells faster.</Text>
-        <Text className="mt-3 text-base text-zinc-400">
-          Native mobile studio for before/after redesigns, gallery history, and one-tap billing.
-        </Text>
-      </View>
+    <Animated.ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+      contentInsetAdjustmentBehavior="automatic"
+    >
+      <ScrollReveal scrollY={scrollY}>
+        <View className="px-5 pt-10">
+          <Text className="text-xs uppercase tracking-[3px] text-cyan-300">Darkor.ai</Text>
+          <Text className="mt-3 text-4xl font-bold leading-tight text-zinc-100">AI staging that sells faster.</Text>
+          <Text className="mt-3 text-base text-zinc-400">
+            Native mobile studio for before/after redesigns, gallery history, and one-tap billing.
+          </Text>
 
-      <HeroTransformation />
+          <View className="mt-6 flex-row gap-3">
+            <Pressable onPress={handleStart} className="flex-1 rounded-2xl bg-cyan-400 px-4 py-4" style={styles.glowCta}>
+              <Text className="text-center text-base font-semibold text-zinc-900">Start for Free</Text>
+            </Pressable>
+            <Pressable onPress={handleLogin} className="flex-1 rounded-2xl border border-white/15 px-4 py-4">
+              <Text className="text-center text-base font-semibold text-zinc-100">Login</Text>
+            </Pressable>
+          </View>
+        </View>
+      </ScrollReveal>
 
-      <View className="mt-8 gap-4 px-5">
-        <OutdoorTransformation />
-        {[
-          { title: "Sketch2Image", before: media.sketch, after: media.render },
-          { title: "Virtual Staging", before: media.stagingBefore, after: media.stagingAfter },
-        ].map((section, idx) => (
-          <MotiView
-            key={section.title}
-            from={{ opacity: 0, translateY: 12 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ delay: 150 * idx }}
-            className="rounded-3xl border border-white/10 bg-zinc-900 p-3"
-          >
-            <Text className="mb-3 text-base font-semibold text-zinc-100">{section.title}</Text>
+      <ScrollReveal scrollY={scrollY}>
+        <HeroTransformation />
+      </ScrollReveal>
+
+      <ScrollReveal scrollY={scrollY}>
+        <View className="mt-6 px-5">
+          <OutdoorTransformation />
+        </View>
+      </ScrollReveal>
+
+      <ScrollReveal scrollY={scrollY}>
+        <View className="mt-6 gap-4 px-5">
+          <View className="rounded-3xl border border-white/10 bg-zinc-900 p-4" style={styles.cardGlow}>
+            <Text className="mb-3 text-base font-semibold text-zinc-100">Sketch2Image</Text>
             <View className="flex-row gap-2">
-              <MotiImage source={section.before} className="h-36 flex-1 rounded-2xl border border-white/5" resizeMode="cover" />
-              <MotiImage source={section.after} className="h-36 flex-1 rounded-2xl border border-white/5" resizeMode="cover" />
+              <MotiImage source={media.sketch} className="h-36 flex-1 rounded-2xl border border-white/5" resizeMode="cover" />
+              <MotiImage source={media.render} className="h-36 flex-1 rounded-2xl border border-white/5" resizeMode="cover" />
             </View>
-          </MotiView>
-        ))}
-      </View>
+          </View>
 
-      <View className="mt-8 px-5">
-        <Text className="mb-3 text-base font-semibold text-zinc-100">Comparison Grid</Text>
-        <View className="flex-row flex-wrap justify-between gap-y-3">
-          {[media.comp1, media.comp2, media.comp3, media.comp4, media.comp5, media.comp6].map((img, idx) => (
-            <MotiImage key={idx} source={img} className="h-28 w-[48.5%] rounded-2xl border border-white/5" resizeMode="cover" />
-          ))}
+          <View className="rounded-3xl border border-white/10 bg-zinc-900 p-4" style={styles.cardGlow}>
+            <Text className="mb-3 text-base font-semibold text-zinc-100">Virtual Staging</Text>
+            <View className="flex-row gap-2">
+              <MotiImage source={media.stagingBefore} className="h-36 flex-1 rounded-2xl border border-white/5" resizeMode="cover" />
+              <MotiImage source={media.stagingAfter} className="h-36 flex-1 rounded-2xl border border-white/5" resizeMode="cover" />
+            </View>
+          </View>
         </View>
-      </View>
+      </ScrollReveal>
 
-      <View className="mt-10 px-5">
-        <View className="mb-4 flex-row rounded-2xl border border-white/10 bg-zinc-900 p-1">
-          <Pressable
-            onPress={() => setCycle("monthly")}
-            className={`flex-1 rounded-xl px-4 py-3 ${cycle === "monthly" ? "bg-white" : "bg-transparent"}`}
-          >
-            <Text className={`text-center font-semibold ${cycle === "monthly" ? "text-zinc-900" : "text-zinc-300"}`}>Monthly</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setCycle("yearly")}
-            className={`flex-1 rounded-xl px-4 py-3 ${cycle === "yearly" ? "bg-white" : "bg-transparent"}`}
-          >
-            <Text className={`text-center font-semibold ${cycle === "yearly" ? "text-zinc-900" : "text-zinc-300"}`}>Yearly</Text>
-          </Pressable>
+      <ScrollReveal scrollY={scrollY}>
+        <View className="mt-6 px-5">
+          <Text className="mb-3 text-base font-semibold text-zinc-100">Comparison Grid</Text>
+          <View className="flex-row flex-wrap justify-between gap-y-3">
+            {[media.comp1, media.comp2, media.comp3, media.comp4, media.comp5, media.comp6].map((img, idx) => (
+              <MotiImage key={idx} source={img} className="h-28 w-[48.5%] rounded-2xl border border-white/5" resizeMode="cover" />
+            ))}
+          </View>
         </View>
+      </ScrollReveal>
 
-        {pricingCards.map((card) => (
-          <View key={card.plan} className="mb-3 rounded-3xl border border-white/10 bg-zinc-900 p-5">
-            <Text className="text-xl font-semibold text-zinc-100">{card.title}</Text>
-            <Text className="mt-2 text-zinc-400">{card.credits} monthly credits</Text>
-            <Text className="mt-4 text-3xl font-bold text-zinc-100">${card.current}</Text>
-            <Text className="text-zinc-400">{cycle === "monthly" ? "/month" : `/year ($${card.monthlyDisplay.toFixed(2)}/mo)`}</Text>
-
+      <ScrollReveal scrollY={scrollY}>
+        <View className="mt-10 px-5">
+          <View className="mb-4 flex-row rounded-2xl border border-white/10 bg-zinc-900 p-1" style={styles.cardGlow}>
             <Pressable
-              onPress={() => void handleSubscribe(card.plan, card.priceId)}
-              className="mt-4 rounded-2xl bg-cyan-400 px-4 py-4"
+              onPress={() => setCycle("monthly")}
+              className={`flex-1 rounded-xl px-4 py-3 ${cycle === "monthly" ? "bg-white" : "bg-transparent"}`}
             >
-              <Text className="text-center text-base font-semibold text-zinc-900">
-                {loadingPlan === card.plan ? "Opening checkout..." : "Subscribe"}
+              <Text className={`text-center font-semibold ${cycle === "monthly" ? "text-zinc-900" : "text-zinc-300"}`}>
+                Monthly
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setCycle("yearly")}
+              className={`flex-1 rounded-xl px-4 py-3 ${cycle === "yearly" ? "bg-white" : "bg-transparent"}`}
+            >
+              <Text className={`text-center font-semibold ${cycle === "yearly" ? "text-zinc-900" : "text-zinc-300"}`}>
+                Yearly
               </Text>
             </Pressable>
           </View>
-        ))}
-      </View>
-    </ScrollView>
+
+          {pricingCards.map((card) => (
+            <View key={card.plan} className="mb-3 rounded-3xl border border-white/10 bg-zinc-900 p-5" style={styles.cardGlow}>
+              <Text className="text-xl font-semibold text-zinc-100">{card.title}</Text>
+              <Text className="mt-2 text-zinc-400">{card.credits} monthly credits</Text>
+              <Text className="mt-4 text-3xl font-bold text-zinc-100">${card.current}</Text>
+              <Text className="text-zinc-400">
+                {cycle === "monthly" ? "/month" : `/year ($${card.monthlyDisplay.toFixed(2)}/mo)`}
+              </Text>
+
+              <Pressable
+                onPress={() => void handleSubscribe(card.plan, card.priceId)}
+                className="mt-4 rounded-2xl bg-cyan-400 px-4 py-4"
+                style={styles.glowCta}
+              >
+                <Text className="text-center text-base font-semibold text-zinc-900">
+                  {loadingPlan === card.plan ? "Opening checkout..." : "Subscribe"}
+                </Text>
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      </ScrollReveal>
+    </Animated.ScrollView>
   );
 }
 
-
-
-
-
-
-
-
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#09090b",
+  },
+  content: {
+    paddingBottom: 140,
+  },
+  cardGlow: {
+    shadowColor: "#0ea5e9",
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 12,
+  },
+  glowCta: {
+    shadowColor: "#22d3ee",
+    shadowOpacity: 0.28,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 16,
+  },
+});
