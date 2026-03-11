@@ -27,7 +27,7 @@ config.resolver.sourceExts.push("css");
 config.resolver.blockList = exclusionList([
   /.*[\\/]web_legacy_app[\\/].*/,
   /.*[\\/]\.next[\\/].*/,
-  /.*[\\/]Darkor\.ai[\\/].*/,
+  /.*[\\/]Darkor\.ai[\\/]Darkor\.ai[\\/].*/,
   /.*[\\/]next\.config\.ts/,
   /.*[\\/]next-env\.d\.ts/,
 ]);
