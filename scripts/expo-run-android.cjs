@@ -21,9 +21,11 @@ if (fs.existsSync(gradlePropsPath)) {
   props = patchProp(
     props,
     "org.gradle.jvmargs",
-    "-Xmx2048m -Xms256m -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=256m -Dfile.encoding=UTF-8 -Dkotlin.daemon.jvm.options=-Xmx1024m",
+    "-Xmx1536m -Xms128m -XX:MaxMetaspaceSize=384m -XX:ReservedCodeCacheSize=128m -Dfile.encoding=UTF-8 -Dkotlin.daemon.jvm.options=-Xmx768m",
   );
   props = patchProp(props, "org.gradle.workers.max", "1");
+  props = patchProp(props, "org.gradle.parallel", "false");
+  props = patchProp(props, "org.gradle.daemon", "false");
   props = patchProp(props, "reactNativeArchitectures", "x86_64");
   props = patchProp(props, "newArchEnabled", "false");
   fs.writeFileSync(gradlePropsPath, props);
