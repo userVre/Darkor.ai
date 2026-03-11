@@ -4,9 +4,9 @@ import type { SubscriptionIntent } from "./subscription-intent";
 WebBrowser.maybeCompleteAuthSession();
 
 export async function openPolarCheckout(clerkId: string, intent: SubscriptionIntent) {
-  const baseUrl = process.env.EXPO_PUBLIC_POLAR_CHECKOUT_URL;
+  const baseUrl = process.env.EXPO_PUBLIC_POLAR_CHECKOUT_URL ?? process.env.NEXT_PUBLIC_POLAR_CHECKOUT_URL;
   if (!baseUrl) {
-    throw new Error("Missing EXPO_PUBLIC_POLAR_CHECKOUT_URL");
+    throw new Error("Missing EXPO_PUBLIC_POLAR_CHECKOUT_URL (or NEXT_PUBLIC_POLAR_CHECKOUT_URL)");
   }
 
   const checkoutUrl = new URL(baseUrl);

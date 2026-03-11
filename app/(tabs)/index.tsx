@@ -4,11 +4,11 @@ import { MotiImage, MotiView } from "moti";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { getPriceId, PLAN_PRICING, planTitle, type BillingCycle, type PlanKey } from "@/lib/pricing";
-import { openPolarCheckout } from "@/lib/polar";
-import { saveSubscriptionIntent } from "@/lib/subscription-intent";
-import HeroTransformation from "@/app/components/HeroTransformation";
-import OutdoorTransformation from "@/app/components/OutdoorTransformation";
+import { getPriceId, PLAN_PRICING, planTitle, type BillingCycle, type PlanKey } from "../../lib/pricing";
+import { openPolarCheckout } from "../../lib/polar";
+import { saveSubscriptionIntent } from "../../lib/subscription-intent";
+import HeroTransformation from "../_components/HeroTransformation";
+import OutdoorTransformation from "../_components/OutdoorTransformation";
 
 const media = {
   sketch: require("../../assets/media/sketch.jpg"),
@@ -26,7 +26,6 @@ const media = {
 const plans: PlanKey[] = ["pro", "premium", "ultra"];
 
 export default function HomeScreen() {
-  console.log("APP IS RUNNING");
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const router = useRouter();
@@ -85,7 +84,7 @@ export default function HomeScreen() {
         <OutdoorTransformation />
         {[
           { title: "Sketch2Image", before: media.sketch, after: media.render },
-                    { title: "Virtual Staging", before: media.stagingBefore, after: media.stagingAfter },
+          { title: "Virtual Staging", before: media.stagingBefore, after: media.stagingAfter },
         ].map((section, idx) => (
           <MotiView
             key={section.title}

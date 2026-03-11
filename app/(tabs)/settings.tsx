@@ -3,7 +3,7 @@ import { useQuery } from "convex/react";
 import * as WebBrowser from "expo-web-browser";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { PLAN_PRICING, planTitle, type PlanKey } from "@/lib/pricing";
+import { PLAN_PRICING, planTitle, type PlanKey } from "../../lib/pricing";
 
 type MeResponse = {
   plan: "free" | PlanKey;
@@ -16,7 +16,7 @@ export default function SettingsScreen() {
   const me = useQuery("users:me" as any, isSignedIn ? {} : "skip") as MeResponse | null | undefined;
 
   const openBilling = async () => {
-    const portalUrl = process.env.EXPO_PUBLIC_POLAR_PORTAL_URL;
+    const portalUrl = process.env.EXPO_PUBLIC_POLAR_PORTAL_URL ?? process.env.NEXT_PUBLIC_POLAR_PORTAL_URL;
     if (!portalUrl) return;
     await WebBrowser.openBrowserAsync(portalUrl);
   };

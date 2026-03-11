@@ -1,4 +1,6 @@
+import "react-native-gesture-handler";
 import "react-native-reanimated";
+import "../lib/nativewind";
 import "../global.css";
 
 import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
@@ -8,10 +10,10 @@ import { useEffect } from "react";
 import { Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { convex } from "@/lib/convex";
-import { openPolarCheckout } from "@/lib/polar";
-import { clearSubscriptionIntent, getSubscriptionIntent } from "@/lib/subscription-intent";
-import { tokenCache } from "@/lib/token-cache";
+import { convex } from "../lib/convex";
+import { openPolarCheckout } from "../lib/polar";
+import { clearSubscriptionIntent, getSubscriptionIntent } from "../lib/subscription-intent";
+import { tokenCache } from "../lib/token-cache";
 
 function PendingCheckoutResume() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -50,25 +52,26 @@ function Providers({ children }: { children: React.ReactNode }) {
 
 function MissingEnv() {
   return (
-    <View className="flex-1 items-center justify-center bg-zinc-950 px-6">
-      <Text className="text-lg font-semibold text-zinc-100">Missing environment variables</Text>
-      <Text className="mt-2 text-center text-zinc-400">
-        Set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY and EXPO_PUBLIC_CONVEX_URL before launching the app.
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#09090b", paddingHorizontal: 24 }}>
+      <Text style={{ fontSize: 18, fontWeight: "600", color: "#f4f4f5" }}>Missing environment variables</Text>
+      <Text style={{ marginTop: 8, textAlign: "center", color: "#a1a1aa" }}>
+        Set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY (or NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) and EXPO_PUBLIC_CONVEX_URL (or NEXT_PUBLIC_CONVEX_URL) before launching the app.
       </Text>
     </View>
   );
 }
 
 export default function RootLayout() {
-  const key = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL;
 
-  if (!key) {
+  if (!clerkKey || !convexUrl) {
     return <MissingEnv />;
   }
 
   return (
     <SafeAreaProvider>
-      <ClerkProvider publishableKey={key} tokenCache={tokenCache}>
+      <ClerkProvider publishableKey={clerkKey} tokenCache={tokenCache}>
         <Providers>
           <Stack
             screenOptions={{
@@ -86,4 +89,3 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
-

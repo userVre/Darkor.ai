@@ -5,7 +5,7 @@ import { MotiImage, MotiView } from "moti";
 import { useState } from "react";
 import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
-import { generateImage } from "@/lib/api";
+import { generateImage } from "../../lib/api";
 
 const styles = ["Modern", "Luxury", "Scandinavian", "Cyberpunk", "Boho", "Japandi"];
 

@@ -15,9 +15,9 @@ export async function generateImage(
   payload: GenerateRequestPayload,
   clerkToken?: string | null,
 ): Promise<GenerateResponse> {
-  const apiBase = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const apiBase = process.env.EXPO_PUBLIC_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL;
   if (!apiBase) {
-    throw new Error("Missing EXPO_PUBLIC_API_BASE_URL");
+    throw new Error("Missing EXPO_PUBLIC_API_BASE_URL (or NEXT_PUBLIC_API_BASE_URL)");
   }
 
   const response = await fetch(`${apiBase}/api/generate`, {
