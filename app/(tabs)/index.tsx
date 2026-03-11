@@ -5,7 +5,9 @@ import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { useAnimatedScrollHandler, useSharedValue } from "react-native-reanimated";
 
+import ComparisonGrid from "../../components/comparison-grid";
 import ScrollReveal from "../../components/scroll-reveal";
+import WallOfLove from "../../components/wall-of-love";
 import { getPriceId, PLAN_PRICING, planTitle, type BillingCycle, type PlanKey } from "../../lib/pricing";
 import { openPolarCheckout } from "../../lib/polar";
 import { saveSubscriptionIntent } from "../../lib/subscription-intent";
@@ -17,12 +19,6 @@ const media = {
   render: require("../../assets/media/render.jpg"),
   stagingBefore: require("../../assets/media/staging-before.jpg"),
   stagingAfter: require("../../assets/media/staging-after.jpg"),
-  comp1: require("../../assets/media/comp-1.jpg"),
-  comp2: require("../../assets/media/comp-2.jpg"),
-  comp3: require("../../assets/media/comp-3.jpg"),
-  comp4: require("../../assets/media/comp-4.jpg"),
-  comp5: require("../../assets/media/comp-5.jpg"),
-  comp6: require("../../assets/media/comp-6.jpg"),
 };
 
 const plans: PlanKey[] = ["pro", "premium", "ultra"];
@@ -147,14 +143,11 @@ export default function HomeScreen() {
       </ScrollReveal>
 
       <ScrollReveal scrollY={scrollY}>
-        <View className="mt-6 px-5">
-          <Text className="mb-3 text-base font-semibold text-zinc-100">Comparison Grid</Text>
-          <View className="flex-row flex-wrap justify-between gap-y-3">
-            {[media.comp1, media.comp2, media.comp3, media.comp4, media.comp5, media.comp6].map((img, idx) => (
-              <MotiImage key={idx} source={img} className="h-28 w-[48.5%] rounded-2xl border border-white/5" resizeMode="cover" />
-            ))}
-          </View>
-        </View>
+        <ComparisonGrid scrollY={scrollY} />
+      </ScrollReveal>
+
+      <ScrollReveal scrollY={scrollY}>
+        <WallOfLove />
       </ScrollReveal>
 
       <ScrollReveal scrollY={scrollY}>
