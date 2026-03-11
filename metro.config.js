@@ -6,7 +6,7 @@ const defaultExclusions = [/\/__tests__\/.*/];
 
 function escapeRegExp(pattern) {
   if (pattern instanceof RegExp) {
-    return pattern.source.replace(/\/|\\\//g, "\\" + path.sep);
+    return pattern.source;
   }
   if (typeof pattern === "string") {
     const escaped = pattern.replace(/[\-\[\]\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
