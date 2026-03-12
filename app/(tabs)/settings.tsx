@@ -4,8 +4,9 @@ import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useEffect } from "react";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import Purchases from "react-native-purchases";
 import {
   ArrowLeft,
   ChevronRight,
@@ -23,10 +24,9 @@ import {
   Zap,
 } from "lucide-react-native";
 
-import { getPriceId, planTitle, type BillingCycle, type PlanKey } from "../../lib/pricing";
-import { openPolarCheckout } from "../../lib/polar";
-import { saveSubscriptionIntent } from "../../lib/subscription-intent";
+import { planTitle, type PlanKey } from "../../lib/pricing";
 import { triggerHaptic } from "../../lib/haptics";
+import { hasProEntitlement } from "../../lib/revenuecat";
 
 type MeResponse = {
   plan: "free" | PlanKey;
@@ -54,6 +54,7 @@ export default function SettingsScreen() {
   const { user } = useUser();
   const me = useQuery("users:me" as any, isSignedIn ? {} : skip) as MeResponse | null | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
+  const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
 
   useEffect(() => {
     if (!isSignedIn) return;
@@ -63,23 +64,9 @@ export default function SettingsScreen() {
   const plan = me?.plan && me.plan !== "free" ? me.plan : "free";
   const planLabel = plan === "free" ? "FREE" : planTitle(plan).toUpperCase();
 
-  const handleUpgrade = async () => {
-    const billing: BillingCycle = "monthly";
-    const priceId = getPriceId("pro", billing);
-    const intent = { planName: "pro" as PlanKey, priceId, billingCycle: billing };
-
-    try {
-      triggerHaptic();
-      if (!isSignedIn || !user?.id) {
-        await saveSubscriptionIntent(intent);
-        router.push("/sign-in");
-        return;
-      }
-
-      await openPolarCheckout(user.id, intent);
-    } catch (error) {
-      Alert.alert("Upgrade failed", "Please try again in a moment.");
-    }
+  const handleUpgrade = () => {
+    triggerHaptic();
+    router.push("/paywall");
   };
 
   const handleNav = (id: string) => {
@@ -115,9 +102,18 @@ export default function SettingsScreen() {
     Alert.alert("Copied", "User ID copied to clipboard.");
   };
 
-  const handleRestore = () => {
+  const handleRestore = async () => {
     triggerHaptic();
-    Alert.alert("Restore Purchase", "We'll re-check your subscription shortly.");
+    try {
+      const info = await Purchases.restorePurchases();
+      const hasPro = hasProEntitlement(info);
+      if (hasPro && isSignedIn) {
+        await setPlan({ plan: "pro" });
+      }
+      Alert.alert("Restored", hasPro ? "Your subscription is active." : "No active subscriptions found.");
+    } catch (error) {
+      Alert.alert("Restore failed", "Please try again in a moment.");
+    }
   };
 
   const handleDelete = () => {
@@ -263,6 +259,10 @@ export default function SettingsScreen() {
     </ScrollView>
   );
 }
+
+
+
+
 
 
 

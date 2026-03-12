@@ -66,66 +66,29 @@ export const getByClerkIdInternal = queryGeneric({
   },
 });
 
-export const applyPolarCredits = mutationGeneric({
+export const setPlanFromRevenueCat = mutationGeneric({
   args: {
-    clerkId: v.string(),
     plan: v.string(),
-    credits: v.int64(),
-    polarCustomerId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
-      .unique();
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        credits: existing.credits + args.credits,
-        plan: args.plan,
-        polarCustomerId: args.polarCustomerId ?? existing.polarCustomerId,
-      });
-      return { ok: true, userId: existing._id };
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
     }
 
-    const id = await ctx.db.insert("users", {
-      clerkId: args.clerkId,
-      credits: args.credits,
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!existing) {
+      throw new Error("No billing profile found.");
+    }
+
+    await ctx.db.patch(existing._id, {
       plan: args.plan,
-      polarCustomerId: args.polarCustomerId,
     });
 
-    return { ok: true, userId: id };
-  },
-});
-
-export const addCreditsOnly = mutationGeneric({
-  args: {
-    clerkId: v.string(),
-    credits: v.int64(),
-    polarCustomerId: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
-      .unique();
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        credits: existing.credits + args.credits,
-        polarCustomerId: args.polarCustomerId ?? existing.polarCustomerId,
-      });
-      return { ok: true, userId: existing._id };
-    }
-
-    const id = await ctx.db.insert("users", {
-      clerkId: args.clerkId,
-      credits: args.credits,
-      plan: "free",
-      polarCustomerId: args.polarCustomerId,
-    });
-
-    return { ok: true, userId: id };
+    return { ok: true };
   },
 });
