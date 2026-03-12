@@ -20,7 +20,7 @@ export const getOrCreateCurrentUser = mutationGeneric({
 
     const id = await ctx.db.insert("users", {
       clerkId: identity.subject,
-      credits: 0,
+      credits: 3,
       plan: "free",
     });
 

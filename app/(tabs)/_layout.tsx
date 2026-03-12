@@ -1,7 +1,5 @@
 import { Tabs } from "expo-router";
-import { CreditCard, GalleryHorizontalEnd, Sparkles } from "lucide-react-native";
-
-import Logo from "../../components/logo";
+import { Compass, Settings, Sparkles, Wrench } from "lucide-react-native";
 
 export default function TabsLayout() {
   return (
@@ -9,45 +7,48 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#0a0a0a",
-          borderTopColor: "#27272a",
-          height: 66,
-          paddingBottom: 8,
-          paddingTop: 8,
+          backgroundColor: "#000000",
+          borderTopColor: "rgba(255, 255, 255, 0.08)",
+          height: 72,
+          paddingBottom: 10,
+          paddingTop: 10,
         },
-        tabBarActiveTintColor: "#f4f4f5",
-        tabBarInactiveTintColor: "#71717a",
+        tabBarActiveTintColor: "#f8fafc",
+        tabBarInactiveTintColor: "#52525b",
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "600",
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
-          tabBarIcon: ({ focused }) => <Logo size={focused ? 22 : 20} />,
+          title: "Tools",
+          tabBarIcon: ({ color, size }) => <Wrench color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="workspace"
         options={{
-          title: "Workspace",
+          title: "Create",
           tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="gallery"
         options={{
-          title: "Gallery",
-          tabBarIcon: ({ color, size }) => <GalleryHorizontalEnd color={color} size={size} />,
+          title: "Discover",
+          tabBarIcon: ({ color, size }) => <Compass color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
-          tabBarIcon: ({ color, size }) => <CreditCard color={color} size={size} />,
+          title: "My Profile",
+          tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
         }}
       />
     </Tabs>
   );
 }
-

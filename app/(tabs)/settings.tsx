@@ -1,25 +1,39 @@
 import { useAuth, useUser } from "@clerk/expo";
-import { useQuery } from "convex/react";
+import { skip, useMutation, useQuery } from "convex/react";
+import { BlurView } from "expo-blur";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import * as Clipboard from "expo-clipboard";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { useEffect } from "react";
 import {
+  ArrowLeft,
   ChevronRight,
+  Copy,
+  Diamond,
   FileText,
   HelpCircle,
   MessageCircle,
   RefreshCcw,
   Share2,
   Shield,
+  Sparkles,
   Star,
   Trash2,
-  User,
+  Zap,
 } from "lucide-react-native";
 
 import { getPriceId, planTitle, type BillingCycle, type PlanKey } from "../../lib/pricing";
 import { openPolarCheckout } from "../../lib/polar";
 import { saveSubscriptionIntent } from "../../lib/subscription-intent";
+import { triggerHaptic } from "../../lib/haptics";
 
-const NAV_ITEMS = [
+type MeResponse = {
+  plan: "free" | PlanKey;
+  credits: number;
+};
+
+const MENU_ITEMS = [
   { id: "feedback", label: "Feedback", icon: MessageCircle },
   { id: "faq", label: "FAQ", icon: HelpCircle },
   { id: "rate", label: "Rate Us", icon: Star },
@@ -28,20 +42,26 @@ const NAV_ITEMS = [
   { id: "privacy", label: "Privacy Policy", icon: Shield },
 ];
 
-type MeResponse = {
-  plan: "free" | PlanKey;
-  credits: number;
-};
+const ACCOUNT_BULLETS = [
+  { id: "model", label: "Advanced AI Model", icon: Sparkles },
+  { id: "speed", label: "Fast Processing", icon: Zap },
+  { id: "ads", label: "Remove All Ads", icon: Shield },
+];
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
-  const me = useQuery("users:me" as any, isSignedIn ? {} : "skip") as MeResponse | null | undefined;
+  const me = useQuery("users:me" as any, isSignedIn ? {} : skip) as MeResponse | null | undefined;
+  const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+    ensureUser({}).catch(() => undefined);
+  }, [ensureUser, isSignedIn]);
 
   const plan = me?.plan && me.plan !== "free" ? me.plan : "free";
   const planLabel = plan === "free" ? "FREE" : planTitle(plan).toUpperCase();
-  const isPaid = plan !== "free";
 
   const handleUpgrade = async () => {
     const billing: BillingCycle = "monthly";
@@ -49,6 +69,7 @@ export default function SettingsScreen() {
     const intent = { planName: "pro" as PlanKey, priceId, billingCycle: billing };
 
     try {
+      triggerHaptic();
       if (!isSignedIn || !user?.id) {
         await saveSubscriptionIntent(intent);
         router.push("/sign-in");
@@ -62,6 +83,7 @@ export default function SettingsScreen() {
   };
 
   const handleNav = (id: string) => {
+    triggerHaptic();
     switch (id) {
       case "feedback":
         Alert.alert("Feedback", "Thanks for sharing feedback. We'll open a form soon.");
@@ -86,17 +108,21 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleCopyId = () => {
-    if (!user?.id) return;
-    Alert.alert("Copy User ID", "Tap and hold your User ID to select and copy it.");
+  const handleCopyId = async () => {
+    triggerHaptic();
+    const value = user?.id ?? "eRBJziTFTy6tMa...";
+    await Clipboard.setStringAsync(value);
+    Alert.alert("Copied", "User ID copied to clipboard.");
   };
 
   const handleRestore = () => {
+    triggerHaptic();
     Alert.alert("Restore Purchase", "We'll re-check your subscription shortly.");
   };
 
   const handleDelete = () => {
-    Alert.alert("Delete Account", "This action is permanent. Are you sure?", [
+    triggerHaptic();
+    Alert.alert("Delete Information", "This removes your account information. Continue?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
@@ -104,7 +130,6 @@ export default function SettingsScreen() {
         onPress: async () => {
           try {
             if (user) {
-              // Clerk supports user.delete(); if unavailable, this will be caught.
               await user.delete();
             }
             await signOut();
@@ -118,48 +143,73 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.content}
+      className="flex-1 bg-black"
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 120 }}
       contentInsetAdjustmentBehavior="automatic"
     >
-      <Text style={styles.title}>Settings</Text>
-      <Text style={styles.subtitle}>Manage your Darkor.ai experience.</Text>
-
-      <View style={styles.statusCard}>
-        <View style={styles.statusHeader}>
-          <User color="#22d3ee" size={20} />
-          <Text style={styles.statusLabel}>Your Account is {planLabel}</Text>
-        </View>
-        <Text style={styles.statusHint}>Credits available: {me?.credits ?? 0}</Text>
-
-        <View style={styles.bullets}>
-          {["Advanced AI Model", "Fast Processing", "Remove All Ads"].map((item) => (
-            <View key={item} style={styles.bulletRow}>
-              <View style={styles.bulletDot} />
-              <Text style={styles.bulletText}>{item}</Text>
-            </View>
-          ))}
-        </View>
-
-        <Pressable onPress={handleUpgrade} style={[styles.primaryButton, styles.pointer]}>
-          <Text style={styles.primaryButtonText}>{isPaid ? "Manage Subscription" : "Upgrade PRO"}</Text>
+      <View className="flex-row items-center justify-between">
+        <Pressable
+          onPress={() => {
+            triggerHaptic();
+            router.back();
+          }}
+          className="cursor-pointer h-10 w-10 items-center justify-center rounded-full border border-white/10"
+        >
+          <ArrowLeft color="#e4e4e7" size={18} />
         </Pressable>
+        <Text className="text-lg font-semibold text-white">Settings</Text>
+        <View className="h-10 w-10" />
       </View>
 
-      <View style={styles.listCard}>
-        {NAV_ITEMS.map((item, index) => {
+      <View className="mt-6 overflow-hidden rounded-3xl border border-white/10 bg-zinc-950">
+        <Image
+          source={require("../../assets/media/after-luxury.jpg")}
+          className="absolute inset-0 h-full w-full"
+          contentFit="cover"
+        />
+        <View className="absolute inset-0 bg-black/50" />
+        <BlurView intensity={24} tint="dark" className="absolute inset-0" />
+        <View className="gap-4 p-6">
+          <Text className="text-lg font-semibold text-white">Your Account is {planLabel}</Text>
+          <View className="gap-3">
+            {ACCOUNT_BULLETS.map((bullet) => {
+              const Icon = bullet.icon;
+              return (
+                <View key={bullet.id} className="flex-row items-center gap-2">
+                  <Icon color="#ffffff" size={14} />
+                  <Text className="text-sm font-semibold text-white">{bullet.label}</Text>
+                </View>
+              );
+            })}
+          </View>
+          <Pressable
+            onPress={handleUpgrade}
+            className="cursor-pointer flex-row items-center justify-center gap-2 rounded-full border border-white/70 bg-white px-4 py-3"
+            style={{ boxShadow: "0 0 24px rgba(255, 255, 255, 0.4)" }}
+          >
+            <Diamond color="#0f172a" size={14} />
+            <Text className="text-sm font-semibold text-slate-900">Upgrade PRO</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950">
+        {MENU_ITEMS.map((item, index) => {
           const Icon = item.icon;
+          const isLast = index === MENU_ITEMS.length - 1;
           return (
             <Pressable
               key={item.id}
               onPress={() => handleNav(item.id)}
-              style={[styles.listRow, index === NAV_ITEMS.length - 1 && styles.listRowLast, styles.pointer]}
+              className={`cursor-pointer flex-row items-center justify-between px-4 py-4 ${
+                isLast ? "" : "border-b border-white/5"
+              }`}
             >
-              <View style={styles.listRowLeft}>
-                <View style={styles.iconBubble}>
-                  <Icon color="#e4e4e7" size={18} />
+              <View className="flex-row items-center gap-3">
+                <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
+                  <Icon color="#e4e4e7" size={16} />
                 </View>
-                <Text style={styles.listRowText}>{item.label}</Text>
+                <Text className="text-sm font-semibold text-zinc-100">{item.label}</Text>
               </View>
               <ChevronRight color="#71717a" size={18} />
             </Pressable>
@@ -167,44 +217,46 @@ export default function SettingsScreen() {
         })}
       </View>
 
-      <Text style={styles.sectionLabel}>Danger Zone</Text>
-      <View style={styles.dangerCard}>
-        <Pressable onPress={handleRestore} style={[styles.dangerRow, styles.pointer]}>
-          <View style={styles.listRowLeft}>
-            <View style={styles.iconBubbleMuted}>
-              <RefreshCcw color="#f4f4f5" size={16} />
+      <View className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950">
+        <Pressable onPress={handleRestore} className="cursor-pointer px-4 py-4">
+          <View className="flex-row items-center gap-3">
+            <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
+              <RefreshCcw color="#e4e4e7" size={16} />
             </View>
-            <Text style={styles.dangerText}>Restore Purchase</Text>
+            <Text className="text-sm font-semibold text-zinc-100">Restore Purchase</Text>
           </View>
         </Pressable>
 
-        <View style={styles.divider} />
+        <View className="h-px bg-white/5" />
 
-        <View style={styles.dangerRow}>
-          <View style={styles.listRowLeft}>
-            <View style={styles.iconBubbleMuted}>
-              <User color="#f4f4f5" size={16} />
+        <View className="flex-row items-center justify-between px-4 py-4">
+          <View className="flex-row items-center gap-3">
+            <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
+              <Shield color="#e4e4e7" size={16} />
             </View>
             <View>
-              <Text style={styles.dangerText}>User ID</Text>
-              <Text selectable style={styles.userIdText}>
-                {user?.id ?? "Guest"}
+              <Text className="text-sm font-semibold text-zinc-100">User ID</Text>
+              <Text selectable className="mt-1 text-xs text-zinc-500">
+                {user?.id ?? "eRBJziTFTy6tMa..."}
               </Text>
             </View>
           </View>
-          <Pressable onPress={handleCopyId} style={[styles.copyButton, styles.pointer]} disabled={!user?.id}>
-            <Text style={styles.copyButtonText}>Copy</Text>
+          <Pressable
+            onPress={handleCopyId}
+            className="cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-white/10"
+          >
+            <Copy color="#e4e4e7" size={14} />
           </Pressable>
         </View>
 
-        <View style={styles.divider} />
+        <View className="h-px bg-white/5" />
 
-        <Pressable onPress={handleDelete} style={[styles.dangerRow, styles.pointer]}>
-          <View style={styles.listRowLeft}>
-            <View style={styles.iconBubbleDanger}>
-              <Trash2 color="#fef2f2" size={16} />
+        <Pressable onPress={handleDelete} className="cursor-pointer px-4 py-4">
+          <View className="flex-row items-center gap-3">
+            <View className="h-8 w-8 items-center justify-center rounded-full bg-rose-500/20">
+              <Trash2 color="#fee2e2" size={16} />
             </View>
-            <Text style={styles.dangerText}>Delete Account</Text>
+            <Text className="text-sm font-semibold text-zinc-100">Delete Information</Text>
           </View>
         </Pressable>
       </View>
@@ -212,184 +264,6 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#09090b",
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 120,
-  },
-  title: {
-    color: "#f8fafc",
-    fontSize: 28,
-    fontWeight: "700",
-  },
-  subtitle: {
-    color: "#a1a1aa",
-    marginTop: 6,
-    fontSize: 14,
-  },
-  statusCard: {
-    marginTop: 20,
-    borderRadius: 24,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    backgroundColor: "rgba(24, 24, 27, 0.9)",
-    padding: 18,
-    gap: 12,
-  },
-  statusHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  statusLabel: {
-    color: "#f8fafc",
-    fontWeight: "700",
-    fontSize: 16,
-  },
-  statusHint: {
-    color: "#a1a1aa",
-    fontSize: 13,
-  },
-  bullets: {
-    gap: 8,
-  },
-  bulletRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  bulletDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#22d3ee",
-  },
-  bulletText: {
-    color: "#e4e4e7",
-    fontSize: 13,
-  },
-  primaryButton: {
-    marginTop: 6,
-    borderRadius: 16,
-    backgroundColor: "#22d3ee",
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  primaryButtonText: {
-    color: "#0f172a",
-    fontWeight: "700",
-    fontSize: 14,
-  },
-  listCard: {
-    marginTop: 18,
-    borderRadius: 22,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    backgroundColor: "rgba(24, 24, 27, 0.85)",
-  },
-  listRow: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.08)",
-  },
-  listRowLast: {
-    borderBottomWidth: 0,
-  },
-  listRowLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  listRowText: {
-    color: "#e4e4e7",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  iconBubble: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sectionLabel: {
-    marginTop: 20,
-    color: "#f4f4f5",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  dangerCard: {
-    marginTop: 12,
-    borderRadius: 22,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    borderColor: "rgba(244, 63, 94, 0.3)",
-    backgroundColor: "rgba(24, 24, 27, 0.9)",
-    overflow: "hidden",
-  },
-  dangerRow: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-  },
-  dangerText: {
-    color: "#f4f4f5",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  userIdText: {
-    color: "#71717a",
-    fontSize: 12,
-    marginTop: 2,
-  },
-  iconBubbleMuted: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: "rgba(255, 255, 255, 0.06)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconBubbleDanger: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: "rgba(244, 63, 94, 0.25)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  copyButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
-  },
-  copyButtonText: {
-    color: "#e4e4e7",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  pointer: {
-    cursor: "pointer",
-  },
-});
+
+
 

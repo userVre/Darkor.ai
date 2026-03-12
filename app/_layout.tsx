@@ -1,4 +1,4 @@
-﻿import "react-native-gesture-handler";
+import "react-native-gesture-handler";
 import "react-native-reanimated";
 import "../lib/nativewind";
 import "../global.css";
@@ -95,7 +95,7 @@ export default function RootLayout() {
           <Stack
             screenOptions={{
               headerShown: false,
-              contentStyle: { backgroundColor: "#09090b" },
+              contentStyle: { backgroundColor: "#000000" },
               animation: "fade",
             }}
           >
@@ -108,5 +108,6 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
 
 
