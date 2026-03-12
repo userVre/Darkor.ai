@@ -1,35 +1,46 @@
 {
-    "expo":  {
-                 "name":  "Darkor.ai",
-                 "slug":  "darkor-ai",
-                 "scheme":  "darkorai",
-                 "version":  "1.0.0",
-                 "orientation":  "portrait",
-                 "userInterfaceStyle":  "dark",
-                 "platforms":  [
-                                   "ios",
-                                   "android"
-                               ],
-                 "ios":  {
-                             "supportsTablet":  true,
-                             "bundleIdentifier":  "com.darkor.ai"
-                         },
-                 "android":  {
-                                 "package":  "com.darkor.ai"
-                             },
-                 "plugins":  [
-                                 "expo-router",
-                                 "expo-secure-store",
-                                 [
-                                     "expo-image-picker",
-                                     {
-                                         "photosPermission":  "Darkor.ai needs access to your photos so you can upload room images.",
-                                         "cameraPermission":  "Darkor.ai needs camera access so you can capture a room before redesign."
-                                     }
-                                 ]
-                             ],
-                 "experiments":  {
-                                     "typedRoutes":  true
-                                 }
-             }
+  "expo": {
+    "name": "Darkor.ai",
+    "slug": "darkor-ai",
+    "scheme": "darkorai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/logo.png",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.darkor.ai",
+      "icon": "./assets/logo.png"
+    },
+    "android": {
+      "package": "com.darkor.ai",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#000000"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Darkor.ai needs access to your photos so you can upload room images.",
+          "cameraPermission": "Darkor.ai needs camera access so you can capture a room before redesign."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
 }

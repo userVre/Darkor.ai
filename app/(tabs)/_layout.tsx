@@ -1,5 +1,7 @@
 import { Tabs } from "expo-router";
-import { CreditCard, GalleryHorizontalEnd, House, Sparkles } from "lucide-react-native";
+import { CreditCard, GalleryHorizontalEnd, Sparkles } from "lucide-react-native";
+
+import Logo from "../../components/logo";
 
 export default function TabsLayout() {
   return (
@@ -21,7 +23,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, size }) => <House color={color} size={size} />,
+          tabBarIcon: ({ focused }) => <Logo size={focused ? 22 : 20} />,
         }}
       />
       <Tabs.Screen

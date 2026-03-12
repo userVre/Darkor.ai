@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { useAnimatedScrollHandler, useSharedValue } from "react-native-reanimated";
 
 import ComparisonGrid from "../../components/comparison-grid";
+import Logo from "../../components/logo";
 import ScrollReveal from "../../components/scroll-reveal";
 import WallOfLove from "../../components/wall-of-love";
 import { getPriceId, PLAN_PRICING, planTitle, type BillingCycle, type PlanKey } from "../../lib/pricing";
@@ -95,7 +96,7 @@ export default function HomeScreen() {
     >
       <ScrollReveal scrollY={scrollY}>
         <View className="px-5 pt-10">
-          <Text className="text-xs uppercase tracking-[3px] text-cyan-300">Darkor.ai</Text>
+          <Logo width={44} height={44} />
           <Text className="mt-3 text-4xl font-bold leading-tight text-zinc-100">AI staging that sells faster.</Text>
           <Text className="mt-3 text-base text-zinc-400">
             Native mobile studio for before/after redesigns, gallery history, and one-tap billing.
@@ -193,6 +194,12 @@ export default function HomeScreen() {
           ))}
         </View>
       </ScrollReveal>
+
+      <ScrollReveal scrollY={scrollY}>
+        <View style={styles.footerBrand}>
+          <Logo size={56} />
+        </View>
+      </ScrollReveal>
     </Animated.ScrollView>
   );
 }
@@ -211,6 +218,11 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
     elevation: 12,
+  },
+  footerBrand: {
+    paddingHorizontal: 20,
+    paddingVertical: 32,
+    alignItems: "center",
   },
   glowCta: {
     shadowColor: "#22d3ee",
