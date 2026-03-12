@@ -1,6 +1,5 @@
 import { useAuth, useUser } from "@clerk/expo";
 import { useQuery } from "convex/react";
-import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
@@ -87,10 +86,9 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleCopyId = async () => {
+  const handleCopyId = () => {
     if (!user?.id) return;
-    await Clipboard.setStringAsync(user.id);
-    Alert.alert("Copied", "User ID copied to clipboard.");
+    Alert.alert("Copy User ID", "Tap and hold your User ID to select and copy it.");
   };
 
   const handleRestore = () => {
