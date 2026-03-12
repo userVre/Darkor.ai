@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
 import { useEffect, useMemo, useState } from "react";
@@ -15,25 +16,27 @@ import {
 import {
   ArrowLeft,
   Download,
+  Info,
   Paintbrush,
   RefreshCcw,
   Share2,
   Sparkles,
   SwatchBook,
+  Trash2,
 } from "lucide-react-native";
+import { BlurView } from "expo-blur";
 
-const ROOM_OPTIONS = [
-  "Living Room",
-  "Bedroom",
-  "Kitchen",
-  "Bathroom",
-  "Office",
-  "Dining Room",
-  "Kids Room",
-  "Outdoor",
-  "Studio",
-  "Loft",
+const EXAMPLE_PHOTOS = [
+  "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1502005097973-6a7082348e28?auto=format&fit=crop&w=1200&q=80",
 ];
+
+const ROOM_OPTIONS = {
+  interior: ["Living Room", "Bedroom", "Kitchen", "Bathroom", "Home Office", "Dining Room"],
+  exterior: ["House", "Apartment", "Office Building", "Villa", "Retail"],
+  garden: ["Backyard", "Front Yard", "Patio", "Balcony"],
+} as const;
 
 const STYLE_OPTIONS = [
   "Modern",
@@ -63,80 +66,146 @@ const STYLE_OPTIONS = [
 ];
 
 const PALETTE_OPTIONS = [
-  { id: "surprise", label: "Surprise Me", colors: ["#f8fafc", "#111827"] },
-  { id: "gray", label: "Millennial Gray", colors: ["#d1d5db", "#6b7280"] },
-  { id: "sunset", label: "Neon Sunset", colors: ["#fb7185", "#f59e0b"] },
-  { id: "oasis", label: "Coastal Fog", colors: ["#bae6fd", "#0ea5e9"] },
-  { id: "luxe", label: "Midnight Luxe", colors: ["#0f172a", "#22d3ee"] },
-  { id: "sage", label: "Sage Calm", colors: ["#a7f3d0", "#0f766e"] },
-  { id: "sand", label: "Warm Sand", colors: ["#fbbf24", "#f97316"] },
-  { id: "mono", label: "Monochrome", colors: ["#e4e4e7", "#18181b"] },
+  { id: "surprise", label: "Surprise Me", colors: ["#f8fafc", "#0f172a", "#22d3ee"] },
+  { id: "gray", label: "Millennial Gray", colors: ["#d1d5db", "#9ca3af", "#6b7280"] },
+  { id: "sunset", label: "Neon Sunset", colors: ["#fb7185", "#f59e0b", "#f97316"] },
+  { id: "emerald", label: "Emerald Gem", colors: ["#34d399", "#10b981", "#065f46"] },
+  { id: "oasis", label: "Coastal Fog", colors: ["#bae6fd", "#38bdf8", "#0ea5e9"] },
+  { id: "luxe", label: "Midnight Luxe", colors: ["#0f172a", "#111827", "#22d3ee"] },
+  { id: "sage", label: "Sage Calm", colors: ["#a7f3d0", "#34d399", "#0f766e"] },
+  { id: "sand", label: "Warm Sand", colors: ["#fbbf24", "#f59e0b", "#f97316"] },
+  { id: "mono", label: "Monochrome", colors: ["#e4e4e7", "#71717a", "#18181b"] },
 ];
 
 const SERVICE_LABELS: Record<string, string> = {
-  "media-wall": "Media Wall Design",
-  facade: "Architectural Facade",
-  garden: "Designer Sanctuary",
-  floor: "Instant Floor Refresh",
-  paint: "Smart Wall Paint",
-  "master-suite": "Interior Masterpiece",
+  interior: "Interior Redesign",
+  exterior: "Exterior Redesign",
+  garden: "Garden Redesign",
+  floor: "Floor Restyle",
+  paint: "Wall Paint",
+  reference: "Reference Match",
 };
 
-const inputImage = require("../assets/media/empty-room.jpg");
-const resultImage = require("../assets/media/after-luxury.jpg");
+const mockResult = require("../assets/media/after-luxury.jpg");
 
 export default function WizardScreen() {
   const router = useRouter();
   const { service } = useLocalSearchParams<{ service?: string }>();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
 
-  const [step, setStep] = useState(0);
+  const [workflowStep, setWorkflowStep] = useState(0);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedPalette, setSelectedPalette] = useState<string | null>(null);
+  const [compareBefore, setCompareBefore] = useState(false);
 
-  const columns = width > 420 ? 3 : 2;
-  const serviceLabel = service ? SERVICE_LABELS[String(service)] ?? "Redesign" : "Redesign";
+  const serviceKey = String(service ?? "interior").toLowerCase();
+  const serviceType = useMemo(() => {
+    if (serviceKey.includes("facade") || serviceKey.includes("exterior")) return "exterior";
+    if (serviceKey.includes("garden")) return "garden";
+    if (serviceKey.includes("floor")) return "floor";
+    if (serviceKey.includes("paint")) return "paint";
+    if (serviceKey.includes("reference")) return "reference";
+    return "interior";
+  }, [serviceKey]);
+
+  const heading = serviceType === "exterior" ? "Choose Building Type" : serviceType === "garden" ? "Choose Outdoor Space" : "Choose Room Type";
+
+  const buildingOptions = useMemo(() => {
+    if (serviceType === "exterior") return ROOM_OPTIONS.exterior;
+    if (serviceType === "garden") return ROOM_OPTIONS.garden;
+    return ROOM_OPTIONS.interior;
+  }, [serviceType]);
 
   useEffect(() => {
-    if (step === 3) {
-      const timer = setTimeout(() => setStep(4), 1600);
+    if (workflowStep === 4) {
+      const timer = setTimeout(() => setWorkflowStep(5), 3800);
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [step]);
+  }, [workflowStep]);
 
-  const progress = useMemo(() => {
-    const labels = ["Room", "Style", "Palette", "Processing", "Result"];
-    return labels.map((label, index) => ({ label, active: index <= step }));
-  }, [step]);
+  const openPicker = async (source: "camera" | "gallery") => {
+    if (source === "camera") {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert("Permission needed", "Camera access is required.");
+        return;
+      }
 
-  const handleNext = () => {
-    if (step === 0 && !selectedRoom) {
-      Alert.alert("Pick a room", "Select a room type to continue.");
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.9,
+      });
+
+      if (!result.canceled) {
+        setSelectedImage(result.assets[0].uri);
+      }
       return;
     }
-    if (step === 1 && !selectedStyle) {
-      Alert.alert("Pick a style", "Select a design style to continue.");
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission needed", "Photo library access is required.");
       return;
     }
-    if (step === 2 && !selectedPalette) {
-      Alert.alert("Pick a palette", "Select a color palette to continue.");
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.9,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
+
+  const handlePickPhoto = () => {
+    Alert.alert("Add Photo", "Choose a source", [
+      { text: "Camera", onPress: () => void openPicker("camera") },
+      { text: "Gallery", onPress: () => void openPicker("gallery") },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+
+  const canContinue = () => {
+    if (workflowStep === 0) return Boolean(selectedImage);
+    if (workflowStep === 1) return Boolean(selectedRoom);
+    if (workflowStep === 2) return Boolean(selectedStyle);
+    if (workflowStep === 3) return Boolean(selectedPalette);
+    return false;
+  };
+
+  const handleContinue = () => {
+    if (!canContinue()) {
+      Alert.alert("Complete this step", "Please make a selection to continue.");
       return;
     }
-    setStep((prev) => Math.min(prev + 1, 4));
+
+    if (workflowStep === 3) {
+      setWorkflowStep(4);
+      return;
+    }
+
+    setWorkflowStep((prev) => Math.min(prev + 1, 5));
   };
 
   const handleBack = () => {
-    if (step === 0) {
+    if (workflowStep === 0) {
       router.back();
       return;
     }
-    setStep((prev) => Math.max(prev - 1, 0));
+    if (workflowStep === 4) {
+      return;
+    }
+    setWorkflowStep((prev) => Math.max(prev - 1, 0));
   };
 
   const handlePrimaryAction = (label: string) => {
-    Alert.alert(label, "This action will trigger the editing tool (mock)." );
+    Alert.alert(label, "This tool will launch the editing workflow (mock)." );
   };
 
   const handleDownload = () => {
@@ -144,17 +213,20 @@ export default function WizardScreen() {
   };
 
   const handleShare = async () => {
-    await Share.share({ message: "Check out my Darkor.ai redesign!" });
+    await Share.share({ message: "Darkor.ai redesign ready." });
   };
 
-  const handleUpscale = () => {
-    Alert.alert("Upscale", "Upscale queued (mock)." );
+  const handleDelete = () => {
+    Alert.alert("Delete", "This removes the render from your workspace (mock)." );
   };
+
+  const label = SERVICE_LABELS[serviceType] ?? "Redesign";
+  const previewImage = compareBefore && selectedImage ? { uri: selectedImage } : mockResult;
 
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { minHeight: height }]}
       contentInsetAdjustmentBehavior="automatic"
     >
       <View style={styles.header}>
@@ -162,30 +234,49 @@ export default function WizardScreen() {
           <ArrowLeft color="#e4e4e7" size={18} />
         </Pressable>
         <View>
-          <Text style={styles.eyebrow}>Try It!</Text>
-          <Text style={styles.title}>{serviceLabel}</Text>
+          <Text style={styles.eyebrow}>Darkor.ai</Text>
+          <Text style={styles.title}>{label}</Text>
         </View>
       </View>
 
-      <View style={styles.progressRow}>
-        {progress.map((item) => (
-          <View key={item.label} style={[styles.progressPill, item.active && styles.progressPillActive]}>
-            <Text style={[styles.progressText, item.active && styles.progressTextActive]}>{item.label}</Text>
-          </View>
-        ))}
-      </View>
-
-      {step === 0 ? (
+      {workflowStep === 0 ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select a room type</Text>
+          <Text style={styles.sectionTitle}>Add a Photo</Text>
+          <Pressable onPress={handlePickPhoto} style={[styles.uploadCard, styles.pointer]}>
+            {selectedImage ? (
+              <Image source={{ uri: selectedImage }} style={styles.uploadPreview} contentFit="cover" />
+            ) : (
+              <View style={styles.uploadInner}>
+                <View style={styles.plusCircle}>
+                  <Text style={styles.plusText}>+</Text>
+                </View>
+                <Text style={styles.uploadText}>Upload from camera or gallery</Text>
+              </View>
+            )}
+          </Pressable>
+
+          <Text style={styles.caption}>Example Photos</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.examplesRow}>
+            {EXAMPLE_PHOTOS.map((uri) => (
+              <Pressable key={uri} onPress={() => setSelectedImage(uri)} style={[styles.exampleCard, styles.pointer]}>
+                <Image source={{ uri }} style={styles.exampleImage} contentFit="cover" />
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+
+      {workflowStep === 1 ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{heading}</Text>
           <View style={styles.grid}>
-            {ROOM_OPTIONS.map((room) => {
+            {buildingOptions.map((room) => {
               const active = selectedRoom === room;
               return (
                 <Pressable
                   key={room}
                   onPress={() => setSelectedRoom(room)}
-                  style={[styles.gridCard, active && styles.gridCardActive, styles.pointer, { width: `${100 / columns - 4}%` }]}
+                  style={[styles.gridCard, active && styles.gridCardActive, styles.pointer]}
                 >
                   <Text style={[styles.gridCardText, active && styles.gridCardTextActive]}>{room}</Text>
                 </Pressable>
@@ -195,18 +286,21 @@ export default function WizardScreen() {
         </View>
       ) : null}
 
-      {step === 1 ? (
+      {workflowStep === 2 ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pick a signature style</Text>
-          <View style={styles.grid}>
+          <Text style={styles.sectionTitle}>Select Style</Text>
+          <View style={styles.styleGrid}>
             {STYLE_OPTIONS.map((style) => {
               const active = selectedStyle === style;
               return (
                 <Pressable
                   key={style}
                   onPress={() => setSelectedStyle(style)}
-                  style={[styles.gridCard, active && styles.gridCardActive, styles.pointer, { width: `${100 / columns - 4}%` }]}
+                  style={[styles.styleCard, active && styles.gridCardActive, styles.pointer]}
                 >
+                  <View style={styles.styleThumb}>
+                    <Text style={styles.styleThumbText}>{style.slice(0, 1)}</Text>
+                  </View>
                   <Text style={[styles.gridCardText, active && styles.gridCardTextActive]}>{style}</Text>
                 </Pressable>
               );
@@ -215,17 +309,17 @@ export default function WizardScreen() {
         </View>
       ) : null}
 
-      {step === 2 ? (
+      {workflowStep === 3 ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Choose a color vibe</Text>
-          <View style={styles.grid}>
+          <Text style={styles.sectionTitle}>Choose Vibe</Text>
+          <View style={styles.paletteGrid}>
             {PALETTE_OPTIONS.map((palette) => {
               const active = selectedPalette === palette.id;
               return (
                 <Pressable
                   key={palette.id}
                   onPress={() => setSelectedPalette(palette.id)}
-                  style={[styles.paletteCard, active && styles.gridCardActive, styles.pointer, { width: `${100 / columns - 4}%` }]}
+                  style={[styles.paletteCard, active && styles.gridCardActive, styles.pointer]}
                 >
                   <View style={styles.paletteSwatches}>
                     {palette.colors.map((color) => (
@@ -240,27 +334,42 @@ export default function WizardScreen() {
         </View>
       ) : null}
 
-      {step === 3 ? (
-        <View style={styles.processingSection}>
+      {workflowStep === 4 ? (
+        <View style={styles.processingScreen}>
           <MotiView
             from={{ opacity: 0.8, scale: 0.96 }}
             animate={{ opacity: [0.8, 1, 0.8], scale: [0.96, 1, 0.96] }}
             transition={{ type: "timing", duration: 1600, loop: true }}
             style={styles.processingCard}
           >
-            <Image source={inputImage} style={styles.processingImage} contentFit="cover" />
+            <Image source={{ uri: selectedImage ?? EXAMPLE_PHOTOS[0] }} style={styles.processingImage} contentFit="cover" />
+            <MotiView
+              animate={{ opacity: [0.2, 0.6, 0.2], scale: [1, 1.08, 1] }}
+              transition={{ type: "timing", duration: 2000, loop: true }}
+              style={styles.processingRing}
+            />
           </MotiView>
           <Text style={styles.processingTitle}>Processing...</Text>
-          <Text style={styles.processingSubtitle}>Crafting a premium redesign in seconds.</Text>
+          <Text style={styles.processingSubtitle}>
+            Analyzing your space and applying {selectedStyle ?? "your"} style.
+          </Text>
         </View>
       ) : null}
 
-      {step === 4 ? (
+      {workflowStep === 5 ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your redesign is ready</Text>
-          <Image source={resultImage} style={styles.resultImage} contentFit="cover" />
+          <View style={styles.editorHeader}>
+            <Pressable onPress={() => Alert.alert("Info", "Render details coming soon.")} style={[styles.infoButton, styles.pointer]}>
+              <Info color="#e4e4e7" size={16} />
+            </Pressable>
+            <Pressable onPress={handleDelete} style={[styles.infoButton, styles.pointer]}>
+              <Trash2 color="#f87171" size={16} />
+            </Pressable>
+          </View>
 
-          <View style={styles.toolbar}>
+          <Image source={previewImage} style={styles.resultImage} contentFit="cover" />
+
+          <View style={styles.toolbarFloating}>
             <Pressable onPress={() => handlePrimaryAction("Replace")} style={[styles.toolbarButton, styles.pointer]}>
               <RefreshCcw color="#e4e4e7" size={16} />
               <Text style={styles.toolbarText}>Replace</Text>
@@ -284,23 +393,29 @@ export default function WizardScreen() {
               <Share2 color="#a1a1aa" size={16} />
               <Text style={styles.secondaryText}>Share</Text>
             </Pressable>
-            <Pressable onPress={handleUpscale} style={[styles.secondaryButton, styles.pointer]}>
+            <Pressable onPress={() => setCompareBefore((prev) => !prev)} style={[styles.secondaryButton, styles.pointer]}>
               <Sparkles color="#a1a1aa" size={16} />
-              <Text style={styles.secondaryText}>Upscale</Text>
+              <Text style={styles.secondaryText}>{compareBefore ? "After" : "Compare"}</Text>
             </Pressable>
           </View>
         </View>
       ) : null}
 
-      {step < 3 ? (
-        <View style={styles.footer}>
-          <Pressable onPress={handleBack} style={[styles.secondaryButton, styles.pointer]}>
-            <Text style={styles.secondaryText}>Back</Text>
+      {workflowStep <= 3 ? (
+        <BlurView intensity={30} tint="dark" style={styles.footer}>
+          <Pressable onPress={handleBack} style={[styles.footerButton, styles.pointer]}>
+            <Text style={styles.footerButtonText}>Back</Text>
           </Pressable>
-          <Pressable onPress={handleNext} style={[styles.primaryButton, styles.pointer]}>
-            <Text style={styles.primaryText}>{step === 2 ? "Generate" : "Next"}</Text>
+          <Pressable
+            onPress={handleContinue}
+            style={[styles.footerButtonPrimary, styles.pointer, !canContinue() && styles.footerButtonDisabled]}
+            disabled={!canContinue()}
+          >
+            <Text style={styles.footerPrimaryText}>
+              {workflowStep === 3 ? "? Generate Renders" : "Continue"}
+            </Text>
           </Pressable>
-        </View>
+        </BlurView>
       ) : null}
     </ScrollView>
   );
@@ -314,7 +429,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingTop: 30,
-    paddingBottom: 120,
+    paddingBottom: 140,
     gap: 16,
   },
   header: {
@@ -343,30 +458,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
   },
-  progressRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-  progressPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-  },
-  progressPillActive: {
-    backgroundColor: "rgba(34, 211, 238, 0.18)",
-    borderColor: "rgba(34, 211, 238, 0.6)",
-  },
-  progressText: {
-    color: "#71717a",
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  progressTextActive: {
-    color: "#e0f2fe",
-  },
   section: {
     gap: 14,
   },
@@ -375,12 +466,71 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
   },
+  uploadCard: {
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderStyle: "dashed",
+    backgroundColor: "rgba(24, 24, 27, 0.6)",
+    height: 220,
+    overflow: "hidden",
+  },
+  uploadInner: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  plusCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(34, 211, 238, 0.2)",
+    borderWidth: 1,
+    borderColor: "rgba(34, 211, 238, 0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  plusText: {
+    color: "#e0f2fe",
+    fontSize: 24,
+    fontWeight: "700",
+  },
+  uploadText: {
+    color: "#a1a1aa",
+    fontSize: 13,
+  },
+  uploadPreview: {
+    width: "100%",
+    height: "100%",
+  },
+  caption: {
+    color: "#a1a1aa",
+    fontSize: 12,
+  },
+  examplesRow: {
+    gap: 10,
+    paddingVertical: 4,
+  },
+  exampleCard: {
+    width: 120,
+    height: 84,
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  exampleImage: {
+    width: "100%",
+    height: "100%",
+  },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
   },
   gridCard: {
+    width: "48%",
     paddingVertical: 16,
     paddingHorizontal: 12,
     borderRadius: 16,
@@ -391,8 +541,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   gridCardActive: {
-    borderColor: "rgba(34, 211, 238, 0.8)",
-    backgroundColor: "rgba(34, 211, 238, 0.12)",
+    borderColor: "rgba(236, 72, 153, 0.8)",
+    backgroundColor: "rgba(236, 72, 153, 0.12)",
   },
   gridCardText: {
     color: "#d4d4d8",
@@ -401,29 +551,64 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   gridCardTextActive: {
-    color: "#e0f2fe",
+    color: "#fdf2f8",
   },
-  paletteCard: {
+  styleGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  styleCard: {
+    width: "48%",
     padding: 12,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.08)",
     backgroundColor: "rgba(24, 24, 27, 0.9)",
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
+  },
+  styleThumb: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  styleThumbText: {
+    color: "#a1a1aa",
+    fontWeight: "700",
+  },
+  paletteGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  paletteCard: {
+    width: "31%",
+    padding: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: "rgba(24, 24, 27, 0.9)",
+    gap: 8,
   },
   paletteSwatches: {
     flexDirection: "row",
-    gap: 6,
+    gap: 4,
   },
   paletteSwatch: {
     flex: 1,
-    height: 28,
-    borderRadius: 10,
+    height: 24,
+    borderRadius: 8,
   },
-  processingSection: {
+  processingScreen: {
     alignItems: "center",
-    gap: 14,
-    paddingVertical: 30,
+    justifyContent: "center",
+    gap: 16,
+    minHeight: 360,
   },
   processingCard: {
     width: 220,
@@ -432,10 +617,20 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.12)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   processingImage: {
     width: "100%",
     height: "100%",
+  },
+  processingRing: {
+    position: "absolute",
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    borderWidth: 2,
+    borderColor: "rgba(34, 211, 238, 0.5)",
   },
   processingTitle: {
     color: "#f8fafc",
@@ -447,6 +642,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: "center",
   },
+  editorHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  infoButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   resultImage: {
     width: "100%",
     height: 320,
@@ -454,7 +663,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.1)",
   },
-  toolbar: {
+  toolbarFloating: {
     marginTop: 16,
     flexDirection: "row",
     flexWrap: "wrap",
@@ -501,20 +710,41 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.12)",
+    padding: 14,
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 12,
-  },
-  primaryButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 16,
-    backgroundColor: "#22d3ee",
     alignItems: "center",
+    backgroundColor: "rgba(15, 23, 42, 0.55)",
+    overflow: "hidden",
   },
-  primaryText: {
+  footerButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.12)",
+  },
+  footerButtonText: {
+    color: "#e4e4e7",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  footerButtonPrimary: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    backgroundColor: "rgba(34, 211, 238, 0.85)",
+  },
+  footerPrimaryText: {
     color: "#0f172a",
+    fontSize: 12,
     fontWeight: "700",
+  },
+  footerButtonDisabled: {
+    opacity: 0.5,
   },
   pointer: {
     cursor: "pointer",
