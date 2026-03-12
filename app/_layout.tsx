@@ -1,4 +1,4 @@
-import "react-native-gesture-handler";
+﻿import "react-native-gesture-handler";
 import "react-native-reanimated";
 import "../lib/nativewind";
 import "../global.css";
@@ -70,7 +70,7 @@ export default function RootLayout() {
   const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL;
 
   useEffect(() => {
-    const timer = setTimeout(() => setAppReady(true), 900);
+    const timer = setTimeout(() => setAppReady(true), 2500);
     return () => clearTimeout(timer);
   }, []);
 

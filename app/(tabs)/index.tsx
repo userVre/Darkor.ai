@@ -1,64 +1,139 @@
-import { useAuth, useUser } from "@clerk/expo";
+﻿import { useAuth, useUser } from "@clerk/expo";
+import { useQuery } from "convex/react";
+import { Video, ResizeMode } from "expo-av";
+import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
-import { MotiImage } from "moti";
-import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, { useAnimatedScrollHandler, useSharedValue } from "react-native-reanimated";
+import { memo, useCallback, useMemo } from "react";
+import { Alert, FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 
-import ComparisonGrid from "../../components/comparison-grid";
 import Logo from "../../components/logo";
-import ScrollReveal from "../../components/scroll-reveal";
-import AiServices from "../../components/sections/ai-services";
-import WallOfLove from "../../components/wall-of-love";
-import { getPriceId, PLAN_PRICING, planTitle, type BillingCycle, type PlanKey } from "../../lib/pricing";
+import { getPriceId, type BillingCycle, type PlanKey } from "../../lib/pricing";
 import { openPolarCheckout } from "../../lib/polar";
 import { saveSubscriptionIntent } from "../../lib/subscription-intent";
 import HeroTransformation from "../_components/HeroTransformation";
-import OutdoorTransformation from "../_components/OutdoorTransformation";
 
-const media = {
-  sketch: require("../../assets/media/sketch.jpg"),
-  render: require("../../assets/media/render.jpg"),
-  stagingBefore: require("../../assets/media/staging-before.jpg"),
-  stagingAfter: require("../../assets/media/staging-after.jpg"),
+type MeResponse = {
+  plan: "free" | PlanKey;
+  credits: number;
 };
 
-const plans: PlanKey[] = ["pro", "premium", "ultra"];
+type ServiceCardData = {
+  id: string;
+  title: string;
+  cta: string;
+  video: number;
+  serviceParam: string;
+};
 
-export default function HomeScreen() {
-  const { isSignedIn } = useAuth();
-  const { user } = useUser();
-  const router = useRouter();
-  const [cycle, setCycle] = useState<BillingCycle>("monthly");
-  const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
-  const scrollY = useSharedValue(0);
+const SERVICE_CARDS: ServiceCardData[] = [
+  {
+    id: "media-room",
+    title: "Media Room Masterpiece",
+    cta: "Try it! ->",
+    video: require("../../assets/videos/media-wall.mp4"),
+    serviceParam: "interior",
+  },
+  {
+    id: "facade",
+    title: "Architectural Facade",
+    cta: "Try it! ->",
+    video: require("../../assets/videos/facade.mp4"),
+    serviceParam: "facade",
+  },
+  {
+    id: "garden",
+    title: "Designer Sanctuary",
+    cta: "Try it! ->",
+    video: require("../../assets/videos/garden.mp4"),
+    serviceParam: "garden",
+  },
+  {
+    id: "floor",
+    title: "Instant Floor Restyle",
+    cta: "Try it! ->",
+    video: require("../../assets/videos/floor.mp4"),
+    serviceParam: "floor",
+  },
+  {
+    id: "paint",
+    title: "Smart Wall Paint",
+    cta: "Try it! ->",
+    video: require("../../assets/videos/paint.mp4"),
+    serviceParam: "paint",
+  },
+  {
+    id: "bedroom",
+    title: "Interior Redesign",
+    cta: "Try it! ->",
+    video: require("../../assets/videos/master-suite.mp4"),
+    serviceParam: "interior-bedroom",
+  },
+];
 
-  const onScroll = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y;
+const CARD_GAP = 18;
+
+type ServiceCardProps = {
+  item: ServiceCardData;
+  height: number;
+  locked: boolean;
+  onPress: (item: ServiceCardData, locked: boolean) => void;
+};
+
+const ServiceCard = memo(function ServiceCard({ item, height, locked, onPress }: ServiceCardProps) {
+  const handlePress = useCallback(() => onPress(item, locked), [item, locked, onPress]);
+  const handleCtaPress = useCallback(
+    (event: { stopPropagation?: () => void }) => {
+      event.stopPropagation?.();
+      onPress(item, locked);
     },
-  });
-
-  const pricingCards = useMemo(
-    () =>
-      plans.map((plan) => {
-        const price = PLAN_PRICING[plan];
-        const current = cycle === "monthly" ? price.monthly : price.yearly;
-        return {
-          plan,
-          title: planTitle(plan),
-          current,
-          monthlyDisplay: cycle === "yearly" ? price.yearlyMonthlyDisplay : price.monthly,
-          credits: price.credits,
-          priceId: getPriceId(plan, cycle),
-        };
-      }),
-    [cycle],
+    [item, locked, onPress],
   );
 
-  const handleSubscribe = async (plan: PlanKey, priceId: string) => {
-    setLoadingPlan(plan);
-    const intent = { planName: plan, priceId, billingCycle: cycle };
+  return (
+    <Pressable onPress={handlePress} style={[styles.card, styles.pointer, { height }]}>
+      <Video
+        source={item.video}
+        style={styles.cardVideo}
+        shouldPlay
+        isLooping
+        isMuted
+        resizeMode={ResizeMode.COVER}
+      />
+
+      <BlurView intensity={60} tint="dark" style={styles.cardOverlay}>
+        <View style={styles.cardOverlayRow}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+          <Pressable onPress={handleCtaPress} style={[styles.cardButton, styles.pointer]}>
+            <Text style={styles.cardButtonText}>{item.cta}</Text>
+          </Pressable>
+        </View>
+      </BlurView>
+
+      {locked ? (
+        <View style={styles.lockBadge}>
+          <Text style={styles.lockText}>🔒</Text>
+        </View>
+      ) : null}
+    </Pressable>
+  );
+});
+
+export default function HomeScreen() {
+  const router = useRouter();
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
+  const { width } = useWindowDimensions();
+  const me = useQuery("users:me" as any, isSignedIn ? {} : "skip") as MeResponse | null | undefined;
+
+  const cardHeight = useMemo(() => Math.min(340, Math.round(width * 0.62)), [width]);
+  const plan = me?.plan && me.plan !== "free" ? me.plan : "free";
+  const shouldLock = plan === "pro";
+
+  const handleUpgrade = useCallback(async () => {
+    const billing: BillingCycle = "monthly";
+    const planName: PlanKey = "premium";
+    const priceId = getPriceId(planName, billing);
+    const intent = { planName, priceId, billingCycle: billing };
 
     try {
       if (!isSignedIn || !user?.id) {
@@ -69,176 +144,189 @@ export default function HomeScreen() {
 
       await openPolarCheckout(user.id, intent);
     } catch (error) {
-      console.error("Subscription flow failed", error);
-    } finally {
-      setLoadingPlan(null);
+      Alert.alert("Upgrade failed", "Please try again in a moment.");
     }
-  };
+  }, [isSignedIn, router, user?.id]);
 
-  const handleStart = () => {
-    if (isSignedIn) {
-      router.push("/workspace");
-      return;
-    }
-    router.push("/sign-up");
-  };
+  const promptUpgrade = useCallback(() => {
+    Alert.alert(
+      "Upgrade required",
+      "Upgrade your plan to unlock this experience.",
+      [
+        { text: "Not now", style: "cancel" },
+        { text: "Upgrade", onPress: () => void handleUpgrade() },
+      ],
+    );
+  }, [handleUpgrade]);
 
-  const handleLogin = () => {
-    router.push("/sign-in");
-  };
+  const handleServicePress = useCallback(
+    (item: ServiceCardData, locked: boolean) => {
+      if (locked) {
+        promptUpgrade();
+        return;
+      }
+      router.push({ pathname: "/workspace", params: { service: item.serviceParam } });
+    },
+    [promptUpgrade, router],
+  );
 
-  const handleServiceCta = (serviceId: string) => {
-    router.push({ pathname: "/workspace", params: { service: serviceId } });
-  };
+  const renderItem = useCallback(
+    ({ item, index }: { item: ServiceCardData; index: number }) => (
+      <View style={styles.cardWrap}>
+        <ServiceCard item={item} height={cardHeight} locked={shouldLock && index >= 3} onPress={handleServicePress} />
+      </View>
+    ),
+    [cardHeight, handleServicePress, shouldLock],
+  );
+
+  const keyExtractor = useCallback((item: ServiceCardData) => item.id, []);
+
+  const header = useMemo(
+    () => (
+      <View style={styles.headerWrap}>
+        <View style={styles.brandRow}>
+          <Logo width={36} height={36} />
+          <Text style={styles.brandTitle}>home ai</Text>
+        </View>
+        <Text style={styles.brandSubtitle}>Select a transformation and watch the room evolve.</Text>
+        <HeroTransformation compact />
+        <Text style={styles.sectionTitle}>Services</Text>
+      </View>
+    ),
+    [],
+  );
 
   return (
-    <Animated.ScrollView
+    <FlatList
       style={styles.screen}
       contentContainerStyle={styles.content}
-      onScroll={onScroll}
-      scrollEventThrottle={16}
+      data={SERVICE_CARDS}
+      keyExtractor={keyExtractor}
+      renderItem={renderItem}
+      ListHeaderComponent={header}
+      ItemSeparatorComponent={() => <View style={styles.cardSpacer} />}
       contentInsetAdjustmentBehavior="automatic"
-    >
-      <ScrollReveal scrollY={scrollY}>
-        <View className="px-5 pt-10">
-          <Logo width={44} height={44} />
-          <Text className="mt-3 text-4xl font-bold leading-tight text-zinc-100">AI staging that sells faster.</Text>
-          <Text className="mt-3 text-base text-zinc-400">
-            Native mobile studio for before/after redesigns, gallery history, and one-tap billing.
-          </Text>
-
-          <View className="mt-6 flex-row gap-3">
-            <Pressable onPress={handleStart} className="flex-1 rounded-2xl bg-cyan-400 px-4 py-4" style={[styles.glowCta, styles.pointer]}>
-              <Text className="text-center text-base font-semibold text-zinc-900">Start for Free</Text>
-            </Pressable>
-            <Pressable onPress={handleLogin} className="flex-1 rounded-2xl border border-white/15 px-4 py-4" style={styles.pointer}>
-              <Text className="text-center text-base font-semibold text-zinc-100">Login</Text>
-            </Pressable>
-          </View>
-        </View>
-      </ScrollReveal>
-
-      <ScrollReveal scrollY={scrollY}>
-        <HeroTransformation />
-      </ScrollReveal>
-
-      <ScrollReveal scrollY={scrollY}>
-        <View className="mt-6 px-5">
-          <OutdoorTransformation />
-        </View>
-      </ScrollReveal>
-
-      <ScrollReveal scrollY={scrollY}>
-        <View className="mt-6 gap-4 px-5">
-          <View className="rounded-3xl border border-white/10 bg-zinc-900 p-4" style={styles.cardGlow}>
-            <Text className="mb-3 text-base font-semibold text-zinc-100">Sketch2Image</Text>
-            <View className="flex-row gap-2">
-              <MotiImage source={media.sketch} className="h-36 flex-1 rounded-2xl border border-white/5" resizeMode="cover" />
-              <MotiImage source={media.render} className="h-36 flex-1 rounded-2xl border border-white/5" resizeMode="cover" />
-            </View>
-          </View>
-
-          <View className="rounded-3xl border border-white/10 bg-zinc-900 p-4" style={styles.cardGlow}>
-            <Text className="mb-3 text-base font-semibold text-zinc-100">Virtual Staging</Text>
-            <View className="flex-row gap-2">
-              <MotiImage source={media.stagingBefore} className="h-36 flex-1 rounded-2xl border border-white/5" resizeMode="cover" />
-              <MotiImage source={media.stagingAfter} className="h-36 flex-1 rounded-2xl border border-white/5" resizeMode="cover" />
-            </View>
-          </View>
-        </View>
-      </ScrollReveal>
-
-      <AiServices scrollY={scrollY} onCtaPress={handleServiceCta} />
-
-      <ScrollReveal scrollY={scrollY}>
-        <ComparisonGrid scrollY={scrollY} />
-      </ScrollReveal>
-
-      <ScrollReveal scrollY={scrollY}>
-        <WallOfLove />
-      </ScrollReveal>
-
-      <ScrollReveal scrollY={scrollY}>
-        <View className="mt-10 px-5">
-          <View className="mb-4 flex-row rounded-2xl border border-white/10 bg-zinc-900 p-1" style={styles.cardGlow}>
-            <Pressable
-              onPress={() => setCycle("monthly")}
-              className={`flex-1 rounded-xl px-4 py-3 ${cycle === "monthly" ? "bg-white" : "bg-transparent"}`}
-              style={styles.pointer}
-            >
-              <Text className={`text-center font-semibold ${cycle === "monthly" ? "text-zinc-900" : "text-zinc-300"}`}>
-                Monthly
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setCycle("yearly")}
-              className={`flex-1 rounded-xl px-4 py-3 ${cycle === "yearly" ? "bg-white" : "bg-transparent"}`}
-              style={styles.pointer}
-            >
-              <Text className={`text-center font-semibold ${cycle === "yearly" ? "text-zinc-900" : "text-zinc-300"}`}>
-                Yearly
-              </Text>
-            </Pressable>
-          </View>
-
-          {pricingCards.map((card) => (
-            <View key={card.plan} className="mb-3 rounded-3xl border border-white/10 bg-zinc-900 p-5" style={styles.cardGlow}>
-              <Text className="text-xl font-semibold text-zinc-100">{card.title}</Text>
-              <Text className="mt-2 text-zinc-400">{card.credits} monthly credits</Text>
-              <Text className="mt-4 text-3xl font-bold text-zinc-100">${card.current}</Text>
-              <Text className="text-zinc-400">
-                {cycle === "monthly" ? "/month" : `/year ($${card.monthlyDisplay.toFixed(2)}/mo)`}
-              </Text>
-
-              <Pressable
-                onPress={() => void handleSubscribe(card.plan, card.priceId)}
-                className="mt-4 rounded-2xl bg-cyan-400 px-4 py-4"
-                style={[styles.glowCta, styles.pointer]}
-              >
-                <Text className="text-center text-base font-semibold text-zinc-900">
-                  {loadingPlan === card.plan ? "Opening checkout..." : "Subscribe"}
-                </Text>
-              </Pressable>
-            </View>
-          ))}
-        </View>
-      </ScrollReveal>
-
-      <ScrollReveal scrollY={scrollY}>
-        <View style={styles.footerBrand}>
-          <Logo size={56} />
-        </View>
-      </ScrollReveal>
-    </Animated.ScrollView>
+      showsVerticalScrollIndicator={false}
+      removeClippedSubviews
+      windowSize={6}
+      initialNumToRender={3}
+      getItemLayout={(_, index) => ({
+        length: cardHeight + CARD_GAP,
+        offset: (cardHeight + CARD_GAP) * index,
+        index,
+      })}
+    />
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#09090b",
+    backgroundColor: "#f4f4f5",
   },
   content: {
-    paddingBottom: 140,
+    paddingBottom: 120,
   },
-  cardGlow: {
-    shadowColor: "#0ea5e9",
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 12,
-  },
-  footerBrand: {
+  headerWrap: {
     paddingHorizontal: 20,
-    paddingVertical: 32,
-    alignItems: "center",
+    paddingTop: 12,
+    paddingBottom: 12,
+    gap: 12,
   },
-  glowCta: {
-    shadowColor: "#22d3ee",
-    shadowOpacity: 0.28,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 16,
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  brandTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#0f172a",
+    letterSpacing: 0.6,
+  },
+  brandSubtitle: {
+    color: "#475569",
+    fontSize: 13,
+  },
+  sectionTitle: {
+    marginTop: 6,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#0f172a",
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+  },
+  cardWrap: {
+    paddingHorizontal: 20,
+  },
+  cardSpacer: {
+    height: CARD_GAP,
+  },
+  card: {
+    borderRadius: 24,
+    borderCurve: "continuous",
+    overflow: "hidden",
+    backgroundColor: "#0f172a",
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.08)",
+    boxShadow: "0 28px 60px rgba(15, 23, 42, 0.18)",
+  },
+  cardVideo: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
+  },
+  cardOverlay: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    bottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+    backgroundColor: "rgba(6, 10, 18, 0.45)",
+  },
+  cardOverlayRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  cardTitle: {
+    color: "#f8fafc",
+    fontSize: 16,
+    fontWeight: "700",
+    flex: 1,
+  },
+  cardButton: {
+    borderRadius: 999,
+    backgroundColor: "#f8fafc",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    boxShadow: "0 10px 20px rgba(15, 23, 42, 0.35)",
+  },
+  cardButtonText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
+  lockBadge: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "rgba(15, 23, 42, 0.7)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+  },
+  lockText: {
+    color: "#f8fafc",
+    fontSize: 12,
+    fontWeight: "700",
   },
   pointer: {
     cursor: "pointer",
