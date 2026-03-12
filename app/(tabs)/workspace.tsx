@@ -102,7 +102,7 @@ const SERVICE_LABELS: Record<string, string> = {
   reference: "Reference Match",
 };
 
-const mockResult = require("../assets/media/after-luxury.jpg");
+const mockResult = require("../../assets/media/after-luxury.jpg");
 
 export default function WorkspaceScreen() {
   const router = useRouter();
