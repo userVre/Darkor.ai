@@ -88,7 +88,7 @@ export default function HomeScreen() {
   };
 
   const handleServiceCta = (serviceId: string) => {
-    router.push({ pathname: "/wizard", params: { service: serviceId } });
+    router.push({ pathname: "/workspace", params: { service: serviceId } });
   };
 
   return (
@@ -108,10 +108,10 @@ export default function HomeScreen() {
           </Text>
 
           <View className="mt-6 flex-row gap-3">
-            <Pressable onPress={handleStart} className="flex-1 rounded-2xl bg-cyan-400 px-4 py-4" style={styles.glowCta}>
+            <Pressable onPress={handleStart} className="flex-1 rounded-2xl bg-cyan-400 px-4 py-4" style={[styles.glowCta, styles.pointer]}>
               <Text className="text-center text-base font-semibold text-zinc-900">Start for Free</Text>
             </Pressable>
-            <Pressable onPress={handleLogin} className="flex-1 rounded-2xl border border-white/15 px-4 py-4">
+            <Pressable onPress={handleLogin} className="flex-1 rounded-2xl border border-white/15 px-4 py-4" style={styles.pointer}>
               <Text className="text-center text-base font-semibold text-zinc-100">Login</Text>
             </Pressable>
           </View>
@@ -164,6 +164,7 @@ export default function HomeScreen() {
             <Pressable
               onPress={() => setCycle("monthly")}
               className={`flex-1 rounded-xl px-4 py-3 ${cycle === "monthly" ? "bg-white" : "bg-transparent"}`}
+              style={styles.pointer}
             >
               <Text className={`text-center font-semibold ${cycle === "monthly" ? "text-zinc-900" : "text-zinc-300"}`}>
                 Monthly
@@ -172,6 +173,7 @@ export default function HomeScreen() {
             <Pressable
               onPress={() => setCycle("yearly")}
               className={`flex-1 rounded-xl px-4 py-3 ${cycle === "yearly" ? "bg-white" : "bg-transparent"}`}
+              style={styles.pointer}
             >
               <Text className={`text-center font-semibold ${cycle === "yearly" ? "text-zinc-900" : "text-zinc-300"}`}>
                 Yearly
@@ -191,7 +193,7 @@ export default function HomeScreen() {
               <Pressable
                 onPress={() => void handleSubscribe(card.plan, card.priceId)}
                 className="mt-4 rounded-2xl bg-cyan-400 px-4 py-4"
-                style={styles.glowCta}
+                style={[styles.glowCta, styles.pointer]}
               >
                 <Text className="text-center text-base font-semibold text-zinc-900">
                   {loadingPlan === card.plan ? "Opening checkout..." : "Subscribe"}
@@ -238,6 +240,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 16,
   },
+  pointer: {
+    cursor: "pointer",
+  },
 });
-
-

@@ -50,7 +50,7 @@ export default function SignInScreen() {
         onChangeText={setPassword}
       />
 
-      <Pressable onPress={() => void handleSignIn()} className="mt-4 rounded-2xl bg-cyan-400 p-4" disabled={loading}>
+      <Pressable onPress={() => void handleSignIn()} className="mt-4 rounded-2xl bg-cyan-400 p-4" style={{ cursor: "pointer" }} disabled={loading}>
         <Text className="text-center font-semibold text-zinc-900">{loading ? "Signing in..." : "Continue"}</Text>
       </Pressable>
 

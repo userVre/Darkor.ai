@@ -104,7 +104,7 @@ function TestimonialCard({ testimonial, delay }: TestimonialCardProps) {
   const radius = 20;
 
   return (
-    <Pressable onPressIn={() => setPressed(true)} onPressOut={() => setPressed(false)}>
+    <Pressable onPressIn={() => setPressed(true)} onPressOut={() => setPressed(false)} style={styles.pointer}>
       <MotiView
         onLayout={(event) => setLayout(event.nativeEvent.layout)}
         from={{ opacity: 0, translateY: 14 }}
@@ -120,7 +120,7 @@ function TestimonialCard({ testimonial, delay }: TestimonialCardProps) {
           gradientId={gradientId}
         />
         <Text style={styles.stars}>?????</Text>
-        <Text style={styles.quote}>“{testimonial.quote}”</Text>
+        <Text style={styles.quote}>ï¿½{testimonial.quote}ï¿½</Text>
         <View style={styles.profileRow}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{testimonial.initials}</Text>
@@ -245,5 +245,9 @@ const styles = StyleSheet.create({
   role: {
     color: "#a1a1aa",
     fontSize: 12,
+  },
+
+  pointer: {
+    cursor: "pointer",
   },
 });

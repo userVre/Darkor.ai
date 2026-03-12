@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image } from "expo-image";
+import { Pressable, Text, View } from "react-native";
 
 type StyleItem = {
   id: string;
@@ -203,7 +204,7 @@ export default function StyleGallery() {
             key={style.id}
             className="mb-4 w-[48%] overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/60"
           >
-            <Image source={{ uri: style.image }} className="h-32 w-full" resizeMode="cover" />
+            <Image source={{ uri: style.image }} style={{ height: 128, width: "100%" }} contentFit="cover" />
             <View className="p-4">
               <Text className="text-base font-bold text-white">{style.title}</Text>
               <Text className="mt-1 text-sm text-zinc-400">{style.description}</Text>
@@ -216,6 +217,7 @@ export default function StyleGallery() {
         <Pressable
           onPress={() => setExpanded((prev) => !prev)}
           className="rounded-xl border border-white/20 bg-white/5 px-5 py-2.5"
+          style={{ cursor: "pointer" }}
         >
           <Text className="text-sm font-semibold text-zinc-100">{expanded ? "Show less" : "View all styles"}</Text>
         </Pressable>

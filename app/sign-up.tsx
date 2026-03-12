@@ -47,7 +47,7 @@ export default function SignUpScreen() {
         onChangeText={setPassword}
       />
 
-      <Pressable onPress={() => void handleSignUp()} className="mt-4 rounded-2xl bg-cyan-400 p-4" disabled={loading}>
+      <Pressable onPress={() => void handleSignUp()} className="mt-4 rounded-2xl bg-cyan-400 p-4" style={{ cursor: "pointer" }} disabled={loading}>
         <Text className="text-center font-semibold text-zinc-900">{loading ? "Creating..." : "Create account"}</Text>
       </Pressable>
 

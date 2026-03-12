@@ -114,7 +114,7 @@ function ComparisonCard({ data, index, visible }: ComparisonCardProps) {
   const ringVisible = data.winner === true;
 
   return (
-    <Pressable onPressIn={() => setPressed(true)} onPressOut={() => setPressed(false)}>
+    <Pressable onPressIn={() => setPressed(true)} onPressOut={() => setPressed(false)} style={styles.pointer}>
       <MotiView
         from={{ opacity: 0, translateY: 16 }}
         animate={{
@@ -329,6 +329,10 @@ const styles = StyleSheet.create({
   featureText: {
     color: "#d4d4d8",
     fontSize: 12,
+  },
+
+  pointer: {
+    cursor: "pointer",
   },
 });
 
