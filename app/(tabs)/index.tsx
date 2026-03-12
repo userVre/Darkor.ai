@@ -1,6 +1,6 @@
 ﻿import { useAuth, useUser } from "@clerk/expo";
 import { useQuery } from "convex/react";
-import { Video, ResizeMode } from "expo-av";
+import { VideoView, useVideoPlayer } from "expo-video";
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import { memo, useCallback, useMemo } from "react";
@@ -80,6 +80,14 @@ type ServiceCardProps = {
 };
 
 const ServiceCard = memo(function ServiceCard({ item, height, locked, onPress }: ServiceCardProps) {
+  const player = useVideoPlayer(item.video, (playerInstance) => {
+    playerInstance.loop = true;
+    playerInstance.muted = true;
+    playerInstance.volume = 0;
+    playerInstance.timeUpdateEventInterval = 0;
+    playerInstance.play();
+  });
+
   const handlePress = useCallback(() => onPress(item, locked), [item, locked, onPress]);
   const handleCtaPress = useCallback(
     (event: { stopPropagation?: () => void }) => {
@@ -91,13 +99,12 @@ const ServiceCard = memo(function ServiceCard({ item, height, locked, onPress }:
 
   return (
     <Pressable onPress={handlePress} style={[styles.card, styles.pointer, { height }]}>
-      <Video
-        source={item.video}
+      <VideoView
+        player={player}
         style={styles.cardVideo}
-        shouldPlay
-        isLooping
-        isMuted
-        resizeMode={ResizeMode.COVER}
+        contentFit="cover"
+        nativeControls={false}
+        pointerEvents="none"
       />
 
       <BlurView intensity={60} tint="dark" style={styles.cardOverlay}>
