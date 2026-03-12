@@ -77,6 +77,9 @@ const PALETTE_OPTIONS = [
   { id: "mono", label: "Monochrome", colors: ["#e4e4e7", "#71717a", "#18181b"] },
 ];
 
+const PAINT_SWATCHES = ["#f5f5f4", "#cbd5e1", "#a7f3d0", "#c4b5fd", "#fbbf24", "#f472b6"];
+const FLOOR_TEXTURES = ["Warm Oak", "Dark Walnut", "Polished Marble", "Concrete", "Terrazzo"];
+
 const SERVICE_LABELS: Record<string, string> = {
   interior: "Interior Redesign",
   exterior: "Exterior Redesign",
@@ -91,7 +94,7 @@ const mockResult = require("../assets/media/after-luxury.jpg");
 export default function WizardScreen() {
   const router = useRouter();
   const { service } = useLocalSearchParams<{ service?: string }>();
-  const { width, height } = useWindowDimensions();
+  const { height } = useWindowDimensions();
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -99,6 +102,9 @@ export default function WizardScreen() {
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedPalette, setSelectedPalette] = useState<string | null>(null);
   const [compareBefore, setCompareBefore] = useState(false);
+  const [editorPanel, setEditorPanel] = useState<"none" | "paint" | "floor">("none");
+  const [selectedPaint, setSelectedPaint] = useState<string | null>(null);
+  const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
 
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = useMemo(() => {
@@ -125,6 +131,18 @@ export default function WizardScreen() {
     }
     return undefined;
   }, [workflowStep]);
+
+  const resetFlow = () => {
+    setWorkflowStep(0);
+    setSelectedImage(null);
+    setSelectedRoom(null);
+    setSelectedStyle(null);
+    setSelectedPalette(null);
+    setCompareBefore(false);
+    setEditorPanel("none");
+    setSelectedPaint(null);
+    setSelectedFloor(null);
+  };
 
   const openPicker = async (source: "camera" | "gallery") => {
     if (source === "camera") {
@@ -204,10 +222,6 @@ export default function WizardScreen() {
     setWorkflowStep((prev) => Math.max(prev - 1, 0));
   };
 
-  const handlePrimaryAction = (label: string) => {
-    Alert.alert(label, "This tool will launch the editing workflow (mock)." );
-  };
-
   const handleDownload = () => {
     Alert.alert("Download", "Saved to your gallery (mock)." );
   };
@@ -218,6 +232,24 @@ export default function WizardScreen() {
 
   const handleDelete = () => {
     Alert.alert("Delete", "This removes the render from your workspace (mock)." );
+  };
+
+  const handleApplyPaint = () => {
+    if (!selectedPaint) {
+      Alert.alert("Select a color", "Choose a paint swatch to apply.");
+      return;
+    }
+    Alert.alert("Paint applied", "Your wall color update is ready (mock)." );
+    setEditorPanel("none");
+  };
+
+  const handleApplyFloor = () => {
+    if (!selectedFloor) {
+      Alert.alert("Select a floor", "Choose a flooring texture to apply.");
+      return;
+    }
+    Alert.alert("Floor applied", "Your flooring update is ready (mock)." );
+    setEditorPanel("none");
   };
 
   const label = SERVICE_LABELS[serviceType] ?? "Redesign";
@@ -370,19 +402,54 @@ export default function WizardScreen() {
           <Image source={previewImage} style={styles.resultImage} contentFit="cover" />
 
           <View style={styles.toolbarFloating}>
-            <Pressable onPress={() => handlePrimaryAction("Replace")} style={[styles.toolbarButton, styles.pointer]}>
+            <Pressable onPress={resetFlow} style={[styles.toolbarButton, styles.pointer]}>
               <RefreshCcw color="#e4e4e7" size={16} />
               <Text style={styles.toolbarText}>Replace</Text>
             </Pressable>
-            <Pressable onPress={() => handlePrimaryAction("Paint")} style={[styles.toolbarButton, styles.pointer]}>
+            <Pressable onPress={() => setEditorPanel("paint")} style={[styles.toolbarButton, styles.pointer]}>
               <Paintbrush color="#e4e4e7" size={16} />
               <Text style={styles.toolbarText}>Paint</Text>
             </Pressable>
-            <Pressable onPress={() => handlePrimaryAction("New Floor")} style={[styles.toolbarButton, styles.pointer]}>
+            <Pressable onPress={() => setEditorPanel("floor")} style={[styles.toolbarButton, styles.pointer]}>
               <SwatchBook color="#e4e4e7" size={16} />
               <Text style={styles.toolbarText}>New Floor</Text>
             </Pressable>
           </View>
+
+          {editorPanel !== "none" ? (
+            <View style={styles.editorPanel}>
+              <Text style={styles.sectionTitle}>{editorPanel === "paint" ? "Paint Walls" : "Choose Flooring"}</Text>
+              {editorPanel === "paint" ? (
+                <View style={styles.swatchRow}>
+                  {PAINT_SWATCHES.map((color) => (
+                    <Pressable
+                      key={color}
+                      onPress={() => setSelectedPaint(color)}
+                      style={[styles.paintSwatch, { backgroundColor: color }, selectedPaint === color && styles.paintSwatchActive, styles.pointer]}
+                    />
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.floorRow}>
+                  {FLOOR_TEXTURES.map((texture) => (
+                    <Pressable
+                      key={texture}
+                      onPress={() => setSelectedFloor(texture)}
+                      style={[styles.floorChip, selectedFloor === texture && styles.floorChipActive, styles.pointer]}
+                    >
+                      <Text style={[styles.floorChipText, selectedFloor === texture && styles.floorChipTextActive]}>{texture}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+              <Pressable
+                onPress={editorPanel === "paint" ? handleApplyPaint : handleApplyFloor}
+                style={[styles.footerButtonPrimary, styles.pointer]}
+              >
+                <Text style={styles.footerPrimaryText}>Apply</Text>
+              </Pressable>
+            </View>
+          ) : null}
 
           <View style={styles.secondaryRow}>
             <Pressable onPress={handleDownload} style={[styles.secondaryButton, styles.pointer]}>
@@ -685,6 +752,54 @@ const styles = StyleSheet.create({
   toolbarText: {
     color: "#e4e4e7",
     fontSize: 12,
+    fontWeight: "600",
+  },
+  editorPanel: {
+    marginTop: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.12)",
+    backgroundColor: "rgba(24, 24, 27, 0.95)",
+    padding: 14,
+    gap: 12,
+  },
+  swatchRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  paintSwatch: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  paintSwatchActive: {
+    borderColor: "#f472b6",
+  },
+  floorRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  floorChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.15)",
+  },
+  floorChipActive: {
+    borderColor: "rgba(236, 72, 153, 0.8)",
+    backgroundColor: "rgba(236, 72, 153, 0.12)",
+  },
+  floorChipText: {
+    color: "#d4d4d8",
+    fontSize: 12,
+  },
+  floorChipTextActive: {
+    color: "#fdf2f8",
     fontWeight: "600",
   },
   secondaryRow: {
