@@ -102,9 +102,11 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="sign-in" />
             <Stack.Screen name="sign-up" />
+            <Stack.Screen name="wizard" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           </Stack>
         </Providers>
       </ClerkProvider>
     </SafeAreaProvider>
   );
 }
+

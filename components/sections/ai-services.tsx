@@ -20,50 +20,49 @@ const SERVICE_CARDS: ServiceCard[] = [
     id: "media-wall",
     title: "Media Wall Design",
     subtitle: "Upgrade your living room with high-end integrated TV walls and designer furniture.",
-    cta: "Redesign Now ->",
+    cta: "Try It!",
     video: require("../../assets/videos/media-wall.mp4"),
   },
   {
     id: "facade",
     title: "Architectural Facade",
     subtitle: "Give your home a premium face-lift with modern materials and architectural lighting.",
-    cta: "Refine Facade ->",
+    cta: "Try It!",
     video: require("../../assets/videos/facade.mp4"),
   },
   {
     id: "garden",
     title: "Designer Sanctuary",
     subtitle: "Transform your backyard into a luxury outdoor retreat with professional landscaping.",
-    cta: "Create Oasis ->",
+    cta: "Try It!",
     video: require("../../assets/videos/garden.mp4"),
   },
   {
     id: "floor",
     title: "Instant Floor Refresh",
     subtitle: "Instantly visualize how different hardwood, marble, or stone flooring looks in your room.",
-    cta: "Swap Floor ->",
+    cta: "Try It!",
     video: require("../../assets/videos/floor.mp4"),
   },
   {
     id: "paint",
     title: "Smart Wall Paint",
     subtitle: "Test thousands of paint colors on your walls realistically without lifting a brush.",
-    cta: "Paint Walls ->",
+    cta: "Try It!",
     video: require("../../assets/videos/paint.mp4"),
   },
   {
     id: "master-suite",
     title: "Interior Masterpiece",
     subtitle: "Breathe new life into any room with AI-curated furniture and spatial optimization.",
-    cta: "Transform Room ->",
+    cta: "Try It!",
     video: require("../../assets/videos/master-suite.mp4"),
   },
 ];
 
 type AiServicesProps = {
   scrollY: SharedValue<number>;
-  onCtaPress: () => void;
-  loading?: boolean;
+  onCtaPress: (serviceId: string) => void;
 };
 
 type ServiceCardProps = {
@@ -71,11 +70,10 @@ type ServiceCardProps = {
   height: number;
   index: number;
   scrollY: SharedValue<number>;
-  onCtaPress: () => void;
-  loading: boolean;
+  onCtaPress: (serviceId: string) => void;
 };
 
-function ServiceCardView({ data, height, index, scrollY, onCtaPress, loading }: ServiceCardProps) {
+function ServiceCardView({ data, height, index, scrollY, onCtaPress }: ServiceCardProps) {
   const [pressed, setPressed] = useState(false);
   const player = useVideoPlayer(data.video, (instance) => {
     instance.loop = true;
@@ -88,6 +86,7 @@ function ServiceCardView({ data, height, index, scrollY, onCtaPress, loading }: 
       <Pressable
         onPressIn={() => setPressed(true)}
         onPressOut={() => setPressed(false)}
+        onPress={() => onCtaPress(data.id)}
         style={[styles.pressable, styles.pointer]}
       >
         <MotiView
@@ -110,12 +109,12 @@ function ServiceCardView({ data, height, index, scrollY, onCtaPress, loading }: 
               <Text style={styles.cardSubtitle}>{data.subtitle}</Text>
               <Pressable
                 accessibilityRole="button"
-                onPress={onCtaPress}
+                onPress={() => onCtaPress(data.id)}
                 onPressIn={() => setPressed(true)}
                 onPressOut={() => setPressed(false)}
                 style={[styles.ctaButton, styles.pointer]}
               >
-                <Text style={styles.ctaText}>{loading ? "Opening checkout..." : data.cta}</Text>
+                <Text style={styles.ctaText}>{data.cta}</Text>
               </Pressable>
             </View>
           </BlurView>
@@ -125,7 +124,7 @@ function ServiceCardView({ data, height, index, scrollY, onCtaPress, loading }: 
   );
 }
 
-export default function AiServices({ scrollY, onCtaPress, loading = false }: AiServicesProps) {
+export default function AiServices({ scrollY, onCtaPress }: AiServicesProps) {
   const { width } = useWindowDimensions();
   const cardHeight = Math.round(width * 0.62);
 
@@ -150,7 +149,6 @@ export default function AiServices({ scrollY, onCtaPress, loading = false }: AiS
             index={index}
             scrollY={scrollY}
             onCtaPress={onCtaPress}
-            loading={loading}
           />
         ))}
       </View>
@@ -247,4 +245,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-

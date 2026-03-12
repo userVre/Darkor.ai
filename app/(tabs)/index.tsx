@@ -1,5 +1,4 @@
 import { useAuth, useUser } from "@clerk/expo";
-import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import { MotiImage } from "moti";
 import { useMemo, useState } from "react";
@@ -26,21 +25,13 @@ const media = {
 
 const plans: PlanKey[] = ["pro", "premium", "ultra"];
 
-type MeResponse = {
-  plan: "free" | "pro" | "premium" | "ultra";
-  credits: number;
-};
-
 export default function HomeScreen() {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const router = useRouter();
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
-  const [serviceLoading, setServiceLoading] = useState(false);
   const scrollY = useSharedValue(0);
-  const me = useQuery("users:me" as any, {}) as MeResponse | null | undefined;
-  const isSubscribed = me?.plan && me.plan !== "free";
 
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -96,31 +87,8 @@ export default function HomeScreen() {
     router.push("/sign-in");
   };
 
-  const handleServiceCta = async () => {
-    if (serviceLoading) return;
-    setServiceLoading(true);
-    const plan: PlanKey = "pro";
-    const priceId = getPriceId(plan, cycle);
-    const intent = { planName: plan, priceId, billingCycle: cycle };
-
-    try {
-      if (!isSignedIn || !user?.id) {
-        await saveSubscriptionIntent(intent);
-        router.push("/sign-in");
-        return;
-      }
-
-      if (isSubscribed) {
-        router.push("/workspace");
-        return;
-      }
-
-      await openPolarCheckout(user.id, intent);
-    } catch (error) {
-      console.error("Service CTA failed", error);
-    } finally {
-      setServiceLoading(false);
-    }
+  const handleServiceCta = (serviceId: string) => {
+    router.push({ pathname: "/wizard", params: { service: serviceId } });
   };
 
   return (
@@ -180,7 +148,7 @@ export default function HomeScreen() {
         </View>
       </ScrollReveal>
 
-      <AiServices scrollY={scrollY} onCtaPress={handleServiceCta} loading={serviceLoading} />
+      <AiServices scrollY={scrollY} onCtaPress={handleServiceCta} />
 
       <ScrollReveal scrollY={scrollY}>
         <ComparisonGrid scrollY={scrollY} />
@@ -271,4 +239,5 @@ const styles = StyleSheet.create({
     elevation: 16,
   },
 });
+
 
