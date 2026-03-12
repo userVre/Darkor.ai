@@ -1,4 +1,4 @@
-import { MotiImage, MotiView } from "moti";
+﻿import { MotiImage, MotiView } from "moti";
 import { useEffect, useState } from "react";
 import { ImageSourcePropType, StyleSheet, useWindowDimensions, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
@@ -13,6 +13,10 @@ type StackCardProps = {
   delay: number;
   width: number;
   height: number;
+};
+
+type HeroTransformationProps = {
+  compact?: boolean;
 };
 
 function StackCard({
@@ -45,14 +49,20 @@ function StackCard({
   );
 }
 
-export default function HeroTransformation() {
+export default function HeroTransformation({ compact = false }: HeroTransformationProps) {
   const [entered, setEntered] = useState(false);
   const { width } = useWindowDimensions();
 
-  const beforeWidth = Math.min(194, width * 0.43);
+  const scale = compact ? 0.86 : 1;
+  const beforeWidth = Math.min(194, width * 0.43) * scale;
   const beforeHeight = beforeWidth * 1.2;
-  const stackWidth = Math.min(170, width * 0.39);
+  const stackWidth = Math.min(170, width * 0.39) * scale;
   const stackHeight = stackWidth * 1.18;
+  const arrowWidth = Math.max(44, width * 0.12) * scale;
+  const arrowSize = compact ? 38 : 44;
+  const arrowHeight = compact ? 24 : 28;
+  const stackWrapWidth = stackWidth + 24 * scale;
+  const stackWrapHeight = stackHeight + 28 * scale;
 
   useEffect(() => {
     const timer = setTimeout(() => setEntered(true), 180);
@@ -60,8 +70,8 @@ export default function HeroTransformation() {
   }, []);
 
   return (
-    <View className="mt-8 px-5">
-      <View className="rounded-3xl border border-white/10 bg-zinc-900/60 px-3 py-4" style={styles.heroShell}>
+    <View className="mt-8 px-5" style={compact ? styles.compactWrap : undefined}>
+      <View className="rounded-3xl border border-white/10 bg-zinc-900/60 px-3 py-4" style={[styles.heroShell, compact && styles.heroShellCompact]}>
         <View className="flex-row items-center justify-between">
           <MotiImage
             source={require("../../assets/media/empty-room.jpg")}
@@ -73,8 +83,8 @@ export default function HeroTransformation() {
             transition={{ duration: 500 }}
           />
 
-          <View className="items-center justify-center px-1" style={{ width: Math.max(44, width * 0.12) }}>
-            <Svg width="44" height="28" viewBox="0 0 44 28" fill="none">
+          <View className="items-center justify-center px-1" style={{ width: arrowWidth }}>
+            <Svg width={arrowSize} height={arrowHeight} viewBox="0 0 44 28" fill="none">
               <Path
                 d="M2 15C9 10 14 9 20 14C24 17 29 18 36 13"
                 stroke="white"
@@ -92,7 +102,7 @@ export default function HeroTransformation() {
             </Svg>
           </View>
 
-          <View style={{ width: stackWidth + 24, height: stackHeight + 28 }}>
+          <View style={{ width: stackWrapWidth, height: stackWrapHeight }}>
             <StackCard
               source={require("../../assets/media/after-luxury.jpg")}
               entered={entered}
@@ -134,6 +144,9 @@ export default function HeroTransformation() {
 }
 
 const styles = StyleSheet.create({
+  compactWrap: {
+    marginTop: 14,
+  },
   heroShell: {
     borderRadius: 28,
     shadowColor: "#0ea5e9",
@@ -141,6 +154,11 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 12 },
     elevation: 18,
+  },
+  heroShellCompact: {
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
   },
   polaroidCard: {
     width: "100%",
