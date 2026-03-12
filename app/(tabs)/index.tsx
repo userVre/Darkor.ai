@@ -1,4 +1,5 @@
 import { useAuth, useUser } from "@clerk/expo";
+import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import { MotiImage } from "moti";
 import { useMemo, useState } from "react";
@@ -8,6 +9,7 @@ import Animated, { useAnimatedScrollHandler, useSharedValue } from "react-native
 import ComparisonGrid from "../../components/comparison-grid";
 import Logo from "../../components/logo";
 import ScrollReveal from "../../components/scroll-reveal";
+import AiServices from "../../components/sections/ai-services";
 import WallOfLove from "../../components/wall-of-love";
 import { getPriceId, PLAN_PRICING, planTitle, type BillingCycle, type PlanKey } from "../../lib/pricing";
 import { openPolarCheckout } from "../../lib/polar";
@@ -24,13 +26,21 @@ const media = {
 
 const plans: PlanKey[] = ["pro", "premium", "ultra"];
 
+type MeResponse = {
+  plan: "free" | "pro" | "premium" | "ultra";
+  credits: number;
+};
+
 export default function HomeScreen() {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const router = useRouter();
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
+  const [serviceLoading, setServiceLoading] = useState(false);
   const scrollY = useSharedValue(0);
+  const me = useQuery("users:me" as any, {}) as MeResponse | null | undefined;
+  const isSubscribed = me?.plan && me.plan !== "free";
 
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -84,6 +94,33 @@ export default function HomeScreen() {
 
   const handleLogin = () => {
     router.push("/sign-in");
+  };
+
+  const handleServiceCta = async () => {
+    if (serviceLoading) return;
+    setServiceLoading(true);
+    const plan: PlanKey = "pro";
+    const priceId = getPriceId(plan, cycle);
+    const intent = { planName: plan, priceId, billingCycle: cycle };
+
+    try {
+      if (!isSignedIn || !user?.id) {
+        await saveSubscriptionIntent(intent);
+        router.push("/sign-in");
+        return;
+      }
+
+      if (isSubscribed) {
+        router.push("/workspace");
+        return;
+      }
+
+      await openPolarCheckout(user.id, intent);
+    } catch (error) {
+      console.error("Service CTA failed", error);
+    } finally {
+      setServiceLoading(false);
+    }
   };
 
   return (
@@ -142,6 +179,8 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollReveal>
+
+      <AiServices scrollY={scrollY} onCtaPress={handleServiceCta} loading={serviceLoading} />
 
       <ScrollReveal scrollY={scrollY}>
         <ComparisonGrid scrollY={scrollY} />
@@ -232,3 +271,4 @@ const styles = StyleSheet.create({
     elevation: 16,
   },
 });
+
