@@ -43,10 +43,11 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Billing",
+          title: "Settings",
           tabBarIcon: ({ color, size }) => <CreditCard color={color} size={size} />,
         }}
       />
     </Tabs>
   );
 }
+
