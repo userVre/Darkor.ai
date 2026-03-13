@@ -201,7 +201,7 @@ export default function GalleryScreen() {
                 <Text className="text-xs font-semibold text-white">{credits}</Text>
               </LuxPressable>
 
-              <Text className="text-2xl font-semibold text-white">Discover</Text>
+              <Text className="text-2xl font-medium text-white">Discover</Text>
 
               <View className="flex-row items-center gap-2">
                 <LuxPressable
@@ -225,7 +225,7 @@ export default function GalleryScreen() {
 
         <MotiView {...staggerFadeUp(1)} className="mb-6">
           <Text className="text-sm uppercase tracking-[3px] text-zinc-500">Darkor.ai Curated</Text>
-          <Text className="mt-2 text-3xl font-semibold text-white">Visual Heart</Text>
+          <Text className="mt-2 text-3xl font-medium text-white">Visual Heart</Text>
           <Text className="mt-2 text-sm text-zinc-400">
             Explore {DISCOVER_ITEMS.length} cinematic spaces. Tap any style to launch the studio.
           </Text>
@@ -273,7 +273,7 @@ export default function GalleryScreen() {
       >
         <View className="flex-1 px-5 pb-8 pt-2">
           <View className="flex-row items-center justify-between">
-            <Text className="text-lg font-semibold text-white">Style Preview</Text>
+            <Text className="text-lg font-medium text-white">Style Preview</Text>
             <LuxPressable onPress={handleCloseSheet} className="h-9 w-9 items-center justify-center rounded-full bg-white/10">
               <X color="#f4f4f5" size={16} />
             </LuxPressable>
@@ -355,4 +355,5 @@ export default function GalleryScreen() {
     </View>
   );
 }
+
 

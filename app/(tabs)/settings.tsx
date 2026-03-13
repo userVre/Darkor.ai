@@ -1,4 +1,4 @@
-import { useAuth, useUser } from "@clerk/expo";
+﻿import { useAuth, useUser } from "@clerk/expo";
 import { skip, useMutation, useQuery } from "convex/react";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
@@ -162,7 +162,7 @@ export default function SettingsScreen() {
         >
           <ArrowLeft color="#e4e4e7" size={18} />
         </LuxPressable>
-        <Text className="text-lg font-semibold text-white">Settings</Text>
+        <Text className="text-lg font-medium text-white">Settings</Text>
         <View className="h-10 w-10" />
       </View>
 
@@ -175,7 +175,7 @@ export default function SettingsScreen() {
         <View className="absolute inset-0 bg-black/50" />
         <BlurView intensity={70} tint="dark" className="absolute inset-0" />
         <View className="gap-4 p-6">
-          <Text className="text-lg font-semibold text-white">Your Account is {planLabel}</Text>
+          <Text className="text-lg font-medium text-white">Your Account is {planLabel}</Text>
           <View className="gap-3">
             {ACCOUNT_BULLETS.map((bullet) => {
               const Icon = bullet.icon;
@@ -209,7 +209,7 @@ export default function SettingsScreen() {
               <Star color="#facc15" size={16} />
             </View>
             <View className="flex-1">
-              <Text className="text-sm font-semibold text-amber-200">🌟 Rate Darkor.ai on the Store</Text>
+              <Text className="text-sm font-semibold text-amber-200">ðŸŒŸ Rate Darkor.ai on the Store</Text>
               <Text className="mt-1 text-xs text-amber-200/70">Help us reach more creators</Text>
             </View>
           </View>
@@ -285,6 +285,7 @@ export default function SettingsScreen() {
     </ScrollView>
   );
 }
+
 
 
 

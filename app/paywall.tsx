@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/expo";
+﻿import { useAuth } from "@clerk/expo";
 import { useMutation } from "convex/react";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
@@ -204,7 +204,7 @@ export default function PaywallScreen() {
 
           <MotiView {...staggerFadeUp(1)} className="px-5">
             <Text className="text-[11px] uppercase tracking-[3px] text-zinc-400">Darkor.ai Pro</Text>
-            <Text className="mt-2 text-3xl font-semibold text-white">Unlock the Studio</Text>
+            <Text className="mt-2 text-3xl font-medium text-white">Unlock the Studio</Text>
             <Text className="mt-3 text-sm text-zinc-400">Premium redesigns, instant iterations, and unlimited visual exports.</Text>
           </MotiView>
 
@@ -320,3 +320,4 @@ export default function PaywallScreen() {
     </View>
   );
 }
+

@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/expo";
+﻿import { useAuth } from "@clerk/expo";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { skip, useMutation, useQuery } from "convex/react";
 import { Asset } from "expo-asset";
@@ -651,7 +651,7 @@ export default function WorkspaceScreen() {
             <View className="h-16 w-16 items-center justify-center rounded-full border border-cyan-200/40 bg-cyan-500/20">
               <Wand2 color="#67e8f9" size={26} />
             </View>
-            <Text className="text-2xl font-semibold text-white">Processing...</Text>
+            <Text className="text-2xl font-medium text-white">Processing...</Text>
             <Text className="text-center text-sm text-zinc-400">
               Running Gemini 3.1 with cinematic lighting and neon scan.
             </Text>
@@ -679,7 +679,7 @@ export default function WorkspaceScreen() {
             className="rounded-2xl border border-white/10 bg-black/70 px-4 py-3"
             style={{ borderWidth: 0.5 }}
           >
-            <Text className="text-center text-sm font-semibold text-white">✨ Resuming with your current draft.</Text>
+            <Text className="text-center text-sm font-semibold text-white">âœ¨ Resuming with your current draft.</Text>
           </BlurView>
         </MotiView>
       ) : null}
@@ -698,7 +698,7 @@ export default function WorkspaceScreen() {
           </LuxPressable>
           <View>
             <Text className="text-xs uppercase tracking-[3px] text-cyan-200/80">Darkor.ai</Text>
-            <Text className="text-2xl font-semibold text-white">{serviceLabel}</Text>
+            <Text className="text-2xl font-medium text-white">{serviceLabel}</Text>
           </View>
         </View>
 
@@ -1063,7 +1063,7 @@ export default function WorkspaceScreen() {
         handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
       >
         <View className="flex-1 px-5 pb-8 pt-2">
-          <Text className="text-lg font-semibold text-white">Are you happy with your AI redesign?</Text>
+          <Text className="text-lg font-medium text-white">Are you happy with your AI redesign?</Text>
           <Text className="mt-2 text-sm text-zinc-400">Your feedback helps Darkor.ai improve.</Text>
           <View className="mt-5 flex-row gap-3">
             <LuxPressable
@@ -1090,7 +1090,7 @@ export default function WorkspaceScreen() {
         handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
       >
         <View className="flex-1 px-5 pb-8 pt-2">
-          <Text className="text-lg font-semibold text-white">Would you rate Darkor.ai?</Text>
+          <Text className="text-lg font-medium text-white">Would you rate Darkor.ai?</Text>
           <Text className="mt-2 text-sm text-zinc-400">A quick review helps us reach more creators.</Text>
           <View className="mt-5 flex-row gap-3">
             <LuxPressable
@@ -1124,8 +1124,8 @@ export default function WorkspaceScreen() {
         handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
       >
         <View className="flex-1 px-5 pb-8 pt-2">
-          <Text className="text-lg font-semibold text-white">Tell us what went wrong</Text>
-          <Text className="mt-2 text-sm text-zinc-400">We’ll use this to improve your next redesign.</Text>
+          <Text className="text-lg font-medium text-white">Tell us what went wrong</Text>
+          <Text className="mt-2 text-sm text-zinc-400">Weâ€™ll use this to improve your next redesign.</Text>
           <TextInput
             value={feedbackMessage}
             onChangeText={setFeedbackMessage}
@@ -1168,6 +1168,7 @@ export default function WorkspaceScreen() {
     </View>
   );
 }
+
 
 
 
