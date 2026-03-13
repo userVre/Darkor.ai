@@ -51,7 +51,7 @@ function RevenueCatGate() {
 
   useEffect(() => {
     syncRef.current = async (info?: CustomerInfo) => {
-      if (!configuredRef.current) return;
+      if (!configuredRef.current || !isLoaded) return;
       try {
         const customerInfo = info ?? (await Purchases.getCustomerInfo());
         const hasPro = hasProEntitlement(customerInfo);
@@ -74,15 +74,19 @@ function RevenueCatGate() {
   }, [isSignedIn, pathname, router, setPlan]);
 
   useEffect(() => {
-    if (!configuredRef.current) return;
+    if (!configuredRef.current || !isLoaded) return;
     void syncRef.current();
     if (listenerAddedRef.current) return;
 
     listenerAddedRef.current = true;
-    Purchases.addCustomerInfoUpdateListener((info) => {
+    const listener = (info: CustomerInfo) => {
       void syncRef.current(info);
-    });
-  }, []);
+    };
+    Purchases.addCustomerInfoUpdateListener(listener);
+    return () => {
+      Purchases.removeCustomerInfoUpdateListener(listener);
+    };
+  }, [isLoaded]);
 
   return null;
 }
@@ -153,6 +157,9 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+
+
 
 
 

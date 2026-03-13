@@ -69,6 +69,7 @@ export const getByClerkIdInternal = queryGeneric({
 export const setPlanFromRevenueCat = mutationGeneric({
   args: {
     plan: v.string(),
+    credits: v.optional(v.int64()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -85,8 +86,12 @@ export const setPlanFromRevenueCat = mutationGeneric({
       throw new Error("No billing profile found.");
     }
 
+    const nextCredits =
+      typeof args.credits === "number" ? Math.max(existing.credits, args.credits) : existing.credits;
+
     await ctx.db.patch(existing._id, {
       plan: args.plan,
+      credits: nextCredits,
     });
 
     return { ok: true };

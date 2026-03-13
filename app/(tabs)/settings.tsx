@@ -108,7 +108,7 @@ export default function SettingsScreen() {
       const info = await Purchases.restorePurchases();
       const hasPro = hasProEntitlement(info);
       if (hasPro && isSignedIn) {
-        await setPlan({ plan: "pro" });
+        await setPlan({ plan: "pro", credits: 100 });
       }
       Alert.alert("Restored", hasPro ? "Your subscription is active." : "No active subscriptions found.");
     } catch (error) {
