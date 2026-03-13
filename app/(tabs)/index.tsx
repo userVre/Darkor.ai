@@ -5,11 +5,13 @@ import { useRouter } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { MotiView } from "moti";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, Modal, Pressable, Text, View, useWindowDimensions } from "react-native";
+import { FlatList, Modal, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Diamond, Settings, X } from "lucide-react-native";
 
 import { triggerHaptic } from "../../lib/haptics";
+import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
+import { LuxPressable } from "../../components/lux-pressable";
 
 type ServiceCardData = {
   id: string;
@@ -94,15 +96,10 @@ const ServiceCard = memo(function ServiceCard({ item, height, index, onPress }: 
   }, [item, onPress]);
 
   return (
-    <MotiView
-      from={{ opacity: 0, translateY: 16 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: "timing", duration: 520, delay: index * 120 }}
-      className="px-4"
-    >
+    <MotiView {...staggerFadeUp(index)} className="px-4">
       <View
-        className="overflow-hidden rounded-3xl border border-white/10 bg-[#050505]"
-        style={{ height, borderCurve: "continuous" }}
+        className="overflow-hidden rounded-3xl border border-white/10 bg-black"
+        style={{ height, borderCurve: "continuous", borderWidth: 0.5 }}
       >
         <VideoView
           player={player}
@@ -113,23 +110,24 @@ const ServiceCard = memo(function ServiceCard({ item, height, index, onPress }: 
         />
 
         <BlurView
-          intensity={88}
+          intensity={96}
           tint="dark"
           className="absolute bottom-3 left-3 right-3 rounded-2xl border border-white/10 bg-black/40 px-4 py-3"
-          style={{ borderCurve: "continuous" }}
+          style={{ borderCurve: "continuous", borderWidth: 0.5 }}
         >
           <View className="flex-row items-center justify-between gap-3">
             <View className="flex-1">
               <Text className="text-base font-semibold text-white">{item.title}</Text>
               <Text className="mt-1 text-xs text-zinc-400">{item.subtitle}</Text>
             </View>
-            <Pressable
+            <LuxPressable
               accessibilityRole="button"
               onPress={handlePress}
-              className="cursor-pointer rounded-full border border-white/40 bg-white/15 px-4 py-2"
+              className="rounded-full border border-white/40 bg-white/15 px-4 py-2"
+              style={{ borderWidth: 0.5 }}
             >
               <Text className="text-xs font-semibold text-white">Try it! -&gt;</Text>
-            </Pressable>
+            </LuxPressable>
           </View>
         </BlurView>
       </View>
@@ -195,9 +193,10 @@ export default function HomeScreen() {
   const keyExtractor = useCallback((item: ServiceCardData) => item.id, []);
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
       <FlatList
         className="flex-1 bg-black"
+        style={{ backgroundColor: "#000000" }}
         contentContainerStyle={contentContainerStyle}
         data={SERVICES}
         keyExtractor={keyExtractor}
@@ -215,23 +214,34 @@ export default function HomeScreen() {
       />
 
       <View
-        className="absolute left-0 right-0 top-0 z-10 flex-row items-center justify-between px-4"
-        style={{ paddingTop: insets.top + 8 }}
+        className="absolute left-0 right-0 top-0 z-10 px-4"
+        style={{ paddingTop: insets.top + 6 }}
         pointerEvents="box-none"
       >
-        <Pressable
-          onPress={handleOpenCredits}
-          className="cursor-pointer flex-row items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-3 py-2"
+        <BlurView
+          intensity={90}
+          tint="dark"
+          className="rounded-full border border-white/10 bg-black/50 px-3 py-2"
+          style={{ borderWidth: 0.5 }}
         >
-          <Diamond color="#ffffff" size={16} />
-          <Text className="text-xs font-semibold text-white">{credits}</Text>
-        </Pressable>
-        <Pressable
-          onPress={handleOpenSettings}
-          className="cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/60"
-        >
-          <Settings color="#ffffff" size={18} />
-        </Pressable>
+          <View className="flex-row items-center justify-between">
+            <LuxPressable
+              onPress={handleOpenCredits}
+              className="flex-row items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-3 py-2"
+              style={{ borderWidth: 0.5 }}
+            >
+              <Diamond color="#ffffff" size={16} />
+              <Text className="text-xs font-semibold text-white">{credits}</Text>
+            </LuxPressable>
+            <LuxPressable
+              onPress={handleOpenSettings}
+              className="h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/60"
+              style={{ borderWidth: 0.5 }}
+            >
+              <Settings color="#ffffff" size={18} />
+            </LuxPressable>
+          </View>
+        </BlurView>
       </View>
 
       <Modal
@@ -240,29 +250,40 @@ export default function HomeScreen() {
         animationType="fade"
         onRequestClose={() => setIsCreditModalOpen(false)}
       >
-        <View className="flex-1 items-center justify-center bg-black/70 px-6">
-          <View className="w-full rounded-[26px] bg-white p-6">
-            <Pressable
+        <View className="flex-1 items-center justify-center bg-black/80 px-6">
+          <MotiView
+            from={{ opacity: 0, translateY: 14, scale: 0.98 }}
+            animate={{ opacity: 1, translateY: 0, scale: 1 }}
+            transition={LUX_SPRING}
+          >
+            <BlurView
+              intensity={96}
+              tint="dark"
+              className="w-full rounded-[26px] border border-white/10 bg-black/70 p-6"
+              style={{ borderWidth: 0.5 }}
+            >
+            <LuxPressable
               onPress={() => {
                 triggerHaptic();
                 setIsCreditModalOpen(false);
               }}
-              className="cursor-pointer absolute right-4 top-4 h-7 w-7 items-center justify-center rounded-full bg-slate-100"
+              className="absolute right-4 top-4 h-7 w-7 items-center justify-center rounded-full bg-white/10"
             >
-              <X color="#111827" size={16} />
-            </Pressable>
-            <Text className="mt-4 text-xl font-semibold text-slate-900">Daily Credit Limit</Text>
-            <Text className="mt-3 text-sm leading-5 text-slate-600">
+              <X color="#f4f4f5" size={16} />
+            </LuxPressable>
+            <Text className="mt-4 text-xl font-semibold text-white">Daily Credit Limit</Text>
+            <Text className="mt-3 text-sm leading-5 text-zinc-300">
               Every account receives a set amount of daily credits. When credits run out, users can wait for the daily
               reset or choose to upgrade to a PRO plan instead anytime now!
             </Text>
-            <Pressable
+            <LuxPressable
               onPress={handleUpgrade}
-              className="cursor-pointer mt-5 items-center rounded-2xl bg-black py-3"
+              className="mt-5 items-center rounded-2xl bg-white/10 py-3"
             >
               <Text className="text-sm font-semibold text-white">Upgrade</Text>
-            </Pressable>
-          </View>
+            </LuxPressable>
+            </BlurView>
+          </MotiView>
         </View>
       </Modal>
     </View>

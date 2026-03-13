@@ -1,7 +1,8 @@
 import { useSignIn } from "@clerk/expo/legacy";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { Alert, Text, TextInput, View } from "react-native";
+import { LuxPressable } from "../components/lux-pressable";
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -30,10 +31,11 @@ export default function SignInScreen() {
   };
 
   return (
-    <View className="flex-1 justify-center bg-zinc-950 px-5">
+    <View className="flex-1 justify-center bg-black px-5" style={{ backgroundColor: "#000000" }}>
       <Text className="text-3xl font-bold text-zinc-100">Sign in</Text>
       <TextInput
-        className="mt-4 rounded-2xl border border-white/10 bg-zinc-900 p-4 text-zinc-100"
+        className="mt-4 rounded-2xl border border-white/10 bg-black/60 p-4 text-zinc-100"
+        style={{ borderWidth: 0.5 }}
         placeholder="Email"
         placeholderTextColor="#71717a"
         autoCapitalize="none"
@@ -42,7 +44,8 @@ export default function SignInScreen() {
         onChangeText={setEmail}
       />
       <TextInput
-        className="mt-3 rounded-2xl border border-white/10 bg-zinc-900 p-4 text-zinc-100"
+        className="mt-3 rounded-2xl border border-white/10 bg-black/60 p-4 text-zinc-100"
+        style={{ borderWidth: 0.5 }}
         placeholder="Password"
         placeholderTextColor="#71717a"
         secureTextEntry
@@ -50,9 +53,13 @@ export default function SignInScreen() {
         onChangeText={setPassword}
       />
 
-      <Pressable onPress={() => void handleSignIn()} className="mt-4 rounded-2xl bg-cyan-400 p-4" style={{ cursor: "pointer" }} disabled={loading}>
+      <LuxPressable
+        onPress={() => void handleSignIn()}
+        className="mt-4 rounded-2xl bg-cyan-400 p-4"
+        disabled={loading}
+      >
         <Text className="text-center font-semibold text-zinc-900">{loading ? "Signing in..." : "Continue"}</Text>
-      </Pressable>
+      </LuxPressable>
 
       <Text className="mt-4 text-center text-zinc-400">
         No account? <Link href="/sign-up" className="text-cyan-300">Create one</Link>

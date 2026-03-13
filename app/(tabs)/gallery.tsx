@@ -1,12 +1,12 @@
 import { useAuth } from "@clerk/expo";
 import { skip, useMutation, useQuery } from "convex/react";
+import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Modal,
-  Pressable,
   ScrollView,
   Text,
   View,
@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Diamond, Search, Settings, X } from "lucide-react-native";
 
 import { triggerHaptic } from "../../lib/haptics";
+import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
+import { LuxPressable } from "../../components/lux-pressable";
 
 type MeResponse = {
   credits?: number;
@@ -140,58 +142,69 @@ export default function GalleryScreen() {
   const placeholderWidth = useMemo(() => Math.min(168, Math.round(width * 0.44)), [width]);
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
       <ScrollView
         className="flex-1 bg-black"
+        style={{ backgroundColor: "#000000" }}
         contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 120 }}
         contentInsetAdjustmentBehavior="automatic"
       >
         <View className="px-4">
-          <View className="mb-6 flex-row items-center justify-between">
-            <Pressable
-              onPress={handleOpenCredits}
-              className="cursor-pointer flex-row items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-3 py-2"
-            >
-              <Diamond color="#ffffff" size={16} />
-              <Text className="text-xs font-semibold text-white">{credits}</Text>
-            </Pressable>
-
-            <Text className="text-2xl font-semibold text-white">Discover</Text>
-
-            <View className="flex-row items-center gap-2">
-              <Pressable
-                onPress={handleSearch}
-                className="cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/60"
+          <BlurView
+            intensity={90}
+            tint="dark"
+            className="mb-6 rounded-[28px] border border-white/10 bg-black/60 px-4 py-3"
+            style={{ borderWidth: 0.5 }}
+          >
+            <View className="flex-row items-center justify-between">
+              <LuxPressable
+                onPress={handleOpenCredits}
+                className="flex-row items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-3 py-2"
+                style={{ borderWidth: 0.5 }}
               >
-                <Search color="#ffffff" size={18} />
-              </Pressable>
-              <Pressable
-                onPress={handleOpenSettings}
-                className="cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/60"
-              >
-                <Settings color="#ffffff" size={18} />
-              </Pressable>
+                <Diamond color="#ffffff" size={16} />
+                <Text className="text-xs font-semibold text-white">{credits}</Text>
+              </LuxPressable>
+
+              <Text className="text-2xl font-semibold text-white">Discover</Text>
+
+              <View className="flex-row items-center gap-2">
+                <LuxPressable
+                  onPress={handleSearch}
+                  className="h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/60"
+                  style={{ borderWidth: 0.5 }}
+                >
+                  <Search color="#ffffff" size={18} />
+                </LuxPressable>
+                <LuxPressable
+                  onPress={handleOpenSettings}
+                  className="h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/60"
+                  style={{ borderWidth: 0.5 }}
+                >
+                  <Settings color="#ffffff" size={18} />
+                </LuxPressable>
+              </View>
             </View>
-          </View>
+          </BlurView>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-8">
             <View className="flex-row gap-3">
-              {FILTERS.map((filter) => {
+              {FILTERS.map((filter, index) => {
                 const active = filter === activeFilter;
                 return (
-                  <Pressable
-                    key={filter}
-                    onPress={() => handleFilterSelect(filter)}
-                    className={`cursor-pointer rounded-full border px-4 py-2 ${
-                      active
-                        ? "border-white/40 bg-white/15"
-                        : "border-white/10 bg-white/5"
-                    }`}
-                  >
-                    <Text className={`text-xs font-semibold ${active ? "text-white" : "text-zinc-400"}`}>
-                      {filter}
-                    </Text>
-                  </Pressable>
+                  <MotiView key={filter} {...staggerFadeUp(index, 70)}>
+                    <LuxPressable
+                      onPress={() => handleFilterSelect(filter)}
+                      className={`rounded-full border px-4 py-2 ${
+                        active ? "border-white/40 bg-white/15" : "border-white/10 bg-white/5"
+                      }`}
+                      style={{ borderWidth: 0.5 }}
+                    >
+                      <Text className={`text-xs font-semibold ${active ? "text-white" : "text-zinc-400"}`}>
+                        {filter}
+                      </Text>
+                    </LuxPressable>
+                  </MotiView>
                 );
               })}
             </View>
@@ -202,21 +215,12 @@ export default function GalleryScreen() {
           {filteredSections.map((section, sectionIndex) => (
             <View key={section.id} className="gap-6">
               {section.categories.map((category, index) => (
-                <MotiView
-                  key={category.id}
-                  from={{ opacity: 0, translateY: 16 }}
-                  animate={{ opacity: 1, translateY: 0 }}
-                  transition={{ type: "timing", duration: 420, delay: (sectionIndex + index) * 80 }}
-                  className="gap-3"
-                >
+                <MotiView key={category.id} {...staggerFadeUp(sectionIndex + index)} className="gap-3">
                   <View className="flex-row items-center justify-between px-4">
                     <Text className="text-lg font-semibold text-white">{category.title}</Text>
-                    <Pressable
-                      onPress={() => handleSeeAll(category.title)}
-                      className="cursor-pointer"
-                    >
+                    <LuxPressable onPress={() => handleSeeAll(category.title)}>
                       <Text className="text-xs font-semibold text-zinc-400">See All</Text>
-                    </Pressable>
+                    </LuxPressable>
                   </View>
 
                   <FlatList
@@ -227,17 +231,15 @@ export default function GalleryScreen() {
                     contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
                     renderItem={({ index: itemIndex }) => (
                       <MotiView
-                        from={{ opacity: 0, translateY: 10 }}
-                        animate={{ opacity: 1, translateY: 0 }}
-                        transition={{ type: "timing", duration: 380, delay: itemIndex * 120 }}
-                        className="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/80"
-                        style={{ width: placeholderWidth, height: 140, borderCurve: "continuous" }}
+                        {...staggerFadeUp(itemIndex, 110)}
+                        className="overflow-hidden rounded-2xl border border-white/10 bg-black/70"
+                        style={{ width: placeholderWidth, height: 140, borderCurve: "continuous", borderWidth: 0.5 }}
                       >
                         <View className="h-full w-full bg-white/5" />
-                        <View className="absolute inset-x-3 bottom-3 rounded-xl border border-white/10 bg-black/40 px-3 py-2">
+                        <BlurView intensity={85} tint="dark" className="absolute inset-x-3 bottom-3 rounded-xl border border-white/10 bg-black/40 px-3 py-2" style={{ borderWidth: 0.5 }}>
                           <Text className="text-xs font-semibold text-white">Inspiration</Text>
                           <Text className="mt-1 text-[10px] text-zinc-400">High-end concept</Text>
-                        </View>
+                        </BlurView>
                       </MotiView>
                     )}
                   />
@@ -254,29 +256,37 @@ export default function GalleryScreen() {
         animationType="fade"
         onRequestClose={() => setIsCreditModalOpen(false)}
       >
-        <View className="flex-1 items-center justify-center bg-black/70 px-6">
-          <View className="w-full rounded-[26px] bg-white p-6">
-            <Pressable
+        <View className="flex-1 items-center justify-center bg-black/80 px-6">
+          <MotiView
+            from={{ opacity: 0, translateY: 14, scale: 0.98 }}
+            animate={{ opacity: 1, translateY: 0, scale: 1 }}
+            transition={LUX_SPRING}
+          >
+            <BlurView
+              intensity={96}
+              tint="dark"
+              className="w-full rounded-[26px] border border-white/10 bg-black/70 p-6"
+              style={{ borderWidth: 0.5 }}
+            >
+            <LuxPressable
               onPress={() => {
                 triggerHaptic();
                 setIsCreditModalOpen(false);
               }}
-              className="cursor-pointer absolute right-4 top-4 h-7 w-7 items-center justify-center rounded-full bg-slate-100"
+              className="absolute right-4 top-4 h-7 w-7 items-center justify-center rounded-full bg-white/10"
             >
-              <X color="#111827" size={16} />
-            </Pressable>
-            <Text className="mt-4 text-xl font-semibold text-slate-900">Daily Credit Limit</Text>
-            <Text className="mt-3 text-sm leading-5 text-slate-600">
+              <X color="#f4f4f5" size={16} />
+            </LuxPressable>
+            <Text className="mt-4 text-xl font-semibold text-white">Daily Credit Limit</Text>
+            <Text className="mt-3 text-sm leading-5 text-zinc-300">
               Every account receives a set amount of daily credits. When credits run out, users can wait for the daily
               reset or choose to upgrade to a PRO plan instead anytime now!
             </Text>
-            <Pressable
-              onPress={handleUpgrade}
-              className="cursor-pointer mt-5 items-center rounded-2xl bg-black py-3"
-            >
+            <LuxPressable onPress={handleUpgrade} className="mt-5 items-center rounded-2xl bg-white/10 py-3">
               <Text className="text-sm font-semibold text-white">Upgrade</Text>
-            </Pressable>
-          </View>
+            </LuxPressable>
+            </BlurView>
+          </MotiView>
         </View>
       </Modal>
     </View>

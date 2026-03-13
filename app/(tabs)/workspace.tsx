@@ -3,6 +3,7 @@ import { skip, useMutation, useQuery } from "convex/react";
 import { Asset } from "expo-asset";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -10,7 +11,6 @@ import { AnimatePresence, MotiView } from "moti";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
-  Pressable,
   ScrollView,
   Share,
   Text,
@@ -31,6 +31,8 @@ import {
 
 import { generateImage } from "../../lib/api";
 import { triggerHaptic } from "../../lib/haptics";
+import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
+import { LuxPressable } from "../../components/lux-pressable";
 type MeResponse = {
   plan: "free" | "pro" | "premium" | "ultra";
   credits: number;
@@ -197,11 +199,19 @@ export default function WorkspaceScreen() {
   const [compareHold, setCompareHold] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoadingExample, setIsLoadingExample] = useState<string | null>(null);
+  const [activeEditAction, setActiveEditAction] = useState<(typeof EDIT_ACTIONS)[number]>("Replace");
+  const [editBarWidth, setEditBarWidth] = useState(0);
 
   useEffect(() => {
     if (!isSignedIn) return;
     ensureUser({}).catch(() => undefined);
   }, [ensureUser, isSignedIn]);
+
+  useEffect(() => {
+    if (workflowStep === 5 && generatedImageUrl) {
+      triggerHaptic();
+    }
+  }, [generatedImageUrl, workflowStep]);
 
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = getServiceType(serviceKey);
@@ -221,6 +231,10 @@ export default function WorkspaceScreen() {
   const plan = me?.plan ?? "free";
   const planUsed = plan === "premium" || plan === "ultra" ? plan : "pro";
   const canUpscale = plan === "premium" || plan === "ultra";
+  const editGap = 12;
+  const activeEditIndex = EDIT_ACTIONS.indexOf(activeEditAction);
+  const editItemWidth =
+    editBarWidth > 0 ? (editBarWidth - editGap * (EDIT_ACTIONS.length - 1)) / EDIT_ACTIONS.length : 0;
 
   const promptText = useMemo(() => {
     if (!selectedRoom || !selectedStyle || !selectedPalette) return "";
@@ -323,8 +337,9 @@ export default function WorkspaceScreen() {
     Alert.alert("Upscale", "Your 4K upscale is queued.");
   }, [canUpscale]);
 
-  const handleEditAction = useCallback((label: string) => {
+  const handleEditAction = useCallback((label: (typeof EDIT_ACTIONS)[number]) => {
     triggerHaptic();
+    setActiveEditAction(label);
     Alert.alert(label, "Editing tools are coming next.");
   }, []);
 
@@ -402,11 +417,11 @@ export default function WorkspaceScreen() {
     setSelectedPaletteId(value);
   }, []);
 
-  const stepTransition = { type: "timing", duration: 280 } as const;
+  const stepTransition = LUX_SPRING;
 
   if (workflowStep === 4) {
     return (
-      <View className="flex-1 bg-black">
+      <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
         <View className="flex-1 items-center justify-center overflow-hidden">
           {selectedImage ? (
             <Image source={{ uri: selectedImage.uri }} className="absolute inset-0 h-full w-full" contentFit="cover" />
@@ -414,9 +429,9 @@ export default function WorkspaceScreen() {
           <View className="absolute inset-0 bg-black/70" />
 
           <MotiView
-            animate={{ opacity: [0.2, 0.6, 0.2] }}
-            transition={{ type: "timing", duration: 1800, loop: true }}
-            className="absolute inset-x-0 h-20"
+            animate={{ opacity: [0.15, 0.65, 0.15], scale: [1, 1.04, 1] }}
+            transition={{ ...LUX_SPRING, loop: true }}
+            className="absolute inset-x-0 h-24"
             style={{
               transform: [{ translateY: -height * 0.35 }],
             }}
@@ -424,13 +439,23 @@ export default function WorkspaceScreen() {
 
           <MotiView
             animate={{ translateY: [-height * 0.35, height * 0.35] }}
-            transition={{ type: "timing", duration: 2200, loop: true }}
-            className="absolute inset-x-0 h-20"
+            transition={{ ...LUX_SPRING, loop: true }}
+            className="absolute inset-x-0 h-24"
           >
             <View className="absolute inset-0 bg-cyan-400/10" />
+            <LinearGradient
+              colors={["rgba(34, 211, 238, 0)", "rgba(34, 211, 238, 0.35)", "rgba(34, 211, 238, 0)"]}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={{ position: "absolute", inset: 0, opacity: 0.7 }}
+            />
             <View
-              className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2 bg-cyan-300/80"
-              style={{ boxShadow: "0 0 30px rgba(34, 211, 238, 0.8)" }}
+              className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2 bg-cyan-300/90"
+              style={{ boxShadow: "0 0 35px rgba(34, 211, 238, 0.9)" }}
+            />
+            <View
+              className="absolute inset-x-0 top-1/2 h-5 -translate-y-1/2 bg-cyan-200/10"
+              style={{ boxShadow: "0 0 60px rgba(34, 211, 238, 0.35)" }}
             />
           </MotiView>
 
@@ -449,19 +474,20 @@ export default function WorkspaceScreen() {
   }
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
       <ScrollView
         className="flex-1 bg-black"
+        style={{ backgroundColor: "#000000" }}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 140, minHeight: height }}
         contentInsetAdjustmentBehavior="automatic"
       >
         <View className="flex-row items-center gap-3">
-          <Pressable
+          <LuxPressable
             onPress={handleBack}
             className="cursor-pointer h-10 w-10 items-center justify-center rounded-full border border-white/10"
           >
             <ArrowLeft color="#e4e4e7" size={18} />
-          </Pressable>
+          </LuxPressable>
           <View>
             <Text className="text-xs uppercase tracking-[3px] text-cyan-200/80">Darkor.ai</Text>
             <Text className="text-2xl font-semibold text-white">{serviceLabel}</Text>
@@ -494,7 +520,7 @@ export default function WorkspaceScreen() {
                 </Text>
               </View>
 
-              <Pressable
+              <LuxPressable
                 onPress={handlePickPhoto}
                 className="cursor-pointer items-center justify-center rounded-3xl border border-dashed border-white/25 bg-white/5 px-6 py-10"
               >
@@ -503,7 +529,7 @@ export default function WorkspaceScreen() {
                 </View>
                 <Text className="mt-4 text-sm font-semibold text-white">Add a Photo +</Text>
                 <Text className="mt-2 text-xs text-zinc-500">Camera or gallery</Text>
-              </Pressable>
+              </LuxPressable>
 
               {selectedImage ? (
                 <View className="overflow-hidden rounded-3xl border border-white/10">
@@ -516,23 +542,25 @@ export default function WorkspaceScreen() {
 
               <Text className="text-xs uppercase tracking-[2px] text-zinc-400">Example Photos</Text>
               <View className="flex-row flex-wrap gap-3">
-                {EXAMPLE_PHOTOS.map((example) => {
+                {EXAMPLE_PHOTOS.map((example, index) => {
                   const isActive = selectedImage?.label === example.label;
                   const isLoading = isLoadingExample === example.id;
                   return (
-                    <Pressable
-                      key={example.id}
-                      onPress={() => void handleSelectExample(example)}
-                      className={`cursor-pointer w-[48%] overflow-hidden rounded-2xl border ${
-                        isActive ? "border-cyan-300" : "border-white/10"
-                      }`}
-                    >
-                      <Image source={example.source} className="h-24 w-full" contentFit="cover" />
-                      <View className="bg-black/60 px-3 py-2">
-                        <Text className="text-xs font-semibold text-white">{example.label}</Text>
-                        {isLoading ? <Text className="mt-1 text-[10px] text-zinc-400">Loading...</Text> : null}
-                      </View>
-                    </Pressable>
+                    <MotiView key={example.id} {...staggerFadeUp(index, 70)}>
+                      <LuxPressable
+                        onPress={() => void handleSelectExample(example)}
+                        className={`cursor-pointer w-[48%] overflow-hidden rounded-2xl border ${
+                          isActive ? "border-cyan-300" : "border-white/10"
+                        }`}
+                        style={{ borderWidth: 0.5 }}
+                      >
+                        <Image source={example.source} className="h-24 w-full" contentFit="cover" />
+                        <View className="bg-black/60 px-3 py-2">
+                          <Text className="text-xs font-semibold text-white">{example.label}</Text>
+                          {isLoading ? <Text className="mt-1 text-[10px] text-zinc-400">Loading...</Text> : null}
+                        </View>
+                      </LuxPressable>
+                    </MotiView>
                   );
                 })}
               </View>
@@ -554,21 +582,23 @@ export default function WorkspaceScreen() {
               </View>
 
               <View className="flex-row flex-wrap gap-3">
-                {spaceOptions.map((option) => {
+                {spaceOptions.map((option, index) => {
                   const active = selectedRoom === option;
                   return (
-                    <Pressable
-                      key={option}
-                      onPress={() => handleSelectRoom(option)}
-                      className={`cursor-pointer w-[48%] rounded-2xl border px-3 py-4 ${
-                        active ? "border-cyan-300/70 bg-cyan-400/10" : "border-white/10 bg-white/5"
-                      }`}
-                    >
-                      <Text className={`text-sm font-semibold ${active ? "text-cyan-100" : "text-zinc-200"}`}>
-                        {option}
-                      </Text>
-                      <Text className="mt-2 text-xs text-zinc-500">Tap to select</Text>
-                    </Pressable>
+                    <MotiView key={option} {...staggerFadeUp(index, 60)}>
+                      <LuxPressable
+                        onPress={() => handleSelectRoom(option)}
+                        className={`cursor-pointer w-[48%] rounded-2xl border px-3 py-4 ${
+                          active ? "border-cyan-300/70 bg-cyan-400/10" : "border-white/10 bg-white/5"
+                        }`}
+                        style={{ borderWidth: 0.5 }}
+                      >
+                        <Text className={`text-sm font-semibold ${active ? "text-cyan-100" : "text-zinc-200"}`}>
+                          {option}
+                        </Text>
+                        <Text className="mt-2 text-xs text-zinc-500">Tap to select</Text>
+                      </LuxPressable>
+                    </MotiView>
                   );
                 })}
               </View>
@@ -590,21 +620,23 @@ export default function WorkspaceScreen() {
               </View>
 
               <View className="flex-row flex-wrap gap-3">
-                {STYLE_OPTIONS.map((style) => {
+                {STYLE_OPTIONS.map((style, index) => {
                   const active = selectedStyle === style;
                   return (
-                    <Pressable
-                      key={style}
-                      onPress={() => handleSelectStyle(style)}
-                      className={`cursor-pointer w-[31%] overflow-hidden rounded-2xl border ${
-                        active ? "border-cyan-300 bg-cyan-400/10" : "border-white/10 bg-white/5"
-                      }`}
-                    >
-                      <View className="h-16 w-full bg-white/5" />
-                      <Text className={`px-3 py-2 text-[11px] font-semibold ${active ? "text-cyan-100" : "text-zinc-200"}`}>
-                        {style}
-                      </Text>
-                    </Pressable>
+                    <MotiView key={style} {...staggerFadeUp(index, 40)}>
+                      <LuxPressable
+                        onPress={() => handleSelectStyle(style)}
+                        className={`cursor-pointer w-[31%] overflow-hidden rounded-2xl border ${
+                          active ? "border-cyan-300 bg-cyan-400/10" : "border-white/10 bg-white/5"
+                        }`}
+                        style={{ borderWidth: 0.5 }}
+                      >
+                        <View className="h-16 w-full bg-white/5" />
+                        <Text className={`px-3 py-2 text-[11px] font-semibold ${active ? "text-cyan-100" : "text-zinc-200"}`}>
+                          {style}
+                        </Text>
+                      </LuxPressable>
+                    </MotiView>
                   );
                 })}
               </View>
@@ -641,29 +673,31 @@ export default function WorkspaceScreen() {
               <View className="gap-3">
                 <Text className="text-sm font-semibold text-white">Color Palette Picker</Text>
                 <View className="flex-row flex-wrap gap-3">
-                  {PALETTE_OPTIONS.map((palette) => {
+                  {PALETTE_OPTIONS.map((palette, index) => {
                     const active = selectedPaletteId === palette.id;
                     return (
-                      <Pressable
-                        key={palette.id}
-                        onPress={() => handleSelectPalette(palette.id)}
-                        className={`cursor-pointer w-[48%] rounded-2xl border px-3 py-3 ${
-                          active ? "border-cyan-300 bg-cyan-400/10" : "border-white/10 bg-white/5"
-                        }`}
-                      >
-                        <View className="flex-row gap-2">
-                          {palette.colors.map((color) => (
-                            <View
-                              key={color}
-                              className="h-5 flex-1 rounded-lg"
-                              style={{ backgroundColor: color }}
-                            />
-                          ))}
-                        </View>
-                        <Text className={`mt-2 text-xs font-semibold ${active ? "text-cyan-100" : "text-zinc-200"}`}>
-                          {palette.label}
-                        </Text>
-                      </Pressable>
+                      <MotiView key={palette.id} {...staggerFadeUp(index, 60)}>
+                        <LuxPressable
+                          onPress={() => handleSelectPalette(palette.id)}
+                          className={`cursor-pointer w-[48%] rounded-2xl border px-3 py-3 ${
+                            active ? "border-cyan-300 bg-cyan-400/10" : "border-white/10 bg-white/5"
+                          }`}
+                          style={{ borderWidth: 0.5 }}
+                        >
+                          <View className="flex-row gap-2">
+                            {palette.colors.map((color) => (
+                              <View
+                                key={color}
+                                className="h-5 flex-1 rounded-lg"
+                                style={{ backgroundColor: color }}
+                              />
+                            ))}
+                          </View>
+                          <Text className={`mt-2 text-xs font-semibold ${active ? "text-cyan-100" : "text-zinc-200"}`}>
+                            {palette.label}
+                          </Text>
+                        </LuxPressable>
+                      </MotiView>
                     );
                   })}
                 </View>
@@ -685,13 +719,20 @@ export default function WorkspaceScreen() {
                 <Text className="mt-2 text-sm text-zinc-400">Review your render and refine the space.</Text>
               </View>
 
-              <View className="relative overflow-hidden rounded-3xl border border-white/10">
+              <View className="relative overflow-hidden rounded-3xl border border-white/10" style={{ borderWidth: 0.5 }}>
                 {generatedImageUrl ? (
-                  <Image
-                    source={{ uri: compareHold && selectedImage ? selectedImage.uri : generatedImageUrl }}
-                    className="h-80 w-full"
-                    contentFit="cover"
-                  />
+                  <MotiView
+                    key={generatedImageUrl}
+                    from={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={LUX_SPRING}
+                  >
+                    <Image
+                      source={{ uri: compareHold && selectedImage ? selectedImage.uri : generatedImageUrl }}
+                      className="h-80 w-full"
+                      contentFit="cover"
+                    />
+                  </MotiView>
                 ) : (
                   <View className="h-64 items-center justify-center gap-2 bg-white/5">
                     <Sparkles color="#a1a1aa" size={32} />
@@ -699,8 +740,13 @@ export default function WorkspaceScreen() {
                   </View>
                 )}
 
-                <View className="absolute bottom-4 left-1/2 flex-row -translate-x-1/2 items-center gap-2 rounded-full border border-white/20 bg-black/60 px-3 py-2">
-                  <Pressable
+                <BlurView
+                  intensity={80}
+                  tint="dark"
+                  className="absolute bottom-4 left-1/2 flex-row -translate-x-1/2 items-center gap-2 rounded-full border border-white/20 bg-black/60 px-3 py-2"
+                  style={{ borderWidth: 0.5 }}
+                >
+                  <LuxPressable
                     onPressIn={() => {
                       triggerHaptic();
                       setCompareHold(true);
@@ -709,8 +755,8 @@ export default function WorkspaceScreen() {
                     className="cursor-pointer rounded-full bg-white/10 px-3 py-1"
                   >
                     <Text className="text-[11px] font-semibold text-white">Compare</Text>
-                  </Pressable>
-                  <Pressable
+                  </LuxPressable>
+                  <LuxPressable
                     onPress={handleUpscale}
                     className={`cursor-pointer rounded-full px-3 py-1 ${
                       canUpscale ? "bg-white/10" : "bg-white/5"
@@ -720,28 +766,40 @@ export default function WorkspaceScreen() {
                       {!canUpscale ? <Lock color="#facc15" size={12} /> : null}
                       <Text className="text-[11px] font-semibold text-white">Upscale</Text>
                     </View>
-                  </Pressable>
-                  <Pressable onPress={handleDownload} className="cursor-pointer rounded-full bg-white/10 px-3 py-1">
+                  </LuxPressable>
+                  <LuxPressable onPress={handleDownload} className="cursor-pointer rounded-full bg-white/10 px-3 py-1">
                     <Text className="text-[11px] font-semibold text-white">Download</Text>
-                  </Pressable>
-                  <Pressable onPress={handleShare} className="cursor-pointer rounded-full bg-white/10 px-3 py-1">
+                  </LuxPressable>
+                  <LuxPressable onPress={handleShare} className="cursor-pointer rounded-full bg-white/10 px-3 py-1">
                     <Text className="text-[11px] font-semibold text-white">Share</Text>
-                  </Pressable>
-                </View>
+                  </LuxPressable>
+                </BlurView>
               </View>
 
-              <View className="flex-row flex-wrap gap-3">
+              <View
+                className="relative flex-row gap-3"
+                onLayout={(event) => setEditBarWidth(event.nativeEvent.layout.width)}
+              >
+                {editItemWidth > 0 ? (
+                  <MotiView
+                    animate={{ translateX: activeEditIndex * (editItemWidth + editGap) }}
+                    transition={LUX_SPRING}
+                    className="absolute bottom-0 top-0 rounded-2xl bg-white/10"
+                    style={{ width: editItemWidth }}
+                  />
+                ) : null}
                 {EDIT_ACTIONS.map((action) => (
-                  <Pressable
+                  <LuxPressable
                     key={action}
                     onPress={() => handleEditAction(action)}
                     className="cursor-pointer flex-1 min-w-[120px] flex-row items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-3"
+                    style={{ borderWidth: 0.5 }}
                   >
                     {action === "Replace" ? <Layers color="#e4e4e7" size={16} /> : null}
                     {action === "Paint" ? <Paintbrush color="#e4e4e7" size={16} /> : null}
                     {action === "Floor" ? <SwatchBook color="#e4e4e7" size={16} /> : null}
                     <Text className="text-xs font-semibold text-zinc-100">{action}</Text>
-                  </Pressable>
+                  </LuxPressable>
                 ))}
               </View>
 
@@ -752,17 +810,19 @@ export default function WorkspaceScreen() {
 
       {workflowStep <= 3 ? (
         <BlurView
-          intensity={28}
+          intensity={90}
           tint="dark"
-          className="absolute bottom-5 left-5 right-5 flex-row items-center justify-between rounded-full border border-white/15 px-4 py-3"
+          className="absolute bottom-5 left-5 right-5 flex-row items-center justify-between rounded-full border border-white/15 bg-black/60 px-4 py-3"
+          style={{ borderWidth: 0.5 }}
         >
-          <Pressable
+          <LuxPressable
             onPress={handleBack}
             className="cursor-pointer rounded-full border border-white/10 px-4 py-2"
+            style={{ borderWidth: 0.5 }}
           >
             <Text className="text-xs font-semibold text-zinc-200">Back</Text>
-          </Pressable>
-          <Pressable
+          </LuxPressable>
+          <LuxPressable
             onPress={handleContinue}
             disabled={!canContinue || isGenerating}
             className={`cursor-pointer rounded-full px-5 py-2 ${
@@ -776,12 +836,13 @@ export default function WorkspaceScreen() {
             >
               {workflowStep === 3 ? "Generate" : "Continue"}
             </Text>
-          </Pressable>
+          </LuxPressable>
         </BlurView>
       ) : null}
     </View>
   );
 }
+
 
 
 

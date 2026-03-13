@@ -5,7 +5,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { useEffect } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, ScrollView, Text, View } from "react-native";
 import Purchases from "react-native-purchases";
 import {
   ArrowLeft,
@@ -27,6 +27,7 @@ import {
 import { planTitle, type PlanKey } from "../../lib/pricing";
 import { triggerHaptic } from "../../lib/haptics";
 import { hasProEntitlement } from "../../lib/revenuecat";
+import { LuxPressable } from "../../components/lux-pressable";
 
 type MeResponse = {
   plan: "free" | PlanKey;
@@ -140,31 +141,33 @@ export default function SettingsScreen() {
   return (
     <ScrollView
       className="flex-1 bg-black"
+      style={{ backgroundColor: "#000000" }}
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 120 }}
       contentInsetAdjustmentBehavior="automatic"
     >
       <View className="flex-row items-center justify-between">
-        <Pressable
+        <LuxPressable
           onPress={() => {
             triggerHaptic();
             router.back();
           }}
           className="cursor-pointer h-10 w-10 items-center justify-center rounded-full border border-white/10"
+          style={{ borderWidth: 0.5 }}
         >
           <ArrowLeft color="#e4e4e7" size={18} />
-        </Pressable>
+        </LuxPressable>
         <Text className="text-lg font-semibold text-white">Settings</Text>
         <View className="h-10 w-10" />
       </View>
 
-      <View className="mt-6 overflow-hidden rounded-3xl border border-white/10 bg-zinc-950">
+      <View className="mt-6 overflow-hidden rounded-3xl border border-white/10 bg-black" style={{ borderWidth: 0.5 }}>
         <Image
           source={require("../../assets/media/after-luxury.jpg")}
           className="absolute inset-0 h-full w-full"
           contentFit="cover"
         />
         <View className="absolute inset-0 bg-black/50" />
-        <BlurView intensity={24} tint="dark" className="absolute inset-0" />
+        <BlurView intensity={70} tint="dark" className="absolute inset-0" />
         <View className="gap-4 p-6">
           <Text className="text-lg font-semibold text-white">Your Account is {planLabel}</Text>
           <View className="gap-3">
@@ -178,23 +181,23 @@ export default function SettingsScreen() {
               );
             })}
           </View>
-          <Pressable
+          <LuxPressable
             onPress={handleUpgrade}
             className="cursor-pointer flex-row items-center justify-center gap-2 rounded-full border border-white/70 bg-white px-4 py-3"
             style={{ boxShadow: "0 0 24px rgba(255, 255, 255, 0.4)" }}
           >
             <Diamond color="#0f172a" size={14} />
             <Text className="text-sm font-semibold text-slate-900">Upgrade PRO</Text>
-          </Pressable>
+          </LuxPressable>
         </View>
       </View>
 
-      <View className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950">
+      <View className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-black" style={{ borderWidth: 0.5 }}>
         {MENU_ITEMS.map((item, index) => {
           const Icon = item.icon;
           const isLast = index === MENU_ITEMS.length - 1;
           return (
-            <Pressable
+            <LuxPressable
               key={item.id}
               onPress={() => handleNav(item.id)}
               className={`cursor-pointer flex-row items-center justify-between px-4 py-4 ${
@@ -208,20 +211,20 @@ export default function SettingsScreen() {
                 <Text className="text-sm font-semibold text-zinc-100">{item.label}</Text>
               </View>
               <ChevronRight color="#71717a" size={18} />
-            </Pressable>
+            </LuxPressable>
           );
         })}
       </View>
 
-      <View className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950">
-        <Pressable onPress={handleRestore} className="cursor-pointer px-4 py-4">
+      <View className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-black" style={{ borderWidth: 0.5 }}>
+        <LuxPressable onPress={handleRestore} className="cursor-pointer px-4 py-4">
           <View className="flex-row items-center gap-3">
             <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
               <RefreshCcw color="#e4e4e7" size={16} />
             </View>
             <Text className="text-sm font-semibold text-zinc-100">Restore Purchase</Text>
           </View>
-        </Pressable>
+        </LuxPressable>
 
         <View className="h-px bg-white/5" />
 
@@ -237,24 +240,25 @@ export default function SettingsScreen() {
               </Text>
             </View>
           </View>
-          <Pressable
+          <LuxPressable
             onPress={handleCopyId}
             className="cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-white/10"
+            style={{ borderWidth: 0.5 }}
           >
             <Copy color="#e4e4e7" size={14} />
-          </Pressable>
+          </LuxPressable>
         </View>
 
         <View className="h-px bg-white/5" />
 
-        <Pressable onPress={handleDelete} className="cursor-pointer px-4 py-4">
+        <LuxPressable onPress={handleDelete} className="cursor-pointer px-4 py-4">
           <View className="flex-row items-center gap-3">
             <View className="h-8 w-8 items-center justify-center rounded-full bg-rose-500/20">
               <Trash2 color="#fee2e2" size={16} />
             </View>
             <Text className="text-sm font-semibold text-zinc-100">Delete Information</Text>
           </View>
-        </Pressable>
+        </LuxPressable>
       </View>
     </ScrollView>
   );

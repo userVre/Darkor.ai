@@ -5,7 +5,6 @@ import { AnimatePresence, MotiView } from "moti";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
-  Pressable,
   ScrollView,
   Share,
   StyleSheet,
@@ -28,6 +27,8 @@ import {
   Wand2,
 } from "lucide-react-native";
 import { BlurView } from "expo-blur";
+import { LuxPressable } from "../components/lux-pressable";
+import { LUX_SPRING } from "../lib/motion";
 
 const EXAMPLE_PHOTOS = [
   "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80",
@@ -265,12 +266,12 @@ export default function WizardScreen() {
             <Image source={{ uri: selectedImage ?? EXAMPLE_PHOTOS[0] }} style={styles.processingImage} contentFit="cover" />
             <MotiView
               animate={{ opacity: [0.2, 0.6, 0.2], scale: [1, 1.1, 1] }}
-              transition={{ type: "timing", duration: 2000, loop: true }}
+            transition={{ ...LUX_SPRING, loop: true }}
               style={styles.processingRing}
             />
             <MotiView
               animate={{ rotateZ: ["0deg", "360deg"] }}
-              transition={{ type: "timing", duration: 2200, loop: true }}
+            transition={{ ...LUX_SPRING, loop: true }}
               style={styles.scanArm}
             >
               <View style={styles.scanLine} />
@@ -287,14 +288,15 @@ export default function WizardScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-zinc-950"
+      className="flex-1 bg-black"
+      style={{ backgroundColor: "#000000" }}
       contentContainerStyle={{ padding: 20, paddingBottom: 150, minHeight: height }}
       contentInsetAdjustmentBehavior="automatic"
     >
       <View className="flex-row items-center gap-3">
-        <Pressable onPress={handleBack} className="h-10 w-10 items-center justify-center rounded-full border border-white/10" style={styles.pointer}>
+        <LuxPressable onPress={handleBack} className="h-10 w-10 items-center justify-center rounded-full border border-white/10" style={styles.pointer}>
           <ArrowLeft color="#e4e4e7" size={18} />
-        </Pressable>
+        </LuxPressable>
         <View>
           <Text className="text-xs uppercase tracking-[3px] text-cyan-200/80">Darkor.ai</Text>
           <Text className="text-2xl font-semibold text-zinc-100">{label}</Text>
@@ -318,13 +320,13 @@ export default function WizardScreen() {
             key="step-photo"
             from={{ opacity: 0, translateY: 20 }}
             animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 350 }}
+            transition={LUX_SPRING}
             className="mt-8"
           >
             <Text className="text-lg font-semibold text-zinc-100">Add a Photo</Text>
-            <Pressable
+            <LuxPressable
               onPress={handlePickPhoto}
-              className="mt-4 overflow-hidden rounded-3xl border border-dashed border-white/20 bg-zinc-900/70"
+              className="mt-4 overflow-hidden rounded-3xl border border-dashed border-white/20 bg-black/70"
               style={[styles.cardShadow, styles.pointer, { height: 220 }]}
             >
               {selectedImage ? (
@@ -347,15 +349,15 @@ export default function WizardScreen() {
                   </View>
                 </View>
               )}
-            </Pressable>
+            </LuxPressable>
 
             <Text className="mt-6 text-xs uppercase tracking-[2px] text-zinc-400">Example Photos</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3">
               <View className="flex-row gap-3">
                 {EXAMPLE_PHOTOS.map((uri) => (
-                  <Pressable key={uri} onPress={() => setSelectedImage(uri)} style={[styles.pointer, styles.exampleCard]}>
+                  <LuxPressable key={uri} onPress={() => setSelectedImage(uri)} style={[styles.pointer, styles.exampleCard]}>
                     <Image source={{ uri }} style={styles.exampleImage} contentFit="cover" />
-                  </Pressable>
+                  </LuxPressable>
                 ))}
               </View>
             </ScrollView>
@@ -367,7 +369,7 @@ export default function WizardScreen() {
             key="step-room"
             from={{ opacity: 0, translateY: 20 }}
             animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 350 }}
+            transition={LUX_SPRING}
             className="mt-8"
           >
             <Text className="text-lg font-semibold text-zinc-100">{heading}</Text>
@@ -375,15 +377,15 @@ export default function WizardScreen() {
               {buildingOptions.map((room) => {
                 const active = selectedRoom === room;
                 return (
-                  <Pressable
+                  <LuxPressable
                     key={room}
                     onPress={() => setSelectedRoom(room)}
-                    className={`w-[48%] rounded-2xl border p-4 ${active ? "border-fuchsia-400/70 bg-fuchsia-500/10" : "border-white/10 bg-zinc-900/80"}`}
+                    className={`w-[48%] rounded-2xl border p-4 ${active ? "border-fuchsia-400/70 bg-fuchsia-500/10" : "border-white/10 bg-black/70"}`}
                     style={[styles.cardShadow, styles.pointer]}
                   >
                     <Text className={`text-sm font-semibold ${active ? "text-fuchsia-100" : "text-zinc-200"}`}>{room}</Text>
                     <Text className="mt-2 text-xs text-zinc-400">Tap to select</Text>
-                  </Pressable>
+                  </LuxPressable>
                 );
               })}
             </View>
@@ -395,7 +397,7 @@ export default function WizardScreen() {
             key="step-style"
             from={{ opacity: 0, translateY: 20 }}
             animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 350 }}
+            transition={LUX_SPRING}
             className="mt-8"
           >
             <Text className="text-lg font-semibold text-zinc-100">Select Style</Text>
@@ -403,10 +405,10 @@ export default function WizardScreen() {
               {STYLE_OPTIONS.map((style) => {
                 const active = selectedStyle === style;
                 return (
-                  <Pressable
+                  <LuxPressable
                     key={style}
                     onPress={() => setSelectedStyle(style)}
-                    className={`w-[48%] flex-row items-center gap-3 rounded-2xl border p-3 ${active ? "border-fuchsia-400/70 bg-fuchsia-500/10" : "border-white/10 bg-zinc-900/80"}`}
+                    className={`w-[48%] flex-row items-center gap-3 rounded-2xl border p-3 ${active ? "border-fuchsia-400/70 bg-fuchsia-500/10" : "border-white/10 bg-black/70"}`}
                     style={[styles.cardShadow, styles.pointer]}
                   >
                     <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/10">
@@ -416,7 +418,7 @@ export default function WizardScreen() {
                       <Text className={`text-sm font-semibold ${active ? "text-fuchsia-100" : "text-zinc-200"}`}>{style}</Text>
                       <Text className="mt-1 text-xs text-zinc-500">Signature</Text>
                     </View>
-                  </Pressable>
+                  </LuxPressable>
                 );
               })}
             </View>
@@ -428,7 +430,7 @@ export default function WizardScreen() {
             key="step-palette"
             from={{ opacity: 0, translateY: 20 }}
             animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 350 }}
+            transition={LUX_SPRING}
             className="mt-8"
           >
             <Text className="text-lg font-semibold text-zinc-100">Choose Vibe</Text>
@@ -436,10 +438,10 @@ export default function WizardScreen() {
               {PALETTE_OPTIONS.map((palette) => {
                 const active = selectedPalette === palette.id;
                 return (
-                  <Pressable
+                  <LuxPressable
                     key={palette.id}
                     onPress={() => setSelectedPalette(palette.id)}
-                    className={`w-[31%] rounded-2xl border p-3 ${active ? "border-fuchsia-400/70 bg-fuchsia-500/10" : "border-white/10 bg-zinc-900/80"}`}
+                    className={`w-[31%] rounded-2xl border p-3 ${active ? "border-fuchsia-400/70 bg-fuchsia-500/10" : "border-white/10 bg-black/70"}`}
                     style={[styles.cardShadow, styles.pointer]}
                   >
                     <View className="flex-row gap-1">
@@ -448,7 +450,7 @@ export default function WizardScreen() {
                       ))}
                     </View>
                     <Text className={`mt-2 text-xs font-semibold ${active ? "text-fuchsia-100" : "text-zinc-200"}`}>{palette.label}</Text>
-                  </Pressable>
+                  </LuxPressable>
                 );
               })}
             </View>
@@ -460,44 +462,44 @@ export default function WizardScreen() {
             key="step-editor"
             from={{ opacity: 0, translateY: 20 }}
             animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 350 }}
+            transition={LUX_SPRING}
             className="mt-8"
           >
             <View className="flex-row items-center justify-between">
-              <Pressable onPress={() => Alert.alert("Info", "Render details coming soon.")} className="h-10 w-10 items-center justify-center rounded-full border border-white/10" style={styles.pointer}>
+              <LuxPressable onPress={() => Alert.alert("Info", "Render details coming soon.")} className="h-10 w-10 items-center justify-center rounded-full border border-white/10" style={styles.pointer}>
                 <Info color="#e4e4e7" size={16} />
-              </Pressable>
-              <Pressable onPress={handleDelete} className="h-10 w-10 items-center justify-center rounded-full border border-rose-500/40" style={styles.pointer}>
+              </LuxPressable>
+              <LuxPressable onPress={handleDelete} className="h-10 w-10 items-center justify-center rounded-full border border-rose-500/40" style={styles.pointer}>
                 <Trash2 color="#fb7185" size={16} />
-              </Pressable>
+              </LuxPressable>
             </View>
 
             <Image source={previewImage} style={styles.resultImage} contentFit="cover" />
 
-            <View className="mt-6 rounded-3xl border border-white/10 bg-zinc-900/90 p-3" style={styles.cardShadow}>
+            <View className="mt-6 rounded-3xl border border-white/10 bg-black/70 p-3" style={styles.cardShadow}>
               <View className="flex-row justify-between gap-3">
-                <Pressable onPress={resetFlow} className="flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-3" style={styles.pointer}>
+                <LuxPressable onPress={resetFlow} className="flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-3" style={styles.pointer}>
                   <RefreshCcw color="#e4e4e7" size={16} />
                   <Text className="text-xs font-semibold text-zinc-200">Replace</Text>
-                </Pressable>
-                <Pressable onPress={() => setEditorPanel("paint")} className="flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-3" style={styles.pointer}>
+                </LuxPressable>
+                <LuxPressable onPress={() => setEditorPanel("paint")} className="flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-3" style={styles.pointer}>
                   <Paintbrush color="#e4e4e7" size={16} />
                   <Text className="text-xs font-semibold text-zinc-200">Paint</Text>
-                </Pressable>
-                <Pressable onPress={() => setEditorPanel("floor")} className="flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-3" style={styles.pointer}>
+                </LuxPressable>
+                <LuxPressable onPress={() => setEditorPanel("floor")} className="flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-3" style={styles.pointer}>
                   <SwatchBook color="#e4e4e7" size={16} />
                   <Text className="text-xs font-semibold text-zinc-200">New Floor</Text>
-                </Pressable>
+                </LuxPressable>
               </View>
             </View>
 
             {editorPanel !== "none" ? (
-              <View className="mt-5 rounded-3xl border border-white/10 bg-zinc-900/90 p-4" style={styles.cardShadow}>
+              <View className="mt-5 rounded-3xl border border-white/10 bg-black/70 p-4" style={styles.cardShadow}>
                 <Text className="text-sm font-semibold text-zinc-100">{editorPanel === "paint" ? "Paint Walls" : "Choose Flooring"}</Text>
                 {editorPanel === "paint" ? (
                   <View className="mt-3 flex-row flex-wrap gap-3">
                     {PAINT_SWATCHES.map((color) => (
-                      <Pressable
+                      <LuxPressable
                         key={color}
                         onPress={() => setSelectedPaint(color)}
                         className={`h-10 w-10 rounded-full border-2 ${selectedPaint === color ? "border-fuchsia-400" : "border-transparent"}`}
@@ -508,40 +510,40 @@ export default function WizardScreen() {
                 ) : (
                   <View className="mt-3 flex-row flex-wrap gap-2">
                     {FLOOR_TEXTURES.map((texture) => (
-                      <Pressable
+                      <LuxPressable
                         key={texture}
                         onPress={() => setSelectedFloor(texture)}
                         className={`rounded-full border px-3 py-2 ${selectedFloor === texture ? "border-fuchsia-400 bg-fuchsia-500/10" : "border-white/10"}`}
                         style={styles.pointer}
                       >
                         <Text className={`text-xs font-semibold ${selectedFloor === texture ? "text-fuchsia-100" : "text-zinc-300"}`}>{texture}</Text>
-                      </Pressable>
+                      </LuxPressable>
                     ))}
                   </View>
                 )}
-                <Pressable
+                <LuxPressable
                   onPress={editorPanel === "paint" ? handleApplyPaint : handleApplyFloor}
                   className="mt-4 items-center rounded-2xl bg-cyan-400 py-3"
                   style={styles.pointer}
                 >
                   <Text className="text-sm font-semibold text-zinc-900">Apply Changes</Text>
-                </Pressable>
+                </LuxPressable>
               </View>
             ) : null}
 
             <View className="mt-5 flex-row flex-wrap gap-3">
-              <Pressable onPress={handleDownload} className="flex-row items-center gap-2 rounded-full border border-white/10 px-4 py-2" style={styles.pointer}>
+              <LuxPressable onPress={handleDownload} className="flex-row items-center gap-2 rounded-full border border-white/10 px-4 py-2" style={styles.pointer}>
                 <Download color="#a1a1aa" size={16} />
                 <Text className="text-xs font-semibold text-zinc-300">Download</Text>
-              </Pressable>
-              <Pressable onPress={handleShare} className="flex-row items-center gap-2 rounded-full border border-white/10 px-4 py-2" style={styles.pointer}>
+              </LuxPressable>
+              <LuxPressable onPress={handleShare} className="flex-row items-center gap-2 rounded-full border border-white/10 px-4 py-2" style={styles.pointer}>
                 <Share2 color="#a1a1aa" size={16} />
                 <Text className="text-xs font-semibold text-zinc-300">Share</Text>
-              </Pressable>
-              <Pressable onPress={() => setCompareBefore((prev) => !prev)} className="flex-row items-center gap-2 rounded-full border border-white/10 px-4 py-2" style={styles.pointer}>
+              </LuxPressable>
+              <LuxPressable onPress={() => setCompareBefore((prev) => !prev)} className="flex-row items-center gap-2 rounded-full border border-white/10 px-4 py-2" style={styles.pointer}>
                 <Sparkles color="#a1a1aa" size={16} />
                 <Text className="text-xs font-semibold text-zinc-300">{compareBefore ? "After" : "Compare"}</Text>
-              </Pressable>
+              </LuxPressable>
             </View>
           </MotiView>
         ) : null}
@@ -549,10 +551,10 @@ export default function WizardScreen() {
 
       {workflowStep <= 3 ? (
         <BlurView intensity={28} tint="dark" style={styles.footerGlass}>
-          <Pressable onPress={handleBack} className="rounded-full border border-white/10 px-5 py-2" style={styles.pointer}>
+          <LuxPressable onPress={handleBack} className="rounded-full border border-white/10 px-5 py-2" style={styles.pointer}>
             <Text className="text-xs font-semibold text-zinc-200">Back</Text>
-          </Pressable>
-          <Pressable
+          </LuxPressable>
+          <LuxPressable
             onPress={handleContinue}
             className={`rounded-full px-5 py-2 ${canContinue() ? "bg-cyan-400" : "bg-zinc-700"}`}
             style={styles.pointer}
@@ -561,7 +563,7 @@ export default function WizardScreen() {
             <Text className={`text-xs font-semibold ${canContinue() ? "text-zinc-900" : "text-zinc-300"}`}>
               {workflowStep === 3 ? "? Generate Renders" : "Continue"}
             </Text>
-          </Pressable>
+          </LuxPressable>
         </BlurView>
       ) : null}
     </ScrollView>
@@ -649,3 +651,4 @@ const styles = StyleSheet.create({
     borderRadius: 1,
   },
 });
+
