@@ -6,6 +6,7 @@ import "../global.css";
 import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
 import { useMutation } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
+import * as Linking from "expo-linking";
 import { Stack, usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useRef, useState } from "react";
@@ -18,6 +19,7 @@ import Purchases, { CustomerInfo } from "react-native-purchases";
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
 import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
+import { consumeReferralCode, setReferralCode } from "../lib/referral";
 import { tokenCache } from "../lib/token-cache";
 import { configureRevenueCat, getRevenueCatApiKey, hasProEntitlement } from "../lib/revenuecat";
 
@@ -106,11 +108,45 @@ function RevenueCatGate() {
   return null;
 }
 
+function ReferralGate() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const applyReferral = useMutation("users:applyReferral" as any);
+
+  useEffect(() => {
+    const handleUrl = (url: string | null) => {
+      if (!url) return;
+      const parsed = Linking.parse(url);
+      const code = typeof parsed.queryParams?.code === "string" ? parsed.queryParams.code : null;
+      if (code) {
+        void setReferralCode(code);
+      }
+    };
+
+    void Linking.getInitialURL().then(handleUrl);
+    const subscription = Linking.addEventListener("url", (event) => handleUrl(event.url));
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    const run = async () => {
+      const code = await consumeReferralCode();
+      if (code) {
+        await applyReferral({ referralCode: code });
+      }
+    };
+    void run();
+  }, [applyReferral, isLoaded, isSignedIn]);
+
+  return null;
+}
+
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       <ProSuccessProvider>
         <RevenueCatGate />
+        <ReferralGate />
         {children}
       </ProSuccessProvider>
     </ConvexProviderWithClerk>

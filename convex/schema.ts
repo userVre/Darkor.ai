@@ -9,6 +9,9 @@ export default defineSchema({
     generationCount: v.int64(),
     reviewPrompted: v.boolean(),
     lastReviewPromptAt: v.optional(v.int64()),
+    referralCode: v.optional(v.string()),
+    referralCount: v.optional(v.int64()),
+    referredBy: v.optional(v.string()),
   }).index("by_clerkId", ["clerkId"]),
 
   generations: defineTable({

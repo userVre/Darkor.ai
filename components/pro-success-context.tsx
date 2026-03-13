@@ -1,14 +1,16 @@
 import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
 import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import { Platform, Text, ToastAndroid, View } from "react-native";
+import { Platform, Text, ToastAndroid, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, Sparkles } from "lucide-react-native";
 
@@ -54,10 +56,10 @@ function ProSuccessOverlay({
             <View className="rounded-[30px] border border-white/10 bg-black px-6 py-8" style={{ borderWidth: 0.5 }}>
               <View className="flex-row items-center gap-2">
                 <Sparkles color="#f5f3ff" size={20} />
-                <Text className="text-xl font-medium text-white">Welcome to Darkor Pro! ✨</Text>
+                <Text className="text-xl font-medium text-white">Welcome to Darkor Pro! {"\u2728"}</Text>
               </View>
               <Text className="mt-3 text-sm text-zinc-400">
-                You’re fully powered up. Here’s what’s unlocked:
+              <Text className="mt-3 text-sm text-zinc-400">You're fully powered up. Here's what's unlocked:</Text>
               </Text>
 
               <View className="mt-5 gap-3">
@@ -89,6 +91,59 @@ function ProSuccessOverlay({
           </LinearGradient>
         </MotiView>
       </MotiView>
+    </View>
+  );
+}
+
+const BASE_SPARKLES = Array.from({ length: 18 }).map((_, index) => {
+  const offset = index * 37;
+  const xRatio = ((offset * 13) % 100) / 100;
+  const yRatio = ((offset * 17) % 100) / 100;
+  const size = 10 + ((offset * 7) % 16);
+  const delay = (offset * 23) % 900;
+  const duration = 1600 + ((offset * 11) % 1400);
+  return { id: `sparkle-${index}`, xRatio, yRatio, size, delay, duration };
+});
+
+function SparkleCelebration({ visible }: { visible: boolean }) {
+  const { width, height } = useWindowDimensions();
+  const sparkles = useMemo(
+    () =>
+      BASE_SPARKLES.map((sparkle) => ({
+        ...sparkle,
+        x: sparkle.xRatio * Math.max(0, width - sparkle.size),
+        y: sparkle.yRatio * Math.max(0, height - sparkle.size),
+      })),
+    [width, height],
+  );
+  if (!visible) return null;
+
+  return (
+    <View className="absolute inset-0 z-40" pointerEvents="none">
+      {sparkles.map((sparkle) => (
+        <MotiView
+          key={sparkle.id}
+          from={{ opacity: 0, translateY: 12, scale: 0.6, rotate: "0deg" }}
+          animate={{ opacity: [0, 1, 0], translateY: -48, scale: [0.6, 1, 0.5], rotate: "12deg" }}
+          transition={{ delay: sparkle.delay, duration: sparkle.duration, easing: "easeOut" }}
+          style={{
+            position: "absolute",
+            left: sparkle.x,
+            top: sparkle.y,
+            width: sparkle.size,
+            height: sparkle.size,
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              borderRadius: sparkle.size,
+              backgroundColor: "rgba(244, 63, 94, 0.7)",
+              boxShadow: "0 0 16px rgba(244, 63, 94, 0.6)",
+            }}
+          />
+        </MotiView>
+      ))}
     </View>
   );
 }
@@ -128,6 +183,8 @@ function ProToast({
 export function ProSuccessProvider({ children }: { children: React.ReactNode }) {
   const [showOverlay, setShowOverlay] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [showSparkles, setShowSparkles] = useState(false);
+  const sparkleTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = useCallback((message: string) => {
     if (Platform.OS === "android") {
@@ -139,8 +196,26 @@ export function ProSuccessProvider({ children }: { children: React.ReactNode }) 
 
   const showSuccess = useCallback(() => {
     setShowOverlay(true);
+    setShowSparkles(true);
     showToast("Account Upgraded to Pro successfully.");
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+    }
   }, [showToast]);
+
+  useEffect(() => {
+    if (!showSparkles) return;
+    if (sparkleTimeout.current) {
+      clearTimeout(sparkleTimeout.current);
+    }
+    sparkleTimeout.current = setTimeout(() => setShowSparkles(false), 3200);
+    return () => {
+      if (sparkleTimeout.current) {
+        clearTimeout(sparkleTimeout.current);
+        sparkleTimeout.current = null;
+      }
+    };
+  }, [showSparkles]);
 
   const value = useMemo(
     () => ({
@@ -153,6 +228,7 @@ export function ProSuccessProvider({ children }: { children: React.ReactNode }) 
   return (
     <ProSuccessContext.Provider value={value}>
       {children}
+      <SparkleCelebration visible={showSparkles} />
       <ProSuccessOverlay visible={showOverlay} onClose={() => setShowOverlay(false)} />
       {toastMessage ? <ProToast message={toastMessage} onHide={() => setToastMessage("")} /> : null}
     </ProSuccessContext.Provider>
@@ -166,3 +242,4 @@ export function useProSuccess() {
   }
   return context;
 }
+

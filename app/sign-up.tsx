@@ -1,3 +1,4 @@
+import { useOAuth } from "@clerk/expo";
 import { useSignUp } from "@clerk/expo/legacy";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
@@ -7,9 +8,11 @@ import { LuxPressable } from "../components/lux-pressable";
 export default function SignUpScreen() {
   const router = useRouter();
   const { signUp, isLoaded } = useSignUp();
+  const { startOAuthFlow } = useOAuth({ strategy: "oauth_apple" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
 
   const handleSignUp = async () => {
     if (!isLoaded) return;
@@ -24,6 +27,22 @@ export default function SignUpScreen() {
       Alert.alert("Sign up failed", message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAppleSignUp = async () => {
+    setAppleLoading(true);
+    try {
+      const { createdSessionId, setActive: setOAuthActive } = await startOAuthFlow();
+      if (createdSessionId) {
+        await setOAuthActive?.({ session: createdSessionId });
+        router.replace("/(tabs)");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Apple sign-up failed";
+      Alert.alert("Apple sign-up failed", message);
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -56,6 +75,18 @@ export default function SignUpScreen() {
         disabled={loading}
       >
         <Text className="text-center font-semibold text-zinc-900">{loading ? "Creating..." : "Create account"}</Text>
+      </LuxPressable>
+
+      <LuxPressable
+        onPress={() => void handleAppleSignUp()}
+        className="mt-3 flex-row items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black py-3"
+        style={{ borderWidth: 0.5 }}
+        disabled={appleLoading}
+      >
+        <Text className="text-lg font-semibold text-white">{"\uF8FF"}</Text>
+        <Text className="text-sm font-semibold text-white">
+          {appleLoading ? "Connecting..." : "Continue with Apple"}
+        </Text>
       </LuxPressable>
 
       <Text className="mt-4 text-center text-zinc-400">

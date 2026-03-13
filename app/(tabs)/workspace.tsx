@@ -1,10 +1,11 @@
-﻿import { useAuth } from "@clerk/expo";
+import { useAuth } from "@clerk/expo";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { skip, useMutation, useQuery } from "convex/react";
 import { Asset } from "expo-asset";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import * as MediaLibrary from "expo-media-library";
 import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -39,6 +40,8 @@ import { requestStoreReview } from "../../lib/store-review";
 import { GlassBackdrop } from "../../components/glass-backdrop";
 import { LuxPressable } from "../../components/lux-pressable";
 import { useWorkspaceDraft } from "../../components/workspace-context";
+import Logo from "../../components/logo";
+import { captureRef } from "react-native-view-shot";
 type MeResponse = {
   plan: "free" | "pro" | "premium" | "ultra";
   credits: number;
@@ -227,6 +230,7 @@ export default function WorkspaceScreen() {
   const reviewSheetRef = useRef<BottomSheetModal>(null);
   const rateSheetRef = useRef<BottomSheetModal>(null);
   const feedbackSheetRef = useRef<BottomSheetModal>(null);
+  const imageContainerRef = useRef<View>(null);
   const hasAppliedStartStepRef = useRef(false);
   const reviewHandledRef = useRef(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -425,14 +429,38 @@ export default function WorkspaceScreen() {
     await Share.share({ message: generatedImageUrl });
   }, [generatedImageUrl]);
 
-  const handleDownload = useCallback(() => {
+  const handleDownload = useCallback(async () => {
     triggerHaptic();
     if (!generatedImageUrl) {
       Alert.alert("Nothing to download", "Generate an image first.");
       return;
     }
-    Alert.alert("Download", "Your render will download shortly.");
-  }, [generatedImageUrl]);
+
+    try {
+      const permission = await MediaLibrary.requestPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert("Permission required", "Please allow photo access to save your render.");
+        return;
+      }
+
+      let fileUri = "";
+      if (isProUser) {
+        const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}darkor-${Date.now()}.jpg`;
+        const download = await FileSystem.downloadAsync(generatedImageUrl, targetUri);
+        fileUri = download.uri;
+      } else {
+        if (!imageContainerRef.current) {
+          throw new Error("Preview not ready. Please try again.");
+        }
+        fileUri = await captureRef(imageContainerRef, { format: "png", quality: 1, result: "tmpfile" });
+      }
+
+      await MediaLibrary.saveToLibraryAsync(fileUri);
+      Alert.alert("Saved", "Your render has been saved to your library.");
+    } catch (error) {
+      Alert.alert("Download failed", error instanceof Error ? error.message : "Please try again.");
+    }
+  }, [generatedImageUrl, imageContainerRef, isProUser]);
 
   const handleUpscale = useCallback(() => {
     triggerHaptic();
@@ -680,7 +708,7 @@ export default function WorkspaceScreen() {
             className="rounded-2xl border border-white/10 bg-black/70 px-4 py-3"
             style={{ borderWidth: 0.5 }}
           >
-            <Text className="text-center text-sm font-semibold text-white">âœ¨ Resuming with your current draft.</Text>
+            <Text className="text-center text-sm font-semibold text-white">{"\u2728"} Resuming with your current draft.</Text>
           </BlurView>
         </MotiView>
       ) : null}
@@ -929,25 +957,33 @@ export default function WorkspaceScreen() {
               </View>
 
               <View className="relative overflow-hidden rounded-3xl border border-white/10" style={{ borderWidth: 0.5 }}>
-                {generatedImageUrl ? (
-                  <MotiView
-                    key={generatedImageUrl}
-                    from={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={LUX_SPRING}
-                  >
-                    <Image
-                      source={{ uri: compareHold && selectedImage ? selectedImage.uri : generatedImageUrl }}
+                <View ref={imageContainerRef} collapsable={false} className="relative h-80 w-full">
+                  {generatedImageUrl ? (
+                    <MotiView
+                      key={generatedImageUrl}
+                      from={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={LUX_SPRING}
                       className="h-80 w-full"
-                      contentFit="cover"
-                    />
-                  </MotiView>
-                ) : (
-                  <View className="h-64 items-center justify-center gap-2 bg-white/5">
-                    <Sparkles color="#a1a1aa" size={32} />
-                    <Text className="text-sm text-zinc-400">No render yet.</Text>
-                  </View>
-                )}
+                    >
+                      <Image
+                        source={{ uri: compareHold && selectedImage ? selectedImage.uri : generatedImageUrl }}
+                        className="h-80 w-full"
+                        contentFit="cover"
+                      />
+                    </MotiView>
+                  ) : (
+                    <View className="h-80 w-full items-center justify-center gap-2 bg-white/5">
+                      <Sparkles color="#a1a1aa" size={32} />
+                      <Text className="text-sm text-zinc-400">No render yet.</Text>
+                    </View>
+                  )}
+                  {!isProUser && generatedImageUrl && !compareHold ? (
+                    <View className="absolute bottom-3 right-3">
+                      <Logo size={44} style={{ opacity: 0.6 }} />
+                    </View>
+                  ) : null}
+                </View>
 
                 <BlurView
                   intensity={80}
@@ -1126,7 +1162,7 @@ export default function WorkspaceScreen() {
       >
         <View className="flex-1 px-5 pb-8 pt-2">
           <Text className="text-lg font-medium text-white">Tell us what went wrong</Text>
-          <Text className="mt-2 text-sm text-zinc-400">Weâ€™ll use this to improve your next redesign.</Text>
+          <Text className="mt-2 text-sm text-zinc-400">We'll use this to improve your next redesign.</Text>
           <TextInput
             value={feedbackMessage}
             onChangeText={setFeedbackMessage}
@@ -1169,6 +1205,7 @@ export default function WorkspaceScreen() {
     </View>
   );
 }
+
 
 
 

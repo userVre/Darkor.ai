@@ -45,6 +45,12 @@
           "photosPermission": "Darkor.ai needs access to your photos so you can upload room images.",
           "cameraPermission": "Darkor.ai needs camera access so you can capture a room before redesign."
         }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Darkor.ai needs access to save your redesigned images."
+        }
       ]
     ],
     "experiments": {

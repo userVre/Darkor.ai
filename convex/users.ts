@@ -15,6 +15,12 @@ export const getOrCreateCurrentUser = mutationGeneric({
       .unique();
 
     if (existing) {
+      if (!existing.referralCode || typeof existing.referralCount !== "number") {
+        await ctx.db.patch(existing._id, {
+          referralCode: existing.referralCode ?? identity.subject,
+          referralCount: typeof existing.referralCount === "number" ? existing.referralCount : 0,
+        });
+      }
       return existing;
     }
 
@@ -25,6 +31,9 @@ export const getOrCreateCurrentUser = mutationGeneric({
       generationCount: 0,
       reviewPrompted: false,
       lastReviewPromptAt: 0,
+      referralCode: identity.subject,
+      referralCount: 0,
+      referredBy: undefined,
     });
 
     const created = await ctx.db.get(id);
@@ -157,6 +166,63 @@ export const markReviewPrompted = mutationGeneric({
     await ctx.db.patch(existing._id, {
       reviewPrompted: true,
       lastReviewPromptAt: Date.now(),
+    });
+
+    return { ok: true };
+  },
+});
+
+export const applyReferral = mutationGeneric({
+  args: {
+    referralCode: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const current = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!current) {
+      throw new Error("No billing profile found.");
+    }
+
+    const normalizedCode = args.referralCode.trim();
+    if (!normalizedCode) {
+      return { ok: false, reason: "invalid_referral" };
+    }
+
+    if (current.referredBy) {
+      return { ok: false, reason: "already_referred" };
+    }
+
+    if (normalizedCode === current.clerkId) {
+      return { ok: false, reason: "self_referral" };
+    }
+
+    const referrer = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", normalizedCode))
+      .unique();
+
+    if (!referrer) {
+      return { ok: false, reason: "invalid_referral" };
+    }
+
+    const nextCredits = referrer.credits + 3;
+    const nextReferralCount = (referrer.referralCount ?? 0) + 1;
+
+    await ctx.db.patch(referrer._id, {
+      credits: nextCredits,
+      referralCount: nextReferralCount,
+    });
+
+    await ctx.db.patch(current._id, {
+      referredBy: referrer.clerkId,
     });
 
     return { ok: true };
