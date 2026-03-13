@@ -333,8 +333,9 @@ export default function WorkspaceScreen() {
   }, [serviceType]);
 
   const plan = me?.plan ?? "free";
+  const isProUser = plan !== "free";
   const planUsed = plan === "premium" || plan === "ultra" ? plan : "pro";
-  const canUpscale = plan === "premium" || plan === "ultra";
+  const canUpscale = isProUser;
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const editGap = 12;
   const activeEditIndex = EDIT_ACTIONS.indexOf(activeEditAction);
@@ -436,7 +437,7 @@ export default function WorkspaceScreen() {
   const handleUpscale = useCallback(() => {
     triggerHaptic();
     if (!canUpscale) {
-      Alert.alert("Premium feature", "Upscale to 4K is available on Premium or Ultra.");
+      Alert.alert("Upgrade to Pro", "Upscale to 4K is available on Pro and higher.");
       return;
     }
     Alert.alert("Upscale", "Your 4K upscale is queued.");
@@ -971,7 +972,7 @@ export default function WorkspaceScreen() {
                     }`}
                   >
                     <View className="flex-row items-center gap-1">
-                      {!canUpscale ? <Lock color="#facc15" size={12} /> : null}
+                  {isProUser ? <Sparkles color="#f5d0fe" size={12} /> : <Lock color="#facc15" size={12} />}
                       <Text className="text-[11px] font-semibold text-white">Upscale</Text>
                     </View>
                   </LuxPressable>

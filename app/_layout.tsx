@@ -15,6 +15,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Purchases, { CustomerInfo } from "react-native-purchases";
 
+import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
 import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
 import { tokenCache } from "../lib/token-cache";
@@ -28,9 +29,11 @@ function RevenueCatGate() {
   const router = useRouter();
   const pathname = usePathname();
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
+  const { showSuccess } = useProSuccess();
 
   const configuredRef = useRef(false);
   const listenerAddedRef = useRef(false);
+  const hasProRef = useRef<boolean | null>(null);
   const syncRef = useRef<(info?: CustomerInfo) => void>(() => undefined);
 
   useEffect(() => {
@@ -61,6 +64,15 @@ function RevenueCatGate() {
 
         if (hasPro && isSignedIn) {
           await setPlan({ plan: "pro" });
+        }
+
+        if (hasProRef.current === null) {
+          hasProRef.current = hasPro;
+        } else if (hasPro && !hasProRef.current) {
+          showSuccess();
+          hasProRef.current = true;
+        } else {
+          hasProRef.current = hasPro;
         }
 
         const onPaywall = pathname === "/paywall";
@@ -97,8 +109,10 @@ function RevenueCatGate() {
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-      <RevenueCatGate />
-      {children}
+      <ProSuccessProvider>
+        <RevenueCatGate />
+        {children}
+      </ProSuccessProvider>
     </ConvexProviderWithClerk>
   );
 }
