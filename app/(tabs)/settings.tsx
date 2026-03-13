@@ -27,6 +27,7 @@ import {
 import { planTitle, type PlanKey } from "../../lib/pricing";
 import { triggerHaptic } from "../../lib/haptics";
 import { hasProEntitlement } from "../../lib/revenuecat";
+import { requestStoreReview } from "../../lib/store-review";
 import { LuxPressable } from "../../components/lux-pressable";
 
 type MeResponse = {
@@ -68,6 +69,11 @@ export default function SettingsScreen() {
   const handleUpgrade = () => {
     triggerHaptic();
     router.push("/paywall");
+  };
+
+  const handleRateStore = async () => {
+    triggerHaptic();
+    await requestStoreReview();
   };
 
   const handleNav = (id: string) => {
@@ -193,6 +199,22 @@ export default function SettingsScreen() {
       </View>
 
       <View className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-black" style={{ borderWidth: 0.5 }}>
+        <LuxPressable
+          onPress={handleRateStore}
+          className="cursor-pointer overflow-hidden px-4 py-4"
+          style={{ borderBottomWidth: 0.5, borderBottomColor: "rgba(255, 255, 255, 0.06)" }}
+        >
+          <View className="flex-row items-center gap-3">
+            <View className="h-8 w-8 items-center justify-center rounded-full bg-amber-400/20">
+              <Star color="#facc15" size={16} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-sm font-semibold text-amber-200">🌟 Rate Darkor.ai on the Store</Text>
+              <Text className="mt-1 text-xs text-amber-200/70">Help us reach more creators</Text>
+            </View>
+          </View>
+        </LuxPressable>
+
         {MENU_ITEMS.map((item, index) => {
           const Icon = item.icon;
           const isLast = index === MENU_ITEMS.length - 1;

@@ -6,6 +6,9 @@ export default defineSchema({
     clerkId: v.string(),
     credits: v.int64(),
     plan: v.string(),
+    generationCount: v.int64(),
+    reviewPrompted: v.boolean(),
+    lastReviewPromptAt: v.optional(v.int64()),
   }).index("by_clerkId", ["clerkId"]),
 
   generations: defineTable({
@@ -15,5 +18,12 @@ export default defineSchema({
     prompt: v.optional(v.string()),
     style: v.optional(v.string()),
     planUsed: v.string(),
+  }).index("by_userId", ["userId"]),
+
+  feedback: defineTable({
+    userId: v.string(),
+    message: v.string(),
+    createdAt: v.int64(),
+    generationCount: v.optional(v.int64()),
   }).index("by_userId", ["userId"]),
 });

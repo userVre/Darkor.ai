@@ -10,9 +10,12 @@ import { Stack, usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Purchases, { CustomerInfo } from "react-native-purchases";
 
+import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
 import { tokenCache } from "../lib/token-cache";
 import { configureRevenueCat, getRevenueCatApiKey, hasProEntitlement } from "../lib/revenuecat";
@@ -137,24 +140,30 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <ClerkProvider publishableKey={clerkKey} tokenCache={tokenCache}>
-        <Providers>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: "#000000" },
-              animation: "fade",
-            }}
-          >
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="paywall" />
-            <Stack.Screen name="sign-in" />
-            <Stack.Screen name="sign-up" />
-          </Stack>
-        </Providers>
-      </ClerkProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ClerkProvider publishableKey={clerkKey} tokenCache={tokenCache}>
+          <Providers>
+            <WorkspaceDraftProvider>
+              <BottomSheetModalProvider>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: "#000000" },
+                    animation: "fade",
+                  }}
+                >
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="paywall" />
+                  <Stack.Screen name="sign-in" />
+                  <Stack.Screen name="sign-up" />
+                </Stack>
+              </BottomSheetModalProvider>
+            </WorkspaceDraftProvider>
+          </Providers>
+        </ClerkProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 

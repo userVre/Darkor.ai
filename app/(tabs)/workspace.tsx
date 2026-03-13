@@ -1,4 +1,5 @@
 import { useAuth } from "@clerk/expo";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { skip, useMutation, useQuery } from "convex/react";
 import { Asset } from "expo-asset";
 import { BlurView } from "expo-blur";
@@ -8,8 +9,9 @@ import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   ScrollView,
   Share,
@@ -18,6 +20,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ArrowLeft,
   Image as ImageIcon,
@@ -32,7 +35,10 @@ import {
 import { generateImage } from "../../lib/api";
 import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
+import { requestStoreReview } from "../../lib/store-review";
+import { GlassBackdrop } from "../../components/glass-backdrop";
 import { LuxPressable } from "../../components/lux-pressable";
+import { useWorkspaceDraft } from "../../components/workspace-context";
 type MeResponse = {
   plan: "free" | "pro" | "premium" | "ultra";
   credits: number;
@@ -182,12 +188,21 @@ async function readBase64FromUri(uri: string) {
 
 export default function WorkspaceScreen() {
   const router = useRouter();
-  const { service } = useLocalSearchParams<{ service?: string }>();
+  const { service, presetStyle, startStep } = useLocalSearchParams<{
+    service?: string;
+    presetStyle?: string;
+    startStep?: string;
+  }>();
   const { isSignedIn, getToken } = useAuth();
   const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const { draft, setDraftImage, setDraftRoom, setDraftStyle } = useWorkspaceDraft();
 
   const me = useQuery("users:me" as any, isSignedIn ? {} : skip) as MeResponse | null | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
+  const trackGeneration = useMutation("users:trackGeneration" as any);
+  const markReviewPrompted = useMutation("users:markReviewPrompted" as any);
+  const submitFeedback = useMutation("feedback:submit" as any);
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
@@ -201,11 +216,100 @@ export default function WorkspaceScreen() {
   const [isLoadingExample, setIsLoadingExample] = useState<string | null>(null);
   const [activeEditAction, setActiveEditAction] = useState<(typeof EDIT_ACTIONS)[number]>("Replace");
   const [editBarWidth, setEditBarWidth] = useState(0);
+  const [reviewPromptOpen, setReviewPromptOpen] = useState(false);
+  const [ratePromptOpen, setRatePromptOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [lastGenerationCount, setLastGenerationCount] = useState<number | null>(null);
+  const [showResumeToast, setShowResumeToast] = useState(false);
+
+  const reviewSheetRef = useRef<BottomSheetModal>(null);
+  const rateSheetRef = useRef<BottomSheetModal>(null);
+  const feedbackSheetRef = useRef<BottomSheetModal>(null);
+  const hasAppliedStartStepRef = useRef(false);
+  const reviewHandledRef = useRef(false);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isSmallScreen = height < 740;
+  const reviewSnapPoints = useMemo(() => ["38%"], []);
+  const rateSnapPoints = useMemo(() => ["36%"], []);
+  const feedbackSnapPoints = useMemo(() => [isSmallScreen ? "95%" : "58%"], [isSmallScreen]);
 
   useEffect(() => {
     if (!isSignedIn) return;
     ensureUser({}).catch(() => undefined);
   }, [ensureUser, isSignedIn]);
+
+  useEffect(() => {
+    if (draft.image && !selectedImage) {
+      setSelectedImage(draft.image);
+    }
+  }, [draft.image, selectedImage]);
+
+  useEffect(() => {
+    if (draft.room && !selectedRoom) {
+      setSelectedRoom(draft.room);
+    }
+  }, [draft.room, selectedRoom]);
+
+  useEffect(() => {
+    if (draft.style && !selectedStyle) {
+      setSelectedStyle(draft.style);
+    }
+  }, [draft.style, selectedStyle]);
+
+  useEffect(() => {
+    if (selectedImage) {
+      setDraftImage(selectedImage);
+    }
+  }, [selectedImage, setDraftImage]);
+
+  useEffect(() => {
+    if (selectedRoom) {
+      setDraftRoom(selectedRoom);
+    }
+  }, [selectedRoom, setDraftRoom]);
+
+  useEffect(() => {
+    if (selectedStyle) {
+      setDraftStyle(selectedStyle);
+    }
+  }, [selectedStyle, setDraftStyle]);
+
+  useEffect(() => {
+    if (!startStep || hasAppliedStartStepRef.current) return;
+    const canSkip = Boolean(draft.image && draft.room);
+    const hasStyle = Boolean(presetStyle || draft.style || selectedStyle);
+    if (canSkip && hasStyle) {
+      const parsed = Number(startStep);
+      const nextStep = Number.isFinite(parsed) ? Math.max(0, Math.min(parsed, 3)) : 3;
+      setWorkflowStep(nextStep);
+      setShowResumeToast(true);
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+      toastTimeoutRef.current = setTimeout(() => setShowResumeToast(false), 2200);
+    }
+    hasAppliedStartStepRef.current = true;
+  }, [draft.image, draft.room, draft.style, presetStyle, selectedStyle, startStep]);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!presetStyle || selectedStyle) return;
+    const normalized = String(presetStyle).trim().toLowerCase();
+    const matched = STYLE_OPTIONS.find((style) => style.toLowerCase() === normalized);
+    if (matched) {
+      setSelectedStyle(matched);
+    }
+  }, [presetStyle, selectedStyle]);
 
   useEffect(() => {
     if (workflowStep === 5 && generatedImageUrl) {
@@ -231,6 +335,7 @@ export default function WorkspaceScreen() {
   const plan = me?.plan ?? "free";
   const planUsed = plan === "premium" || plan === "ultra" ? plan : "pro";
   const canUpscale = plan === "premium" || plan === "ultra";
+  const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const editGap = 12;
   const activeEditIndex = EDIT_ACTIONS.indexOf(activeEditAction);
   const editItemWidth =
@@ -379,6 +484,22 @@ export default function WorkspaceScreen() {
 
       setGeneratedImageUrl(response.imageUrl);
       setWorkflowStep(5);
+
+      try {
+        const reviewState = (await trackGeneration({ ignoreCooldown: ignoreReviewCooldown })) as {
+          count: number;
+          shouldPrompt: boolean;
+        };
+        setLastGenerationCount(reviewState.count);
+        if (reviewState.shouldPrompt) {
+          console.log("[Analytics] Review Shown", { count: reviewState.count });
+          reviewHandledRef.current = false;
+          setReviewPromptOpen(true);
+          requestAnimationFrame(() => reviewSheetRef.current?.present());
+        }
+      } catch {
+        // Ignore review tracking failures.
+      }
     } catch (error) {
       setWorkflowStep(3);
       Alert.alert("Generation failed", error instanceof Error ? error.message : "Please try again.");
@@ -416,6 +537,73 @@ export default function WorkspaceScreen() {
     triggerHaptic();
     setSelectedPaletteId(value);
   }, []);
+
+  const handleReviewYes = useCallback(async () => {
+    triggerHaptic();
+    reviewHandledRef.current = true;
+    setReviewPromptOpen(false);
+    reviewSheetRef.current?.dismiss();
+    try {
+      await markReviewPrompted({});
+    } catch {
+      // noop
+    }
+    setRatePromptOpen(true);
+    requestAnimationFrame(() => rateSheetRef.current?.present());
+  }, [markReviewPrompted]);
+
+  const handleReviewNo = useCallback(async () => {
+    triggerHaptic();
+    reviewHandledRef.current = true;
+    setReviewPromptOpen(false);
+    reviewSheetRef.current?.dismiss();
+    try {
+      await markReviewPrompted({});
+    } catch {
+      // noop
+    }
+    setFeedbackOpen(true);
+    requestAnimationFrame(() => feedbackSheetRef.current?.present());
+  }, [markReviewPrompted]);
+
+  const handleRateNow = useCallback(async () => {
+    triggerHaptic();
+    setRatePromptOpen(false);
+    rateSheetRef.current?.dismiss();
+    await requestStoreReview();
+  }, []);
+
+  const handleRateLater = useCallback(() => {
+    triggerHaptic();
+    setRatePromptOpen(false);
+    rateSheetRef.current?.dismiss();
+  }, []);
+
+  const handleSubmitFeedback = useCallback(async () => {
+    if (feedbackMessage.trim().length < 3) {
+      Alert.alert("Feedback", "Please add a few words so we can help.");
+      return;
+    }
+    triggerHaptic();
+    setIsSubmittingFeedback(true);
+    try {
+      await submitFeedback({
+        message: feedbackMessage.trim(),
+        generationCount: lastGenerationCount ?? undefined,
+      });
+      console.log("[Analytics] Feedback Sent", {
+        count: lastGenerationCount ?? undefined,
+      });
+      setFeedbackMessage("");
+      setFeedbackOpen(false);
+      feedbackSheetRef.current?.dismiss();
+      Alert.alert("Thank you", "Your feedback helps us improve quickly.");
+    } catch (error) {
+      Alert.alert("Feedback", error instanceof Error ? error.message : "Unable to send feedback.");
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
+  }, [feedbackMessage, lastGenerationCount, submitFeedback]);
 
   const stepTransition = LUX_SPRING;
 
@@ -475,6 +663,26 @@ export default function WorkspaceScreen() {
 
   return (
     <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
+      {showResumeToast ? (
+        <MotiView
+          from={{ opacity: 0, translateY: -12 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          exit={{ opacity: 0, translateY: -12 }}
+          transition={LUX_SPRING}
+          className="absolute left-6 right-6 z-20"
+          style={{ top: insets.top + 8 }}
+          pointerEvents="none"
+        >
+          <BlurView
+            intensity={80}
+            tint="dark"
+            className="rounded-2xl border border-white/10 bg-black/70 px-4 py-3"
+            style={{ borderWidth: 0.5 }}
+          >
+            <Text className="text-center text-sm font-semibold text-white">✨ Resuming with your current draft.</Text>
+          </BlurView>
+        </MotiView>
+      ) : null}
       <ScrollView
         className="flex-1 bg-black"
         style={{ backgroundColor: "#000000" }}
@@ -839,6 +1047,124 @@ export default function WorkspaceScreen() {
           </LuxPressable>
         </BlurView>
       ) : null}
+
+      <BottomSheetModal
+        ref={reviewSheetRef}
+        snapPoints={reviewSnapPoints}
+        enablePanDownToClose
+        backdropComponent={GlassBackdrop}
+        onDismiss={() => {
+          if (!reviewHandledRef.current && reviewPromptOpen) {
+            markReviewPrompted({}).catch(() => undefined);
+          }
+          setReviewPromptOpen(false);
+        }}
+        backgroundStyle={{ backgroundColor: "#050505" }}
+        handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
+      >
+        <View className="flex-1 px-5 pb-8 pt-2">
+          <Text className="text-lg font-semibold text-white">Are you happy with your AI redesign?</Text>
+          <Text className="mt-2 text-sm text-zinc-400">Your feedback helps Darkor.ai improve.</Text>
+          <View className="mt-5 flex-row gap-3">
+            <LuxPressable
+              onPress={handleReviewNo}
+              className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-4 py-3"
+              style={{ borderWidth: 0.5 }}
+            >
+              <Text className="text-center text-sm font-semibold text-zinc-200">No</Text>
+            </LuxPressable>
+            <LuxPressable onPress={handleReviewYes} className="flex-1 rounded-2xl bg-cyan-400 px-4 py-3">
+              <Text className="text-center text-sm font-semibold text-zinc-900">Yes</Text>
+            </LuxPressable>
+          </View>
+        </View>
+      </BottomSheetModal>
+
+      <BottomSheetModal
+        ref={rateSheetRef}
+        snapPoints={rateSnapPoints}
+        enablePanDownToClose
+        backdropComponent={GlassBackdrop}
+        onDismiss={() => setRatePromptOpen(false)}
+        backgroundStyle={{ backgroundColor: "#050505" }}
+        handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
+      >
+        <View className="flex-1 px-5 pb-8 pt-2">
+          <Text className="text-lg font-semibold text-white">Would you rate Darkor.ai?</Text>
+          <Text className="mt-2 text-sm text-zinc-400">A quick review helps us reach more creators.</Text>
+          <View className="mt-5 flex-row gap-3">
+            <LuxPressable
+              onPress={handleRateLater}
+              className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-4 py-3"
+              style={{ borderWidth: 0.5 }}
+            >
+              <Text className="text-center text-sm font-semibold text-zinc-200">Later</Text>
+            </LuxPressable>
+            <LuxPressable onPress={handleRateNow} className="flex-1 overflow-hidden rounded-2xl">
+              <LinearGradient
+                colors={["#f43f5e", "#d946ef"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ paddingVertical: 12, alignItems: "center" }}
+              >
+                <Text className="text-center text-sm font-semibold text-white">Rate Now</Text>
+              </LinearGradient>
+            </LuxPressable>
+          </View>
+        </View>
+      </BottomSheetModal>
+
+      <BottomSheetModal
+        ref={feedbackSheetRef}
+        snapPoints={feedbackSnapPoints}
+        enablePanDownToClose
+        backdropComponent={GlassBackdrop}
+        onDismiss={() => setFeedbackOpen(false)}
+        backgroundStyle={{ backgroundColor: "#050505" }}
+        handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
+      >
+        <View className="flex-1 px-5 pb-8 pt-2">
+          <Text className="text-lg font-semibold text-white">Tell us what went wrong</Text>
+          <Text className="mt-2 text-sm text-zinc-400">We’ll use this to improve your next redesign.</Text>
+          <TextInput
+            value={feedbackMessage}
+            onChangeText={setFeedbackMessage}
+            placeholder="Share what you expected or what felt off..."
+            placeholderTextColor="rgba(148, 163, 184, 0.6)"
+            multiline
+            textAlignVertical="top"
+            className="mt-4 min-h-[120px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+            style={{ borderWidth: 0.5 }}
+          />
+          <View className="mt-5 flex-row gap-3">
+            <LuxPressable
+              onPress={() => {
+                triggerHaptic();
+                setFeedbackOpen(false);
+                feedbackSheetRef.current?.dismiss();
+              }}
+              className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-4 py-3"
+              style={{ borderWidth: 0.5 }}
+            >
+              <Text className="text-center text-sm font-semibold text-zinc-200">Cancel</Text>
+            </LuxPressable>
+            <LuxPressable
+              onPress={handleSubmitFeedback}
+              className="flex-1 rounded-2xl bg-cyan-400 px-4 py-3"
+              disabled={isSubmittingFeedback}
+            >
+              {isSubmittingFeedback ? (
+                <View className="flex-row items-center justify-center gap-2">
+                  <ActivityIndicator color="#0f172a" />
+                  <Text className="text-sm font-semibold text-zinc-900">Sending...</Text>
+                </View>
+              ) : (
+                <Text className="text-center text-sm font-semibold text-zinc-900">Send</Text>
+              )}
+            </LuxPressable>
+          </View>
+        </View>
+      </BottomSheetModal>
     </View>
   );
 }

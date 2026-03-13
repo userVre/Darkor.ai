@@ -22,6 +22,9 @@ export const getOrCreateCurrentUser = mutationGeneric({
       clerkId: identity.subject,
       credits: 3,
       plan: "free",
+      generationCount: 0,
+      reviewPrompted: false,
+      lastReviewPromptAt: 0,
     });
 
     const created = await ctx.db.get(id);
@@ -92,6 +95,68 @@ export const setPlanFromRevenueCat = mutationGeneric({
     await ctx.db.patch(existing._id, {
       plan: args.plan,
       credits: nextCredits,
+    });
+
+    return { ok: true };
+  },
+});
+
+export const trackGeneration = mutationGeneric({
+  args: {
+    ignoreCooldown: v.optional(v.boolean()),
+  },
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!existing) {
+      throw new Error("No billing profile found.");
+    }
+
+    const currentCount = typeof existing.generationCount === "number" ? existing.generationCount : 0;
+    const nextCount = currentCount + 1;
+    await ctx.db.patch(existing._id, {
+      generationCount: nextCount,
+    });
+
+    const lastPromptAt = typeof existing.lastReviewPromptAt === "number" ? existing.lastReviewPromptAt : 0;
+    const cooldownMs = 30 * 24 * 60 * 60 * 1000;
+    const cooldownActive = lastPromptAt > 0 && Date.now() - lastPromptAt < cooldownMs;
+    const shouldPrompt = args.ignoreCooldown
+      ? nextCount >= 2
+      : !cooldownActive && (nextCount === 2 || nextCount === 3);
+
+    return { count: nextCount, shouldPrompt };
+  },
+});
+
+export const markReviewPrompted = mutationGeneric({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!existing) {
+      throw new Error("No billing profile found.");
+    }
+
+    await ctx.db.patch(existing._id, {
+      reviewPrompted: true,
+      lastReviewPromptAt: Date.now(),
     });
 
     return { ok: true };
