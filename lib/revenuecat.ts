@@ -1,12 +1,13 @@
 import Purchases, { CustomerInfo, LOG_LEVEL } from "react-native-purchases";
+import { Platform } from "react-native";
 
 export const REVENUECAT_ENTITLEMENT = "pro";
 
 export function getRevenueCatApiKey() {
-  if (process.env.EXPO_OS === "ios") {
+  if (Platform.OS === "ios") {
     return process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY ?? process.env.EXPO_PUBLIC_REVENUECAT_API_KEY;
   }
-  if (process.env.EXPO_OS === "android") {
+  if (Platform.OS === "android") {
     return process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY ?? process.env.EXPO_PUBLIC_REVENUECAT_API_KEY;
   }
   return process.env.EXPO_PUBLIC_REVENUECAT_API_KEY;
