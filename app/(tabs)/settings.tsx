@@ -37,6 +37,7 @@ import { planTitle, type PlanKey } from "../../lib/pricing";
 import { triggerHaptic } from "../../lib/haptics";
 import { hasProEntitlement } from "../../lib/revenuecat";
 import { requestStoreReview } from "../../lib/store-review";
+import { formatRewardCountdown } from "../../lib/rewards";
 import { GlassBackdrop } from "../../components/glass-backdrop";
 import { LuxPressable } from "../../components/lux-pressable";
 
@@ -44,6 +45,7 @@ type MeResponse = {
   plan: "free" | PlanKey;
   credits: number;
   referralCode?: string;
+  lastRewardDate?: number;
 };
 
 const MENU_ITEMS = [
@@ -69,6 +71,7 @@ export default function SettingsScreen() {
   const { height } = useWindowDimensions();
   const me = useQuery("users:me" as any, isSignedIn ? {} : skip) as MeResponse | null | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
+  const deleteAccountData = useMutation("users:deleteAccountData" as any);
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
   const whatsNewRef = useRef<BottomSheetModal>(null);
   const isCompact = height < 740;
@@ -81,6 +84,8 @@ export default function SettingsScreen() {
 
   const plan = me?.plan && me.plan !== "free" ? me.plan : "free";
   const planLabel = plan === "free" ? "FREE" : planTitle(plan).toUpperCase();
+  const isFreeTier = me?.plan === "free" || me?.plan === "trial";
+  const rewardCountdown = formatRewardCountdown(me?.lastRewardDate);
 
   const handleUpgrade = () => {
     triggerHaptic();
@@ -180,10 +185,12 @@ export default function SettingsScreen() {
         style: "destructive",
         onPress: async () => {
           try {
+            await deleteAccountData({});
             if (user) {
               await user.delete();
             }
             await signOut();
+            router.replace("/");
           } catch (error) {
             Alert.alert("Delete failed", "Please contact support to delete your account.");
           }
@@ -225,6 +232,10 @@ export default function SettingsScreen() {
         <BlurView intensity={70} tint="dark" className="absolute inset-0" />
         <View className="gap-4 p-6">
           <Text className="text-lg font-medium text-white">Your Account is {planLabel}</Text>
+          <Text className="text-xs text-zinc-300">
+            Credits remaining: {typeof me?.credits === "number" ? me.credits : 0}
+          </Text>
+          {isFreeTier ? <Text className="text-xs text-zinc-500">{rewardCountdown}</Text> : null}
           <View className="gap-3">
             {ACCOUNT_BULLETS.map((bullet) => {
               const Icon = bullet.icon;

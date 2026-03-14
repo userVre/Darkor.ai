@@ -9,6 +9,7 @@ export default defineSchema({
     generationCount: v.int64(),
     reviewPrompted: v.boolean(),
     lastReviewPromptAt: v.optional(v.int64()),
+    lastRewardDate: v.optional(v.int64()),
     referralCode: v.optional(v.string()),
     referralCount: v.optional(v.int64()),
     referredBy: v.optional(v.string()),
@@ -23,6 +24,9 @@ export default defineSchema({
     planUsed: v.string(),
     createdAt: v.optional(v.int64()),
     isFavorite: v.optional(v.boolean()),
+    feedback: v.optional(v.string()),
+    feedbackReason: v.optional(v.string()),
+    retryGranted: v.optional(v.boolean()),
     projectId: v.optional(v.id("projects")),
   }).index("by_userId", ["userId"]),
 

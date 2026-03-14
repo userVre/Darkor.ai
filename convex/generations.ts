@@ -81,6 +81,9 @@ export const finalizeStoredGeneration = mutationGeneric({
       planUsed: user.plan,
       createdAt: Date.now(),
       isFavorite: false,
+      feedback: undefined,
+      feedbackReason: undefined,
+      retryGranted: false,
       projectId: undefined,
     });
 
@@ -179,8 +182,53 @@ export const saveGeneration = mutationGeneric({
       planUsed: user.plan !== "free" ? user.plan : args.planUsed,
       createdAt: Date.now(),
       isFavorite: false,
+      feedback: undefined,
+      feedbackReason: undefined,
+      retryGranted: false,
       projectId: undefined,
     });
+  },
+});
+
+export const submitFeedback = mutationGeneric({
+  args: {
+    id: v.id("generations"),
+    sentiment: v.union(v.literal("liked"), v.literal("disliked")),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const item = await ctx.db.get(args.id);
+    if (!item) {
+      throw new Error("Generation not found");
+    }
+    if (item.userId !== identity.subject) {
+      throw new Error("Forbidden");
+    }
+
+    let retryGranted = false;
+    if (args.sentiment === "disliked" && !item.retryGranted) {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+        .unique();
+      if (user) {
+        await ctx.db.patch(user._id, { credits: user.credits + 1 });
+        retryGranted = true;
+      }
+    }
+
+    await ctx.db.patch(args.id, {
+      feedback: args.sentiment,
+      feedbackReason: args.reason?.trim() || item.feedbackReason,
+      retryGranted: item.retryGranted || retryGranted,
+    });
+
+    return { ok: true, retryGranted };
   },
 });
 

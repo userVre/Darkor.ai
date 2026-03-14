@@ -2,7 +2,7 @@
 import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
 
-type PlanUsed = "pro" | "premium" | "ultra";
+type PlanUsed = "free" | "trial" | "pro" | "premium" | "ultra";
 
 type GeneratePayload = {
   imageBase64?: string;
@@ -10,6 +10,9 @@ type GeneratePayload = {
   prompt?: string;
   style?: string;
   planUsed?: PlanUsed;
+  aspectRatio?: string;
+  targetWidth?: number;
+  targetHeight?: number;
 };
 
 type GeminiInlineData = {
@@ -33,6 +36,9 @@ function stripBase64Prefix(value: string) {
 }
 
 function planPromptSuffix(plan: PlanUsed) {
+  if (plan === "free" || plan === "trial") {
+    return ", high quality interior redesign, realistic lighting";
+  }
   if (plan === "pro") {
     return ", high quality interior redesign, realistic lighting";
   }
@@ -40,6 +46,21 @@ function planPromptSuffix(plan: PlanUsed) {
     return ", photorealistic premium interior redesign, realistic materials, cinematic lighting";
   }
   return ", ultra photorealistic 8k interior redesign, hyper detailed materials, cinematic ray traced lighting";
+}
+
+function ratioToResolution(aspectRatio?: string) {
+  if (!aspectRatio) return null;
+  const base = 1024;
+  if (aspectRatio === "1:1") {
+    return { width: base, height: base };
+  }
+  if (aspectRatio === "9:16") {
+    return { width: base, height: Math.round((base * 16) / 9) };
+  }
+  if (aspectRatio === "16:9") {
+    return { width: Math.round((base * 16) / 9), height: base };
+  }
+  return null;
 }
 
 function extractGeneratedImage(response: unknown): { base64: string; mimeType: string } | null {
@@ -103,11 +124,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json()) as GeneratePayload;
-    const planUsed: PlanUsed = body.planUsed ?? "pro";
+    const planUsed: PlanUsed = body.planUsed ?? "free";
 
     const prompt = (body.prompt ?? "").trim() || "Redesign this interior to look premium and photorealistic";
     const style = (body.style ?? "Modern").trim();
-    const mergedPrompt = `${prompt}. Style: ${style}${planPromptSuffix(planUsed)}`;
+    const ratioHint = body.aspectRatio ? ` The output image must have a ${body.aspectRatio} aspect ratio.` : "";
+    const fallbackResolution = ratioToResolution(body.aspectRatio);
+    const targetWidth = body.targetWidth ?? fallbackResolution?.width;
+    const targetHeight = body.targetHeight ?? fallbackResolution?.height;
+    const resolutionHint = targetWidth && targetHeight ? ` Target resolution: ${targetWidth}x${targetHeight}.` : "";
+    const mergedPrompt = `${prompt}. Style: ${style}${planPromptSuffix(planUsed)}${ratioHint}${resolutionHint}`;
 
     const parts: Array<Record<string, unknown>> = [{ text: mergedPrompt }];
 
@@ -165,6 +191,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       imageUrl: stored.imageUrl,
       remainingCredits: stored.remainingCredits,
+      generationId: stored.generationId,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown server error";

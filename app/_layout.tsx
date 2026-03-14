@@ -138,12 +138,41 @@ function ReferralGate() {
   return null;
 }
 
+function RewardGate() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const claimReward = useMutation("users:claimThreeDayReward" as any);
+  const { showToast } = useProSuccess();
+  const hasCheckedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || hasCheckedRef.current) return;
+    hasCheckedRef.current = true;
+    const run = async () => {
+      try {
+        const result = (await claimReward({})) as {
+          granted?: boolean;
+          creditsAdded?: number;
+        };
+        if (result?.granted) {
+          showToast("\u2728 Your 3-day gift is here! 3 credits have been added to your account. Start designing now!");
+        }
+      } catch {
+        // ignore reward errors
+      }
+    };
+    void run();
+  }, [claimReward, isLoaded, isSignedIn, showToast]);
+
+  return null;
+}
+
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       <ProSuccessProvider>
         <RevenueCatGate />
         <ReferralGate />
+        <RewardGate />
         {children}
       </ProSuccessProvider>
     </ConvexProviderWithClerk>
@@ -213,6 +242,8 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
+
 
 
 

@@ -15,10 +15,15 @@ export const getOrCreateCurrentUser = mutationGeneric({
       .unique();
 
     if (existing) {
-      if (!existing.referralCode || typeof existing.referralCount !== "number") {
+      if (
+        !existing.referralCode ||
+        typeof existing.referralCount !== "number" ||
+        typeof existing.lastRewardDate !== "number"
+      ) {
         await ctx.db.patch(existing._id, {
           referralCode: existing.referralCode ?? identity.subject,
           referralCount: typeof existing.referralCount === "number" ? existing.referralCount : 0,
+          lastRewardDate: typeof existing.lastRewardDate === "number" ? existing.lastRewardDate : Date.now(),
         });
       }
       return existing;
@@ -31,6 +36,7 @@ export const getOrCreateCurrentUser = mutationGeneric({
       generationCount: 0,
       reviewPrompted: false,
       lastReviewPromptAt: 0,
+      lastRewardDate: Date.now(),
       referralCode: identity.subject,
       referralCount: 0,
       referredBy: undefined,
@@ -225,6 +231,113 @@ export const applyReferral = mutationGeneric({
       referredBy: referrer.clerkId,
     });
 
+    return { ok: true };
+  },
+});
+
+export const claimThreeDayReward = mutationGeneric({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!existing) {
+      throw new Error("No billing profile found.");
+    }
+
+    if (existing.plan !== "free") {
+      return {
+        granted: false,
+        creditsAdded: 0,
+        credits: existing.credits,
+        nextEligibleAt: existing.lastRewardDate ?? 0,
+      };
+    }
+
+    const now = Date.now();
+    const lastRewardDate = typeof existing.lastRewardDate === "number" ? existing.lastRewardDate : 0;
+    const rewardWindowMs = 72 * 60 * 60 * 1000;
+    const nextEligibleAt = lastRewardDate + rewardWindowMs;
+
+    if (now < nextEligibleAt) {
+      return {
+        granted: false,
+        creditsAdded: 0,
+        credits: existing.credits,
+        nextEligibleAt,
+      };
+    }
+
+    const nextCredits = existing.credits + 3;
+    await ctx.db.patch(existing._id, {
+      credits: nextCredits,
+      lastRewardDate: now,
+    });
+
+    return {
+      granted: true,
+      creditsAdded: 3,
+      credits: nextCredits,
+      nextEligibleAt: now + rewardWindowMs,
+    };
+  },
+});
+
+export const deleteAccountData = mutationGeneric({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      return { ok: true };
+    }
+
+    const generations = await ctx.db
+      .query("generations")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .collect();
+
+    for (const generation of generations) {
+      if (generation.storageId) {
+        await ctx.storage.delete(generation.storageId);
+      }
+      await ctx.db.delete(generation._id);
+    }
+
+    const projects = await ctx.db
+      .query("projects")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .collect();
+
+    for (const project of projects) {
+      await ctx.db.delete(project._id);
+    }
+
+    const feedback = await ctx.db
+      .query("feedback")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .collect();
+
+    for (const item of feedback) {
+      await ctx.db.delete(item._id);
+    }
+
+    await ctx.db.delete(user._id);
     return { ok: true };
   },
 });

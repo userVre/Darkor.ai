@@ -11,6 +11,7 @@ import { Diamond, Settings, X } from "lucide-react-native";
 
 import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
+import { formatRewardCountdown } from "../../lib/rewards";
 import { LuxPressable } from "../../components/lux-pressable";
 
 type ServiceCardData = {
@@ -23,6 +24,8 @@ type ServiceCardData = {
 
 type MeResponse = {
   credits?: number;
+  plan?: string;
+  lastRewardDate?: number;
 };
 
 const SERVICES: ServiceCardData[] = [
@@ -152,6 +155,7 @@ export default function HomeScreen() {
   }, [ensureUser, isSignedIn]);
 
   const credits = typeof me?.credits === "number" ? me.credits : 3;
+  const rewardCountdown = formatRewardCountdown(me?.lastRewardDate);
   const cardHeight = useMemo(() => Math.min(360, Math.round(width * 0.62)), [width]);
   const headerOffset = useMemo(() => insets.top + 64, [insets.top]);
 
@@ -276,6 +280,7 @@ export default function HomeScreen() {
               Every account receives a set amount of daily credits. When credits run out, users can wait for the daily
               reset or choose to upgrade to a PRO plan instead anytime now!
             </Text>
+            <Text className="mt-3 text-xs text-zinc-400">{rewardCountdown}</Text>
             <LuxPressable
               onPress={handleUpgrade}
               className="mt-5 items-center rounded-2xl bg-white/10 py-3"

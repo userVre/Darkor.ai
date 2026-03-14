@@ -23,12 +23,15 @@ import { Diamond, Folder, Heart, Plus, Search, Settings, X } from "lucide-react-
 import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
 import { DISCOVER_ITEMS, type DiscoverItem } from "../../lib/discover-data";
+import { formatRewardCountdown } from "../../lib/rewards";
 import { GlassBackdrop } from "../../components/glass-backdrop";
 import { LuxPressable } from "../../components/lux-pressable";
 import { useWorkspaceDraft } from "../../components/workspace-context";
 
 type MeResponse = {
   credits?: number;
+  plan?: string;
+  lastRewardDate?: number;
 };
 
 type GenerationItem = {
@@ -189,6 +192,7 @@ export default function GalleryScreen() {
   const [selectedItem, setSelectedItem] = useState<DiscoverItem | null>(null);
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
   const [mode, setMode] = useState<"discover" | "gallery">("discover");
+  const [searchQuery, setSearchQuery] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [selectedGeneration, setSelectedGeneration] = useState<GenerationItem | null>(null);
@@ -198,6 +202,7 @@ export default function GalleryScreen() {
   const styleSheetRef = useRef<BottomSheetModal>(null);
   const projectSheetRef = useRef<BottomSheetModal>(null);
   const createProjectRef = useRef<BottomSheetModal>(null);
+  const searchInputRef = useRef<TextInput>(null);
   const isSmallScreen = height < 740;
   const snapPoints = useMemo(() => [isSmallScreen ? "95%" : "58%"], [isSmallScreen]);
   const projectSnapPoints = useMemo(() => [isSmallScreen ? "70%" : "45%"], [isSmallScreen]);
@@ -209,6 +214,7 @@ export default function GalleryScreen() {
   }, [ensureUser, isSignedIn]);
 
   const credits = typeof me?.credits === "number" ? me.credits : 3;
+  const rewardCountdown = formatRewardCountdown(me?.lastRewardDate);
   const columnWidth = useMemo(() => (width - H_PADDING * 2 - GAP) / NUM_COLUMNS, [width]);
   const scrollY = useSharedValue(0);
 
@@ -230,6 +236,15 @@ export default function GalleryScreen() {
     }
     return items;
   }, [activeProjectId, archive, favoritesOnly]);
+
+  const filteredDiscover = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return DISCOVER_ITEMS;
+    return DISCOVER_ITEMS.filter((item) => {
+      const haystack = `${item.title} ${item.style} ${item.category}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [searchQuery]);
 
   const handleScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -255,6 +270,13 @@ export default function GalleryScreen() {
 
   const handleSearch = useCallback(() => {
     triggerHaptic();
+    searchInputRef.current?.focus();
+  }, []);
+
+  const handleResetSearch = useCallback(() => {
+    triggerHaptic();
+    setSearchQuery("");
+    searchInputRef.current?.focus();
   }, []);
 
   const handleSelectItem = useCallback((item: DiscoverItem) => {
@@ -413,11 +435,42 @@ export default function GalleryScreen() {
         </MotiView>
 
         {mode === "discover" ? (
-          <MotiView {...staggerFadeUp(2)} className="mb-6">
+          <MotiView {...staggerFadeUp(2)} className="mb-4">
+            <BlurView
+              intensity={80}
+              tint="dark"
+              className="rounded-[22px] border border-white/10 bg-black/60 px-4 py-3"
+              style={{ borderWidth: 0.5 }}
+            >
+              <View className="flex-row items-center gap-3">
+                <Search color="#f4f4f5" size={16} />
+                <TextInput
+                  ref={searchInputRef}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder="Search styles or rooms"
+                  placeholderTextColor="rgba(148, 163, 184, 0.6)"
+                  className="flex-1 text-sm text-white"
+                />
+                {searchQuery.length > 0 ? (
+                  <LuxPressable
+                    onPress={handleResetSearch}
+                    className="h-7 w-7 items-center justify-center rounded-full bg-white/10"
+                  >
+                    <X color="#f4f4f5" size={12} />
+                  </LuxPressable>
+                ) : null}
+              </View>
+            </BlurView>
+          </MotiView>
+        ) : null}
+
+        {mode === "discover" ? (
+          <MotiView {...staggerFadeUp(3)} className="mb-6">
             <Text className="text-sm uppercase tracking-[3px] text-zinc-500">Darkor.ai Curated</Text>
             <Text className="mt-2 text-3xl font-medium text-white">Visual Heart</Text>
             <Text className="mt-2 text-sm text-zinc-400">
-              Explore {DISCOVER_ITEMS.length} cinematic spaces. Tap any style to launch the studio.
+              Explore {filteredDiscover.length} cinematic spaces. Tap any style to launch the studio.
             </Text>
           </MotiView>
         ) : (
@@ -431,7 +484,17 @@ export default function GalleryScreen() {
         )}
       </View>
     ),
-    [credits, handleOpenCredits, handleOpenSettings, handleSearch, insets.top, mode],
+    [
+      credits,
+      filteredDiscover.length,
+      handleOpenCredits,
+      handleOpenSettings,
+      handleResetSearch,
+      handleSearch,
+      insets.top,
+      mode,
+      searchQuery,
+    ],
   );
 
   const galleryHeader = useMemo(
@@ -509,7 +572,7 @@ export default function GalleryScreen() {
     <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
       {mode === "discover" ? (
         <AnimatedFlashList
-          data={DISCOVER_ITEMS}
+          data={filteredDiscover}
           keyExtractor={(item) => item.id}
           numColumns={NUM_COLUMNS}
           masonry
@@ -529,6 +592,20 @@ export default function GalleryScreen() {
           estimatedItemSize={280}
           contentContainerStyle={{ paddingBottom: 140 }}
           ListHeaderComponent={header}
+          ListEmptyComponent={
+            searchQuery.length > 0 ? (
+              <View className="px-6 py-10">
+                <Text className="text-center text-sm text-zinc-400">No styles found.</Text>
+                <LuxPressable
+                  onPress={handleResetSearch}
+                  className="cursor-pointer mt-4 rounded-full border border-white/10 bg-white/5 px-4 py-3"
+                  style={{ borderWidth: 0.5 }}
+                >
+                  <Text className="text-center text-xs font-semibold text-white">Reset search</Text>
+                </LuxPressable>
+              </View>
+            ) : null
+          }
           columnWrapperStyle={{ paddingHorizontal: H_PADDING, columnGap: GAP }}
           contentInsetAdjustmentBehavior="automatic"
         />
@@ -740,6 +817,7 @@ export default function GalleryScreen() {
                 Every account receives a set amount of daily credits. When credits run out, users can wait for the daily
                 reset or choose to upgrade to a PRO plan instead anytime now!
               </Text>
+              <Text className="mt-3 text-xs text-zinc-400">{rewardCountdown}</Text>
               <LuxPressable onPress={handleUpgrade} className="mt-5 items-center rounded-2xl bg-white/10 py-3">
                 <Text className="text-sm font-semibold text-white">Upgrade</Text>
               </LuxPressable>

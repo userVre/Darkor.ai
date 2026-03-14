@@ -1,13 +1,19 @@
+export type PlanUsed = "free" | "trial" | "pro" | "premium" | "ultra";
+
 export type GenerateRequestPayload = {
   imageBase64: string;
   prompt: string;
   style: string;
-  planUsed: "pro" | "premium" | "ultra";
+  planUsed: PlanUsed;
+  aspectRatio?: string;
+  targetWidth?: number;
+  targetHeight?: number;
 };
 
 type GenerateResponse = {
   imageUrl: string;
   remainingCredits?: number;
+  generationId?: string;
   error?: string;
 };
 

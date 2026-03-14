@@ -13,6 +13,7 @@ type WorkspaceDraft = {
   style?: string | null;
   paletteId?: string | null;
   prompt?: string | null;
+  aspectRatio?: string | null;
 };
 
 type WorkspaceDraftContextValue = {
@@ -22,6 +23,7 @@ type WorkspaceDraftContextValue = {
   setDraftStyle: (style: string | null) => void;
   setDraftPalette: (paletteId: string | null) => void;
   setDraftPrompt: (prompt: string | null) => void;
+  setDraftAspectRatio: (aspectRatio: string | null) => void;
   clearDraft: () => void;
 };
 
@@ -45,6 +47,7 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
             style: parsed.style ?? null,
             paletteId: parsed.paletteId ?? null,
             prompt: parsed.prompt ?? null,
+            aspectRatio: parsed.aspectRatio ?? null,
           });
         }
       } catch {
@@ -66,6 +69,7 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
           style: draft.style ?? null,
           paletteId: draft.paletteId ?? null,
           prompt: draft.prompt ?? null,
+          aspectRatio: draft.aspectRatio ?? null,
         };
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
       } catch {
@@ -95,6 +99,10 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
     setDraft((prev) => ({ ...prev, prompt }));
   }, []);
 
+  const setDraftAspectRatio = useCallback((aspectRatio: string | null) => {
+    setDraft((prev) => ({ ...prev, aspectRatio }));
+  }, []);
+
   const clearDraft = useCallback(() => {
     setDraft({});
     AsyncStorage.removeItem(STORAGE_KEY).catch(() => undefined);
@@ -108,9 +116,10 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
       setDraftStyle,
       setDraftPalette,
       setDraftPrompt,
+      setDraftAspectRatio,
       clearDraft,
     }),
-    [clearDraft, draft, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle],
+    [clearDraft, draft, setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle],
   );
 
   return <WorkspaceDraftContext.Provider value={value}>{children}</WorkspaceDraftContext.Provider>;

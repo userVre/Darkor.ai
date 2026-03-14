@@ -23,8 +23,15 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 import {
   ArrowLeft,
+  Download,
   Image as ImageIcon,
   Layers,
   Lock,
@@ -32,6 +39,9 @@ import {
   Send,
   Sparkles,
   SwatchBook,
+  ThumbsDown,
+  ThumbsUp,
+  MoveHorizontal,
   Wand2,
 } from "lucide-react-native";
 
@@ -42,10 +52,11 @@ import { requestStoreReview } from "../../lib/store-review";
 import { GlassBackdrop } from "../../components/glass-backdrop";
 import { LuxPressable } from "../../components/lux-pressable";
 import { useWorkspaceDraft } from "../../components/workspace-context";
+import { useProSuccess } from "../../components/pro-success-context";
 import Logo from "../../components/logo";
 import { captureRef } from "react-native-view-shot";
 type MeResponse = {
-  plan: "free" | "pro" | "premium" | "ultra";
+  plan: "free" | "trial" | "pro" | "premium" | "ultra";
   credits: number;
 };
 
@@ -65,6 +76,16 @@ type PaletteOption = {
   id: string;
   label: string;
   colors: string[];
+};
+
+type AspectRatioOption = {
+  id: "post" | "story" | "landscape";
+  label: string;
+  ratio: string;
+  descriptor: string;
+  width: number;
+  height: number;
+  preview: { width: number; height: number };
 };
 
 const EXAMPLE_PHOTOS: ExamplePhoto[] = [
@@ -150,6 +171,36 @@ const PALETTE_OPTIONS: PaletteOption[] = [
   { id: "pastel", label: "Pastel Breeze", colors: ["#d8b4fe", "#bae6fd", "#fbcfe8", "#fef9c3"] },
 ];
 
+const ASPECT_RATIO_OPTIONS: AspectRatioOption[] = [
+  {
+    id: "post",
+    label: "Post (1:1)",
+    ratio: "1:1",
+    descriptor: "Best for Social",
+    width: 1,
+    height: 1,
+    preview: { width: 28, height: 28 },
+  },
+  {
+    id: "story",
+    label: "Story (9:16)",
+    ratio: "9:16",
+    descriptor: "Best for Phone",
+    width: 9,
+    height: 16,
+    preview: { width: 22, height: 34 },
+  },
+  {
+    id: "landscape",
+    label: "Landscape (16:9)",
+    ratio: "16:9",
+    descriptor: "Best for PC",
+    width: 16,
+    height: 9,
+    preview: { width: 34, height: 22 },
+  },
+];
+
 const SERVICE_LABELS: Record<string, string> = {
   interior: "Interior Redesign",
   exterior: "Exterior Redesign",
@@ -159,8 +210,18 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 
 const EDIT_ACTIONS = ["Replace", "Paint", "Floor"] as const;
+const FEEDBACK_REASONS = ["Blurry", "Wrong Style", "Lighting", "Layout", "Artifacts"];
 const STORY_WIDTH = 1080;
 const STORY_HEIGHT = 1920;
+
+function resolveAspectRatio(option: AspectRatioOption | null) {
+  if (!option) return { ratioValue: 1, ratioLabel: "1:1", targetWidth: 1024, targetHeight: 1024 };
+  const ratioValue = option.width / option.height;
+  const base = 1024;
+  const targetWidth = Math.round(ratioValue >= 1 ? base * ratioValue : base);
+  const targetHeight = Math.round(ratioValue >= 1 ? base : base / ratioValue);
+  return { ratioValue, ratioLabel: option.ratio, targetWidth, targetHeight };
+}
 
 function getServiceType(serviceKey: string) {
   if (serviceKey.includes("facade") || serviceKey.includes("exterior")) return "exterior";
@@ -203,13 +264,16 @@ export default function WorkspaceScreen() {
   const { isSignedIn, getToken } = useAuth();
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { draft, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle } = useWorkspaceDraft();
+  const { draft, setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle } =
+    useWorkspaceDraft();
+  const { showToast } = useProSuccess();
 
   const me = useQuery("users:me" as any, isSignedIn ? {} : skip) as MeResponse | null | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
   const trackGeneration = useMutation("users:trackGeneration" as any);
   const markReviewPrompted = useMutation("users:markReviewPrompted" as any);
   const submitFeedback = useMutation("feedback:submit" as any);
+  const submitGenerationFeedback = useMutation("generations:submitFeedback" as any);
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
@@ -217,10 +281,12 @@ export default function WorkspaceScreen() {
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [selectedPaletteId, setSelectedPaletteId] = useState<string | null>(null);
+  const [selectedAspectRatioId, setSelectedAspectRatioId] = useState<AspectRatioOption["id"]>("post");
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
-  const [compareHold, setCompareHold] = useState(false);
+  const [generationId, setGenerationId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSharingStory, setIsSharingStory] = useState(false);
+  const [isDownloading, setIsDownloading] = useState<"standard" | "ultra" | null>(null);
   const [isLoadingExample, setIsLoadingExample] = useState<string | null>(null);
   const [activeEditAction, setActiveEditAction] = useState<(typeof EDIT_ACTIONS)[number]>("Replace");
   const [editBarWidth, setEditBarWidth] = useState(0);
@@ -229,6 +295,10 @@ export default function WorkspaceScreen() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [feedbackState, setFeedbackState] = useState<"liked" | "disliked" | null>(null);
+  const [feedbackReason, setFeedbackReason] = useState("");
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [isSendingFeedback, setIsSendingFeedback] = useState(false);
   const [lastGenerationCount, setLastGenerationCount] = useState<number | null>(null);
   const [showResumeToast, setShowResumeToast] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
@@ -241,6 +311,9 @@ export default function WorkspaceScreen() {
   const hasAppliedStartStepRef = useRef(false);
   const reviewHandledRef = useRef(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sliderX = useSharedValue(0);
+  const sliderWidth = useSharedValue(0);
+  const sliderStart = useSharedValue(0);
 
   const isSmallScreen = height < 740;
   const reviewSnapPoints = useMemo(() => ["38%"], []);
@@ -283,6 +356,12 @@ export default function WorkspaceScreen() {
   }, [customPrompt.length, draft.prompt]);
 
   useEffect(() => {
+    if (draft.aspectRatio && draft.aspectRatio !== selectedAspectRatioId) {
+      setSelectedAspectRatioId(draft.aspectRatio as AspectRatioOption["id"]);
+    }
+  }, [draft.aspectRatio, selectedAspectRatioId]);
+
+  useEffect(() => {
     if (selectedImage) {
       setDraftImage(selectedImage);
     }
@@ -308,6 +387,10 @@ export default function WorkspaceScreen() {
     const nextPrompt = customPrompt.trim();
     setDraftPrompt(nextPrompt.length > 0 ? customPrompt : null);
   }, [customPrompt, setDraftPrompt]);
+
+  useEffect(() => {
+    setDraftAspectRatio(selectedAspectRatioId ?? null);
+  }, [selectedAspectRatioId, setDraftAspectRatio]);
 
   useEffect(() => {
     if (!startStep || hasAppliedStartStepRef.current) return;
@@ -358,6 +441,13 @@ export default function WorkspaceScreen() {
     [selectedPaletteId],
   );
 
+  const selectedAspectRatio = useMemo(
+    () => ASPECT_RATIO_OPTIONS.find((option) => option.id === selectedAspectRatioId) ?? ASPECT_RATIO_OPTIONS[0],
+    [selectedAspectRatioId],
+  );
+
+  const ratioSpec = useMemo(() => resolveAspectRatio(selectedAspectRatio), [selectedAspectRatio]);
+
   const spaceOptions = useMemo(() => {
     if (serviceType === "exterior") return SPACE_OPTIONS.exterior;
     if (serviceType === "garden") return SPACE_OPTIONS.garden;
@@ -365,28 +455,64 @@ export default function WorkspaceScreen() {
   }, [serviceType]);
 
   const plan = me?.plan ?? "free";
-  const isProUser = plan !== "free";
-  const planUsed = plan === "premium" || plan === "ultra" ? plan : "pro";
-  const canUpscale = isProUser;
+  const isPaidPlan = plan !== "free" && plan !== "trial";
+  const planUsed =
+    plan === "premium" || plan === "ultra" ? plan : plan === "pro" ? "pro" : plan === "trial" ? "trial" : "free";
+  const canUpscale = isPaidPlan;
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const editGap = 12;
   const activeEditIndex = EDIT_ACTIONS.indexOf(activeEditAction);
   const editItemWidth =
     editBarWidth > 0 ? (editBarWidth - editGap * (EDIT_ACTIONS.length - 1)) / EDIT_ACTIONS.length : 0;
+  const isDownloadingStandard = isDownloading === "standard";
+  const isDownloadingUltra = isDownloading === "ultra";
+  const sliderSpring = useMemo(() => ({ damping: 15, stiffness: 100 }), []);
+
+  const handleSliderLayout = useCallback(
+    (event: { nativeEvent: { layout: { width: number } } }) => {
+      const width = event.nativeEvent.layout.width;
+      if (!width || width === sliderWidth.value) return;
+      sliderWidth.value = width;
+      sliderX.value = withSpring(width / 2, sliderSpring);
+    },
+    [sliderSpring, sliderWidth, sliderX],
+  );
+
+  const sliderGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .onBegin(() => {
+          sliderStart.value = sliderX.value;
+        })
+        .onUpdate((event) => {
+          const next = sliderStart.value + event.translationX;
+          const max = sliderWidth.value || 1;
+          sliderX.value = Math.max(0, Math.min(next, max));
+        }),
+    [sliderStart, sliderWidth, sliderX],
+  );
+
+  const afterImageStyle = useAnimatedStyle(() => ({
+    width: sliderX.value,
+  }));
+
+  const sliderBarStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: sliderX.value - 1 }],
+  }));
 
   const promptText = useMemo(() => {
-    if (!selectedRoom || !selectedStyle || !selectedPalette) return "";
+    if (!selectedRoom || !selectedStyle || !selectedPalette || !selectedAspectRatio) return "";
     const instruction = customPrompt.trim().length > 0 ? customPrompt.trim() : "No additional instructions.";
-    return `${selectedRoom} in ${selectedStyle} style, following these instructions: ${instruction}, with a ${selectedPalette.label} color vibe. 8k resolution, photorealistic masterpiece.`;
-  }, [customPrompt, selectedPalette, selectedRoom, selectedStyle]);
+    return `${selectedRoom} in ${selectedStyle} style, following these instructions: ${instruction}, with a ${selectedPalette.label} color vibe. The output image must have a ${ratioSpec.ratioLabel} aspect ratio. Target resolution: ${ratioSpec.targetWidth}x${ratioSpec.targetHeight}. 8k resolution, photorealistic masterpiece.`;
+  }, [customPrompt, ratioSpec.ratioLabel, ratioSpec.targetHeight, ratioSpec.targetWidth, selectedAspectRatio, selectedPalette, selectedRoom, selectedStyle]);
 
   const canContinue = useMemo(() => {
     if (workflowStep === 0) return Boolean(selectedImage);
     if (workflowStep === 1) return Boolean(selectedRoom);
     if (workflowStep === 2) return Boolean(selectedStyle);
-    if (workflowStep === 3) return Boolean(selectedPaletteId);
+    if (workflowStep === 3) return Boolean(selectedPaletteId && selectedAspectRatioId);
     return false;
-  }, [selectedImage, selectedPaletteId, selectedRoom, selectedStyle, workflowStep]);
+  }, [selectedAspectRatioId, selectedImage, selectedPaletteId, selectedRoom, selectedStyle, workflowStep]);
 
   const handlePickPhoto = useCallback(async () => {
     triggerHaptic();
@@ -489,7 +615,12 @@ export default function WorkspaceScreen() {
     }
   }, [generatedImageUrl, selectedImage]);
 
-  const handleDownload = useCallback(async () => {
+  const handleUpgrade = useCallback(() => {
+    triggerHaptic();
+    router.push("/paywall");
+  }, [router]);
+
+  const handleDownloadStandard = useCallback(async () => {
     triggerHaptic();
     if (!generatedImageUrl) {
       Alert.alert("Nothing to download", "Generate an image first.");
@@ -497,30 +628,65 @@ export default function WorkspaceScreen() {
     }
 
     try {
+      setIsDownloading("standard");
       const permission = await MediaLibrary.requestPermissionsAsync();
       if (!permission.granted) {
         Alert.alert("Permission required", "Please allow photo access to save your render.");
         return;
       }
 
-      let fileUri = "";
-      if (isProUser) {
-        const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}darkor-${Date.now()}.jpg`;
-        const download = await FileSystem.downloadAsync(generatedImageUrl, targetUri);
-        fileUri = download.uri;
-      } else {
-        if (!imageContainerRef.current) {
-          throw new Error("Preview not ready. Please try again.");
-        }
-        fileUri = await captureRef(imageContainerRef, { format: "png", quality: 1, result: "tmpfile" });
+      if (!imageContainerRef.current) {
+        throw new Error("Preview not ready. Please try again.");
       }
 
+      const previousSlider = sliderX.value;
+      if (sliderWidth.value > 0) {
+        sliderX.value = sliderWidth.value;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      const fileUri = await captureRef(imageContainerRef, { format: "png", quality: 1, result: "tmpfile" });
+      if (sliderWidth.value > 0) {
+        sliderX.value = previousSlider;
+      }
       await MediaLibrary.saveToLibraryAsync(fileUri);
       Alert.alert("Saved", "Your render has been saved to your library.");
     } catch (error) {
       Alert.alert("Download failed", error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      setIsDownloading(null);
     }
-  }, [generatedImageUrl, imageContainerRef, isProUser]);
+  }, [generatedImageUrl, imageContainerRef, sliderWidth, sliderX]);
+
+  const handleDownloadUltra = useCallback(async () => {
+    triggerHaptic();
+    if (!generatedImageUrl) {
+      Alert.alert("Nothing to download", "Generate an image first.");
+      return;
+    }
+
+    if (!isPaidPlan) {
+      handleUpgrade();
+      return;
+    }
+
+    try {
+      setIsDownloading("ultra");
+      const permission = await MediaLibrary.requestPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert("Permission required", "Please allow photo access to save your render.");
+        return;
+      }
+
+      const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}darkor-${Date.now()}.jpg`;
+      const download = await FileSystem.downloadAsync(generatedImageUrl, targetUri);
+      await MediaLibrary.saveToLibraryAsync(download.uri);
+      Alert.alert("Saved", "Your 4K render has been saved to your library.");
+    } catch (error) {
+      Alert.alert("Download failed", error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      setIsDownloading(null);
+    }
+  }, [generatedImageUrl, handleUpgrade, isPaidPlan]);
 
   const handleUpscale = useCallback(() => {
     triggerHaptic();
@@ -537,6 +703,53 @@ export default function WorkspaceScreen() {
     Alert.alert(label, "Editing tools are coming next.");
   }, []);
 
+  const handleLike = useCallback(async () => {
+    if (!generationId || feedbackSubmitted) return;
+    triggerHaptic();
+    setFeedbackState("liked");
+    setFeedbackSubmitted(true);
+    try {
+      await submitGenerationFeedback({ id: generationId, sentiment: "liked" });
+      showToast("Glad you like it! ✨");
+    } catch (error) {
+      Alert.alert("Feedback failed", error instanceof Error ? error.message : "Please try again.");
+    }
+  }, [feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
+
+  const handleDislike = useCallback(() => {
+    if (!generationId || feedbackSubmitted) return;
+    triggerHaptic();
+    setFeedbackState("disliked");
+  }, [feedbackSubmitted, generationId]);
+
+  const handleSubmitDislike = useCallback(async () => {
+    if (!generationId || feedbackSubmitted) return;
+    const reason = feedbackReason.trim();
+    if (!reason) {
+      Alert.alert("Tell us more", "Choose a reason or add a short note.");
+      return;
+    }
+    triggerHaptic();
+    setIsSendingFeedback(true);
+    try {
+      const result = (await submitGenerationFeedback({
+        id: generationId,
+        sentiment: "disliked",
+        reason,
+      })) as { retryGranted?: boolean };
+      setFeedbackSubmitted(true);
+      showToast(
+        result?.retryGranted
+          ? "Thanks for the feedback. A free retry credit was added."
+          : "Thanks for the feedback. We'll improve the next render.",
+      );
+    } catch (error) {
+      Alert.alert("Feedback failed", error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      setIsSendingFeedback(false);
+    }
+  }, [feedbackReason, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
+
   const handleGenerate = useCallback(async () => {
     if (!selectedImage || !selectedRoom || !selectedStyle || !selectedPalette) {
       Alert.alert("Complete the steps", "Please finish the previous steps first.");
@@ -549,14 +762,18 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    if (typeof me?.credits === "number" && me.credits <= 0) {
-      Alert.alert("Refill Credits", "You have no credits left.");
-      return;
-    }
+      if (typeof me?.credits === "number" && me.credits <= 0) {
+        Alert.alert("Refill Credits", "You have no credits left.");
+        return;
+      }
 
-    try {
-      setIsGenerating(true);
-      setWorkflowStep(4);
+      try {
+        setFeedbackState(null);
+        setFeedbackReason("");
+        setFeedbackSubmitted(false);
+        setGenerationId(null);
+        setIsGenerating(true);
+        setWorkflowStep(4);
 
       const base64 = selectedImage.base64 ?? (await readBase64FromUri(selectedImage.uri));
       const token = await getToken();
@@ -567,12 +784,16 @@ export default function WorkspaceScreen() {
           prompt: promptText,
           style: selectedStyle,
           planUsed,
+          aspectRatio: ratioSpec.ratioLabel,
+          targetWidth: ratioSpec.targetWidth,
+          targetHeight: ratioSpec.targetHeight,
         },
         token,
       );
 
-      setGeneratedImageUrl(response.imageUrl);
-      setWorkflowStep(5);
+        setGeneratedImageUrl(response.imageUrl);
+        setGenerationId(response.generationId ?? null);
+        setWorkflowStep(5);
 
       try {
         const reviewState = (await trackGeneration({ ignoreCooldown: ignoreReviewCooldown })) as {
@@ -595,7 +816,7 @@ export default function WorkspaceScreen() {
     } finally {
       setIsGenerating(false);
     }
-  }, [getToken, isSignedIn, me?.credits, planUsed, promptText, router, selectedImage, selectedPalette, selectedRoom, selectedStyle]);
+  }, [getToken, isSignedIn, me?.credits, planUsed, promptText, ratioSpec, router, selectedImage, selectedPalette, selectedRoom, selectedStyle]);
 
   useEffect(() => {
     if (!isSignedIn || !awaitingAuth) return;
@@ -638,6 +859,11 @@ export default function WorkspaceScreen() {
   const handleSelectPalette = useCallback((value: string) => {
     triggerHaptic();
     setSelectedPaletteId(value);
+  }, []);
+
+  const handleSelectAspectRatio = useCallback((value: AspectRatioOption["id"]) => {
+    triggerHaptic();
+    setSelectedAspectRatioId(value);
   }, []);
 
   const handleReviewYes = useCallback(async () => {
@@ -710,6 +936,14 @@ export default function WorkspaceScreen() {
   const stepTransition = LUX_SPRING;
 
   if (workflowStep === 4) {
+    const maxFrameWidth = width * 0.7;
+    const maxFrameHeight = height * 0.55;
+    const frameByWidth = maxFrameWidth / ratioSpec.ratioValue;
+    const frameWidth = frameByWidth <= maxFrameHeight ? maxFrameWidth : maxFrameHeight * ratioSpec.ratioValue;
+    const frameHeight = frameWidth / ratioSpec.ratioValue;
+    const scanMin = -frameHeight * 0.45;
+    const scanMax = frameHeight * 0.45;
+
     return (
       <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
         <View className="flex-1 items-center justify-center overflow-hidden">
@@ -718,36 +952,52 @@ export default function WorkspaceScreen() {
           ) : null}
           <View className="absolute inset-0 bg-black/70" />
 
-          <MotiView
-            animate={{ opacity: [0.15, 0.65, 0.15], scale: [1, 1.04, 1] }}
-            transition={{ ...LUX_SPRING, loop: true }}
-            className="absolute inset-x-0 h-24"
-            style={{
-              transform: [{ translateY: -height * 0.35 }],
-            }}
-          />
-
-          <MotiView
-            animate={{ translateY: [-height * 0.35, height * 0.35] }}
-            transition={{ ...LUX_SPRING, loop: true }}
-            className="absolute inset-x-0 h-24"
+          <View
+            className="items-center justify-center rounded-3xl border border-white/10 bg-black/40"
+            style={{ width: frameWidth, height: frameHeight, borderWidth: 0.5 }}
           >
-            <View className="absolute inset-0 bg-cyan-400/10" />
-            <LinearGradient
-              colors={["rgba(34, 211, 238, 0)", "rgba(34, 211, 238, 0.35)", "rgba(34, 211, 238, 0)"]}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-              style={{ position: "absolute", inset: 0, opacity: 0.7 }}
+            {selectedImage ? (
+              <Image
+                source={{ uri: selectedImage.uri }}
+                style={{ width: frameWidth, height: frameHeight, borderRadius: 24 }}
+                contentFit="cover"
+              />
+            ) : null}
+            <View className="absolute inset-0 rounded-3xl bg-black/50" />
+
+            <MotiView
+              animate={{ opacity: [0.15, 0.65, 0.15], scale: [1, 1.04, 1] }}
+              transition={{ ...LUX_SPRING, loop: true }}
+              style={{
+                position: "absolute",
+                width: frameWidth,
+                height: frameHeight * 0.3,
+                transform: [{ translateY: scanMin }],
+              }}
             />
-            <View
-              className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2 bg-cyan-300/90"
-              style={{ boxShadow: "0 0 35px rgba(34, 211, 238, 0.9)" }}
-            />
-            <View
-              className="absolute inset-x-0 top-1/2 h-5 -translate-y-1/2 bg-cyan-200/10"
-              style={{ boxShadow: "0 0 60px rgba(34, 211, 238, 0.35)" }}
-            />
-          </MotiView>
+
+            <MotiView
+              animate={{ translateY: [scanMin, scanMax] }}
+              transition={{ ...LUX_SPRING, loop: true }}
+              style={{ position: "absolute", width: frameWidth, height: frameHeight * 0.3 }}
+            >
+              <View className="absolute inset-0 bg-cyan-400/10" />
+              <LinearGradient
+                colors={["rgba(34, 211, 238, 0)", "rgba(34, 211, 238, 0.35)", "rgba(34, 211, 238, 0)"]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={{ position: "absolute", inset: 0, opacity: 0.7 }}
+              />
+              <View
+                className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2 bg-cyan-300/90"
+                style={{ boxShadow: "0 0 35px rgba(34, 211, 238, 0.9)" }}
+              />
+              <View
+                className="absolute inset-x-0 top-1/2 h-5 -translate-y-1/2 bg-cyan-200/10"
+                style={{ boxShadow: "0 0 60px rgba(34, 211, 238, 0.35)" }}
+              />
+            </MotiView>
+          </View>
 
           <View className="items-center gap-3 px-6">
             <View className="h-16 w-16 items-center justify-center rounded-full border border-cyan-200/40 bg-cyan-500/20">
@@ -755,7 +1005,7 @@ export default function WorkspaceScreen() {
             </View>
             <Text className="text-2xl font-medium text-white">Processing...</Text>
             <Text className="text-center text-sm text-zinc-400">
-              Running Gemini 3.1 with cinematic lighting and neon scan.
+              Rendering in {ratioSpec.ratioLabel} · {selectedAspectRatio?.descriptor}
             </Text>
           </View>
         </View>
@@ -1012,6 +1262,42 @@ export default function WorkspaceScreen() {
                   })}
                 </View>
               </View>
+
+              <View className="gap-3">
+                <Text className="text-sm font-semibold text-white">Aspect Ratio</Text>
+                <View className="flex-row flex-wrap gap-3">
+                  {ASPECT_RATIO_OPTIONS.map((option, index) => {
+                    const active = selectedAspectRatioId === option.id;
+                    return (
+                      <MotiView key={option.id} {...staggerFadeUp(index, 60)}>
+                        <LuxPressable
+                          onPress={() => handleSelectAspectRatio(option.id)}
+                          className={`cursor-pointer w-[31%] rounded-2xl border px-3 py-3 ${
+                            active ? "border-cyan-300 bg-cyan-400/10" : "border-white/10 bg-white/5"
+                          }`}
+                          style={{ borderWidth: 0.5 }}
+                        >
+                          <View className="items-center gap-2">
+                            <View
+                              style={{
+                                width: option.preview.width,
+                                height: option.preview.height,
+                                borderRadius: 6,
+                                borderWidth: 1,
+                                borderColor: active ? "rgba(34,211,238,0.9)" : "rgba(255,255,255,0.35)",
+                              }}
+                            />
+                            <Text className={`text-[11px] font-semibold ${active ? "text-cyan-100" : "text-zinc-200"}`}>
+                              {option.label}
+                            </Text>
+                            <Text className="text-[10px] text-zinc-500">{option.descriptor}</Text>
+                          </View>
+                        </LuxPressable>
+                      </MotiView>
+                    );
+                  })}
+                </View>
+              </View>
             </MotiView>
           ) : null}
 
@@ -1030,7 +1316,12 @@ export default function WorkspaceScreen() {
               </View>
 
               <View className="relative overflow-hidden rounded-3xl border border-white/10" style={{ borderWidth: 0.5 }}>
-                <View ref={imageContainerRef} collapsable={false} className="relative h-80 w-full">
+                <View
+                  ref={imageContainerRef}
+                  collapsable={false}
+                  onLayout={handleSliderLayout}
+                  className="relative h-80 w-full"
+                >
                   {generatedImageUrl ? (
                     <MotiView
                       key={generatedImageUrl}
@@ -1039,11 +1330,55 @@ export default function WorkspaceScreen() {
                       transition={LUX_SPRING}
                       className="h-80 w-full"
                     >
-                      <Image
-                        source={{ uri: compareHold && selectedImage ? selectedImage.uri : generatedImageUrl }}
-                        className="h-80 w-full"
-                        contentFit="cover"
-                      />
+                      <View className="absolute inset-0">
+                        <Image
+                          source={{ uri: selectedImage?.uri ?? generatedImageUrl }}
+                          className="h-80 w-full"
+                          contentFit="cover"
+                        />
+                      </View>
+                      <Animated.View
+                        style={[
+                          {
+                            position: "absolute",
+                            top: 0,
+                            bottom: 0,
+                            left: 0,
+                            overflow: "hidden",
+                          },
+                          afterImageStyle,
+                        ]}
+                      >
+                        <Image source={{ uri: generatedImageUrl }} className="h-80 w-full" contentFit="cover" />
+                      </Animated.View>
+                      <GestureDetector gesture={sliderGesture}>
+                        <Animated.View
+                          style={[
+                            {
+                              position: "absolute",
+                              top: 0,
+                              bottom: 0,
+                              width: 44,
+                              alignItems: "center",
+                              justifyContent: "center",
+                            },
+                            sliderBarStyle,
+                          ]}
+                        >
+                          <View
+                            style={{
+                              position: "absolute",
+                              top: 0,
+                              bottom: 0,
+                              width: 2,
+                              backgroundColor: "rgba(255,255,255,0.75)",
+                            }}
+                          />
+                          <View className="h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-black/60">
+                            <MoveHorizontal color="#ffffff" size={14} />
+                          </View>
+                        </Animated.View>
+                      </GestureDetector>
                     </MotiView>
                   ) : (
                     <View className="h-80 w-full items-center justify-center gap-2 bg-white/5">
@@ -1051,7 +1386,7 @@ export default function WorkspaceScreen() {
                       <Text className="text-sm text-zinc-400">No render yet.</Text>
                     </View>
                   )}
-                  {!isProUser && generatedImageUrl && !compareHold ? (
+                  {!isPaidPlan && generatedImageUrl ? (
                     <View className="absolute bottom-3 right-3">
                       <Logo size={44} style={{ opacity: 0.6 }} />
                     </View>
@@ -1065,28 +1400,15 @@ export default function WorkspaceScreen() {
                   style={{ borderWidth: 0.5 }}
                 >
                   <LuxPressable
-                    onPressIn={() => {
-                      triggerHaptic();
-                      setCompareHold(true);
-                    }}
-                    onPressOut={() => setCompareHold(false)}
-                    className="cursor-pointer rounded-full bg-white/10 px-3 py-1"
-                  >
-                    <Text className="text-[11px] font-semibold text-white">Compare</Text>
-                  </LuxPressable>
-                  <LuxPressable
                     onPress={handleUpscale}
                     className={`cursor-pointer rounded-full px-3 py-1 ${
                       canUpscale ? "bg-white/10" : "bg-white/5"
                     }`}
                   >
                     <View className="flex-row items-center gap-1">
-                  {isProUser ? <Sparkles color="#f5d0fe" size={12} /> : <Lock color="#facc15" size={12} />}
+                      {isPaidPlan ? <Sparkles color="#f5d0fe" size={12} /> : <Lock color="#facc15" size={12} />}
                       <Text className="text-[11px] font-semibold text-white">Upscale</Text>
                     </View>
-                  </LuxPressable>
-                  <LuxPressable onPress={handleDownload} className="cursor-pointer rounded-full bg-white/10 px-3 py-1">
-                    <Text className="text-[11px] font-semibold text-white">Download</Text>
                   </LuxPressable>
                   <LuxPressable
                     onPress={handleShareStory}
@@ -1099,6 +1421,128 @@ export default function WorkspaceScreen() {
                     <Text className="text-[11px] font-semibold text-white">Share</Text>
                   </LuxPressable>
                 </BlurView>
+              </View>
+
+              <View className="flex-row items-center justify-center gap-3">
+                <LuxPressable
+                  onPress={handleLike}
+                  disabled={feedbackSubmitted || !generationId}
+                  className={`cursor-pointer flex-row items-center gap-2 rounded-full border px-4 py-2 ${
+                    feedbackState === "liked" ? "border-emerald-300 bg-emerald-400/15" : "border-white/10 bg-white/5"
+                  }`}
+                  style={{ borderWidth: 0.5 }}
+                >
+                  <ThumbsUp color="#bbf7d0" size={16} />
+                  <Text className="text-xs font-semibold text-white">Like</Text>
+                </LuxPressable>
+                <LuxPressable
+                  onPress={handleDislike}
+                  disabled={feedbackSubmitted || !generationId}
+                  className={`cursor-pointer flex-row items-center gap-2 rounded-full border px-4 py-2 ${
+                    feedbackState === "disliked" ? "border-rose-300 bg-rose-400/15" : "border-white/10 bg-white/5"
+                  }`}
+                  style={{ borderWidth: 0.5 }}
+                >
+                  <ThumbsDown color="#fecdd3" size={16} />
+                  <Text className="text-xs font-semibold text-white">Dislike</Text>
+                </LuxPressable>
+              </View>
+
+              {feedbackState === "disliked" && !feedbackSubmitted ? (
+                <View className="gap-3 rounded-2xl border border-white/10 bg-white/5 p-4" style={{ borderWidth: 0.5 }}>
+                  <Text className="text-sm font-semibold text-white">What went wrong?</Text>
+                  <View className="flex-row flex-wrap gap-2">
+                    {FEEDBACK_REASONS.map((reason) => {
+                      const active = feedbackReason === reason;
+                      return (
+                        <LuxPressable
+                          key={reason}
+                          onPress={() => setFeedbackReason(reason)}
+                          className={`cursor-pointer rounded-full border px-3 py-1 ${
+                            active ? "border-rose-300 bg-rose-400/20" : "border-white/10 bg-white/5"
+                          }`}
+                          style={{ borderWidth: 0.5 }}
+                        >
+                          <Text className="text-[11px] font-semibold text-zinc-100">{reason}</Text>
+                        </LuxPressable>
+                      );
+                    })}
+                  </View>
+                  <TextInput
+                    value={feedbackReason}
+                    onChangeText={setFeedbackReason}
+                    placeholder="Share more details (optional)"
+                    placeholderTextColor="rgba(148, 163, 184, 0.6)"
+                    className="rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white"
+                    style={{ borderWidth: 0.5 }}
+                  />
+                  <LuxPressable
+                    onPress={handleSubmitDislike}
+                    disabled={isSendingFeedback}
+                    className="cursor-pointer flex-row items-center justify-center gap-2 rounded-2xl bg-white/10 py-2.5"
+                  >
+                    {isSendingFeedback ? <ActivityIndicator color="#f8fafc" /> : null}
+                    <Text className="text-xs font-semibold text-white">Send feedback</Text>
+                  </LuxPressable>
+                </View>
+              ) : null}
+
+              <View className="gap-3">
+                {!isPaidPlan ? (
+                  <>
+                    <LuxPressable
+                      onPress={handleDownloadStandard}
+                      disabled={isDownloadingStandard}
+                      className="cursor-pointer rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
+                      style={{ borderWidth: 0.5 }}
+                    >
+                      <View className="flex-row items-center justify-between">
+                        <View>
+                          <Text className="text-sm font-semibold text-white">Standard HD Download</Text>
+                          <Text className="mt-1 text-xs text-zinc-400">For free trial users</Text>
+                        </View>
+                        {isDownloadingStandard ? (
+                          <ActivityIndicator color="#f8fafc" />
+                        ) : (
+                          <Download color="#f8fafc" size={18} />
+                        )}
+                      </View>
+                    </LuxPressable>
+
+                    <LuxPressable
+                      onPress={handleUpgrade}
+                      className="cursor-pointer rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
+                      style={{ borderWidth: 0.5 }}
+                    >
+                      <View className="flex-row items-center justify-between">
+                        <View>
+                          <Text className="text-sm font-semibold text-white">4K Ultra HD Download</Text>
+                          <Text className="mt-1 text-xs text-zinc-400">Pro users only</Text>
+                        </View>
+                        <Lock color="#facc15" size={18} />
+                      </View>
+                    </LuxPressable>
+                  </>
+                ) : (
+                  <LuxPressable
+                    onPress={handleDownloadUltra}
+                    disabled={isDownloadingUltra}
+                    className="cursor-pointer rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
+                    style={{ borderWidth: 0.5 }}
+                  >
+                    <View className="flex-row items-center justify-between">
+                      <View>
+                        <Text className="text-sm font-semibold text-white">Download 4K Ultra HD</Text>
+                        <Text className="mt-1 text-xs text-zinc-400">Watermark-free, max resolution</Text>
+                      </View>
+                      {isDownloadingUltra ? (
+                        <ActivityIndicator color="#f8fafc" />
+                      ) : (
+                        <Download color="#f8fafc" size={18} />
+                      )}
+                    </View>
+                  </LuxPressable>
+                )}
               </View>
 
               <View
