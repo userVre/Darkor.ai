@@ -248,9 +248,9 @@ export function SubscriptionCheckoutProvider({ children }: PropsWithChildren) {
       setPendingIntent(intent);
       setError(null);
 
-      if (!isSignedIn) {
-        setAuthGateMessage("Sign in or sign up to continue. We will open checkout automatically.");
-        resumeInFlightRef.current = false;
+        if (!isSignedIn) {
+          setAuthGateMessage("Sign in or sign up to continue. We will open checkout automatically.");
+          resumeInFlightRef.current = false;
 
         const returnUrl = `${window.location.origin}/#pricing`;
 
@@ -308,7 +308,7 @@ export function SubscriptionCheckoutProvider({ children }: PropsWithChildren) {
       return;
     }
 
-    resumeInFlightRef.current = true;
+      resumeInFlightRef.current = true;
     setAuthGateMessage("Authentication complete. Opening checkout...");
 
     void openPolarCheckout(pendingIntent).finally(() => {
