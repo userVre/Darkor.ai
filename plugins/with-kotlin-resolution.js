@@ -3,12 +3,19 @@ const {
   createRunOncePlugin,
 } = require("@expo/config-plugins");
 
+const SERIALIZATION_VERSION = "1.8.1";
+
 const KOTLIN_BLOCK = `
     configurations.all {
         resolutionStrategy.eachDependency { details ->
             if (details.requested.group == "org.jetbrains.kotlin") {
                 details.useVersion(rootProject.ext.kotlinVersion)
                 details.because("Force Kotlin stdlib to match the compiler version")
+            }
+            if (details.requested.group == "org.jetbrains.kotlinx" &&
+                details.requested.name?.startsWith("kotlinx-serialization-")) {
+                details.useVersion("${SERIALIZATION_VERSION}")
+                details.because("Keep kotlinx.serialization compatible with Kotlin 2.1.x")
             }
         }
     }
