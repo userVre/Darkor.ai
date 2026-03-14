@@ -17,6 +17,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import Purchases, { CustomerInfo } from "react-native-purchases";
 
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
+import { ErrorBoundary } from "../components/error-boundary";
 import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
@@ -219,24 +220,28 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ClerkProvider publishableKey={clerkKey} tokenCache={tokenCache}>
-          <Providers>
-            <WorkspaceDraftProvider>
-              <BottomSheetModalProvider>
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                    contentStyle: { backgroundColor: "#000000" },
-                    animation: "fade",
-                  }}
-                >
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
-                  <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
-                  <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
-                </Stack>
-              </BottomSheetModalProvider>
-            </WorkspaceDraftProvider>
-          </Providers>
+          <ErrorBoundary>
+            <Providers>
+              <WorkspaceDraftProvider>
+                <BottomSheetModalProvider>
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                      contentStyle: { backgroundColor: "#000000" },
+                      animation: "fade",
+                    }}
+                  >
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
+                    <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
+                    <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
+                    <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
+                    <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
+                  </Stack>
+                </BottomSheetModalProvider>
+              </WorkspaceDraftProvider>
+            </Providers>
+          </ErrorBoundary>
         </ClerkProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

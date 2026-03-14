@@ -116,10 +116,10 @@ export default function SettingsScreen() {
         Alert.alert("Share", "Share link copied soon. We'll enable native share next.");
         break;
       case "terms":
-        Alert.alert("Terms", "Terms of Use will open here.");
+        router.push("/terms-of-service");
         break;
       case "privacy":
-        Alert.alert("Privacy", "Privacy Policy will open here.");
+        router.push("/privacy-policy");
         break;
       default:
         break;

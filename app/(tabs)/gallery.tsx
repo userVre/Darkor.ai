@@ -297,11 +297,6 @@ export default function GalleryScreen() {
     const startStep = hasPrereqs ? 3 : 0;
     triggerHaptic();
     setDraftStyle(selectedItem.style);
-    console.log("[Analytics] Style Selected from Discover", {
-      style: selectedItem.style,
-      category: selectedItem.category,
-      hasPrereqs,
-    });
     styleSheetRef.current?.dismiss();
     router.push({
       pathname: "/workspace",

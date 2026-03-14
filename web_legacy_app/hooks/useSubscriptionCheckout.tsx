@@ -173,12 +173,6 @@ export function SubscriptionCheckoutProvider({ children }: PropsWithChildren) {
       }
 
       try {
-        console.log("[Subscription] Opening Polar checkout", {
-          planName: intent.planName,
-          billing: intent.billing,
-          priceId: intent.priceId,
-          clerkId: userId,
-        });
 
         const response = await fetch("/api/polar/checkout", {
           method: "POST",
@@ -195,12 +189,6 @@ export function SubscriptionCheckoutProvider({ children }: PropsWithChildren) {
         });
 
         const data = await response.json();
-        console.log("[Subscription] /api/polar/checkout response", {
-          ok: response.ok,
-          status: response.status,
-          data,
-        });
-
         if (!response.ok || !data?.checkoutUrl) {
           throw new Error(data?.error ?? `Checkout API failed with status ${response.status}`);
         }
@@ -212,25 +200,13 @@ export function SubscriptionCheckoutProvider({ children }: PropsWithChildren) {
         const checkout = await PolarEmbedCheckout.create(data.checkoutUrl, { theme: "dark" });
         checkoutRef.current = checkout;
 
-        console.log("[Subscription] PolarEmbedCheckout.create success", {
-          checkoutUrl: data.checkoutUrl,
-          checkout,
-        });
-
         checkout.addEventListener("success", () => {
-          console.log("[Subscription] Polar checkout success event fired", {
-            planName: intent.planName,
-            billing: intent.billing,
-            priceId: intent.priceId,
-            clerkId: userId,
-          });
           checkoutRef.current = null;
           setAuthGateMessage("Payment completed. Redirecting to your workspace...");
           router.push("/dashboard/workspace");
         });
 
         checkout.addEventListener("close", () => {
-          console.log("[Subscription] Polar checkout close event fired");
           checkoutRef.current = null;
         });
 
@@ -271,8 +247,6 @@ export function SubscriptionCheckoutProvider({ children }: PropsWithChildren) {
       const intent = writeSubscriptionIntent(planName, billing);
       setPendingIntent(intent);
       setError(null);
-
-      console.log("[Subscription] Intent saved to localStorage", intent);
 
       if (!isSignedIn) {
         setAuthGateMessage("Sign in or sign up to continue. We will open checkout automatically.");
@@ -334,8 +308,6 @@ export function SubscriptionCheckoutProvider({ children }: PropsWithChildren) {
       return;
     }
 
-    console.log("[Subscription] Auto-resume triggered from saved intent", pendingIntent);
-
     resumeInFlightRef.current = true;
     setAuthGateMessage("Authentication complete. Opening checkout...");
 
@@ -364,3 +336,5 @@ export function useSubscriptionCheckout() {
 
   return context;
 }
+
+

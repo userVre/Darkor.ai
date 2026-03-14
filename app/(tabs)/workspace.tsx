@@ -801,12 +801,11 @@ export default function WorkspaceScreen() {
           shouldPrompt: boolean;
         };
         setLastGenerationCount(reviewState.count);
-        if (reviewState.shouldPrompt) {
-          console.log("[Analytics] Review Shown", { count: reviewState.count });
-          reviewHandledRef.current = false;
-          setReviewPromptOpen(true);
-          requestAnimationFrame(() => reviewSheetRef.current?.present());
-        }
+          if (reviewState.shouldPrompt) {
+            reviewHandledRef.current = false;
+            setReviewPromptOpen(true);
+            requestAnimationFrame(() => reviewSheetRef.current?.present());
+          }
       } catch {
         // Ignore review tracking failures.
       }
@@ -919,12 +918,9 @@ export default function WorkspaceScreen() {
         message: feedbackMessage.trim(),
         generationCount: lastGenerationCount ?? undefined,
       });
-      console.log("[Analytics] Feedback Sent", {
-        count: lastGenerationCount ?? undefined,
-      });
-      setFeedbackMessage("");
-      setFeedbackOpen(false);
-      feedbackSheetRef.current?.dismiss();
+        setFeedbackMessage("");
+        setFeedbackOpen(false);
+        feedbackSheetRef.current?.dismiss();
       Alert.alert("Thank you", "Your feedback helps us improve quickly.");
     } catch (error) {
       Alert.alert("Feedback", error instanceof Error ? error.message : "Unable to send feedback.");

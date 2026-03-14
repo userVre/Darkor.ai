@@ -132,22 +132,13 @@ export default function PricingSection() {
     useSubscriptionCheckout();
 
   const handleSubscription = async (planName: PricingTierName, cycle: BillingCycle) => {
-    try {
-      console.log("[Pricing] Subscribe clicked", {
-        planName,
-        billing: cycle,
-      });
-      await startSubscription(planName, cycle);
-    } catch (submitError) {
-      const message = submitError instanceof Error ? submitError.message : "Unknown subscription error";
-      console.error("[Pricing] handleSubscription failed", {
-        error: submitError,
-        planName,
-        billing: cycle,
-      });
-      alert(`Subscription failed: ${message}`);
-    }
-  };
+      try {
+        await startSubscription(planName, cycle);
+      } catch (submitError) {
+        const message = submitError instanceof Error ? submitError.message : "Unknown subscription error";
+        alert(`Subscription failed: ${message}`);
+      }
+    };
 
   return (
     <section id="pricing" className="mx-auto mt-24 w-full max-w-7xl px-6">

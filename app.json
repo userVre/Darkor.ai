@@ -6,9 +6,9 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "icon": "./assets/logo-minimal.png",
+    "icon": "./assets/logo.png",
     "splash": {
-      "image": "./assets/logo-minimal.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
@@ -27,12 +27,12 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.darkor.ai",
-      "icon": "./assets/logo-minimal.png"
+      "icon": "./assets/logo.png"
     },
     "android": {
       "package": "com.darkor.ai",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo-foreground.png",
+        "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#000000"
       }
     },
