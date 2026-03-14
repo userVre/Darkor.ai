@@ -8,6 +8,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
 import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
+import * as Sharing from "expo-sharing";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -28,6 +29,7 @@ import {
   Layers,
   Lock,
   Paintbrush,
+  Send,
   Sparkles,
   SwatchBook,
   Wand2,
@@ -157,6 +159,8 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 
 const EDIT_ACTIONS = ["Replace", "Paint", "Floor"] as const;
+const STORY_WIDTH = 1080;
+const STORY_HEIGHT = 1920;
 
 function getServiceType(serviceKey: string) {
   if (serviceKey.includes("facade") || serviceKey.includes("exterior")) return "exterior";
@@ -199,7 +203,7 @@ export default function WorkspaceScreen() {
   const { isSignedIn, getToken } = useAuth();
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { draft, setDraftImage, setDraftRoom, setDraftStyle } = useWorkspaceDraft();
+  const { draft, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle } = useWorkspaceDraft();
 
   const me = useQuery("users:me" as any, isSignedIn ? {} : skip) as MeResponse | null | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
@@ -216,6 +220,7 @@ export default function WorkspaceScreen() {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [compareHold, setCompareHold] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSharingStory, setIsSharingStory] = useState(false);
   const [isLoadingExample, setIsLoadingExample] = useState<string | null>(null);
   const [activeEditAction, setActiveEditAction] = useState<(typeof EDIT_ACTIONS)[number]>("Replace");
   const [editBarWidth, setEditBarWidth] = useState(0);
@@ -226,11 +231,13 @@ export default function WorkspaceScreen() {
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [lastGenerationCount, setLastGenerationCount] = useState<number | null>(null);
   const [showResumeToast, setShowResumeToast] = useState(false);
+  const [awaitingAuth, setAwaitingAuth] = useState(false);
 
   const reviewSheetRef = useRef<BottomSheetModal>(null);
   const rateSheetRef = useRef<BottomSheetModal>(null);
   const feedbackSheetRef = useRef<BottomSheetModal>(null);
   const imageContainerRef = useRef<View>(null);
+  const storyRef = useRef<View>(null);
   const hasAppliedStartStepRef = useRef(false);
   const reviewHandledRef = useRef(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -264,6 +271,18 @@ export default function WorkspaceScreen() {
   }, [draft.style, selectedStyle]);
 
   useEffect(() => {
+    if (draft.paletteId && !selectedPaletteId) {
+      setSelectedPaletteId(draft.paletteId);
+    }
+  }, [draft.paletteId, selectedPaletteId]);
+
+  useEffect(() => {
+    if (draft.prompt && customPrompt.length === 0) {
+      setCustomPrompt(draft.prompt);
+    }
+  }, [customPrompt.length, draft.prompt]);
+
+  useEffect(() => {
     if (selectedImage) {
       setDraftImage(selectedImage);
     }
@@ -280,6 +299,15 @@ export default function WorkspaceScreen() {
       setDraftStyle(selectedStyle);
     }
   }, [selectedStyle, setDraftStyle]);
+
+  useEffect(() => {
+    setDraftPalette(selectedPaletteId ?? null);
+  }, [selectedPaletteId, setDraftPalette]);
+
+  useEffect(() => {
+    const nextPrompt = customPrompt.trim();
+    setDraftPrompt(nextPrompt.length > 0 ? customPrompt : null);
+  }, [customPrompt, setDraftPrompt]);
 
   useEffect(() => {
     if (!startStep || hasAppliedStartStepRef.current) return;
@@ -429,6 +457,38 @@ export default function WorkspaceScreen() {
     await Share.share({ message: generatedImageUrl });
   }, [generatedImageUrl]);
 
+  const handleShareStory = useCallback(async () => {
+    triggerHaptic();
+    if (!generatedImageUrl || !selectedImage) {
+      Alert.alert("Nothing to share", "Generate a render first.");
+      return;
+    }
+    if (!storyRef.current) {
+      Alert.alert("Story unavailable", "Please try again.");
+      return;
+    }
+    try {
+      setIsSharingStory(true);
+      const uri = await captureRef(storyRef, {
+        format: "png",
+        quality: 1,
+        result: "tmpfile",
+        width: STORY_WIDTH,
+        height: STORY_HEIGHT,
+      });
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(uri);
+      } else {
+        await Share.share({ message: "Designed with Darkor.ai", url: uri });
+      }
+    } catch (error) {
+      Alert.alert("Share failed", error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      setIsSharingStory(false);
+    }
+  }, [generatedImageUrl, selectedImage]);
+
   const handleDownload = useCallback(async () => {
     triggerHaptic();
     if (!generatedImageUrl) {
@@ -484,8 +544,8 @@ export default function WorkspaceScreen() {
     }
 
     if (!isSignedIn) {
-      Alert.alert("Sign in required", "Please sign in to generate your redesign.");
-      router.push("/sign-in");
+      setAwaitingAuth(true);
+      router.push({ pathname: "/sign-in", params: { returnTo: "/workspace" } });
       return;
     }
 
@@ -536,6 +596,19 @@ export default function WorkspaceScreen() {
       setIsGenerating(false);
     }
   }, [getToken, isSignedIn, me?.credits, planUsed, promptText, router, selectedImage, selectedPalette, selectedRoom, selectedStyle]);
+
+  useEffect(() => {
+    if (!isSignedIn || !awaitingAuth) return;
+    if (!canContinue) {
+      setAwaitingAuth(false);
+      return;
+    }
+    setAwaitingAuth(false);
+    const timer = setTimeout(() => {
+      void handleGenerate();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [awaitingAuth, canContinue, handleGenerate, isSignedIn]);
 
   const handleContinue = useCallback(() => {
     triggerHaptic();
@@ -1015,6 +1088,13 @@ export default function WorkspaceScreen() {
                   <LuxPressable onPress={handleDownload} className="cursor-pointer rounded-full bg-white/10 px-3 py-1">
                     <Text className="text-[11px] font-semibold text-white">Download</Text>
                   </LuxPressable>
+                  <LuxPressable
+                    onPress={handleShareStory}
+                    className="cursor-pointer flex-row items-center gap-1 rounded-full bg-white/10 px-3 py-1"
+                  >
+                    {isSharingStory ? <ActivityIndicator size="small" color="#f8fafc" /> : <Send color="#f8fafc" size={12} />}
+                    <Text className="text-[11px] font-semibold text-white">Story</Text>
+                  </LuxPressable>
                   <LuxPressable onPress={handleShare} className="cursor-pointer rounded-full bg-white/10 px-3 py-1">
                     <Text className="text-[11px] font-semibold text-white">Share</Text>
                   </LuxPressable>
@@ -1079,7 +1159,7 @@ export default function WorkspaceScreen() {
                 canContinue && !isGenerating ? "text-zinc-900" : "text-zinc-300"
               }`}
             >
-              {workflowStep === 3 ? "Generate" : "Continue"}
+              {workflowStep === 3 ? "Generate Renders" : "Continue"}
             </Text>
           </LuxPressable>
         </BlurView>
@@ -1202,6 +1282,39 @@ export default function WorkspaceScreen() {
           </View>
         </View>
       </BottomSheetModal>
+
+      <View
+        ref={storyRef}
+        collapsable={false}
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          left: -9999,
+          top: -9999,
+          width: STORY_WIDTH,
+          height: STORY_HEIGHT,
+          backgroundColor: "#000000",
+        }}
+      >
+        <View style={{ height: STORY_HEIGHT / 2, width: "100%" }}>
+          {selectedImage ? (
+            <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+          ) : (
+            <View className="h-full w-full bg-black" />
+          )}
+        </View>
+        <View style={{ height: STORY_HEIGHT / 2, width: "100%" }}>
+          {generatedImageUrl ? (
+            <Image source={{ uri: generatedImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+          ) : (
+            <View className="h-full w-full bg-black" />
+          )}
+        </View>
+        <View className="absolute bottom-16 left-0 right-0 items-center gap-2">
+          <Logo size={76} style={{ opacity: 0.9 }} />
+          <Text className="text-sm font-semibold text-white">Designed with Darkor.ai</Text>
+        </View>
+      </View>
     </View>
   );
 }

@@ -21,6 +21,15 @@ export default defineSchema({
     prompt: v.optional(v.string()),
     style: v.optional(v.string()),
     planUsed: v.string(),
+    createdAt: v.optional(v.int64()),
+    isFavorite: v.optional(v.boolean()),
+    projectId: v.optional(v.id("projects")),
+  }).index("by_userId", ["userId"]),
+
+  projects: defineTable({
+    userId: v.string(),
+    name: v.string(),
+    createdAt: v.int64(),
   }).index("by_userId", ["userId"]),
 
   feedback: defineTable({

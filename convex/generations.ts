@@ -31,6 +31,7 @@ export const getUserArchive = queryGeneric({
         return {
           ...row,
           imageUrl: storageUrl ?? row.imageUrl ?? "",
+          isFavorite: row.isFavorite ?? false,
         };
       }),
     );
@@ -78,6 +79,9 @@ export const finalizeStoredGeneration = mutationGeneric({
       prompt: args.prompt,
       style: args.style,
       planUsed: user.plan,
+      createdAt: Date.now(),
+      isFavorite: false,
+      projectId: undefined,
     });
 
     return {
@@ -173,7 +177,65 @@ export const saveGeneration = mutationGeneric({
       prompt: args.prompt,
       style: args.style,
       planUsed: user.plan !== "free" ? user.plan : args.planUsed,
+      createdAt: Date.now(),
+      isFavorite: false,
+      projectId: undefined,
     });
+  },
+});
+
+export const toggleFavorite = mutationGeneric({
+  args: {
+    id: v.id("generations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const item = await ctx.db.get(args.id);
+    if (!item) {
+      throw new Error("Generation not found");
+    }
+    if (item.userId !== identity.subject) {
+      throw new Error("Forbidden");
+    }
+
+    const nextValue = !(item.isFavorite ?? false);
+    await ctx.db.patch(args.id, { isFavorite: nextValue });
+    return { ok: true, isFavorite: nextValue };
+  },
+});
+
+export const setProject = mutationGeneric({
+  args: {
+    id: v.id("generations"),
+    projectId: v.optional(v.id("projects")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const item = await ctx.db.get(args.id);
+    if (!item) {
+      throw new Error("Generation not found");
+    }
+    if (item.userId !== identity.subject) {
+      throw new Error("Forbidden");
+    }
+
+    if (args.projectId) {
+      const project = await ctx.db.get(args.projectId);
+      if (!project || project.userId !== identity.subject) {
+        throw new Error("Invalid project");
+      }
+    }
+
+    await ctx.db.patch(args.id, { projectId: args.projectId ?? undefined });
+    return { ok: true };
   },
 });
 

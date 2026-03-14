@@ -78,9 +78,6 @@ function RevenueCatGate() {
         }
 
         const onPaywall = pathname === "/paywall";
-        if (!hasPro && !onPaywall) {
-          router.replace("/paywall");
-        }
         if (hasPro && onPaywall) {
           router.replace("/(tabs)");
         }
@@ -204,9 +201,9 @@ export default function RootLayout() {
                   }}
                 >
                   <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="paywall" />
-                  <Stack.Screen name="sign-in" />
-                  <Stack.Screen name="sign-up" />
+                  <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
+                  <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
+                  <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
                 </Stack>
               </BottomSheetModalProvider>
             </WorkspaceDraftProvider>

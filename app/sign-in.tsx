@@ -1,12 +1,13 @@
 import { useOAuth } from "@clerk/expo";
 import { useSignIn } from "@clerk/expo/legacy";
-import { Link, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Text, TextInput, View } from "react-native";
 import { LuxPressable } from "../components/lux-pressable";
 
 export default function SignInScreen() {
   const router = useRouter();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const { signIn, setActive, isLoaded } = useSignIn();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_apple" });
   const [email, setEmail] = useState("");
@@ -24,7 +25,7 @@ export default function SignInScreen() {
         return;
       }
       await setActive({ session: completeSignIn.createdSessionId });
-      router.replace("/(tabs)");
+      router.replace(returnTo ?? "/(tabs)");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sign in failed";
       Alert.alert("Sign in failed", message);
@@ -39,7 +40,7 @@ export default function SignInScreen() {
       const { createdSessionId, setActive: setOAuthActive } = await startOAuthFlow();
       if (createdSessionId) {
         await setOAuthActive?.({ session: createdSessionId });
-        router.replace("/(tabs)");
+        router.replace(returnTo ?? "/(tabs)");
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Apple sign-in failed";
