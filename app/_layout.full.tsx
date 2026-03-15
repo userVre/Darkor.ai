@@ -1,7 +1,6 @@
 import "react-native-gesture-handler";
 import "react-native-reanimated";
 import "../lib/nativewind";
-import "../global.css";
 
 import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
 import { useMutation } from "convex/react";

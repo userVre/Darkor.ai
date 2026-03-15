@@ -1,11 +1,12 @@
-import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
-import RootLayoutDiagnostic from "./_layout.diagnostic";
+import { Text, View } from "react-native";
+
+console.log("LOG_STAGE_2: Root loaded");
 
 export default function RootLayout() {
-  if (DIAGNOSTIC_BYPASS) {
-    return <RootLayoutDiagnostic />;
-  }
-
-  const RootLayoutFull = require("./_layout.full").default;
-  return <RootLayoutFull />;
+  console.log("LOG_STAGE_1: Layout mounting");
+  return (
+    <View style={{ flex: 1, backgroundColor: "#000", justifyContent: "center", alignItems: "center" }}>
+      <Text style={{ color: "white", fontSize: 24 }}>DARKOR AI BOOTING...</Text>
+    </View>
+  );
 }
