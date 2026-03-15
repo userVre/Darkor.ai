@@ -46,6 +46,7 @@ import {
 } from "lucide-react-native";
 
 import { generateImage } from "../../lib/api";
+import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
 import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
 import { requestStoreReview } from "../../lib/store-review";
@@ -262,13 +263,18 @@ export default function WorkspaceScreen() {
     startStep?: string;
   }>();
   const { isSignedIn, getToken } = useAuth();
+  const diagnostic = DIAGNOSTIC_BYPASS;
+  const effectiveSignedIn = diagnostic ? true : isSignedIn;
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { draft, setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle } =
     useWorkspaceDraft();
   const { showToast } = useProSuccess();
 
-  const me = useQuery("users:me" as any, isSignedIn ? {} : skip) as MeResponse | null | undefined;
+  const me = useQuery(
+    "users:me" as any,
+    diagnostic ? skip : isSignedIn ? {} : skip,
+  ) as MeResponse | null | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
   const trackGeneration = useMutation("users:trackGeneration" as any);
   const markReviewPrompted = useMutation("users:markReviewPrompted" as any);
@@ -326,9 +332,10 @@ export default function WorkspaceScreen() {
   }, []);
 
   useEffect(() => {
+    if (diagnostic) return;
     if (!isSignedIn) return;
     ensureUser({}).catch(() => undefined);
-  }, [ensureUser, isSignedIn]);
+  }, [diagnostic, ensureUser, isSignedIn]);
 
   useEffect(() => {
     if (draft.image && !selectedImage) {
@@ -459,7 +466,7 @@ export default function WorkspaceScreen() {
     return SPACE_OPTIONS.interior;
   }, [serviceType]);
 
-  const plan = me?.plan ?? "free";
+  const plan = diagnostic ? "premium" : me?.plan ?? "free";
   const isPaidPlan = plan !== "free" && plan !== "trial";
   const planUsed =
     plan === "premium" || plan === "ultra" ? plan : plan === "pro" ? "pro" : plan === "trial" ? "trial" : "free";
@@ -761,13 +768,14 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    if (!isSignedIn) {
+    if (!effectiveSignedIn) {
       setAwaitingAuth(true);
       router.push({ pathname: "/sign-in", params: { returnTo: "/workspace" } });
       return;
     }
 
-      if (typeof me?.credits === "number" && me.credits <= 0) {
+      const effectiveCredits = diagnostic ? 10 : me?.credits;
+      if (typeof effectiveCredits === "number" && effectiveCredits <= 0) {
         Alert.alert("Refill Credits", "You have no credits left.");
         return;
       }
@@ -781,7 +789,7 @@ export default function WorkspaceScreen() {
         setWorkflowStep(4);
 
       const base64 = selectedImage.base64 ?? (await readBase64FromUri(selectedImage.uri));
-      const token = await getToken();
+      const token = diagnostic ? null : await getToken();
 
       const response = await generateImage(
         {
@@ -820,10 +828,10 @@ export default function WorkspaceScreen() {
     } finally {
       setIsGenerating(false);
     }
-  }, [getToken, isSignedIn, me?.credits, planUsed, promptText, ratioSpec, router, selectedImage, selectedPalette, selectedRoom, selectedStyle]);
+  }, [diagnostic, effectiveSignedIn, getToken, me?.credits, planUsed, promptText, ratioSpec, router, selectedImage, selectedPalette, selectedRoom, selectedStyle]);
 
   useEffect(() => {
-    if (!isSignedIn || !awaitingAuth) return;
+    if (!effectiveSignedIn || !awaitingAuth) return;
     if (!canContinue) {
       setAwaitingAuth(false);
       return;
@@ -833,7 +841,7 @@ export default function WorkspaceScreen() {
       void handleGenerate();
     }, 300);
     return () => clearTimeout(timer);
-  }, [awaitingAuth, canContinue, handleGenerate, isSignedIn]);
+  }, [awaitingAuth, canContinue, effectiveSignedIn, handleGenerate]);
 
   const handleContinue = useCallback(() => {
     triggerHaptic();

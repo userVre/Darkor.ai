@@ -19,6 +19,7 @@ import { ProSuccessProvider, useProSuccess } from "../components/pro-success-con
 import { ErrorBoundary } from "../components/error-boundary";
 import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
+import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
 import { tokenCache } from "../lib/token-cache";
 import {
@@ -202,9 +203,9 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       <ProSuccessProvider>
-        <RevenueCatGate />
-        <ReferralGate />
-        <RewardGate />
+        {DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
+        {DIAGNOSTIC_BYPASS ? null : <ReferralGate />}
+        {DIAGNOSTIC_BYPASS ? null : <RewardGate />}
         {children}
       </ProSuccessProvider>
     </ConvexProviderWithClerk>
@@ -283,7 +284,7 @@ export default function RootLayout() {
     return <BootScreen message="Starting Darkor.ai..." />;
   }
 
-  if (!clerkKey || !convexUrl || !revenueCatKey) {
+  if (!DIAGNOSTIC_BYPASS && (!clerkKey || !convexUrl || !revenueCatKey)) {
     console.warn("[Boot] Missing environment variables", {
       hasClerkKey: Boolean(clerkKey),
       hasConvexUrl: Boolean(convexUrl),

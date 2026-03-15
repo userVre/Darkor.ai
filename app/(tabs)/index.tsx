@@ -13,6 +13,7 @@ import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
 import { formatRewardCountdown } from "../../lib/rewards";
 import { LuxPressable } from "../../components/lux-pressable";
+import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
 
 type ServiceCardData = {
   id: string;
@@ -143,8 +144,12 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { isSignedIn } = useAuth();
+  const diagnostic = DIAGNOSTIC_BYPASS;
 
-  const me = useQuery("users:me" as any, isSignedIn ? {} : skip) as MeResponse | null | undefined;
+  const me = useQuery(
+    "users:me" as any,
+    diagnostic ? skip : isSignedIn ? {} : skip,
+  ) as MeResponse | null | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
 
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
@@ -155,11 +160,12 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
+    if (diagnostic) return;
     if (!isSignedIn) return;
     ensureUser({}).catch(() => undefined);
-  }, [ensureUser, isSignedIn]);
+  }, [diagnostic, ensureUser, isSignedIn]);
 
-  const credits = typeof me?.credits === "number" ? me.credits : 3;
+  const credits = diagnostic ? 10 : typeof me?.credits === "number" ? me.credits : 3;
   const rewardCountdown = formatRewardCountdown(me?.lastRewardDate);
   const cardHeight = useMemo(() => Math.min(360, Math.round(width * 0.62)), [width]);
   const headerOffset = useMemo(() => insets.top + 64, [insets.top]);
