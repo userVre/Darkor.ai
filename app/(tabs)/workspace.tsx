@@ -321,6 +321,11 @@ export default function WorkspaceScreen() {
   const feedbackSnapPoints = useMemo(() => [isSmallScreen ? "95%" : "58%"], [isSmallScreen]);
 
   useEffect(() => {
+    console.log("[Screen] Workspace mounted");
+    return () => console.log("[Screen] Workspace unmounted");
+  }, []);
+
+  useEffect(() => {
     if (!isSignedIn) return;
     ensureUser({}).catch(() => undefined);
   }, [ensureUser, isSignedIn]);

@@ -150,6 +150,11 @@ export default function HomeScreen() {
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
 
   useEffect(() => {
+    console.log("[Screen] Home mounted");
+    return () => console.log("[Screen] Home unmounted");
+  }, []);
+
+  useEffect(() => {
     if (!isSignedIn) return;
     ensureUser({}).catch(() => undefined);
   }, [ensureUser, isSignedIn]);

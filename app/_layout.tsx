@@ -10,11 +10,10 @@ import * as Linking from "expo-linking";
 import { Stack, usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useRef, useState } from "react";
-import { Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import Purchases, { CustomerInfo } from "react-native-purchases";
 
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
 import { ErrorBoundary } from "../components/error-boundary";
@@ -22,7 +21,15 @@ import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
 import { tokenCache } from "../lib/token-cache";
-import { configureRevenueCat, getRevenueCatApiKey, hasProEntitlement } from "../lib/revenuecat";
+import {
+  configureRevenueCat,
+  getRevenueCatApiKey,
+  hasProEntitlement,
+  type RevenueCatCustomerInfo,
+  type RevenueCatPurchases,
+} from "../lib/revenuecat";
+
+console.log("[Boot] Root layout module loaded");
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -37,32 +44,48 @@ function RevenueCatGate() {
   const configuredRef = useRef(false);
   const listenerAddedRef = useRef(false);
   const hasProRef = useRef<boolean | null>(null);
-  const syncRef = useRef<(info?: CustomerInfo) => void>(() => undefined);
+  const purchasesRef = useRef<RevenueCatPurchases | null>(null);
+  const [revenueCatReady, setRevenueCatReady] = useState(false);
+  const syncRef = useRef<(info?: RevenueCatCustomerInfo) => void>(() => undefined);
 
   useEffect(() => {
     if (!isLoaded || configuredRef.current) return;
-    try {
-      configureRevenueCat(isSignedIn ? user?.id ?? null : null);
-      configuredRef.current = true;
-    } catch (error) {
-      console.warn("RevenueCat not configured", error);
-    }
-  }, [isLoaded, isSignedIn, user?.id]);
-
-  useEffect(() => {
-    if (!configuredRef.current || !isLoaded) return;
-    if (isSignedIn && user?.id) {
-      Purchases.logIn(user.id).catch(() => undefined);
-    } else {
-      Purchases.logOut().catch(() => undefined);
-    }
-  }, [isLoaded, isSignedIn, user?.id]);
-
-  useEffect(() => {
-    syncRef.current = async (info?: CustomerInfo) => {
-      if (!configuredRef.current || !isLoaded) return;
+    const run = async () => {
+      console.log("[Boot] RevenueCat configure start");
       try {
-        const customerInfo = info ?? (await Purchases.getCustomerInfo());
+        const purchases = await configureRevenueCat(isSignedIn ? user?.id ?? null : null);
+        if (!purchases) {
+          console.warn("[Boot] RevenueCat unavailable - skipping");
+          return;
+        }
+        purchasesRef.current = purchases;
+        configuredRef.current = true;
+        setRevenueCatReady(true);
+        console.log("[Boot] RevenueCat configured");
+      } catch (error) {
+        console.warn("RevenueCat not configured", error);
+      }
+    };
+    void run();
+  }, [isLoaded, isSignedIn, user?.id]);
+
+  useEffect(() => {
+    const purchases = purchasesRef.current;
+    if (!revenueCatReady || !configuredRef.current || !isLoaded || !purchases) return;
+    console.log(`[Boot] RevenueCat ${isSignedIn ? "logIn" : "logOut"} start`);
+    if (isSignedIn && user?.id) {
+      purchases.logIn(user.id).catch(() => undefined);
+    } else {
+      purchases.logOut().catch(() => undefined);
+    }
+  }, [isLoaded, isSignedIn, revenueCatReady, user?.id]);
+
+  useEffect(() => {
+    syncRef.current = async (info?: RevenueCatCustomerInfo) => {
+      const purchases = purchasesRef.current;
+      if (!revenueCatReady || !configuredRef.current || !isLoaded || !purchases) return;
+      try {
+        const customerInfo = info ?? (await purchases.getCustomerInfo());
         const hasPro = hasProEntitlement(customerInfo);
 
         if (hasPro && isSignedIn) {
@@ -86,22 +109,23 @@ function RevenueCatGate() {
         console.warn("RevenueCat sync failed", error);
       }
     };
-  }, [isSignedIn, pathname, router, setPlan]);
+  }, [isSignedIn, pathname, revenueCatReady, router, setPlan]);
 
   useEffect(() => {
-    if (!configuredRef.current || !isLoaded) return;
+    const purchases = purchasesRef.current;
+    if (!revenueCatReady || !configuredRef.current || !isLoaded || !purchases) return;
     void syncRef.current();
     if (listenerAddedRef.current) return;
 
     listenerAddedRef.current = true;
-    const listener = (info: CustomerInfo) => {
+    const listener = (info: RevenueCatCustomerInfo) => {
       void syncRef.current(info);
     };
-    Purchases.addCustomerInfoUpdateListener(listener);
+    purchases.addCustomerInfoUpdateListener(listener);
     return () => {
-      Purchases.removeCustomerInfoUpdateListener(listener);
+      purchases.removeCustomerInfoUpdateListener(listener);
     };
-  }, [isLoaded]);
+  }, [isLoaded, revenueCatReady]);
 
   return null;
 }
@@ -111,6 +135,7 @@ function ReferralGate() {
   const applyReferral = useMutation("users:applyReferral" as any);
 
   useEffect(() => {
+    console.log("[Boot] ReferralGate listening for deep links");
     const handleUrl = (url: string | null) => {
       if (!url) return;
       const parsed = Linking.parse(url);
@@ -130,6 +155,7 @@ function ReferralGate() {
     const run = async () => {
       const code = await consumeReferralCode();
       if (code) {
+        console.log("[Boot] ReferralGate applying code");
         await applyReferral({ referralCode: code });
       }
     };
@@ -150,6 +176,7 @@ function RewardGate() {
     hasCheckedRef.current = true;
     const run = async () => {
       try {
+        console.log("[Boot] RewardGate checking reward");
         const result = (await claimReward({})) as {
           granted?: boolean;
           creditsAdded?: number;
@@ -168,6 +195,10 @@ function RewardGate() {
 }
 
 function Providers({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    console.log("[Boot] Providers mounted");
+  }, []);
+
   return (
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       <ProSuccessProvider>
@@ -191,6 +222,26 @@ function MissingEnv() {
   );
 }
 
+function BootScreen({ message }: { message: string }) {
+  return (
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#000", paddingHorizontal: 24 }}>
+      <ActivityIndicator color="#ffffff" />
+      <Text style={{ marginTop: 12, fontSize: 14, color: "#f4f4f5" }}>{message}</Text>
+    </View>
+  );
+}
+
+function LaunchDiagnostics() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    console.log("[Boot] Auth state", { isLoaded, isSignedIn, pathname });
+  }, [isLoaded, isSignedIn, pathname]);
+
+  return null;
+}
+
 export default function RootLayout() {
   const [appReady, setAppReady] = useState(false);
   const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -198,21 +249,46 @@ export default function RootLayout() {
   const revenueCatKey = getRevenueCatApiKey();
 
   useEffect(() => {
-    const timer = setTimeout(() => setAppReady(true), 2500);
+    console.log("[Boot] RootLayout mounted");
+    const timer = setTimeout(() => {
+      console.log("[Boot] App ready");
+      setAppReady(true);
+    }, 150);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (appReady) {
-      void SplashScreen.hideAsync();
-    }
+    const safetyTimer = setTimeout(() => {
+      console.log("[Boot] Splash safety hide");
+      SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
+    }, 4000);
+    return () => clearTimeout(safetyTimer);
+  }, []);
+
+  useEffect(() => {
+    console.log("[Boot] Env check", {
+      hasClerkKey: Boolean(clerkKey),
+      hasConvexUrl: Boolean(convexUrl),
+      hasRevenueCatKey: Boolean(revenueCatKey),
+    });
+  }, [clerkKey, convexUrl, revenueCatKey]);
+
+  useEffect(() => {
+    if (!appReady) return;
+    console.log("[Boot] Hiding splash");
+    SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
   }, [appReady]);
 
   if (!appReady) {
-    return null;
+    return <BootScreen message="Starting Darkor.ai..." />;
   }
 
   if (!clerkKey || !convexUrl || !revenueCatKey) {
+    console.warn("[Boot] Missing environment variables", {
+      hasClerkKey: Boolean(clerkKey),
+      hasConvexUrl: Boolean(convexUrl),
+      hasRevenueCatKey: Boolean(revenueCatKey),
+    });
     return <MissingEnv />;
   }
 
@@ -221,6 +297,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ClerkProvider publishableKey={clerkKey} tokenCache={tokenCache}>
           <ErrorBoundary>
+            <LaunchDiagnostics />
             <Providers>
               <WorkspaceDraftProvider>
                 <BottomSheetModalProvider>
@@ -247,6 +324,7 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
 
 
 

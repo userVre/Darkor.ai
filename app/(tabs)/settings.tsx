@@ -11,7 +11,6 @@ import * as Linking from "expo-linking";
 import * as Sharing from "expo-sharing";
 import { useEffect, useMemo, useRef } from "react";
 import { Alert, ScrollView, Share, Text, View, useWindowDimensions } from "react-native";
-import Purchases from "react-native-purchases";
 import {
   ArrowLeft,
   BadgeCheck,
@@ -35,7 +34,11 @@ import {
 
 import { planTitle, type PlanKey } from "../../lib/pricing";
 import { triggerHaptic } from "../../lib/haptics";
-import { hasProEntitlement } from "../../lib/revenuecat";
+import {
+  configureRevenueCat,
+  getRevenueCatClient,
+  hasProEntitlement,
+} from "../../lib/revenuecat";
 import { requestStoreReview } from "../../lib/store-review";
 import { formatRewardCountdown } from "../../lib/rewards";
 import { GlassBackdrop } from "../../components/glass-backdrop";
@@ -165,7 +168,13 @@ export default function SettingsScreen() {
   const handleRestore = async () => {
     triggerHaptic();
     try {
-      const info = await Purchases.restorePurchases();
+      const cached = getRevenueCatClient();
+      const purchases = cached ?? (await configureRevenueCat(isSignedIn ? user?.id ?? null : null));
+      if (!purchases) {
+        Alert.alert("Restore failed", "Subscriptions are not available on this build.");
+        return;
+      }
+      const info = await purchases.restorePurchases();
       const hasPro = hasProEntitlement(info);
       if (hasPro && isSignedIn) {
         await setPlan({ plan: "pro", credits: 100 });
@@ -442,6 +451,8 @@ export default function SettingsScreen() {
     </View>
   );
 }
+
+
 
 
 

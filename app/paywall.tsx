@@ -1,11 +1,11 @@
-﻿import { useAuth } from "@clerk/expo";
+import { useAuth, useUser } from "@clerk/expo";
 import { useMutation } from "convex/react";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,12 +16,17 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Purchases, { PurchasesPackage } from "react-native-purchases";
 import Carousel from "react-native-reanimated-carousel";
 import { ArrowRight, Check, ShieldCheck, X } from "lucide-react-native";
 
 import { triggerHaptic } from "../lib/haptics";
-import { hasProEntitlement } from "../lib/revenuecat";
+import {
+  configureRevenueCat,
+  getRevenueCatClient,
+  hasProEntitlement,
+  type RevenueCatPackage,
+  type RevenueCatPurchases,
+} from "../lib/revenuecat";
 import { staggerFadeUp } from "../lib/motion";
 import { LuxPressable } from "../components/lux-pressable";
 
@@ -45,30 +50,53 @@ const FEATURES = ["Faster Rendering", "Ad-free Experience", "Unlimited Design Re
 export default function PaywallScreen() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
 
-  const [annualPackage, setAnnualPackage] = useState<PurchasesPackage | null>(null);
-  const [weeklyPackage, setWeeklyPackage] = useState<PurchasesPackage | null>(null);
+  const [annualPackage, setAnnualPackage] = useState<RevenueCatPackage | null>(null);
+  const [weeklyPackage, setWeeklyPackage] = useState<RevenueCatPackage | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<"yearly" | "weekly">("yearly");
   const [trialEnabled, setTrialEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const purchasesRef = useRef<RevenueCatPurchases | null>(null);
 
   const galleryWidth = Math.min(320, Math.round(width * 0.76));
   const galleryHeight = Math.round(galleryWidth * 0.64);
 
   useEffect(() => {
+    console.log("[Screen] Paywall mounted");
+    return () => console.log("[Screen] Paywall unmounted");
+  }, []);
+
+  useEffect(() => {
     let active = true;
     const loadOfferings = async () => {
       try {
-        const data = await Purchases.getOfferings();
+        const cached = getRevenueCatClient();
+        if (cached) {
+          purchasesRef.current = cached;
+        } else {
+          const configured = await configureRevenueCat(isSignedIn ? user?.id ?? null : null);
+          purchasesRef.current = configured;
+        }
+        if (!active) return;
+        if (!purchasesRef.current) {
+          setErrorMessage("Subscriptions are temporarily unavailable.");
+          return;
+        }
+        const data = await purchasesRef.current.getOfferings();
         if (!active) return;
         const current = data.current;
         const available = current?.availablePackages ?? [];
-        const annual = current?.annual ?? available.find((pkg) => pkg.packageType === Purchases.PACKAGE_TYPE.ANNUAL);
-        const weekly = current?.weekly ?? available.find((pkg) => pkg.packageType === Purchases.PACKAGE_TYPE.WEEKLY);
+        const annual =
+          current?.annual ??
+          available.find((pkg) => pkg.packageType === purchasesRef.current?.PACKAGE_TYPE.ANNUAL);
+        const weekly =
+          current?.weekly ??
+          available.find((pkg) => pkg.packageType === purchasesRef.current?.PACKAGE_TYPE.WEEKLY);
         setAnnualPackage(annual ?? null);
         setWeeklyPackage(weekly ?? null);
       } catch (error) {
@@ -82,7 +110,7 @@ export default function PaywallScreen() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [isSignedIn, user?.id]);
 
   const handleSelectPlan = (plan: "yearly" | "weekly") => {
     if (trialEnabled && plan === "weekly") return;
@@ -102,8 +130,12 @@ export default function PaywallScreen() {
     triggerHaptic();
     setErrorMessage(null);
     try {
+      if (!purchasesRef.current) {
+        Alert.alert("Restore failed", "Subscriptions are not available on this build.");
+        return;
+      }
       setIsLoading(true);
-      const info = await Purchases.restorePurchases();
+      const info = await purchasesRef.current.restorePurchases();
       const hasPro = hasProEntitlement(info);
       if (hasPro && isSignedIn) {
         await setPlan({ plan: "pro", credits: PRO_CREDITS_GRANT });
@@ -136,8 +168,12 @@ export default function PaywallScreen() {
     }
 
     try {
+      if (!purchasesRef.current) {
+        Alert.alert("Purchase Error", "Subscriptions are not available on this build.");
+        return;
+      }
       setIsLoading(true);
-      const result = await Purchases.purchasePackage(chosenPackage);
+      const result = await purchasesRef.current.purchasePackage(chosenPackage);
       const hasPro = hasProEntitlement(result.customerInfo);
 
       if (hasPro && isSignedIn) {
@@ -320,4 +356,10 @@ export default function PaywallScreen() {
     </View>
   );
 }
+
+
+
+
+
+
 
