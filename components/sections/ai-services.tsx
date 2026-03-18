@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-na
 import type { SharedValue } from "react-native-reanimated";
 
 import ScrollReveal from "../scroll-reveal";
+import { DISABLE_VIDEO_BACKGROUNDS } from "../../lib/diagnostics";
 
 type ServiceCard = {
   id: string;
@@ -73,13 +74,38 @@ type ServiceCardProps = {
   onCtaPress: (serviceId: string) => void;
 };
 
-function ServiceCardView({ data, height, index, scrollY, onCtaPress }: ServiceCardProps) {
-  const [pressed, setPressed] = useState(false);
-  const player = useVideoPlayer(data.video, (instance) => {
+const VIDEO_ENABLED = !DISABLE_VIDEO_BACKGROUNDS;
+
+type VideoBackgroundProps = {
+  video: number;
+};
+
+function VideoBackground({ video }: VideoBackgroundProps) {
+  const player = useVideoPlayer(video, (instance) => {
     instance.loop = true;
     instance.muted = true;
     instance.play();
   });
+
+  return (
+    <VideoView
+      player={player}
+      style={StyleSheet.absoluteFillObject}
+      contentFit="cover"
+      nativeControls={false}
+      pointerEvents="none"
+    />
+  );
+}
+
+function StaticBackground(_: VideoBackgroundProps) {
+  return <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { backgroundColor: "#060606" }]} />;
+}
+
+const CardBackground = VIDEO_ENABLED ? VideoBackground : StaticBackground;
+
+function ServiceCardView({ data, height, index, scrollY, onCtaPress }: ServiceCardProps) {
+  const [pressed, setPressed] = useState(false);
 
   return (
     <ScrollReveal scrollY={scrollY} offset={index * 0.08}>
@@ -94,13 +120,7 @@ function ServiceCardView({ data, height, index, scrollY, onCtaPress }: ServiceCa
           transition={{ type: "timing", duration: 160 }}
           style={[styles.card, { height }]}
         >
-          <VideoView
-            player={player}
-            style={StyleSheet.absoluteFillObject}
-            contentFit="cover"
-            nativeControls={false}
-            pointerEvents="none"
-          />
+          <CardBackground video={data.video} />
           <View pointerEvents="none" style={styles.scrim} />
 
           <BlurView intensity={32} tint="dark" style={styles.glass}>

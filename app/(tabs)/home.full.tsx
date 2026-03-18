@@ -14,7 +14,7 @@ import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
 import { formatRewardCountdown } from "../../lib/rewards";
 import { LuxPressable } from "../../components/lux-pressable";
-import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
+import { DIAGNOSTIC_BYPASS, DISABLE_VIDEO_BACKGROUNDS } from "../../lib/diagnostics";
 
 type ServiceCardData = {
   id: string;
@@ -76,6 +76,7 @@ const SERVICES: ServiceCardData[] = [
 ];
 
 const CARD_GAP = 16;
+const VIDEO_ENABLED = !DISABLE_VIDEO_BACKGROUNDS;
 
 type ServiceCardProps = {
   item: ServiceCardData;
@@ -87,8 +88,13 @@ type ServiceCardProps = {
 
 const CardSeparator = () => <View style={{ height: CARD_GAP }} />;
 
-const ServiceCard = memo(function ServiceCard({ item, height, index, isActive, onPress }: ServiceCardProps) {
-  const player = useVideoPlayer(item.video, (playerInstance) => {
+type BackgroundProps = {
+  source: number;
+  isActive: boolean;
+};
+
+function VideoBackground({ source, isActive }: BackgroundProps) {
+  const player = useVideoPlayer(source, (playerInstance) => {
     playerInstance.loop = true;
     playerInstance.muted = true;
     playerInstance.volume = 0;
@@ -104,6 +110,24 @@ const ServiceCard = memo(function ServiceCard({ item, height, index, isActive, o
     }
   }, [isActive, player]);
 
+  return (
+    <VideoView
+      player={player}
+      className="absolute inset-0"
+      contentFit="cover"
+      nativeControls={false}
+      pointerEvents="none"
+    />
+  );
+}
+
+function StaticBackground(_: BackgroundProps) {
+  return <View className="absolute inset-0 bg-black" />;
+}
+
+const CardBackground = VIDEO_ENABLED ? VideoBackground : StaticBackground;
+
+const ServiceCard = memo(function ServiceCard({ item, height, index, isActive, onPress }: ServiceCardProps) {
   const handlePress = useCallback(() => {
     triggerHaptic();
     onPress(item);
@@ -115,13 +139,7 @@ const ServiceCard = memo(function ServiceCard({ item, height, index, isActive, o
         className="overflow-hidden rounded-3xl border border-white/10 bg-black"
         style={{ height, borderCurve: "continuous", borderWidth: 0.5 }}
       >
-        <VideoView
-          player={player}
-          className="absolute inset-0"
-          contentFit="cover"
-          nativeControls={false}
-          pointerEvents="none"
-        />
+        <CardBackground source={item.video} isActive={isActive} />
 
         <BlurView
           intensity={96}

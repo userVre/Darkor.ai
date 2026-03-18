@@ -1,25 +1,21 @@
-import "react-native-gesture-handler";
-import "react-native-reanimated";
-import "../lib/nativewind";
-import "../global.css";
-
 import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
 import { useMutation } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import * as Linking from "expo-linking";
 import { Stack, usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
-import { ErrorBoundary } from "../components/error-boundary";
 import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
 import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
+import { getEnvReport, logEnvDiagnostics } from "../lib/env";
+import { useBackendHealth } from "../lib/network";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
 import { tokenCache } from "../lib/token-cache";
 import {
@@ -31,8 +27,6 @@ import {
 } from "../lib/revenuecat";
 
 console.log("[Boot] Root layout module loaded");
-
-void SplashScreen.preventAutoHideAsync();
 
 function RevenueCatGate() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -110,7 +104,7 @@ function RevenueCatGate() {
         console.warn("RevenueCat sync failed", error);
       }
     };
-  }, [isSignedIn, pathname, revenueCatReady, router, setPlan]);
+  }, [isSignedIn, pathname, revenueCatReady, router, setPlan, showSuccess]);
 
   useEffect(() => {
     const purchases = purchasesRef.current;
@@ -183,7 +177,7 @@ function RewardGate() {
           creditsAdded?: number;
         };
         if (result?.granted) {
-          showToast("\u2728 Your 3-day gift is here! 3 credits have been added to your account. Start designing now!");
+          showToast("Your 3-day gift is here. 3 credits have been added to your account.");
         }
       } catch {
         // ignore reward errors
@@ -212,17 +206,6 @@ function Providers({ children }: { children: React.ReactNode }) {
   );
 }
 
-function MissingEnv() {
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#000", paddingHorizontal: 24 }}>
-      <Text style={{ fontSize: 18, fontWeight: "600", color: "#f4f4f5" }}>Missing environment variables</Text>
-      <Text style={{ marginTop: 8, textAlign: "center", color: "#a1a1aa" }}>
-        Set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY (or NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY), EXPO_PUBLIC_CONVEX_URL (or NEXT_PUBLIC_CONVEX_URL), and RevenueCat keys (EXPO_PUBLIC_REVENUECAT_IOS_API_KEY / EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY) before launching the app.
-      </Text>
-    </View>
-  );
-}
-
 function BootScreen({ message }: { message: string }) {
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#000", paddingHorizontal: 24 }}>
@@ -230,6 +213,56 @@ function BootScreen({ message }: { message: string }) {
       <Text style={{ marginTop: 12, fontSize: 14, color: "#f4f4f5" }}>{message}</Text>
     </View>
   );
+}
+
+function MissingEnv({ missing }: { missing: string[] }) {
+  return (
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#000", paddingHorizontal: 24 }}>
+      <Text style={{ fontSize: 18, fontWeight: "600", color: "#f4f4f5" }}>Missing environment variables</Text>
+      <Text style={{ marginTop: 8, textAlign: "center", color: "#a1a1aa" }}>
+        The following variables are required before the app can start:
+      </Text>
+      <View style={{ marginTop: 12 }}>
+        {missing.map((item) => (
+          <Text key={item} style={{ color: "#e2e8f0", fontSize: 12, textAlign: "center" }}>
+            {item}
+          </Text>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function OfflineScreen({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#000", paddingHorizontal: 24 }}>
+      <Text style={{ fontSize: 18, fontWeight: "600", color: "#f4f4f5" }}>Connecting to Darkor.ai</Text>
+      <Text style={{ marginTop: 8, textAlign: "center", color: "#a1a1aa" }}>{message}</Text>
+      <Pressable
+        onPress={onRetry}
+        style={{
+          marginTop: 16,
+          borderRadius: 16,
+          borderWidth: 0.5,
+          borderColor: "rgba(255,255,255,0.2)",
+          paddingHorizontal: 18,
+          paddingVertical: 10,
+        }}
+      >
+        <Text style={{ color: "#e2e8f0", fontSize: 13, fontWeight: "600" }}>Retry</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { isLoaded } = useAuth();
+
+  if (!isLoaded) {
+    return <BootScreen message="Loading your account..." />;
+  }
+
+  return <>{children}</>;
 }
 
 function LaunchDiagnostics() {
@@ -243,11 +276,16 @@ function LaunchDiagnostics() {
   return null;
 }
 
-export default function RootLayout() {
+export default function RootLayoutFull() {
   const [appReady, setAppReady] = useState(false);
-  const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL;
+  const envReport = useMemo(() => getEnvReport(), []);
+  const clerkKey = envReport.values.clerkPublishableKey;
+  const backendUrl = envReport.values.apiBaseUrl ?? envReport.values.convexUrl;
   const revenueCatKey = getRevenueCatApiKey();
+
+  useEffect(() => {
+    logEnvDiagnostics(envReport);
+  }, [envReport]);
 
   useEffect(() => {
     console.log("[Boot] RootLayout mounted");
@@ -267,38 +305,43 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    console.log("[Boot] Env check", {
-      hasClerkKey: Boolean(clerkKey),
-      hasConvexUrl: Boolean(convexUrl),
-      hasRevenueCatKey: Boolean(revenueCatKey),
-    });
-  }, [clerkKey, convexUrl, revenueCatKey]);
-
-  useEffect(() => {
     if (!appReady) return;
     console.log("[Boot] Hiding splash");
     SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
   }, [appReady]);
 
+  const health = useBackendHealth(backendUrl, {
+    enabled: appReady && !DIAGNOSTIC_BYPASS && envReport.ok,
+    intervalMs: 15000,
+    timeoutMs: 5000,
+  });
+
   if (!appReady) {
     return <BootScreen message="Starting Darkor.ai..." />;
   }
 
-  if (!DIAGNOSTIC_BYPASS && (!clerkKey || !convexUrl || !revenueCatKey)) {
-    console.warn("[Boot] Missing environment variables", {
-      hasClerkKey: Boolean(clerkKey),
-      hasConvexUrl: Boolean(convexUrl),
-      hasRevenueCatKey: Boolean(revenueCatKey),
-    });
-    return <MissingEnv />;
+  if (!DIAGNOSTIC_BYPASS && (!envReport.ok || !clerkKey || !revenueCatKey)) {
+    const missing = envReport.ok ? [] : envReport.missing;
+    if (!revenueCatKey && !missing.includes("EXPO_PUBLIC_REVENUECAT_(IOS|ANDROID)_API_KEY")) {
+      missing.push("EXPO_PUBLIC_REVENUECAT_(IOS|ANDROID)_API_KEY");
+    }
+    return <MissingEnv missing={missing} />;
+  }
+
+  if (!DIAGNOSTIC_BYPASS && backendUrl && health.status === "checking") {
+    return <BootScreen message="Connecting to services..." />;
+  }
+
+  if (!DIAGNOSTIC_BYPASS && backendUrl && health.status === "offline") {
+    return <OfflineScreen message={health.lastError ?? "Backend is unreachable."} onRetry={health.retry} />;
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ClerkProvider publishableKey={clerkKey} tokenCache={tokenCache}>
-          <ErrorBoundary>
-            <LaunchDiagnostics />
+        <ClerkProvider publishableKey={clerkKey ?? ""} tokenCache={tokenCache}>
+          <LaunchDiagnostics />
+          <AuthGate>
             <Providers>
               <WorkspaceDraftProvider>
                 <BottomSheetModalProvider>
@@ -319,20 +362,9 @@ export default function RootLayout() {
                 </BottomSheetModalProvider>
               </WorkspaceDraftProvider>
             </Providers>
-          </ErrorBoundary>
+          </AuthGate>
         </ClerkProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
-
-
-
-
-
-
-
-
-
-
-

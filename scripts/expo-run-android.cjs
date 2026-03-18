@@ -7,7 +7,7 @@ const projectRoot = resolve(__dirname, "..");
 const metroConfig = pathToFileURL(resolve(projectRoot, "metro.config.js")).href;
 process.env.EXPO_OVERRIDE_METRO_CONFIG = metroConfig;
 
-const host = process.env.EXPO_DEV_HOST || "127.0.0.1";
+const host = process.env.EXPO_DEV_HOST || "10.0.2.2";
 const port = process.env.EXPO_DEV_PORT || "8081";
 process.env.EXPO_DEV_CLIENT_SERVER_URL = `http://${host}:${port}`;
 process.env.EXPO_PACKAGER_HOSTNAME = host;

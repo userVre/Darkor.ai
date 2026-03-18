@@ -8,6 +8,7 @@ type Props = {
 type State = {
   hasError: boolean;
   message?: string;
+  stack?: string;
 };
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -15,11 +16,16 @@ export class ErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(error: unknown) {
     const message = error instanceof Error ? error.message : "Unexpected error";
-    return { hasError: true, message };
+    const stack = error instanceof Error ? error.stack : undefined;
+    return { hasError: true, message, stack };
   }
 
   componentDidCatch(error: unknown, info: unknown) {
     console.error("[ErrorBoundary] Unhandled error", error, info);
+    const componentStack = (info as { componentStack?: string } | null)?.componentStack;
+    if (componentStack && componentStack !== this.state.stack) {
+      this.setState({ stack: componentStack });
+    }
   }
 
   handleReload = async () => {
@@ -55,8 +61,11 @@ export class ErrorBoundary extends Component<Props, State> {
               We hit a temporary issue. Please try again.
             </Text>
             {this.state.message ? (
-              <Text style={{ marginTop: 10, fontSize: 12, color: "#71717a" }} numberOfLines={2}>
-                {this.state.message}
+              <Text style={{ marginTop: 10, fontSize: 12, color: "#71717a" }}>{this.state.message}</Text>
+            ) : null}
+            {this.state.stack ? (
+              <Text style={{ marginTop: 10, fontSize: 11, color: "#94a3b8", lineHeight: 16 }}>
+                {this.state.stack}
               </Text>
             ) : null}
             <Pressable
