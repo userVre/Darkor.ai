@@ -120,7 +120,7 @@ export const trackGeneration = mutationGeneric({
   args: {
     ignoreCooldown: v.optional(v.boolean()),
   },
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Unauthorized");
