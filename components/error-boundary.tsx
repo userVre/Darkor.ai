@@ -1,5 +1,5 @@
 import { Component, type ReactNode } from "react";
-import { Pressable, Text, View } from "react-native";
+import { DevSettings, Pressable, Text, View } from "react-native";
 
 type Props = {
   children: ReactNode;
@@ -7,18 +7,33 @@ type Props = {
 
 type State = {
   hasError: boolean;
+  message?: string;
 };
 
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error: unknown) {
+    const message = error instanceof Error ? error.message : "Unexpected error";
+    return { hasError: true, message };
   }
 
   componentDidCatch(error: unknown, info: unknown) {
     console.error("[ErrorBoundary] Unhandled error", error, info);
   }
+
+  handleReload = async () => {
+    try {
+      const updates = await import("expo-updates");
+      if (updates?.reloadAsync) {
+        await updates.reloadAsync();
+        return;
+      }
+    } catch {
+      // ignore, fallback to DevSettings
+    }
+    DevSettings.reload();
+  };
 
   render() {
     if (this.state.hasError) {
@@ -39,6 +54,11 @@ export class ErrorBoundary extends Component<Props, State> {
             <Text style={{ marginTop: 8, fontSize: 13, color: "#a1a1aa" }}>
               We hit a temporary issue. Please try again.
             </Text>
+            {this.state.message ? (
+              <Text style={{ marginTop: 10, fontSize: 12, color: "#71717a" }} numberOfLines={2}>
+                {this.state.message}
+              </Text>
+            ) : null}
             <Pressable
               onPress={() => this.setState({ hasError: false })}
               style={{
@@ -51,6 +71,20 @@ export class ErrorBoundary extends Component<Props, State> {
               }}
             >
               <Text style={{ fontSize: 14, fontWeight: "600", color: "#ffffff" }}>Try again</Text>
+            </Pressable>
+            <Pressable
+              onPress={this.handleReload}
+              style={{
+                marginTop: 10,
+                alignItems: "center",
+                borderRadius: 16,
+                borderWidth: 0.5,
+                borderColor: "rgba(255,255,255,0.2)",
+                paddingVertical: 10,
+                paddingHorizontal: 16,
+              }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: "600", color: "#e4e4e7" }}>Reload app</Text>
             </Pressable>
           </View>
         </View>

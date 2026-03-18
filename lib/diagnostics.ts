@@ -1,1 +1,1 @@
-export const DIAGNOSTIC_BYPASS = true;
+export const DIAGNOSTIC_BYPASS = false;

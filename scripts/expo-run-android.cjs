@@ -7,6 +7,25 @@ const projectRoot = resolve(__dirname, "..");
 const metroConfig = pathToFileURL(resolve(projectRoot, "metro.config.js")).href;
 process.env.EXPO_OVERRIDE_METRO_CONFIG = metroConfig;
 
+const host = process.env.EXPO_DEV_HOST || "127.0.0.1";
+const port = process.env.EXPO_DEV_PORT || "8081";
+process.env.EXPO_DEV_CLIENT_SERVER_URL = `http://${host}:${port}`;
+process.env.EXPO_PACKAGER_HOSTNAME = host;
+process.env.REACT_NATIVE_PACKAGER_HOSTNAME = host;
+process.env.EXPO_ANDROID_ARCHITECTURES = "x86_64";
+process.env.REACT_NATIVE_DISABLE_LTO = "1";
+
+const envKeys = [
+  "GEMINI_API_KEY",
+  "EXPO_PUBLIC_API_BASE_URL",
+  "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
+  "EXPO_PUBLIC_CONVEX_URL",
+  "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY",
+  "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY",
+];
+const present = envKeys.filter((key) => !!process.env[key]);
+console.log(`env: verified ${present.length ? present.join(" ") : "none"}`);
+
 const gradlePropsPath = resolve(projectRoot, "android", "gradle.properties");
 if (fs.existsSync(gradlePropsPath)) {
   const patchProp = (content, key, value) => {

@@ -31,6 +31,10 @@
     },
     "android": {
       "package": "com.darkor.ai",
+      "usesCleartextTraffic": true,
+      "architectures": [
+        "x86_64"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#000000"

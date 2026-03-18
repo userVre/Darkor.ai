@@ -3,9 +3,10 @@ import { skip, useMutation, useQuery } from "convex/react";
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
+import { FlashList } from "@shopify/flash-list";
 import { MotiView } from "moti";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, Modal, Text, View, useWindowDimensions } from "react-native";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Modal, Text, View, ViewToken, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Diamond, Settings, X } from "lucide-react-native";
 
@@ -80,19 +81,28 @@ type ServiceCardProps = {
   item: ServiceCardData;
   height: number;
   index: number;
+  isActive: boolean;
   onPress: (item: ServiceCardData) => void;
 };
 
 const CardSeparator = () => <View style={{ height: CARD_GAP }} />;
 
-const ServiceCard = memo(function ServiceCard({ item, height, index, onPress }: ServiceCardProps) {
+const ServiceCard = memo(function ServiceCard({ item, height, index, isActive, onPress }: ServiceCardProps) {
   const player = useVideoPlayer(item.video, (playerInstance) => {
     playerInstance.loop = true;
     playerInstance.muted = true;
     playerInstance.volume = 0;
     playerInstance.timeUpdateEventInterval = 0;
-    playerInstance.play();
   });
+
+  useEffect(() => {
+    if (!player) return;
+    if (isActive) {
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [isActive, player]);
 
   const handlePress = useCallback(() => {
     triggerHaptic();
@@ -153,6 +163,7 @@ export default function HomeScreen() {
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
 
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
+  const [activeIds, setActiveIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     console.log("[Screen] Home mounted");
@@ -198,18 +209,34 @@ export default function HomeScreen() {
     router.push("/settings");
   }, [router]);
 
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: Array<ViewToken> }) => {
+      const next = new Set<string>();
+      viewableItems.forEach((token) => {
+        if (token.item?.id) next.add(token.item.id);
+      });
+      setActiveIds(next);
+    },
+  ).current;
+
   const renderItem = useCallback(
     ({ item, index }: { item: ServiceCardData; index: number }) => (
-      <ServiceCard item={item} height={cardHeight} index={index} onPress={handleServicePress} />
+      <ServiceCard
+        item={item}
+        height={cardHeight}
+        index={index}
+        isActive={activeIds.has(item.id)}
+        onPress={handleServicePress}
+      />
     ),
-    [cardHeight, handleServicePress],
+    [activeIds, cardHeight, handleServicePress],
   );
 
   const keyExtractor = useCallback((item: ServiceCardData) => item.id, []);
 
   return (
     <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
-      <FlatList
+      <FlashList
         className="flex-1 bg-black"
         style={{ backgroundColor: "#000000" }}
         contentContainerStyle={contentContainerStyle}
@@ -221,6 +248,8 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         windowSize={6}
         initialNumToRender={3}
+        estimatedItemSize={cardHeight + CARD_GAP}
+        onViewableItemsChanged={onViewableItemsChanged}
         getItemLayout={(_, index) => ({
           length: cardHeight + CARD_GAP,
           offset: (cardHeight + CARD_GAP) * index,

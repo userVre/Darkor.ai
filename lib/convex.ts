@@ -1,9 +1,13 @@
 import { ConvexReactClient } from "convex/react";
 
-const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL;
+import { getEnvReport } from "./env";
+
+const { values } = getEnvReport();
+const convexUrl = values.convexUrl;
 
 if (!convexUrl) {
-  console.warn("EXPO_PUBLIC_CONVEX_URL (or NEXT_PUBLIC_CONVEX_URL) is not set.");
+  console.warn("[Env] EXPO_PUBLIC_CONVEX_URL (or NEXT_PUBLIC_CONVEX_URL) is not set.");
 }
 
+export const hasConvexConfig = Boolean(convexUrl);
 export const convex = new ConvexReactClient(convexUrl ?? "https://placeholder.convex.cloud");
