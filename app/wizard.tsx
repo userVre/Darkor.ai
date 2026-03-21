@@ -29,7 +29,6 @@ import {
   Sparkles,
   SwatchBook,
   Trash2,
-  Wand2,
   X,
 } from "lucide-react-native";
 import { LuxPressable } from "../components/lux-pressable";
@@ -202,7 +201,7 @@ export default function WizardScreen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ["images"],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [4, 5],
         quality: 0.9,
@@ -221,7 +220,7 @@ export default function WizardScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 5],
       quality: 0.9,
@@ -343,12 +342,13 @@ export default function WizardScreen() {
   }
 
   return (
-    <ScrollView
-      className="flex-1 bg-black"
-      style={{ backgroundColor: "#000000" }}
-      contentContainerStyle={{ padding: 20, paddingBottom: 150, minHeight: height }}
-      contentInsetAdjustmentBehavior="automatic"
-    >
+    <>
+      <ScrollView
+        className="flex-1 bg-black"
+        style={{ backgroundColor: "#000000" }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 150, minHeight: height }}
+        contentInsetAdjustmentBehavior="automatic"
+      >
       <View className="flex-row items-center gap-3">
         <LuxPressable onPress={handleBack} className="h-10 w-10 items-center justify-center rounded-full border border-white/10" style={styles.pointer}>
           <ArrowLeft color="#e4e4e7" size={18} />
@@ -380,43 +380,68 @@ export default function WizardScreen() {
             className="mt-8"
           >
             <Text className="text-lg font-semibold text-zinc-100">Add a Photo</Text>
-            <LuxPressable
-              onPress={handlePickPhoto}
-              className="mt-4 overflow-hidden rounded-3xl border border-dashed border-white/20 bg-black/70"
-              style={[styles.cardShadow, styles.pointer, { height: 220 }]}
-            >
-              {selectedImage ? (
-                <Image source={{ uri: selectedImage }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
-              ) : (
-                <View className="flex-1 items-center justify-center gap-3">
-                  <View className="h-14 w-14 items-center justify-center rounded-full border border-cyan-300/40 bg-cyan-400/10">
-                    <Wand2 color="#67e8f9" size={24} />
-                  </View>
-                  <Text className="text-sm font-medium text-zinc-300">Tap to upload from camera or gallery</Text>
-                  <View className="flex-row gap-3">
-                    <View className="flex-row items-center gap-2 rounded-full border border-white/10 px-3 py-1">
-                      <Camera color="#94a3b8" size={14} />
-                      <Text className="text-xs text-zinc-400">Camera</Text>
-                    </View>
-                    <View className="flex-row items-center gap-2 rounded-full border border-white/10 px-3 py-1">
-                      <ImageIcon color="#94a3b8" size={14} />
-                      <Text className="text-xs text-zinc-400">Gallery</Text>
-                    </View>
-                  </View>
-                </View>
-              )}
-            </LuxPressable>
+            <Text className="mt-2 text-sm leading-6 text-zinc-400">
+              Upload a real space or start instantly from one of the curated references below.
+            </Text>
 
-            <Text className="mt-6 text-xs uppercase tracking-[2px] text-zinc-400">Example Photos</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3">
-              <View className="flex-row gap-3">
-                {EXAMPLE_PHOTOS.map((uri) => (
-                  <LuxPressable key={uri} onPress={() => setSelectedImage(uri)} style={[styles.pointer, styles.exampleCard]}>
-                    <Image source={{ uri }} style={styles.exampleImage} contentFit="cover" />
-                  </LuxPressable>
-                ))}
-              </View>
-            </ScrollView>
+            {selectedImage ? (
+              <LuxPressable
+                onPress={handlePickPhoto}
+                className="mt-5 overflow-hidden rounded-3xl border border-white/10 bg-zinc-950"
+                style={[styles.previewCard, styles.cardShadow, styles.pointer]}
+              >
+                <Image source={{ uri: selectedImage }} style={styles.previewImage} contentFit="cover" transition={180} />
+                <View style={styles.previewBadge}>
+                  <Text className="text-xs font-semibold text-white">Selected photo</Text>
+                  <Text className="mt-1 text-[11px] text-zinc-300">Tap to replace from camera or library</Text>
+                </View>
+                <LuxPressable
+                  onPress={handleClearSelectedImage}
+                  className="absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full bg-black/75"
+                  style={[styles.pointer, styles.closeButton]}
+                >
+                  <X color="#ffffff" size={18} />
+                </LuxPressable>
+              </LuxPressable>
+            ) : (
+              <LuxPressable onPress={handlePickPhoto} className="mt-5 rounded-3xl bg-black/80" style={[styles.uploadCard, styles.cardShadow, styles.pointer]}>
+                <View style={styles.uploadInner}>
+                  <View style={styles.plusWrap}>
+                    <Plus color="#fafafa" size={34} strokeWidth={2.1} />
+                  </View>
+                  <Text style={styles.uploadTitle}>Start Redesigning{"\n"}Redesign and beautify your home</Text>
+                  <Text style={styles.uploadSubtitle}>Tap to add a photo from your camera or library</Text>
+                </View>
+              </LuxPressable>
+            )}
+
+            <View className="mt-8">
+              <Text className="text-base font-semibold text-zinc-100">Example Photos</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
+                <View className="flex-row gap-4 pr-1">
+                  {EXAMPLE_PHOTOS.map((photo) => {
+                    const active = selectedImage === photo.uri;
+                    return (
+                      <LuxPressable
+                        key={photo.id}
+                        onPress={() => handleSelectExample(photo.uri)}
+                        style={[styles.pointer, styles.examplePhotoCard, active ? styles.examplePhotoCardActive : null]}
+                      >
+                        <Image source={{ uri: photo.uri }} style={styles.examplePhotoImage} contentFit="cover" transition={180} />
+                        <LinearGradient
+                          colors={["transparent", "rgba(0,0,0,0.88)"]}
+                          start={{ x: 0.5, y: 0 }}
+                          end={{ x: 0.5, y: 1 }}
+                          style={styles.exampleGradient}
+                        >
+                          <Text className="text-xs font-semibold text-white">{photo.title}</Text>
+                        </LinearGradient>
+                      </LuxPressable>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+            </View>
           </MotiView>
         ) : null}
 
@@ -610,19 +635,71 @@ export default function WizardScreen() {
           <LuxPressable onPress={handleBack} className="rounded-full border border-white/10 px-5 py-2" style={styles.pointer}>
             <Text className="text-xs font-semibold text-zinc-200">Back</Text>
           </LuxPressable>
-          <LuxPressable
-            onPress={handleContinue}
-            className={`rounded-full px-5 py-2 ${canContinue() ? "bg-cyan-400" : "bg-zinc-700"}`}
-            style={styles.pointer}
-            disabled={!canContinue()}
-          >
-            <Text className={`text-xs font-semibold ${canContinue() ? "text-zinc-900" : "text-zinc-300"}`}>
-              {workflowStep === 3 ? "? Generate Renders" : "Continue"}
-            </Text>
+          <LuxPressable onPress={handleContinue} style={styles.pointer} disabled={!canContinue()}>
+            {canContinue() ? (
+              <LinearGradient
+                colors={["#ef4444", "#d946ef"]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={styles.continueButtonActive}
+              >
+                <Text className="text-xs font-semibold text-white">{workflowStep === 3 ? "Generate Renders" : "Continue"}</Text>
+              </LinearGradient>
+            ) : (
+              <View style={styles.continueButtonDisabled}>
+                <Text className="text-xs font-semibold text-zinc-400">{workflowStep === 3 ? "Generate Renders" : "Continue"}</Text>
+              </View>
+            )}
           </LuxPressable>
         </BlurView>
       ) : null}
-    </ScrollView>
+      </ScrollView>
+
+      <AnimatePresence>
+        {isSourceSheetVisible ? (
+          <MotiView key="source-sheet" from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.sheetRoot}>
+            <Pressable onPress={closeSourceSheet} style={styles.sheetBackdrop} />
+            <MotiView
+              from={{ translateY: 48, opacity: 0 }}
+              animate={{ translateY: 0, opacity: 1 }}
+              exit={{ translateY: 48, opacity: 0 }}
+              transition={LUX_SPRING}
+              style={styles.sheetCard}
+            >
+              <View style={styles.sheetHandle} />
+              <Text className="mt-3 text-center text-lg font-semibold text-zinc-100">Add a Photo</Text>
+              <Text className="mt-2 text-center text-sm leading-6 text-zinc-400">
+                Choose how you want to bring your space into Darkor.ai.
+              </Text>
+
+              <LuxPressable onPress={() => void openPicker("camera")} style={[styles.sheetAction, styles.pointer]}>
+                <View style={styles.sheetActionIcon}>
+                  <Camera color="#ffffff" size={18} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-semibold text-white">Take photo from camera</Text>
+                  <Text className="mt-1 text-xs text-zinc-400">Capture the room directly and continue instantly.</Text>
+                </View>
+              </LuxPressable>
+
+              <LuxPressable onPress={() => void openPicker("gallery")} style={[styles.sheetAction, styles.pointer]}>
+                <View style={styles.sheetActionIcon}>
+                  <ImageIcon color="#ffffff" size={18} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-semibold text-white">Choose from library</Text>
+                  <Text className="mt-1 text-xs text-zinc-400">Import an existing photo from your device.</Text>
+                </View>
+              </LuxPressable>
+
+              <LuxPressable onPress={closeSourceSheet} className="mt-3 items-center rounded-2xl border border-white/10 py-3" style={styles.pointer}>
+                <Text className="text-sm font-semibold text-zinc-200">Cancel</Text>
+              </LuxPressable>
+            </MotiView>
+          </MotiView>
+        ) : null}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -633,17 +710,97 @@ const styles = StyleSheet.create({
   pointer: {
     cursor: "pointer",
   },
-  exampleCard: {
-    width: 130,
-    height: 90,
-    borderRadius: 18,
+  uploadCard: {
+    minHeight: 312,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: "#27272a",
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
   },
-  exampleImage: {
+  uploadInner: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 28,
+    paddingVertical: 32,
+  },
+  plusWrap: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+    marginBottom: 20,
+  },
+  uploadTitle: {
+    color: "#fafafa",
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  uploadSubtitle: {
+    marginTop: 14,
+    color: "#a1a1aa",
+    fontSize: 14,
+    lineHeight: 22,
+    textAlign: "center",
+  },
+  previewCard: {
+    position: "relative",
+    height: 312,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  previewImage: {
     width: "100%",
     height: "100%",
+  },
+  previewBadge: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    bottom: 16,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: "rgba(0, 0, 0, 0.62)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  closeButton: {
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.14)",
+  },
+  examplePhotoCard: {
+    width: 164,
+    height: 212,
+    borderRadius: 24,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#111111",
+  },
+  examplePhotoCardActive: {
+    borderColor: "rgba(236, 72, 153, 0.95)",
+    boxShadow: "0 16px 32px rgba(217, 70, 239, 0.24)",
+  },
+  examplePhotoImage: {
+    width: "100%",
+    height: "100%",
+  },
+  exampleGradient: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
   },
   resultImage: {
     width: "100%",
@@ -663,6 +820,70 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  continueButtonActive: {
+    minWidth: 146,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 999,
+  },
+  continueButtonDisabled: {
+    minWidth: 146,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 999,
+    backgroundColor: "#3f3f46",
+  },
+  sheetRoot: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "flex-end",
+    zIndex: 50,
+  },
+  sheetBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.72)",
+  },
+  sheetCard: {
+    marginHorizontal: 12,
+    marginBottom: 12,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.12)",
+    backgroundColor: "#09090b",
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    paddingBottom: 18,
+  },
+  sheetHandle: {
+    alignSelf: "center",
+    width: 44,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+  },
+  sheetAction: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  sheetActionIcon: {
+    width: 42,
+    height: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 21,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
   },
   processingRoot: {
     flex: 1,
