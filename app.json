@@ -5,7 +5,6 @@
     "scheme": "darkorai",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
     "icon": "./assets/logo.png",
     "splash": {
       "image": "./assets/logo.png",
@@ -31,10 +30,6 @@
     },
     "android": {
       "package": "com.darkor.ai",
-      "usesCleartextTraffic": true,
-      "architectures": [
-        "x86_64"
-      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#000000"

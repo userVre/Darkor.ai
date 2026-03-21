@@ -67,12 +67,29 @@ function RevenueCatGate() {
   useEffect(() => {
     const purchases = purchasesRef.current;
     if (!revenueCatReady || !configuredRef.current || !isLoaded || !purchases) return;
-    console.log(`[Boot] RevenueCat ${isSignedIn ? "logIn" : "logOut"} start`);
-    if (isSignedIn && user?.id) {
-      purchases.logIn(user.id).catch(() => undefined);
-    } else {
-      purchases.logOut().catch(() => undefined);
-    }
+
+    const run = async () => {
+      try {
+        if (isSignedIn && user?.id) {
+          console.log("[Boot] RevenueCat logIn start");
+          const currentUserId = await purchases.getAppUserID().catch(() => null);
+          if (currentUserId !== user.id) {
+            await purchases.logIn(user.id);
+          }
+          return;
+        }
+
+        console.log("[Boot] RevenueCat logOut start");
+        const isAnonymous = await purchases.isAnonymous().catch(() => true);
+        if (!isAnonymous) {
+          await purchases.logOut();
+        }
+      } catch (error) {
+        console.warn("[Boot] RevenueCat auth sync failed", error);
+      }
+    };
+
+    void run();
   }, [isLoaded, isSignedIn, revenueCatReady, user?.id]);
 
   useEffect(() => {
@@ -369,5 +386,6 @@ export default function RootLayoutFull() {
     </GestureHandlerRootView>
   );
 }
+
 
 

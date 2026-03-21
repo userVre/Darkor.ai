@@ -1,44 +1,49 @@
 const { spawnSync } = require("child_process");
 const { resolve } = require("path");
 const { pathToFileURL } = require("url");
+const { resolvePort, tryAdbReverse } = require("./dev-server-utils.cjs");
 
-const metroConfig = pathToFileURL(resolve(__dirname, "..", "metro.config.js")).href;
-process.env.EXPO_OVERRIDE_METRO_CONFIG = metroConfig;
+async function main() {
+  const metroConfig = pathToFileURL(resolve(__dirname, "..", "metro.config.js")).href;
+  process.env.EXPO_OVERRIDE_METRO_CONFIG = metroConfig;
 
-const port = process.env.EXPO_DEV_PORT || "8081";
+  const { port, autoSelected } = await resolvePort();
+  const portString = String(port);
 
-function tryAdbReverse(portNumber) {
-  const result = spawnSync("adb", ["reverse", `tcp:${portNumber}`, `tcp:${portNumber}`], {
-    stdio: "ignore",
+  if (autoSelected) {
+    console.log(`[dev] Port 8081 is busy, using ${portString} instead`);
+  }
+
+  let host = process.env.EXPO_DEV_HOST;
+  let adbOk = false;
+
+  if (!host) {
+    adbOk = tryAdbReverse(portString);
+    host = adbOk ? "127.0.0.1" : "10.0.2.2";
+  }
+
+  const serverUrl = `http://${host}:${portString}`;
+  console.log(`[dev] Expo dev server: ${serverUrl} (adb reverse ${adbOk ? "ok" : "off"})`);
+
+  process.env.EXPO_DEV_CLIENT_SERVER_URL = serverUrl;
+  process.env.EXPO_PACKAGER_PROXY_URL = serverUrl;
+  process.env.EXPO_PACKAGER_HOSTNAME = host;
+  process.env.REACT_NATIVE_PACKAGER_HOSTNAME = host;
+  process.env.EXPO_DEV_PORT = portString;
+
+  const defaultArgs = ["expo", "start", "--clear", "--dev-client", "--host", "localhost", "--port", portString];
+  const extraArgs = process.argv.slice(2);
+
+  const result = spawnSync("npx", [...defaultArgs, ...extraArgs], {
+    stdio: "inherit",
     shell: true,
+    env: process.env,
   });
-  return result.status === 0;
+
+  process.exit(result.status ?? 1);
 }
 
-let host = process.env.EXPO_DEV_HOST;
-let adbOk = false;
-
-if (!host) {
-  adbOk = tryAdbReverse(port);
-  host = adbOk ? "127.0.0.1" : "10.0.2.2";
-}
-
-const serverUrl = `http://${host}:${port}`;
-console.log(`[dev] Expo dev server: ${serverUrl} (adb reverse ${adbOk ? "ok" : "off"})`);
-
-// Force dev client + Metro to use the emulator-friendly host instead of LAN IPs.
-process.env.EXPO_DEV_CLIENT_SERVER_URL = serverUrl;
-process.env.EXPO_PACKAGER_PROXY_URL = serverUrl;
-process.env.EXPO_PACKAGER_HOSTNAME = host;
-process.env.REACT_NATIVE_PACKAGER_HOSTNAME = host;
-
-const defaultArgs = ["expo", "start", "--clear", "--dev-client", "--host", "localhost", "--port", port];
-const extraArgs = process.argv.slice(2);
-
-const result = spawnSync("npx", [...defaultArgs, ...extraArgs], {
-  stdio: "inherit",
-  shell: true,
-  env: process.env,
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
 });
-
-process.exit(result.status ?? 1);
