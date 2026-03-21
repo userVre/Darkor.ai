@@ -18,6 +18,7 @@ import {
   Linking,
   ScrollView,
   Share,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -32,21 +33,43 @@ import Animated, {
 } from "react-native-reanimated";
 import {
   ArrowLeft,
+  ArrowRight,
+  BadgeCheck,
   X as Close,
+  Bath,
+  Baby,
+  BedDouble,
+  Building2,
   Camera,
+  CarFront,
+  Check,
+  CookingPot,
   Download,
+  DoorOpen,
+  Fence,
+  Flower2,
+  House,
   Image as ImageIcon,
   Plus,
   Layers,
   Lock,
+  Monitor,
   Paintbrush,
+  PaintRoller,
+  Projector,
   Send,
+  Sofa,
   Sparkles,
+  Store,
+  SunMedium,
   SwatchBook,
   ThumbsDown,
   ThumbsUp,
+  Trees,
+  UtensilsCrossed,
   MoveHorizontal,
   Wand2,
+  WandSparkles,
 } from "lucide-react-native";
 
 import { generateImage } from "../../lib/api";
@@ -81,6 +104,7 @@ type PaletteOption = {
   id: string;
   label: string;
   colors: string[];
+  description?: string;
 };
 
 type AspectRatioOption = {
@@ -91,6 +115,21 @@ type AspectRatioOption = {
   width: number;
   height: number;
   preview: { width: number; height: number };
+};
+
+type StyleLibraryItem = {
+  id: string;
+  title: string;
+  description: string;
+  image: number;
+};
+
+type ModeOption = {
+  id: "preserve" | "renovate";
+  title: string;
+  description: string;
+  promptHint: string;
+  icon: any;
 };
 
 const EXAMPLE_PHOTOS: ExamplePhoto[] = [
@@ -138,42 +177,228 @@ const SPACE_OPTIONS = {
   garden: ["Backyard", "Front yard", "Patio", "Swimming Pool Area", "Terrace"],
 } as const;
 
-const STYLE_OPTIONS = [
-  "Modern",
-  "Luxury",
-  "Japandi",
-  "Cyberpunk",
-  "Tropical",
-  "Industrial",
-  "Minimalist",
-  "Scandinavian",
-  "Bohemian",
-  "Midcentury Modern",
-  "Art Deco",
-  "Zen",
-  "Coastal",
-  "Rustic",
-  "Vintage",
-  "Mediterranean",
-  "Glam",
-  "Shabby Chic",
-  "French Country",
-  "Brutalist",
-  "Hollywood Regency",
-  "Neo-classic",
-  "Sketch",
-  "Art Nouveau",
+const STYLE_LIBRARY: StyleLibraryItem[] = [
+  {
+    id: "modern",
+    title: "Modern",
+    description: "Clean architectural lines with a polished, airy palette.",
+    image: require("../../assets/media/styles/style-modern.jpg"),
+  },
+  {
+    id: "luxury",
+    title: "Luxury",
+    description: "Statement chandeliers, marble drama, and bespoke warmth.",
+    image: require("../../assets/media/styles/style-luxury.jpg"),
+  },
+  {
+    id: "japandi",
+    title: "Japandi",
+    description: "Soft natural calm with minimal Nordic restraint.",
+    image: require("../../assets/media/styles/style-japandi.jpg"),
+  },
+  {
+    id: "cyberpunk",
+    title: "Cyberpunk",
+    description: "Futuristic neon ambiance with cinematic contrast.",
+    image: require("../../assets/media/styles/style-cyberpunk.jpg"),
+  },
+  {
+    id: "tropical",
+    title: "Tropical",
+    description: "Lush greenery and resort-style sunshine energy.",
+    image: require("../../assets/media/styles/style-tropical.jpg"),
+  },
+  {
+    id: "minimalist",
+    title: "Minimalist",
+    description: "Quiet forms, negative space, and effortless clarity.",
+    image: require("../../assets/media/styles/style-minimalist.jpg"),
+  },
+  {
+    id: "scandinavian",
+    title: "Scandinavian",
+    description: "Warm woods, bright light, and soft layered comfort.",
+    image: require("../../assets/media/styles/style-scandinavian.jpg"),
+  },
+  {
+    id: "bohemian",
+    title: "Bohemian",
+    description: "Relaxed eclectic styling with earthy texture and soul.",
+    image: require("../../assets/media/styles/style-bohemian.jpg"),
+  },
+  {
+    id: "midcentury",
+    title: "Midcentury",
+    description: "Retro silhouettes balanced with timeless modern flow.",
+    image: require("../../assets/media/styles/style-midcentury.jpg"),
+  },
+  {
+    id: "art-deco",
+    title: "Art Deco",
+    description: "Geometric glamour, rich finishes, and layered elegance.",
+    image: require("../../assets/media/styles/style-art-deco.jpg"),
+  },
+  {
+    id: "coastal",
+    title: "Coastal",
+    description: "Fresh seaside calm with bright textures and light.",
+    image: require("../../assets/media/styles/style-coastal.jpg"),
+  },
+  {
+    id: "rustic",
+    title: "Rustic",
+    description: "Natural stone, timber warmth, and a grounded mood.",
+    image: require("../../assets/media/styles/style-rustic.jpg"),
+  },
+  {
+    id: "vintage",
+    title: "Vintage",
+    description: "Collected charm with classic furniture and moody glow.",
+    image: require("../../assets/media/styles/style-vintage.jpg"),
+  },
+  {
+    id: "mediterranean",
+    title: "Mediterranean",
+    description: "Sun-washed elegance with warm earth tones and arches.",
+    image: require("../../assets/media/styles/style-mediterranean.jpg"),
+  },
+  {
+    id: "glam",
+    title: "Glam",
+    description: "Polished sparkle, plush seating, and upscale softness.",
+    image: require("../../assets/media/styles/style-glam.jpg"),
+  },
+  {
+    id: "coastal-retreat",
+    title: "Coastal Retreat",
+    description: "A softer coastal variation with lounge-forward comfort.",
+    image: require("../../assets/media/styles/style-coastal-alt.jpg"),
+  },
+  {
+    id: "rustic-manor",
+    title: "Rustic Manor",
+    description: "Traditional hearth energy with richer, heritage details.",
+    image: require("../../assets/media/styles/style-rustic-alt.jpg"),
+  },
+  {
+    id: "hollywood-regency",
+    title: "Hollywood Regency",
+    description: "High-contrast drama with glamorous old-school polish.",
+    image: require("../../assets/media/styles/style-hollywood-regency.jpg"),
+  },
+  {
+    id: "neo-classic",
+    title: "Neo-Classic",
+    description: "Symmetry, ornament, and an elevated tailored calm.",
+    image: require("../../assets/media/styles/style-neo-classic.jpg"),
+  },
+  {
+    id: "shabby-chic",
+    title: "Shabby Chic",
+    description: "Light-toned romance with vintage softness and ease.",
+    image: require("../../assets/media/styles/style-shabby-chic.jpg"),
+  },
+  {
+    id: "french-country",
+    title: "French Country",
+    description: "Refined countryside warmth with timeless cozy detail.",
+    image: require("../../assets/media/styles/style-french-country.jpg"),
+  },
+  {
+    id: "brutalist",
+    title: "Brutalist",
+    description: "Raw concrete texture shaped into calm sculptural space.",
+    image: require("../../assets/media/styles/style-brutalist.jpg"),
+  },
+  {
+    id: "hollywood-regency-noir",
+    title: "Hollywood Regency Noir",
+    description: "A darker regency take with richer contrast and edge.",
+    image: require("../../assets/media/styles/style-hollywood-regency-alt.jpg"),
+  },
+  {
+    id: "art-nouveau",
+    title: "Art Nouveau",
+    description: "Curved classicism and decorative flourishes with warmth.",
+    image: require("../../assets/media/styles/style-art-nouveau.jpg"),
+  },
 ];
 
+const STYLE_OPTIONS = STYLE_LIBRARY.map((style) => style.title);
+
 const PALETTE_OPTIONS: PaletteOption[] = [
-  { id: "surprise", label: "Surprise Me", colors: ["#f8fafc", "#0f172a", "#22d3ee", "#f472b6"] },
-  { id: "gray", label: "Millennial Gray", colors: ["#e5e7eb", "#cbd5f5", "#9ca3af", "#6b7280"] },
-  { id: "sunset", label: "Neon Sunset", colors: ["#fb7185", "#f59e0b", "#f97316", "#a855f7"] },
-  { id: "forest", label: "Forest Hues", colors: ["#14532d", "#166534", "#22c55e", "#a3e635"] },
-  { id: "peach", label: "Peach Orchard", colors: ["#fed7aa", "#fdba74", "#f97316", "#fef3c7"] },
-  { id: "fuschia", label: "Fuschia Blossom", colors: ["#fbcfe8", "#f472b6", "#ec4899", "#f9a8d4"] },
-  { id: "emerald", label: "Emerald Gem", colors: ["#34d399", "#10b981", "#059669", "#065f46"] },
-  { id: "pastel", label: "Pastel Breeze", colors: ["#d8b4fe", "#bae6fd", "#fbcfe8", "#fef9c3"] },
+  {
+    id: "surprise",
+    label: "Surprise Me",
+    colors: ["#f7f7f5", "#f4d7a6", "#fd5d82", "#6b8afd", "#121212"],
+    description: "Unexpected yet balanced.",
+  },
+  {
+    id: "gray",
+    label: "Millennial Gray",
+    colors: ["#f5f5f4", "#d6d3d1", "#a8a29e", "#78716c", "#44403c"],
+    description: "Quiet urban neutrals.",
+  },
+  {
+    id: "terracotta",
+    label: "Terracotta Mirage",
+    colors: ["#fff7ed", "#fed7aa", "#fdba74", "#fb923c", "#ea580c"],
+    description: "Warm Mediterranean depth.",
+  },
+  {
+    id: "forest",
+    label: "Forest Hues",
+    colors: ["#ecfccb", "#cbd5b1", "#9caf88", "#6f8f72", "#334d36"],
+    description: "Calm natural layering.",
+  },
+  {
+    id: "peach",
+    label: "Peach Orchard",
+    colors: ["#fff7ed", "#fde1d3", "#fac9b8", "#f3b49f", "#e68a73"],
+    description: "Soft sunlit warmth.",
+  },
+  {
+    id: "fuchsia",
+    label: "Fuchsia Blossom",
+    colors: ["#fdf2f8", "#fbcfe8", "#f9a8d4", "#ec4899", "#be185d"],
+    description: "Bold couture energy.",
+  },
+  {
+    id: "emerald",
+    label: "Emerald Gem",
+    colors: ["#e8f5ec", "#bfd8c2", "#7aa182", "#425a41", "#1f2f23"],
+    description: "Refined botanical richness.",
+  },
+  {
+    id: "pastel",
+    label: "Pastel Breeze",
+    colors: ["#e0f2fe", "#fffbea", "#eef6f0", "#f5f4f7", "#e9d5ff"],
+    description: "Airy and softly polished.",
+  },
+  {
+    id: "ocean",
+    label: "Ocean Mist",
+    colors: ["#304766", "#6587a7", "#a7c7e1", "#f8f7f2", "#d4d6d1"],
+    description: "Coastal light with depth.",
+  },
+  {
+    id: "velvet",
+    label: "Velvet Dusk",
+    colors: ["#6b4b59", "#957785", "#c1a7b1", "#e7d8d0", "#f5efe9"],
+    description: "Moody evening elegance.",
+  },
+  {
+    id: "amethyst",
+    label: "Amethyst Dream",
+    colors: ["#e9d5ff", "#d8b4fe", "#c084fc", "#9333ea", "#6b21a8"],
+    description: "Jewel-box statement tones.",
+  },
+  {
+    id: "sunset",
+    label: "Neon Sunset",
+    colors: ["#f59e0b", "#ff4db8", "#8b00ff", "#fff04d", "#ffd8a8"],
+    description: "High-contrast playful glow.",
+  },
 ];
 
 const ASPECT_RATIO_OPTIONS: AspectRatioOption[] = [
@@ -205,6 +430,55 @@ const ASPECT_RATIO_OPTIONS: AspectRatioOption[] = [
     preview: { width: 34, height: 22 },
   },
 ];
+
+const ROOM_CARD_META = {
+  "Living Room": { icon: Sofa, description: "Layered lounge refinement." },
+  Bedroom: { icon: BedDouble, description: "A calmer, hotel-like retreat." },
+  Kitchen: { icon: CookingPot, description: "Sharper culinary flow and finishes." },
+  Bathroom: { icon: Bath, description: "Spa-driven comfort and texture." },
+  "Home Office": { icon: Monitor, description: "Focused executive atmosphere." },
+  "Dining Room": { icon: UtensilsCrossed, description: "Gathering-ready statement dining." },
+  Nursery: { icon: Baby, description: "Soft comfort with practical balance." },
+  "Home Theater": { icon: Projector, description: "Immersive cinematic ambiance." },
+  "Modern House": { icon: House, description: "Contemporary curbside presence." },
+  "Luxury Villa": { icon: Sparkles, description: "Resort-inspired exterior drama." },
+  "Office Building": { icon: Building2, description: "Sharper executive frontage." },
+  "Apartment Block": { icon: Building2, description: "Refined urban facade refresh." },
+  "Retail Store": { icon: Store, description: "Street-facing brand appeal." },
+  Garage: { icon: CarFront, description: "Polished practical shell." },
+  Backyard: { icon: Trees, description: "Outdoor entertaining retreat." },
+  "Front yard": { icon: Fence, description: "First-impression landscaping." },
+  Patio: { icon: SunMedium, description: "Relaxed open-air layering." },
+  "Swimming Pool Area": { icon: Flower2, description: "Resort-style poolside calm." },
+  Terrace: { icon: DoorOpen, description: "Elevated lounge with a view." },
+} as const;
+
+const MODE_OPTIONS: ModeOption[] = [
+  {
+    id: "preserve",
+    title: "Structural Preservation",
+    description: "Follow your room's architecture closely while elevating styling, materials, and atmosphere.",
+    promptHint:
+      "Preserve the original architecture, room structure, camera angle, and layout as closely as possible while upgrading furniture, finishes, and mood.",
+    icon: PaintRoller,
+  },
+  {
+    id: "renovate",
+    title: "Renovation Design",
+    description: "Give AI more freedom to reinterpret surfaces, built-ins, and focal moments for a bolder transformation.",
+    promptHint:
+      "Allow a more transformative renovation approach with stronger upgrades to built-ins, focal elements, and materials while keeping the result realistic and coherent.",
+    icon: WandSparkles,
+  },
+];
+
+const WIZARD_CARD_SHADOW = {
+  shadowColor: "#111827",
+  shadowOpacity: 0.08,
+  shadowRadius: 22,
+  shadowOffset: { width: 0, height: 12 },
+  elevation: 4,
+} as const;
 
 const SERVICE_LABELS: Record<string, string> = {
   interior: "Interior Redesign",
@@ -289,6 +563,7 @@ export default function WorkspaceScreen() {
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [selectedModeId, setSelectedModeId] = useState<ModeOption["id"] | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [selectedPaletteId, setSelectedPaletteId] = useState<string | null>(null);
   const [selectedAspectRatioId, setSelectedAspectRatioId] = useState<AspectRatioOption["id"]>("post");
@@ -458,12 +733,21 @@ export default function WorkspaceScreen() {
     [selectedPaletteId],
   );
 
+  const selectedMode = useMemo(
+    () => MODE_OPTIONS.find((mode) => mode.id === selectedModeId) ?? null,
+    [selectedModeId],
+  );
+
   const selectedAspectRatio = useMemo(
     () => ASPECT_RATIO_OPTIONS.find((option) => option.id === selectedAspectRatioId) ?? ASPECT_RATIO_OPTIONS[0],
     [selectedAspectRatioId],
   );
 
   const ratioSpec = useMemo(() => resolveAspectRatio(selectedAspectRatio), [selectedAspectRatio]);
+  const wizardColumnGap = 16;
+  const wizardCardWidth = useMemo(() => Math.max((width - 48 - wizardColumnGap) / 2, 148), [width]);
+  const wizardPreviewHeight = Math.min(Math.max(height * 0.36, 332), 428);
+  const wizardUploadHeight = Math.min(Math.max(height * 0.36, 360), 452);
 
   const spaceOptions = useMemo(() => {
     if (serviceType === "exterior") return SPACE_OPTIONS.exterior;
@@ -518,18 +802,18 @@ export default function WorkspaceScreen() {
   }));
 
   const promptText = useMemo(() => {
-    if (!selectedRoom || !selectedStyle || !selectedPalette || !selectedAspectRatio) return "";
+    if (!selectedRoom || !selectedStyle || !selectedPalette || !selectedAspectRatio || !selectedMode) return "";
     const instruction = customPrompt.trim().length > 0 ? customPrompt.trim() : "No additional instructions.";
-    return `${selectedRoom} in ${selectedStyle} style, following these instructions: ${instruction}, with a ${selectedPalette.label} color vibe. The output image must have a ${ratioSpec.ratioLabel} aspect ratio. Target resolution: ${ratioSpec.targetWidth}x${ratioSpec.targetHeight}. 8k resolution, photorealistic masterpiece.`;
-  }, [customPrompt, ratioSpec.ratioLabel, ratioSpec.targetHeight, ratioSpec.targetWidth, selectedAspectRatio, selectedPalette, selectedRoom, selectedStyle]);
+    return `${selectedRoom} redesigned in ${selectedStyle} style. ${selectedMode.promptHint} Use the ${selectedPalette.label} palette direction. Additional instructions: ${instruction}. The output image must have a ${ratioSpec.ratioLabel} aspect ratio. Target resolution: ${ratioSpec.targetWidth}x${ratioSpec.targetHeight}. Photorealistic, premium, editorial-quality interior render.`;
+  }, [customPrompt, ratioSpec.ratioLabel, ratioSpec.targetHeight, ratioSpec.targetWidth, selectedAspectRatio, selectedMode, selectedPalette, selectedRoom, selectedStyle]);
 
   const canContinue = useMemo(() => {
     if (workflowStep === 0) return Boolean(selectedImage);
     if (workflowStep === 1) return Boolean(selectedRoom);
     if (workflowStep === 2) return Boolean(selectedStyle);
-    if (workflowStep === 3) return Boolean(selectedPaletteId && selectedAspectRatioId);
+    if (workflowStep === 3) return Boolean(selectedModeId && selectedPaletteId);
     return false;
-  }, [selectedAspectRatioId, selectedImage, selectedPaletteId, selectedRoom, selectedStyle, workflowStep]);
+  }, [selectedImage, selectedModeId, selectedPaletteId, selectedRoom, selectedStyle, workflowStep]);
 
   const openSystemSettings = useCallback(() => {
     Linking.openSettings().catch(() => undefined);
@@ -661,502 +945,548 @@ export default function WorkspaceScreen() {
 
   const handleBack = useCallback(() => {
     triggerHaptic();
-    if (workflowStep === 0) {
-      router.back();
-      return;
-    }
-    if (workflowStep === 4) {
-      return;
-    }
-    if (workflowStep === 5) {
-      setWorkflowStep(3);
-      return;
-    }
-    setWorkflowStep((prev) => Math.max(prev - 1, 0));
-  }, [router, workflowStep]);
+    if (workflowStep <= 3) {
+    const currentStepNumber = workflowStep + 1;
+    const isFinalWizardStep = workflowStep === 3;
+    const continueLabel = isFinalWizardStep ? (isGenerating ? "Generating..." : "Generate Design") : "Continue";
 
-  const handleShare = useCallback(async () => {
-    triggerHaptic();
-    if (!generatedImageUrl) {
-      Alert.alert("Nothing to share", "Generate an image first.");
-      return;
-    }
-    await Share.share({ message: generatedImageUrl });
-  }, [generatedImageUrl]);
-
-  const handleShareStory = useCallback(async () => {
-    triggerHaptic();
-    if (!generatedImageUrl || !selectedImage) {
-      Alert.alert("Nothing to share", "Generate a render first.");
-      return;
-    }
-    if (!storyRef.current) {
-      Alert.alert("Story unavailable", "Please try again.");
-      return;
-    }
-    try {
-      setIsSharingStory(true);
-      const uri = await captureRef(storyRef, {
-        format: "png",
-        quality: 1,
-        result: "tmpfile",
-        width: STORY_WIDTH,
-        height: STORY_HEIGHT,
-      });
-      const canShare = await Sharing.isAvailableAsync();
-      if (canShare) {
-        await Sharing.shareAsync(uri);
-      } else {
-        await Share.share({ message: "Designed with Darkor.ai", url: uri });
-      }
-    } catch (error) {
-      Alert.alert("Share failed", error instanceof Error ? error.message : "Please try again.");
-    } finally {
-      setIsSharingStory(false);
-    }
-  }, [generatedImageUrl, selectedImage]);
-
-  const handleUpgrade = useCallback(() => {
-    triggerHaptic();
-    router.push("/paywall");
-  }, [router]);
-
-  const handleDownloadStandard = useCallback(async () => {
-    triggerHaptic();
-    if (!generatedImageUrl) {
-      Alert.alert("Nothing to download", "Generate an image first.");
-      return;
-    }
-
-    try {
-      setIsDownloading("standard");
-      const permission = await MediaLibrary.requestPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert("Permission required", "Please allow photo access to save your render.");
-        return;
-      }
-
-      if (!imageContainerRef.current) {
-        throw new Error("Preview not ready. Please try again.");
-      }
-
-      const previousSlider = sliderX.value;
-      if (sliderWidth.value > 0) {
-        sliderX.value = sliderWidth.value;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 80));
-      const fileUri = await captureRef(imageContainerRef, { format: "png", quality: 1, result: "tmpfile" });
-      if (sliderWidth.value > 0) {
-        sliderX.value = previousSlider;
-      }
-      await MediaLibrary.saveToLibraryAsync(fileUri);
-      Alert.alert("Saved", "Your render has been saved to your library.");
-    } catch (error) {
-      Alert.alert("Download failed", error instanceof Error ? error.message : "Please try again.");
-    } finally {
-      setIsDownloading(null);
-    }
-  }, [generatedImageUrl, imageContainerRef, sliderWidth, sliderX]);
-
-  const handleDownloadUltra = useCallback(async () => {
-    triggerHaptic();
-    if (!generatedImageUrl) {
-      Alert.alert("Nothing to download", "Generate an image first.");
-      return;
-    }
-
-    if (!isPaidPlan) {
-      handleUpgrade();
-      return;
-    }
-
-    try {
-      setIsDownloading("ultra");
-      const permission = await MediaLibrary.requestPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert("Permission required", "Please allow photo access to save your render.");
-        return;
-      }
-
-      const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}darkor-${Date.now()}.jpg`;
-      const download = await FileSystem.downloadAsync(generatedImageUrl, targetUri);
-      await MediaLibrary.saveToLibraryAsync(download.uri);
-      Alert.alert("Saved", "Your 4K render has been saved to your library.");
-    } catch (error) {
-      Alert.alert("Download failed", error instanceof Error ? error.message : "Please try again.");
-    } finally {
-      setIsDownloading(null);
-    }
-  }, [generatedImageUrl, handleUpgrade, isPaidPlan]);
-
-  const handleUpscale = useCallback(() => {
-    triggerHaptic();
-    if (!canUpscale) {
-      Alert.alert("Upgrade to Pro", "Upscale to 4K is available on Pro and higher.");
-      return;
-    }
-    Alert.alert("Upscale", "Your 4K upscale is queued.");
-  }, [canUpscale]);
-
-  const handleEditAction = useCallback((label: (typeof EDIT_ACTIONS)[number]) => {
-    triggerHaptic();
-    setActiveEditAction(label);
-    Alert.alert(label, "Editing tools are coming next.");
-  }, []);
-
-  const handleLike = useCallback(async () => {
-    if (!generationId || feedbackSubmitted) return;
-    triggerHaptic();
-    setFeedbackState("liked");
-    setFeedbackSubmitted(true);
-    try {
-      await submitGenerationFeedback({ id: generationId, sentiment: "liked" });
-      showToast("Glad you like it! ✨");
-    } catch (error) {
-      Alert.alert("Feedback failed", error instanceof Error ? error.message : "Please try again.");
-    }
-  }, [feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
-
-  const handleDislike = useCallback(() => {
-    if (!generationId || feedbackSubmitted) return;
-    triggerHaptic();
-    setFeedbackState("disliked");
-  }, [feedbackSubmitted, generationId]);
-
-  const handleSubmitDislike = useCallback(async () => {
-    if (!generationId || feedbackSubmitted) return;
-    const reason = feedbackReason.trim();
-    if (!reason) {
-      Alert.alert("Tell us more", "Choose a reason or add a short note.");
-      return;
-    }
-    triggerHaptic();
-    setIsSendingFeedback(true);
-    try {
-      const result = (await submitGenerationFeedback({
-        id: generationId,
-        sentiment: "disliked",
-        reason,
-      })) as { retryGranted?: boolean };
-      setFeedbackSubmitted(true);
-      showToast(
-        result?.retryGranted
-          ? "Thanks for the feedback. A free retry credit was added."
-          : "Thanks for the feedback. We'll improve the next render.",
-      );
-    } catch (error) {
-      Alert.alert("Feedback failed", error instanceof Error ? error.message : "Please try again.");
-    } finally {
-      setIsSendingFeedback(false);
-    }
-  }, [feedbackReason, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
-
-  const handleGenerate = useCallback(async () => {
-    if (!selectedImage || !selectedRoom || !selectedStyle || !selectedPalette) {
-      Alert.alert("Complete the steps", "Please finish the previous steps first.");
-      return;
-    }
-
-    if (!effectiveSignedIn) {
-      setAwaitingAuth(true);
-      router.push({ pathname: "/sign-in", params: { returnTo: "/workspace" } });
-      return;
-    }
-
-      const effectiveCredits = diagnostic ? 10 : me?.credits;
-      if (typeof effectiveCredits === "number" && effectiveCredits <= 0) {
-        Alert.alert("Refill Credits", "You have no credits left.");
-        return;
-      }
-
-      try {
-        setFeedbackState(null);
-        setFeedbackReason("");
-        setFeedbackSubmitted(false);
-        setGenerationId(null);
-        setIsGenerating(true);
-        setWorkflowStep(4);
-
-      const base64 = selectedImage.base64 ?? (await readBase64FromUri(selectedImage.uri));
-      const token = diagnostic ? null : await getToken();
-
-      const response = await generateImage(
-        {
-          imageBase64: base64,
-          prompt: promptText,
-          style: selectedStyle,
-          planUsed,
-          aspectRatio: ratioSpec.ratioLabel,
-          targetWidth: ratioSpec.targetWidth,
-          targetHeight: ratioSpec.targetHeight,
-        },
-        token,
-      );
-
-        setGeneratedImageUrl(response.imageUrl);
-        setGenerationId(response.generationId ?? null);
-        setWorkflowStep(5);
-
-      try {
-        const reviewState = (await trackGeneration({ ignoreCooldown: ignoreReviewCooldown })) as {
-          count: number;
-          shouldPrompt: boolean;
-        };
-        setLastGenerationCount(reviewState.count);
-          if (reviewState.shouldPrompt) {
-            reviewHandledRef.current = false;
-            setReviewPromptOpen(true);
-            requestAnimationFrame(() => reviewSheetRef.current?.present());
-          }
-      } catch {
-        // Ignore review tracking failures.
-      }
-    } catch (error) {
-      setWorkflowStep(3);
-      Alert.alert("Generation failed", error instanceof Error ? error.message : "Please try again.");
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [diagnostic, effectiveSignedIn, getToken, me?.credits, planUsed, promptText, ratioSpec, router, selectedImage, selectedPalette, selectedRoom, selectedStyle]);
-
-  useEffect(() => {
-    if (!effectiveSignedIn || !awaitingAuth) return;
-    if (!canContinue) {
-      setAwaitingAuth(false);
-      return;
-    }
-    setAwaitingAuth(false);
-    const timer = setTimeout(() => {
-      void handleGenerate();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [awaitingAuth, canContinue, effectiveSignedIn, handleGenerate]);
-
-  const handleContinue = useCallback(() => {
-    triggerHaptic();
-    if (!canContinue) {
-      Alert.alert("Complete this step", "Please make a selection to continue.");
-      return;
-    }
-
-    if (workflowStep === 3) {
-      void handleGenerate();
-      return;
-    }
-
-    setWorkflowStep((prev) => Math.min(prev + 1, 5));
-  }, [canContinue, handleGenerate, workflowStep]);
-
-  const handleSelectRoom = useCallback((value: string) => {
-    triggerHaptic();
-    setSelectedRoom(value);
-  }, []);
-
-  const handleSelectStyle = useCallback((value: string) => {
-    triggerHaptic();
-    setSelectedStyle(value);
-  }, []);
-
-  const handleSelectPalette = useCallback((value: string) => {
-    triggerHaptic();
-    setSelectedPaletteId(value);
-  }, []);
-
-  const handleSelectAspectRatio = useCallback((value: AspectRatioOption["id"]) => {
-    triggerHaptic();
-    setSelectedAspectRatioId(value);
-  }, []);
-
-  const handleReviewYes = useCallback(async () => {
-    triggerHaptic();
-    reviewHandledRef.current = true;
-    setReviewPromptOpen(false);
-    reviewSheetRef.current?.dismiss();
-    try {
-      await markReviewPrompted({});
-    } catch {
-      // noop
-    }
-    setRatePromptOpen(true);
-    requestAnimationFrame(() => rateSheetRef.current?.present());
-  }, [markReviewPrompted]);
-
-  const handleReviewNo = useCallback(async () => {
-    triggerHaptic();
-    reviewHandledRef.current = true;
-    setReviewPromptOpen(false);
-    reviewSheetRef.current?.dismiss();
-    try {
-      await markReviewPrompted({});
-    } catch {
-      // noop
-    }
-    setFeedbackOpen(true);
-    requestAnimationFrame(() => feedbackSheetRef.current?.present());
-  }, [markReviewPrompted]);
-
-  const handleRateNow = useCallback(async () => {
-    triggerHaptic();
-    setRatePromptOpen(false);
-    rateSheetRef.current?.dismiss();
-    await requestStoreReview();
-  }, []);
-
-  const handleRateLater = useCallback(() => {
-    triggerHaptic();
-    setRatePromptOpen(false);
-    rateSheetRef.current?.dismiss();
-  }, []);
-
-  const handleSubmitFeedback = useCallback(async () => {
-    if (feedbackMessage.trim().length < 3) {
-      Alert.alert("Feedback", "Please add a few words so we can help.");
-      return;
-    }
-    triggerHaptic();
-    setIsSubmittingFeedback(true);
-    try {
-      await submitFeedback({
-        message: feedbackMessage.trim(),
-        generationCount: lastGenerationCount ?? undefined,
-      });
-        setFeedbackMessage("");
-        setFeedbackOpen(false);
-        feedbackSheetRef.current?.dismiss();
-      Alert.alert("Thank you", "Your feedback helps us improve quickly.");
-    } catch (error) {
-      Alert.alert("Feedback", error instanceof Error ? error.message : "Unable to send feedback.");
-    } finally {
-      setIsSubmittingFeedback(false);
-    }
-  }, [feedbackMessage, lastGenerationCount, submitFeedback]);
-
-  const stepTransition = LUX_SPRING;
-  const isPhotoPreviewBusy = isSelectingPhoto || isLoadingExample !== null;
-
-  if (workflowStep === 0) {
     return (
       <View className="flex-1 bg-white" style={{ backgroundColor: "#ffffff" }}>
+        <LinearGradient
+          colors={["#ffffff", "#fff8fb", "#ffffff"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            right: -52,
+            top: -88,
+            width: 240,
+            height: 240,
+            borderRadius: 999,
+            backgroundColor: "rgba(236, 72, 153, 0.08)",
+          }}
+        />
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            left: -72,
+            top: 240,
+            width: 220,
+            height: 220,
+            borderRadius: 999,
+            backgroundColor: "rgba(251, 191, 36, 0.06)",
+          }}
+        />
+
+        {showResumeToast ? (
+          <MotiView
+            from={{ opacity: 0, translateY: -12 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            exit={{ opacity: 0, translateY: -12 }}
+            transition={LUX_SPRING}
+            className="absolute left-6 right-6 z-20"
+            style={{ top: insets.top + 8 }}
+            pointerEvents="none"
+          >
+            <View
+              className="rounded-[22px] px-4 py-3"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.96)",
+                borderWidth: 1,
+                borderColor: "rgba(17,17,17,0.06)",
+                ...WIZARD_CARD_SHADOW,
+              }}
+            >
+              <Text className="text-center text-sm font-semibold text-zinc-900">Resuming your saved wizard draft.</Text>
+            </View>
+          </MotiView>
+        ) : null}
+
         <ScrollView
           className="flex-1 bg-white"
           style={{ backgroundColor: "#ffffff" }}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 26, paddingBottom: 180, minHeight: height }}
+          contentContainerStyle={{
+            paddingHorizontal: 24,
+            paddingTop: Math.max(insets.top + 12, 28),
+            paddingBottom: 208,
+            minHeight: height,
+          }}
           contentInsetAdjustmentBehavior="automatic"
           showsVerticalScrollIndicator={false}
         >
-          <View className="items-center justify-center">
-            <Text style={{ color: "#111111", fontSize: 24, fontWeight: "700" }}>Step 1 / 4</Text>
-            <LuxPressable
-              onPress={() => router.back()}
-              className="cursor-pointer absolute right-0 top-0 h-10 w-10 items-center justify-center"
-            >
-              <Close color="#111111" size={24} strokeWidth={2.2} />
-            </LuxPressable>
-          </View>
-
-          <View className="mt-7 flex-row gap-3">
-            {[0, 1, 2, 3].map((index) => (
-              <View
-                key={`step-progress-${index}`}
-                className="h-[5px] flex-1 rounded-full"
-                style={{ backgroundColor: index === 0 ? "#111111" : "#d4d4d8" }}
-              />
-            ))}
-          </View>
-
-          <Text className="mt-10 text-[30px] font-semibold text-black">Add a Photo</Text>
-
-          <View className="mt-7">
-            {selectedImage ? (
-              <View className="overflow-hidden rounded-[28px] bg-zinc-100" style={{ height: 440 }}>
-                <Image source={{ uri: selectedImage.uri }} className="h-full w-full" contentFit="cover" transition={220} />
+          <View style={{ gap: 28 }}>
+            <View className="flex-row items-center justify-between">
+              {workflowStep > 0 ? (
                 <LuxPressable
-                  onPress={handleClearSelectedImage}
-                  className="cursor-pointer absolute right-4 top-4 h-11 w-11 items-center justify-center rounded-full"
-                  style={{ backgroundColor: "rgba(17,17,17,0.42)" }}
+                  onPress={handleBack}
+                  className="cursor-pointer h-12 w-12 items-center justify-center rounded-full"
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.92)",
+                    borderWidth: 1,
+                    borderColor: "rgba(17,17,17,0.08)",
+                    ...WIZARD_CARD_SHADOW,
+                  }}
                 >
-                  <Close color="#ffffff" size={18} strokeWidth={2.4} />
+                  <ArrowLeft color="#111111" size={22} strokeWidth={2.2} />
                 </LuxPressable>
-                {isPhotoPreviewBusy ? (
-                  <MotiView
-                    animate={{ opacity: [0.45, 0.95, 0.45] }}
-                    transition={{ duration: 1100, loop: true }}
-                    className="absolute bottom-4 left-4 right-4 flex-row items-center justify-center gap-3 rounded-2xl px-4 py-3"
-                    style={{ backgroundColor: "rgba(17,17,17,0.55)" }}
-                  >
-                    <ActivityIndicator size="small" color="#ffffff" />
-                    <Text className="text-sm font-semibold text-white">Uploading...</Text>
-                  </MotiView>
-                ) : null}
-              </View>
-            ) : (
-              <LuxPressable
-                onPress={handlePickPhoto}
-                className="cursor-pointer items-center justify-center rounded-[28px] border-2 border-dashed border-zinc-700 bg-white px-8"
-                style={{ minHeight: 440 }}
-              >
-                <View className="h-24 w-24 items-center justify-center rounded-full bg-black">
-                  <Plus color="#ffffff" size={36} strokeWidth={2.2} />
+              ) : (
+                <View
+                  className="flex-row items-center gap-3 rounded-full px-4 py-3"
+                  style={{
+                    minWidth: 116,
+                    backgroundColor: "#111111",
+                    borderWidth: 1,
+                    borderColor: "rgba(17,17,17,0.06)",
+                    ...WIZARD_CARD_SHADOW,
+                  }}
+                >
+                  <Logo size={18} />
+                  <Text className="text-sm font-semibold text-white">Darkor.ai</Text>
                 </View>
-                <Text className="mt-6 text-center text-[24px] font-semibold leading-8 text-black">{"Start Redesigning\nRedesign and beautify your room"}</Text>
-                <LuxPressable
-                  onPress={handlePickPhoto}
-                  className="cursor-pointer mt-5 flex-row items-center gap-2 rounded-full bg-zinc-100 px-4 py-2"
-                >
-                  <ImageIcon color="#111111" size={16} />
-                  <Text className="text-sm font-semibold text-black">Choose Photo</Text>
-                </LuxPressable>
-              </LuxPressable>
-            )}
-          </View>
+              )}
 
-          <View className="mt-8">
-            <Text className="text-[18px] font-semibold text-black">Example Photos</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 14, paddingTop: 16, paddingRight: 24 }}
-            >
-              {EXAMPLE_PHOTOS.map((example) => {
-                const active = selectedImage?.label === example.label;
-                const isLoading = isLoadingExample === example.id;
-                return (
-                  <LuxPressable
-                    key={example.id}
-                    onPress={() => void handleSelectExample(example)}
-                    className="cursor-pointer overflow-hidden rounded-[22px] bg-zinc-100"
-                    style={{ width: 122, height: 122, borderWidth: active ? 3 : 0, borderColor: active ? "#d946ef" : "transparent" }}
-                  >
-                    <Image source={example.source} className="h-full w-full" contentFit="cover" transition={180} />
-                    {isLoading ? (
-                      <View className="absolute inset-0 items-center justify-center" style={{ backgroundColor: "rgba(17,17,17,0.35)" }}>
-                        <ActivityIndicator size="small" color="#ffffff" />
-                      </View>
-                    ) : null}
-                  </LuxPressable>
-                );
-              })}
-            </ScrollView>
+              <Text style={{ color: "#111111", fontSize: 20, fontWeight: "700", letterSpacing: -0.4 }}>
+                {`Step ${currentStepNumber} / 4`}
+              </Text>
+
+              <LuxPressable
+                onPress={() => router.back()}
+                className="cursor-pointer h-12 w-12 items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.92)",
+                  borderWidth: 1,
+                  borderColor: "rgba(17,17,17,0.08)",
+                  ...WIZARD_CARD_SHADOW,
+                }}
+              >
+                <Close color="#111111" size={22} strokeWidth={2.2} />
+              </LuxPressable>
+            </View>
+
+            <View className="flex-row gap-3">
+              {[0, 1, 2, 3].map((index) => (
+                <MotiView
+                  key={`wizard-progress-${index}`}
+                  animate={{
+                    backgroundColor: index <= workflowStep ? "#111111" : "#d4d4d8",
+                    opacity: index < workflowStep ? 0.9 : 1,
+                  }}
+                  transition={LUX_SPRING}
+                  style={{ flex: 1, height: 5, borderRadius: 999 }}
+                />
+              ))}
+            </View>
+
+            <AnimatePresence exitBeforeEnter>
+              <MotiView
+                key={`wizard-step-${workflowStep}`}
+                from={{ opacity: 0, translateX: 22, scale: 0.985 }}
+                animate={{ opacity: 1, translateX: 0, scale: 1 }}
+                exit={{ opacity: 0, translateX: -18, scale: 0.99 }}
+                transition={stepTransition}
+                style={{ gap: 24 }}
+              >
+                {workflowStep === 0 ? (
+                  <>
+                    <View style={{ gap: 10 }}>
+                      <Text style={{ color: "#111111", fontSize: 38, fontWeight: "700", letterSpacing: -1.2 }}>
+                        Add a Photo
+                      </Text>
+                      <Text style={{ color: "#52525b", fontSize: 16, lineHeight: 25 }}>
+                        Start with a clean photo of your space so we can redesign it with realistic materials, lighting, and depth.
+                      </Text>
+                    </View>
+
+                    <LuxPressable
+                      onPress={handlePickPhoto}
+                      className="cursor-pointer"
+                      style={{
+                        minHeight: selectedImage ? wizardPreviewHeight : wizardUploadHeight,
+                        borderRadius: 32,
+                        backgroundColor: "#ffffff",
+                        borderWidth: 1,
+                        borderColor: selectedImage ? "rgba(17,17,17,0.08)" : "#3f3f46",
+                        borderStyle: selectedImage ? "solid" : "dashed",
+                        overflow: "hidden",
+                        ...WIZARD_CARD_SHADOW,
+                      }}
+                    >
+                      {selectedImage ? (
+                        <>
+                          <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: wizardPreviewHeight }} contentFit="cover" transition={220} />
+                          <LinearGradient
+                            colors={["transparent", "rgba(17,17,17,0.62)"]}
+                            start={{ x: 0.5, y: 0 }}
+                            end={{ x: 0.5, y: 1 }}
+                            style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 160 }}
+                          />
+                          <View style={{ position: "absolute", left: 20, right: 20, bottom: 20, gap: 6 }}>
+                            <Text className="text-lg font-semibold text-white">{selectedImage.label ?? "Selected photo"}</Text>
+                            <Text className="text-sm text-zinc-100/85">Tap anywhere to replace it from camera or gallery.</Text>
+                          </View>
+                          <LuxPressable
+                            onPress={(event) => {
+                              event.stopPropagation();
+                              handleClearSelectedImage();
+                            }}
+                            className="cursor-pointer absolute right-4 top-4 h-11 w-11 items-center justify-center rounded-full"
+                            style={{ backgroundColor: "rgba(17,17,17,0.42)", borderWidth: 1, borderColor: "rgba(255,255,255,0.18)" }}
+                          >
+                            <Close color="#ffffff" size={18} strokeWidth={2.4} />
+                          </LuxPressable>
+                          {isPhotoPreviewBusy ? (
+                            <MotiView
+                              animate={{ opacity: [0.45, 0.95, 0.45] }}
+                              transition={{ duration: 1100, loop: true }}
+                              className="absolute bottom-4 left-4 right-4 flex-row items-center justify-center gap-3 rounded-[20px] px-4 py-3"
+                              style={{ backgroundColor: "rgba(17,17,17,0.58)" }}
+                            >
+                              <ActivityIndicator size="small" color="#ffffff" />
+                              <Text className="text-sm font-semibold text-white">Uploading...</Text>
+                            </MotiView>
+                          ) : null}
+                        </>
+                      ) : (
+                        <View className="flex-1 items-center justify-center px-8" style={{ minHeight: wizardUploadHeight, gap: 18 }}>
+                          <View
+                            className="items-center justify-center rounded-full"
+                            style={{
+                              width: 98,
+                              height: 98,
+                              backgroundColor: "#111111",
+                              borderWidth: 8,
+                              borderColor: "rgba(17,17,17,0.06)",
+                            }}
+                          >
+                            <Plus color="#ffffff" size={38} strokeWidth={2.25} />
+                          </View>
+                          <View style={{ gap: 8, alignItems: "center" }}>
+                            <Text className="text-center text-[28px] font-semibold text-black">Start Redesigning</Text>
+                            <Text className="text-center text-base leading-7 text-zinc-500">
+                              Redesign and beautify your home with a single well-lit photo.
+                            </Text>
+                          </View>
+                          <View
+                            className="flex-row items-center gap-2 rounded-full px-4 py-2.5"
+                            style={{ backgroundColor: "#f4f4f5", borderWidth: 1, borderColor: "#e4e4e7" }}
+                          >
+                            <ImageIcon color="#111111" size={16} />
+                            <Text className="text-sm font-semibold text-black">Take Photo or Choose Library</Text>
+                          </View>
+                        </View>
+                      )}
+                    </LuxPressable>
+
+                    <View style={{ gap: 8 }}>
+                      <Text style={{ color: "#111111", fontSize: 20, fontWeight: "700", letterSpacing: -0.4 }}>
+                        Example Photos
+                      </Text>
+                      <Text style={{ color: "#71717a", fontSize: 14, lineHeight: 22 }}>
+                        Curated starter spaces to preview the wizard instantly.
+                      </Text>
+                    </View>
+
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                      {EXAMPLE_PHOTOS.map((example, index) => {
+                        const active = selectedImage?.label === example.label;
+                        const isLoading = isLoadingExample === example.id;
+                        return (
+                          <MotiView key={example.id} {...staggerFadeUp(index, 45)} style={{ width: wizardCardWidth }}>
+                            <LuxPressable
+                              onPress={() => void handleSelectExample(example)}
+                              className="cursor-pointer"
+                              style={{
+                                borderRadius: 28,
+                                backgroundColor: "#ffffff",
+                                borderWidth: active ? 2 : 1,
+                                borderColor: active ? "#d946ef" : "#f1f5f9",
+                                overflow: "hidden",
+                                ...WIZARD_CARD_SHADOW,
+                              }}
+                            >
+                              <View style={{ height: 164 }}>
+                                <Image source={example.source} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} />
+                                <LinearGradient
+                                  colors={["transparent", "rgba(17,17,17,0.8)"]}
+                                  start={{ x: 0.5, y: 0 }}
+                                  end={{ x: 0.5, y: 1 }}
+                                  style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 110 }}
+                                />
+                                {active ? (
+                                  <View
+                                    className="absolute right-3 top-3 h-8 w-8 items-center justify-center rounded-full"
+                                    style={{ backgroundColor: "rgba(217,70,239,0.95)" }}
+                                  >
+                                    <Check color="#ffffff" size={16} strokeWidth={2.5} />
+                                  </View>
+                                ) : null}
+                                {isLoading ? (
+                                  <View className="absolute inset-0 items-center justify-center" style={{ backgroundColor: "rgba(17,17,17,0.32)" }}>
+                                    <ActivityIndicator size="small" color="#ffffff" />
+                                  </View>
+                                ) : null}
+                              </View>
+                              <View style={{ padding: 16, gap: 4 }}>
+                                <Text className="text-base font-semibold text-black">{example.label}</Text>
+                                <Text className="text-sm text-zinc-500">Use this catalog sample</Text>
+                              </View>
+                            </LuxPressable>
+                          </MotiView>
+                        );
+                      })}
+                    </View>
+                  </>
+                ) : null}
+
+                {workflowStep === 1 ? (
+                  <>
+                    <View style={{ gap: 10 }}>
+                      <Text style={{ color: "#111111", fontSize: 38, fontWeight: "700", letterSpacing: -1.2 }}>
+                        Choose Room
+                      </Text>
+                      <Text style={{ color: "#52525b", fontSize: 16, lineHeight: 25 }}>
+                        Pick the type of space you want Darkor.ai to redesign next.
+                      </Text>
+                    </View>
+
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                      {spaceOptions.map((option, index) => {
+                        const active = selectedRoom === option;
+                        const meta = ROOM_CARD_META[option as keyof typeof ROOM_CARD_META] ?? {
+                          icon: House,
+                          description: "A polished redesign starting point.",
+                        };
+                        const RoomIcon = meta.icon;
+                        return (
+                          <MotiView key={option} {...staggerFadeUp(index, 45)} style={{ width: wizardCardWidth }}>
+                            <LuxPressable
+                              onPress={() => handleSelectRoom(option)}
+                              className="cursor-pointer"
+                              style={{
+                                minHeight: 158,
+                                borderRadius: 30,
+                                backgroundColor: "#ffffff",
+                                borderWidth: active ? 2 : 1,
+                                borderColor: active ? "#d946ef" : "#f1f5f9",
+                                padding: 20,
+                                ...WIZARD_CARD_SHADOW,
+                              }}
+                            >
+                              <View className="flex-row items-start justify-between">
+                                <View
+                                  className="items-center justify-center rounded-[20px]"
+                                  style={{
+                                    width: 58,
+                                    height: 58,
+                                    backgroundColor: active ? "#fdf2f8" : "#f4f4f5",
+                                  }}
+                                >
+                                  <RoomIcon color={active ? "#c026d3" : "#111111"} size={24} strokeWidth={2} />
+                                </View>
+                                {active ? (
+                                  <View className="h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: "#111111" }}>
+                                    <Check color="#ffffff" size={15} strokeWidth={2.5} />
+                                  </View>
+                                ) : null}
+                              </View>
+                              <View style={{ marginTop: 18, gap: 8 }}>
+                                <Text className="text-xl font-semibold text-black">{option}</Text>
+                                <Text className="text-sm leading-6 text-zinc-500">{meta.description}</Text>
+                              </View>
+                            </LuxPressable>
+                          </MotiView>
+                        );
+                      })}
+                    </View>
+                  </>
+                ) : null}
+
+                {workflowStep === 2 ? (
+                  <>
+                    <View style={{ gap: 10 }}>
+                      <Text style={{ color: "#111111", fontSize: 38, fontWeight: "700", letterSpacing: -1.2 }}>
+                        Select Style
+                      </Text>
+                      <Text style={{ color: "#52525b", fontSize: 16, lineHeight: 25 }}>
+                        Browse our premium visual library and choose the mood that should guide the redesign.
+                      </Text>
+                    </View>
+
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                      {STYLE_LIBRARY.map((style, index) => {
+                        const active = selectedStyle === style.title;
+                        return (
+                          <MotiView key={style.id} {...staggerFadeUp(index, 26)} style={{ width: wizardCardWidth }}>
+                            <LuxPressable
+                              onPress={() => handleSelectStyle(style.title)}
+                              className="cursor-pointer"
+                              style={{
+                                borderRadius: 30,
+                                backgroundColor: "#ffffff",
+                                borderWidth: active ? 2 : 1,
+                                borderColor: active ? "#d946ef" : "#f1f5f9",
+                                overflow: "hidden",
+                                ...WIZARD_CARD_SHADOW,
+                              }}
+                            >
+                              <View style={{ height: 172 }}>
+                                <Image source={style.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={160} />
+                                <LinearGradient
+                                  colors={["transparent", "rgba(17,17,17,0.18)"]}
+                                  start={{ x: 0.5, y: 0.2 }}
+                                  end={{ x: 0.5, y: 1 }}
+                                  style={{ position: "absolute", inset: 0 }}
+                                />
+                                {active ? (
+                                  <View className="absolute right-3 top-3 rounded-full bg-white px-2.5 py-1.5">
+                                    <Text className="text-[11px] font-semibold text-fuchsia-600">Selected</Text>
+                                  </View>
+                                ) : null}
+                              </View>
+                              <View style={{ padding: 16, gap: 6 }}>
+                                <Text className="text-lg font-semibold text-black">{style.title}</Text>
+                                <Text className="text-sm leading-6 text-zinc-500">{style.description}</Text>
+                              </View>
+                            </LuxPressable>
+                          </MotiView>
+                        );
+                      })}
+                    </View>
+                  </>
+                ) : null}
+
+                {workflowStep === 3 ? (
+                  <>
+                    <View style={{ gap: 10 }}>
+                      <Text style={{ color: "#111111", fontSize: 38, fontWeight: "700", letterSpacing: -1.2 }}>
+                        Mode & Palette
+                      </Text>
+                      <Text style={{ color: "#52525b", fontSize: 16, lineHeight: 25 }}>
+                        Choose how boldly the redesign should transform the room, then set the overall color atmosphere.
+                      </Text>
+                    </View>
+
+                    <View style={{ flexDirection: "row", gap: wizardColumnGap }}>
+                      {MODE_OPTIONS.map((mode, index) => {
+                        const active = selectedModeId === mode.id;
+                        const ModeIcon = mode.icon;
+                        return (
+                          <MotiView key={mode.id} {...staggerFadeUp(index, 60)} style={{ flex: 1 }}>
+                            <LuxPressable
+                              onPress={() => handleSelectMode(mode.id)}
+                              className="cursor-pointer"
+                              style={{
+                                minHeight: 244,
+                                borderRadius: 30,
+                                backgroundColor: "#ffffff",
+                                borderWidth: active ? 2 : 1,
+                                borderColor: active ? "#d946ef" : "#f1f5f9",
+                                padding: 22,
+                                ...WIZARD_CARD_SHADOW,
+                              }}
+                            >
+                              <View className="flex-row items-start justify-between">
+                                <View
+                                  className="items-center justify-center rounded-[22px]"
+                                  style={{ width: 62, height: 62, backgroundColor: active ? "#fdf2f8" : "#f4f4f5" }}
+                                >
+                                  <ModeIcon color={active ? "#c026d3" : "#111111"} size={28} strokeWidth={2} />
+                                </View>
+                                {active ? <BadgeCheck color="#d946ef" size={22} strokeWidth={2} /> : null}
+                              </View>
+                              <View style={{ marginTop: 20, gap: 10 }}>
+                                <Text className="text-[26px] font-semibold leading-8 text-black">{mode.title}</Text>
+                                <Text className="text-sm leading-6 text-zinc-500">{mode.description}</Text>
+                              </View>
+                            </LuxPressable>
+                          </MotiView>
+                        );
+                      })}
+                    </View>
+
+                    <View style={{ gap: 8, marginTop: 4 }}>
+                      <Text style={{ color: "#111111", fontSize: 20, fontWeight: "700", letterSpacing: -0.4 }}>
+                        Select Palette
+                      </Text>
+                      <Text style={{ color: "#71717a", fontSize: 14, lineHeight: 22 }}>
+                        A curated paint-swatch system inspired by premium interior moodboards.
+                      </Text>
+                    </View>
+
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                      {PALETTE_OPTIONS.map((palette, index) => {
+                        const active = selectedPaletteId === palette.id;
+                        return (
+                          <MotiView key={palette.id} {...staggerFadeUp(index, 28)} style={{ width: wizardCardWidth }}>
+                            <LuxPressable
+                              onPress={() => handleSelectPalette(palette.id)}
+                              className="cursor-pointer"
+                              style={{
+                                borderRadius: 28,
+                                backgroundColor: "#ffffff",
+                                borderWidth: active ? 2 : 1,
+                                borderColor: active ? "#d946ef" : "#f1f5f9",
+                                overflow: "hidden",
+                                ...WIZARD_CARD_SHADOW,
+                              }}
+                            >
+                              <View style={{ height: 116, flexDirection: "row" }}>
+                                {palette.colors.map((color) => (
+                                  <View key={color} style={{ flex: 1, backgroundColor: color }} />
+                                ))}
+                              </View>
+                              <View style={{ padding: 16, gap: 6 }}>
+                                <View className="flex-row items-center justify-between gap-3">
+                                  <Text className="flex-1 text-lg font-semibold text-black">{palette.label}</Text>
+                                  {active ? <BadgeCheck color="#d946ef" size={20} strokeWidth={2} /> : null}
+                                </View>
+                                <Text className="text-sm leading-6 text-zinc-500">{palette.description ?? "A refined designer-led palette."}</Text>
+                              </View>
+                            </LuxPressable>
+                          </MotiView>
+                        );
+                      })}
+                    </View>
+                  </>
+                ) : null}
+              </MotiView>
+            </AnimatePresence>
           </View>
         </ScrollView>
 
         <View
           className="absolute inset-x-0 bottom-0 px-6 pt-4"
-          style={{ paddingBottom: Math.max(insets.bottom, 18), backgroundColor: "rgba(255,255,255,0.97)" }}
+          style={{
+            paddingBottom: Math.max(insets.bottom, 18),
+            backgroundColor: "rgba(255,255,255,0.97)",
+            borderTopWidth: 1,
+            borderTopColor: "rgba(17,17,17,0.06)",
+          }}
         >
-          <LuxPressable onPress={() => setWorkflowStep(1)} disabled={!selectedImage} className="cursor-pointer">
-            {selectedImage ? (
+          <LuxPressable onPress={handleContinue} disabled={!canContinue || (isGenerating && isFinalWizardStep)} className="cursor-pointer">
+            {canContinue ? (
               <LinearGradient
                 colors={["#ff3b30", "#d946ef"]}
                 start={{ x: 0, y: 0.5 }}
                 end={{ x: 1, y: 0.5 }}
-                className="items-center justify-center rounded-[22px]"
-                style={{ minHeight: 64 }}
+                className="rounded-[24px]"
+                style={{ minHeight: 66, ...WIZARD_CARD_SHADOW }}
               >
-                <Text className="text-[18px] font-semibold text-white">Continue</Text>
+                <View className="flex-1 flex-row items-center justify-center gap-3">
+                  <Text className="text-[18px] font-semibold text-white">{continueLabel}</Text>
+                  {!isGenerating ? <ArrowRight color="#ffffff" size={18} strokeWidth={2.3} /> : null}
+                </View>
               </LinearGradient>
             ) : (
-              <View className="items-center justify-center rounded-[22px] bg-zinc-200" style={{ minHeight: 64 }}>
+              <View
+                className="flex-row items-center justify-center rounded-[24px] bg-zinc-200"
+                style={{ minHeight: 66, borderWidth: 1, borderColor: "#e4e4e7" }}
+              >
                 <Text className="text-[18px] font-semibold text-zinc-500">Continue</Text>
               </View>
             )}
@@ -1169,36 +1499,40 @@ export default function WorkspaceScreen() {
           enablePanDownToClose
           backdropComponent={GlassBackdrop}
           backgroundStyle={{ backgroundColor: "#ffffff" }}
-          handleIndicatorStyle={{ backgroundColor: "rgba(17,17,17,0.25)" }}
+          handleIndicatorStyle={{ backgroundColor: "rgba(17,17,17,0.24)" }}
         >
           <View className="flex-1 px-5 pb-8 pt-2">
             <Text className="text-lg font-semibold text-black">Choose Photo Source</Text>
-            <Text className="mt-2 text-sm text-zinc-500">Take a fresh photo or import one from your gallery.</Text>
+            <Text className="mt-2 text-sm leading-6 text-zinc-500">
+              Bring in a fresh room photo from your camera or import one from your gallery.
+            </Text>
 
             <View className="mt-5 gap-3">
               <LuxPressable
                 onPress={() => void launchPhotoSource("camera")}
-                className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4"
+                className="cursor-pointer flex-row items-center gap-4 rounded-[24px] px-4 py-4"
+                style={{ borderWidth: 1, borderColor: "#e4e4e7", backgroundColor: "#fafafa", ...WIZARD_CARD_SHADOW }}
               >
-                <View className="h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100">
+                <View className="h-12 w-12 items-center justify-center rounded-[18px] bg-white">
                   <Camera color="#111111" size={20} />
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm font-semibold text-black">Take photo from camera</Text>
-                  <Text className="mt-1 text-xs text-zinc-500">Capture a fresh room photo with your camera.</Text>
+                  <Text className="mt-1 text-xs leading-5 text-zinc-500">Capture a fresh room photo and drop it straight into the wizard.</Text>
                 </View>
               </LuxPressable>
 
               <LuxPressable
                 onPress={() => void launchPhotoSource("library")}
-                className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4"
+                className="cursor-pointer flex-row items-center gap-4 rounded-[24px] px-4 py-4"
+                style={{ borderWidth: 1, borderColor: "#e4e4e7", backgroundColor: "#fafafa", ...WIZARD_CARD_SHADOW }}
               >
-                <View className="h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100">
+                <View className="h-12 w-12 items-center justify-center rounded-[18px] bg-white">
                   <ImageIcon color="#111111" size={20} />
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm font-semibold text-black">Choose from gallery</Text>
-                  <Text className="mt-1 text-xs text-zinc-500">Import a saved room photo from your device.</Text>
+                  <Text className="mt-1 text-xs leading-5 text-zinc-500">Import an existing interior or exterior photo from your device.</Text>
                 </View>
               </LuxPressable>
             </View>
