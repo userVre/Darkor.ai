@@ -528,3 +528,5 @@ Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓�
 Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 95.1% (4135/4257)
 Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 97.0% (4271/4337)
 Android Bundled 283619ms node_modules\expo-router\entry.js (4355 modules)
+› Detected a change in babel.config.js. Restart the server to see the new results. You may need to clear the bundler cache with the --clear flag for your changes to take effect.
+› Detected a change in metro.config.js. Restart the server to see the new results.

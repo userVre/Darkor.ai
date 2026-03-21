@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   ScrollView,
   Share,
   Text,
@@ -31,6 +32,7 @@ import Animated, {
 } from "react-native-reanimated";
 import {
   ArrowLeft,
+  Camera,
   Download,
   Image as ImageIcon,
   Layers,
@@ -312,6 +314,7 @@ export default function WorkspaceScreen() {
   const reviewSheetRef = useRef<BottomSheetModal>(null);
   const rateSheetRef = useRef<BottomSheetModal>(null);
   const feedbackSheetRef = useRef<BottomSheetModal>(null);
+  const photoSourceSheetRef = useRef<BottomSheetModal>(null);
   const imageContainerRef = useRef<View>(null);
   const storyRef = useRef<View>(null);
   const hasAppliedStartStepRef = useRef(false);
@@ -325,6 +328,7 @@ export default function WorkspaceScreen() {
   const reviewSnapPoints = useMemo(() => ["38%"], []);
   const rateSnapPoints = useMemo(() => ["36%"], []);
   const feedbackSnapPoints = useMemo(() => [isSmallScreen ? "95%" : "58%"], [isSmallScreen]);
+  const photoSourceSnapPoints = useMemo(() => ["30%"], []);
 
   useEffect(() => {
     console.log("[Screen] Workspace mounted");
@@ -526,29 +530,101 @@ export default function WorkspaceScreen() {
     return false;
   }, [selectedAspectRatioId, selectedImage, selectedPaletteId, selectedRoom, selectedStyle, workflowStep]);
 
-  const handlePickPhoto = useCallback(async () => {
-    triggerHaptic();
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert("Permission required", "Please allow photo access to continue.");
-      return;
-    }
+  const openSystemSettings = useCallback(() => {
+    Linking.openSettings().catch(() => undefined);
+  }, []);
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      base64: true,
-      quality: 0.9,
+  const showPermissionAlert = useCallback(
+    (title: string, message: string) => {
+      Alert.alert(title, message, [
+        { text: "Not now", style: "cancel" },
+        { text: "Open Settings", onPress: openSystemSettings },
+      ]);
+    },
+    [openSystemSettings],
+  );
+
+  const ensureMediaLibraryPermission = useCallback(async () => {
+    const current = await ImagePicker.getMediaLibraryPermissionsAsync();
+    if (current.granted) return true;
+
+    const next = current.canAskAgain ? await ImagePicker.requestMediaLibraryPermissionsAsync() : current;
+    if (next.granted) return true;
+
+    showPermissionAlert(
+      "Photo access needed",
+      "Please allow photo library access so we can import your room photo into the wizard.",
+    );
+    return false;
+  }, [showPermissionAlert]);
+
+  const ensureCameraPermission = useCallback(async () => {
+    const current = await ImagePicker.getCameraPermissionsAsync();
+    if (current.granted) return true;
+
+    const next = current.canAskAgain ? await ImagePicker.requestCameraPermissionsAsync() : current;
+    if (next.granted) return true;
+
+    showPermissionAlert(
+      "Camera access needed",
+      "Please allow camera access so you can capture a fresh room photo inside Darkor.ai.",
+    );
+    return false;
+  }, [showPermissionAlert]);
+
+  const applyPickedAsset = useCallback(async (asset: ImagePicker.ImagePickerAsset, label: string) => {
+    const fallbackBase64 = asset.base64 ?? (await readBase64FromUri(asset.uri).catch(() => undefined));
+    setSelectedImage({
+      uri: asset.uri,
+      base64: fallbackBase64,
+      label,
     });
+  }, []);
 
-    if (!result.canceled) {
+  const launchPhotoSource = useCallback(
+    async (source: "camera" | "library") => {
+      photoSourceSheetRef.current?.dismiss();
+      await new Promise((resolve) => setTimeout(resolve, 180));
+
+      const hasPermission =
+        source === "camera" ? await ensureCameraPermission() : await ensureMediaLibraryPermission();
+      if (!hasPermission) {
+        return;
+      }
+
+      triggerHaptic();
+
+      const result =
+        source === "camera"
+          ? await ImagePicker.launchCameraAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              allowsEditing: true,
+              base64: true,
+              quality: 0.82,
+              exif: false,
+              cameraType: ImagePicker.CameraType.back,
+            })
+          : await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              allowsEditing: true,
+              base64: true,
+              quality: 0.82,
+              exif: false,
+            });
+
+      if (result.canceled) {
+        return;
+      }
+
       const asset = result.assets[0];
-      setSelectedImage({
-        uri: asset.uri,
-        base64: asset.base64 ?? undefined,
-        label: "Uploaded Photo",
-      });
-    }
+      await applyPickedAsset(asset, source === "camera" ? "Captured Photo" : "Uploaded Photo");
+    },
+    [applyPickedAsset, ensureCameraPermission, ensureMediaLibraryPermission],
+  );
+
+  const handlePickPhoto = useCallback(() => {
+    triggerHaptic();
+    photoSourceSheetRef.current?.present();
   }, []);
 
   const handleSelectExample = useCallback(async (example: ExamplePhoto) => {
@@ -1101,12 +1177,17 @@ export default function WorkspaceScreen() {
               </LuxPressable>
 
               {selectedImage ? (
-                <View className="overflow-hidden rounded-3xl border border-white/10">
+                <LuxPressable
+                  onPress={handlePickPhoto}
+                  className="cursor-pointer overflow-hidden rounded-3xl border border-white/10"
+                  style={{ borderWidth: 0.5 }}
+                >
                   <Image source={{ uri: selectedImage.uri }} className="h-48 w-full" contentFit="cover" />
                   <View className="bg-black/60 px-4 py-3">
                     <Text className="text-sm font-semibold text-white">{selectedImage.label ?? "Selected Photo"}</Text>
+                    <Text className="mt-1 text-xs text-zinc-400">Tap to replace your photo</Text>
                   </View>
-                </View>
+                </LuxPressable>
               ) : null}
 
               <Text className="text-xs uppercase tracking-[2px] text-zinc-400">Example Photos</Text>
@@ -1617,6 +1698,50 @@ export default function WorkspaceScreen() {
           </LuxPressable>
         </BlurView>
       ) : null}
+
+      <BottomSheetModal
+        ref={photoSourceSheetRef}
+        snapPoints={photoSourceSnapPoints}
+        enablePanDownToClose
+        backdropComponent={GlassBackdrop}
+        backgroundStyle={{ backgroundColor: "#050505" }}
+        handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
+      >
+        <View className="flex-1 px-5 pb-8 pt-2">
+          <Text className="text-lg font-medium text-white">Add your photo</Text>
+          <Text className="mt-2 text-sm text-zinc-400">Choose how you'd like to bring your space into the wizard.</Text>
+
+          <View className="mt-5 gap-3">
+            <LuxPressable
+              onPress={() => void launchPhotoSource("camera")}
+              className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
+              style={{ borderWidth: 0.5 }}
+            >
+              <View className="h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
+                <Camera color="#f8fafc" size={20} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-semibold text-white">Take Photo</Text>
+                <Text className="mt-1 text-xs text-zinc-400">Capture a fresh room photo with your camera.</Text>
+              </View>
+            </LuxPressable>
+
+            <LuxPressable
+              onPress={() => void launchPhotoSource("library")}
+              className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
+              style={{ borderWidth: 0.5 }}
+            >
+              <View className="h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
+                <ImageIcon color="#f8fafc" size={20} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-semibold text-white">Choose from Library</Text>
+                <Text className="mt-1 text-xs text-zinc-400">Import a saved room photo from your gallery.</Text>
+              </View>
+            </LuxPressable>
+          </View>
+        </View>
+      </BottomSheetModal>
 
       <BottomSheetModal
         ref={reviewSheetRef}
