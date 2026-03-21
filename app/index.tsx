@@ -1,5 +1,6 @@
-import HomeScreen from "./(tabs)/index";
+﻿import { Redirect } from "expo-router";
 
 export default function Index() {
-  return <HomeScreen />;
+  return <Redirect href="/paywall" />;
 }
+

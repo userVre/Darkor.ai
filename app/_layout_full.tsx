@@ -1,4 +1,4 @@
-import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
+﻿import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
 import { useMutation } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
@@ -15,6 +15,7 @@ import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
 import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
 import { getEnvReport, logEnvDiagnostics } from "../lib/env";
+import { hasDismissedLaunchPaywall } from "../lib/launch-paywall";
 import { useBackendHealth } from "../lib/network";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
 import { tokenCache } from "../lib/token-cache";
@@ -31,8 +32,6 @@ console.log("[Boot] Root layout module loaded");
 function RevenueCatGate() {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
-  const router = useRouter();
-  const pathname = usePathname();
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
   const { showSuccess } = useProSuccess();
 
@@ -113,15 +112,11 @@ function RevenueCatGate() {
           hasProRef.current = hasPro;
         }
 
-        const onPaywall = pathname === "/paywall";
-        if (hasPro && onPaywall) {
-          router.replace("/(tabs)");
-        }
       } catch (error) {
         console.warn("RevenueCat sync failed", error);
       }
     };
-  }, [isSignedIn, pathname, revenueCatReady, router, setPlan, showSuccess]);
+  }, [isSignedIn, revenueCatReady, setPlan, showSuccess]);
 
   useEffect(() => {
     const purchases = purchasesRef.current;
@@ -206,6 +201,23 @@ function RewardGate() {
   return null;
 }
 
+function LaunchPaywallGate() {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (DIAGNOSTIC_BYPASS || hasDismissedLaunchPaywall()) return;
+
+    const allowList = ["/paywall", "/sign-in", "/sign-up", "/privacy-policy", "/terms-of-service"];
+    if (allowList.some((route) => pathname.startsWith(route))) {
+      return;
+    }
+
+    router.replace("/paywall");
+  }, [pathname, router]);
+
+  return null;
+}
 function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.log("[Boot] Providers mounted");
@@ -215,6 +227,7 @@ function Providers({ children }: { children: React.ReactNode }) {
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       <ProSuccessProvider>
         {DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
+        {DIAGNOSTIC_BYPASS ? null : <LaunchPaywallGate />}
         {DIAGNOSTIC_BYPASS ? null : <ReferralGate />}
         {DIAGNOSTIC_BYPASS ? null : <RewardGate />}
         {children}
@@ -361,13 +374,7 @@ export default function RootLayoutFull() {
     return <MissingEnv missing={missing} />;
   }
 
-  if (!DIAGNOSTIC_BYPASS && backendUrl && health.status === "checking") {
-    return <BootScreen message="Connecting to services..." />;
-  }
-
-  if (!DIAGNOSTIC_BYPASS && backendUrl && health.status === "offline") {
-    return <OfflineScreen message={health.lastError ?? "Backend is unreachable."} onRetry={health.retry} />;
-  }
+  // Keep launch focused on the paywall/home flow even if the backend is still waking up.
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -401,6 +408,10 @@ export default function RootLayoutFull() {
     </GestureHandlerRootView>
   );
 }
+
+
+
+
 
 
 
