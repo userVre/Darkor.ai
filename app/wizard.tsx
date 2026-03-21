@@ -856,7 +856,11 @@ export default function WizardScreen() {
 
 const styles = StyleSheet.create({
   cardShadow: {
-    boxShadow: "0 20px 40px rgba(0, 0, 0, 0.45)",
+    shadowColor: "#000000",
+    shadowOpacity: 0.22,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
   },
   pointer: {
     cursor: "pointer",
@@ -1123,7 +1127,11 @@ const styles = StyleSheet.create({
   },
   examplePhotoCardActive: {
     borderColor: "rgba(236, 72, 153, 0.95)",
-    boxShadow: "0 16px 32px rgba(217, 70, 239, 0.24)",
+    shadowColor: "#d946ef",
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
   },
   examplePhotoImage: {
     width: "100%",

@@ -83,8 +83,10 @@ const DiscoverCard = memo(function DiscoverCard({
     };
   }, [index, scrollY]);
 
+  const isLeftColumn = index % NUM_COLUMNS === 0;
+
   return (
-    <Animated.View style={[animatedStyle, { width: columnWidth, marginBottom: GAP }]}>
+    <Animated.View style={[animatedStyle, { width: columnWidth, marginBottom: GAP, marginRight: isLeftColumn ? GAP : 0 }]}>
       <LuxPressable
         onPress={() => onPress(item)}
         className="overflow-hidden rounded-3xl border border-white/10 bg-black"
@@ -128,8 +130,10 @@ const GenerationCard = memo(function GenerationCard({
   projectLabel?: string;
 }) {
   const height = 220 + (index % 3) * 24;
+  const isLeftColumn = index % NUM_COLUMNS === 0;
+
   return (
-    <View style={{ width: columnWidth, marginBottom: GAP }}>
+    <View style={{ width: columnWidth, marginBottom: GAP, marginRight: isLeftColumn ? GAP : 0 }}>
       <View className="overflow-hidden rounded-3xl border border-white/10 bg-black" style={{ borderWidth: 0.5 }}>
         <View style={{ height }}>
           <Image source={{ uri: item.imageUrl }} className="h-full w-full" contentFit="cover" transition={260} />
@@ -584,8 +588,7 @@ export default function GalleryScreen() {
           onScroll={handleScroll}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
-          estimatedItemSize={280}
-          contentContainerStyle={{ paddingBottom: 140 }}
+          contentContainerStyle={{ paddingHorizontal: H_PADDING, paddingBottom: 140 }}
           ListHeaderComponent={header}
           ListEmptyComponent={
             searchQuery.length > 0 ? (
@@ -601,7 +604,6 @@ export default function GalleryScreen() {
               </View>
             ) : null
           }
-          columnWrapperStyle={{ paddingHorizontal: H_PADDING, columnGap: GAP }}
           contentInsetAdjustmentBehavior="automatic"
         />
       ) : (
@@ -620,10 +622,8 @@ export default function GalleryScreen() {
             />
           )}
           showsVerticalScrollIndicator={false}
-          estimatedItemSize={260}
-          contentContainerStyle={{ paddingBottom: 140 }}
+          contentContainerStyle={{ paddingHorizontal: H_PADDING, paddingBottom: 140 }}
           ListHeaderComponent={galleryHeader}
-          columnWrapperStyle={{ paddingHorizontal: H_PADDING, columnGap: GAP }}
           ListEmptyComponent={
             <View className="px-6 py-10">
               <Text className="text-center text-sm text-zinc-400">

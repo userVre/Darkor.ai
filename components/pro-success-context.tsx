@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Platform, Text, ToastAndroid, View, useWindowDimensions } from "react-native";
+import { Easing, Platform, Text, ToastAndroid, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, Sparkles } from "lucide-react-native";
 
@@ -45,7 +45,13 @@ function ProSuccessOverlay({
           animate={{ opacity: [0.75, 1, 0.75] }}
           transition={{ ...LUX_SPRING, loop: true }}
           className="rounded-[32px]"
-          style={{ boxShadow: "0 0 40px rgba(217, 70, 239, 0.45)" }}
+          style={{
+            shadowColor: "#d946ef",
+            shadowOpacity: 0.28,
+            shadowRadius: 22,
+            shadowOffset: { width: 0, height: 12 },
+            elevation: 16,
+          }}
         >
           <LinearGradient
             colors={["#d946ef", "#6366f1"]}
@@ -58,9 +64,7 @@ function ProSuccessOverlay({
                 <Sparkles color="#f5f3ff" size={20} />
                 <Text className="text-xl font-medium text-white">Welcome to Darkor Pro! {"\u2728"}</Text>
               </View>
-              <Text className="mt-3 text-sm text-zinc-400">
               <Text className="mt-3 text-sm text-zinc-400">You're fully powered up. Here's what's unlocked:</Text>
-              </Text>
 
               <View className="mt-5 gap-3">
                 {[
@@ -125,7 +129,12 @@ function SparkleCelebration({ visible }: { visible: boolean }) {
           key={sparkle.id}
           from={{ opacity: 0, translateY: 12, scale: 0.6, rotate: "0deg" }}
           animate={{ opacity: [0, 1, 0], translateY: -48, scale: [0.6, 1, 0.5], rotate: "12deg" }}
-          transition={{ delay: sparkle.delay, duration: sparkle.duration, easing: "easeOut" }}
+          transition={{
+            type: "timing",
+            delay: sparkle.delay,
+            duration: sparkle.duration,
+            easing: Easing.out(Easing.cubic),
+          }}
           style={{
             position: "absolute",
             left: sparkle.x,
@@ -139,7 +148,11 @@ function SparkleCelebration({ visible }: { visible: boolean }) {
               flex: 1,
               borderRadius: sparkle.size,
               backgroundColor: "rgba(244, 63, 94, 0.7)",
-              boxShadow: "0 0 16px rgba(244, 63, 94, 0.6)",
+              shadowColor: "#f43f5e",
+              shadowOpacity: 0.35,
+              shadowRadius: 10,
+              shadowOffset: { width: 0, height: 4 },
+              elevation: 6,
             }}
           />
         </MotiView>

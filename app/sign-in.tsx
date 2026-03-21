@@ -1,6 +1,6 @@
 import { useOAuth } from "@clerk/expo";
 import { useSignIn } from "@clerk/expo/legacy";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { Link, type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Text, TextInput, View } from "react-native";
 import { LuxPressable } from "../components/lux-pressable";
@@ -14,6 +14,7 @@ export default function SignInScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
+  const nextRoute = typeof returnTo === "string" && returnTo.startsWith("/") ? returnTo : "/(tabs)";
 
   const handleSignIn = async () => {
     if (!isLoaded) return;
@@ -25,7 +26,7 @@ export default function SignInScreen() {
         return;
       }
       await setActive({ session: completeSignIn.createdSessionId });
-      router.replace(returnTo ?? "/(tabs)");
+      router.replace(nextRoute as Href);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sign in failed";
       Alert.alert("Sign in failed", message);
@@ -40,7 +41,7 @@ export default function SignInScreen() {
       const { createdSessionId, setActive: setOAuthActive } = await startOAuthFlow();
       if (createdSessionId) {
         await setOAuthActive?.({ session: createdSessionId });
-        router.replace(returnTo ?? "/(tabs)");
+        router.replace(nextRoute as Href);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Apple sign-in failed";

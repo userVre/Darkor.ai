@@ -1,4 +1,4 @@
-﻿import { MotiImage, MotiView } from "moti";
+import { MotiImage, MotiView } from "moti";
 import { useEffect, useState } from "react";
 import { ImageSourcePropType, StyleSheet, useWindowDimensions, View } from "react-native";
 import Svg, { Path } from "react-native-svg";

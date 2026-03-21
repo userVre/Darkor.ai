@@ -1,6 +1,6 @@
 import { useOAuth } from "@clerk/expo";
 import { useSignUp } from "@clerk/expo/legacy";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { Link, type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Text, TextInput, View } from "react-native";
 import { LuxPressable } from "../components/lux-pressable";
@@ -14,6 +14,7 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
+  const nextRoute = typeof returnTo === "string" && returnTo.startsWith("/") ? returnTo : "/(tabs)";
 
   const handleSignUp = async () => {
     if (!isLoaded) return;
@@ -22,7 +23,7 @@ export default function SignUpScreen() {
       await signUp.create({ emailAddress: email.trim(), password });
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       Alert.alert("Verify email", "Check your inbox for the verification code, then sign in.");
-      router.replace({ pathname: "/sign-in", params: { returnTo: returnTo ?? "/(tabs)" } });
+      router.replace({ pathname: "/sign-in", params: { returnTo: nextRoute } });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sign up failed";
       Alert.alert("Sign up failed", message);
@@ -37,7 +38,7 @@ export default function SignUpScreen() {
       const { createdSessionId, setActive: setOAuthActive } = await startOAuthFlow();
       if (createdSessionId) {
         await setOAuthActive?.({ session: createdSessionId });
-        router.replace(returnTo ?? "/(tabs)");
+        router.replace(nextRoute as Href);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Apple sign-up failed";

@@ -3,7 +3,9 @@ import { BlurView } from "expo-blur";
 import { Pressable, StyleSheet } from "react-native";
 import Animated, { interpolate, useAnimatedStyle } from "react-native-reanimated";
 
-export function GlassBackdrop({ animatedIndex, style, onPress }: BottomSheetBackdropProps) {
+type GlassBackdropProps = BottomSheetBackdropProps & { onPress?: () => void };
+
+export function GlassBackdrop({ animatedIndex, style, onPress }: GlassBackdropProps) {
   const animatedStyle = useAnimatedStyle(() => {
     const opacity = interpolate(animatedIndex.value, [-1, 0], [0, 1]);
     return { opacity };

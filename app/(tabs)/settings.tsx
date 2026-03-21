@@ -45,7 +45,7 @@ import { GlassBackdrop } from "../../components/glass-backdrop";
 import { LuxPressable } from "../../components/lux-pressable";
 
 type MeResponse = {
-  plan: "free" | PlanKey;
+  plan: "free" | "trial" | PlanKey;
   credits: number;
   referralCode?: string;
   lastRewardDate?: number;
@@ -85,7 +85,7 @@ export default function SettingsScreen() {
     ensureUser({}).catch(() => undefined);
   }, [ensureUser, isSignedIn]);
 
-  const plan = me?.plan && me.plan !== "free" ? me.plan : "free";
+  const plan = me?.plan && me.plan !== "free" && me.plan !== "trial" ? me.plan : "free";
   const planLabel = plan === "free" ? "FREE" : planTitle(plan).toUpperCase();
   const isFreeTier = me?.plan === "free" || me?.plan === "trial";
   const rewardCountdown = formatRewardCountdown(me?.lastRewardDate);
@@ -259,7 +259,13 @@ export default function SettingsScreen() {
           <LuxPressable
             onPress={handleUpgrade}
             className="cursor-pointer flex-row items-center justify-center gap-2 rounded-full border border-white/70 bg-white px-4 py-3"
-            style={{ boxShadow: "0 0 24px rgba(255, 255, 255, 0.4)" }}
+            style={{
+              shadowColor: "#ffffff",
+              shadowOpacity: 0.22,
+              shadowRadius: 18,
+              shadowOffset: { width: 0, height: 8 },
+              elevation: 8,
+            }}
           >
             <Diamond color="#0f172a" size={14} />
             <Text className="text-sm font-semibold text-slate-900">Upgrade PRO</Text>

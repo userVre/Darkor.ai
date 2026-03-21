@@ -29,7 +29,11 @@ export function LuxPressable({
     if (!pressed || disabled) return null;
     const glow = glowColor ?? "rgba(255, 255, 255, 0.18)";
     return {
-      boxShadow: `0 0 18px ${glow}, inset 0 0 12px rgba(255, 255, 255, 0.12)`,
+      shadowColor: glow,
+      shadowOpacity: 0.45,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 0 },
+      elevation: 8,
     } as ViewStyle;
   }, [disabled, glowColor, pressed]);
 

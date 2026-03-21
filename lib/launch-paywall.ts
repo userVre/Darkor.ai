@@ -1,4 +1,4 @@
-﻿let launchPaywallDismissed = false;
+let launchPaywallDismissed = false;
 
 export function hasDismissedLaunchPaywall() {
   return launchPaywallDismissed;

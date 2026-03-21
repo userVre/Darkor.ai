@@ -1,4 +1,4 @@
-﻿import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
+import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
 import { useMutation } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";

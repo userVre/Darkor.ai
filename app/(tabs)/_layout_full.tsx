@@ -1,5 +1,23 @@
+import type { ReactNode } from "react";
+import { Pressable, type PressableProps } from "react-native";
 import { Tabs } from "expo-router";
-import { Compass, Settings, Sparkles, Wrench } from "lucide-react-native";
+import { Compass, LayoutGrid, Sparkles, UserCircle } from "lucide-react-native";
+
+type TabButtonProps = PressableProps & {
+  children?: ReactNode;
+};
+
+function TabBarButton({ children, style, ...props }: TabButtonProps) {
+  return (
+    <Pressable
+      {...props}
+      style={style}
+      android_ripple={{ color: "rgba(255,255,255,0.08)", borderless: false }}
+    >
+      {children}
+    </Pressable>
+  );
+}
 
 export default function TabsLayout() {
   return (
@@ -10,23 +28,26 @@ export default function TabsLayout() {
           backgroundColor: "#000000",
           borderTopColor: "rgba(255, 255, 255, 0.08)",
           borderTopWidth: 0.5,
-          height: 72,
-          paddingBottom: 10,
+          height: 78,
+          paddingBottom: 12,
           paddingTop: 10,
         },
-        tabBarActiveTintColor: "#f8fafc",
-        tabBarInactiveTintColor: "#52525b",
+        tabBarActiveTintColor: "#ffffff",
+        tabBarInactiveTintColor: "#6b7280",
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "600",
         },
+        tabBarButton: (props) => <TabBarButton {...props} />,
+        tabBarHideOnKeyboard: true,
+        lazy: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Tools",
-          tabBarIcon: ({ color, size }) => <Wrench color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <LayoutGrid color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -47,9 +68,17 @@ export default function TabsLayout() {
         name="settings"
         options={{
           title: "My Profile",
-          tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <UserCircle color={color} size={size} />,
         }}
       />
+
+      <Tabs.Screen name="home.full" options={{ href: null }} />
+      <Tabs.Screen name="home.diagnostic" options={{ href: null }} />
+      <Tabs.Screen name="workspace.full" options={{ href: null }} />
+      <Tabs.Screen name="workspace.diagnostic" options={{ href: null }} />
+      <Tabs.Screen name="_layout_full" options={{ href: null }} />
+      <Tabs.Screen name="_layout_diagnostic" options={{ href: null }} />
     </Tabs>
   );
 }
+

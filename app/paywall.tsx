@@ -1,4 +1,4 @@
-﻿import { useAuth, useUser } from "@clerk/expo";
+import { useAuth, useUser } from "@clerk/expo";
 import { useMutation } from "convex/react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
