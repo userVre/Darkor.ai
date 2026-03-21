@@ -862,9 +862,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     elevation: 10,
   },
-  pointer: {
-    cursor: "pointer",
-  },
+  pointer: {},
   stepOneScreen: {
     flex: 1,
     backgroundColor: "#ffffff",
@@ -1302,4 +1300,5 @@ const styles = StyleSheet.create({
     borderRadius: 1,
   },
 });
+
 

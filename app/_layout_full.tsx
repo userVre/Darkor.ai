@@ -10,6 +10,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { AppErrorBoundary } from "../components/app-error-boundary";
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
 import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
@@ -17,12 +18,14 @@ import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
 import { getEnvReport, logEnvDiagnostics } from "../lib/env";
 import { hasDismissedLaunchPaywall } from "../lib/launch-paywall";
 import { useBackendHealth } from "../lib/network";
+import { planCreditGrant } from "../lib/pricing";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
 import { tokenCache } from "../lib/token-cache";
 import {
   configureRevenueCat,
   getRevenueCatApiKey,
   hasProEntitlement,
+  inferPlanFromCustomerInfo,
   type RevenueCatCustomerInfo,
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
@@ -100,7 +103,8 @@ function RevenueCatGate() {
         const hasPro = hasProEntitlement(customerInfo);
 
         if (hasPro && isSignedIn) {
-          await setPlan({ plan: "pro" });
+          const inferredPlan = inferPlanFromCustomerInfo(customerInfo);
+          await setPlan({ plan: inferredPlan, credits: planCreditGrant(inferredPlan) });
         }
 
         if (hasProRef.current === null) {
@@ -385,20 +389,23 @@ export default function RootLayoutFull() {
             <Providers>
               <WorkspaceDraftProvider>
                 <BottomSheetModalProvider>
-                  <Stack
-                    screenOptions={{
-                      headerShown: false,
-                      contentStyle: { backgroundColor: "#000000" },
-                      animation: "fade",
-                    }}
-                  >
-                    <Stack.Screen name="(tabs)" />
-                    <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
-                    <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
-                    <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
-                    <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
-                    <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
-                  </Stack>
+                  <AppErrorBoundary>
+                    <Stack
+                      screenOptions={{
+                        headerShown: false,
+                        contentStyle: { backgroundColor: "#000000" },
+                        animation: "slide_from_right",
+                        animationDuration: 260,
+                      }}
+                    >
+                      <Stack.Screen name="(tabs)" />
+                      <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
+                      <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
+                      <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
+                      <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
+                      <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
+                    </Stack>
+                  </AppErrorBoundary>
                 </BottomSheetModalProvider>
               </WorkspaceDraftProvider>
             </Providers>
@@ -408,6 +415,7 @@ export default function RootLayoutFull() {
     </GestureHandlerRootView>
   );
 }
+
 
 
 

@@ -50,7 +50,6 @@ export function LuxPressable({
         setPressed(false);
         props.onPressOut?.(event);
       }}
-      style={{ cursor: "pointer" }}
     >
       <MotiView
         className={className}

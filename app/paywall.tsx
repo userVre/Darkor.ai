@@ -19,15 +19,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Carousel from "react-native-reanimated-carousel";
 import { Check, ShieldCheck, X } from "lucide-react-native";
 
+import { useProSuccess } from "../components/pro-success-context";
 import { triggerHaptic } from "../lib/haptics";
 import { dismissLaunchPaywall } from "../lib/launch-paywall";
 import {
   configureRevenueCat,
   getRevenueCatClient,
   hasProEntitlement,
+  inferPlanFromCustomerInfo,
+  inferPlanFromRevenueCat,
   type RevenueCatPackage,
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
+import { planCreditGrant } from "../lib/pricing";
 
 const GALLERY_IMAGES = [
   require("../assets/media/luxury-1.jpg"),
@@ -42,7 +46,6 @@ const GALLERY_IMAGES = [
 const YEARLY_TOTAL = 484.99;
 const WEEKLY_PRICE = 119.99;
 const YEARLY_WEEKLY_EQUIV = (YEARLY_TOTAL / 52).toFixed(2);
-const PRO_CREDITS_GRANT = 100;
 const FEATURES = ["Faster rendering", "Ad-free experience", "Unlimited design renders"];
 
 export default function PaywallScreen() {
@@ -52,6 +55,7 @@ export default function PaywallScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
+  const { showSuccess } = useProSuccess();
 
   const [annualPackage, setAnnualPackage] = useState<RevenueCatPackage | null>(null);
   const [weeklyPackage, setWeeklyPackage] = useState<RevenueCatPackage | null>(null);
@@ -150,7 +154,8 @@ export default function PaywallScreen() {
       const hasPro = hasProEntitlement(info);
 
       if (hasPro && isSignedIn) {
-        await setPlan({ plan: "pro", credits: PRO_CREDITS_GRANT });
+        const inferredPlan = inferPlanFromCustomerInfo(info);
+        await setPlan({ plan: inferredPlan, credits: planCreditGrant(inferredPlan) });
       }
 
       if (hasPro) {
@@ -186,7 +191,13 @@ export default function PaywallScreen() {
       const hasPro = hasProEntitlement(result.customerInfo);
 
       if (hasPro && isSignedIn) {
-        await setPlan({ plan: "pro", credits: PRO_CREDITS_GRANT });
+        const inferredPlan = inferPlanFromRevenueCat({
+          packageIdentifier: selectedPackage.identifier,
+          productIdentifier: selectedPackage.product.identifier,
+          activeSubscriptions: result.customerInfo.activeSubscriptions,
+        });
+        await setPlan({ plan: inferredPlan, credits: planCreditGrant(inferredPlan) });
+        showSuccess();
       }
 
       dismissLaunchPaywall();
@@ -557,3 +568,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+

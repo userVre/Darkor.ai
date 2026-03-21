@@ -32,12 +32,13 @@ import {
   Zap,
 } from "lucide-react-native";
 
-import { planTitle, type PlanKey } from "../../lib/pricing";
+import { planCreditGrant, planTitle, type PlanKey } from "../../lib/pricing";
 import { triggerHaptic } from "../../lib/haptics";
 import {
   configureRevenueCat,
   getRevenueCatClient,
   hasProEntitlement,
+  inferPlanFromCustomerInfo,
 } from "../../lib/revenuecat";
 import { requestStoreReview } from "../../lib/store-review";
 import { formatRewardCountdown } from "../../lib/rewards";
@@ -85,6 +86,24 @@ export default function SettingsScreen() {
     ensureUser({}).catch(() => undefined);
   }, [ensureUser, isSignedIn]);
 
+  useEffect(() => {
+    if (!isSignedIn) return;
+    const syncPlan = async () => {
+      try {
+        const cached = getRevenueCatClient();
+        const purchases = cached ?? (await configureRevenueCat(user?.id ?? null));
+        if (!purchases) return;
+        const info = await purchases.getCustomerInfo();
+        if (!hasProEntitlement(info)) return;
+        const inferredPlan = inferPlanFromCustomerInfo(info);
+        await setPlan({ plan: inferredPlan, credits: planCreditGrant(inferredPlan) });
+      } catch {
+        // ignore sync failures on settings open
+      }
+    };
+    void syncPlan();
+  }, [isSignedIn, setPlan, user?.id]);
+
   const plan = me?.plan && me.plan !== "free" && me.plan !== "trial" ? me.plan : "free";
   const planLabel = plan === "free" ? "FREE" : planTitle(plan).toUpperCase();
   const isFreeTier = me?.plan === "free" || me?.plan === "trial";
@@ -107,16 +126,16 @@ export default function SettingsScreen() {
         whatsNewRef.current?.present();
         break;
       case "feedback":
-        Alert.alert("Feedback", "Thanks for sharing feedback. We'll open a form soon.");
+        void Linking.openURL("mailto:support@darkor.ai?subject=Darkor.ai%20Feedback");
         break;
       case "faq":
-        Alert.alert("FAQ", "The FAQ section is coming next.");
+        whatsNewRef.current?.present();
         break;
       case "rate":
-        Alert.alert("Rate Us", "Thanks! We'll link to the store rating soon.");
+        void requestStoreReview();
         break;
       case "share":
-        Alert.alert("Share", "Share link copied soon. We'll enable native share next.");
+        void Share.share({ message: "See what I'm designing with Darkor.ai." });
         break;
       case "terms":
         router.push("/terms-of-service");
@@ -177,7 +196,8 @@ export default function SettingsScreen() {
       const info = await purchases.restorePurchases();
       const hasPro = hasProEntitlement(info);
       if (hasPro && isSignedIn) {
-        await setPlan({ plan: "pro", credits: 100 });
+        const inferredPlan = inferPlanFromCustomerInfo(info);
+        await setPlan({ plan: inferredPlan, credits: planCreditGrant(inferredPlan) });
       }
       Alert.alert("Restored", hasPro ? "Your subscription is active." : "No active subscriptions found.");
     } catch (error) {
@@ -240,7 +260,7 @@ export default function SettingsScreen() {
         <View className="absolute inset-0 bg-black/50" />
         <BlurView intensity={70} tint="dark" className="absolute inset-0" />
         <View className="gap-4 p-6">
-          <Text className="text-lg font-medium text-white">Your Account is {planLabel}</Text>
+          <Text className="text-lg font-medium text-white">Account Status ? {planLabel}</Text>
           <Text className="text-xs text-zinc-300">
             Credits remaining: {typeof me?.credits === "number" ? me.credits : 0}
           </Text>
@@ -277,7 +297,7 @@ export default function SettingsScreen() {
         <View className="px-5 py-4">
           <View className="flex-row items-center gap-2">
             <Gift color="#facc15" size={16} />
-            <Text className="text-base font-medium text-amber-200">?? Invite Friends & Earn Credits</Text>
+            <Text className="text-base font-medium text-amber-200">Invite Friends & Earn Credits</Text>
           </View>
           <Text className="mt-2 text-xs text-amber-200/80">Earn 3 credits for every friend who joins!</Text>
           <View className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3" style={{ borderWidth: 0.5 }}>

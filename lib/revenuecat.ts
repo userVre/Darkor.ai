@@ -72,3 +72,29 @@ export function hasProEntitlement(info?: RevenueCatCustomerInfo | null) {
   if (info.entitlements?.active?.[REVENUECAT_ENTITLEMENT]) return true;
   return Boolean(info.entitlements?.all?.[REVENUECAT_ENTITLEMENT]?.isActive);
 }
+
+
+export function inferPlanFromRevenueCat(input?: {
+  packageIdentifier?: string | null;
+  productIdentifier?: string | null;
+  activeSubscriptions?: string[] | null;
+}) {
+  const haystack = [
+    input?.packageIdentifier ?? "",
+    input?.productIdentifier ?? "",
+    ...(input?.activeSubscriptions ?? []),
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  if (haystack.includes("ultra")) return "ultra" as const;
+  if (haystack.includes("premium")) return "premium" as const;
+  return "pro" as const;
+}
+
+export function inferPlanFromCustomerInfo(info?: RevenueCatCustomerInfo | null) {
+  if (!info) return "pro" as const;
+  return inferPlanFromRevenueCat({
+    activeSubscriptions: Array.isArray(info.activeSubscriptions) ? info.activeSubscriptions : [],
+  });
+}

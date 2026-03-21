@@ -165,6 +165,10 @@ const SPACE_OPTIONS = {
     "Dining Room",
     "Nursery",
     "Home Theater",
+    "Gaming Room",
+    "Hall",
+    "Library",
+    "Laundry",
   ],
   exterior: [
     "Modern House",
@@ -174,7 +178,7 @@ const SPACE_OPTIONS = {
     "Retail Store",
     "Garage",
   ],
-  garden: ["Backyard", "Front yard", "Patio", "Swimming Pool Area", "Terrace"],
+  garden: ["Backyard", "Front yard", "Patio", "Swimming Pool", "Terrace", "Deck"],
 } as const;
 
 const STYLE_LIBRARY: StyleLibraryItem[] = [
@@ -535,9 +539,10 @@ async function readBase64FromUri(uri: string) {
 
 export default function WorkspaceScreen() {
   const router = useRouter();
-  const { service, presetStyle, startStep } = useLocalSearchParams<{
+  const { service, presetStyle, presetRoom, startStep } = useLocalSearchParams<{
     service?: string;
     presetStyle?: string;
+    presetRoom?: string;
     startStep?: string;
   }>();
   const { isSignedIn, getToken } = useAuth();
@@ -607,6 +612,15 @@ export default function WorkspaceScreen() {
   const rateSnapPoints = useMemo(() => ["36%"], []);
   const feedbackSnapPoints = useMemo(() => [isSmallScreen ? "95%" : "58%"], [isSmallScreen]);
   const photoSourceSnapPoints = useMemo(() => ["30%"], []);
+  const serviceKey = String(service ?? "interior").toLowerCase();
+  const serviceType = getServiceType(serviceKey);
+  const serviceLabel = SERVICE_LABELS[serviceType] ?? "Interior Redesign";
+  const presetRoomOptions =
+    serviceType === "exterior"
+      ? SPACE_OPTIONS.exterior
+      : serviceType === "garden"
+        ? SPACE_OPTIONS.garden
+        : SPACE_OPTIONS.interior;
 
   useEffect(() => {
     console.log("[Screen] Workspace mounted");
@@ -719,14 +733,19 @@ export default function WorkspaceScreen() {
   }, [presetStyle, selectedStyle]);
 
   useEffect(() => {
+    if (!presetRoom || selectedRoom) return;
+    const normalized = String(presetRoom).trim().toLowerCase();
+    const matched = presetRoomOptions.find((room) => room.toLowerCase() === normalized);
+    if (matched) {
+      setSelectedRoom(matched);
+    }
+  }, [presetRoom, presetRoomOptions, selectedRoom]);
+
+  useEffect(() => {
     if (workflowStep === 5 && generatedImageUrl) {
       triggerHaptic();
     }
   }, [generatedImageUrl, workflowStep]);
-
-  const serviceKey = String(service ?? "interior").toLowerCase();
-  const serviceType = getServiceType(serviceKey);
-  const serviceLabel = SERVICE_LABELS[serviceType] ?? "Interior Redesign";
 
   const selectedPalette = useMemo(
     () => PALETTE_OPTIONS.find((palette) => palette.id === selectedPaletteId) ?? null,
@@ -2808,6 +2827,7 @@ export default function WorkspaceScreen() {
     </View>
   );
 }
+
 
 
 
