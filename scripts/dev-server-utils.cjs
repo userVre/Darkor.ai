@@ -38,7 +38,6 @@ async function resolvePort() {
   }
 
   for (let port = preferredPort; port < preferredPort + 20; port += 1) {
-    // eslint-disable-next-line no-await-in-loop
     if (await isPortAvailable(port)) {
       return { port, autoSelected: port !== preferredPort };
     }
@@ -47,15 +46,37 @@ async function resolvePort() {
   return { port: preferredPort, autoSelected: false };
 }
 
-function tryAdbReverse(port) {
-  const result = spawnSync("adb", ["reverse", `tcp:${port}`, `tcp:${port}`], {
+function tryAdbReverse(remotePort, localPort = remotePort) {
+  const result = spawnSync("adb", ["reverse", `tcp:${remotePort}`, `tcp:${localPort}`], {
     stdio: "ignore",
     shell: true,
   });
   return result.status === 0;
 }
 
+function setupAdbReverse(localPort) {
+  const aliases = new Set([String(localPort), "8081", "8082"]);
+  let primaryOk = false;
+  const activeAliases = [];
+
+  for (const remotePort of aliases) {
+    const ok = tryAdbReverse(remotePort, localPort);
+    if (remotePort === String(localPort)) {
+      primaryOk = ok;
+    }
+    if (ok) {
+      activeAliases.push(`${remotePort}->${localPort}`);
+    }
+  }
+
+  return {
+    primaryOk,
+    ok: primaryOk || activeAliases.length > 0,
+    activeAliases,
+  };
+}
+
 module.exports = {
   resolvePort,
-  tryAdbReverse,
+  setupAdbReverse,
 };

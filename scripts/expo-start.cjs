@@ -1,7 +1,7 @@
 const { spawnSync } = require("child_process");
 const { resolve } = require("path");
 const { pathToFileURL } = require("url");
-const { resolvePort, tryAdbReverse } = require("./dev-server-utils.cjs");
+const { resolvePort, setupAdbReverse } = require("./dev-server-utils.cjs");
 
 async function main() {
   const metroConfig = pathToFileURL(resolve(__dirname, "..", "metro.config.js")).href;
@@ -18,7 +18,12 @@ async function main() {
   let adbOk = false;
 
   if (!host) {
-    adbOk = tryAdbReverse(portString);
+    const reverse = setupAdbReverse(portString);
+    adbOk = reverse.ok;
+    const compatibilityAliases = reverse.activeAliases.filter((alias) => alias !== `${portString}->${portString}`);
+    if (compatibilityAliases.length > 0) {
+      console.log(`[dev] ADB reverse aliases active: ${compatibilityAliases.join(", ")}`);
+    }
     host = adbOk ? "127.0.0.1" : "10.0.2.2";
   }
 
@@ -31,7 +36,7 @@ async function main() {
   process.env.REACT_NATIVE_PACKAGER_HOSTNAME = host;
   process.env.EXPO_DEV_PORT = portString;
 
-  const defaultArgs = ["expo", "start", "--clear", "--dev-client", "--host", "localhost", "--port", portString];
+  const defaultArgs = ["expo", "start", "--clear", "--dev-client", "--host", "lan", "--port", portString];
   const extraArgs = process.argv.slice(2);
 
   const result = spawnSync("npx", [...defaultArgs, ...extraArgs], {

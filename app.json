@@ -68,7 +68,10 @@
           }
         }
       ],
-      "./plugins/with-kotlin-resolution"
+      "./plugins/with-kotlin-resolution",
+      "expo-sharing",
+      "expo-video",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -78,6 +81,7 @@
       "eas": {
         "projectId": "9470d384-ff08-4425-bd05-fe33e0c631b6"
       }
-    }
+    },
+    "userInterfaceStyle": "automatic"
   }
 }

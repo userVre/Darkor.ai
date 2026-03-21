@@ -1,0 +1,15 @@
+
+> darkor-ai-mobile@1.0.0 start
+> node scripts/expo-start.cjs
+
+[dev] Port 8081 is busy, using 8082 instead
+[dev] ADB reverse aliases active: 8081->8082
+[dev] Expo dev server: http://127.0.0.1:8082 (adb reverse ok)
+env: load .env.local .env
+env: export EXPO_PUBLIC_API_BASE_URL EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY EXPO_PUBLIC_CONVEX_URL EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY EXPO_PUBLIC_REVENUECAT_IOS_API_KEY CONVEX_DEPLOYMENT EXPO_PUBLIC_CONVEX_SITE_URL
+Starting project at C:\Users\LENOVO\Desktop\Darkor.AI,ismail\Darkor.ai
+Starting Metro Bundler
+
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Waiting on http://localhost:8082
+Logs for your project will appear below.

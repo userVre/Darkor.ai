@@ -2,7 +2,7 @@ const fs = require("fs");
 const { spawnSync } = require("child_process");
 const { resolve } = require("path");
 const { pathToFileURL } = require("url");
-const { resolvePort, tryAdbReverse } = require("./dev-server-utils.cjs");
+const { resolvePort, setupAdbReverse } = require("./dev-server-utils.cjs");
 
 async function main() {
   const projectRoot = resolve(__dirname, "..");
@@ -19,7 +19,12 @@ async function main() {
   let host = process.env.EXPO_DEV_HOST;
   let adbOk = false;
   if (!host) {
-    adbOk = tryAdbReverse(portString);
+    const reverse = setupAdbReverse(portString);
+    adbOk = reverse.ok;
+    const compatibilityAliases = reverse.activeAliases.filter((alias) => alias !== `${portString}->${portString}`);
+    if (compatibilityAliases.length > 0) {
+      console.log(`[dev] ADB reverse aliases active: ${compatibilityAliases.join(", ")}`);
+    }
     host = adbOk ? "127.0.0.1" : "10.0.2.2";
   }
 
