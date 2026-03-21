@@ -32,9 +32,11 @@ import Animated, {
 } from "react-native-reanimated";
 import {
   ArrowLeft,
+  X as Close,
   Camera,
   Download,
   Image as ImageIcon,
+  Plus,
   Layers,
   Lock,
   Paintbrush,
@@ -296,6 +298,7 @@ export default function WorkspaceScreen() {
   const [isSharingStory, setIsSharingStory] = useState(false);
   const [isDownloading, setIsDownloading] = useState<"standard" | "ultra" | null>(null);
   const [isLoadingExample, setIsLoadingExample] = useState<string | null>(null);
+  const [isSelectingPhoto, setIsSelectingPhoto] = useState(false);
   const [activeEditAction, setActiveEditAction] = useState<(typeof EDIT_ACTIONS)[number]>("Replace");
   const [editBarWidth, setEditBarWidth] = useState(0);
   const [reviewPromptOpen, setReviewPromptOpen] = useState(false);
@@ -342,7 +345,7 @@ export default function WorkspaceScreen() {
   }, [diagnostic, ensureUser, isSignedIn]);
 
   useEffect(() => {
-    if (draft.image && !selectedImage) {
+    if (draft.image?.uri && !selectedImage) {
       setSelectedImage(draft.image);
     }
   }, [draft.image, selectedImage]);
@@ -378,9 +381,7 @@ export default function WorkspaceScreen() {
   }, [draft.aspectRatio, selectedAspectRatioId]);
 
   useEffect(() => {
-    if (selectedImage) {
-      setDraftImage(selectedImage);
-    }
+    setDraftImage(selectedImage ?? null);
   }, [selectedImage, setDraftImage]);
 
   useEffect(() => {
@@ -593,31 +594,36 @@ export default function WorkspaceScreen() {
       }
 
       triggerHaptic();
+      setIsSelectingPhoto(true);
 
-      const result =
-        source === "camera"
-          ? await ImagePicker.launchCameraAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
-              base64: true,
-              quality: 0.82,
-              exif: false,
-              cameraType: ImagePicker.CameraType.back,
-            })
-          : await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
-              base64: true,
-              quality: 0.82,
-              exif: false,
-            });
+      try {
+        const result =
+          source === "camera"
+            ? await ImagePicker.launchCameraAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                base64: true,
+                quality: 0.82,
+                exif: false,
+                cameraType: ImagePicker.CameraType.back,
+              })
+            : await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                base64: true,
+                quality: 0.82,
+                exif: false,
+              });
 
-      if (result.canceled) {
-        return;
+        if (result.canceled) {
+          return;
+        }
+
+        const asset = result.assets[0];
+        await applyPickedAsset(asset, source === "camera" ? "Captured Photo" : "Uploaded Photo");
+      } finally {
+        setIsSelectingPhoto(false);
       }
-
-      const asset = result.assets[0];
-      await applyPickedAsset(asset, source === "camera" ? "Captured Photo" : "Uploaded Photo");
     },
     [applyPickedAsset, ensureCameraPermission, ensureMediaLibraryPermission],
   );
@@ -625,6 +631,13 @@ export default function WorkspaceScreen() {
   const handlePickPhoto = useCallback(() => {
     triggerHaptic();
     photoSourceSheetRef.current?.present();
+  }, []);
+
+  const handleClearSelectedImage = useCallback(() => {
+    triggerHaptic();
+    setSelectedImage(null);
+    setIsLoadingExample(null);
+    setIsSelectingPhoto(false);
   }, []);
 
   const handleSelectExample = useCallback(async (example: ExamplePhoto) => {
@@ -1019,6 +1032,181 @@ export default function WorkspaceScreen() {
   }, [feedbackMessage, lastGenerationCount, submitFeedback]);
 
   const stepTransition = LUX_SPRING;
+  const isPhotoPreviewBusy = isSelectingPhoto || isLoadingExample !== null;
+
+  if (workflowStep === 0) {
+    return (
+      <View className="flex-1 bg-white" style={{ backgroundColor: "#ffffff" }}>
+        <ScrollView
+          className="flex-1 bg-white"
+          style={{ backgroundColor: "#ffffff" }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 26, paddingBottom: 180, minHeight: height }}
+          contentInsetAdjustmentBehavior="automatic"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="items-center justify-center">
+            <Text style={{ color: "#111111", fontSize: 24, fontWeight: "700" }}>Step 1 / 4</Text>
+            <LuxPressable
+              onPress={() => router.back()}
+              className="cursor-pointer absolute right-0 top-0 h-10 w-10 items-center justify-center"
+            >
+              <Close color="#111111" size={24} strokeWidth={2.2} />
+            </LuxPressable>
+          </View>
+
+          <View className="mt-7 flex-row gap-3">
+            {[0, 1, 2, 3].map((index) => (
+              <View
+                key={`step-progress-${index}`}
+                className="h-[5px] flex-1 rounded-full"
+                style={{ backgroundColor: index === 0 ? "#111111" : "#d4d4d8" }}
+              />
+            ))}
+          </View>
+
+          <Text className="mt-10 text-[30px] font-semibold text-black">Add a Photo</Text>
+
+          <View className="mt-7">
+            {selectedImage ? (
+              <View className="overflow-hidden rounded-[28px] bg-zinc-100" style={{ height: 440 }}>
+                <Image source={{ uri: selectedImage.uri }} className="h-full w-full" contentFit="cover" transition={220} />
+                <LuxPressable
+                  onPress={handleClearSelectedImage}
+                  className="cursor-pointer absolute right-4 top-4 h-11 w-11 items-center justify-center rounded-full"
+                  style={{ backgroundColor: "rgba(17,17,17,0.42)" }}
+                >
+                  <Close color="#ffffff" size={18} strokeWidth={2.4} />
+                </LuxPressable>
+                {isPhotoPreviewBusy ? (
+                  <MotiView
+                    animate={{ opacity: [0.45, 0.95, 0.45] }}
+                    transition={{ duration: 1100, loop: true }}
+                    className="absolute bottom-4 left-4 right-4 flex-row items-center justify-center gap-3 rounded-2xl px-4 py-3"
+                    style={{ backgroundColor: "rgba(17,17,17,0.55)" }}
+                  >
+                    <ActivityIndicator size="small" color="#ffffff" />
+                    <Text className="text-sm font-semibold text-white">Uploading...</Text>
+                  </MotiView>
+                ) : null}
+              </View>
+            ) : (
+              <LuxPressable
+                onPress={handlePickPhoto}
+                className="cursor-pointer items-center justify-center rounded-[28px] border-2 border-dashed border-zinc-700 bg-white px-8"
+                style={{ minHeight: 440 }}
+              >
+                <View className="h-24 w-24 items-center justify-center rounded-full bg-black">
+                  <Plus color="#ffffff" size={36} strokeWidth={2.2} />
+                </View>
+                <Text className="mt-6 text-center text-[24px] font-semibold leading-8 text-black">{"Start Redesigning\nRedesign and beautify your room"}</Text>
+                <LuxPressable
+                  onPress={handlePickPhoto}
+                  className="cursor-pointer mt-5 flex-row items-center gap-2 rounded-full bg-zinc-100 px-4 py-2"
+                >
+                  <ImageIcon color="#111111" size={16} />
+                  <Text className="text-sm font-semibold text-black">Choose Photo</Text>
+                </LuxPressable>
+              </LuxPressable>
+            )}
+          </View>
+
+          <View className="mt-8">
+            <Text className="text-[18px] font-semibold text-black">Example Photos</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 14, paddingTop: 16, paddingRight: 24 }}
+            >
+              {EXAMPLE_PHOTOS.map((example) => {
+                const active = selectedImage?.label === example.label;
+                const isLoading = isLoadingExample === example.id;
+                return (
+                  <LuxPressable
+                    key={example.id}
+                    onPress={() => void handleSelectExample(example)}
+                    className="cursor-pointer overflow-hidden rounded-[22px] bg-zinc-100"
+                    style={{ width: 122, height: 122, borderWidth: active ? 3 : 0, borderColor: active ? "#d946ef" : "transparent" }}
+                  >
+                    <Image source={example.source} className="h-full w-full" contentFit="cover" transition={180} />
+                    {isLoading ? (
+                      <View className="absolute inset-0 items-center justify-center" style={{ backgroundColor: "rgba(17,17,17,0.35)" }}>
+                        <ActivityIndicator size="small" color="#ffffff" />
+                      </View>
+                    ) : null}
+                  </LuxPressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </ScrollView>
+
+        <View
+          className="absolute inset-x-0 bottom-0 px-6 pt-4"
+          style={{ paddingBottom: Math.max(insets.bottom, 18), backgroundColor: "rgba(255,255,255,0.97)" }}
+        >
+          <LuxPressable onPress={() => setWorkflowStep(1)} disabled={!selectedImage} className="cursor-pointer">
+            {selectedImage ? (
+              <LinearGradient
+                colors={["#ff3b30", "#d946ef"]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                className="items-center justify-center rounded-[22px]"
+                style={{ minHeight: 64 }}
+              >
+                <Text className="text-[18px] font-semibold text-white">Continue</Text>
+              </LinearGradient>
+            ) : (
+              <View className="items-center justify-center rounded-[22px] bg-zinc-200" style={{ minHeight: 64 }}>
+                <Text className="text-[18px] font-semibold text-zinc-500">Continue</Text>
+              </View>
+            )}
+          </LuxPressable>
+        </View>
+
+        <BottomSheetModal
+          ref={photoSourceSheetRef}
+          snapPoints={photoSourceSnapPoints}
+          enablePanDownToClose
+          backdropComponent={GlassBackdrop}
+          backgroundStyle={{ backgroundColor: "#ffffff" }}
+          handleIndicatorStyle={{ backgroundColor: "rgba(17,17,17,0.25)" }}
+        >
+          <View className="flex-1 px-5 pb-8 pt-2">
+            <Text className="text-lg font-semibold text-black">Choose Photo Source</Text>
+            <Text className="mt-2 text-sm text-zinc-500">Take a fresh photo or import one from your gallery.</Text>
+
+            <View className="mt-5 gap-3">
+              <LuxPressable
+                onPress={() => void launchPhotoSource("camera")}
+                className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4"
+              >
+                <View className="h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100">
+                  <Camera color="#111111" size={20} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-semibold text-black">Take photo from camera</Text>
+                  <Text className="mt-1 text-xs text-zinc-500">Capture a fresh room photo with your camera.</Text>
+                </View>
+              </LuxPressable>
+
+              <LuxPressable
+                onPress={() => void launchPhotoSource("library")}
+                className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4"
+              >
+                <View className="h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100">
+                  <ImageIcon color="#111111" size={20} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-semibold text-black">Choose from gallery</Text>
+                  <Text className="mt-1 text-xs text-zinc-500">Import a saved room photo from your device.</Text>
+                </View>
+              </LuxPressable>
+            </View>
+          </View>
+        </BottomSheetModal>
+      </View>
+    );
+  }
 
   if (workflowStep === 4) {
     const maxFrameWidth = width * 0.7;
