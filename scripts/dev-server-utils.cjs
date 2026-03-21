@@ -1,6 +1,8 @@
 const net = require("net");
 const { spawnSync } = require("child_process");
 
+const DEFAULT_DEV_PORT_ALIASES = ["8081", "8082", "8083", "8084", "8085"];
+
 function isHostPortOpen(port, host) {
   return new Promise((resolve) => {
     const socket = new net.Socket();
@@ -55,7 +57,7 @@ function tryAdbReverse(remotePort, localPort = remotePort) {
 }
 
 function setupAdbReverse(localPort) {
-  const aliases = new Set([String(localPort), "8081", "8082"]);
+  const aliases = new Set([String(localPort), ...DEFAULT_DEV_PORT_ALIASES]);
   let primaryOk = false;
   const activeAliases = [];
 
