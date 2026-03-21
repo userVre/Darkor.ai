@@ -17,14 +17,15 @@
   },
   "include": [
     "app",
+    "components",
     "lib",
+    "plugins",
+    "scripts",
     "expo-env.d.ts",
     "nativewind-env.d.ts",
     ".expo/types/**/*.ts"
   ],
   "exclude": [
-    "web_legacy_app",
-    "components",
     "convex"
   ]
 }

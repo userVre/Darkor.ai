@@ -8,7 +8,7 @@
     "android": "node scripts/expo-run-android.cjs",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
+    "lint": "eslint . --ext .js,.cjs,.mjs",
     "postinstall": "node scripts/patch-react-native-lto.cjs"
   },
   "dependencies": {
