@@ -1,20 +1,24 @@
 import { useAuth } from "@clerk/expo";
+import { useFocusEffect } from "@react-navigation/native";
 import { useMutation, useQuery } from "convex/react";
-import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
-import { VideoView, useVideoPlayer } from "expo-video";
-import { FlashList } from "@shopify/flash-list";
-import { MotiView } from "moti";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Modal, Text, View, ViewToken, useWindowDimensions } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Diamond, Settings, X } from "lucide-react-native";
 
+import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
 import { triggerHaptic } from "../../lib/haptics";
-import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
 import { formatRewardCountdown } from "../../lib/rewards";
-import { LuxPressable } from "../../components/lux-pressable";
-import { DIAGNOSTIC_BYPASS, DISABLE_VIDEO_BACKGROUNDS } from "../../lib/diagnostics";
 
 type ServiceCardData = {
   id: string;
@@ -75,97 +79,14 @@ const SERVICES: ServiceCardData[] = [
   },
 ];
 
-const CARD_GAP = 16;
-const VIDEO_ENABLED = !DISABLE_VIDEO_BACKGROUNDS;
-
-type ServiceCardProps = {
-  item: ServiceCardData;
-  height: number;
-  index: number;
-  isActive: boolean;
-  onPress: (item: ServiceCardData) => void;
-};
-
-const CardSeparator = () => <View style={{ height: CARD_GAP }} />;
-
-type BackgroundProps = {
-  source: number;
-  isActive: boolean;
-};
-
-function VideoBackground({ source, isActive }: BackgroundProps) {
-  const player = useVideoPlayer(source, (playerInstance) => {
-    playerInstance.loop = true;
-    playerInstance.muted = true;
-    playerInstance.volume = 0;
-    playerInstance.timeUpdateEventInterval = 0;
-  });
-
-  useEffect(() => {
-    if (!player) return;
-    if (isActive) {
-      player.play();
-    } else {
-      player.pause();
-    }
-  }, [isActive, player]);
-
+function LoadingRow({ message }: { message: string }) {
   return (
-    <VideoView
-      player={player}
-      className="absolute inset-0"
-      contentFit="cover"
-      nativeControls={false}
-      pointerEvents="none"
-    />
+    <View style={styles.loadingRow}>
+      <ActivityIndicator color="#f8fafc" />
+      <Text style={styles.loadingText}>{message}</Text>
+    </View>
   );
 }
-
-function StaticBackground(_: BackgroundProps) {
-  return <View className="absolute inset-0 bg-black" />;
-}
-
-const CardBackground = VIDEO_ENABLED ? VideoBackground : StaticBackground;
-
-const ServiceCard = memo(function ServiceCard({ item, height, index, isActive, onPress }: ServiceCardProps) {
-  const handlePress = useCallback(() => {
-    triggerHaptic();
-    onPress(item);
-  }, [item, onPress]);
-
-  return (
-    <MotiView {...staggerFadeUp(index)} className="px-4">
-      <View
-        className="overflow-hidden rounded-3xl border border-white/10 bg-black"
-        style={{ height, borderCurve: "continuous", borderWidth: 0.5 }}
-      >
-        <CardBackground source={item.video} isActive={isActive} />
-
-        <BlurView
-          intensity={96}
-          tint="dark"
-          className="absolute bottom-3 left-3 right-3 rounded-2xl border border-white/10 bg-black/40 px-4 py-3"
-          style={{ borderCurve: "continuous", borderWidth: 0.5 }}
-        >
-          <View className="flex-row items-center justify-between gap-3">
-            <View className="flex-1">
-              <Text className="text-base font-semibold text-white">{item.title}</Text>
-              <Text className="mt-1 text-xs text-zinc-400">{item.subtitle}</Text>
-            </View>
-            <LuxPressable
-              accessibilityRole="button"
-              onPress={handlePress}
-              className="rounded-full border border-white/40 bg-white/15 px-4 py-2"
-              style={{ borderWidth: 0.5 }}
-            >
-              <Text className="text-xs font-semibold text-white">Try it! -&gt;</Text>
-            </LuxPressable>
-          </View>
-        </BlurView>
-      </View>
-    </MotiView>
-  );
-});
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -181,31 +102,52 @@ export default function HomeScreen() {
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
 
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
-  const [activeIds, setActiveIds] = useState<Set<string>>(new Set());
+  const [scrollResetKey, setScrollResetKey] = useState(0);
+  const scrollRef = useRef<ScrollView | null>(null);
 
-  useEffect(() => {
-    console.log("[Screen] Home mounted");
-    return () => console.log("[Screen] Home unmounted");
+  const resetScrollPosition = useCallback(() => {
+    const recreate = setTimeout(() => {
+      setScrollResetKey((value) => value + 1);
+    }, 120);
+    const first = setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: 1, animated: false });
+    }, 220);
+    const second = setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, 380);
+    return () => {
+      clearTimeout(recreate);
+      clearTimeout(first);
+      clearTimeout(second);
+    };
   }, []);
 
   useEffect(() => {
-    if (diagnostic) return;
-    if (!isSignedIn) return;
+    console.log("[Screen] Home mounted");
+    const dispose = resetScrollPosition();
+    return () => {
+      dispose();
+      console.log("[Screen] Home unmounted");
+    };
+  }, [resetScrollPosition]);
+
+  useFocusEffect(
+    useCallback(() => resetScrollPosition(), [resetScrollPosition]),
+  );
+
+  useEffect(() => {
+    if (diagnostic || !isSignedIn) return;
     ensureUser({}).catch(() => undefined);
   }, [diagnostic, ensureUser, isSignedIn]);
 
   const credits = diagnostic ? 10 : typeof me?.credits === "number" ? me.credits : 3;
   const rewardCountdown = formatRewardCountdown(me?.lastRewardDate);
-  const cardHeight = useMemo(() => Math.min(360, Math.round(width * 0.62)), [width]);
-  const headerOffset = useMemo(() => insets.top + 64, [insets.top]);
-
-  const contentContainerStyle = useMemo(
-    () => ({ paddingTop: headerOffset + 12, paddingBottom: 120 }),
-    [headerOffset],
-  );
+  const cardHeight = useMemo(() => Math.max(180, Math.min(240, Math.round(width * 0.45))), [width]);
+  const showInlineLoading = !diagnostic && isSignedIn && me === undefined;
 
   const handleServicePress = useCallback(
     (item: ServiceCardData) => {
+      triggerHaptic();
       router.push({ pathname: "/workspace", params: { service: item.serviceParam } });
     },
     [router],
@@ -216,95 +158,49 @@ export default function HomeScreen() {
     router.push("/settings");
   }, [router]);
 
-  const handleOpenCredits = useCallback(() => {
-    triggerHaptic();
-    setIsCreditModalOpen(true);
-  }, []);
-
-  const handleUpgrade = useCallback(() => {
-    triggerHaptic();
-    setIsCreditModalOpen(false);
-    router.push("/settings");
-  }, [router]);
-
-  const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: Array<ViewToken> }) => {
-      const next = new Set<string>();
-      viewableItems.forEach((token) => {
-        if (token.item?.id) next.add(token.item.id);
-      });
-      setActiveIds(next);
-    },
-  ).current;
-
-  const renderItem = useCallback(
-    ({ item, index }: { item: ServiceCardData; index: number }) => (
-      <ServiceCard
-        item={item}
-        height={cardHeight}
-        index={index}
-        isActive={activeIds.has(item.id)}
-        onPress={handleServicePress}
-      />
-    ),
-    [activeIds, cardHeight, handleServicePress],
-  );
-
-  const keyExtractor = useCallback((item: ServiceCardData) => item.id, []);
-
   return (
-    <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
-      <FlashList
-        className="flex-1 bg-black"
-        style={{ backgroundColor: "#000000" }}
-        contentContainerStyle={contentContainerStyle}
-        data={SERVICES}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        ItemSeparatorComponent={CardSeparator}
-        contentInsetAdjustmentBehavior="automatic"
+    <View style={styles.screen}>
+      <ScrollView
+        key={scrollResetKey}
+        ref={scrollRef}
+        style={styles.scroll}
+        contentOffset={{ x: 0, y: 0 }}
+        contentContainerStyle={{
+          paddingTop: Math.max(insets.top + 18, 48),
+          paddingHorizontal: 16,
+          paddingBottom: 120,
+        }}
         showsVerticalScrollIndicator={false}
-        windowSize={6}
-        initialNumToRender={3}
-        estimatedItemSize={cardHeight + CARD_GAP}
-        onViewableItemsChanged={onViewableItemsChanged}
-        getItemLayout={(_, index) => ({
-          length: cardHeight + CARD_GAP,
-          offset: (cardHeight + CARD_GAP) * index,
-          index,
-        })}
-      />
-
-      <View
-        className="absolute left-0 right-0 top-0 z-10 px-4"
-        style={{ paddingTop: insets.top + 6 }}
-        pointerEvents="box-none"
       >
-        <BlurView
-          intensity={90}
-          tint="dark"
-          className="rounded-full border border-white/10 bg-black/50 px-3 py-2"
-          style={{ borderWidth: 0.5 }}
-        >
-          <View className="flex-row items-center justify-between">
-            <LuxPressable
-              onPress={handleOpenCredits}
-              className="flex-row items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-3 py-2"
-              style={{ borderWidth: 0.5 }}
-            >
-              <Diamond color="#ffffff" size={16} />
-              <Text className="text-xs font-semibold text-white">{credits}</Text>
-            </LuxPressable>
-            <LuxPressable
-              onPress={handleOpenSettings}
-              className="h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/60"
-              style={{ borderWidth: 0.5 }}
-            >
-              <Settings color="#ffffff" size={18} />
-            </LuxPressable>
-          </View>
-        </BlurView>
-      </View>
+        <View style={styles.topRow}>
+          <Pressable onPress={() => setIsCreditModalOpen(true)} style={({ pressed }) => [styles.creditButton, pressed ? styles.buttonPressed : null]}>
+            <Diamond color="#ffffff" size={16} />
+            <Text style={styles.creditValue}>{credits}</Text>
+          </Pressable>
+          <Pressable onPress={handleOpenSettings} style={({ pressed }) => [styles.iconButton, pressed ? styles.buttonPressed : null]}>
+            <Settings color="#ffffff" size={18} />
+          </Pressable>
+        </View>
+
+        <Text style={styles.eyebrow}>Darkor.ai Tools</Text>
+        <Text style={styles.title}>Choose a redesign flow</Text>
+        <Text style={styles.subtitle}>Pick a redesign path to open the wizard and start generating.</Text>
+
+        {showInlineLoading ? <LoadingRow message="Loading your account data..." /> : null}
+
+        <View style={styles.cardList}>
+          {SERVICES.map((item) => (
+            <View key={item.id} style={[styles.card, { minHeight: cardHeight }]}>
+              <View style={styles.cardAccent} />
+              <Text style={styles.cardTitle}>{item.title}</Text>
+              <Text style={styles.cardBody}>{item.subtitle}</Text>
+              <Pressable onPress={() => handleServicePress(item)} style={({ pressed }) => [styles.primaryButton, pressed ? styles.buttonPressed : null]}>
+                <Text style={styles.primaryButtonText}>Open wizard</Text>
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
 
       <Modal
         visible={isCreditModalOpen}
@@ -312,46 +208,184 @@ export default function HomeScreen() {
         animationType="fade"
         onRequestClose={() => setIsCreditModalOpen(false)}
       >
-        <View className="flex-1 items-center justify-center bg-black/80 px-6">
-          <MotiView
-            from={{ opacity: 0, translateY: 14, scale: 0.98 }}
-            animate={{ opacity: 1, translateY: 0, scale: 1 }}
-            transition={LUX_SPRING}
-          >
-            <BlurView
-              intensity={96}
-              tint="dark"
-              className="w-full rounded-[26px] border border-white/10 bg-black/70 p-6"
-              style={{ borderWidth: 0.5 }}
-            >
-            <LuxPressable
-              onPress={() => {
-                triggerHaptic();
-                setIsCreditModalOpen(false);
-              }}
-              className="absolute right-4 top-4 h-7 w-7 items-center justify-center rounded-full bg-white/10"
-            >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Pressable onPress={() => setIsCreditModalOpen(false)} style={({ pressed }) => [styles.modalClose, pressed ? styles.buttonPressed : null]}>
               <X color="#f4f4f5" size={16} />
-            </LuxPressable>
-            <Text className="mt-4 text-xl font-semibold text-white">Daily Credit Limit</Text>
-            <Text className="mt-3 text-sm leading-5 text-zinc-300">
+            </Pressable>
+            <Text style={styles.modalTitle}>Daily Credit Limit</Text>
+            <Text style={styles.modalText}>
               Every account receives a set amount of daily credits. When credits run out, users can wait for the daily
-              reset or choose to upgrade to a PRO plan instead anytime now!
+              reset or upgrade later.
             </Text>
-            <Text className="mt-3 text-xs text-zinc-400">{rewardCountdown}</Text>
-            <LuxPressable
-              onPress={handleUpgrade}
-              className="mt-5 items-center rounded-2xl bg-white/10 py-3"
-            >
-              <Text className="text-sm font-semibold text-white">Upgrade</Text>
-            </LuxPressable>
-            </BlurView>
-          </MotiView>
+            <Text style={styles.modalHint}>{rewardCountdown}</Text>
+          </View>
         </View>
       </Modal>
     </View>
   );
 }
 
-
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#070707",
+  },
+  scroll: {
+    flex: 1,
+    backgroundColor: "#070707",
+  },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 18,
+  },
+  creditButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "#121212",
+  },
+  iconButton: {
+    height: 42,
+    width: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "#121212",
+  },
+  creditValue: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  eyebrow: {
+    color: "#9ca3af",
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 1.4,
+  },
+  title: {
+    color: "#ffffff",
+    fontSize: 28,
+    fontWeight: "800",
+    marginTop: 8,
+  },
+  subtitle: {
+    color: "#c4c4c5",
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
+  },
+  loadingRow: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  loadingText: {
+    color: "#d4d4d8",
+    fontSize: 13,
+  },
+  cardList: {
+    marginTop: 20,
+    gap: 14,
+  },
+  card: {
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "#111111",
+    padding: 18,
+    justifyContent: "space-between",
+  },
+  cardAccent: {
+    width: 48,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: "#60a5fa",
+    marginBottom: 14,
+  },
+  cardTitle: {
+    color: "#ffffff",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  cardBody: {
+    color: "#a1a1aa",
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: 10,
+    marginBottom: 18,
+  },
+  primaryButton: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    backgroundColor: "#2563eb",
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+  },
+  primaryButtonText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  buttonPressed: {
+    opacity: 0.82,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.8)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 420,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "#111111",
+    paddingHorizontal: 20,
+    paddingTop: 44,
+    paddingBottom: 20,
+  },
+  modalClose: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+    height: 30,
+    width: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  modalTitle: {
+    color: "#ffffff",
+    fontSize: 22,
+    fontWeight: "800",
+  },
+  modalText: {
+    marginTop: 12,
+    color: "#d4d4d8",
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  modalHint: {
+    marginTop: 12,
+    color: "#9ca3af",
+    fontSize: 12,
+  },
+});
 

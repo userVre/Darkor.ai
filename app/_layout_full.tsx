@@ -274,8 +274,23 @@ function OfflineScreen({ message, onRetry }: { message: string; onRetry: () => v
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isLoaded } = useAuth();
+  const [authFallbackReady, setAuthFallbackReady] = useState(DIAGNOSTIC_BYPASS);
 
-  if (!isLoaded) {
+  useEffect(() => {
+    if (isLoaded) {
+      setAuthFallbackReady(true);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      console.warn("[Boot] AuthGate timeout - rendering app before Clerk finished loading");
+      setAuthFallbackReady(true);
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [isLoaded]);
+
+  if (!isLoaded && !authFallbackReady) {
     return <BootScreen message="Loading your account..." />;
   }
 

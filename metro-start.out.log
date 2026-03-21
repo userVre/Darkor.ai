@@ -13,3 +13,299 @@ Starting Metro Bundler
 warning: Bundler cache is empty, rebuilding (this may take a minute)
 Waiting on http://localhost:8082
 Logs for your project will appear below.
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  1.0% (1/2)
+Android node_modules\expo-router\entry.js ▓░░░░░░░░░░░░░░░ 12.0% ( 20/156)
+Android node_modules\expo-router\entry.js ▓▓▓░░░░░░░░░░░░░ 22.7% (253/531)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 36.2% ( 616/1024)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 59.4% (1135/1474)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 62.6% (1351/3509)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 62.6% (2412/3779)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.5% (4043/4158)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (4297/4297)
+Android Bundled 34427ms node_modules\expo-router\entry.js (4297 modules)
+ WARN  SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context
+ LOG  [Boot] Root layout entry loaded
+ LOG  [Boot] Root layout module loaded
+ LOG  [Env] Present variables: ["EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY", "EXPO_PUBLIC_CONVEX_URL", "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY", "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY", "EXPO_PUBLIC_API_BASE_URL"]
+ LOG  [Boot] RootLayout mounted
+ LOG  [Network] Backend status offline
+ LOG  [Boot] App ready
+ LOG  [Boot] Hiding splash
+ LOG  [Boot] Splash safety hide
+ WARN  Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+ LOG  [Boot] Auth state {"isLoaded": false, "isSignedIn": undefined, "pathname": "/"}
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `addListener` method.
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `removeListeners` method.
+ LOG  [Network] Backend status online
+ LOG  [Boot] Auth state {"isLoaded": true, "isSignedIn": false, "pathname": "/"}
+ LOG  [Boot] RevenueCat configure start
+ LOG  [Boot] ReferralGate listening for deep links
+ LOG  [Screen] Home mounted
+ LOG  [Boot] Providers mounted
+Android node_modules\react-native-purchases\dist\index.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android node_modules\react-native-purchases\dist\index.js ░░░░░░░░░░░░░░░░  1.0% (1/1)
+Android node_modules\react-native-purchases\dist\index.js ▓▓▓▓░░░░░░░░░░░░ 25.0% ( 12/111)
+Android node_modules\react-native-purchases\dist\index.js ▓▓▓▓▓▓░░░░░░░░░░ 37.8% (228/371)
+Android node_modules\react-native-purchases\dist\index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 85.7% (470/519)
+Android node_modules\react-native-purchases\dist\index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.7% (547/582)
+Android node_modules\react-native-purchases\dist\index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.7% (666/764)
+Android node_modules\react-native-purchases\dist\index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.7% (865/912)
+Android node_modules\react-native-purchases\dist\index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 93.6% (956/993)
+Android Bundled 34994ms node_modules\react-native-purchases\dist\index.js (1005 modules)
+Android node_modules\react-native-purchases\dist\index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1005/1005)
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android Bundled 399ms node_modules\expo-router\entry.js (1 module)
+ WARN  SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context
+ LOG  [Boot] Root layout entry loaded
+ LOG  [Boot] Root layout module loaded
+ LOG  [Env] Present variables: ["EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY", "EXPO_PUBLIC_CONVEX_URL", "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY", "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY", "EXPO_PUBLIC_API_BASE_URL"]
+ LOG  [Boot] RootLayout mounted
+ LOG  [Network] Backend status offline
+ LOG  [Boot] App ready
+ LOG  [Boot] Hiding splash
+ WARN  Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+ LOG  [Boot] Auth state {"isLoaded": false, "isSignedIn": undefined, "pathname": "/"}
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `addListener` method.
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `removeListeners` method.
+ LOG  [Network] Backend status online
+ LOG  [Boot] Splash safety hide
+ LOG  [Boot] Auth state {"isLoaded": true, "isSignedIn": false, "pathname": "/"}
+ LOG  [Boot] RevenueCat configure start
+ LOG  [Boot] ReferralGate listening for deep links
+ LOG  [Screen] Home mounted
+ LOG  [Boot] Providers mounted
+Android Bundled 124ms node_modules\react-native-purchases\dist\index.js (1 module)
+ LOG  [Boot] RevenueCat configured
+ LOG  [Boot] RevenueCat logOut start
+ WARN  [RevenueCat] Using a Test Store API key.
+The Test Store is for development only. Never use a Test Store API key in production. Our SDK will crash if using it in production. Test Store purchases are simulated, do not use Google Play or Amazon store, and generate no revenue. Apps submitted with a Test Store API key will be rejected during App Review.
+ LOG  [Screen] Home unmounted
+ LOG  [Screen] Home mounted
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android Bundled 279ms node_modules\expo-router\entry.js (1 module)
+ WARN  SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context
+ LOG  [Boot] Root layout entry loaded
+ LOG  [Boot] Root layout module loaded
+ LOG  [Env] Present variables: ["EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY", "EXPO_PUBLIC_CONVEX_URL", "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY", "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY", "EXPO_PUBLIC_API_BASE_URL"]
+ LOG  [Boot] RootLayout mounted
+ LOG  [Network] Backend status offline
+ LOG  [Boot] App ready
+ LOG  [Boot] Hiding splash
+ WARN  Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+ LOG  [Boot] Auth state {"isLoaded": false, "isSignedIn": undefined, "pathname": "/"}
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `addListener` method.
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `removeListeners` method.
+ LOG  [Network] Backend status online
+ LOG  [Boot] Splash safety hide
+ LOG  [Boot] Auth state {"isLoaded": true, "isSignedIn": false, "pathname": "/"}
+ LOG  [Boot] RevenueCat configure start
+ LOG  [Boot] ReferralGate listening for deep links
+ LOG  [Screen] Home mounted
+Android Bundled 150ms node_modules\react-native-purchases\dist\index.js (1 module)
+ LOG  [Boot] Providers mounted
+ LOG  [Boot] RevenueCat configured
+ LOG  [Boot] RevenueCat logOut start
+ WARN  [RevenueCat] Using a Test Store API key.
+The Test Store is for development only. Never use a Test Store API key in production. Our SDK will crash if using it in production. Test Store purchases are simulated, do not use Google Play or Amazon store, and generate no revenue. Apps submitted with a Test Store API key will be rejected during App Review.
+ LOG  [Boot] Root layout module loaded
+ LOG  [Screen] Home unmounted
+ LOG  [Boot] Auth state {"isLoaded": true, "isSignedIn": false, "pathname": "/"}
+ LOG  [Boot] RevenueCat configure start
+ LOG  [Boot] ReferralGate listening for deep links
+ LOG  [Screen] Home mounted
+ LOG  [Boot] Providers mounted
+ LOG  [Boot] RootLayout mounted
+ LOG  [Boot] Hiding splash
+ LOG  [Boot] RevenueCat configured
+ LOG  [Boot] App ready
+ LOG  [Boot] RevenueCat logOut start
+ LOG  [Boot] Splash safety hide
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android Bundled 304ms node_modules\expo-router\entry.js (1 module)
+ WARN  SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context
+ LOG  [Boot] Root layout entry loaded
+ LOG  [Boot] Root layout module loaded
+ LOG  [Env] Present variables: ["EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY", "EXPO_PUBLIC_CONVEX_URL", "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY", "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY", "EXPO_PUBLIC_API_BASE_URL"]
+ LOG  [Boot] RootLayout mounted
+ LOG  [Network] Backend status offline
+ LOG  [Boot] App ready
+ LOG  [Boot] Hiding splash
+ WARN  Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+ LOG  [Boot] Splash safety hide
+ LOG  [Boot] Auth state {"isLoaded": false, "isSignedIn": undefined, "pathname": "/"}
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `addListener` method.
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `removeListeners` method.
+ LOG  [Network] Backend status online
+ WARN  [Boot] AuthGate timeout - rendering app before Clerk finished loading
+ LOG  [Boot] ReferralGate listening for deep links
+ LOG  [Screen] Home mounted
+ LOG  [Boot] Providers mounted
+ LOG  [Boot] Auth state {"isLoaded": true, "isSignedIn": false, "pathname": "/"}
+ LOG  [Boot] RevenueCat configure start
+Android Bundled 137ms node_modules\react-native-purchases\dist\index.js (1 module)
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android Bundled 269ms node_modules\expo-router\entry.js (1 module)
+ WARN  SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context
+ LOG  [Boot] Root layout entry loaded
+ LOG  [Boot] Root layout module loaded
+ LOG  [Env] Present variables: ["EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY", "EXPO_PUBLIC_CONVEX_URL", "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY", "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY", "EXPO_PUBLIC_API_BASE_URL"]
+ LOG  [Boot] RootLayout mounted
+ LOG  [Network] Backend status offline
+ LOG  [Boot] App ready
+ LOG  [Boot] Hiding splash
+ WARN  Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+ LOG  [Boot] Auth state {"isLoaded": false, "isSignedIn": undefined, "pathname": "/"}
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `addListener` method.
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `removeListeners` method.
+ LOG  [Network] Backend status online
+ LOG  [Boot] Splash safety hide
+ WARN  [Boot] AuthGate timeout - rendering app before Clerk finished loading
+ LOG  [Boot] ReferralGate listening for deep links
+ LOG  [Screen] Home mounted
+ LOG  [Boot] Providers mounted
+ LOG  [Boot] Auth state {"isLoaded": true, "isSignedIn": false, "pathname": "/"}
+ LOG  [Boot] RevenueCat configure start
+Android Bundled 130ms node_modules\react-native-purchases\dist\index.js (1 module)
+ LOG  [Boot] RevenueCat configured
+ LOG  [Boot] RevenueCat logOut start
+ WARN  [RevenueCat] Using a Test Store API key.
+The Test Store is for development only. Never use a Test Store API key in production. Our SDK will crash if using it in production. Test Store purchases are simulated, do not use Google Play or Amazon store, and generate no revenue. Apps submitted with a Test Store API key will be rejected during App Review.
+ LOG  [Screen] Home unmounted
+ LOG  [Screen] Home mounted
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android Bundled 392ms node_modules\expo-router\entry.js (1 module)
+ WARN  SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context
+ LOG  [Boot] Root layout entry loaded
+ LOG  [Boot] Root layout module loaded
+ LOG  [Env] Present variables: ["EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY", "EXPO_PUBLIC_CONVEX_URL", "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY", "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY", "EXPO_PUBLIC_API_BASE_URL"]
+ LOG  [Boot] RootLayout mounted
+ LOG  [Network] Backend status offline
+ LOG  [Boot] App ready
+ LOG  [Boot] Hiding splash
+ WARN  Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+ LOG  [Boot] Auth state {"isLoaded": false, "isSignedIn": undefined, "pathname": "/"}
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `addListener` method.
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `removeListeners` method.
+ LOG  [Network] Backend status online
+ LOG  [Boot] Splash safety hide
+ WARN  [Boot] AuthGate timeout - rendering app before Clerk finished loading
+ LOG  [Boot] ReferralGate listening for deep links
+ LOG  [Screen] Home mounted
+ LOG  [Boot] Providers mounted
+ LOG  [Boot] Auth state {"isLoaded": true, "isSignedIn": false, "pathname": "/"}
+ LOG  [Boot] RevenueCat configure start
+Android Bundled 105ms node_modules\react-native-purchases\dist\index.js (1 module)
+ LOG  [Screen] Home unmounted
+ LOG  [Screen] Home mounted
+ LOG  [Boot] RevenueCat configured
+ LOG  [Boot] RevenueCat logOut start
+ WARN  [RevenueCat] Using a Test Store API key.
+The Test Store is for development only. Never use a Test Store API key in production. Our SDK will crash if using it in production. Test Store purchases are simulated, do not use Google Play or Amazon store, and generate no revenue. Apps submitted with a Test Store API key will be rejected during App Review.
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android Bundled 278ms node_modules\expo-router\entry.js (1 module)
+ WARN  SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context
+ LOG  [Boot] Root layout entry loaded
+ LOG  [Boot] Root layout module loaded
+ LOG  [Env] Present variables: ["EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY", "EXPO_PUBLIC_CONVEX_URL", "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY", "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY", "EXPO_PUBLIC_API_BASE_URL"]
+ LOG  [Boot] RootLayout mounted
+ LOG  [Network] Backend status offline
+ LOG  [Boot] App ready
+ LOG  [Boot] Hiding splash
+ WARN  Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+ LOG  [Boot] Auth state {"isLoaded": false, "isSignedIn": undefined, "pathname": "/"}
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `addListener` method.
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `removeListeners` method.
+ LOG  [Network] Backend status online
+ LOG  [Boot] Splash safety hide
+ WARN  [Boot] AuthGate timeout - rendering app before Clerk finished loading
+ LOG  [Boot] Auth state {"isLoaded": true, "isSignedIn": false, "pathname": "/"}
+ LOG  [Boot] RevenueCat configure start
+ LOG  [Boot] ReferralGate listening for deep links
+ LOG  [Screen] Home mounted
+ LOG  [Boot] Providers mounted
+Android Bundled 112ms node_modules\react-native-purchases\dist\index.js (1 module)
+ LOG  [Boot] RevenueCat configured
+ LOG  [Boot] RevenueCat logOut start
+ WARN  [RevenueCat] Using a Test Store API key.
+The Test Store is for development only. Never use a Test Store API key in production. Our SDK will crash if using it in production. Test Store purchases are simulated, do not use Google Play or Amazon store, and generate no revenue. Apps submitted with a Test Store API key will be rejected during App Review.
+ LOG  [Screen] Home unmounted
+ LOG  [Screen] Home mounted
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android Bundled 350ms node_modules\expo-router\entry.js (1 module)
+ WARN  SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context
+ LOG  [Boot] Root layout entry loaded
+ LOG  [Boot] Root layout module loaded
+ LOG  [Env] Present variables: ["EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY", "EXPO_PUBLIC_CONVEX_URL", "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY", "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY", "EXPO_PUBLIC_API_BASE_URL"]
+ LOG  [Boot] RootLayout mounted
+ LOG  [Network] Backend status offline
+ LOG  [Boot] App ready
+ LOG  [Boot] Hiding splash
+ WARN  Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+ LOG  [Boot] Auth state {"isLoaded": false, "isSignedIn": undefined, "pathname": "/"}
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `addListener` method.
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `removeListeners` method.
+ LOG  [Network] Backend status online
+ LOG  [Boot] Splash safety hide
+ WARN  [Boot] AuthGate timeout - rendering app before Clerk finished loading
+ LOG  [Boot] ReferralGate listening for deep links
+ LOG  [Screen] Home mounted
+ LOG  [Boot] Providers mounted
+ LOG  [Boot] Auth state {"isLoaded": true, "isSignedIn": false, "pathname": "/"}
+ LOG  [Boot] RevenueCat configure start
+Android Bundled 103ms node_modules\react-native-purchases\dist\index.js (1 module)
+ LOG  [Boot] RevenueCat configured
+ LOG  [Boot] RevenueCat logOut start
+ WARN  [RevenueCat] Using a Test Store API key.
+The Test Store is for development only. Never use a Test Store API key in production. Our SDK will crash if using it in production. Test Store purchases are simulated, do not use Google Play or Amazon store, and generate no revenue. Apps submitted with a Test Store API key will be rejected during App Review.
+ LOG  [Screen] Home unmounted
+ LOG  [Screen] Home mounted
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android Bundled 266ms node_modules\expo-router\entry.js (1 module)
+ WARN  SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context
+ LOG  [Boot] Root layout entry loaded
+ LOG  [Boot] Root layout module loaded
+ LOG  [Env] Present variables: ["EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY", "EXPO_PUBLIC_CONVEX_URL", "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY", "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY", "EXPO_PUBLIC_API_BASE_URL"]
+ LOG  [Boot] RootLayout mounted
+ LOG  [Network] Backend status offline
+ LOG  [Boot] App ready
+ LOG  [Boot] Hiding splash
+ WARN  Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+ LOG  [Boot] Auth state {"isLoaded": false, "isSignedIn": undefined, "pathname": "/"}
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `addListener` method.
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `removeListeners` method.
+ LOG  [Network] Backend status online
+ LOG  [Boot] Splash safety hide
+ WARN  [Boot] AuthGate timeout - rendering app before Clerk finished loading
+ LOG  [Boot] Auth state {"isLoaded": true, "isSignedIn": false, "pathname": "/"}
+ LOG  [Boot] RevenueCat configure start
+ LOG  [Boot] ReferralGate listening for deep links
+ LOG  [Screen] Home mounted
+ LOG  [Boot] Providers mounted
+Android Bundled 93ms node_modules\react-native-purchases\dist\index.js (1 module)
+ LOG  [Boot] RevenueCat configured
+ LOG  [Boot] RevenueCat logOut start
+ WARN  [RevenueCat] Using a Test Store API key.
+The Test Store is for development only. Never use a Test Store API key in production. Our SDK will crash if using it in production. Test Store purchases are simulated, do not use Google Play or Amazon store, and generate no revenue. Apps submitted with a Test Store API key will be rejected during App Review.
+ LOG  [Screen] Home unmounted
+ LOG  [Screen] Home mounted
+ LOG  [Screen] Home unmounted
+ LOG  [Screen] Home mounted
+ LOG  [Screen] Workspace mounted
+ LOG  [Boot] Auth state {"isLoaded": true, "isSignedIn": false, "pathname": "/workspace"}
+ LOG  [Screen] Home mounted
+ LOG  [Boot] Auth state {"isLoaded": true, "isSignedIn": false, "pathname": "/"}
+ LOG  [Screen] Home unmounted
+ LOG  [Screen] Home unmounted
+ LOG  [Screen] Workspace unmounted
+ LOG  [Network] Backend status offline
+ LOG  [Boot] Auth state {"isLoaded": true, "isSignedIn": false, "pathname": "/"}
+ LOG  [Boot] RevenueCat configure start
+ LOG  [Boot] ReferralGate listening for deep links
+ LOG  [Screen] Home mounted
+ LOG  [Boot] Providers mounted
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `addListener` method.
+ WARN  `new NativeEventEmitter()` was called with a non-null argument without the required `removeListeners` method.
+ LOG  [Network] Backend status online
+ LOG  [Boot] RevenueCat configured
+ LOG  [Boot] RevenueCat logOut start
