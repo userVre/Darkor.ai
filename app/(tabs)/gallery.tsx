@@ -1,7 +1,7 @@
-﻿import { useAuth } from "@clerk/expo";
+import { useAuth } from "@clerk/expo";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
-import { skip, useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -157,7 +157,7 @@ const GenerationCard = memo(function GenerationCard({
           >
             <Text className="text-[11px] font-semibold text-zinc-200">{item.style ?? "Darkor.ai Render"}</Text>
             <Text className="mt-1 text-[10px] text-zinc-400">
-              {projectLabel ?? "Unassigned"} • {item.prompt ?? "AI redesign"}
+              {projectLabel ?? "Unassigned"} � {item.prompt ?? "AI redesign"}
             </Text>
           </BlurView>
         </View>
@@ -179,12 +179,12 @@ export default function GalleryScreen() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  const me = useQuery("users:me" as any, isSignedIn ? {} : skip) as MeResponse | null | undefined;
+  const me = useQuery("users:me" as any, isSignedIn ? {} : "skip") as MeResponse | null | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
-  const archive = useQuery("generations:getUserArchive" as any, isSignedIn ? {} : skip) as
+  const archive = useQuery("generations:getUserArchive" as any, isSignedIn ? {} : "skip") as
     | GenerationItem[]
     | undefined;
-  const projects = useQuery("projects:list" as any, isSignedIn ? {} : skip) as ProjectItem[] | undefined;
+  const projects = useQuery("projects:list" as any, isSignedIn ? {} : "skip") as ProjectItem[] | undefined;
   const toggleFavorite = useMutation("generations:toggleFavorite" as any);
   const setProject = useMutation("generations:setProject" as any);
   const createProject = useMutation("projects:create" as any);
@@ -676,7 +676,7 @@ export default function GalleryScreen() {
               >
                 <Text className="text-sm font-semibold text-white">{selectedItem.style}</Text>
                 <Text className="mt-1 text-xs text-zinc-400">
-                  {selectedItem.title} · {selectedItem.category}
+                  {selectedItem.title} � {selectedItem.category}
                 </Text>
               </BlurView>
             </View>
@@ -689,7 +689,7 @@ export default function GalleryScreen() {
               end={{ x: 1, y: 1 }}
               style={{ borderRadius: 22, paddingVertical: 16, alignItems: "center" }}
             >
-              <Text className="text-sm font-semibold text-white">Use this Style ✨</Text>
+              <Text className="text-sm font-semibold text-white">Use this Style ?</Text>
             </LinearGradient>
           </LuxPressable>
         </View>
@@ -823,5 +823,6 @@ export default function GalleryScreen() {
     </View>
   );
 }
+
 
 

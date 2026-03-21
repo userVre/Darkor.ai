@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/expo";
-import { skip, useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
@@ -176,7 +176,7 @@ export default function HomeScreen() {
 
   const me = useQuery(
     "users:me" as any,
-    diagnostic ? skip : isSignedIn ? {} : skip,
+    diagnostic ? "skip" : isSignedIn ? {} : "skip",
   ) as MeResponse | null | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
 
@@ -352,4 +352,6 @@ export default function HomeScreen() {
     </View>
   );
 }
+
+
 

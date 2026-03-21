@@ -1,17 +1,16 @@
 import "react-native-gesture-handler";
 import "react-native-reanimated";
 
-import { Stack } from "expo-router";
+import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
+import RootLayoutDiagnostic from "./_layout_diagnostic";
 
-console.log("[Boot] Safe root layout loaded");
+console.log("[Boot] Root layout entry loaded");
 
 export default function RootLayout() {
-  return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: "#000" },
-      }}
-    />
-  );
+  if (DIAGNOSTIC_BYPASS) {
+    return <RootLayoutDiagnostic />;
+  }
+
+  const RootLayoutFull = require("./_layout_full").default;
+  return <RootLayoutFull />;
 }

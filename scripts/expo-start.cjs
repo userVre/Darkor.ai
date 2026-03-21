@@ -28,6 +28,7 @@ console.log(`[dev] Expo dev server: ${serverUrl} (adb reverse ${adbOk ? "ok" : "
 
 // Force dev client + Metro to use the emulator-friendly host instead of LAN IPs.
 process.env.EXPO_DEV_CLIENT_SERVER_URL = serverUrl;
+process.env.EXPO_PACKAGER_PROXY_URL = serverUrl;
 process.env.EXPO_PACKAGER_HOSTNAME = host;
 process.env.REACT_NATIVE_PACKAGER_HOSTNAME = host;
 

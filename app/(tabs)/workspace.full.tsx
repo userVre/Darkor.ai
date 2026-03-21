@@ -1,12 +1,12 @@
 import { useAuth } from "@clerk/expo";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { skip, useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Asset } from "expo-asset";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -265,7 +265,7 @@ export default function WorkspaceScreen() {
   const { isSignedIn, getToken } = useAuth();
   const diagnostic = DIAGNOSTIC_BYPASS;
   const effectiveSignedIn = diagnostic ? true : isSignedIn;
-  const { height } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { draft, setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle } =
     useWorkspaceDraft();
@@ -273,7 +273,7 @@ export default function WorkspaceScreen() {
 
   const me = useQuery(
     "users:me" as any,
-    diagnostic ? skip : isSignedIn ? {} : skip,
+    diagnostic ? "skip" : isSignedIn ? {} : "skip",
   ) as MeResponse | null | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
   const trackGeneration = useMutation("users:trackGeneration" as any);
@@ -1771,6 +1771,9 @@ export default function WorkspaceScreen() {
     </View>
   );
 }
+
+
+
 
 
 

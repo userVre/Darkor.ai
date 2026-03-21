@@ -1,12 +1,12 @@
 import { useAuth, useUser } from "@clerk/expo";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { skip, useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Linking from "expo-linking";
 import * as Sharing from "expo-sharing";
 import { useEffect, useMemo, useRef } from "react";
@@ -72,7 +72,7 @@ export default function SettingsScreen() {
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
   const { height } = useWindowDimensions();
-  const me = useQuery("users:me" as any, isSignedIn ? {} : skip) as MeResponse | null | undefined;
+  const me = useQuery("users:me" as any, isSignedIn ? {} : "skip") as MeResponse | null | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
   const deleteAccountData = useMutation("users:deleteAccountData" as any);
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
@@ -451,6 +451,8 @@ export default function SettingsScreen() {
     </View>
   );
 }
+
+
 
 
 

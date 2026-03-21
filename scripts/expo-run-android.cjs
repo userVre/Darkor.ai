@@ -26,6 +26,7 @@ if (!host) {
 
 console.log(`[dev] Android dev server: http://${host}:${port} (adb reverse ${adbOk ? "ok" : "off"})`);
 process.env.EXPO_DEV_CLIENT_SERVER_URL = `http://${host}:${port}`;
+process.env.EXPO_PACKAGER_PROXY_URL = `http://${host}:${port}`;
 process.env.EXPO_PACKAGER_HOSTNAME = host;
 process.env.REACT_NATIVE_PACKAGER_HOSTNAME = host;
 process.env.EXPO_ANDROID_ARCHITECTURES = "x86_64";

@@ -280,7 +280,8 @@ export default function RootLayoutFull() {
   const [appReady, setAppReady] = useState(false);
   const envReport = useMemo(() => getEnvReport(), []);
   const clerkKey = envReport.values.clerkPublishableKey;
-  const backendUrl = envReport.values.apiBaseUrl ?? envReport.values.convexUrl;
+  // The generation API can be local-only; do not block launch on it.
+  const backendUrl = envReport.values.convexUrl;
   const revenueCatKey = getRevenueCatApiKey();
 
   useEffect(() => {
@@ -368,3 +369,5 @@ export default function RootLayoutFull() {
     </GestureHandlerRootView>
   );
 }
+
+
