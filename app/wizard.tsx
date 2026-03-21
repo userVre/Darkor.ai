@@ -6,6 +6,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Linking,
   Pressable,
@@ -131,6 +132,7 @@ export default function WizardScreen() {
   const [selectedPaint, setSelectedPaint] = useState<string | null>(null);
   const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
   const [isSourceSheetVisible, setIsSourceSheetVisible] = useState(false);
+  const [isUploadingPreview, setIsUploadingPreview] = useState(false);
 
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = useMemo(() => {
@@ -158,6 +160,14 @@ export default function WizardScreen() {
     return undefined;
   }, [workflowStep]);
 
+  useEffect(() => {
+    if (!selectedImage || !isUploadingPreview) {
+      return undefined;
+    }
+    const timer = setTimeout(() => setIsUploadingPreview(false), 950);
+    return () => clearTimeout(timer);
+  }, [isUploadingPreview, selectedImage]);
+
   const closeSourceSheet = () => setIsSourceSheetVisible(false);
   const openSourceSheet = () => setIsSourceSheetVisible(true);
 
@@ -174,6 +184,7 @@ export default function WizardScreen() {
 
   const applyPickedUri = (uri?: string | null) => {
     if (!uri) return;
+    setIsUploadingPreview(true);
     setSelectedImage(uri);
   };
 
@@ -190,10 +201,10 @@ export default function WizardScreen() {
     closeSourceSheet();
   };
 
-  const openPicker = async (source: "camera" | "gallery") => {
+  const pickImage = async (useCamera: boolean) => {
     closeSourceSheet();
 
-    if (source === "camera") {
+    if (useCamera) {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
         showPermissionAlert("camera");
@@ -237,10 +248,11 @@ export default function WizardScreen() {
 
   const handleSelectExample = (uri: string) => {
     closeSourceSheet();
-    setSelectedImage(uri);
+    applyPickedUri(uri);
   };
 
   const handleClearSelectedImage = () => {
+    setIsUploadingPreview(false);
     setSelectedImage(null);
   };
 
@@ -311,6 +323,145 @@ export default function WizardScreen() {
 
   const label = SERVICE_LABELS[serviceType] ?? "Redesign";
   const previewImage = compareBefore && selectedImage ? { uri: selectedImage } : mockResult;
+  const isStepOneReady = Boolean(selectedImage);
+
+  if (workflowStep === 0) {
+    return (
+      <View style={styles.stepOneScreen}>
+        <ScrollView
+          style={styles.stepOneScroll}
+          contentContainerStyle={styles.stepOneContent}
+          contentInsetAdjustmentBehavior="automatic"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.stepOneHeaderRow}>
+            <Text style={styles.stepCounter}>Step 1 / 4</Text>
+            <LuxPressable onPress={() => router.back()} style={[styles.pointer, styles.stepCloseButton]}>
+              <X color="#111111" size={24} strokeWidth={2.2} />
+            </LuxPressable>
+          </View>
+
+          <View style={styles.progressTrackRow}>
+            {[0, 1, 2, 3].map((index) => (
+              <View key={index} style={[styles.progressTrack, index === 0 ? styles.progressTrackActive : null]} />
+            ))}
+          </View>
+
+          <Text style={styles.stepOneTitle}>Add a Photo</Text>
+
+          <MotiView
+            from={{ opacity: 0, translateY: 18 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={LUX_SPRING}
+            style={styles.stepOneCardWrap}
+          >
+            {selectedImage ? (
+              <View style={styles.selectedImageCard}>
+                <Image source={{ uri: selectedImage }} style={styles.selectedImage} contentFit="cover" transition={220} />
+                <LuxPressable onPress={handleClearSelectedImage} style={[styles.pointer, styles.selectedImageClose]}>
+                  <X color="#ffffff" size={18} strokeWidth={2.4} />
+                </LuxPressable>
+                {isUploadingPreview ? (
+                  <MotiView
+                    animate={{ opacity: [0.5, 0.9, 0.5] }}
+                    transition={{ duration: 1100, loop: true }}
+                    style={styles.uploadingOverlay}
+                  >
+                    <ActivityIndicator size="small" color="#ffffff" />
+                    <Text style={styles.uploadingText}>Uploading...</Text>
+                  </MotiView>
+                ) : null}
+              </View>
+            ) : (
+              <LuxPressable onPress={handlePickPhoto} style={[styles.pointer, styles.emptyUploadCard]}>
+                <View style={styles.plusButton}>
+                  <Plus color="#ffffff" size={34} strokeWidth={2.3} />
+                </View>
+                <Text style={styles.emptyUploadTitle}>Start Redesigning{"\n"}Redesign and beautify your room</Text>
+              </LuxPressable>
+            )}
+          </MotiView>
+
+          <View style={styles.exampleSection}>
+            <Text style={styles.exampleHeading}>Example Photos</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.exampleRow}>
+              {EXAMPLE_PHOTOS.map((photo) => (
+                <LuxPressable
+                  key={photo.id}
+                  onPress={() => handleSelectExample(photo.uri)}
+                  style={[
+                    styles.pointer,
+                    styles.exampleThumbCard,
+                    selectedImage === photo.uri ? styles.exampleThumbCardActive : null,
+                  ]}
+                >
+                  <Image source={{ uri: photo.uri }} style={styles.exampleThumbImage} contentFit="cover" transition={180} />
+                </LuxPressable>
+              ))}
+            </ScrollView>
+          </View>
+        </ScrollView>
+
+        <View style={styles.stepOneFooter}>
+          <LuxPressable onPress={() => isStepOneReady && setWorkflowStep(1)} disabled={!isStepOneReady} style={styles.pointer}>
+            {isStepOneReady ? (
+              <LinearGradient
+                colors={["#ff3b30", "#d946ef"]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={styles.stepOneContinueActive}
+              >
+                <Text style={styles.stepOneContinueText}>Continue</Text>
+              </LinearGradient>
+            ) : (
+              <View style={styles.stepOneContinueDisabled}>
+                <Text style={styles.stepOneContinueDisabledText}>Continue</Text>
+              </View>
+            )}
+          </LuxPressable>
+        </View>
+
+        <AnimatePresence>
+          {isSourceSheetVisible ? (
+            <MotiView key="step-one-source-sheet" from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.sheetRoot}>
+              <Pressable onPress={closeSourceSheet} style={styles.sheetBackdrop} />
+              <MotiView
+                from={{ translateY: 48, opacity: 0 }}
+                animate={{ translateY: 0, opacity: 1 }}
+                exit={{ translateY: 48, opacity: 0 }}
+                transition={LUX_SPRING}
+                style={styles.sheetCard}
+              >
+                <View style={styles.sheetHandle} />
+                <Text style={styles.sheetTitle}>Choose Photo Source</Text>
+                <LuxPressable onPress={() => void pickImage(true)} style={[styles.sheetAction, styles.pointer]}>
+                  <View style={styles.sheetActionIcon}>
+                    <Camera color="#111111" size={18} />
+                  </View>
+                  <View className="flex-1">
+                    <Text style={styles.sheetActionTitle}>Take Photo</Text>
+                    <Text style={styles.sheetActionBody}>Capture a fresh room photo with your camera.</Text>
+                  </View>
+                </LuxPressable>
+                <LuxPressable onPress={() => void pickImage(false)} style={[styles.sheetAction, styles.pointer]}>
+                  <View style={styles.sheetActionIcon}>
+                    <ImageIcon color="#111111" size={18} />
+                  </View>
+                  <View className="flex-1">
+                    <Text style={styles.sheetActionTitle}>Choose from Library</Text>
+                    <Text style={styles.sheetActionBody}>Import an existing photo from your gallery.</Text>
+                  </View>
+                </LuxPressable>
+                <LuxPressable onPress={closeSourceSheet} style={[styles.pointer, styles.sheetCancelButton]}>
+                  <Text style={styles.sheetCancelText}>Cancel</Text>
+                </LuxPressable>
+              </MotiView>
+            </MotiView>
+          ) : null}
+        </AnimatePresence>
+      </View>
+    );
+  }
 
   if (workflowStep === 4) {
     return (
@@ -672,7 +823,7 @@ export default function WizardScreen() {
                 Choose how you want to bring your space into Darkor.ai.
               </Text>
 
-              <LuxPressable onPress={() => void openPicker("camera")} style={[styles.sheetAction, styles.pointer]}>
+              <LuxPressable onPress={() => void pickImage(true)} style={[styles.sheetAction, styles.pointer]}>
                 <View style={styles.sheetActionIcon}>
                   <Camera color="#ffffff" size={18} />
                 </View>
@@ -682,7 +833,7 @@ export default function WizardScreen() {
                 </View>
               </LuxPressable>
 
-              <LuxPressable onPress={() => void openPicker("gallery")} style={[styles.sheetAction, styles.pointer]}>
+              <LuxPressable onPress={() => void pickImage(false)} style={[styles.sheetAction, styles.pointer]}>
                 <View style={styles.sheetActionIcon}>
                   <ImageIcon color="#ffffff" size={18} />
                 </View>
@@ -709,6 +860,190 @@ const styles = StyleSheet.create({
   },
   pointer: {
     cursor: "pointer",
+  },
+  stepOneScreen: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+  },
+  stepOneScroll: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+  },
+  stepOneContent: {
+    paddingHorizontal: 24,
+    paddingTop: 26,
+    paddingBottom: 180,
+  },
+  stepOneHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  stepCounter: {
+    color: "#111111",
+    fontSize: 24,
+    fontWeight: "700",
+  },
+  stepCloseButton: {
+    position: "absolute",
+    right: 0,
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  progressTrackRow: {
+    marginTop: 28,
+    flexDirection: "row",
+    gap: 14,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "#d4d4d8",
+  },
+  progressTrackActive: {
+    backgroundColor: "#111111",
+  },
+  stepOneTitle: {
+    marginTop: 42,
+    color: "#111111",
+    fontSize: 30,
+    fontWeight: "700",
+  },
+  stepOneCardWrap: {
+    marginTop: 28,
+  },
+  emptyUploadCard: {
+    minHeight: 458,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: "#3f3f46",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 28,
+    backgroundColor: "#ffffff",
+  },
+  plusButton: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: "#111111",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyUploadTitle: {
+    marginTop: 24,
+    color: "#111111",
+    fontSize: 24,
+    lineHeight: 32,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  selectedImageCard: {
+    height: 458,
+    borderRadius: 28,
+    overflow: "hidden",
+    position: "relative",
+    backgroundColor: "#f4f4f5",
+  },
+  selectedImage: {
+    width: "100%",
+    height: "100%",
+  },
+  selectedImageClose: {
+    position: "absolute",
+    top: 18,
+    right: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(17, 17, 17, 0.42)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  uploadingOverlay: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    bottom: 16,
+    borderRadius: 18,
+    backgroundColor: "rgba(17, 17, 17, 0.52)",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  uploadingText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  exampleSection: {
+    marginTop: 28,
+  },
+  exampleHeading: {
+    color: "#111111",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  exampleRow: {
+    gap: 14,
+    paddingTop: 16,
+    paddingRight: 24,
+  },
+  exampleThumbCard: {
+    width: 122,
+    height: 122,
+    borderRadius: 22,
+    overflow: "hidden",
+    backgroundColor: "#f4f4f5",
+  },
+  exampleThumbCardActive: {
+    borderWidth: 3,
+    borderColor: "#d946ef",
+  },
+  exampleThumbImage: {
+    width: "100%",
+    height: "100%",
+  },
+  stepOneFooter: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 28,
+    backgroundColor: "rgba(255, 255, 255, 0.96)",
+  },
+  stepOneContinueActive: {
+    minHeight: 64,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepOneContinueText: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  stepOneContinueDisabled: {
+    minHeight: 64,
+    borderRadius: 22,
+    backgroundColor: "#e4e4e7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepOneContinueDisabledText: {
+    color: "#71717a",
+    fontSize: 18,
+    fontWeight: "700",
   },
   uploadCard: {
     minHeight: 312,
@@ -852,8 +1187,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
-    backgroundColor: "#09090b",
+    borderColor: "#e4e4e7",
+    backgroundColor: "#ffffff",
     paddingHorizontal: 18,
     paddingTop: 12,
     paddingBottom: 18,
@@ -863,7 +1198,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 5,
     borderRadius: 999,
-    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    backgroundColor: "rgba(17, 17, 17, 0.18)",
+  },
+  sheetTitle: {
+    marginTop: 14,
+    color: "#111111",
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
   },
   sheetAction: {
     marginTop: 14,
@@ -872,10 +1214,21 @@ const styles = StyleSheet.create({
     gap: 14,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    backgroundColor: "rgba(255, 255, 255, 0.04)",
+    borderColor: "#e4e4e7",
+    backgroundColor: "#fafafa",
     paddingHorizontal: 14,
     paddingVertical: 14,
+  },
+  sheetActionTitle: {
+    color: "#111111",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  sheetActionBody: {
+    marginTop: 2,
+    color: "#71717a",
+    fontSize: 13,
+    lineHeight: 18,
   },
   sheetActionIcon: {
     width: 42,
@@ -883,7 +1236,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 21,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: "#f4f4f5",
+  },
+  sheetCancelButton: {
+    marginTop: 14,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    backgroundColor: "#111111",
+  },
+  sheetCancelText: {
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "700",
   },
   processingRoot: {
     flex: 1,
