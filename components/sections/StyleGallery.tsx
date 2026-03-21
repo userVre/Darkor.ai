@@ -5,179 +5,154 @@ import { Pressable, Text, View } from "react-native";
 type StyleItem = {
   id: string;
   title: string;
-  emoji: string;
   description: string;
-  image: string;
+  image: number;
 };
 
 const STYLES_GALLERY: StyleItem[] = [
   {
     id: "modern",
     title: "Modern",
-    emoji: "??",
-    description: "Clean architectural lines with premium materials.",
-    image: "/media/style-modern.jpg",
-  },
-  {
-    id: "minimalist",
-    title: "Minimalist",
-    emoji: "??",
-    description: "Simple forms, calm palette, and uncluttered harmony.",
-    image: "/media/style-minimalist.jpg",
-  },
-  {
-    id: "scandinavian",
-    title: "Scandinavian",
-    emoji: "??",
-    description: "Soft light, natural textures, and cozy balance.",
-    image: "/media/style-scandinavian.jpg",
-  },
-  {
-    id: "industrial",
-    title: "Industrial",
-    emoji: "??",
-    description: "Raw finishes, steel accents, and urban edge.",
-    image: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "zen",
-    title: "Zen",
-    emoji: "??",
-    description: "Serene composition and mindful spatial flow.",
-    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "coastal",
-    title: "Coastal",
-    emoji: "??",
-    description: "Bright, airy rooms with relaxed seaside mood.",
-    image: "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "art-deco",
-    title: "Art Deco",
-    emoji: "?",
-    description: "Geometric glamour and high-contrast sophistication.",
-    image: "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "tropical",
-    title: "Tropical",
-    emoji: "??",
-    description: "Lush foliage, warm tones, and resort elegance.",
-    image: "https://images.unsplash.com/photo-1600573472592-401b489a3cdc?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "midcentury",
-    title: "Midcentury",
-    emoji: "??",
-    description: "Retro silhouettes with timeless modern warmth.",
-    image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "bohemian",
-    title: "Bohemian",
-    emoji: "??",
-    description: "Layered textiles, earthy colors, and creative spirit.",
-    image: "https://images.unsplash.com/photo-1600121848594-d8644e57abab?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "farmhouse",
-    title: "Farmhouse",
-    emoji: "??",
-    description: "Rustic charm with modern comfort and warmth.",
-    image: "https://images.unsplash.com/photo-1565183928294-7063f23ce0f8?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "japanese",
-    title: "Japanese",
-    emoji: "??",
-    description: "Natural simplicity with refined minimal detail.",
-    image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "biophilic",
-    title: "Biophilic",
-    emoji: "??",
-    description: "Nature-first interiors with organic rhythm.",
-    image: "https://images.unsplash.com/photo-1617103996702-96ff29b1c467?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "retro",
-    title: "Retro",
-    emoji: "??",
-    description: "Playful vintage personality and nostalgic color.",
-    image: "https://images.unsplash.com/photo-1493666438817-866a91353ca9?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "glam",
-    title: "Glam",
-    emoji: "??",
-    description: "Polished finishes, mirrors, and statement luxe.",
-    image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "rustic",
-    title: "Rustic",
-    emoji: "??",
-    description: "Natural wood textures and cozy cabin atmosphere.",
-    image: "https://images.unsplash.com/photo-1600566752734-8c2e0d8f5a76?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "mediterranean",
-    title: "Mediterranean",
-    emoji: "??",
-    description: "Sun-washed surfaces and earthy coastal warmth.",
-    image: "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "cyberpunk",
-    title: "Cyberpunk",
-    emoji: "??",
-    description: "Neon accents and futuristic cinematic mood.",
-    image: "https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: "contemporary",
-    title: "Contemporary",
-    emoji: "??",
-    description: "Current trends with elegant modern restraint.",
-    image: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=80",
+    description: "Clean architectural lines with a polished, airy palette.",
+    image: require("../../assets/media/styles/style-modern.jpg"),
   },
   {
     id: "luxury",
     title: "Luxury",
-    emoji: "??",
-    description: "High-end finishes and bespoke statement pieces.",
-    image: "https://images.unsplash.com/photo-1617098900591-3f90928e8c54?auto=format&fit=crop&w=1200&q=80",
+    description: "Statement chandeliers, marble drama, and bespoke warmth.",
+    image: require("../../assets/media/styles/style-luxury.jpg"),
   },
   {
     id: "japandi",
     title: "Japandi",
-    emoji: "??",
-    description: "Nordic function and Japanese calm in one.",
-    image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80",
+    description: "Soft natural calm with minimal Nordic restraint.",
+    image: require("../../assets/media/styles/style-japandi.jpg"),
   },
   {
-    id: "classic",
-    title: "Classic",
-    emoji: "???",
-    description: "Symmetry, heritage details, and timeless poise.",
-    image: "https://images.unsplash.com/photo-1616593969747-4797dc75033e?auto=format&fit=crop&w=1200&q=80",
+    id: "cyberpunk",
+    title: "Cyberpunk",
+    description: "Futuristic neon ambiance with cinematic contrast.",
+    image: require("../../assets/media/styles/style-cyberpunk.jpg"),
   },
   {
-    id: "eclectic",
-    title: "Eclectic",
-    emoji: "??",
-    description: "Curated contrast with bold character.",
-    image: "https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?auto=format&fit=crop&w=1200&q=80",
+    id: "tropical",
+    title: "Tropical",
+    description: "Lush greenery and resort-style sunshine energy.",
+    image: require("../../assets/media/styles/style-tropical.jpg"),
   },
   {
-    id: "wabi-sabi",
-    title: "Wabi-Sabi",
-    emoji: "??",
-    description: "Organic imperfection and quiet authenticity.",
-    image: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb3?auto=format&fit=crop&w=1200&q=80",
+    id: "minimalist",
+    title: "Minimalist",
+    description: "Quiet forms, negative space, and effortless clarity.",
+    image: require("../../assets/media/styles/style-minimalist.jpg"),
+  },
+  {
+    id: "scandinavian",
+    title: "Scandinavian",
+    description: "Warm woods, bright light, and soft layered comfort.",
+    image: require("../../assets/media/styles/style-scandinavian.jpg"),
+  },
+  {
+    id: "bohemian",
+    title: "Bohemian",
+    description: "Relaxed eclectic styling with earthy texture and soul.",
+    image: require("../../assets/media/styles/style-bohemian.jpg"),
+  },
+  {
+    id: "midcentury",
+    title: "Midcentury",
+    description: "Retro silhouettes balanced with timeless modern flow.",
+    image: require("../../assets/media/styles/style-midcentury.jpg"),
+  },
+  {
+    id: "art-deco",
+    title: "Art Deco",
+    description: "Geometric glamour, rich finishes, and layered elegance.",
+    image: require("../../assets/media/styles/style-art-deco.jpg"),
+  },
+  {
+    id: "coastal",
+    title: "Coastal",
+    description: "Fresh seaside calm with bright textures and light.",
+    image: require("../../assets/media/styles/style-coastal.jpg"),
+  },
+  {
+    id: "rustic",
+    title: "Rustic",
+    description: "Natural stone, timber warmth, and a grounded mood.",
+    image: require("../../assets/media/styles/style-rustic.jpg"),
+  },
+  {
+    id: "vintage",
+    title: "Vintage",
+    description: "Collected charm with classic furniture and moody glow.",
+    image: require("../../assets/media/styles/style-vintage.jpg"),
+  },
+  {
+    id: "mediterranean",
+    title: "Mediterranean",
+    description: "Sun-washed elegance with warm earth tones and arches.",
+    image: require("../../assets/media/styles/style-mediterranean.jpg"),
+  },
+  {
+    id: "glam",
+    title: "Glam",
+    description: "Polished sparkle, plush seating, and upscale softness.",
+    image: require("../../assets/media/styles/style-glam.jpg"),
+  },
+  {
+    id: "coastal-retreat",
+    title: "Coastal Retreat",
+    description: "A softer coastal variation with lounge-forward comfort.",
+    image: require("../../assets/media/styles/style-coastal-alt.jpg"),
+  },
+  {
+    id: "rustic-manor",
+    title: "Rustic Manor",
+    description: "Traditional hearth energy with richer, heritage details.",
+    image: require("../../assets/media/styles/style-rustic-alt.jpg"),
+  },
+  {
+    id: "hollywood-regency",
+    title: "Hollywood Regency",
+    description: "High-contrast drama with glamorous old-school polish.",
+    image: require("../../assets/media/styles/style-hollywood-regency.jpg"),
+  },
+  {
+    id: "neo-classic",
+    title: "Neo-Classic",
+    description: "Symmetry, ornament, and an elevated tailored calm.",
+    image: require("../../assets/media/styles/style-neo-classic.jpg"),
+  },
+  {
+    id: "shabby-chic",
+    title: "Shabby Chic",
+    description: "Light-toned romance with vintage softness and ease.",
+    image: require("../../assets/media/styles/style-shabby-chic.jpg"),
+  },
+  {
+    id: "french-country",
+    title: "French Country",
+    description: "Refined countryside warmth with timeless cozy detail.",
+    image: require("../../assets/media/styles/style-french-country.jpg"),
+  },
+  {
+    id: "brutalist",
+    title: "Brutalist",
+    description: "Raw concrete texture shaped into calm sculptural space.",
+    image: require("../../assets/media/styles/style-brutalist.jpg"),
+  },
+  {
+    id: "hollywood-regency-noir",
+    title: "Hollywood Regency Noir",
+    description: "A darker regency take with richer contrast and edge.",
+    image: require("../../assets/media/styles/style-hollywood-regency-alt.jpg"),
+  },
+  {
+    id: "art-nouveau",
+    title: "Art Nouveau",
+    description: "Curved classicism and decorative flourishes with warmth.",
+    image: require("../../assets/media/styles/style-art-nouveau.jpg"),
   },
 ];
 
@@ -194,7 +169,8 @@ export default function StyleGallery() {
       <View className="mb-8 items-center">
         <Text className="text-center text-3xl font-black text-white">Explore 24 Signature Styles</Text>
         <Text className="mt-3 text-center text-zinc-400">
-          Create premium interiors in seconds across 24 distinct looks, from Industrial and Zen to Glam and Cyberpunk.
+          Browse Darkor.ai's premium collage-driven style library, from Luxury and Japandi to Brutalist and Art
+          Nouveau.
         </Text>
       </View>
 
@@ -204,7 +180,7 @@ export default function StyleGallery() {
             key={style.id}
             className="mb-4 w-[48%] overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/60"
           >
-            <Image source={{ uri: style.image }} style={{ height: 128, width: "100%" }} contentFit="cover" />
+            <Image source={style.image} style={{ height: 128, width: "100%" }} contentFit="cover" />
             <View className="p-4">
               <Text className="text-base font-bold text-white">{style.title}</Text>
               <Text className="mt-1 text-sm text-zinc-400">{style.description}</Text>

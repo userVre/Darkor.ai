@@ -12,25 +12,74 @@ export type DiscoverItem = {
 
 const HEIGHTS = [220, 280, 260, 320, 240, 300];
 
-const RAW_ITEMS = [
-  { title: "Living Room", style: "Modern Luxury", category: "Home", query: "living-room,interior,modern" },
-  { title: "Kitchen", style: "Minimalist", category: "Home", query: "kitchen,interior,minimal" },
-  { title: "Dining Room", style: "Scandinavian", category: "Home", query: "dining-room,scandinavian" },
-  { title: "Bedroom", style: "Japandi Calm", category: "Home", query: "bedroom,japandi" },
-  { title: "Home Office", style: "Industrial Loft", category: "Home", query: "home-office,industrial" },
-  { title: "Bathroom", style: "Spa Zen", category: "Home", query: "bathroom,zen" },
-  { title: "Nursery", style: "Soft Pastel", category: "Home", query: "nursery,interior,pastel" },
-  { title: "Home Theater", style: "Cinematic", category: "Home", query: "home-theater,interior" },
-  { title: "Gaming Room", style: "Cyberpunk", category: "Home", query: "gaming-room,cyberpunk" },
-  { title: "Master Suite", style: "Hotel Luxe", category: "Home", query: "master-bedroom,luxury" },
-  { title: "Study Room", style: "Classic", category: "Home", query: "study-room,classic" },
-  { title: "Hall", style: "Art Deco", category: "Home", query: "hallway,art-deco" },
-  { title: "Living Room", style: "Coastal Breeze", category: "Home", query: "living-room,coastal" },
-  { title: "Kitchen", style: "Neo Classic", category: "Home", query: "kitchen,neo-classic" },
-  { title: "Dining Room", style: "Rustic", category: "Home", query: "dining-room,rustic" },
-  { title: "Bedroom", style: "Bohemian", category: "Home", query: "bedroom,bohemian" },
-  { title: "Home Office", style: "Midcentury", category: "Home", query: "home-office,midcentury" },
-  { title: "Bathroom", style: "Brutalist", category: "Home", query: "bathroom,brutalist" },
+type RawDiscoverItem = Omit<DiscoverItem, "id" | "height" | "image"> & {
+  image?: string | number;
+};
+
+const RAW_ITEMS: readonly RawDiscoverItem[] = [
+  {
+    title: "Kitchen",
+    style: "Marble Luxe",
+    category: "Home",
+    query: "kitchen,interior,luxury",
+    image: require("../assets/media/rooms/room-kitchen.jpg"),
+  },
+  {
+    title: "Living Room",
+    style: "Modern Luxury",
+    category: "Home",
+    query: "living-room,interior,modern",
+    image: require("../assets/media/rooms/room-living-room.jpg"),
+  },
+  {
+    title: "Master Suite",
+    style: "Hotel Luxe",
+    category: "Home",
+    query: "master-bedroom,luxury",
+    image: require("../assets/media/rooms/room-master-suite.jpg"),
+  },
+  {
+    title: "Bathroom",
+    style: "Spa Marble",
+    category: "Home",
+    query: "bathroom,spa,luxury",
+    image: require("../assets/media/rooms/room-bathroom.jpg"),
+  },
+  {
+    title: "Home Office",
+    style: "Executive Suite",
+    category: "Home",
+    query: "home-office,luxury,wood",
+    image: require("../assets/media/rooms/room-home-office.jpg"),
+  },
+  {
+    title: "Dining Room",
+    style: "Formal Glow",
+    category: "Home",
+    query: "dining-room,luxury,classic",
+    image: require("../assets/media/rooms/room-dining-room.jpg"),
+  },
+  {
+    title: "Nursery",
+    style: "Soft Elegance",
+    category: "Home",
+    query: "nursery,luxury,soft",
+    image: require("../assets/media/rooms/room-nursery.jpg"),
+  },
+  {
+    title: "Home Theater",
+    style: "Cinematic",
+    category: "Home",
+    query: "home-theater,luxury,dark",
+    image: require("../assets/media/rooms/room-home-theater.jpg"),
+  },
+  {
+    title: "Hall",
+    style: "Grand Entrance",
+    category: "Home",
+    query: "hallway,luxury,classic",
+    image: require("../assets/media/rooms/room-hall.jpg"),
+  },
   { title: "Modern House", style: "Glass Facade", category: "Exterior", query: "modern-house,exterior" },
   { title: "Luxury Villa", style: "Mediterranean", category: "Exterior", query: "villa,mediterranean" },
   { title: "Apartment Block", style: "Urban Minimal", category: "Exterior", query: "apartment-building,modern" },
@@ -54,7 +103,6 @@ const RAW_ITEMS = [
 export const DISCOVER_ITEMS: DiscoverItem[] = RAW_ITEMS.map((item, index) => ({
   ...item,
   id: `discover-${index}`,
-  // Replace with a local asset require(...) or a permanent URL anytime.
-  image: `https://source.unsplash.com/1600x2000/?${item.query}&sig=${index + 1}`,
+  image: item.image ?? `https://source.unsplash.com/1600x2000/?${item.query}&sig=${index + 1}`,
   height: HEIGHTS[index % HEIGHTS.length],
 }));

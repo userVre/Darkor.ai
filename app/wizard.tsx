@@ -1,10 +1,14 @@
+import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Linking,
+  Pressable,
   ScrollView,
   Share,
   StyleSheet,
@@ -19,22 +23,40 @@ import {
   Image as ImageIcon,
   Info,
   Paintbrush,
+  Plus,
   RefreshCcw,
   Share2,
   Sparkles,
   SwatchBook,
   Trash2,
   Wand2,
+  X,
 } from "lucide-react-native";
-import { BlurView } from "expo-blur";
 import { LuxPressable } from "../components/lux-pressable";
 import { LUX_SPRING } from "../lib/motion";
 
 const EXAMPLE_PHOTOS = [
-  "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1502005097973-6a7082348e28?auto=format&fit=crop&w=1200&q=80",
-];
+  {
+    id: "modern-living-room",
+    title: "Modern Living Room",
+    uri: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    id: "raw-penthouse",
+    title: "Raw Penthouse",
+    uri: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    id: "backyard",
+    title: "Backyard",
+    uri: "https://images.unsplash.com/photo-1502005097973-6a7082348e28?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    id: "old-facade",
+    title: "Old Facade",
+    uri: "https://images.unsplash.com/photo-1511818966892-d7d671e672a2?auto=format&fit=crop&w=1200&q=80",
+  },
+] as const;
 
 const ROOM_OPTIONS = {
   interior: ["Living Room", "Bedroom", "Kitchen", "Bathroom", "Home Office", "Dining Room"],
@@ -109,6 +131,7 @@ export default function WizardScreen() {
   const [editorPanel, setEditorPanel] = useState<"none" | "paint" | "floor">("none");
   const [selectedPaint, setSelectedPaint] = useState<string | null>(null);
   const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
+  const [isSourceSheetVisible, setIsSourceSheetVisible] = useState(false);
 
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = useMemo(() => {
@@ -136,6 +159,25 @@ export default function WizardScreen() {
     return undefined;
   }, [workflowStep]);
 
+  const closeSourceSheet = () => setIsSourceSheetVisible(false);
+  const openSourceSheet = () => setIsSourceSheetVisible(true);
+
+  const showPermissionAlert = (resource: "camera" | "photo library") => {
+    Alert.alert(
+      `Allow ${resource}`,
+      `Darkor.ai needs ${resource} access so we can import your space and start the redesign.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Open Settings", onPress: () => void Linking.openSettings() },
+      ],
+    );
+  };
+
+  const applyPickedUri = (uri?: string | null) => {
+    if (!uri) return;
+    setSelectedImage(uri);
+  };
+
   const resetFlow = () => {
     setWorkflowStep(0);
     setSelectedImage(null);
@@ -146,51 +188,61 @@ export default function WizardScreen() {
     setEditorPanel("none");
     setSelectedPaint(null);
     setSelectedFloor(null);
+    closeSourceSheet();
   };
 
   const openPicker = async (source: "camera" | "gallery") => {
+    closeSourceSheet();
+
     if (source === "camera") {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert("Permission needed", "Camera access is required.");
+        showPermissionAlert("camera");
         return;
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ["images"],
         allowsEditing: true,
+        aspect: [4, 5],
         quality: 0.9,
       });
 
       if (!result.canceled) {
-        setSelectedImage(result.assets[0].uri);
+        applyPickedUri(result.assets[0]?.uri);
       }
       return;
     }
 
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Permission needed", "Photo library access is required.");
+      showPermissionAlert("photo library");
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
+      aspect: [4, 5],
       quality: 0.9,
     });
 
     if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
+      applyPickedUri(result.assets[0]?.uri);
     }
   };
 
   const handlePickPhoto = () => {
-    Alert.alert("Add Photo", "Choose a source", [
-      { text: "Camera", onPress: () => void openPicker("camera") },
-      { text: "Gallery", onPress: () => void openPicker("gallery") },
-      { text: "Cancel", style: "cancel" },
-    ]);
+    openSourceSheet();
+  };
+
+  const handleSelectExample = (uri: string) => {
+    closeSourceSheet();
+    setSelectedImage(uri);
+  };
+
+  const handleClearSelectedImage = () => {
+    setSelectedImage(null);
   };
 
   const canContinue = () => {
@@ -217,6 +269,10 @@ export default function WizardScreen() {
 
   const handleBack = () => {
     if (workflowStep === 0) {
+      if (isSourceSheetVisible) {
+        closeSourceSheet();
+        return;
+      }
       router.back();
       return;
     }
@@ -263,7 +319,7 @@ export default function WizardScreen() {
         <Text className="text-xs uppercase tracking-[3px] text-cyan-200/80">Darkor.ai</Text>
         <View className="mt-6 items-center justify-center">
           <View style={styles.processingCard}>
-            <Image source={{ uri: selectedImage ?? EXAMPLE_PHOTOS[0] }} style={styles.processingImage} contentFit="cover" />
+            <Image source={{ uri: selectedImage ?? EXAMPLE_PHOTOS[0].uri }} style={styles.processingImage} contentFit="cover" />
             <MotiView
               animate={{ opacity: [0.2, 0.6, 0.2], scale: [1, 1.1, 1] }}
             transition={{ ...LUX_SPRING, loop: true }}
