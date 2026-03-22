@@ -1472,10 +1472,6 @@ export default function WorkspaceScreen() {
     return () => clearTimeout(timer);
   }, [awaitingAuth, canContinue, effectiveSignedIn, handleGenerate]);
 
-  const handleRegenerate = useCallback(() => {
-    void handleGenerate({ regenerate: true });
-  }, [handleGenerate]);
-
   const handleContinue = useCallback(() => {
     triggerHaptic();
     if (!canContinue) {
@@ -2656,15 +2652,8 @@ export default function WorkspaceScreen() {
             <Text className="mt-1 text-sm text-zinc-400">Curated inside your premium Darkor board.</Text>
           </View>
 
-          <View className="mt-6 flex-row items-start justify-between px-2">
+          <View className="mt-6 flex-row items-start justify-center gap-12 px-2">
             {[
-              {
-                id: "regenerate",
-                label: "Regenerate",
-                icon: RefreshCw,
-                onPress: handleRegenerate,
-                loading: isGenerating,
-              },
               {
                 id: "save",
                 label: "Save",
@@ -2686,7 +2675,7 @@ export default function WorkspaceScreen() {
                   <LuxPressable
                     onPress={action.onPress}
                     disabled={action.loading}
-                    className="cursor-pointer h-[74px] w-[74px] items-center justify-center rounded-full border border-white/10 bg-zinc-950"
+                    className="cursor-pointer h-[78px] w-[78px] items-center justify-center rounded-full border border-white/10 bg-zinc-950"
                     style={{ borderWidth: 0.5 }}
                   >
                     {action.loading ? <ActivityIndicator color="#ffffff" /> : <Icon color="#ffffff" size={24} strokeWidth={2.1} />}
