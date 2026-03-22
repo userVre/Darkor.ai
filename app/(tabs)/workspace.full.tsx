@@ -675,14 +675,6 @@ export default function WorkspaceScreen() {
   }, [diagnostic, ensureUser, isSignedIn]);
 
   useEffect(() => {
-    if (draft.image?.uri && !selectedImage) {
-      startTransition(() => {
-        setSelectedImage(draft.image ?? null);
-      });
-    }
-  }, [draft.image, selectedImage]);
-
-  useEffect(() => {
     if (draft.room && !selectedRoom) {
       setSelectedRoom(draft.room);
     }
@@ -813,8 +805,8 @@ export default function WorkspaceScreen() {
   const ratioSpec = useMemo(() => resolveAspectRatio(selectedAspectRatio), [selectedAspectRatio]);
   const wizardColumnGap = 16;
   const wizardCardWidth = useMemo(() => Math.max((width - 48 - wizardColumnGap) / 2, 148), [width]);
-  const wizardExampleCardWidth = useMemo(() => Math.min(Math.max(width * 0.56, 212), 248), [width]);
-  const wizardUploadSize = useMemo(() => Math.min(width - 40, 430), [width]);
+  const wizardExampleCardWidth = useMemo(() => Math.min(Math.max(width * 0.3, 112), 132), [width]);
+  const wizardUploadSize = useMemo(() => Math.min(width - 56, 332), [width]);
   const wizardPreviewHeight = wizardUploadSize;
   const wizardUploadHeight = wizardUploadSize;
 
@@ -1777,12 +1769,12 @@ export default function WorkspaceScreen() {
                   <MotiView
                     key={`wizard-progress-${index}`}
                     animate={{
-                      backgroundColor: active ? (index === workflowStep ? "#d946ef" : "#6366f1") : "rgba(255,255,255,0.12)",
-                      opacity: active ? 1 : 0.72,
-                      scale: active ? 1 : 0.98,
+                      backgroundColor: active ? "#d946ef" : "rgba(39,39,42,0.95)",
+                      opacity: 1,
+                      scale: 1,
                     }}
                     transition={LUX_SPRING}
-                    style={{ flex: 1, height: 6, borderRadius: 999 }}
+                    style={{ flex: 1, height: 8, borderRadius: 999 }}
                   />
                 );
               })}
@@ -1807,8 +1799,9 @@ export default function WorkspaceScreen() {
                     </View>
 
                     <MotiView
-                      from={{ opacity: 0, translateY: 14 }}
-                      animate={{ opacity: 1, translateY: 0 }}
+                      key={selectedImage?.uri ?? "empty-upload"}
+                      from={{ opacity: 0, scale: 0.99, translateY: 10 }}
+                      animate={{ opacity: 1, scale: 1, translateY: 0 }}
                       transition={LUX_SPRING}
                       style={{ alignItems: "center" }}
                     >
@@ -1819,29 +1812,24 @@ export default function WorkspaceScreen() {
                           width: wizardUploadSize,
                           height: wizardUploadHeight,
                           borderRadius: 32,
-                          backgroundColor: selectedImage ? "#050505" : "#030303",
-                          borderWidth: selectedImage ? 0.5 : 2,
+                          backgroundColor: selectedImage ? "#050505" : "#020202",
+                          borderWidth: selectedImage ? 0.5 : 1.5,
                           borderColor: selectedImage ? "rgba(255,255,255,0.08)" : "#27272a",
                           borderStyle: selectedImage ? "solid" : "dashed",
                           overflow: "hidden",
-                          shadowColor: "#000000",
-                          shadowOpacity: 0.38,
-                          shadowRadius: 28,
-                          shadowOffset: { width: 0, height: 18 },
-                          elevation: 12,
                         }}
                       >
                         {selectedImage ? (
                           <>
                             <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} />
                             <LinearGradient
-                              colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.22)", "rgba(0,0,0,0.74)"]}
+                              colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.64)"]}
                               locations={[0, 0.45, 1]}
                               style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
                             />
-                            <View style={{ position: "absolute", left: 18, right: 18, bottom: 18, gap: 6 }}>
+                            <View style={{ position: "absolute", left: 16, right: 16, bottom: 16, gap: 4 }}>
                               <Text className="text-base font-semibold text-white">{selectedImage.label ?? "Selected photo"}</Text>
-                              <Text className="text-sm text-zinc-300">Tap to replace it from camera or gallery.</Text>
+                              <Text className="text-sm text-zinc-300">Tap anywhere to replace it.</Text>
                             </View>
                             <LuxPressable
                               onPress={(event) => {
@@ -1857,7 +1845,7 @@ export default function WorkspaceScreen() {
                               <MotiView
                                 animate={{ opacity: [0.42, 0.92, 0.42] }}
                                 transition={{ duration: 1050, loop: true }}
-                                className="absolute bottom-4 left-4 right-4 flex-row items-center justify-center gap-3 rounded-[18px] border border-white/10 bg-black/60 px-4 py-3"
+                                className="absolute inset-x-4 bottom-4 flex-row items-center justify-center gap-3 rounded-[18px] border border-white/10 bg-black/60 px-4 py-3"
                                 style={{ borderWidth: 0.5 }}
                               >
                                 <ActivityIndicator size="small" color="#ffffff" />
@@ -1866,19 +1854,15 @@ export default function WorkspaceScreen() {
                             ) : null}
                           </>
                         ) : (
-                          <View className="flex-1 items-center justify-center px-8" style={{ gap: 18 }}>
-                            <LuxPressable
-                              onPress={(event) => {
-                                event.stopPropagation();
-                                handlePickPhoto();
-                              }}
-                              className="cursor-pointer h-24 w-24 items-center justify-center rounded-full border border-white/10 bg-white"
+                          <View className="flex-1 items-center justify-center px-8" style={{ gap: 16 }}>
+                            <View
+                              className="h-[86px] w-[86px] items-center justify-center rounded-full border border-white/10 bg-white"
                               style={{ borderWidth: 0.5 }}
                             >
-                              <Plus color="#000000" size={36} strokeWidth={2.4} />
-                            </LuxPressable>
+                              <Plus color="#000000" size={32} strokeWidth={2.4} />
+                            </View>
                             <View style={{ gap: 8, alignItems: "center" }}>
-                              <Text className="text-center text-[30px] font-semibold text-white">Start Redesigning</Text>
+                              <Text className="text-center text-[28px] font-semibold text-white">Start Redesigning</Text>
                               <Text className="text-center text-[15px] leading-7 text-zinc-400">
                                 Redesign and beautify your room
                               </Text>
@@ -1888,10 +1872,9 @@ export default function WorkspaceScreen() {
                       </LuxPressable>
                     </MotiView>
 
-                    <View style={{ gap: 10 }}>
+                    <View style={{ gap: 14 }}>
                       <Text style={{ color: "#ffffff", fontSize: 24, fontWeight: "700", letterSpacing: -0.6 }}>Example Photos</Text>
-                      <Text style={{ color: "#a1a1aa", fontSize: 14, lineHeight: 21 }}>Curated starter spaces to preview the wizard instantly.</Text>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 4, gap: 14 }}>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 4, gap: 12 }}>
                         {EXAMPLE_PHOTOS.slice(0, 4).map((example, index) => {
                           const active = selectedImage?.label === example.label;
                           const isLoading = isLoadingExample === example.id;
@@ -1899,24 +1882,14 @@ export default function WorkspaceScreen() {
                             <MotiView key={example.id} {...staggerFadeUp(index, 45)} style={{ width: wizardExampleCardWidth }}>
                               <LuxPressable
                                 onPress={() => void handleSelectExample(example)}
-                                className="cursor-pointer overflow-hidden rounded-[24px] border"
+                                className="cursor-pointer overflow-hidden rounded-[22px] border"
                                 style={{
                                   borderWidth: active ? 1.5 : 0.5,
                                   borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
                                   backgroundColor: "#050505",
                                 }}
                               >
-                                <Image source={example.source} style={{ width: "100%", height: 176 }} contentFit="cover" transition={180} />
-                                <LinearGradient
-                                  colors={["transparent", "rgba(0,0,0,0.78)"]}
-                                  start={{ x: 0.5, y: 0 }}
-                                  end={{ x: 0.5, y: 1 }}
-                                  style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 96 }}
-                                />
-                                <View style={{ position: "absolute", left: 14, right: 14, bottom: 14, gap: 4 }}>
-                                  <Text className="text-sm font-semibold text-white">{example.label}</Text>
-                                  <Text className="text-xs text-zinc-300">Tap to use this starter image.</Text>
-                                </View>
+                                <Image source={example.source} style={{ width: "100%", height: 112 }} contentFit="cover" transition={180} />
                                 {active ? (
                                   <View className="absolute right-3 top-3 h-8 w-8 items-center justify-center rounded-full bg-fuchsia-600">
                                     <Check color="#ffffff" size={16} strokeWidth={2.5} />
