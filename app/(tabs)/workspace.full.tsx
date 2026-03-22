@@ -478,7 +478,7 @@ const MODE_OPTIONS: ModeOption[] = [
   {
     id: "preserve",
     title: "Structural Preservation",
-    description: "Follow your room's architecture closely while elevating styling, materials, and atmosphere.",
+    description: "Follow your room's structure closely.",
     promptHint:
       "Preserve the original architecture, room structure, camera angle, and layout as closely as possible while upgrading furniture, finishes, and mood.",
     icon: PaintRoller,
@@ -486,10 +486,10 @@ const MODE_OPTIONS: ModeOption[] = [
   {
     id: "renovate",
     title: "Renovation Design",
-    description: "Give AI more freedom to reinterpret surfaces, built-ins, and focal moments for a bolder transformation.",
+    description: "Have more freedom to change your space.",
     promptHint:
       "Allow a more transformative renovation approach with stronger upgrades to built-ins, focal elements, and materials while keeping the result realistic and coherent.",
-    icon: WandSparkles,
+    icon: Wand2,
   },
 ];
 
@@ -1862,9 +1862,16 @@ export default function WorkspaceScreen() {
                 {workflowStep === 3 ? (
                   <>
                     <View style={{ gap: 8 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Refine</Text>
+                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Mode & Palette</Text>
                       <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
-                        Pick the redesign mode, then lock in the palette direction for the final render.
+                        Choose how boldly Darkor.ai can transform the space, then lock the color direction before processing.
+                      </Text>
+                    </View>
+
+                    <View style={{ gap: 8 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Modification Mode</Text>
+                      <Text style={{ color: "#71717a", fontSize: 14, lineHeight: 22 }}>
+                        Select one premium design approach to control how closely the render follows the original room.
                       </Text>
                     </View>
 
@@ -1882,6 +1889,11 @@ export default function WorkspaceScreen() {
                                 borderWidth: active ? 1.5 : 0.5,
                                 borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
                                 backgroundColor: active ? "rgba(217,70,239,0.08)" : "#050505",
+                                shadowColor: active ? "#d946ef" : "#000000",
+                                shadowOpacity: active ? 0.16 : 0.22,
+                                shadowRadius: active ? 20 : 18,
+                                shadowOffset: { width: 0, height: 12 },
+                                elevation: active ? 8 : 6,
                               }}
                             >
                               <View className="flex-row items-start justify-between">
@@ -1949,8 +1961,12 @@ export default function WorkspaceScreen() {
           className="absolute inset-x-0 bottom-0 border-t border-white/10 bg-black/92 px-5 pt-4"
           style={{ paddingBottom: Math.max(insets.bottom + 10, 22), borderTopWidth: 0.5 }}
         >
-          <LuxPressable onPress={handleContinue} disabled={!canContinue || (isGenerating && isFinalWizardStep)} className="cursor-pointer">
-            {canContinue ? (
+          <LuxPressable
+            onPress={handleContinue}
+            disabled={!canContinue || (isFinalWizardStep && (isGenerating || generationBlocked))}
+            className="cursor-pointer"
+          >
+            {canContinue && !(isFinalWizardStep && generationBlocked) ? (
               <LinearGradient
                 colors={["#d946ef", "#6366f1"]}
                 start={{ x: 0, y: 0.5 }}
@@ -1968,7 +1984,7 @@ export default function WorkspaceScreen() {
                 className="flex-row items-center justify-center rounded-[24px]"
                 style={{ minHeight: 62, backgroundColor: "#27272a", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)" }}
               >
-                <Text className="text-[17px] font-semibold text-zinc-500">Continue</Text>
+                <Text className="text-[17px] font-semibold text-zinc-500">{generationBlocked && isFinalWizardStep ? "Limit Reached - Upgrade or Wait" : "Continue"}</Text>
               </View>
             )}
           </LuxPressable>
