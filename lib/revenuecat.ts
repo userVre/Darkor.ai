@@ -61,12 +61,8 @@ function inferDurationFromHaystack(haystack: string): BillingDuration {
   return "weekly";
 }
 
-function isTrialPeriod(info?: RevenueCatCustomerInfo | null) {
-  const activeEntitlements = Object.values((info?.entitlements?.active ?? {}) as Record<string, any>);
-  return activeEntitlements.some((entitlement) => {
-    const periodType = String(entitlement?.periodType ?? "").toLowerCase();
-    return periodType === "trial" || periodType === "intro";
-  });
+function getActiveEntitlement(info?: RevenueCatCustomerInfo | null) {
+  return Object.values((info?.entitlements?.active ?? {}) as Record<string, any>)[0] as any;
 }
 
 export function getRevenueCatApiKey() {
@@ -138,15 +134,66 @@ export function inferPlanFromRevenueCat(input?: {
 export function inferPlanFromCustomerInfo(info?: RevenueCatCustomerInfo | null) {
   if (!info) return "pro" as const;
 
-  const activeEntitlement = Object.values((info.entitlements?.active ?? {}) as Record<string, any>)[0] as any;
+  const activeEntitlement = getActiveEntitlement(info);
   return inferPlanFromRevenueCat({
     activeSubscriptions: Array.isArray(info.activeSubscriptions) ? info.activeSubscriptions : [],
+    productIdentifier: activeEntitlement?.productIdentifier,
     entitlementPeriodType: activeEntitlement?.periodType,
   });
 }
 
 export function inferBillingDurationFromPackage(pkg?: RevenueCatPackage | null) {
   return inferDurationFromHaystack(getPackageHaystack(pkg));
+}
+
+export function inferBillingDurationFromCustomerInfo(info?: RevenueCatCustomerInfo | null) {
+  const activeEntitlement = getActiveEntitlement(info);
+  const haystack = normalizeHaystack([
+    activeEntitlement?.productIdentifier,
+    ...(Array.isArray(info?.activeSubscriptions) ? info?.activeSubscriptions : []),
+  ]);
+  return inferDurationFromHaystack(haystack);
+}
+
+export function inferSubscriptionEndFromCustomerInfo(info?: RevenueCatCustomerInfo | null) {
+  const activeEntitlement = getActiveEntitlement(info);
+  const raw = activeEntitlement?.expirationDateMillis ?? activeEntitlement?.expirationDate;
+  if (typeof raw === "number") {
+    return raw;
+  }
+  if (typeof raw === "string") {
+    const asNumber = Number(raw);
+    if (Number.isFinite(asNumber)) {
+      return asNumber;
+    }
+    const parsed = Date.parse(raw);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+export function inferPurchaseDateFromCustomerInfo(info?: RevenueCatCustomerInfo | null) {
+  const activeEntitlement = getActiveEntitlement(info);
+  const raw = activeEntitlement?.latestPurchaseDateMillis
+    ?? activeEntitlement?.originalPurchaseDateMillis
+    ?? activeEntitlement?.latestPurchaseDate
+    ?? activeEntitlement?.originalPurchaseDate;
+  if (typeof raw === "number") {
+    return raw;
+  }
+  if (typeof raw === "string") {
+    const asNumber = Number(raw);
+    if (Number.isFinite(asNumber)) {
+      return asNumber;
+    }
+    const parsed = Date.parse(raw);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
 }
 
 export function findRevenueCatPackage(packages: RevenueCatPackage[], duration: BillingDuration) {
@@ -174,8 +221,4 @@ export function findRevenueCatPackage(packages: RevenueCatPackage[], duration: B
   }
 
   return null;
-}
-
-export function hasTrialEntitlement(info?: RevenueCatCustomerInfo | null) {
-  return isTrialPeriod(info);
 }

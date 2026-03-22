@@ -86,6 +86,16 @@ import { captureRef } from "react-native-view-shot";
 type MeResponse = {
   plan: "free" | "trial" | "pro";
   credits: number;
+  subscriptionType?: "free" | "weekly" | "yearly";
+  subscriptionEnd?: number;
+  imageGenerationCount?: number;
+  lastResetDate?: number;
+  imageGenerationLimit?: number;
+  imagesRemaining?: number;
+  subscriptionActive?: boolean;
+  generationLimitReached?: boolean;
+  generationStatusLabel?: string;
+  generationStatusMessage?: string;
 };
 
 type SelectedImage = {
@@ -559,7 +569,8 @@ export default function WorkspaceScreen() {
     diagnostic ? "skip" : isSignedIn ? {} : "skip",
   ) as MeResponse | null | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
-  const trackGeneration = useMutation("users:trackGeneration" as any);
+  const consumeGenerationAllowance = useMutation("users:consumeGenerationAllowance" as any);
+  const releaseGenerationAllowance = useMutation("users:releaseGenerationAllowance" as any);
   const markReviewPrompted = useMutation("users:markReviewPrompted" as any);
   const submitFeedback = useMutation("feedback:submit" as any);
   const submitGenerationFeedback = useMutation("generations:submitFeedback" as any);
@@ -777,6 +788,11 @@ export default function WorkspaceScreen() {
   const isProPlan = plan === "pro";
   const planUsed = plan === "pro" ? "pro" : plan === "trial" ? "trial" : "free";
   const canUpscale = isProPlan;
+  const imagesRemaining = diagnostic ? 999 : me?.imagesRemaining ?? 0;
+  const imageGenerationLimit = diagnostic ? 999 : me?.imageGenerationLimit ?? 0;
+  const generationStatusLabel = diagnostic ? "Unlimited diagnostic" : me?.generationStatusLabel ?? "0 / 0 images left";
+  const generationStatusMessage = diagnostic ? "Diagnostic access enabled." : me?.generationStatusMessage ?? "Limit Reached - Upgrade or Wait";
+  const generationBlocked = !diagnostic && (!(me?.subscriptionActive ?? false) || (me?.generationLimitReached ?? true));
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const editGap = 12;
   const activeEditIndex = EDIT_ACTIONS.indexOf(activeEditAction);
@@ -1164,19 +1180,29 @@ export default function WorkspaceScreen() {
       return;
     }
 
-      const effectiveCredits = diagnostic ? 10 : me?.credits;
-      if (typeof effectiveCredits === "number" && effectiveCredits <= 0) {
-        Alert.alert("Refill Credits", "You have no credits left.");
-        return;
-      }
+    if (!diagnostic && generationBlocked) {
+      Alert.alert("Limit Reached", generationStatusMessage);
+      return;
+    }
 
-      try {
-        setFeedbackState(null);
-        setFeedbackReason("");
-        setFeedbackSubmitted(false);
-        setGenerationId(null);
-        setIsGenerating(true);
-        setWorkflowStep(4);
+    let allowanceReserved = false;
+    let reviewState: { count: number; shouldPrompt: boolean } | null = null;
+
+    try {
+      setFeedbackState(null);
+      setFeedbackReason("");
+      setFeedbackSubmitted(false);
+      setGenerationId(null);
+      setIsGenerating(true);
+      setWorkflowStep(4);
+
+      if (!diagnostic) {
+        reviewState = (await consumeGenerationAllowance({ ignoreCooldown: ignoreReviewCooldown })) as {
+          count: number;
+          shouldPrompt: boolean;
+        };
+        allowanceReserved = true;
+      }
 
       const base64 = selectedImage.base64 ?? (await readBase64FromUri(selectedImage.uri));
       const token = diagnostic ? null : await getToken();
@@ -1194,31 +1220,50 @@ export default function WorkspaceScreen() {
         token,
       );
 
-        setGeneratedImageUrl(response.imageUrl);
-        setGenerationId(response.generationId ?? null);
-        setWorkflowStep(5);
+      setGeneratedImageUrl(response.imageUrl);
+      setGenerationId(response.generationId ?? null);
+      setWorkflowStep(5);
 
-      try {
-        const reviewState = (await trackGeneration({ ignoreCooldown: ignoreReviewCooldown })) as {
-          count: number;
-          shouldPrompt: boolean;
-        };
+      if (reviewState) {
         setLastGenerationCount(reviewState.count);
-          if (reviewState.shouldPrompt) {
-            reviewHandledRef.current = false;
-            setReviewPromptOpen(true);
-            requestAnimationFrame(() => reviewSheetRef.current?.present());
-          }
-      } catch {
-        // Ignore review tracking failures.
+        if (reviewState.shouldPrompt) {
+          reviewHandledRef.current = false;
+          setReviewPromptOpen(true);
+          requestAnimationFrame(() => reviewSheetRef.current?.present());
+        }
       }
     } catch (error) {
+      if (allowanceReserved) {
+        try {
+          await releaseGenerationAllowance({});
+        } catch {
+          // Ignore allowance rollback failures.
+        }
+      }
       setWorkflowStep(3);
       Alert.alert("Generation failed", error instanceof Error ? error.message : "Please try again.");
     } finally {
       setIsGenerating(false);
     }
-  }, [diagnostic, effectiveSignedIn, getToken, me?.credits, planUsed, promptText, ratioSpec, router, selectedImage, selectedMode, selectedPalette, selectedRoom, selectedStyle]);
+  }, [
+    consumeGenerationAllowance,
+    diagnostic,
+    effectiveSignedIn,
+    generationBlocked,
+    generationStatusMessage,
+    getToken,
+    ignoreReviewCooldown,
+    planUsed,
+    promptText,
+    ratioSpec,
+    releaseGenerationAllowance,
+    router,
+    selectedImage,
+    selectedMode,
+    selectedPalette,
+    selectedRoom,
+    selectedStyle,
+  ]);
 
   useEffect(() => {
     if (!effectiveSignedIn || !awaitingAuth) return;
@@ -1343,7 +1388,13 @@ export default function WorkspaceScreen() {
   if (workflowStep <= 3) {
     const currentStepNumber = workflowStep + 1;
     const isFinalWizardStep = workflowStep === 3;
-    const continueLabel = isFinalWizardStep ? (isGenerating ? "Generating..." : "Generate Design") : "Continue";
+    const continueLabel = isFinalWizardStep
+      ? generationBlocked
+        ? "Limit Reached - Upgrade or Wait"
+        : isGenerating
+          ? "Generating..."
+          : "Generate Design"
+      : "Continue";
 
     return (
       <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
@@ -1381,6 +1432,11 @@ export default function WorkspaceScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={{ gap: 22 }}>
+              <View className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3" style={{ borderWidth: 0.5 }}>
+                <Text className="text-xs font-semibold uppercase tracking-[1px] text-zinc-400">Images Remaining</Text>
+                <Text className="mt-2 text-base font-semibold text-white">{generationStatusLabel}</Text>
+                <Text className="mt-1 text-xs text-zinc-500">{generationStatusMessage}</Text>
+              </View>
             <View className="flex-row items-center justify-between">
               <LuxPressable
                 onPress={workflowStep > 0 ? handleBack : () => router.back()}
@@ -2455,17 +2511,17 @@ export default function WorkspaceScreen() {
           </LuxPressable>
           <LuxPressable
             onPress={handleContinue}
-            disabled={!canContinue || isGenerating}
+            disabled={!canContinue || isGenerating || (workflowStep === 3 && generationBlocked)}
             className={`cursor-pointer rounded-full px-5 py-2 ${
-              canContinue && !isGenerating ? "bg-cyan-400" : "bg-zinc-700"
+              canContinue && !isGenerating && !(workflowStep === 3 && generationBlocked) ? "bg-cyan-400" : "bg-zinc-700"
             }`}
           >
             <Text
               className={`text-xs font-semibold ${
-                canContinue && !isGenerating ? "text-zinc-900" : "text-zinc-300"
+                canContinue && !isGenerating && !(workflowStep === 3 && generationBlocked) ? "text-zinc-900" : "text-zinc-300"
               }`}
             >
-              {workflowStep === 3 ? "Generate Renders" : "Continue"}
+              {workflowStep === 3 ? (generationBlocked ? "Limit Reached - Upgrade or Wait" : isGenerating ? "Generating..." : "Generate Renders") : "Continue"}
             </Text>
           </LuxPressable>
         </BlurView>
@@ -2668,6 +2724,12 @@ export default function WorkspaceScreen() {
     </View>
   );
 }
+
+
+
+
+
+
 
 
 

@@ -37,7 +37,10 @@ import {
   configureRevenueCat,
   getRevenueCatClient,
   hasActiveSubscription,
+  inferBillingDurationFromCustomerInfo,
   inferPlanFromCustomerInfo,
+  inferPurchaseDateFromCustomerInfo,
+  inferSubscriptionEndFromCustomerInfo,
 } from "../../lib/revenuecat";
 import { requestStoreReview } from "../../lib/store-review";
 import { formatRewardCountdown } from "../../lib/rewards";
@@ -49,6 +52,10 @@ type MeResponse = {
   credits: number;
   referralCode?: string;
   lastRewardDate?: number;
+  generationStatusLabel?: string;
+  generationStatusMessage?: string;
+  imagesRemaining?: number;
+  imageGenerationLimit?: number;
 };
 
 const MENU_ITEMS = [
@@ -107,7 +114,13 @@ export default function SettingsScreen() {
         const info = await purchases.getCustomerInfo();
         if (!hasActiveSubscription(info)) return;
         const inferredPlan = inferPlanFromCustomerInfo(info);
-        await setPlan({ plan: inferredPlan, credits: planCreditGrant(inferredPlan) });
+        await setPlan({
+          plan: inferredPlan,
+          credits: planCreditGrant(inferredPlan),
+          subscriptionType: inferBillingDurationFromCustomerInfo(info),
+          purchasedAt: inferPurchaseDateFromCustomerInfo(info) ?? undefined,
+          subscriptionEnd: inferSubscriptionEndFromCustomerInfo(info) ?? undefined,
+        });
       } catch {
         // ignore sync failures on settings open
       }
@@ -218,7 +231,13 @@ export default function SettingsScreen() {
       const hasSubscription = hasActiveSubscription(info);
       if (hasSubscription && isSignedIn) {
         const inferredPlan = inferPlanFromCustomerInfo(info);
-        await setPlan({ plan: inferredPlan, credits: planCreditGrant(inferredPlan) });
+        await setPlan({
+          plan: inferredPlan,
+          credits: planCreditGrant(inferredPlan),
+          subscriptionType: inferBillingDurationFromCustomerInfo(info),
+          purchasedAt: inferPurchaseDateFromCustomerInfo(info) ?? undefined,
+          subscriptionEnd: inferSubscriptionEndFromCustomerInfo(info) ?? undefined,
+        });
       }
       Alert.alert("Restored", hasSubscription ? "Your Pro Studio subscription is active." : "No active subscriptions found.");
     } catch {
@@ -283,10 +302,15 @@ export default function SettingsScreen() {
           <View className="gap-4 p-6">
             <Text className="text-lg font-medium text-white">Membership Status · {planLabel}</Text>
             <Text className="text-xs text-zinc-300">
-              Credits remaining: {typeof me?.credits === "number" ? me.credits : 0}
+              Images remaining: {me?.generationStatusLabel ?? "0 / 0 images left"}
             </Text>
             <Text className="text-xs text-zinc-400">{upgradeSubtitle}</Text>
             {membershipPlan !== "pro" ? <Text className="text-xs text-zinc-500">{rewardCountdown}</Text> : null}
+            <View className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3" style={{ borderWidth: 0.5 }}>
+              <Text className="text-[11px] font-semibold uppercase tracking-[1px] text-zinc-500">Usage</Text>
+              <Text className="mt-2 text-sm font-semibold text-white">{me?.generationStatusLabel ?? "0 / 0 images left"}</Text>
+              <Text className="mt-1 text-xs text-zinc-400">{me?.generationStatusMessage ?? "Limit Reached - Upgrade or Wait"}</Text>
+            </View>
             <View className="gap-3">
               {accountBullets.map((bullet) => {
                 const Icon = bullet.icon;

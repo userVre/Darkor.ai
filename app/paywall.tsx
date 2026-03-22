@@ -35,7 +35,10 @@ import {
   findRevenueCatPackage,
   getRevenueCatClient,
   hasActiveSubscription,
+  inferBillingDurationFromCustomerInfo,
   inferPlanFromCustomerInfo,
+  inferPurchaseDateFromCustomerInfo,
+  inferSubscriptionEndFromCustomerInfo,
   type BillingDuration,
   type BillingPlan,
   type RevenueCatPackage,
@@ -248,8 +251,14 @@ export default function PaywallScreen() {
     });
   }, []);
 
-  const persistPurchasedPlan = useCallback(async (plan: BillingPlan) => {
-    await setPlan({ plan, credits: planCreditGrant(plan) });
+  const persistPurchasedPlan = useCallback(async (plan: BillingPlan, subscriptionType: BillingDuration, purchasedAt?: number | null, subscriptionEnd?: number | null) => {
+    await setPlan({
+      plan,
+      credits: planCreditGrant(plan),
+      subscriptionType,
+      purchasedAt: typeof purchasedAt === "number" ? purchasedAt : undefined,
+      subscriptionEnd: typeof subscriptionEnd === "number" ? subscriptionEnd : undefined,
+    });
   }, [setPlan]);
 
   const handleRestore = useCallback(async () => {
@@ -270,8 +279,11 @@ export default function PaywallScreen() {
       }
 
       const inferredPlan = inferPlanFromCustomerInfo(info);
+      const inferredDuration = inferBillingDurationFromCustomerInfo(info);
+      const purchasedAt = inferPurchaseDateFromCustomerInfo(info);
+      const subscriptionEnd = inferSubscriptionEndFromCustomerInfo(info);
       if (isSignedIn) {
-        await persistPurchasedPlan(inferredPlan);
+        await persistPurchasedPlan(inferredPlan, inferredDuration, purchasedAt, subscriptionEnd);
       }
 
       if (inferredPlan === "trial") {
@@ -314,7 +326,7 @@ export default function PaywallScreen() {
 
       const purchasedPlan: BillingPlan = trialEnabled && selectedDuration === "weekly" ? "trial" : "pro";
       if (isSignedIn) {
-        await persistPurchasedPlan(purchasedPlan);
+        await persistPurchasedPlan(purchasedPlan, selectedDuration, Date.now(), null);
       }
 
       if (purchasedPlan === "trial") {
@@ -811,3 +823,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+
+

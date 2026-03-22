@@ -24,7 +24,10 @@ import {
   configureRevenueCat,
   getRevenueCatApiKey,
   hasActiveSubscription,
+  inferBillingDurationFromCustomerInfo,
   inferPlanFromCustomerInfo,
+  inferPurchaseDateFromCustomerInfo,
+  inferSubscriptionEndFromCustomerInfo,
   type RevenueCatCustomerInfo,
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
@@ -96,9 +99,18 @@ function RevenueCatGate() {
         const customerInfo = info ?? (await purchases.getCustomerInfo());
         const hasSubscription = hasActiveSubscription(customerInfo);
         const inferredPlan = hasSubscription ? inferPlanFromCustomerInfo(customerInfo) : null;
+        const inferredDuration = hasSubscription ? inferBillingDurationFromCustomerInfo(customerInfo) : undefined;
+        const purchasedAt = hasSubscription ? inferPurchaseDateFromCustomerInfo(customerInfo) : undefined;
+        const subscriptionEnd = hasSubscription ? inferSubscriptionEndFromCustomerInfo(customerInfo) : undefined;
 
-        if (inferredPlan && isSignedIn) {
-          await setPlan({ plan: inferredPlan, credits: planCreditGrant(inferredPlan) });
+        if (inferredPlan && isSignedIn && inferredDuration) {
+          await setPlan({
+            plan: inferredPlan,
+            credits: planCreditGrant(inferredPlan),
+            subscriptionType: inferredDuration,
+            purchasedAt: purchasedAt ?? undefined,
+            subscriptionEnd: subscriptionEnd ?? undefined,
+          });
         }
 
         if (hasSubscriptionRef.current === null) {
@@ -397,6 +409,7 @@ export default function RootLayoutFull() {
     </GestureHandlerRootView>
   );
 }
+
 
 
 

@@ -1,6 +1,8 @@
 import { actionGeneric, mutationGeneric, queryGeneric } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
+import { deriveSubscriptionState } from "./subscriptions";
+
 function decodeBase64ToBytes(base64: string): Uint8Array {
   const cleaned = base64.replace(/^data:[^;]+;base64,/, "");
   const binary = atob(cleaned);
@@ -9,6 +11,13 @@ function decodeBase64ToBytes(base64: string): Uint8Array {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes;
+}
+
+async function getUserByClerkId(ctx: any, clerkId: string) {
+  return await ctx.db
+    .query("users")
+    .withIndex("by_clerkId", (q: any) => q.eq("clerkId", clerkId))
+    .unique();
 }
 
 export const getUserArchive = queryGeneric({
@@ -54,23 +63,15 @@ export const finalizeStoredGeneration = mutationGeneric({
       throw new ConvexError("Forbidden");
     }
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
-      .unique();
-
+    const user = await getUserByClerkId(ctx, args.clerkId);
     if (!user) {
       throw new ConvexError("No billing profile found. Please subscribe to continue.");
     }
 
-    if (user.credits <= 0) {
-      throw new ConvexError("No credits left. Please refill credits.");
+    const state = deriveSubscriptionState(user, Date.now());
+    if (!state.active) {
+      throw new ConvexError("Limit Exceeded - Upgrade or Wait");
     }
-
-    const nextCredits = user.credits - 1;
-    await ctx.db.patch(user._id, {
-      credits: nextCredits,
-    });
 
     const generationId = await ctx.db.insert("generations", {
       userId: args.clerkId,
@@ -78,7 +79,7 @@ export const finalizeStoredGeneration = mutationGeneric({
       imageUrl: undefined,
       prompt: args.prompt,
       style: args.style,
-      planUsed: user.plan,
+      planUsed: state.plan,
       createdAt: Date.now(),
       isFavorite: false,
       feedback: undefined,
@@ -89,8 +90,9 @@ export const finalizeStoredGeneration = mutationGeneric({
 
     return {
       generationId,
-      remainingCredits: nextCredits,
-      planUsed: user.plan,
+      remainingCredits: state.remaining,
+      remainingImages: state.remaining,
+      planUsed: state.plan,
     };
   },
 });
@@ -123,7 +125,7 @@ export const storeGeneratedFromApi = actionGeneric({
         prompt: args.prompt,
         style: args.style,
         internalToken: args.internalToken,
-      })) as { generationId: string; remainingCredits: number; planUsed: string };
+      })) as { generationId: string; remainingImages: number; planUsed: string };
 
       const imageUrl = await ctx.storage.getUrl(storageId);
       if (!imageUrl) {
@@ -134,7 +136,8 @@ export const storeGeneratedFromApi = actionGeneric({
         generationId: finalized.generationId,
         storageId,
         imageUrl,
-        remainingCredits: finalized.remainingCredits,
+        remainingCredits: finalized.remainingImages,
+        remainingImages: finalized.remainingImages,
         planUsed: finalized.planUsed,
       };
     } catch (error) {
@@ -157,29 +160,22 @@ export const saveGeneration = mutationGeneric({
       throw new Error("Unauthorized");
     }
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
+    const user = await getUserByClerkId(ctx, identity.subject);
     if (!user) {
       throw new Error("No billing profile found. Please subscribe to continue.");
     }
 
-    if (user.credits <= 0) {
-      throw new Error("No credits left. Please refill to continue.");
+    const state = deriveSubscriptionState(user, Date.now());
+    if (!state.active) {
+      throw new ConvexError("Limit Exceeded - Upgrade or Wait");
     }
-
-    await ctx.db.patch(user._id, {
-      credits: user.credits - 1,
-    });
 
     return await ctx.db.insert("generations", {
       userId: identity.subject,
       imageUrl: args.imageUrl,
       prompt: args.prompt,
       style: args.style,
-      planUsed: user.plan !== "free" ? user.plan : args.planUsed,
+      planUsed: state.plan !== "free" ? state.plan : args.planUsed,
       createdAt: Date.now(),
       isFavorite: false,
       feedback: undefined,
@@ -212,10 +208,7 @@ export const submitFeedback = mutationGeneric({
 
     let retryGranted = false;
     if (args.sentiment === "disliked" && !item.retryGranted) {
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-        .unique();
+      const user = await getUserByClerkId(ctx, identity.subject);
       if (user) {
         await ctx.db.patch(user._id, { credits: user.credits + 1 });
         retryGranted = true;
@@ -313,4 +306,3 @@ export const deleteGeneration = mutationGeneric({
     return { ok: true };
   },
 });
-
