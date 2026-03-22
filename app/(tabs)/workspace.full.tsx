@@ -84,7 +84,7 @@ import { useProSuccess } from "../../components/pro-success-context";
 import Logo from "../../components/logo";
 import { captureRef } from "react-native-view-shot";
 type MeResponse = {
-  plan: "free" | "trial" | "basic" | "pro";
+  plan: "free" | "trial" | "pro";
   credits: number;
 };
 
@@ -775,7 +775,7 @@ export default function WorkspaceScreen() {
 
   const plan = diagnostic ? "pro" : me?.plan ?? "free";
   const isProPlan = plan === "pro";
-  const planUsed = plan === "pro" ? "pro" : plan === "basic" ? "basic" : plan === "trial" ? "trial" : "free";
+  const planUsed = plan === "pro" ? "pro" : plan === "trial" ? "trial" : "free";
   const canUpscale = isProPlan;
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const editGap = 12;
@@ -1093,7 +1093,7 @@ export default function WorkspaceScreen() {
   const handleUpscale = useCallback(() => {
     triggerHaptic();
     if (!canUpscale) {
-      Alert.alert("Upgrade to Pro", "Upscale to 4K is available on Pro and higher.");
+      Alert.alert("Upgrade to Pro Studio", "Upscale to 4K is available only on an active paid Pro Studio subscription.");
       return;
     }
     Alert.alert("Upscale", "Your 4K upscale is queued.");
@@ -2361,7 +2361,7 @@ export default function WorkspaceScreen() {
                       <View className="flex-row items-center justify-between">
                         <View>
                           <Text className="text-sm font-semibold text-white">Standard HD Download</Text>
-                          <Text className="mt-1 text-xs text-zinc-400">For Basic and trial users</Text>
+                          <Text className="mt-1 text-xs text-zinc-400">For trial users</Text>
                         </View>
                         {isDownloadingStandard ? (
                           <ActivityIndicator color="#f8fafc" />
@@ -2379,7 +2379,7 @@ export default function WorkspaceScreen() {
                       <View className="flex-row items-center justify-between">
                         <View>
                           <Text className="text-sm font-semibold text-white">4K Ultra HD Download</Text>
-                          <Text className="mt-1 text-xs text-zinc-400">Paid Pro only</Text>
+                          <Text className="mt-1 text-xs text-zinc-400">Paid Pro Studio only</Text>
                         </View>
                         <Lock color="#facc15" size={18} />
                       </View>
@@ -2668,6 +2668,7 @@ export default function WorkspaceScreen() {
     </View>
   );
 }
+
 
 
 

@@ -1,6 +1,7 @@
 import { useAuth, useUser } from "@clerk/expo";
 import { useMutation } from "convex/react";
 import { Image } from "expo-image";
+import * as Localization from "expo-localization";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -22,7 +23,7 @@ import Animated, {
 } from "react-native-reanimated";
 import Carousel from "react-native-reanimated-carousel";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, ShieldCheck, Sparkles, X } from "lucide-react-native";
+import { ArrowRight, Check, ShieldCheck, Sparkles, X } from "lucide-react-native";
 
 import { LuxPressable } from "../components/lux-pressable";
 import { useProSuccess } from "../components/pro-success-context";
@@ -51,64 +52,49 @@ const GALLERY_IMAGES = [
   require("../assets/media/luxury-7.jpg"),
 ];
 
-type PlanId = "basic" | "pro";
+const PRO_FEATURES = [
+  "Watermark-free 4K Ultra HD exports",
+  "Priority generation and premium render path",
+  "All interior, exterior, and outdoor workflows",
+  "3D walkthroughs and VR presentation tools",
+];
 
-type PlanCopy = {
-  id: PlanId;
-  eyebrow: string;
-  title: string;
-  audience: string;
-  weeklyPrice: string;
-  monthlyPrice: string;
-  savings: string;
-  featureSummary: string;
-  features: string[];
-  trialAvailable: boolean;
-};
+const EUROPE_REGIONS = new Set([
+  "AD", "AL", "AT", "AX", "BA", "BE", "BG", "BY", "CH", "CY", "CZ", "DE", "DK", "EE", "ES", "FI",
+  "FO", "FR", "GB", "GG", "GI", "GR", "HR", "HU", "IE", "IM", "IS", "IT", "JE", "LI", "LT", "LU",
+  "LV", "MC", "MD", "ME", "MK", "MT", "NL", "NO", "PL", "PT", "RO", "RS", "SE", "SI", "SJ", "SK",
+  "SM", "UA", "VA",
+]);
 
-const PLAN_COPY: Record<PlanId, PlanCopy> = {
-  basic: {
-    id: "basic",
-    eyebrow: "Homeowners",
-    title: "Basic",
-    audience: "Reliable redesigns for everyday spaces.",
-    weeklyPrice: "$0.99 / week",
-    monthlyPrice: "$2.99 / month",
-    savings: "Save 30%",
-    featureSummary: "35 images/month, HD with watermark.",
-    features: [
-      "35 images each month",
-      "Standard HD quality with watermark",
-      "Basic room types only",
-      "10 style presets",
-    ],
-    trialAvailable: false,
-  },
-  pro: {
-    id: "pro",
-    eyebrow: "Designers & Pros",
-    title: "Pro",
-    audience: "Priority-grade output for serious client work.",
-    weeklyPrice: "$2.99 / week",
-    monthlyPrice: "$7.99 / month",
-    savings: "Save 38%",
-    featureSummary: "110 images/month, 4K, no watermark.",
-    features: [
-      "110 images each month",
-      "4K Ultra HD with no watermark",
-      "All room types plus outdoor",
-      "30+ premium style presets",
-      "Priority generation",
-      "3D walkthroughs and VR",
-    ],
-    trialAvailable: true,
-  },
-};
+const FX_RATES = {
+  USD: 1,
+  EUR: 0.92,
+  MAD: 10,
+} as const;
+
+const BASE_PRICES_USD = {
+  yearlyWeekly: 0.99,
+  yearlyTotal: 47.52,
+  weekly: 11.99,
+} as const;
 
 const SPRING = {
   damping: 18,
   stiffness: 180,
 } as const;
+
+const pointerClassName = "cursor-pointer";
+
+type CurrencyCode = keyof typeof FX_RATES;
+
+type LocalizedPricing = {
+  currency: CurrencyCode;
+  localeTag: string;
+  regionCode: string;
+  yearlyWeeklyLabel: string;
+  yearlyTotalLabel: string;
+  weeklyLabel: string;
+};
 
 const GallerySlide = memo(function GallerySlide({ source }: { source: number }) {
   return <Image source={source} style={styles.galleryImage} contentFit="cover" transition={180} cachePolicy="memory-disk" />;
@@ -125,30 +111,45 @@ const FeatureRow = memo(function FeatureRow({ label }: { label: string }) {
   );
 });
 
-function useSlidingHighlight(index: number) {
-  const trackWidth = useSharedValue(0);
-  const translateX = useSharedValue(0);
-
-  const onLayout = useCallback((width: number) => {
-    trackWidth.value = width;
-    translateX.value = withSpring(width / 2 * index, SPRING);
-  }, [index, trackWidth, translateX]);
-
-  useEffect(() => {
-    if (trackWidth.value > 0) {
-      translateX.value = withSpring((trackWidth.value / 2) * index, SPRING);
-    }
-  }, [index, trackWidth, translateX]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    width: trackWidth.value / 2,
-    transform: [{ translateX: translateX.value }],
-  }));
-
-  return { animatedStyle, onLayout };
+function getCurrencyCode(regionCode: string): CurrencyCode {
+  if (regionCode === "MA") {
+    return "MAD";
+  }
+  if (EUROPE_REGIONS.has(regionCode)) {
+    return "EUR";
+  }
+  return "USD";
 }
 
-function TrialSwitch({ value, disabled, onPress }: { value: boolean; disabled?: boolean; onPress: () => void }) {
+function formatMoney(value: number, currency: CurrencyCode, localeTag: string) {
+  return new Intl.NumberFormat(localeTag, {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function getLocalizedPricing(): LocalizedPricing {
+  const locale = Localization.getLocales()[0];
+  const regionCode = locale?.regionCode?.toUpperCase()
+    ?? locale?.languageTag?.split("-")[1]?.toUpperCase()
+    ?? "US";
+  const currency = getCurrencyCode(regionCode);
+  const localeTag = locale?.languageTag ?? (currency === "MAD" ? "fr-MA" : currency === "EUR" ? "fr-FR" : "en-US");
+  const rate = FX_RATES[currency];
+
+  return {
+    currency,
+    localeTag,
+    regionCode,
+    yearlyWeeklyLabel: `${formatMoney(BASE_PRICES_USD.yearlyWeekly * rate, currency, localeTag)} / week`,
+    yearlyTotalLabel: formatMoney(BASE_PRICES_USD.yearlyTotal * rate, currency, localeTag),
+    weeklyLabel: `${formatMoney(BASE_PRICES_USD.weekly * rate, currency, localeTag)} / week`,
+  };
+}
+
+function TrialSwitch({ value, onPress }: { value: boolean; onPress: () => void }) {
   const offset = useSharedValue(value ? 20 : 0);
 
   useEffect(() => {
@@ -160,7 +161,7 @@ function TrialSwitch({ value, disabled, onPress }: { value: boolean; disabled?: 
   }));
 
   return (
-    <LuxPressable onPress={onPress} disabled={disabled} style={[styles.trialSwitch, disabled ? styles.disabledControl : null]}>
+    <LuxPressable onPress={onPress} style={styles.trialSwitch} className={pointerClassName}>
       <Animated.View style={[styles.trialThumb, thumbStyle]} />
     </LuxPressable>
   );
@@ -175,21 +176,20 @@ export default function PaywallScreen() {
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
   const { showSuccess, showToast } = useProSuccess();
 
-  const [selectedPlan, setSelectedPlan] = useState<PlanId>("pro");
-  const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("monthly");
-  const [trialEnabled, setTrialEnabled] = useState(true);
+  const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("yearly");
+  const [trialEnabled, setTrialEnabled] = useState(false);
   const [packages, setPackages] = useState<RevenueCatPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
 
-  const durationIndex = selectedDuration === "monthly" ? 1 : 0;
-  const { animatedStyle: durationHighlightStyle, onLayout: onDurationLayout } = useSlidingHighlight(durationIndex);
-
   const galleryWidth = Math.min(width - 32, 420);
   const galleryHeight = Math.round(galleryWidth * 0.62);
-  const selectedCopy = PLAN_COPY[selectedPlan];
-  const canUseTrial = selectedPlan === "pro" && selectedDuration === "monthly";
+  const pricing = useMemo(() => getLocalizedPricing(), []);
+  const selectedPackage = useMemo(
+    () => findRevenueCatPackage(packages, selectedDuration),
+    [packages, selectedDuration],
+  );
 
   useEffect(() => {
     let active = true;
@@ -208,8 +208,7 @@ export default function PaywallScreen() {
 
         const offerings = await purchasesRef.current.getOfferings();
         if (!active) return;
-        const availablePackages = offerings.current?.availablePackages ?? [];
-        setPackages(availablePackages);
+        setPackages(offerings.current?.availablePackages ?? []);
       } catch {
         if (active) {
           setErrorMessage("Subscriptions are temporarily unavailable.");
@@ -224,31 +223,6 @@ export default function PaywallScreen() {
     };
   }, [isSignedIn, user?.id]);
 
-  useEffect(() => {
-    if (!canUseTrial && trialEnabled) {
-      setTrialEnabled(false);
-    }
-  }, [canUseTrial, trialEnabled]);
-
-  const catalog = useMemo(() => ({
-    basic: {
-      weekly: findRevenueCatPackage(packages, "basic", "weekly"),
-      monthly: findRevenueCatPackage(packages, "basic", "monthly"),
-    },
-    pro: {
-      weekly: findRevenueCatPackage(packages, "pro", "weekly"),
-      monthly: findRevenueCatPackage(packages, "pro", "monthly"),
-    },
-  }), [packages]);
-
-  const selectedPackage = catalog[selectedPlan][selectedDuration];
-  const ctaTitle = canUseTrial && trialEnabled ? "Start Free Trial" : "Subscribe";
-  const ctaSubtitle = canUseTrial && trialEnabled
-    ? "5 images free, then $21.99/mo"
-    : selectedPlan === "basic"
-      ? `${selectedCopy.monthlyPrice.replace("/ month", "")} billed monthly or ${selectedCopy.weeklyPrice.replace("/ week", "")} weekly`
-      : `${selectedCopy.featureSummary} Cancel anytime.`;
-
   const handleClose = useCallback(() => {
     triggerHaptic();
     dismissLaunchPaywall();
@@ -258,21 +232,21 @@ export default function PaywallScreen() {
   const handleSelectDuration = useCallback((duration: BillingDuration) => {
     triggerHaptic();
     setSelectedDuration(duration);
-  }, []);
-
-  const handleSelectPlan = useCallback((plan: PlanId) => {
-    triggerHaptic();
-    setSelectedPlan(plan);
-    if (plan === "basic") {
+    if (duration === "yearly" && trialEnabled) {
       setTrialEnabled(false);
     }
-  }, []);
+  }, [trialEnabled]);
 
   const handleToggleTrial = useCallback(() => {
-    if (!canUseTrial) return;
     triggerHaptic();
-    setTrialEnabled((current) => !current);
-  }, [canUseTrial]);
+    setTrialEnabled((current) => {
+      const next = !current;
+      if (next) {
+        setSelectedDuration("weekly");
+      }
+      return next;
+    });
+  }, []);
 
   const persistPurchasedPlan = useCallback(async (plan: BillingPlan) => {
     await setPlan({ plan, credits: planCreditGrant(plan) });
@@ -300,10 +274,10 @@ export default function PaywallScreen() {
         await persistPurchasedPlan(inferredPlan);
       }
 
-      if (inferredPlan === "pro") {
-        showSuccess();
+      if (inferredPlan === "trial") {
+        showToast("Your 3-day Pro Studio trial is active.");
       } else {
-        showToast("Basic subscription restored.");
+        showSuccess();
       }
 
       dismissLaunchPaywall();
@@ -338,15 +312,15 @@ export default function PaywallScreen() {
         throw new Error("No active entitlement was returned after checkout.");
       }
 
-      const purchasedPlan: BillingPlan = canUseTrial && trialEnabled ? "trial" : selectedPlan;
+      const purchasedPlan: BillingPlan = trialEnabled && selectedDuration === "weekly" ? "trial" : "pro";
       if (isSignedIn) {
         await persistPurchasedPlan(purchasedPlan);
       }
 
-      if (selectedPlan === "pro") {
-        showSuccess();
+      if (purchasedPlan === "trial") {
+        showToast("Your 3-day Pro Studio trial is active.");
       } else {
-        showToast("Basic unlocked successfully.");
+        showSuccess();
       }
 
       dismissLaunchPaywall();
@@ -358,9 +332,15 @@ export default function PaywallScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [canUseTrial, isSignedIn, persistPurchasedPlan, router, selectedPackage, selectedPlan, showSuccess, showToast, trialEnabled]);
+  }, [isSignedIn, persistPurchasedPlan, router, selectedDuration, selectedPackage, showSuccess, showToast, trialEnabled]);
 
   const renderGalleryItem = useCallback(({ item }: { item: number }) => <GallerySlide source={item} />, []);
+  const ctaTitle = trialEnabled ? "Try for Free" : "Continue";
+  const ctaSubtitle = trialEnabled
+    ? `3 days free, then ${pricing.weeklyLabel}`
+    : selectedDuration === "yearly"
+      ? `Just ${pricing.yearlyTotalLabel} per year`
+      : `Billed at ${pricing.weeklyLabel}. Cancel anytime.`;
 
   return (
     <View style={styles.screen}>
@@ -374,10 +354,10 @@ export default function PaywallScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topBar}>
-          <LuxPressable onPress={handleRestore} style={styles.topAction}>
+          <LuxPressable onPress={handleRestore} style={styles.topAction} className={pointerClassName}>
             <Text style={styles.topActionText}>Restore</Text>
           </LuxPressable>
-          <LuxPressable onPress={handleClose} style={styles.closeButton}>
+          <LuxPressable onPress={handleClose} style={styles.closeButton} className={pointerClassName}>
             <X color="#f5f5f5" size={18} />
           </LuxPressable>
         </View>
@@ -396,121 +376,122 @@ export default function PaywallScreen() {
         </View>
 
         <View style={styles.heroBlock}>
-          <Text style={styles.eyebrow}>Darkor.ai Membership</Text>
-          <Text style={styles.heroTitle}>Choose the right studio tier for your redesign workflow.</Text>
+          <Text style={styles.eyebrow}>Darkor.ai Pro Studio</Text>
+          <Text style={styles.heroTitle}>One premium studio, localized for every market.</Text>
           <Text style={styles.heroBody}>
-            Start on Basic for homeowner-friendly edits or unlock Pro for premium output, priority rendering, and immersive walkthrough tools.
+            Choose the best Pro Studio billing cadence for your region. Morocco displays in MAD, Europe in EUR, and the rest of the world in USD automatically.
           </Text>
         </View>
 
-        <View style={styles.durationShell}>
-          <View
-            style={styles.durationTrack}
-            onLayout={(event) => onDurationLayout(event.nativeEvent.layout.width)}
-          >
-            <Animated.View style={[styles.durationHighlight, durationHighlightStyle]} />
-            <LuxPressable onPress={() => handleSelectDuration("weekly")} style={styles.durationOption}>
-              <Text style={[styles.durationText, selectedDuration === "weekly" ? styles.durationTextActive : null]}>Weekly</Text>
-            </LuxPressable>
-            <LuxPressable onPress={() => handleSelectDuration("monthly")} style={styles.durationOption}>
-              <View style={styles.durationLabelRow}>
-                <Text style={[styles.durationText, selectedDuration === "monthly" ? styles.durationTextActive : null]}>Monthly</Text>
-                <View style={styles.saveBadge}>
-                  <Text style={styles.saveBadgeText}>Save up to 36%</Text>
-                </View>
-              </View>
-            </LuxPressable>
+        <View style={styles.trialControlRow}>
+          <View style={styles.trialControlCopy}>
+            <Text style={styles.trialControlTitle}>Enable free trial</Text>
+            <Text style={styles.trialControlBody}>Turning this on automatically switches you to the weekly plan.</Text>
           </View>
+          <TrialSwitch value={trialEnabled} onPress={handleToggleTrial} />
         </View>
 
         <View style={styles.planStack}>
-          {(Object.keys(PLAN_COPY) as PlanId[]).map((plan) => {
-            const copy = PLAN_COPY[plan];
-            const active = selectedPlan === plan;
-            const currentPrice = selectedDuration === "monthly" ? copy.monthlyPrice : copy.weeklyPrice;
-            const hasSelectedProduct = Boolean(catalog[plan][selectedDuration]);
-            return (
-              <LuxPressable
-                key={plan}
-                onPress={() => handleSelectPlan(plan)}
-                style={[styles.planCard, active ? styles.planCardActive : null]}
-              >
-                <View style={styles.planHeaderRow}>
-                  <View>
-                    <Text style={styles.planEyebrow}>{copy.eyebrow}</Text>
-                    <Text style={styles.planTitle}>{copy.title}</Text>
-                    <Text style={styles.planAudience}>{copy.audience}</Text>
-                  </View>
-                  <View style={[styles.selectionDot, active ? styles.selectionDotActive : null]} />
-                </View>
+          <LuxPressable
+            onPress={() => handleSelectDuration("yearly")}
+            style={[styles.planCard, styles.yearlyCard, selectedDuration === "yearly" ? styles.planCardActive : null]}
+            className={pointerClassName}
+          >
+            <View style={styles.cardTopRow}>
+              <View style={styles.bestOfferBadge}>
+                <Text style={styles.bestOfferText}>BEST OFFER</Text>
+              </View>
+              <View style={[styles.selectionDot, selectedDuration === "yearly" ? styles.selectionDotActive : null]} />
+            </View>
 
-                <Animated.View key={`${plan}-${selectedDuration}`} entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
-                  <Text style={styles.planPrice}>{currentPrice}</Text>
-                  <Text style={styles.planMeta}>{selectedDuration === "monthly" ? copy.savings : "Flexible weekly access"}</Text>
-                  <Text style={styles.planSummary}>{copy.featureSummary}</Text>
-                </Animated.View>
+            <Animated.View key={`yearly-${pricing.currency}`} entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
+              <Text style={styles.planTitle}>Yearly Access</Text>
+              <Text style={styles.primaryPrice}>{pricing.yearlyWeeklyLabel}</Text>
+              <Text style={styles.secondaryPrice}>Just {pricing.yearlyTotalLabel} per year</Text>
+              <Text style={styles.planBody}>The lowest weekly cost for full Pro Studio access.</Text>
+            </Animated.View>
+          </LuxPressable>
 
-                <View style={styles.featureList}>
-                  {copy.features.map((feature) => (
-                    <FeatureRow key={feature} label={feature} />
-                  ))}
-                </View>
+          <LuxPressable
+            onPress={() => handleSelectDuration("weekly")}
+            style={[
+              styles.planCard,
+              styles.weeklyCard,
+              selectedDuration === "weekly" ? styles.planCardActive : null,
+              trialEnabled ? styles.weeklyTrialCard : null,
+            ]}
+            className={pointerClassName}
+          >
+            <View style={styles.cardTopRow}>
+              <View style={[styles.weeklyBadge, trialEnabled ? styles.weeklyBadgeActive : null]}>
+                <Text style={styles.weeklyBadgeText}>{trialEnabled ? "TRIAL ACTIVE" : "WEEKLY"}</Text>
+              </View>
+              <View style={[styles.selectionDot, selectedDuration === "weekly" ? styles.selectionDotActive : null]} />
+            </View>
 
-                {plan === "pro" ? (
-                  <View style={styles.trialRow}>
-                    <View style={styles.trialCopyWrap}>
-                      <Text style={styles.trialTitle}>Enable 3-day free trial</Text>
-                      <Text style={styles.trialBody}>
-                        {canUseTrial ? "Available on Pro Monthly only." : "Switch to Pro Monthly to unlock the trial."}
-                      </Text>
-                    </View>
-                    <TrialSwitch value={trialEnabled} disabled={!canUseTrial} onPress={handleToggleTrial} />
-                  </View>
-                ) : null}
-
-                {!hasSelectedProduct ? (
-                  <Text style={styles.planWarning}>RevenueCat package for this option is not mapped yet.</Text>
-                ) : null}
-              </LuxPressable>
-            );
-          })}
+            <Animated.View key={`weekly-${trialEnabled}-${pricing.currency}`} entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
+              <Text style={styles.planTitle}>Weekly Access</Text>
+              {trialEnabled ? (
+                <>
+                  <Text style={styles.trialHeadline}>3-DAYS FREE TRIAL</Text>
+                  <Text style={styles.secondaryPrice}>then {pricing.weeklyLabel}</Text>
+                  <Text style={styles.planBody}>The only plan that unlocks the free trial experience.</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.primaryPrice}>{pricing.weeklyLabel}</Text>
+                  <Text style={styles.secondaryPrice}>Flexible weekly billing</Text>
+                  <Text style={styles.planBody}>Ideal for trying Pro Studio without the yearly commitment.</Text>
+                </>
+              )}
+            </Animated.View>
+          </LuxPressable>
         </View>
 
-        {selectedPlan === "pro" ? (
-          <View style={styles.trialBanner}>
+        <View style={styles.featureShell}>
+          <View style={styles.featureHeaderRow}>
             <ShieldCheck color="#67e8f9" size={16} />
-            <Text style={styles.trialBannerText}>
-              {canUseTrial && trialEnabled
-                ? "Trial users get 5 images in HD with watermark before the paid Pro plan begins."
-                : "Paid Pro removes the watermark automatically and unlocks the full 4K path."}
-            </Text>
+            <Text style={styles.featureHeaderText}>Everything in Pro Studio</Text>
           </View>
-        ) : (
-          <View style={styles.basicBanner}>
-            <Text style={styles.basicBannerText}>Basic stays direct-pay only: HD exports, watermark on, and homeowner-focused presets.</Text>
+          <View style={styles.featureList}>
+            {PRO_FEATURES.map((feature) => (
+              <FeatureRow key={feature} label={feature} />
+            ))}
           </View>
-        )}
+          <Text style={styles.featureFooter}>
+            {trialEnabled
+              ? "Trial checkout is available on the weekly plan only."
+              : "Switch on the trial at any time and we will move you to the weekly card automatically."}
+          </Text>
+        </View>
 
         {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+        {!selectedPackage ? <Text style={styles.warningText}>RevenueCat package for this billing option is not mapped yet.</Text> : null}
 
-        <LuxPressable onPress={handlePurchase} disabled={isLoading} style={styles.ctaOuter}>
-          <LinearGradient colors={["#d946ef", "#8b5cf6", "#312e81"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.ctaGradient}>
+        <LuxPressable onPress={handlePurchase} disabled={isLoading} style={styles.ctaOuter} className={pointerClassName}>
+          <LinearGradient
+            colors={trialEnabled ? ["#ef4444", "#d946ef", "#7c3aed"] : ["#a855f7", "#d946ef", "#312e81"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.ctaGradient}
+          >
             {isLoading ? (
               <View style={styles.loadingRow}>
                 <ActivityIndicator color="#ffffff" />
                 <Text style={styles.ctaText}>Processing...</Text>
               </View>
             ) : (
-              <>
+              <View style={styles.ctaContent}>
                 <Text style={styles.ctaText}>{ctaTitle}</Text>
-                <Text style={styles.ctaSubtext}>{ctaSubtitle}</Text>
-              </>
+                {trialEnabled ? <ArrowRight color="#ffffff" size={18} /> : null}
+              </View>
             )}
+            {!isLoading ? <Text style={styles.ctaSubtext}>{ctaSubtitle}</Text> : null}
           </LinearGradient>
         </LuxPressable>
 
         <Text style={styles.disclaimer}>
-          Free trial and billing terms are managed by the App Store or Google Play. Darkor.ai applies watermark-free 4K output only to active paid Pro users.
+          Free trials and recurring billing are managed by the App Store or Google Play. Darkor.ai localizes displayed prices for your region and removes the watermark only for active paid Pro Studio subscriptions.
         </Text>
       </ScrollView>
     </View>
@@ -537,7 +518,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   topActionText: {
-    color: "#e4e4e7",
+    color: "#f4f4f5",
     fontSize: 14,
     fontWeight: "700",
   },
@@ -583,56 +564,46 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 24,
   },
-  durationShell: {
+  trialControlRow: {
     marginTop: 24,
-  },
-  durationTrack: {
-    position: "relative",
-    flexDirection: "row",
-    borderRadius: 999,
+    borderRadius: 26,
     borderWidth: 0.5,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: "rgba(255,255,255,0.03)",
-    overflow: "hidden",
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
   },
-  durationHighlight: {
-    position: "absolute",
-    top: 4,
-    bottom: 4,
-    left: 4,
-    borderRadius: 999,
-    backgroundColor: "rgba(217,70,239,0.18)",
-  },
-  durationOption: {
+  trialControlCopy: {
     flex: 1,
-    minHeight: 56,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 10,
-  },
-  durationLabelRow: {
-    alignItems: "center",
     gap: 4,
   },
-  durationText: {
-    color: "#71717a",
-    fontSize: 14,
+  trialControlTitle: {
+    color: "#ffffff",
+    fontSize: 15,
     fontWeight: "700",
   },
-  durationTextActive: {
-    color: "#f5f5f5",
+  trialControlBody: {
+    color: "#a1a1aa",
+    fontSize: 12,
+    lineHeight: 18,
   },
-  saveBadge: {
+  trialSwitch: {
+    width: 48,
+    height: 28,
     borderRadius: 999,
-    backgroundColor: "rgba(244,114,182,0.14)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    backgroundColor: "rgba(217,70,239,0.28)",
+    padding: 4,
+    justifyContent: "center",
   },
-  saveBadgeText: {
-    color: "#fbcfe8",
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 0.2,
+  trialThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#ffffff",
   },
   planStack: {
     marginTop: 20,
@@ -641,45 +612,62 @@ const styles = StyleSheet.create({
   planCard: {
     borderRadius: 30,
     borderWidth: 0.5,
-    borderColor: "rgba(255,255,255,0.05)",
-    backgroundColor: "rgba(255,255,255,0.03)",
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "#050505",
     paddingHorizontal: 20,
     paddingVertical: 20,
     shadowColor: "#000000",
-    shadowOpacity: 0.34,
+    shadowOpacity: 0.38,
     shadowRadius: 28,
     shadowOffset: { width: 0, height: 16 },
     elevation: 12,
   },
+  yearlyCard: {
+    backgroundColor: "rgba(255,255,255,0.02)",
+  },
+  weeklyCard: {
+    backgroundColor: "rgba(255,255,255,0.02)",
+  },
+  weeklyTrialCard: {
+    borderColor: "rgba(248,113,113,0.72)",
+    shadowColor: "#ef4444",
+  },
   planCardActive: {
-    borderColor: "rgba(217,70,239,0.6)",
+    borderColor: "rgba(217,70,239,0.7)",
     backgroundColor: "rgba(255,255,255,0.045)",
   },
-  planHeaderRow: {
+  cardTopRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
-    gap: 16,
+    marginBottom: 18,
   },
-  planEyebrow: {
-    color: "#a1a1aa",
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.6,
-    textTransform: "uppercase",
+  bestOfferBadge: {
+    borderRadius: 999,
+    backgroundColor: "rgba(217,70,239,0.18)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
-  planTitle: {
-    marginTop: 4,
-    color: "#ffffff",
-    fontSize: 28,
+  bestOfferText: {
+    color: "#f5d0fe",
+    fontSize: 10,
     fontWeight: "800",
+    letterSpacing: 0.6,
   },
-  planAudience: {
-    marginTop: 4,
-    color: "#a1a1aa",
-    fontSize: 13,
-    lineHeight: 20,
-    maxWidth: "92%",
+  weeklyBadge: {
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  weeklyBadgeActive: {
+    backgroundColor: "rgba(239,68,68,0.18)",
+  },
+  weeklyBadgeText: {
+    color: "#fca5a5",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.6,
   },
   selectionDot: {
     width: 20,
@@ -687,32 +675,62 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1.5,
     borderColor: "rgba(255,255,255,0.2)",
-    marginTop: 4,
   },
   selectionDotActive: {
     borderColor: "#f0abfc",
     backgroundColor: "rgba(217,70,239,0.18)",
   },
-  planPrice: {
-    marginTop: 18,
+  planTitle: {
     color: "#ffffff",
-    fontSize: 30,
+    fontSize: 26,
     fontWeight: "800",
   },
-  planMeta: {
+  primaryPrice: {
+    marginTop: 12,
+    color: "#ffffff",
+    fontSize: 32,
+    fontWeight: "800",
+  },
+  trialHeadline: {
+    marginTop: 12,
+    color: "#ffffff",
+    fontSize: 30,
+    fontWeight: "900",
+    lineHeight: 34,
+  },
+  secondaryPrice: {
     marginTop: 8,
     color: "#f5d0fe",
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "700",
   },
-  planSummary: {
-    marginTop: 8,
+  planBody: {
+    marginTop: 10,
     color: "#a1a1aa",
     fontSize: 13,
     lineHeight: 20,
   },
+  featureShell: {
+    marginTop: 20,
+    borderRadius: 26,
+    borderWidth: 0.5,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(255,255,255,0.03)",
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+  },
+  featureHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  featureHeaderText: {
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "700",
+  },
   featureList: {
-    marginTop: 18,
+    marginTop: 16,
     gap: 10,
   },
   featureRow: {
@@ -734,86 +752,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  trialRow: {
-    marginTop: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 14,
-    borderTopWidth: 0.5,
-    borderTopColor: "rgba(255,255,255,0.06)",
-    paddingTop: 16,
-  },
-  trialCopyWrap: {
-    flex: 1,
-    gap: 4,
-  },
-  trialTitle: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  trialBody: {
+  featureFooter: {
+    marginTop: 14,
     color: "#a1a1aa",
     fontSize: 12,
-    lineHeight: 18,
-  },
-  trialSwitch: {
-    width: 48,
-    height: 28,
-    borderRadius: 999,
-    backgroundColor: "rgba(217,70,239,0.24)",
-    padding: 4,
-    justifyContent: "center",
-  },
-  trialThumb: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#ffffff",
-  },
-  disabledControl: {
-    opacity: 0.45,
-  },
-  planWarning: {
-    marginTop: 12,
-    color: "#fca5a5",
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  trialBanner: {
-    marginTop: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    borderRadius: 20,
-    backgroundColor: "rgba(34,211,238,0.08)",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  trialBannerText: {
-    flex: 1,
-    color: "#cffafe",
-    fontSize: 12,
-    fontWeight: "700",
-    lineHeight: 18,
-  },
-  basicBanner: {
-    marginTop: 18,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.04)",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  basicBannerText: {
-    color: "#d4d4d8",
-    fontSize: 12,
-    fontWeight: "700",
     lineHeight: 18,
   },
   errorText: {
     marginTop: 16,
     color: "#fecdd3",
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  warningText: {
+    marginTop: 10,
+    color: "#fca5a5",
     fontSize: 12,
     lineHeight: 18,
   },
@@ -827,6 +780,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 18,
     paddingHorizontal: 18,
+  },
+  ctaContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   ctaText: {
     color: "#ffffff",

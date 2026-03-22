@@ -5,8 +5,8 @@ export const REVENUECAT_ENTITLEMENT = "pro";
 export type RevenueCatCustomerInfo = import("react-native-purchases").CustomerInfo;
 export type RevenueCatPackage = import("react-native-purchases").PurchasesPackage;
 export type RevenueCatPurchases = (typeof import("react-native-purchases"))["default"];
-export type BillingPlan = "basic" | "pro" | "trial";
-export type BillingDuration = "weekly" | "monthly";
+export type BillingPlan = "pro" | "trial";
+export type BillingDuration = "weekly" | "yearly";
 
 let purchasesClient: RevenueCatPurchases | null = null;
 let purchasesModulePromise: Promise<typeof import("react-native-purchases")> | null = null;
@@ -55,12 +55,10 @@ function matchesAny(haystack: string, needles: string[]) {
 }
 
 function inferDurationFromHaystack(haystack: string): BillingDuration {
-  return matchesAny(haystack, ["month", "monthly"]) ? "monthly" : "weekly";
-}
-
-function inferBasePlanFromHaystack(haystack: string): Exclude<BillingPlan, "trial"> {
-  if (matchesAny(haystack, ["basic", "homeowner"])) return "basic";
-  return "pro";
+  if (matchesAny(haystack, ["annual", "year", "yearly", "best offer"])) {
+    return "yearly";
+  }
+  return "weekly";
 }
 
 function isTrialPeriod(info?: RevenueCatCustomerInfo | null) {
@@ -113,28 +111,28 @@ export function hasActiveSubscription(info?: RevenueCatCustomerInfo | null) {
   return Object.keys(info.entitlements?.active ?? {}).length > 0;
 }
 
-export function hasProEntitlement(info?: RevenueCatCustomerInfo | null) {
-  return hasActiveSubscription(info);
-}
-
 export function inferPlanFromRevenueCat(input?: {
   packageIdentifier?: string | null;
   productIdentifier?: string | null;
   activeSubscriptions?: string[] | null;
   entitlementPeriodType?: string | null;
 }) {
+  const periodType = String(input?.entitlementPeriodType ?? "").toLowerCase();
+  if (periodType === "trial" || periodType === "intro") {
+    return "trial" as const;
+  }
+
   const haystack = normalizeHaystack([
     input?.packageIdentifier,
     input?.productIdentifier,
     ...(input?.activeSubscriptions ?? []),
   ]);
 
-  const basePlan = inferBasePlanFromHaystack(haystack);
-  const periodType = String(input?.entitlementPeriodType ?? "").toLowerCase();
-  if (basePlan === "pro" && (periodType === "trial" || periodType === "intro")) {
+  if (matchesAny(haystack, ["trial", "intro"])) {
     return "trial" as const;
   }
-  return basePlan;
+
+  return "pro" as const;
 }
 
 export function inferPlanFromCustomerInfo(info?: RevenueCatCustomerInfo | null) {
@@ -151,28 +149,33 @@ export function inferBillingDurationFromPackage(pkg?: RevenueCatPackage | null) 
   return inferDurationFromHaystack(getPackageHaystack(pkg));
 }
 
-export function inferBillingPlanFromPackage(pkg?: RevenueCatPackage | null) {
-  return inferBasePlanFromHaystack(getPackageHaystack(pkg));
-}
-
-export function findRevenueCatPackage(
-  packages: RevenueCatPackage[],
-  plan: Exclude<BillingPlan, "trial">,
-  duration: BillingDuration,
-) {
+export function findRevenueCatPackage(packages: RevenueCatPackage[], duration: BillingDuration) {
   const ranked = packages
     .map((pkg) => {
       const haystack = getPackageHaystack(pkg);
       let score = 0;
-      if (inferBillingPlanFromPackage(pkg) === plan) score += 5;
-      if (inferBillingDurationFromPackage(pkg) === duration) score += 3;
-      if (haystack.includes(`${plan}_${duration}`) || haystack.includes(`${plan}-${duration}`)) score += 2;
-      if (plan === "pro" && matchesAny(haystack, ["designer", "designers", "priority"])) score += 1;
-      if (plan === "basic" && matchesAny(haystack, ["homeowner", "starter"])) score += 1;
+
+      if (inferBillingDurationFromPackage(pkg) === duration) score += 6;
+      if (duration === "yearly" && matchesAny(haystack, ["annual", "year", "yearly", "best offer"])) score += 3;
+      if (duration === "weekly" && matchesAny(haystack, ["week", "weekly", "trial"])) score += 3;
+      if (matchesAny(haystack, ["pro", "studio", "premium", "darkor"])) score += 1;
+
       return { pkg, score };
     })
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score);
 
-  return ranked[0]?.pkg ?? null;
+  if (ranked.length > 0) {
+    return ranked[0]?.pkg ?? null;
+  }
+
+  if (packages.length === 1) {
+    return packages[0];
+  }
+
+  return null;
+}
+
+export function hasTrialEntitlement(info?: RevenueCatCustomerInfo | null) {
+  return isTrialPeriod(info);
 }

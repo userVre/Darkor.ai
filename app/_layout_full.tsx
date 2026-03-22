@@ -38,7 +38,7 @@ function RevenueCatGate() {
 
   const configuredRef = useRef(false);
   const listenerAddedRef = useRef(false);
-  const hasProRef = useRef<boolean | null>(null);
+  const hasSubscriptionRef = useRef<boolean | null>(null);
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
   const [revenueCatReady, setRevenueCatReady] = useState(false);
   const syncRef = useRef<(info?: RevenueCatCustomerInfo) => void>(() => undefined);
@@ -101,17 +101,17 @@ function RevenueCatGate() {
           await setPlan({ plan: inferredPlan, credits: planCreditGrant(inferredPlan) });
         }
 
-        if (hasProRef.current === null) {
-          hasProRef.current = hasSubscription;
-        } else if (hasSubscription && !hasProRef.current) {
-          if (inferredPlan === "pro") {
-            showSuccess();
+        if (hasSubscriptionRef.current === null) {
+          hasSubscriptionRef.current = hasSubscription;
+        } else if (hasSubscription && !hasSubscriptionRef.current) {
+          if (inferredPlan === "trial") {
+            showToast("Your 3-day Pro Studio trial is active.");
           } else {
-            showToast("Basic plan is active.");
+            showSuccess();
           }
-          hasProRef.current = true;
+          hasSubscriptionRef.current = true;
         } else {
-          hasProRef.current = hasSubscription;
+          hasSubscriptionRef.current = hasSubscription;
         }
 
       } catch (error) {
@@ -397,6 +397,9 @@ export default function RootLayoutFull() {
     </GestureHandlerRootView>
   );
 }
+
+
+
 
 
 

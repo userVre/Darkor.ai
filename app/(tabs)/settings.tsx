@@ -14,7 +14,6 @@ import { Alert, ScrollView, Share, Text, View, useWindowDimensions } from "react
 import {
   ArrowLeft,
   BadgeCheck,
-  Building2,
   ChevronRight,
   Copy,
   Diamond,
@@ -64,24 +63,19 @@ const MENU_ITEMS = [
 
 const PLAN_BULLETS: Record<MeResponse["plan"], { id: string; label: string; icon: any }[]> = {
   free: [
-    { id: "hd", label: "HD previews with watermark", icon: Sparkles },
-    { id: "rooms", label: "Basic room types only", icon: Building2 },
-    { id: "styles", label: "10 style presets", icon: Shield },
+    { id: "free-watermark", label: "Previews stay HD with a Darkor.ai watermark", icon: Shield },
+    { id: "free-upgrade", label: "Unlock Pro Studio for 4K and premium tools", icon: Diamond },
+    { id: "free-speed", label: "Weekly or yearly billing available from the paywall", icon: Zap },
   ],
   trial: [
-    { id: "trial-images", label: "5 free images in HD", icon: Sparkles },
-    { id: "trial-watermark", label: "Watermark stays on during trial", icon: Shield },
-    { id: "trial-upgrade", label: "Upgrade to paid Pro for 4K + no watermark", icon: Zap },
-  ],
-  basic: [
-    { id: "basic-images", label: "35 images each month", icon: Sparkles },
-    { id: "basic-quality", label: "HD exports with Darkor.ai watermark", icon: Shield },
-    { id: "basic-presets", label: "10 styles and homeowner room types", icon: Building2 },
+    { id: "trial-state", label: "Your 3-day Pro Studio weekly trial is active", icon: Sparkles },
+    { id: "trial-upgrade", label: "Billing begins automatically after the free period", icon: Zap },
+    { id: "trial-quality", label: "Paid Pro Studio removes the watermark and unlocks 4K", icon: Diamond },
   ],
   pro: [
-    { id: "pro-images", label: "110 images each month", icon: Sparkles },
-    { id: "pro-quality", label: "4K Ultra HD with no watermark", icon: Diamond },
-    { id: "pro-speed", label: "Priority renders, outdoor, walkthroughs, and VR", icon: Zap },
+    { id: "pro-quality", label: "Watermark-free 4K Ultra HD exports", icon: Diamond },
+    { id: "pro-speed", label: "Priority generation and premium render path", icon: Zap },
+    { id: "pro-tools", label: "Outdoor, walkthrough, and VR tools included", icon: Sparkles },
   ],
 };
 
@@ -122,17 +116,19 @@ export default function SettingsScreen() {
   }, [isSignedIn, setPlan, user?.id]);
 
   const membershipPlan: MeResponse["plan"] = me?.plan ?? "free";
-  const paidPlan = membershipPlan === "basic" || membershipPlan === "pro" ? membershipPlan : null;
-  const planLabel = membershipPlan === "free" ? "FREE" : membershipPlan === "trial" ? "PRO TRIAL" : planTitle(membershipPlan).toUpperCase();
-  const isLockedTier = membershipPlan === "free" || membershipPlan === "trial";
+  const planLabel = membershipPlan === "free"
+    ? "FREE"
+    : membershipPlan === "trial"
+      ? "PRO STUDIO TRIAL"
+      : planTitle(membershipPlan).toUpperCase();
   const rewardCountdown = formatRewardCountdown(me?.lastRewardDate);
   const accountBullets = PLAN_BULLETS[membershipPlan];
-  const upgradeLabel = paidPlan === "basic" ? "Unlock Pro" : "View Plans";
+  const upgradeLabel = membershipPlan === "pro" ? "Manage Pro Studio" : "Unlock Pro Studio";
   const upgradeSubtitle = membershipPlan === "pro"
     ? "Your premium studio tier is active."
-    : membershipPlan === "basic"
-      ? "Move to Pro for 4K, no watermark, and premium tools."
-      : "Choose Basic for essentials or Pro for the full studio path.";
+    : membershipPlan === "trial"
+      ? "You are inside the weekly trial path right now."
+      : "One Pro Studio offering, available weekly or yearly.";
 
   const handleUpgrade = () => {
     triggerHaptic();
@@ -224,7 +220,7 @@ export default function SettingsScreen() {
         const inferredPlan = inferPlanFromCustomerInfo(info);
         await setPlan({ plan: inferredPlan, credits: planCreditGrant(inferredPlan) });
       }
-      Alert.alert("Restored", hasSubscription ? "Your subscription is active." : "No active subscriptions found.");
+      Alert.alert("Restored", hasSubscription ? "Your Pro Studio subscription is active." : "No active subscriptions found.");
     } catch {
       Alert.alert("Restore failed", "Please try again in a moment.");
     }
@@ -290,7 +286,7 @@ export default function SettingsScreen() {
               Credits remaining: {typeof me?.credits === "number" ? me.credits : 0}
             </Text>
             <Text className="text-xs text-zinc-400">{upgradeSubtitle}</Text>
-            {isLockedTier ? <Text className="text-xs text-zinc-500">{rewardCountdown}</Text> : null}
+            {membershipPlan !== "pro" ? <Text className="text-xs text-zinc-500">{rewardCountdown}</Text> : null}
             <View className="gap-3">
               {accountBullets.map((bullet) => {
                 const Icon = bullet.icon;
@@ -334,7 +330,7 @@ export default function SettingsScreen() {
             <View className="mt-4 flex-row gap-3">
               <LuxPressable
                 onPress={handleCopyReferral}
-                className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-3"
+                className="cursor-pointer flex-1 flex-row items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-3"
                 style={{ borderWidth: 0.5 }}
               >
                 <Copy color="#e4e4e7" size={14} />
@@ -342,7 +338,7 @@ export default function SettingsScreen() {
               </LuxPressable>
               <LuxPressable
                 onPress={handleShareReferral}
-                className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl bg-amber-400/20 py-3"
+                className="cursor-pointer flex-1 flex-row items-center justify-center gap-2 rounded-2xl bg-amber-400/20 py-3"
               >
                 <Share2 color="#facc15" size={14} />
                 <Text className="text-xs font-semibold text-amber-200">Share</Text>
@@ -463,24 +459,24 @@ export default function SettingsScreen() {
 
           <View className="mt-6 gap-4">
             <View className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              <Building2 color="#f9a8d4" size={18} />
+              <Sparkles color="#f9a8d4" size={18} />
               <View className="flex-1">
-                <Text className="text-sm font-semibold text-white">Exterior Facades</Text>
-                <Text className="mt-1 text-xs text-zinc-400">Architectural-grade redesigns in seconds.</Text>
+                <Text className="text-sm font-semibold text-white">Localized Paywall</Text>
+                <Text className="mt-1 text-xs text-zinc-400">Weekly and yearly pricing now adapts to your region automatically.</Text>
               </View>
             </View>
             <View className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
               <Trees color="#fef08a" size={18} />
               <View className="flex-1">
-                <Text className="text-sm font-semibold text-white">Garden Design</Text>
-                <Text className="mt-1 text-xs text-zinc-400">Lush outdoor concepts with cinematic lighting.</Text>
+                <Text className="text-sm font-semibold text-white">Outdoor Design</Text>
+                <Text className="mt-1 text-xs text-zinc-400">Premium landscape concepts are available inside Pro Studio.</Text>
               </View>
             </View>
             <View className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              <Sparkles color="#a5b4fc" size={18} />
+              <Diamond color="#a5b4fc" size={18} />
               <View className="flex-1">
-                <Text className="text-sm font-semibold text-white">3D Walkthroughs</Text>
-                <Text className="mt-1 text-xs text-zinc-400">Preview rooms as if you're already inside.</Text>
+                <Text className="text-sm font-semibold text-white">Pro Studio</Text>
+                <Text className="mt-1 text-xs text-zinc-400">One premium tier, simplified into a cleaner global checkout.</Text>
               </View>
             </View>
           </View>

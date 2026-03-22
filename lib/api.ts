@@ -1,4 +1,4 @@
-export type PlanUsed = "free" | "trial" | "basic" | "pro";
+export type PlanUsed = "free" | "trial" | "pro";
 
 export type GenerateRequestPayload = {
   imageBase64: string;
