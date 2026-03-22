@@ -6,12 +6,14 @@ const { resolvePort, setupAdbReverse } = require("./dev-server-utils.cjs");
 async function main() {
   const metroConfig = pathToFileURL(resolve(__dirname, "..", "metro.config.js")).href;
   process.env.EXPO_OVERRIDE_METRO_CONFIG = metroConfig;
+  process.env.EXPO_DEV_PORT = process.env.EXPO_DEV_PORT || "8081";
 
   const { port, autoSelected } = await resolvePort();
   const portString = String(port);
 
   if (autoSelected) {
-    console.log(`[dev] Port 8081 is busy, using ${portString} instead`);
+    console.error(`[dev] Port 8081 is unavailable; stop the conflicting process before starting Metro.`);
+    process.exit(1);
   }
 
   let host = process.env.EXPO_DEV_HOST;
@@ -32,12 +34,11 @@ async function main() {
 
   process.env.EXPO_DEV_CLIENT_SERVER_URL = serverUrl;
   process.env.EXPO_PACKAGER_PROXY_URL = serverUrl;
-  process.env.EXPO_PACKAGER_HOSTNAME = host;
-  process.env.REACT_NATIVE_PACKAGER_HOSTNAME = host;
   process.env.EXPO_DEV_PORT = portString;
 
-  const defaultArgs = ["expo", "start", "--clear", "--dev-client", "--host", "lan", "--port", portString];
-  const extraArgs = process.argv.slice(2);
+  const expoHostMode = adbOk ? "localhost" : "lan";
+  const defaultArgs = ["expo", "start", "--clear", "--dev-client", "--host", expoHostMode, "--port", portString];
+  const extraArgs = process.argv.slice(2).filter((arg) => arg !== "--non-interactive");
 
   const result = spawnSync("npx", [...defaultArgs, ...extraArgs], {
     stdio: "inherit",

@@ -4,16 +4,30 @@ const { resolve } = require("path");
 const { pathToFileURL } = require("url");
 const { resolvePort, setupAdbReverse } = require("./dev-server-utils.cjs");
 
+function run(command, args, options = {}) {
+  const result = spawnSync(command, args, {
+    stdio: "inherit",
+    shell: true,
+    ...options,
+  });
+
+  if (result.status !== 0) {
+    process.exit(result.status ?? 1);
+  }
+}
+
 async function main() {
   const projectRoot = resolve(__dirname, "..");
   const metroConfig = pathToFileURL(resolve(projectRoot, "metro.config.js")).href;
   process.env.EXPO_OVERRIDE_METRO_CONFIG = metroConfig;
+  process.env.EXPO_DEV_PORT = process.env.EXPO_DEV_PORT || "8081";
 
   const { port, autoSelected } = await resolvePort();
   const portString = String(port);
 
   if (autoSelected) {
-    console.log(`[dev] Port 8081 is busy, using ${portString} instead`);
+    console.error(`[dev] Port 8081 is unavailable; stop the conflicting process before running Android.`);
+    process.exit(1);
   }
 
   let host = process.env.EXPO_DEV_HOST;
@@ -28,11 +42,10 @@ async function main() {
     host = adbOk ? "127.0.0.1" : "10.0.2.2";
   }
 
-  console.log(`[dev] Android dev server: http://${host}:${portString} (adb reverse ${adbOk ? "ok" : "off"})`);
-  process.env.EXPO_DEV_CLIENT_SERVER_URL = `http://${host}:${portString}`;
-  process.env.EXPO_PACKAGER_PROXY_URL = `http://${host}:${portString}`;
-  process.env.EXPO_PACKAGER_HOSTNAME = host;
-  process.env.REACT_NATIVE_PACKAGER_HOSTNAME = host;
+  const serverUrl = `http://${host}:${portString}`;
+  console.log(`[dev] Android dev server: ${serverUrl} (adb reverse ${adbOk ? "ok" : "off"})`);
+  process.env.EXPO_DEV_CLIENT_SERVER_URL = serverUrl;
+  process.env.EXPO_PACKAGER_PROXY_URL = serverUrl;
   process.env.EXPO_DEV_PORT = portString;
   process.env.EXPO_ANDROID_ARCHITECTURES = "x86_64";
   process.env.REACT_NATIVE_DISABLE_LTO = "1";
@@ -55,7 +68,7 @@ async function main() {
       if (new RegExp(`^${key}=`, "m").test(content)) {
         return content.replace(new RegExp(`^${key}=.*$`, "m"), line);
       }
-      return content.trimEnd() + "\n" + line + "\n";
+      return `${content.trimEnd()}\n${line}\n`;
     };
 
     let props = fs.readFileSync(gradlePropsPath, "utf8");
@@ -69,16 +82,29 @@ async function main() {
     props = patchProp(props, "org.gradle.daemon", "false");
     props = patchProp(props, "reactNativeArchitectures", "x86_64");
     props = patchProp(props, "newArchEnabled", "false");
+    props = patchProp(props, "EX_DEV_CLIENT_NETWORK_INSPECTOR", "false");
     fs.writeFileSync(gradlePropsPath, props);
   }
 
-  const result = spawnSync("npx", ["expo", "run:android", "--port", portString], {
-    stdio: "inherit",
-    shell: true,
+  const androidDir = resolve(projectRoot, "android");
+  run("cmd", ["/c", "gradlew.bat", "app:installDebug"], {
+    cwd: androidDir,
     env: process.env,
   });
 
-  process.exit(result.status ?? 1);
+  run("adb", [
+    "shell",
+    "am",
+    "start",
+    "-W",
+    "-a",
+    "android.intent.action.VIEW",
+    "-d",
+    `exp+darkor-ai://expo-development-client/?url=${encodeURIComponent(serverUrl)}`,
+  ], {
+    cwd: projectRoot,
+    env: process.env,
+  });
 }
 
 main().catch((error) => {

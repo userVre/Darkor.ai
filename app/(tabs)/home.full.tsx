@@ -95,6 +95,7 @@ const ServiceCard = memo(function ServiceCard({ item, height, onPress }: Service
         player={player}
         style={styles.video}
         contentFit="cover"
+        surfaceType="textureView"
         nativeControls={false}
         pointerEvents="none"
       />
