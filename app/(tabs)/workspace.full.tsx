@@ -1001,6 +1001,39 @@ export default function WorkspaceScreen() {
     setWorkflowStep((prev) => Math.max(prev - 1, 0));
   }, [router, workflowStep]);
 
+  const handleResetWizard = useCallback(() => {
+    triggerHaptic();
+    setDraftImage(null);
+    setDraftRoom(null);
+    setDraftStyle(null);
+    setDraftPalette(null);
+    setDraftPrompt(null);
+    setDraftAspectRatio(null);
+    startTransition(() => {
+      setWorkflowStep(0);
+      setSelectedImage(null);
+      setSelectedRoom(null);
+      setSelectedStyle(null);
+      setSelectedModeId(null);
+      setCustomPrompt("");
+      setSelectedPaletteId(null);
+      setSelectedAspectRatioId("post");
+      setGeneratedImageUrl(null);
+      setGenerationId(null);
+      setFeedbackMessage("");
+      setFeedbackState(null);
+      setFeedbackReason("");
+      setFeedbackSubmitted(false);
+      setLastGenerationCount(null);
+    });
+    setIsLoadingExample(null);
+    setIsSelectingPhoto(false);
+    setReviewPromptOpen(false);
+    setRatePromptOpen(false);
+    setFeedbackOpen(false);
+    setAwaitingAuth(false);
+  }, [setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle]);
+
   const handleShare = useCallback(async () => {
     triggerHaptic();
     if (!generatedImageUrl) {
@@ -1462,7 +1495,7 @@ export default function WorkspaceScreen() {
               </Text>
 
               <LuxPressable
-                onPress={() => router.back()}
+                onPress={handleResetWizard}
                 className="cursor-pointer h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5"
                 style={{ borderWidth: 0.5 }}
               >
@@ -1659,17 +1692,26 @@ export default function WorkspaceScreen() {
                               onPress={() => handleSelectRoom(option)}
                               className="cursor-pointer rounded-[24px] border px-4 py-4"
                               style={{
-                                minHeight: 144,
+                                minHeight: 152,
                                 borderWidth: active ? 1.5 : 0.5,
                                 borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
-                                backgroundColor: active ? "rgba(217,70,239,0.08)" : "#050505",
+                                backgroundColor: active ? "rgba(217,70,239,0.09)" : "#050505",
+                                shadowColor: active ? "#d946ef" : "#000000",
+                                shadowOpacity: active ? 0.14 : 0.22,
+                                shadowRadius: active ? 18 : 20,
+                                shadowOffset: { width: 0, height: 12 },
+                                elevation: active ? 8 : 6,
                               }}
                             >
                               <View className="flex-row items-start justify-between">
                                 <View className="h-12 w-12 items-center justify-center rounded-[16px] border border-white/10 bg-white/5" style={{ borderWidth: 0.5 }}>
                                   <RoomIcon color={active ? "#f0abfc" : "#ffffff"} size={22} strokeWidth={2} />
                                 </View>
-                                {active ? <BadgeCheck color="#f0abfc" size={18} strokeWidth={2.1} /> : null}
+                                {active ? (
+                                  <View className="rounded-full border border-fuchsia-400/40 bg-fuchsia-500/15 px-3 py-1">
+                                    <Text className="text-[11px] font-semibold uppercase tracking-[1px] text-fuchsia-200">Selected</Text>
+                                  </View>
+                                ) : null}
                               </View>
                               <View style={{ marginTop: 16, gap: 6 }}>
                                 <Text className="text-lg font-semibold text-white">{option}</Text>
