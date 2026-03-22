@@ -48,9 +48,11 @@ import {
   DoorOpen,
   Fence,
   Flower2,
+  History,
   House,
   Image as ImageIcon,
   Plus,
+  RefreshCw,
   Layers,
   Lock,
   Monitor,
@@ -132,6 +134,14 @@ type StyleLibraryItem = {
   title: string;
   description: string;
   image: number;
+};
+
+type BoardRenderItem = {
+  id: string;
+  imageUrl: string;
+  styleLabel: string;
+  roomLabel: string;
+  generationId?: string | null;
 };
 
 type ModeOption = {
@@ -593,6 +603,8 @@ export default function WorkspaceScreen() {
   const [selectedAspectRatioId, setSelectedAspectRatioId] = useState<AspectRatioOption["id"]>("post");
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [generationId, setGenerationId] = useState<string | null>(null);
+  const [boardItems, setBoardItems] = useState<BoardRenderItem[]>([]);
+  const [activeBoardItemId, setActiveBoardItemId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSharingStory, setIsSharingStory] = useState(false);
   const [isDownloading, setIsDownloading] = useState<"standard" | "ultra" | null>(null);
@@ -781,6 +793,11 @@ export default function WorkspaceScreen() {
   const selectedAspectRatio = useMemo(
     () => ASPECT_RATIO_OPTIONS.find((option) => option.id === selectedAspectRatioId) ?? ASPECT_RATIO_OPTIONS[0],
     [selectedAspectRatioId],
+  );
+
+  const activeBoardItem = useMemo(
+    () => boardItems.find((item) => item.id === activeBoardItemId) ?? null,
+    [activeBoardItemId, boardItems],
   );
 
   const ratioSpec = useMemo(() => resolveAspectRatio(selectedAspectRatio), [selectedAspectRatio]);
@@ -1035,6 +1052,8 @@ export default function WorkspaceScreen() {
       setSelectedAspectRatioId("post");
       setGeneratedImageUrl(null);
       setGenerationId(null);
+      setBoardItems([]);
+      setActiveBoardItemId(null);
       setFeedbackMessage("");
       setFeedbackState(null);
       setFeedbackReason("");
@@ -1279,8 +1298,18 @@ export default function WorkspaceScreen() {
         token,
       );
 
+      const nextBoardItem: BoardRenderItem = {
+        id: response.generationId ?? String(Date.now()),
+        imageUrl: response.imageUrl,
+        styleLabel: selectedStyle,
+        roomLabel: selectedRoom,
+        generationId: response.generationId ?? null,
+      };
+
       setGeneratedImageUrl(response.imageUrl);
       setGenerationId(response.generationId ?? null);
+      setBoardItems((prev) => [nextBoardItem, ...prev.filter((item) => item.id !== nextBoardItem.id)]);
+      setActiveBoardItemId(null);
       setWorkflowStep(5);
 
       if (reviewState) {
@@ -1409,6 +1438,26 @@ export default function WorkspaceScreen() {
     triggerHaptic();
     setSelectedAspectRatioId(value);
   }, []);
+
+  const handleOpenBoardItem = useCallback((item: BoardRenderItem) => {
+    triggerHaptic();
+    setActiveBoardItemId(item.id);
+    setGeneratedImageUrl(item.imageUrl);
+    setGenerationId(item.generationId ?? null);
+    setFeedbackState(null);
+    setFeedbackReason("");
+    setFeedbackSubmitted(false);
+  }, []);
+
+  const handleCloseBoardEditor = useCallback(() => {
+    triggerHaptic();
+    setActiveBoardItemId(null);
+  }, []);
+
+  const handleBoardHistory = useCallback(() => {
+    triggerHaptic();
+    showToast("Generation history is coming next.");
+  }, [showToast]);
 
   const handleReviewYes = useCallback(async () => {
     triggerHaptic();
@@ -2116,94 +2165,293 @@ export default function WorkspaceScreen() {
   }
 
   if (workflowStep === 4) {
-    const maxFrameWidth = width * 0.7;
-    const maxFrameHeight = height * 0.55;
-    const frameByWidth = maxFrameWidth / ratioSpec.ratioValue;
-    const frameWidth = frameByWidth <= maxFrameHeight ? maxFrameWidth : maxFrameHeight * ratioSpec.ratioValue;
-    const frameHeight = frameWidth / ratioSpec.ratioValue;
-    const scanMin = -frameHeight * 0.45;
-    const scanMax = frameHeight * 0.45;
+    const boardCardWidth = Math.max((width - 52) / 2, 150);
 
     return (
       <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
-        <View className="flex-1 items-center justify-center overflow-hidden">
-          {selectedImage ? (
-            <Image source={{ uri: selectedImage.uri }} className="absolute inset-0 h-full w-full" contentFit="cover" />
-          ) : null}
-          <View className="absolute inset-0 bg-black/70" />
+        <ScrollView
+          className="flex-1 bg-black"
+          style={{ backgroundColor: "#000000" }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingTop: Math.max(insets.top + 14, 28),
+            paddingBottom: Math.max(insets.bottom + 32, 40),
+          }}
+          contentInsetAdjustmentBehavior="never"
+        >
+          <View className="flex-row items-center justify-between">
+            <View style={{ width: 42 }} />
+            <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>Your Board</Text>
+            <View style={{ width: 42 }} />
+          </View>
 
-          <View
-            className="items-center justify-center rounded-3xl border border-white/10 bg-black/40"
-            style={{ width: frameWidth, height: frameHeight, borderWidth: 0.5 }}
-          >
-            {selectedImage ? (
-              <Image
-                source={{ uri: selectedImage.uri }}
-                style={{ width: frameWidth, height: frameHeight, borderRadius: 24 }}
-                contentFit="cover"
-              />
-            ) : null}
-            <View className="absolute inset-0 rounded-3xl bg-black/50" />
-
-            <MotiView
-              animate={{ opacity: [0.15, 0.65, 0.15], scale: [1, 1.04, 1] }}
-              transition={{ ...LUX_SPRING, loop: true }}
-              style={{
-                position: "absolute",
-                width: frameWidth,
-                height: frameHeight * 0.3,
-                transform: [{ translateY: scanMin }],
-              }}
-            />
-
-            <MotiView
-              animate={{ translateY: [scanMin, scanMax] }}
-              transition={{ ...LUX_SPRING, loop: true }}
-              style={{ position: "absolute", width: frameWidth, height: frameHeight * 0.3 }}
-            >
-              <View className="absolute inset-0 bg-cyan-400/10" />
-              <LinearGradient
-                colors={["rgba(34, 211, 238, 0)", "rgba(34, 211, 238, 0.35)", "rgba(34, 211, 238, 0)"]}
-                start={{ x: 0.5, y: 0 }}
-                end={{ x: 0.5, y: 1 }}
-                style={{ position: "absolute", inset: 0, opacity: 0.7 }}
-              />
+          <View style={{ marginTop: 28, flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+            <MotiView style={{ width: boardCardWidth }} from={{ opacity: 0.5, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={LUX_SPRING}>
               <View
-                className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2 bg-cyan-300/90"
-                style={{
-                  shadowColor: "#22d3ee",
-                  shadowOpacity: 0.85,
-                  shadowRadius: 18,
-                  shadowOffset: { width: 0, height: 0 },
-                  elevation: 10,
-                }}
-              />
-              <View
-                className="absolute inset-x-0 top-1/2 h-5 -translate-y-1/2 bg-cyan-200/10"
-                style={{
-                  shadowColor: "#22d3ee",
-                  shadowOpacity: 0.35,
-                  shadowRadius: 30,
-                  shadowOffset: { width: 0, height: 0 },
-                  elevation: 6,
-                }}
-              />
+                className="overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950"
+                style={{ height: 236, borderWidth: 0.5 }}
+              >
+                {selectedImage ? (
+                  <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                ) : null}
+                <View className="absolute inset-0 bg-black/60" />
+                <View className="absolute inset-0 items-center justify-center gap-3">
+                  <MotiView animate={{ opacity: [0.5, 1, 0.5], scale: [0.96, 1, 0.96] }} transition={{ ...LUX_SPRING, loop: true }}>
+                    <View className="h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-white/10">
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    </View>
+                  </MotiView>
+                  <Text className="text-base font-semibold text-white">Processing...</Text>
+                  <Text className="text-sm text-zinc-300">Nano Banana is rendering your board.</Text>
+                </View>
+              </View>
             </MotiView>
           </View>
-
-          <View className="items-center gap-3 px-6">
-            <View className="h-16 w-16 items-center justify-center rounded-full border border-cyan-200/40 bg-cyan-500/20">
-              <Wand2 color="#67e8f9" size={26} />
-            </View>
-            <Text className="text-2xl font-medium text-white">Processing...</Text>
-            <Text className="text-center text-sm text-zinc-400">
-              Rendering in {ratioSpec.ratioLabel} · {selectedAspectRatio?.descriptor}
-            </Text>
-          </View>
-        </View>
+        </ScrollView>
       </View>
     );
   }
+
+  if (workflowStep === 5) {
+    const boardCardWidth = Math.max((width - 52) / 2, 150);
+    const editorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
+    const editorStyleLabel = activeBoardItem?.styleLabel ?? selectedStyle ?? "Custom";
+    const editorRoomLabel = activeBoardItem?.roomLabel ?? selectedRoom ?? serviceLabel;
+
+    if (!activeBoardItem) {
+      return (
+        <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
+          <ScrollView
+            className="flex-1 bg-black"
+            style={{ backgroundColor: "#000000" }}
+            contentContainerStyle={{
+              paddingHorizontal: 20,
+              paddingTop: Math.max(insets.top + 14, 28),
+              paddingBottom: Math.max(insets.bottom + 32, 40),
+            }}
+            contentInsetAdjustmentBehavior="never"
+          >
+            <View className="flex-row items-center justify-between">
+              <View style={{ width: 42 }} />
+              <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>Your Board</Text>
+              <LuxPressable
+                onPress={handleResetWizard}
+                className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
+                style={{ borderWidth: 0.5 }}
+              >
+                <Close color="#ffffff" size={18} strokeWidth={2.2} />
+              </LuxPressable>
+            </View>
+
+            <View style={{ marginTop: 28, flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+              {boardItems.length === 0 ? (
+                <View
+                  className="items-center justify-center rounded-[28px] border border-white/10 bg-zinc-950"
+                  style={{ width: boardCardWidth, height: 236, borderWidth: 0.5 }}
+                >
+                  <Sparkles color="#71717a" size={28} />
+                  <Text className="mt-4 text-base font-semibold text-white">Your first board appears here</Text>
+                  <Text className="mt-2 px-6 text-center text-sm leading-6 text-zinc-500">
+                    Generate a redesign to start building your collection.
+                  </Text>
+                </View>
+              ) : null}
+
+              {boardItems.map((item, index) => (
+                <MotiView key={item.id} {...staggerFadeUp(index, 40)} style={{ width: boardCardWidth }}>
+                  <LuxPressable
+                    onPress={() => handleOpenBoardItem(item)}
+                    className="cursor-pointer overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950"
+                    style={{ height: 236, borderWidth: 0.5 }}
+                  >
+                    <MotiView from={{ opacity: 0.7, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={LUX_SPRING} style={{ flex: 1 }}>
+                      <Image source={{ uri: item.imageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                    </MotiView>
+                    <LinearGradient
+                      colors={["transparent", "rgba(0,0,0,0.82)"]}
+                      start={{ x: 0.5, y: 0 }}
+                      end={{ x: 0.5, y: 1 }}
+                      style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 96 }}
+                    />
+                    <View style={{ position: "absolute", left: 14, right: 14, bottom: 14 }}>
+                      <Text className="text-base font-semibold text-white">{item.styleLabel + " " + item.roomLabel}</Text>
+                      <Text className="mt-1 text-xs text-zinc-300">Tap to open your design editor</Text>
+                    </View>
+                  </LuxPressable>
+                </MotiView>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      );
+    }
+
+    return (
+      <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
+        <View className="px-5" style={{ paddingTop: Math.max(insets.top + 10, 20) }}>
+          <View className="flex-row items-center justify-between">
+            <View className="rounded-full border border-white/10 bg-zinc-950 px-4 py-2" style={{ borderWidth: 0.5 }}>
+              <Text className="text-sm font-semibold text-white">{"?? " + imagesRemaining}</Text>
+            </View>
+            <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Your Design</Text>
+            <LuxPressable
+              onPress={handleCloseBoardEditor}
+              className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
+              style={{ borderWidth: 0.5 }}
+            >
+              <Close color="#ffffff" size={18} strokeWidth={2.2} />
+            </LuxPressable>
+          </View>
+        </View>
+
+        <ScrollView
+          className="flex-1 bg-black"
+          style={{ backgroundColor: "#000000" }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingTop: 22,
+            paddingBottom: Math.max(insets.bottom + 34, 42),
+          }}
+          contentInsetAdjustmentBehavior="never"
+        >
+          <MotiView from={{ opacity: 0, scale: 0.96, translateY: 18 }} animate={{ opacity: 1, scale: 1, translateY: 0 }} transition={LUX_SPRING}>
+            <View className="overflow-hidden rounded-[34px] border border-white/10 bg-zinc-950" style={{ borderWidth: 0.5 }}>
+              <View ref={imageContainerRef} collapsable={false} className="relative h-[460px] w-full">
+                {editorImageUrl ? (
+                  <Image source={{ uri: editorImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                ) : (
+                  <View className="h-full w-full items-center justify-center bg-zinc-900">
+                    <Sparkles color="#71717a" size={28} />
+                  </View>
+                )}
+                <View className="absolute inset-0 bg-black/10" />
+
+                <View className="absolute left-4 right-4 top-4 flex-row items-center justify-between">
+                  <View className="rounded-full border border-white/10 bg-black/45 p-3" style={{ borderWidth: 0.5 }}>
+                    <Layers color="#ffffff" size={18} strokeWidth={2.1} />
+                  </View>
+                  <LuxPressable
+                    onPress={handleBoardHistory}
+                    className="cursor-pointer rounded-full border border-white/10 bg-black/45 p-3"
+                    style={{ borderWidth: 0.5 }}
+                  >
+                    <History color="#ffffff" size={18} strokeWidth={2.1} />
+                  </LuxPressable>
+                </View>
+
+                <View className="absolute bottom-5 left-4 right-4 gap-4">
+                  <View className="flex-row items-center justify-between">
+                    <BlurView
+                      intensity={70}
+                      tint="dark"
+                      className="flex-row items-center gap-2 rounded-full border border-white/10 px-3 py-2"
+                      style={{ borderWidth: 0.5, overflow: "hidden" }}
+                    >
+                      <LuxPressable onPress={handleLike} disabled={feedbackSubmitted || !generationId} className="cursor-pointer rounded-full bg-white/5 p-2">
+                        <ThumbsUp color="#ffffff" size={16} />
+                      </LuxPressable>
+                      <LuxPressable onPress={handleDislike} disabled={feedbackSubmitted || !generationId} className="cursor-pointer rounded-full bg-white/5 p-2">
+                        <ThumbsDown color="#ffffff" size={16} />
+                      </LuxPressable>
+                    </BlurView>
+
+                    <LuxPressable onPress={isProPlan ? undefined : handleUpgrade} className="cursor-pointer">
+                      <LinearGradient
+                        colors={isProPlan ? ["rgba(255,255,255,0.16)", "rgba(255,255,255,0.12)"] : ["#d946ef", "#6366f1"]}
+                        start={{ x: 0, y: 0.5 }}
+                        end={{ x: 1, y: 0.5 }}
+                        style={{ borderRadius: 999, paddingHorizontal: 16, paddingVertical: 11 }}
+                      >
+                        <Text className="text-sm font-semibold text-white">{isProPlan ? "Watermark Removed" : "? Remove Watermark"}</Text>
+                      </LinearGradient>
+                    </LuxPressable>
+                  </View>
+
+                  <View className="flex-row items-center justify-between gap-2">
+                    {[
+                      { id: "Replace", label: "Replace", icon: Layers },
+                      { id: "Paint", label: "Paint", icon: Paintbrush },
+                      { id: "Floor", label: "New Floor", icon: SwatchBook },
+                    ].map((item) => {
+                      const active = activeEditAction === item.id;
+                      const Icon = item.icon;
+                      return (
+                        <LuxPressable
+                          key={item.id}
+                          onPress={() => handleEditAction(item.id as (typeof EDIT_ACTIONS)[number])}
+                          className="cursor-pointer flex-1 rounded-full bg-white px-3 py-3"
+                          style={{ opacity: active ? 1 : 0.92 }}
+                        >
+                          <View className="flex-row items-center justify-center gap-2">
+                            <Icon color="#111827" size={14} strokeWidth={2.2} />
+                            <Text className="text-[12px] font-semibold text-zinc-900">{item.label}</Text>
+                          </View>
+                        </LuxPressable>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {!isProPlan && editorImageUrl ? (
+                  <View className="absolute bottom-24 right-4">
+                    <Logo size={44} style={{ opacity: 0.6 }} />
+                  </View>
+                ) : null}
+              </View>
+            </View>
+          </MotiView>
+
+          <View className="mt-5">
+            <Text className="text-lg font-semibold text-white">{editorStyleLabel + " " + editorRoomLabel}</Text>
+            <Text className="mt-1 text-sm text-zinc-400">Curated inside your premium Darkor board.</Text>
+          </View>
+
+          <View className="mt-6 flex-row items-start justify-between px-2">
+            {[
+              {
+                id: "regenerate",
+                label: "Regenerate",
+                icon: RefreshCw,
+                onPress: handleGenerate,
+                loading: isGenerating,
+              },
+              {
+                id: "save",
+                label: "Save",
+                icon: Download,
+                onPress: isProPlan ? handleDownloadUltra : handleDownloadStandard,
+                loading: isProPlan ? isDownloadingUltra : isDownloadingStandard,
+              },
+              {
+                id: "share",
+                label: "Share",
+                icon: Send,
+                onPress: handleShare,
+                loading: false,
+              },
+            ].map((action) => {
+              const Icon = action.icon;
+              return (
+                <View key={action.id} className="items-center gap-3">
+                  <LuxPressable
+                    onPress={action.onPress}
+                    disabled={action.loading}
+                    className="cursor-pointer h-[74px] w-[74px] items-center justify-center rounded-full border border-white/10 bg-zinc-950"
+                    style={{ borderWidth: 0.5 }}
+                  >
+                    {action.loading ? <ActivityIndicator color="#ffffff" /> : <Icon color="#ffffff" size={24} strokeWidth={2.1} />}
+                  </LuxPressable>
+                  <Text className="text-xs font-medium text-zinc-300">{action.label}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+
 
   return (
     <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
