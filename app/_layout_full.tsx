@@ -23,7 +23,7 @@ import { tokenCache } from "../lib/token-cache";
 import {
   configureRevenueCat,
   getRevenueCatApiKey,
-  hasProEntitlement,
+  hasActiveSubscription,
   inferPlanFromCustomerInfo,
   type RevenueCatCustomerInfo,
   type RevenueCatPurchases,
@@ -34,7 +34,7 @@ function RevenueCatGate() {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
-  const { showSuccess } = useProSuccess();
+  const { showSuccess, showToast } = useProSuccess();
 
   const configuredRef = useRef(false);
   const listenerAddedRef = useRef(false);
@@ -94,27 +94,31 @@ function RevenueCatGate() {
       if (!revenueCatReady || !configuredRef.current || !isLoaded || !purchases) return;
       try {
         const customerInfo = info ?? (await purchases.getCustomerInfo());
-        const hasPro = hasProEntitlement(customerInfo);
+        const hasSubscription = hasActiveSubscription(customerInfo);
+        const inferredPlan = hasSubscription ? inferPlanFromCustomerInfo(customerInfo) : null;
 
-        if (hasPro && isSignedIn) {
-          const inferredPlan = inferPlanFromCustomerInfo(customerInfo);
+        if (inferredPlan && isSignedIn) {
           await setPlan({ plan: inferredPlan, credits: planCreditGrant(inferredPlan) });
         }
 
         if (hasProRef.current === null) {
-          hasProRef.current = hasPro;
-        } else if (hasPro && !hasProRef.current) {
-          showSuccess();
+          hasProRef.current = hasSubscription;
+        } else if (hasSubscription && !hasProRef.current) {
+          if (inferredPlan === "pro") {
+            showSuccess();
+          } else {
+            showToast("Basic plan is active.");
+          }
           hasProRef.current = true;
         } else {
-          hasProRef.current = hasPro;
+          hasProRef.current = hasSubscription;
         }
 
       } catch (error) {
         console.warn("RevenueCat sync failed", error);
       }
     };
-  }, [isSignedIn, revenueCatReady, setPlan, showSuccess]);
+  }, [isSignedIn, revenueCatReady, setPlan, showSuccess, showToast]);
 
   useEffect(() => {
     const purchases = purchasesRef.current;
@@ -393,6 +397,7 @@ export default function RootLayoutFull() {
     </GestureHandlerRootView>
   );
 }
+
 
 
 

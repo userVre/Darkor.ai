@@ -1,13 +1,13 @@
-export type PlanKey = "pro" | "premium" | "ultra";
+export type PaidPlanKey = "basic" | "pro";
+export type AppPlanKey = PaidPlanKey | "trial";
 
-export function planTitle(plan: PlanKey) {
-  if (plan === "pro") return "Pro";
-  if (plan === "premium") return "Premium";
-  return "Ultra";
+export function planTitle(plan: PaidPlanKey) {
+  if (plan === "basic") return "Basic";
+  return "Pro";
 }
 
-export function planCreditGrant(plan: PlanKey) {
-  if (plan === "ultra") return 300;
-  if (plan === "premium") return 180;
-  return 100;
+export function planCreditGrant(plan: AppPlanKey) {
+  if (plan === "trial") return 5;
+  if (plan === "basic") return 35;
+  return 110;
 }

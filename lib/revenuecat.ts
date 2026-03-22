@@ -5,12 +5,13 @@ export const REVENUECAT_ENTITLEMENT = "pro";
 export type RevenueCatCustomerInfo = import("react-native-purchases").CustomerInfo;
 export type RevenueCatPackage = import("react-native-purchases").PurchasesPackage;
 export type RevenueCatPurchases = (typeof import("react-native-purchases"))["default"];
+export type BillingPlan = "basic" | "pro" | "trial";
+export type BillingDuration = "weekly" | "monthly";
 
 let purchasesClient: RevenueCatPurchases | null = null;
 let purchasesModulePromise: Promise<typeof import("react-native-purchases")> | null = null;
 
 function hasRevenueCatNativeModule() {
-  if (Platform.OS === "web") return false;
   return Boolean((NativeModules as { RNPurchases?: unknown }).RNPurchases);
 }
 
@@ -29,6 +30,45 @@ async function loadPurchasesModule() {
     purchasesModulePromise = null;
     return null;
   }
+}
+
+function normalizeHaystack(values: Array<string | null | undefined>) {
+  return values
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function getPackageHaystack(pkg?: RevenueCatPackage | null) {
+  if (!pkg) return "";
+  return normalizeHaystack([
+    pkg.identifier,
+    pkg.packageType,
+    pkg.product.identifier,
+    pkg.product.title,
+    pkg.product.description,
+  ]);
+}
+
+function matchesAny(haystack: string, needles: string[]) {
+  return needles.some((needle) => haystack.includes(needle));
+}
+
+function inferDurationFromHaystack(haystack: string): BillingDuration {
+  return matchesAny(haystack, ["month", "monthly"]) ? "monthly" : "weekly";
+}
+
+function inferBasePlanFromHaystack(haystack: string): Exclude<BillingPlan, "trial"> {
+  if (matchesAny(haystack, ["basic", "homeowner"])) return "basic";
+  return "pro";
+}
+
+function isTrialPeriod(info?: RevenueCatCustomerInfo | null) {
+  const activeEntitlements = Object.values((info?.entitlements?.active ?? {}) as Record<string, any>);
+  return activeEntitlements.some((entitlement) => {
+    const periodType = String(entitlement?.periodType ?? "").toLowerCase();
+    return periodType === "trial" || periodType === "intro";
+  });
 }
 
 export function getRevenueCatApiKey() {
@@ -67,34 +107,72 @@ export function getRevenueCatClient() {
   return purchasesClient;
 }
 
-export function hasProEntitlement(info?: RevenueCatCustomerInfo | null) {
+export function hasActiveSubscription(info?: RevenueCatCustomerInfo | null) {
   if (!info) return false;
-  if (info.entitlements?.active?.[REVENUECAT_ENTITLEMENT]) return true;
-  return Boolean(info.entitlements?.all?.[REVENUECAT_ENTITLEMENT]?.isActive);
+  if ((info.activeSubscriptions?.length ?? 0) > 0) return true;
+  return Object.keys(info.entitlements?.active ?? {}).length > 0;
 }
 
+export function hasProEntitlement(info?: RevenueCatCustomerInfo | null) {
+  return hasActiveSubscription(info);
+}
 
 export function inferPlanFromRevenueCat(input?: {
   packageIdentifier?: string | null;
   productIdentifier?: string | null;
   activeSubscriptions?: string[] | null;
+  entitlementPeriodType?: string | null;
 }) {
-  const haystack = [
-    input?.packageIdentifier ?? "",
-    input?.productIdentifier ?? "",
+  const haystack = normalizeHaystack([
+    input?.packageIdentifier,
+    input?.productIdentifier,
     ...(input?.activeSubscriptions ?? []),
-  ]
-    .join(" ")
-    .toLowerCase();
+  ]);
 
-  if (haystack.includes("ultra")) return "ultra" as const;
-  if (haystack.includes("premium")) return "premium" as const;
-  return "pro" as const;
+  const basePlan = inferBasePlanFromHaystack(haystack);
+  const periodType = String(input?.entitlementPeriodType ?? "").toLowerCase();
+  if (basePlan === "pro" && (periodType === "trial" || periodType === "intro")) {
+    return "trial" as const;
+  }
+  return basePlan;
 }
 
 export function inferPlanFromCustomerInfo(info?: RevenueCatCustomerInfo | null) {
   if (!info) return "pro" as const;
+
+  const activeEntitlement = Object.values((info.entitlements?.active ?? {}) as Record<string, any>)[0] as any;
   return inferPlanFromRevenueCat({
     activeSubscriptions: Array.isArray(info.activeSubscriptions) ? info.activeSubscriptions : [],
+    entitlementPeriodType: activeEntitlement?.periodType,
   });
+}
+
+export function inferBillingDurationFromPackage(pkg?: RevenueCatPackage | null) {
+  return inferDurationFromHaystack(getPackageHaystack(pkg));
+}
+
+export function inferBillingPlanFromPackage(pkg?: RevenueCatPackage | null) {
+  return inferBasePlanFromHaystack(getPackageHaystack(pkg));
+}
+
+export function findRevenueCatPackage(
+  packages: RevenueCatPackage[],
+  plan: Exclude<BillingPlan, "trial">,
+  duration: BillingDuration,
+) {
+  const ranked = packages
+    .map((pkg) => {
+      const haystack = getPackageHaystack(pkg);
+      let score = 0;
+      if (inferBillingPlanFromPackage(pkg) === plan) score += 5;
+      if (inferBillingDurationFromPackage(pkg) === duration) score += 3;
+      if (haystack.includes(`${plan}_${duration}`) || haystack.includes(`${plan}-${duration}`)) score += 2;
+      if (plan === "pro" && matchesAny(haystack, ["designer", "designers", "priority"])) score += 1;
+      if (plan === "basic" && matchesAny(haystack, ["homeowner", "starter"])) score += 1;
+      return { pkg, score };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  return ranked[0]?.pkg ?? null;
 }

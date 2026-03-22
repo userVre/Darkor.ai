@@ -84,7 +84,7 @@ import { useProSuccess } from "../../components/pro-success-context";
 import Logo from "../../components/logo";
 import { captureRef } from "react-native-view-shot";
 type MeResponse = {
-  plan: "free" | "trial" | "pro" | "premium" | "ultra";
+  plan: "free" | "trial" | "basic" | "pro";
   credits: number;
 };
 
@@ -773,11 +773,10 @@ export default function WorkspaceScreen() {
     return SPACE_OPTIONS.interior;
   }, [serviceType]);
 
-  const plan = diagnostic ? "premium" : me?.plan ?? "free";
-  const isPaidPlan = plan !== "free" && plan !== "trial";
-  const planUsed =
-    plan === "premium" || plan === "ultra" ? plan : plan === "pro" ? "pro" : plan === "trial" ? "trial" : "free";
-  const canUpscale = isPaidPlan;
+  const plan = diagnostic ? "pro" : me?.plan ?? "free";
+  const isProPlan = plan === "pro";
+  const planUsed = plan === "pro" ? "pro" : plan === "basic" ? "basic" : plan === "trial" ? "trial" : "free";
+  const canUpscale = isProPlan;
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const editGap = 12;
   const activeEditIndex = EDIT_ACTIONS.indexOf(activeEditAction);
@@ -1067,7 +1066,7 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    if (!isPaidPlan) {
+    if (!isProPlan) {
       handleUpgrade();
       return;
     }
@@ -1089,7 +1088,7 @@ export default function WorkspaceScreen() {
     } finally {
       setIsDownloading(null);
     }
-  }, [generatedImageUrl, handleUpgrade, isPaidPlan]);
+  }, [generatedImageUrl, handleUpgrade, isProPlan]);
 
   const handleUpscale = useCallback(() => {
     triggerHaptic();
@@ -2249,7 +2248,7 @@ export default function WorkspaceScreen() {
                       <Text className="text-sm text-zinc-400">No render yet.</Text>
                     </View>
                   )}
-                  {!isPaidPlan && generatedImageUrl ? (
+                  {!isProPlan && generatedImageUrl ? (
                     <View className="absolute bottom-3 right-3">
                       <Logo size={44} style={{ opacity: 0.6 }} />
                     </View>
@@ -2269,7 +2268,7 @@ export default function WorkspaceScreen() {
                     }`}
                   >
                     <View className="flex-row items-center gap-1">
-                      {isPaidPlan ? <Sparkles color="#f5d0fe" size={12} /> : <Lock color="#facc15" size={12} />}
+                      {isProPlan ? <Sparkles color="#f5d0fe" size={12} /> : <Lock color="#facc15" size={12} />}
                       <Text className="text-[11px] font-semibold text-white">Upscale</Text>
                     </View>
                   </LuxPressable>
@@ -2351,7 +2350,7 @@ export default function WorkspaceScreen() {
               ) : null}
 
               <View className="gap-3">
-                {!isPaidPlan ? (
+                {!isProPlan ? (
                   <>
                     <LuxPressable
                       onPress={handleDownloadStandard}
@@ -2362,7 +2361,7 @@ export default function WorkspaceScreen() {
                       <View className="flex-row items-center justify-between">
                         <View>
                           <Text className="text-sm font-semibold text-white">Standard HD Download</Text>
-                          <Text className="mt-1 text-xs text-zinc-400">For free trial users</Text>
+                          <Text className="mt-1 text-xs text-zinc-400">For Basic and trial users</Text>
                         </View>
                         {isDownloadingStandard ? (
                           <ActivityIndicator color="#f8fafc" />
@@ -2380,7 +2379,7 @@ export default function WorkspaceScreen() {
                       <View className="flex-row items-center justify-between">
                         <View>
                           <Text className="text-sm font-semibold text-white">4K Ultra HD Download</Text>
-                          <Text className="mt-1 text-xs text-zinc-400">Pro users only</Text>
+                          <Text className="mt-1 text-xs text-zinc-400">Paid Pro only</Text>
                         </View>
                         <Lock color="#facc15" size={18} />
                       </View>
@@ -2669,6 +2668,7 @@ export default function WorkspaceScreen() {
     </View>
   );
 }
+
 
 
 

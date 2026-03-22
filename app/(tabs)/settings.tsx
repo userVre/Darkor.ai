@@ -32,12 +32,12 @@ import {
   Zap,
 } from "lucide-react-native";
 
-import { planCreditGrant, planTitle, type PlanKey } from "../../lib/pricing";
+import { planCreditGrant, planTitle, type PaidPlanKey } from "../../lib/pricing";
 import { triggerHaptic } from "../../lib/haptics";
 import {
   configureRevenueCat,
   getRevenueCatClient,
-  hasProEntitlement,
+  hasActiveSubscription,
   inferPlanFromCustomerInfo,
 } from "../../lib/revenuecat";
 import { requestStoreReview } from "../../lib/store-review";
@@ -46,7 +46,7 @@ import { GlassBackdrop } from "../../components/glass-backdrop";
 import { LuxPressable } from "../../components/lux-pressable";
 
 type MeResponse = {
-  plan: "free" | "trial" | PlanKey;
+  plan: "free" | "trial" | PaidPlanKey;
   credits: number;
   referralCode?: string;
   lastRewardDate?: number;
@@ -62,11 +62,28 @@ const MENU_ITEMS = [
   { id: "privacy", label: "Privacy Policy", icon: Shield },
 ];
 
-const ACCOUNT_BULLETS = [
-  { id: "model", label: "Advanced AI Model", icon: Sparkles },
-  { id: "speed", label: "Fast Processing", icon: Zap },
-  { id: "ads", label: "Remove All Ads", icon: Shield },
-];
+const PLAN_BULLETS: Record<MeResponse["plan"], { id: string; label: string; icon: any }[]> = {
+  free: [
+    { id: "hd", label: "HD previews with watermark", icon: Sparkles },
+    { id: "rooms", label: "Basic room types only", icon: Building2 },
+    { id: "styles", label: "10 style presets", icon: Shield },
+  ],
+  trial: [
+    { id: "trial-images", label: "5 free images in HD", icon: Sparkles },
+    { id: "trial-watermark", label: "Watermark stays on during trial", icon: Shield },
+    { id: "trial-upgrade", label: "Upgrade to paid Pro for 4K + no watermark", icon: Zap },
+  ],
+  basic: [
+    { id: "basic-images", label: "35 images each month", icon: Sparkles },
+    { id: "basic-quality", label: "HD exports with Darkor.ai watermark", icon: Shield },
+    { id: "basic-presets", label: "10 styles and homeowner room types", icon: Building2 },
+  ],
+  pro: [
+    { id: "pro-images", label: "110 images each month", icon: Sparkles },
+    { id: "pro-quality", label: "4K Ultra HD with no watermark", icon: Diamond },
+    { id: "pro-speed", label: "Priority renders, outdoor, walkthroughs, and VR", icon: Zap },
+  ],
+};
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -94,7 +111,7 @@ export default function SettingsScreen() {
         const purchases = cached ?? (await configureRevenueCat(user?.id ?? null));
         if (!purchases) return;
         const info = await purchases.getCustomerInfo();
-        if (!hasProEntitlement(info)) return;
+        if (!hasActiveSubscription(info)) return;
         const inferredPlan = inferPlanFromCustomerInfo(info);
         await setPlan({ plan: inferredPlan, credits: planCreditGrant(inferredPlan) });
       } catch {
@@ -104,10 +121,18 @@ export default function SettingsScreen() {
     void syncPlan();
   }, [isSignedIn, setPlan, user?.id]);
 
-  const plan = me?.plan && me.plan !== "free" && me.plan !== "trial" ? me.plan : "free";
-  const planLabel = plan === "free" ? "FREE" : planTitle(plan).toUpperCase();
-  const isFreeTier = me?.plan === "free" || me?.plan === "trial";
+  const membershipPlan: MeResponse["plan"] = me?.plan ?? "free";
+  const paidPlan = membershipPlan === "basic" || membershipPlan === "pro" ? membershipPlan : null;
+  const planLabel = membershipPlan === "free" ? "FREE" : membershipPlan === "trial" ? "PRO TRIAL" : planTitle(membershipPlan).toUpperCase();
+  const isLockedTier = membershipPlan === "free" || membershipPlan === "trial";
   const rewardCountdown = formatRewardCountdown(me?.lastRewardDate);
+  const accountBullets = PLAN_BULLETS[membershipPlan];
+  const upgradeLabel = paidPlan === "basic" ? "Unlock Pro" : "View Plans";
+  const upgradeSubtitle = membershipPlan === "pro"
+    ? "Your premium studio tier is active."
+    : membershipPlan === "basic"
+      ? "Move to Pro for 4K, no watermark, and premium tools."
+      : "Choose Basic for essentials or Pro for the full studio path.";
 
   const handleUpgrade = () => {
     triggerHaptic();
@@ -194,13 +219,13 @@ export default function SettingsScreen() {
         return;
       }
       const info = await purchases.restorePurchases();
-      const hasPro = hasProEntitlement(info);
-      if (hasPro && isSignedIn) {
+      const hasSubscription = hasActiveSubscription(info);
+      if (hasSubscription && isSignedIn) {
         const inferredPlan = inferPlanFromCustomerInfo(info);
         await setPlan({ plan: inferredPlan, credits: planCreditGrant(inferredPlan) });
       }
-      Alert.alert("Restored", hasPro ? "Your subscription is active." : "No active subscriptions found.");
-    } catch (error) {
+      Alert.alert("Restored", hasSubscription ? "Your subscription is active." : "No active subscriptions found.");
+    } catch {
       Alert.alert("Restore failed", "Please try again in a moment.");
     }
   };
@@ -220,7 +245,7 @@ export default function SettingsScreen() {
             }
             await signOut();
             router.replace("/");
-          } catch (error) {
+          } catch {
             Alert.alert("Delete failed", "Please contact support to delete your account.");
           }
         },
@@ -237,185 +262,186 @@ export default function SettingsScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <View className="flex-row items-center justify-between">
-        <LuxPressable
-          onPress={() => {
-            triggerHaptic();
-            router.back();
-          }}
-          className="cursor-pointer h-10 w-10 items-center justify-center rounded-full border border-white/10"
-          style={{ borderWidth: 0.5 }}
-        >
-          <ArrowLeft color="#e4e4e7" size={18} />
-        </LuxPressable>
-        <Text className="text-lg font-medium text-white">Settings</Text>
-        <View className="h-10 w-10" />
-      </View>
-
-      <View className="mt-6 overflow-hidden rounded-3xl border border-white/10 bg-black" style={{ borderWidth: 0.5 }}>
-        <Image
-          source={require("../../assets/media/after-luxury.jpg")}
-          className="absolute inset-0 h-full w-full"
-          contentFit="cover"
-        />
-        <View className="absolute inset-0 bg-black/50" />
-        <BlurView intensity={70} tint="dark" className="absolute inset-0" />
-        <View className="gap-4 p-6">
-          <Text className="text-lg font-medium text-white">Account Status ? {planLabel}</Text>
-          <Text className="text-xs text-zinc-300">
-            Credits remaining: {typeof me?.credits === "number" ? me.credits : 0}
-          </Text>
-          {isFreeTier ? <Text className="text-xs text-zinc-500">{rewardCountdown}</Text> : null}
-          <View className="gap-3">
-            {ACCOUNT_BULLETS.map((bullet) => {
-              const Icon = bullet.icon;
-              return (
-                <View key={bullet.id} className="flex-row items-center gap-2">
-                  <Icon color="#ffffff" size={14} />
-                  <Text className="text-sm font-semibold text-white">{bullet.label}</Text>
-                </View>
-              );
-            })}
-          </View>
           <LuxPressable
-            onPress={handleUpgrade}
-            className="cursor-pointer flex-row items-center justify-center gap-2 rounded-full border border-white/70 bg-white px-4 py-3"
-            style={{
-              shadowColor: "#ffffff",
-              shadowOpacity: 0.22,
-              shadowRadius: 18,
-              shadowOffset: { width: 0, height: 8 },
-              elevation: 8,
+            onPress={() => {
+              triggerHaptic();
+              router.back();
             }}
+            className="cursor-pointer h-10 w-10 items-center justify-center rounded-full border border-white/10"
+            style={{ borderWidth: 0.5 }}
           >
-            <Diamond color="#0f172a" size={14} />
-            <Text className="text-sm font-semibold text-slate-900">Upgrade PRO</Text>
+            <ArrowLeft color="#e4e4e7" size={18} />
           </LuxPressable>
+          <Text className="text-lg font-medium text-white">Settings</Text>
+          <View className="h-10 w-10" />
         </View>
-      </View>
 
-      <View className="mt-6 overflow-hidden rounded-2xl border border-amber-300/30 bg-black" style={{ borderWidth: 0.5 }}>
-        <View className="px-5 py-4">
-          <View className="flex-row items-center gap-2">
-            <Gift color="#facc15" size={16} />
-            <Text className="text-base font-medium text-amber-200">Invite Friends & Earn Credits</Text>
-          </View>
-          <Text className="mt-2 text-xs text-amber-200/80">Earn 3 credits for every friend who joins!</Text>
-          <View className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3" style={{ borderWidth: 0.5 }}>
-            <Text selectable className="text-xs text-zinc-200">
-              {referralLink || "Sign in to generate your referral link."}
+        <View className="mt-6 overflow-hidden rounded-3xl border border-white/10 bg-black" style={{ borderWidth: 0.5 }}>
+          <Image
+            source={require("../../assets/media/after-luxury.jpg")}
+            className="absolute inset-0 h-full w-full"
+            contentFit="cover"
+          />
+          <View className="absolute inset-0 bg-black/55" />
+          <BlurView intensity={70} tint="dark" className="absolute inset-0" />
+          <View className="gap-4 p-6">
+            <Text className="text-lg font-medium text-white">Membership Status · {planLabel}</Text>
+            <Text className="text-xs text-zinc-300">
+              Credits remaining: {typeof me?.credits === "number" ? me.credits : 0}
             </Text>
-          </View>
-          <View className="mt-4 flex-row gap-3">
+            <Text className="text-xs text-zinc-400">{upgradeSubtitle}</Text>
+            {isLockedTier ? <Text className="text-xs text-zinc-500">{rewardCountdown}</Text> : null}
+            <View className="gap-3">
+              {accountBullets.map((bullet) => {
+                const Icon = bullet.icon;
+                return (
+                  <View key={bullet.id} className="flex-row items-center gap-2">
+                    <Icon color="#ffffff" size={14} />
+                    <Text className="text-sm font-semibold text-white">{bullet.label}</Text>
+                  </View>
+                );
+              })}
+            </View>
             <LuxPressable
-              onPress={handleCopyReferral}
-              className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-3"
+              onPress={handleUpgrade}
+              className="cursor-pointer flex-row items-center justify-center gap-2 rounded-full border border-white/70 bg-white px-4 py-3"
+              style={{
+                shadowColor: "#ffffff",
+                shadowOpacity: 0.22,
+                shadowRadius: 18,
+                shadowOffset: { width: 0, height: 8 },
+                elevation: 8,
+              }}
+            >
+              <Diamond color="#0f172a" size={14} />
+              <Text className="text-sm font-semibold text-slate-900">{upgradeLabel}</Text>
+            </LuxPressable>
+          </View>
+        </View>
+
+        <View className="mt-6 overflow-hidden rounded-2xl border border-amber-300/30 bg-black" style={{ borderWidth: 0.5 }}>
+          <View className="px-5 py-4">
+            <View className="flex-row items-center gap-2">
+              <Gift color="#facc15" size={16} />
+              <Text className="text-base font-medium text-amber-200">Invite Friends & Earn Credits</Text>
+            </View>
+            <Text className="mt-2 text-xs text-amber-200/80">Earn 3 credits for every friend who joins!</Text>
+            <View className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3" style={{ borderWidth: 0.5 }}>
+              <Text selectable className="text-xs text-zinc-200">
+                {referralLink || "Sign in to generate your referral link."}
+              </Text>
+            </View>
+            <View className="mt-4 flex-row gap-3">
+              <LuxPressable
+                onPress={handleCopyReferral}
+                className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-3"
+                style={{ borderWidth: 0.5 }}
+              >
+                <Copy color="#e4e4e7" size={14} />
+                <Text className="text-xs font-semibold text-zinc-200">Copy Link</Text>
+              </LuxPressable>
+              <LuxPressable
+                onPress={handleShareReferral}
+                className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl bg-amber-400/20 py-3"
+              >
+                <Share2 color="#facc15" size={14} />
+                <Text className="text-xs font-semibold text-amber-200">Share</Text>
+              </LuxPressable>
+            </View>
+          </View>
+        </View>
+
+        <View className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-black" style={{ borderWidth: 0.5 }}>
+          <LuxPressable
+            onPress={handleRateStore}
+            className="cursor-pointer overflow-hidden px-4 py-4"
+            style={{ borderBottomWidth: 0.5, borderBottomColor: "rgba(255, 255, 255, 0.06)" }}
+          >
+            <View className="flex-row items-center gap-3">
+              <View className="h-8 w-8 items-center justify-center rounded-full bg-amber-400/20">
+                <Star color="#facc15" size={16} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-semibold text-amber-200">{"\uD83C\uDF1F"} Rate Darkor.ai on the Store</Text>
+                <Text className="mt-1 text-xs text-amber-200/70">Help us reach more creators</Text>
+              </View>
+            </View>
+          </LuxPressable>
+
+          {MENU_ITEMS.map((item, index) => {
+            const Icon = item.icon;
+            const isLast = index === MENU_ITEMS.length - 1;
+            return (
+              <LuxPressable
+                key={item.id}
+                onPress={() => handleNav(item.id)}
+                className={`cursor-pointer flex-row items-center justify-between px-4 py-4 ${
+                  isLast ? "" : "border-b border-white/5"
+                }`}
+              >
+                <View className="flex-row items-center gap-3">
+                  <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
+                    <Icon color="#e4e4e7" size={16} />
+                  </View>
+                  <View className="flex-row items-center gap-2">
+                    <Text className="text-sm font-semibold text-zinc-100">{item.label}</Text>
+                    {item.id === "whats_new" ? (
+                      <View className="rounded-full bg-amber-400/20 px-2 py-0.5">
+                        <Text className="text-[10px] font-semibold text-amber-200">NEW</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </View>
+                <ChevronRight color="#71717a" size={18} />
+              </LuxPressable>
+            );
+          })}
+        </View>
+
+        <View className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-black" style={{ borderWidth: 0.5 }}>
+          <LuxPressable onPress={handleRestore} className="cursor-pointer px-4 py-4">
+            <View className="flex-row items-center gap-3">
+              <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
+                <RefreshCcw color="#e4e4e7" size={16} />
+              </View>
+              <Text className="text-sm font-semibold text-zinc-100">Restore Purchase</Text>
+            </View>
+          </LuxPressable>
+
+          <View className="h-px bg-white/5" />
+
+          <View className="flex-row items-center justify-between px-4 py-4">
+            <View className="flex-row items-center gap-3">
+              <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
+                <Shield color="#e4e4e7" size={16} />
+              </View>
+              <View>
+                <Text className="text-sm font-semibold text-zinc-100">User ID</Text>
+                <Text selectable className="mt-1 text-xs text-zinc-500">
+                  {user?.id ?? "eRBJziTFTy6tMa..."}
+                </Text>
+              </View>
+            </View>
+            <LuxPressable
+              onPress={handleCopyId}
+              className="cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-white/10"
               style={{ borderWidth: 0.5 }}
             >
               <Copy color="#e4e4e7" size={14} />
-              <Text className="text-xs font-semibold text-zinc-200">Copy Link</Text>
-            </LuxPressable>
-            <LuxPressable
-              onPress={handleShareReferral}
-              className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl bg-amber-400/20 py-3"
-            >
-              <Share2 color="#facc15" size={14} />
-              <Text className="text-xs font-semibold text-amber-200">Share</Text>
             </LuxPressable>
           </View>
-        </View>
-      </View>
 
-      <View className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-black" style={{ borderWidth: 0.5 }}>
-        <LuxPressable
-          onPress={handleRateStore}
-          className="cursor-pointer overflow-hidden px-4 py-4"
-          style={{ borderBottomWidth: 0.5, borderBottomColor: "rgba(255, 255, 255, 0.06)" }}
-        >
-          <View className="flex-row items-center gap-3">
-            <View className="h-8 w-8 items-center justify-center rounded-full bg-amber-400/20">
-              <Star color="#facc15" size={16} />
-            </View>
-            <View className="flex-1">
-              <Text className="text-sm font-semibold text-amber-200">{"\uD83C\uDF1F"} Rate Darkor.ai on the Store</Text>
-              <Text className="mt-1 text-xs text-amber-200/70">Help us reach more creators</Text>
-            </View>
-          </View>
-        </LuxPressable>
+          <View className="h-px bg-white/5" />
 
-        {MENU_ITEMS.map((item, index) => {
-          const Icon = item.icon;
-          const isLast = index === MENU_ITEMS.length - 1;
-          return (
-            <LuxPressable
-              key={item.id}
-              onPress={() => handleNav(item.id)}
-              className={`cursor-pointer flex-row items-center justify-between px-4 py-4 ${
-                isLast ? "" : "border-b border-white/5"
-              }`}
-            >
-              <View className="flex-row items-center gap-3">
-                <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
-                  <Icon color="#e4e4e7" size={16} />
-                </View>
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-sm font-semibold text-zinc-100">{item.label}</Text>
-                  {item.id === "whats_new" ? (
-                    <View className="rounded-full bg-amber-400/20 px-2 py-0.5">
-                      <Text className="text-[10px] font-semibold text-amber-200">NEW</Text>
-                    </View>
-                  ) : null}
-                </View>
+          <LuxPressable onPress={handleDelete} className="cursor-pointer px-4 py-4">
+            <View className="flex-row items-center gap-3">
+              <View className="h-8 w-8 items-center justify-center rounded-full bg-rose-500/20">
+                <Trash2 color="#fee2e2" size={16} />
               </View>
-              <ChevronRight color="#71717a" size={18} />
-            </LuxPressable>
-          );
-        })}
-      </View>
-
-        <View className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-black" style={{ borderWidth: 0.5 }}>
-        <LuxPressable onPress={handleRestore} className="cursor-pointer px-4 py-4">
-          <View className="flex-row items-center gap-3">
-            <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
-              <RefreshCcw color="#e4e4e7" size={16} />
+              <Text className="text-sm font-semibold text-zinc-100">Delete Information</Text>
             </View>
-            <Text className="text-sm font-semibold text-zinc-100">Restore Purchase</Text>
-          </View>
-        </LuxPressable>
-
-        <View className="h-px bg-white/5" />
-
-        <View className="flex-row items-center justify-between px-4 py-4">
-          <View className="flex-row items-center gap-3">
-            <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
-              <Shield color="#e4e4e7" size={16} />
-            </View>
-            <View>
-              <Text className="text-sm font-semibold text-zinc-100">User ID</Text>
-              <Text selectable className="mt-1 text-xs text-zinc-500">
-                {user?.id ?? "eRBJziTFTy6tMa..."}
-              </Text>
-            </View>
-          </View>
-          <LuxPressable
-            onPress={handleCopyId}
-            className="cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-white/10"
-            style={{ borderWidth: 0.5 }}
-          >
-            <Copy color="#e4e4e7" size={14} />
           </LuxPressable>
         </View>
-
-        <View className="h-px bg-white/5" />
-
-        <LuxPressable onPress={handleDelete} className="cursor-pointer px-4 py-4">
-          <View className="flex-row items-center gap-3">
-            <View className="h-8 w-8 items-center justify-center rounded-full bg-rose-500/20">
-              <Trash2 color="#fee2e2" size={16} />
-            </View>
-            <Text className="text-sm font-semibold text-zinc-100">Delete Information</Text>
-          </View>
-        </LuxPressable>
-      </View>
       </ScrollView>
 
       <BottomSheetModal
@@ -477,17 +503,3 @@ export default function SettingsScreen() {
     </View>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
