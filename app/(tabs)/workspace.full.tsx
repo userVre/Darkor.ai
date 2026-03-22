@@ -340,6 +340,13 @@ const STYLE_LIBRARY: StyleLibraryItem[] = [
 
 const STYLE_OPTIONS = STYLE_LIBRARY.map((style) => style.title);
 
+const CUSTOM_STYLE_EXAMPLE_PROMPTS = [
+  "Design a farmhouse kitchen with rustic oak cabinetry, aged brass fixtures, and warm layered lighting.",
+  "Create a moody luxury living room with sculptural seating, smoked glass accents, and hotel-level ambiance.",
+  "Transform this into a serene Japandi bedroom with soft limestone tones, natural wood, and tactile textiles.",
+  "Reimagine the patio as a Mediterranean outdoor lounge with curved built-ins, olive trees, and sunset warmth.",
+];
+
 const PALETTE_OPTIONS: PaletteOption[] = [
   {
     id: "surprise",
@@ -581,6 +588,7 @@ export default function WorkspaceScreen() {
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedModeId, setSelectedModeId] = useState<ModeOption["id"] | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
+  const [customPromptDraft, setCustomPromptDraft] = useState("");
   const [selectedPaletteId, setSelectedPaletteId] = useState<string | null>(null);
   const [selectedAspectRatioId, setSelectedAspectRatioId] = useState<AspectRatioOption["id"]>("post");
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
@@ -609,6 +617,7 @@ export default function WorkspaceScreen() {
   const rateSheetRef = useRef<BottomSheetModal>(null);
   const feedbackSheetRef = useRef<BottomSheetModal>(null);
   const photoSourceSheetRef = useRef<BottomSheetModal>(null);
+  const customPromptSheetRef = useRef<BottomSheetModal>(null);
   const imageContainerRef = useRef<View>(null);
   const storyRef = useRef<View>(null);
   const hasAppliedStartStepRef = useRef(false);
@@ -623,6 +632,7 @@ export default function WorkspaceScreen() {
   const rateSnapPoints = useMemo(() => ["36%"], []);
   const feedbackSnapPoints = useMemo(() => [isSmallScreen ? "95%" : "58%"], [isSmallScreen]);
   const photoSourceSnapPoints = useMemo(() => ["30%"], []);
+  const customPromptSnapPoints = useMemo(() => [isSmallScreen ? "90%" : "74%"], [isSmallScreen]);
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = getServiceType(serviceKey);
   const serviceLabel = SERVICE_LABELS[serviceType] ?? "Interior Redesign";
@@ -846,10 +856,15 @@ export default function WorkspaceScreen() {
   const canContinue = useMemo(() => {
     if (workflowStep === 0) return Boolean(selectedImage);
     if (workflowStep === 1) return Boolean(selectedRoom);
-    if (workflowStep === 2) return Boolean(selectedStyle);
+    if (workflowStep === 2) {
+      if (selectedStyle === "Custom") {
+        return customPrompt.trim().length > 0;
+      }
+      return Boolean(selectedStyle);
+    }
     if (workflowStep === 3) return Boolean(selectedModeId && selectedPaletteId);
     return false;
-  }, [selectedImage, selectedModeId, selectedPaletteId, selectedRoom, selectedStyle, workflowStep]);
+  }, [customPrompt, selectedImage, selectedModeId, selectedPaletteId, selectedRoom, selectedStyle, workflowStep]);
 
   const openSystemSettings = useCallback(() => {
     Linking.openSettings().catch(() => undefined);
@@ -1028,6 +1043,8 @@ export default function WorkspaceScreen() {
     });
     setIsLoadingExample(null);
     setIsSelectingPhoto(false);
+    setCustomPromptDraft("");
+    customPromptSheetRef.current?.dismiss();
     setReviewPromptOpen(false);
     setRatePromptOpen(false);
     setFeedbackOpen(false);
@@ -1340,10 +1357,43 @@ export default function WorkspaceScreen() {
     setSelectedRoom(value);
   }, []);
 
-  const handleSelectStyle = useCallback((value: string) => {
+  const handleOpenCustomStyle = useCallback(() => {
     triggerHaptic();
-    setSelectedStyle(value);
+    setCustomPromptDraft(customPrompt);
+    customPromptSheetRef.current?.present();
+  }, [customPrompt]);
+
+  const handleClearCustomPromptDraft = useCallback(() => {
+    triggerHaptic();
+    setCustomPromptDraft("");
   }, []);
+
+  const handleApplyCustomPrompt = useCallback(() => {
+    const trimmed = customPromptDraft.trim();
+    if (!trimmed) {
+      Alert.alert("Add a custom prompt", "Describe the exact design direction you want before applying it.");
+      return;
+    }
+
+    triggerHaptic();
+    startTransition(() => {
+      setCustomPrompt(trimmed);
+      setSelectedStyle("Custom");
+    });
+    customPromptSheetRef.current?.dismiss();
+  }, [customPromptDraft]);
+
+  const handleSelectStyle = useCallback((value: string) => {
+    if (value === "Custom") {
+      handleOpenCustomStyle();
+      return;
+    }
+
+    triggerHaptic();
+    startTransition(() => {
+      setSelectedStyle(value);
+    });
+  }, [handleOpenCustomStyle]);
 
   const handleSelectPalette = useCallback((value: string) => {
     triggerHaptic();
@@ -1730,12 +1780,24 @@ export default function WorkspaceScreen() {
                     <View style={{ gap: 8 }}>
                       <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Select Style</Text>
                       <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
-                        Choose the visual direction for the redesign from the curated style grid.
+                        Choose a signature design language, or use Custom to direct Darkor.ai like a pro.
                       </Text>
                     </View>
 
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
-                      {STYLE_LIBRARY.map((style, index) => {
+                      {[
+                        {
+                          id: "custom",
+                          title: "Custom",
+                          description:
+                            customPrompt.trim().length > 0
+                              ? customPrompt
+                              : "Write your own design brief with materials, mood, styling cues, and focal details.",
+                          image: null,
+                        },
+                        ...STYLE_LIBRARY,
+                      ].map((style, index) => {
+                        const isCustomCard = style.title === "Custom";
                         const active = selectedStyle === style.title;
                         return (
                           <MotiView key={style.id} {...staggerFadeUp(index, 24)} style={{ width: wizardCardWidth }}>
@@ -1743,15 +1805,51 @@ export default function WorkspaceScreen() {
                               onPress={() => handleSelectStyle(style.title)}
                               className="cursor-pointer overflow-hidden rounded-[24px] border"
                               style={{
+                                minHeight: 248,
                                 borderWidth: active ? 1.5 : 0.5,
                                 borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
-                                backgroundColor: "#050505",
+                                backgroundColor: isCustomCard ? "#08080a" : "#050505",
+                                shadowColor: active ? "#d946ef" : "#000000",
+                                shadowOpacity: active ? 0.18 : 0.22,
+                                shadowRadius: active ? 20 : 18,
+                                shadowOffset: { width: 0, height: 12 },
+                                elevation: active ? 8 : 6,
                               }}
                             >
-                              <Image source={style.image} style={{ width: "100%", height: 168 }} contentFit="cover" transition={160} />
+                              {isCustomCard ? (
+                                <LinearGradient
+                                  colors={["rgba(217,70,239,0.20)", "rgba(99,102,241,0.18)", "rgba(8,8,10,1)"]}
+                                  start={{ x: 0, y: 0 }}
+                                  end={{ x: 1, y: 1 }}
+                                  style={{ minHeight: 168, padding: 18, justifyContent: "space-between" }}
+                                >
+                                  <View className="flex-row items-start justify-between">
+                                    <View className="h-12 w-12 items-center justify-center rounded-[18px] border border-white/15 bg-white/10">
+                                      <Sparkles color="#fdf2f8" size={22} strokeWidth={2} />
+                                    </View>
+                                    <View className="rounded-full border border-fuchsia-400/25 bg-black/35 px-3 py-1">
+                                      <Text className="text-[11px] font-semibold uppercase tracking-[1px] text-fuchsia-100">Pro Control</Text>
+                                    </View>
+                                  </View>
+                                  <View style={{ gap: 6 }}>
+                                    <Text className="text-xl font-semibold text-white">Custom</Text>
+                                    <Text className="text-sm leading-6 text-zinc-200">Build a bespoke design brief with your exact vision, materials, and mood.</Text>
+                                  </View>
+                                </LinearGradient>
+                              ) : (
+                                <Image source={style.image} style={{ width: "100%", height: 168 }} contentFit="cover" transition={160} />
+                              )}
                               <View style={{ padding: 14, gap: 4 }}>
-                                <Text className="text-base font-semibold text-white">{style.title}</Text>
-                                <Text className="text-sm leading-5 text-zinc-400">{style.description}</Text>
+                                <View className="flex-row items-start justify-between gap-3">
+                                  <Text className="flex-1 text-base font-semibold text-white">{style.title}</Text>
+                                  {active ? <BadgeCheck color="#f0abfc" size={18} strokeWidth={2} /> : null}
+                                </View>
+                                <Text className="text-sm leading-5 text-zinc-400" numberOfLines={isCustomCard && customPrompt.trim().length > 0 ? 4 : 3}>
+                                  {style.description}
+                                </Text>
+                                {isCustomCard ? (
+                                  <Text className="pt-1 text-xs font-medium text-fuchsia-200">Tap to open the custom prompt studio.</Text>
+                                ) : null}
                               </View>
                             </LuxPressable>
                           </MotiView>
@@ -1875,6 +1973,84 @@ export default function WorkspaceScreen() {
             )}
           </LuxPressable>
         </View>
+
+        <BottomSheetModal
+          ref={customPromptSheetRef}
+          snapPoints={customPromptSnapPoints}
+          enablePanDownToClose
+          backdropComponent={GlassBackdrop}
+          backgroundStyle={{ backgroundColor: "#050505" }}
+          handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
+        >
+          <View className="flex-1 px-5 pb-8 pt-2">
+            <View className="flex-row items-start justify-between gap-4">
+              <View className="flex-1">
+                <Text className="text-xl font-semibold text-white">Custom Style Prompt</Text>
+                <Text className="mt-2 text-sm leading-6 text-zinc-400">Direct the redesign with your own materials, mood, furniture language, lighting cues, and standout details.</Text>
+              </View>
+              <LuxPressable
+                onPress={() => customPromptSheetRef.current?.dismiss()}
+                className="cursor-pointer h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5"
+                style={{ borderWidth: 0.5 }}
+              >
+                <Close color="#f4f4f5" size={16} strokeWidth={2.2} />
+              </LuxPressable>
+            </View>
+
+            <View className="mt-5 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03]" style={{ borderWidth: 0.5 }}>
+              <View style={{ minHeight: 220, padding: 18 }}>
+                <View className="mb-3 flex-row items-center justify-between">
+                  <Text className="text-xs font-semibold uppercase tracking-[2px] text-zinc-500">Design Brief</Text>
+                  {customPromptDraft.length > 0 ? (
+                    <LuxPressable onPress={handleClearCustomPromptDraft} className="cursor-pointer h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5" style={{ borderWidth: 0.5 }}>
+                      <Close color="#f4f4f5" size={14} strokeWidth={2.3} />
+                    </LuxPressable>
+                  ) : null}
+                </View>
+                <TextInput
+                  value={customPromptDraft}
+                  onChangeText={setCustomPromptDraft}
+                  multiline
+                  placeholder="Example: Turn this into a warm luxury living room with curved seating, walnut wall panels, smoked brass lighting, and a dramatic stone fireplace focal point."
+                  placeholderTextColor="#71717a"
+                  textAlignVertical="top"
+                  style={{ color: "#ffffff", fontSize: 15, lineHeight: 24, minHeight: 156 }}
+                />
+              </View>
+            </View>
+
+            <View className="mt-6 gap-3">
+              <Text className="text-sm font-semibold text-white">Example Prompts</Text>
+              <View className="gap-3">
+                {CUSTOM_STYLE_EXAMPLE_PROMPTS.map((prompt) => (
+                  <LuxPressable
+                    key={prompt}
+                    onPress={() => setCustomPromptDraft(prompt)}
+                    className="cursor-pointer rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4"
+                    style={{ borderWidth: 0.5 }}
+                  >
+                    <Text className="text-sm leading-6 text-zinc-200">{prompt}</Text>
+                  </LuxPressable>
+                ))}
+              </View>
+            </View>
+
+            <LuxPressable onPress={handleApplyCustomPrompt} className="cursor-pointer mt-6">
+              <LinearGradient
+                colors={["#d946ef", "#6366f1"]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                className="rounded-[24px]"
+                style={{ minHeight: 58 }}
+              >
+                <View className="flex-1 flex-row items-center justify-center gap-3">
+                  <Text className="text-[16px] font-semibold text-white">Apply Custom Style</Text>
+                  <ArrowRight color="#ffffff" size={18} strokeWidth={2.3} />
+                </View>
+              </LinearGradient>
+            </LuxPressable>
+          </View>
+        </BottomSheetModal>
 
         <BottomSheetModal
           ref={photoSourceSheetRef}
