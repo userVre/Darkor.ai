@@ -613,6 +613,7 @@ export default function WorkspaceScreen() {
   const [showBeforeOnly, setShowBeforeOnly] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDeletingGeneration, setIsDeletingGeneration] = useState(false);
+  const [isSharingResult, setIsSharingResult] = useState(false);
   const [isSharingStory, setIsSharingStory] = useState(false);
   const [isDownloading, setIsDownloading] = useState<"standard" | "ultra" | null>(null);
   const [isLoadingExample, setIsLoadingExample] = useState<string | null>(null);
@@ -839,6 +840,7 @@ export default function WorkspaceScreen() {
     editBarWidth > 0 ? (editBarWidth - editGap * (EDIT_ACTIONS.length - 1)) / EDIT_ACTIONS.length : 0;
   const isDownloadingStandard = isDownloading === "standard";
   const isDownloadingUltra = isDownloading === "ultra";
+  const activeEditorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
   const sliderSpring = useMemo(() => ({ damping: 15, stiffness: 100 }), []);
 
   const handleSliderLayout = useCallback(
@@ -1089,14 +1091,80 @@ export default function WorkspaceScreen() {
     setAwaitingAuth(false);
   }, [setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle]);
 
+  const cleanupTempFile = useCallback(async (uri: string | null | undefined) => {
+    if (!uri) {
+      return;
+    }
+    try {
+      await FileSystem.deleteAsync(uri, { idempotent: true });
+    } catch {
+      // ignore temp cleanup errors
+    }
+  }, []);
+
+  const ensureGallerySavePermission = useCallback(async () => {
+    const permission = await MediaLibrary.requestPermissionsAsync();
+    if (permission.granted) {
+      return true;
+    }
+
+    Alert.alert("Permission required", "Please allow photo access to save your render.");
+    return false;
+  }, []);
+
+  const exportCurrentRender = useCallback(async () => {
+    if (isProPlan) {
+      if (!activeEditorImageUrl) {
+        throw new Error("Render unavailable. Please try again.");
+      }
+      const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}darkor-share-${Date.now()}.jpg`;
+      const download = await FileSystem.downloadAsync(activeEditorImageUrl, targetUri);
+      return download.uri;
+    }
+
+    if (!imageContainerRef.current) {
+      throw new Error("Preview not ready. Please try again.");
+    }
+
+    const previousSlider = sliderX.value;
+    if (sliderWidth.value > 0) {
+      sliderX.value = sliderWidth.value;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    try {
+      const fileUri = await captureRef(imageContainerRef, { format: "png", quality: 1, result: "tmpfile" });
+      return fileUri;
+    } finally {
+      if (sliderWidth.value > 0) {
+        sliderX.value = previousSlider;
+      }
+    }
+  }, [activeEditorImageUrl, imageContainerRef, isProPlan, sliderWidth, sliderX]);
+
   const handleShare = useCallback(async () => {
     triggerHaptic();
-    if (!generatedImageUrl) {
+    if (!activeEditorImageUrl) {
       Alert.alert("Nothing to share", "Generate an image first.");
       return;
     }
-    await Share.share({ message: generatedImageUrl });
-  }, [generatedImageUrl]);
+
+    let tempUri: string | null = null;
+    try {
+      setIsSharingResult(true);
+      tempUri = await exportCurrentRender();
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(tempUri, { dialogTitle: "Share your Darkor design" });
+      } else {
+        await Share.share({ message: "Designed with Darkor.ai", url: tempUri });
+      }
+    } catch (error) {
+      Alert.alert("Share failed", error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      await cleanupTempFile(tempUri);
+      setIsSharingResult(false);
+    }
+  }, [activeEditorImageUrl, cleanupTempFile, exportCurrentRender]);
 
   const handleShareStory = useCallback(async () => {
     triggerHaptic();
@@ -1108,9 +1176,10 @@ export default function WorkspaceScreen() {
       Alert.alert("Story unavailable", "Please try again.");
       return;
     }
+    let tempUri: string | null = null;
     try {
       setIsSharingStory(true);
-      const uri = await captureRef(storyRef, {
+      tempUri = await captureRef(storyRef, {
         format: "png",
         quality: 1,
         result: "tmpfile",
@@ -1119,16 +1188,17 @@ export default function WorkspaceScreen() {
       });
       const canShare = await Sharing.isAvailableAsync();
       if (canShare) {
-        await Sharing.shareAsync(uri);
+        await Sharing.shareAsync(tempUri, { dialogTitle: "Share your Darkor design" });
       } else {
-        await Share.share({ message: "Designed with Darkor.ai", url: uri });
+        await Share.share({ message: "Designed with Darkor.ai", url: tempUri });
       }
     } catch (error) {
       Alert.alert("Share failed", error instanceof Error ? error.message : "Please try again.");
     } finally {
+      await cleanupTempFile(tempUri);
       setIsSharingStory(false);
     }
-  }, [generatedImageUrl, selectedImage]);
+  }, [cleanupTempFile, generatedImageUrl, selectedImage]);
 
   const handleUpgrade = useCallback(() => {
     triggerHaptic();
@@ -1137,44 +1207,33 @@ export default function WorkspaceScreen() {
 
   const handleDownloadStandard = useCallback(async () => {
     triggerHaptic();
-    if (!generatedImageUrl) {
+    if (!activeEditorImageUrl) {
       Alert.alert("Nothing to download", "Generate an image first.");
       return;
     }
 
+    let tempUri: string | null = null;
     try {
       setIsDownloading("standard");
-      const permission = await MediaLibrary.requestPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert("Permission required", "Please allow photo access to save your render.");
+      const granted = await ensureGallerySavePermission();
+      if (!granted) {
         return;
       }
 
-      if (!imageContainerRef.current) {
-        throw new Error("Preview not ready. Please try again.");
-      }
-
-      const previousSlider = sliderX.value;
-      if (sliderWidth.value > 0) {
-        sliderX.value = sliderWidth.value;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 80));
-      const fileUri = await captureRef(imageContainerRef, { format: "png", quality: 1, result: "tmpfile" });
-      if (sliderWidth.value > 0) {
-        sliderX.value = previousSlider;
-      }
-      await MediaLibrary.saveToLibraryAsync(fileUri);
-      Alert.alert("Saved", "Your render has been saved to your library.");
+      tempUri = await exportCurrentRender();
+      await MediaLibrary.saveToLibraryAsync(tempUri);
+      showToast("Saved to Photos");
     } catch (error) {
       Alert.alert("Download failed", error instanceof Error ? error.message : "Please try again.");
     } finally {
+      await cleanupTempFile(tempUri);
       setIsDownloading(null);
     }
-  }, [generatedImageUrl, imageContainerRef, sliderWidth, sliderX]);
+  }, [activeEditorImageUrl, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, showToast]);
 
   const handleDownloadUltra = useCallback(async () => {
     triggerHaptic();
-    if (!generatedImageUrl) {
+    if (!activeEditorImageUrl) {
       Alert.alert("Nothing to download", "Generate an image first.");
       return;
     }
@@ -1184,24 +1243,24 @@ export default function WorkspaceScreen() {
       return;
     }
 
+    let tempUri: string | null = null;
     try {
       setIsDownloading("ultra");
-      const permission = await MediaLibrary.requestPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert("Permission required", "Please allow photo access to save your render.");
+      const granted = await ensureGallerySavePermission();
+      if (!granted) {
         return;
       }
 
-      const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}darkor-${Date.now()}.jpg`;
-      const download = await FileSystem.downloadAsync(generatedImageUrl, targetUri);
-      await MediaLibrary.saveToLibraryAsync(download.uri);
-      Alert.alert("Saved", "Your 4K render has been saved to your library.");
+      tempUri = await exportCurrentRender();
+      await MediaLibrary.saveToLibraryAsync(tempUri);
+      showToast("Saved to Photos");
     } catch (error) {
       Alert.alert("Download failed", error instanceof Error ? error.message : "Please try again.");
     } finally {
+      await cleanupTempFile(tempUri);
       setIsDownloading(null);
     }
-  }, [generatedImageUrl, handleUpgrade, isProPlan]);
+  }, [activeEditorImageUrl, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, handleUpgrade, isProPlan, showToast]);
 
   const handleUpscale = useCallback(() => {
     triggerHaptic();
@@ -2618,7 +2677,7 @@ export default function WorkspaceScreen() {
                 label: "Share",
                 icon: Send,
                 onPress: handleShare,
-                loading: false,
+                loading: isSharingResult,
               },
             ].map((action) => {
               const Icon = action.icon;
