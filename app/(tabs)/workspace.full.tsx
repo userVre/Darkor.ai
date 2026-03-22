@@ -27,6 +27,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -67,6 +68,7 @@ import {
   SwatchBook,
   ThumbsDown,
   ThumbsUp,
+  Trash2,
   Trees,
   UtensilsCrossed,
   MoveHorizontal,
@@ -139,6 +141,7 @@ type StyleLibraryItem = {
 type BoardRenderItem = {
   id: string;
   imageUrl: string;
+  originalImageUrl?: string | null;
   styleLabel: string;
   roomLabel: string;
   generationId?: string | null;
@@ -591,6 +594,7 @@ export default function WorkspaceScreen() {
   const markReviewPrompted = useMutation("users:markReviewPrompted" as any);
   const submitFeedback = useMutation("feedback:submit" as any);
   const submitGenerationFeedback = useMutation("generations:submitFeedback" as any);
+  const deleteGeneration = useMutation("generations:deleteGeneration" as any);
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
@@ -605,7 +609,9 @@ export default function WorkspaceScreen() {
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [boardItems, setBoardItems] = useState<BoardRenderItem[]>([]);
   const [activeBoardItemId, setActiveBoardItemId] = useState<string | null>(null);
+  const [showBeforeOnly, setShowBeforeOnly] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDeletingGeneration, setIsDeletingGeneration] = useState(false);
   const [isSharingStory, setIsSharingStory] = useState(false);
   const [isDownloading, setIsDownloading] = useState<"standard" | "ultra" | null>(null);
   const [isLoadingExample, setIsLoadingExample] = useState<string | null>(null);
@@ -847,6 +853,7 @@ export default function WorkspaceScreen() {
       Gesture.Pan()
         .onBegin(() => {
           sliderStart.value = sliderX.value;
+          runOnJS(setShowBeforeOnly)(false);
         })
         .onUpdate((event) => {
           const next = sliderStart.value + event.translationX;
@@ -1054,6 +1061,7 @@ export default function WorkspaceScreen() {
       setGenerationId(null);
       setBoardItems([]);
       setActiveBoardItemId(null);
+      setShowBeforeOnly(false);
       setFeedbackMessage("");
       setFeedbackState(null);
       setFeedbackReason("");
@@ -1301,6 +1309,7 @@ export default function WorkspaceScreen() {
       const nextBoardItem: BoardRenderItem = {
         id: response.generationId ?? String(Date.now()),
         imageUrl: response.imageUrl,
+        originalImageUrl: selectedImage.uri,
         styleLabel: selectedStyle,
         roomLabel: selectedRoom,
         generationId: response.generationId ?? null,
@@ -1444,15 +1453,77 @@ export default function WorkspaceScreen() {
     setActiveBoardItemId(item.id);
     setGeneratedImageUrl(item.imageUrl);
     setGenerationId(item.generationId ?? null);
+    setShowBeforeOnly(false);
     setFeedbackState(null);
     setFeedbackReason("");
     setFeedbackSubmitted(false);
-  }, []);
+    if (sliderWidth.value > 0) {
+      sliderX.value = withSpring(sliderWidth.value / 2, sliderSpring);
+    }
+  }, [sliderSpring, sliderWidth, sliderX]);
 
   const handleCloseBoardEditor = useCallback(() => {
     triggerHaptic();
     setActiveBoardItemId(null);
+    setShowBeforeOnly(false);
   }, []);
+
+  const handleToggleBeforePreview = useCallback(() => {
+    triggerHaptic();
+    const nextValue = !showBeforeOnly;
+    setShowBeforeOnly(nextValue);
+    if (sliderWidth.value > 0) {
+      sliderX.value = withSpring(nextValue ? 0 : sliderWidth.value / 2, sliderSpring);
+    }
+  }, [showBeforeOnly, sliderSpring, sliderWidth, sliderX]);
+
+  const performDeleteBoardItem = useCallback(async () => {
+    const item = activeBoardItem;
+    if (!item) {
+      return;
+    }
+
+    try {
+      setIsDeletingGeneration(true);
+      if (item.generationId) {
+        await deleteGeneration({ id: item.generationId });
+      }
+
+      setBoardItems((prev) => prev.filter((entry) => entry.id != item.id));
+      setActiveBoardItemId(null);
+      setGeneratedImageUrl(null);
+      setGenerationId(null);
+      setShowBeforeOnly(false);
+      showToast("Design removed from your board.");
+    } catch (error) {
+      Alert.alert("Delete failed", error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      setIsDeletingGeneration(false);
+    }
+  }, [activeBoardItem, deleteGeneration, showToast]);
+
+  const handleDeleteBoardItem = useCallback(() => {
+    const item = activeBoardItem;
+    if (!item) {
+      return;
+    }
+
+    triggerHaptic();
+    Alert.alert(
+      "Delete design",
+      "This will remove the design from your board and delete it from your gallery.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            void performDeleteBoardItem();
+          },
+        },
+      ],
+    );
+  }, [activeBoardItem, performDeleteBoardItem]);
 
   const handleBoardHistory = useCallback(() => {
     triggerHaptic();
@@ -2215,6 +2286,7 @@ export default function WorkspaceScreen() {
   if (workflowStep === 5) {
     const boardCardWidth = Math.max((width - 52) / 2, 150);
     const editorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
+    const beforeImageUrl = activeBoardItem?.originalImageUrl ?? selectedImage?.uri ?? editorImageUrl;
     const editorStyleLabel = activeBoardItem?.styleLabel ?? selectedStyle ?? "Custom";
     const editorRoomLabel = activeBoardItem?.roomLabel ?? selectedRoom ?? serviceLabel;
 
@@ -2316,8 +2388,60 @@ export default function WorkspaceScreen() {
         >
           <MotiView from={{ opacity: 0, scale: 0.96, translateY: 18 }} animate={{ opacity: 1, scale: 1, translateY: 0 }} transition={LUX_SPRING}>
             <View className="overflow-hidden rounded-[34px] border border-white/10 bg-zinc-950" style={{ borderWidth: 0.5 }}>
-              <View ref={imageContainerRef} collapsable={false} className="relative h-[460px] w-full">
-                {editorImageUrl ? (
+              <View ref={imageContainerRef} collapsable={false} onLayout={handleSliderLayout} className="relative h-[460px] w-full">
+                {editorImageUrl && beforeImageUrl ? (
+                  <MotiView
+                    key={editorImageUrl}
+                    from={{ opacity: 0, scale: 0.985 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={LUX_SPRING}
+                    className="h-full w-full"
+                  >
+                    <Image source={{ uri: beforeImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                    <Animated.View
+                      style={[
+                        {
+                          position: "absolute",
+                          top: 0,
+                          bottom: 0,
+                          left: 0,
+                          overflow: "hidden",
+                        },
+                        afterImageStyle,
+                      ]}
+                    >
+                      <Image source={{ uri: editorImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                    </Animated.View>
+                    <GestureDetector gesture={sliderGesture}>
+                      <Animated.View
+                        style={[
+                          {
+                            position: "absolute",
+                            top: 0,
+                            bottom: 0,
+                            width: 52,
+                            alignItems: "center",
+                            justifyContent: "center",
+                          },
+                          sliderBarStyle,
+                        ]}
+                      >
+                        <View
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            bottom: 0,
+                            width: 2,
+                            backgroundColor: "rgba(255,255,255,0.88)",
+                          }}
+                        />
+                        <View className="h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/60">
+                          <MoveHorizontal color="#ffffff" size={18} strokeWidth={2.2} />
+                        </View>
+                      </Animated.View>
+                    </GestureDetector>
+                  </MotiView>
+                ) : editorImageUrl ? (
                   <Image source={{ uri: editorImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
                 ) : (
                   <View className="h-full w-full items-center justify-center bg-zinc-900">
@@ -2327,16 +2451,35 @@ export default function WorkspaceScreen() {
                 <View className="absolute inset-0 bg-black/10" />
 
                 <View className="absolute left-4 right-4 top-4 flex-row items-center justify-between">
-                  <View className="rounded-full border border-white/10 bg-black/45 p-3" style={{ borderWidth: 0.5 }}>
-                    <Layers color="#ffffff" size={18} strokeWidth={2.1} />
-                  </View>
                   <LuxPressable
-                    onPress={handleBoardHistory}
-                    className="cursor-pointer rounded-full border border-white/10 bg-black/45 p-3"
+                    onPress={handleToggleBeforePreview}
+                    className="cursor-pointer flex-row items-center gap-2 rounded-full border border-white/10 bg-black/45 px-4 py-3"
                     style={{ borderWidth: 0.5 }}
                   >
-                    <History color="#ffffff" size={18} strokeWidth={2.1} />
+                    <Layers color="#ffffff" size={17} strokeWidth={2.1} />
+                    <Text className="text-sm font-semibold text-white">{showBeforeOnly ? "Show After" : "Show Before"}</Text>
                   </LuxPressable>
+                  <LuxPressable
+                    onPress={handleDeleteBoardItem}
+                    disabled={isDeletingGeneration}
+                    className="cursor-pointer rounded-full border border-white/10 bg-black/45 p-3"
+                    style={{ borderWidth: 0.5, opacity: isDeletingGeneration ? 0.6 : 1 }}
+                  >
+                    {isDeletingGeneration ? (
+                      <ActivityIndicator color="#ffffff" size="small" />
+                    ) : (
+                      <Trash2 color="#ffffff" size={18} strokeWidth={2.1} />
+                    )}
+                  </LuxPressable>
+                </View>
+
+                <View className="absolute left-4 right-4 top-20 flex-row items-center justify-between">
+                  <View className="rounded-full border border-white/10 bg-black/35 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
+                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85">Before</Text>
+                  </View>
+                  <View className="rounded-full border border-white/10 bg-black/35 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
+                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85">AI After</Text>
+                  </View>
                 </View>
 
                 <View className="absolute bottom-5 left-4 right-4 gap-4">
@@ -2362,33 +2505,9 @@ export default function WorkspaceScreen() {
                         end={{ x: 1, y: 0.5 }}
                         style={{ borderRadius: 999, paddingHorizontal: 16, paddingVertical: 11 }}
                       >
-                        <Text className="text-sm font-semibold text-white">{isProPlan ? "Watermark Removed" : "? Remove Watermark"}</Text>
+                        <Text className="text-sm font-semibold text-white">{isProPlan ? "Watermark Removed" : "Remove Watermark"}</Text>
                       </LinearGradient>
                     </LuxPressable>
-                  </View>
-
-                  <View className="flex-row items-center justify-between gap-2">
-                    {[
-                      { id: "Replace", label: "Replace", icon: Layers },
-                      { id: "Paint", label: "Paint", icon: Paintbrush },
-                      { id: "Floor", label: "New Floor", icon: SwatchBook },
-                    ].map((item) => {
-                      const active = activeEditAction === item.id;
-                      const Icon = item.icon;
-                      return (
-                        <LuxPressable
-                          key={item.id}
-                          onPress={() => handleEditAction(item.id as (typeof EDIT_ACTIONS)[number])}
-                          className="cursor-pointer flex-1 rounded-full bg-white px-3 py-3"
-                          style={{ opacity: active ? 1 : 0.92 }}
-                        >
-                          <View className="flex-row items-center justify-center gap-2">
-                            <Icon color="#111827" size={14} strokeWidth={2.2} />
-                            <Text className="text-[12px] font-semibold text-zinc-900">{item.label}</Text>
-                          </View>
-                        </LuxPressable>
-                      );
-                    })}
                   </View>
                 </View>
 
