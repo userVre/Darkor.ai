@@ -30,6 +30,7 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
   withSpring,
 } from "react-native-reanimated";
 import {
@@ -644,6 +645,8 @@ export default function WorkspaceScreen() {
   const sliderX = useSharedValue(0);
   const sliderWidth = useSharedValue(0);
   const sliderStart = useSharedValue(0);
+  const likeScale = useSharedValue(1);
+  const dislikeScale = useSharedValue(1);
 
   const isSmallScreen = height < 740;
   const reviewSnapPoints = useMemo(() => ["38%"], []);
@@ -869,6 +872,14 @@ export default function WorkspaceScreen() {
 
   const sliderBarStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: sliderX.value - 1 }],
+  }));
+
+  const likeButtonStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: likeScale.value }],
+  }));
+
+  const dislikeButtonStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: dislikeScale.value }],
   }));
 
   const promptText = useMemo(() => {
@@ -1207,24 +1218,49 @@ export default function WorkspaceScreen() {
     Alert.alert(label, "Editing tools are coming next.");
   }, []);
 
+  const animateFeedbackButton = useCallback((target: "liked" | "disliked") => {
+    const scale = target === "liked" ? likeScale : dislikeScale;
+    scale.value = withSequence(withSpring(1.14, { damping: 11, stiffness: 260 }), withSpring(1, { damping: 13, stiffness: 220 }));
+  }, [dislikeScale, likeScale]);
+
   const handleLike = useCallback(async () => {
     if (!generationId || feedbackSubmitted) return;
     triggerHaptic();
+    animateFeedbackButton("liked");
     setFeedbackState("liked");
     setFeedbackSubmitted(true);
     try {
       await submitGenerationFeedback({ id: generationId, sentiment: "liked" });
-      showToast("Glad you like it! ✨");
+      showToast("Feedback saved. We will lean into results like this.");
     } catch (error) {
+      setFeedbackState(null);
+      setFeedbackSubmitted(false);
       Alert.alert("Feedback failed", error instanceof Error ? error.message : "Please try again.");
     }
-  }, [feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
+  }, [animateFeedbackButton, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
 
-  const handleDislike = useCallback(() => {
+  const handleDislike = useCallback(async () => {
     if (!generationId || feedbackSubmitted) return;
     triggerHaptic();
+    animateFeedbackButton("disliked");
     setFeedbackState("disliked");
-  }, [feedbackSubmitted, generationId]);
+    setFeedbackSubmitted(true);
+    try {
+      const result = (await submitGenerationFeedback({
+        id: generationId,
+        sentiment: "disliked",
+      })) as { retryGranted?: boolean };
+      showToast(
+        result?.retryGranted
+          ? "Feedback saved. A retry credit was added to your account."
+          : "Feedback saved. We will use it to improve future renders.",
+      );
+    } catch (error) {
+      setFeedbackState(null);
+      setFeedbackSubmitted(false);
+      Alert.alert("Feedback failed", error instanceof Error ? error.message : "Please try again.");
+    }
+  }, [animateFeedbackButton, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
 
   const handleSubmitDislike = useCallback(async () => {
     if (!generationId || feedbackSubmitted) return;
@@ -1254,7 +1290,7 @@ export default function WorkspaceScreen() {
     }
   }, [feedbackReason, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
 
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = useCallback(async (options?: { regenerate?: boolean }) => {
     if (!selectedImage || !selectedRoom || !selectedStyle || !selectedPalette || !selectedMode) {
       Alert.alert("Complete the steps", "Please finish the previous steps first.");
       return;
@@ -1296,7 +1332,9 @@ export default function WorkspaceScreen() {
       const response = await generateImage(
         {
           imageBase64: base64,
-          prompt: promptText,
+          prompt: options?.regenerate
+            ? `${promptText} Create a fresh alternative variation that keeps the same room type, style, palette, and mode but explores a new composition and design outcome.`
+            : promptText,
           style: selectedStyle,
           planUsed,
           aspectRatio: ratioSpec.ratioLabel,
@@ -1374,6 +1412,10 @@ export default function WorkspaceScreen() {
     }, 300);
     return () => clearTimeout(timer);
   }, [awaitingAuth, canContinue, effectiveSignedIn, handleGenerate]);
+
+  const handleRegenerate = useCallback(() => {
+    void handleGenerate({ regenerate: true });
+  }, [handleGenerate]);
 
   const handleContinue = useCallback(() => {
     triggerHaptic();
@@ -2490,24 +2532,54 @@ export default function WorkspaceScreen() {
                       className="flex-row items-center gap-2 rounded-full border border-white/10 px-3 py-2"
                       style={{ borderWidth: 0.5, overflow: "hidden" }}
                     >
-                      <LuxPressable onPress={handleLike} disabled={feedbackSubmitted || !generationId} className="cursor-pointer rounded-full bg-white/5 p-2">
-                        <ThumbsUp color="#ffffff" size={16} />
-                      </LuxPressable>
-                      <LuxPressable onPress={handleDislike} disabled={feedbackSubmitted || !generationId} className="cursor-pointer rounded-full bg-white/5 p-2">
-                        <ThumbsDown color="#ffffff" size={16} />
-                      </LuxPressable>
+                      <Animated.View style={likeButtonStyle}>
+                        <LuxPressable
+                          onPress={handleLike}
+                          disabled={feedbackSubmitted || !generationId}
+                          className="cursor-pointer rounded-full p-2"
+                          style={{
+                            backgroundColor: feedbackState === "liked" ? "rgba(99,102,241,0.22)" : "rgba(255,255,255,0.06)",
+                            borderWidth: 0.5,
+                            borderColor: feedbackState === "liked" ? "rgba(129,140,248,0.95)" : "rgba(255,255,255,0.06)",
+                          }}
+                        >
+                          <ThumbsUp color={feedbackState === "liked" ? "#818cf8" : "#ffffff"} size={16} />
+                        </LuxPressable>
+                      </Animated.View>
+                      <Animated.View style={dislikeButtonStyle}>
+                        <LuxPressable
+                          onPress={handleDislike}
+                          disabled={feedbackSubmitted || !generationId}
+                          className="cursor-pointer rounded-full p-2"
+                          style={{
+                            backgroundColor: feedbackState === "disliked" ? "rgba(99,102,241,0.22)" : "rgba(255,255,255,0.06)",
+                            borderWidth: 0.5,
+                            borderColor: feedbackState === "disliked" ? "rgba(129,140,248,0.95)" : "rgba(255,255,255,0.06)",
+                          }}
+                        >
+                          <ThumbsDown color={feedbackState === "disliked" ? "#818cf8" : "#ffffff"} size={16} />
+                        </LuxPressable>
+                      </Animated.View>
                     </BlurView>
 
-                    <LuxPressable onPress={isProPlan ? undefined : handleUpgrade} className="cursor-pointer">
-                      <LinearGradient
-                        colors={isProPlan ? ["rgba(255,255,255,0.16)", "rgba(255,255,255,0.12)"] : ["#d946ef", "#6366f1"]}
-                        start={{ x: 0, y: 0.5 }}
-                        end={{ x: 1, y: 0.5 }}
-                        style={{ borderRadius: 999, paddingHorizontal: 16, paddingVertical: 11 }}
-                      >
-                        <Text className="text-sm font-semibold text-white">{isProPlan ? "Watermark Removed" : "Remove Watermark"}</Text>
-                      </LinearGradient>
-                    </LuxPressable>
+                    <MotiView
+                      animate={!isProPlan ? { scale: [1, 1.03, 1], opacity: [1, 0.94, 1] } : { scale: 1, opacity: 1 }}
+                      transition={!isProPlan ? { duration: 2200, loop: true } : { duration: 180 }}
+                    >
+                      <LuxPressable onPress={isProPlan ? undefined : handleUpgrade} className="cursor-pointer">
+                        <LinearGradient
+                          colors={isProPlan ? ["rgba(255,255,255,0.16)", "rgba(255,255,255,0.12)"] : ["#d946ef", "#6366f1"]}
+                          start={{ x: 0, y: 0.5 }}
+                          end={{ x: 1, y: 0.5 }}
+                          style={{ borderRadius: 999, paddingHorizontal: 18, paddingVertical: 11 }}
+                        >
+                          <View className="flex-row items-center gap-2">
+                            <Sparkles color="#ffffff" size={15} />
+                            <Text className="text-sm font-semibold text-white">{isProPlan ? "Watermark Removed" : "Remove Watermark"}</Text>
+                          </View>
+                        </LinearGradient>
+                      </LuxPressable>
+                    </MotiView>
                   </View>
                 </View>
 
@@ -2531,7 +2603,7 @@ export default function WorkspaceScreen() {
                 id: "regenerate",
                 label: "Regenerate",
                 icon: RefreshCw,
-                onPress: handleGenerate,
+                onPress: handleRegenerate,
                 loading: isGenerating,
               },
               {
