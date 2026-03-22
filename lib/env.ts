@@ -25,26 +25,19 @@ const optionalKeys = [
   "EXPO_PUBLIC_API_BASE_URL",
 ] as const;
 
-const fallbackKeys: Record<string, string> = {
-  EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
-  EXPO_PUBLIC_CONVEX_URL: "NEXT_PUBLIC_CONVEX_URL",
-  EXPO_PUBLIC_API_BASE_URL: "NEXT_PUBLIC_API_BASE_URL",
-};
-
 let didLog = false;
 
-function resolveEnv(primary: string) {
-  const fallback = fallbackKeys[primary];
-  return process.env[primary] ?? (fallback ? process.env[fallback] : undefined);
+function resolveEnv(key: string) {
+  return process.env[key];
 }
 
 export function getEnvReport(): EnvReport {
   const values: EnvSnapshot = {
     clerkPublishableKey: resolveEnv("EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"),
     convexUrl: resolveEnv("EXPO_PUBLIC_CONVEX_URL"),
-    revenueCatIosKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY,
-    revenueCatAndroidKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY,
-    revenueCatKey: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
+    revenueCatIosKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"),
+    revenueCatAndroidKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY"),
+    revenueCatKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_API_KEY"),
     apiBaseUrl: resolveEnv("EXPO_PUBLIC_API_BASE_URL"),
   };
 
@@ -77,13 +70,12 @@ export function logEnvDiagnostics(report: EnvReport) {
     if (resolveEnv(key)) present.push(key);
   }
   for (const key of optionalKeys) {
-    if (resolveEnv(key) || process.env[key]) present.push(key);
+    if (resolveEnv(key)) present.push(key);
   }
 
   if (missing.length) {
     console.error("[Env] Missing required environment variables:", missing);
   }
-  console.log("[Env] Present variables:", present);
 }
 
 export function getEnvValue(key: keyof EnvSnapshot) {

@@ -1,19 +1,26 @@
 import { BlurView } from "expo-blur";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
-import { memo, useCallback, useEffect, useMemo } from "react";
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { FlatList, StyleSheet, Text, View, type ViewToken, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { LuxPressable } from "../../components/lux-pressable";
 import { triggerHaptic } from "../../lib/haptics";
+
+const VIEWABILITY_CONFIG = {
+  itemVisiblePercentThreshold: 65,
+  minimumViewTime: 180,
+};
 
 type ServiceCardData = {
   id: string;
   title: string;
   subtitle: string;
   video: number;
+  poster: number;
   serviceParam: string;
 };
 
@@ -21,54 +28,71 @@ const SERVICE_CARDS: ServiceCardData[] = [
   {
     id: "interior-design",
     title: "Interior Design",
-    subtitle: "Upload a pic, choose a style, let AI design the room!",
+    subtitle: "Upload a room, choose a style, and let AI restage it in seconds.",
     video: require("../../assets/videos/media-wall.mp4"),
+    poster: require("../../assets/media/empty-room.jpg"),
     serviceParam: "interior",
   },
   {
     id: "exterior-design",
     title: "Exterior Design",
-    subtitle: "Snap your home, pick a vibe, let AI craft the facade!",
+    subtitle: "Refresh facades, lighting, and curb appeal with a cleaner native flow.",
     video: require("../../assets/videos/facade.mp4"),
+    poster: require("../../assets/media/staging-before.jpg"),
     serviceParam: "facade",
   },
   {
     id: "garden-design",
     title: "Garden Design",
-    subtitle: "Choose a style you adore and give your garden a whole new vibe.",
+    subtitle: "Transform patios, yards, and pools without dragging the UI down.",
     video: require("../../assets/videos/garden.mp4"),
+    poster: require("../../assets/media/garden-before.jpg"),
     serviceParam: "garden",
   },
   {
     id: "ai-paint",
     title: "AI Paint",
-    subtitle: "Pick any color you love and transform your space with just a touch!",
+    subtitle: "Try fresh wall palettes instantly with a lighter render path.",
     video: require("../../assets/videos/paint.mp4"),
+    poster: require("../../assets/media/staging-before.jpg"),
     serviceParam: "paint",
   },
   {
     id: "floor-restyle",
     title: "Floor Restyle",
-    subtitle: "Edit floor plans with AI ? rearrange rooms in one tap!",
+    subtitle: "Preview new floor materials with faster, mobile-first interactions.",
     video: require("../../assets/videos/floor.mp4"),
+    poster: require("../../assets/media/sketch.jpg"),
     serviceParam: "floor",
   },
   {
     id: "reference-style",
     title: "Reference Style",
-    subtitle: "Show AI what you like and let it apply it to your room!",
+    subtitle: "Match inspiration looks while keeping the experience responsive.",
     video: require("../../assets/videos/master-suite.mp4"),
+    poster: require("../../assets/media/after-luxury.jpg"),
     serviceParam: "reference",
   },
 ];
 
-type ServiceCardProps = {
+type CardMediaProps = {
   item: ServiceCardData;
-  height: number;
-  onPress: (item: ServiceCardData) => void;
+  active: boolean;
 };
 
-const ServiceCard = memo(function ServiceCard({ item, height, onPress }: ServiceCardProps) {
+const CardPoster = memo(function CardPoster({ source }: { source: number }) {
+  return (
+    <Image
+      source={source}
+      style={StyleSheet.absoluteFillObject}
+      contentFit="cover"
+      cachePolicy="memory-disk"
+      transition={120}
+    />
+  );
+});
+
+const ActiveCardVideo = memo(function ActiveCardVideo({ item }: { item: ServiceCardData }) {
   const player = useVideoPlayer(item.video, (videoPlayer) => {
     videoPlayer.loop = true;
     videoPlayer.muted = true;
@@ -77,13 +101,34 @@ const ServiceCard = memo(function ServiceCard({ item, height, onPress }: Service
     videoPlayer.play();
   });
 
-  useEffect(() => {
-    player.play();
-    return () => {
-      player.pause();
-    };
-  }, [player]);
+  return (
+    <VideoView
+      player={player}
+      style={styles.video}
+      contentFit="cover"
+      surfaceType="textureView"
+      nativeControls={false}
+      pointerEvents="none"
+    />
+  );
+});
 
+const CardMedia = memo(function CardMedia({ item, active }: CardMediaProps) {
+  if (!active) {
+    return <CardPoster source={item.poster} />;
+  }
+
+  return <ActiveCardVideo item={item} />;
+});
+
+type ServiceCardProps = {
+  item: ServiceCardData;
+  height: number;
+  active: boolean;
+  onPress: (item: ServiceCardData) => void;
+};
+
+const ServiceCard = memo(function ServiceCard({ item, height, active, onPress }: ServiceCardProps) {
   const handlePress = useCallback(() => {
     triggerHaptic();
     onPress(item);
@@ -91,17 +136,10 @@ const ServiceCard = memo(function ServiceCard({ item, height, onPress }: Service
 
   return (
     <View style={[styles.card, { height }]}> 
-      <VideoView
-        player={player}
-        style={styles.video}
-        contentFit="cover"
-        surfaceType="textureView"
-        nativeControls={false}
-        pointerEvents="none"
-      />
+      <CardMedia item={item} active={active} />
       <LinearGradient
-        colors={["rgba(0,0,0,0.06)", "rgba(0,0,0,0.14)", "rgba(0,0,0,0.68)"]}
-        locations={[0, 0.5, 1]}
+        colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.16)", "rgba(0,0,0,0.74)"]}
+        locations={[0, 0.46, 1]}
         style={StyleSheet.absoluteFillObject}
         pointerEvents="none"
       />
@@ -113,10 +151,12 @@ const ServiceCard = memo(function ServiceCard({ item, height, onPress }: Service
         </View>
 
         <View style={styles.cardFooter}>
-          <View />
+          <View style={styles.liveBadge}>
+            <Text style={styles.liveBadgeText}>{active ? "Live preview" : "Ready"}</Text>
+          </View>
           <BlurView intensity={70} tint="dark" style={styles.ctaGlass}>
             <LuxPressable onPress={handlePress} style={styles.ctaButton}>
-              <Text style={styles.ctaText}>Try it!</Text>
+              <Text style={styles.ctaText}>Try it</Text>
             </LuxPressable>
           </BlurView>
         </View>
@@ -129,6 +169,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const [activeCardId, setActiveCardId] = useState(SERVICE_CARDS[0]?.id ?? "");
 
   const cardHeight = useMemo(() => Math.max(316, Math.min(388, Math.round(width * 0.96))), [width]);
 
@@ -139,40 +180,66 @@ export default function HomeScreen() {
     [router],
   );
 
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken<ServiceCardData>[] }) => {
+      const firstVisible = viewableItems.find((entry) => entry.isViewable)?.item;
+      if (firstVisible?.id) {
+        setActiveCardId((current) => (current === firstVisible.id ? current : firstVisible.id));
+      }
+    },
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: ServiceCardData }) => (
+      <ServiceCard item={item} height={cardHeight} active={item.id === activeCardId} onPress={handleServicePress} />
+    ),
+    [activeCardId, cardHeight, handleServicePress],
+  );
+
+  const keyExtractor = useCallback((item: ServiceCardData) => item.id, []);
+
+  const header = useMemo(
+    () => (
+      <View style={styles.header}>
+        <Text style={styles.eyebrow}>Darkor.ai Premium</Text>
+        <Text style={styles.title}>Choose Your Transformation</Text>
+        <Text style={styles.subtitle}>
+          Each service is now rendered with mobile-first lifecycle control so the screen stays smooth while you browse.
+        </Text>
+      </View>
+    ),
+    [],
+  );
+
   return (
     <View style={styles.screen}>
-      <ScrollView
-        style={styles.scroll}
+      <FlatList
+        data={SERVICE_CARDS}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        ListHeaderComponent={header}
         contentContainerStyle={{
           paddingTop: insets.top + 20,
           paddingHorizontal: 16,
           paddingBottom: Math.max(insets.bottom + 120, 136),
           gap: 20,
         }}
+        ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
         showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Text style={styles.eyebrow}>Darkor.ai Premium</Text>
-          <Text style={styles.title}>Choose Your Transformation</Text>
-          <Text style={styles.subtitle}>
-            Six premium AI design tools, rebuilt to feel clean, fast, and finished from the first tap.
-          </Text>
-        </View>
-
-        {SERVICE_CARDS.map((item) => (
-          <ServiceCard key={item.id} item={item} height={cardHeight} onPress={handleServicePress} />
-        ))}
-      </ScrollView>
+        initialNumToRender={2}
+        maxToRenderPerBatch={2}
+        updateCellsBatchingPeriod={40}
+        windowSize={3}
+        removeClippedSubviews
+        onViewableItemsChanged={onViewableItemsChanged.current}
+        viewabilityConfig={VIEWABILITY_CONFIG}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
-    backgroundColor: "#000000",
-  },
-  scroll: {
     flex: 1,
     backgroundColor: "#000000",
   },
@@ -221,7 +288,7 @@ const styles = StyleSheet.create({
   copyBlock: {
     marginTop: "auto",
     gap: 10,
-    maxWidth: "72%",
+    maxWidth: "78%",
   },
   cardTitle: {
     color: "#ffffff",
@@ -239,6 +306,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
+  },
+  liveBadge: {
+    borderRadius: 999,
+    borderWidth: 0.5,
+    borderColor: "rgba(255,255,255,0.14)",
+    backgroundColor: "rgba(0,0,0,0.38)",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  liveBadgeText: {
+    color: "#f4f4f5",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
   ctaGlass: {
     borderRadius: 999,

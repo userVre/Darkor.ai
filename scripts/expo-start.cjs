@@ -7,6 +7,8 @@ async function main() {
   const metroConfig = pathToFileURL(resolve(__dirname, "..", "metro.config.js")).href;
   process.env.EXPO_OVERRIDE_METRO_CONFIG = metroConfig;
   process.env.EXPO_DEV_PORT = process.env.EXPO_DEV_PORT || "8081";
+  process.env.NODE_ENV = process.env.NODE_ENV || "development";
+  process.env.NODE_OPTIONS = [process.env.NODE_OPTIONS, "--dns-result-order=ipv4first"].filter(Boolean).join(" ");
 
   const { port, autoSelected } = await resolvePort();
   const portString = String(port);
@@ -53,3 +55,4 @@ main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
+

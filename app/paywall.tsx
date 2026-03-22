@@ -15,8 +15,8 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Carousel from "react-native-reanimated-carousel";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, ShieldCheck, X } from "lucide-react-native";
 
 import { useProSuccess } from "../components/pro-success-context";
@@ -137,27 +137,27 @@ export default function PaywallScreen() {
     };
   }, [isSignedIn, user?.id]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     triggerHaptic();
     dismissLaunchPaywall();
     router.replace("/(tabs)");
-  };
+  }, [router]);
 
-  const handleSelectPlan = (plan: "yearly" | "weekly") => {
+  const handleSelectPlan = useCallback((plan: "yearly" | "weekly") => {
     if (trialEnabled && plan === "weekly") return;
     triggerHaptic();
     setSelectedPlan(plan);
-  };
+  }, [trialEnabled]);
 
-  const handleToggleTrial = (value: boolean) => {
+  const handleToggleTrial = useCallback((value: boolean) => {
     triggerHaptic();
     setTrialEnabled(value);
     if (value) {
       setSelectedPlan("yearly");
     }
-  };
+  }, []);
 
-  const handleRestore = async () => {
+  const handleRestore = useCallback(async () => {
     triggerHaptic();
     setErrorMessage(null);
 
@@ -185,9 +185,9 @@ export default function PaywallScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isSignedIn, router, setPlan]);
 
-  const handlePurchase = async () => {
+  const handlePurchase = useCallback(async () => {
     triggerHaptic();
     setErrorMessage(null);
 
@@ -227,7 +227,7 @@ export default function PaywallScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isSignedIn, router, selectedPackage, setPlan, showSuccess]);
 
   const renderGalleryItem = useCallback(({ item }: { item: number }) => <GallerySlide source={item} />, []);
 
@@ -253,17 +253,13 @@ export default function PaywallScreen() {
 
         <View style={styles.carouselWrap}>
           <Carousel
+            loop
+            autoPlay
+            autoPlayInterval={2600}
             width={galleryWidth}
             height={galleryHeight}
             data={GALLERY_IMAGES}
-            autoPlay
-            autoPlayInterval={2400}
-            scrollAnimationDuration={1100}
-            loop
-            enabled={false}
-            pagingEnabled
-            windowSize={3}
-            style={{ width: galleryWidth }}
+            scrollAnimationDuration={900}
             renderItem={renderGalleryItem}
           />
         </View>
@@ -404,6 +400,7 @@ const styles = StyleSheet.create({
   carouselWrap: {
     alignItems: "center",
     marginBottom: 28,
+    overflow: "hidden",
   },
   galleryImage: {
     width: "100%",
@@ -599,3 +596,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+
+

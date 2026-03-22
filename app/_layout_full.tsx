@@ -17,7 +17,6 @@ import { convex } from "../lib/convex";
 import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
 import { getEnvReport, logEnvDiagnostics } from "../lib/env";
 import { hasDismissedLaunchPaywall } from "../lib/launch-paywall";
-import { useBackendHealth } from "../lib/network";
 import { planCreditGrant } from "../lib/pricing";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
 import { tokenCache } from "../lib/token-cache";
@@ -30,7 +29,6 @@ import {
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
 
-console.log("[Boot] Root layout module loaded");
 
 function RevenueCatGate() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -48,7 +46,6 @@ function RevenueCatGate() {
   useEffect(() => {
     if (!isLoaded || configuredRef.current) return;
     const run = async () => {
-      console.log("[Boot] RevenueCat configure start");
       try {
         const purchases = await configureRevenueCat(isSignedIn ? user?.id ?? null : null);
         if (!purchases) {
@@ -58,7 +55,6 @@ function RevenueCatGate() {
         purchasesRef.current = purchases;
         configuredRef.current = true;
         setRevenueCatReady(true);
-        console.log("[Boot] RevenueCat configured");
       } catch (error) {
         console.warn("RevenueCat not configured", error);
       }
@@ -73,7 +69,6 @@ function RevenueCatGate() {
     const run = async () => {
       try {
         if (isSignedIn && user?.id) {
-          console.log("[Boot] RevenueCat logIn start");
           const currentUserId = await purchases.getAppUserID().catch(() => null);
           if (currentUserId !== user.id) {
             await purchases.logIn(user.id);
@@ -81,7 +76,6 @@ function RevenueCatGate() {
           return;
         }
 
-        console.log("[Boot] RevenueCat logOut start");
         const isAnonymous = await purchases.isAnonymous().catch(() => true);
         if (!isAnonymous) {
           await purchases.logOut();
@@ -146,7 +140,6 @@ function ReferralGate() {
   const applyReferral = useMutation("users:applyReferral" as any);
 
   useEffect(() => {
-    console.log("[Boot] ReferralGate listening for deep links");
     const handleUrl = (url: string | null) => {
       if (!url) return;
       const parsed = Linking.parse(url);
@@ -166,7 +159,6 @@ function ReferralGate() {
     const run = async () => {
       const code = await consumeReferralCode();
       if (code) {
-        console.log("[Boot] ReferralGate applying code");
         await applyReferral({ referralCode: code });
       }
     };
@@ -187,7 +179,6 @@ function RewardGate() {
     hasCheckedRef.current = true;
     const run = async () => {
       try {
-        console.log("[Boot] RewardGate checking reward");
         const result = (await claimReward({})) as {
           granted?: boolean;
           creditsAdded?: number;
@@ -224,7 +215,6 @@ function LaunchPaywallGate() {
 }
 function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    console.log("[Boot] Providers mounted");
   }, []);
 
   return (
@@ -319,7 +309,6 @@ function LaunchDiagnostics() {
   const pathname = usePathname();
 
   useEffect(() => {
-    console.log("[Boot] Auth state", { isLoaded, isSignedIn, pathname });
   }, [isLoaded, isSignedIn, pathname]);
 
   return null;
@@ -330,7 +319,6 @@ export default function RootLayoutFull() {
   const envReport = useMemo(() => getEnvReport(), []);
   const clerkKey = envReport.values.clerkPublishableKey;
   // The generation API can be local-only; do not block launch on it.
-  const backendUrl = envReport.values.convexUrl;
   const revenueCatKey = getRevenueCatApiKey();
 
   useEffect(() => {
@@ -338,9 +326,7 @@ export default function RootLayoutFull() {
   }, [envReport]);
 
   useEffect(() => {
-    console.log("[Boot] RootLayout mounted");
     const timer = setTimeout(() => {
-      console.log("[Boot] App ready");
       setAppReady(true);
     }, 150);
     return () => clearTimeout(timer);
@@ -348,7 +334,6 @@ export default function RootLayoutFull() {
 
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
-      console.log("[Boot] Splash safety hide");
       SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
     }, 4000);
     return () => clearTimeout(safetyTimer);
@@ -356,15 +341,9 @@ export default function RootLayoutFull() {
 
   useEffect(() => {
     if (!appReady) return;
-    console.log("[Boot] Hiding splash");
     SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
   }, [appReady]);
-
-  const health = useBackendHealth(backendUrl, {
-    enabled: appReady && !DIAGNOSTIC_BYPASS && envReport.ok,
-    intervalMs: 15000,
-    timeoutMs: 5000,
-  });
+
 
   if (!appReady) {
     return <BootScreen message="Starting Darkor.ai..." />;
@@ -384,7 +363,6 @@ export default function RootLayoutFull() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ClerkProvider publishableKey={clerkKey ?? ""} tokenCache={tokenCache}>
-          <LaunchDiagnostics />
           <AuthGate>
             <Providers>
               <WorkspaceDraftProvider>
@@ -415,6 +393,8 @@ export default function RootLayoutFull() {
     </GestureHandlerRootView>
   );
 }
+
+
 
 
 

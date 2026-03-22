@@ -40,7 +40,7 @@ export default function TabsLayout() {
         },
         tabBarButton: (props) => <TabBarButton {...props} />,
         tabBarHideOnKeyboard: true,
-        lazy: false,
+        lazy: true,
       }}
     >
       <Tabs.Screen
@@ -74,12 +74,7 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen name="home.full" options={{ href: null }} />
-      <Tabs.Screen name="home.diagnostic" options={{ href: null }} />
       <Tabs.Screen name="workspace.full" options={{ href: null }} />
-      <Tabs.Screen name="workspace.diagnostic" options={{ href: null }} />
-      <Tabs.Screen name="_layout_full" options={{ href: null }} />
-      <Tabs.Screen name="_layout_diagnostic" options={{ href: null }} />
     </Tabs>
   );
 }
-

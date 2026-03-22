@@ -6,7 +6,7 @@ const { values } = getEnvReport();
 const convexUrl = values.convexUrl;
 
 if (!convexUrl) {
-  console.warn("[Env] EXPO_PUBLIC_CONVEX_URL (or NEXT_PUBLIC_CONVEX_URL) is not set.");
+  console.warn("[Env] EXPO_PUBLIC_CONVEX_URL is not set.");
 }
 
 export const hasConvexConfig = Boolean(convexUrl);

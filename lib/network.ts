@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type HealthStatus = "checking" | "online" | "offline";
 
@@ -39,8 +39,6 @@ export function useBackendHealth(url?: string, options: HealthOptions = {}): Bac
   const [status, setStatus] = useState<HealthStatus>(enabled ? "checking" : "offline");
   const [lastError, setLastError] = useState<string | null>(null);
   const [lastCheckedAt, setLastCheckedAt] = useState<number | null>(null);
-  const latestStatus = useRef<HealthStatus>("checking");
-  const statusRef = useRef<HealthStatus>("checking");
 
   const runCheck = useCallback(async () => {
     if (!enabled || !url) {
@@ -50,9 +48,7 @@ export function useBackendHealth(url?: string, options: HealthOptions = {}): Bac
       return;
     }
 
-    if (statusRef.current === "checking") {
-      setStatus("checking");
-    }
+    setStatus("checking");
     const result = await pingBackend(url, timeoutMs);
     setLastCheckedAt(Date.now());
     setLastError(result.error);
@@ -76,14 +72,6 @@ export function useBackendHealth(url?: string, options: HealthOptions = {}): Bac
       clearInterval(id);
     };
   }, [enabled, intervalMs, runCheck]);
-
-  useEffect(() => {
-    if (latestStatus.current !== status) {
-      console.log("[Network] Backend status", status);
-      latestStatus.current = status;
-    }
-    statusRef.current = status;
-  }, [status]);
 
   return {
     status,

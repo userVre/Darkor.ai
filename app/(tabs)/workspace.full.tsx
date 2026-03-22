@@ -623,8 +623,6 @@ export default function WorkspaceScreen() {
         : SPACE_OPTIONS.interior;
 
   useEffect(() => {
-    console.log("[Screen] Workspace mounted");
-    return () => console.log("[Screen] Workspace unmounted");
   }, []);
 
   useEffect(() => {
@@ -1344,598 +1342,443 @@ export default function WorkspaceScreen() {
   const isPhotoPreviewBusy = isSelectingPhoto || isLoadingExample !== null;
 
   if (workflowStep <= 3) {
-  const currentStepNumber = workflowStep + 1;
-  const isFinalWizardStep = workflowStep === 3;
-  const continueLabel = isFinalWizardStep ? (isGenerating ? "Generating..." : "Generate Design") : "Continue";
+    const currentStepNumber = workflowStep + 1;
+    const isFinalWizardStep = workflowStep === 3;
+    const continueLabel = isFinalWizardStep ? (isGenerating ? "Generating..." : "Generate Design") : "Continue";
 
-  return (
-    <View className="flex-1 bg-white" style={{ backgroundColor: "#ffffff" }}>
-      <LinearGradient
-        colors={["#ffffff", "#fff8fb", "#ffffff"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-      />
-      <View
-        pointerEvents="none"
-        style={{
-          position: "absolute",
-          right: -52,
-          top: -88,
-          width: 240,
-          height: 240,
-          borderRadius: 999,
-          backgroundColor: "rgba(236, 72, 153, 0.08)",
-        }}
-      />
-      <View
-        pointerEvents="none"
-        style={{
-          position: "absolute",
-          left: -72,
-          top: 240,
-          width: 220,
-          height: 220,
-          borderRadius: 999,
-          backgroundColor: "rgba(251, 191, 36, 0.06)",
-        }}
-      />
-
-      {showResumeToast ? (
-        <MotiView
-          from={{ opacity: 0, translateY: -12 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          exit={{ opacity: 0, translateY: -12 }}
-          transition={LUX_SPRING}
-          className="absolute left-6 right-6 z-20"
-          style={{ top: insets.top + 8 }}
-          pointerEvents="none"
-        >
-          <View
-            className="rounded-[22px] px-4 py-3"
-            style={{
-              backgroundColor: "rgba(255,255,255,0.96)",
-              borderWidth: 1,
-              borderColor: "rgba(17,17,17,0.06)",
-              ...WIZARD_CARD_SHADOW,
-            }}
+    return (
+      <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
+        {showResumeToast ? (
+          <MotiView
+            from={{ opacity: 0, translateY: -12 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            exit={{ opacity: 0, translateY: -12 }}
+            transition={LUX_SPRING}
+            className="absolute left-5 right-5 z-20"
+            style={{ top: insets.top + 8 }}
+            pointerEvents="none"
           >
-            <Text className="text-center text-sm font-semibold text-zinc-900">Resuming your saved wizard draft.</Text>
-          </View>
-        </MotiView>
-      ) : null}
+            <BlurView
+              intensity={80}
+              tint="dark"
+              className="rounded-[22px] border border-white/10 bg-black/75 px-4 py-3"
+              style={{ borderWidth: 0.5 }}
+            >
+              <Text className="text-center text-sm font-semibold text-white">{"✨"} Resuming your saved wizard draft.</Text>
+            </BlurView>
+          </MotiView>
+        ) : null}
 
-      <ScrollView
-        className="flex-1 bg-white"
-        style={{ backgroundColor: "#ffffff" }}
-        contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingTop: Math.max(insets.top + 18, 34),
-          paddingBottom: 208,
-          minHeight: height,
-        }}
-        contentInsetAdjustmentBehavior="never"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={{ gap: 28 }}>
-          <View className="flex-row items-center justify-between">
-            {workflowStep > 0 ? (
+        <ScrollView
+          className="flex-1 bg-black"
+          style={{ backgroundColor: "#000000" }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingTop: Math.max(insets.top + 18, 34),
+            paddingBottom: Math.max(insets.bottom + 128, 156),
+            minHeight: height,
+          }}
+          contentInsetAdjustmentBehavior="never"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={{ gap: 22 }}>
+            <View className="flex-row items-center justify-between">
               <LuxPressable
-                onPress={handleBack}
-                className="cursor-pointer h-12 w-12 items-center justify-center rounded-full"
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.96)",
-                  borderWidth: 1,
-                  borderColor: "rgba(17,17,17,0.08)",
-                  ...WIZARD_CARD_SHADOW,
-                }}
+                onPress={workflowStep > 0 ? handleBack : () => router.back()}
+                className="cursor-pointer h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5"
+                style={{ borderWidth: 0.5 }}
               >
-                <ArrowLeft color="#111111" size={22} strokeWidth={2.2} />
+                {workflowStep > 0 ? <ArrowLeft color="#ffffff" size={20} strokeWidth={2.2} /> : <Close color="#ffffff" size={20} strokeWidth={2.2} />}
               </LuxPressable>
-            ) : (
-              <View
-                className="items-center justify-center rounded-full"
-                style={{
-                  width: 52,
-                  height: 52,
-                  backgroundColor: "#111111",
-                  borderWidth: 1,
-                  borderColor: "rgba(17,17,17,0.06)",
-                  ...WIZARD_CARD_SHADOW,
-                }}
+
+              <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", letterSpacing: -0.4 }}>
+                {`Step ${currentStepNumber} / 4`}
+              </Text>
+
+              <LuxPressable
+                onPress={() => router.back()}
+                className="cursor-pointer h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5"
+                style={{ borderWidth: 0.5 }}
               >
-                <Text className="text-base font-semibold text-white">1</Text>
-              </View>
-            )}
+                <Close color="#ffffff" size={20} strokeWidth={2.2} />
+              </LuxPressable>
+            </View>
 
-            <Text style={{ color: "#111111", fontSize: 20, fontWeight: "700", letterSpacing: -0.4 }}>
-              {`Step ${currentStepNumber} / 4`}
-            </Text>
+            <View className="flex-row gap-3">
+              {[0, 1, 2, 3].map((index) => (
+                <MotiView
+                  key={`wizard-progress-${index}`}
+                  animate={{
+                    backgroundColor: index <= workflowStep ? "#ffffff" : "rgba(255,255,255,0.14)",
+                    opacity: index <= workflowStep ? 1 : 0.8,
+                  }}
+                  transition={LUX_SPRING}
+                  style={{ flex: 1, height: 4, borderRadius: 999 }}
+                />
+              ))}
+            </View>
 
-            <LuxPressable
-              onPress={() => router.back()}
-              className="cursor-pointer h-12 w-12 items-center justify-center rounded-full"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.96)",
-                borderWidth: 1,
-                borderColor: "rgba(17,17,17,0.08)",
-                ...WIZARD_CARD_SHADOW,
-              }}
-            >
-              <Close color="#111111" size={22} strokeWidth={2.2} />
-            </LuxPressable>
-          </View>
-
-          <View className="flex-row gap-3">
-            {[0, 1, 2, 3].map((index) => (
+            <AnimatePresence exitBeforeEnter>
               <MotiView
-                key={`wizard-progress-${index}`}
-                animate={{
-                  backgroundColor: index <= workflowStep ? "#111111" : "#d4d4d8",
-                  opacity: index < workflowStep ? 0.9 : 1,
-                }}
-                transition={LUX_SPRING}
-                style={{ flex: 1, height: 5, borderRadius: 999 }}
-              />
-            ))}
-          </View>
+                key={`wizard-step-${workflowStep}`}
+                from={{ opacity: 0, translateX: 18, scale: 0.99 }}
+                animate={{ opacity: 1, translateX: 0, scale: 1 }}
+                exit={{ opacity: 0, translateX: -14, scale: 0.99 }}
+                transition={stepTransition}
+                style={{ gap: 22 }}
+              >
+                {workflowStep === 0 ? (
+                  <>
+                    <View style={{ gap: 8 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Add a Photo</Text>
+                      <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
+                        Start with a clear photo of your space, or tap one of the curated examples below.
+                      </Text>
+                    </View>
 
-          <AnimatePresence exitBeforeEnter>
-            <MotiView
-              key={`wizard-step-${workflowStep}`}
-              from={{ opacity: 0, translateX: 22, scale: 0.985 }}
-              animate={{ opacity: 1, translateX: 0, scale: 1 }}
-              exit={{ opacity: 0, translateX: -18, scale: 0.99 }}
-              transition={stepTransition}
-              style={{ gap: 24 }}
-            >
-              {workflowStep === 0 ? (
-                <>
-                  <View style={{ gap: 10 }}>
-                    <Text style={{ color: "#111111", fontSize: 38, fontWeight: "700", letterSpacing: -1.2 }}>
-                      Add a Photo
-                    </Text>
-                    <Text style={{ color: "#52525b", fontSize: 16, lineHeight: 25 }}>
-                      Start with a clean photo of your space so we can redesign it with realistic materials, lighting, and depth.
-                    </Text>
-                  </View>
-
-                  <LuxPressable
-                    onPress={handlePickPhoto}
-                    className="cursor-pointer"
-                    style={{
-                      minHeight: selectedImage ? wizardPreviewHeight : wizardUploadHeight,
-                      borderRadius: 32,
-                      backgroundColor: "#ffffff",
-                      borderWidth: selectedImage ? 1 : 2,
-                      borderColor: selectedImage ? "rgba(17,17,17,0.08)" : "#3f3f46",
-                      borderStyle: selectedImage ? "solid" : "dashed",
-                      overflow: "hidden",
-                      ...WIZARD_CARD_SHADOW,
-                    }}
-                  >
-                    {selectedImage ? (
-                      <>
-                        <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: wizardPreviewHeight }} contentFit="cover" transition={220} />
-                        <LinearGradient
-                          colors={["transparent", "rgba(17,17,17,0.62)"]}
-                          start={{ x: 0.5, y: 0 }}
-                          end={{ x: 0.5, y: 1 }}
-                          style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 160 }}
-                        />
-                        <View style={{ position: "absolute", left: 20, right: 20, bottom: 20, gap: 6 }}>
-                          <Text className="text-lg font-semibold text-white">{selectedImage.label ?? "Selected photo"}</Text>
-                          <Text className="text-sm text-zinc-100/85">Tap anywhere to replace it from camera or gallery.</Text>
-                        </View>
-                        <LuxPressable
-                          onPress={(event) => {
-                            event.stopPropagation();
-                            handleClearSelectedImage();
-                          }}
-                          className="cursor-pointer absolute right-4 top-4 h-11 w-11 items-center justify-center rounded-full"
-                          style={{ backgroundColor: "rgba(17,17,17,0.42)", borderWidth: 1, borderColor: "rgba(255,255,255,0.18)" }}
-                        >
-                          <Close color="#ffffff" size={18} strokeWidth={2.4} />
-                        </LuxPressable>
-                        {isPhotoPreviewBusy ? (
-                          <MotiView
-                            animate={{ opacity: [0.45, 0.95, 0.45] }}
-                            transition={{ duration: 1100, loop: true }}
-                            className="absolute bottom-4 left-4 right-4 flex-row items-center justify-center gap-3 rounded-[20px] px-4 py-3"
-                            style={{ backgroundColor: "rgba(17,17,17,0.58)" }}
-                          >
-                            <ActivityIndicator size="small" color="#ffffff" />
-                            <Text className="text-sm font-semibold text-white">Uploading...</Text>
-                          </MotiView>
-                        ) : null}
-                      </>
-                    ) : (
-                      <View className="flex-1 items-center justify-center px-8" style={{ minHeight: wizardUploadHeight, gap: 18 }}>
-                        <View
-                          className="items-center justify-center rounded-full"
-                          style={{
-                            width: 98,
-                            height: 98,
-                            backgroundColor: "#111111",
-                            borderWidth: 8,
-                            borderColor: "rgba(17,17,17,0.06)",
-                          }}
-                        >
-                          <Plus color="#ffffff" size={38} strokeWidth={2.25} />
-                        </View>
-                        <View style={{ gap: 8, alignItems: "center" }}>
-                          <Text className="text-center text-[28px] font-semibold text-black">Start Redesigning</Text>
-                          <Text className="text-center text-base leading-7 text-zinc-500">
-                            Redesign and beautify your room with a single well-lit photo.
-                          </Text>
-                        </View>
-                        <View
-                          className="flex-row items-center gap-2 rounded-full px-4 py-2.5"
-                          style={{ backgroundColor: "#f4f4f5", borderWidth: 1, borderColor: "#e4e4e7" }}
-                        >
-                          <ImageIcon color="#111111" size={16} />
-                          <Text className="text-sm font-semibold text-black">Take Photo or Choose Library</Text>
-                        </View>
-                      </View>
-                    )}
-                  </LuxPressable>
-
-                  <View style={{ gap: 8 }}>
-                    <Text style={{ color: "#111111", fontSize: 20, fontWeight: "700", letterSpacing: -0.4 }}>
-                      Example Photos
-                    </Text>
-                    <Text style={{ color: "#71717a", fontSize: 14, lineHeight: 22 }}>
-                      Curated starter spaces to preview the wizard instantly.
-                    </Text>
-                  </View>
-
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingRight: 12, gap: 16 }}
-                  >
-                    {EXAMPLE_PHOTOS.map((example, index) => {
-                      const active = selectedImage?.label === example.label;
-                      const isLoading = isLoadingExample === example.id;
-                      return (
-                        <MotiView key={example.id} {...staggerFadeUp(index, 45)} style={{ width: wizardExampleCardWidth }}>
+                    <LuxPressable
+                      onPress={handlePickPhoto}
+                      className="cursor-pointer"
+                      style={{
+                        minHeight: selectedImage ? wizardPreviewHeight : wizardUploadHeight,
+                        borderRadius: 30,
+                        backgroundColor: "#050505",
+                        borderWidth: selectedImage ? 0.5 : 2,
+                        borderColor: selectedImage ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.18)",
+                        borderStyle: selectedImage ? "solid" : "dashed",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {selectedImage ? (
+                        <>
+                          <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: wizardPreviewHeight }} contentFit="cover" transition={220} />
+                          <LinearGradient
+                            colors={["transparent", "rgba(0,0,0,0.76)"]}
+                            start={{ x: 0.5, y: 0 }}
+                            end={{ x: 0.5, y: 1 }}
+                            style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 140 }}
+                          />
+                          <View style={{ position: "absolute", left: 18, right: 18, bottom: 18, gap: 6 }}>
+                            <Text className="text-base font-semibold text-white">{selectedImage.label ?? "Selected photo"}</Text>
+                            <Text className="text-sm text-zinc-300">Tap anywhere to replace it from camera or library.</Text>
+                          </View>
                           <LuxPressable
-                            onPress={() => void handleSelectExample(example)}
-                            className="cursor-pointer"
-                            style={{
-                              borderRadius: 24,
-                              backgroundColor: "#ffffff",
-                              borderWidth: active ? 2 : 1,
-                              borderColor: active ? "#d946ef" : "#e4e4e7",
-                              overflow: "hidden",
-                              ...WIZARD_CARD_SHADOW,
+                            onPress={(event) => {
+                              event.stopPropagation();
+                              handleClearSelectedImage();
                             }}
+                            className="cursor-pointer absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/45"
+                            style={{ borderWidth: 0.5 }}
                           >
-                            <View style={{ height: 168 }}>
-                              <Image source={example.source} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} />
-                              {active ? (
-                                <View
-                                  className="absolute right-3 top-3 h-8 w-8 items-center justify-center rounded-full"
-                                  style={{ backgroundColor: "rgba(217,70,239,0.95)" }}
-                                >
-                                  <Check color="#ffffff" size={16} strokeWidth={2.5} />
-                                </View>
-                              ) : null}
-                              {isLoading ? (
-                                <View className="absolute inset-0 items-center justify-center" style={{ backgroundColor: "rgba(17,17,17,0.32)" }}>
-                                  <ActivityIndicator size="small" color="#ffffff" />
-                                </View>
-                              ) : null}
-                            </View>
-                            <View style={{ padding: 16, gap: 4 }}>
-                              <Text className="text-base font-semibold text-black">{example.label}</Text>
-                              <Text className="text-sm text-zinc-500">Use this catalog sample</Text>
-                            </View>
+                            <Close color="#ffffff" size={16} strokeWidth={2.4} />
                           </LuxPressable>
-                        </MotiView>
-                      );
-                    })}
-                  </ScrollView>
-                </>
-              ) : null}
+                          {isPhotoPreviewBusy ? (
+                            <MotiView
+                              animate={{ opacity: [0.45, 0.95, 0.45] }}
+                              transition={{ duration: 1100, loop: true }}
+                              className="absolute bottom-4 left-4 right-4 flex-row items-center justify-center gap-3 rounded-[18px] border border-white/10 bg-black/60 px-4 py-3"
+                              style={{ borderWidth: 0.5 }}
+                            >
+                              <ActivityIndicator size="small" color="#ffffff" />
+                              <Text className="text-sm font-semibold text-white">Uploading...</Text>
+                            </MotiView>
+                          ) : null}
+                        </>
+                      ) : (
+                        <View className="flex-1 items-center justify-center px-8" style={{ minHeight: wizardUploadHeight, gap: 18 }}>
+                          <View className="h-20 w-20 items-center justify-center rounded-full border border-white/10 bg-white/5" style={{ borderWidth: 0.5 }}>
+                            <Plus color="#ffffff" size={34} strokeWidth={2.2} />
+                          </View>
+                          <View style={{ gap: 8, alignItems: "center" }}>
+                            <Text className="text-center text-[28px] font-semibold text-white">Add a Photo</Text>
+                            <Text className="text-center text-[15px] leading-7 text-zinc-400">
+                              Take a photo or choose one from your library to start the redesign.
+                            </Text>
+                          </View>
+                        </View>
+                      )}
+                    </LuxPressable>
 
-              {workflowStep === 1 ? (
-                <>
-                  <View style={{ gap: 10 }}>
-                    <Text style={{ color: "#111111", fontSize: 38, fontWeight: "700", letterSpacing: -1.2 }}>
-                      Choose Room
-                    </Text>
-                    <Text style={{ color: "#52525b", fontSize: 16, lineHeight: 25 }}>
-                      Pick the type of space you want Darkor.ai to redesign next.
-                    </Text>
-                  </View>
-
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
-                    {spaceOptions.map((option, index) => {
-                      const active = selectedRoom === option;
-                      const meta = ROOM_CARD_META[option as keyof typeof ROOM_CARD_META] ?? {
-                        icon: House,
-                        description: "A polished redesign starting point.",
-                      };
-                      const RoomIcon = meta.icon;
-                      return (
-                        <MotiView key={option} {...staggerFadeUp(index, 45)} style={{ width: wizardCardWidth }}>
-                          <LuxPressable
-                            onPress={() => handleSelectRoom(option)}
-                            className="cursor-pointer"
-                            style={{
-                              minHeight: 156,
-                              borderRadius: 24,
-                              backgroundColor: "#ffffff",
-                              borderWidth: active ? 2 : 1,
-                              borderColor: active ? "#d946ef" : "#e4e4e7",
-                              padding: 20,
-                              ...WIZARD_CARD_SHADOW,
-                            }}
-                          >
-                            <View className="flex-row items-start justify-between">
-                              <View
-                                className="items-center justify-center rounded-[20px]"
+                    <View style={{ gap: 10 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 24, fontWeight: "700", letterSpacing: -0.6 }}>Example Photos</Text>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 4, gap: 14 }}>
+                        {EXAMPLE_PHOTOS.map((example, index) => {
+                          const active = selectedImage?.label === example.label;
+                          const isLoading = isLoadingExample === example.id;
+                          return (
+                            <MotiView key={example.id} {...staggerFadeUp(index, 45)} style={{ width: wizardExampleCardWidth }}>
+                              <LuxPressable
+                                onPress={() => void handleSelectExample(example)}
+                                className="cursor-pointer overflow-hidden rounded-[24px] border"
                                 style={{
-                                  width: 54,
-                                  height: 54,
-                                  backgroundColor: active ? "#fdf2f8" : "#fafafa",
+                                  borderWidth: active ? 2 : 0.5,
+                                  borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
+                                  backgroundColor: "#050505",
                                 }}
                               >
-                                <RoomIcon color={active ? "#c026d3" : "#111111"} size={24} strokeWidth={2} />
-                              </View>
-                              {active ? (
-                                <View className="h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: "#111111" }}>
-                                  <Check color="#ffffff" size={15} strokeWidth={2.5} />
+                                <Image source={example.source} style={{ width: "100%", height: 174 }} contentFit="cover" transition={180} />
+                                {active ? (
+                                  <View className="absolute right-3 top-3 h-8 w-8 items-center justify-center rounded-full bg-fuchsia-600">
+                                    <Check color="#ffffff" size={16} strokeWidth={2.5} />
+                                  </View>
+                                ) : null}
+                                {isLoading ? (
+                                  <View className="absolute inset-0 items-center justify-center bg-black/30">
+                                    <ActivityIndicator size="small" color="#ffffff" />
+                                  </View>
+                                ) : null}
+                              </LuxPressable>
+                            </MotiView>
+                          );
+                        })}
+                      </ScrollView>
+                    </View>
+                  </>
+                ) : null}
+
+                {workflowStep === 1 ? (
+                  <>
+                    <View style={{ gap: 8 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Choose Room</Text>
+                      <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
+                        Select the type of space you want Darkor.ai to redesign.
+                      </Text>
+                    </View>
+
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                      {spaceOptions.map((option, index) => {
+                        const active = selectedRoom === option;
+                        const meta = ROOM_CARD_META[option as keyof typeof ROOM_CARD_META] ?? {
+                          icon: House,
+                          description: "A polished redesign starting point.",
+                        };
+                        const RoomIcon = meta.icon;
+                        return (
+                          <MotiView key={option} {...staggerFadeUp(index, 40)} style={{ width: wizardCardWidth }}>
+                            <LuxPressable
+                              onPress={() => handleSelectRoom(option)}
+                              className="cursor-pointer rounded-[24px] border px-4 py-4"
+                              style={{
+                                minHeight: 144,
+                                borderWidth: active ? 1.5 : 0.5,
+                                borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
+                                backgroundColor: active ? "rgba(217,70,239,0.08)" : "#050505",
+                              }}
+                            >
+                              <View className="flex-row items-start justify-between">
+                                <View className="h-12 w-12 items-center justify-center rounded-[16px] border border-white/10 bg-white/5" style={{ borderWidth: 0.5 }}>
+                                  <RoomIcon color={active ? "#f0abfc" : "#ffffff"} size={22} strokeWidth={2} />
                                 </View>
-                              ) : null}
-                            </View>
-                            <View style={{ marginTop: 18, gap: 8 }}>
-                              <Text className="text-xl font-semibold text-black">{option}</Text>
-                              <Text className="text-sm leading-6 text-zinc-500">{meta.description}</Text>
-                            </View>
-                          </LuxPressable>
-                        </MotiView>
-                      );
-                    })}
-                  </View>
-                </>
-              ) : null}
+                                {active ? <BadgeCheck color="#f0abfc" size={18} strokeWidth={2.1} /> : null}
+                              </View>
+                              <View style={{ marginTop: 16, gap: 6 }}>
+                                <Text className="text-lg font-semibold text-white">{option}</Text>
+                                <Text className="text-sm leading-6 text-zinc-400">{meta.description}</Text>
+                              </View>
+                            </LuxPressable>
+                          </MotiView>
+                        );
+                      })}
+                    </View>
+                  </>
+                ) : null}
 
-              {workflowStep === 2 ? (
-                <>
-                  <View style={{ gap: 10 }}>
-                    <Text style={{ color: "#111111", fontSize: 38, fontWeight: "700", letterSpacing: -1.2 }}>
-                      Select Style
-                    </Text>
-                    <Text style={{ color: "#52525b", fontSize: 16, lineHeight: 25 }}>
-                      Browse our premium visual library and choose the mood that should guide the redesign.
-                    </Text>
-                  </View>
+                {workflowStep === 2 ? (
+                  <>
+                    <View style={{ gap: 8 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Select Style</Text>
+                      <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
+                        Choose the visual direction for the redesign from the curated style grid.
+                      </Text>
+                    </View>
 
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
-                    {STYLE_LIBRARY.map((style, index) => {
-                      const active = selectedStyle === style.title;
-                      return (
-                        <MotiView key={style.id} {...staggerFadeUp(index, 26)} style={{ width: wizardCardWidth }}>
-                          <LuxPressable
-                            onPress={() => handleSelectStyle(style.title)}
-                            className="cursor-pointer"
-                            style={{
-                              borderRadius: 24,
-                              backgroundColor: "#ffffff",
-                              borderWidth: active ? 2 : 1,
-                              borderColor: active ? "#d946ef" : "#e4e4e7",
-                              overflow: "hidden",
-                              ...WIZARD_CARD_SHADOW,
-                            }}
-                          >
-                            <View style={{ height: 168 }}>
-                              <Image source={style.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={160} />
-                              <LinearGradient
-                                colors={["transparent", "rgba(17,17,17,0.18)"]}
-                                start={{ x: 0.5, y: 0.2 }}
-                                end={{ x: 0.5, y: 1 }}
-                                style={{ position: "absolute", inset: 0 }}
-                              />
-                              {active ? (
-                                <View className="absolute right-3 top-3 rounded-full bg-white px-2.5 py-1.5">
-                                  <Text className="text-[11px] font-semibold text-fuchsia-600">Selected</Text>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                      {STYLE_LIBRARY.map((style, index) => {
+                        const active = selectedStyle === style.title;
+                        return (
+                          <MotiView key={style.id} {...staggerFadeUp(index, 24)} style={{ width: wizardCardWidth }}>
+                            <LuxPressable
+                              onPress={() => handleSelectStyle(style.title)}
+                              className="cursor-pointer overflow-hidden rounded-[24px] border"
+                              style={{
+                                borderWidth: active ? 1.5 : 0.5,
+                                borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
+                                backgroundColor: "#050505",
+                              }}
+                            >
+                              <Image source={style.image} style={{ width: "100%", height: 168 }} contentFit="cover" transition={160} />
+                              <View style={{ padding: 14, gap: 4 }}>
+                                <Text className="text-base font-semibold text-white">{style.title}</Text>
+                                <Text className="text-sm leading-5 text-zinc-400">{style.description}</Text>
+                              </View>
+                            </LuxPressable>
+                          </MotiView>
+                        );
+                      })}
+                    </View>
+                  </>
+                ) : null}
+
+                {workflowStep === 3 ? (
+                  <>
+                    <View style={{ gap: 8 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Refine</Text>
+                      <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
+                        Pick the redesign mode, then lock in the palette direction for the final render.
+                      </Text>
+                    </View>
+
+                    <View style={{ flexDirection: "row", gap: wizardColumnGap }}>
+                      {MODE_OPTIONS.map((mode, index) => {
+                        const active = selectedModeId === mode.id;
+                        const ModeIcon = mode.icon;
+                        return (
+                          <MotiView key={mode.id} {...staggerFadeUp(index, 50)} style={{ flex: 1 }}>
+                            <LuxPressable
+                              onPress={() => handleSelectMode(mode.id)}
+                              className="cursor-pointer rounded-[24px] border px-5 py-5"
+                              style={{
+                                minHeight: 214,
+                                borderWidth: active ? 1.5 : 0.5,
+                                borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
+                                backgroundColor: active ? "rgba(217,70,239,0.08)" : "#050505",
+                              }}
+                            >
+                              <View className="flex-row items-start justify-between">
+                                <View className="h-14 w-14 items-center justify-center rounded-[18px] border border-white/10 bg-white/5" style={{ borderWidth: 0.5 }}>
+                                  <ModeIcon color={active ? "#f0abfc" : "#ffffff"} size={24} strokeWidth={2} />
                                 </View>
-                              ) : null}
-                            </View>
-                            <View style={{ padding: 16, gap: 6 }}>
-                              <Text className="text-lg font-semibold text-black">{style.title}</Text>
-                              <Text className="text-sm leading-6 text-zinc-500">{style.description}</Text>
-                            </View>
-                          </LuxPressable>
-                        </MotiView>
-                      );
-                    })}
-                  </View>
-                </>
-              ) : null}
-
-              {workflowStep === 3 ? (
-                <>
-                  <View style={{ gap: 10 }}>
-                    <Text style={{ color: "#111111", fontSize: 38, fontWeight: "700", letterSpacing: -1.2 }}>
-                      Mode & Palette
-                    </Text>
-                    <Text style={{ color: "#52525b", fontSize: 16, lineHeight: 25 }}>
-                      Choose how boldly the redesign should transform the room, then set the overall color atmosphere.
-                    </Text>
-                  </View>
-
-                  <View style={{ flexDirection: "row", gap: wizardColumnGap }}>
-                    {MODE_OPTIONS.map((mode, index) => {
-                      const active = selectedModeId === mode.id;
-                      const ModeIcon = mode.icon;
-                      return (
-                        <MotiView key={mode.id} {...staggerFadeUp(index, 60)} style={{ flex: 1 }}>
-                          <LuxPressable
-                            onPress={() => handleSelectMode(mode.id)}
-                            className="cursor-pointer"
-                            style={{
-                              minHeight: 244,
-                              borderRadius: 24,
-                              backgroundColor: "#ffffff",
-                              borderWidth: active ? 2 : 1,
-                              borderColor: active ? "#d946ef" : "#e4e4e7",
-                              padding: 22,
-                              ...WIZARD_CARD_SHADOW,
-                            }}
-                          >
-                            <View className="flex-row items-start justify-between">
-                              <View
-                                className="items-center justify-center rounded-[22px]"
-                                style={{ width: 62, height: 62, backgroundColor: active ? "#fdf2f8" : "#f4f4f5" }}
-                              >
-                                <ModeIcon color={active ? "#c026d3" : "#111111"} size={28} strokeWidth={2} />
+                                {active ? <BadgeCheck color="#f0abfc" size={20} strokeWidth={2.1} /> : null}
                               </View>
-                              {active ? <BadgeCheck color="#d946ef" size={22} strokeWidth={2} /> : null}
-                            </View>
-                            <View style={{ marginTop: 20, gap: 10 }}>
-                              <Text className="text-[26px] font-semibold leading-8 text-black">{mode.title}</Text>
-                              <Text className="text-sm leading-6 text-zinc-500">{mode.description}</Text>
-                            </View>
-                          </LuxPressable>
-                        </MotiView>
-                      );
-                    })}
-                  </View>
-
-                  <View style={{ gap: 8, marginTop: 4 }}>
-                    <Text style={{ color: "#111111", fontSize: 20, fontWeight: "700", letterSpacing: -0.4 }}>
-                      Select Palette
-                    </Text>
-                    <Text style={{ color: "#71717a", fontSize: 14, lineHeight: 22 }}>
-                      A curated paint-swatch system inspired by premium interior moodboards.
-                    </Text>
-                  </View>
-
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
-                    {PALETTE_OPTIONS.map((palette, index) => {
-                      const active = selectedPaletteId === palette.id;
-                      return (
-                        <MotiView key={palette.id} {...staggerFadeUp(index, 28)} style={{ width: wizardCardWidth }}>
-                          <LuxPressable
-                            onPress={() => handleSelectPalette(palette.id)}
-                            className="cursor-pointer"
-                            style={{
-                              borderRadius: 24,
-                              backgroundColor: "#ffffff",
-                              borderWidth: active ? 2 : 1,
-                              borderColor: active ? "#d946ef" : "#e4e4e7",
-                              overflow: "hidden",
-                              ...WIZARD_CARD_SHADOW,
-                            }}
-                          >
-                            <View style={{ height: 116, flexDirection: "row" }}>
-                              {palette.colors.map((color) => (
-                                <View key={color} style={{ flex: 1, backgroundColor: color }} />
-                              ))}
-                            </View>
-                            <View style={{ padding: 16, gap: 6 }}>
-                              <View className="flex-row items-center justify-between gap-3">
-                                <Text className="flex-1 text-lg font-semibold text-black">{palette.label}</Text>
-                                {active ? <BadgeCheck color="#d946ef" size={20} strokeWidth={2} /> : null}
+                              <View style={{ marginTop: 18, gap: 8 }}>
+                                <Text className="text-[24px] font-semibold leading-8 text-white">{mode.title}</Text>
+                                <Text className="text-sm leading-6 text-zinc-400">{mode.description}</Text>
                               </View>
-                              <Text className="text-sm leading-6 text-zinc-500">{palette.description ?? "A refined designer-led palette."}</Text>
-                            </View>
-                          </LuxPressable>
-                        </MotiView>
-                      );
-                    })}
-                  </View>
-                </>
-              ) : null}
-            </MotiView>
-          </AnimatePresence>
-        </View>
-      </ScrollView>
+                            </LuxPressable>
+                          </MotiView>
+                        );
+                      })}
+                    </View>
 
-      <View
-        className="absolute inset-x-0 bottom-0 px-6 pt-4"
-        style={{
-          paddingBottom: Math.max(insets.bottom, 18),
-          backgroundColor: "rgba(255,255,255,0.97)",
-          borderTopWidth: 1,
-          borderTopColor: "rgba(17,17,17,0.06)",
-        }}
-      >
-        <LuxPressable onPress={handleContinue} disabled={!canContinue || (isGenerating && isFinalWizardStep)} className="cursor-pointer">
-          {canContinue ? (
-            <LinearGradient
-              colors={["#ff3b30", "#d946ef"]}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              className="rounded-[24px]"
-              style={{ minHeight: 66, ...WIZARD_CARD_SHADOW }}
-            >
-              <View className="flex-1 flex-row items-center justify-center gap-3">
-                <Text className="text-[18px] font-semibold text-white">{continueLabel}</Text>
-                {!isGenerating ? <ArrowRight color="#ffffff" size={18} strokeWidth={2.3} /> : null}
-              </View>
-            </LinearGradient>
-          ) : (
-            <View
-              className="flex-row items-center justify-center rounded-[24px] bg-zinc-200"
-              style={{ minHeight: 66, borderWidth: 1, borderColor: "#e4e4e7" }}
-            >
-              <Text className="text-[18px] font-semibold text-zinc-500">Continue</Text>
-            </View>
-          )}
-        </LuxPressable>
-      </View>
+                    <View style={{ gap: 8, marginTop: 2 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Color Palette</Text>
+                      <Text style={{ color: "#71717a", fontSize: 14, lineHeight: 22 }}>
+                        Choose the overall color mood before generating the final design.
+                      </Text>
+                    </View>
 
-      <BottomSheetModal
-        ref={photoSourceSheetRef}
-        snapPoints={photoSourceSnapPoints}
-        enablePanDownToClose
-        backdropComponent={GlassBackdrop}
-        backgroundStyle={{ backgroundColor: "#ffffff" }}
-        handleIndicatorStyle={{ backgroundColor: "rgba(17,17,17,0.24)" }}
-      >
-        <View className="flex-1 px-5 pb-8 pt-2">
-          <Text className="text-lg font-semibold text-black">Choose Photo Source</Text>
-          <Text className="mt-2 text-sm leading-6 text-zinc-500">
-            Bring in a fresh room photo from your camera or import one from your gallery.
-          </Text>
-
-          <View className="mt-5 gap-3">
-            <LuxPressable
-              onPress={() => void launchPhotoSource("camera")}
-              className="cursor-pointer flex-row items-center gap-4 rounded-[24px] px-4 py-4"
-              style={{ borderWidth: 1, borderColor: "#e4e4e7", backgroundColor: "#fafafa", ...WIZARD_CARD_SHADOW }}
-            >
-              <View className="h-12 w-12 items-center justify-center rounded-[18px] bg-white">
-                <Camera color="#111111" size={20} />
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-semibold text-black">Take photo from camera</Text>
-                <Text className="mt-1 text-xs leading-5 text-zinc-500">Capture a fresh room photo and drop it straight into the wizard.</Text>
-              </View>
-            </LuxPressable>
-
-            <LuxPressable
-              onPress={() => void launchPhotoSource("library")}
-              className="cursor-pointer flex-row items-center gap-4 rounded-[24px] px-4 py-4"
-              style={{ borderWidth: 1, borderColor: "#e4e4e7", backgroundColor: "#fafafa", ...WIZARD_CARD_SHADOW }}
-            >
-              <View className="h-12 w-12 items-center justify-center rounded-[18px] bg-white">
-                <ImageIcon color="#111111" size={20} />
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-semibold text-black">Choose from gallery</Text>
-                <Text className="mt-1 text-xs leading-5 text-zinc-500">Import an existing interior or exterior photo from your device.</Text>
-              </View>
-            </LuxPressable>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                      {PALETTE_OPTIONS.map((palette, index) => {
+                        const active = selectedPaletteId === palette.id;
+                        return (
+                          <MotiView key={palette.id} {...staggerFadeUp(index, 24)} style={{ width: wizardCardWidth }}>
+                            <LuxPressable
+                              onPress={() => handleSelectPalette(palette.id)}
+                              className="cursor-pointer overflow-hidden rounded-[24px] border"
+                              style={{
+                                borderWidth: active ? 1.5 : 0.5,
+                                borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
+                                backgroundColor: "#050505",
+                              }}
+                            >
+                              <View style={{ height: 116, flexDirection: "row" }}>
+                                {palette.colors.map((color) => (
+                                  <View key={color} style={{ flex: 1, backgroundColor: color }} />
+                                ))}
+                              </View>
+                              <View style={{ padding: 14, gap: 4 }}>
+                                <View className="flex-row items-center justify-between gap-3">
+                                  <Text className="flex-1 text-base font-semibold text-white">{palette.label}</Text>
+                                  {active ? <BadgeCheck color="#f0abfc" size={18} strokeWidth={2} /> : null}
+                                </View>
+                                <Text className="text-sm leading-5 text-zinc-400">{palette.description ?? "A refined designer-led palette."}</Text>
+                              </View>
+                            </LuxPressable>
+                          </MotiView>
+                        );
+                      })}
+                    </View>
+                  </>
+                ) : null}
+              </MotiView>
+            </AnimatePresence>
           </View>
+        </ScrollView>
+
+        <View
+          className="absolute inset-x-0 bottom-0 border-t border-white/10 bg-black/92 px-5 pt-4"
+          style={{ paddingBottom: Math.max(insets.bottom + 10, 22), borderTopWidth: 0.5 }}
+        >
+          <LuxPressable onPress={handleContinue} disabled={!canContinue || (isGenerating && isFinalWizardStep)} className="cursor-pointer">
+            {canContinue ? (
+              <LinearGradient
+                colors={["#ff3b30", "#d946ef"]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                className="rounded-[24px]"
+                style={{ minHeight: 62 }}
+              >
+                <View className="flex-1 flex-row items-center justify-center gap-3">
+                  <Text className="text-[17px] font-semibold text-white">{continueLabel}</Text>
+                  {!isGenerating ? <ArrowRight color="#ffffff" size={18} strokeWidth={2.3} /> : null}
+                </View>
+              </LinearGradient>
+            ) : (
+              <View
+                className="flex-row items-center justify-center rounded-[24px]"
+                style={{ minHeight: 62, backgroundColor: "#27272a", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)" }}
+              >
+                <Text className="text-[17px] font-semibold text-zinc-500">Continue</Text>
+              </View>
+            )}
+          </LuxPressable>
         </View>
-      </BottomSheetModal>
-    </View>
-  );
+
+        <BottomSheetModal
+          ref={photoSourceSheetRef}
+          snapPoints={photoSourceSnapPoints}
+          enablePanDownToClose
+          backdropComponent={GlassBackdrop}
+          backgroundStyle={{ backgroundColor: "#050505" }}
+          handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
+        >
+          <View className="flex-1 px-5 pb-8 pt-2">
+            <Text className="text-lg font-medium text-white">Add your photo</Text>
+            <Text className="mt-2 text-sm text-zinc-400">Choose how you'd like to bring your space into the wizard.</Text>
+
+            <View className="mt-5 gap-3">
+              <LuxPressable
+                onPress={() => void launchPhotoSource("camera")}
+                className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
+                style={{ borderWidth: 0.5 }}
+              >
+                <View className="h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
+                  <Camera color="#f8fafc" size={20} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-semibold text-white">Take Photo</Text>
+                  <Text className="mt-1 text-xs text-zinc-400">Capture a fresh room photo with your camera.</Text>
+                </View>
+              </LuxPressable>
+
+              <LuxPressable
+                onPress={() => void launchPhotoSource("library")}
+                className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
+                style={{ borderWidth: 0.5 }}
+              >
+                <View className="h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
+                  <ImageIcon color="#f8fafc" size={20} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-semibold text-white">Choose from Library</Text>
+                  <Text className="mt-1 text-xs text-zinc-400">Import an existing interior or exterior photo from your device.</Text>
+                </View>
+              </LuxPressable>
+            </View>
+          </View>
+        </BottomSheetModal>
+      </View>
+    );
   }
 
   if (workflowStep === 4) {
@@ -2826,6 +2669,7 @@ export default function WorkspaceScreen() {
     </View>
   );
 }
+
 
 
 
