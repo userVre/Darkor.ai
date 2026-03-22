@@ -19,46 +19,46 @@ type ServiceCardData = {
 
 const SERVICE_CARDS: ServiceCardData[] = [
   {
-    id: "media-wall",
-    title: "Media Wall Masterpiece",
-    subtitle: "OLED drama, warm timber slats, and a cinematic glow for statement living spaces.",
+    id: "interior-design",
+    title: "Interior Design",
+    subtitle: "Upload a pic, choose a style, let AI design the room!",
     video: require("../../assets/videos/media-wall.mp4"),
     serviceParam: "interior",
   },
   {
-    id: "facade",
-    title: "Architectural Facade",
-    subtitle: "Contemporary limestone elevation with bold geometry and luxury curb appeal.",
+    id: "exterior-design",
+    title: "Exterior Design",
+    subtitle: "Snap your home, pick a vibe, let AI craft the facade!",
     video: require("../../assets/videos/facade.mp4"),
     serviceParam: "facade",
   },
   {
-    id: "garden",
-    title: "Designer Sanctuary",
-    subtitle: "Decked outdoor living with fire pit ambience and premium landscape styling.",
+    id: "garden-design",
+    title: "Garden Design",
+    subtitle: "Choose a style you adore and give your garden a whole new vibe.",
     video: require("../../assets/videos/garden.mp4"),
     serviceParam: "garden",
   },
   {
-    id: "floor",
-    title: "Instant Floor Restyle",
-    subtitle: "See surfaces transform from dated tile into rich hardwood in seconds.",
-    video: require("../../assets/videos/floor.mp4"),
-    serviceParam: "floor",
-  },
-  {
-    id: "paint",
-    title: "Smart Wall Paint",
-    subtitle: "Preview bold designer palettes and refined neutrals before you commit.",
+    id: "ai-paint",
+    title: "AI Paint",
+    subtitle: "Pick any color you love and transform your space with just a touch!",
     video: require("../../assets/videos/paint.mp4"),
     serviceParam: "paint",
   },
   {
-    id: "interior",
-    title: "Interior Redesign",
-    subtitle: "Luxury suite-level transformations for bedrooms, lounges, and full interiors.",
+    id: "floor-restyle",
+    title: "Floor Restyle",
+    subtitle: "Edit floor plans with AI ? rearrange rooms in one tap!",
+    video: require("../../assets/videos/floor.mp4"),
+    serviceParam: "floor",
+  },
+  {
+    id: "reference-style",
+    title: "Reference Style",
+    subtitle: "Show AI what you like and let it apply it to your room!",
     video: require("../../assets/videos/master-suite.mp4"),
-    serviceParam: "interior-bedroom",
+    serviceParam: "reference",
   },
 ];
 
@@ -90,7 +90,7 @@ const ServiceCard = memo(function ServiceCard({ item, height, onPress }: Service
   }, [item, onPress]);
 
   return (
-    <View style={[styles.card, { height }]}>
+    <View style={[styles.card, { height }]}> 
       <VideoView
         player={player}
         style={styles.video}
@@ -100,27 +100,27 @@ const ServiceCard = memo(function ServiceCard({ item, height, onPress }: Service
         pointerEvents="none"
       />
       <LinearGradient
-        colors={["rgba(0,0,0,0.08)", "rgba(0,0,0,0.24)", "rgba(0,0,0,0.74)"]}
-        locations={[0, 0.45, 1]}
+        colors={["rgba(0,0,0,0.06)", "rgba(0,0,0,0.14)", "rgba(0,0,0,0.68)"]}
+        locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFillObject}
         pointerEvents="none"
       />
-      <BlurView intensity={88} tint="dark" style={styles.overlay}>
-        <View style={styles.overlayCopy}>
+
+      <View style={styles.cardContent}>
+        <View style={styles.copyBlock}>
           <Text style={styles.cardTitle}>{item.title}</Text>
           <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
         </View>
-        <LuxPressable onPress={handlePress} style={styles.ctaShell} glowColor="rgba(236, 72, 153, 0.42)">
-          <LinearGradient
-            colors={["#ec4899", "#a855f7", "#6366f1"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.ctaGradient}
-          >
-            <Text style={styles.ctaText}>Try it! -&gt;</Text>
-          </LinearGradient>
-        </LuxPressable>
-      </BlurView>
+
+        <View style={styles.cardFooter}>
+          <View />
+          <BlurView intensity={70} tint="dark" style={styles.ctaGlass}>
+            <LuxPressable onPress={handlePress} style={styles.ctaButton}>
+              <Text style={styles.ctaText}>Try it!</Text>
+            </LuxPressable>
+          </BlurView>
+        </View>
+      </View>
     </View>
   );
 });
@@ -130,7 +130,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
-  const cardHeight = useMemo(() => Math.max(300, Math.min(380, Math.round(width * 0.92))), [width]);
+  const cardHeight = useMemo(() => Math.max(316, Math.min(388, Math.round(width * 0.96))), [width]);
 
   const handleServicePress = useCallback(
     (item: ServiceCardData) => {
@@ -144,17 +144,19 @@ export default function HomeScreen() {
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={{
-          paddingTop: insets.top + 18,
+          paddingTop: insets.top + 20,
           paddingHorizontal: 16,
           paddingBottom: Math.max(insets.bottom + 120, 136),
-          gap: 16,
+          gap: 20,
         }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
           <Text style={styles.eyebrow}>Darkor.ai Premium</Text>
           <Text style={styles.title}>Choose Your Transformation</Text>
-          <Text style={styles.subtitle}>Six signature AI redesign experiences, each built to feel like a finished product from the first tap.</Text>
+          <Text style={styles.subtitle}>
+            Six premium AI design tools, rebuilt to feel clean, fast, and finished from the first tap.
+          </Text>
         </View>
 
         {SERVICE_CARDS.map((item) => (
@@ -175,32 +177,33 @@ const styles = StyleSheet.create({
     backgroundColor: "#000000",
   },
   header: {
-    gap: 8,
-    marginBottom: 4,
+    gap: 14,
+    marginBottom: 6,
+    paddingRight: 14,
   },
   eyebrow: {
     color: "#a1a1aa",
     fontSize: 12,
     fontWeight: "700",
-    letterSpacing: 2.2,
+    letterSpacing: 2.6,
     textTransform: "uppercase",
   },
   title: {
     color: "#ffffff",
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: "800",
-    lineHeight: 38,
+    lineHeight: 40,
   },
   subtitle: {
-    color: "#d4d4d8",
-    fontSize: 14,
-    lineHeight: 21,
-    maxWidth: 640,
+    color: "#a1a1aa",
+    fontSize: 16,
+    lineHeight: 25,
+    maxWidth: 680,
   },
   card: {
     position: "relative",
     overflow: "hidden",
-    borderRadius: 24,
+    borderRadius: 32,
     borderWidth: 0.5,
     borderColor: "rgba(255,255,255,0.1)",
     backgroundColor: "#050505",
@@ -208,50 +211,56 @@ const styles = StyleSheet.create({
   video: {
     ...StyleSheet.absoluteFillObject,
   },
-  overlay: {
-    position: "absolute",
-    left: 14,
-    right: 14,
-    bottom: 14,
-    borderRadius: 22,
-    borderWidth: 0.5,
-    borderColor: "rgba(255,255,255,0.14)",
-    backgroundColor: "rgba(10,10,10,0.28)",
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    gap: 16,
+  cardContent: {
+    flex: 1,
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    paddingTop: 26,
+    paddingBottom: 22,
   },
-  overlayCopy: {
-    gap: 8,
+  copyBlock: {
+    marginTop: "auto",
+    gap: 10,
+    maxWidth: "72%",
   },
   cardTitle: {
     color: "#ffffff",
-    fontSize: 24,
+    fontSize: 29,
     fontWeight: "800",
-    lineHeight: 28,
+    lineHeight: 33,
   },
   cardSubtitle: {
-    color: "#e4e4e7",
-    fontSize: 14,
-    lineHeight: 20,
-    maxWidth: 420,
+    color: "#d4d4d8",
+    fontSize: 15,
+    lineHeight: 22,
   },
-  ctaShell: {
-    alignSelf: "flex-start",
+  cardFooter: {
+    marginTop: 24,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+  },
+  ctaGlass: {
     borderRadius: 999,
+    borderWidth: 0.5,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    overflow: "hidden",
   },
-  ctaGradient: {
-    minWidth: 138,
+  ctaButton: {
+    minWidth: 108,
+    minHeight: 44,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.78)",
     paddingHorizontal: 18,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   ctaText: {
     color: "#ffffff",
     fontSize: 13,
     fontWeight: "800",
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
 });

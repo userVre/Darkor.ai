@@ -765,6 +765,7 @@ export default function WorkspaceScreen() {
   const ratioSpec = useMemo(() => resolveAspectRatio(selectedAspectRatio), [selectedAspectRatio]);
   const wizardColumnGap = 16;
   const wizardCardWidth = useMemo(() => Math.max((width - 48 - wizardColumnGap) / 2, 148), [width]);
+  const wizardExampleCardWidth = useMemo(() => Math.min(Math.max(width * 0.56, 212), 248), [width]);
   const wizardPreviewHeight = Math.min(Math.max(height * 0.36, 332), 428);
   const wizardUploadHeight = Math.min(Math.max(height * 0.36, 360), 452);
 
@@ -1409,11 +1410,11 @@ export default function WorkspaceScreen() {
         style={{ backgroundColor: "#ffffff" }}
         contentContainerStyle={{
           paddingHorizontal: 24,
-          paddingTop: Math.max(insets.top + 12, 28),
+          paddingTop: Math.max(insets.top + 18, 34),
           paddingBottom: 208,
           minHeight: height,
         }}
-        contentInsetAdjustmentBehavior="automatic"
+        contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
       >
         <View style={{ gap: 28 }}>
@@ -1423,7 +1424,7 @@ export default function WorkspaceScreen() {
                 onPress={handleBack}
                 className="cursor-pointer h-12 w-12 items-center justify-center rounded-full"
                 style={{
-                  backgroundColor: "rgba(255,255,255,0.92)",
+                  backgroundColor: "rgba(255,255,255,0.96)",
                   borderWidth: 1,
                   borderColor: "rgba(17,17,17,0.08)",
                   ...WIZARD_CARD_SHADOW,
@@ -1433,17 +1434,17 @@ export default function WorkspaceScreen() {
               </LuxPressable>
             ) : (
               <View
-                className="flex-row items-center gap-3 rounded-full px-4 py-3"
+                className="items-center justify-center rounded-full"
                 style={{
-                  minWidth: 116,
+                  width: 52,
+                  height: 52,
                   backgroundColor: "#111111",
                   borderWidth: 1,
                   borderColor: "rgba(17,17,17,0.06)",
                   ...WIZARD_CARD_SHADOW,
                 }}
               >
-                <Logo size={18} />
-                <Text className="text-sm font-semibold text-white">Darkor.ai</Text>
+                <Text className="text-base font-semibold text-white">1</Text>
               </View>
             )}
 
@@ -1455,7 +1456,7 @@ export default function WorkspaceScreen() {
               onPress={() => router.back()}
               className="cursor-pointer h-12 w-12 items-center justify-center rounded-full"
               style={{
-                backgroundColor: "rgba(255,255,255,0.92)",
+                backgroundColor: "rgba(255,255,255,0.96)",
                 borderWidth: 1,
                 borderColor: "rgba(17,17,17,0.08)",
                 ...WIZARD_CARD_SHADOW,
@@ -1506,7 +1507,7 @@ export default function WorkspaceScreen() {
                       minHeight: selectedImage ? wizardPreviewHeight : wizardUploadHeight,
                       borderRadius: 32,
                       backgroundColor: "#ffffff",
-                      borderWidth: 1,
+                      borderWidth: selectedImage ? 1 : 2,
                       borderColor: selectedImage ? "rgba(17,17,17,0.08)" : "#3f3f46",
                       borderStyle: selectedImage ? "solid" : "dashed",
                       overflow: "hidden",
@@ -1565,7 +1566,7 @@ export default function WorkspaceScreen() {
                         <View style={{ gap: 8, alignItems: "center" }}>
                           <Text className="text-center text-[28px] font-semibold text-black">Start Redesigning</Text>
                           <Text className="text-center text-base leading-7 text-zinc-500">
-                            Redesign and beautify your home with a single well-lit photo.
+                            Redesign and beautify your room with a single well-lit photo.
                           </Text>
                         </View>
                         <View
@@ -1588,32 +1589,30 @@ export default function WorkspaceScreen() {
                     </Text>
                   </View>
 
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingRight: 12, gap: 16 }}
+                  >
                     {EXAMPLE_PHOTOS.map((example, index) => {
                       const active = selectedImage?.label === example.label;
                       const isLoading = isLoadingExample === example.id;
                       return (
-                        <MotiView key={example.id} {...staggerFadeUp(index, 45)} style={{ width: wizardCardWidth }}>
+                        <MotiView key={example.id} {...staggerFadeUp(index, 45)} style={{ width: wizardExampleCardWidth }}>
                           <LuxPressable
                             onPress={() => void handleSelectExample(example)}
                             className="cursor-pointer"
                             style={{
-                              borderRadius: 28,
+                              borderRadius: 24,
                               backgroundColor: "#ffffff",
                               borderWidth: active ? 2 : 1,
-                              borderColor: active ? "#d946ef" : "#f1f5f9",
+                              borderColor: active ? "#d946ef" : "#e4e4e7",
                               overflow: "hidden",
                               ...WIZARD_CARD_SHADOW,
                             }}
                           >
-                            <View style={{ height: 164 }}>
+                            <View style={{ height: 168 }}>
                               <Image source={example.source} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} />
-                              <LinearGradient
-                                colors={["transparent", "rgba(17,17,17,0.8)"]}
-                                start={{ x: 0.5, y: 0 }}
-                                end={{ x: 0.5, y: 1 }}
-                                style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 110 }}
-                              />
                               {active ? (
                                 <View
                                   className="absolute right-3 top-3 h-8 w-8 items-center justify-center rounded-full"
@@ -1636,7 +1635,7 @@ export default function WorkspaceScreen() {
                         </MotiView>
                       );
                     })}
-                  </View>
+                  </ScrollView>
                 </>
               ) : null}
 
@@ -1665,11 +1664,11 @@ export default function WorkspaceScreen() {
                             onPress={() => handleSelectRoom(option)}
                             className="cursor-pointer"
                             style={{
-                              minHeight: 158,
-                              borderRadius: 30,
+                              minHeight: 156,
+                              borderRadius: 24,
                               backgroundColor: "#ffffff",
                               borderWidth: active ? 2 : 1,
-                              borderColor: active ? "#d946ef" : "#f1f5f9",
+                              borderColor: active ? "#d946ef" : "#e4e4e7",
                               padding: 20,
                               ...WIZARD_CARD_SHADOW,
                             }}
@@ -1678,9 +1677,9 @@ export default function WorkspaceScreen() {
                               <View
                                 className="items-center justify-center rounded-[20px]"
                                 style={{
-                                  width: 58,
-                                  height: 58,
-                                  backgroundColor: active ? "#fdf2f8" : "#f4f4f5",
+                                  width: 54,
+                                  height: 54,
+                                  backgroundColor: active ? "#fdf2f8" : "#fafafa",
                                 }}
                               >
                                 <RoomIcon color={active ? "#c026d3" : "#111111"} size={24} strokeWidth={2} />
@@ -1723,15 +1722,15 @@ export default function WorkspaceScreen() {
                             onPress={() => handleSelectStyle(style.title)}
                             className="cursor-pointer"
                             style={{
-                              borderRadius: 30,
+                              borderRadius: 24,
                               backgroundColor: "#ffffff",
                               borderWidth: active ? 2 : 1,
-                              borderColor: active ? "#d946ef" : "#f1f5f9",
+                              borderColor: active ? "#d946ef" : "#e4e4e7",
                               overflow: "hidden",
                               ...WIZARD_CARD_SHADOW,
                             }}
                           >
-                            <View style={{ height: 172 }}>
+                            <View style={{ height: 168 }}>
                               <Image source={style.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={160} />
                               <LinearGradient
                                 colors={["transparent", "rgba(17,17,17,0.18)"]}
@@ -1779,10 +1778,10 @@ export default function WorkspaceScreen() {
                             className="cursor-pointer"
                             style={{
                               minHeight: 244,
-                              borderRadius: 30,
+                              borderRadius: 24,
                               backgroundColor: "#ffffff",
                               borderWidth: active ? 2 : 1,
-                              borderColor: active ? "#d946ef" : "#f1f5f9",
+                              borderColor: active ? "#d946ef" : "#e4e4e7",
                               padding: 22,
                               ...WIZARD_CARD_SHADOW,
                             }}
@@ -1824,10 +1823,10 @@ export default function WorkspaceScreen() {
                             onPress={() => handleSelectPalette(palette.id)}
                             className="cursor-pointer"
                             style={{
-                              borderRadius: 28,
+                              borderRadius: 24,
                               backgroundColor: "#ffffff",
                               borderWidth: active ? 2 : 1,
-                              borderColor: active ? "#d946ef" : "#f1f5f9",
+                              borderColor: active ? "#d946ef" : "#e4e4e7",
                               overflow: "hidden",
                               ...WIZARD_CARD_SHADOW,
                             }}
@@ -2055,7 +2054,7 @@ export default function WorkspaceScreen() {
         className="flex-1 bg-black"
         style={{ backgroundColor: "#000000" }}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 140, minHeight: height }}
-        contentInsetAdjustmentBehavior="automatic"
+        contentInsetAdjustmentBehavior="never"
       >
         <View className="flex-row items-center gap-3">
           <LuxPressable

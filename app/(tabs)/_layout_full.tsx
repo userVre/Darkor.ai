@@ -54,6 +54,7 @@ export default function TabsLayout() {
         name="workspace"
         options={{
           title: "Create",
+          tabBarStyle: { display: "none" },
           tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size} />,
         }}
       />

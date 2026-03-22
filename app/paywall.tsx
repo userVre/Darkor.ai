@@ -3,7 +3,7 @@ import { useMutation } from "convex/react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -48,6 +48,21 @@ const WEEKLY_PRICE = 119.99;
 const YEARLY_WEEKLY_EQUIV = (YEARLY_TOTAL / 52).toFixed(2);
 const FEATURES = ["Faster rendering", "Ad-free experience", "Unlimited design renders"];
 
+const GallerySlide = memo(function GallerySlide({ source }: { source: number }) {
+  return <Image source={source} style={styles.galleryImage} contentFit="cover" transition={180} cachePolicy="memory-disk" />;
+});
+
+const FeatureRow = memo(function FeatureRow({ feature }: { feature: string }) {
+  return (
+    <View style={styles.featureCard}>
+      <View style={styles.featureIconWrap}>
+        <Check color="#ffffff" size={14} />
+      </View>
+      <Text style={styles.featureText}>{feature}</Text>
+    </View>
+  );
+});
+
 export default function PaywallScreen() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
@@ -67,10 +82,13 @@ export default function PaywallScreen() {
 
   const galleryWidth = Math.min(width - 32, 420);
   const galleryHeight = Math.round(galleryWidth * 0.62);
-  const selectedPackage = useMemo(
-    () => (trialEnabled || selectedPlan === "yearly" ? annualPackage : weeklyPackage),
-    [annualPackage, selectedPlan, trialEnabled, weeklyPackage],
-  );
+  const selectedPackage = useMemo(() => {
+    if (trialEnabled) return annualPackage;
+    return selectedPlan === "yearly" ? annualPackage : weeklyPackage;
+  }, [annualPackage, selectedPlan, trialEnabled, weeklyPackage]);
+  const trialCopy = trialEnabled
+    ? "3-DAYS FREE TRIAL then MAD 119.99 per week"
+    : "Choose yearly for the best offer or weekly for flexible billing.";
 
   useEffect(() => {
     let active = true;
@@ -211,6 +229,8 @@ export default function PaywallScreen() {
     }
   };
 
+  const renderGalleryItem = useCallback(({ item }: { item: number }) => <GallerySlide source={item} />, []);
+
   return (
     <View style={styles.screen}>
       <ScrollView
@@ -237,13 +257,14 @@ export default function PaywallScreen() {
             height={galleryHeight}
             data={GALLERY_IMAGES}
             autoPlay
-            autoPlayInterval={2800}
-            scrollAnimationDuration={1400}
+            autoPlayInterval={2400}
+            scrollAnimationDuration={1100}
             loop
+            enabled={false}
+            pagingEnabled
+            windowSize={3}
             style={{ width: galleryWidth }}
-            renderItem={({ item }) => (
-              <Image source={item} style={styles.galleryImage} contentFit="cover" />
-            )}
+            renderItem={renderGalleryItem}
           />
         </View>
 
@@ -257,19 +278,14 @@ export default function PaywallScreen() {
 
         <View style={styles.featureList}>
           {FEATURES.map((feature) => (
-            <View key={feature} style={styles.featureCard}>
-              <View style={styles.featureIconWrap}>
-                <Check color="#ffffff" size={14} />
-              </View>
-              <Text style={styles.featureText}>{feature}</Text>
-            </View>
+            <FeatureRow key={feature} feature={feature} />
           ))}
         </View>
 
         <View style={styles.trialRow}>
           <View style={styles.trialCopyWrap}>
             <Text style={styles.trialTitle}>Enable free trial</Text>
-            <Text style={styles.trialBody}>3 days free on yearly access, then MAD 119.99 per week.</Text>
+            <Text style={styles.trialBody}>{trialCopy}</Text>
           </View>
           <Switch
             value={trialEnabled}
@@ -283,7 +299,12 @@ export default function PaywallScreen() {
         <View style={styles.planList}>
           <Pressable
             onPress={() => handleSelectPlan("yearly")}
-            style={({ pressed }) => [styles.planCard, styles.planCardPrimary, selectedPlan === "yearly" ? styles.planCardActive : null, pressed ? styles.pressed : null]}
+            style={({ pressed }) => [
+              styles.planCard,
+              styles.planCardPrimary,
+              trialEnabled || selectedPlan === "yearly" ? styles.planCardActive : null,
+              pressed ? styles.pressed : null,
+            ]}
           >
             <View style={styles.planTopRow}>
               <Text style={styles.planLabel}>YEARLY ACCESS</Text>
@@ -293,6 +314,7 @@ export default function PaywallScreen() {
             </View>
             <Text style={styles.planPrice}>MAD {YEARLY_WEEKLY_EQUIV} / week</Text>
             <Text style={styles.planMeta}>Billed as MAD {YEARLY_TOTAL.toFixed(2)} per year</Text>
+            <Text style={styles.planFootnote}>Full access, lowest weekly equivalent.</Text>
           </Pressable>
 
           <Pressable
@@ -300,7 +322,7 @@ export default function PaywallScreen() {
             disabled={trialEnabled}
             style={({ pressed }) => [
               styles.planCard,
-              selectedPlan === "weekly" ? styles.planCardActive : null,
+              !trialEnabled && selectedPlan === "weekly" ? styles.planCardActive : null,
               trialEnabled ? styles.planCardDisabled : null,
               pressed ? styles.pressed : null,
             ]}
@@ -308,6 +330,7 @@ export default function PaywallScreen() {
             <Text style={styles.planLabel}>WEEKLY ACCESS</Text>
             <Text style={styles.planPrice}>MAD {WEEKLY_PRICE.toFixed(2)} / week</Text>
             <Text style={styles.planMeta}>Flexible weekly billing for fast testing and upgrades</Text>
+            <Text style={styles.planFootnote}>Best for short-term upgrades and quick access.</Text>
           </Pressable>
         </View>
 
@@ -380,17 +403,17 @@ const styles = StyleSheet.create({
   },
   carouselWrap: {
     alignItems: "center",
-    marginBottom: 26,
+    marginBottom: 28,
   },
   galleryImage: {
     width: "100%",
     height: "100%",
-    borderRadius: 28,
+    borderRadius: 32,
     borderWidth: 0.5,
     borderColor: "rgba(255,255,255,0.1)",
   },
   heroBlock: {
-    gap: 10,
+    gap: 12,
   },
   eyebrow: {
     color: "#a1a1aa",
@@ -401,29 +424,29 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     color: "#ffffff",
-    fontSize: 34,
+    fontSize: 38,
     fontWeight: "800",
-    lineHeight: 40,
+    lineHeight: 44,
   },
   heroBody: {
     color: "#d4d4d8",
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 24,
   },
   featureList: {
-    marginTop: 22,
-    gap: 12,
+    marginTop: 24,
+    gap: 14,
   },
   featureCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    borderRadius: 22,
+    borderRadius: 24,
     borderWidth: 0.5,
     borderColor: "rgba(255,255,255,0.1)",
     backgroundColor: "rgba(255,255,255,0.05)",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
   },
   featureIconWrap: {
     height: 34,
@@ -439,7 +462,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   trialRow: {
-    marginTop: 22,
+    marginTop: 24,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -447,38 +470,40 @@ const styles = StyleSheet.create({
   },
   trialCopyWrap: {
     flex: 1,
-    gap: 4,
+    gap: 6,
   },
   trialTitle: {
     color: "#ffffff",
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
   },
   trialBody: {
     color: "#a1a1aa",
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 20,
   },
   planList: {
-    marginTop: 20,
+    marginTop: 22,
     gap: 14,
   },
   planCard: {
-    borderRadius: 28,
+    minHeight: 154,
+    borderRadius: 30,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
     backgroundColor: "rgba(255,255,255,0.05)",
-    paddingHorizontal: 18,
-    paddingVertical: 18,
+    paddingHorizontal: 22,
+    paddingVertical: 20,
   },
   planCardPrimary: {
-    backgroundColor: "rgba(236,72,153,0.09)",
+    backgroundColor: "rgba(255,255,255,0.035)",
   },
   planCardActive: {
-    borderColor: "rgba(236,72,153,0.78)",
+    borderColor: "rgba(236,72,153,0.92)",
+    backgroundColor: "rgba(236,72,153,0.08)",
   },
   planCardDisabled: {
-    opacity: 0.52,
+    opacity: 0.46,
   },
   planTopRow: {
     flexDirection: "row",
@@ -495,8 +520,8 @@ const styles = StyleSheet.create({
   planBadge: {
     borderRadius: 999,
     backgroundColor: "rgba(250,204,21,0.16)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
   },
   planBadgeText: {
     color: "#fde68a",
@@ -507,24 +532,30 @@ const styles = StyleSheet.create({
   planPrice: {
     marginTop: 14,
     color: "#ffffff",
-    fontSize: 28,
+    fontSize: 31,
     fontWeight: "800",
   },
   planMeta: {
-    marginTop: 6,
+    marginTop: 8,
     color: "#a1a1aa",
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 19,
+  },
+  planFootnote: {
+    marginTop: 10,
+    color: "#71717a",
+    fontSize: 12,
+    lineHeight: 17,
   },
   trialBanner: {
     marginTop: 18,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    borderRadius: 18,
+    borderRadius: 20,
     backgroundColor: "rgba(34,211,238,0.08)",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   trialBannerText: {
     flex: 1,
@@ -540,19 +571,19 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   ctaOuter: {
-    marginTop: 22,
-    borderRadius: 24,
+    marginTop: 24,
+    borderRadius: 28,
   },
   ctaGradient: {
-    borderRadius: 24,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 18,
+    paddingVertical: 19,
     paddingHorizontal: 18,
   },
   ctaText: {
     color: "#ffffff",
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "800",
   },
   loadingRow: {
@@ -568,4 +599,3 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
-
