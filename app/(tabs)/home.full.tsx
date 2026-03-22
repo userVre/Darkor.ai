@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, StyleSheet, Text, View, type ViewToken, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -98,8 +98,15 @@ const ActiveCardVideo = memo(function ActiveCardVideo({ item }: { item: ServiceC
     videoPlayer.muted = true;
     videoPlayer.volume = 0;
     videoPlayer.timeUpdateEventInterval = 0;
+    videoPlayer.keepScreenOnWhilePlaying = false;
     videoPlayer.play();
   });
+
+  useEffect(() => {
+    return () => {
+      player.pause();
+    };
+  }, [player]);
 
   return (
     <VideoView
