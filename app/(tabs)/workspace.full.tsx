@@ -3,7 +3,6 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery } from "convex/react";
 import { Asset } from "expo-asset";
 import { BlurView } from "expo-blur";
-import { Camera as ExpoCamera } from "expo-camera";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
@@ -16,6 +15,7 @@ import { AnimatePresence, MotiView } from "moti";
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  ActionSheetIOS,
   Alert,
   Linking,
   ScrollView,
@@ -44,7 +44,6 @@ import {
   Baby,
   BedDouble,
   Building2,
-  Camera,
   CarFront,
   CookingPot,
   Download,
@@ -53,7 +52,6 @@ import {
   Flower2,
   History,
   House,
-  Image as ImageIcon,
   Plus,
   Monitor,
   PaintRoller,
@@ -99,6 +97,8 @@ type SelectedImage = {
   base64?: string;
   label?: string;
 };
+
+type PhotoSource = "camera" | "library";
 
 type ExamplePhoto = {
   id: string;
@@ -689,6 +689,7 @@ export default function WorkspaceScreen() {
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
+  const [pendingSelectedImage, setPendingSelectedImage] = useState<SelectedImage | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedModeId, setSelectedModeId] = useState<ModeOption["id"] | null>(null);
@@ -722,7 +723,6 @@ export default function WorkspaceScreen() {
   const reviewSheetRef = useRef<BottomSheetModal>(null);
   const rateSheetRef = useRef<BottomSheetModal>(null);
   const feedbackSheetRef = useRef<BottomSheetModal>(null);
-  const photoSourceSheetRef = useRef<BottomSheetModal>(null);
   const customPromptSheetRef = useRef<BottomSheetModal>(null);
   const imageContainerRef = useRef<View>(null);
   const hasAppliedStartStepRef = useRef(false);
@@ -739,7 +739,6 @@ export default function WorkspaceScreen() {
   const reviewSnapPoints = useMemo(() => ["38%"], []);
   const rateSnapPoints = useMemo(() => ["36%"], []);
   const feedbackSnapPoints = useMemo(() => [isSmallScreen ? "95%" : "58%"], [isSmallScreen]);
-  const photoSourceSnapPoints = useMemo(() => [isSmallScreen ? "38%" : "34%"], [isSmallScreen]);
   const customPromptSnapPoints = useMemo(() => [isSmallScreen ? "90%" : "74%"], [isSmallScreen]);
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = getServiceType(serviceKey);
@@ -1045,7 +1044,7 @@ export default function WorkspaceScreen() {
   }));
 
   const canContinue = useMemo(() => {
-    if (workflowStep === 0) return Boolean(selectedImage);
+    if (workflowStep === 0) return Boolean(selectedImage) && !pendingSelectedImage;
     if (workflowStep === 1) return Boolean(selectedRoom);
     if (workflowStep === 2) {
       if (selectedStyle === "Custom") {
@@ -1055,7 +1054,7 @@ export default function WorkspaceScreen() {
     }
     if (workflowStep === 3) return Boolean(selectedModeId && selectedPaletteId);
     return false;
-  }, [customPrompt, selectedImage, selectedModeId, selectedPaletteId, selectedRoom, selectedStyle, workflowStep]);
+  }, [customPrompt, pendingSelectedImage, selectedImage, selectedModeId, selectedPaletteId, selectedRoom, selectedStyle, workflowStep]);
 
   const openSystemSettings = useCallback(() => {
     Linking.openSettings().catch(() => undefined);
@@ -1080,33 +1079,19 @@ export default function WorkspaceScreen() {
   }, [showPermissionAlert]);
 
   const ensureCameraPermission = useCallback(async () => {
-    const current = await ExpoCamera.getCameraPermissionsAsync();
+    const current = await ImagePicker.getCameraPermissionsAsync();
     if (current.granted) return true;
 
-    const next = current.canAskAgain ? await ExpoCamera.requestCameraPermissionsAsync() : current;
+    const next = current.canAskAgain ? await ImagePicker.requestCameraPermissionsAsync() : current;
     if (next.granted) return true;
 
     showPermissionAlert();
     return false;
   }, [showPermissionAlert]);
 
-  const ensurePhotoIntakePermissions = useCallback(async () => {
-    const hasCameraPermission = await ensureCameraPermission();
-    if (!hasCameraPermission) {
-      return false;
-    }
-
-    const hasMediaLibraryPermission = await ensureMediaLibraryPermission();
-    if (!hasMediaLibraryPermission) {
-      return false;
-    }
-
-    return true;
-  }, [ensureCameraPermission, ensureMediaLibraryPermission]);
-
-  const applyPickedAsset = useCallback(async (asset: ImagePicker.ImagePickerAsset, label: string) => {
+  const applyPickedAsset = useCallback((asset: ImagePicker.ImagePickerAsset, label: string) => {
     startTransition(() => {
-      setSelectedImage({
+      setPendingSelectedImage({
         uri: asset.uri,
         label,
       });
@@ -1114,10 +1099,7 @@ export default function WorkspaceScreen() {
   }, []);
 
   const launchPhotoSource = useCallback(
-    async (source: "camera" | "library") => {
-      photoSourceSheetRef.current?.dismiss();
-      await new Promise((resolve) => setTimeout(resolve, 180));
-
+    async (source: PhotoSource) => {
       const hasPermission =
         source === "camera" ? await ensureCameraPermission() : await ensureMediaLibraryPermission();
       if (!hasPermission) {
@@ -1149,7 +1131,7 @@ export default function WorkspaceScreen() {
         }
 
         const asset = result.assets[0];
-        await applyPickedAsset(asset, source === "camera" ? "Captured Photo" : "Uploaded Photo");
+        applyPickedAsset(asset, source === "camera" ? "Captured Photo" : "Uploaded Photo");
       } catch (error) {
         Alert.alert(
           "Photo Intake Unavailable",
@@ -1162,25 +1144,72 @@ export default function WorkspaceScreen() {
     [applyPickedAsset, ensureCameraPermission, ensureMediaLibraryPermission],
   );
 
+  const presentPhotoSourceMenu = useCallback(() => {
+    const openSource = (source: PhotoSource) => {
+      void launchPhotoSource(source);
+    };
+
+    if (process.env.EXPO_OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: "Add Room Photo",
+          message: "Choose how you'd like to start Step 1.",
+          options: ["Cancel", "📸 Take Photo", "🖼️ Upload from Gallery"],
+          cancelButtonIndex: 0,
+          userInterfaceStyle: "dark",
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            openSource("camera");
+            return;
+          }
+
+          if (buttonIndex === 2) {
+            openSource("library");
+          }
+        },
+      );
+      return;
+    }
+
+    Alert.alert("Add Room Photo", "Choose how you'd like to start Step 1.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "📸 Take Photo", onPress: () => openSource("camera") },
+      { text: "🖼️ Upload from Gallery", onPress: () => openSource("library") },
+    ]);
+  }, [launchPhotoSource]);
+
   const handlePickPhoto = useCallback(async () => {
     triggerHaptic();
-    setIsSelectingPhoto(true);
-    try {
-      const hasPermissions = await ensurePhotoIntakePermissions();
-      if (!hasPermissions) {
-        return;
-      }
+    presentPhotoSourceMenu();
+  }, [presentPhotoSourceMenu]);
 
-      photoSourceSheetRef.current?.present();
-    } finally {
-      setIsSelectingPhoto(false);
+  const handleVerifyPendingImage = useCallback(() => {
+    if (!pendingSelectedImage) {
+      return;
     }
-  }, [ensurePhotoIntakePermissions]);
+
+    triggerHaptic();
+    startTransition(() => {
+      setSelectedImage(pendingSelectedImage);
+      setPendingSelectedImage(null);
+    });
+  }, [pendingSelectedImage]);
+
+  const handleDiscardPendingImage = useCallback(() => {
+    triggerHaptic();
+    startTransition(() => {
+      setPendingSelectedImage(null);
+    });
+    setIsLoadingExample(null);
+    setIsSelectingPhoto(false);
+  }, []);
 
   const handleClearSelectedImage = useCallback(() => {
     triggerHaptic();
     startTransition(() => {
       setSelectedImage(null);
+      setPendingSelectedImage(null);
     });
     setIsLoadingExample(null);
     setIsSelectingPhoto(false);
@@ -1197,7 +1226,7 @@ export default function WorkspaceScreen() {
         throw new Error("Example image unavailable.");
       }
       startTransition(() => {
-        setSelectedImage({ uri, label: example.label });
+        setPendingSelectedImage({ uri, label: example.label });
       });
     } catch (error) {
       Alert.alert("Example unavailable", error instanceof Error ? error.message : "Please try another image.");
@@ -1233,6 +1262,7 @@ export default function WorkspaceScreen() {
     startTransition(() => {
       setWorkflowStep(0);
       setSelectedImage(null);
+      setPendingSelectedImage(null);
       setSelectedRoom(null);
       setSelectedStyle(null);
       setSelectedModeId(null);
@@ -1593,7 +1623,9 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    setWorkflowStep((prev) => Math.min(prev + 1, 5));
+    startTransition(() => {
+      setWorkflowStep((prev) => Math.min(prev + 1, 3));
+    });
   }, [canContinue, handleGenerate, workflowStep]);
 
   const handleSelectRoom = useCallback((value: string) => {
@@ -1833,24 +1865,36 @@ export default function WorkspaceScreen() {
     const currentStepNumber = workflowStep + 1;
     const isFinalWizardStep = workflowStep === 3;
     const isPhotoStep = workflowStep === 0;
+    const displayedSelectedImage = pendingSelectedImage ?? selectedImage;
     const hasSelectedPhoto = Boolean(selectedImage);
+    const hasVisiblePhoto = Boolean(displayedSelectedImage);
+    const isReviewingSelectedPhoto = Boolean(pendingSelectedImage);
+    const activeExampleLabel = pendingSelectedImage?.label ?? selectedImage?.label ?? null;
     const wizardBackgroundColor = isPhotoStep ? "#000000" : "#ffffff";
     const wizardPrimaryTextColor = isPhotoStep ? "#ffffff" : "#09090b";
-    const progressTrackColor = isPhotoStep ? "#26262b" : "#d4d4d8";
+    const headerButtonBorderColor = isPhotoStep ? "rgba(255,255,255,0.12)" : "rgba(9,9,11,0.08)";
+    const headerButtonBackgroundColor = isPhotoStep ? "rgba(255,255,255,0.04)" : "rgba(9,9,11,0.03)";
+    const progressTrackColor = "#27272a";
+    const progressFillWidth = `${currentStepNumber * 25}%` as `${number}%`;
     const uploadTileSize = wizardUploadSize;
     const stepOneExampleCardWidth = Math.min(Math.max(width * 0.36, 132), 152);
     const stepContentMinHeight = Math.max(
       height - Math.max(insets.top + (isPhotoStep ? 18 : 8), isPhotoStep ? 24 : 20) - Math.max(insets.bottom + (isPhotoStep ? 148 : 124), isPhotoStep ? 176 : 144),
       isPhotoStep ? 520 : 460,
     );
+    const continueButtonHeight = isPhotoStep ? 64 : 62;
+    const continueButtonRadius = isPhotoStep ? 28 : 24;
     const isContinueDisabled = !canContinue || (isFinalWizardStep && (isGenerating || generationBlocked));
+    const isContinueActive = canContinue && !(isFinalWizardStep && generationBlocked) && !isContinueDisabled;
+    const shouldPulseContinue = isPhotoStep && hasSelectedPhoto && !pendingSelectedImage && isContinueActive;
+    const continueButtonOpacity = isContinueActive ? 1 : isPhotoStep ? 0.48 : 0.62;
     const continueLabel = isFinalWizardStep
       ? generationBlocked
         ? "Limit Reached - Upgrade or Wait"
         : isGenerating
           ? "Processing..."
           : "Continue"
-      : "Continue";
+      : `Continue to Step ${currentStepNumber + 1}`;
 
     return (
       <View className="flex-1" style={{ backgroundColor: wizardBackgroundColor }}>
@@ -1893,84 +1937,73 @@ export default function WorkspaceScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={{ flex: 1, gap: 24 }}>
-            {isPhotoStep ? (
-              <View style={{ gap: 16 }}>
-                <View className="flex-row" style={{ gap: 8 }}>
-                  {[0, 1, 2, 3].map((index) => (
-                    <MotiView
-                      key={`wizard-progress-${index}`}
-                      from={{ opacity: 0.78, scaleX: 0.96 }}
-                      animate={{ opacity: 1, scaleX: 1 }}
-                      transition={{ ...LUX_SPRING, delay: 40 + index * 32 }}
+            <View style={{ gap: 14 }}>
+              <View style={{ minHeight: 44, justifyContent: "center", alignItems: "center" }}>
+                {workflowStep > 0 ? (
+                  <View style={{ position: "absolute", left: 0, top: 0, bottom: 0, justifyContent: "center" }}>
+                    <LuxPressable
+                      onPress={handleBack}
+                      className="cursor-pointer h-11 w-11 items-center justify-center rounded-full"
                       style={{
-                        flex: 1,
-                        height: 4,
-                        borderRadius: 999,
-                        backgroundColor: index === 0 ? "#d946ef" : progressTrackColor,
+                        borderWidth: 0.5,
+                        borderColor: headerButtonBorderColor,
+                        backgroundColor: headerButtonBackgroundColor,
                       }}
-                    />
-                  ))}
-                </View>
+                    >
+                      <ArrowLeft color={wizardPrimaryTextColor} size={20} strokeWidth={2.2} />
+                    </LuxPressable>
+                  </View>
+                ) : null}
 
-                <View className="items-end">
+                <Text
+                  style={{
+                    color: wizardPrimaryTextColor,
+                    fontSize: 18,
+                    fontWeight: "800",
+                    letterSpacing: -0.35,
+                    textAlign: "center",
+                  }}
+                >
+                  {`Step ${currentStepNumber}`}
+                </Text>
+
+                <View style={{ position: "absolute", right: 0, top: 0, bottom: 0, justifyContent: "center" }}>
                   <LuxPressable
                     onPress={handleCloseWizard}
                     className="cursor-pointer h-11 w-11 items-center justify-center rounded-full"
                     style={{
                       borderWidth: 0.5,
-                      borderColor: "rgba(255,255,255,0.12)",
-                      backgroundColor: "rgba(255,255,255,0.04)",
+                      borderColor: headerButtonBorderColor,
+                      backgroundColor: headerButtonBackgroundColor,
                     }}
                   >
-                    <Close color="#ffffff" size={20} strokeWidth={2.2} />
+                    <Close color={wizardPrimaryTextColor} size={20} strokeWidth={2.2} />
                   </LuxPressable>
                 </View>
               </View>
-            ) : (
-              <>
-                <View className="flex-row items-center justify-between">
-                  <View style={{ width: 44, alignItems: "flex-start" }}>
-                    {workflowStep > 0 ? (
-                      <LuxPressable onPress={handleBack} className="cursor-pointer h-11 w-11 items-center justify-center rounded-full">
-                        <ArrowLeft color={wizardPrimaryTextColor} size={22} strokeWidth={2.1} />
-                      </LuxPressable>
-                    ) : null}
-                  </View>
-                  <Text style={{ color: wizardPrimaryTextColor, fontSize: 18, fontWeight: "700", letterSpacing: -0.3 }}>
-                    {`Step ${currentStepNumber} / 4`}
-                  </Text>
-                  <View style={{ width: 44, alignItems: "flex-end" }}>
-                    <LuxPressable onPress={handleCloseWizard} className="cursor-pointer h-11 w-11 items-center justify-center rounded-full">
-                      <Close color={wizardPrimaryTextColor} size={22} strokeWidth={2.1} />
-                    </LuxPressable>
-                  </View>
-                </View>
 
-                <View className="flex-row gap-3">
-                  {[0, 1, 2, 3].map((index) => {
-                    const active = index <= workflowStep;
-                    return (
-                      <View
-                        key={`wizard-progress-${index}`}
-                        style={{
-                          flex: 1,
-                          height: 6,
-                          borderRadius: 999,
-                          overflow: "hidden",
-                          backgroundColor: progressTrackColor,
-                        }}
-                      >
-                        <MotiView
-                          animate={{ width: active ? "100%" : "0%" }}
-                          transition={LUX_SPRING}
-                          style={{ height: "100%", borderRadius: 999, backgroundColor: "#d946ef" }}
-                        />
-                      </View>
-                    );
-                  })}
-                </View>
-              </>
-            )}
+              <View
+                style={{
+                  height: 8,
+                  borderRadius: 999,
+                  overflow: "hidden",
+                  backgroundColor: progressTrackColor,
+                }}
+              >
+                <MotiView
+                  animate={{ width: progressFillWidth }}
+                  transition={LUX_SPRING}
+                  style={{ height: "100%", borderRadius: 999, overflow: "hidden" }}
+                >
+                  <LinearGradient
+                    colors={["#d946ef", "#a855f7"]}
+                    start={{ x: 0, y: 0.5 }}
+                    end={{ x: 1, y: 0.5 }}
+                    style={{ height: "100%", width: "100%" }}
+                  />
+                </MotiView>
+              </View>
+            </View>
 
             <AnimatePresence exitBeforeEnter>
               <MotiView
@@ -2009,7 +2042,7 @@ export default function WorkspaceScreen() {
                     </View>
 
                     <MotiView
-                      key={selectedImage?.uri ?? "empty-upload"}
+                      key={displayedSelectedImage?.uri ?? selectedImage?.uri ?? "empty-upload"}
                       from={{ opacity: 0, scale: 0.985, translateY: 14 }}
                       animate={{ opacity: 1, scale: 1, translateY: 0 }}
                       transition={LUX_SPRING}
@@ -2022,9 +2055,9 @@ export default function WorkspaceScreen() {
                           width: uploadTileSize,
                           height: uploadTileSize,
                           borderRadius: 32,
-                          borderWidth: hasSelectedPhoto ? 1 : 2,
-                          borderColor: hasSelectedPhoto ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.3)",
-                          borderStyle: hasSelectedPhoto ? "solid" : "dashed",
+                          borderWidth: hasVisiblePhoto ? 1 : 2,
+                          borderColor: hasVisiblePhoto ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.3)",
+                          borderStyle: hasVisiblePhoto ? "solid" : "dashed",
                           overflow: "hidden",
                           alignSelf: "center",
                           backgroundColor: "#0a0a0a",
@@ -2032,15 +2065,47 @@ export default function WorkspaceScreen() {
                           alignItems: "center",
                         }}
                       >
-                        {hasSelectedPhoto ? (
+                        {hasVisiblePhoto ? (
                           <>
                             <Image
-                              source={{ uri: selectedImage?.uri ?? "" }}
+                              source={{ uri: displayedSelectedImage?.uri ?? "" }}
                               style={{ width: "100%", height: "100%" }}
                               contentFit="cover"
                               transition={180}
                               cachePolicy="memory-disk"
                             />
+                            <LinearGradient
+                              colors={["transparent", "rgba(0,0,0,0.1)", "rgba(0,0,0,0.86)"]}
+                              start={{ x: 0.5, y: 0 }}
+                              end={{ x: 0.5, y: 1 }}
+                              style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }}
+                            />
+                            <View
+                              pointerEvents="none"
+                              style={{
+                                position: "absolute",
+                                left: 16,
+                                top: 16,
+                                borderRadius: 999,
+                                borderWidth: 1,
+                                borderColor: isReviewingSelectedPhoto ? "rgba(250, 204, 21, 0.28)" : "rgba(255,255,255,0.14)",
+                                backgroundColor: isReviewingSelectedPhoto ? "rgba(161, 98, 7, 0.34)" : "rgba(0,0,0,0.36)",
+                                paddingHorizontal: 12,
+                                paddingVertical: 7,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  color: "#ffffff",
+                                  fontSize: 11,
+                                  fontWeight: "800",
+                                  letterSpacing: 0.7,
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                {isReviewingSelectedPhoto ? "Review" : "Verified"}
+                              </Text>
+                            </View>
                             <View
                               pointerEvents="none"
                               style={{
@@ -2053,14 +2118,22 @@ export default function WorkspaceScreen() {
                                 backgroundColor: "rgba(0,0,0,0.36)",
                               }}
                             >
-                              <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>Photo Ready</Text>
+                              <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>
+                                {isReviewingSelectedPhoto ? "Review your photo" : "Photo Ready"}
+                              </Text>
                               <Text style={{ color: "#d4d4d8", fontSize: 12, marginTop: 4 }}>
-                                Continue to choose your room type.
+                                {isReviewingSelectedPhoto
+                                  ? "Tap Verify to lock this image into Step 1."
+                                  : "Continue to choose your room type."}
                               </Text>
                             </View>
                             <LuxPressable
                               onPress={(event) => {
                                 event.stopPropagation();
+                                if (isReviewingSelectedPhoto) {
+                                  handleDiscardPendingImage();
+                                  return;
+                                }
                                 handleClearSelectedImage();
                               }}
                               className="cursor-pointer absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full"
@@ -2072,6 +2145,28 @@ export default function WorkspaceScreen() {
                             >
                               <Close color="#ffffff" size={18} strokeWidth={2.4} />
                             </LuxPressable>
+                            {isReviewingSelectedPhoto ? (
+                              <LuxPressable
+                                onPress={(event) => {
+                                  event.stopPropagation();
+                                  handleVerifyPendingImage();
+                                }}
+                                className="cursor-pointer absolute bottom-4 right-4"
+                                style={{
+                                  borderRadius: 999,
+                                  borderWidth: 1,
+                                  borderColor: "rgba(255,255,255,0.16)",
+                                  backgroundColor: "rgba(255,255,255,0.14)",
+                                  paddingHorizontal: 14,
+                                  paddingVertical: 10,
+                                }}
+                              >
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                  <BadgeCheck color="#ffffff" size={18} strokeWidth={2.2} />
+                                  <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "800" }}>Verify</Text>
+                                </View>
+                              </LuxPressable>
+                            ) : null}
                             {isPhotoPreviewBusy ? (
                               <View
                                 style={{
@@ -2165,7 +2260,7 @@ export default function WorkspaceScreen() {
                           contentContainerStyle={{ paddingRight: 4, gap: 14 }}
                         >
                           {EXAMPLE_PHOTOS.slice(0, 4).map((example, index) => {
-                            const active = selectedImage?.label === example.label;
+                            const active = activeExampleLabel === example.label;
                             const isLoading = isLoadingExample === example.id;
                             return (
                               <MotiView
@@ -2460,41 +2555,70 @@ export default function WorkspaceScreen() {
             elevation: 14,
           }}
         >
-          <LuxPressable onPress={handleContinue} disabled={isContinueDisabled} className="cursor-pointer">
-            {canContinue && !(isFinalWizardStep && generationBlocked) ? (
-              <LinearGradient
-                colors={["#d946ef", "#7c3aed"]}
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-                className="items-center justify-center"
-                style={{
-                  minHeight: isPhotoStep ? 64 : 62,
-                  borderRadius: isPhotoStep ? 28 : 24,
-                  opacity: isPhotoStep ? (hasSelectedPhoto ? 1 : 0.5) : 1,
-                }}
+          <View style={{ position: "relative" }}>
+            <MotiView
+              pointerEvents="none"
+              animate={
+                shouldPulseContinue
+                  ? { opacity: [0.16, 0.32, 0.16], scale: [0.985, 1.02, 0.985] }
+                  : { opacity: 0, scale: 1 }
+              }
+              transition={shouldPulseContinue ? { duration: 2100, loop: true } : { duration: 180 }}
+              style={{
+                position: "absolute",
+                left: 4,
+                right: 4,
+                top: 2,
+                bottom: 2,
+                borderRadius: continueButtonRadius + 4,
+                backgroundColor: "#d946ef",
+              }}
+            />
+
+            <MotiView
+              animate={shouldPulseContinue ? { scale: [1, 1.01, 1], translateY: [0, -1, 0] } : { scale: 1, translateY: 0 }}
+              transition={shouldPulseContinue ? { duration: 2100, loop: true } : { duration: 180 }}
+            >
+              <LuxPressable
+                onPress={handleContinue}
+                disabled={isContinueDisabled}
+                pressableClassName="cursor-pointer"
+                className="cursor-pointer"
               >
-                <Text style={{ color: "#ffffff", fontSize: 17, fontWeight: "600" }}>
-                  {continueLabel}
-                </Text>
-              </LinearGradient>
-            ) : (
-              <View
-                className="items-center justify-center"
-                style={{
-                  minHeight: isPhotoStep ? 64 : 62,
-                  borderRadius: isPhotoStep ? 28 : 24,
-                  backgroundColor: isPhotoStep ? "#27272a" : "#e4e4e7",
-                  opacity: isPhotoStep ? (hasSelectedPhoto ? 1 : 0.5) : 1,
-                  borderWidth: isPhotoStep ? 1 : 0,
-                  borderColor: isPhotoStep ? "rgba(255,255,255,0.1)" : "transparent",
-                }}
-              >
-                <Text style={{ color: isPhotoStep ? "#ffffff" : "#a1a1aa", fontSize: 17, fontWeight: "600" }}>
-                  {generationBlocked && isFinalWizardStep ? "Limit Reached - Upgrade or Wait" : continueLabel}
-                </Text>
-              </View>
-            )}
-          </LuxPressable>
+                {isContinueActive ? (
+                  <LinearGradient
+                    colors={["#d946ef", "#7c3aed"]}
+                    start={{ x: 0, y: 0.5 }}
+                    end={{ x: 1, y: 0.5 }}
+                    className="items-center justify-center"
+                    style={{
+                      minHeight: continueButtonHeight,
+                      borderRadius: continueButtonRadius,
+                      opacity: continueButtonOpacity,
+                    }}
+                  >
+                    <Text style={{ color: "#ffffff", fontSize: 17, fontWeight: "700" }}>{continueLabel}</Text>
+                  </LinearGradient>
+                ) : (
+                  <View
+                    className="items-center justify-center"
+                    style={{
+                      minHeight: continueButtonHeight,
+                      borderRadius: continueButtonRadius,
+                      backgroundColor: isPhotoStep ? "#27272a" : "#e4e4e7",
+                      opacity: continueButtonOpacity,
+                      borderWidth: isPhotoStep ? 1 : 0,
+                      borderColor: isPhotoStep ? "rgba(255,255,255,0.1)" : "transparent",
+                    }}
+                  >
+                    <Text style={{ color: isPhotoStep ? "#ffffff" : "#a1a1aa", fontSize: 17, fontWeight: "600" }}>
+                      {generationBlocked && isFinalWizardStep ? "Limit Reached - Upgrade or Wait" : continueLabel}
+                    </Text>
+                  </View>
+                )}
+              </LuxPressable>
+            </MotiView>
+          </View>
         </View>
 
         <BottomSheetModal
@@ -2575,49 +2699,6 @@ export default function WorkspaceScreen() {
           </View>
         </BottomSheetModal>
 
-        <BottomSheetModal
-          ref={photoSourceSheetRef}
-          snapPoints={photoSourceSnapPoints}
-          enablePanDownToClose
-          backdropComponent={GlassBackdrop}
-          backgroundStyle={{ backgroundColor: "#050505" }}
-          handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
-        >
-          <View className="flex-1 px-5 pb-8 pt-2">
-            <Text className="text-lg font-medium text-white">Start Redesigning</Text>
-            <Text className="mt-2 text-sm text-zinc-400">Choose how you'd like to bring your space into the wizard.</Text>
-
-            <View className="mt-5 gap-3">
-              <LuxPressable
-                onPress={() => void launchPhotoSource("camera")}
-                className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
-                style={{ borderWidth: 0.5 }}
-                >
-                <View className="h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
-                  <Camera color="#f8fafc" size={20} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-sm font-semibold text-white">Take a Photo</Text>
-                  <Text className="mt-1 text-xs text-zinc-400">Capture a fresh room photo with your camera.</Text>
-                </View>
-              </LuxPressable>
-
-              <LuxPressable
-                onPress={() => void launchPhotoSource("library")}
-                className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
-                style={{ borderWidth: 0.5 }}
-                >
-                <View className="h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
-                  <ImageIcon color="#f8fafc" size={20} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-sm font-semibold text-white">Choose from Library</Text>
-                  <Text className="mt-1 text-xs text-zinc-400">Import an existing interior or exterior photo from your device.</Text>
-                </View>
-              </LuxPressable>
-            </View>
-          </View>
-        </BottomSheetModal>
       </View>
     );
   }
