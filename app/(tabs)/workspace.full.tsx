@@ -158,9 +158,9 @@ type ModeOption = {
 
 const EXAMPLE_PHOTOS: ExamplePhoto[] = [
   {
-    id: "modern-living",
-    label: "Modern Living Room",
-    source: require("../../assets/media/empty-room.jpg"),
+    id: "luxury-living",
+    label: "Luxury Living Room",
+    source: require("../../assets/media/luxury-1.jpg"),
   },
   {
     id: "raw-penthouse",
@@ -168,14 +168,14 @@ const EXAMPLE_PHOTOS: ExamplePhoto[] = [
     source: require("../../assets/media/before-empty-room.png"),
   },
   {
-    id: "backyard",
-    label: "Backyard",
-    source: require("../../assets/media/garden-before.jpg"),
-  },
-  {
     id: "old-facade",
     label: "Old Facade",
     source: require("../../assets/media/staging-before.jpg"),
+  },
+  {
+    id: "backyard",
+    label: "Backyard",
+    source: require("../../assets/media/garden-before.jpg"),
   },
 ];
 
@@ -1834,7 +1834,7 @@ export default function WorkspaceScreen() {
                         className="cursor-pointer self-center"
                         style={{
                           width: wizardUploadSize,
-                          height: wizardUploadHeight,
+                          height: wizardUploadSize,
                           borderRadius: 32,
                           backgroundColor: selectedImage ? "#050505" : "#020202",
                           borderWidth: selectedImage ? 0.5 : 1.5,
@@ -1846,49 +1846,34 @@ export default function WorkspaceScreen() {
                         {selectedImage ? (
                           <>
                             <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} />
-                            <LinearGradient
-                              colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.64)"]}
-                              locations={[0, 0.45, 1]}
-                              style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
-                            />
-                            <View style={{ position: "absolute", left: 16, right: 16, bottom: 16, gap: 4 }}>
-                              <Text className="text-base font-semibold text-white">{selectedImage.label ?? "Selected photo"}</Text>
-                              <Text className="text-sm text-zinc-300">Tap anywhere to replace it.</Text>
-                            </View>
                             <LuxPressable
                               onPress={(event) => {
                                 event.stopPropagation();
                                 handleClearSelectedImage();
                               }}
-                              className="cursor-pointer absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/60"
+                              className="cursor-pointer absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/70"
                               style={{ borderWidth: 0.5 }}
                             >
                               <Close color="#ffffff" size={16} strokeWidth={2.4} />
                             </LuxPressable>
                             {isPhotoPreviewBusy ? (
-                              <MotiView
-                                animate={{ opacity: [0.42, 0.92, 0.42] }}
-                                transition={{ duration: 1050, loop: true }}
-                                className="absolute inset-x-4 bottom-4 flex-row items-center justify-center gap-3 rounded-[18px] border border-white/10 bg-black/60 px-4 py-3"
-                                style={{ borderWidth: 0.5 }}
-                              >
+                              <View className="absolute inset-0 items-center justify-center bg-black/26">
                                 <ActivityIndicator size="small" color="#ffffff" />
-                                <Text className="text-sm font-semibold text-white">Preparing preview...</Text>
-                              </MotiView>
+                              </View>
                             ) : null}
                           </>
                         ) : (
                           <View className="flex-1 items-center justify-center px-8" style={{ gap: 16 }}>
                             <View
-                              className="h-[86px] w-[86px] items-center justify-center rounded-full border border-white/10 bg-white"
+                              className="h-[86px] w-[86px] items-center justify-center rounded-full border border-white/10 bg-white/5"
                               style={{ borderWidth: 0.5 }}
                             >
-                              <Plus color="#000000" size={32} strokeWidth={2.4} />
+                              <Plus color="#ffffff" size={34} strokeWidth={2.4} />
                             </View>
                             <View style={{ gap: 8, alignItems: "center" }}>
-                              <Text className="text-center text-[28px] font-semibold text-white">Start Redesigning</Text>
+                              <Text className="text-center text-[28px] font-semibold text-white">Add a Photo</Text>
                               <Text className="text-center text-[15px] leading-7 text-zinc-400">
-                                Redesign and beautify your room
+                                Tap to take a photo or upload
                               </Text>
                             </View>
                           </View>
