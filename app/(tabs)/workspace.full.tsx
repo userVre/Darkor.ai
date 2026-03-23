@@ -1235,6 +1235,15 @@ export default function WorkspaceScreen() {
     setAwaitingAuth(false);
   }, [setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle]);
 
+  const handleCloseWizard = useCallback(() => {
+    handleResetWizard();
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/workspace");
+  }, [handleResetWizard, router]);
+
   const cleanupTempFile = useCallback(async (uri: string | null | undefined) => {
     if (!uri) {
       return;
@@ -1803,12 +1812,12 @@ export default function WorkspaceScreen() {
       ? generationBlocked
         ? "Limit Reached - Upgrade or Wait"
         : isGenerating
-          ? "Generating..."
-          : "Generate Design"
+          ? "Processing..."
+          : "Continue"
       : "Continue";
 
     return (
-      <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
+      <View className="flex-1 bg-white" style={{ backgroundColor: "#ffffff" }}>
         {showResumeToast ? (
           <MotiView
             from={{ opacity: 0, translateY: -12 }}
@@ -1819,64 +1828,42 @@ export default function WorkspaceScreen() {
             style={{ top: insets.top + 8 }}
             pointerEvents="none"
           >
-            <BlurView
-              intensity={80}
-              tint="dark"
-              className="rounded-[22px] border border-white/10 bg-black/75 px-4 py-3"
-              style={{ borderWidth: 0.5 }}
-            >
-              <Text className="text-center text-sm font-semibold text-white">Resuming your saved wizard draft.</Text>
-            </BlurView>
+            <View className="rounded-[22px] border border-black/6 bg-white px-4 py-3" style={{ borderWidth: 1 }}>
+              <Text className="text-center text-sm font-semibold text-zinc-900">Resuming your saved wizard draft.</Text>
+            </View>
           </MotiView>
         ) : null}
 
         <ScrollView
-          className="flex-1 bg-black"
-          style={{ backgroundColor: "#000000" }}
+          className="flex-1 bg-white"
+          style={{ backgroundColor: "#ffffff" }}
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingTop: Math.max(insets.top + 18, 34),
-            paddingBottom: Math.max(insets.bottom + 128, 156),
+            paddingTop: Math.max(insets.top + 10, 22),
+            paddingBottom: Math.max(insets.bottom + 124, 144),
             minHeight: height,
           }}
           contentInsetAdjustmentBehavior="never"
           showsVerticalScrollIndicator={false}
         >
           <View style={{ gap: 24 }}>
-            {workflowStep === 0 ? (
-              <View className="flex-row items-center justify-between">
-                <Text className="text-[13px] font-semibold uppercase tracking-[1.9px] text-zinc-400">{`Step ${currentStepNumber} / 4`}</Text>
-                <LuxPressable
-                  onPress={() => router.back()}
-                  className="cursor-pointer flex-row items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-3"
-                  style={{ borderWidth: 0.5 }}
-                >
-                  <Text className="text-sm font-medium text-white">Close</Text>
-                  <Close color="#ffffff" size={16} strokeWidth={2.2} />
+            <View className="flex-row items-center justify-between">
+              <View style={{ width: 44, alignItems: "flex-start" }}>
+                {workflowStep > 0 ? (
+                  <LuxPressable onPress={handleBack} className="cursor-pointer h-11 w-11 items-center justify-center rounded-full">
+                    <ArrowLeft color="#09090b" size={22} strokeWidth={2.1} />
+                  </LuxPressable>
+                ) : null}
+              </View>
+              <Text style={{ color: "#09090b", fontSize: 18, fontWeight: "700", letterSpacing: -0.3 }}>{`Step ${currentStepNumber} / 4`}</Text>
+              <View style={{ width: 44, alignItems: "flex-end" }}>
+                <LuxPressable onPress={handleCloseWizard} className="cursor-pointer h-11 w-11 items-center justify-center rounded-full">
+                  <Close color="#09090b" size={22} strokeWidth={2.1} />
                 </LuxPressable>
               </View>
-            ) : (
-              <View className="flex-row items-center justify-between">
-                <LuxPressable
-                  onPress={handleBack}
-                  className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
-                  style={{ borderWidth: 0.5 }}
-                >
-                  <ArrowLeft color="#ffffff" size={19} strokeWidth={2.2} />
-                </LuxPressable>
-                <Text className="text-[13px] font-semibold uppercase tracking-[1.9px] text-zinc-400">{`Step ${currentStepNumber} / 4`}</Text>
-                <LuxPressable
-                  onPress={handleResetWizard}
-                  className="cursor-pointer flex-row items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-3"
-                  style={{ borderWidth: 0.5 }}
-                >
-                  <Text className="text-sm font-medium text-white">Close</Text>
-                  <Close color="#ffffff" size={16} strokeWidth={2.2} />
-                </LuxPressable>
-              </View>
-            )}
+            </View>
 
-            <View className="flex-row gap-2.5">
+            <View className="flex-row gap-3">
               {[0, 1, 2, 3].map((index) => {
                 const active = index <= workflowStep;
                 return (
@@ -1884,17 +1871,14 @@ export default function WorkspaceScreen() {
                     key={`wizard-progress-${index}`}
                     style={{
                       flex: 1,
-                      height: 8,
+                      height: 6,
                       borderRadius: 999,
                       overflow: "hidden",
-                      backgroundColor: "#27272a",
+                      backgroundColor: "#d4d4d8",
                     }}
                   >
                     <MotiView
-                      animate={{
-                        width: active ? "100%" : "0%",
-                        opacity: active ? 1 : 0.55,
-                      }}
+                      animate={{ width: active ? "100%" : "0%" }}
                       transition={LUX_SPRING}
                       style={{ height: "100%", borderRadius: 999, backgroundColor: "#d946ef" }}
                     />
@@ -1914,9 +1898,9 @@ export default function WorkspaceScreen() {
               >
                 {workflowStep === 0 ? (
                   <>
-                    <View style={{ gap: 10 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Add a Photo</Text>
-                      <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
+                    <View style={{ gap: 12 }}>
+                      <Text style={{ color: "#09090b", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Add a Photo</Text>
+                      <Text style={{ color: "#71717a", fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
                         Start with a clean photo of your space to redesign it with AI.
                       </Text>
                     </View>
@@ -1926,22 +1910,21 @@ export default function WorkspaceScreen() {
                       from={{ opacity: 0, scale: 0.99, translateY: 10 }}
                       animate={{ opacity: 1, scale: 1, translateY: 0 }}
                       transition={LUX_SPRING}
-                      style={{ alignItems: "center", gap: 20 }}
+                      style={{ alignItems: "center", gap: 22 }}
                     >
                       <LuxPressable
                         onPress={handlePickPhoto}
                         className="cursor-pointer self-center"
                         style={{
-                          width: wizardUploadSize,
-                          height: wizardUploadSize,
+                          width: Math.min(width - 40, 350),
+                          height: Math.min(width - 40, 350),
                           borderRadius: 32,
-                          backgroundColor: "#09090b",
-                          borderWidth: selectedImage ? 0.5 : 1.5,
-                          borderColor: selectedImage ? "rgba(255,255,255,0.08)" : "#3f3f46",
+                          backgroundColor: "#ffffff",
+                          borderWidth: selectedImage ? 0 : 2,
+                          borderColor: "#d4d4d8",
                           borderStyle: selectedImage ? "solid" : "dashed",
                           overflow: "hidden",
                           alignSelf: "center",
-                          ...WIZARD_CARD_SHADOW,
                         }}
                       >
                         {selectedImage ? (
@@ -1952,59 +1935,57 @@ export default function WorkspaceScreen() {
                                 event.stopPropagation();
                                 handleClearSelectedImage();
                               }}
-                              className="cursor-pointer absolute right-4 top-4 h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/72"
-                              style={{ borderWidth: 0.5 }}
+                              className="cursor-pointer absolute right-4 top-4 h-11 w-11 items-center justify-center rounded-full bg-black/45"
                             >
-                              <Close color="#ffffff" size={15} strokeWidth={2.5} />
+                              <Close color="#ffffff" size={20} strokeWidth={2.4} />
                             </LuxPressable>
                             {isPhotoPreviewBusy ? (
-                              <View className="absolute inset-0 items-center justify-center bg-black/26">
+                              <View className="absolute inset-0 items-center justify-center bg-black/18">
                                 <ActivityIndicator size="small" color="#ffffff" />
                               </View>
                             ) : null}
                           </>
                         ) : (
                           <View className="flex-1 items-center justify-center px-8">
-                            <View className="h-[68px] w-[68px] items-center justify-center rounded-full border border-white/10 bg-white/5">
-                              <Plus color="#ffffff" size={30} strokeWidth={2.4} />
+                            <View className="h-[56px] w-[56px] items-center justify-center rounded-full bg-black">
+                              <Plus color="#ffffff" size={24} strokeWidth={2.6} />
                             </View>
-                            <View style={{ gap: 8, alignItems: "center", marginTop: 20 }}>
-                              <Text className="text-center text-[28px] font-semibold text-white">Start Redesigning</Text>
-                              <Text className="text-center text-[14px] leading-6 text-zinc-500">Redesign and beautify your home</Text>
+                            <View style={{ gap: 8, alignItems: "center", marginTop: 18 }}>
+                              <Text className="text-center text-[24px] font-semibold text-black">Start Redesigning</Text>
+                              <Text className="text-center text-[14px] leading-6 text-zinc-500">Redesign and beautify your room</Text>
                             </View>
                           </View>
                         )}
                       </LuxPressable>
 
                       <View style={{ alignSelf: "stretch", gap: 14 }}>
-                        <Text className="text-base font-semibold text-white">Example Photos</Text>
+                        <Text className="text-[17px] font-semibold text-black">Example Photos</Text>
                         <ScrollView
                           horizontal
                           showsHorizontalScrollIndicator={false}
                           decelerationRate="fast"
-                          contentContainerStyle={{ paddingHorizontal: 2, paddingRight: 8, gap: 14 }}
+                          contentContainerStyle={{ paddingRight: 8, gap: 14 }}
                         >
                           {EXAMPLE_PHOTOS.slice(0, 4).map((example, index) => {
                             const active = selectedImage?.label === example.label;
                             const isLoading = isLoadingExample === example.id;
                             return (
-                              <MotiView key={example.id} {...staggerFadeUp(index, 45)} style={{ width: wizardExampleCardSize, height: wizardExampleCardSize }}>
+                              <MotiView key={example.id} {...staggerFadeUp(index, 45)} style={{ width: 112, height: 112 }}>
                                 <LuxPressable
                                   onPress={() => void handleSelectExample(example)}
-                                  className="cursor-pointer overflow-hidden border"
+                                  className="cursor-pointer overflow-hidden"
                                   style={{
                                     width: "100%",
                                     height: "100%",
-                                    borderRadius: 20,
-                                    borderWidth: active ? 2 : 0.5,
-                                    borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
-                                    backgroundColor: "#050505",
-                                    ...WIZARD_CARD_SHADOW,
+                                    borderRadius: 24,
+                                    borderWidth: active ? 2 : 0,
+                                    borderColor: active ? "#d946ef" : "transparent",
+                                    backgroundColor: "#e5e7eb",
                                   }}
                                 >
                                   <Image source={example.source} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} cachePolicy="memory-disk" />
                                   {isLoading ? (
-                                    <View className="absolute inset-0 items-center justify-center bg-black/35">
+                                    <View className="absolute inset-0 items-center justify-center bg-black/20">
                                       <ActivityIndicator size="small" color="#ffffff" />
                                     </View>
                                   ) : null}
@@ -2019,9 +2000,9 @@ export default function WorkspaceScreen() {
                 ) : null}
                 {workflowStep === 1 ? (
                   <>
-                    <View style={{ gap: 10 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Choose Space</Text>
-                      <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
+                    <View style={{ gap: 12 }}>
+                      <Text style={{ color: "#09090b", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Choose Space</Text>
+                      <Text style={{ color: "#71717a", fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
                         Tell Darkor.ai what kind of room or area you want to transform.
                       </Text>
                     </View>
@@ -2040,26 +2021,21 @@ export default function WorkspaceScreen() {
                               onPress={() => handleSelectRoom(option)}
                               className="cursor-pointer rounded-[24px] border px-4 py-4"
                               style={{
-                                minHeight: 146,
-                                borderWidth: active ? 1.5 : 0.5,
-                                borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
-                                backgroundColor: active ? "rgba(217,70,239,0.10)" : "#050505",
-                                shadowColor: active ? "#d946ef" : "#000000",
-                                shadowOpacity: active ? 0.12 : 0.2,
-                                shadowRadius: active ? 18 : 20,
-                                shadowOffset: { width: 0, height: 12 },
-                                elevation: active ? 8 : 6,
+                                minHeight: 148,
+                                borderWidth: active ? 1.5 : 1,
+                                borderColor: active ? "#d946ef" : "#e4e4e7",
+                                backgroundColor: active ? "rgba(217,70,239,0.08)" : "#fafafa",
                               }}
                             >
                               <View className="flex-row items-start justify-between">
-                                <View className="h-12 w-12 items-center justify-center rounded-[16px] border border-white/10 bg-white/5" style={{ borderWidth: 0.5 }}>
-                                  <RoomIcon color={active ? "#f0abfc" : "#ffffff"} size={22} strokeWidth={2} />
+                                <View className="h-12 w-12 items-center justify-center rounded-[16px] bg-white" style={{ borderWidth: 1, borderColor: active ? "rgba(217,70,239,0.22)" : "#e4e4e7" }}>
+                                  <RoomIcon color={active ? "#d946ef" : "#18181b"} size={22} strokeWidth={2} />
                                 </View>
-                                {active ? <BadgeCheck color="#f0abfc" size={18} strokeWidth={2} /> : null}
+                                {active ? <BadgeCheck color="#d946ef" size={18} strokeWidth={2} /> : null}
                               </View>
                               <View style={{ marginTop: 16, gap: 6 }}>
-                                <Text className="text-lg font-semibold text-white">{option}</Text>
-                                <Text className="text-sm leading-6 text-zinc-400">{meta.description}</Text>
+                                <Text className="text-lg font-semibold text-zinc-950">{option}</Text>
+                                <Text className="text-sm leading-6 text-zinc-500">{meta.description}</Text>
                               </View>
                             </LuxPressable>
                           </MotiView>
@@ -2071,9 +2047,9 @@ export default function WorkspaceScreen() {
 
                 {workflowStep === 2 ? (
                   <>
-                    <View style={{ gap: 10 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Select Style</Text>
-                      <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
+                    <View style={{ gap: 12 }}>
+                      <Text style={{ color: "#09090b", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Select Style</Text>
+                      <Text style={{ color: "#71717a", fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
                         Choose one of the design styles below, or write your own custom brief.
                       </Text>
                     </View>
@@ -2088,37 +2064,32 @@ export default function WorkspaceScreen() {
                               onPress={() => handleSelectStyle(style.title)}
                               className="cursor-pointer overflow-hidden rounded-[24px] border"
                               style={{
-                                borderWidth: active ? 1.5 : 0.5,
-                                borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
-                                backgroundColor: "#050505",
-                                shadowColor: active ? "#d946ef" : "#000000",
-                                shadowOpacity: active ? 0.14 : 0.2,
-                                shadowRadius: active ? 18 : 16,
-                                shadowOffset: { width: 0, height: 10 },
-                                elevation: active ? 8 : 5,
+                                borderWidth: active ? 1.5 : 1,
+                                borderColor: active ? "#d946ef" : "#e4e4e7",
+                                backgroundColor: "#ffffff",
                               }}
                             >
                               {isCustomCard ? (
                                 <LinearGradient
-                                  colors={["rgba(217,70,239,0.24)", "rgba(99,102,241,0.2)", "rgba(8,8,10,1)"]}
+                                  colors={["#fde7ff", "#f8fafc"]}
                                   start={{ x: 0, y: 0 }}
                                   end={{ x: 1, y: 1 }}
                                   style={{ height: 120, alignItems: "center", justifyContent: "center" }}
                                 >
-                                  <Sparkles color="#ffffff" size={28} strokeWidth={2.1} />
+                                  <Sparkles color="#d946ef" size={28} strokeWidth={2.1} />
                                 </LinearGradient>
                               ) : (
                                 <Image source={style.image} style={{ width: "100%", height: 120 }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
                               )}
                               <View style={{ paddingHorizontal: 12, paddingVertical: 12 }}>
-                                <Text className="text-sm font-semibold text-white" numberOfLines={2}>{style.title}</Text>
+                                <Text className="text-sm font-semibold text-zinc-950" numberOfLines={2}>{style.title}</Text>
                                 {isCustomCard && customPrompt.trim().length > 0 ? (
-                                  <Text className="mt-2 text-xs leading-5 text-zinc-300" numberOfLines={2}>{customPrompt}</Text>
+                                  <Text className="mt-2 text-xs leading-5 text-zinc-500" numberOfLines={2}>{customPrompt}</Text>
                                 ) : null}
                               </View>
                               {active ? (
-                                <View className="absolute right-2 top-2 rounded-full border border-fuchsia-400/30 bg-black/55 p-1.5" style={{ borderWidth: 0.5 }}>
-                                  <BadgeCheck color="#f0abfc" size={16} strokeWidth={2} />
+                                <View className="absolute right-2 top-2 rounded-full bg-white p-1.5" style={{ borderWidth: 1, borderColor: "rgba(217,70,239,0.22)" }}>
+                                  <BadgeCheck color="#d946ef" size={16} strokeWidth={2} />
                                 </View>
                               ) : null}
                             </LuxPressable>
@@ -2128,10 +2099,10 @@ export default function WorkspaceScreen() {
                     </View>
 
                     {selectedStyle === "Custom" ? (
-                      <View className="overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950" style={{ borderWidth: 0.5, ...WIZARD_CARD_SHADOW }}>
+                      <View className="overflow-hidden rounded-[28px] border bg-white" style={{ borderWidth: 1, borderColor: "#e4e4e7" }}>
                         <View style={{ padding: 18, gap: 14 }}>
-                          <Text className="text-lg font-semibold text-white">Custom Prompt</Text>
-                          <View className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4" style={{ borderWidth: 0.5 }}>
+                          <Text className="text-lg font-semibold text-zinc-950">Custom Prompt</Text>
+                          <View className="rounded-[22px] border bg-zinc-50 px-4 py-4" style={{ borderWidth: 1, borderColor: "#e4e4e7" }}>
                             <TextInput
                               value={customPrompt}
                               onChangeText={handleChangeCustomPrompt}
@@ -2139,15 +2110,15 @@ export default function WorkspaceScreen() {
                               placeholder="Describe the look you want, key materials, lighting, furniture direction, and standout features."
                               placeholderTextColor="#71717a"
                               textAlignVertical="top"
-                              style={{ color: "#ffffff", fontSize: 15, lineHeight: 24, minHeight: 132 }}
+                              style={{ color: "#09090b", fontSize: 15, lineHeight: 24, minHeight: 132 }}
                             />
                           </View>
                           <View style={{ gap: 10 }}>
-                            <Text className="text-sm font-semibold text-white">Example Prompts</Text>
+                            <Text className="text-sm font-semibold text-zinc-950">Example Prompts</Text>
                             <View style={{ gap: 10 }}>
                               {CUSTOM_STYLE_EXAMPLE_PROMPTS.map((prompt) => (
-                                <LuxPressable key={prompt} onPress={() => handleSelectCustomPromptExample(prompt)} className="cursor-pointer rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-4" style={{ borderWidth: 0.5 }}>
-                                  <Text className="text-sm leading-6 text-zinc-300">{prompt}</Text>
+                                <LuxPressable key={prompt} onPress={() => handleSelectCustomPromptExample(prompt)} className="cursor-pointer rounded-[20px] border bg-zinc-50 px-4 py-4" style={{ borderWidth: 1, borderColor: "#e4e4e7" }}>
+                                  <Text className="text-sm leading-6 text-zinc-600">{prompt}</Text>
                                 </LuxPressable>
                               ))}
                             </View>
@@ -2160,15 +2131,15 @@ export default function WorkspaceScreen() {
 
                 {workflowStep === 3 ? (
                   <>
-                    <View style={{ gap: 10 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Personalize</Text>
-                      <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
+                    <View style={{ gap: 12 }}>
+                      <Text style={{ color: "#09090b", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Personalize</Text>
+                      <Text style={{ color: "#71717a", fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
                         Pick the redesign mode and color palette before generating your result.
                       </Text>
                     </View>
 
                     <View style={{ gap: 12 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Mode</Text>
+                      <Text style={{ color: "#09090b", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Mode</Text>
                       <View style={{ flexDirection: "row", gap: 12 }}>
                         {MODE_OPTIONS.map((mode, index) => {
                           const active = selectedModeId === mode.id;
@@ -2180,25 +2151,20 @@ export default function WorkspaceScreen() {
                                 className="cursor-pointer rounded-[26px] border px-5 py-5"
                                 style={{
                                   minHeight: 188,
-                                  borderWidth: active ? 1.5 : 0.5,
-                                  borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
-                                  backgroundColor: active ? "rgba(217,70,239,0.08)" : "#050505",
-                                  shadowColor: active ? "#d946ef" : "#000000",
-                                  shadowOpacity: active ? 0.16 : 0.2,
-                                  shadowRadius: active ? 20 : 18,
-                                  shadowOffset: { width: 0, height: 12 },
-                                  elevation: active ? 8 : 6,
+                                  borderWidth: active ? 1.5 : 1,
+                                  borderColor: active ? "#d946ef" : "#e4e4e7",
+                                  backgroundColor: active ? "rgba(217,70,239,0.08)" : "#fafafa",
                                 }}
                               >
                                 <View className="flex-row items-start justify-between">
-                                  <View className="h-14 w-14 items-center justify-center rounded-[18px] border border-white/10 bg-white/5" style={{ borderWidth: 0.5 }}>
-                                    <ModeIcon color={active ? "#f0abfc" : "#ffffff"} size={24} strokeWidth={2} />
+                                  <View className="h-14 w-14 items-center justify-center rounded-[18px] bg-white" style={{ borderWidth: 1, borderColor: active ? "rgba(217,70,239,0.22)" : "#e4e4e7" }}>
+                                    <ModeIcon color={active ? "#d946ef" : "#18181b"} size={24} strokeWidth={2} />
                                   </View>
-                                  {active ? <BadgeCheck color="#f0abfc" size={19} strokeWidth={2.1} /> : null}
+                                  {active ? <BadgeCheck color="#d946ef" size={19} strokeWidth={2.1} /> : null}
                                 </View>
                                 <View style={{ marginTop: 18, gap: 8 }}>
-                                  <Text className="text-[21px] font-semibold leading-7 text-white">{mode.title}</Text>
-                                  <Text className="text-sm leading-6 text-zinc-400">{mode.description}</Text>
+                                  <Text className="text-[21px] font-semibold leading-7 text-zinc-950">{mode.title}</Text>
+                                  <Text className="text-sm leading-6 text-zinc-500">{mode.description}</Text>
                                 </View>
                               </LuxPressable>
                             </MotiView>
@@ -2208,7 +2174,7 @@ export default function WorkspaceScreen() {
                     </View>
 
                     <View style={{ gap: 12 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Palette</Text>
+                      <Text style={{ color: "#09090b", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Palette</Text>
                       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardPaletteGap }}>
                         {PALETTE_OPTIONS.slice(0, 8).map((palette, index) => {
                           const active = selectedPaletteId === palette.id;
@@ -2218,9 +2184,9 @@ export default function WorkspaceScreen() {
                                 onPress={() => handleSelectPalette(palette.id)}
                                 className="cursor-pointer overflow-hidden rounded-[22px] border"
                                 style={{
-                                  borderWidth: active ? 1.5 : 0.5,
-                                  borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
-                                  backgroundColor: "#050505",
+                                  borderWidth: active ? 1.5 : 1,
+                                  borderColor: active ? "#d946ef" : "#e4e4e7",
+                                  backgroundColor: "#ffffff",
                                 }}
                               >
                                 <View style={{ height: 74, flexDirection: "row" }}>
@@ -2229,11 +2195,11 @@ export default function WorkspaceScreen() {
                                   ))}
                                 </View>
                                 <View style={{ paddingHorizontal: 12, paddingVertical: 12 }}>
-                                  <Text className="text-sm font-semibold text-white" numberOfLines={2}>{palette.label}</Text>
+                                  <Text className="text-sm font-semibold text-zinc-950" numberOfLines={2}>{palette.label}</Text>
                                 </View>
                                 {active ? (
-                                  <View className="absolute right-2 top-2 rounded-full border border-fuchsia-400/30 bg-black/55 p-1.5" style={{ borderWidth: 0.5 }}>
-                                    <BadgeCheck color="#f0abfc" size={16} strokeWidth={2} />
+                                  <View className="absolute right-2 top-2 rounded-full bg-white p-1.5" style={{ borderWidth: 1, borderColor: "rgba(217,70,239,0.22)" }}>
+                                    <BadgeCheck color="#d946ef" size={16} strokeWidth={2} />
                                   </View>
                                 ) : null}
                               </LuxPressable>
@@ -2250,35 +2216,30 @@ export default function WorkspaceScreen() {
         </ScrollView>
 
         <View
-          className="absolute inset-x-0 bottom-0 border-t border-white/10 bg-black/92 px-5 pt-4"
-          style={{ paddingBottom: Math.max(insets.bottom + 10, 22), borderTopWidth: 0.5 }}
+          className="absolute inset-x-0 bottom-0 bg-white px-5 pt-4"
+          style={{
+            paddingBottom: Math.max(insets.bottom + 12, 24),
+            borderTopWidth: 1,
+            borderTopColor: "#f4f4f5",
+            shadowColor: "#000000",
+            shadowOpacity: 0.06,
+            shadowRadius: 18,
+            shadowOffset: { width: 0, height: -8 },
+            elevation: 14,
+          }}
         >
-          <LuxPressable
-            onPress={handleContinue}
-            disabled={!canContinue || (isFinalWizardStep && (isGenerating || generationBlocked))}
-            className="cursor-pointer"
-          >
-            {canContinue && !(isFinalWizardStep && generationBlocked) ? (
-              <LinearGradient
-                colors={["#d946ef", "#6366f1"]}
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-                className="rounded-[24px]"
-                style={{ minHeight: 62 }}
-              >
-                <View className="flex-1 flex-row items-center justify-center gap-3">
-                  <Text className="text-[17px] font-semibold text-white">{continueLabel}</Text>
-                  {!isGenerating ? <ArrowRight color="#ffffff" size={18} strokeWidth={2.3} /> : null}
-                </View>
-              </LinearGradient>
-            ) : (
-              <View
-                className="flex-row items-center justify-center rounded-[24px]"
-                style={{ minHeight: 62, backgroundColor: "#27272a", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)" }}
-              >
-                <Text className="text-[17px] font-semibold text-zinc-500">{generationBlocked && isFinalWizardStep ? "Limit Reached - Upgrade or Wait" : "Continue"}</Text>
-              </View>
-            )}
+          <LuxPressable onPress={handleContinue} disabled={!canContinue || (isFinalWizardStep && (isGenerating || generationBlocked))} className="cursor-pointer">
+            <View
+              className="items-center justify-center rounded-[24px]"
+              style={{
+                minHeight: 62,
+                backgroundColor: canContinue && !(isFinalWizardStep && generationBlocked) ? "#09090b" : "#e4e4e7",
+              }}
+            >
+              <Text style={{ color: canContinue && !(isFinalWizardStep && generationBlocked) ? "#ffffff" : "#a1a1aa", fontSize: 17, fontWeight: "600" }}>
+                {generationBlocked && isFinalWizardStep ? "Limit Reached - Upgrade or Wait" : continueLabel}
+              </Text>
+            </View>
           </LuxPressable>
         </View>
 
@@ -2681,6 +2642,8 @@ export default function WorkspaceScreen() {
   }
 
 }
+
+
 
 
 

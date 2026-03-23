@@ -3,89 +3,155 @@ import { useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { MotiView } from "moti";
-import { memo, useCallback, useEffect } from "react";
-import { ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FlashList } from "@shopify/flash-list";
-import { ChevronRight, Compass, Diamond, Sparkles } from "lucide-react-native";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { ScrollView, Text, View, useWindowDimensions } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { Diamond, Settings2 } from "lucide-react-native";
 
 import { LuxPressable } from "../../components/lux-pressable";
 import { useWorkspaceDraft } from "../../components/workspace-context";
-import { DISCOVER_SECTIONS, type DiscoverTile } from "../../lib/discover-data";
+import { DISCOVER_SECTIONS, type DiscoverSection, type DiscoverTile } from "../../lib/discover-data";
 import { triggerHaptic } from "../../lib/haptics";
 import { staggerFadeUp } from "../../lib/motion";
-import { formatRewardCountdown } from "../../lib/rewards";
 
 type MeResponse = {
   credits?: number;
-  plan?: string;
-  lastRewardDate?: number;
 };
 
-const DiscoverCard = memo(function DiscoverCard({ item, onPress }: { item: DiscoverTile; onPress: (item: DiscoverTile) => void }) {
+const SCREEN_BG = "#09090b";
+const CARD_GAP = 16;
+const BORDER_COLOR = "rgba(255,255,255,0.06)";
+const BRAND_COLOR = "#f59e0b";
+
+function mapService(service: DiscoverTile["service"]) {
+  if (service === "garden") return "garden";
+  if (service === "exterior") return "facade";
+  return "interior";
+}
+
+const DiscoverCard = memo(function DiscoverCard({
+  item,
+  width,
+  isLast,
+  onPress,
+}: {
+  item: DiscoverTile;
+  width: number;
+  isLast: boolean;
+  onPress: (item: DiscoverTile) => void;
+}) {
   return (
     <LuxPressable
-      onPress={() => onPress(item)}
-      className="overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950"
-      style={{ width: 196, borderWidth: 0.5, marginRight: 16 }}
-      glowColor="rgba(244, 63, 94, 0.24)"
+      onPress={() => {
+        triggerHaptic();
+        onPress(item);
+      }}
+      pressableClassName="cursor-pointer"
+      className="overflow-hidden rounded-[24px] border"
+      style={{
+        width,
+        height: width * 1.24,
+        marginRight: isLast ? 0 : CARD_GAP,
+        borderWidth: 1,
+        borderColor: BORDER_COLOR,
+        backgroundColor: "#111113",
+      }}
+      glowColor="rgba(245, 158, 11, 0.18)"
+      scale={0.985}
     >
-      <View style={{ height: 244 }}>
-        <Image source={item.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} cachePolicy="memory-disk" />
-        <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.2)", "rgba(0,0,0,0.92)"]}
-          style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: 16, paddingTop: 52 }}
-        >
-          <Text className="text-lg font-semibold text-white">{item.title}</Text>
-          <Text className="mt-1 text-xs text-zinc-300">{item.caption}</Text>
-          <View className="mt-4 flex-row items-center justify-between rounded-full border border-white/10 bg-white/5 px-3 py-2">
-            <View>
-              <Text className="text-[10px] uppercase tracking-[1.2px] text-zinc-500">Preset</Text>
-              <Text className="mt-1 text-sm font-medium text-zinc-100">{item.style}</Text>
-            </View>
-            <ChevronRight color="#ffffff" size={18} />
-          </View>
-        </LinearGradient>
-      </View>
+      <Image source={item.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={140} />
+      <LinearGradient
+        colors={["transparent", "rgba(0,0,0,0.08)", "rgba(0,0,0,0.88)"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          paddingHorizontal: 18,
+          paddingTop: 84,
+          paddingBottom: 18,
+        }}
+      >
+        <Text className="text-[22px] font-semibold text-white" numberOfLines={2}>
+          {item.title}
+        </Text>
+        <Text className="mt-2 text-sm text-zinc-300" numberOfLines={1}>
+          {item.subtitle}
+        </Text>
+      </LinearGradient>
     </LuxPressable>
   );
 });
 
-const DiscoverShelf = memo(function DiscoverShelf({
-  items,
-  onPress,
+const DiscoverSectionRow = memo(function DiscoverSectionRow({
+  section,
+  cardWidth,
+  expanded,
+  onToggle,
+  onCardPress,
 }: {
-  items: DiscoverTile[];
-  onPress: (item: DiscoverTile) => void;
+  section: DiscoverSection;
+  cardWidth: number;
+  expanded: boolean;
+  onToggle: (sectionId: DiscoverSection["id"]) => void;
+  onCardPress: (item: DiscoverTile) => void;
 }) {
-  const renderItem = useCallback(
-    ({ item }: { item: DiscoverTile }) => <DiscoverCard item={item} onPress={onPress} />,
-    [onPress],
-  );
-
-  const keyExtractor = useCallback((item: DiscoverTile) => item.id, []);
+  const visibleItems = expanded ? section.items : section.items.slice(0, 4);
 
   return (
-    <FlashList
-      data={items}
-      horizontal
-      renderItem={renderItem}
-      keyExtractor={keyExtractor}
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ paddingLeft: 20, paddingRight: 4 }}
-      removeClippedSubviews
-    />
+    <View style={{ gap: 18 }}>
+      <View className="flex-row items-center justify-between px-5">
+        <Text className="text-[28px] font-semibold tracking-[-0.8px] text-white">{section.title}</Text>
+        <LuxPressable
+          onPress={() => onToggle(section.id)}
+          pressableClassName="cursor-pointer"
+          className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2"
+          style={{ borderWidth: 1 }}
+          scale={0.98}
+        >
+          <Text className="text-sm font-medium text-zinc-300">{expanded ? "Show Less" : "See All"}</Text>
+        </LuxPressable>
+      </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        snapToAlignment="start"
+        snapToInterval={cardWidth + CARD_GAP}
+        contentContainerStyle={{ paddingLeft: 20, paddingRight: 4 }}
+      >
+        {visibleItems.map((item, index) => (
+          <DiscoverCard
+            key={item.id}
+            item={item}
+            width={cardWidth}
+            isLast={index === visibleItems.length - 1}
+            onPress={onCardPress}
+          />
+        ))}
+      </ScrollView>
+    </View>
   );
 });
 
 export default function GalleryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { isSignedIn } = useAuth();
   const me = useQuery("users:me" as any, isSignedIn ? {} : "skip") as MeResponse | null | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
   const { setDraftRoom, setDraftStyle } = useWorkspaceDraft();
+  const [expandedSections, setExpandedSections] = useState<Record<DiscoverSection["id"], boolean>>({
+    home: false,
+    garden: false,
+    exterior: false,
+  });
 
   useEffect(() => {
     if (!isSignedIn) return;
@@ -93,92 +159,88 @@ export default function GalleryScreen() {
   }, [ensureUser, isSignedIn]);
 
   const credits = typeof me?.credits === "number" ? me.credits : 3;
-  const rewardCountdown = formatRewardCountdown(me?.lastRewardDate);
+  const cardWidth = useMemo(() => Math.min(Math.max(width * 0.68, 248), 284), [width]);
 
-  const handleOpenTile = useCallback(
+  const handleCardPress = useCallback(
     (item: DiscoverTile) => {
-      triggerHaptic();
       setDraftRoom(item.spaceType);
       setDraftStyle(item.style);
       router.push({
-        pathname: "/workspace",
+        pathname: "/wizard",
         params: {
-          service: item.service,
+          service: mapService(item.service),
           presetRoom: item.spaceType,
           presetStyle: item.style,
-          startStep: "0",
         },
       });
     },
     [router, setDraftRoom, setDraftStyle],
   );
 
+  const handleOpenSettings = useCallback(() => {
+    triggerHaptic();
+    router.push("/profile");
+  }, [router]);
+
+  const handleToggleSection = useCallback((sectionId: DiscoverSection["id"]) => {
+    triggerHaptic();
+    setExpandedSections((current) => ({
+      ...current,
+      [sectionId]: !current[sectionId],
+    }));
+  }, []);
+
   return (
-    <View className="flex-1 bg-black">
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+      <StatusBar style="light" />
       <ScrollView
-        className="flex-1 bg-black"
-        contentContainerStyle={{ paddingTop: insets.top + 18, paddingBottom: 120 }}
+        style={{ flex: 1, backgroundColor: SCREEN_BG }}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingTop: 10,
+          paddingBottom: Math.max(insets.bottom + 34, 44),
+          gap: 28,
+        }}
+        contentInsetAdjustmentBehavior="never"
       >
-        <View className="px-5">
-          <MotiView {...staggerFadeUp(0)}>
-            <View className="rounded-[30px] border border-white/10 bg-zinc-950 px-5 py-5" style={{ borderWidth: 0.5 }}>
-              <View className="flex-row items-center justify-between">
-                <View className="rounded-full border border-white/10 bg-white/5 px-3 py-2" style={{ borderWidth: 0.5 }}>
-                  <View className="flex-row items-center gap-2">
-                    <Diamond color="#ffffff" size={15} />
-                    <Text className="text-sm font-semibold text-white">{credits}</Text>
-                  </View>
-                </View>
-                <View className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-2" style={{ borderWidth: 0.5 }}>
-                  <Text className="text-[11px] font-medium text-emerald-200">{rewardCountdown}</Text>
-                </View>
+        <MotiView {...staggerFadeUp(0)} className="px-5">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-[32px] font-bold tracking-[-1px] text-white">Discover</Text>
+
+            <View className="flex-row items-center gap-3">
+              <View
+                className="flex-row items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2.5"
+                style={{ borderWidth: 1 }}
+              >
+                <Diamond color={BRAND_COLOR} size={15} />
+                <Text className="text-sm font-semibold text-white">{credits}</Text>
               </View>
 
-              <View className="mt-6">
-                <View className="flex-row items-center gap-2">
-                  <Compass color="#ffffff" size={18} />
-                  <Text className="text-[11px] uppercase tracking-[2px] text-zinc-500">Discover Hub</Text>
-                </View>
-                <Text className="mt-3 text-3xl font-semibold text-white">Explore spaces worth redesigning.</Text>
-                <Text className="mt-3 max-w-[92%] text-sm leading-6 text-zinc-400">
-                  Browse curated rooms, gardens, and facades. Any image you tap opens the Create flow with the matching
-                  space type and a recommended style already selected.
-                </Text>
-              </View>
+              <LuxPressable
+                onPress={handleOpenSettings}
+                pressableClassName="cursor-pointer"
+                className="h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04]"
+                style={{ borderWidth: 1 }}
+                scale={0.98}
+              >
+                <Settings2 color="#ffffff" size={19} strokeWidth={2.1} />
+              </LuxPressable>
             </View>
-          </MotiView>
-        </View>
+          </View>
+        </MotiView>
 
-        {DISCOVER_SECTIONS.map((section, sectionIndex) => (
-          <MotiView key={section.id} {...staggerFadeUp(sectionIndex + 1)} className="mt-10">
-            <View className="px-5">
-              <Text className="text-[11px] uppercase tracking-[2px] text-zinc-500">{section.eyebrow}</Text>
-              <Text className="mt-2 text-2xl font-semibold text-white">{section.title}</Text>
-              <Text className="mt-2 max-w-[92%] text-sm leading-6 text-zinc-400">{section.description}</Text>
-            </View>
-
-            <View className="mt-6 gap-8">
-              {section.shelves.map((shelf) => (
-                <View key={shelf.id}>
-                  <View className="mb-4 px-5">
-                    <View className="flex-row items-center justify-between">
-                      <Text className="text-lg font-semibold text-white">{shelf.title}</Text>
-                      <View className="flex-row items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
-                        <Sparkles color="#f9a8d4" size={12} />
-                        <Text className="text-[10px] font-medium uppercase tracking-[1.4px] text-zinc-300">{shelf.items.length} looks</Text>
-                      </View>
-                    </View>
-                    <Text className="mt-2 text-sm leading-6 text-zinc-500">{shelf.description}</Text>
-                  </View>
-
-                  <DiscoverShelf items={shelf.items} onPress={handleOpenTile} />
-                </View>
-              ))}
-            </View>
+        {DISCOVER_SECTIONS.map((section, index) => (
+          <MotiView key={section.id} {...staggerFadeUp(index + 1)}>
+            <DiscoverSectionRow
+              section={section}
+              cardWidth={cardWidth}
+              expanded={expandedSections[section.id]}
+              onToggle={handleToggleSection}
+              onCardPress={handleCardPress}
+            />
           </MotiView>
         ))}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
