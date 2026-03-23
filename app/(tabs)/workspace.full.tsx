@@ -45,7 +45,6 @@ import {
   Building2,
   Camera,
   CarFront,
-  Check,
   CookingPot,
   Download,
   DoorOpen,
@@ -55,7 +54,6 @@ import {
   House,
   Image as ImageIcon,
   Plus,
-  Layers,
   Monitor,
   PaintRoller,
   Projector,
@@ -64,16 +62,12 @@ import {
   Sparkles,
   Store,
   SunMedium,
-  ThumbsDown,
-  ThumbsUp,
-  Trash2,
   Trees,
   UtensilsCrossed,
   MoveHorizontal,
   Wand2,
 } from "lucide-react-native";
 
-import { generateImage } from "../../lib/api";
 import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
 import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
@@ -135,13 +129,31 @@ type StyleLibraryItem = {
   image: number;
 };
 
+type GenerationStatus = "processing" | "ready" | "failed";
+type GenerationSpeedTier = "standard" | "pro" | "ultra";
+
+type ArchiveGeneration = {
+  _id: string;
+  _creationTime: number;
+  imageUrl?: string | null;
+  sourceImageUrl?: string | null;
+  style?: string | null;
+  roomType?: string | null;
+  status?: GenerationStatus;
+  errorMessage?: string | null;
+  createdAt?: number;
+};
+
 type BoardRenderItem = {
   id: string;
-  imageUrl: string;
+  imageUrl?: string | null;
   originalImageUrl?: string | null;
   styleLabel: string;
   roomLabel: string;
   generationId?: string | null;
+  status: GenerationStatus;
+  errorMessage?: string | null;
+  createdAt: number;
 };
 
 type ModeOption = {
@@ -163,23 +175,57 @@ const BoardGridCard = memo(function BoardGridCard({
   index: number;
   onPress: (item: BoardRenderItem) => void;
 }) {
+  const previewImage = item.imageUrl ?? item.originalImageUrl ?? null;
+  const isProcessing = item.status === "processing";
+  const isFailed = item.status === "failed";
+
   return (
     <View style={{ width, marginBottom: 12, marginRight: index % 2 === 0 ? 12 : 0 }}>
       <LuxPressable
         onPress={() => onPress(item)}
         className="cursor-pointer overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950"
-        style={{ height: 236, borderWidth: 0.5 }}
+        style={{ height: 236, borderWidth: 0.5, opacity: isFailed ? 0.92 : 1 }}
       >
-        <Image source={{ uri: item.imageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+        {previewImage ? (
+          <Image source={{ uri: previewImage }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+        ) : (
+          <View className="h-full w-full items-center justify-center bg-zinc-900">
+            <Sparkles color="#71717a" size={28} />
+          </View>
+        )}
+
+        <View
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundColor: isFailed ? "rgba(20,0,8,0.58)" : isProcessing ? "rgba(0,0,0,0.42)" : "rgba(0,0,0,0.14)",
+          }}
+        />
+
+        {isProcessing ? (
+          <View className="absolute inset-0 items-center justify-center gap-3">
+            <View className="h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/35">
+              <ActivityIndicator size="small" color="#ffffff" />
+            </View>
+            <Text className="text-sm font-semibold text-white">Generating...</Text>
+          </View>
+        ) : null}
+
         <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.82)"]}
+          colors={["transparent", "rgba(0,0,0,0.84)"]}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
-          style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 96 }}
+          style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 108 }}
         />
         <View style={{ position: "absolute", left: 14, right: 14, bottom: 14 }}>
           <Text className="text-base font-semibold text-white">{item.styleLabel + " " + item.roomLabel}</Text>
-          <Text className="mt-1 text-xs text-zinc-300">Tap to open your design editor</Text>
+          <Text className="mt-1 text-xs text-zinc-300">
+            {isProcessing
+              ? "Generating with Gemini..."
+              : isFailed
+                ? "Generation failed. Tap for details."
+                : "Tap to open your design editor"}
+          </Text>
         </View>
       </LuxPressable>
     </View>
@@ -594,6 +640,15 @@ async function readBase64FromUri(uri: string) {
   return markerIndex === -1 ? dataUrl : dataUrl.slice(markerIndex + marker.length);
 }
 
+async function readBlobFromUri(uri: string) {
+  const response = await fetch(uri);
+  if (!response.ok) {
+    throw new Error("Unable to load the selected image.");
+  }
+
+  return await response.blob();
+}
+
 export default function WorkspaceScreen() {
   const router = useRouter();
   const { service, presetStyle, presetRoom, startStep } = useLocalSearchParams<{
@@ -602,9 +657,9 @@ export default function WorkspaceScreen() {
     presetRoom?: string;
     startStep?: string;
   }>();
-  const { isSignedIn, getToken } = useAuth();
+  const { isSignedIn } = useAuth();
   const diagnostic = DIAGNOSTIC_BYPASS;
-  const effectiveSignedIn = diagnostic ? true : isSignedIn;
+  const effectiveSignedIn = isSignedIn;
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { draft, setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle } =
@@ -615,9 +670,13 @@ export default function WorkspaceScreen() {
     "users:me" as any,
     diagnostic ? "skip" : isSignedIn ? {} : "skip",
   ) as MeResponse | null | undefined;
+  const generationArchive = useQuery(
+    "generations:getUserArchive" as any,
+    diagnostic ? "skip" : isSignedIn ? {} : "skip",
+  ) as ArchiveGeneration[] | undefined;
   const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
-  const consumeGenerationAllowance = useMutation("users:consumeGenerationAllowance" as any);
-  const releaseGenerationAllowance = useMutation("users:releaseGenerationAllowance" as any);
+  const createSourceUploadUrl = useMutation("generations:createSourceUploadUrl" as any);
+  const startGeneration = useMutation("generations:startGeneration" as any);
   const markReviewPrompted = useMutation("users:markReviewPrompted" as any);
   const submitFeedback = useMutation("feedback:submit" as any);
   const submitGenerationFeedback = useMutation("generations:submitFeedback" as any);
@@ -634,7 +693,7 @@ export default function WorkspaceScreen() {
   const [selectedAspectRatioId, setSelectedAspectRatioId] = useState<AspectRatioOption["id"]>("post");
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [generationId, setGenerationId] = useState<string | null>(null);
-  const [boardItems, setBoardItems] = useState<BoardRenderItem[]>([]);
+  const [pendingBoardItems, setPendingBoardItems] = useState<BoardRenderItem[]>([]);
   const [activeBoardItemId, setActiveBoardItemId] = useState<string | null>(null);
   const [showBeforeOnly, setShowBeforeOnly] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -653,6 +712,7 @@ export default function WorkspaceScreen() {
   const [lastGenerationCount, setLastGenerationCount] = useState<number | null>(null);
   const [showResumeToast, setShowResumeToast] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
+  const [pendingReviewState, setPendingReviewState] = useState<{ count: number; shouldPrompt: boolean } | null>(null);
 
   const reviewSheetRef = useRef<BottomSheetModal>(null);
   const rateSheetRef = useRef<BottomSheetModal>(null);
@@ -663,6 +723,7 @@ export default function WorkspaceScreen() {
   const hasAppliedStartStepRef = useRef(false);
   const reviewHandledRef = useRef(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const generationAlertedFailureRef = useRef<string | null>(null);
   const sliderX = useSharedValue(0);
   const sliderWidth = useSharedValue(0);
   const sliderStart = useSharedValue(0);
@@ -814,6 +875,33 @@ export default function WorkspaceScreen() {
     [selectedAspectRatioId],
   );
 
+  const archivedBoardItems = useMemo<BoardRenderItem[]>(() => {
+    return (generationArchive ?? []).map((generation) => ({
+      id: generation._id,
+      imageUrl: generation.imageUrl ?? null,
+      originalImageUrl: generation.sourceImageUrl ?? null,
+      styleLabel: generation.style ?? "Custom",
+      roomLabel: generation.roomType ?? serviceLabel,
+      generationId: generation._id,
+      status: generation.status ?? ((generation.imageUrl ?? "").length > 0 ? "ready" : "processing"),
+      errorMessage: generation.errorMessage ?? null,
+      createdAt: generation.createdAt ?? generation._creationTime,
+    }));
+  }, [generationArchive, serviceLabel]);
+
+  const boardItems = useMemo<BoardRenderItem[]>(() => {
+    const merged = new Map<string, BoardRenderItem>();
+    for (const item of archivedBoardItems) {
+      merged.set(item.id, item);
+    }
+    for (const item of pendingBoardItems) {
+      if (!merged.has(item.id)) {
+        merged.set(item.id, item);
+      }
+    }
+    return Array.from(merged.values()).sort((left, right) => right.createdAt - left.createdAt);
+  }, [archivedBoardItems, pendingBoardItems]);
+
   const activeBoardItem = useMemo(
     () => boardItems.find((item) => item.id === activeBoardItemId) ?? null,
     [activeBoardItemId, boardItems],
@@ -822,8 +910,12 @@ export default function WorkspaceScreen() {
   const ratioSpec = useMemo(() => resolveAspectRatio(selectedAspectRatio), [selectedAspectRatio]);
   const wizardColumnGap = 16;
   const wizardCardWidth = useMemo(() => Math.max((width - 48 - wizardColumnGap) / 2, 148), [width]);
-  const wizardExampleCardWidth = useMemo(() => Math.min(Math.max(width * 0.3, 112), 132), [width]);
-  const wizardUploadSize = useMemo(() => Math.min(width - 56, 332), [width]);
+  const wizardStyleGap = 12;
+  const wizardStyleCardWidth = useMemo(() => Math.max((width - 40 - wizardStyleGap * 2) / 3, 98), [width]);
+  const wizardPaletteGap = 12;
+  const wizardPaletteCardWidth = useMemo(() => Math.max((width - 40 - wizardPaletteGap * 2) / 3, 98), [width]);
+  const wizardExampleCardSize = useMemo(() => Math.min(Math.max(width * 0.23, 90), 104), [width]);
+  const wizardUploadSize = useMemo(() => Math.max(Math.min(width - 72, 318), 248), [width]);
 
   const spaceOptions = useMemo(() => {
     if (serviceType === "exterior") return SPACE_OPTIONS.exterior;
@@ -834,6 +926,15 @@ export default function WorkspaceScreen() {
   const plan = diagnostic ? "pro" : me?.plan ?? "free";
   const isProPlan = plan === "pro";
   const planUsed = plan === "pro" ? "pro" : plan === "trial" ? "trial" : "free";
+  const generationSpeedTier = useMemo<GenerationSpeedTier>(() => {
+    if (me?.subscriptionType === "yearly") {
+      return "ultra";
+    }
+    if (plan === "pro") {
+      return "pro";
+    }
+    return "standard";
+  }, [me?.subscriptionType, plan]);
   const imagesRemaining = diagnostic ? 999 : me?.imagesRemaining ?? 0;
   const imageGenerationLimit = diagnostic ? 999 : me?.imageGenerationLimit ?? 0;
   const generationStatusLabel = diagnostic ? "Unlimited diagnostic" : me?.generationStatusLabel ?? "0 / 0 images left";
@@ -844,6 +945,58 @@ export default function WorkspaceScreen() {
   const isDownloadingUltra = isDownloading === "ultra";
   const activeEditorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
   const sliderSpring = useMemo(() => ({ damping: 15, stiffness: 100 }), []);
+
+  useEffect(() => {
+    if (pendingBoardItems.length === 0 || archivedBoardItems.length === 0) {
+      return;
+    }
+
+    setPendingBoardItems((current) =>
+      current.filter((item) => !archivedBoardItems.some((archivedItem) => archivedItem.id === item.id)),
+    );
+  }, [archivedBoardItems, pendingBoardItems.length]);
+
+  useEffect(() => {
+    if (!generationId) {
+      return;
+    }
+
+    const currentGeneration = boardItems.find((item) => item.generationId === generationId || item.id === generationId) ?? null;
+    if (!currentGeneration) {
+      return;
+    }
+
+    if (currentGeneration.status === "ready" && currentGeneration.imageUrl) {
+      if (generatedImageUrl !== currentGeneration.imageUrl) {
+        setGeneratedImageUrl(currentGeneration.imageUrl);
+      }
+
+      if (activeBoardItemId !== currentGeneration.id) {
+        setActiveBoardItemId(currentGeneration.id);
+      }
+
+      if (workflowStep !== 5) {
+        setWorkflowStep(5);
+      }
+
+      if (pendingReviewState) {
+        setLastGenerationCount(pendingReviewState.count);
+        if (pendingReviewState.shouldPrompt) {
+          reviewHandledRef.current = false;
+          setReviewPromptOpen(true);
+          requestAnimationFrame(() => reviewSheetRef.current?.present());
+        }
+        setPendingReviewState(null);
+      }
+      return;
+    }
+
+    if (currentGeneration.status === "failed" && generationAlertedFailureRef.current !== currentGeneration.id) {
+      generationAlertedFailureRef.current = currentGeneration.id;
+      setPendingReviewState(null);
+      Alert.alert("Generation failed", currentGeneration.errorMessage ?? "Please try again.");
+    }
+  }, [activeBoardItemId, boardItems, generatedImageUrl, generationId, pendingReviewState, workflowStep]);
 
   const handleSliderLayout = useCallback(
     (event: { nativeEvent: { layout: { width: number } } }) => {
@@ -885,12 +1038,6 @@ export default function WorkspaceScreen() {
   const dislikeButtonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: dislikeScale.value }],
   }));
-
-  const promptText = useMemo(() => {
-    if (!selectedRoom || !selectedStyle || !selectedPalette || !selectedAspectRatio || !selectedMode) return "";
-    const instruction = customPrompt.trim().length > 0 ? customPrompt.trim() : "No additional instructions.";
-    return `${selectedRoom} redesigned in ${selectedStyle} style. ${selectedMode.promptHint} Use the ${selectedPalette.label} palette direction. Additional instructions: ${instruction}. The output image must have a ${ratioSpec.ratioLabel} aspect ratio. Target resolution: ${ratioSpec.targetWidth}x${ratioSpec.targetHeight}. Photorealistic, premium, editorial-quality interior render.`;
-  }, [customPrompt, ratioSpec.ratioLabel, ratioSpec.targetHeight, ratioSpec.targetWidth, selectedAspectRatio, selectedMode, selectedPalette, selectedRoom, selectedStyle]);
 
   const canContinue = useMemo(() => {
     if (workflowStep === 0) return Boolean(selectedImage);
@@ -1069,7 +1216,8 @@ export default function WorkspaceScreen() {
       setSelectedAspectRatioId("post");
       setGeneratedImageUrl(null);
       setGenerationId(null);
-      setBoardItems([]);
+      generationAlertedFailureRef.current = null;
+      setPendingReviewState(null);
       setActiveBoardItemId(null);
       setShowBeforeOnly(false);
       setFeedbackMessage("");
@@ -1272,6 +1420,29 @@ export default function WorkspaceScreen() {
   }, [animateFeedbackButton, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
 
 
+  const uploadSelectedImageToStorage = useCallback(async (image: SelectedImage) => {
+    const uploadUrl = (await createSourceUploadUrl({})) as string;
+    const blob = await readBlobFromUri(image.uri);
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": blob.type || "image/jpeg",
+      },
+      body: blob,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error("Unable to upload the source image to Convex Storage.");
+    }
+
+    const uploadResult = (await uploadResponse.json()) as { storageId?: string };
+    if (!uploadResult.storageId) {
+      throw new Error("Convex did not return a storage id for the uploaded source image.");
+    }
+
+    return uploadResult.storageId;
+  }, [createSourceUploadUrl]);
+
   const handleGenerate = useCallback(async (options?: { regenerate?: boolean }) => {
     if (!selectedImage || !selectedRoom || !selectedStyle || !selectedPalette || !selectedMode) {
       Alert.alert("Complete the steps", "Please finish the previous steps first.");
@@ -1289,96 +1460,78 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    let allowanceReserved = false;
-    let reviewState: { count: number; shouldPrompt: boolean } | null = null;
-
     try {
       setFeedbackState(null);
       setFeedbackSubmitted(false);
+      setGeneratedImageUrl(null);
       setGenerationId(null);
+      generationAlertedFailureRef.current = null;
+      setPendingReviewState(null);
       setIsGenerating(true);
       setWorkflowStep(4);
 
-      if (!diagnostic) {
-        reviewState = (await consumeGenerationAllowance({ ignoreCooldown: ignoreReviewCooldown })) as {
-          count: number;
-          shouldPrompt: boolean;
-        };
-        allowanceReserved = true;
-      }
-
-      const base64 = selectedImage.base64 ?? (await readBase64FromUri(selectedImage.uri));
-      const token = diagnostic ? null : await getToken();
-
-      const response = await generateImage(
-        {
-          imageBase64: base64,
-          prompt: options?.regenerate
-            ? `${promptText} Create a fresh alternative variation that keeps the same room type, style, palette, and mode but explores a new composition and design outcome.`
-            : promptText,
-          style: selectedStyle,
-          planUsed,
-          aspectRatio: ratioSpec.ratioLabel,
-          targetWidth: ratioSpec.targetWidth,
-          targetHeight: ratioSpec.targetHeight,
-        },
-        token,
-      );
+      const sourceStorageId = await uploadSelectedImageToStorage(selectedImage);
+      const startResult = (await startGeneration({
+        sourceStorageId,
+        roomType: selectedRoom,
+        style: selectedStyle,
+        customPrompt: customPrompt.trim().length > 0 ? customPrompt.trim() : undefined,
+        aspectRatio: ratioSpec.ratioLabel,
+        colorPalette: selectedPalette.label,
+        modeLabel: selectedMode.title,
+        modePromptHint: selectedMode.promptHint,
+        regenerate: options?.regenerate ?? false,
+        ignoreReviewCooldown,
+        speedTier: generationSpeedTier,
+      })) as {
+        generationId: string;
+        reviewState?: { count: number; shouldPrompt: boolean };
+      };
 
       const nextBoardItem: BoardRenderItem = {
-        id: response.generationId ?? String(Date.now()),
-        imageUrl: response.imageUrl,
+        id: startResult.generationId,
+        imageUrl: null,
         originalImageUrl: selectedImage.uri,
         styleLabel: selectedStyle,
         roomLabel: selectedRoom,
-        generationId: response.generationId ?? null,
+        generationId: startResult.generationId,
+        status: "processing",
+        errorMessage: null,
+        createdAt: Date.now(),
       };
 
-      setGeneratedImageUrl(response.imageUrl);
-      setGenerationId(response.generationId ?? null);
-      setBoardItems((prev) => [nextBoardItem, ...prev.filter((item) => item.id !== nextBoardItem.id)]);
+      setPendingBoardItems((current) => [nextBoardItem, ...current.filter((item) => item.id !== nextBoardItem.id)]);
+      setGenerationId(startResult.generationId);
+      setPendingReviewState(startResult.reviewState ?? null);
+      if (startResult.reviewState) {
+        setLastGenerationCount(startResult.reviewState.count);
+      }
       setActiveBoardItemId(null);
       setWorkflowStep(5);
-
-      if (reviewState) {
-        setLastGenerationCount(reviewState.count);
-        if (reviewState.shouldPrompt) {
-          reviewHandledRef.current = false;
-          setReviewPromptOpen(true);
-          requestAnimationFrame(() => reviewSheetRef.current?.present());
-        }
-      }
     } catch (error) {
-      if (allowanceReserved) {
-        try {
-          await releaseGenerationAllowance({});
-        } catch {
-          // Ignore allowance rollback failures.
-        }
-      }
       setWorkflowStep(3);
       Alert.alert("Generation failed", error instanceof Error ? error.message : "Please try again.");
     } finally {
       setIsGenerating(false);
     }
   }, [
-    consumeGenerationAllowance,
+    createSourceUploadUrl,
+    customPrompt,
     diagnostic,
     effectiveSignedIn,
     generationBlocked,
+    generationSpeedTier,
     generationStatusMessage,
-    getToken,
     ignoreReviewCooldown,
-    planUsed,
-    promptText,
-    ratioSpec,
-    releaseGenerationAllowance,
+    ratioSpec.ratioLabel,
     router,
     selectedImage,
     selectedMode,
     selectedPalette,
     selectedRoom,
     selectedStyle,
+    startGeneration,
+    uploadSelectedImageToStorage,
   ]);
 
   useEffect(() => {
@@ -1441,16 +1594,31 @@ export default function WorkspaceScreen() {
   }, [customPromptDraft]);
 
   const handleSelectStyle = useCallback((value: string) => {
-    if (value === "Custom") {
-      handleOpenCustomStyle();
-      return;
-    }
-
     triggerHaptic();
     startTransition(() => {
       setSelectedStyle(value);
+      if (value === "Custom") {
+        setCustomPromptDraft(customPrompt);
+      }
     });
-  }, [handleOpenCustomStyle]);
+  }, [customPrompt]);
+
+  const handleChangeCustomPrompt = useCallback((value: string) => {
+    setCustomPrompt(value);
+    setCustomPromptDraft(value);
+    if (selectedStyle !== "Custom") {
+      setSelectedStyle("Custom");
+    }
+  }, [selectedStyle]);
+
+  const handleSelectCustomPromptExample = useCallback((value: string) => {
+    triggerHaptic();
+    startTransition(() => {
+      setSelectedStyle("Custom");
+      setCustomPrompt(value);
+      setCustomPromptDraft(value);
+    });
+  }, []);
 
   const handleSelectPalette = useCallback((value: string) => {
     triggerHaptic();
@@ -1468,6 +1636,16 @@ export default function WorkspaceScreen() {
   }, []);
 
   const handleOpenBoardItem = useCallback((item: BoardRenderItem) => {
+    if (item.status === "processing") {
+      showToast("Your redesign is still processing.");
+      return;
+    }
+
+    if (item.status === "failed" || !item.imageUrl) {
+      Alert.alert("Generation failed", item.errorMessage ?? "This redesign did not finish. Please try generating again.");
+      return;
+    }
+
     triggerHaptic();
     setActiveBoardItemId(item.id);
     setGeneratedImageUrl(item.imageUrl);
@@ -1478,7 +1656,7 @@ export default function WorkspaceScreen() {
     if (sliderWidth.value > 0) {
       sliderX.value = withSpring(sliderWidth.value / 2, sliderSpring);
     }
-  }, [sliderSpring, sliderWidth, sliderX]);
+  }, [showToast, sliderSpring, sliderWidth, sliderX]);
 
   const handleCloseBoardEditor = useCallback(() => {
     triggerHaptic();
@@ -1507,10 +1685,12 @@ export default function WorkspaceScreen() {
         await deleteGeneration({ id: item.generationId });
       }
 
-      setBoardItems((prev) => prev.filter((entry) => entry.id != item.id));
+      setPendingBoardItems((current) => current.filter((entry) => entry.id !== item.id));
       setActiveBoardItemId(null);
       setGeneratedImageUrl(null);
       setGenerationId(null);
+      generationAlertedFailureRef.current = null;
+      setPendingReviewState(null);
       setShowBeforeOnly(false);
       showToast("Design removed from your board.");
     } catch (error) {
@@ -1617,6 +1797,7 @@ export default function WorkspaceScreen() {
 
   if (workflowStep <= 3) {
     const currentStepNumber = workflowStep + 1;
+    const currentStepTitle = ["Add a Photo", "Choose Space", "Select Style", "Personalize"][workflowStep] ?? "Add a Photo";
     const isFinalWizardStep = workflowStep === 3;
     const continueLabel = isFinalWizardStep
       ? generationBlocked
@@ -1644,7 +1825,7 @@ export default function WorkspaceScreen() {
               className="rounded-[22px] border border-white/10 bg-black/75 px-4 py-3"
               style={{ borderWidth: 0.5 }}
             >
-              <Text className="text-center text-sm font-semibold text-white">{"✨"} Resuming your saved wizard draft.</Text>
+              <Text className="text-center text-sm font-semibold text-white">Resuming your saved wizard draft.</Text>
             </BlurView>
           </MotiView>
         ) : null}
@@ -1661,50 +1842,63 @@ export default function WorkspaceScreen() {
           contentInsetAdjustmentBehavior="never"
           showsVerticalScrollIndicator={false}
         >
-          <View style={{ gap: 22 }}>
-              {workflowStep > 0 ? (
-                <View className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3" style={{ borderWidth: 0.5 }}>
-                  <Text className="text-xs font-semibold uppercase tracking-[1px] text-zinc-400">Images Remaining</Text>
-                  <Text className="mt-2 text-base font-semibold text-white">{generationStatusLabel}</Text>
-                  <Text className="mt-1 text-xs text-zinc-500">{generationStatusMessage}</Text>
-                </View>
-              ) : null}
+          <View style={{ gap: 24 }}>
+            {workflowStep === 0 ? (
               <View className="flex-row items-center justify-between">
-              <LuxPressable
-                onPress={workflowStep > 0 ? handleBack : () => router.back()}
-                className="cursor-pointer h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5"
-                style={{ borderWidth: 0.5 }}
-              >
-                <ArrowLeft color="#ffffff" size={20} strokeWidth={2.2} />
-              </LuxPressable>
+                <Text className="text-[13px] font-semibold uppercase tracking-[1.9px] text-zinc-400">{`Step ${currentStepNumber} / 4`}</Text>
+                <LuxPressable
+                  onPress={() => router.back()}
+                  className="cursor-pointer flex-row items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-3"
+                  style={{ borderWidth: 0.5 }}
+                >
+                  <Text className="text-sm font-medium text-white">Close</Text>
+                  <Close color="#ffffff" size={16} strokeWidth={2.2} />
+                </LuxPressable>
+              </View>
+            ) : (
+              <View className="flex-row items-center justify-between">
+                <LuxPressable
+                  onPress={handleBack}
+                  className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
+                  style={{ borderWidth: 0.5 }}
+                >
+                  <ArrowLeft color="#ffffff" size={19} strokeWidth={2.2} />
+                </LuxPressable>
+                <Text className="text-[13px] font-semibold uppercase tracking-[1.9px] text-zinc-400">{`Step ${currentStepNumber} / 4`}</Text>
+                <LuxPressable
+                  onPress={handleResetWizard}
+                  className="cursor-pointer flex-row items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-3"
+                  style={{ borderWidth: 0.5 }}
+                >
+                  <Text className="text-sm font-medium text-white">Close</Text>
+                  <Close color="#ffffff" size={16} strokeWidth={2.2} />
+                </LuxPressable>
+              </View>
+            )}
 
-              <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", letterSpacing: -0.4 }}>
-                {`Step ${currentStepNumber} / 4`}
-              </Text>
-
-              <LuxPressable
-                onPress={handleResetWizard}
-                className="cursor-pointer h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5"
-                style={{ borderWidth: 0.5 }}
-              >
-                <Close color="#ffffff" size={20} strokeWidth={2.2} />
-              </LuxPressable>
-            </View>
-
-            <View className="flex-row gap-3">
+            <View className="flex-row gap-2.5">
               {[0, 1, 2, 3].map((index) => {
                 const active = index <= workflowStep;
                 return (
-                  <MotiView
+                  <View
                     key={`wizard-progress-${index}`}
-                    animate={{
-                      backgroundColor: active ? "#d946ef" : "rgba(39,39,42,0.95)",
-                      opacity: 1,
-                      scale: 1,
+                    style={{
+                      flex: 1,
+                      height: 8,
+                      borderRadius: 999,
+                      overflow: "hidden",
+                      backgroundColor: "#27272a",
                     }}
-                    transition={LUX_SPRING}
-                    style={{ flex: 1, height: 8, borderRadius: 999 }}
-                  />
+                  >
+                    <MotiView
+                      animate={{
+                        width: active ? "100%" : "0%",
+                        opacity: active ? 1 : 0.55,
+                      }}
+                      transition={LUX_SPRING}
+                      style={{ height: "100%", borderRadius: 999, backgroundColor: "#d946ef" }}
+                    />
+                  </View>
                 );
               })}
             </View>
@@ -1716,14 +1910,14 @@ export default function WorkspaceScreen() {
                 animate={{ opacity: 1, translateX: 0, scale: 1 }}
                 exit={{ opacity: 0, translateX: -14, scale: 0.99 }}
                 transition={stepTransition}
-                style={{ gap: 22 }}
+                style={{ gap: 24 }}
               >
                 {workflowStep === 0 ? (
                   <>
-                    <View style={{ gap: 8 }}>
+                    <View style={{ gap: 10 }}>
                       <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Add a Photo</Text>
                       <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
-                        Start with a clear photo of your space, or tap one of the curated examples below.
+                        Start with a clean photo of your space to redesign it with AI.
                       </Text>
                     </View>
 
@@ -1732,7 +1926,7 @@ export default function WorkspaceScreen() {
                       from={{ opacity: 0, scale: 0.99, translateY: 10 }}
                       animate={{ opacity: 1, scale: 1, translateY: 0 }}
                       transition={LUX_SPRING}
-                      style={{ alignItems: "center" }}
+                      style={{ alignItems: "center", gap: 20 }}
                     >
                       <LuxPressable
                         onPress={handlePickPhoto}
@@ -1741,11 +1935,13 @@ export default function WorkspaceScreen() {
                           width: wizardUploadSize,
                           height: wizardUploadSize,
                           borderRadius: 32,
-                          backgroundColor: selectedImage ? "#050505" : "#020202",
+                          backgroundColor: "#09090b",
                           borderWidth: selectedImage ? 0.5 : 1.5,
-                          borderColor: selectedImage ? "rgba(255,255,255,0.08)" : "#27272a",
+                          borderColor: selectedImage ? "rgba(255,255,255,0.08)" : "#3f3f46",
                           borderStyle: selectedImage ? "solid" : "dashed",
                           overflow: "hidden",
+                          alignSelf: "center",
+                          ...WIZARD_CARD_SHADOW,
                         }}
                       >
                         {selectedImage ? (
@@ -1756,10 +1952,10 @@ export default function WorkspaceScreen() {
                                 event.stopPropagation();
                                 handleClearSelectedImage();
                               }}
-                              className="cursor-pointer absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/70"
+                              className="cursor-pointer absolute right-4 top-4 h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/72"
                               style={{ borderWidth: 0.5 }}
                             >
-                              <Close color="#ffffff" size={16} strokeWidth={2.4} />
+                              <Close color="#ffffff" size={15} strokeWidth={2.5} />
                             </LuxPressable>
                             {isPhotoPreviewBusy ? (
                               <View className="absolute inset-0 items-center justify-center bg-black/26">
@@ -1768,67 +1964,65 @@ export default function WorkspaceScreen() {
                             ) : null}
                           </>
                         ) : (
-                          <View className="flex-1 items-center justify-center px-8" style={{ gap: 16 }}>
-                            <View
-                              className="h-[86px] w-[86px] items-center justify-center rounded-full border border-white/10 bg-white/5"
-                              style={{ borderWidth: 0.5 }}
-                            >
-                              <Plus color="#ffffff" size={34} strokeWidth={2.4} />
+                          <View className="flex-1 items-center justify-center px-8">
+                            <View className="h-[68px] w-[68px] items-center justify-center rounded-full border border-white/10 bg-white/5">
+                              <Plus color="#ffffff" size={30} strokeWidth={2.4} />
                             </View>
-                            <View style={{ gap: 8, alignItems: "center" }}>
-                              <Text className="text-center text-[28px] font-semibold text-white">Add a Photo</Text>
-                              <Text className="text-center text-[15px] leading-7 text-zinc-400">
-                                Tap to take a photo or upload
-                              </Text>
+                            <View style={{ gap: 8, alignItems: "center", marginTop: 20 }}>
+                              <Text className="text-center text-[28px] font-semibold text-white">Start Redesigning</Text>
+                              <Text className="text-center text-[14px] leading-6 text-zinc-500">Redesign and beautify your home</Text>
                             </View>
                           </View>
                         )}
                       </LuxPressable>
-                    </MotiView>
 
-                    <View style={{ gap: 14 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 24, fontWeight: "700", letterSpacing: -0.6 }}>Example Photos</Text>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 4, gap: 12 }}>
-                        {EXAMPLE_PHOTOS.slice(0, 4).map((example, index) => {
-                          const active = selectedImage?.label === example.label;
-                          const isLoading = isLoadingExample === example.id;
-                          return (
-                            <MotiView key={example.id} {...staggerFadeUp(index, 45)} style={{ width: wizardExampleCardWidth }}>
-                              <LuxPressable
-                                onPress={() => void handleSelectExample(example)}
-                                className="cursor-pointer overflow-hidden rounded-[22px] border"
-                                style={{
-                                  borderWidth: active ? 1.5 : 0.5,
-                                  borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
-                                  backgroundColor: "#050505",
-                                }}
-                              >
-                                <Image source={example.source} style={{ width: "100%", height: 112 }} contentFit="cover" transition={180} cachePolicy="memory-disk" />
-                                {active ? (
-                                  <View className="absolute right-3 top-3 h-8 w-8 items-center justify-center rounded-full bg-fuchsia-600">
-                                    <Check color="#ffffff" size={16} strokeWidth={2.5} />
-                                  </View>
-                                ) : null}
-                                {isLoading ? (
-                                  <View className="absolute inset-0 items-center justify-center bg-black/35">
-                                    <ActivityIndicator size="small" color="#ffffff" />
-                                  </View>
-                                ) : null}
-                              </LuxPressable>
-                            </MotiView>
-                          );
-                        })}
-                      </ScrollView>
-                    </View>
+                      <View style={{ alignSelf: "stretch", gap: 14 }}>
+                        <Text className="text-base font-semibold text-white">Example Photos</Text>
+                        <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          decelerationRate="fast"
+                          contentContainerStyle={{ paddingHorizontal: 2, paddingRight: 8, gap: 14 }}
+                        >
+                          {EXAMPLE_PHOTOS.slice(0, 4).map((example, index) => {
+                            const active = selectedImage?.label === example.label;
+                            const isLoading = isLoadingExample === example.id;
+                            return (
+                              <MotiView key={example.id} {...staggerFadeUp(index, 45)} style={{ width: wizardExampleCardSize, height: wizardExampleCardSize }}>
+                                <LuxPressable
+                                  onPress={() => void handleSelectExample(example)}
+                                  className="cursor-pointer overflow-hidden border"
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    borderRadius: 20,
+                                    borderWidth: active ? 2 : 0.5,
+                                    borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
+                                    backgroundColor: "#050505",
+                                    ...WIZARD_CARD_SHADOW,
+                                  }}
+                                >
+                                  <Image source={example.source} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} cachePolicy="memory-disk" />
+                                  {isLoading ? (
+                                    <View className="absolute inset-0 items-center justify-center bg-black/35">
+                                      <ActivityIndicator size="small" color="#ffffff" />
+                                    </View>
+                                  ) : null}
+                                </LuxPressable>
+                              </MotiView>
+                            );
+                          })}
+                        </ScrollView>
+                      </View>
+                    </MotiView>
                   </>
                 ) : null}
-
                 {workflowStep === 1 ? (
                   <>
-                    <View style={{ gap: 8 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Choose Room</Text>
+                    <View style={{ gap: 10 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Choose Space</Text>
                       <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
-                        Select the type of space you want Darkor.ai to redesign.
+                        Tell Darkor.ai what kind of room or area you want to transform.
                       </Text>
                     </View>
 
@@ -1846,12 +2040,12 @@ export default function WorkspaceScreen() {
                               onPress={() => handleSelectRoom(option)}
                               className="cursor-pointer rounded-[24px] border px-4 py-4"
                               style={{
-                                minHeight: 152,
+                                minHeight: 146,
                                 borderWidth: active ? 1.5 : 0.5,
                                 borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
-                                backgroundColor: active ? "rgba(217,70,239,0.09)" : "#050505",
+                                backgroundColor: active ? "rgba(217,70,239,0.10)" : "#050505",
                                 shadowColor: active ? "#d946ef" : "#000000",
-                                shadowOpacity: active ? 0.14 : 0.22,
+                                shadowOpacity: active ? 0.12 : 0.2,
                                 shadowRadius: active ? 18 : 20,
                                 shadowOffset: { width: 0, height: 12 },
                                 elevation: active ? 8 : 6,
@@ -1861,11 +2055,7 @@ export default function WorkspaceScreen() {
                                 <View className="h-12 w-12 items-center justify-center rounded-[16px] border border-white/10 bg-white/5" style={{ borderWidth: 0.5 }}>
                                   <RoomIcon color={active ? "#f0abfc" : "#ffffff"} size={22} strokeWidth={2} />
                                 </View>
-                                {active ? (
-                                  <View className="rounded-full border border-fuchsia-400/40 bg-fuchsia-500/15 px-3 py-1">
-                                    <Text className="text-[11px] font-semibold uppercase tracking-[1px] text-fuchsia-200">Selected</Text>
-                                  </View>
-                                ) : null}
+                                {active ? <BadgeCheck color="#f0abfc" size={18} strokeWidth={2} /> : null}
                               </View>
                               <View style={{ marginTop: 16, gap: 6 }}>
                                 <Text className="text-lg font-semibold text-white">{option}</Text>
@@ -1881,178 +2071,176 @@ export default function WorkspaceScreen() {
 
                 {workflowStep === 2 ? (
                   <>
-                    <View style={{ gap: 8 }}>
+                    <View style={{ gap: 10 }}>
                       <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Select Style</Text>
                       <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
-                        Choose a signature design language, or use Custom to direct Darkor.ai like a pro.
+                        Choose one of the design styles below, or write your own custom brief.
                       </Text>
                     </View>
 
-                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
-                      {[
-                        {
-                          id: "custom",
-                          title: "Custom",
-                          description:
-                            customPrompt.trim().length > 0
-                              ? customPrompt
-                              : "Write your own design brief with materials, mood, styling cues, and focal details.",
-                          image: null,
-                        },
-                        ...STYLE_LIBRARY,
-                      ].map((style, index) => {
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardStyleGap }}>
+                      {[{ id: "custom", title: "Custom", image: null }, ...STYLE_LIBRARY].map((style, index) => {
                         const isCustomCard = style.title === "Custom";
                         const active = selectedStyle === style.title;
                         return (
-                          <MotiView key={style.id} {...staggerFadeUp(index, 24)} style={{ width: wizardCardWidth }}>
+                          <MotiView key={style.id} {...staggerFadeUp(index, 18)} style={{ width: wizardStyleCardWidth }}>
                             <LuxPressable
                               onPress={() => handleSelectStyle(style.title)}
-                              className="cursor-pointer overflow-hidden rounded-[24px] border"
-                              style={{
-                                minHeight: 248,
-                                borderWidth: active ? 1.5 : 0.5,
-                                borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
-                                backgroundColor: isCustomCard ? "#08080a" : "#050505",
-                                shadowColor: active ? "#d946ef" : "#000000",
-                                shadowOpacity: active ? 0.18 : 0.22,
-                                shadowRadius: active ? 20 : 18,
-                                shadowOffset: { width: 0, height: 12 },
-                                elevation: active ? 8 : 6,
-                              }}
-                            >
-                              {isCustomCard ? (
-                                <LinearGradient
-                                  colors={["rgba(217,70,239,0.20)", "rgba(99,102,241,0.18)", "rgba(8,8,10,1)"]}
-                                  start={{ x: 0, y: 0 }}
-                                  end={{ x: 1, y: 1 }}
-                                  style={{ minHeight: 168, padding: 18, justifyContent: "space-between" }}
-                                >
-                                  <View className="flex-row items-start justify-between">
-                                    <View className="h-12 w-12 items-center justify-center rounded-[18px] border border-white/15 bg-white/10">
-                                      <Sparkles color="#fdf2f8" size={22} strokeWidth={2} />
-                                    </View>
-                                    <View className="rounded-full border border-fuchsia-400/25 bg-black/35 px-3 py-1">
-                                      <Text className="text-[11px] font-semibold uppercase tracking-[1px] text-fuchsia-100">Pro Control</Text>
-                                    </View>
-                                  </View>
-                                  <View style={{ gap: 6 }}>
-                                    <Text className="text-xl font-semibold text-white">Custom</Text>
-                                    <Text className="text-sm leading-6 text-zinc-200">Build a bespoke design brief with your exact vision, materials, and mood.</Text>
-                                  </View>
-                                </LinearGradient>
-                              ) : (
-                                <Image source={style.image} style={{ width: "100%", height: 168 }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
-                              )}
-                              <View style={{ padding: 14, gap: 4 }}>
-                                <View className="flex-row items-start justify-between gap-3">
-                                  <Text className="flex-1 text-base font-semibold text-white">{style.title}</Text>
-                                  {active ? <BadgeCheck color="#f0abfc" size={18} strokeWidth={2} /> : null}
-                                </View>
-                                <Text className="text-sm leading-5 text-zinc-400" numberOfLines={isCustomCard && customPrompt.trim().length > 0 ? 4 : 3}>
-                                  {style.description}
-                                </Text>
-                                {isCustomCard ? (
-                                  <Text className="pt-1 text-xs font-medium text-fuchsia-200">Tap to open the custom prompt studio.</Text>
-                                ) : null}
-                              </View>
-                            </LuxPressable>
-                          </MotiView>
-                        );
-                      })}
-                    </View>
-                  </>
-                ) : null}
-
-                {workflowStep === 3 ? (
-                  <>
-                    <View style={{ gap: 8 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Mode & Palette</Text>
-                      <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
-                        Choose how boldly Darkor.ai can transform the space, then lock the color direction before processing.
-                      </Text>
-                    </View>
-
-                    <View style={{ gap: 8 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Modification Mode</Text>
-                      <Text style={{ color: "#71717a", fontSize: 14, lineHeight: 22 }}>
-                        Select one premium design approach to control how closely the render follows the original room.
-                      </Text>
-                    </View>
-
-                    <View style={{ flexDirection: "row", gap: wizardColumnGap }}>
-                      {MODE_OPTIONS.map((mode, index) => {
-                        const active = selectedModeId === mode.id;
-                        const ModeIcon = mode.icon;
-                        return (
-                          <MotiView key={mode.id} {...staggerFadeUp(index, 50)} style={{ flex: 1 }}>
-                            <LuxPressable
-                              onPress={() => handleSelectMode(mode.id)}
-                              className="cursor-pointer rounded-[24px] border px-5 py-5"
-                              style={{
-                                minHeight: 214,
-                                borderWidth: active ? 1.5 : 0.5,
-                                borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
-                                backgroundColor: active ? "rgba(217,70,239,0.08)" : "#050505",
-                                shadowColor: active ? "#d946ef" : "#000000",
-                                shadowOpacity: active ? 0.16 : 0.22,
-                                shadowRadius: active ? 20 : 18,
-                                shadowOffset: { width: 0, height: 12 },
-                                elevation: active ? 8 : 6,
-                              }}
-                            >
-                              <View className="flex-row items-start justify-between">
-                                <View className="h-14 w-14 items-center justify-center rounded-[18px] border border-white/10 bg-white/5" style={{ borderWidth: 0.5 }}>
-                                  <ModeIcon color={active ? "#f0abfc" : "#ffffff"} size={24} strokeWidth={2} />
-                                </View>
-                                {active ? <BadgeCheck color="#f0abfc" size={20} strokeWidth={2.1} /> : null}
-                              </View>
-                              <View style={{ marginTop: 18, gap: 8 }}>
-                                <Text className="text-[24px] font-semibold leading-8 text-white">{mode.title}</Text>
-                                <Text className="text-sm leading-6 text-zinc-400">{mode.description}</Text>
-                              </View>
-                            </LuxPressable>
-                          </MotiView>
-                        );
-                      })}
-                    </View>
-
-                    <View style={{ gap: 8, marginTop: 2 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Color Palette</Text>
-                      <Text style={{ color: "#71717a", fontSize: 14, lineHeight: 22 }}>
-                        Choose the overall color mood before generating the final design.
-                      </Text>
-                    </View>
-
-                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
-                      {PALETTE_OPTIONS.map((palette, index) => {
-                        const active = selectedPaletteId === palette.id;
-                        return (
-                          <MotiView key={palette.id} {...staggerFadeUp(index, 24)} style={{ width: wizardCardWidth }}>
-                            <LuxPressable
-                              onPress={() => handleSelectPalette(palette.id)}
                               className="cursor-pointer overflow-hidden rounded-[24px] border"
                               style={{
                                 borderWidth: active ? 1.5 : 0.5,
                                 borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
                                 backgroundColor: "#050505",
+                                shadowColor: active ? "#d946ef" : "#000000",
+                                shadowOpacity: active ? 0.14 : 0.2,
+                                shadowRadius: active ? 18 : 16,
+                                shadowOffset: { width: 0, height: 10 },
+                                elevation: active ? 8 : 5,
                               }}
                             >
-                              <View style={{ height: 116, flexDirection: "row" }}>
-                                {palette.colors.map((color) => (
-                                  <View key={color} style={{ flex: 1, backgroundColor: color }} />
-                                ))}
+                              {isCustomCard ? (
+                                <LinearGradient
+                                  colors={["rgba(217,70,239,0.24)", "rgba(99,102,241,0.2)", "rgba(8,8,10,1)"]}
+                                  start={{ x: 0, y: 0 }}
+                                  end={{ x: 1, y: 1 }}
+                                  style={{ height: 120, alignItems: "center", justifyContent: "center" }}
+                                >
+                                  <Sparkles color="#ffffff" size={28} strokeWidth={2.1} />
+                                </LinearGradient>
+                              ) : (
+                                <Image source={style.image} style={{ width: "100%", height: 120 }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
+                              )}
+                              <View style={{ paddingHorizontal: 12, paddingVertical: 12 }}>
+                                <Text className="text-sm font-semibold text-white" numberOfLines={2}>{style.title}</Text>
+                                {isCustomCard && customPrompt.trim().length > 0 ? (
+                                  <Text className="mt-2 text-xs leading-5 text-zinc-300" numberOfLines={2}>{customPrompt}</Text>
+                                ) : null}
                               </View>
-                              <View style={{ padding: 14, gap: 4 }}>
-                                <View className="flex-row items-center justify-between gap-3">
-                                  <Text className="flex-1 text-base font-semibold text-white">{palette.label}</Text>
-                                  {active ? <BadgeCheck color="#f0abfc" size={18} strokeWidth={2} /> : null}
+                              {active ? (
+                                <View className="absolute right-2 top-2 rounded-full border border-fuchsia-400/30 bg-black/55 p-1.5" style={{ borderWidth: 0.5 }}>
+                                  <BadgeCheck color="#f0abfc" size={16} strokeWidth={2} />
                                 </View>
-                                <Text className="text-sm leading-5 text-zinc-400">{palette.description ?? "A refined designer-led palette."}</Text>
-                              </View>
+                              ) : null}
                             </LuxPressable>
                           </MotiView>
                         );
                       })}
+                    </View>
+
+                    {selectedStyle === "Custom" ? (
+                      <View className="overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950" style={{ borderWidth: 0.5, ...WIZARD_CARD_SHADOW }}>
+                        <View style={{ padding: 18, gap: 14 }}>
+                          <Text className="text-lg font-semibold text-white">Custom Prompt</Text>
+                          <View className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4" style={{ borderWidth: 0.5 }}>
+                            <TextInput
+                              value={customPrompt}
+                              onChangeText={handleChangeCustomPrompt}
+                              multiline
+                              placeholder="Describe the look you want, key materials, lighting, furniture direction, and standout features."
+                              placeholderTextColor="#71717a"
+                              textAlignVertical="top"
+                              style={{ color: "#ffffff", fontSize: 15, lineHeight: 24, minHeight: 132 }}
+                            />
+                          </View>
+                          <View style={{ gap: 10 }}>
+                            <Text className="text-sm font-semibold text-white">Example Prompts</Text>
+                            <View style={{ gap: 10 }}>
+                              {CUSTOM_STYLE_EXAMPLE_PROMPTS.map((prompt) => (
+                                <LuxPressable key={prompt} onPress={() => handleSelectCustomPromptExample(prompt)} className="cursor-pointer rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-4" style={{ borderWidth: 0.5 }}>
+                                  <Text className="text-sm leading-6 text-zinc-300">{prompt}</Text>
+                                </LuxPressable>
+                              ))}
+                            </View>
+                          </View>
+                        </View>
+                      </View>
+                    ) : null}
+                  </>
+                ) : null}
+
+                {workflowStep === 3 ? (
+                  <>
+                    <View style={{ gap: 10 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Personalize</Text>
+                      <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 23 }}>
+                        Pick the redesign mode and color palette before generating your result.
+                      </Text>
+                    </View>
+
+                    <View style={{ gap: 12 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Mode</Text>
+                      <View style={{ flexDirection: "row", gap: 12 }}>
+                        {MODE_OPTIONS.map((mode, index) => {
+                          const active = selectedModeId === mode.id;
+                          const ModeIcon = mode.icon;
+                          return (
+                            <MotiView key={mode.id} {...staggerFadeUp(index, 40)} style={{ flex: 1 }}>
+                              <LuxPressable
+                                onPress={() => handleSelectMode(mode.id)}
+                                className="cursor-pointer rounded-[26px] border px-5 py-5"
+                                style={{
+                                  minHeight: 188,
+                                  borderWidth: active ? 1.5 : 0.5,
+                                  borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
+                                  backgroundColor: active ? "rgba(217,70,239,0.08)" : "#050505",
+                                  shadowColor: active ? "#d946ef" : "#000000",
+                                  shadowOpacity: active ? 0.16 : 0.2,
+                                  shadowRadius: active ? 20 : 18,
+                                  shadowOffset: { width: 0, height: 12 },
+                                  elevation: active ? 8 : 6,
+                                }}
+                              >
+                                <View className="flex-row items-start justify-between">
+                                  <View className="h-14 w-14 items-center justify-center rounded-[18px] border border-white/10 bg-white/5" style={{ borderWidth: 0.5 }}>
+                                    <ModeIcon color={active ? "#f0abfc" : "#ffffff"} size={24} strokeWidth={2} />
+                                  </View>
+                                  {active ? <BadgeCheck color="#f0abfc" size={19} strokeWidth={2.1} /> : null}
+                                </View>
+                                <View style={{ marginTop: 18, gap: 8 }}>
+                                  <Text className="text-[21px] font-semibold leading-7 text-white">{mode.title}</Text>
+                                  <Text className="text-sm leading-6 text-zinc-400">{mode.description}</Text>
+                                </View>
+                              </LuxPressable>
+                            </MotiView>
+                          );
+                        })}
+                      </View>
+                    </View>
+
+                    <View style={{ gap: 12 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Palette</Text>
+                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardPaletteGap }}>
+                        {PALETTE_OPTIONS.slice(0, 8).map((palette, index) => {
+                          const active = selectedPaletteId === palette.id;
+                          return (
+                            <MotiView key={palette.id} {...staggerFadeUp(index, 18)} style={{ width: wizardPaletteCardWidth }}>
+                              <LuxPressable
+                                onPress={() => handleSelectPalette(palette.id)}
+                                className="cursor-pointer overflow-hidden rounded-[22px] border"
+                                style={{
+                                  borderWidth: active ? 1.5 : 0.5,
+                                  borderColor: active ? "#d946ef" : "rgba(255,255,255,0.12)",
+                                  backgroundColor: "#050505",
+                                }}
+                              >
+                                <View style={{ height: 74, flexDirection: "row" }}>
+                                  {palette.colors.map((color) => (
+                                    <View key={color} style={{ flex: 1, backgroundColor: color }} />
+                                  ))}
+                                </View>
+                                <View style={{ paddingHorizontal: 12, paddingVertical: 12 }}>
+                                  <Text className="text-sm font-semibold text-white" numberOfLines={2}>{palette.label}</Text>
+                                </View>
+                                {active ? (
+                                  <View className="absolute right-2 top-2 rounded-full border border-fuchsia-400/30 bg-black/55 p-1.5" style={{ borderWidth: 0.5 }}>
+                                    <BadgeCheck color="#f0abfc" size={16} strokeWidth={2} />
+                                  </View>
+                                ) : null}
+                              </LuxPressable>
+                            </MotiView>
+                          );
+                        })}
+                      </View>
                     </View>
                   </>
                 ) : null}
@@ -2270,7 +2458,7 @@ export default function WorkspaceScreen() {
   if (workflowStep === 5) {
     const boardCardWidth = Math.max((width - 52) / 2, 150);
     const editorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
-    const beforeImageUrl = activeBoardItem?.originalImageUrl ?? selectedImage?.uri ?? editorImageUrl;
+    const beforeImageUrl = activeBoardItem ? activeBoardItem.originalImageUrl ?? editorImageUrl : selectedImage?.uri ?? editorImageUrl;
     const editorStyleLabel = activeBoardItem?.styleLabel ?? selectedStyle ?? "Custom";
     const editorRoomLabel = activeBoardItem?.roomLabel ?? selectedRoom ?? serviceLabel;
 
@@ -2414,95 +2602,33 @@ export default function WorkspaceScreen() {
                 <View className="absolute inset-0 bg-black/10" />
 
                 <View className="absolute left-4 right-4 top-4 flex-row items-center justify-between">
-                  <LuxPressable
-                    onPress={handleToggleBeforePreview}
-                    className="cursor-pointer flex-row items-center gap-2 rounded-full border border-white/10 bg-black/45 px-4 py-3"
-                    style={{ borderWidth: 0.5 }}
-                  >
-                    <Layers color="#ffffff" size={17} strokeWidth={2.1} />
-                    <Text className="text-sm font-semibold text-white">{showBeforeOnly ? "Show After" : "Show Before"}</Text>
-                  </LuxPressable>
-                  <LuxPressable
-                    onPress={handleDeleteBoardItem}
-                    disabled={isDeletingGeneration}
-                    className="cursor-pointer rounded-full border border-white/10 bg-black/45 p-3"
-                    style={{ borderWidth: 0.5, opacity: isDeletingGeneration ? 0.6 : 1 }}
-                  >
-                    {isDeletingGeneration ? (
-                      <ActivityIndicator color="#ffffff" size="small" />
-                    ) : (
-                      <Trash2 color="#ffffff" size={18} strokeWidth={2.1} />
-                    )}
-                  </LuxPressable>
-                </View>
-
-                <View className="absolute left-4 right-4 top-20 flex-row items-center justify-between">
-                  <View className="rounded-full border border-white/10 bg-black/35 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
+                  <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
                     <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85">Before</Text>
                   </View>
-                  <View className="rounded-full border border-white/10 bg-black/35 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
-                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85">AI After</Text>
+                  <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
+                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85">After</Text>
                   </View>
                 </View>
 
-                <View className="absolute bottom-5 left-4 right-4 gap-4">
-                  <View className="flex-row items-center justify-between">
-                    <BlurView
-                      intensity={70}
-                      tint="dark"
-                      className="flex-row items-center gap-2 rounded-full border border-white/10 px-3 py-2"
-                      style={{ borderWidth: 0.5, overflow: "hidden" }}
-                    >
-                      <Animated.View style={likeButtonStyle}>
-                        <LuxPressable
-                          onPress={handleLike}
-                          disabled={feedbackSubmitted || !generationId}
-                          className="cursor-pointer rounded-full p-2"
-                          style={{
-                            backgroundColor: feedbackState === "liked" ? "rgba(99,102,241,0.22)" : "rgba(255,255,255,0.06)",
-                            borderWidth: 0.5,
-                            borderColor: feedbackState === "liked" ? "rgba(129,140,248,0.95)" : "rgba(255,255,255,0.06)",
-                          }}
-                        >
-                          <ThumbsUp color={feedbackState === "liked" ? "#818cf8" : "#ffffff"} size={16} />
-                        </LuxPressable>
-                      </Animated.View>
-                      <Animated.View style={dislikeButtonStyle}>
-                        <LuxPressable
-                          onPress={handleDislike}
-                          disabled={feedbackSubmitted || !generationId}
-                          className="cursor-pointer rounded-full p-2"
-                          style={{
-                            backgroundColor: feedbackState === "disliked" ? "rgba(99,102,241,0.22)" : "rgba(255,255,255,0.06)",
-                            borderWidth: 0.5,
-                            borderColor: feedbackState === "disliked" ? "rgba(129,140,248,0.95)" : "rgba(255,255,255,0.06)",
-                          }}
-                        >
-                          <ThumbsDown color={feedbackState === "disliked" ? "#818cf8" : "#ffffff"} size={16} />
-                        </LuxPressable>
-                      </Animated.View>
-                    </BlurView>
-
-                    <MotiView
-                      animate={!isProPlan ? { scale: [1, 1.03, 1], opacity: [1, 0.94, 1] } : { scale: 1, opacity: 1 }}
-                      transition={!isProPlan ? { duration: 2200, loop: true } : { duration: 180 }}
-                    >
-                      <LuxPressable onPress={isProPlan ? undefined : handleUpgrade} className="cursor-pointer">
+                {!isProPlan ? (
+                  <View className="absolute bottom-5 right-4">
+                    <MotiView animate={{ scale: [1, 1.03, 1], opacity: [1, 0.94, 1] }} transition={{ duration: 2200, loop: true }}>
+                      <LuxPressable onPress={handleUpgrade} className="cursor-pointer">
                         <LinearGradient
-                          colors={isProPlan ? ["rgba(255,255,255,0.16)", "rgba(255,255,255,0.12)"] : ["#d946ef", "#6366f1"]}
+                          colors={["#d946ef", "#6366f1"]}
                           start={{ x: 0, y: 0.5 }}
                           end={{ x: 1, y: 0.5 }}
                           style={{ borderRadius: 999, paddingHorizontal: 18, paddingVertical: 11 }}
                         >
                           <View className="flex-row items-center gap-2">
                             <Sparkles color="#ffffff" size={15} />
-                            <Text className="text-sm font-semibold text-white">{isProPlan ? "Watermark Removed" : "Remove Watermark"}</Text>
+                            <Text className="text-sm font-semibold text-white">Remove Watermark</Text>
                           </View>
                         </LinearGradient>
                       </LuxPressable>
                     </MotiView>
                   </View>
-                </View>
+                ) : null}
 
                 {!isProPlan && editorImageUrl ? (
                   <View className="absolute bottom-24 right-4">
@@ -2518,7 +2644,7 @@ export default function WorkspaceScreen() {
             <Text className="mt-1 text-sm text-zinc-400">Curated inside your premium Darkor board.</Text>
           </View>
 
-          <View className="mt-6 flex-row items-start justify-center gap-12 px-2">
+          <View className="mt-6 flex-row gap-4">
             {[
               {
                 id: "save",
@@ -2537,17 +2663,15 @@ export default function WorkspaceScreen() {
             ].map((action) => {
               const Icon = action.icon;
               return (
-                <View key={action.id} className="items-center gap-3">
-                  <LuxPressable
-                    onPress={action.onPress}
-                    disabled={action.loading}
-                    className="cursor-pointer h-[78px] w-[78px] items-center justify-center rounded-full border border-white/10 bg-zinc-950"
-                    style={{ borderWidth: 0.5 }}
+                <LuxPressable key={action.id} onPress={action.onPress} disabled={action.loading} className="cursor-pointer flex-1">
+                  <View
+                    className="flex-row items-center justify-center gap-3 rounded-[22px] border border-white/10 bg-zinc-950 px-5 py-4"
+                    style={{ borderWidth: 0.5, opacity: action.loading ? 0.72 : 1 }}
                   >
-                    {action.loading ? <ActivityIndicator color="#ffffff" /> : <Icon color="#ffffff" size={24} strokeWidth={2.1} />}
-                  </LuxPressable>
-                  <Text className="text-xs font-medium text-zinc-300">{action.label}</Text>
-                </View>
+                    {action.loading ? <ActivityIndicator color="#ffffff" /> : <Icon color="#ffffff" size={20} strokeWidth={2.1} />}
+                    <Text className="text-base font-semibold text-white">{action.label}</Text>
+                  </View>
+                </LuxPressable>
               );
             })}
           </View>
@@ -2557,3 +2681,12 @@ export default function WorkspaceScreen() {
   }
 
 }
+
+
+
+
+
+
+
+
+

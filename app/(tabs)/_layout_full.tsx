@@ -74,7 +74,7 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen name="home.full" options={{ href: null }} />
-      <Tabs.Screen name="workspace.full" options={{ href: null }} />
+      <Tabs.Screen name="workspace.full" options={{ href: null, tabBarStyle: { display: "none" } }} />
     </Tabs>
   );
 }
