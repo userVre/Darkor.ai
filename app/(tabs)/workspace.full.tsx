@@ -938,12 +938,28 @@ export default function WorkspaceScreen() {
   }, [showPermissionAlert]);
 
   const applyPickedAsset = useCallback(async (asset: ImagePicker.ImagePickerAsset, label: string) => {
-    const fallbackBase64 = asset.base64 ?? (await readBase64FromUri(asset.uri).catch(() => undefined));
     startTransition(() => {
       setSelectedImage({
         uri: asset.uri,
-        base64: fallbackBase64,
         label,
+      });
+    });
+
+    const fallbackBase64 = asset.base64 ?? (await readBase64FromUri(asset.uri).catch(() => undefined));
+    if (!fallbackBase64) {
+      return;
+    }
+
+    startTransition(() => {
+      setSelectedImage((current) => {
+        if (current && current.uri !== asset.uri) {
+          return current;
+        }
+        return {
+          uri: asset.uri,
+          base64: fallbackBase64,
+          label,
+        };
       });
     });
   }, []);
@@ -1018,9 +1034,17 @@ export default function WorkspaceScreen() {
       if (!uri) {
         throw new Error("Example image unavailable.");
       }
+      startTransition(() => {
+        setSelectedImage({ uri, label: example.label });
+      });
       const base64 = await readBase64FromUri(uri);
       startTransition(() => {
-        setSelectedImage({ uri, base64, label: example.label });
+        setSelectedImage((current) => {
+          if (current && current.uri !== uri) {
+            return current;
+          }
+          return { uri, base64, label: example.label };
+        });
       });
     } catch (error) {
       Alert.alert("Example unavailable", error instanceof Error ? error.message : "Please try another image.");
@@ -2707,10 +2731,11 @@ export default function WorkspaceScreen() {
         </View>
 
         <View className="mt-5 flex-row gap-2">
-          {Array.from({ length: 6 }).map((_, index) => (
+          {Array.from({ length: 4 }).map((_, index) => (
             <View
               key={`step-${index}`}
-              className={`h-1 flex-1 rounded-full ${index <= workflowStep ? "bg-cyan-400" : "bg-white/10"}`}
+              className="h-1.5 flex-1 rounded-full"
+              style={{ backgroundColor: index <= workflowStep ? "#d946ef" : "#1a1a1a" }}
             />
           ))}
         </View>
@@ -2726,39 +2751,52 @@ export default function WorkspaceScreen() {
               className="mt-8 gap-5"
             >
               <View>
-                <Text className="text-xl font-semibold text-white">Add a Photo</Text>
-                <Text className="mt-2 text-sm text-zinc-400">
-                  Start your redesign by uploading a clear photo or choosing an example.
+                <Text className="text-sm font-medium uppercase tracking-[3px] text-zinc-500">Step 1 / 4</Text>
+                <Text className="mt-3 text-3xl font-semibold text-white">Add a Photo</Text>
+                <Text className="mt-3 text-sm leading-6 text-zinc-400">
+                  Start with one clean photo of your space or use an example to preview the wizard instantly.
                 </Text>
               </View>
 
               <LuxPressable
                 onPress={handlePickPhoto}
-                className="cursor-pointer items-center justify-center rounded-3xl border border-dashed border-white/25 bg-white/5 px-6 py-10"
+                className="cursor-pointer overflow-hidden rounded-[32px] border-2 border-dashed items-center justify-center"
+                style={{
+                  minHeight: Math.min(width - 40, 336),
+                  borderColor: selectedImage ? "rgba(255,255,255,0.12)" : "#27272a",
+                  backgroundColor: "#050505",
+                  paddingHorizontal: 24,
+                  paddingVertical: 28,
+                }}
               >
-                <View className="h-14 w-14 items-center justify-center rounded-full border border-white/30 bg-white/5">
-                  <ImageIcon color="#e4e4e7" size={24} />
-                </View>
-                <Text className="mt-4 text-sm font-semibold text-white">Add a Photo +</Text>
-                <Text className="mt-2 text-xs text-zinc-500">Camera or gallery</Text>
+                {selectedImage ? (
+                  <View className="h-full w-full">
+                    <Image source={{ uri: selectedImage.uri }} className="h-full w-full rounded-[28px]" contentFit="cover" />
+                    <LuxPressable
+                      onPress={handleClearSelectedImage}
+                      className="absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/70"
+                      style={{ borderWidth: 0.5 }}
+                    >
+                      <Close color="#ffffff" size={18} />
+                    </LuxPressable>
+                  </View>
+                ) : (
+                  <View className="items-center justify-center">
+                    <View className="h-20 w-20 items-center justify-center rounded-full border border-white/10 bg-white/5">
+                      <Plus color="#ffffff" size={34} />
+                    </View>
+                    <Text className="mt-6 text-xl font-semibold text-white">Add a Photo</Text>
+                    <Text className="mt-2 text-center text-sm leading-6 text-zinc-500">
+                      Tap to take a photo or upload
+                    </Text>
+                  </View>
+                )}
               </LuxPressable>
 
-              {selectedImage ? (
-                <LuxPressable
-                  onPress={handlePickPhoto}
-                  className="cursor-pointer overflow-hidden rounded-3xl border border-white/10"
-                  style={{ borderWidth: 0.5 }}
-                >
-                  <Image source={{ uri: selectedImage.uri }} className="h-48 w-full" contentFit="cover" />
-                  <View className="bg-black/60 px-4 py-3">
-                    <Text className="text-sm font-semibold text-white">{selectedImage.label ?? "Selected Photo"}</Text>
-                    <Text className="mt-1 text-xs text-zinc-400">Tap to replace your photo</Text>
-                  </View>
-                </LuxPressable>
-              ) : null}
-
-              <Text className="text-xs uppercase tracking-[2px] text-zinc-400">Example Photos</Text>
-              <View className="flex-row flex-wrap gap-3">
+              <View>
+                <Text className="text-lg font-semibold text-white">Example Photos</Text>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingRight: 4 }}>
                 {EXAMPLE_PHOTOS.map((example, index) => {
                   const isActive = selectedImage?.label === example.label;
                   const isLoading = isLoadingExample === example.id;
@@ -2766,21 +2804,25 @@ export default function WorkspaceScreen() {
                     <MotiView key={example.id} {...staggerFadeUp(index, 70)}>
                       <LuxPressable
                         onPress={() => void handleSelectExample(example)}
-                        className={`cursor-pointer w-[48%] overflow-hidden rounded-2xl border ${
-                          isActive ? "border-cyan-300" : "border-white/10"
-                        }`}
-                        style={{ borderWidth: 0.5 }}
+                        className="cursor-pointer overflow-hidden rounded-[20px] border"
+                        style={{
+                          width: 108,
+                          height: 108,
+                          borderWidth: isActive ? 1.5 : 0.5,
+                          borderColor: isActive ? "#d946ef" : "rgba(255,255,255,0.12)",
+                        }}
                       >
-                        <Image source={example.source} className="h-24 w-full" contentFit="cover" />
-                        <View className="bg-black/60 px-3 py-2">
-                          <Text className="text-xs font-semibold text-white">{example.label}</Text>
-                          {isLoading ? <Text className="mt-1 text-[10px] text-zinc-400">Loading...</Text> : null}
-                        </View>
+                        <Image source={example.source} className="h-full w-full" contentFit="cover" />
+                        {isLoading ? (
+                          <View className="absolute inset-0 items-center justify-center bg-black/45">
+                            <ActivityIndicator color="#ffffff" size="small" />
+                          </View>
+                        ) : null}
                       </LuxPressable>
                     </MotiView>
                   );
                 })}
-              </View>
+              </ScrollView>
             </MotiView>
           ) : null}
 

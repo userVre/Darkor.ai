@@ -93,18 +93,21 @@ const CardPoster = memo(function CardPoster({ source }: { source: number }) {
 });
 
 const ActiveCardVideo = memo(function ActiveCardVideo({ item }: { item: ServiceCardData }) {
-  const player = useVideoPlayer(item.video, (videoPlayer) => {
-    videoPlayer.loop = true;
-    videoPlayer.muted = true;
-    videoPlayer.volume = 0;
-    videoPlayer.timeUpdateEventInterval = 0;
-    videoPlayer.keepScreenOnWhilePlaying = false;
-    videoPlayer.play();
-  });
+  const player = useVideoPlayer(item.video);
 
   useEffect(() => {
+    player.loop = true;
+    player.muted = true;
+    player.volume = 0;
+    player.timeUpdateEventInterval = 0;
+    player.keepScreenOnWhilePlaying = false;
+    player.staysActiveInBackground = false;
+    player.play();
+
     return () => {
+      player.keepScreenOnWhilePlaying = false;
       player.pause();
+      player.currentTime = 0;
     };
   }, [player]);
 
