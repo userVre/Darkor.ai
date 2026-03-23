@@ -1808,6 +1808,13 @@ export default function WorkspaceScreen() {
     const currentStepNumber = workflowStep + 1;
     const currentStepTitle = ["Add a Photo", "Choose Space", "Select Style", "Personalize"][workflowStep] ?? "Add a Photo";
     const isFinalWizardStep = workflowStep === 3;
+    const isPhotoStep = workflowStep === 0;
+    const wizardBackgroundColor = isPhotoStep ? "#000000" : "#ffffff";
+    const wizardPrimaryTextColor = isPhotoStep ? "#ffffff" : "#09090b";
+    const wizardSecondaryTextColor = isPhotoStep ? "#a1a1aa" : "#71717a";
+    const progressTrackColor = isPhotoStep ? "#1a1a1a" : "#d4d4d8";
+    const uploadTileSize = Math.min(width - 48, 332);
+    const isContinueDisabled = !canContinue || (isFinalWizardStep && (isGenerating || generationBlocked));
     const continueLabel = isFinalWizardStep
       ? generationBlocked
         ? "Limit Reached - Upgrade or Wait"
@@ -1817,7 +1824,7 @@ export default function WorkspaceScreen() {
       : "Continue";
 
     return (
-      <View className="flex-1 bg-white" style={{ backgroundColor: "#ffffff" }}>
+      <View className="flex-1" style={{ backgroundColor: wizardBackgroundColor }}>
         {showResumeToast ? (
           <MotiView
             from={{ opacity: 0, translateY: -12 }}
@@ -1828,18 +1835,27 @@ export default function WorkspaceScreen() {
             style={{ top: insets.top + 8 }}
             pointerEvents="none"
           >
-            <View className="rounded-[22px] border border-black/6 bg-white px-4 py-3" style={{ borderWidth: 1 }}>
-              <Text className="text-center text-sm font-semibold text-zinc-900">Resuming your saved wizard draft.</Text>
+            <View
+              className="rounded-[22px] px-4 py-3"
+              style={{
+                borderWidth: 1,
+                borderColor: isPhotoStep ? "rgba(255,255,255,0.08)" : "rgba(9,9,11,0.06)",
+                backgroundColor: isPhotoStep ? "rgba(17,17,19,0.94)" : "#ffffff",
+              }}
+            >
+              <Text className="text-center text-sm font-semibold" style={{ color: wizardPrimaryTextColor }}>
+                Resuming your saved wizard draft.
+              </Text>
             </View>
           </MotiView>
         ) : null}
 
         <ScrollView
-          className="flex-1 bg-white"
-          style={{ backgroundColor: "#ffffff" }}
+          className="flex-1"
+          style={{ backgroundColor: wizardBackgroundColor }}
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingTop: Math.max(insets.top + 10, 22),
+            paddingTop: Math.max(insets.top + 8, 20),
             paddingBottom: Math.max(insets.bottom + 124, 144),
             minHeight: height,
           }}
@@ -1851,14 +1867,16 @@ export default function WorkspaceScreen() {
               <View style={{ width: 44, alignItems: "flex-start" }}>
                 {workflowStep > 0 ? (
                   <LuxPressable onPress={handleBack} className="cursor-pointer h-11 w-11 items-center justify-center rounded-full">
-                    <ArrowLeft color="#09090b" size={22} strokeWidth={2.1} />
+                    <ArrowLeft color={wizardPrimaryTextColor} size={22} strokeWidth={2.1} />
                   </LuxPressable>
                 ) : null}
               </View>
-              <Text style={{ color: "#09090b", fontSize: 18, fontWeight: "700", letterSpacing: -0.3 }}>{`Step ${currentStepNumber} / 4`}</Text>
+              <Text style={{ color: wizardPrimaryTextColor, fontSize: 18, fontWeight: "700", letterSpacing: -0.3 }}>
+                {`Step ${currentStepNumber} / 4`}
+              </Text>
               <View style={{ width: 44, alignItems: "flex-end" }}>
                 <LuxPressable onPress={handleCloseWizard} className="cursor-pointer h-11 w-11 items-center justify-center rounded-full">
-                  <Close color="#09090b" size={22} strokeWidth={2.1} />
+                  <Close color={wizardPrimaryTextColor} size={22} strokeWidth={2.1} />
                 </LuxPressable>
               </View>
             </View>
@@ -1874,7 +1892,7 @@ export default function WorkspaceScreen() {
                       height: 6,
                       borderRadius: 999,
                       overflow: "hidden",
-                      backgroundColor: "#d4d4d8",
+                      backgroundColor: progressTrackColor,
                     }}
                   >
                     <MotiView
@@ -1899,8 +1917,8 @@ export default function WorkspaceScreen() {
                 {workflowStep === 0 ? (
                   <>
                     <View style={{ gap: 12 }}>
-                      <Text style={{ color: "#09090b", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Add a Photo</Text>
-                      <Text style={{ color: "#71717a", fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Add a Photo</Text>
+                      <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
                         Start with a clean photo of your space to redesign it with AI.
                       </Text>
                     </View>
@@ -1910,18 +1928,18 @@ export default function WorkspaceScreen() {
                       from={{ opacity: 0, scale: 0.99, translateY: 10 }}
                       animate={{ opacity: 1, scale: 1, translateY: 0 }}
                       transition={LUX_SPRING}
-                      style={{ alignItems: "center", gap: 22 }}
+                      style={{ alignItems: "center", gap: 26 }}
                     >
                       <LuxPressable
                         onPress={handlePickPhoto}
                         className="cursor-pointer self-center"
                         style={{
-                          width: Math.min(width - 40, 350),
-                          height: Math.min(width - 40, 350),
+                          width: uploadTileSize,
+                          height: uploadTileSize,
                           borderRadius: 32,
-                          backgroundColor: "#ffffff",
-                          borderWidth: selectedImage ? 0 : 2,
-                          borderColor: "#d4d4d8",
+                          backgroundColor: "#050505",
+                          borderWidth: selectedImage ? 0 : 1.5,
+                          borderColor: selectedImage ? "transparent" : "rgba(255,255,255,0.16)",
                           borderStyle: selectedImage ? "solid" : "dashed",
                           overflow: "hidden",
                           alignSelf: "center",
@@ -1935,31 +1953,40 @@ export default function WorkspaceScreen() {
                                 event.stopPropagation();
                                 handleClearSelectedImage();
                               }}
-                              className="cursor-pointer absolute right-4 top-4 h-11 w-11 items-center justify-center rounded-full bg-black/45"
+                              className="cursor-pointer absolute right-4 top-4 h-11 w-11 items-center justify-center rounded-full bg-black/55"
                             >
                               <Close color="#ffffff" size={20} strokeWidth={2.4} />
                             </LuxPressable>
                             {isPhotoPreviewBusy ? (
-                              <View className="absolute inset-0 items-center justify-center bg-black/18">
+                              <View className="absolute inset-0 items-center justify-center bg-black/24">
                                 <ActivityIndicator size="small" color="#ffffff" />
                               </View>
                             ) : null}
                           </>
                         ) : (
                           <View className="flex-1 items-center justify-center px-8">
-                            <View className="h-[56px] w-[56px] items-center justify-center rounded-full bg-black">
-                              <Plus color="#ffffff" size={24} strokeWidth={2.6} />
+                            <View
+                              className="h-[60px] w-[60px] items-center justify-center rounded-full"
+                              style={{
+                                borderWidth: 1,
+                                borderColor: "rgba(255,255,255,0.14)",
+                                backgroundColor: "rgba(255,255,255,0.04)",
+                              }}
+                            >
+                              <Plus color="#ffffff" size={25} strokeWidth={2.5} />
                             </View>
                             <View style={{ gap: 8, alignItems: "center", marginTop: 18 }}>
-                              <Text className="text-center text-[24px] font-semibold text-black">Start Redesigning</Text>
-                              <Text className="text-center text-[14px] leading-6 text-zinc-500">Redesign and beautify your room</Text>
+                              <Text className="text-center text-[24px] font-semibold text-white">Start Redesigning</Text>
+                              <Text className="text-center text-[14px] leading-6 text-zinc-500">
+                                Redesign and beautify your room
+                              </Text>
                             </View>
                           </View>
                         )}
                       </LuxPressable>
 
                       <View style={{ alignSelf: "stretch", gap: 14 }}>
-                        <Text className="text-[17px] font-semibold text-black">Example Photos</Text>
+                        <Text className="text-[17px] font-semibold text-white">Example Photos</Text>
                         <ScrollView
                           horizontal
                           showsHorizontalScrollIndicator={false}
@@ -1980,7 +2007,7 @@ export default function WorkspaceScreen() {
                                     borderRadius: 24,
                                     borderWidth: active ? 2 : 0,
                                     borderColor: active ? "#d946ef" : "transparent",
-                                    backgroundColor: "#e5e7eb",
+                                    backgroundColor: "#18181b",
                                   }}
                                 >
                                   <Image source={example.source} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} cachePolicy="memory-disk" />
@@ -2216,30 +2243,45 @@ export default function WorkspaceScreen() {
         </ScrollView>
 
         <View
-          className="absolute inset-x-0 bottom-0 bg-white px-5 pt-4"
+          className="absolute inset-x-0 bottom-0 px-5 pt-4"
           style={{
             paddingBottom: Math.max(insets.bottom + 12, 24),
             borderTopWidth: 1,
-            borderTopColor: "#f4f4f5",
+            borderTopColor: isPhotoStep ? "rgba(255,255,255,0.06)" : "#f4f4f5",
+            backgroundColor: wizardBackgroundColor,
             shadowColor: "#000000",
-            shadowOpacity: 0.06,
+            shadowOpacity: isPhotoStep ? 0.22 : 0.06,
             shadowRadius: 18,
             shadowOffset: { width: 0, height: -8 },
             elevation: 14,
           }}
         >
-          <LuxPressable onPress={handleContinue} disabled={!canContinue || (isFinalWizardStep && (isGenerating || generationBlocked))} className="cursor-pointer">
-            <View
-              className="items-center justify-center rounded-[24px]"
-              style={{
-                minHeight: 62,
-                backgroundColor: canContinue && !(isFinalWizardStep && generationBlocked) ? "#09090b" : "#e4e4e7",
-              }}
-            >
-              <Text style={{ color: canContinue && !(isFinalWizardStep && generationBlocked) ? "#ffffff" : "#a1a1aa", fontSize: 17, fontWeight: "600" }}>
-                {generationBlocked && isFinalWizardStep ? "Limit Reached - Upgrade or Wait" : continueLabel}
-              </Text>
-            </View>
+          <LuxPressable onPress={handleContinue} disabled={isContinueDisabled} className="cursor-pointer">
+            {canContinue && !(isFinalWizardStep && generationBlocked) ? (
+              <LinearGradient
+                colors={["#d946ef", "#7c3aed"]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                className="items-center justify-center rounded-[24px]"
+                style={{ minHeight: 62 }}
+              >
+                <Text style={{ color: "#ffffff", fontSize: 17, fontWeight: "600" }}>
+                  {continueLabel}
+                </Text>
+              </LinearGradient>
+            ) : (
+              <View
+                className="items-center justify-center rounded-[24px]"
+                style={{
+                  minHeight: 62,
+                  backgroundColor: isPhotoStep ? "#27272a" : "#e4e4e7",
+                }}
+              >
+                <Text style={{ color: "#a1a1aa", fontSize: 17, fontWeight: "600" }}>
+                  {generationBlocked && isFinalWizardStep ? "Limit Reached - Upgrade or Wait" : continueLabel}
+                </Text>
+              </View>
+            )}
           </LuxPressable>
         </View>
 
