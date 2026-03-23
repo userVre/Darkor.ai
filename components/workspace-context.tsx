@@ -29,6 +29,11 @@ type WorkspaceDraftContextValue = {
 
 const WorkspaceDraftContext = createContext<WorkspaceDraftContextValue | null>(null);
 const STORAGE_KEY = "darkor_workspace_draft_v1";
+const PERSIST_DELAY_MS = 180;
+
+function sameDraftImage(left?: DraftImage | null, right?: DraftImage | null) {
+  return (left?.uri ?? null) === (right?.uri ?? null) && (left?.label ?? null) === (right?.label ?? null);
+}
 
 export function WorkspaceDraftProvider({ children }: { children: React.ReactNode }) {
   const [draft, setDraft] = useState<WorkspaceDraft>({});
@@ -61,46 +66,55 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
   }, []);
 
   useEffect(() => {
-    const persist = async () => {
-      try {
-        const payload: WorkspaceDraft = {
-          image: draft.image ? { uri: draft.image.uri, label: draft.image.label } : null,
-          room: draft.room ?? null,
-          style: draft.style ?? null,
-          paletteId: draft.paletteId ?? null,
-          prompt: draft.prompt ?? null,
-          aspectRatio: draft.aspectRatio ?? null,
-        };
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-      } catch {
-        // ignore storage errors
-      }
-    };
-    void persist();
+    const timeout = setTimeout(() => {
+      const persist = async () => {
+        try {
+          const payload: WorkspaceDraft = {
+            image: draft.image ? { uri: draft.image.uri, label: draft.image.label } : null,
+            room: draft.room ?? null,
+            style: draft.style ?? null,
+            paletteId: draft.paletteId ?? null,
+            prompt: draft.prompt ?? null,
+            aspectRatio: draft.aspectRatio ?? null,
+          };
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        } catch {
+          // ignore storage errors
+        }
+      };
+      void persist();
+    }, PERSIST_DELAY_MS);
+
+    return () => clearTimeout(timeout);
   }, [draft]);
 
   const setDraftImage = useCallback((image: DraftImage | null) => {
-    setDraft((prev) => ({ ...prev, image }));
+    setDraft((prev) => {
+      if (sameDraftImage(prev.image, image)) {
+        return prev;
+      }
+      return { ...prev, image };
+    });
   }, []);
 
   const setDraftRoom = useCallback((room: string | null) => {
-    setDraft((prev) => ({ ...prev, room }));
+    setDraft((prev) => (prev.room === room ? prev : { ...prev, room }));
   }, []);
 
   const setDraftStyle = useCallback((style: string | null) => {
-    setDraft((prev) => ({ ...prev, style }));
+    setDraft((prev) => (prev.style === style ? prev : { ...prev, style }));
   }, []);
 
   const setDraftPalette = useCallback((paletteId: string | null) => {
-    setDraft((prev) => ({ ...prev, paletteId }));
+    setDraft((prev) => (prev.paletteId === paletteId ? prev : { ...prev, paletteId }));
   }, []);
 
   const setDraftPrompt = useCallback((prompt: string | null) => {
-    setDraft((prev) => ({ ...prev, prompt }));
+    setDraft((prev) => (prev.prompt === prompt ? prev : { ...prev, prompt }));
   }, []);
 
   const setDraftAspectRatio = useCallback((aspectRatio: string | null) => {
-    setDraft((prev) => ({ ...prev, aspectRatio }));
+    setDraft((prev) => (prev.aspectRatio === aspectRatio ? prev : { ...prev, aspectRatio }));
   }, []);
 
   const clearDraft = useCallback(() => {

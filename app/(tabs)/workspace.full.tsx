@@ -10,8 +10,9 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { FlashList } from "@shopify/flash-list";
 import { AnimatePresence, MotiView } from "moti";
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -54,11 +55,8 @@ import {
   House,
   Image as ImageIcon,
   Plus,
-  RefreshCw,
   Layers,
-  Lock,
   Monitor,
-  Paintbrush,
   PaintRoller,
   Projector,
   Send,
@@ -66,7 +64,6 @@ import {
   Sparkles,
   Store,
   SunMedium,
-  SwatchBook,
   ThumbsDown,
   ThumbsUp,
   Trash2,
@@ -74,7 +71,6 @@ import {
   UtensilsCrossed,
   MoveHorizontal,
   Wand2,
-  WandSparkles,
 } from "lucide-react-native";
 
 import { generateImage } from "../../lib/api";
@@ -155,6 +151,40 @@ type ModeOption = {
   promptHint: string;
   icon: any;
 };
+
+const BoardGridCard = memo(function BoardGridCard({
+  item,
+  width,
+  index,
+  onPress,
+}: {
+  item: BoardRenderItem;
+  width: number;
+  index: number;
+  onPress: (item: BoardRenderItem) => void;
+}) {
+  return (
+    <View style={{ width, marginBottom: 12, marginRight: index % 2 === 0 ? 12 : 0 }}>
+      <LuxPressable
+        onPress={() => onPress(item)}
+        className="cursor-pointer overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950"
+        style={{ height: 236, borderWidth: 0.5 }}
+      >
+        <Image source={{ uri: item.imageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.82)"]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 96 }}
+        />
+        <View style={{ position: "absolute", left: 14, right: 14, bottom: 14 }}>
+          <Text className="text-base font-semibold text-white">{item.styleLabel + " " + item.roomLabel}</Text>
+          <Text className="mt-1 text-xs text-zinc-300">Tap to open your design editor</Text>
+        </View>
+      </LuxPressable>
+    </View>
+  );
+});
 
 const EXAMPLE_PHOTOS: ExamplePhoto[] = [
   {
@@ -523,10 +553,6 @@ const SERVICE_LABELS: Record<string, string> = {
   paint: "Wall Paint",
 };
 
-const EDIT_ACTIONS = ["Replace", "Paint", "Floor"] as const;
-const FEEDBACK_REASONS = ["Blurry", "Wrong Style", "Lighting", "Layout", "Artifacts"];
-const STORY_WIDTH = 1080;
-const STORY_HEIGHT = 1920;
 
 function resolveAspectRatio(option: AspectRatioOption | null) {
   if (!option) return { ratioValue: 1, ratioLabel: "1:1", targetWidth: 1024, targetHeight: 1024 };
@@ -614,21 +640,16 @@ export default function WorkspaceScreen() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDeletingGeneration, setIsDeletingGeneration] = useState(false);
   const [isSharingResult, setIsSharingResult] = useState(false);
-  const [isSharingStory, setIsSharingStory] = useState(false);
   const [isDownloading, setIsDownloading] = useState<"standard" | "ultra" | null>(null);
   const [isLoadingExample, setIsLoadingExample] = useState<string | null>(null);
   const [isSelectingPhoto, setIsSelectingPhoto] = useState(false);
-  const [activeEditAction, setActiveEditAction] = useState<(typeof EDIT_ACTIONS)[number]>("Replace");
-  const [editBarWidth, setEditBarWidth] = useState(0);
   const [reviewPromptOpen, setReviewPromptOpen] = useState(false);
   const [ratePromptOpen, setRatePromptOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [feedbackState, setFeedbackState] = useState<"liked" | "disliked" | null>(null);
-  const [feedbackReason, setFeedbackReason] = useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
-  const [isSendingFeedback, setIsSendingFeedback] = useState(false);
   const [lastGenerationCount, setLastGenerationCount] = useState<number | null>(null);
   const [showResumeToast, setShowResumeToast] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
@@ -639,7 +660,6 @@ export default function WorkspaceScreen() {
   const photoSourceSheetRef = useRef<BottomSheetModal>(null);
   const customPromptSheetRef = useRef<BottomSheetModal>(null);
   const imageContainerRef = useRef<View>(null);
-  const storyRef = useRef<View>(null);
   const hasAppliedStartStepRef = useRef(false);
   const reviewHandledRef = useRef(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -664,9 +684,6 @@ export default function WorkspaceScreen() {
       : serviceType === "garden"
         ? SPACE_OPTIONS.garden
         : SPACE_OPTIONS.interior;
-
-  useEffect(() => {
-  }, []);
 
   useEffect(() => {
     if (diagnostic) return;
@@ -807,8 +824,6 @@ export default function WorkspaceScreen() {
   const wizardCardWidth = useMemo(() => Math.max((width - 48 - wizardColumnGap) / 2, 148), [width]);
   const wizardExampleCardWidth = useMemo(() => Math.min(Math.max(width * 0.3, 112), 132), [width]);
   const wizardUploadSize = useMemo(() => Math.min(width - 56, 332), [width]);
-  const wizardPreviewHeight = wizardUploadSize;
-  const wizardUploadHeight = wizardUploadSize;
 
   const spaceOptions = useMemo(() => {
     if (serviceType === "exterior") return SPACE_OPTIONS.exterior;
@@ -819,17 +834,12 @@ export default function WorkspaceScreen() {
   const plan = diagnostic ? "pro" : me?.plan ?? "free";
   const isProPlan = plan === "pro";
   const planUsed = plan === "pro" ? "pro" : plan === "trial" ? "trial" : "free";
-  const canUpscale = isProPlan;
   const imagesRemaining = diagnostic ? 999 : me?.imagesRemaining ?? 0;
   const imageGenerationLimit = diagnostic ? 999 : me?.imageGenerationLimit ?? 0;
   const generationStatusLabel = diagnostic ? "Unlimited diagnostic" : me?.generationStatusLabel ?? "0 / 0 images left";
   const generationStatusMessage = diagnostic ? "Diagnostic access enabled." : me?.generationStatusMessage ?? "Limit Reached - Upgrade or Wait";
   const generationBlocked = !diagnostic && (!(me?.subscriptionActive ?? false) || (me?.generationLimitReached ?? true));
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
-  const editGap = 12;
-  const activeEditIndex = EDIT_ACTIONS.indexOf(activeEditAction);
-  const editItemWidth =
-    editBarWidth > 0 ? (editBarWidth - editGap * (EDIT_ACTIONS.length - 1)) / EDIT_ACTIONS.length : 0;
   const isDownloadingStandard = isDownloading === "standard";
   const isDownloadingUltra = isDownloading === "ultra";
   const activeEditorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
@@ -944,24 +954,6 @@ export default function WorkspaceScreen() {
         label,
       });
     });
-
-    const fallbackBase64 = asset.base64 ?? (await readBase64FromUri(asset.uri).catch(() => undefined));
-    if (!fallbackBase64) {
-      return;
-    }
-
-    startTransition(() => {
-      setSelectedImage((current) => {
-        if (current && current.uri !== asset.uri) {
-          return current;
-        }
-        return {
-          uri: asset.uri,
-          base64: fallbackBase64,
-          label,
-        };
-      });
-    });
   }, []);
 
   const launchPhotoSource = useCallback(
@@ -984,7 +976,6 @@ export default function WorkspaceScreen() {
             ? await ImagePicker.launchCameraAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
-                base64: true,
                 quality: 0.82,
                 exif: false,
                 cameraType: ImagePicker.CameraType.back,
@@ -992,7 +983,6 @@ export default function WorkspaceScreen() {
             : await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
-                base64: true,
                 quality: 0.82,
                 exif: false,
               });
@@ -1036,15 +1026,6 @@ export default function WorkspaceScreen() {
       }
       startTransition(() => {
         setSelectedImage({ uri, label: example.label });
-      });
-      const base64 = await readBase64FromUri(uri);
-      startTransition(() => {
-        setSelectedImage((current) => {
-          if (current && current.uri !== uri) {
-            return current;
-          }
-          return { uri, base64, label: example.label };
-        });
       });
     } catch (error) {
       Alert.alert("Example unavailable", error instanceof Error ? error.message : "Please try another image.");
@@ -1093,7 +1074,6 @@ export default function WorkspaceScreen() {
       setShowBeforeOnly(false);
       setFeedbackMessage("");
       setFeedbackState(null);
-      setFeedbackReason("");
       setFeedbackSubmitted(false);
       setLastGenerationCount(null);
     });
@@ -1182,39 +1162,6 @@ export default function WorkspaceScreen() {
     }
   }, [activeEditorImageUrl, cleanupTempFile, exportCurrentRender]);
 
-  const handleShareStory = useCallback(async () => {
-    triggerHaptic();
-    if (!generatedImageUrl || !selectedImage) {
-      Alert.alert("Nothing to share", "Generate a render first.");
-      return;
-    }
-    if (!storyRef.current) {
-      Alert.alert("Story unavailable", "Please try again.");
-      return;
-    }
-    let tempUri: string | null = null;
-    try {
-      setIsSharingStory(true);
-      tempUri = await captureRef(storyRef, {
-        format: "png",
-        quality: 1,
-        result: "tmpfile",
-        width: STORY_WIDTH,
-        height: STORY_HEIGHT,
-      });
-      const canShare = await Sharing.isAvailableAsync();
-      if (canShare) {
-        await Sharing.shareAsync(tempUri, { dialogTitle: "Share your Darkor design" });
-      } else {
-        await Share.share({ message: "Designed with Darkor.ai", url: tempUri });
-      }
-    } catch (error) {
-      Alert.alert("Share failed", error instanceof Error ? error.message : "Please try again.");
-    } finally {
-      await cleanupTempFile(tempUri);
-      setIsSharingStory(false);
-    }
-  }, [cleanupTempFile, generatedImageUrl, selectedImage]);
 
   const handleUpgrade = useCallback(() => {
     triggerHaptic();
@@ -1278,20 +1225,7 @@ export default function WorkspaceScreen() {
     }
   }, [activeEditorImageUrl, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, handleUpgrade, isProPlan, showToast]);
 
-  const handleUpscale = useCallback(() => {
-    triggerHaptic();
-    if (!canUpscale) {
-      Alert.alert("Upgrade to Pro Studio", "Upscale to 4K is available only on an active paid Pro Studio subscription.");
-      return;
-    }
-    Alert.alert("Upscale", "Your 4K upscale is queued.");
-  }, [canUpscale]);
 
-  const handleEditAction = useCallback((label: (typeof EDIT_ACTIONS)[number]) => {
-    triggerHaptic();
-    setActiveEditAction(label);
-    Alert.alert(label, "Editing tools are coming next.");
-  }, []);
 
   const animateFeedbackButton = useCallback((target: "liked" | "disliked") => {
     const scale = target === "liked" ? likeScale : dislikeScale;
@@ -1337,33 +1271,6 @@ export default function WorkspaceScreen() {
     }
   }, [animateFeedbackButton, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
 
-  const handleSubmitDislike = useCallback(async () => {
-    if (!generationId || feedbackSubmitted) return;
-    const reason = feedbackReason.trim();
-    if (!reason) {
-      Alert.alert("Tell us more", "Choose a reason or add a short note.");
-      return;
-    }
-    triggerHaptic();
-    setIsSendingFeedback(true);
-    try {
-      const result = (await submitGenerationFeedback({
-        id: generationId,
-        sentiment: "disliked",
-        reason,
-      })) as { retryGranted?: boolean };
-      setFeedbackSubmitted(true);
-      showToast(
-        result?.retryGranted
-          ? "Thanks for the feedback. A free retry credit was added."
-          : "Thanks for the feedback. We'll improve the next render.",
-      );
-    } catch (error) {
-      Alert.alert("Feedback failed", error instanceof Error ? error.message : "Please try again.");
-    } finally {
-      setIsSendingFeedback(false);
-    }
-  }, [feedbackReason, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
 
   const handleGenerate = useCallback(async (options?: { regenerate?: boolean }) => {
     if (!selectedImage || !selectedRoom || !selectedStyle || !selectedPalette || !selectedMode) {
@@ -1387,7 +1294,6 @@ export default function WorkspaceScreen() {
 
     try {
       setFeedbackState(null);
-      setFeedbackReason("");
       setFeedbackSubmitted(false);
       setGenerationId(null);
       setIsGenerating(true);
@@ -1568,7 +1474,6 @@ export default function WorkspaceScreen() {
     setGenerationId(item.generationId ?? null);
     setShowBeforeOnly(false);
     setFeedbackState(null);
-    setFeedbackReason("");
     setFeedbackSubmitted(false);
     if (sliderWidth.value > 0) {
       sliderX.value = withSpring(sliderWidth.value / 2, sliderSpring);
@@ -1845,7 +1750,7 @@ export default function WorkspaceScreen() {
                       >
                         {selectedImage ? (
                           <>
-                            <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} />
+                            <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} cachePolicy="memory-disk" />
                             <LuxPressable
                               onPress={(event) => {
                                 event.stopPropagation();
@@ -1898,7 +1803,7 @@ export default function WorkspaceScreen() {
                                   backgroundColor: "#050505",
                                 }}
                               >
-                                <Image source={example.source} style={{ width: "100%", height: 112 }} contentFit="cover" transition={180} />
+                                <Image source={example.source} style={{ width: "100%", height: 112 }} contentFit="cover" transition={180} cachePolicy="memory-disk" />
                                 {active ? (
                                   <View className="absolute right-3 top-3 h-8 w-8 items-center justify-center rounded-full bg-fuchsia-600">
                                     <Check color="#ffffff" size={16} strokeWidth={2.5} />
@@ -2036,7 +1941,7 @@ export default function WorkspaceScreen() {
                                   </View>
                                 </LinearGradient>
                               ) : (
-                                <Image source={style.image} style={{ width: "100%", height: 168 }} contentFit="cover" transition={160} />
+                                <Image source={style.image} style={{ width: "100%", height: 168 }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
                               )}
                               <View style={{ padding: 14, gap: 4 }}>
                                 <View className="flex-row items-start justify-between gap-3">
@@ -2342,7 +2247,7 @@ export default function WorkspaceScreen() {
                 style={{ height: 236, borderWidth: 0.5 }}
               >
                 {selectedImage ? (
-                  <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                  <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
                 ) : null}
                 <View className="absolute inset-0 bg-black/60" />
                 <View className="absolute inset-0 items-center justify-center gap-3">
@@ -2372,67 +2277,46 @@ export default function WorkspaceScreen() {
     if (!activeBoardItem) {
       return (
         <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
-          <ScrollView
-            className="flex-1 bg-black"
-            style={{ backgroundColor: "#000000" }}
+          <FlashList
+            data={boardItems}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item, index }) => (
+              <BoardGridCard item={item} width={boardCardWidth} index={index} onPress={handleOpenBoardItem} />
+            )}
+            numColumns={2}
+            showsVerticalScrollIndicator={false}
             contentContainerStyle={{
               paddingHorizontal: 20,
               paddingTop: Math.max(insets.top + 14, 28),
               paddingBottom: Math.max(insets.bottom + 32, 40),
             }}
-            contentInsetAdjustmentBehavior="never"
-          >
-            <View className="flex-row items-center justify-between">
-              <View style={{ width: 42 }} />
-              <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>Your Board</Text>
-              <LuxPressable
-                onPress={handleResetWizard}
-                className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
-                style={{ borderWidth: 0.5 }}
-              >
-                <Close color="#ffffff" size={18} strokeWidth={2.2} />
-              </LuxPressable>
-            </View>
-
-            <View style={{ marginTop: 28, flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-              {boardItems.length === 0 ? (
-                <View
-                  className="items-center justify-center rounded-[28px] border border-white/10 bg-zinc-950"
-                  style={{ width: boardCardWidth, height: 236, borderWidth: 0.5 }}
+            ListHeaderComponent={
+              <View style={{ marginBottom: 28 }} className="flex-row items-center justify-between">
+                <View style={{ width: 42 }} />
+                <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>Your Board</Text>
+                <LuxPressable
+                  onPress={handleResetWizard}
+                  className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
+                  style={{ borderWidth: 0.5 }}
                 >
-                  <Sparkles color="#71717a" size={28} />
-                  <Text className="mt-4 text-base font-semibold text-white">Your first board appears here</Text>
-                  <Text className="mt-2 px-6 text-center text-sm leading-6 text-zinc-500">
-                    Generate a redesign to start building your collection.
-                  </Text>
-                </View>
-              ) : null}
-
-              {boardItems.map((item, index) => (
-                <MotiView key={item.id} {...staggerFadeUp(index, 40)} style={{ width: boardCardWidth }}>
-                  <LuxPressable
-                    onPress={() => handleOpenBoardItem(item)}
-                    className="cursor-pointer overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950"
-                    style={{ height: 236, borderWidth: 0.5 }}
-                  >
-                    <MotiView from={{ opacity: 0.7, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={LUX_SPRING} style={{ flex: 1 }}>
-                      <Image source={{ uri: item.imageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
-                    </MotiView>
-                    <LinearGradient
-                      colors={["transparent", "rgba(0,0,0,0.82)"]}
-                      start={{ x: 0.5, y: 0 }}
-                      end={{ x: 0.5, y: 1 }}
-                      style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 96 }}
-                    />
-                    <View style={{ position: "absolute", left: 14, right: 14, bottom: 14 }}>
-                      <Text className="text-base font-semibold text-white">{item.styleLabel + " " + item.roomLabel}</Text>
-                      <Text className="mt-1 text-xs text-zinc-300">Tap to open your design editor</Text>
-                    </View>
-                  </LuxPressable>
-                </MotiView>
-              ))}
-            </View>
-          </ScrollView>
+                  <Close color="#ffffff" size={18} strokeWidth={2.2} />
+                </LuxPressable>
+              </View>
+            }
+            ListEmptyComponent={
+              <View
+                className="items-center justify-center rounded-[28px] border border-white/10 bg-zinc-950"
+                style={{ width: boardCardWidth, height: 236, borderWidth: 0.5 }}
+              >
+                <Sparkles color="#71717a" size={28} />
+                <Text className="mt-4 text-base font-semibold text-white">Your first board appears here</Text>
+                <Text className="mt-2 px-6 text-center text-sm leading-6 text-zinc-500">
+                  Generate a redesign to start building your collection.
+                </Text>
+              </View>
+            }
+            removeClippedSubviews
+          />
         </View>
       );
     }
@@ -2442,7 +2326,7 @@ export default function WorkspaceScreen() {
         <View className="px-5" style={{ paddingTop: Math.max(insets.top + 10, 20) }}>
           <View className="flex-row items-center justify-between">
             <View className="rounded-full border border-white/10 bg-zinc-950 px-4 py-2" style={{ borderWidth: 0.5 }}>
-              <Text className="text-sm font-semibold text-white">{"?? " + imagesRemaining}</Text>
+              <Text className="text-sm font-semibold text-white">{"Credits " + imagesRemaining}</Text>
             </View>
             <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Your Design</Text>
             <LuxPressable
@@ -2476,7 +2360,7 @@ export default function WorkspaceScreen() {
                     transition={LUX_SPRING}
                     className="h-full w-full"
                   >
-                    <Image source={{ uri: beforeImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                    <Image source={{ uri: beforeImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
                     <Animated.View
                       style={[
                         {
@@ -2489,7 +2373,7 @@ export default function WorkspaceScreen() {
                         afterImageStyle,
                       ]}
                     >
-                      <Image source={{ uri: editorImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                      <Image source={{ uri: editorImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
                     </Animated.View>
                     <GestureDetector gesture={sliderGesture}>
                       <Animated.View
@@ -2521,7 +2405,7 @@ export default function WorkspaceScreen() {
                     </GestureDetector>
                   </MotiView>
                 ) : editorImageUrl ? (
-                  <Image source={{ uri: editorImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                  <Image source={{ uri: editorImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
                 ) : (
                   <View className="h-full w-full items-center justify-center bg-zinc-900">
                     <Sparkles color="#71717a" size={28} />
@@ -2672,846 +2556,4 @@ export default function WorkspaceScreen() {
     );
   }
 
-
-
-  return (
-    <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
-      {showResumeToast ? (
-        <MotiView
-          from={{ opacity: 0, translateY: -12 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          exit={{ opacity: 0, translateY: -12 }}
-          transition={LUX_SPRING}
-          className="absolute left-6 right-6 z-20"
-          style={{ top: insets.top + 8 }}
-          pointerEvents="none"
-        >
-          <BlurView
-            intensity={80}
-            tint="dark"
-            className="rounded-2xl border border-white/10 bg-black/70 px-4 py-3"
-            style={{ borderWidth: 0.5 }}
-          >
-            <Text className="text-center text-sm font-semibold text-white">{"\u2728"} Resuming with your current draft.</Text>
-          </BlurView>
-        </MotiView>
-      ) : null}
-      <ScrollView
-        className="flex-1 bg-black"
-        style={{ backgroundColor: "#000000" }}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 140, minHeight: height }}
-        contentInsetAdjustmentBehavior="never"
-      >
-        <View className="flex-row items-center gap-3">
-          <LuxPressable
-            onPress={handleBack}
-            className="cursor-pointer h-10 w-10 items-center justify-center rounded-full border border-white/10"
-          >
-            <ArrowLeft color="#e4e4e7" size={18} />
-          </LuxPressable>
-          <View>
-            <Text className="text-xs uppercase tracking-[3px] text-cyan-200/80">Darkor.ai</Text>
-            <Text className="text-2xl font-medium text-white">{serviceLabel}</Text>
-          </View>
-        </View>
-
-        <View className="mt-5 flex-row gap-2">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <View
-              key={`step-${index}`}
-              className="h-1.5 flex-1 rounded-full"
-              style={{ backgroundColor: index <= workflowStep ? "#d946ef" : "#1a1a1a" }}
-            />
-          ))}
-        </View>
-
-        <AnimatePresence exitBeforeEnter>
-          {workflowStep === 0 ? (
-            <MotiView
-              key="step-photo"
-              from={{ opacity: 0, translateY: 16 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              exit={{ opacity: 0, translateY: -12 }}
-              transition={stepTransition}
-              className="mt-8 gap-5"
-            >
-              <View>
-                <Text className="text-sm font-medium uppercase tracking-[3px] text-zinc-500">Step 1 / 4</Text>
-                <Text className="mt-3 text-3xl font-semibold text-white">Add a Photo</Text>
-                <Text className="mt-3 text-sm leading-6 text-zinc-400">
-                  Start with one clean photo of your space or use an example to preview the wizard instantly.
-                </Text>
-              </View>
-
-              <LuxPressable
-                onPress={handlePickPhoto}
-                className="cursor-pointer overflow-hidden rounded-[32px] border-2 border-dashed items-center justify-center"
-                style={{
-                  minHeight: Math.min(width - 40, 336),
-                  borderColor: selectedImage ? "rgba(255,255,255,0.12)" : "#27272a",
-                  backgroundColor: "#050505",
-                  paddingHorizontal: 24,
-                  paddingVertical: 28,
-                }}
-              >
-                {selectedImage ? (
-                  <View className="h-full w-full">
-                    <Image source={{ uri: selectedImage.uri }} className="h-full w-full rounded-[28px]" contentFit="cover" />
-                    <LuxPressable
-                      onPress={handleClearSelectedImage}
-                      className="absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/70"
-                      style={{ borderWidth: 0.5 }}
-                    >
-                      <Close color="#ffffff" size={18} />
-                    </LuxPressable>
-                  </View>
-                ) : (
-                  <View className="items-center justify-center">
-                    <View className="h-20 w-20 items-center justify-center rounded-full border border-white/10 bg-white/5">
-                      <Plus color="#ffffff" size={34} />
-                    </View>
-                    <Text className="mt-6 text-xl font-semibold text-white">Add a Photo</Text>
-                    <Text className="mt-2 text-center text-sm leading-6 text-zinc-500">
-                      Tap to take a photo or upload
-                    </Text>
-                  </View>
-                )}
-              </LuxPressable>
-
-              <View>
-                <Text className="text-lg font-semibold text-white">Example Photos</Text>
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingRight: 4 }}>
-                {EXAMPLE_PHOTOS.map((example, index) => {
-                  const isActive = selectedImage?.label === example.label;
-                  const isLoading = isLoadingExample === example.id;
-                  return (
-                    <MotiView key={example.id} {...staggerFadeUp(index, 70)}>
-                      <LuxPressable
-                        onPress={() => void handleSelectExample(example)}
-                        className="cursor-pointer overflow-hidden rounded-[20px] border"
-                        style={{
-                          width: 108,
-                          height: 108,
-                          borderWidth: isActive ? 1.5 : 0.5,
-                          borderColor: isActive ? "#d946ef" : "rgba(255,255,255,0.12)",
-                        }}
-                      >
-                        <Image source={example.source} className="h-full w-full" contentFit="cover" />
-                        {isLoading ? (
-                          <View className="absolute inset-0 items-center justify-center bg-black/45">
-                            <ActivityIndicator color="#ffffff" size="small" />
-                          </View>
-                        ) : null}
-                      </LuxPressable>
-                    </MotiView>
-                  );
-                })}
-              </ScrollView>
-            </MotiView>
-          ) : null}
-
-          {workflowStep === 1 ? (
-            <MotiView
-              key="step-space"
-              from={{ opacity: 0, translateY: 16 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              exit={{ opacity: 0, translateY: -12 }}
-              transition={stepTransition}
-              className="mt-8 gap-5"
-            >
-              <View>
-                <Text className="text-xl font-semibold text-white">Choose Space Type</Text>
-                <Text className="mt-2 text-sm text-zinc-400">Select the space you want to redesign.</Text>
-              </View>
-
-              <View className="flex-row flex-wrap gap-3">
-                {spaceOptions.map((option, index) => {
-                  const active = selectedRoom === option;
-                  return (
-                    <MotiView key={option} {...staggerFadeUp(index, 60)}>
-                      <LuxPressable
-                        onPress={() => handleSelectRoom(option)}
-                        className={`cursor-pointer w-[48%] rounded-2xl border px-3 py-4 ${
-                          active ? "border-cyan-300/70 bg-cyan-400/10" : "border-white/10 bg-white/5"
-                        }`}
-                        style={{ borderWidth: 0.5 }}
-                      >
-                        <Text className={`text-sm font-semibold ${active ? "text-cyan-100" : "text-zinc-200"}`}>
-                          {option}
-                        </Text>
-                        <Text className="mt-2 text-xs text-zinc-500">Tap to select</Text>
-                      </LuxPressable>
-                    </MotiView>
-                  );
-                })}
-              </View>
-            </MotiView>
-          ) : null}
-
-          {workflowStep === 2 ? (
-            <MotiView
-              key="step-style"
-              from={{ opacity: 0, translateY: 16 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              exit={{ opacity: 0, translateY: -12 }}
-              transition={stepTransition}
-              className="mt-8 gap-5"
-            >
-              <View>
-                <Text className="text-xl font-semibold text-white">Select Your Style</Text>
-                <Text className="mt-2 text-sm text-zinc-400">Choose one of the 24 curated aesthetics.</Text>
-              </View>
-
-              <View className="flex-row flex-wrap gap-3">
-                {STYLE_OPTIONS.map((style, index) => {
-                  const active = selectedStyle === style;
-                  return (
-                    <MotiView key={style} {...staggerFadeUp(index, 40)}>
-                      <LuxPressable
-                        onPress={() => handleSelectStyle(style)}
-                        className={`cursor-pointer w-[31%] overflow-hidden rounded-2xl border ${
-                          active ? "border-cyan-300 bg-cyan-400/10" : "border-white/10 bg-white/5"
-                        }`}
-                        style={{ borderWidth: 0.5 }}
-                      >
-                        <View className="h-16 w-full bg-white/5" />
-                        <Text className={`px-3 py-2 text-[11px] font-semibold ${active ? "text-cyan-100" : "text-zinc-200"}`}>
-                          {style}
-                        </Text>
-                      </LuxPressable>
-                    </MotiView>
-                  );
-                })}
-              </View>
-            </MotiView>
-          ) : null}
-
-          {workflowStep === 3 ? (
-            <MotiView
-              key="step-custom"
-              from={{ opacity: 0, translateY: 16 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              exit={{ opacity: 0, translateY: -12 }}
-              transition={stepTransition}
-              className="mt-8 gap-5"
-            >
-              <View>
-                <Text className="text-xl font-semibold text-white">Personalize Your Vision</Text>
-                <Text className="mt-2 text-sm text-zinc-400">Refine the look with AI instructions and palettes.</Text>
-              </View>
-
-              <View className="gap-3">
-                <Text className="text-sm font-semibold text-white">Refine with AI Instructions</Text>
-                <TextInput
-                  value={customPrompt}
-                  onChangeText={setCustomPrompt}
-                  placeholder="e.g., Add a large marble fireplace, or replace the rug with a dark gray velvet one."
-                  placeholderTextColor="rgba(148, 163, 184, 0.65)"
-                  multiline
-                  textAlignVertical="top"
-                  className="min-h-[140px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
-                />
-              </View>
-
-              <View className="gap-3">
-                <Text className="text-sm font-semibold text-white">Color Palette Picker</Text>
-                <View className="flex-row flex-wrap gap-3">
-                  {PALETTE_OPTIONS.map((palette, index) => {
-                    const active = selectedPaletteId === palette.id;
-                    return (
-                      <MotiView key={palette.id} {...staggerFadeUp(index, 60)}>
-                        <LuxPressable
-                          onPress={() => handleSelectPalette(palette.id)}
-                          className={`cursor-pointer w-[48%] rounded-2xl border px-3 py-3 ${
-                            active ? "border-cyan-300 bg-cyan-400/10" : "border-white/10 bg-white/5"
-                          }`}
-                          style={{ borderWidth: 0.5 }}
-                        >
-                          <View className="flex-row gap-2">
-                            {palette.colors.map((color) => (
-                              <View
-                                key={color}
-                                className="h-5 flex-1 rounded-lg"
-                                style={{ backgroundColor: color }}
-                              />
-                            ))}
-                          </View>
-                          <Text className={`mt-2 text-xs font-semibold ${active ? "text-cyan-100" : "text-zinc-200"}`}>
-                            {palette.label}
-                          </Text>
-                        </LuxPressable>
-                      </MotiView>
-                    );
-                  })}
-                </View>
-              </View>
-
-              <View className="gap-3">
-                <Text className="text-sm font-semibold text-white">Aspect Ratio</Text>
-                <View className="flex-row flex-wrap gap-3">
-                  {ASPECT_RATIO_OPTIONS.map((option, index) => {
-                    const active = selectedAspectRatioId === option.id;
-                    return (
-                      <MotiView key={option.id} {...staggerFadeUp(index, 60)}>
-                        <LuxPressable
-                          onPress={() => handleSelectAspectRatio(option.id)}
-                          className={`cursor-pointer w-[31%] rounded-2xl border px-3 py-3 ${
-                            active ? "border-cyan-300 bg-cyan-400/10" : "border-white/10 bg-white/5"
-                          }`}
-                          style={{ borderWidth: 0.5 }}
-                        >
-                          <View className="items-center gap-2">
-                            <View
-                              style={{
-                                width: option.preview.width,
-                                height: option.preview.height,
-                                borderRadius: 6,
-                                borderWidth: 1,
-                                borderColor: active ? "rgba(34,211,238,0.9)" : "rgba(255,255,255,0.35)",
-                              }}
-                            />
-                            <Text className={`text-[11px] font-semibold ${active ? "text-cyan-100" : "text-zinc-200"}`}>
-                              {option.label}
-                            </Text>
-                            <Text className="text-[10px] text-zinc-500">{option.descriptor}</Text>
-                          </View>
-                        </LuxPressable>
-                      </MotiView>
-                    );
-                  })}
-                </View>
-              </View>
-            </MotiView>
-          ) : null}
-
-          {workflowStep === 5 ? (
-            <MotiView
-              key="step-result"
-              from={{ opacity: 0, translateY: 16 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              exit={{ opacity: 0, translateY: -12 }}
-              transition={stepTransition}
-              className="mt-8 gap-5"
-            >
-              <View>
-                <Text className="text-xl font-semibold text-white">The Designer Studio</Text>
-                <Text className="mt-2 text-sm text-zinc-400">Review your render and refine the space.</Text>
-              </View>
-
-              <View className="relative overflow-hidden rounded-3xl border border-white/10" style={{ borderWidth: 0.5 }}>
-                <View
-                  ref={imageContainerRef}
-                  collapsable={false}
-                  onLayout={handleSliderLayout}
-                  className="relative h-80 w-full"
-                >
-                  {generatedImageUrl ? (
-                    <MotiView
-                      key={generatedImageUrl}
-                      from={{ opacity: 0, scale: 0.98 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={LUX_SPRING}
-                      className="h-80 w-full"
-                    >
-                      <View className="absolute inset-0">
-                        <Image
-                          source={{ uri: selectedImage?.uri ?? generatedImageUrl }}
-                          className="h-80 w-full"
-                          contentFit="cover"
-                        />
-                      </View>
-                      <Animated.View
-                        style={[
-                          {
-                            position: "absolute",
-                            top: 0,
-                            bottom: 0,
-                            left: 0,
-                            overflow: "hidden",
-                          },
-                          afterImageStyle,
-                        ]}
-                      >
-                        <Image source={{ uri: generatedImageUrl }} className="h-80 w-full" contentFit="cover" />
-                      </Animated.View>
-                      <GestureDetector gesture={sliderGesture}>
-                        <Animated.View
-                          style={[
-                            {
-                              position: "absolute",
-                              top: 0,
-                              bottom: 0,
-                              width: 44,
-                              alignItems: "center",
-                              justifyContent: "center",
-                            },
-                            sliderBarStyle,
-                          ]}
-                        >
-                          <View
-                            style={{
-                              position: "absolute",
-                              top: 0,
-                              bottom: 0,
-                              width: 2,
-                              backgroundColor: "rgba(255,255,255,0.75)",
-                            }}
-                          />
-                          <View className="h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-black/60">
-                            <MoveHorizontal color="#ffffff" size={14} />
-                          </View>
-                        </Animated.View>
-                      </GestureDetector>
-                    </MotiView>
-                  ) : (
-                    <View className="h-80 w-full items-center justify-center gap-2 bg-white/5">
-                      <Sparkles color="#a1a1aa" size={32} />
-                      <Text className="text-sm text-zinc-400">No render yet.</Text>
-                    </View>
-                  )}
-                  {!isProPlan && generatedImageUrl ? (
-                    <View className="absolute bottom-3 right-3">
-                      <Logo size={44} style={{ opacity: 0.6 }} />
-                    </View>
-                  ) : null}
-                </View>
-
-                <BlurView
-                  intensity={80}
-                  tint="dark"
-                  className="absolute bottom-4 left-1/2 flex-row -translate-x-1/2 items-center gap-2 rounded-full border border-white/20 bg-black/60 px-3 py-2"
-                  style={{ borderWidth: 0.5 }}
-                >
-                  <LuxPressable
-                    onPress={handleUpscale}
-                    className={`cursor-pointer rounded-full px-3 py-1 ${
-                      canUpscale ? "bg-white/10" : "bg-white/5"
-                    }`}
-                  >
-                    <View className="flex-row items-center gap-1">
-                      {isProPlan ? <Sparkles color="#f5d0fe" size={12} /> : <Lock color="#facc15" size={12} />}
-                      <Text className="text-[11px] font-semibold text-white">Upscale</Text>
-                    </View>
-                  </LuxPressable>
-                  <LuxPressable
-                    onPress={handleShareStory}
-                    className="cursor-pointer flex-row items-center gap-1 rounded-full bg-white/10 px-3 py-1"
-                  >
-                    {isSharingStory ? <ActivityIndicator size="small" color="#f8fafc" /> : <Send color="#f8fafc" size={12} />}
-                    <Text className="text-[11px] font-semibold text-white">Story</Text>
-                  </LuxPressable>
-                  <LuxPressable onPress={handleShare} className="cursor-pointer rounded-full bg-white/10 px-3 py-1">
-                    <Text className="text-[11px] font-semibold text-white">Share</Text>
-                  </LuxPressable>
-                </BlurView>
-              </View>
-
-              <View className="flex-row items-center justify-center gap-3">
-                <LuxPressable
-                  onPress={handleLike}
-                  disabled={feedbackSubmitted || !generationId}
-                  className={`cursor-pointer flex-row items-center gap-2 rounded-full border px-4 py-2 ${
-                    feedbackState === "liked" ? "border-emerald-300 bg-emerald-400/15" : "border-white/10 bg-white/5"
-                  }`}
-                  style={{ borderWidth: 0.5 }}
-                >
-                  <ThumbsUp color="#bbf7d0" size={16} />
-                  <Text className="text-xs font-semibold text-white">Like</Text>
-                </LuxPressable>
-                <LuxPressable
-                  onPress={handleDislike}
-                  disabled={feedbackSubmitted || !generationId}
-                  className={`cursor-pointer flex-row items-center gap-2 rounded-full border px-4 py-2 ${
-                    feedbackState === "disliked" ? "border-rose-300 bg-rose-400/15" : "border-white/10 bg-white/5"
-                  }`}
-                  style={{ borderWidth: 0.5 }}
-                >
-                  <ThumbsDown color="#fecdd3" size={16} />
-                  <Text className="text-xs font-semibold text-white">Dislike</Text>
-                </LuxPressable>
-              </View>
-
-              {feedbackState === "disliked" && !feedbackSubmitted ? (
-                <View className="gap-3 rounded-2xl border border-white/10 bg-white/5 p-4" style={{ borderWidth: 0.5 }}>
-                  <Text className="text-sm font-semibold text-white">What went wrong?</Text>
-                  <View className="flex-row flex-wrap gap-2">
-                    {FEEDBACK_REASONS.map((reason) => {
-                      const active = feedbackReason === reason;
-                      return (
-                        <LuxPressable
-                          key={reason}
-                          onPress={() => setFeedbackReason(reason)}
-                          className={`cursor-pointer rounded-full border px-3 py-1 ${
-                            active ? "border-rose-300 bg-rose-400/20" : "border-white/10 bg-white/5"
-                          }`}
-                          style={{ borderWidth: 0.5 }}
-                        >
-                          <Text className="text-[11px] font-semibold text-zinc-100">{reason}</Text>
-                        </LuxPressable>
-                      );
-                    })}
-                  </View>
-                  <TextInput
-                    value={feedbackReason}
-                    onChangeText={setFeedbackReason}
-                    placeholder="Share more details (optional)"
-                    placeholderTextColor="rgba(148, 163, 184, 0.6)"
-                    className="rounded-2xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white"
-                    style={{ borderWidth: 0.5 }}
-                  />
-                  <LuxPressable
-                    onPress={handleSubmitDislike}
-                    disabled={isSendingFeedback}
-                    className="cursor-pointer flex-row items-center justify-center gap-2 rounded-2xl bg-white/10 py-2.5"
-                  >
-                    {isSendingFeedback ? <ActivityIndicator color="#f8fafc" /> : null}
-                    <Text className="text-xs font-semibold text-white">Send feedback</Text>
-                  </LuxPressable>
-                </View>
-              ) : null}
-
-              <View className="gap-3">
-                {!isProPlan ? (
-                  <>
-                    <LuxPressable
-                      onPress={handleDownloadStandard}
-                      disabled={isDownloadingStandard}
-                      className="cursor-pointer rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
-                      style={{ borderWidth: 0.5 }}
-                    >
-                      <View className="flex-row items-center justify-between">
-                        <View>
-                          <Text className="text-sm font-semibold text-white">Standard HD Download</Text>
-                          <Text className="mt-1 text-xs text-zinc-400">For trial users</Text>
-                        </View>
-                        {isDownloadingStandard ? (
-                          <ActivityIndicator color="#f8fafc" />
-                        ) : (
-                          <Download color="#f8fafc" size={18} />
-                        )}
-                      </View>
-                    </LuxPressable>
-
-                    <LuxPressable
-                      onPress={handleUpgrade}
-                      className="cursor-pointer rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
-                      style={{ borderWidth: 0.5 }}
-                    >
-                      <View className="flex-row items-center justify-between">
-                        <View>
-                          <Text className="text-sm font-semibold text-white">4K Ultra HD Download</Text>
-                          <Text className="mt-1 text-xs text-zinc-400">Paid Pro Studio only</Text>
-                        </View>
-                        <Lock color="#facc15" size={18} />
-                      </View>
-                    </LuxPressable>
-                  </>
-                ) : (
-                  <LuxPressable
-                    onPress={handleDownloadUltra}
-                    disabled={isDownloadingUltra}
-                    className="cursor-pointer rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
-                    style={{ borderWidth: 0.5 }}
-                  >
-                    <View className="flex-row items-center justify-between">
-                      <View>
-                        <Text className="text-sm font-semibold text-white">Download 4K Ultra HD</Text>
-                        <Text className="mt-1 text-xs text-zinc-400">Watermark-free, max resolution</Text>
-                      </View>
-                      {isDownloadingUltra ? (
-                        <ActivityIndicator color="#f8fafc" />
-                      ) : (
-                        <Download color="#f8fafc" size={18} />
-                      )}
-                    </View>
-                  </LuxPressable>
-                )}
-              </View>
-
-              <View
-                className="relative flex-row gap-3"
-                onLayout={(event) => setEditBarWidth(event.nativeEvent.layout.width)}
-              >
-                {editItemWidth > 0 ? (
-                  <MotiView
-                    animate={{ translateX: activeEditIndex * (editItemWidth + editGap) }}
-                    transition={LUX_SPRING}
-                    className="absolute bottom-0 top-0 rounded-2xl bg-white/10"
-                    style={{ width: editItemWidth }}
-                  />
-                ) : null}
-                {EDIT_ACTIONS.map((action) => (
-                  <LuxPressable
-                    key={action}
-                    onPress={() => handleEditAction(action)}
-                    className="cursor-pointer flex-1 min-w-[120px] flex-row items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-3"
-                    style={{ borderWidth: 0.5 }}
-                  >
-                    {action === "Replace" ? <Layers color="#e4e4e7" size={16} /> : null}
-                    {action === "Paint" ? <Paintbrush color="#e4e4e7" size={16} /> : null}
-                    {action === "Floor" ? <SwatchBook color="#e4e4e7" size={16} /> : null}
-                    <Text className="text-xs font-semibold text-zinc-100">{action}</Text>
-                  </LuxPressable>
-                ))}
-              </View>
-
-              </MotiView>
-          ) : null}
-        </AnimatePresence>
-      </ScrollView>
-
-      {workflowStep <= 3 ? (
-        <BlurView
-          intensity={90}
-          tint="dark"
-          className="absolute bottom-5 left-5 right-5 flex-row items-center justify-between rounded-full border border-white/15 bg-black/60 px-4 py-3"
-          style={{ borderWidth: 0.5 }}
-        >
-          <LuxPressable
-            onPress={handleBack}
-            className="cursor-pointer rounded-full border border-white/10 px-4 py-2"
-            style={{ borderWidth: 0.5 }}
-          >
-            <Text className="text-xs font-semibold text-zinc-200">Back</Text>
-          </LuxPressable>
-          <LuxPressable
-            onPress={handleContinue}
-            disabled={!canContinue || isGenerating || (workflowStep === 3 && generationBlocked)}
-            className={`cursor-pointer rounded-full px-5 py-2 ${
-              canContinue && !isGenerating && !(workflowStep === 3 && generationBlocked) ? "bg-cyan-400" : "bg-zinc-700"
-            }`}
-          >
-            <Text
-              className={`text-xs font-semibold ${
-                canContinue && !isGenerating && !(workflowStep === 3 && generationBlocked) ? "text-zinc-900" : "text-zinc-300"
-              }`}
-            >
-              {workflowStep === 3 ? (generationBlocked ? "Limit Reached - Upgrade or Wait" : isGenerating ? "Generating..." : "Generate Renders") : "Continue"}
-            </Text>
-          </LuxPressable>
-        </BlurView>
-      ) : null}
-
-      <BottomSheetModal
-        ref={photoSourceSheetRef}
-        snapPoints={photoSourceSnapPoints}
-        enablePanDownToClose
-        backdropComponent={GlassBackdrop}
-        backgroundStyle={{ backgroundColor: "#050505" }}
-        handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
-      >
-        <View className="flex-1 px-5 pb-8 pt-2">
-          <Text className="text-lg font-medium text-white">Add your photo</Text>
-          <Text className="mt-2 text-sm text-zinc-400">Choose how you'd like to bring your space into the wizard.</Text>
-
-          <View className="mt-5 gap-3">
-            <LuxPressable
-              onPress={() => void launchPhotoSource("camera")}
-              className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
-              style={{ borderWidth: 0.5 }}
-            >
-              <View className="h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
-                <Camera color="#f8fafc" size={20} />
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-semibold text-white">Take Photo from Camera</Text>
-                <Text className="mt-1 text-xs text-zinc-400">Capture a fresh room photo with your camera.</Text>
-              </View>
-            </LuxPressable>
-
-            <LuxPressable
-              onPress={() => void launchPhotoSource("library")}
-              className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
-              style={{ borderWidth: 0.5 }}
-            >
-              <View className="h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
-                <ImageIcon color="#f8fafc" size={20} />
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-semibold text-white">Upload from Gallery</Text>
-                <Text className="mt-1 text-xs text-zinc-400">Import a saved room photo from your gallery.</Text>
-              </View>
-            </LuxPressable>
-          </View>
-        </View>
-      </BottomSheetModal>
-
-      <BottomSheetModal
-        ref={reviewSheetRef}
-        snapPoints={reviewSnapPoints}
-        enablePanDownToClose
-        backdropComponent={GlassBackdrop}
-        onDismiss={() => {
-          if (!reviewHandledRef.current && reviewPromptOpen) {
-            markReviewPrompted({}).catch(() => undefined);
-          }
-          setReviewPromptOpen(false);
-        }}
-        backgroundStyle={{ backgroundColor: "#050505" }}
-        handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
-      >
-        <View className="flex-1 px-5 pb-8 pt-2">
-          <Text className="text-lg font-medium text-white">Are you happy with your AI redesign?</Text>
-          <Text className="mt-2 text-sm text-zinc-400">Your feedback helps Darkor.ai improve.</Text>
-          <View className="mt-5 flex-row gap-3">
-            <LuxPressable
-              onPress={handleReviewNo}
-              className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-4 py-3"
-              style={{ borderWidth: 0.5 }}
-            >
-              <Text className="text-center text-sm font-semibold text-zinc-200">No</Text>
-            </LuxPressable>
-            <LuxPressable onPress={handleReviewYes} className="flex-1 rounded-2xl bg-cyan-400 px-4 py-3">
-              <Text className="text-center text-sm font-semibold text-zinc-900">Yes</Text>
-            </LuxPressable>
-          </View>
-        </View>
-      </BottomSheetModal>
-
-      <BottomSheetModal
-        ref={rateSheetRef}
-        snapPoints={rateSnapPoints}
-        enablePanDownToClose
-        backdropComponent={GlassBackdrop}
-        onDismiss={() => setRatePromptOpen(false)}
-        backgroundStyle={{ backgroundColor: "#050505" }}
-        handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
-      >
-        <View className="flex-1 px-5 pb-8 pt-2">
-          <Text className="text-lg font-medium text-white">Would you rate Darkor.ai?</Text>
-          <Text className="mt-2 text-sm text-zinc-400">A quick review helps us reach more creators.</Text>
-          <View className="mt-5 flex-row gap-3">
-            <LuxPressable
-              onPress={handleRateLater}
-              className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-4 py-3"
-              style={{ borderWidth: 0.5 }}
-            >
-              <Text className="text-center text-sm font-semibold text-zinc-200">Later</Text>
-            </LuxPressable>
-            <LuxPressable onPress={handleRateNow} className="flex-1 overflow-hidden rounded-2xl">
-              <LinearGradient
-                colors={["#f43f5e", "#d946ef"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{ paddingVertical: 12, alignItems: "center" }}
-              >
-                <Text className="text-center text-sm font-semibold text-white">Rate Now</Text>
-              </LinearGradient>
-            </LuxPressable>
-          </View>
-        </View>
-      </BottomSheetModal>
-
-      <BottomSheetModal
-        ref={feedbackSheetRef}
-        snapPoints={feedbackSnapPoints}
-        enablePanDownToClose
-        backdropComponent={GlassBackdrop}
-        onDismiss={() => setFeedbackOpen(false)}
-        backgroundStyle={{ backgroundColor: "#050505" }}
-        handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
-      >
-        <View className="flex-1 px-5 pb-8 pt-2">
-          <Text className="text-lg font-medium text-white">Tell us what went wrong</Text>
-          <Text className="mt-2 text-sm text-zinc-400">We'll use this to improve your next redesign.</Text>
-          <TextInput
-            value={feedbackMessage}
-            onChangeText={setFeedbackMessage}
-            placeholder="Share what you expected or what felt off..."
-            placeholderTextColor="rgba(148, 163, 184, 0.6)"
-            multiline
-            textAlignVertical="top"
-            className="mt-4 min-h-[120px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
-            style={{ borderWidth: 0.5 }}
-          />
-          <View className="mt-5 flex-row gap-3">
-            <LuxPressable
-              onPress={() => {
-                triggerHaptic();
-                setFeedbackOpen(false);
-                feedbackSheetRef.current?.dismiss();
-              }}
-              className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-4 py-3"
-              style={{ borderWidth: 0.5 }}
-            >
-              <Text className="text-center text-sm font-semibold text-zinc-200">Cancel</Text>
-            </LuxPressable>
-            <LuxPressable
-              onPress={handleSubmitFeedback}
-              className="flex-1 rounded-2xl bg-cyan-400 px-4 py-3"
-              disabled={isSubmittingFeedback}
-            >
-              {isSubmittingFeedback ? (
-                <View className="flex-row items-center justify-center gap-2">
-                  <ActivityIndicator color="#0f172a" />
-                  <Text className="text-sm font-semibold text-zinc-900">Sending...</Text>
-                </View>
-              ) : (
-                <Text className="text-center text-sm font-semibold text-zinc-900">Send</Text>
-              )}
-            </LuxPressable>
-          </View>
-        </View>
-      </BottomSheetModal>
-
-      <View
-        ref={storyRef}
-        collapsable={false}
-        pointerEvents="none"
-        style={{
-          position: "absolute",
-          left: -9999,
-          top: -9999,
-          width: STORY_WIDTH,
-          height: STORY_HEIGHT,
-          backgroundColor: "#000000",
-        }}
-      >
-        <View style={{ height: STORY_HEIGHT / 2, width: "100%" }}>
-          {selectedImage ? (
-            <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
-          ) : (
-            <View className="h-full w-full bg-black" />
-          )}
-        </View>
-        <View style={{ height: STORY_HEIGHT / 2, width: "100%" }}>
-          {generatedImageUrl ? (
-            <Image source={{ uri: generatedImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
-          ) : (
-            <View className="h-full w-full bg-black" />
-          )}
-        </View>
-        <View className="absolute bottom-16 left-0 right-0 items-center gap-2">
-          <Logo size={76} style={{ opacity: 0.9 }} />
-          <Text className="text-sm font-semibold text-white">Designed with Darkor.ai</Text>
-        </View>
-      </View>
-    </View>
-  );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

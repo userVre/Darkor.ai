@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, StyleSheet, Text, View, type ViewToken, useWindowDimensions } from "react-native";
+import { FlatList, Platform, StyleSheet, Text, View, type ViewToken, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { LuxPressable } from "../../components/lux-pressable";
@@ -124,7 +124,7 @@ const ActiveCardVideo = memo(function ActiveCardVideo({ item }: { item: ServiceC
 });
 
 const CardMedia = memo(function CardMedia({ item, active }: CardMediaProps) {
-  if (!active) {
+  if (!active || Platform.OS === "android") {
     return <CardPoster source={item.poster} />;
   }
 

@@ -4,9 +4,10 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import { useCallback, useEffect } from "react";
+import { memo, useCallback, useEffect } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FlashList } from "@shopify/flash-list";
 import { ChevronRight, Compass, Diamond, Sparkles } from "lucide-react-native";
 
 import { LuxPressable } from "../../components/lux-pressable";
@@ -22,16 +23,16 @@ type MeResponse = {
   lastRewardDate?: number;
 };
 
-function DiscoverCard({ item, onPress }: { item: DiscoverTile; onPress: (item: DiscoverTile) => void }) {
+const DiscoverCard = memo(function DiscoverCard({ item, onPress }: { item: DiscoverTile; onPress: (item: DiscoverTile) => void }) {
   return (
     <LuxPressable
       onPress={() => onPress(item)}
-      className="mr-4 overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950"
-      style={{ width: 196, borderWidth: 0.5 }}
+      className="overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950"
+      style={{ width: 196, borderWidth: 0.5, marginRight: 16 }}
       glowColor="rgba(244, 63, 94, 0.24)"
     >
       <View style={{ height: 244 }}>
-        <Image source={item.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={220} />
+        <Image source={item.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} cachePolicy="memory-disk" />
         <LinearGradient
           colors={["transparent", "rgba(0,0,0,0.2)", "rgba(0,0,0,0.92)"]}
           style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: 16, paddingTop: 52 }}
@@ -49,7 +50,34 @@ function DiscoverCard({ item, onPress }: { item: DiscoverTile; onPress: (item: D
       </View>
     </LuxPressable>
   );
-}
+});
+
+const DiscoverShelf = memo(function DiscoverShelf({
+  items,
+  onPress,
+}: {
+  items: DiscoverTile[];
+  onPress: (item: DiscoverTile) => void;
+}) {
+  const renderItem = useCallback(
+    ({ item }: { item: DiscoverTile }) => <DiscoverCard item={item} onPress={onPress} />,
+    [onPress],
+  );
+
+  const keyExtractor = useCallback((item: DiscoverTile) => item.id, []);
+
+  return (
+    <FlashList
+      data={items}
+      horizontal
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ paddingLeft: 20, paddingRight: 4 }}
+      removeClippedSubviews
+    />
+  );
+});
 
 export default function GalleryScreen() {
   const router = useRouter();
@@ -144,11 +172,7 @@ export default function GalleryScreen() {
                     <Text className="mt-2 text-sm leading-6 text-zinc-500">{shelf.description}</Text>
                   </View>
 
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: 20, paddingRight: 4 }}>
-                    {shelf.items.map((item) => (
-                      <DiscoverCard key={item.id} item={item} onPress={handleOpenTile} />
-                    ))}
-                  </ScrollView>
+                  <DiscoverShelf items={shelf.items} onPress={handleOpenTile} />
                 </View>
               ))}
             </View>
