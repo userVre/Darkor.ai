@@ -3,6 +3,7 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery } from "convex/react";
 import { Asset } from "expo-asset";
 import { BlurView } from "expo-blur";
+import { Camera as ExpoCamera } from "expo-camera";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
@@ -649,6 +650,10 @@ async function readBlobFromUri(uri: string) {
   return await response.blob();
 }
 
+const PHOTO_PERMISSION_ALERT_TITLE = "Permission Required";
+const PHOTO_PERMISSION_ALERT_MESSAGE =
+  "Please enable camera/photo access in your system settings to continue.";
+
 export default function WorkspaceScreen() {
   const router = useRouter();
   const { service, presetStyle, presetRoom, startStep } = useLocalSearchParams<{
@@ -734,7 +739,7 @@ export default function WorkspaceScreen() {
   const reviewSnapPoints = useMemo(() => ["38%"], []);
   const rateSnapPoints = useMemo(() => ["36%"], []);
   const feedbackSnapPoints = useMemo(() => [isSmallScreen ? "95%" : "58%"], [isSmallScreen]);
-  const photoSourceSnapPoints = useMemo(() => ["30%"], []);
+  const photoSourceSnapPoints = useMemo(() => [isSmallScreen ? "38%" : "34%"], [isSmallScreen]);
   const customPromptSnapPoints = useMemo(() => [isSmallScreen ? "90%" : "74%"], [isSmallScreen]);
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = getServiceType(serviceKey);
@@ -914,8 +919,8 @@ export default function WorkspaceScreen() {
   const wizardStyleCardWidth = useMemo(() => Math.max((width - 40 - wizardStyleGap * 2) / 3, 98), [width]);
   const wizardPaletteGap = 12;
   const wizardPaletteCardWidth = useMemo(() => Math.max((width - 40 - wizardPaletteGap * 2) / 3, 98), [width]);
-  const wizardExampleCardSize = useMemo(() => Math.min(Math.max(width * 0.23, 90), 104), [width]);
-  const wizardUploadSize = useMemo(() => Math.max(Math.min(width - 72, 318), 248), [width]);
+  const wizardExampleCardSize = useMemo(() => Math.min(Math.max(width * 0.27, 92), 118), [width]);
+  const wizardUploadSize = useMemo(() => Math.max(Math.min(width - 56, 336), 252), [width]);
 
   const spaceOptions = useMemo(() => {
     if (serviceType === "exterior") return SPACE_OPTIONS.exterior;
@@ -1056,15 +1061,12 @@ export default function WorkspaceScreen() {
     Linking.openSettings().catch(() => undefined);
   }, []);
 
-  const showPermissionAlert = useCallback(
-    (title: string, message: string) => {
-      Alert.alert(title, message, [
-        { text: "Not now", style: "cancel" },
-        { text: "Open Settings", onPress: openSystemSettings },
-      ]);
-    },
-    [openSystemSettings],
-  );
+  const showPermissionAlert = useCallback(() => {
+    Alert.alert(PHOTO_PERMISSION_ALERT_TITLE, PHOTO_PERMISSION_ALERT_MESSAGE, [
+      { text: "Not now", style: "cancel" },
+      { text: "Open Settings", onPress: openSystemSettings },
+    ]);
+  }, [openSystemSettings]);
 
   const ensureMediaLibraryPermission = useCallback(async () => {
     const current = await ImagePicker.getMediaLibraryPermissionsAsync();
@@ -1073,26 +1075,34 @@ export default function WorkspaceScreen() {
     const next = current.canAskAgain ? await ImagePicker.requestMediaLibraryPermissionsAsync() : current;
     if (next.granted) return true;
 
-    showPermissionAlert(
-      "Photo access needed",
-      "Please allow photo library access so we can import your room photo into the wizard.",
-    );
+    showPermissionAlert();
     return false;
   }, [showPermissionAlert]);
 
   const ensureCameraPermission = useCallback(async () => {
-    const current = await ImagePicker.getCameraPermissionsAsync();
+    const current = await ExpoCamera.getCameraPermissionsAsync();
     if (current.granted) return true;
 
-    const next = current.canAskAgain ? await ImagePicker.requestCameraPermissionsAsync() : current;
+    const next = current.canAskAgain ? await ExpoCamera.requestCameraPermissionsAsync() : current;
     if (next.granted) return true;
 
-    showPermissionAlert(
-      "Camera access needed",
-      "Please allow camera access so you can capture a fresh room photo inside Darkor.ai.",
-    );
+    showPermissionAlert();
     return false;
   }, [showPermissionAlert]);
+
+  const ensurePhotoIntakePermissions = useCallback(async () => {
+    const hasCameraPermission = await ensureCameraPermission();
+    if (!hasCameraPermission) {
+      return false;
+    }
+
+    const hasMediaLibraryPermission = await ensureMediaLibraryPermission();
+    if (!hasMediaLibraryPermission) {
+      return false;
+    }
+
+    return true;
+  }, [ensureCameraPermission, ensureMediaLibraryPermission]);
 
   const applyPickedAsset = useCallback(async (asset: ImagePicker.ImagePickerAsset, label: string) => {
     startTransition(() => {
@@ -1134,12 +1144,17 @@ export default function WorkspaceScreen() {
                 exif: false,
               });
 
-        if (result.canceled) {
+        if (result.canceled || !result.assets?.[0]) {
           return;
         }
 
         const asset = result.assets[0];
         await applyPickedAsset(asset, source === "camera" ? "Captured Photo" : "Uploaded Photo");
+      } catch (error) {
+        Alert.alert(
+          "Photo Intake Unavailable",
+          error instanceof Error ? error.message : "We couldn't open your camera or photo library. Please try again.",
+        );
       } finally {
         setIsSelectingPhoto(false);
       }
@@ -1147,10 +1162,20 @@ export default function WorkspaceScreen() {
     [applyPickedAsset, ensureCameraPermission, ensureMediaLibraryPermission],
   );
 
-  const handlePickPhoto = useCallback(() => {
+  const handlePickPhoto = useCallback(async () => {
     triggerHaptic();
-    photoSourceSheetRef.current?.present();
-  }, []);
+    setIsSelectingPhoto(true);
+    try {
+      const hasPermissions = await ensurePhotoIntakePermissions();
+      if (!hasPermissions) {
+        return;
+      }
+
+      photoSourceSheetRef.current?.present();
+    } finally {
+      setIsSelectingPhoto(false);
+    }
+  }, [ensurePhotoIntakePermissions]);
 
   const handleClearSelectedImage = useCallback(() => {
     triggerHaptic();
@@ -1806,14 +1831,16 @@ export default function WorkspaceScreen() {
 
   if (workflowStep <= 3) {
     const currentStepNumber = workflowStep + 1;
-    const currentStepTitle = ["Add a Photo", "Choose Space", "Select Style", "Personalize"][workflowStep] ?? "Add a Photo";
     const isFinalWizardStep = workflowStep === 3;
     const isPhotoStep = workflowStep === 0;
     const wizardBackgroundColor = isPhotoStep ? "#000000" : "#ffffff";
     const wizardPrimaryTextColor = isPhotoStep ? "#ffffff" : "#09090b";
-    const wizardSecondaryTextColor = isPhotoStep ? "#a1a1aa" : "#71717a";
-    const progressTrackColor = isPhotoStep ? "#1a1a1a" : "#d4d4d8";
-    const uploadTileSize = Math.min(width - 48, 332);
+    const progressTrackColor = isPhotoStep ? "#26262b" : "#d4d4d8";
+    const uploadTileSize = wizardUploadSize;
+    const stepContentMinHeight = Math.max(
+      height - Math.max(insets.top + (isPhotoStep ? 18 : 8), isPhotoStep ? 24 : 20) - Math.max(insets.bottom + (isPhotoStep ? 148 : 124), isPhotoStep ? 176 : 144),
+      isPhotoStep ? 520 : 460,
+    );
     const isContinueDisabled = !canContinue || (isFinalWizardStep && (isGenerating || generationBlocked));
     const continueLabel = isFinalWizardStep
       ? generationBlocked
@@ -1854,56 +1881,94 @@ export default function WorkspaceScreen() {
           className="flex-1"
           style={{ backgroundColor: wizardBackgroundColor }}
           contentContainerStyle={{
-            paddingHorizontal: 20,
-            paddingTop: Math.max(insets.top + 8, 20),
-            paddingBottom: Math.max(insets.bottom + 124, 144),
+            flexGrow: 1,
+            paddingHorizontal: isPhotoStep ? 24 : 20,
+            paddingTop: Math.max(insets.top + (isPhotoStep ? 14 : 8), isPhotoStep ? 22 : 20),
+            paddingBottom: Math.max(insets.bottom + (isPhotoStep ? 148 : 124), isPhotoStep ? 176 : 144),
             minHeight: height,
           }}
           contentInsetAdjustmentBehavior="never"
           showsVerticalScrollIndicator={false}
         >
-          <View style={{ gap: 24 }}>
-            <View className="flex-row items-center justify-between">
-              <View style={{ width: 44, alignItems: "flex-start" }}>
-                {workflowStep > 0 ? (
-                  <LuxPressable onPress={handleBack} className="cursor-pointer h-11 w-11 items-center justify-center rounded-full">
-                    <ArrowLeft color={wizardPrimaryTextColor} size={22} strokeWidth={2.1} />
-                  </LuxPressable>
-                ) : null}
-              </View>
-              <Text style={{ color: wizardPrimaryTextColor, fontSize: 18, fontWeight: "700", letterSpacing: -0.3 }}>
-                {`Step ${currentStepNumber} / 4`}
-              </Text>
-              <View style={{ width: 44, alignItems: "flex-end" }}>
-                <LuxPressable onPress={handleCloseWizard} className="cursor-pointer h-11 w-11 items-center justify-center rounded-full">
-                  <Close color={wizardPrimaryTextColor} size={22} strokeWidth={2.1} />
-                </LuxPressable>
-              </View>
-            </View>
+          <View style={{ flex: 1, gap: 24 }}>
+            {isPhotoStep ? (
+              <View style={{ gap: 16 }}>
+                <View className="flex-row" style={{ gap: 8 }}>
+                  {[0, 1, 2, 3].map((index) => (
+                    <MotiView
+                      key={`wizard-progress-${index}`}
+                      from={{ opacity: 0.78, scaleX: 0.96 }}
+                      animate={{ opacity: 1, scaleX: 1 }}
+                      transition={{ ...LUX_SPRING, delay: 40 + index * 32 }}
+                      style={{
+                        flex: 1,
+                        height: 4,
+                        borderRadius: 999,
+                        backgroundColor: index === 0 ? "#d946ef" : progressTrackColor,
+                      }}
+                    />
+                  ))}
+                </View>
 
-            <View className="flex-row gap-3">
-              {[0, 1, 2, 3].map((index) => {
-                const active = index <= workflowStep;
-                return (
-                  <View
-                    key={`wizard-progress-${index}`}
+                <View className="items-end">
+                  <LuxPressable
+                    onPress={handleCloseWizard}
+                    className="cursor-pointer h-11 w-11 items-center justify-center rounded-full"
                     style={{
-                      flex: 1,
-                      height: 6,
-                      borderRadius: 999,
-                      overflow: "hidden",
-                      backgroundColor: progressTrackColor,
+                      borderWidth: 0.5,
+                      borderColor: "rgba(255,255,255,0.12)",
+                      backgroundColor: "rgba(255,255,255,0.04)",
                     }}
                   >
-                    <MotiView
-                      animate={{ width: active ? "100%" : "0%" }}
-                      transition={LUX_SPRING}
-                      style={{ height: "100%", borderRadius: 999, backgroundColor: "#d946ef" }}
-                    />
+                    <Close color="#ffffff" size={20} strokeWidth={2.2} />
+                  </LuxPressable>
+                </View>
+              </View>
+            ) : (
+              <>
+                <View className="flex-row items-center justify-between">
+                  <View style={{ width: 44, alignItems: "flex-start" }}>
+                    {workflowStep > 0 ? (
+                      <LuxPressable onPress={handleBack} className="cursor-pointer h-11 w-11 items-center justify-center rounded-full">
+                        <ArrowLeft color={wizardPrimaryTextColor} size={22} strokeWidth={2.1} />
+                      </LuxPressable>
+                    ) : null}
                   </View>
-                );
-              })}
-            </View>
+                  <Text style={{ color: wizardPrimaryTextColor, fontSize: 18, fontWeight: "700", letterSpacing: -0.3 }}>
+                    {`Step ${currentStepNumber} / 4`}
+                  </Text>
+                  <View style={{ width: 44, alignItems: "flex-end" }}>
+                    <LuxPressable onPress={handleCloseWizard} className="cursor-pointer h-11 w-11 items-center justify-center rounded-full">
+                      <Close color={wizardPrimaryTextColor} size={22} strokeWidth={2.1} />
+                    </LuxPressable>
+                  </View>
+                </View>
+
+                <View className="flex-row gap-3">
+                  {[0, 1, 2, 3].map((index) => {
+                    const active = index <= workflowStep;
+                    return (
+                      <View
+                        key={`wizard-progress-${index}`}
+                        style={{
+                          flex: 1,
+                          height: 6,
+                          borderRadius: 999,
+                          overflow: "hidden",
+                          backgroundColor: progressTrackColor,
+                        }}
+                      >
+                        <MotiView
+                          animate={{ width: active ? "100%" : "0%" }}
+                          transition={LUX_SPRING}
+                          style={{ height: "100%", borderRadius: 999, backgroundColor: "#d946ef" }}
+                        />
+                      </View>
+                    );
+                  })}
+                </View>
+              </>
+            )}
 
             <AnimatePresence exitBeforeEnter>
               <MotiView
@@ -1912,23 +1977,16 @@ export default function WorkspaceScreen() {
                 animate={{ opacity: 1, translateX: 0, scale: 1 }}
                 exit={{ opacity: 0, translateX: -14, scale: 0.99 }}
                 transition={stepTransition}
-                style={{ gap: 24 }}
+                style={isPhotoStep ? { flex: 1, minHeight: stepContentMinHeight, gap: 24 } : { gap: 24 }}
               >
                 {workflowStep === 0 ? (
-                  <>
-                    <View style={{ gap: 12 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Add a Photo</Text>
-                      <Text style={{ color: "#a1a1aa", fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
-                        Start with a clean photo of your space to redesign it with AI.
-                      </Text>
-                    </View>
-
+                  <View style={{ flex: 1, justifyContent: "space-between", gap: 26 }}>
                     <MotiView
                       key={selectedImage?.uri ?? "empty-upload"}
-                      from={{ opacity: 0, scale: 0.99, translateY: 10 }}
+                      from={{ opacity: 0, scale: 0.985, translateY: 14 }}
                       animate={{ opacity: 1, scale: 1, translateY: 0 }}
                       transition={LUX_SPRING}
-                      style={{ alignItems: "center", gap: 26 }}
+                      style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 12 }}
                     >
                       <LuxPressable
                         onPress={handlePickPhoto}
@@ -1937,12 +1995,12 @@ export default function WorkspaceScreen() {
                           width: uploadTileSize,
                           height: uploadTileSize,
                           borderRadius: 32,
-                          backgroundColor: "#050505",
-                          borderWidth: selectedImage ? 0 : 1.5,
-                          borderColor: selectedImage ? "transparent" : "rgba(255,255,255,0.16)",
+                          borderWidth: selectedImage ? 0.5 : 1.5,
+                          borderColor: selectedImage ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.18)",
                           borderStyle: selectedImage ? "solid" : "dashed",
                           overflow: "hidden",
                           alignSelf: "center",
+                          backgroundColor: selectedImage ? "#050505" : "rgba(255,255,255,0.02)",
                         }}
                       >
                         {selectedImage ? (
@@ -1953,9 +2011,14 @@ export default function WorkspaceScreen() {
                                 event.stopPropagation();
                                 handleClearSelectedImage();
                               }}
-                              className="cursor-pointer absolute right-4 top-4 h-11 w-11 items-center justify-center rounded-full bg-black/55"
+                              className="cursor-pointer absolute right-4 top-4 h-9 w-9 items-center justify-center rounded-full"
+                              style={{
+                                borderWidth: 0.5,
+                                borderColor: "rgba(255,255,255,0.12)",
+                                backgroundColor: "rgba(0,0,0,0.58)",
+                              }}
                             >
-                              <Close color="#ffffff" size={20} strokeWidth={2.4} />
+                              <Close color="#ffffff" size={16} strokeWidth={2.5} />
                             </LuxPressable>
                             {isPhotoPreviewBusy ? (
                               <View className="absolute inset-0 items-center justify-center bg-black/24">
@@ -1966,14 +2029,16 @@ export default function WorkspaceScreen() {
                         ) : (
                           <View className="flex-1 items-center justify-center px-8">
                             <View
-                              className="h-[60px] w-[60px] items-center justify-center rounded-full"
+                              className="items-center justify-center rounded-full"
                               style={{
+                                width: 58,
+                                height: 58,
                                 borderWidth: 1,
-                                borderColor: "rgba(255,255,255,0.14)",
-                                backgroundColor: "rgba(255,255,255,0.04)",
+                                borderColor: "rgba(255,255,255,0.18)",
+                                backgroundColor: "rgba(255,255,255,0.03)",
                               }}
                             >
-                              <Plus color="#ffffff" size={25} strokeWidth={2.5} />
+                              <Plus color="#ffffff" size={18} strokeWidth={2.4} />
                             </View>
                             <View style={{ gap: 8, alignItems: "center", marginTop: 18 }}>
                               <Text className="text-center text-[24px] font-semibold text-white">Start Redesigning</Text>
@@ -1984,46 +2049,53 @@ export default function WorkspaceScreen() {
                           </View>
                         )}
                       </LuxPressable>
-
-                      <View style={{ alignSelf: "stretch", gap: 14 }}>
-                        <Text className="text-[17px] font-semibold text-white">Example Photos</Text>
-                        <ScrollView
-                          horizontal
-                          showsHorizontalScrollIndicator={false}
-                          decelerationRate="fast"
-                          contentContainerStyle={{ paddingRight: 8, gap: 14 }}
-                        >
-                          {EXAMPLE_PHOTOS.slice(0, 4).map((example, index) => {
-                            const active = selectedImage?.label === example.label;
-                            const isLoading = isLoadingExample === example.id;
-                            return (
-                              <MotiView key={example.id} {...staggerFadeUp(index, 45)} style={{ width: 112, height: 112 }}>
-                                <LuxPressable
-                                  onPress={() => void handleSelectExample(example)}
-                                  className="cursor-pointer overflow-hidden"
-                                  style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    borderRadius: 24,
-                                    borderWidth: active ? 2 : 0,
-                                    borderColor: active ? "#d946ef" : "transparent",
-                                    backgroundColor: "#18181b",
-                                  }}
-                                >
-                                  <Image source={example.source} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} cachePolicy="memory-disk" />
-                                  {isLoading ? (
-                                    <View className="absolute inset-0 items-center justify-center bg-black/20">
-                                      <ActivityIndicator size="small" color="#ffffff" />
-                                    </View>
-                                  ) : null}
-                                </LuxPressable>
-                              </MotiView>
-                            );
-                          })}
-                        </ScrollView>
-                      </View>
                     </MotiView>
-                  </>
+
+                    <MotiView
+                      from={{ opacity: 0, translateY: 12 }}
+                      animate={{ opacity: 1, translateY: 0 }}
+                      transition={{ ...LUX_SPRING, delay: 90 }}
+                    >
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        decelerationRate="fast"
+                        contentContainerStyle={{ paddingRight: 2, gap: 14 }}
+                      >
+                        {EXAMPLE_PHOTOS.slice(0, 4).map((example, index) => {
+                          const active = selectedImage?.label === example.label;
+                          const isLoading = isLoadingExample === example.id;
+                          return (
+                            <MotiView
+                              key={example.id}
+                              {...staggerFadeUp(index, 45)}
+                              style={{ width: wizardExampleCardSize, height: wizardExampleCardSize }}
+                            >
+                              <LuxPressable
+                                onPress={() => void handleSelectExample(example)}
+                                className="cursor-pointer overflow-hidden"
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  borderRadius: 24,
+                                  borderWidth: active ? 1.5 : 0.5,
+                                  borderColor: active ? "#d946ef" : "rgba(255,255,255,0.08)",
+                                  backgroundColor: "#111111",
+                                }}
+                              >
+                                <Image source={example.source} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} cachePolicy="memory-disk" />
+                                {isLoading ? (
+                                  <View className="absolute inset-0 items-center justify-center bg-black/24">
+                                    <ActivityIndicator size="small" color="#ffffff" />
+                                  </View>
+                                ) : null}
+                              </LuxPressable>
+                            </MotiView>
+                          );
+                        })}
+                      </ScrollView>
+                    </MotiView>
+                  </View>
                 ) : null}
                 {workflowStep === 1 ? (
                   <>
@@ -2245,14 +2317,14 @@ export default function WorkspaceScreen() {
         <View
           className="absolute inset-x-0 bottom-0 px-5 pt-4"
           style={{
-            paddingBottom: Math.max(insets.bottom + 12, 24),
+            paddingBottom: Math.max(insets.bottom + (isPhotoStep ? 16 : 12), isPhotoStep ? 28 : 24),
             borderTopWidth: 1,
             borderTopColor: isPhotoStep ? "rgba(255,255,255,0.06)" : "#f4f4f5",
             backgroundColor: wizardBackgroundColor,
             shadowColor: "#000000",
-            shadowOpacity: isPhotoStep ? 0.22 : 0.06,
-            shadowRadius: 18,
-            shadowOffset: { width: 0, height: -8 },
+            shadowOpacity: isPhotoStep ? 0.28 : 0.06,
+            shadowRadius: isPhotoStep ? 24 : 18,
+            shadowOffset: { width: 0, height: isPhotoStep ? -10 : -8 },
             elevation: 14,
           }}
         >
@@ -2262,8 +2334,8 @@ export default function WorkspaceScreen() {
                 colors={["#d946ef", "#7c3aed"]}
                 start={{ x: 0, y: 0.5 }}
                 end={{ x: 1, y: 0.5 }}
-                className="items-center justify-center rounded-[24px]"
-                style={{ minHeight: 62 }}
+                className="items-center justify-center"
+                style={{ minHeight: isPhotoStep ? 64 : 62, borderRadius: isPhotoStep ? 28 : 24 }}
               >
                 <Text style={{ color: "#ffffff", fontSize: 17, fontWeight: "600" }}>
                   {continueLabel}
@@ -2271,9 +2343,10 @@ export default function WorkspaceScreen() {
               </LinearGradient>
             ) : (
               <View
-                className="items-center justify-center rounded-[24px]"
+                className="items-center justify-center"
                 style={{
-                  minHeight: 62,
+                  minHeight: isPhotoStep ? 64 : 62,
+                  borderRadius: isPhotoStep ? 28 : 24,
                   backgroundColor: isPhotoStep ? "#27272a" : "#e4e4e7",
                 }}
               >
@@ -2380,12 +2453,12 @@ export default function WorkspaceScreen() {
                 onPress={() => void launchPhotoSource("camera")}
                 className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
                 style={{ borderWidth: 0.5 }}
-              >
+                >
                 <View className="h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
                   <Camera color="#f8fafc" size={20} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-sm font-semibold text-white">Take Photo from Camera</Text>
+                  <Text className="text-sm font-semibold text-white">Take a Photo</Text>
                   <Text className="mt-1 text-xs text-zinc-400">Capture a fresh room photo with your camera.</Text>
                 </View>
               </LuxPressable>
@@ -2394,12 +2467,12 @@ export default function WorkspaceScreen() {
                 onPress={() => void launchPhotoSource("library")}
                 className="cursor-pointer flex-row items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
                 style={{ borderWidth: 0.5 }}
-              >
+                >
                 <View className="h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
                   <ImageIcon color="#f8fafc" size={20} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-sm font-semibold text-white">Upload from Gallery</Text>
+                  <Text className="text-sm font-semibold text-white">Choose from Library</Text>
                   <Text className="mt-1 text-xs text-zinc-400">Import an existing interior or exterior photo from your device.</Text>
                 </View>
               </LuxPressable>
