@@ -9,7 +9,7 @@ import * as MediaLibrary from "expo-media-library";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, usePathname, useRouter } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -18,6 +18,7 @@ import {
   ActionSheetIOS,
   Alert,
   Linking,
+  Pressable,
   ScrollView,
   Share,
   StyleSheet,
@@ -656,6 +657,7 @@ const PHOTO_PERMISSION_ALERT_MESSAGE =
 
 export default function WorkspaceScreen() {
   const router = useRouter();
+  const pathname = usePathname();
   const { service, presetStyle, presetRoom, startStep } = useLocalSearchParams<{
     service?: string;
     presetStyle?: string;
@@ -1847,6 +1849,7 @@ export default function WorkspaceScreen() {
     const currentStepNumber = workflowStep + 1;
     const isFinalWizardStep = workflowStep === 3;
     const isPhotoStep = workflowStep === 0;
+    const isTabbedWorkspaceRoute = pathname === "/workspace";
     const displayedSelectedImage = selectedImage;
     const hasSelectedPhoto = Boolean(selectedImage);
     const hasVisiblePhoto = Boolean(displayedSelectedImage);
@@ -1859,8 +1862,14 @@ export default function WorkspaceScreen() {
     const uploadTileSize = wizardUploadSize;
     const stepOneExampleCardWidth = Math.min(Math.max(width * 0.28, 112), 126);
     const stepOneExampleCardHeight = Math.round(stepOneExampleCardWidth * 1.2);
+    const bottomBarOffset = isTabbedWorkspaceRoute ? 86 : 0;
     const stepContentMinHeight = Math.max(
-      height - Math.max(insets.top + (isPhotoStep ? 18 : 8), isPhotoStep ? 24 : 20) - Math.max(insets.bottom + (isPhotoStep ? 148 : 124), isPhotoStep ? 176 : 144),
+      height -
+        Math.max(insets.top + (isPhotoStep ? 18 : 8), isPhotoStep ? 24 : 20) -
+        Math.max(
+          insets.bottom + bottomBarOffset + (isPhotoStep ? 148 : 124),
+          bottomBarOffset + (isPhotoStep ? 176 : 144),
+        ),
       isPhotoStep ? 520 : 460,
     );
     const continueButtonHeight = isPhotoStep ? 64 : 62;
@@ -1913,7 +1922,10 @@ export default function WorkspaceScreen() {
             flexGrow: 1,
             paddingHorizontal: isPhotoStep ? 24 : 20,
             paddingTop: Math.max(insets.top + (isPhotoStep ? 14 : 8), isPhotoStep ? 22 : 20),
-            paddingBottom: Math.max(insets.bottom + (isPhotoStep ? 148 : 124), isPhotoStep ? 176 : 144),
+            paddingBottom: Math.max(
+              insets.bottom + bottomBarOffset + (isPhotoStep ? 148 : 124),
+              bottomBarOffset + (isPhotoStep ? 176 : 144),
+            ),
             minHeight: height,
           }}
           contentInsetAdjustmentBehavior="never"
@@ -2139,21 +2151,30 @@ export default function WorkspaceScreen() {
                         )}
 
                         {hasVisiblePhoto ? (
-                          <LuxPressable
-                            onPress={(event) => {
-                              event.stopPropagation();
-                              handleClearSelectedImage();
-                            }}
-                            className="cursor-pointer absolute right-4 top-4 h-9 w-9 items-center justify-center rounded-full"
-                            style={{
-                              zIndex: 2,
-                              borderWidth: 1,
-                              borderColor: "rgba(255,255,255,0.14)",
-                              backgroundColor: "rgba(10,10,10,0.72)",
-                            }}
-                          >
-                            <Close color="#ffffff" size={16} strokeWidth={2.4} />
-                          </LuxPressable>
+                            <Pressable
+                              onPress={(event) => {
+                                event.stopPropagation();
+                                handleClearSelectedImage();
+                              }}
+                              style={{
+                                position: "absolute",
+                                right: 14,
+                                top: 14,
+                                zIndex: 20,
+                                elevation: 20,
+                                width: 40,
+                                height: 40,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                borderRadius: 999,
+                                borderWidth: 1,
+                                borderColor: "rgba(255,255,255,0.16)",
+                                backgroundColor: "rgba(10,10,10,0.78)",
+                              }}
+                              android_ripple={{ color: "rgba(255,255,255,0.12)", borderless: false }}
+                            >
+                              <Close color="#ffffff" size={16} strokeWidth={2.4} />
+                            </Pressable>
                         ) : null}
                       </LuxPressable>
                     </MotiView>
@@ -2452,6 +2473,8 @@ export default function WorkspaceScreen() {
         <View
           className="absolute inset-x-0 bottom-0 px-5 pt-4"
           style={{
+            bottom: bottomBarOffset,
+            zIndex: 30,
             paddingBottom: Math.max(insets.bottom + (isPhotoStep ? 16 : 12), isPhotoStep ? 28 : 24),
             borderTopWidth: isPhotoStep ? 0 : 1,
             borderTopColor: isPhotoStep ? "transparent" : "#f4f4f5",
