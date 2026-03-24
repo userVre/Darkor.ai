@@ -20,7 +20,6 @@ import { convex } from "../lib/convex";
 import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
 import { getEnvReport, logEnvDiagnostics } from "../lib/env";
 import { hasDismissedLaunchPaywall } from "../lib/launch-paywall";
-import { planCreditGrant } from "../lib/pricing";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
 import { tokenCache } from "../lib/token-cache";
 import {
@@ -108,7 +107,6 @@ function RevenueCatGate() {
         if (inferredPlan && isSignedIn && inferredDuration) {
           await setPlan({
             plan: inferredPlan,
-            credits: planCreditGrant(inferredPlan),
             subscriptionType: inferredDuration,
             purchasedAt: purchasedAt ?? undefined,
             subscriptionEnd: subscriptionEnd ?? undefined,
@@ -185,34 +183,6 @@ function ReferralGate() {
   return null;
 }
 
-function RewardGate() {
-  const { isLoaded, isSignedIn } = useAuth();
-  const claimReward = useMutation("users:claimThreeDayReward" as any);
-  const { showToast } = useProSuccess();
-  const hasCheckedRef = useRef(false);
-
-  useEffect(() => {
-    if (!isLoaded || !isSignedIn || hasCheckedRef.current) return;
-    hasCheckedRef.current = true;
-    const run = async () => {
-      try {
-        const result = (await claimReward({})) as {
-          granted?: boolean;
-          creditsAdded?: number;
-        };
-        if (result?.granted) {
-          showToast("Your 3-day gift is here. 3 credits have been added to your account.");
-        }
-      } catch {
-        // ignore reward errors
-      }
-    };
-    void run();
-  }, [claimReward, isLoaded, isSignedIn, showToast]);
-
-  return null;
-}
-
 function LaunchPaywallGate() {
   const pathname = usePathname();
   const router = useRouter();
@@ -240,7 +210,6 @@ function Providers({ children }: { children: React.ReactNode }) {
         {DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
         {DIAGNOSTIC_BYPASS ? null : <LaunchPaywallGate />}
         {DIAGNOSTIC_BYPASS ? null : <ReferralGate />}
-        {DIAGNOSTIC_BYPASS ? null : <RewardGate />}
         {children}
       </ProSuccessProvider>
     </ConvexProviderWithClerk>

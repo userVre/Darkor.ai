@@ -2,7 +2,7 @@ import { httpRouter } from "convex/server";
 
 import { api } from "./_generated/api";
 import { httpAction } from "./_generated/server";
-import { BillingPlan, getSubscriptionEndForType, SubscriptionType } from "./subscriptions";
+import { BillingPlan, getGenerationLimit, getSubscriptionEndForType, SubscriptionType } from "./subscriptions";
 
 const http = httpRouter();
 
@@ -114,6 +114,7 @@ http.route({
       plan,
       subscriptionType,
       subscriptionEnd,
+      imageLimit: getGenerationLimit(subscriptionType),
     });
   }),
 });

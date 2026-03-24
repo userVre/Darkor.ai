@@ -1,10 +1,10 @@
 import { useAuth, useUser } from "@clerk/expo";
 import { useMutation } from "convex/react";
-import { Image } from "expo-image";
-import * as Localization from "expo-localization";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { VideoView, useVideoPlayer } from "expo-video";
+import { MotiView } from "moti";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -15,13 +15,10 @@ import {
   useWindowDimensions,
 } from "react-native";
 import Animated, {
-  FadeIn,
-  FadeOut,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import Carousel from "react-native-reanimated-carousel";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowRight, Check, ShieldCheck, X } from "lucide-react-native";
 
@@ -29,7 +26,6 @@ import { LuxPressable } from "../components/lux-pressable";
 import { useProSuccess } from "../components/pro-success-context";
 import { triggerHaptic } from "../lib/haptics";
 import { dismissLaunchPaywall } from "../lib/launch-paywall";
-import { planCreditGrant } from "../lib/pricing";
 import {
   configureRevenueCat,
   findRevenueCatPackage,
@@ -45,140 +41,148 @@ import {
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
 
-const GALLERY_IMAGES = [
-  require("../assets/media/luxury-1.jpg"),
-  require("../assets/media/luxury-2.jpg"),
-  require("../assets/media/luxury-3.jpg"),
-  require("../assets/media/luxury-4.jpg"),
-  require("../assets/media/luxury-5.jpg"),
-  require("../assets/media/luxury-6.jpg"),
-  require("../assets/media/luxury-7.jpg"),
+const pointerClassName = "cursor-pointer";
+const PAYWALL_VIDEO = require("../assets/videos/paywall-dream-home.mp4");
+
+const FEATURE_ITEMS = [
+  "Unlock 4K Ultra-HD renders",
+  "20+ premium styles",
+  "No watermarks",
+  "Faster rendering",
 ];
 
-const PRO_FEATURES = [
-  "Watermark-free 4K Ultra HD exports",
-  "Full access to 50+ Premium Styles",
-  "Redesign Interior, Exterior, and Gardens",
-  "Smart Wall Paint & Floor Restyle tools",
-  "Priority processing (No waiting in line)",
-];
-
-const EUROPE_REGIONS = new Set([
-  "AD", "AL", "AT", "AX", "BA", "BE", "BG", "BY", "CH", "CY", "CZ", "DE", "DK", "EE", "ES", "FI",
-  "FO", "FR", "GB", "GG", "GI", "GR", "HR", "HU", "IE", "IM", "IS", "IT", "JE", "LI", "LT", "LU",
-  "LV", "MC", "MD", "ME", "MK", "MT", "NL", "NO", "PL", "PT", "RO", "RS", "SE", "SI", "SJ", "SK",
-  "SM", "UA", "VA",
-]);
-
-const FX_RATES = {
-  USD: 1,
-  EUR: 0.92,
-  MAD: 10,
-} as const;
-
-const BASE_PRICES_USD = {
-  yearlyWeekly: 0.9,
-  yearlyTotal: 47.52,
-  weekly: 11.9,
+const PLAN_COPY = {
+  yearly: {
+    badge: "BEST VALUE",
+    title: "Yearly Access",
+    price: "$0.90 / week",
+    subtitle: "Just $47.52 per year",
+  },
+  weekly: {
+    badge: null,
+    title: "Weekly Access",
+    price: "$11.90 / week",
+    subtitle: "Includes 3-day free trial",
+  },
 } as const;
 
 const SPRING = {
   damping: 18,
-  stiffness: 180,
+  stiffness: 190,
 } as const;
 
-const pointerClassName = "cursor-pointer";
-
-type CurrencyCode = keyof typeof FX_RATES;
-
-type LocalizedPricing = {
-  currency: CurrencyCode;
-  localeTag: string;
-  regionCode: string;
-  yearlyWeeklyLabel: string;
-  yearlyBillingLabel: string;
-  weeklyLabel: string;
-  weeklyCompactLabel: string;
-  trialLine: string;
-};
-
-const GallerySlide = memo(function GallerySlide({ source }: { source: number }) {
-  return <Image source={source} style={styles.galleryImage} contentFit="cover" transition={180} cachePolicy="memory-disk" />;
-});
-
-const FeatureRow = memo(function FeatureRow({ label }: { label: string }) {
-  return (
-    <View style={styles.featureRow}>
-      <View style={styles.featureIconWrap}>
-        <Check color="#f7efe0" size={13} />
-      </View>
-      <Text style={styles.featureText}>{label}</Text>
-    </View>
-  );
-});
-
-function getCurrencyCode(regionCode: string): CurrencyCode {
-  if (regionCode === "MA") {
-    return "MAD";
-  }
-  if (EUROPE_REGIONS.has(regionCode)) {
-    return "EUR";
-  }
-  return "USD";
-}
-
-function formatMoney(value: number, currency: CurrencyCode, localeTag: string) {
-  return new Intl.NumberFormat(localeTag, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
-function getLocalizedPricing(): LocalizedPricing {
-  const locale = Localization.getLocales()[0];
-  const regionCode = locale?.regionCode?.toUpperCase()
-    ?? locale?.languageTag?.split("-")[1]?.toUpperCase()
-    ?? "US";
-  const currency = getCurrencyCode(regionCode);
-  const localeTag = locale?.languageTag ?? (currency === "MAD" ? "fr-MA" : currency === "EUR" ? "fr-FR" : "en-US");
-  const rate = FX_RATES[currency];
-  const yearlyWeekly = formatMoney(BASE_PRICES_USD.yearlyWeekly * rate, currency, localeTag);
-  const yearlyTotal = formatMoney(BASE_PRICES_USD.yearlyTotal * rate, currency, localeTag);
-  const weekly = formatMoney(BASE_PRICES_USD.weekly * rate, currency, localeTag);
-
-  return {
-    currency,
-    localeTag,
-    regionCode,
-    yearlyWeeklyLabel: `${yearlyWeekly} / week`,
-    yearlyBillingLabel: `Billed at ${yearlyTotal}/year`,
-    weeklyLabel: `${weekly} / week`,
-    weeklyCompactLabel: `${weekly}/week`,
-    trialLine: `3-DAYS FREE TRIAL then ${weekly}/week`,
-  };
-}
-
 function TrialSwitch({ value, onPress }: { value: boolean; onPress: () => void }) {
-  const offset = useSharedValue(value ? 20 : 0);
+  const translateX = useSharedValue(value ? 24 : 0);
 
   useEffect(() => {
-    offset.value = withSpring(value ? 20 : 0, SPRING);
-  }, [offset, value]);
+    translateX.value = withSpring(value ? 24 : 0, SPRING);
+  }, [translateX, value]);
 
   const thumbStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: offset.value }],
+    transform: [{ translateX: translateX.value }],
   }));
 
   return (
     <LuxPressable
       onPress={onPress}
-      style={[styles.trialSwitch, value ? styles.trialSwitchActive : null]}
       className={pointerClassName}
+      style={[
+        styles.toggleTrack,
+        value ? styles.toggleTrackActive : null,
+      ]}
     >
-      <Animated.View style={[styles.trialThumb, thumbStyle]} />
+      <Animated.View style={[styles.toggleThumb, thumbStyle]} />
     </LuxPressable>
+  );
+}
+
+function FeatureItem({ label }: { label: string }) {
+  return (
+    <View style={styles.featureRow}>
+      <View style={styles.featureIconWrap}>
+        <Check color="#f3ead9" size={13} strokeWidth={2.5} />
+      </View>
+      <Text style={styles.featureText}>{label}</Text>
+    </View>
+  );
+}
+
+function PlanOptionCard({
+  active,
+  title,
+  price,
+  subtitle,
+  badge,
+  onPress,
+}: {
+  active: boolean;
+  title: string;
+  price: string;
+  subtitle: string;
+  badge: string | null;
+  onPress: () => void;
+}) {
+  return (
+    <MotiView
+      animate={{
+        scale: active ? 1 : 0.992,
+        opacity: 1,
+      }}
+      transition={SPRING}
+    >
+      <LuxPressable
+        onPress={onPress}
+        className={pointerClassName}
+        style={[
+          styles.planCard,
+          active ? styles.planCardActive : null,
+        ]}
+      >
+        {badge ? (
+          <View style={styles.bestValueBadge}>
+            <Text style={styles.bestValueText}>{badge}</Text>
+          </View>
+        ) : null}
+
+        {active ? (
+          <MotiView
+            pointerEvents="none"
+            from={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={SPRING}
+            style={styles.selectedGlow}
+          />
+        ) : null}
+
+        <View style={styles.planRow}>
+          <View style={styles.planLeft}>
+            <View style={[styles.radioOuter, active ? styles.radioOuterActive : null]}>
+              {active ? <View style={styles.radioInner} /> : null}
+            </View>
+
+            <View style={styles.planCopy}>
+              <Text style={styles.planTitle}>{title}</Text>
+              <Text style={styles.planSubtitle}>{subtitle}</Text>
+            </View>
+          </View>
+
+          <View style={styles.planPriceBlock}>
+            <Text style={styles.planPrice}>{price}</Text>
+            {active ? (
+              <MotiView
+                from={{ opacity: 0, translateY: -4 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={SPRING}
+                style={styles.selectedPill}
+              >
+                <Text style={styles.selectedPillText}>Selected</Text>
+              </MotiView>
+            ) : null}
+          </View>
+        </View>
+      </LuxPressable>
+    </MotiView>
   );
 }
 
@@ -190,34 +194,32 @@ export default function PaywallScreen() {
   const { width } = useWindowDimensions();
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
   const { showSuccess, showToast } = useProSuccess();
+  const purchasesRef = useRef<RevenueCatPurchases | null>(null);
 
   const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("yearly");
-  const [trialEnabled, setTrialEnabled] = useState(false);
+  const [freeTrialEnabled, setFreeTrialEnabled] = useState(false);
   const [packages, setPackages] = useState<RevenueCatPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const purchasesRef = useRef<RevenueCatPurchases | null>(null);
 
-  const galleryWidth = Math.min(width - 32, 420);
-  const galleryHeight = Math.round(galleryWidth * 0.64);
-  const pricing = useMemo(() => getLocalizedPricing(), []);
+  const player = useVideoPlayer(PAYWALL_VIDEO, (instance) => {
+    instance.loop = true;
+    instance.muted = true;
+    instance.volume = 0;
+    instance.timeUpdateEventInterval = 0;
+    instance.play();
+  });
+
+  const contentWidth = useMemo(() => Math.min(width - 28, 430), [width]);
   const selectedPackage = useMemo(
     () => findRevenueCatPackage(packages, selectedDuration),
     [packages, selectedDuration],
   );
-  const checkoutStateMessage = useMemo(() => {
-    if (errorMessage) {
-      return errorMessage;
-    }
-    if (selectedPackage) {
-      return null;
-    }
-    if (!packages.length) {
-      return "Loading secure checkout...";
-    }
-    return "This plan is temporarily unavailable. Please try the other option or restore a purchase.";
-  }, [errorMessage, packages.length, selectedPackage]);
   const isCtaDisabled = isLoading || !selectedPackage;
+  const footerLine = freeTrialEnabled
+    ? "No Payment Now. Cancel anytime before the trial ends."
+    : "Cancel Anytime";
+  const ctaTitle = freeTrialEnabled ? "Try for Free" : "Continue";
 
   useEffect(() => {
     let active = true;
@@ -251,6 +253,18 @@ export default function PaywallScreen() {
     };
   }, [isSignedIn, user?.id]);
 
+  const persistPurchasedPlan = useCallback(
+    async (plan: BillingPlan, subscriptionType: BillingDuration, purchasedAt?: number | null, subscriptionEnd?: number | null) => {
+      await setPlan({
+        plan,
+        subscriptionType,
+        purchasedAt: typeof purchasedAt === "number" ? purchasedAt : undefined,
+        subscriptionEnd: typeof subscriptionEnd === "number" ? subscriptionEnd : undefined,
+      });
+    },
+    [setPlan],
+  );
+
   const handleClose = useCallback(() => {
     triggerHaptic();
     dismissLaunchPaywall();
@@ -260,31 +274,19 @@ export default function PaywallScreen() {
   const handleSelectDuration = useCallback((duration: BillingDuration) => {
     triggerHaptic();
     setSelectedDuration(duration);
-    if (duration === "yearly" && trialEnabled) {
-      setTrialEnabled(false);
+    if (duration === "yearly") {
+      setFreeTrialEnabled(false);
     }
-  }, [trialEnabled]);
+  }, []);
 
   const handleToggleTrial = useCallback(() => {
     triggerHaptic();
-    setTrialEnabled((current) => {
+    setFreeTrialEnabled((current) => {
       const next = !current;
-      if (next) {
-        setSelectedDuration("weekly");
-      }
+      setSelectedDuration(next ? "weekly" : "yearly");
       return next;
     });
   }, []);
-
-  const persistPurchasedPlan = useCallback(async (plan: BillingPlan, subscriptionType: BillingDuration, purchasedAt?: number | null, subscriptionEnd?: number | null) => {
-    await setPlan({
-      plan,
-      credits: planCreditGrant(plan),
-      subscriptionType,
-      purchasedAt: typeof purchasedAt === "number" ? purchasedAt : undefined,
-      subscriptionEnd: typeof subscriptionEnd === "number" ? subscriptionEnd : undefined,
-    });
-  }, [setPlan]);
 
   const handleRestore = useCallback(async () => {
     triggerHaptic();
@@ -307,6 +309,7 @@ export default function PaywallScreen() {
       const inferredDuration = inferBillingDurationFromCustomerInfo(info);
       const purchasedAt = inferPurchaseDateFromCustomerInfo(info);
       const subscriptionEnd = inferSubscriptionEndFromCustomerInfo(info);
+
       if (isSignedIn) {
         await persistPurchasedPlan(inferredPlan, inferredDuration, purchasedAt, subscriptionEnd);
       }
@@ -349,7 +352,7 @@ export default function PaywallScreen() {
         throw new Error("We could not confirm your subscription. Please try again.");
       }
 
-      const purchasedPlan: BillingPlan = trialEnabled && selectedDuration === "weekly" ? "trial" : "pro";
+      const purchasedPlan: BillingPlan = freeTrialEnabled && selectedDuration === "weekly" ? "trial" : "pro";
       if (isSignedIn) {
         await persistPurchasedPlan(purchasedPlan, selectedDuration, Date.now(), null);
       }
@@ -369,171 +372,137 @@ export default function PaywallScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [isSignedIn, persistPurchasedPlan, router, selectedDuration, selectedPackage, showSuccess, showToast, trialEnabled]);
-
-  const renderGalleryItem = useCallback(({ item }: { item: number }) => <GallerySlide source={item} />, []);
-  const ctaTitle = trialEnabled ? "Start free trial" : "Continue";
-  const ctaSubtitle = trialEnabled
-    ? pricing.trialLine
-    : selectedDuration === "yearly"
-      ? pricing.yearlyBillingLabel
-      : "Flexible weekly access";
+  }, [freeTrialEnabled, isSignedIn, persistPurchasedPlan, router, selectedDuration, selectedPackage, showSuccess, showToast]);
 
   return (
     <View style={styles.screen}>
+      <VideoView
+        player={player}
+        style={styles.video}
+        contentFit="cover"
+        nativeControls={false}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={["rgba(0,0,0,0.26)", "rgba(0,0,0,0.42)", "rgba(0,0,0,0.72)"]}
+        locations={[0, 0.38, 1]}
+        style={styles.videoShade}
+        pointerEvents="none"
+      />
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={{
-          paddingTop: insets.top + 12,
-          paddingBottom: Math.max(insets.bottom + 28, 32),
-          paddingHorizontal: 16,
+          flexGrow: 1,
+          paddingTop: insets.top + 14,
+          paddingBottom: Math.max(insets.bottom + 26, 34),
+          paddingHorizontal: 14,
         }}
+        contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.topBar}>
-          <LuxPressable onPress={handleRestore} style={styles.topAction} className={pointerClassName}>
-            <Text style={styles.topActionText}>Restore</Text>
-          </LuxPressable>
+        <View style={styles.chromeRow}>
+          <View style={styles.chromeSpacer} />
           <LuxPressable onPress={handleClose} style={styles.closeButton} className={pointerClassName}>
-            <X color="#ffffff" size={18} />
+            <X color="#f4ede0" size={18} strokeWidth={2.2} />
           </LuxPressable>
         </View>
 
-        <View style={styles.carouselWrap}>
-          <Carousel
-            loop
-            autoPlay
-            autoPlayInterval={2600}
-            width={galleryWidth}
-            height={galleryHeight}
-            data={GALLERY_IMAGES}
-            scrollAnimationDuration={900}
-            renderItem={renderGalleryItem}
-          />
-        </View>
-
-        <View style={styles.heroBlock}>
-          <Text style={styles.eyebrow}>Darkor.ai Pro</Text>
-          <Text style={styles.heroTitle}>Unlock the full power of Darkor.ai Pro</Text>
-          <Text style={styles.heroBody}>
-            Export without watermarks, access every premium style, and redesign interiors, exteriors, and gardens with faster turnaround.
-          </Text>
-        </View>
-
-        <View style={styles.trialControlRow}>
-          <View style={styles.trialControlCopy}>
-            <Text style={styles.trialControlTitle}>3-day free trial</Text>
-            <Text style={styles.trialControlBody}>Available on the weekly plan only.</Text>
+        <View style={[styles.contentShell, { width: contentWidth, alignSelf: "center" }]}>
+          <View style={styles.heroBlock}>
+            <Text style={styles.heroTitle}>Unlock Your Dream Home with AI</Text>
           </View>
-          <TrialSwitch value={trialEnabled} onPress={handleToggleTrial} />
-        </View>
 
-        <View style={styles.planStack}>
-          <LuxPressable
-            onPress={() => handleSelectDuration("yearly")}
-            style={[styles.planCard, selectedDuration === "yearly" ? styles.planCardActive : null]}
-            className={pointerClassName}
-          >
-            <View style={styles.cardTopRow}>
-              <View style={styles.valueBadge}>
-                <Text style={styles.valueBadgeText}>BEST VALUE</Text>
-              </View>
-              <View style={[styles.selectionDot, selectedDuration === "yearly" ? styles.selectionDotActive : null]} />
+          <View style={styles.featureStack}>
+            {FEATURE_ITEMS.map((item) => (
+              <FeatureItem key={item} label={item} />
+            ))}
+          </View>
+
+          <View style={styles.toggleCard}>
+            <View style={styles.toggleCopy}>
+              <Text style={styles.toggleTitle}>Enable Free Trial</Text>
+              <Text style={styles.toggleBody}>Weekly only. Switches selection automatically.</Text>
             </View>
+            <TrialSwitch value={freeTrialEnabled} onPress={handleToggleTrial} />
+          </View>
 
-            <Animated.View key={`yearly-${pricing.currency}`} entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
-              <Text style={styles.planTitle}>Yearly Pro</Text>
-              <Text style={styles.primaryPrice}>{pricing.yearlyWeeklyLabel}</Text>
-              <Text style={styles.secondaryPrice}>{pricing.yearlyBillingLabel}</Text>
-              <Text style={styles.planBody}>The lowest weekly cost for full Darkor.ai Pro access.</Text>
-            </Animated.View>
-          </LuxPressable>
+          <View style={styles.planStack}>
+            <PlanOptionCard
+              active={selectedDuration === "yearly"}
+              title={PLAN_COPY.yearly.title}
+              price={PLAN_COPY.yearly.price}
+              subtitle={PLAN_COPY.yearly.subtitle}
+              badge={PLAN_COPY.yearly.badge}
+              onPress={() => handleSelectDuration("yearly")}
+            />
+
+            <PlanOptionCard
+              active={selectedDuration === "weekly"}
+              title={PLAN_COPY.weekly.title}
+              price={PLAN_COPY.weekly.price}
+              subtitle={PLAN_COPY.weekly.subtitle}
+              badge={PLAN_COPY.weekly.badge}
+              onPress={() => handleSelectDuration("weekly")}
+            />
+          </View>
+
+          <MotiView
+            key={`footer-${freeTrialEnabled ? "trial" : "standard"}`}
+            from={{ opacity: 0, translateY: 8 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={SPRING}
+            style={styles.footerInfo}
+          >
+            {freeTrialEnabled ? (
+              <ShieldCheck color="#f3ead9" size={16} strokeWidth={2.1} />
+            ) : (
+              <Check color="#f3ead9" size={16} strokeWidth={2.8} />
+            )}
+            <Text style={styles.footerInfoText}>{footerLine}</Text>
+          </MotiView>
+
+          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
           <LuxPressable
-            onPress={() => handleSelectDuration("weekly")}
+            onPress={handlePurchase}
+            disabled={isCtaDisabled}
             style={[
-              styles.planCard,
-              selectedDuration === "weekly" ? styles.planCardActive : null,
-              trialEnabled ? styles.weeklyTrialCard : null,
+              styles.ctaOuter,
+              isCtaDisabled ? styles.ctaOuterDisabled : null,
             ]}
             className={pointerClassName}
           >
-            <View style={styles.cardTopRow}>
-              <View style={[styles.weeklyBadge, trialEnabled ? styles.weeklyBadgeActive : null]}>
-                <Text style={[styles.weeklyBadgeText, trialEnabled ? styles.weeklyBadgeTextActive : null]}>
-                  {trialEnabled ? "TRIAL ON" : "WEEKLY"}
-                </Text>
-              </View>
-              <View style={[styles.selectionDot, selectedDuration === "weekly" ? styles.selectionDotActive : null]} />
-            </View>
-
-            <Animated.View key={`weekly-${trialEnabled}-${pricing.currency}`} entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
-              <Text style={styles.planTitle}>Weekly Pro</Text>
-              {trialEnabled ? (
-                <>
-                  <Text style={styles.trialHeadline}>3-DAYS FREE TRIAL</Text>
-                  <Text style={styles.secondaryPrice}>{`then ${pricing.weeklyCompactLabel}`}</Text>
-                  <Text style={styles.planBody}>Flexible weekly access after your trial ends.</Text>
-                </>
+            <LinearGradient
+              colors={isCtaDisabled ? ["#53483c", "#3e352b"] : ["#f2d8aa", "#d3b17f"]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.ctaGradient}
+            >
+              {isLoading ? (
+                <View style={styles.loadingRow}>
+                  <ActivityIndicator color="#14100c" />
+                  <Text style={styles.ctaText}>Processing...</Text>
+                </View>
               ) : (
-                <>
-                  <Text style={styles.primaryPrice}>{pricing.weeklyLabel}</Text>
-                  <Text style={styles.secondaryPrice}>Flexible weekly access</Text>
-                  <Text style={styles.planBody}>Start Pro immediately without the yearly commitment.</Text>
-                </>
+                <MotiView
+                  key={`cta-${ctaTitle}`}
+                  from={{ opacity: 0, translateY: 4 }}
+                  animate={{ opacity: 1, translateY: 0 }}
+                  transition={SPRING}
+                  style={styles.ctaContent}
+                >
+                  <Text style={styles.ctaText}>{ctaTitle}</Text>
+                  <ArrowRight color="#14100c" size={18} strokeWidth={2.4} />
+                </MotiView>
               )}
-            </Animated.View>
+            </LinearGradient>
+          </LuxPressable>
+
+          <LuxPressable onPress={handleRestore} className={pointerClassName} style={styles.restoreButton}>
+            <Text style={styles.restoreText}>Restore purchase</Text>
           </LuxPressable>
         </View>
-
-        <View style={styles.featureShell}>
-          <View style={styles.featureHeaderRow}>
-            <ShieldCheck color="#d6b06a" size={16} />
-            <Text style={styles.featureHeaderText}>Everything included in Pro</Text>
-          </View>
-          <View style={styles.featureList}>
-            {PRO_FEATURES.map((feature) => (
-              <FeatureRow key={feature} label={feature} />
-            ))}
-          </View>
-        </View>
-
-        {checkoutStateMessage ? (
-          <Text style={errorMessage ? styles.errorText : styles.statusText}>{checkoutStateMessage}</Text>
-        ) : null}
-
-        <LuxPressable
-          onPress={handlePurchase}
-          disabled={isCtaDisabled}
-          style={[styles.ctaOuter, isCtaDisabled ? styles.ctaOuterDisabled : null]}
-          className={pointerClassName}
-        >
-          <LinearGradient
-            colors={isCtaDisabled ? ["#171717", "#111111"] : ["#f1d49a", "#b47b31"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.ctaGradient}
-          >
-            {isLoading ? (
-              <View style={styles.loadingRow}>
-                <ActivityIndicator color="#0b0b0b" />
-                <Text style={styles.ctaText}>Processing...</Text>
-              </View>
-            ) : (
-              <View style={styles.ctaContent}>
-                <Text style={[styles.ctaText, isCtaDisabled ? styles.ctaTextDisabled : null]}>{ctaTitle}</Text>
-                {!isCtaDisabled ? <ArrowRight color="#0b0b0b" size={18} /> : null}
-              </View>
-            )}
-            {!isLoading ? (
-              <Text style={[styles.ctaSubtext, isCtaDisabled ? styles.ctaSubtextDisabled : null]}>{ctaSubtitle}</Text>
-            ) : null}
-          </LinearGradient>
-        </LuxPressable>
-
-        <Text style={styles.disclaimer}>
-          Subscriptions renew automatically unless canceled in your App Store or Google Play settings.
-        </Text>
       </ScrollView>
     </View>
   );
@@ -542,241 +511,56 @@ export default function PaywallScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#000000",
+    backgroundColor: "#050402",
+  },
+  video: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  videoShade: {
+    ...StyleSheet.absoluteFillObject,
   },
   scroll: {
     flex: 1,
-    backgroundColor: "#000000",
   },
-  topBar: {
+  chromeRow: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    alignItems: "center",
   },
-  topAction: {
-    minHeight: 40,
-    paddingHorizontal: 12,
-    justifyContent: "center",
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(255,255,255,0.04)",
-  },
-  topActionText: {
-    color: "#f5f5f5",
-    fontSize: 13,
-    fontWeight: "700",
+  chromeSpacer: {
+    width: 44,
+    height: 44,
   },
   closeButton: {
-    height: 42,
-    width: 42,
+    height: 44,
+    width: 44,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.14)",
-    backgroundColor: "rgba(255,255,255,0.06)",
+    borderColor: "rgba(244,237,224,0.18)",
+    backgroundColor: "rgba(14,12,10,0.38)",
   },
-  carouselWrap: {
-    alignItems: "center",
-    marginBottom: 28,
-  },
-  galleryImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
+  contentShell: {
+    flex: 1,
+    justifyContent: "flex-end",
+    gap: 16,
+    paddingTop: 42,
   },
   heroBlock: {
-    gap: 12,
-  },
-  eyebrow: {
-    color: "#b9b9b9",
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 2.2,
-    textTransform: "uppercase",
+    gap: 10,
   },
   heroTitle: {
-    color: "#ffffff",
-    fontSize: 34,
-    fontWeight: "800",
-    lineHeight: 40,
+    color: "#f4ede0",
+    fontSize: 40,
+    lineHeight: 46,
+    fontWeight: "500",
+    letterSpacing: -1.2,
+    textAlign: "center",
   },
-  heroBody: {
-    color: "#d4d4d8",
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  trialControlRow: {
-    marginTop: 24,
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "#050505",
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  trialControlCopy: {
-    flex: 1,
-    gap: 4,
-  },
-  trialControlTitle: {
-    color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  trialControlBody: {
-    color: "#9ca3af",
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  trialSwitch: {
-    width: 48,
-    height: 28,
-    borderRadius: 999,
-    backgroundColor: "#242424",
-    padding: 4,
-    justifyContent: "center",
-  },
-  trialSwitchActive: {
-    backgroundColor: "#b47b31",
-  },
-  trialThumb: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#ffffff",
-  },
-  planStack: {
-    marginTop: 20,
-    gap: 16,
-  },
-  planCard: {
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "#050505",
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-  },
-  planCardActive: {
-    borderColor: "rgba(214,176,106,0.75)",
-    backgroundColor: "#080808",
-    shadowColor: "#b47b31",
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 10,
-  },
-  weeklyTrialCard: {
-    borderColor: "rgba(214,176,106,0.75)",
-  },
-  cardTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 18,
-  },
-  valueBadge: {
-    borderRadius: 999,
-    backgroundColor: "rgba(214,176,106,0.14)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  valueBadgeText: {
-    color: "#f1d49a",
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 0.8,
-  },
-  weeklyBadge: {
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  weeklyBadgeActive: {
-    backgroundColor: "rgba(214,176,106,0.14)",
-  },
-  weeklyBadgeText: {
-    color: "#d4d4d8",
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 0.8,
-  },
-  weeklyBadgeTextActive: {
-    color: "#f1d49a",
-  },
-  selectionDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.22)",
-  },
-  selectionDotActive: {
-    borderColor: "#d6b06a",
-    backgroundColor: "rgba(214,176,106,0.22)",
-  },
-  planTitle: {
-    color: "#ffffff",
-    fontSize: 24,
-    fontWeight: "800",
-  },
-  primaryPrice: {
-    marginTop: 12,
-    color: "#ffffff",
-    fontSize: 32,
-    fontWeight: "800",
-  },
-  trialHeadline: {
-    marginTop: 12,
-    color: "#ffffff",
-    fontSize: 29,
-    fontWeight: "900",
-    lineHeight: 34,
-  },
-  secondaryPrice: {
-    marginTop: 8,
-    color: "#f1d49a",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  planBody: {
-    marginTop: 10,
-    color: "#a1a1aa",
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  featureShell: {
-    marginTop: 20,
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "#050505",
-    paddingHorizontal: 18,
-    paddingVertical: 18,
-  },
-  featureHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  featureStack: {
     gap: 10,
-  },
-  featureHeaderText: {
-    color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  featureList: {
-    marginTop: 16,
-    gap: 10,
+    paddingHorizontal: 12,
   },
   featureRow: {
     flexDirection: "row",
@@ -784,78 +568,235 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   featureIconWrap: {
-    height: 26,
-    width: 26,
+    height: 22,
+    width: 22,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,
-    backgroundColor: "rgba(214,176,106,0.14)",
+    backgroundColor: "rgba(194,160,118,0.26)",
+    borderWidth: 1,
+    borderColor: "rgba(243,234,217,0.18)",
   },
   featureText: {
     flex: 1,
-    color: "#f4f4f5",
-    fontSize: 13,
-    lineHeight: 18,
+    color: "#f2eadc",
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "500",
   },
-  statusText: {
-    marginTop: 16,
-    color: "#9ca3af",
+  toggleCard: {
+    marginTop: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: "rgba(244,237,224,0.14)",
+    backgroundColor: "rgba(248,239,226,0.18)",
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+  },
+  toggleCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  toggleTitle: {
+    color: "#f6efe2",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  toggleBody: {
+    color: "rgba(246,239,226,0.78)",
     fontSize: 12,
     lineHeight: 18,
   },
+  toggleTrack: {
+    width: 54,
+    height: 30,
+    borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.28)",
+    padding: 3,
+    justifyContent: "center",
+  },
+  toggleTrackActive: {
+    backgroundColor: "rgba(231,198,149,0.92)",
+  },
+  toggleThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 999,
+    backgroundColor: "#ffffff",
+  },
+  planStack: {
+    gap: 12,
+  },
+  planCard: {
+    position: "relative",
+    overflow: "hidden",
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: "rgba(244,237,224,0.16)",
+    backgroundColor: "rgba(249,240,228,0.18)",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  planCardActive: {
+    borderColor: "rgba(246,228,194,0.82)",
+    backgroundColor: "rgba(252,244,233,0.22)",
+  },
+  selectedGlow: {
+    position: "absolute",
+    inset: 0,
+    borderRadius: 26,
+    borderWidth: 1.25,
+    borderColor: "rgba(255,241,214,0.95)",
+    backgroundColor: "rgba(255,244,225,0.06)",
+  },
+  bestValueBadge: {
+    position: "absolute",
+    left: 14,
+    top: 12,
+    zIndex: 2,
+    borderRadius: 999,
+    backgroundColor: "#f0472e",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  bestValueText: {
+    color: "#ffffff",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.7,
+  },
+  planRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+  planLeft: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  planCopy: {
+    flex: 1,
+    gap: 3,
+    paddingTop: 4,
+  },
+  radioOuter: {
+    height: 24,
+    width: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: "rgba(246,239,226,0.48)",
+    backgroundColor: "rgba(0,0,0,0.12)",
+  },
+  radioOuterActive: {
+    borderColor: "#1b1712",
+    backgroundColor: "rgba(255,250,241,0.95)",
+  },
+  radioInner: {
+    height: 10,
+    width: 10,
+    borderRadius: 999,
+    backgroundColor: "#15110d",
+  },
+  planTitle: {
+    color: "#fff7eb",
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  planSubtitle: {
+    color: "rgba(255,247,235,0.72)",
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  planPriceBlock: {
+    alignItems: "flex-end",
+    gap: 8,
+    paddingTop: 4,
+  },
+  planPrice: {
+    color: "#fff7eb",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  selectedPill: {
+    borderRadius: 999,
+    backgroundColor: "rgba(16,14,12,0.78)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  selectedPillText: {
+    color: "#f6efe2",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+  },
+  footerInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderRadius: 20,
+    backgroundColor: "rgba(8,7,6,0.34)",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  footerInfoText: {
+    flex: 1,
+    color: "#f6efe2",
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "600",
+  },
   errorText: {
-    marginTop: 16,
     color: "#fca5a5",
     fontSize: 12,
     lineHeight: 18,
+    textAlign: "center",
   },
   ctaOuter: {
-    marginTop: 24,
-    borderRadius: 28,
+    borderRadius: 24,
   },
   ctaOuterDisabled: {
     opacity: 0.72,
   },
   ctaGradient: {
-    borderRadius: 28,
+    minHeight: 62,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 18,
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
   },
   ctaContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
   },
   ctaText: {
-    color: "#0b0b0b",
+    color: "#14100c",
     fontSize: 17,
     fontWeight: "800",
-  },
-  ctaTextDisabled: {
-    color: "#f5f5f5",
-  },
-  ctaSubtext: {
-    marginTop: 6,
-    color: "rgba(11,11,11,0.72)",
-    fontSize: 12,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  ctaSubtextDisabled: {
-    color: "rgba(255,255,255,0.72)",
   },
   loadingRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-  disclaimer: {
-    marginTop: 14,
-    color: "#71717a",
-    fontSize: 12,
-    lineHeight: 18,
-    textAlign: "center",
+  restoreButton: {
+    alignSelf: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  restoreText: {
+    color: "rgba(246,239,226,0.78)",
+    fontSize: 13,
+    fontWeight: "600",
+    textDecorationLine: "underline",
   },
 });

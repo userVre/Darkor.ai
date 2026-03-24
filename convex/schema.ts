@@ -15,6 +15,7 @@ export default defineSchema({
     referredBy: v.optional(v.string()),
     subscriptionType: v.optional(v.union(v.literal("weekly"), v.literal("yearly"), v.literal("free"))),
     subscriptionEnd: v.optional(v.int64()),
+    imageLimit: v.optional(v.int64()),
     imageGenerationCount: v.optional(v.int64()),
     lastResetDate: v.optional(v.int64()),
   }).index("by_clerkId", ["clerkId"]),

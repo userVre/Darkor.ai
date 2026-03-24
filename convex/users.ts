@@ -1,7 +1,7 @@
 import { mutationGeneric, queryGeneric } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
-import { BillingPlan, buildSubscriptionPatch, deriveSubscriptionState, SubscriptionType } from "./subscriptions";
+import { BillingPlan, buildSubscriptionPatch, deriveSubscriptionState, FREE_IMAGE_LIMIT, SubscriptionType } from "./subscriptions";
 
 function omitUndefined<T extends Record<string, unknown>>(value: T) {
   return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)) as T;
@@ -34,10 +34,7 @@ async function syncDerivedSubscriptionState(ctx: any, user: any, now: number) {
 }
 
 function getLimitExceededMessage(state: ReturnType<typeof deriveSubscriptionState>) {
-  if (!state.active) {
-    return "Limit Exceeded - Upgrade or Wait";
-  }
-  return `Limit Exceeded - ${state.statusLabel}`;
+  return state.statusMessage;
 }
 
 function computeReviewPrompt(nextCount: number, lastPromptAt: number, ignoreCooldown?: boolean) {
@@ -86,6 +83,7 @@ export const getOrCreateCurrentUser = mutationGeneric({
       referredBy: undefined,
       subscriptionType: "free",
       subscriptionEnd: 0,
+      imageLimit: FREE_IMAGE_LIMIT,
       imageGenerationCount: 0,
       lastResetDate: 0,
     });
@@ -115,9 +113,11 @@ export const me = queryGeneric({
     const state = deriveSubscriptionState(user, Date.now());
     return {
       ...user,
+      credits: state.remaining,
       plan: state.plan,
       subscriptionType: state.subscriptionType,
       subscriptionEnd: state.subscriptionEnd,
+      imageLimit: state.limit,
       imageGenerationCount: state.imageGenerationCount,
       lastResetDate: state.lastResetDate,
       imageGenerationLimit: state.limit,
@@ -126,6 +126,11 @@ export const me = queryGeneric({
       generationLimitReached: state.reachedLimit,
       generationStatusLabel: state.statusLabel,
       generationStatusMessage: state.statusMessage,
+      hasPaidAccess: state.hasPaidAccess,
+      canExport4k: state.canExport4k,
+      canRemoveWatermark: state.canRemoveWatermark,
+      canVirtualStage: state.canVirtualStage,
+      canEditDesigns: state.canEditDesigns,
     };
   },
 });
@@ -148,7 +153,6 @@ export const getByClerkIdInternal = queryGeneric({
 export const setPlanFromRevenueCat = mutationGeneric({
   args: {
     plan: v.string(),
-    credits: v.optional(v.int64()),
     subscriptionType: v.optional(v.union(v.literal("weekly"), v.literal("yearly"), v.literal("free"))),
     purchasedAt: v.optional(v.int64()),
     subscriptionEnd: v.optional(v.int64()),
@@ -172,15 +176,13 @@ export const setPlanFromRevenueCat = mutationGeneric({
       previousSubscriptionEnd: user.subscriptionEnd,
     });
 
-    const nextCredits = typeof args.credits === "number" ? Math.max(user.credits, args.credits) : user.credits;
-
     await ctx.db.patch(user._id, omitUndefined({
       plan: subscriptionPatch.plan,
       subscriptionType: subscriptionPatch.subscriptionType,
       subscriptionEnd: subscriptionPatch.subscriptionEnd,
+      imageLimit: subscriptionPatch.imageLimit,
       imageGenerationCount: subscriptionPatch.imageGenerationCount,
       lastResetDate: subscriptionPatch.lastResetDate,
-      credits: nextCredits,
     }));
 
     return { ok: true, clerkId: identity.subject };
@@ -227,6 +229,7 @@ export const syncRevenueCatSubscriptionInternal = mutationGeneric({
         referredBy: undefined,
         subscriptionType: initialSubscription.subscriptionType,
         subscriptionEnd: initialSubscription.subscriptionEnd,
+        imageLimit: initialSubscription.imageLimit,
         imageGenerationCount: initialSubscription.imageGenerationCount ?? 0,
         lastResetDate: initialSubscription.lastResetDate ?? 0,
       });
@@ -262,8 +265,10 @@ export const getGenerationStatus = queryGeneric({
 
     const state = deriveSubscriptionState(user, Date.now());
     return {
+      credits: state.remaining,
       subscriptionType: state.subscriptionType,
       subscriptionEnd: state.subscriptionEnd,
+      imageLimit: state.limit,
       imageGenerationCount: state.imageGenerationCount,
       imageGenerationLimit: state.limit,
       imagesRemaining: state.remaining,
@@ -271,6 +276,11 @@ export const getGenerationStatus = queryGeneric({
       generationLimitReached: state.reachedLimit,
       generationStatusLabel: state.statusLabel,
       generationStatusMessage: state.statusMessage,
+      hasPaidAccess: state.hasPaidAccess,
+      canExport4k: state.canExport4k,
+      canRemoveWatermark: state.canRemoveWatermark,
+      canVirtualStage: state.canVirtualStage,
+      canEditDesigns: state.canEditDesigns,
     };
   },
 });
@@ -281,38 +291,47 @@ async function consumeAllowance(ctx: any, ignoreCooldown?: boolean) {
     throw new Error("No billing profile found.");
   }
 
-  const now = Date.now();
-  const state = await syncDerivedSubscriptionState(ctx, user, now);
-  if (state.blocked) {
-    throw new ConvexError(getLimitExceededMessage(state));
-  }
+    const now = Date.now();
+    const state = await syncDerivedSubscriptionState(ctx, user, now);
+    if (state.blocked) {
+      throw new ConvexError(getLimitExceededMessage(state));
+    }
 
-  const currentCount = typeof user.generationCount === "number" ? user.generationCount : 0;
-  const nextGenerationCount = currentCount + 1;
-  const nextImageGenerationCount = state.imageGenerationCount + 1;
-  const lastPromptAt = typeof user.lastReviewPromptAt === "number" ? user.lastReviewPromptAt : 0;
-  const shouldPrompt = computeReviewPrompt(nextGenerationCount, lastPromptAt, ignoreCooldown);
+    const currentCount = typeof user.generationCount === "number" ? user.generationCount : 0;
+    const nextGenerationCount = currentCount + 1;
+    const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : state.imageGenerationCount + 1;
+    const lastPromptAt = typeof user.lastReviewPromptAt === "number" ? user.lastReviewPromptAt : 0;
+    const shouldPrompt = computeReviewPrompt(nextGenerationCount, lastPromptAt, ignoreCooldown);
 
-  await ctx.db.patch(user._id, {
-    generationCount: nextGenerationCount,
-    imageGenerationCount: nextImageGenerationCount,
-    lastResetDate: state.subscriptionType === "free" ? 0 : state.lastResetDate,
-    ...(state.patch.plan ? { plan: state.patch.plan } : {}),
-    ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
-    ...(typeof state.patch.subscriptionEnd === "number" ? { subscriptionEnd: state.patch.subscriptionEnd } : {}),
-  });
+    await ctx.db.patch(user._id, {
+      generationCount: nextGenerationCount,
+      credits: state.subscriptionType === "free" ? Math.max(state.credits - 1, 0) : state.credits,
+      imageLimit: state.limit,
+      imageGenerationCount: nextImageGenerationCount,
+      lastResetDate: state.subscriptionType === "free" ? 0 : state.lastResetDate,
+      ...(state.patch.plan ? { plan: state.patch.plan } : {}),
+      ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
+      ...(typeof state.patch.subscriptionEnd === "number" ? { subscriptionEnd: state.patch.subscriptionEnd } : {}),
+      ...(typeof state.patch.imageLimit === "number" ? { imageLimit: state.patch.imageLimit } : {}),
+      ...(typeof state.patch.lastResetDate === "number" ? { lastResetDate: state.patch.lastResetDate } : {}),
+    });
 
-  const remaining = Math.max(state.limit - nextImageGenerationCount, 0);
+  const remaining = state.subscriptionType === "free"
+    ? Math.max(state.credits - 1, 0)
+    : Math.max(state.limit - nextImageGenerationCount, 0);
   const statusLabel = state.subscriptionType === "weekly"
     ? `${remaining} / ${state.limit} images left`
-    : `${remaining} / ${state.limit} this month`;
+    : state.subscriptionType === "yearly"
+      ? `${remaining} / ${state.limit} this month`
+      : `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`;
 
-  return {
-    count: nextGenerationCount,
-    shouldPrompt,
-    imageGenerationCount: nextImageGenerationCount,
-    imageGenerationLimit: state.limit,
-    imagesRemaining: remaining,
+    return {
+      count: nextGenerationCount,
+      shouldPrompt,
+      credits: remaining,
+      imageGenerationCount: nextImageGenerationCount,
+      imageGenerationLimit: state.limit,
+      imagesRemaining: remaining,
     subscriptionType: state.subscriptionType,
     generationStatusLabel: statusLabel,
     generationStatusMessage: remaining <= 0 ? `Limit Reached - ${statusLabel}` : statusLabel,
@@ -336,25 +355,30 @@ export const releaseGenerationAllowance = mutationGeneric({
     }
 
     const state = await syncDerivedSubscriptionState(ctx, user, Date.now());
-    const nextImageGenerationCount = Math.max(state.imageGenerationCount - 1, 0);
+    const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : Math.max(state.imageGenerationCount - 1, 0);
     const currentCount = typeof user.generationCount === "number" ? user.generationCount : 0;
     const nextGenerationCount = Math.max(currentCount - 1, 0);
 
     await ctx.db.patch(user._id, {
+      credits: state.subscriptionType === "free" ? Math.min(state.credits + 1, FREE_IMAGE_LIMIT) : state.credits,
+      imageLimit: state.limit,
       imageGenerationCount: nextImageGenerationCount,
       generationCount: nextGenerationCount,
     });
 
-    const remaining = Math.max(state.limit - nextImageGenerationCount, 0);
+    const remaining = state.subscriptionType === "free"
+      ? Math.min(state.credits + 1, FREE_IMAGE_LIMIT)
+      : Math.max(state.limit - nextImageGenerationCount, 0);
     return {
       ok: true,
+      credits: remaining,
       imageGenerationCount: nextImageGenerationCount,
       imagesRemaining: remaining,
       generationStatusLabel: state.subscriptionType === "weekly"
         ? `${remaining} / ${state.limit} images left`
         : state.subscriptionType === "yearly"
           ? `${remaining} / ${state.limit} this month`
-          : "0 / 0 images left",
+          : `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`,
     };
   },
 });
@@ -413,11 +437,9 @@ export const applyReferral = mutationGeneric({
       return { ok: false, reason: "invalid_referral" };
     }
 
-    const nextCredits = referrer.credits + 3;
     const nextReferralCount = (referrer.referralCount ?? 0) + 1;
 
     await ctx.db.patch(referrer._id, {
-      credits: nextCredits,
       referralCount: nextReferralCount,
     });
 
@@ -441,36 +463,16 @@ export const claimThreeDayReward = mutationGeneric({
       return {
         granted: false,
         creditsAdded: 0,
-        credits: user.credits,
+        credits: 0,
         nextEligibleAt: user.lastRewardDate ?? 0,
       };
     }
 
-    const now = Date.now();
-    const lastRewardDate = typeof user.lastRewardDate === "number" ? user.lastRewardDate : 0;
-    const rewardWindowMs = 72 * 60 * 60 * 1000;
-    const nextEligibleAt = lastRewardDate + rewardWindowMs;
-
-    if (now < nextEligibleAt) {
-      return {
-        granted: false,
-        creditsAdded: 0,
-        credits: user.credits,
-        nextEligibleAt,
-      };
-    }
-
-    const nextCredits = user.credits + 3;
-    await ctx.db.patch(user._id, {
-      credits: nextCredits,
-      lastRewardDate: now,
-    });
-
     return {
-      granted: true,
-      creditsAdded: 3,
-      credits: nextCredits,
-      nextEligibleAt: now + rewardWindowMs,
+      granted: false,
+      creditsAdded: 0,
+      credits: typeof user.credits === "number" ? Math.min(user.credits, FREE_IMAGE_LIMIT) : FREE_IMAGE_LIMIT,
+      nextEligibleAt: typeof user.lastRewardDate === "number" ? user.lastRewardDate : 0,
     };
   },
 });

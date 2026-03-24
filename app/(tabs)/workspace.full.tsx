@@ -84,6 +84,7 @@ type MeResponse = {
   credits: number;
   subscriptionType?: "free" | "weekly" | "yearly";
   subscriptionEnd?: number;
+  imageLimit?: number;
   imageGenerationCount?: number;
   lastResetDate?: number;
   imageGenerationLimit?: number;
@@ -92,6 +93,11 @@ type MeResponse = {
   generationLimitReached?: boolean;
   generationStatusLabel?: string;
   generationStatusMessage?: string;
+  hasPaidAccess?: boolean;
+  canExport4k?: boolean;
+  canRemoveWatermark?: boolean;
+  canVirtualStage?: boolean;
+  canEditDesigns?: boolean;
 };
 
 type SelectedImage = {
@@ -207,10 +213,12 @@ const BoardGridCard = memo(function BoardGridCard({
 
         {isProcessing ? (
           <View className="absolute inset-0 items-center justify-center gap-3">
-            <View className="h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/35">
-              <ActivityIndicator size="small" color="#ffffff" />
-            </View>
-            <Text className="text-sm font-semibold text-white">Generating...</Text>
+            <MotiView animate={{ opacity: [0.52, 1, 0.52], scale: [0.96, 1.03, 0.96] }} transition={{ ...LUX_SPRING, loop: true }}>
+              <View className="h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/35">
+                <ActivityIndicator size="small" color="#ffffff" />
+              </View>
+            </MotiView>
+            <Text className="text-sm font-semibold text-white">Processing...</Text>
           </View>
         ) : null}
 
@@ -224,7 +232,7 @@ const BoardGridCard = memo(function BoardGridCard({
           <Text className="text-base font-semibold text-white">{item.styleLabel + " " + item.roomLabel}</Text>
           <Text className="mt-1 text-xs text-zinc-300">
             {isProcessing
-              ? "Generating with Gemini..."
+              ? "Nano Banana is rendering your design."
               : isFailed
                 ? "Generation failed. Tap for details."
                 : "Tap to open your design editor"}
@@ -951,17 +959,20 @@ export default function WorkspaceScreen() {
   }, [serviceType]);
 
   const plan = diagnostic ? "pro" : me?.plan ?? "free";
-  const isProPlan = plan === "pro";
   const planUsed = plan === "pro" ? "pro" : plan === "trial" ? "trial" : "free";
+  const hasPaidAccess = diagnostic ? true : me?.hasPaidAccess ?? false;
+  const canExport4k = diagnostic ? true : me?.canExport4k ?? false;
+  const canRemoveWatermark = diagnostic ? true : me?.canRemoveWatermark ?? false;
+  const canEditDesigns = diagnostic ? true : me?.canEditDesigns ?? false;
   const generationSpeedTier = useMemo<GenerationSpeedTier>(() => {
     if (me?.subscriptionType === "yearly") {
       return "ultra";
     }
-    if (plan === "pro") {
+    if (hasPaidAccess) {
       return "pro";
     }
     return "standard";
-  }, [me?.subscriptionType, plan]);
+  }, [hasPaidAccess, me?.subscriptionType]);
   const creditBalance = diagnostic ? 999 : effectiveSignedIn ? me?.credits ?? 3 : 3;
   const hasGenerationCredits = creditBalance > 0;
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
@@ -995,14 +1006,6 @@ export default function WorkspaceScreen() {
         setGeneratedImageUrl(currentGeneration.imageUrl);
       }
 
-      if (activeBoardItemId !== currentGeneration.id) {
-        setActiveBoardItemId(currentGeneration.id);
-      }
-
-      if (workflowStep !== 5) {
-        setWorkflowStep(5);
-      }
-
       if (pendingReviewState) {
         setLastGenerationCount(pendingReviewState.count);
         if (pendingReviewState.shouldPrompt) {
@@ -1020,7 +1023,7 @@ export default function WorkspaceScreen() {
       setPendingReviewState(null);
       Alert.alert("Generation failed", currentGeneration.errorMessage ?? "Please try again.");
     }
-  }, [activeBoardItemId, boardItems, generatedImageUrl, generationId, pendingReviewState, workflowStep]);
+  }, [boardItems, generatedImageUrl, generationId, pendingReviewState]);
 
   const handleSliderLayout = useCallback(
     (event: { nativeEvent: { layout: { width: number } } }) => {
@@ -1250,7 +1253,7 @@ export default function WorkspaceScreen() {
     }
     if (workflowStep === 5) {
       setWizardNavDirection(-1);
-      setWorkflowStep(3);
+      setWorkflowStep(4);
       return;
     }
     setWizardNavDirection(-1);
@@ -1322,7 +1325,7 @@ export default function WorkspaceScreen() {
   }, []);
 
   const exportCurrentRender = useCallback(async () => {
-    if (isProPlan) {
+    if (canRemoveWatermark) {
       if (!activeEditorImageUrl) {
         throw new Error("Render unavailable. Please try again.");
       }
@@ -1348,7 +1351,7 @@ export default function WorkspaceScreen() {
         sliderX.value = previousSlider;
       }
     }
-  }, [activeEditorImageUrl, imageContainerRef, isProPlan, sliderWidth, sliderX]);
+  }, [activeEditorImageUrl, canRemoveWatermark, imageContainerRef, sliderWidth, sliderX]);
 
   const handleShare = useCallback(async () => {
     triggerHaptic();
@@ -1414,7 +1417,7 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    if (!isProPlan) {
+    if (!canExport4k) {
       handleUpgrade();
       return;
     }
@@ -1436,7 +1439,7 @@ export default function WorkspaceScreen() {
       await cleanupTempFile(tempUri);
       setIsDownloading(null);
     }
-  }, [activeEditorImageUrl, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, handleUpgrade, isProPlan, showToast]);
+  }, [activeEditorImageUrl, canExport4k, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, handleUpgrade, showToast]);
 
 
 
@@ -1468,15 +1471,11 @@ export default function WorkspaceScreen() {
     setFeedbackState("disliked");
     setFeedbackSubmitted(true);
     try {
-      const result = (await submitGenerationFeedback({
+      await submitGenerationFeedback({
         id: generationId,
         sentiment: "disliked",
-      })) as { retryGranted?: boolean };
-      showToast(
-        result?.retryGranted
-          ? "Feedback saved. A retry credit was added to your account."
-          : "Feedback saved. We will use it to improve future renders.",
-      );
+      });
+      showToast("Feedback saved. We will use it to improve future renders.");
     } catch (error) {
       setFeedbackState(null);
       setFeedbackSubmitted(false);
@@ -1515,8 +1514,16 @@ export default function WorkspaceScreen() {
     }
 
     if (!effectiveSignedIn) {
-      setAwaitingAuth(true);
-      router.push({ pathname: "/sign-in", params: { returnTo: "/workspace" } });
+      Alert.alert("Sign in required", "Sign in to save this render to your board.", [
+        { text: "Not now", style: "cancel" },
+        {
+          text: "Sign in",
+          onPress: () => {
+            setAwaitingAuth(true);
+            router.push({ pathname: "/sign-in", params: { returnTo: "/workspace" } });
+          },
+        },
+      ]);
       return;
     }
 
@@ -1524,6 +1531,20 @@ export default function WorkspaceScreen() {
       router.push("/paywall");
       return;
     }
+
+    const requestStartedAt = Date.now();
+    const temporaryBoardId = `pending-${requestStartedAt}`;
+    const processingBoardItem: BoardRenderItem = {
+      id: temporaryBoardId,
+      imageUrl: null,
+      originalImageUrl: selectedImage.uri,
+      styleLabel: selectedStyle,
+      roomLabel: selectedRoom,
+      generationId: null,
+      status: "processing",
+      errorMessage: null,
+      createdAt: requestStartedAt,
+    };
 
     try {
       setFeedbackState(null);
@@ -1533,6 +1554,8 @@ export default function WorkspaceScreen() {
       generationAlertedFailureRef.current = null;
       setPendingReviewState(null);
       setIsGenerating(true);
+      setActiveBoardItemId(null);
+      setPendingBoardItems((current) => [processingBoardItem, ...current.filter((item) => item.id !== temporaryBoardId)]);
       setWorkflowStep(4);
 
       const sourceStorageId = await uploadSelectedImageToStorage(selectedImage);
@@ -1554,33 +1577,40 @@ export default function WorkspaceScreen() {
         reviewState?: { count: number; shouldPrompt: boolean };
       };
 
-      const nextBoardItem: BoardRenderItem = {
-        id: startResult.generationId,
-        imageUrl: null,
-        originalImageUrl: selectedImage.uri,
-        styleLabel: selectedStyle,
-        roomLabel: selectedRoom,
-        generationId: startResult.generationId,
-        status: "processing",
-        errorMessage: null,
-        createdAt: Date.now(),
-      };
-
-      setPendingBoardItems((current) => [nextBoardItem, ...current.filter((item) => item.id !== nextBoardItem.id)]);
+      setPendingBoardItems((current) =>
+        current.map((item) =>
+          item.id === temporaryBoardId
+            ? {
+                ...item,
+                id: startResult.generationId,
+                generationId: startResult.generationId,
+              }
+            : item,
+        ),
+      );
       setGenerationId(startResult.generationId);
       setPendingReviewState(startResult.reviewState ?? null);
       if (startResult.reviewState) {
         setLastGenerationCount(startResult.reviewState.count);
       }
-      setActiveBoardItemId(null);
-      setWorkflowStep(5);
     } catch (error) {
-      setWorkflowStep(3);
       const message = error instanceof Error ? error.message : "Please try again.";
       if (!diagnostic && message.includes("No diamonds remaining")) {
+        setPendingBoardItems((current) => current.filter((item) => item.id !== temporaryBoardId));
         router.push("/paywall");
         return;
       }
+      setPendingBoardItems((current) =>
+        current.map((item) =>
+          item.id === temporaryBoardId
+            ? {
+                ...item,
+                status: "failed",
+                errorMessage: message,
+              }
+            : item,
+        ),
+      );
       Alert.alert("Generation failed", message);
     } finally {
       setIsGenerating(false);
@@ -1719,7 +1749,14 @@ export default function WorkspaceScreen() {
       return;
     }
 
+    if (!canEditDesigns) {
+      router.push("/paywall");
+      return;
+    }
+
     triggerHaptic();
+    setWizardNavDirection(1);
+    setWorkflowStep(5);
     setActiveBoardItemId(item.id);
     setGeneratedImageUrl(item.imageUrl);
     setGenerationId(item.generationId ?? null);
@@ -1729,10 +1766,12 @@ export default function WorkspaceScreen() {
     if (sliderWidth.value > 0) {
       sliderX.value = withSpring(sliderWidth.value / 2, sliderSpring);
     }
-  }, [showToast, sliderSpring, sliderWidth, sliderX]);
+  }, [canEditDesigns, router, showToast, sliderSpring, sliderWidth, sliderX]);
 
   const handleCloseBoardEditor = useCallback(() => {
     triggerHaptic();
+    setWizardNavDirection(-1);
+    setWorkflowStep(4);
     setActiveBoardItemId(null);
     setShowBeforeOnly(false);
   }, []);
@@ -2790,45 +2829,46 @@ export default function WorkspaceScreen() {
 
     return (
       <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
-        <ScrollView
-          className="flex-1 bg-black"
-          style={{ backgroundColor: "#000000" }}
+        <FlashList
+          data={boardItems}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item, index }) => (
+            <BoardGridCard item={item} width={boardCardWidth} index={index} onPress={handleOpenBoardItem} />
+          )}
+          numColumns={2}
+          showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: 20,
             paddingTop: Math.max(insets.top + 14, 28),
             paddingBottom: Math.max(insets.bottom + 32, 40),
           }}
-          contentInsetAdjustmentBehavior="never"
-        >
-          <View className="flex-row items-center justify-between">
-            <View style={{ width: 42 }} />
-            <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>Your Board</Text>
-            <View style={{ width: 42 }} />
-          </View>
-
-          <View style={{ marginTop: 28, flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-            <MotiView style={{ width: boardCardWidth }} from={{ opacity: 0.5, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={LUX_SPRING}>
-              <View
-                className="overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950"
-                style={{ height: 236, borderWidth: 0.5 }}
+          ListHeaderComponent={
+            <View style={{ marginBottom: 28 }} className="flex-row items-center justify-between">
+              <View style={{ width: 42 }} />
+              <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>Your Board</Text>
+              <LuxPressable
+                onPress={handleResetWizard}
+                className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
+                style={{ borderWidth: 0.5 }}
               >
-                {selectedImage ? (
-                  <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
-                ) : null}
-                <View className="absolute inset-0 bg-black/60" />
-                <View className="absolute inset-0 items-center justify-center gap-3">
-                  <MotiView animate={{ opacity: [0.5, 1, 0.5], scale: [0.96, 1, 0.96] }} transition={{ ...LUX_SPRING, loop: true }}>
-                    <View className="h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-white/10">
-                      <ActivityIndicator size="small" color="#ffffff" />
-                    </View>
-                  </MotiView>
-                  <Text className="text-base font-semibold text-white">Processing...</Text>
-                  <Text className="text-sm text-zinc-300">Nano Banana is rendering your board.</Text>
-                </View>
-              </View>
-            </MotiView>
-          </View>
-        </ScrollView>
+                <Close color="#ffffff" size={18} strokeWidth={2.2} />
+              </LuxPressable>
+            </View>
+          }
+          ListEmptyComponent={
+            <View
+              className="items-center justify-center rounded-[28px] border border-white/10 bg-zinc-950"
+              style={{ width: boardCardWidth, height: 236, borderWidth: 0.5 }}
+            >
+              <Sparkles color="#71717a" size={28} />
+              <Text className="mt-4 text-base font-semibold text-white">Your first board appears here</Text>
+              <Text className="mt-2 px-6 text-center text-sm leading-6 text-zinc-500">
+                Generate a redesign to start building your collection.
+              </Text>
+            </View>
+          }
+          removeClippedSubviews
+        />
       </View>
     );
   }
@@ -2988,7 +3028,7 @@ export default function WorkspaceScreen() {
                   </View>
                 </View>
 
-                {!isProPlan ? (
+                {!canRemoveWatermark ? (
                   <View className="absolute bottom-5 right-4">
                     <MotiView animate={{ scale: [1, 1.03, 1], opacity: [1, 0.94, 1] }} transition={{ duration: 2200, loop: true }}>
                       <LuxPressable onPress={handleUpgrade} className="cursor-pointer">
@@ -3008,7 +3048,7 @@ export default function WorkspaceScreen() {
                   </View>
                 ) : null}
 
-                {!isProPlan && editorImageUrl ? (
+                {!canRemoveWatermark && editorImageUrl ? (
                   <View className="absolute bottom-24 right-4">
                     <Logo size={44} style={{ opacity: 0.6 }} />
                   </View>
@@ -3028,8 +3068,8 @@ export default function WorkspaceScreen() {
                 id: "save",
                 label: "Save",
                 icon: Download,
-                onPress: isProPlan ? handleDownloadUltra : handleDownloadStandard,
-                loading: isProPlan ? isDownloadingUltra : isDownloadingStandard,
+                onPress: canExport4k ? handleDownloadUltra : handleDownloadStandard,
+                loading: canExport4k ? isDownloadingUltra : isDownloadingStandard,
               },
               {
                 id: "share",
