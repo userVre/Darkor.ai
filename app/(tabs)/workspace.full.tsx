@@ -689,7 +689,6 @@ export default function WorkspaceScreen() {
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
-  const [pendingSelectedImage, setPendingSelectedImage] = useState<SelectedImage | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedModeId, setSelectedModeId] = useState<ModeOption["id"] | null>(null);
@@ -1044,7 +1043,7 @@ export default function WorkspaceScreen() {
   }));
 
   const canContinue = useMemo(() => {
-    if (workflowStep === 0) return Boolean(selectedImage) && !pendingSelectedImage;
+    if (workflowStep === 0) return Boolean(selectedImage);
     if (workflowStep === 1) return Boolean(selectedRoom);
     if (workflowStep === 2) {
       if (selectedStyle === "Custom") {
@@ -1054,7 +1053,7 @@ export default function WorkspaceScreen() {
     }
     if (workflowStep === 3) return Boolean(selectedModeId && selectedPaletteId);
     return false;
-  }, [customPrompt, pendingSelectedImage, selectedImage, selectedModeId, selectedPaletteId, selectedRoom, selectedStyle, workflowStep]);
+  }, [customPrompt, selectedImage, selectedModeId, selectedPaletteId, selectedRoom, selectedStyle, workflowStep]);
 
   const openSystemSettings = useCallback(() => {
     Linking.openSettings().catch(() => undefined);
@@ -1091,7 +1090,7 @@ export default function WorkspaceScreen() {
 
   const applyPickedAsset = useCallback((asset: ImagePicker.ImagePickerAsset, label: string) => {
     startTransition(() => {
-      setPendingSelectedImage({
+      setSelectedImage({
         uri: asset.uri,
         label,
       });
@@ -1184,32 +1183,10 @@ export default function WorkspaceScreen() {
     presentPhotoSourceMenu();
   }, [presentPhotoSourceMenu]);
 
-  const handleVerifyPendingImage = useCallback(() => {
-    if (!pendingSelectedImage) {
-      return;
-    }
-
-    triggerHaptic();
-    startTransition(() => {
-      setSelectedImage(pendingSelectedImage);
-      setPendingSelectedImage(null);
-    });
-  }, [pendingSelectedImage]);
-
-  const handleDiscardPendingImage = useCallback(() => {
-    triggerHaptic();
-    startTransition(() => {
-      setPendingSelectedImage(null);
-    });
-    setIsLoadingExample(null);
-    setIsSelectingPhoto(false);
-  }, []);
-
   const handleClearSelectedImage = useCallback(() => {
     triggerHaptic();
     startTransition(() => {
       setSelectedImage(null);
-      setPendingSelectedImage(null);
     });
     setIsLoadingExample(null);
     setIsSelectingPhoto(false);
@@ -1226,7 +1203,7 @@ export default function WorkspaceScreen() {
         throw new Error("Example image unavailable.");
       }
       startTransition(() => {
-        setPendingSelectedImage({ uri, label: example.label });
+        setSelectedImage({ uri, label: example.label });
       });
     } catch (error) {
       Alert.alert("Example unavailable", error instanceof Error ? error.message : "Please try another image.");
@@ -1262,7 +1239,6 @@ export default function WorkspaceScreen() {
     startTransition(() => {
       setWorkflowStep(0);
       setSelectedImage(null);
-      setPendingSelectedImage(null);
       setSelectedRoom(null);
       setSelectedStyle(null);
       setSelectedModeId(null);
@@ -1865,30 +1841,31 @@ export default function WorkspaceScreen() {
     const currentStepNumber = workflowStep + 1;
     const isFinalWizardStep = workflowStep === 3;
     const isPhotoStep = workflowStep === 0;
-    const displayedSelectedImage = pendingSelectedImage ?? selectedImage;
+    const displayedSelectedImage = selectedImage;
     const hasSelectedPhoto = Boolean(selectedImage);
     const hasVisiblePhoto = Boolean(displayedSelectedImage);
-    const isReviewingSelectedPhoto = Boolean(pendingSelectedImage);
-    const activeExampleLabel = pendingSelectedImage?.label ?? selectedImage?.label ?? null;
+    const activeExampleLabel = selectedImage?.label ?? null;
     const wizardBackgroundColor = isPhotoStep ? "#000000" : "#ffffff";
     const wizardPrimaryTextColor = isPhotoStep ? "#ffffff" : "#09090b";
     const headerButtonBorderColor = isPhotoStep ? "rgba(255,255,255,0.12)" : "rgba(9,9,11,0.08)";
     const headerButtonBackgroundColor = isPhotoStep ? "rgba(255,255,255,0.04)" : "rgba(9,9,11,0.03)";
-    const progressTrackColor = "#27272a";
-    const progressFillWidth = `${currentStepNumber * 25}%` as `${number}%`;
+    const progressTrackColor = isPhotoStep ? "rgba(255,255,255,0.14)" : "#e4e4e7";
     const uploadTileSize = wizardUploadSize;
-    const stepOneExampleCardWidth = Math.min(Math.max(width * 0.36, 132), 152);
+    const stepOneExampleCardWidth = Math.min(Math.max(width * 0.28, 112), 126);
+    const stepOneExampleCardHeight = Math.round(stepOneExampleCardWidth * 1.2);
     const stepContentMinHeight = Math.max(
       height - Math.max(insets.top + (isPhotoStep ? 18 : 8), isPhotoStep ? 24 : 20) - Math.max(insets.bottom + (isPhotoStep ? 148 : 124), isPhotoStep ? 176 : 144),
       isPhotoStep ? 520 : 460,
     );
-    const continueButtonHeight = isPhotoStep ? 64 : 62;
-    const continueButtonRadius = isPhotoStep ? 28 : 24;
+    const continueButtonHeight = isPhotoStep ? 58 : 62;
+    const continueButtonRadius = isPhotoStep ? 20 : 24;
     const isContinueDisabled = !canContinue || (isFinalWizardStep && (isGenerating || generationBlocked));
     const isContinueActive = canContinue && !(isFinalWizardStep && generationBlocked) && !isContinueDisabled;
-    const shouldPulseContinue = isPhotoStep && hasSelectedPhoto && !pendingSelectedImage && isContinueActive;
-    const continueButtonOpacity = isContinueActive ? 1 : isPhotoStep ? 0.48 : 0.62;
-    const continueLabel = isFinalWizardStep
+    const shouldPulseContinue = !isPhotoStep && hasSelectedPhoto && isContinueActive;
+    const continueButtonOpacity = isPhotoStep ? 1 : isContinueActive ? 1 : 0.62;
+    const continueLabel = isPhotoStep
+      ? "Continue"
+      : isFinalWizardStep
       ? generationBlocked
         ? "Limit Reached - Upgrade or Wait"
         : isGenerating
@@ -1937,8 +1914,8 @@ export default function WorkspaceScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={{ flex: 1, gap: 24 }}>
-            <View style={{ gap: 14 }}>
-              <View style={{ minHeight: 44, justifyContent: "center", alignItems: "center" }}>
+            <View style={{ gap: isPhotoStep ? 18 : 14 }}>
+              <View style={{ minHeight: isPhotoStep ? 32 : 44, justifyContent: "center", alignItems: "center" }}>
                 {workflowStep > 0 ? (
                   <View style={{ position: "absolute", left: 0, top: 0, bottom: 0, justifyContent: "center" }}>
                     <LuxPressable
@@ -1967,7 +1944,17 @@ export default function WorkspaceScreen() {
                   {`Step ${currentStepNumber}`}
                 </Text>
 
-                <View style={{ position: "absolute", right: 0, top: 0, bottom: 0, justifyContent: "center" }}>
+                <View
+                  style={{
+                    position: "absolute",
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    justifyContent: "center",
+                    opacity: isPhotoStep ? 0 : 1,
+                  }}
+                  pointerEvents={isPhotoStep ? "none" : "auto"}
+                >
                   <LuxPressable
                     onPress={handleCloseWizard}
                     className="cursor-pointer h-11 w-11 items-center justify-center rounded-full"
@@ -1982,26 +1969,31 @@ export default function WorkspaceScreen() {
                 </View>
               </View>
 
-              <View
-                style={{
-                  height: 8,
-                  borderRadius: 999,
-                  overflow: "hidden",
-                  backgroundColor: progressTrackColor,
-                }}
-              >
-                <MotiView
-                  animate={{ width: progressFillWidth }}
-                  transition={LUX_SPRING}
-                  style={{ height: "100%", borderRadius: 999, overflow: "hidden" }}
-                >
-                  <LinearGradient
-                    colors={["#d946ef", "#a855f7"]}
-                    start={{ x: 0, y: 0.5 }}
-                    end={{ x: 1, y: 0.5 }}
-                    style={{ height: "100%", width: "100%" }}
-                  />
-                </MotiView>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                {Array.from({ length: 4 }).map((_, index) => {
+                  const isComplete = index < currentStepNumber;
+                  return (
+                    <View
+                      key={`wizard-progress-${index}`}
+                      style={{
+                        flex: 1,
+                        height: 8,
+                        borderRadius: 999,
+                        overflow: "hidden",
+                        backgroundColor: progressTrackColor,
+                      }}
+                    >
+                      {isComplete ? (
+                        <LinearGradient
+                          colors={["#ff4d6d", "#d946ef"]}
+                          start={{ x: 0, y: 0.5 }}
+                          end={{ x: 1, y: 0.5 }}
+                          style={{ height: "100%", width: "100%" }}
+                        />
+                      ) : null}
+                    </View>
+                  );
+                })}
               </View>
             </View>
 
@@ -2015,38 +2007,38 @@ export default function WorkspaceScreen() {
                 style={isPhotoStep ? { flex: 1, minHeight: stepContentMinHeight, gap: 24 } : { gap: 24 }}
               >
                 {workflowStep === 0 ? (
-                  <View style={{ flex: 1, gap: 24 }}>
-                    <View style={{ gap: 10 }}>
+                  <View style={{ flex: 1, gap: 24, paddingTop: 4 }}>
+                    <View style={{ gap: 8, alignItems: "center" }}>
                       <Text
                         style={{
                           color: "#ffffff",
-                          fontSize: 30,
+                          fontSize: 28,
                           fontWeight: "800",
                           letterSpacing: -0.8,
                           textAlign: "center",
                         }}
                       >
-                        Start Redesigning
+                        Add a Photo
                       </Text>
                       <Text
                         style={{
                           color: "#a1a1aa",
-                          fontSize: 15,
-                          lineHeight: 22,
+                          fontSize: 14,
+                          lineHeight: 21,
                           textAlign: "center",
-                          paddingHorizontal: 14,
+                          maxWidth: 280,
                         }}
                       >
-                        Upload a room photo to begin Step 1 of 4.
+                        Upload a room photo or choose one of the examples below.
                       </Text>
                     </View>
 
                     <MotiView
-                      key={displayedSelectedImage?.uri ?? selectedImage?.uri ?? "empty-upload"}
-                      from={{ opacity: 0, scale: 0.985, translateY: 14 }}
+                      key={displayedSelectedImage?.uri ?? "empty-upload"}
+                      from={{ opacity: 0, scale: 0.985, translateY: 12 }}
                       animate={{ opacity: 1, scale: 1, translateY: 0 }}
                       transition={LUX_SPRING}
-                      style={{ alignItems: "center", justifyContent: "center", paddingVertical: 8 }}
+                      style={{ alignItems: "center", justifyContent: "center" }}
                     >
                       <LuxPressable
                         onPress={handlePickPhoto}
@@ -2054,13 +2046,13 @@ export default function WorkspaceScreen() {
                         style={{
                           width: uploadTileSize,
                           height: uploadTileSize,
-                          borderRadius: 32,
-                          borderWidth: hasVisiblePhoto ? 1 : 2,
-                          borderColor: hasVisiblePhoto ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.3)",
+                          borderRadius: 34,
+                          borderWidth: hasVisiblePhoto ? 1 : 1.5,
+                          borderColor: hasVisiblePhoto ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.18)",
                           borderStyle: hasVisiblePhoto ? "solid" : "dashed",
                           overflow: "hidden",
                           alignSelf: "center",
-                          backgroundColor: "#0a0a0a",
+                          backgroundColor: "#0d0d0d",
                           justifyContent: "center",
                           alignItems: "center",
                         }}
@@ -2074,99 +2066,6 @@ export default function WorkspaceScreen() {
                               transition={180}
                               cachePolicy="memory-disk"
                             />
-                            <LinearGradient
-                              colors={["transparent", "rgba(0,0,0,0.1)", "rgba(0,0,0,0.86)"]}
-                              start={{ x: 0.5, y: 0 }}
-                              end={{ x: 0.5, y: 1 }}
-                              style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }}
-                            />
-                            <View
-                              pointerEvents="none"
-                              style={{
-                                position: "absolute",
-                                left: 16,
-                                top: 16,
-                                borderRadius: 999,
-                                borderWidth: 1,
-                                borderColor: isReviewingSelectedPhoto ? "rgba(250, 204, 21, 0.28)" : "rgba(255,255,255,0.14)",
-                                backgroundColor: isReviewingSelectedPhoto ? "rgba(161, 98, 7, 0.34)" : "rgba(0,0,0,0.36)",
-                                paddingHorizontal: 12,
-                                paddingVertical: 7,
-                              }}
-                            >
-                              <Text
-                                style={{
-                                  color: "#ffffff",
-                                  fontSize: 11,
-                                  fontWeight: "800",
-                                  letterSpacing: 0.7,
-                                  textTransform: "uppercase",
-                                }}
-                              >
-                                {isReviewingSelectedPhoto ? "Review" : "Verified"}
-                              </Text>
-                            </View>
-                            <View
-                              pointerEvents="none"
-                              style={{
-                                position: "absolute",
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                paddingHorizontal: 16,
-                                paddingVertical: 16,
-                                backgroundColor: "rgba(0,0,0,0.36)",
-                              }}
-                            >
-                              <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>
-                                {isReviewingSelectedPhoto ? "Review your photo" : "Photo Ready"}
-                              </Text>
-                              <Text style={{ color: "#d4d4d8", fontSize: 12, marginTop: 4 }}>
-                                {isReviewingSelectedPhoto
-                                  ? "Tap Verify to lock this image into Step 1."
-                                  : "Continue to choose your room type."}
-                              </Text>
-                            </View>
-                            <LuxPressable
-                              onPress={(event) => {
-                                event.stopPropagation();
-                                if (isReviewingSelectedPhoto) {
-                                  handleDiscardPendingImage();
-                                  return;
-                                }
-                                handleClearSelectedImage();
-                              }}
-                              className="cursor-pointer absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full"
-                              style={{
-                                borderWidth: 1,
-                                borderColor: "rgba(255,255,255,0.18)",
-                                backgroundColor: "rgba(0,0,0,0.62)",
-                              }}
-                            >
-                              <Close color="#ffffff" size={18} strokeWidth={2.4} />
-                            </LuxPressable>
-                            {isReviewingSelectedPhoto ? (
-                              <LuxPressable
-                                onPress={(event) => {
-                                  event.stopPropagation();
-                                  handleVerifyPendingImage();
-                                }}
-                                className="cursor-pointer absolute bottom-4 right-4"
-                                style={{
-                                  borderRadius: 999,
-                                  borderWidth: 1,
-                                  borderColor: "rgba(255,255,255,0.16)",
-                                  backgroundColor: "rgba(255,255,255,0.14)",
-                                  paddingHorizontal: 14,
-                                  paddingVertical: 10,
-                                }}
-                              >
-                                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                                  <BadgeCheck color="#ffffff" size={18} strokeWidth={2.2} />
-                                  <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "800" }}>Verify</Text>
-                                </View>
-                              </LuxPressable>
-                            ) : null}
                             {isPhotoPreviewBusy ? (
                               <View
                                 style={{
@@ -2174,7 +2073,7 @@ export default function WorkspaceScreen() {
                                   inset: 0,
                                   alignItems: "center",
                                   justifyContent: "center",
-                                  backgroundColor: "rgba(0,0,0,0.22)",
+                                  backgroundColor: "rgba(0,0,0,0.18)",
                                 }}
                               >
                                 <ActivityIndicator size="small" color="#ffffff" />
@@ -2187,52 +2086,70 @@ export default function WorkspaceScreen() {
                               flex: 1,
                               alignItems: "center",
                               justifyContent: "center",
-                              paddingHorizontal: 24,
-                              paddingVertical: 24,
+                              gap: 14,
+                              paddingHorizontal: 30,
+                              paddingVertical: 30,
                             }}
                           >
                             <View
                               style={{
-                                width: 64,
-                                height: 64,
-                                borderRadius: 32,
-                                borderWidth: 1.5,
-                                borderColor: "rgba(255,255,255,0.24)",
-                                backgroundColor: "rgba(255,255,255,0.06)",
+                                width: 70,
+                                height: 70,
+                                borderRadius: 35,
+                                borderWidth: 1,
+                                borderColor: "rgba(255,255,255,0.16)",
+                                backgroundColor: "rgba(255,255,255,0.04)",
                                 alignItems: "center",
                                 justifyContent: "center",
                               }}
                             >
-                              <Plus color="#ffffff" size={24} strokeWidth={2.5} />
+                              <Plus color="#ffffff" size={26} strokeWidth={2.4} />
                             </View>
-                            <Text
-                              style={{
-                                color: "#ffffff",
-                                fontSize: 24,
-                                fontWeight: "800",
-                                textAlign: "center",
-                                marginTop: 18,
-                              }}
-                            >
-                              Start Redesigning
-                            </Text>
-                            <Text
-                              style={{
-                                color: "#a1a1aa",
-                                fontSize: 14,
-                                lineHeight: 21,
-                                textAlign: "center",
-                                marginTop: 8,
-                                maxWidth: 220,
-                              }}
-                            >
-                              Tap to take a photo or upload
-                            </Text>
-                            {isPhotoPreviewBusy ? (
-                              <ActivityIndicator style={{ marginTop: 16 }} size="small" color="#ffffff" />
-                            ) : null}
+                            <View style={{ gap: 6, alignItems: "center" }}>
+                              <Text
+                                style={{
+                                  color: "#ffffff",
+                                  fontSize: 22,
+                                  fontWeight: "800",
+                                  textAlign: "center",
+                                }}
+                              >
+                                Upload photo
+                              </Text>
+                              <Text
+                                style={{
+                                  color: "#a1a1aa",
+                                  fontSize: 14,
+                                  lineHeight: 21,
+                                  textAlign: "center",
+                                  maxWidth: 220,
+                                }}
+                              >
+                                Tap to choose from your camera or photo library
+                              </Text>
+                            </View>
+                            {isPhotoPreviewBusy ? <ActivityIndicator size="small" color="#ffffff" /> : null}
                           </View>
                         )}
+
+                        <LuxPressable
+                          onPress={(event) => {
+                            event.stopPropagation();
+                            if (hasVisiblePhoto) {
+                              handleClearSelectedImage();
+                              return;
+                            }
+                            handleCloseWizard();
+                          }}
+                          className="cursor-pointer absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full"
+                          style={{
+                            borderWidth: 1,
+                            borderColor: "rgba(255,255,255,0.14)",
+                            backgroundColor: "rgba(10,10,10,0.72)",
+                          }}
+                        >
+                          <Close color="#ffffff" size={18} strokeWidth={2.3} />
+                        </LuxPressable>
                       </LuxPressable>
                     </MotiView>
 
@@ -2240,9 +2157,9 @@ export default function WorkspaceScreen() {
                       <Text
                         style={{
                           color: "#ffffff",
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: "700",
-                          paddingHorizontal: 2,
+                          letterSpacing: -0.2,
                         }}
                       >
                         Example Photos
@@ -2257,7 +2174,7 @@ export default function WorkspaceScreen() {
                           horizontal
                           showsHorizontalScrollIndicator={false}
                           decelerationRate="fast"
-                          contentContainerStyle={{ paddingRight: 4, gap: 14 }}
+                          contentContainerStyle={{ paddingRight: 2, gap: 12 }}
                         >
                           {EXAMPLE_PHOTOS.slice(0, 4).map((example, index) => {
                             const active = activeExampleLabel === example.label;
@@ -2272,49 +2189,35 @@ export default function WorkspaceScreen() {
                                   onPress={() => void handleSelectExample(example)}
                                   className="cursor-pointer"
                                   style={{
-                                    borderRadius: 24,
+                                    width: stepOneExampleCardWidth,
+                                    height: stepOneExampleCardHeight,
+                                    borderRadius: 22,
                                     borderWidth: active ? 1.5 : 1,
-                                    borderColor: active ? "#d946ef" : "rgba(255,255,255,0.14)",
-                                    backgroundColor: "#111111",
+                                    borderColor: active ? "#ff4d6d" : "rgba(255,255,255,0.12)",
+                                    backgroundColor: "#151515",
                                     overflow: "hidden",
                                   }}
                                 >
-                                  <View style={{ height: 118, backgroundColor: "#1a1a1a" }}>
-                                    <Image
-                                      source={example.source}
-                                      style={{ width: "100%", height: "100%" }}
-                                      contentFit="cover"
-                                      transition={180}
-                                      cachePolicy="memory-disk"
-                                    />
-                                    {isLoading ? (
-                                      <View
-                                        style={{
-                                          position: "absolute",
-                                          inset: 0,
-                                          alignItems: "center",
-                                          justifyContent: "center",
-                                          backgroundColor: "rgba(0,0,0,0.24)",
-                                        }}
-                                      >
-                                        <ActivityIndicator size="small" color="#ffffff" />
-                                      </View>
-                                    ) : null}
-                                  </View>
-                                  <View style={{ paddingHorizontal: 12, paddingVertical: 12 }}>
-                                    <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>
-                                      {example.label}
-                                    </Text>
-                                    <Text
+                                  <Image
+                                    source={example.source}
+                                    style={{ width: "100%", height: "100%" }}
+                                    contentFit="cover"
+                                    transition={180}
+                                    cachePolicy="memory-disk"
+                                  />
+                                  {isLoading ? (
+                                    <View
                                       style={{
-                                        color: "#a1a1aa",
-                                        fontSize: 12,
-                                        marginTop: 4,
+                                        position: "absolute",
+                                        inset: 0,
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        backgroundColor: "rgba(0,0,0,0.2)",
                                       }}
                                     >
-                                      Tap to use this as your main photo
-                                    </Text>
-                                  </View>
+                                      <ActivityIndicator size="small" color="#ffffff" />
+                                    </View>
+                                  ) : null}
                                 </LuxPressable>
                               </MotiView>
                             );
@@ -2545,13 +2448,13 @@ export default function WorkspaceScreen() {
           className="absolute inset-x-0 bottom-0 px-5 pt-4"
           style={{
             paddingBottom: Math.max(insets.bottom + (isPhotoStep ? 16 : 12), isPhotoStep ? 28 : 24),
-            borderTopWidth: 1,
-            borderTopColor: isPhotoStep ? "rgba(255,255,255,0.06)" : "#f4f4f5",
+            borderTopWidth: isPhotoStep ? 0 : 1,
+            borderTopColor: isPhotoStep ? "transparent" : "#f4f4f5",
             backgroundColor: wizardBackgroundColor,
             shadowColor: "#000000",
-            shadowOpacity: isPhotoStep ? 0.28 : 0.06,
-            shadowRadius: isPhotoStep ? 24 : 18,
-            shadowOffset: { width: 0, height: isPhotoStep ? -10 : -8 },
+            shadowOpacity: isPhotoStep ? 0 : 0.06,
+            shadowRadius: isPhotoStep ? 0 : 18,
+            shadowOffset: { width: 0, height: isPhotoStep ? 0 : -8 },
             elevation: 14,
           }}
         >
@@ -2587,7 +2490,7 @@ export default function WorkspaceScreen() {
               >
                 {isContinueActive ? (
                   <LinearGradient
-                    colors={["#d946ef", "#7c3aed"]}
+                    colors={isPhotoStep ? ["#ff4d6d", "#d946ef"] : ["#d946ef", "#7c3aed"]}
                     start={{ x: 0, y: 0.5 }}
                     end={{ x: 1, y: 0.5 }}
                     className="items-center justify-center"
@@ -2605,13 +2508,13 @@ export default function WorkspaceScreen() {
                     style={{
                       minHeight: continueButtonHeight,
                       borderRadius: continueButtonRadius,
-                      backgroundColor: isPhotoStep ? "#27272a" : "#e4e4e7",
+                      backgroundColor: isPhotoStep ? "#e5e7eb" : "#e4e4e7",
                       opacity: continueButtonOpacity,
-                      borderWidth: isPhotoStep ? 1 : 0,
-                      borderColor: isPhotoStep ? "rgba(255,255,255,0.1)" : "transparent",
+                      borderWidth: 0,
+                      borderColor: "transparent",
                     }}
                   >
-                    <Text style={{ color: isPhotoStep ? "#ffffff" : "#a1a1aa", fontSize: 17, fontWeight: "600" }}>
+                    <Text style={{ color: isPhotoStep ? "#9ca3af" : "#a1a1aa", fontSize: 17, fontWeight: "600" }}>
                       {generationBlocked && isFinalWizardStep ? "Limit Reached - Upgrade or Wait" : continueLabel}
                     </Text>
                   </View>

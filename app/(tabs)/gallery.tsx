@@ -1,31 +1,22 @@
-import { useAuth } from "@clerk/expo";
-import { useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { MotiView } from "moti";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Diamond, Settings2 } from "lucide-react-native";
+import { memo, useCallback, useMemo } from "react";
+import { FlatList, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { LuxPressable } from "../../components/lux-pressable";
 import { useWorkspaceDraft } from "../../components/workspace-context";
 import { DISCOVER_SECTIONS, type DiscoverSection, type DiscoverTile } from "../../lib/discover-data";
 import { triggerHaptic } from "../../lib/haptics";
-import { staggerFadeUp } from "../../lib/motion";
-
-type MeResponse = {
-  credits?: number;
-};
 
 const SCREEN_BG = "#09090b";
-const CARD_GAP = 14;
+const EDGE_PADDING = 20;
 const SECTION_GAP = 32;
-const HORIZONTAL_PADDING = 20;
-const BORDER_COLOR = "rgba(255,255,255,0.08)";
-const BRAND_COLOR = "#f59e0b";
+const SHELF_GAP = 16;
+const CARD_BORDER_COLOR = "rgba(255,255,255,0.05)";
+const CARD_RADIUS = 28;
 
 function mapService(service: DiscoverTile["service"]) {
   if (service === "garden") return "garden";
@@ -43,7 +34,7 @@ function getCardTitle(item: DiscoverTile) {
   return "Curated Space";
 }
 
-function getCardSubStyle(item: DiscoverTile) {
+function getCardStyle(item: DiscoverTile) {
   const style = item.style.trim();
   if (style.length > 0) return style;
 
@@ -56,131 +47,133 @@ function getCardSubStyle(item: DiscoverTile) {
   return derivedStyle ?? "Featured";
 }
 
-const DiscoverCard = memo(function DiscoverCard({
+const DiscoverShelfCard = memo(function DiscoverShelfCard({
   item,
   width,
+  height,
   onPress,
 }: {
   item: DiscoverTile;
   width: number;
+  height: number;
   onPress: (item: DiscoverTile) => void;
 }) {
   const title = getCardTitle(item);
-  const subStyle = getCardSubStyle(item);
+  const styleName = getCardStyle(item);
+
+  const handlePress = useCallback(() => {
+    triggerHaptic();
+    onPress(item);
+  }, [item, onPress]);
 
   return (
     <LuxPressable
-      onPress={() => {
-        triggerHaptic();
-        onPress(item);
-      }}
+      onPress={handlePress}
       pressableClassName="cursor-pointer"
-      style={[styles.card, { width }]}
-      glowColor="rgba(245, 158, 11, 0.18)"
+      className="cursor-pointer"
+      style={[styles.card, { width, height }]}
+      glowColor="rgba(255, 255, 255, 0.08)"
       scale={0.985}
     >
       <Image
         source={item.image}
         style={StyleSheet.absoluteFillObject}
         contentFit="cover"
-        transition={140}
+        transition={120}
         cachePolicy="memory-disk"
       />
       <LinearGradient
-        colors={["rgba(0,0,0,0.03)", "rgba(0,0,0,0.24)", "rgba(0,0,0,0.98)"]}
-        locations={[0.1, 0.56, 1]}
-        style={[StyleSheet.absoluteFillObject, styles.cardGradient]}
-      >
+        colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.14)", "rgba(0,0,0,0.78)", "rgba(0,0,0,0.94)"]}
+        locations={[0, 0.42, 0.8, 1]}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      />
+
+      <View style={styles.cardCopy}>
         <Text style={styles.cardTitle} numberOfLines={2}>
           {title}
         </Text>
-        <Text style={styles.cardSubtitle} numberOfLines={1}>
-          {subStyle}
+        <Text style={styles.cardStyle} numberOfLines={1}>
+          {styleName}
         </Text>
-      </LinearGradient>
+      </View>
     </LuxPressable>
   );
 });
 
-const DiscoverSectionGrid = memo(function DiscoverSectionGrid({
+const DiscoverShelfSection = memo(function DiscoverShelfSection({
   section,
   cardWidth,
-  columnCount,
-  expanded,
-  onToggle,
+  cardHeight,
   onCardPress,
 }: {
   section: DiscoverSection;
   cardWidth: number;
-  columnCount: number;
-  expanded: boolean;
-  onToggle: (sectionId: DiscoverSection["id"]) => void;
+  cardHeight: number;
   onCardPress: (item: DiscoverTile) => void;
 }) {
-  const collapsedCount = Math.max(columnCount * 2, 4);
-  const visibleItems = expanded ? section.items : section.items.slice(0, collapsedCount);
-  const canExpand = section.items.length > collapsedCount;
+  const snapToInterval = cardWidth + SHELF_GAP;
+
+  const keyExtractor = useCallback((item: DiscoverTile) => item.id, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: DiscoverTile }) => (
+      <DiscoverShelfCard item={item} width={cardWidth} height={cardHeight} onPress={onCardPress} />
+    ),
+    [cardHeight, cardWidth, onCardPress],
+  );
+
+  const getItemLayout = useCallback(
+    (_data: ArrayLike<DiscoverTile> | null | undefined, index: number) => ({
+      index,
+      length: snapToInterval,
+      offset: snapToInterval * index,
+    }),
+    [snapToInterval],
+  );
 
   return (
     <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionCopy}>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
-          <Text style={styles.sectionMeta}>{section.items.length} curated spaces</Text>
-        </View>
+      <Text style={styles.sectionTitle}>{section.title}</Text>
 
-        {canExpand ? (
-          <LuxPressable
-            onPress={() => onToggle(section.id)}
-            pressableClassName="cursor-pointer"
-            style={styles.toggleButton}
-            scale={0.98}
-          >
-            <Text style={styles.toggleButtonText}>{expanded ? "Show Less" : "See All"}</Text>
-          </LuxPressable>
-        ) : null}
-      </View>
-
-      <View style={styles.grid}>
-        {visibleItems.map((item) => (
-          <DiscoverCard key={item.id} item={item} width={cardWidth} onPress={onCardPress} />
-        ))}
-      </View>
+      <FlatList
+        data={section.items}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={snapToInterval}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        contentContainerStyle={styles.shelfContent}
+        ItemSeparatorComponent={ShelfSpacer}
+        getItemLayout={getItemLayout}
+        initialNumToRender={3}
+        maxToRenderPerBatch={4}
+        updateCellsBatchingPeriod={40}
+        windowSize={4}
+        removeClippedSubviews
+      />
     </View>
   );
 });
+
+function ShelfSpacer() {
+  return <View style={{ width: SHELF_GAP }} />;
+}
 
 export default function GalleryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { isSignedIn } = useAuth();
-  const me = useQuery("users:me" as any, isSignedIn ? {} : "skip") as MeResponse | null | undefined;
-  const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
   const { setDraftRoom, setDraftStyle } = useWorkspaceDraft();
-  const [expandedSections, setExpandedSections] = useState<Record<DiscoverSection["id"], boolean>>({
-    home: false,
-    garden: false,
-    exterior: false,
-  });
 
-  useEffect(() => {
-    if (!isSignedIn) return;
-    ensureUser({}).catch(() => undefined);
-  }, [ensureUser, isSignedIn]);
-
-  const credits = typeof me?.credits === "number" ? me.credits : 3;
-  const availableWidth = useMemo(() => Math.max(width - HORIZONTAL_PADDING * 2, 0), [width]);
-  const columnCount = useMemo(() => {
-    if (availableWidth >= 1120) return 4;
-    if (availableWidth >= 760) return 3;
-    if (availableWidth >= 360) return 2;
-    return 1;
-  }, [availableWidth]);
   const cardWidth = useMemo(() => {
-    const totalGap = CARD_GAP * (columnCount - 1);
-    return Math.floor(Math.max(availableWidth - totalGap, 0) / columnCount);
-  }, [availableWidth, columnCount]);
+    if (width >= 1200) return 320;
+    return Math.min(280, Math.max(width - 44, 248));
+  }, [width]);
+
+  const cardHeight = useMemo(() => Math.round(cardWidth * 1.22), [cardWidth]);
 
   const handleCardPress = useCallback(
     (item: DiscoverTile) => {
@@ -198,225 +191,96 @@ export default function GalleryScreen() {
     [router, setDraftRoom, setDraftStyle],
   );
 
-  const handleOpenSettings = useCallback(() => {
-    triggerHaptic();
-    router.push("/settings");
-  }, [router]);
-
-  const handleToggleSection = useCallback((sectionId: DiscoverSection["id"]) => {
-    triggerHaptic();
-    setExpandedSections((current) => ({
-      ...current,
-      [sectionId]: !current[sectionId],
-    }));
-  }, []);
-
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+    <View style={styles.screen}>
       <StatusBar style="light" />
       <ScrollView
-        style={{ flex: 1, backgroundColor: SCREEN_BG }}
-        showsVerticalScrollIndicator={false}
+        style={styles.scroll}
         contentContainerStyle={{
-          paddingTop: 10,
-          paddingBottom: Math.max(insets.bottom + 34, 44),
+          paddingTop: insets.top + 12,
+          paddingBottom: Math.max(insets.bottom + 28, 36),
           gap: SECTION_GAP,
         }}
+        showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
       >
-        <MotiView {...staggerFadeUp(0)} style={styles.headerBlock}>
-          <View style={styles.headerRow}>
-            <View style={styles.headerCopy}>
-              <Text style={styles.headerTitle}>Discover</Text>
-              <Text style={styles.headerSubtitle}>Curated transformations by room type and design style.</Text>
-            </View>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Discover</Text>
+        </View>
 
-            <View style={styles.headerActions}>
-              <View style={styles.creditBadge}>
-                <View style={styles.creditIcon}>
-                  <Diamond color={BRAND_COLOR} size={15} />
-                </View>
-                <View style={styles.creditCopy}>
-                  <Text style={styles.creditLabel}>Diamond Credit</Text>
-                  <Text style={styles.creditValue}>{credits}</Text>
-                </View>
-              </View>
-
-              <LuxPressable
-                onPress={handleOpenSettings}
-                pressableClassName="cursor-pointer"
-                style={styles.settingsButton}
-                scale={0.98}
-              >
-                <Settings2 color="#ffffff" size={19} strokeWidth={2.1} />
-              </LuxPressable>
-            </View>
-          </View>
-        </MotiView>
-
-        {DISCOVER_SECTIONS.map((section, index) => (
-          <MotiView key={section.id} {...staggerFadeUp(index + 1)}>
-            <DiscoverSectionGrid
-              section={section}
-              cardWidth={cardWidth}
-              columnCount={columnCount}
-              expanded={expandedSections[section.id]}
-              onToggle={handleToggleSection}
-              onCardPress={handleCardPress}
-            />
-          </MotiView>
+        {DISCOVER_SECTIONS.map((section) => (
+          <DiscoverShelfSection
+            key={section.id}
+            section={section}
+            cardWidth={cardWidth}
+            cardHeight={cardHeight}
+            onCardPress={handleCardPress}
+          />
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    aspectRatio: 0.82,
-    overflow: "hidden",
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: BORDER_COLOR,
-    backgroundColor: "#111113",
-  },
-  cardGradient: {
-    justifyContent: "flex-end",
-    paddingHorizontal: 16,
-    paddingTop: 88,
-    paddingBottom: 16,
-  },
-  cardTitle: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "700",
-    lineHeight: 22,
-  },
-  cardSubtitle: {
-    marginTop: 4,
-    color: "rgba(255,255,255,0.92)",
-    fontSize: 13,
-    fontWeight: "600",
-    lineHeight: 16,
-  },
-  creditBadge: {
-    minHeight: 48,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-    backgroundColor: "rgba(255,255,255,0.05)",
-    paddingLeft: 10,
-    paddingRight: 14,
-    paddingVertical: 8,
-  },
-  creditCopy: {
-    gap: 1,
-  },
-  creditIcon: {
-    height: 28,
-    width: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 999,
-    backgroundColor: "rgba(245, 158, 11, 0.14)",
-  },
-  creditLabel: {
-    color: "#a1a1aa",
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
-  },
-  creditValue: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "700",
-    lineHeight: 18,
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: CARD_GAP,
-  },
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginLeft: "auto",
-  },
-  headerBlock: {
-    paddingHorizontal: HORIZONTAL_PADDING,
-  },
-  headerCopy: {
+  screen: {
     flex: 1,
-    gap: 4,
-    paddingRight: 16,
+    backgroundColor: SCREEN_BG,
   },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
+  scroll: {
+    flex: 1,
+    backgroundColor: SCREEN_BG,
   },
-  headerSubtitle: {
-    color: "#a1a1aa",
-    fontSize: 14,
-    lineHeight: 20,
+  header: {
+    paddingHorizontal: EDGE_PADDING,
   },
   headerTitle: {
     color: "#ffffff",
     fontSize: 32,
     fontWeight: "800",
-    lineHeight: 36,
+    lineHeight: 38,
+    letterSpacing: -0.8,
   },
   section: {
     gap: 16,
-    paddingHorizontal: HORIZONTAL_PADDING,
-  },
-  sectionCopy: {
-    flex: 1,
-    gap: 3,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  sectionMeta: {
-    color: "#71717a",
-    fontSize: 13,
-    fontWeight: "600",
   },
   sectionTitle: {
     color: "#ffffff",
-    fontSize: 26,
-    fontWeight: "700",
+    fontSize: 25,
+    fontWeight: "800",
     lineHeight: 30,
+    paddingHorizontal: EDGE_PADDING,
+    letterSpacing: -0.4,
   },
-  settingsButton: {
-    height: 48,
-    width: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 999,
+  shelfContent: {
+    paddingRight: EDGE_PADDING,
+  },
+  card: {
+    overflow: "hidden",
+    borderRadius: CARD_RADIUS,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-    backgroundColor: "rgba(255,255,255,0.05)",
+    borderColor: CARD_BORDER_COLOR,
+    backgroundColor: "#111113",
   },
-  toggleButton: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-    backgroundColor: "rgba(255,255,255,0.05)",
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+  cardCopy: {
+    flex: 1,
+    justifyContent: "flex-end",
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 96,
+    gap: 4,
   },
-  toggleButtonText: {
-    color: "#e4e4e7",
-    fontSize: 13,
+  cardTitle: {
+    color: "#ffffff",
+    fontSize: 24,
+    fontWeight: "800",
+    lineHeight: 28,
+    letterSpacing: -0.45,
+  },
+  cardStyle: {
+    color: "rgba(255,255,255,0.88)",
+    fontSize: 14,
     fontWeight: "700",
+    lineHeight: 18,
   },
 });
