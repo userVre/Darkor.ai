@@ -59,6 +59,7 @@ export const getOrCreateCurrentUser = mutationGeneric({
       const now = Date.now();
       const state = deriveSubscriptionState(existing, now);
       const patch = omitUndefined({
+        credits: typeof existing.credits === "number" ? existing.credits : 3,
         referralCode: existing.referralCode ?? identity.subject,
         referralCount: typeof existing.referralCount === "number" ? existing.referralCount : 0,
         lastRewardDate: typeof existing.lastRewardDate === "number" ? existing.lastRewardDate : now,

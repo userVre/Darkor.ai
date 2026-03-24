@@ -962,11 +962,8 @@ export default function WorkspaceScreen() {
     }
     return "standard";
   }, [me?.subscriptionType, plan]);
-  const imagesRemaining = diagnostic ? 999 : me?.imagesRemaining ?? 0;
-  const imageGenerationLimit = diagnostic ? 999 : me?.imageGenerationLimit ?? 0;
-  const generationStatusLabel = diagnostic ? "Unlimited diagnostic" : me?.generationStatusLabel ?? "0 / 0 images left";
-  const generationStatusMessage = diagnostic ? "Diagnostic access enabled." : me?.generationStatusMessage ?? "Limit Reached - Upgrade or Wait";
-  const generationBlocked = !diagnostic && (!(me?.subscriptionActive ?? false) || (me?.generationLimitReached ?? true));
+  const creditBalance = diagnostic ? 999 : effectiveSignedIn ? me?.credits ?? 3 : 3;
+  const hasGenerationCredits = creditBalance > 0;
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const isDownloadingStandard = isDownloading === "standard";
   const isDownloadingUltra = isDownloading === "ultra";
@@ -1523,8 +1520,8 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    if (!diagnostic && generationBlocked) {
-      Alert.alert("Limit Reached", generationStatusMessage);
+    if (!diagnostic && !hasGenerationCredits) {
+      router.push("/paywall");
       return;
     }
 
@@ -1579,7 +1576,12 @@ export default function WorkspaceScreen() {
       setWorkflowStep(5);
     } catch (error) {
       setWorkflowStep(3);
-      Alert.alert("Generation failed", error instanceof Error ? error.message : "Please try again.");
+      const message = error instanceof Error ? error.message : "Please try again.";
+      if (!diagnostic && message.includes("No diamonds remaining")) {
+        router.push("/paywall");
+        return;
+      }
+      Alert.alert("Generation failed", message);
     } finally {
       setIsGenerating(false);
     }
@@ -1588,9 +1590,8 @@ export default function WorkspaceScreen() {
     customPrompt,
     diagnostic,
     effectiveSignedIn,
-    generationBlocked,
     generationSpeedTier,
-    generationStatusMessage,
+    hasGenerationCredits,
     ignoreReviewCooldown,
     ratioSpec.ratioLabel,
     router,
@@ -1624,6 +1625,10 @@ export default function WorkspaceScreen() {
     }
 
     if (workflowStep === 3) {
+      if (!diagnostic && !hasGenerationCredits) {
+        router.push("/paywall");
+        return;
+      }
       void handleGenerate();
       return;
     }
@@ -1632,7 +1637,7 @@ export default function WorkspaceScreen() {
     startTransition(() => {
       setWorkflowStep((prev) => Math.min(prev + 1, 3));
     });
-  }, [canContinue, handleGenerate, workflowStep]);
+  }, [canContinue, diagnostic, handleGenerate, hasGenerationCredits, router, workflowStep]);
 
   const handleSelectRoom = useCallback((value: string) => {
     triggerHaptic();
@@ -1897,19 +1902,19 @@ export default function WorkspaceScreen() {
     );
     const continueButtonHeight = isPhotoStep ? 64 : 62;
     const continueButtonRadius = isPhotoStep ? 20 : 24;
-    const isContinueDisabled = !canContinue || (isFinalWizardStep && (isGenerating || generationBlocked));
-    const isContinueActive = canContinue && !(isFinalWizardStep && generationBlocked) && !isContinueDisabled;
+    const isContinueDisabled = !canContinue || (isFinalWizardStep && isGenerating);
+    const isContinueActive = canContinue && !isContinueDisabled;
     const shouldPulseContinue = isPhotoStep ? isContinueActive : false;
     const continueButtonOpacity = isContinueActive ? 1 : 0.58;
     const selectedCustomPromptBlocks = new Set(getPromptBlocks(customPromptDraft));
     const continueLabel = isPhotoStep
       ? "Continue"
       : isFinalWizardStep
-      ? generationBlocked
-        ? "Limit Reached - Upgrade or Wait"
-        : isGenerating
-          ? "Processing..."
-          : "Continue"
+      ? isGenerating
+        ? "Generating..."
+        : hasGenerationCredits
+          ? "Generate Renders"
+          : "Get more credits"
       : `Continue to Step ${currentStepNumber + 1}`;
 
     return (
@@ -2602,7 +2607,7 @@ export default function WorkspaceScreen() {
                     }}
                   >
                     <Text style={{ color: "#9ca3af", fontSize: 17, fontWeight: "600", textAlign: "center" }}>
-                      {generationBlocked && isFinalWizardStep ? "Limit Reached - Upgrade or Wait" : continueLabel}
+                      {continueLabel}
                     </Text>
                   </View>
                 )}
@@ -2887,7 +2892,7 @@ export default function WorkspaceScreen() {
         <View className="px-5" style={{ paddingTop: Math.max(insets.top + 10, 20) }}>
           <View className="flex-row items-center justify-between">
             <View className="rounded-full border border-white/10 bg-zinc-950 px-4 py-2" style={{ borderWidth: 0.5 }}>
-              <Text className="text-sm font-semibold text-white">{"Credits " + imagesRemaining}</Text>
+              <Text className="text-sm font-semibold text-white">{"Diamonds " + creditBalance}</Text>
             </View>
             <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Your Design</Text>
             <LuxPressable

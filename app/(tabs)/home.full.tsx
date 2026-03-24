@@ -1,3 +1,5 @@
+import { useAuth } from "@clerk/expo";
+import { useMutation, useQuery } from "convex/react";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -6,6 +8,7 @@ import { VideoView, useVideoPlayer } from "expo-video";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Platform, StyleSheet, Text, View, type ViewToken, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Gem } from "lucide-react-native";
 
 import { LuxPressable } from "../../components/lux-pressable";
 import { triggerHaptic } from "../../lib/haptics";
@@ -177,11 +180,20 @@ const ServiceCard = memo(function ServiceCard({ item, height, active, onPress }:
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { isSignedIn } = useAuth();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [activeCardId, setActiveCardId] = useState(SERVICE_CARDS[0]?.id ?? "");
+  const me = useQuery("users:me" as any, isSignedIn ? {} : "skip") as { credits?: number } | null | undefined;
+  const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+    ensureUser({}).catch(() => undefined);
+  }, [ensureUser, isSignedIn]);
 
   const cardHeight = useMemo(() => Math.max(316, Math.min(388, Math.round(width * 0.96))), [width]);
+  const diamondCount = isSignedIn ? me?.credits ?? 3 : 3;
 
   const handleServicePress = useCallback(
     (item: ServiceCardData) => {
@@ -189,6 +201,11 @@ export default function HomeScreen() {
     },
     [router],
   );
+
+  const handleDiamondPress = useCallback(() => {
+    triggerHaptic();
+    router.push("/paywall");
+  }, [router]);
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken<ServiceCardData>[] }) => {
@@ -211,14 +228,23 @@ export default function HomeScreen() {
   const header = useMemo(
     () => (
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>Darkor.ai Premium</Text>
-        <Text style={styles.title}>Choose Your Transformation</Text>
-        <Text style={styles.subtitle}>
-          Each service is now rendered with mobile-first lifecycle control so the screen stays smooth while you browse.
-        </Text>
+        <View style={styles.headerTopRow}>
+          <View style={styles.headerCopy}>
+            <Text style={styles.eyebrow}>Darkor.ai Premium</Text>
+            <Text style={styles.title}>Choose Your Transformation</Text>
+            <Text style={styles.subtitle}>
+              Each service is now rendered with mobile-first lifecycle control so the screen stays smooth while you browse.
+            </Text>
+          </View>
+
+          <LuxPressable onPress={handleDiamondPress} style={styles.diamondBadge} className="cursor-pointer">
+            <Gem color="#7dd3fc" size={15} strokeWidth={2.1} />
+            <Text style={styles.diamondBadgeText}>{diamondCount}</Text>
+          </LuxPressable>
+        </View>
       </View>
     ),
-    [],
+    [diamondCount, handleDiamondPress],
   );
 
   return (
@@ -254,8 +280,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#000000",
   },
   header: {
-    gap: 14,
     marginBottom: 6,
+  },
+  headerTopRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+  headerCopy: {
+    flex: 1,
+    gap: 14,
     paddingRight: 14,
   },
   eyebrow: {
@@ -276,6 +311,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 25,
     maxWidth: 680,
+  },
+  diamondBadge: {
+    marginTop: 6,
+    minHeight: 38,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 999,
+    borderWidth: 0.5,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "#050505",
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  diamondBadgeText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0.2,
   },
   card: {
     position: "relative",

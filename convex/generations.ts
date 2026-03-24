@@ -7,7 +7,6 @@ import {
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
-import { deriveSubscriptionState } from "./subscriptions";
 
 const GEMINI_MODEL = "gemini-3.1-flash-image-preview";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
@@ -53,31 +52,11 @@ type GeminiResponse = {
   };
 };
 
-function omitUndefined<T extends Record<string, unknown>>(value: T) {
-  return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)) as T;
-}
-
 async function getUserByClerkId(ctx: any, clerkId: string) {
   return (await ctx.db
     .query("users")
     .withIndex("by_clerkId", (q: any) => q.eq("clerkId", clerkId))
     .unique()) as GenerationUser | null;
-}
-
-async function syncDerivedSubscriptionState(ctx: any, user: GenerationUser, now: number) {
-  const state = deriveSubscriptionState(user, now);
-  const patch = omitUndefined(state.patch);
-  if (Object.keys(patch).length > 0) {
-    await ctx.db.patch(user._id as any, patch);
-  }
-  return state;
-}
-
-function getLimitExceededMessage(state: ReturnType<typeof deriveSubscriptionState>) {
-  if (!state.active) {
-    return "Limit Exceeded - Upgrade or Wait";
-  }
-  return `Limit Exceeded - ${state.statusLabel}`;
 }
 
 function computeReviewPrompt(nextCount: number, lastPromptAt: number, ignoreCooldown?: boolean) {
@@ -92,42 +71,25 @@ async function reserveGenerationAllowance(ctx: any, clerkId: string, ignoreCoold
     throw new ConvexError("No billing profile found. Please subscribe to continue.");
   }
 
-  const now = Date.now();
-  const state = await syncDerivedSubscriptionState(ctx, user, now);
-  if (state.blocked) {
-    throw new ConvexError(getLimitExceededMessage(state));
+  const credits = typeof user.credits === "number" ? user.credits : 0;
+  if (credits <= 0) {
+    throw new ConvexError("No diamonds remaining. Please get more credits.");
   }
 
   const currentCount = typeof user.generationCount === "number" ? user.generationCount : 0;
   const nextGenerationCount = currentCount + 1;
-  const nextImageGenerationCount = state.imageGenerationCount + 1;
   const lastPromptAt = typeof user.lastReviewPromptAt === "number" ? user.lastReviewPromptAt : 0;
   const shouldPrompt = computeReviewPrompt(nextGenerationCount, lastPromptAt, ignoreCooldown);
 
   await ctx.db.patch(user._id as any, {
     generationCount: nextGenerationCount,
-    imageGenerationCount: nextImageGenerationCount,
-    lastResetDate: state.subscriptionType === "free" ? 0 : state.lastResetDate,
-    ...(state.patch.plan ? { plan: state.patch.plan } : {}),
-    ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
-    ...(typeof state.patch.subscriptionEnd === "number" ? { subscriptionEnd: state.patch.subscriptionEnd } : {}),
   });
-
-  const remaining = Math.max(state.limit - nextImageGenerationCount, 0);
-  const statusLabel = state.subscriptionType === "weekly"
-    ? `${remaining} / ${state.limit} images left`
-    : `${remaining} / ${state.limit} this month`;
 
   return {
     count: nextGenerationCount,
     shouldPrompt,
-    imageGenerationCount: nextImageGenerationCount,
-    imageGenerationLimit: state.limit,
-    imagesRemaining: remaining,
-    subscriptionType: state.subscriptionType,
-    generationStatusLabel: statusLabel,
-    generationStatusMessage: remaining <= 0 ? `Limit Reached - ${statusLabel}` : statusLabel,
-    planUsed: state.plan,
+    creditsRemaining: Math.max(credits - 1, 0),
+    planUsed: user.plan ?? "free",
   };
 }
 
@@ -136,32 +98,22 @@ async function releaseGenerationAllowance(ctx: any, clerkId: string) {
   if (!user) {
     return {
       ok: false,
-      imageGenerationCount: 0,
-      imagesRemaining: 0,
-      generationStatusLabel: "0 / 0 images left",
+      generationCount: 0,
+      credits: 0,
     };
   }
 
-  const state = await syncDerivedSubscriptionState(ctx, user, Date.now());
-  const nextImageGenerationCount = Math.max(state.imageGenerationCount - 1, 0);
   const currentCount = typeof user.generationCount === "number" ? user.generationCount : 0;
   const nextGenerationCount = Math.max(currentCount - 1, 0);
 
   await ctx.db.patch(user._id as any, {
-    imageGenerationCount: nextImageGenerationCount,
     generationCount: nextGenerationCount,
   });
 
-  const remaining = Math.max(state.limit - nextImageGenerationCount, 0);
   return {
     ok: true,
-    imageGenerationCount: nextImageGenerationCount,
-    imagesRemaining: remaining,
-    generationStatusLabel: state.subscriptionType === "weekly"
-      ? `${remaining} / ${state.limit} images left`
-      : state.subscriptionType === "yearly"
-        ? `${remaining} / ${state.limit} this month`
-        : "0 / 0 images left",
+    generationCount: nextGenerationCount,
+    credits: typeof user.credits === "number" ? user.credits : 0,
   };
 }
 
@@ -402,8 +354,7 @@ export const startGeneration = mutationGeneric({
         count: allowance.count,
         shouldPrompt: allowance.shouldPrompt,
       },
-      imagesRemaining: allowance.imagesRemaining,
-      generationStatusLabel: allowance.generationStatusLabel,
+      creditsRemaining: allowance.creditsRemaining,
       planUsed: allowance.planUsed,
     };
   },
@@ -413,6 +364,7 @@ export const markGenerationReady = internalMutationGeneric({
   args: {
     generationId: v.id("generations"),
     storageId: v.id("_storage"),
+    clerkId: v.string(),
   },
   handler: async (ctx, args) => {
     const generation = await ctx.db.get(args.generationId);
@@ -420,6 +372,19 @@ export const markGenerationReady = internalMutationGeneric({
       throw new ConvexError("Generation not found");
     }
 
+    const user = await getUserByClerkId(ctx, args.clerkId);
+    if (!user) {
+      throw new ConvexError("No billing profile found. Please subscribe to continue.");
+    }
+
+    const credits = typeof user.credits === "number" ? user.credits : 0;
+    if (credits <= 0) {
+      throw new ConvexError("No diamonds remaining. Please get more credits.");
+    }
+
+    await ctx.db.patch(user._id as any, {
+      credits: credits - 1,
+    });
     await ctx.db.patch(args.generationId, {
       storageId: args.storageId,
       imageUrl: undefined,
@@ -478,6 +443,12 @@ export const runGenerationJob = internalActionGeneric({
     let generatedStorageId: string | null = null;
 
     try {
+      const user = await getUserByClerkId(ctx, args.clerkId);
+      const credits = typeof user?.credits === "number" ? user.credits : 0;
+      if (credits <= 0) {
+        throw new ConvexError("No diamonds remaining. Please get more credits.");
+      }
+
       const sourceBlob = await ctx.storage.get(args.sourceStorageId);
       if (!sourceBlob) {
         throw new ConvexError("The source image could not be loaded from storage.");
@@ -530,6 +501,7 @@ export const runGenerationJob = internalActionGeneric({
       await ctx.runMutation((internal as any).generations.markGenerationReady, {
         generationId: args.generationId,
         storageId: generatedStorageId,
+        clerkId: args.clerkId,
       });
 
       return { ok: true, storageId: generatedStorageId };
