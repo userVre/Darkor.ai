@@ -41,33 +41,43 @@ import {
   ArrowLeft,
   ArrowRight,
   BadgeCheck,
+  BoxSelect,
   X as Close,
   Bath,
   Baby,
   BedDouble,
   Building2,
+  Check,
   CarFront,
+  ChevronDown,
   CookingPot,
   Download,
   DoorOpen,
+  Droplet,
+  Eraser,
   Fence,
   Flower2,
   History,
   House,
   Plus,
   Monitor,
+  Package2,
+  Paintbrush,
   PaintRoller,
   Projector,
+  Redo2,
   Send,
   Sofa,
   Sparkles,
   Store,
   SunMedium,
   Trees,
+  Undo2,
   UtensilsCrossed,
   MoveHorizontal,
   Wand2,
 } from "lucide-react-native";
+import Svg, { Defs, Mask, Path as SvgPath, Rect } from "react-native-svg";
 
 import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
 import { triggerHaptic } from "../../lib/haptics";
@@ -185,6 +195,31 @@ type RoomCardMeta = {
   icon: any;
   description: string;
   image?: number;
+};
+
+type PaintTool = "brush" | "eraser" | "object";
+
+type PaintPoint = {
+  x: number;
+  y: number;
+};
+
+type PaintStroke = {
+  id: string;
+  tool: PaintTool;
+  width: number;
+  points: PaintPoint[];
+};
+
+type PaintSurfaceOption = {
+  value: "Auto" | "Brick" | "Cabinet" | "Door" | "Wall" | "Outside Wall";
+  label: string;
+};
+
+type PaintColorSwatch = {
+  id: string;
+  label: string;
+  value: string;
 };
 
 const BoardGridCard = memo(function BoardGridCard({
@@ -324,6 +359,76 @@ const GARDEN_EXAMPLE_PHOTOS: ExamplePhoto[] = [
     label: "Pool",
     source: require("../../assets/media/discover/garden/garden-swimming-pool.jpg"),
   },
+];
+
+const FLOOR_EXAMPLE_PHOTOS: ExamplePhoto[] = [
+  {
+    id: "floor-concrete",
+    label: "Concrete",
+    source: require("../../assets/media/discover/home/home-living-room.jpg"),
+  },
+  {
+    id: "floor-tile",
+    label: "Tile",
+    source: require("../../assets/media/discover/home/home-kitchen.jpg"),
+  },
+  {
+    id: "floor-carpet",
+    label: "Carpet",
+    source: require("../../assets/media/discover/home/home-master-suite.jpg"),
+  },
+  {
+    id: "floor-hardwood",
+    label: "Hardwood",
+    source: require("../../assets/media/discover/home/home-dining-room.jpg"),
+  },
+];
+
+const PAINT_EXAMPLE_PHOTOS: ExamplePhoto[] = [
+  {
+    id: "paint-living-room",
+    label: "Living Room",
+    source: require("../../assets/media/discover/home/home-living-room.jpg"),
+  },
+  {
+    id: "paint-bedroom",
+    label: "Bedroom",
+    source: require("../../assets/media/discover/home/home-master-suite.jpg"),
+  },
+  {
+    id: "paint-kitchen",
+    label: "Kitchen",
+    source: require("../../assets/media/discover/home/home-kitchen.jpg"),
+  },
+  {
+    id: "paint-hall",
+    label: "Hall",
+    source: require("../../assets/media/discover/home/home-hall.jpg"),
+  },
+];
+
+const PAINT_SURFACE_OPTIONS: PaintSurfaceOption[] = [
+  { value: "Auto", label: "Auto" },
+  { value: "Brick", label: "Brick" },
+  { value: "Cabinet", label: "Cabinet" },
+  { value: "Door", label: "Door" },
+  { value: "Wall", label: "Wall" },
+  { value: "Outside Wall", label: "Outside Wall" },
+];
+
+const PAINT_COLOR_SWATCHES: PaintColorSwatch[] = [
+  { id: "fuchsia", label: "Fuchsia Veil", value: "#d946ef" },
+  { id: "indigo", label: "Indigo Bloom", value: "#4f46e5" },
+  { id: "terracotta", label: "Terracotta", value: "#c2410c" },
+  { id: "sage", label: "Sage", value: "#6b8f71" },
+  { id: "navy", label: "Midnight Navy", value: "#1e3a8a" },
+  { id: "sand", label: "Warm Sand", value: "#d6b890" },
+  { id: "charcoal", label: "Graphite", value: "#3f3f46" },
+  { id: "cream", label: "Soft Cream", value: "#f5f1e8" },
+  { id: "coral", label: "Coral Clay", value: "#fb7185" },
+  { id: "olive", label: "Olive Moss", value: "#4d5d3d" },
+  { id: "sky", label: "Sky Blue", value: "#60a5fa" },
+  { id: "wine", label: "Merlot", value: "#7f1d1d" },
 ];
 
 const SPACE_OPTIONS = {
@@ -667,6 +772,17 @@ const CUSTOM_STYLE_EXAMPLE_PROMPTS = [
   "Reimagine the patio as a Mediterranean outdoor lounge with curved built-ins, olive trees, and sunset warmth.",
 ];
 
+const FLOOR_PROMPT_CHIPS = [
+  "smooth polished concrete flooring with subtle matte finish",
+  "luxury hardwood parquet flooring with herringbone pattern",
+  "high-end white Carrara marble flooring with soft grey veins",
+  "rustic farmhouse style natural stone tile flooring",
+  "red and beige glossy marble flooring",
+];
+
+const FLOOR_MASK_PATH = "M 0 100 L 0 76 L 11 67 L 28 58 L 46 54 L 67 56 L 84 63 L 96 73 L 100 84 L 100 100 Z";
+const FLOOR_MASK_EDGE_PATH = "M 10 67 C 24 58 41 53 57 54 C 73 55 86 62 96 73";
+
 const PALETTE_OPTIONS: PaletteOption[] = [
   {
     id: "surprise",
@@ -916,6 +1032,28 @@ function togglePromptBlock(value: string, block: string) {
   return nextBlocks.join("\n\n");
 }
 
+function buildPaintPath(points: PaintPoint[]) {
+  if (points.length === 0) {
+    return "";
+  }
+
+  if (points.length === 1) {
+    const point = points[0];
+    return `M ${point.x} ${point.y} L ${point.x} ${point.y}`;
+  }
+
+  return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
+}
+
+function normalizeHexColor(value: string) {
+  const trimmed = value.trim();
+  const normalized = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+  if (/^#([0-9a-fA-F]{6})$/.test(normalized)) {
+    return normalized.toUpperCase();
+  }
+  return null;
+}
+
 async function readBase64FromUri(uri: string) {
   if (uri.startsWith("file://")) {
     return await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
@@ -1020,6 +1158,21 @@ export default function WorkspaceScreen() {
   const [pendingReviewState, setPendingReviewState] = useState<{ count: number; shouldPrompt: boolean } | null>(null);
   const [wizardNavDirection, setWizardNavDirection] = useState<1 | -1>(1);
   const [isHeaderClosePressed, setIsHeaderClosePressed] = useState(false);
+  const [paintTool, setPaintTool] = useState<PaintTool>("brush");
+  const [paintBrushWidth, setPaintBrushWidth] = useState(28);
+  const [paintColor, setPaintColor] = useState("#D946EF");
+  const [paintColorDraft, setPaintColorDraft] = useState("#D946EF");
+  const [paintSurface, setPaintSurface] = useState<PaintSurfaceOption["value"]>("Auto");
+  const [paintStrokes, setPaintStrokes] = useState<PaintStroke[]>([]);
+  const [paintRedoStrokes, setPaintRedoStrokes] = useState<PaintStroke[]>([]);
+  const [paintCurrentStroke, setPaintCurrentStroke] = useState<PaintStroke | null>(null);
+  const [paintTutorialOpen, setPaintTutorialOpen] = useState(false);
+  const [paintTutorialSeen, setPaintTutorialSeen] = useState(false);
+  const [paintDetectIconIndex, setPaintDetectIconIndex] = useState(0);
+  const [paintColorPickerOpen, setPaintColorPickerOpen] = useState(false);
+  const [paintSurfacePickerOpen, setPaintSurfacePickerOpen] = useState(false);
+  const [paintCanvasSize, setPaintCanvasSize] = useState({ width: 0, height: 0 });
+  const [paintSliderWidth, setPaintSliderWidth] = useState(0);
 
   const reviewSheetRef = useRef<BottomSheetModal>(null);
   const rateSheetRef = useRef<BottomSheetModal>(null);
@@ -1029,6 +1182,8 @@ export default function WorkspaceScreen() {
   const reviewHandledRef = useRef(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const generationAlertedFailureRef = useRef<string | null>(null);
+  const paintStrokeIdRef = useRef(0);
+  const paintCurrentStrokeRef = useRef<PaintStroke | null>(null);
   const sliderX = useSharedValue(0);
   const sliderWidth = useSharedValue(0);
   const sliderStart = useSharedValue(0);
@@ -1044,6 +1199,8 @@ export default function WorkspaceScreen() {
   const serviceLabel = SERVICE_LABELS[serviceType] ?? "Interior Redesign";
   const isExteriorService = serviceType === "exterior";
   const isGardenService = serviceType === "garden";
+  const isFloorService = serviceType === "floor";
+  const isPaintService = serviceType === "paint";
   const isLeanGenerationService = isExteriorService || isGardenService;
   const presetRoomOptions =
     serviceType === "exterior"
@@ -1079,6 +1236,7 @@ export default function WorkspaceScreen() {
   useEffect(() => {
     if (draft.prompt && customPrompt.length === 0) {
       setCustomPrompt(draft.prompt);
+      setCustomPromptDraft(draft.prompt);
     }
   }, [customPrompt.length, draft.prompt]);
 
@@ -1179,6 +1337,24 @@ export default function WorkspaceScreen() {
     }
   }, [generatedImageUrl, workflowStep]);
 
+  useEffect(() => {
+    if (!isPaintService) {
+      return;
+    }
+
+    paintCurrentStrokeRef.current = null;
+    setPaintCurrentStroke(null);
+    setPaintStrokes([]);
+    setPaintRedoStrokes([]);
+    setPaintTutorialOpen(false);
+    setPaintTutorialSeen(false);
+    setPaintSurface("Auto");
+    setPaintTool("brush");
+    setPaintBrushWidth(28);
+    setPaintColor("#D946EF");
+    setPaintColorDraft("#D946EF");
+  }, [isPaintService, selectedImage?.uri]);
+
   const selectedPalette = useMemo(
     () => PALETTE_OPTIONS.find((palette) => palette.id === selectedPaletteId) ?? null,
     [selectedPaletteId],
@@ -1239,16 +1415,22 @@ export default function WorkspaceScreen() {
   const spaceOptions = useMemo(() => {
     if (serviceType === "exterior") return SPACE_OPTIONS.exterior;
     if (serviceType === "garden") return SPACE_OPTIONS.garden;
+    if (serviceType === "floor") return [] as string[];
+    if (serviceType === "paint") return [] as string[];
     return SPACE_OPTIONS.interior;
   }, [serviceType]);
   const examplePhotos = useMemo(() => {
     if (serviceType === "exterior") return EXTERIOR_EXAMPLE_PHOTOS;
     if (serviceType === "garden") return GARDEN_EXAMPLE_PHOTOS;
+    if (serviceType === "floor") return FLOOR_EXAMPLE_PHOTOS;
+    if (serviceType === "paint") return PAINT_EXAMPLE_PHOTOS;
     return INTERIOR_EXAMPLE_PHOTOS;
   }, [serviceType]);
   const styleOptions = useMemo(() => {
     if (serviceType === "exterior") return EXTERIOR_STYLE_OPTIONS;
     if (serviceType === "garden") return GARDEN_STYLE_OPTIONS;
+    if (serviceType === "floor") return [] as string[];
+    if (serviceType === "paint") return [] as string[];
     return STYLE_OPTIONS;
   }, [serviceType]);
   const selectedPaletteOrDefault = useMemo(
@@ -1280,6 +1462,21 @@ export default function WorkspaceScreen() {
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const isDownloadingStandard = isDownloading === "standard";
   const isDownloadingUltra = isDownloading === "ultra";
+  const paintColorMeta = useMemo(
+    () => PAINT_COLOR_SWATCHES.find((swatch) => swatch.value.toLowerCase() === paintColor.toLowerCase()) ?? null,
+    [paintColor],
+  );
+  const paintSurfaceLabel = paintSurface === "Auto" ? "Wall" : paintSurface;
+  const paintHasMask = useMemo(() => paintStrokes.some((stroke) => stroke.tool !== "eraser"), [paintStrokes]);
+  const paintRenderedStrokes = useMemo(
+    () => (paintCurrentStroke ? [...paintStrokes, paintCurrentStroke] : paintStrokes),
+    [paintCurrentStroke, paintStrokes],
+  );
+  const paintBrushRatio = useMemo(() => (paintBrushWidth - 12) / (68 - 12), [paintBrushWidth]);
+  const paintPreviewOverlayColor = useMemo(
+    () => (paintColor.length === 7 ? `${paintColor}66` : "#ff000066"),
+    [paintColor],
+  );
   const activeEditorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
   const sliderSpring = useMemo(() => ({ damping: 15, stiffness: 100 }), []);
 
@@ -1369,6 +1566,19 @@ export default function WorkspaceScreen() {
   }));
 
   const canContinue = useMemo(() => {
+    if (isFloorService) {
+      if (workflowStep === 0) return Boolean(selectedImage);
+      if (workflowStep === 1) return false;
+      if (workflowStep === 2) return customPromptDraft.trim().length > 0;
+      return false;
+    }
+    if (isPaintService) {
+      if (workflowStep === 0) return Boolean(selectedImage);
+      if (workflowStep === 1) return false;
+      if (workflowStep === 2) return paintHasMask;
+      if (workflowStep === 3) return Boolean(selectedImage && paintHasMask);
+      return false;
+    }
     if (workflowStep === 0) return Boolean(selectedImage);
     if (workflowStep === 1) return Boolean(selectedRoom);
     if (workflowStep === 2) {
@@ -1384,7 +1594,7 @@ export default function WorkspaceScreen() {
       return Boolean(selectedModeId && selectedPaletteId);
     }
     return false;
-  }, [customPrompt, isLeanGenerationService, selectedImage, selectedModeId, selectedPaletteId, selectedRoom, selectedStyle, workflowStep]);
+  }, [customPrompt, customPromptDraft, isFloorService, isLeanGenerationService, isPaintService, paintHasMask, selectedImage, selectedModeId, selectedPaletteId, selectedRoom, selectedStyle, workflowStep]);
 
   const openSystemSettings = useCallback(() => {
     Linking.openSettings().catch(() => undefined);
@@ -1525,6 +1735,10 @@ export default function WorkspaceScreen() {
     startTransition(() => {
       setSelectedImage(null);
     });
+    paintCurrentStrokeRef.current = null;
+    setPaintCurrentStroke(null);
+    setPaintStrokes([]);
+    setPaintRedoStrokes([]);
     setIsLoadingExample(null);
     setIsSelectingPhoto(false);
   }, []);
@@ -1549,23 +1763,266 @@ export default function WorkspaceScreen() {
     }
   }, []);
 
+  const clampPaintPoint = useCallback(
+    (x: number, y: number) => ({
+      x: Math.max(0, Math.min(x, paintCanvasSize.width)),
+      y: Math.max(0, Math.min(y, paintCanvasSize.height)),
+    }),
+    [paintCanvasSize.height, paintCanvasSize.width],
+  );
+
+  const startPaintStroke = useCallback(
+    (x: number, y: number) => {
+      if (!isPaintService || paintCanvasSize.width <= 0 || paintCanvasSize.height <= 0) {
+        return;
+      }
+
+      const point = clampPaintPoint(x, y);
+      const width = paintTool === "object" ? Math.max(paintBrushWidth * 2.35, 58) : paintBrushWidth;
+      const stroke: PaintStroke = {
+        id: `paint-stroke-${paintStrokeIdRef.current++}`,
+        tool: paintTool,
+        width,
+        points: [point],
+      };
+      paintCurrentStrokeRef.current = stroke;
+      setPaintCurrentStroke(stroke);
+    },
+    [clampPaintPoint, isPaintService, paintBrushWidth, paintCanvasSize.height, paintCanvasSize.width, paintTool],
+  );
+
+  const extendPaintStroke = useCallback(
+    (x: number, y: number) => {
+      const activeStroke = paintCurrentStrokeRef.current;
+      if (!activeStroke) {
+        return;
+      }
+
+      const nextPoint = clampPaintPoint(x, y);
+      const nextStroke = {
+        ...activeStroke,
+        points: [...activeStroke.points, nextPoint],
+      };
+      paintCurrentStrokeRef.current = nextStroke;
+      setPaintCurrentStroke(nextStroke);
+    },
+    [clampPaintPoint],
+  );
+
+  const finishPaintStroke = useCallback(() => {
+    const activeStroke = paintCurrentStrokeRef.current;
+    if (!activeStroke) {
+      return;
+    }
+
+    const committedStroke =
+      activeStroke.points.length === 1
+        ? {
+            ...activeStroke,
+            points: [...activeStroke.points, activeStroke.points[0]],
+          }
+        : activeStroke;
+
+    paintCurrentStrokeRef.current = null;
+    setPaintCurrentStroke(null);
+    setPaintRedoStrokes([]);
+    setPaintStrokes((current) => [...current, committedStroke]);
+  }, []);
+
+  const handleSelectPaintTool = useCallback((tool: PaintTool) => {
+    triggerHaptic();
+    setPaintTool(tool);
+  }, []);
+
+  const handlePaintUndo = useCallback(() => {
+    triggerHaptic();
+    setPaintStrokes((current) => {
+      if (current.length === 0) {
+        return current;
+      }
+      const previous = current[current.length - 1];
+      setPaintRedoStrokes((redo) => [previous, ...redo]);
+      return current.slice(0, -1);
+    });
+  }, []);
+
+  const handlePaintRedo = useCallback(() => {
+    triggerHaptic();
+    setPaintRedoStrokes((current) => {
+      if (current.length === 0) {
+        return current;
+      }
+      const [nextStroke, ...remaining] = current;
+      setPaintStrokes((strokes) => [...strokes, nextStroke]);
+      return remaining;
+    });
+  }, []);
+
+  const updatePaintBrushWidth = useCallback((locationX: number) => {
+    if (paintSliderWidth <= 0) {
+      return;
+    }
+    const ratio = Math.max(0, Math.min(locationX / paintSliderWidth, 1));
+    const nextWidth = Math.round(12 + ratio * (68 - 12));
+    setPaintBrushWidth(nextWidth);
+  }, [paintSliderWidth]);
+
+  const handleOpenPaintColorPicker = useCallback(() => {
+    triggerHaptic();
+    setPaintColorDraft(paintColor);
+    setPaintColorPickerOpen(true);
+  }, [paintColor]);
+
+  const handleClosePaintColorPicker = useCallback(() => {
+    triggerHaptic();
+    setPaintColorPickerOpen(false);
+    setPaintColorDraft(paintColor);
+  }, [paintColor]);
+
+  const handleSelectPaintSwatch = useCallback((value: string) => {
+    triggerHaptic();
+    setPaintColorDraft(value.toUpperCase());
+  }, []);
+
+  const handleApplyPaintColor = useCallback(() => {
+    const normalized = normalizeHexColor(paintColorDraft);
+    if (!normalized) {
+      Alert.alert("Invalid color", "Enter a valid 6-digit hex color like #D946EF.");
+      return;
+    }
+    triggerHaptic();
+    setPaintColor(normalized);
+    setPaintColorPickerOpen(false);
+  }, [paintColorDraft]);
+
+  const handleSelectPaintSurface = useCallback((value: PaintSurfaceOption["value"]) => {
+    triggerHaptic();
+    setPaintSurface(value);
+    setPaintSurfacePickerOpen(false);
+  }, []);
+
+  const handleDismissPaintTutorial = useCallback(() => {
+    triggerHaptic();
+    setPaintTutorialOpen(false);
+  }, []);
+
+  const paintGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .minDistance(0)
+        .onBegin((event) => {
+          runOnJS(startPaintStroke)(event.x, event.y);
+        })
+        .onUpdate((event) => {
+          runOnJS(extendPaintStroke)(event.x, event.y);
+        })
+        .onEnd(() => {
+          runOnJS(finishPaintStroke)();
+        })
+        .onFinalize(() => {
+          runOnJS(finishPaintStroke)();
+        }),
+    [extendPaintStroke, finishPaintStroke, startPaintStroke],
+  );
+
+  const paintSliderGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .minDistance(0)
+        .onBegin((event) => {
+          runOnJS(updatePaintBrushWidth)(event.x);
+        })
+        .onUpdate((event) => {
+          runOnJS(updatePaintBrushWidth)(event.x);
+        }),
+    [updatePaintBrushWidth],
+  );
+
+  useEffect(() => {
+    if (!isFloorService || workflowStep !== 1) {
+      return;
+    }
+
+    setPaintDetectIconIndex(0);
+    const iconTimer = setInterval(() => {
+      setPaintDetectIconIndex((current) => (current + 1) % 3);
+    }, 520);
+    const transitionTimer = setTimeout(() => {
+      setWizardNavDirection(1);
+      setWorkflowStep(2);
+    }, 2350);
+
+    return () => {
+      clearInterval(iconTimer);
+      clearTimeout(transitionTimer);
+    };
+  }, [isFloorService, workflowStep]);
+
+  useEffect(() => {
+    if (!isPaintService || workflowStep !== 1) {
+      return;
+    }
+
+    setPaintDetectIconIndex(0);
+    const iconTimer = setInterval(() => {
+      setPaintDetectIconIndex((current) => (current + 1) % 3);
+    }, 460);
+    const transitionTimer = setTimeout(() => {
+      setWizardNavDirection(1);
+      setWorkflowStep(2);
+    }, 1800);
+
+    return () => {
+      clearInterval(iconTimer);
+      clearTimeout(transitionTimer);
+    };
+  }, [isPaintService, workflowStep]);
+
+  useEffect(() => {
+    if (!isPaintService || workflowStep !== 2 || paintTutorialSeen) {
+      return;
+    }
+
+    setPaintTutorialSeen(true);
+    setPaintTutorialOpen(true);
+  }, [isPaintService, paintTutorialSeen, workflowStep]);
+
   const handleBack = useCallback(() => {
     triggerHaptic();
     if (workflowStep === 0) {
       router.back();
       return;
     }
+    if (isFloorService) {
+      if (workflowStep === 1 || workflowStep === 2) {
+        setWizardNavDirection(-1);
+        setWorkflowStep(0);
+        return;
+      }
+    }
+    if (isPaintService) {
+      if (workflowStep === 1 || workflowStep === 2) {
+        setWizardNavDirection(-1);
+        setWorkflowStep(0);
+        return;
+      }
+      if (workflowStep === 3) {
+        setWizardNavDirection(-1);
+        setWorkflowStep(2);
+        return;
+      }
+    }
     if (workflowStep === 4) {
       return;
     }
     if (workflowStep === 5) {
       setWizardNavDirection(-1);
-      setWorkflowStep(4);
+      setWorkflowStep(isFloorService ? 2 : 4);
       return;
     }
     setWizardNavDirection(-1);
     setWorkflowStep((prev) => Math.max(prev - 1, 0));
-  }, [router, workflowStep]);
+  }, [isFloorService, isPaintService, router, workflowStep]);
 
   const handleResetWizard = useCallback(() => {
     triggerHaptic();
@@ -1595,6 +2052,19 @@ export default function WorkspaceScreen() {
       setFeedbackState(null);
       setFeedbackSubmitted(false);
       setLastGenerationCount(null);
+      setPaintTool("brush");
+      setPaintBrushWidth(28);
+      setPaintColor("#D946EF");
+      setPaintColorDraft("#D946EF");
+      setPaintSurface("Auto");
+      setPaintStrokes([]);
+      setPaintRedoStrokes([]);
+      setPaintCurrentStroke(null);
+      paintCurrentStrokeRef.current = null;
+      setPaintTutorialOpen(false);
+      setPaintTutorialSeen(false);
+      setPaintColorPickerOpen(false);
+      setPaintSurfacePickerOpen(false);
     });
     setIsLoadingExample(null);
     setIsSelectingPhoto(false);
@@ -1814,8 +2284,21 @@ export default function WorkspaceScreen() {
     return uploadResult.storageId;
   }, [createSourceUploadUrl]);
 
-  const handleGenerate = useCallback(async (options?: { regenerate?: boolean }) => {
-    if (!selectedImage || !selectedRoom || !selectedStyle || !selectedPaletteOrDefault || !selectedModeOrDefault) {
+  const handleGenerate = useCallback(async (options?: { regenerate?: boolean; customPromptOverride?: string }) => {
+    const isPaintGenerationReady = Boolean(selectedImage && paintHasMask);
+    const floorPrompt = (options?.customPromptOverride ?? customPrompt).trim();
+
+    if (isFloorService) {
+      if (!selectedImage || floorPrompt.length === 0) {
+        Alert.alert("Complete the steps", "Add a room photo and describe the flooring you want before continuing.");
+        return;
+      }
+    } else if (isPaintService) {
+      if (!isPaintGenerationReady) {
+        Alert.alert("Complete the steps", "Add a photo and mask the area you want to recolor first.");
+        return;
+      }
+    } else if (!selectedImage || !selectedRoom || !selectedStyle || !selectedPaletteOrDefault || !selectedModeOrDefault) {
       Alert.alert("Complete the steps", "Please finish the previous steps first.");
       return;
     }
@@ -1840,13 +2323,25 @@ export default function WorkspaceScreen() {
     }
 
     const requestStartedAt = Date.now();
+    const activeSelectedImage = selectedImage;
+    if (!activeSelectedImage) {
+      return;
+    }
     const temporaryBoardId = `pending-${requestStartedAt}`;
+    const paintColorLabel = paintColorMeta?.label ?? paintColor;
+    const paintRoomLabel = paintSurface === "Auto" ? "Wall Paint" : paintSurface;
+    const paintPrompt = `Inpaint this image. Change the color of the masked area to ${paintColor} on a ${paintSurfaceLabel.toLowerCase()} texture. Maintain realism and lighting. Preserve all unmasked furniture, lighting, shadows, and geometry exactly as they are.`;
+    const floorStyleLabel = "Floor Restyle";
+    const floorRoomLabel = selectedImage?.label ? `${selectedImage.label} Floor` : "Floor";
+    const floorPromptWithGuardrails = floorPrompt.length > 0
+      ? `${floorPrompt}. Apply the redesign only to the visible flooring surface. Keep the walls, furniture, decor, cabinetry, doors, windows, ceiling, lighting, and camera framing unchanged.`
+      : undefined;
     const processingBoardItem: BoardRenderItem = {
       id: temporaryBoardId,
       imageUrl: null,
-      originalImageUrl: selectedImage.uri,
-      styleLabel: selectedStyle,
-      roomLabel: selectedRoom,
+      originalImageUrl: activeSelectedImage.uri,
+      styleLabel: isFloorService ? floorStyleLabel : isPaintService ? paintColorLabel : selectedStyle!,
+      roomLabel: isFloorService ? floorRoomLabel : isPaintService ? paintRoomLabel : selectedRoom!,
       generationId: null,
       status: "processing",
       errorMessage: null,
@@ -1861,21 +2356,31 @@ export default function WorkspaceScreen() {
       generationAlertedFailureRef.current = null;
       setPendingReviewState(null);
       setIsGenerating(true);
-      setActiveBoardItemId(null);
+      setActiveBoardItemId(isFloorService ? temporaryBoardId : null);
       setPendingBoardItems((current) => [processingBoardItem, ...current.filter((item) => item.id !== temporaryBoardId)]);
-      setWorkflowStep(4);
+      setWorkflowStep(isFloorService ? 5 : 4);
 
-      const sourceStorageId = await uploadSelectedImageToStorage(selectedImage);
-      const activeCustomPrompt = selectedStyle === "Custom" && customPrompt.trim().length > 0 ? customPrompt.trim() : undefined;
+      const sourceStorageId = await uploadSelectedImageToStorage(activeSelectedImage);
+      const activeCustomPrompt = isFloorService
+        ? floorPromptWithGuardrails
+        : isPaintService
+        ? paintPrompt
+        : selectedStyle === "Custom" && customPrompt.trim().length > 0
+          ? customPrompt.trim()
+          : undefined;
       const startResult = (await startGeneration({
         sourceStorageId,
-        roomType: selectedRoom,
-        style: selectedStyle,
+        roomType: isFloorService ? "Floor" : isPaintService ? paintSurfaceLabel : selectedRoom!,
+        style: isFloorService ? floorStyleLabel : isPaintService ? `${paintColorLabel} Paint` : selectedStyle!,
         customPrompt: activeCustomPrompt,
         aspectRatio: ratioSpec.ratioLabel,
-        colorPalette: selectedPaletteOrDefault.label,
-        modeLabel: selectedModeOrDefault.title,
-        modePromptHint: selectedModeOrDefault.promptHint,
+        colorPalette: isFloorService ? "Floor Material Direction" : isPaintService ? paintColor : selectedPaletteOrDefault!.label,
+        modeLabel: isFloorService ? "Floor Surface Restyle" : isPaintService ? "Masked Paint Edit" : selectedModeOrDefault!.title,
+        modePromptHint: isFloorService
+          ? "Only redesign the visible floor surface. Preserve all walls, furniture, decor, structural geometry, and the original camera angle."
+          : isPaintService
+          ? "Only recolor the painted mask region. Preserve the source image composition and realism everywhere else."
+          : selectedModeOrDefault!.promptHint,
         regenerate: options?.regenerate ?? false,
         ignoreReviewCooldown,
         speedTier: generationSpeedTier,
@@ -1895,6 +2400,9 @@ export default function WorkspaceScreen() {
             : item,
         ),
       );
+      if (isFloorService) {
+        setActiveBoardItemId(startResult.generationId);
+      }
       setGenerationId(startResult.generationId);
       setPendingReviewState(startResult.reviewState ?? null);
       if (startResult.reviewState) {
@@ -1918,6 +2426,10 @@ export default function WorkspaceScreen() {
             : item,
         ),
       );
+      if (isFloorService) {
+        setWorkflowStep(2);
+        setActiveBoardItemId(null);
+      }
       Alert.alert("Generation failed", message);
     } finally {
       setIsGenerating(false);
@@ -1927,9 +2439,16 @@ export default function WorkspaceScreen() {
     customPrompt,
     diagnostic,
     effectiveSignedIn,
+    isFloorService,
     generationSpeedTier,
     hasGenerationCredits,
     ignoreReviewCooldown,
+    isPaintService,
+    paintColor,
+    paintColorMeta?.label,
+    paintHasMask,
+    paintSurface,
+    paintSurfaceLabel,
     ratioSpec.ratioLabel,
     router,
     selectedImage,
@@ -1949,15 +2468,22 @@ export default function WorkspaceScreen() {
     }
     setAwaitingAuth(false);
     const timer = setTimeout(() => {
-      void handleGenerate();
+      void handleGenerate(isFloorService ? { customPromptOverride: customPromptDraft.trim() } : undefined);
     }, 300);
     return () => clearTimeout(timer);
-  }, [awaitingAuth, canContinue, effectiveSignedIn, handleGenerate]);
+  }, [awaitingAuth, canContinue, customPromptDraft, effectiveSignedIn, handleGenerate, isFloorService]);
 
   const handleContinue = useCallback(() => {
     triggerHaptic();
     if (!canContinue) {
       Alert.alert("Complete this step", "Please make a selection to continue.");
+      return;
+    }
+
+    if (isFloorService && workflowStep === 2) {
+      const trimmed = customPromptDraft.trim();
+      setCustomPrompt(trimmed);
+      void handleGenerate({ customPromptOverride: trimmed });
       return;
     }
 
@@ -1972,9 +2498,9 @@ export default function WorkspaceScreen() {
 
     setWizardNavDirection(1);
     startTransition(() => {
-      setWorkflowStep((prev) => Math.min(prev + 1, 3));
+      setWorkflowStep((prev) => Math.min(prev + 1, isFloorService ? 2 : 3));
     });
-  }, [canContinue, diagnostic, handleGenerate, hasGenerationCredits, router, workflowStep]);
+  }, [canContinue, customPromptDraft, diagnostic, handleGenerate, hasGenerationCredits, isFloorService, router, workflowStep]);
 
   const handleSelectRoom = useCallback((value: string) => {
     triggerHaptic();
@@ -2078,10 +2604,10 @@ export default function WorkspaceScreen() {
   const handleCloseBoardEditor = useCallback(() => {
     triggerHaptic();
     setWizardNavDirection(-1);
-    setWorkflowStep(4);
+    setWorkflowStep(isFloorService ? 2 : 4);
     setActiveBoardItemId(null);
     setShowBeforeOnly(false);
-  }, []);
+  }, [isFloorService]);
 
   const handleToggleBeforePreview = useCallback(() => {
     triggerHaptic();
@@ -2216,10 +2742,15 @@ export default function WorkspaceScreen() {
 
   if (workflowStep <= 3) {
     const currentStepNumber = workflowStep + 1;
-    const totalWizardSteps = 4;
-    const isFinalWizardStep = workflowStep === 3;
+    const totalWizardSteps = isFloorService ? 3 : 4;
+    const isFinalWizardStep = isFloorService ? workflowStep === 2 : workflowStep === 3;
     const isPhotoStep = workflowStep === 0;
+    const isFloorDetectStep = isFloorService && workflowStep === 1;
+    const isFloorPromptStep = isFloorService && workflowStep === 2;
     const isStyleStep = workflowStep === 2;
+    const isPaintDetectStep = isPaintService && workflowStep === 1;
+    const isPaintEditorStep = isPaintService && workflowStep === 2;
+    const isPaintRefinementStep = isPaintService && workflowStep === 3;
     const isLeanGenerateStep = isLeanGenerationService && workflowStep === 3;
     const isTabbedWorkspaceRoute = pathname === "/workspace";
     const displayedSelectedImage = selectedImage;
@@ -2232,6 +2763,7 @@ export default function WorkspaceScreen() {
     const wizardSurfaceColor = "rgba(255,255,255,0.04)";
     const wizardSurfaceBorderColor = "rgba(255,255,255,0.1)";
     const wizardActiveSurfaceColor = "rgba(217,70,239,0.1)";
+    const floorChipActiveSurfaceColor = "rgba(255,255,255,0.96)";
     const headerButtonBorderColor = "rgba(255,255,255,0.12)";
     const headerButtonBackgroundColor = "rgba(255,255,255,0.04)";
     const progressTrackColor = "rgba(255,255,255,0.14)";
@@ -2250,15 +2782,19 @@ export default function WorkspaceScreen() {
     );
     const continueButtonHeight = isPhotoStep ? 64 : 62;
     const continueButtonRadius = isPhotoStep ? 20 : 24;
-    const isContinueDisabled = !canContinue || (isFinalWizardStep && isGenerating);
+    const isContinueDisabled = isPaintDetectStep || isFloorDetectStep ? true : !canContinue || (isFinalWizardStep && isGenerating);
     const isContinueActive = canContinue && !isContinueDisabled;
-    const shouldPulseContinue = isPhotoStep ? isContinueActive : false;
+    const shouldPulseContinue = (isPhotoStep || isPaintRefinementStep) ? isContinueActive : false;
     const continueButtonOpacity = isContinueActive ? 1 : 0.58;
     const selectedCustomPromptBlocks = new Set(getPromptBlocks(customPromptDraft));
-    const stepOneTitle = isGardenService ? "Start Gardening" : isExteriorService ? "Add Exterior Photo" : "Add a Photo";
-    const emptyUploadTitle = isGardenService ? "Start Gardening" : isExteriorService ? "Start Exterior Redesign" : "Start Redesigning";
+    const stepOneTitle = isFloorService ? "Floor Restyle" : isPaintService ? "Add a Photo" : isGardenService ? "Start Gardening" : isExteriorService ? "Add Exterior Photo" : "Add a Photo";
+    const emptyUploadTitle = isFloorService ? "Add Floor Photo" : isPaintService ? "Start Painting" : isGardenService ? "Start Gardening" : isExteriorService ? "Start Exterior Redesign" : "Start Redesigning";
     const stepOneDescription = isGardenService
       ? "Redesign and beautify your garden"
+      : isFloorService
+        ? "Mark, recolor, and transform your space effortlessly."
+      : isPaintService
+        ? "Upload a room photo or choose one of the paint-ready examples below."
       : isExteriorService
         ? "Upload a building photo or choose one of the exterior examples below."
         : "Upload a room photo or choose one of the examples below.";
@@ -2273,17 +2809,26 @@ export default function WorkspaceScreen() {
       : isGardenService
         ? "Choose a landscape style for the garden transformation."
         : "Choose one of the design styles below, or write your own custom brief.";
+    const paintDetectIcons = [Paintbrush, Sofa, Package2] as const;
+    const ActiveDetectIcon = paintDetectIcons[paintDetectIconIndex] ?? Paintbrush;
+    const showContinueBar = !isPaintDetectStep && !isCustomPromptViewOpen;
     const continueLabel = isPhotoStep
       ? "Continue"
       : isFinalWizardStep
       ? isGenerating
         ? "Generating..."
+        : isFloorPromptStep
+          ? "Continue"
+        : isPaintRefinementStep
+          ? "Continue"
         : isLeanGenerateStep
           ? "Continue"
           : hasGenerationCredits
           ? "Generate Renders"
           : "Get more credits"
-      : `Continue to Step ${currentStepNumber + 1}`;
+      : isPaintEditorStep
+        ? "Continue to Finish"
+        : `Continue to Step ${currentStepNumber + 1}`;
 
     return (
       <View className="flex-1" style={{ backgroundColor: wizardBackgroundColor }}>
@@ -2315,6 +2860,7 @@ export default function WorkspaceScreen() {
         <ScrollView
           className="flex-1"
           style={{ backgroundColor: wizardBackgroundColor }}
+          scrollEnabled={!isPaintEditorStep}
           contentContainerStyle={{
             flexGrow: 1,
             paddingHorizontal: isPhotoStep ? 24 : 20,
@@ -2472,10 +3018,10 @@ export default function WorkspaceScreen() {
                         style={{
                           width: uploadTileSize,
                           height: uploadTileSize,
-                          borderRadius: 34,
-                          borderWidth: hasVisiblePhoto ? 1 : 1.5,
-                          borderColor: hasVisiblePhoto ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.18)",
-                          borderStyle: hasVisiblePhoto ? "solid" : "dashed",
+                          borderRadius: isFloorService ? 28 : 34,
+                          borderWidth: hasVisiblePhoto ? 1 : isFloorService ? 1 : 1.5,
+                          borderColor: hasVisiblePhoto ? "rgba(255,255,255,0.14)" : isFloorService ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.18)",
+                          borderStyle: "solid",
                           overflow: "hidden",
                           alignSelf: "center",
                           backgroundColor: "#0d0d0d",
@@ -2512,16 +3058,16 @@ export default function WorkspaceScreen() {
                               flex: 1,
                               alignItems: "center",
                               justifyContent: "center",
-                              gap: 14,
+                              gap: isFloorService ? 18 : 14,
                               paddingHorizontal: 30,
                               paddingVertical: 30,
                             }}
                           >
                             <View
                               style={{
-                                width: 70,
-                                height: 70,
-                                borderRadius: 35,
+                                width: isFloorService ? 84 : 70,
+                                height: isFloorService ? 84 : 70,
+                                borderRadius: isFloorService ? 24 : 35,
                                 borderWidth: 1,
                                 borderColor: "rgba(255,255,255,0.16)",
                                 backgroundColor: "rgba(255,255,255,0.04)",
@@ -2529,31 +3075,33 @@ export default function WorkspaceScreen() {
                                 justifyContent: "center",
                               }}
                             >
-                              <Plus color="#ffffff" size={26} strokeWidth={2.4} />
+                              <Plus color="#ffffff" size={isFloorService ? 30 : 26} strokeWidth={2.4} />
                             </View>
-                            <View style={{ gap: 6, alignItems: "center" }}>
-                              <Text
-                                style={{
-                                  color: "#ffffff",
-                                  fontSize: 22,
-                                  fontWeight: "800",
-                                  textAlign: "center",
-                                }}
-                              >
-                                {emptyUploadTitle}
-                              </Text>
-                              <Text
-                                style={{
-                                  color: "#a1a1aa",
-                                  fontSize: 14,
-                                  lineHeight: 21,
-                                  textAlign: "center",
-                                  maxWidth: 220,
-                                }}
-                              >
-                                Tap to add a photo from your camera or library
-                              </Text>
-                            </View>
+                            {!isFloorService ? (
+                              <View style={{ gap: 6, alignItems: "center" }}>
+                                <Text
+                                  style={{
+                                    color: "#ffffff",
+                                    fontSize: 22,
+                                    fontWeight: "800",
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  {emptyUploadTitle}
+                                </Text>
+                                <Text
+                                  style={{
+                                    color: "#a1a1aa",
+                                    fontSize: 14,
+                                    lineHeight: 21,
+                                    textAlign: "center",
+                                    maxWidth: 220,
+                                  }}
+                                >
+                                  Tap to add a photo from your camera or library
+                                </Text>
+                              </View>
+                            ) : null}
                             {isPhotoPreviewBusy ? <ActivityIndicator size="small" color="#ffffff" /> : null}
                           </View>
                         )}
@@ -2596,7 +3144,7 @@ export default function WorkspaceScreen() {
                           letterSpacing: -0.2,
                         }}
                       >
-                        Example Photos
+                        {isFloorService ? "Floor-focused Examples" : "Example Photos"}
                       </Text>
 
                       <MotiView
@@ -2624,7 +3172,7 @@ export default function WorkspaceScreen() {
                                   className="cursor-pointer"
                                   style={{
                                     width: stepOneExampleCardWidth,
-                                    height: stepOneExampleCardHeight,
+                                    height: isFloorService ? Math.round(stepOneExampleCardWidth * 0.86) : stepOneExampleCardHeight,
                                     borderRadius: 22,
                                     borderWidth: active ? 1.5 : 1,
                                     borderColor: active ? "#ff4d6d" : "rgba(255,255,255,0.12)",
@@ -2652,6 +3200,16 @@ export default function WorkspaceScreen() {
                                       <ActivityIndicator size="small" color="#ffffff" />
                                     </View>
                                   ) : null}
+                                  <LinearGradient
+                                    colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.74)"]}
+                                    locations={[0.35, 1]}
+                                    style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 64 }}
+                                  />
+                                  <View style={{ position: "absolute", left: 12, right: 12, bottom: 12 }}>
+                                    <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "700" }} numberOfLines={1}>
+                                      {example.label}
+                                    </Text>
+                                  </View>
                                 </LuxPressable>
                               </MotiView>
                             );
@@ -2662,225 +3220,921 @@ export default function WorkspaceScreen() {
                   </View>
                 ) : null}
                 {workflowStep === 1 ? (
-                  <>
-                    <View style={{ gap: 12 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>{stepTwoTitle}</Text>
-                      <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
-                        {stepTwoDescription}
-                      </Text>
-                    </View>
+                  isFloorService ? (
+                    <View style={{ minHeight: stepContentMinHeight * 0.78, justifyContent: "center", gap: 28 }}>
+                      <View style={{ alignItems: "center", gap: 12 }}>
+                        <Text style={{ color: "#ffffff", fontSize: 32, fontWeight: "700", letterSpacing: -1 }}>
+                          Detecting the floor...
+                        </Text>
+                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, textAlign: "center", maxWidth: 320 }}>
+                          Darkor.ai is reading the perspective, isolating the surface plane, and preparing a precision floor restyle pass.
+                        </Text>
+                      </View>
 
-                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
-                      {spaceOptions.map((option, index) => {
-                        const active = selectedRoom === option;
-                        const meta = ROOM_CARD_META[option as keyof typeof ROOM_CARD_META] ?? {
-                          icon: House,
-                          description: "A polished redesign starting point.",
-                        };
-                        const RoomIcon = meta.icon;
-                        return (
-                          <MotiView key={option} {...staggerFadeUp(index, 40)} style={{ width: wizardCardWidth }}>
-                            <LuxPressable
-                              onPress={() => handleSelectRoom(option)}
-                              className="cursor-pointer rounded-[24px] border px-5 py-5"
-                              style={{
-                                minHeight: isExteriorService && meta.image ? 214 : 176,
-                                borderWidth: active ? 1.5 : 1,
-                                borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
-                                backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
-                                shadowColor: "#d946ef",
-                                shadowOpacity: active ? 0.24 : 0,
-                                shadowRadius: active ? 18 : 0,
-                                shadowOffset: { width: 0, height: 0 },
-                                elevation: active ? 8 : 0,
-                              }}
-                            >
-                              <View style={{ flex: 1, gap: 22 }}>
-                                {isExteriorService && meta.image ? (
+                      <View style={{ alignItems: "center", justifyContent: "center", paddingVertical: 10 }}>
+                        <MotiView
+                          animate={{ scale: [0.9, 1.06, 0.9], opacity: [0.1, 0.24, 0.1] }}
+                          transition={{ duration: 2200, loop: true }}
+                          style={{
+                            position: "absolute",
+                            height: 238,
+                            width: 238,
+                            borderRadius: 999,
+                            backgroundColor: "rgba(217,70,239,0.16)",
+                          }}
+                        />
+                        <MotiView
+                          animate={{ scale: [0.82, 1.12, 0.82], opacity: [0.08, 0.18, 0.08] }}
+                          transition={{ duration: 2500, loop: true }}
+                          style={{
+                            position: "absolute",
+                            height: 304,
+                            width: 304,
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: "rgba(255,255,255,0.08)",
+                          }}
+                        />
+
+                        <View
+                          style={{
+                            width: Math.min(width - 40, 352),
+                            aspectRatio: 1,
+                            borderRadius: 32,
+                            overflow: "hidden",
+                            borderWidth: 1,
+                            borderColor: "rgba(255,255,255,0.1)",
+                            backgroundColor: "#09090b",
+                          }}
+                        >
+                          {selectedImage ? (
+                            <>
+                              <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={180} cachePolicy="memory-disk" />
+                              <View style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.18)" }} />
+                              <Svg width="100%" height="100%" viewBox="0 0 100 100" style={{ position: "absolute", inset: 0 }}>
+                                <SvgPath d={FLOOR_MASK_PATH} fill="rgba(255,59,48,0.30)" />
+                                <SvgPath d={FLOOR_MASK_EDGE_PATH} fill="none" stroke="rgba(255,255,255,0.82)" strokeWidth={0.9} strokeDasharray="2.6 1.8" />
+                                <SvgPath d={FLOOR_MASK_PATH} fill="none" stroke="rgba(255,59,48,0.85)" strokeWidth={0.8} />
+                              </Svg>
+                              <MotiView
+                                animate={{ translateY: ["-8%", "108%"], opacity: [0, 0.42, 0] }}
+                                transition={{ duration: 1700, loop: true }}
+                                style={{
+                                  position: "absolute",
+                                  left: 12,
+                                  right: 12,
+                                  height: 96,
+                                  borderRadius: 24,
+                                  backgroundColor: "rgba(255,59,48,0.08)",
+                                  borderWidth: 1,
+                                  borderColor: "rgba(255,255,255,0.1)",
+                                }}
+                              />
+                              <View style={{ position: "absolute", left: 14, right: 14, top: 14, flexDirection: "row", justifyContent: "space-between" }}>
+                                {["Surface", "Depth", "Edges"].map((tag) => (
                                   <View
+                                    key={tag}
                                     style={{
-                                      height: 102,
-                                      overflow: "hidden",
-                                      borderRadius: 18,
-                                      backgroundColor: "#0f0f10",
+                                      borderRadius: 999,
+                                      borderWidth: 1,
+                                      borderColor: "rgba(255,255,255,0.14)",
+                                      backgroundColor: "rgba(0,0,0,0.45)",
+                                      paddingHorizontal: 10,
+                                      paddingVertical: 6,
                                     }}
                                   >
-                                    <Image source={meta.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={140} cachePolicy="memory-disk" />
-                                    <LinearGradient
-                                      colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.62)"]}
-                                      locations={[0, 0.52, 1]}
-                                      style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }}
-                                    />
+                                    <Text style={{ color: "#fafafa", fontSize: 11, fontWeight: "700", letterSpacing: 0.3 }}>{tag}</Text>
+                                  </View>
+                                ))}
+                              </View>
+                            </>
+                          ) : (
+                            <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                              <Sparkles color="#71717a" size={26} />
+                            </View>
+                          )}
+                        </View>
+
+                        <MotiView
+                          animate={{ scale: [1, 1.05, 1], rotate: ["0deg", "3deg", "0deg"] }}
+                          transition={{ duration: 1300, loop: true }}
+                          style={{
+                            position: "absolute",
+                            height: 114,
+                            width: 114,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: "rgba(255,255,255,0.12)",
+                            backgroundColor: "rgba(7,7,9,0.88)",
+                          }}
+                        >
+                          <LinearGradient
+                            colors={["rgba(217,70,239,0.22)", "rgba(79,70,229,0.12)"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={{ position: "absolute", inset: 0, borderRadius: 999 }}
+                          />
+                          <ActiveDetectIcon color="#ffffff" size={30} strokeWidth={2.1} />
+                        </MotiView>
+                      </View>
+
+                      <MotiView animate={{ opacity: [0.34, 1, 0.34] }} transition={{ duration: 1160, loop: true }}>
+                        <Text style={{ color: "#f4f4f5", fontSize: 17, fontWeight: "600", textAlign: "center" }}>
+                          Detecting the floor...
+                        </Text>
+                      </MotiView>
+                    </View>
+                  ) : isPaintService ? (
+                    <View style={{ minHeight: stepContentMinHeight * 0.72, justifyContent: "center", gap: 28 }}>
+                      <View style={{ alignItems: "center", gap: 12 }}>
+                        <Text style={{ color: "#ffffff", fontSize: 32, fontWeight: "700", letterSpacing: -1 }}>
+                          Detecting Objects
+                        </Text>
+                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, textAlign: "center", maxWidth: 320 }}>
+                          We&apos;re isolating paintable surfaces and surrounding furniture before opening the editor.
+                        </Text>
+                      </View>
+
+                      <View style={{ alignItems: "center", justifyContent: "center", paddingVertical: 12 }}>
+                        <MotiView
+                          animate={{ scale: [0.92, 1.08, 0.92], opacity: [0.16, 0.34, 0.16] }}
+                          transition={{ duration: 1800, loop: true }}
+                          style={{
+                            position: "absolute",
+                            height: 220,
+                            width: 220,
+                            borderRadius: 999,
+                            backgroundColor: "rgba(217,70,239,0.16)",
+                          }}
+                        />
+                        <MotiView
+                          animate={{ scale: [0.82, 1.14, 0.82], opacity: [0.08, 0.2, 0.08] }}
+                          transition={{ duration: 2200, loop: true }}
+                          style={{
+                            position: "absolute",
+                            height: 284,
+                            width: 284,
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: "rgba(255,255,255,0.08)",
+                          }}
+                        />
+                        <MotiView
+                          animate={{ scale: [1, 1.06, 1], rotate: ["0deg", "4deg", "0deg"] }}
+                          transition={{ duration: 1300, loop: true }}
+                          style={{
+                            height: 132,
+                            width: 132,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: "rgba(255,255,255,0.12)",
+                            backgroundColor: "rgba(15,15,18,0.92)",
+                          }}
+                        >
+                          <LinearGradient
+                            colors={["rgba(217,70,239,0.2)", "rgba(79,70,229,0.12)"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={{ position: "absolute", inset: 0, borderRadius: 999 }}
+                          />
+                          <ActiveDetectIcon color="#ffffff" size={34} strokeWidth={2.1} />
+                        </MotiView>
+                      </View>
+
+                      <MotiView animate={{ opacity: [0.42, 1, 0.42] }} transition={{ duration: 1200, loop: true }}>
+                        <Text style={{ color: "#f4f4f5", fontSize: 17, fontWeight: "600", textAlign: "center" }}>
+                          Detecting objects...
+                        </Text>
+                      </MotiView>
+                    </View>
+                  ) : (
+                    <>
+                      <View style={{ gap: 12 }}>
+                        <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>{stepTwoTitle}</Text>
+                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
+                          {stepTwoDescription}
+                        </Text>
+                      </View>
+
+                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                        {spaceOptions.map((option, index) => {
+                          const active = selectedRoom === option;
+                          const meta = ROOM_CARD_META[option as keyof typeof ROOM_CARD_META] ?? {
+                            icon: House,
+                            description: "A polished redesign starting point.",
+                          };
+                          const RoomIcon = meta.icon;
+                          return (
+                            <MotiView key={option} {...staggerFadeUp(index, 40)} style={{ width: wizardCardWidth }}>
+                              <LuxPressable
+                                onPress={() => handleSelectRoom(option)}
+                                className="cursor-pointer rounded-[24px] border px-5 py-5"
+                                style={{
+                                  minHeight: isExteriorService && meta.image ? 214 : 176,
+                                  borderWidth: active ? 1.5 : 1,
+                                  borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
+                                  backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
+                                  shadowColor: "#d946ef",
+                                  shadowOpacity: active ? 0.24 : 0,
+                                  shadowRadius: active ? 18 : 0,
+                                  shadowOffset: { width: 0, height: 0 },
+                                  elevation: active ? 8 : 0,
+                                }}
+                              >
+                                <View style={{ flex: 1, gap: 22 }}>
+                                  {isExteriorService && meta.image ? (
                                     <View
                                       style={{
-                                        position: "absolute",
-                                        left: 10,
-                                        top: 10,
-                                        height: 40,
-                                        width: 40,
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        borderRadius: 14,
-                                        borderWidth: 1,
-                                        borderColor: active ? "rgba(217,70,239,0.28)" : "rgba(255,255,255,0.12)",
-                                        backgroundColor: "rgba(10,10,10,0.5)",
+                                        height: 102,
+                                        overflow: "hidden",
+                                        borderRadius: 18,
+                                        backgroundColor: "#0f0f10",
                                       }}
                                     >
-                                      <RoomIcon color={active ? "#d946ef" : "#ffffff"} size={18} strokeWidth={2} />
+                                      <Image source={meta.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={140} cachePolicy="memory-disk" />
+                                      <LinearGradient
+                                        colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.62)"]}
+                                        locations={[0, 0.52, 1]}
+                                        style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }}
+                                      />
+                                      <View
+                                        style={{
+                                          position: "absolute",
+                                          left: 10,
+                                          top: 10,
+                                          height: 40,
+                                          width: 40,
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          borderRadius: 14,
+                                          borderWidth: 1,
+                                          borderColor: active ? "rgba(217,70,239,0.28)" : "rgba(255,255,255,0.12)",
+                                          backgroundColor: "rgba(10,10,10,0.5)",
+                                        }}
+                                      >
+                                        <RoomIcon color={active ? "#d946ef" : "#ffffff"} size={18} strokeWidth={2} />
+                                      </View>
                                     </View>
-                                  </View>
-                                ) : (
-                                  <View
-                                    style={{
-                                      height: 50,
-                                      width: 50,
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      borderRadius: 16,
-                                      borderWidth: 1,
-                                      borderColor: active ? "rgba(217,70,239,0.28)" : "rgba(255,255,255,0.08)",
-                                      backgroundColor: active ? "rgba(217,70,239,0.14)" : "rgba(255,255,255,0.03)",
-                                    }}
-                                  >
-                                    <RoomIcon color={active ? "#d946ef" : "#ffffff"} size={22} strokeWidth={2} />
-                                  </View>
-                                )}
+                                  ) : (
+                                    <View
+                                      style={{
+                                        height: 50,
+                                        width: 50,
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        borderRadius: 16,
+                                        borderWidth: 1,
+                                        borderColor: active ? "rgba(217,70,239,0.28)" : "rgba(255,255,255,0.08)",
+                                        backgroundColor: active ? "rgba(217,70,239,0.14)" : "rgba(255,255,255,0.03)",
+                                      }}
+                                    >
+                                      <RoomIcon color={active ? "#d946ef" : "#ffffff"} size={22} strokeWidth={2} />
+                                    </View>
+                                  )}
 
-                                <View style={{ marginTop: "auto", gap: 8 }}>
-                                  <Text style={{ color: "#ffffff", fontSize: 21, fontWeight: "700", letterSpacing: -0.45 }}>
-                                    {option}
-                                  </Text>
-                                  <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
-                                    {meta.description}
-                                  </Text>
+                                  <View style={{ marginTop: "auto", gap: 8 }}>
+                                    <Text style={{ color: "#ffffff", fontSize: 21, fontWeight: "700", letterSpacing: -0.45 }}>
+                                      {option}
+                                    </Text>
+                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
+                                      {meta.description}
+                                    </Text>
+                                  </View>
                                 </View>
-                              </View>
-                            </LuxPressable>
-                          </MotiView>
-                        );
-                      })}
-                    </View>
-                  </>
+                              </LuxPressable>
+                            </MotiView>
+                          );
+                        })}
+                      </View>
+                    </>
+                  )
                 ) : null}
 
                 {workflowStep === 2 ? (
-                  <>
-                    <View style={{ gap: 12 }}>
-                      <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Select Style</Text>
-                      <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
-                        {stepThreeDescription}
-                      </Text>
-                    </View>
+                  isFloorService ? (
+                    <>
+                      <View style={{ gap: 12 }}>
+                        <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Custom Prompt</Text>
+                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
+                          Tell Darkor.ai exactly how the floor should feel, look, and finish. You can write freely or build the prompt with the style chips below.
+                        </Text>
+                      </View>
 
-                    {isLeanGenerationService ? (
-                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
-                        {(isExteriorService ? EXTERIOR_STYLE_LIBRARY : GARDEN_STYLE_LIBRARY).map((style, index) => {
-                          const active = selectedStyle === style.title;
-                          const StyleIcon = style.icon;
-                          return (
-                            <MotiView key={style.id} {...staggerFadeUp(index, 28)} style={{ width: wizardCardWidth }}>
-                              <LuxPressable
-                                onPress={() => handleSelectStyle(style.title)}
-                                className="cursor-pointer rounded-[24px] border"
-                                style={{
-                                  minHeight: 176,
-                                  overflow: "hidden",
-                                  borderWidth: active ? 1.5 : 1,
-                                  borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
-                                  backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
-                                }}
-                              >
-                                <LinearGradient
-                                  colors={style.colors}
-                                  start={{ x: 0, y: 0 }}
-                                  end={{ x: 1, y: 1 }}
-                                  style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 18, flex: 1 }}
-                                >
-                                  <View
+                      <View
+                        style={{
+                          borderRadius: 30,
+                          borderWidth: 1,
+                          borderColor: "rgba(255,255,255,0.1)",
+                          backgroundColor: "rgba(255,255,255,0.03)",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <View style={{ paddingHorizontal: 18, paddingTop: 18, paddingBottom: 16, gap: 10 }}>
+                          <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700" }}>Enter Prompt</Text>
+                          <View
+                            style={{
+                              minHeight: 224,
+                              borderRadius: 24,
+                              borderWidth: 1,
+                              borderColor: "rgba(255,255,255,0.08)",
+                              backgroundColor: "rgba(3,3,4,0.88)",
+                              overflow: "hidden",
+                            }}
+                          >
+                            <LinearGradient
+                              colors={["rgba(217,70,239,0.08)", "rgba(79,70,229,0.04)", "rgba(0,0,0,0)"]}
+                              locations={[0, 0.55, 1]}
+                              style={{ position: "absolute", inset: 0 }}
+                            />
+                            <TextInput
+                              value={customPromptDraft}
+                              onChangeText={handleChangeCustomPrompt}
+                              multiline
+                              placeholder="Type here a detailed description of what you want to see in your home design"
+                              placeholderTextColor="#71717a"
+                              textAlignVertical="top"
+                              style={{
+                                minHeight: 224,
+                                color: "#ffffff",
+                                fontSize: 15,
+                                lineHeight: 24,
+                                paddingHorizontal: 18,
+                                paddingTop: 18,
+                                paddingBottom: 18,
+                              }}
+                            />
+                          </View>
+                        </View>
+
+                        <View style={{ paddingHorizontal: 18, paddingBottom: 18, gap: 10 }}>
+                          <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700" }}>Example Prompts</Text>
+                          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+                            {FLOOR_PROMPT_CHIPS.map((prompt, index) => {
+                              const active = selectedCustomPromptBlocks.has(prompt);
+                              return (
+                                <MotiView key={prompt} {...staggerFadeUp(index, 26)}>
+                                  <LuxPressable
+                                    onPress={() => handleSelectCustomPromptExample(prompt)}
+                                    className="cursor-pointer rounded-full border"
                                     style={{
-                                      height: 44,
-                                      width: 44,
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      borderRadius: 16,
+                                      maxWidth: width - 76,
                                       borderWidth: 1,
-                                      borderColor: active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
-                                      backgroundColor: "rgba(10,10,10,0.26)",
+                                      borderColor: active ? "rgba(255,255,255,0.96)" : "rgba(255,255,255,0.12)",
+                                      backgroundColor: active ? floorChipActiveSurfaceColor : "rgba(255,255,255,0.04)",
+                                      paddingHorizontal: 16,
+                                      paddingVertical: 12,
                                     }}
                                   >
-                                    <StyleIcon color={active ? "#d946ef" : "#ffffff"} size={20} strokeWidth={2} />
-                                  </View>
-
-                                  <View style={{ marginTop: "auto", gap: 8 }}>
-                                    <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.35 }}>
-                                      {style.title}
+                                    <Text
+                                      style={{
+                                        color: active ? "#09090b" : "#f4f4f5",
+                                        fontSize: 13,
+                                        lineHeight: 20,
+                                        fontWeight: "600",
+                                      }}
+                                    >
+                                      {prompt}
                                     </Text>
-                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
-                                      {style.description}
-                                    </Text>
-                                  </View>
-                                </LinearGradient>
-
-                                {active ? (
-                                  <View className="absolute right-2 top-2 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "#0f0f10" }}>
-                                    <BadgeCheck color="#d946ef" size={16} strokeWidth={2} />
-                                  </View>
-                                ) : null}
-                              </LuxPressable>
-                            </MotiView>
-                          );
-                        })}
+                                  </LuxPressable>
+                                </MotiView>
+                              );
+                            })}
+                          </View>
+                        </View>
                       </View>
-                    ) : (
-                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardStyleGap }}>
-                        {[{ id: "custom", title: "Custom", image: null }, ...STYLE_LIBRARY].map((style, index) => {
-                          const isCustomCard = style.title === "Custom";
-                          const active = selectedStyle === style.title;
-                          return (
-                            <MotiView key={style.id} {...staggerFadeUp(index, 18)} style={{ width: wizardStyleCardWidth }}>
+                    </>
+                  ) : isPaintService ? (
+                    <>
+                      <View style={{ gap: 12 }}>
+                        <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Paint Editor</Text>
+                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 360 }}>
+                          Draw directly over the image to mark the exact area you want to repaint. Brush paints the mask, eraser cuts it back, and object select gives you a faster broad stroke.
+                        </Text>
+                      </View>
+
+                      <View
+                        style={{
+                          borderRadius: 30,
+                          borderWidth: 1,
+                          borderColor: wizardSurfaceBorderColor,
+                          backgroundColor: "rgba(255,255,255,0.03)",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <View
+                          onLayout={(event) => {
+                            const { width: layoutWidth, height: layoutHeight } = event.nativeEvent.layout;
+                            setPaintCanvasSize({ width: layoutWidth, height: layoutHeight });
+                          }}
+                          style={{
+                            position: "relative",
+                            width: "100%",
+                            height: Math.min(Math.max(width * 0.92, 340), 460),
+                            backgroundColor: "#0a0a0b",
+                          }}
+                        >
+                          {selectedImage ? (
+                            <Image
+                              source={{ uri: selectedImage.uri }}
+                              style={{ width: "100%", height: "100%" }}
+                              contentFit="cover"
+                              transition={180}
+                              cachePolicy="memory-disk"
+                            />
+                          ) : null}
+                          <LinearGradient
+                            colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.1)", "rgba(0,0,0,0.42)"]}
+                            locations={[0, 0.58, 1]}
+                            style={{ position: "absolute", inset: 0 }}
+                          />
+                          {paintCanvasSize.width > 0 && paintCanvasSize.height > 0 ? (
+                            <GestureDetector gesture={paintGesture}>
+                              <View style={{ position: "absolute", inset: 0 }}>
+                                <Svg width={paintCanvasSize.width} height={paintCanvasSize.height}>
+                                  <Defs>
+                                    <Mask id="paint-mask-overlay">
+                                      <Rect x="0" y="0" width={paintCanvasSize.width} height={paintCanvasSize.height} fill="#000000" />
+                                      {paintRenderedStrokes.map((stroke) => (
+                                        <SvgPath
+                                          key={stroke.id}
+                                          d={buildPaintPath(stroke.points)}
+                                          fill="none"
+                                          stroke={stroke.tool === "eraser" ? "#000000" : "#ffffff"}
+                                          strokeWidth={stroke.width}
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        />
+                                      ))}
+                                    </Mask>
+                                  </Defs>
+                                  <Rect
+                                    x="0"
+                                    y="0"
+                                    width={paintCanvasSize.width}
+                                    height={paintCanvasSize.height}
+                                    fill="#ff000066"
+                                    mask="url(#paint-mask-overlay)"
+                                  />
+                                </Svg>
+                              </View>
+                            </GestureDetector>
+                          ) : null}
+                          {!paintHasMask ? (
+                            <View
+                              pointerEvents="none"
+                              style={{
+                                position: "absolute",
+                                left: 20,
+                                right: 20,
+                                bottom: 18,
+                                borderRadius: 18,
+                                borderWidth: 1,
+                                borderColor: "rgba(255,255,255,0.08)",
+                                backgroundColor: "rgba(10,10,10,0.6)",
+                                paddingHorizontal: 14,
+                                paddingVertical: 12,
+                              }}
+                            >
+                              <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "600" }}>Mask the paint area</Text>
+                              <Text style={{ color: wizardMutedTextColor, fontSize: 12, lineHeight: 18, marginTop: 4 }}>
+                                Drag your finger over the wall, cabinet, or door you want to repaint.
+                              </Text>
+                            </View>
+                          ) : null}
+                        </View>
+                      </View>
+
+                      <View
+                        style={{
+                          borderRadius: 28,
+                          borderWidth: 1,
+                          borderColor: wizardSurfaceBorderColor,
+                          backgroundColor: wizardSurfaceColor,
+                          paddingHorizontal: 16,
+                          paddingVertical: 16,
+                          gap: 16,
+                        }}
+                      >
+                        <View style={{ flexDirection: "row", gap: 10 }}>
+                          {[
+                            { key: "brush", label: "Brush", icon: Paintbrush },
+                            { key: "eraser", label: "Eraser", icon: Eraser },
+                            { key: "object", label: "Object", icon: BoxSelect },
+                          ].map((tool) => {
+                            const active = paintTool === tool.key;
+                            const ToolIcon = tool.icon;
+                            return (
                               <LuxPressable
-                                onPress={() => handleSelectStyle(style.title)}
-                                className="cursor-pointer overflow-hidden rounded-[24px] border"
+                                key={tool.key}
+                                onPress={() => handleSelectPaintTool(tool.key as PaintTool)}
+                                className="cursor-pointer"
                                 style={{
-                                  borderWidth: active ? 1.5 : 1,
-                                  borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
-                                  backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
+                                  flex: 1,
+                                  borderRadius: 18,
+                                  borderWidth: 1,
+                                  borderColor: active ? "rgba(217,70,239,0.32)" : "rgba(255,255,255,0.08)",
+                                  backgroundColor: active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
+                                  paddingHorizontal: 12,
+                                  paddingVertical: 12,
+                                  alignItems: "center",
+                                  gap: 8,
                                 }}
                               >
-                                {isCustomCard ? (
+                                <ToolIcon color={active ? "#d946ef" : "#ffffff"} size={18} strokeWidth={2} />
+                                <Text style={{ color: active ? "#f5d0fe" : "#ffffff", fontSize: 12, fontWeight: "700" }}>{tool.label}</Text>
+                              </LuxPressable>
+                            );
+                          })}
+                        </View>
+
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+                          <View
+                            style={{
+                              height: Math.max(14, Math.min(paintBrushWidth, 28)),
+                              width: Math.max(14, Math.min(paintBrushWidth, 28)),
+                              borderRadius: 999,
+                              backgroundColor: "#ff000066",
+                              borderWidth: 1,
+                              borderColor: "rgba(255,255,255,0.16)",
+                            }}
+                          />
+                          <View style={{ flex: 1, gap: 8 }}>
+                            <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>Brush Width</Text>
+                            <GestureDetector gesture={paintSliderGesture}>
+                              <View
+                                onLayout={(event) => {
+                                  setPaintSliderWidth(event.nativeEvent.layout.width);
+                                }}
+                                style={{
+                                  height: 28,
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <View style={{ height: 6, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.1)" }} />
+                                <LinearGradient
+                                  colors={["#d946ef", "#4f46e5"]}
+                                  start={{ x: 0, y: 0.5 }}
+                                  end={{ x: 1, y: 0.5 }}
+                                  style={{
+                                    position: "absolute",
+                                    left: 0,
+                                    top: 11,
+                                    height: 6,
+                                    width: paintSliderWidth > 0 ? Math.max(14, paintSliderWidth * paintBrushRatio) : "34%",
+                                    borderRadius: 999,
+                                  }}
+                                />
+                                <View
+                                  style={{
+                                    position: "absolute",
+                                    left: paintSliderWidth > 0 ? Math.max(0, paintSliderWidth * paintBrushRatio - 14) : 0,
+                                    height: 28,
+                                    width: 28,
+                                    borderRadius: 999,
+                                    borderWidth: 1,
+                                    borderColor: "rgba(255,255,255,0.16)",
+                                    backgroundColor: "#ffffff",
+                                  }}
+                                />
+                              </View>
+                            </GestureDetector>
+                          </View>
+
+                          <View style={{ flexDirection: "row", gap: 10 }}>
+                            <LuxPressable
+                              onPress={handlePaintUndo}
+                              disabled={paintStrokes.length === 0}
+                              className="cursor-pointer"
+                              style={{
+                                height: 44,
+                                width: 44,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                borderRadius: 16,
+                                borderWidth: 1,
+                                borderColor: "rgba(255,255,255,0.08)",
+                                backgroundColor: paintStrokes.length === 0 ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.05)",
+                                opacity: paintStrokes.length === 0 ? 0.45 : 1,
+                              }}
+                            >
+                              <Undo2 color="#ffffff" size={18} strokeWidth={2} />
+                            </LuxPressable>
+                            <LuxPressable
+                              onPress={handlePaintRedo}
+                              disabled={paintRedoStrokes.length === 0}
+                              className="cursor-pointer"
+                              style={{
+                                height: 44,
+                                width: 44,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                borderRadius: 16,
+                                borderWidth: 1,
+                                borderColor: "rgba(255,255,255,0.08)",
+                                backgroundColor: paintRedoStrokes.length === 0 ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.05)",
+                                opacity: paintRedoStrokes.length === 0 ? 0.45 : 1,
+                              }}
+                            >
+                              <Redo2 color="#ffffff" size={18} strokeWidth={2} />
+                            </LuxPressable>
+                          </View>
+                        </View>
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <View style={{ gap: 12 }}>
+                        <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Select Style</Text>
+                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
+                          {stepThreeDescription}
+                        </Text>
+                      </View>
+
+                      {isLeanGenerationService ? (
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                          {(isExteriorService ? EXTERIOR_STYLE_LIBRARY : GARDEN_STYLE_LIBRARY).map((style, index) => {
+                            const active = selectedStyle === style.title;
+                            const StyleIcon = style.icon;
+                            return (
+                              <MotiView key={style.id} {...staggerFadeUp(index, 28)} style={{ width: wizardCardWidth }}>
+                                <LuxPressable
+                                  onPress={() => handleSelectStyle(style.title)}
+                                  className="cursor-pointer rounded-[24px] border"
+                                  style={{
+                                    minHeight: 176,
+                                    overflow: "hidden",
+                                    borderWidth: active ? 1.5 : 1,
+                                    borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
+                                    backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
+                                  }}
+                                >
                                   <LinearGradient
-                                    colors={["rgba(217,70,239,0.16)", "rgba(255,255,255,0.04)"]}
+                                    colors={style.colors}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 1 }}
-                                    style={{ height: 120, alignItems: "center", justifyContent: "center" }}
+                                    style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 18, flex: 1 }}
                                   >
-                                    <Sparkles color="#d946ef" size={28} strokeWidth={2.1} />
+                                    <View
+                                      style={{
+                                        height: 44,
+                                        width: 44,
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        borderRadius: 16,
+                                        borderWidth: 1,
+                                        borderColor: active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
+                                        backgroundColor: "rgba(10,10,10,0.26)",
+                                      }}
+                                    >
+                                      <StyleIcon color={active ? "#d946ef" : "#ffffff"} size={20} strokeWidth={2} />
+                                    </View>
+
+                                    <View style={{ marginTop: "auto", gap: 8 }}>
+                                      <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.35 }}>
+                                        {style.title}
+                                      </Text>
+                                      <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
+                                        {style.description}
+                                      </Text>
+                                    </View>
                                   </LinearGradient>
-                                ) : (
-                                  <Image source={style.image} style={{ width: "100%", height: 120 }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
-                                )}
-                                <View style={{ paddingHorizontal: 12, paddingVertical: 12 }}>
-                                  <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }} numberOfLines={2}>{style.title}</Text>
-                                  {isCustomCard && customPrompt.trim().length > 0 ? (
-                                    <Text style={{ marginTop: 8, color: wizardMutedTextColor, fontSize: 12, lineHeight: 18 }} numberOfLines={2}>{customPrompt}</Text>
+
+                                  {active ? (
+                                    <View className="absolute right-2 top-2 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "#0f0f10" }}>
+                                      <BadgeCheck color="#d946ef" size={16} strokeWidth={2} />
+                                    </View>
                                   ) : null}
-                                </View>
-                                {active ? (
-                                  <View className="absolute right-2 top-2 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "#0f0f10" }}>
-                                    <BadgeCheck color="#d946ef" size={16} strokeWidth={2} />
+                                </LuxPressable>
+                              </MotiView>
+                            );
+                          })}
+                        </View>
+                      ) : (
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardStyleGap }}>
+                          {[{ id: "custom", title: "Custom", image: null }, ...STYLE_LIBRARY].map((style, index) => {
+                            const isCustomCard = style.title === "Custom";
+                            const active = selectedStyle === style.title;
+                            return (
+                              <MotiView key={style.id} {...staggerFadeUp(index, 18)} style={{ width: wizardStyleCardWidth }}>
+                                <LuxPressable
+                                  onPress={() => handleSelectStyle(style.title)}
+                                  className="cursor-pointer overflow-hidden rounded-[24px] border"
+                                  style={{
+                                    borderWidth: active ? 1.5 : 1,
+                                    borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
+                                    backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
+                                  }}
+                                >
+                                  {isCustomCard ? (
+                                    <LinearGradient
+                                      colors={["rgba(217,70,239,0.16)", "rgba(255,255,255,0.04)"]}
+                                      start={{ x: 0, y: 0 }}
+                                      end={{ x: 1, y: 1 }}
+                                      style={{ height: 120, alignItems: "center", justifyContent: "center" }}
+                                    >
+                                      <Sparkles color="#d946ef" size={28} strokeWidth={2.1} />
+                                    </LinearGradient>
+                                  ) : (
+                                    <Image source={style.image} style={{ width: "100%", height: 120 }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
+                                  )}
+                                  <View style={{ paddingHorizontal: 12, paddingVertical: 12 }}>
+                                    <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }} numberOfLines={2}>{style.title}</Text>
+                                    {isCustomCard && customPrompt.trim().length > 0 ? (
+                                      <Text style={{ marginTop: 8, color: wizardMutedTextColor, fontSize: 12, lineHeight: 18 }} numberOfLines={2}>{customPrompt}</Text>
+                                    ) : null}
                                   </View>
-                                ) : null}
-                              </LuxPressable>
-                            </MotiView>
-                          );
-                        })}
-                      </View>
-                    )}
-                  </>
+                                  {active ? (
+                                    <View className="absolute right-2 top-2 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "#0f0f10" }}>
+                                      <BadgeCheck color="#d946ef" size={16} strokeWidth={2} />
+                                    </View>
+                                  ) : null}
+                                </LuxPressable>
+                              </MotiView>
+                            );
+                          })}
+                        </View>
+                      )}
+                    </>
+                  )
                 ) : null}
 
                 {workflowStep === 3 ? (
-                  isLeanGenerationService ? (
+                  isPaintService ? (
+                    <>
+                      <View style={{ gap: 12 }}>
+                        <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Refine Paint</Text>
+                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 360 }}>
+                          Choose the finish color and surface type. We&apos;ll use your painted mask to keep the edit controlled and realistic.
+                        </Text>
+                      </View>
+
+                      <View
+                        style={{
+                          borderRadius: 28,
+                          borderWidth: 1,
+                          borderColor: wizardSurfaceBorderColor,
+                          backgroundColor: wizardSurfaceColor,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <View
+                          style={{
+                            position: "relative",
+                            width: "100%",
+                            height: 248,
+                            backgroundColor: "#0a0a0b",
+                          }}
+                        >
+                          {selectedImage ? (
+                            <Image
+                              source={{ uri: selectedImage.uri }}
+                              style={{ width: "100%", height: "100%" }}
+                              contentFit="cover"
+                              transition={160}
+                              cachePolicy="memory-disk"
+                            />
+                          ) : null}
+                          {paintCanvasSize.width > 0 && paintCanvasSize.height > 0 && paintRenderedStrokes.length > 0 ? (
+                            <View style={{ position: "absolute", inset: 0 }}>
+                              <Svg width="100%" height="100%" viewBox={`0 0 ${paintCanvasSize.width} ${paintCanvasSize.height}`} preserveAspectRatio="none">
+                                <Defs>
+                                  <Mask id="paint-preview-mask">
+                                    <Rect x="0" y="0" width={paintCanvasSize.width} height={paintCanvasSize.height} fill="#000000" />
+                                    {paintRenderedStrokes.map((stroke) => (
+                                      <SvgPath
+                                        key={`${stroke.id}-preview`}
+                                        d={buildPaintPath(stroke.points)}
+                                        fill="none"
+                                        stroke={stroke.tool === "eraser" ? "#000000" : "#ffffff"}
+                                        strokeWidth={stroke.width}
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                    ))}
+                                  </Mask>
+                                </Defs>
+                                <Rect x="0" y="0" width={paintCanvasSize.width} height={paintCanvasSize.height} fill={paintPreviewOverlayColor} mask="url(#paint-preview-mask)" />
+                              </Svg>
+                            </View>
+                          ) : null}
+                          <LinearGradient
+                            colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.16)", "rgba(0,0,0,0.8)"]}
+                            locations={[0, 0.54, 1]}
+                            style={{ position: "absolute", inset: 0 }}
+                          />
+                          <View style={{ position: "absolute", left: 18, right: 18, bottom: 18, gap: 8 }}>
+                            <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.45 }}>
+                              {paintColorMeta?.label ?? paintColor}
+                            </Text>
+                            <Text style={{ color: "#d4d4d8", fontSize: 13, lineHeight: 19 }}>
+                              {paintSurfaceLabel} surface selected. The generated image will preserve the current lighting and architecture.
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View style={{ paddingHorizontal: 18, paddingVertical: 18, gap: 14 }}>
+                          <View style={{ flexDirection: "row", gap: 12 }}>
+                            <LuxPressable
+                              onPress={handleOpenPaintColorPicker}
+                              className="cursor-pointer"
+                              style={{
+                                flex: 1,
+                                borderRadius: 20,
+                                borderWidth: 1,
+                                borderColor: "rgba(255,255,255,0.1)",
+                                backgroundColor: "rgba(255,255,255,0.03)",
+                                paddingHorizontal: 14,
+                                paddingVertical: 14,
+                              }}
+                            >
+                              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                                <View
+                                  style={{
+                                    height: 28,
+                                    width: 28,
+                                    borderRadius: 999,
+                                    backgroundColor: paintColor,
+                                    borderWidth: 1,
+                                    borderColor: "rgba(255,255,255,0.16)",
+                                  }}
+                                />
+                                <View style={{ flex: 1 }}>
+                                  <Text style={{ color: wizardMutedTextColor, fontSize: 11, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.4 }}>Color</Text>
+                                  <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700", marginTop: 3 }}>{paintColorMeta?.label ?? paintColor}</Text>
+                                </View>
+                                <Droplet color="#ffffff" size={18} strokeWidth={2} />
+                              </View>
+                            </LuxPressable>
+
+                            <LuxPressable
+                              onPress={() => {
+                                triggerHaptic();
+                                setPaintSurfacePickerOpen(true);
+                              }}
+                              className="cursor-pointer"
+                              style={{
+                                flex: 1,
+                                borderRadius: 20,
+                                borderWidth: 1,
+                                borderColor: "rgba(255,255,255,0.1)",
+                                backgroundColor: "rgba(255,255,255,0.03)",
+                                paddingHorizontal: 14,
+                                paddingVertical: 14,
+                              }}
+                            >
+                              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                                <View
+                                  style={{
+                                    height: 28,
+                                    width: 28,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    borderRadius: 999,
+                                    borderWidth: 1,
+                                    borderColor: "rgba(255,255,255,0.12)",
+                                    backgroundColor: "rgba(255,255,255,0.04)",
+                                  }}
+                                >
+                                  <Package2 color="#ffffff" size={15} strokeWidth={2} />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                  <Text style={{ color: wizardMutedTextColor, fontSize: 11, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.4 }}>Surface</Text>
+                                  <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700", marginTop: 3 }}>{paintSurface}</Text>
+                                </View>
+                                <ChevronDown color="#ffffff" size={18} strokeWidth={2} />
+                              </View>
+                            </LuxPressable>
+                          </View>
+
+                          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+                            {[
+                              { label: paintColorMeta?.label ?? paintColor, active: true },
+                              { label: paintSurfaceLabel, active: true },
+                              { label: paintHasMask ? `${paintStrokes.length} mask stroke${paintStrokes.length === 1 ? "" : "s"}` : "No mask", active: paintHasMask },
+                            ].map((item) => (
+                              <View
+                                key={item.label}
+                                style={{
+                                  borderRadius: 999,
+                                  borderWidth: 1,
+                                  borderColor: item.active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
+                                  backgroundColor: item.active ? "rgba(217,70,239,0.1)" : "rgba(255,255,255,0.03)",
+                                  paddingHorizontal: 12,
+                                  paddingVertical: 8,
+                                }}
+                              >
+                                <Text style={{ color: item.active ? "#f5d0fe" : "#d4d4d8", fontSize: 12, fontWeight: "600" }}>{item.label}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        </View>
+                      </View>
+                    </>
+                  ) : isLeanGenerationService ? (
                     <>
                       <View style={{ gap: 12 }}>
                         <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Generate</Text>
@@ -3035,7 +4289,259 @@ export default function WorkspaceScreen() {
           </View>
         </ScrollView>
 
-        {!isCustomPromptViewOpen ? (
+        {isPaintService && paintTutorialOpen ? (
+          <View
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 38,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(0,0,0,0.66)",
+              paddingHorizontal: 24,
+            }}
+          >
+            <View
+              style={{
+                width: "100%",
+                maxWidth: 360,
+                borderRadius: 28,
+                borderWidth: 1,
+                borderColor: "rgba(255,255,255,0.1)",
+                backgroundColor: "#09090b",
+                paddingHorizontal: 18,
+                paddingVertical: 18,
+                gap: 16,
+              }}
+            >
+              <View style={{ gap: 6 }}>
+                <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Paint Tutorial</Text>
+                <Text style={{ color: "#a1a1aa", fontSize: 14, lineHeight: 21 }}>
+                  Draw directly over the wall or surface you want to recolor. Use the eraser if you overshoot before continuing.
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  height: 184,
+                  overflow: "hidden",
+                  borderRadius: 22,
+                  borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.08)",
+                  backgroundColor: "#111114",
+                }}
+              >
+                <LinearGradient
+                  colors={["#f5f5f4", "#e7e5e4"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{ position: "absolute", left: 18, right: 18, top: 18, bottom: 18, borderRadius: 18 }}
+                />
+                <MotiView
+                  animate={{ translateX: [-84, 34, -84] }}
+                  transition={{ duration: 2200, loop: true }}
+                  style={{
+                    position: "absolute",
+                    left: 56,
+                    top: 92,
+                    height: 14,
+                    width: 88,
+                    borderRadius: 999,
+                    backgroundColor: "#ff000066",
+                  }}
+                />
+                <MotiView
+                  animate={{ translateX: [-62, 54, -62], translateY: [18, -2, 18] }}
+                  transition={{ duration: 2200, loop: true }}
+                  style={{
+                    position: "absolute",
+                    left: 50,
+                    top: 94,
+                    height: 34,
+                    width: 34,
+                    borderRadius: 999,
+                    borderWidth: 2,
+                    borderColor: "rgba(255,255,255,0.14)",
+                    backgroundColor: "rgba(10,10,10,0.86)",
+                  }}
+                />
+              </View>
+
+              <LuxPressable onPress={handleDismissPaintTutorial} className="cursor-pointer" style={{ width: "100%" }}>
+                <LinearGradient
+                  colors={["#d946ef", "#4f46e5"]}
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={{
+                    minHeight: 56,
+                    borderRadius: 20,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700" }}>Got it!</Text>
+                </LinearGradient>
+              </LuxPressable>
+            </View>
+          </View>
+        ) : null}
+
+        {isPaintService && paintColorPickerOpen ? (
+          <View
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 39,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(0,0,0,0.72)",
+              paddingHorizontal: 20,
+            }}
+          >
+            <View
+              style={{
+                width: "100%",
+                maxWidth: 380,
+                borderRadius: 28,
+                borderWidth: 1,
+                borderColor: "rgba(255,255,255,0.1)",
+                backgroundColor: "#09090b",
+                paddingHorizontal: 18,
+                paddingVertical: 18,
+                gap: 16,
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <View>
+                  <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Color Picker</Text>
+                  <Text style={{ color: "#a1a1aa", fontSize: 13, marginTop: 4 }}>Choose the new paint tone for the masked surface.</Text>
+                </View>
+                <LuxPressable onPress={handleClosePaintColorPicker} className="cursor-pointer" style={{ height: 40, width: 40, alignItems: "center", justifyContent: "center", borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)" }}>
+                  <Close color="#ffffff" size={18} strokeWidth={2.1} />
+                </LuxPressable>
+              </View>
+
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+                {PAINT_COLOR_SWATCHES.map((swatch) => {
+                  const active = paintColorDraft.toLowerCase() === swatch.value.toLowerCase();
+                  return (
+                    <LuxPressable
+                      key={swatch.id}
+                      onPress={() => handleSelectPaintSwatch(swatch.value)}
+                      className="cursor-pointer"
+                      style={{
+                        width: "22%",
+                        minWidth: 68,
+                        borderRadius: 18,
+                        borderWidth: 1,
+                        borderColor: active ? "rgba(217,70,239,0.32)" : "rgba(255,255,255,0.08)",
+                        backgroundColor: active ? "rgba(217,70,239,0.1)" : "rgba(255,255,255,0.03)",
+                        paddingHorizontal: 8,
+                        paddingVertical: 10,
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <View style={{ height: 26, width: 26, borderRadius: 999, backgroundColor: swatch.value, borderWidth: 1, borderColor: "rgba(255,255,255,0.16)" }} />
+                      <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "600", textAlign: "center" }} numberOfLines={2}>{swatch.label}</Text>
+                    </LuxPressable>
+                  );
+                })}
+              </View>
+
+              <View style={{ gap: 8 }}>
+                <Text style={{ color: "#d4d4d8", fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 }}>Custom Hex</Text>
+                <TextInput
+                  value={paintColorDraft}
+                  onChangeText={setPaintColorDraft}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  placeholder="#D946EF"
+                  placeholderTextColor="#71717a"
+                  style={{
+                    borderRadius: 18,
+                    borderWidth: 1,
+                    borderColor: "rgba(255,255,255,0.1)",
+                    backgroundColor: "rgba(255,255,255,0.03)",
+                    color: "#ffffff",
+                    paddingHorizontal: 14,
+                    paddingVertical: 14,
+                    fontSize: 15,
+                    fontWeight: "600",
+                  }}
+                />
+              </View>
+
+              <LuxPressable onPress={handleApplyPaintColor} className="cursor-pointer" style={{ width: "100%" }}>
+                <LinearGradient colors={["#d946ef", "#4f46e5"]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ minHeight: 54, borderRadius: 20, alignItems: "center", justifyContent: "center" }}>
+                  <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700" }}>Apply Color</Text>
+                </LinearGradient>
+              </LuxPressable>
+            </View>
+          </View>
+        ) : null}
+
+        {isPaintService && paintSurfacePickerOpen ? (
+          <View
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 39,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(0,0,0,0.72)",
+              paddingHorizontal: 20,
+            }}
+          >
+            <View
+              style={{
+                width: "100%",
+                maxWidth: 340,
+                borderRadius: 28,
+                borderWidth: 1,
+                borderColor: "rgba(255,255,255,0.1)",
+                backgroundColor: "#09090b",
+                paddingHorizontal: 18,
+                paddingVertical: 18,
+                gap: 12,
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Surface Type</Text>
+                <LuxPressable onPress={() => setPaintSurfacePickerOpen(false)} className="cursor-pointer" style={{ height: 40, width: 40, alignItems: "center", justifyContent: "center", borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)" }}>
+                  <Close color="#ffffff" size={18} strokeWidth={2.1} />
+                </LuxPressable>
+              </View>
+
+              {PAINT_SURFACE_OPTIONS.map((option) => {
+                const active = paintSurface === option.value;
+                return (
+                  <LuxPressable
+                    key={option.value}
+                    onPress={() => handleSelectPaintSurface(option.value)}
+                    className="cursor-pointer"
+                    style={{
+                      borderRadius: 18,
+                      borderWidth: 1,
+                      borderColor: active ? "rgba(217,70,239,0.32)" : "rgba(255,255,255,0.08)",
+                      backgroundColor: active ? "rgba(217,70,239,0.1)" : "rgba(255,255,255,0.03)",
+                      paddingHorizontal: 14,
+                      paddingVertical: 14,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "600" }}>{option.label}</Text>
+                    {active ? <Check color="#d946ef" size={16} strokeWidth={2.2} /> : null}
+                  </LuxPressable>
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
+
+        {showContinueBar ? (
         <View
           className="absolute inset-x-0 bottom-0 px-5 pt-4"
           style={{
@@ -3374,6 +4880,17 @@ export default function WorkspaceScreen() {
     const beforeImageUrl = activeBoardItem ? activeBoardItem.originalImageUrl ?? editorImageUrl : selectedImage?.uri ?? editorImageUrl;
     const editorStyleLabel = activeBoardItem?.styleLabel ?? selectedStyle ?? "Custom";
     const editorRoomLabel = activeBoardItem?.roomLabel ?? selectedRoom ?? serviceLabel;
+    const showSliderComparison = Boolean(editorImageUrl && beforeImageUrl);
+    const isEditorProcessing = activeBoardItem?.status === "processing";
+    const isEditorFailed = activeBoardItem?.status === "failed";
+    const editorTitle = isFloorService ? "Floor Restyle" : editorStyleLabel + " " + editorRoomLabel;
+    const editorSubtitle = isFloorService
+      ? isEditorProcessing
+        ? "Gemini 3.1 is rendering your floor redesign in place."
+        : "Prompt-driven flooring transformation with a live before and after slider."
+      : "Curated inside your premium Darkor board.";
+    const editorImageSource = editorImageUrl ? { uri: editorImageUrl } : null;
+    const beforeImageSource = beforeImageUrl ? { uri: beforeImageUrl } : null;
 
     if (!activeBoardItem) {
       return (
@@ -3453,7 +4970,7 @@ export default function WorkspaceScreen() {
           <MotiView from={{ opacity: 0, scale: 0.96, translateY: 18 }} animate={{ opacity: 1, scale: 1, translateY: 0 }} transition={LUX_SPRING}>
             <View className="overflow-hidden rounded-[34px] border border-white/10 bg-zinc-950" style={{ borderWidth: 0.5 }}>
               <View ref={imageContainerRef} collapsable={false} onLayout={handleSliderLayout} className="relative h-[460px] w-full">
-                {editorImageUrl && beforeImageUrl ? (
+                {showSliderComparison && beforeImageSource && editorImageSource ? (
                   <MotiView
                     key={editorImageUrl}
                     from={{ opacity: 0, scale: 0.985 }}
@@ -3461,7 +4978,7 @@ export default function WorkspaceScreen() {
                     transition={LUX_SPRING}
                     className="h-full w-full"
                   >
-                    <Image source={{ uri: beforeImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+                    <Image source={beforeImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
                     <Animated.View
                       style={[
                         {
@@ -3474,7 +4991,7 @@ export default function WorkspaceScreen() {
                         afterImageStyle,
                       ]}
                     >
-                      <Image source={{ uri: editorImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+                      <Image source={editorImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
                     </Animated.View>
                     <GestureDetector gesture={sliderGesture}>
                       <Animated.View
@@ -3505,8 +5022,10 @@ export default function WorkspaceScreen() {
                       </Animated.View>
                     </GestureDetector>
                   </MotiView>
-                ) : editorImageUrl ? (
-                  <Image source={{ uri: editorImageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+                ) : beforeImageSource ? (
+                  <Image source={beforeImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+                ) : editorImageSource ? (
+                  <Image source={editorImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
                 ) : (
                   <View className="h-full w-full items-center justify-center bg-zinc-900">
                     <Sparkles color="#71717a" size={28} />
@@ -3519,9 +5038,91 @@ export default function WorkspaceScreen() {
                     <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85">Before</Text>
                   </View>
                   <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
-                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85">After</Text>
+                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85">
+                      {showSliderComparison ? "After" : isEditorProcessing ? "Rendering" : "Preview"}
+                    </Text>
                   </View>
                 </View>
+
+                {isEditorProcessing ? (
+                  <View
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      paddingHorizontal: 28,
+                    }}
+                  >
+                    <MotiView
+                      animate={{ scale: [0.92, 1.08, 0.92], opacity: [0.14, 0.28, 0.14] }}
+                      transition={{ duration: 2100, loop: true }}
+                      style={{
+                        position: "absolute",
+                        height: 210,
+                        width: 210,
+                        borderRadius: 999,
+                        backgroundColor: "rgba(217,70,239,0.14)",
+                      }}
+                    />
+                    <MotiView
+                      animate={{ translateY: ["-22%", "110%"], opacity: [0, 0.28, 0] }}
+                      transition={{ duration: 1800, loop: true }}
+                      style={{
+                        position: "absolute",
+                        left: 18,
+                        right: 18,
+                        height: 120,
+                        borderRadius: 28,
+                        backgroundColor: "rgba(217,70,239,0.08)",
+                        borderWidth: 1,
+                        borderColor: "rgba(255,255,255,0.08)",
+                      }}
+                    />
+                    <View
+                      style={{
+                        borderRadius: 28,
+                        borderWidth: 1,
+                        borderColor: "rgba(255,255,255,0.12)",
+                        backgroundColor: "rgba(0,0,0,0.58)",
+                        paddingHorizontal: 24,
+                        paddingVertical: 20,
+                        alignItems: "center",
+                        gap: 12,
+                      }}
+                    >
+                      <ActivityIndicator size="small" color="#ffffff" />
+                      <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", textAlign: "center" }}>
+                        Rendering redesigned floor...
+                      </Text>
+                      <Text style={{ color: "#d4d4d8", fontSize: 13, lineHeight: 20, textAlign: "center" }}>
+                        Your result will appear here automatically with the 3D slider as soon as Gemini finishes.
+                      </Text>
+                    </View>
+                  </View>
+                ) : null}
+
+                {isEditorFailed ? (
+                  <View
+                    style={{
+                      position: "absolute",
+                      left: 18,
+                      right: 18,
+                      bottom: 18,
+                      borderRadius: 24,
+                      borderWidth: 1,
+                      borderColor: "rgba(255,255,255,0.08)",
+                      backgroundColor: "rgba(10,10,10,0.82)",
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                    }}
+                  >
+                    <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>Generation failed</Text>
+                    <Text style={{ color: "#a1a1aa", fontSize: 13, lineHeight: 20, marginTop: 4 }}>
+                      {activeBoardItem?.errorMessage ?? "Please go back and try another prompt."}
+                    </Text>
+                  </View>
+                ) : null}
 
                 {!canRemoveWatermark ? (
                   <View className="absolute bottom-5 right-4">
@@ -3553,8 +5154,8 @@ export default function WorkspaceScreen() {
           </MotiView>
 
           <View className="mt-5">
-            <Text className="text-lg font-semibold text-white">{editorStyleLabel + " " + editorRoomLabel}</Text>
-            <Text className="mt-1 text-sm text-zinc-400">Curated inside your premium Darkor board.</Text>
+            <Text className="text-lg font-semibold text-white">{editorTitle}</Text>
+            <Text className="mt-1 text-sm text-zinc-400">{editorSubtitle}</Text>
           </View>
 
           <View className="mt-6 flex-row gap-4">
@@ -3565,6 +5166,7 @@ export default function WorkspaceScreen() {
                 icon: Download,
                 onPress: canExport4k ? handleDownloadUltra : handleDownloadStandard,
                 loading: canExport4k ? isDownloadingUltra : isDownloadingStandard,
+                disabled: !editorImageUrl || isEditorProcessing || isEditorFailed,
               },
               {
                 id: "share",
@@ -3572,14 +5174,15 @@ export default function WorkspaceScreen() {
                 icon: Send,
                 onPress: handleShare,
                 loading: isSharingResult,
+                disabled: !editorImageUrl || isEditorProcessing || isEditorFailed,
               },
             ].map((action) => {
               const Icon = action.icon;
               return (
-                <LuxPressable key={action.id} onPress={action.onPress} disabled={action.loading} className="cursor-pointer flex-1">
+                <LuxPressable key={action.id} onPress={action.onPress} disabled={action.loading || action.disabled} className="cursor-pointer flex-1">
                   <View
                     className="flex-row items-center justify-center gap-3 rounded-[22px] border border-white/10 bg-zinc-950 px-5 py-4"
-                    style={{ borderWidth: 0.5, opacity: action.loading ? 0.72 : 1 }}
+                    style={{ borderWidth: 0.5, opacity: action.loading || action.disabled ? 0.52 : 1 }}
                   >
                     {action.loading ? <ActivityIndicator color="#ffffff" /> : <Icon color="#ffffff" size={20} strokeWidth={2.1} />}
                     <Text className="text-base font-semibold text-white">{action.label}</Text>

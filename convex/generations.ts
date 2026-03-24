@@ -181,6 +181,17 @@ function buildGenerationPrompt(args: {
     ? "Create a fresh alternate variation while preserving the same room type, camera framing, and overall architectural shell."
     : undefined;
 
+  if (args.modeLabel === "Masked Paint Edit") {
+    return [
+      customPrompt ?? `Inpaint this image. Change the color of the masked area to ${args.colorPalette} on a ${args.roomType.toLowerCase()} texture. Maintain realism and lighting.`,
+      modeHint ?? "Only repaint the masked region. Preserve all unmasked objects, geometry, furniture, shadows, and lighting exactly as they appear in the source image.",
+      `Return a photorealistic edited image in a ${args.aspectRatio} frame.`,
+      args.regenerate ? "Create a fresh alternate recolor while preserving the same masked region and composition." : undefined,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
   return [
     `Transform this ${args.roomType} into a ${args.style} design.`,
     `Mode: ${args.modeLabel}.`,
