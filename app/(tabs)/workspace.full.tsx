@@ -24,6 +24,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
   useWindowDimensions,
 } from "react-native";
@@ -619,6 +620,26 @@ function getServiceType(serviceKey: string) {
   return "interior";
 }
 
+function getPromptBlocks(value: string) {
+  return value
+    .split(/\n+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function togglePromptBlock(value: string, block: string) {
+  const nextBlocks = getPromptBlocks(value);
+  const existingIndex = nextBlocks.indexOf(block);
+
+  if (existingIndex >= 0) {
+    nextBlocks.splice(existingIndex, 1);
+    return nextBlocks.join("\n\n");
+  }
+
+  nextBlocks.push(block);
+  return nextBlocks.join("\n\n");
+}
+
 async function readBase64FromUri(uri: string) {
   if (uri.startsWith("file://")) {
     return await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
@@ -696,6 +717,7 @@ export default function WorkspaceScreen() {
   const [selectedModeId, setSelectedModeId] = useState<ModeOption["id"] | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [customPromptDraft, setCustomPromptDraft] = useState("");
+  const [isCustomPromptViewOpen, setIsCustomPromptViewOpen] = useState(false);
   const [selectedPaletteId, setSelectedPaletteId] = useState<string | null>(null);
   const [selectedAspectRatioId, setSelectedAspectRatioId] = useState<AspectRatioOption["id"]>("post");
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
@@ -720,11 +742,12 @@ export default function WorkspaceScreen() {
   const [showResumeToast, setShowResumeToast] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
   const [pendingReviewState, setPendingReviewState] = useState<{ count: number; shouldPrompt: boolean } | null>(null);
+  const [wizardNavDirection, setWizardNavDirection] = useState<1 | -1>(1);
+  const [isHeaderClosePressed, setIsHeaderClosePressed] = useState(false);
 
   const reviewSheetRef = useRef<BottomSheetModal>(null);
   const rateSheetRef = useRef<BottomSheetModal>(null);
   const feedbackSheetRef = useRef<BottomSheetModal>(null);
-  const customPromptSheetRef = useRef<BottomSheetModal>(null);
   const imageContainerRef = useRef<View>(null);
   const hasAppliedStartStepRef = useRef(false);
   const reviewHandledRef = useRef(false);
@@ -740,7 +763,6 @@ export default function WorkspaceScreen() {
   const reviewSnapPoints = useMemo(() => ["38%"], []);
   const rateSnapPoints = useMemo(() => ["36%"], []);
   const feedbackSnapPoints = useMemo(() => [isSmallScreen ? "95%" : "58%"], [isSmallScreen]);
-  const customPromptSnapPoints = useMemo(() => [isSmallScreen ? "90%" : "74%"], [isSmallScreen]);
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = getServiceType(serviceKey);
   const serviceLabel = SERVICE_LABELS[serviceType] ?? "Interior Redesign";
@@ -1230,14 +1252,17 @@ export default function WorkspaceScreen() {
       return;
     }
     if (workflowStep === 5) {
+      setWizardNavDirection(-1);
       setWorkflowStep(3);
       return;
     }
+    setWizardNavDirection(-1);
     setWorkflowStep((prev) => Math.max(prev - 1, 0));
   }, [router, workflowStep]);
 
   const handleResetWizard = useCallback(() => {
     triggerHaptic();
+    setWizardNavDirection(-1);
     setDraftImage(null);
     setDraftRoom(null);
     setDraftStyle(null);
@@ -1267,7 +1292,7 @@ export default function WorkspaceScreen() {
     setIsLoadingExample(null);
     setIsSelectingPhoto(false);
     setCustomPromptDraft("");
-    customPromptSheetRef.current?.dismiss();
+    setIsCustomPromptViewOpen(false);
     setReviewPromptOpen(false);
     setRatePromptOpen(false);
     setFeedbackOpen(false);
@@ -1276,12 +1301,7 @@ export default function WorkspaceScreen() {
 
   const handleCloseWizard = useCallback(() => {
     handleResetWizard();
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-    router.replace("/workspace");
-  }, [handleResetWizard, router]);
+  }, [handleResetWizard]);
 
   const cleanupTempFile = useCallback(async (uri: string | null | undefined) => {
     if (!uri) {
@@ -1519,11 +1539,12 @@ export default function WorkspaceScreen() {
       setWorkflowStep(4);
 
       const sourceStorageId = await uploadSelectedImageToStorage(selectedImage);
+      const activeCustomPrompt = selectedStyle === "Custom" && customPrompt.trim().length > 0 ? customPrompt.trim() : undefined;
       const startResult = (await startGeneration({
         sourceStorageId,
         roomType: selectedRoom,
         style: selectedStyle,
-        customPrompt: customPrompt.trim().length > 0 ? customPrompt.trim() : undefined,
+        customPrompt: activeCustomPrompt,
         aspectRatio: ratioSpec.ratioLabel,
         colorPalette: selectedPalette.label,
         modeLabel: selectedMode.title,
@@ -1607,6 +1628,7 @@ export default function WorkspaceScreen() {
       return;
     }
 
+    setWizardNavDirection(1);
     startTransition(() => {
       setWorkflowStep((prev) => Math.min(prev + 1, 3));
     });
@@ -1617,10 +1639,10 @@ export default function WorkspaceScreen() {
     setSelectedRoom((current) => (current === value ? null : value));
   }, []);
 
-  const handleOpenCustomStyle = useCallback(() => {
+  const handleCloseCustomStyle = useCallback(() => {
     triggerHaptic();
+    setIsCustomPromptViewOpen(false);
     setCustomPromptDraft(customPrompt);
-    customPromptSheetRef.current?.present();
   }, [customPrompt]);
 
   const handleClearCustomPromptDraft = useCallback(() => {
@@ -1636,38 +1658,34 @@ export default function WorkspaceScreen() {
     }
 
     triggerHaptic();
+    setWizardNavDirection(1);
     startTransition(() => {
       setCustomPrompt(trimmed);
       setSelectedStyle("Custom");
+      setIsCustomPromptViewOpen(false);
+      setWorkflowStep(3);
     });
-    customPromptSheetRef.current?.dismiss();
   }, [customPromptDraft]);
 
   const handleSelectStyle = useCallback((value: string) => {
     triggerHaptic();
+    if (value === "Custom") {
+      setCustomPromptDraft(customPrompt);
+      setIsCustomPromptViewOpen(true);
+      return;
+    }
     startTransition(() => {
-      setSelectedStyle(value);
-      if (value === "Custom") {
-        setCustomPromptDraft(customPrompt);
-      }
+      setSelectedStyle((current) => (current === value ? null : value));
     });
   }, [customPrompt]);
 
   const handleChangeCustomPrompt = useCallback((value: string) => {
-    setCustomPrompt(value);
     setCustomPromptDraft(value);
-    if (selectedStyle !== "Custom") {
-      setSelectedStyle("Custom");
-    }
-  }, [selectedStyle]);
+  }, []);
 
   const handleSelectCustomPromptExample = useCallback((value: string) => {
     triggerHaptic();
-    startTransition(() => {
-      setSelectedStyle("Custom");
-      setCustomPrompt(value);
-      setCustomPromptDraft(value);
-    });
+    setCustomPromptDraft((current) => togglePromptBlock(current, value));
   }, []);
 
   const handleSelectPalette = useCallback((value: string) => {
@@ -1849,6 +1867,7 @@ export default function WorkspaceScreen() {
     const currentStepNumber = workflowStep + 1;
     const isFinalWizardStep = workflowStep === 3;
     const isPhotoStep = workflowStep === 0;
+    const isStyleStep = workflowStep === 2;
     const isTabbedWorkspaceRoute = pathname === "/workspace";
     const displayedSelectedImage = selectedImage;
     const hasSelectedPhoto = Boolean(selectedImage);
@@ -1882,6 +1901,7 @@ export default function WorkspaceScreen() {
     const isContinueActive = canContinue && !(isFinalWizardStep && generationBlocked) && !isContinueDisabled;
     const shouldPulseContinue = isPhotoStep ? isContinueActive : false;
     const continueButtonOpacity = isContinueActive ? 1 : 0.58;
+    const selectedCustomPromptBlocks = new Set(getPromptBlocks(customPromptDraft));
     const continueLabel = isPhotoStep
       ? "Continue"
       : isFinalWizardStep
@@ -1973,21 +1993,32 @@ export default function WorkspaceScreen() {
                     top: 0,
                     bottom: 0,
                     justifyContent: "center",
-                    opacity: isPhotoStep ? 0 : 1,
                   }}
-                  pointerEvents={isPhotoStep ? "none" : "auto"}
                 >
-                  <LuxPressable
+                  <TouchableOpacity
                     onPress={handleCloseWizard}
-                    className="cursor-pointer h-11 w-11 items-center justify-center rounded-full"
-                    style={{
-                      borderWidth: 0.5,
-                      borderColor: headerButtonBorderColor,
-                      backgroundColor: headerButtonBackgroundColor,
-                    }}
+                    onPressIn={() => setIsHeaderClosePressed(true)}
+                    onPressOut={() => setIsHeaderClosePressed(false)}
+                    activeOpacity={0.82}
+                    className="cursor-pointer"
                   >
-                    <Close color={wizardPrimaryTextColor} size={20} strokeWidth={2.2} />
-                  </LuxPressable>
+                    <MotiView
+                      animate={{ scale: isHeaderClosePressed ? 0.94 : 1 }}
+                      transition={{ type: "timing", duration: 140 }}
+                      style={{
+                        height: 44,
+                        width: 44,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: 999,
+                        borderWidth: 0.5,
+                        borderColor: headerButtonBorderColor,
+                        backgroundColor: headerButtonBackgroundColor,
+                      }}
+                    >
+                      <Close color={wizardPrimaryTextColor} size={20} strokeWidth={2.2} />
+                    </MotiView>
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -2022,9 +2053,9 @@ export default function WorkspaceScreen() {
             <AnimatePresence exitBeforeEnter>
               <MotiView
                 key={`wizard-step-${workflowStep}`}
-                from={{ opacity: 0, translateX: 18, scale: 0.99 }}
+                from={{ opacity: 0, translateX: wizardNavDirection === 1 ? 18 : -18, scale: 0.99 }}
                 animate={{ opacity: 1, translateX: 0, scale: 1 }}
-                exit={{ opacity: 0, translateX: -14, scale: 0.99 }}
+                exit={{ opacity: 0, translateX: wizardNavDirection === 1 ? -14 : 14, scale: 0.99 }}
                 transition={stepTransition}
                 style={isPhotoStep ? { flex: 1, minHeight: stepContentMinHeight, gap: 24 } : { gap: 24 }}
               >
@@ -2376,35 +2407,6 @@ export default function WorkspaceScreen() {
                         );
                       })}
                     </View>
-
-                    {selectedStyle === "Custom" ? (
-                      <View className="overflow-hidden rounded-[28px] border" style={{ borderWidth: 1, borderColor: wizardSurfaceBorderColor, backgroundColor: wizardSurfaceColor }}>
-                        <View style={{ padding: 18, gap: 14 }}>
-                          <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700" }}>Custom Prompt</Text>
-                          <View className="rounded-[22px] border px-4 py-4" style={{ borderWidth: 1, borderColor: wizardSurfaceBorderColor, backgroundColor: "rgba(255,255,255,0.03)" }}>
-                            <TextInput
-                              value={customPrompt}
-                              onChangeText={handleChangeCustomPrompt}
-                              multiline
-                              placeholder="Describe the look you want, key materials, lighting, furniture direction, and standout features."
-                              placeholderTextColor="#71717a"
-                              textAlignVertical="top"
-                              style={{ color: "#ffffff", fontSize: 15, lineHeight: 24, minHeight: 132 }}
-                            />
-                          </View>
-                          <View style={{ gap: 10 }}>
-                            <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>Example Prompts</Text>
-                            <View style={{ gap: 10 }}>
-                              {CUSTOM_STYLE_EXAMPLE_PROMPTS.map((prompt) => (
-                                <LuxPressable key={prompt} onPress={() => handleSelectCustomPromptExample(prompt)} className="cursor-pointer rounded-[20px] border px-4 py-4" style={{ borderWidth: 1, borderColor: wizardSurfaceBorderColor, backgroundColor: "rgba(255,255,255,0.03)" }}>
-                                  <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>{prompt}</Text>
-                                </LuxPressable>
-                              ))}
-                            </View>
-                          </View>
-                        </View>
-                      </View>
-                    ) : null}
                   </>
                 ) : null}
 
@@ -2494,6 +2496,7 @@ export default function WorkspaceScreen() {
           </View>
         </ScrollView>
 
+        {!isCustomPromptViewOpen ? (
         <View
           className="absolute inset-x-0 bottom-0 px-5 pt-4"
           style={{
@@ -2607,84 +2610,171 @@ export default function WorkspaceScreen() {
             </MotiView>
           </View>
         </View>
+        ) : null}
 
-        <BottomSheetModal
-          ref={customPromptSheetRef}
-          snapPoints={customPromptSnapPoints}
-          enablePanDownToClose
-          backdropComponent={GlassBackdrop}
-          backgroundStyle={{ backgroundColor: "#050505" }}
-          handleIndicatorStyle={{ backgroundColor: "rgba(255,255,255,0.4)" }}
-        >
-          <View className="flex-1 px-5 pb-8 pt-2">
-            <View className="flex-row items-start justify-between gap-4">
-              <View className="flex-1">
-                <Text className="text-xl font-semibold text-white">Custom Style Prompt</Text>
-                <Text className="mt-2 text-sm leading-6 text-zinc-400">Direct the redesign with your own materials, mood, furniture language, lighting cues, and standout details.</Text>
-              </View>
-              <LuxPressable
-                onPress={() => customPromptSheetRef.current?.dismiss()}
-                className="cursor-pointer h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5"
-                style={{ borderWidth: 0.5 }}
+        <AnimatePresence>
+          {isCustomPromptViewOpen && isStyleStep ? (
+            <MotiView
+              key="custom-prompt-view"
+              from={{ opacity: 0, translateX: 22 }}
+              animate={{ opacity: 1, translateX: 0 }}
+              exit={{ opacity: 0, translateX: 18 }}
+              transition={LUX_SPRING}
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 40,
+                backgroundColor: "#000000",
+              }}
+            >
+              <View
+                style={{
+                  flex: 1,
+                  paddingTop: Math.max(insets.top + 16, 26),
+                  paddingBottom: Math.max(insets.bottom + bottomBarOffset + 20, bottomBarOffset + 32),
+                }}
               >
-                <Close color="#f4f4f5" size={16} strokeWidth={2.2} />
-              </LuxPressable>
-            </View>
+                <ScrollView
+                  style={{ flex: 1 }}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 160, gap: 22 }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+                    <Text style={{ color: "#ffffff", fontSize: 28, fontWeight: "800", letterSpacing: -0.8 }}>Custom Prompt</Text>
+                    <TouchableOpacity onPress={handleCloseCustomStyle} activeOpacity={0.82} className="cursor-pointer">
+                      <MotiView
+                        animate={{ scale: 1 }}
+                        style={{
+                          height: 42,
+                          width: 42,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: 999,
+                          borderWidth: 0.5,
+                          borderColor: "rgba(255,255,255,0.12)",
+                          backgroundColor: "rgba(255,255,255,0.04)",
+                        }}
+                      >
+                        <Close color="#ffffff" size={18} strokeWidth={2.2} />
+                      </MotiView>
+                    </TouchableOpacity>
+                  </View>
 
-            <View className="mt-5 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03]" style={{ borderWidth: 0.5 }}>
-              <View style={{ minHeight: 220, padding: 18 }}>
-                <View className="mb-3 flex-row items-center justify-between">
-                  <Text className="text-xs font-semibold uppercase tracking-[2px] text-zinc-500">Design Brief</Text>
-                  {customPromptDraft.length > 0 ? (
-                    <LuxPressable onPress={handleClearCustomPromptDraft} className="cursor-pointer h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5" style={{ borderWidth: 0.5 }}>
-                      <Close color="#f4f4f5" size={14} strokeWidth={2.3} />
-                    </LuxPressable>
-                  ) : null}
-                </View>
-                <TextInput
-                  value={customPromptDraft}
-                  onChangeText={setCustomPromptDraft}
-                  multiline
-                  placeholder="Example: Turn this into a warm luxury living room with curved seating, walnut wall panels, smoked brass lighting, and a dramatic stone fireplace focal point."
-                  placeholderTextColor="#71717a"
-                  textAlignVertical="top"
-                  style={{ color: "#ffffff", fontSize: 15, lineHeight: 24, minHeight: 156 }}
-                />
-              </View>
-            </View>
+                  <View style={{ gap: 12 }}>
+                    <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700" }}>Enter Prompt</Text>
+                    <View
+                      style={{
+                        minHeight: 230,
+                        borderRadius: 28,
+                        borderWidth: 1,
+                        borderColor: "rgba(255,255,255,0.1)",
+                        backgroundColor: "rgba(255,255,255,0.04)",
+                        paddingHorizontal: 18,
+                        paddingTop: 18,
+                        paddingBottom: 18,
+                      }}
+                    >
+                      <TextInput
+                        value={customPromptDraft}
+                        onChangeText={handleChangeCustomPrompt}
+                        multiline
+                        placeholder="Design a cinematic minimalist living room with sculptural furniture, warm indirect lighting, walnut panels, and a soft limestone palette."
+                        placeholderTextColor="#71717a"
+                        textAlignVertical="top"
+                        style={{
+                          color: "#ffffff",
+                          fontSize: 15,
+                          lineHeight: 24,
+                          minHeight: 176,
+                          paddingRight: 42,
+                        }}
+                      />
+                      {customPromptDraft.length > 0 ? (
+                        <Pressable
+                          onPress={handleClearCustomPromptDraft}
+                          className="cursor-pointer"
+                          style={{
+                            position: "absolute",
+                            right: 14,
+                            top: 14,
+                            height: 32,
+                            width: 32,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: "rgba(255,255,255,0.08)",
+                            backgroundColor: "rgba(255,255,255,0.05)",
+                          }}
+                        >
+                          <Close color="#ffffff" size={14} strokeWidth={2.2} />
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  </View>
 
-            <View className="mt-6 gap-3">
-              <Text className="text-sm font-semibold text-white">Example Prompts</Text>
-              <View className="gap-3">
-                {CUSTOM_STYLE_EXAMPLE_PROMPTS.map((prompt) => (
-                  <LuxPressable
-                    key={prompt}
-                    onPress={() => setCustomPromptDraft(prompt)}
-                    className="cursor-pointer rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4"
-                    style={{ borderWidth: 0.5 }}
-                  >
-                    <Text className="text-sm leading-6 text-zinc-200">{prompt}</Text>
+                  <View style={{ gap: 12 }}>
+                    <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700" }}>Example Prompts</Text>
+                    <View style={{ gap: 10 }}>
+                      {CUSTOM_STYLE_EXAMPLE_PROMPTS.map((prompt) => {
+                        const active = selectedCustomPromptBlocks.has(prompt);
+                        return (
+                          <LuxPressable
+                            key={prompt}
+                            onPress={() => handleSelectCustomPromptExample(prompt)}
+                            className="cursor-pointer rounded-[22px] border px-4 py-4"
+                            style={{
+                              borderWidth: 1,
+                              borderColor: active ? "rgba(217,70,239,0.4)" : "rgba(255,255,255,0.1)",
+                              backgroundColor: active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
+                            }}
+                          >
+                            <Text style={{ color: active ? "#f5d0fe" : "#e4e4e7", fontSize: 14, lineHeight: 22 }}>
+                              {prompt}
+                            </Text>
+                          </LuxPressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                </ScrollView>
+
+                <View
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    paddingHorizontal: 20,
+                    paddingTop: 14,
+                    paddingBottom: Math.max(insets.bottom + bottomBarOffset + 12, bottomBarOffset + 24),
+                    borderTopWidth: 1,
+                    borderTopColor: "rgba(255,255,255,0.06)",
+                    backgroundColor: "#000000",
+                  }}
+                >
+                  <LuxPressable onPress={handleApplyCustomPrompt} className="cursor-pointer" style={{ width: "100%" }}>
+                    <LinearGradient
+                      colors={["#d946ef", "#4f46e5"]}
+                      start={{ x: 0, y: 0.5 }}
+                      end={{ x: 1, y: 0.5 }}
+                      style={{
+                        width: "100%",
+                        minHeight: 62,
+                        borderRadius: 24,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        paddingHorizontal: 20,
+                      }}
+                    >
+                      <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700", textAlign: "center" }}>Save</Text>
+                    </LinearGradient>
                   </LuxPressable>
-                ))}
-              </View>
-            </View>
-
-            <LuxPressable onPress={handleApplyCustomPrompt} className="cursor-pointer mt-6">
-              <LinearGradient
-                colors={["#d946ef", "#6366f1"]}
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-                className="rounded-[24px]"
-                style={{ minHeight: 58 }}
-              >
-                <View className="flex-1 flex-row items-center justify-center gap-3">
-                  <Text className="text-[16px] font-semibold text-white">Apply Custom Style</Text>
-                  <ArrowRight color="#ffffff" size={18} strokeWidth={2.3} />
                 </View>
-              </LinearGradient>
-            </LuxPressable>
-          </View>
-        </BottomSheetModal>
+              </View>
+            </MotiView>
+          ) : null}
+        </AnimatePresence>
 
       </View>
     );
