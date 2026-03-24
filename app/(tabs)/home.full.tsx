@@ -1,6 +1,5 @@
 import { useAuth } from "@clerk/expo";
 import { useMutation, useQuery } from "convex/react";
-import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -8,13 +7,13 @@ import { VideoView, useVideoPlayer } from "expo-video";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Platform, StyleSheet, Text, View, type ViewToken, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Gem } from "lucide-react-native";
+import { ArrowUpRight, Gem } from "lucide-react-native";
 
 import { LuxPressable } from "../../components/lux-pressable";
 import { triggerHaptic } from "../../lib/haptics";
 
 const VIEWABILITY_CONFIG = {
-  itemVisiblePercentThreshold: 65,
+  itemVisiblePercentThreshold: 62,
   minimumViewTime: 180,
 };
 
@@ -31,52 +30,44 @@ const SERVICE_CARDS: ServiceCardData[] = [
   {
     id: "interior-design",
     title: "Interior Design",
-    subtitle: "Upload a room, choose a style, and let AI restage it in seconds.",
-    video: require("../../assets/videos/media-wall.mp4"),
-    poster: require("../../assets/media/empty-room.jpg"),
+    subtitle: "Luxury suite redesigns with premium material realism.",
+    video: require("../../assets/videos/master-suite.mp4"),
+    poster: require("../../assets/media/discover/home/home-master-suite.jpg"),
     serviceParam: "interior",
   },
   {
     id: "exterior-design",
     title: "Exterior Design",
-    subtitle: "Refresh facades, lighting, and curb appeal with a cleaner native flow.",
+    subtitle: "Modern facade studies with sharper curb appeal direction.",
     video: require("../../assets/videos/facade.mp4"),
-    poster: require("../../assets/media/staging-before.jpg"),
+    poster: require("../../assets/media/discover/exterior/exterior-modern-villa.jpg"),
     serviceParam: "facade",
   },
   {
     id: "garden-design",
     title: "Garden Design",
-    subtitle: "Transform patios, yards, and pools without dragging the UI down.",
+    subtitle: "Backyard oasis concepts with lighting, fire, and flow.",
     video: require("../../assets/videos/garden.mp4"),
-    poster: require("../../assets/media/garden-before.jpg"),
+    poster: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
     serviceParam: "garden",
   },
   {
     id: "ai-paint",
     title: "AI Paint",
-    subtitle: "Try fresh wall palettes instantly with a lighter render path.",
+    subtitle: "Wall color transformations tuned for elegant tonal balance.",
     video: require("../../assets/videos/paint.mp4"),
-    poster: require("../../assets/media/staging-before.jpg"),
+    poster: require("../../assets/media/empty-room.jpg"),
     serviceParam: "paint",
   },
   {
     id: "floor-restyle",
     title: "Floor Restyle",
-    subtitle: "Preview new floor materials with faster, mobile-first interactions.",
+    subtitle: "Material swaps from tile to hardwood with cleaner detailing.",
     video: require("../../assets/videos/floor.mp4"),
     poster: require("../../assets/media/sketch.jpg"),
     serviceParam: "floor",
   },
-  {
-    id: "reference-style",
-    title: "Reference Style",
-    subtitle: "Match inspiration looks while keeping the experience responsive.",
-    video: require("../../assets/videos/master-suite.mp4"),
-    poster: require("../../assets/media/after-luxury.jpg"),
-    serviceParam: "reference",
-  },
-];
+] as const;
 
 type CardMediaProps = {
   item: ServiceCardData;
@@ -148,30 +139,36 @@ const ServiceCard = memo(function ServiceCard({ item, height, active, onPress }:
   }, [item, onPress]);
 
   return (
-    <View style={[styles.card, { height }]}> 
+    <View style={[styles.card, { height }]}>
       <CardMedia item={item} active={active} />
       <LinearGradient
-        colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.16)", "rgba(0,0,0,0.74)"]}
-        locations={[0, 0.46, 1]}
+        colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.12)", "rgba(0,0,0,0.44)", "rgba(0,0,0,0.82)"]}
+        locations={[0, 0.42, 0.74, 1]}
         style={StyleSheet.absoluteFillObject}
         pointerEvents="none"
       />
 
-      <View style={styles.cardContent}>
-        <View style={styles.copyBlock}>
-          <Text style={styles.cardTitle}>{item.title}</Text>
-          <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
-        </View>
-
-        <View style={styles.cardFooter}>
-          <View style={styles.liveBadge}>
-            <Text style={styles.liveBadgeText}>{active ? "Live preview" : "Ready"}</Text>
+      <View style={styles.cardFrame}>
+        <View style={styles.cardBottomRow}>
+          <View style={styles.copyBlock}>
+            <Text style={styles.cardTitle}>{item.title}</Text>
+            <Text style={styles.cardSubtitle} numberOfLines={1}>
+              {item.subtitle}
+            </Text>
           </View>
-          <BlurView intensity={70} tint="dark" style={styles.ctaGlass}>
-            <LuxPressable onPress={handlePress} style={styles.ctaButton}>
+
+          <LuxPressable
+            onPress={handlePress}
+            className="cursor-pointer"
+            style={styles.ctaButton}
+            glowColor="rgba(255,255,255,0.08)"
+            scale={0.97}
+          >
+            <View style={styles.ctaInner}>
               <Text style={styles.ctaText}>Try it</Text>
-            </LuxPressable>
-          </BlurView>
+              <ArrowUpRight color="#ffffff" size={15} strokeWidth={2.5} />
+            </View>
+          </LuxPressable>
         </View>
       </View>
     </View>
@@ -192,7 +189,7 @@ export default function HomeScreen() {
     ensureUser({}).catch(() => undefined);
   }, [ensureUser, isSignedIn]);
 
-  const cardHeight = useMemo(() => Math.max(316, Math.min(388, Math.round(width * 0.96))), [width]);
+  const cardHeight = useMemo(() => Math.max(332, Math.min(408, Math.round(width * 0.92))), [width]);
   const diamondCount = isSignedIn ? me?.credits ?? 3 : 3;
 
   const handleServicePress = useCallback(
@@ -230,14 +227,17 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View style={styles.headerTopRow}>
           <View style={styles.headerCopy}>
-            <Text style={styles.eyebrow}>Darkor.ai Premium</Text>
+            <Text style={styles.eyebrow}>Darkor.ai</Text>
             <Text style={styles.title}>Choose Your Transformation</Text>
-            <Text style={styles.subtitle}>
-              Each service is now rendered with mobile-first lifecycle control so the screen stays smooth while you browse.
-            </Text>
           </View>
 
-          <LuxPressable onPress={handleDiamondPress} style={styles.diamondBadge} className="cursor-pointer">
+          <LuxPressable
+            onPress={handleDiamondPress}
+            style={styles.diamondBadge}
+            className="cursor-pointer"
+            glowColor="rgba(125,211,252,0.14)"
+            scale={0.98}
+          >
             <Gem color="#7dd3fc" size={15} strokeWidth={2.1} />
             <Text style={styles.diamondBadgeText}>{diamondCount}</Text>
           </LuxPressable>
@@ -255,12 +255,12 @@ export default function HomeScreen() {
         renderItem={renderItem}
         ListHeaderComponent={header}
         contentContainerStyle={{
-          paddingTop: insets.top + 20,
+          paddingTop: insets.top + 34,
           paddingHorizontal: 16,
           paddingBottom: Math.max(insets.bottom + 120, 136),
-          gap: 20,
+          gap: 24,
         }}
-        ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
+        ItemSeparatorComponent={() => <View style={{ height: 24 }} />}
         showsVerticalScrollIndicator={false}
         initialNumToRender={2}
         maxToRenderPerBatch={2}
@@ -280,21 +280,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#000000",
   },
   header: {
-    marginBottom: 6,
+    marginBottom: 12,
   },
   headerTopRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 14,
+    gap: 16,
   },
   headerCopy: {
     flex: 1,
-    gap: 14,
-    paddingRight: 14,
+    gap: 12,
+    paddingRight: 12,
   },
   eyebrow: {
-    color: "#a1a1aa",
+    color: "#8b8b92",
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 2.6,
@@ -302,26 +302,21 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#ffffff",
-    fontSize: 34,
+    fontSize: 38,
     fontWeight: "800",
-    lineHeight: 40,
-  },
-  subtitle: {
-    color: "#a1a1aa",
-    fontSize: 16,
-    lineHeight: 25,
-    maxWidth: 680,
+    lineHeight: 44,
+    letterSpacing: -1.2,
   },
   diamondBadge: {
-    marginTop: 6,
-    minHeight: 38,
+    marginTop: 8,
+    minHeight: 40,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     borderRadius: 999,
     borderWidth: 0.5,
     borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "#050505",
+    backgroundColor: "rgba(8,8,10,0.92)",
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
@@ -342,70 +337,56 @@ const styles = StyleSheet.create({
   video: {
     ...StyleSheet.absoluteFillObject,
   },
-  cardContent: {
+  cardFrame: {
     flex: 1,
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     paddingHorizontal: 24,
-    paddingTop: 26,
     paddingBottom: 22,
+    paddingTop: 26,
   },
-  copyBlock: {
-    marginTop: "auto",
-    gap: 10,
-    maxWidth: "78%",
-  },
-  cardTitle: {
-    color: "#ffffff",
-    fontSize: 29,
-    fontWeight: "800",
-    lineHeight: 33,
-  },
-  cardSubtitle: {
-    color: "#d4d4d8",
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  cardFooter: {
-    marginTop: 24,
+  cardBottomRow: {
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
+    gap: 14,
   },
-  liveBadge: {
-    borderRadius: 999,
-    borderWidth: 0.5,
-    borderColor: "rgba(255,255,255,0.14)",
-    backgroundColor: "rgba(0,0,0,0.38)",
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+  copyBlock: {
+    flex: 1,
+    gap: 8,
+    paddingRight: 4,
   },
-  liveBadgeText: {
-    color: "#f4f4f5",
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.3,
+  cardTitle: {
+    color: "#ffffff",
+    fontSize: 31,
+    fontWeight: "800",
+    lineHeight: 35,
+    letterSpacing: -0.65,
   },
-  ctaGlass: {
-    borderRadius: 999,
-    borderWidth: 0.5,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(255,255,255,0.08)",
-    overflow: "hidden",
+  cardSubtitle: {
+    color: "rgba(244,244,245,0.9)",
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "500",
   },
   ctaButton: {
-    minWidth: 108,
-    minHeight: 44,
+    alignSelf: "flex-end",
+    borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.86)",
+    borderWidth: 0.5,
+    borderColor: "rgba(255,255,255,0.14)",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  ctaInner: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.78)",
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    gap: 6,
   },
   ctaText: {
     color: "#ffffff",
     fontSize: 13,
     fontWeight: "800",
-    letterSpacing: 0.2,
+    letterSpacing: 0.15,
   },
 });

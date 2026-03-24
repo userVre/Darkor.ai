@@ -17,11 +17,11 @@ import {
 import Animated, {
   Extrapolation,
   interpolate,
+  type SharedValue,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  type SharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowRight, Check, ShieldCheck, X } from "lucide-react-native";
@@ -47,8 +47,8 @@ import {
 } from "../lib/revenuecat";
 
 const pointerClassName = "cursor-pointer";
-const AUTO_SCROLL_INTERVAL_MS = 3200;
-const HERO_IMAGE_GAP = 10;
+const INITIAL_HERO_INDEX = 2;
+const HERO_GAP = 12;
 
 const FEATURE_ITEMS = [
   "Unlock 4K Ultra-HD renders",
@@ -73,42 +73,19 @@ const PLAN_COPY = {
 } as const;
 
 const HERO_SLIDES = [
-  {
-    id: "master-suite",
-    image: require("../assets/media/discover/home/home-master-suite.jpg"),
-  },
-  {
-    id: "infinity-pool",
-    image: require("../assets/media/discover/garden/garden-infinity-pool.jpg"),
-  },
-  {
-    id: "gaming-room",
-    image: require("../assets/media/discover/home/home-gaming-room.jpg"),
-  },
-  {
-    id: "living-room",
-    image: require("../assets/media/discover/home/home-living-room.jpg"),
-  },
-  {
-    id: "kitchen",
-    image: require("../assets/media/discover/home/home-kitchen.jpg"),
-  },
+  { id: "luxury-1", image: require("../assets/media/luxury-1.jpg") },
+  { id: "luxury-2", image: require("../assets/media/luxury-2.jpg") },
+  { id: "luxury-3", image: require("../assets/media/luxury-3.jpg") },
+  { id: "luxury-4", image: require("../assets/media/luxury-4.jpg") },
+  { id: "luxury-5", image: require("../assets/media/luxury-5.jpg") },
+  { id: "luxury-6", image: require("../assets/media/luxury-6.jpg") },
 ] as const;
 
-const LOOPED_HERO_SLIDES = Array.from({ length: 3 }, (_, blockIndex) =>
-  HERO_SLIDES.map((slide) => ({
-    ...slide,
-    loopId: `${slide.id}-${blockIndex}`,
-  })),
-).flat();
-
-const BASE_LOOP_INDEX = HERO_SLIDES.length;
-
 function TrialSwitch({ value, onPress }: { value: boolean; onPress: () => void }) {
-  const translateX = useSharedValue(value ? 22 : 0);
+  const translateX = useSharedValue(value ? 24 : 0);
 
   useEffect(() => {
-    translateX.value = withSpring(value ? 22 : 0, {
+    translateX.value = withSpring(value ? 24 : 0, {
       damping: 18,
       stiffness: 180,
     });
@@ -134,7 +111,7 @@ function TrialSwitch({ value, onPress }: { value: boolean; onPress: () => void }
 const FeatureRow = memo(function FeatureRow({ label }: { label: string }) {
   return (
     <View style={styles.featureRow}>
-      <Check color="#f5f5f5" size={14} strokeWidth={3} />
+      <Check color="#f5f5f5" size={15} strokeWidth={3} />
       <Text style={styles.featureText}>{label}</Text>
     </View>
   );
@@ -156,28 +133,27 @@ const HeroSlide = memo(function HeroSlide({
   scrollX: SharedValue<number>;
 }) {
   const animatedStyle = useAnimatedStyle(() => {
-    const inputRange = [
-      (index - 1) * snapInterval,
-      index * snapInterval,
-      (index + 1) * snapInterval,
-    ];
+    const center = index * snapInterval;
+    const inputRange = [center - snapInterval, center, center + snapInterval];
+    const scale = interpolate(scrollX.value, inputRange, [0.85, 1, 0.85], Extrapolation.CLAMP);
+    const opacity = interpolate(scrollX.value, inputRange, [0.6, 1, 0.6], Extrapolation.CLAMP);
+    const translateY = interpolate(scrollX.value, inputRange, [18, 0, 18], Extrapolation.CLAMP);
+    const rotateY = interpolate(scrollX.value, inputRange, [10, 0, -10], Extrapolation.CLAMP);
 
     return {
+      opacity,
       transform: [
-        {
-          scale: interpolate(scrollX.value, inputRange, [0.88, 1, 0.88], Extrapolation.CLAMP),
-        },
-        {
-          translateY: interpolate(scrollX.value, inputRange, [10, 0, 10], Extrapolation.CLAMP),
-        },
+        { perspective: 1200 },
+        { scale },
+        { translateY },
+        { rotateY: `${rotateY}deg` },
       ],
-      opacity: interpolate(scrollX.value, inputRange, [0.68, 1, 0.68], Extrapolation.CLAMP),
     };
   });
 
   return (
-    <Animated.View style={[styles.heroCardWrap, { width, height }, animatedStyle]}>
-      <View style={styles.heroCard}>
+    <Animated.View style={[styles.heroSlideWrap, { width, height }, animatedStyle]}>
+      <View style={styles.heroSlideCard}>
         <Image
           source={image}
           style={StyleSheet.absoluteFillObject}
@@ -186,7 +162,7 @@ const HeroSlide = memo(function HeroSlide({
           transition={140}
         />
         <LinearGradient
-          colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.16)", "rgba(0,0,0,0.36)"]}
+          colors={["rgba(0,0,0,0.01)", "rgba(0,0,0,0.08)", "rgba(0,0,0,0.26)"]}
           locations={[0, 0.68, 1]}
           style={StyleSheet.absoluteFillObject}
           pointerEvents="none"
@@ -212,16 +188,13 @@ function PlanCard({
   onPress: () => void;
 }) {
   return (
-    <MotiView
-      animate={{ scale: active ? 1 : 0.992 }}
-      transition={LUX_SPRING}
-    >
+    <MotiView animate={{ scale: active ? 1 : 0.992 }} transition={LUX_SPRING}>
       <LuxPressable
         onPress={onPress}
         className={pointerClassName}
         style={[styles.planCard, active ? styles.planCardActive : null]}
-        glowColor={active ? "rgba(246, 223, 180, 0.18)" : "rgba(255,255,255,0.04)"}
-        scale={0.985}
+        glowColor={active ? "rgba(243, 223, 184, 0.16)" : "rgba(255,255,255,0.04)"}
+        scale={0.987}
       >
         {badge ? (
           <View style={styles.planBadge}>
@@ -238,27 +211,15 @@ function PlanCard({
           />
         ) : null}
 
-        <View style={styles.planRow}>
-          <View style={styles.planLeft}>
-            <View style={[styles.radioOuter, active ? styles.radioOuterActive : null]}>
-              {active ? <View style={styles.radioInner} /> : null}
-            </View>
+        <Text style={styles.planTitle}>{title}</Text>
+        <Text style={styles.planSubtitle}>{subtitle}</Text>
+        <Text style={styles.planPrice}>{price}</Text>
 
-            <View style={styles.planCopy}>
-              <Text style={styles.planTitle}>{title}</Text>
-              <Text style={styles.planSubtitle}>{subtitle}</Text>
-            </View>
+        {active ? (
+          <View style={styles.selectedChip}>
+            <Text style={styles.selectedChipText}>Selected</Text>
           </View>
-
-          <View style={styles.planPriceBlock}>
-            <Text style={styles.planPrice}>{price}</Text>
-            {active ? (
-              <View style={styles.selectedPill}>
-                <Text style={styles.selectedPillText}>Selected</Text>
-              </View>
-            ) : null}
-          </View>
-        </View>
+        ) : null}
       </LuxPressable>
     </MotiView>
   );
@@ -272,11 +233,8 @@ export default function PaywallScreen() {
   const { width, height } = useWindowDimensions();
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
   const { showSuccess, showToast } = useProSuccess();
-
-  const carouselRef = useRef<FlatList<(typeof LOOPED_HERO_SLIDES)[number]> | null>(null);
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
-  const currentCarouselIndexRef = useRef<number>(BASE_LOOP_INDEX);
-  const isDraggingCarouselRef = useRef(false);
+  const carouselRef = useRef<FlatList<(typeof HERO_SLIDES)[number]> | null>(null);
 
   const scrollX = useSharedValue(0);
 
@@ -288,18 +246,18 @@ export default function PaywallScreen() {
 
   const isCompact = height < 860;
   const isVeryCompact = height < 760;
-  const contentWidth = Math.min(width - 32, 430);
-  const heroCardWidth = Math.min(width - 76, 320);
-  const heroCardHeight = Math.max(188, Math.min(isVeryCompact ? 208 : 228, Math.round(heroCardWidth * 0.72)));
-  const heroSnapInterval = heroCardWidth + HERO_IMAGE_GAP;
-  const heroInset = (width - heroCardWidth) / 2;
-  const footerLine = freeTrialEnabled ? "No Payment Now" : "Cancel Anytime";
-  const ctaTitle = freeTrialEnabled ? "Try for Free" : "Continue";
+  const contentWidth = Math.min(width - 40, 430);
+  const heroWidth = Math.min(width - 96, 332);
+  const heroHeight = Math.max(182, Math.min(isVeryCompact ? 196 : 228, Math.round(heroWidth * 0.72)));
+  const heroSnapInterval = heroWidth + HERO_GAP;
+  const heroInset = Math.max((width - heroWidth) / 2, 0);
+
   const selectedPackage = useMemo(
     () => findRevenueCatPackage(packages, selectedDuration),
     [packages, selectedDuration],
   );
   const isCtaDisabled = isLoading || !selectedPackage;
+  const ctaTitle = freeTrialEnabled ? "Try for Free" : "Continue";
 
   const onHeroScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -308,38 +266,12 @@ export default function PaywallScreen() {
   });
 
   useEffect(() => {
-    const initialOffset = BASE_LOOP_INDEX * heroSnapInterval;
+    const initialOffset = INITIAL_HERO_INDEX * heroSnapInterval;
     scrollX.value = initialOffset;
 
     requestAnimationFrame(() => {
       carouselRef.current?.scrollToOffset({ offset: initialOffset, animated: false });
     });
-  }, [heroSnapInterval, scrollX]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (isDraggingCarouselRef.current) return;
-
-      let nextIndex = currentCarouselIndexRef.current + 1;
-      if (nextIndex >= HERO_SLIDES.length * 2) {
-        const resetIndex = BASE_LOOP_INDEX;
-        const resetOffset = resetIndex * heroSnapInterval;
-        carouselRef.current?.scrollToOffset({ offset: resetOffset, animated: false });
-        currentCarouselIndexRef.current = resetIndex;
-        scrollX.value = resetOffset;
-        nextIndex = resetIndex + 1;
-      }
-
-      carouselRef.current?.scrollToOffset({
-        offset: nextIndex * heroSnapInterval,
-        animated: true,
-      });
-      currentCarouselIndexRef.current = nextIndex;
-    }, AUTO_SCROLL_INTERVAL_MS);
-
-    return () => {
-      clearInterval(timer);
-    };
   }, [heroSnapInterval, scrollX]);
 
   useEffect(() => {
@@ -397,14 +329,6 @@ export default function PaywallScreen() {
     router.replace("/(tabs)");
   }, [router]);
 
-  const handleSelectDuration = useCallback((duration: BillingDuration) => {
-    triggerHaptic();
-    setSelectedDuration(duration);
-    if (duration === "yearly") {
-      setFreeTrialEnabled(false);
-    }
-  }, []);
-
   const handleToggleTrial = useCallback(() => {
     triggerHaptic();
     setFreeTrialEnabled((current) => {
@@ -412,6 +336,14 @@ export default function PaywallScreen() {
       setSelectedDuration(next ? "weekly" : "yearly");
       return next;
     });
+  }, []);
+
+  const handleSelectDuration = useCallback((duration: BillingDuration) => {
+    triggerHaptic();
+    setSelectedDuration(duration);
+    if (duration === "yearly") {
+      setFreeTrialEnabled(false);
+    }
   }, []);
 
   const handleRestore = useCallback(async () => {
@@ -511,47 +443,24 @@ export default function PaywallScreen() {
     showToast,
   ]);
 
-  const handleHeroMomentumEnd = useCallback(
-    (offsetX: number) => {
-      const rawIndex = Math.round(offsetX / heroSnapInterval);
-      const minIndex = HERO_SLIDES.length;
-      const maxIndex = HERO_SLIDES.length * 2 - 1;
-
-      let normalizedIndex = rawIndex;
-      if (rawIndex < minIndex || rawIndex > maxIndex) {
-        const relativeIndex =
-          ((rawIndex % HERO_SLIDES.length) + HERO_SLIDES.length) % HERO_SLIDES.length;
-        normalizedIndex = BASE_LOOP_INDEX + relativeIndex;
-        carouselRef.current?.scrollToOffset({
-          offset: normalizedIndex * heroSnapInterval,
-          animated: false,
-        });
-      }
-
-      currentCarouselIndexRef.current = normalizedIndex;
-      isDraggingCarouselRef.current = false;
-    },
-    [heroSnapInterval],
-  );
-
-  const renderHeroSlide = useCallback(
+  const renderHeroItem = useCallback(
     ({
       item,
       index,
     }: {
-      item: (typeof LOOPED_HERO_SLIDES)[number];
+      item: (typeof HERO_SLIDES)[number];
       index: number;
     }) => (
       <HeroSlide
         image={item.image}
         index={index}
-        width={heroCardWidth}
-        height={heroCardHeight}
+        width={heroWidth}
+        height={heroHeight}
         snapInterval={heroSnapInterval}
         scrollX={scrollX}
       />
     ),
-    [heroCardHeight, heroCardWidth, heroSnapInterval, scrollX],
+    [heroHeight, heroSnapInterval, heroWidth, scrollX],
   );
 
   return (
@@ -561,71 +470,60 @@ export default function PaywallScreen() {
           styles.content,
           {
             paddingTop: insets.top + 10,
-            paddingBottom: Math.max(insets.bottom + 126, 136),
-            paddingHorizontal: 16,
+            paddingBottom: Math.max(insets.bottom + 144, 152),
           },
         ]}
       >
-        <View style={styles.headerRow}>
-          <View style={styles.headerSpacer} />
+        <View style={styles.closeRow}>
+          <View style={styles.closeSpacer} />
           <LuxPressable
             onPress={handleClose}
             className={pointerClassName}
             style={styles.closeButton}
             glowColor="rgba(255,255,255,0.08)"
           >
-            <X color="#f5f5f5" size={18} strokeWidth={2.4} />
+            <X color="#f5f5f5" size={19} strokeWidth={2.4} />
           </LuxPressable>
         </View>
 
-        <View style={[styles.mainStack, { width: contentWidth }]}>
-          <View style={[styles.heroStack, { gap: isVeryCompact ? 10 : 14 }]}>
-            <View style={styles.heroCarouselShell}>
-              <Animated.FlatList
-                ref={carouselRef as any}
-                data={LOOPED_HERO_SLIDES}
-                keyExtractor={(item) => item.loopId}
-                renderItem={renderHeroSlide}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                snapToInterval={heroSnapInterval}
-                decelerationRate="fast"
-                bounces={false}
-                contentContainerStyle={{ paddingHorizontal: heroInset }}
-                ItemSeparatorComponent={() => <View style={{ width: HERO_IMAGE_GAP }} />}
-                getItemLayout={(_, index) => ({
-                  index,
-                  length: heroSnapInterval,
-                  offset: heroSnapInterval * index,
-                })}
-                initialScrollIndex={BASE_LOOP_INDEX}
-                onScroll={onHeroScroll}
-                onScrollBeginDrag={() => {
-                  isDraggingCarouselRef.current = true;
-                }}
-                onMomentumScrollEnd={(event) => {
-                  handleHeroMomentumEnd(event.nativeEvent.contentOffset.x);
-                }}
-                onScrollEndDrag={() => {
-                  if (!isDraggingCarouselRef.current) return;
-                  setTimeout(() => {
-                    isDraggingCarouselRef.current = false;
-                  }, 120);
-                }}
-                scrollEventThrottle={16}
-                style={{ marginHorizontal: -16 }}
-                contentInsetAdjustmentBehavior="never"
-              />
-            </View>
+        <View style={[styles.mainStack, { width: contentWidth, gap: isCompact ? 12 : 16 }]}>
+          <View style={[styles.carouselShell, { gap: isCompact ? 12 : 16 }]}>
+            <Animated.FlatList
+              ref={carouselRef as any}
+              data={HERO_SLIDES}
+              keyExtractor={(item) => item.id}
+              renderItem={renderHeroItem}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={heroSnapInterval}
+              snapToAlignment="start"
+              decelerationRate="fast"
+              bounces={false}
+              scrollEventThrottle={16}
+              onScroll={onHeroScroll}
+              initialNumToRender={HERO_SLIDES.length}
+              maxToRenderPerBatch={HERO_SLIDES.length}
+              windowSize={5}
+              removeClippedSubviews={false}
+              contentContainerStyle={{ paddingHorizontal: heroInset }}
+              ItemSeparatorComponent={() => <View style={{ width: HERO_GAP }} />}
+              getItemLayout={(_, index) => ({
+                index,
+                length: heroSnapInterval,
+                offset: heroSnapInterval * index,
+              })}
+              style={styles.carouselList}
+              contentInsetAdjustmentBehavior="never"
+            />
 
-            <View style={[styles.featureStack, { gap: isCompact ? 8 : 10 }]}>
+            <View style={[styles.featureStack, { gap: isVeryCompact ? 12 : 14 }]}>
               {FEATURE_ITEMS.map((item) => (
                 <FeatureRow key={item} label={item} />
               ))}
             </View>
           </View>
 
-          <View style={[styles.offerStack, { gap: isVeryCompact ? 10 : 12 }]}>
+          <View style={[styles.selectionStack, { gap: isCompact ? 10 : 12 }]}>
             <View style={styles.toggleRow}>
               <Text style={styles.toggleLabel}>Enable free trial</Text>
               <TrialSwitch value={freeTrialEnabled} onPress={handleToggleTrial} />
@@ -648,24 +546,23 @@ export default function PaywallScreen() {
               badge={PLAN_COPY.weekly.badge}
               onPress={() => handleSelectDuration("weekly")}
             />
-
-            <MotiView
-              key={`footer-${freeTrialEnabled ? "trial" : "standard"}`}
-              from={{ opacity: 0, translateY: 6 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={LUX_SPRING}
-              style={styles.footerStatus}
-            >
-              {freeTrialEnabled ? (
-                <ShieldCheck color="#8b8b90" size={15} strokeWidth={2.2} />
-              ) : (
-                <Check color="#8b8b90" size={15} strokeWidth={2.8} />
-              )}
-              <Text style={styles.footerStatusText}>{footerLine}</Text>
-            </MotiView>
-
-            {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
           </View>
+
+          <View style={[styles.footerStack, { gap: freeTrialEnabled ? 8 : 0 }]}>
+            {freeTrialEnabled ? (
+              <View style={styles.footerRow}>
+                <ShieldCheck color="#8b8b90" size={15} strokeWidth={2.2} />
+                <Text style={styles.footerText}>No Payment Now</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.footerRow}>
+              <Check color="#8b8b90" size={15} strokeWidth={2.8} />
+              <Text style={styles.footerText}>Cancel Anytime</Text>
+            </View>
+          </View>
+
+          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
         </View>
       </View>
 
@@ -680,21 +577,21 @@ export default function PaywallScreen() {
       >
         <LinearGradient
           colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.92)", "#000000"]}
-          locations={[0, 0.38, 1]}
-          style={styles.bottomDockShade}
+          locations={[0, 0.34, 1]}
+          style={styles.bottomShade}
           pointerEvents="none"
         />
 
-        <View style={[styles.bottomDockContent, { width: contentWidth }]}>
+        <View style={[styles.bottomContent, { width: contentWidth }]}>
           <LuxPressable
             onPress={handlePurchase}
             disabled={isCtaDisabled}
             className={pointerClassName}
             style={[styles.ctaOuter, isCtaDisabled ? styles.ctaOuterDisabled : null]}
-            glowColor="rgba(243, 223, 184, 0.18)"
+            glowColor="rgba(243,223,184,0.18)"
           >
             <LinearGradient
-              colors={isCtaDisabled ? ["#49433a", "#302c26"] : ["#f3dfb8", "#cea56d"]}
+              colors={isCtaDisabled ? ["#4a433a", "#322d28"] : ["#f4e2be", "#d0a66f"]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               style={styles.ctaGradient}
@@ -723,7 +620,7 @@ export default function PaywallScreen() {
             onPress={handleRestore}
             className={pointerClassName}
             style={styles.restoreButton}
-            glowColor="rgba(255,255,255,0.05)"
+            glowColor="rgba(255,255,255,0.04)"
             scale={0.99}
           >
             <Text style={styles.restoreText}>Restore purchase</Text>
@@ -741,231 +638,214 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    paddingHorizontal: 16,
   },
-  headerRow: {
+  closeRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
   },
-  headerSpacer: {
-    width: 44,
-    height: 44,
+  closeSpacer: {
+    width: 50,
+    height: 50,
   },
   closeButton: {
-    width: 44,
-    height: 44,
+    width: 50,
+    height: 50,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "#0d0d0f",
+    backgroundColor: "#0e0e11",
   },
   mainStack: {
     flex: 1,
     alignSelf: "center",
-    justifyContent: "space-evenly",
-    gap: 16,
-  },
-  heroStack: {
-    gap: 14,
-  },
-  heroCarouselShell: {
+    justifyContent: "center",
     alignItems: "center",
   },
-  heroCardWrap: {
+  carouselShell: {
+    width: "100%",
+    alignItems: "center",
+  },
+  carouselList: {
+    marginHorizontal: -16,
     overflow: "visible",
   },
-  heroCard: {
+  heroSlideWrap: {
+    overflow: "visible",
+  },
+  heroSlideCard: {
     flex: 1,
     overflow: "hidden",
-    borderRadius: 30,
+    borderRadius: 32,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
-    backgroundColor: "#101012",
+    backgroundColor: "#121214",
   },
   featureStack: {
-    paddingHorizontal: 6,
+    width: "100%",
+    alignItems: "center",
   },
   featureRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    justifyContent: "center",
+    gap: 12,
+    minHeight: 28,
   },
   featureText: {
-    flex: 1,
     color: "#f5f5f5",
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: "600",
-    letterSpacing: -0.1,
+    fontSize: 15,
+    lineHeight: 26,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+    textAlign: "center",
   },
-  offerStack: {
-    gap: 12,
+  selectionStack: {
+    width: "100%",
+    alignItems: "center",
   },
   toggleRow: {
-    minHeight: 54,
+    width: "100%",
+    minHeight: 56,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 16,
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "#111113",
+    backgroundColor: "#121214",
     paddingHorizontal: 18,
     paddingVertical: 12,
   },
   toggleLabel: {
+    flex: 1,
     color: "#f4f4f5",
-    fontSize: 15,
-    fontWeight: "700",
-    letterSpacing: -0.15,
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+    textAlign: "center",
   },
   toggleTrack: {
-    width: 52,
+    width: 54,
     height: 30,
     borderRadius: 999,
     justifyContent: "center",
     padding: 3,
-    backgroundColor: "#2b2b30",
+    backgroundColor: "#2b2b31",
   },
   toggleTrackActive: {
-    backgroundColor: "#f3dfb8",
+    backgroundColor: "#f4e2be",
   },
   toggleThumb: {
-    width: 22,
-    height: 22,
+    width: 24,
+    height: 24,
     borderRadius: 999,
     backgroundColor: "#ffffff",
   },
   planCard: {
     position: "relative",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
     overflow: "hidden",
-    borderRadius: 22,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "#111113",
-    paddingHorizontal: 16,
-    paddingVertical: 15,
+    backgroundColor: "#121214",
+    paddingHorizontal: 20,
+    paddingVertical: 18,
   },
   planCardActive: {
-    borderColor: "rgba(243,223,184,0.8)",
-    backgroundColor: "#151518",
-  },
-  planBadge: {
-    position: "absolute",
-    left: 14,
-    top: 10,
-    zIndex: 2,
-    borderRadius: 999,
-    backgroundColor: "#f3dfb8",
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-  },
-  planBadgeText: {
-    color: "#09090b",
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 0.6,
+    borderColor: "rgba(244,226,190,0.75)",
+    backgroundColor: "#17171a",
   },
   planSelectionGlow: {
     position: "absolute",
     inset: 0,
-    borderRadius: 22,
+    borderRadius: 24,
     borderWidth: 1.1,
-    borderColor: "rgba(243,223,184,0.72)",
-    backgroundColor: "rgba(243,223,184,0.03)",
+    borderColor: "rgba(244,226,190,0.7)",
+    backgroundColor: "rgba(244,226,190,0.03)",
   },
-  planRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 14,
-  },
-  planLeft: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  radioOuter: {
-    width: 22,
-    height: 22,
-    alignItems: "center",
-    justifyContent: "center",
+  planBadge: {
+    position: "absolute",
+    top: 12,
+    left: 12,
     borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.28)",
-    backgroundColor: "#0a0a0b",
+    backgroundColor: "#f4e2be",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
-  radioOuterActive: {
-    borderColor: "#f3dfb8",
-    backgroundColor: "#f3dfb8",
-  },
-  radioInner: {
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: "#09090b",
-  },
-  planCopy: {
-    flex: 1,
-    gap: 4,
-    paddingTop: 3,
+  planBadgeText: {
+    color: "#09090b",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.6,
   },
   planTitle: {
     color: "#ffffff",
-    fontSize: 17,
+    fontSize: 20,
+    lineHeight: 24,
     fontWeight: "800",
-    letterSpacing: -0.3,
+    letterSpacing: -0.35,
+    textAlign: "center",
   },
   planSubtitle: {
-    color: "#9f9fa5",
-    fontSize: 12,
-    lineHeight: 17,
+    color: "#8f8f95",
+    fontSize: 13,
+    lineHeight: 18,
     fontWeight: "600",
-  },
-  planPriceBlock: {
-    alignItems: "flex-end",
-    gap: 7,
-    paddingTop: 3,
+    textAlign: "center",
   },
   planPrice: {
     color: "#ffffff",
-    fontSize: 17,
-    fontWeight: "800",
-    letterSpacing: -0.25,
+    fontSize: 19,
+    lineHeight: 24,
+    fontWeight: "900",
+    letterSpacing: -0.35,
+    textAlign: "center",
   },
-  selectedPill: {
+  selectedChip: {
+    marginTop: 4,
     borderRadius: 999,
-    backgroundColor: "#1e1e22",
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+    backgroundColor: "#1f1f24",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
-  selectedPillText: {
-    color: "#f5f5f5",
+  selectedChipText: {
+    color: "#f4f4f5",
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 0.25,
+    letterSpacing: 0.3,
   },
-  footerStatus: {
+  footerStack: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 38,
+  },
+  footerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingTop: 2,
   },
-  footerStatusText: {
-    color: "#f3f4f6",
-    fontSize: 13,
-    fontWeight: "700",
-    letterSpacing: -0.05,
+  footerText: {
+    color: "#a1a1aa",
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "500",
+    letterSpacing: 0.1,
+    textAlign: "center",
   },
   errorText: {
     color: "#fca5a5",
     fontSize: 12,
-    lineHeight: 17,
+    lineHeight: 18,
     textAlign: "center",
   },
   bottomDock: {
@@ -975,40 +855,42 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: "center",
   },
-  bottomDockShade: {
+  bottomShade: {
     ...StyleSheet.absoluteFillObject,
   },
-  bottomDockContent: {
+  bottomContent: {
     alignSelf: "center",
     gap: 10,
   },
   ctaOuter: {
-    borderRadius: 22,
+    borderRadius: 24,
   },
   ctaOuterDisabled: {
     opacity: 0.72,
   },
   ctaGradient: {
-    minHeight: 58,
-    borderRadius: 22,
+    minHeight: 62,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   ctaContent: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 10,
   },
   ctaText: {
     color: "#0b0b0c",
     fontSize: 17,
-    fontWeight: "800",
+    fontWeight: "900",
     letterSpacing: -0.2,
   },
   loadingRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 10,
   },
   restoreButton: {
@@ -1021,5 +903,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     textDecorationLine: "underline",
+    textAlign: "center",
   },
 });
