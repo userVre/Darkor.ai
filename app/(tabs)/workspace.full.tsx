@@ -2120,7 +2120,7 @@ export default function WorkspaceScreen() {
                                   textAlign: "center",
                                 }}
                               >
-                                Upload photo
+                                Start Redesigning
                               </Text>
                               <Text
                                 style={{
@@ -2131,7 +2131,7 @@ export default function WorkspaceScreen() {
                                   maxWidth: 220,
                                 }}
                               >
-                                Tap to choose from your camera or photo library
+                                Tap to add a photo from your camera or library
                               </Text>
                             </View>
                             {isPhotoPreviewBusy ? <ActivityIndicator size="small" color="#ffffff" /> : null}
