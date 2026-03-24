@@ -1857,11 +1857,11 @@ export default function WorkspaceScreen() {
       height - Math.max(insets.top + (isPhotoStep ? 18 : 8), isPhotoStep ? 24 : 20) - Math.max(insets.bottom + (isPhotoStep ? 148 : 124), isPhotoStep ? 176 : 144),
       isPhotoStep ? 520 : 460,
     );
-    const continueButtonHeight = isPhotoStep ? 58 : 62;
+    const continueButtonHeight = isPhotoStep ? 64 : 62;
     const continueButtonRadius = isPhotoStep ? 20 : 24;
     const isContinueDisabled = !canContinue || (isFinalWizardStep && (isGenerating || generationBlocked));
     const isContinueActive = canContinue && !(isFinalWizardStep && generationBlocked) && !isContinueDisabled;
-    const shouldPulseContinue = !isPhotoStep && hasSelectedPhoto && isContinueActive;
+    const shouldPulseContinue = isPhotoStep ? isContinueActive : false;
     const continueButtonOpacity = isPhotoStep ? 1 : isContinueActive ? 1 : 0.62;
     const continueLabel = isPhotoStep
       ? "Continue"
@@ -2132,24 +2132,22 @@ export default function WorkspaceScreen() {
                           </View>
                         )}
 
-                        <LuxPressable
-                          onPress={(event) => {
-                            event.stopPropagation();
-                            if (hasVisiblePhoto) {
+                        {hasVisiblePhoto ? (
+                          <LuxPressable
+                            onPress={(event) => {
+                              event.stopPropagation();
                               handleClearSelectedImage();
-                              return;
-                            }
-                            handleCloseWizard();
-                          }}
-                          className="cursor-pointer absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full"
-                          style={{
-                            borderWidth: 1,
-                            borderColor: "rgba(255,255,255,0.14)",
-                            backgroundColor: "rgba(10,10,10,0.72)",
-                          }}
-                        >
-                          <Close color="#ffffff" size={18} strokeWidth={2.3} />
-                        </LuxPressable>
+                            }}
+                            className="cursor-pointer absolute right-4 top-4 h-9 w-9 items-center justify-center rounded-full"
+                            style={{
+                              borderWidth: 1,
+                              borderColor: "rgba(255,255,255,0.14)",
+                              backgroundColor: "rgba(10,10,10,0.72)",
+                            }}
+                          >
+                            <Close color="#ffffff" size={16} strokeWidth={2.4} />
+                          </LuxPressable>
+                        ) : null}
                       </LuxPressable>
                     </MotiView>
 
@@ -2490,7 +2488,7 @@ export default function WorkspaceScreen() {
               >
                 {isContinueActive ? (
                   <LinearGradient
-                    colors={isPhotoStep ? ["#ff4d6d", "#d946ef"] : ["#d946ef", "#7c3aed"]}
+                    colors={isPhotoStep ? ["#d946ef", "#4f46e5"] : ["#d946ef", "#7c3aed"]}
                     start={{ x: 0, y: 0.5 }}
                     end={{ x: 1, y: 0.5 }}
                     className="items-center justify-center"
@@ -2498,8 +2496,24 @@ export default function WorkspaceScreen() {
                       minHeight: continueButtonHeight,
                       borderRadius: continueButtonRadius,
                       opacity: continueButtonOpacity,
+                      overflow: "hidden",
                     }}
                   >
+                    {isPhotoStep ? (
+                      <MotiView
+                        pointerEvents="none"
+                        animate={shouldPulseContinue ? { translateX: [-140, 260], opacity: [0, 0.2, 0] } : { translateX: 0, opacity: 0 }}
+                        transition={shouldPulseContinue ? { duration: 1800, loop: true } : { duration: 140 }}
+                        style={{
+                          position: "absolute",
+                          top: -10,
+                          bottom: -10,
+                          width: 88,
+                          backgroundColor: "rgba(255,255,255,0.26)",
+                          transform: [{ skewX: "-18deg" }],
+                        }}
+                      />
+                    ) : null}
                     <Text style={{ color: "#ffffff", fontSize: 17, fontWeight: "700" }}>{continueLabel}</Text>
                   </LinearGradient>
                 ) : (
@@ -2508,13 +2522,13 @@ export default function WorkspaceScreen() {
                     style={{
                       minHeight: continueButtonHeight,
                       borderRadius: continueButtonRadius,
-                      backgroundColor: isPhotoStep ? "#e5e7eb" : "#e4e4e7",
+                      backgroundColor: isPhotoStep ? "rgba(39,39,42,0.5)" : "#e4e4e7",
                       opacity: continueButtonOpacity,
                       borderWidth: 0,
                       borderColor: "transparent",
                     }}
                   >
-                    <Text style={{ color: isPhotoStep ? "#9ca3af" : "#a1a1aa", fontSize: 17, fontWeight: "600" }}>
+                    <Text style={{ color: isPhotoStep ? "#d4d4d8" : "#a1a1aa", fontSize: 17, fontWeight: "600" }}>
                       {generationBlocked && isFinalWizardStep ? "Limit Reached - Upgrade or Wait" : continueLabel}
                     </Text>
                   </View>
