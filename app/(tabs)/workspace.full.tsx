@@ -1145,6 +1145,9 @@ export default function WorkspaceScreen() {
 
   const presentPhotoSourceMenu = useCallback(() => {
     const openSource = (source: PhotoSource) => {
+      if (isSelectingPhoto) {
+        return;
+      }
       void launchPhotoSource(source);
     };
 
@@ -1176,12 +1179,15 @@ export default function WorkspaceScreen() {
       { text: "📸 Take Photo", onPress: () => openSource("camera") },
       { text: "🖼️ Upload from Gallery", onPress: () => openSource("library") },
     ]);
-  }, [launchPhotoSource]);
+  }, [isSelectingPhoto, launchPhotoSource]);
 
-  const handlePickPhoto = useCallback(async () => {
+  const handlePickPhoto = useCallback(() => {
+    if (isSelectingPhoto) {
+      return;
+    }
     triggerHaptic();
     presentPhotoSourceMenu();
-  }, [presentPhotoSourceMenu]);
+  }, [isSelectingPhoto, presentPhotoSourceMenu]);
 
   const handleClearSelectedImage = useCallback(() => {
     triggerHaptic();
@@ -2140,6 +2146,7 @@ export default function WorkspaceScreen() {
                             }}
                             className="cursor-pointer absolute right-4 top-4 h-9 w-9 items-center justify-center rounded-full"
                             style={{
+                              zIndex: 2,
                               borderWidth: 1,
                               borderColor: "rgba(255,255,255,0.14)",
                               backgroundColor: "rgba(10,10,10,0.72)",
