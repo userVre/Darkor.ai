@@ -283,11 +283,12 @@ const LAUNCH_GATE_EXEMPT_PATHS = new Set([
   "/faq",
 ]);
 
-function AppShell() {
+function LaunchPaywallGate() {
   const router = useRouter();
   const pathname = usePathname();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
+  const [gateTimedOut, setGateTimedOut] = useState(false);
 
   const me = useQuery(
     "users:me" as any,
@@ -296,45 +297,93 @@ function AppShell() {
 
   const launchPaywallDismissed = hasDismissedLaunchPaywall();
   const isExemptRoute = pathname ? LAUNCH_GATE_EXEMPT_PATHS.has(pathname) : false;
-  const isGateResolved = DIAGNOSTIC_BYPASS || (viewerReady && me !== undefined);
+  const isGateResolved = DIAGNOSTIC_BYPASS || gateTimedOut || (viewerReady && me !== undefined);
   const shouldShowLaunchPaywall =
     !DIAGNOSTIC_BYPASS &&
-    isGateResolved &&
+    !gateTimedOut &&
+    viewerReady &&
+    me !== undefined &&
     (me?.plan ?? "free") === "free" &&
     !launchPaywallDismissed;
+
+  console.log("[Layout] Launch gate render", {
+    pathname,
+    viewerReady,
+    plan: me?.plan ?? null,
+    meResolved: me !== undefined,
+    gateTimedOut,
+    launchPaywallDismissed,
+  });
+
+  useEffect(() => {
+    console.log("[Layout] Launch gate mounted");
+  }, []);
+
+  useEffect(() => {
+    if (DIAGNOSTIC_BYPASS || isExemptRoute || gateTimedOut || (viewerReady && me !== undefined)) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      console.warn("[Layout] Plan lookup timed out after 2000ms. Continuing into free shell.");
+      setGateTimedOut(true);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [gateTimedOut, isExemptRoute, me, viewerReady]);
 
   useEffect(() => {
     if (!shouldShowLaunchPaywall || isExemptRoute || pathname === "/paywall") {
       return;
     }
 
-    router.replace("/paywall");
+    console.log("[Layout] Redirecting free user to paywall", { pathname });
+    requestAnimationFrame(() => {
+      router.replace("/paywall");
+    });
   }, [isExemptRoute, pathname, router, shouldShowLaunchPaywall]);
 
-  if (!isGateResolved && !isExemptRoute) {
-    return <BootScreen message="Loading your plan..." />;
+  if (!isGateResolved && !isExemptRoute && pathname !== "/paywall") {
+    return (
+      <View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+          zIndex: 20,
+        }}
+      >
+        <BootScreen message="Checking your plan..." />
+      </View>
+    );
   }
 
-  if (shouldShowLaunchPaywall && !isExemptRoute) {
-    return <BootScreen message="Preparing your offer..." />;
-  }
+  return null;
+}
 
+function AppShell() {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: "#000000" },
-        animation: "slide_from_right",
-        animationDuration: 260,
-      }}
-    >
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
-      <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
-      <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
-      <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
-      <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
-    </Stack>
+    <View style={{ flex: 1, backgroundColor: "#000000" }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: "#000000" },
+          animation: "slide_from_right",
+          animationDuration: 260,
+        }}
+      >
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
+        <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
+        <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
+        <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
+        <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
+      </Stack>
+      <LaunchPaywallGate />
+    </View>
   );
 }
 
@@ -342,7 +391,13 @@ export default function RootLayout() {
   const envReport = useMemo(() => getEnvReport(), []);
   const clerkKey = envReport.values.clerkPublishableKey;
 
+  console.log("[Layout] RootLayout render", {
+    hasClerkKey: Boolean(clerkKey),
+    diagnosticBypass: DIAGNOSTIC_BYPASS,
+  });
+
   useEffect(() => {
+    console.log("[Layout] RootLayout mounted");
     logEnvDiagnostics(envReport);
   }, [envReport]);
 

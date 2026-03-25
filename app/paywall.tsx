@@ -252,6 +252,7 @@ function DwaraTimer({
   const revealProgress = useSharedValue(0);
 
   useEffect(() => {
+    console.log("[Paywall] DwaraTimer start");
     setCanDismiss(false);
     countdownProgress.value = 0;
     revealProgress.value = 0;
@@ -266,6 +267,9 @@ function DwaraTimer({
         revealProgress.value = withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) });
       },
     );
+    return () => {
+      console.log("[Paywall] DwaraTimer cleanup");
+    };
   }, [countdownProgress, revealProgress]);
 
   const ringAnimatedProps = useAnimatedProps(() => ({
@@ -352,6 +356,14 @@ export default function PaywallScreen() {
   const heroSnapInterval = heroWidth + HERO_GAP;
   const heroInset = Math.max((contentWidth - heroWidth) / 2, 0);
 
+  console.log("[Paywall] Render", {
+    isSignedIn,
+    packageCount: packages.length,
+    isLoading,
+    selectedDuration,
+    freeTrialEnabled,
+  });
+
   const selectedPackage = useMemo(
     () => findRevenueCatPackage(packages, selectedDuration),
     [packages, selectedDuration],
@@ -390,6 +402,10 @@ export default function PaywallScreen() {
   );
 
   useEffect(() => {
+    console.log("[Paywall] Mounted");
+  }, []);
+
+  useEffect(() => {
     requestAnimationFrame(() => {
       syncCarouselToIndex(LOOP_OFFSET, false);
     });
@@ -405,6 +421,8 @@ export default function PaywallScreen() {
 
   useEffect(() => {
     let active = true;
+
+    console.log("[Paywall] Loading offerings");
 
     const loadOfferings = async () => {
       try {
@@ -423,6 +441,7 @@ export default function PaywallScreen() {
         setPackages(offerings.current?.availablePackages ?? []);
       } catch {
         if (active) {
+          console.warn("[Paywall] Offerings unavailable");
           setErrorMessage("Subscriptions are temporarily unavailable.");
         }
       }
