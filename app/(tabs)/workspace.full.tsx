@@ -88,6 +88,7 @@ import { FloorWizard } from "../../components/floor-wizard";
 import { LuxPressable } from "../../components/lux-pressable";
 import { PaintWizard } from "../../components/paint-wizard";
 import { useWorkspaceDraft } from "../../components/workspace-context";
+import { useViewerSession } from "../../components/viewer-session-context";
 import { useProSuccess } from "../../components/pro-success-context";
 import Logo from "../../components/logo";
 import { captureRef } from "react-native-view-shot";
@@ -1364,6 +1365,7 @@ export default function WorkspaceScreen() {
     entrySource?: string;
   }>();
   const { isSignedIn } = useAuth();
+  const { anonymousId, isReady: viewerReady } = useViewerSession();
   const diagnostic = DIAGNOSTIC_BYPASS;
   const effectiveSignedIn = isSignedIn;
   const { width, height } = useWindowDimensions();
@@ -1371,16 +1373,16 @@ export default function WorkspaceScreen() {
   const { draft, setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle } =
     useWorkspaceDraft();
   const { showToast } = useProSuccess();
+  const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
 
   const me = useQuery(
     "users:me" as any,
-    diagnostic ? "skip" : isSignedIn ? {} : "skip",
+    diagnostic ? "skip" : viewerReady ? viewerArgs : "skip",
   ) as MeResponse | null | undefined;
   const generationArchive = useQuery(
     "generations:getUserArchive" as any,
-    diagnostic ? "skip" : isSignedIn ? {} : "skip",
+    diagnostic ? "skip" : viewerReady ? viewerArgs : "skip",
   ) as ArchiveGeneration[] | undefined;
-  const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
   const createSourceUploadUrl = useMutation("generations:createSourceUploadUrl" as any);
   const startGeneration = useMutation("generations:startGeneration" as any);
   const markReviewPrompted = useMutation("users:markReviewPrompted" as any);
@@ -1473,12 +1475,6 @@ export default function WorkspaceScreen() {
       : serviceType === "garden"
         ? SPACE_OPTIONS.garden
         : SPACE_OPTIONS.interior;
-
-  useEffect(() => {
-    if (diagnostic) return;
-    if (!isSignedIn) return;
-    ensureUser({}).catch(() => undefined);
-  }, [diagnostic, ensureUser, isSignedIn]);
 
   useEffect(() => {
     if (draft.room && !selectedRoom) {
@@ -1725,11 +1721,18 @@ export default function WorkspaceScreen() {
     }
     return "standard";
   }, [hasPaidAccess, me?.subscriptionType]);
-  const creditBalance = diagnostic ? 999 : effectiveSignedIn ? me?.credits ?? 3 : 3;
+  const creditBalance = diagnostic ? 999 : viewerReady ? me?.credits ?? 3 : 3;
   const hasGenerationCredits = creditBalance > 0;
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const isDownloadingStandard = isDownloading === "standard";
   const isDownloadingUltra = isDownloading === "ultra";
+  const openAuthWall = useCallback(
+    (returnTo: string, resumeGeneration = false) => {
+      setAwaitingAuth(resumeGeneration);
+      router.push({ pathname: "/sign-in", params: { returnTo } });
+    },
+    [router],
+  );
   const paintColorMeta = useMemo(
     () => PAINT_COLOR_SWATCHES.find((swatch) => swatch.value.toLowerCase() === paintColor.toLowerCase()) ?? null,
     [paintColor],
@@ -1766,8 +1769,25 @@ export default function WorkspaceScreen() {
       return;
     }
 
+    if (!viewerReady) {
+      return;
+    }
+
     const routeSignature = `${boardView}:${boardItemId ?? ""}:${entrySource ?? ""}`;
     if (handledBoardRouteRef.current === routeSignature) {
+      return;
+    }
+
+    if (!effectiveSignedIn) {
+      handledBoardRouteRef.current = routeSignature;
+      router.replace("/workspace");
+      requestAnimationFrame(() => {
+        openAuthWall(
+          boardView === "editor" && boardItemId
+            ? `/workspace?boardView=editor&boardItemId=${encodeURIComponent(boardItemId)}`
+            : "/workspace?boardView=board",
+        );
+      });
       return;
     }
 
@@ -1799,7 +1819,7 @@ export default function WorkspaceScreen() {
     if (sliderWidth.value > 0) {
       sliderX.value = withSpring(sliderWidth.value / 2, sliderSpring);
     }
-  }, [boardItemId, boardItems, boardView, entrySource, sliderSpring, sliderWidth, sliderX]);
+  }, [boardItemId, boardItems, boardView, effectiveSignedIn, entrySource, openAuthWall, router, sliderSpring, sliderWidth, sliderX, viewerReady]);
 
   useEffect(() => {
     if (pendingBoardItems.length === 0 || archivedBoardItems.length === 0) {
@@ -2272,12 +2292,12 @@ export default function WorkspaceScreen() {
     }
     if (workflowStep === 5) {
       setWizardNavDirection(-1);
-      setWorkflowStep(4);
+      setWorkflowStep(effectiveSignedIn ? 4 : 3);
       return;
     }
     setWizardNavDirection(-1);
     setWorkflowStep((prev) => Math.max(prev - 1, 0));
-  }, [router, workflowStep]);
+  }, [effectiveSignedIn, router, workflowStep]);
 
   const handleResetWizard = useCallback(() => {
     triggerHaptic();
@@ -2488,14 +2508,14 @@ export default function WorkspaceScreen() {
     setFeedbackState("liked");
     setFeedbackSubmitted(true);
     try {
-      await submitGenerationFeedback({ id: generationId, sentiment: "liked" });
+      await submitGenerationFeedback({ anonymousId, id: generationId, sentiment: "liked" });
       showToast("Feedback saved. We will lean into results like this.");
     } catch (error) {
       setFeedbackState(null);
       setFeedbackSubmitted(false);
       Alert.alert("Feedback failed", error instanceof Error ? error.message : "Please try again.");
     }
-  }, [animateFeedbackButton, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
+  }, [animateFeedbackButton, anonymousId, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
 
   const handleDislike = useCallback(async () => {
     if (!generationId || feedbackSubmitted) return;
@@ -2505,6 +2525,7 @@ export default function WorkspaceScreen() {
     setFeedbackSubmitted(true);
     try {
       await submitGenerationFeedback({
+        anonymousId,
         id: generationId,
         sentiment: "disliked",
       });
@@ -2514,11 +2535,11 @@ export default function WorkspaceScreen() {
       setFeedbackSubmitted(false);
       Alert.alert("Feedback failed", error instanceof Error ? error.message : "Please try again.");
     }
-  }, [animateFeedbackButton, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
+  }, [animateFeedbackButton, anonymousId, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
 
 
   const uploadSelectedImageToStorage = useCallback(async (image: SelectedImage) => {
-    const uploadUrl = (await createSourceUploadUrl({})) as string;
+    const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
     const blob = await readBlobFromUri(image.uri);
     const uploadResponse = await fetch(uploadUrl, {
       method: "POST",
@@ -2538,9 +2559,14 @@ export default function WorkspaceScreen() {
     }
 
     return uploadResult.storageId;
-  }, [createSourceUploadUrl]);
+  }, [createSourceUploadUrl, viewerArgs]);
 
   const handleGenerate = useCallback(async (options?: { regenerate?: boolean; customPromptOverride?: string }) => {
+    if (!diagnostic && !viewerReady) {
+      Alert.alert("Preparing your session", "Your guest profile is still loading. Please try again in a moment.");
+      return;
+    }
+
     if (isFloorService) {
       if (!selectedImage || !selectedRoom || !selectedStyle || !selectedFinishOption || !selectedFloorMaterialOption) {
         Alert.alert("Complete the steps", "Add a room photo, choose a space, pick a material, and select a finish before continuing.");
@@ -2556,21 +2582,12 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    if (!effectiveSignedIn) {
-      Alert.alert("Sign in required", "Sign in to save this render to your board.", [
-        { text: "Not now", style: "cancel" },
-        {
-          text: "Sign in",
-          onPress: () => {
-            setAwaitingAuth(true);
-            router.push({ pathname: "/sign-in", params: { returnTo: "/workspace" } });
-          },
-        },
-      ]);
-      return;
-    }
-
     if (!diagnostic && !hasGenerationCredits) {
+      if (!effectiveSignedIn) {
+        openAuthWall("/workspace", true);
+        return;
+      }
+
       router.push("/paywall");
       return;
     }
@@ -2611,9 +2628,9 @@ export default function WorkspaceScreen() {
       generationAlertedFailureRef.current = null;
       setPendingReviewState(null);
       setIsGenerating(true);
-      setActiveBoardItemId(null);
+      setActiveBoardItemId(!effectiveSignedIn ? temporaryBoardId : null);
       setPendingBoardItems((current) => [processingBoardItem, ...current.filter((item) => item.id !== temporaryBoardId)]);
-      setWorkflowStep(4);
+      setWorkflowStep(effectiveSignedIn ? 4 : 5);
 
       const sourceStorageId = await uploadSelectedImageToStorage(activeSelectedImage);
       const activeCustomPrompt = isFloorService
@@ -2624,6 +2641,7 @@ export default function WorkspaceScreen() {
           ? customPrompt.trim()
           : undefined;
       const startResult = (await startGeneration({
+        anonymousId,
         sourceStorageId,
         roomType: selectedSpaceLabel,
         style: isFloorService ? floorStyleLabel : isPaintService ? paintStyleLabel : selectedStyle!,
@@ -2655,6 +2673,7 @@ export default function WorkspaceScreen() {
             : item,
         ),
       );
+      setActiveBoardItemId((current) => (current === temporaryBoardId ? startResult.generationId : current));
       setGenerationId(startResult.generationId);
       setPendingReviewState(startResult.reviewState ?? null);
       if (startResult.reviewState) {
@@ -2662,8 +2681,12 @@ export default function WorkspaceScreen() {
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Please try again.";
-      if (!diagnostic && message.includes("No diamonds remaining")) {
+      if (!diagnostic && !hasGenerationCredits) {
         setPendingBoardItems((current) => current.filter((item) => item.id !== temporaryBoardId));
+        if (!effectiveSignedIn) {
+          openAuthWall("/workspace", true);
+          return;
+        }
         router.push("/paywall");
         return;
       }
@@ -2686,12 +2709,14 @@ export default function WorkspaceScreen() {
     createSourceUploadUrl,
     customPrompt,
     diagnostic,
+    anonymousId,
     effectiveSignedIn,
     isFloorService,
     generationSpeedTier,
     hasGenerationCredits,
     ignoreReviewCooldown,
     isPaintService,
+    openAuthWall,
     ratioSpec.ratioLabel,
     router,
     selectedFinishOption,
@@ -2706,10 +2731,11 @@ export default function WorkspaceScreen() {
     serviceType,
     startGeneration,
     uploadSelectedImageToStorage,
+    viewerReady,
   ]);
 
   useEffect(() => {
-    if (!effectiveSignedIn || !awaitingAuth) return;
+    if (!effectiveSignedIn || !awaitingAuth || !viewerReady) return;
     if (!canContinue) {
       setAwaitingAuth(false);
       return;
@@ -2719,7 +2745,7 @@ export default function WorkspaceScreen() {
       void handleGenerate();
     }, 300);
     return () => clearTimeout(timer);
-  }, [awaitingAuth, canContinue, effectiveSignedIn, handleGenerate]);
+  }, [awaitingAuth, canContinue, effectiveSignedIn, handleGenerate, viewerReady]);
 
   const handleContinue = useCallback(() => {
     triggerHaptic();
@@ -2730,6 +2756,10 @@ export default function WorkspaceScreen() {
 
     if (workflowStep === 3) {
       if (!diagnostic && !hasGenerationCredits) {
+        if (!effectiveSignedIn) {
+          openAuthWall("/workspace", true);
+          return;
+        }
         router.push("/paywall");
         return;
       }
@@ -2741,7 +2771,7 @@ export default function WorkspaceScreen() {
     startTransition(() => {
       setWorkflowStep((prev) => Math.min(prev + 1, 3));
     });
-  }, [canContinue, diagnostic, handleGenerate, hasGenerationCredits, router, workflowStep]);
+  }, [canContinue, diagnostic, effectiveSignedIn, handleGenerate, hasGenerationCredits, openAuthWall, router, workflowStep]);
 
   const handleSelectRoom = useCallback((value: string) => {
     triggerHaptic();
@@ -2818,6 +2848,11 @@ export default function WorkspaceScreen() {
   }, []);
 
   const handleOpenBoardItem = useCallback((item: BoardRenderItem) => {
+    if (!effectiveSignedIn) {
+      openAuthWall(`/workspace?boardView=editor&boardItemId=${encodeURIComponent(item.id)}`);
+      return;
+    }
+
     if (item.status === "processing") {
       showToast("Your redesign is still processing.");
       return;
@@ -2845,7 +2880,7 @@ export default function WorkspaceScreen() {
     if (sliderWidth.value > 0) {
       sliderX.value = withSpring(sliderWidth.value / 2, sliderSpring);
     }
-  }, [canEditDesigns, router, showToast, sliderSpring, sliderWidth, sliderX]);
+  }, [canEditDesigns, effectiveSignedIn, openAuthWall, router, showToast, sliderSpring, sliderWidth, sliderX]);
 
   const handleCloseBoardEditor = useCallback(() => {
     triggerHaptic();
@@ -2853,11 +2888,15 @@ export default function WorkspaceScreen() {
       router.replace("/gallery");
       return;
     }
+    if (entrySource === "profile") {
+      router.replace("/profile");
+      return;
+    }
     setWizardNavDirection(-1);
-    setWorkflowStep(isFloorService ? 2 : 4);
+    setWorkflowStep(effectiveSignedIn ? (isFloorService ? 2 : 4) : 3);
     setActiveBoardItemId(null);
     setShowBeforeOnly(false);
-  }, [entrySource, isFloorService, router]);
+  }, [effectiveSignedIn, entrySource, isFloorService, router]);
 
   const handleToggleBeforePreview = useCallback(() => {
     triggerHaptic();
@@ -2877,7 +2916,7 @@ export default function WorkspaceScreen() {
     try {
       setIsDeletingGeneration(true);
       if (item.generationId) {
-        await deleteGeneration({ id: item.generationId });
+        await deleteGeneration({ anonymousId, id: item.generationId });
       }
 
       setPendingBoardItems((current) => current.filter((entry) => entry.id !== item.id));
@@ -2893,7 +2932,7 @@ export default function WorkspaceScreen() {
     } finally {
       setIsDeletingGeneration(false);
     }
-  }, [activeBoardItem, deleteGeneration, showToast]);
+  }, [activeBoardItem, anonymousId, deleteGeneration, showToast]);
 
   const handleDeleteBoardItem = useCallback(() => {
     const item = activeBoardItem;
@@ -2929,13 +2968,13 @@ export default function WorkspaceScreen() {
     setReviewPromptOpen(false);
     reviewSheetRef.current?.dismiss();
     try {
-      await markReviewPrompted({});
+      await markReviewPrompted({ anonymousId });
     } catch {
       // noop
     }
     setRatePromptOpen(true);
     requestAnimationFrame(() => rateSheetRef.current?.present());
-  }, [markReviewPrompted]);
+  }, [anonymousId, markReviewPrompted]);
 
   const handleReviewNo = useCallback(async () => {
     triggerHaptic();
@@ -2943,13 +2982,13 @@ export default function WorkspaceScreen() {
     setReviewPromptOpen(false);
     reviewSheetRef.current?.dismiss();
     try {
-      await markReviewPrompted({});
+      await markReviewPrompted({ anonymousId });
     } catch {
       // noop
     }
     setFeedbackOpen(true);
     requestAnimationFrame(() => feedbackSheetRef.current?.present());
-  }, [markReviewPrompted]);
+  }, [anonymousId, markReviewPrompted]);
 
   const handleRateNow = useCallback(async () => {
     triggerHaptic();
@@ -2973,6 +3012,7 @@ export default function WorkspaceScreen() {
     setIsSubmittingFeedback(true);
     try {
       await submitFeedback({
+        anonymousId,
         message: feedbackMessage.trim(),
         generationCount: lastGenerationCount ?? undefined,
       });
@@ -2985,7 +3025,7 @@ export default function WorkspaceScreen() {
     } finally {
       setIsSubmittingFeedback(false);
     }
-  }, [feedbackMessage, lastGenerationCount, submitFeedback]);
+  }, [anonymousId, feedbackMessage, lastGenerationCount, submitFeedback]);
 
   const stepTransition = LUX_SPRING;
   const isPhotoPreviewBusy = isSelectingPhoto || isLoadingExample !== null;
@@ -3933,8 +3973,12 @@ export default function WorkspaceScreen() {
                         <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Generate</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
                           {isGardenService
-                            ? "Review your garden selections, then continue to generate and send the result to Your Board."
-                            : "Review your exterior selections, then continue to generate and send the result to Your Board."}
+                            ? effectiveSignedIn
+                              ? "Review your garden selections, then continue to generate and send the result to Your Board."
+                              : "Review your garden selections, then continue to generate instantly. Sign in later to save it to Your Board."
+                            : effectiveSignedIn
+                              ? "Review your exterior selections, then continue to generate and send the result to Your Board."
+                              : "Review your exterior selections, then continue to generate instantly. Sign in later to save it to Your Board."}
                         </Text>
                       </View>
 

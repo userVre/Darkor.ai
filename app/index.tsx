@@ -1,6 +1,6 @@
 import { Redirect } from "expo-router";
 
 export default function Index() {
-  return <Redirect href="/paywall" />;
+  return <Redirect href="/(tabs)" />;
 }
 

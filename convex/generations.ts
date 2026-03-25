@@ -8,6 +8,13 @@ import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { deriveSubscriptionState, FREE_IMAGE_LIMIT } from "./subscriptions";
+import {
+  buildDefaultUserFields,
+  ensureGuestUser,
+  getUserByAnonymousId,
+  getUserByClerkId,
+  resolveViewer,
+} from "./viewer";
 
 const GEMINI_MODEL = "gemini-3.1-flash-image-preview";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
@@ -18,7 +25,9 @@ type SpeedTier = "standard" | "pro" | "ultra";
 
 type GenerationUser = {
   _id: string;
-  clerkId: string;
+  clerkId?: string;
+  anonymousId?: string;
+  mergedIntoClerkId?: string;
   credits: number;
   generationCount: number;
   reviewPrompted: boolean;
@@ -54,11 +63,51 @@ type GeminiResponse = {
   };
 };
 
-async function getUserByClerkId(ctx: any, clerkId: string) {
-  return (await ctx.db
-    .query("users")
-    .withIndex("by_clerkId", (q: any) => q.eq("clerkId", clerkId))
-    .unique()) as GenerationUser | null;
+async function getUserByOwnerId(ctx: any, ownerId: string) {
+  if (ownerId.startsWith("guest:")) {
+    const anonymousId = ownerId.slice("guest:".length);
+    return (await getUserByAnonymousId(ctx, anonymousId)) as GenerationUser | null;
+  }
+
+  return (await getUserByClerkId(ctx, ownerId)) as GenerationUser | null;
+}
+
+async function ensureGenerationViewer(ctx: any, anonymousId?: string) {
+  const viewer = await resolveViewer(ctx, {
+    anonymousId,
+    createGuest: true,
+  });
+
+  if (!viewer) {
+    throw new ConvexError("No viewer session found.");
+  }
+
+  if (viewer.kind === "account") {
+    if (viewer.user) {
+      return { ...viewer, user: viewer.user as GenerationUser };
+    }
+
+    const insertedId = await ctx.db.insert(
+      "users",
+      buildDefaultUserFields({
+        clerkId: viewer.clerkId,
+        referralCode: viewer.clerkId,
+      }),
+    );
+    const insertedUser = await ctx.db.get(insertedId);
+    if (!insertedUser) {
+      throw new ConvexError("No billing profile found. Please try again.");
+    }
+
+    return { ...viewer, user: insertedUser as GenerationUser };
+  }
+
+  const guestUser = (viewer.user ?? (await ensureGuestUser(ctx, viewer.anonymousId))) as GenerationUser | null;
+  if (!guestUser) {
+    throw new ConvexError("Guest profile not found.");
+  }
+
+  return { ...viewer, user: guestUser };
 }
 
 function omitUndefined<T extends Record<string, unknown>>(value: T) {
@@ -84,8 +133,8 @@ function computeReviewPrompt(nextCount: number, lastPromptAt: number, ignoreCool
   return ignoreCooldown ? nextCount >= 2 : !cooldownActive && (nextCount === 2 || nextCount === 3);
 }
 
-async function reserveGenerationAllowance(ctx: any, clerkId: string, ignoreCooldown?: boolean) {
-  const user = await getUserByClerkId(ctx, clerkId);
+async function reserveGenerationAllowance(ctx: any, ownerId: string, ignoreCooldown?: boolean) {
+  const user = await getUserByOwnerId(ctx, ownerId);
   if (!user) {
     throw new ConvexError("No billing profile found. Please subscribe to continue.");
   }
@@ -122,8 +171,8 @@ async function reserveGenerationAllowance(ctx: any, clerkId: string, ignoreCoold
   };
 }
 
-async function releaseGenerationAllowance(ctx: any, clerkId: string) {
-  const user = await getUserByClerkId(ctx, clerkId);
+async function releaseGenerationAllowance(ctx: any, ownerId: string) {
+  const user = await getUserByOwnerId(ctx, ownerId);
   if (!user) {
     return {
       ok: false,
@@ -293,16 +342,22 @@ function resolveRowStatus(row: { status?: string; imageUrl?: string | null }, im
 }
 
 export const getUserArchive = queryGeneric({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthorized");
+  args: {
+    anonymousId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await resolveViewer(ctx, {
+      anonymousId: args.anonymousId,
+      createGuest: false,
+      requireViewer: false,
+    });
+    if (!viewer) {
+      return [];
     }
 
     const rows = await ctx.db
       .query("generations")
-      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .withIndex("by_userId", (q) => q.eq("userId", viewer.userId))
       .order("desc")
       .collect();
 
@@ -325,19 +380,18 @@ export const getUserArchive = queryGeneric({
 });
 
 export const createSourceUploadUrl = mutationGeneric({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthorized");
-    }
-
+  args: {
+    anonymousId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ensureGenerationViewer(ctx, args.anonymousId);
     return await ctx.storage.generateUploadUrl();
   },
 });
 
 export const startGeneration = mutationGeneric({
   args: {
+    anonymousId: v.optional(v.string()),
     sourceStorageId: v.id("_storage"),
     maskStorageId: v.optional(v.id("_storage")),
     roomType: v.string(),
@@ -352,10 +406,7 @@ export const startGeneration = mutationGeneric({
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthorized");
-    }
+    const viewer = await ensureGenerationViewer(ctx, args.anonymousId);
 
     const sourceMetadata = await ctx.db.system.get("_storage", args.sourceStorageId);
     if (!sourceMetadata) {
@@ -368,7 +419,7 @@ export const startGeneration = mutationGeneric({
       }
     }
 
-    const allowance = await reserveGenerationAllowance(ctx, identity.subject, args.ignoreReviewCooldown);
+    const allowance = await reserveGenerationAllowance(ctx, viewer.userId, args.ignoreReviewCooldown);
     const prompt = buildGenerationPrompt({
       roomType: args.roomType,
       style: args.style,
@@ -381,7 +432,7 @@ export const startGeneration = mutationGeneric({
     });
 
     const generationId = await ctx.db.insert("generations", {
-      userId: identity.subject,
+      userId: viewer.userId,
       sourceImageStorageId: args.sourceStorageId,
       maskImageStorageId: args.maskStorageId,
       storageId: undefined,
@@ -408,7 +459,7 @@ export const startGeneration = mutationGeneric({
 
     await ctx.scheduler.runAfter(0, (internal as any).generations.runGenerationJob, {
       generationId,
-      clerkId: identity.subject,
+      ownerId: viewer.userId,
       sourceStorageId: args.sourceStorageId,
       maskStorageId: args.maskStorageId,
       prompt,
@@ -455,7 +506,7 @@ export const markGenerationReady = internalMutationGeneric({
 export const markGenerationFailed = internalMutationGeneric({
   args: {
     generationId: v.id("generations"),
-    clerkId: v.string(),
+    ownerId: v.string(),
     errorMessage: v.string(),
   },
   handler: async (ctx, args) => {
@@ -468,7 +519,7 @@ export const markGenerationFailed = internalMutationGeneric({
       });
     }
 
-    await releaseGenerationAllowance(ctx, args.clerkId);
+    await releaseGenerationAllowance(ctx, args.ownerId);
     return { ok: true };
   },
 });
@@ -476,7 +527,7 @@ export const markGenerationFailed = internalMutationGeneric({
 export const runGenerationJob = internalActionGeneric({
   args: {
     generationId: v.id("generations"),
-    clerkId: v.string(),
+    ownerId: v.string(),
     sourceStorageId: v.id("_storage"),
     maskStorageId: v.optional(v.id("_storage")),
     prompt: v.string(),
@@ -488,7 +539,7 @@ export const runGenerationJob = internalActionGeneric({
     if (!apiKey) {
       await ctx.runMutation((internal as any).generations.markGenerationFailed, {
         generationId: args.generationId,
-        clerkId: args.clerkId,
+        ownerId: args.ownerId,
         errorMessage: "Missing GEMINI_API_KEY in Convex environment variables.",
       });
       throw new ConvexError("Missing GEMINI_API_KEY in Convex environment variables.");
@@ -580,7 +631,7 @@ export const runGenerationJob = internalActionGeneric({
       const message = error instanceof Error ? error.message : "Generation failed";
       await ctx.runMutation((internal as any).generations.markGenerationFailed, {
         generationId: args.generationId,
-        clerkId: args.clerkId,
+        ownerId: args.ownerId,
         errorMessage: message,
       });
       throw error;
@@ -590,21 +641,19 @@ export const runGenerationJob = internalActionGeneric({
 
 export const submitFeedback = mutationGeneric({
   args: {
+    anonymousId: v.optional(v.string()),
     id: v.id("generations"),
     sentiment: v.union(v.literal("liked"), v.literal("disliked")),
     reason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthorized");
-    }
+    const viewer = await ensureGenerationViewer(ctx, args.anonymousId);
 
     const item = await ctx.db.get(args.id);
     if (!item) {
       throw new Error("Generation not found");
     }
-    if (item.userId !== identity.subject) {
+    if (item.userId !== viewer.userId) {
       throw new Error("Forbidden");
     }
 
@@ -620,19 +669,17 @@ export const submitFeedback = mutationGeneric({
 
 export const toggleFavorite = mutationGeneric({
   args: {
+    anonymousId: v.optional(v.string()),
     id: v.id("generations"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthorized");
-    }
+    const viewer = await ensureGenerationViewer(ctx, args.anonymousId);
 
     const item = await ctx.db.get(args.id);
     if (!item) {
       throw new Error("Generation not found");
     }
-    if (item.userId !== identity.subject) {
+    if (item.userId !== viewer.userId) {
       throw new Error("Forbidden");
     }
 
@@ -644,26 +691,24 @@ export const toggleFavorite = mutationGeneric({
 
 export const setProject = mutationGeneric({
   args: {
+    anonymousId: v.optional(v.string()),
     id: v.id("generations"),
     projectId: v.optional(v.id("projects")),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthorized");
-    }
+    const viewer = await ensureGenerationViewer(ctx, args.anonymousId);
 
     const item = await ctx.db.get(args.id);
     if (!item) {
       throw new Error("Generation not found");
     }
-    if (item.userId !== identity.subject) {
+    if (item.userId !== viewer.userId) {
       throw new Error("Forbidden");
     }
 
     if (args.projectId) {
       const project = await ctx.db.get(args.projectId);
-      if (!project || project.userId !== identity.subject) {
+      if (!project || project.userId !== viewer.userId) {
         throw new Error("Invalid project");
       }
     }
@@ -675,19 +720,17 @@ export const setProject = mutationGeneric({
 
 export const deleteGeneration = mutationGeneric({
   args: {
+    anonymousId: v.optional(v.string()),
     id: v.id("generations"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthorized");
-    }
+    const viewer = await ensureGenerationViewer(ctx, args.anonymousId);
 
     const item = await ctx.db.get(args.id);
     if (!item) {
       throw new Error("Generation not found");
     }
-    if (item.userId !== identity.subject) {
+    if (item.userId !== viewer.userId) {
       throw new Error("Forbidden");
     }
 

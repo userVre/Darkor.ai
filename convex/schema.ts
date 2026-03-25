@@ -3,7 +3,9 @@ import { v } from "convex/values";
 
 export default defineSchema({
   users: defineTable({
-    clerkId: v.string(),
+    clerkId: v.optional(v.string()),
+    anonymousId: v.optional(v.string()),
+    mergedIntoClerkId: v.optional(v.string()),
     credits: v.int64(),
     plan: v.string(),
     generationCount: v.int64(),
@@ -18,7 +20,9 @@ export default defineSchema({
     imageLimit: v.optional(v.int64()),
     imageGenerationCount: v.optional(v.int64()),
     lastResetDate: v.optional(v.int64()),
-  }).index("by_clerkId", ["clerkId"]),
+  })
+    .index("by_clerkId", ["clerkId"])
+    .index("by_anonymousId", ["anonymousId"]),
 
   generations: defineTable({
     userId: v.string(),

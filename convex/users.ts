@@ -2,16 +2,19 @@ import { mutationGeneric, queryGeneric } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
 import { BillingPlan, buildSubscriptionPatch, deriveSubscriptionState, FREE_IMAGE_LIMIT, SubscriptionType } from "./subscriptions";
+import {
+  buildDefaultUserFields,
+  ensureGuestUser,
+  getUserByAnonymousId,
+  getUserByClerkId,
+  normalizeAnonymousId,
+  resolveViewer,
+  toGuestUserId,
+  transferOwnedDocuments,
+} from "./viewer";
 
 function omitUndefined<T extends Record<string, unknown>>(value: T) {
   return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)) as T;
-}
-
-async function getUserByClerkId(ctx: any, clerkId: string) {
-  return await ctx.db
-    .query("users")
-    .withIndex("by_clerkId", (q: any) => q.eq("clerkId", clerkId))
-    .unique();
 }
 
 async function getCurrentUser(ctx: any) {
@@ -43,95 +46,162 @@ function computeReviewPrompt(nextCount: number, lastPromptAt: number, ignoreCool
   return ignoreCooldown ? nextCount >= 2 : !cooldownActive && (nextCount === 2 || nextCount === 3);
 }
 
-export const getOrCreateCurrentUser = mutationGeneric({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthorized");
-    }
+function buildViewerResponse(user: any) {
+  if (!user) {
+    return null;
+  }
 
-    const existing = await getUserByClerkId(ctx, identity.subject);
-    if (existing) {
-      const now = Date.now();
-      const state = deriveSubscriptionState(existing, now);
-      const patch = omitUndefined({
-        credits: typeof existing.credits === "number" ? existing.credits : 3,
-        referralCode: existing.referralCode ?? identity.subject,
-        referralCount: typeof existing.referralCount === "number" ? existing.referralCount : 0,
-        lastRewardDate: typeof existing.lastRewardDate === "number" ? existing.lastRewardDate : now,
-        ...state.patch,
-      });
-      if (Object.keys(patch).length > 0) {
-        await ctx.db.patch(existing._id, patch);
-      }
-      const refreshed = await ctx.db.get(existing._id);
-      return refreshed ?? existing;
-    }
+  const state = deriveSubscriptionState(user, Date.now());
+  return {
+    ...user,
+    credits: state.remaining,
+    plan: state.plan,
+    subscriptionType: state.subscriptionType,
+    subscriptionEnd: state.subscriptionEnd,
+    imageLimit: state.limit,
+    imageGenerationCount: state.imageGenerationCount,
+    lastResetDate: state.lastResetDate,
+    imageGenerationLimit: state.limit,
+    imagesRemaining: state.remaining,
+    subscriptionActive: state.active,
+    generationLimitReached: state.reachedLimit,
+    generationStatusLabel: state.statusLabel,
+    generationStatusMessage: state.statusMessage,
+    hasPaidAccess: state.hasPaidAccess,
+    canExport4k: state.canExport4k,
+    canRemoveWatermark: state.canRemoveWatermark,
+    canVirtualStage: state.canVirtualStage,
+    canEditDesigns: state.canEditDesigns,
+    isGuest: !user.clerkId,
+  };
+}
 
+async function getOrCreateClerkUser(ctx: any, clerkId: string) {
+  const existing = await getUserByClerkId(ctx, clerkId);
+  if (existing) {
     const now = Date.now();
-    const id = await ctx.db.insert("users", {
-      clerkId: identity.subject,
-      credits: 3,
-      plan: "free",
-      generationCount: 0,
-      reviewPrompted: false,
-      lastReviewPromptAt: 0,
-      lastRewardDate: now,
-      referralCode: identity.subject,
-      referralCount: 0,
-      referredBy: undefined,
-      subscriptionType: "free",
-      subscriptionEnd: 0,
-      imageLimit: FREE_IMAGE_LIMIT,
-      imageGenerationCount: 0,
-      lastResetDate: 0,
+    const state = deriveSubscriptionState(existing, now);
+    const patch = omitUndefined({
+      credits: typeof existing.credits === "number" ? existing.credits : 3,
+      referralCode: existing.referralCode ?? clerkId,
+      referralCount: typeof existing.referralCount === "number" ? existing.referralCount : 0,
+      lastRewardDate: typeof existing.lastRewardDate === "number" ? existing.lastRewardDate : now,
+      ...state.patch,
     });
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(existing._id, patch);
+    }
+    return (await ctx.db.get(existing._id)) ?? existing;
+  }
 
-    const created = await ctx.db.get(id);
-    if (!created) {
-      throw new Error("Failed to create user");
+  const id = await ctx.db.insert(
+    "users",
+    buildDefaultUserFields({
+      clerkId,
+      referralCode: clerkId,
+    }),
+  );
+
+  const created = await ctx.db.get(id);
+  if (!created) {
+    throw new Error("Failed to create user");
+  }
+
+  return created;
+}
+
+async function ensureViewerUser(ctx: any, anonymousId?: string) {
+  const viewer = await resolveViewer(ctx, {
+    anonymousId,
+    createGuest: true,
+  });
+
+  if (!viewer) {
+    throw new Error("No billing profile found.");
+  }
+
+  if (viewer.kind === "account") {
+    const user = viewer.user ?? (await getOrCreateClerkUser(ctx, viewer.clerkId));
+    return { ...viewer, user };
+  }
+
+  const user = viewer.user ?? (await ensureGuestUser(ctx, viewer.anonymousId));
+  return { ...viewer, user };
+}
+
+async function mergeAnonymousUserIntoClerkUser(ctx: any, clerkId: string, anonymousId?: string | null) {
+  const accountUser = await getOrCreateClerkUser(ctx, clerkId);
+  const normalizedAnonymousId = normalizeAnonymousId(anonymousId);
+
+  if (!normalizedAnonymousId) {
+    return accountUser;
+  }
+
+  const guestUser = await getUserByAnonymousId(ctx, normalizedAnonymousId);
+  if (!guestUser || guestUser.clerkId) {
+    return accountUser;
+  }
+
+  const guestOwnerId = toGuestUserId(normalizedAnonymousId);
+  const guestCredits = typeof guestUser.credits === "number" ? guestUser.credits : 0;
+  const guestGenerationCount = typeof guestUser.generationCount === "number" ? guestUser.generationCount : 0;
+  const guestImageGenerationCount = typeof guestUser.imageGenerationCount === "number" ? guestUser.imageGenerationCount : 0;
+  const guestReferralCount = typeof guestUser.referralCount === "number" ? guestUser.referralCount : 0;
+
+  await transferOwnedDocuments(ctx, guestOwnerId, clerkId);
+
+  await ctx.db.patch(accountUser._id, omitUndefined({
+    credits: (typeof accountUser.credits === "number" ? accountUser.credits : 0) + guestCredits,
+    generationCount: (typeof accountUser.generationCount === "number" ? accountUser.generationCount : 0) + guestGenerationCount,
+    imageGenerationCount:
+      (typeof accountUser.imageGenerationCount === "number" ? accountUser.imageGenerationCount : 0) + guestImageGenerationCount,
+    referralCount: (typeof accountUser.referralCount === "number" ? accountUser.referralCount : 0) + guestReferralCount,
+    referredBy: accountUser.referredBy ?? guestUser.referredBy,
+    lastRewardDate: Math.max(accountUser.lastRewardDate ?? 0, guestUser.lastRewardDate ?? 0),
+    lastReviewPromptAt: Math.max(accountUser.lastReviewPromptAt ?? 0, guestUser.lastReviewPromptAt ?? 0),
+  }));
+
+  await ctx.db.patch(guestUser._id, {
+    credits: 0,
+    generationCount: 0,
+    imageGenerationCount: 0,
+    reviewPrompted: false,
+    mergedIntoClerkId: clerkId,
+  });
+
+  return (await ctx.db.get(accountUser._id)) ?? accountUser;
+}
+
+export const getOrCreateCurrentUser = mutationGeneric({
+  args: {
+    anonymousId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity) {
+      return await mergeAnonymousUserIntoClerkUser(ctx, identity.subject, args.anonymousId);
     }
 
-    return created;
+    const guestUser = await ensureGuestUser(ctx, args.anonymousId ?? "");
+    if (!guestUser) {
+      throw new Error("Failed to create guest user");
+    }
+
+    return guestUser;
   },
 });
 
 export const me = queryGeneric({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    const user = await getUserByClerkId(ctx, identity.subject);
-    if (!user) {
-      return null;
-    }
-
-    const state = deriveSubscriptionState(user, Date.now());
-    return {
-      ...user,
-      credits: state.remaining,
-      plan: state.plan,
-      subscriptionType: state.subscriptionType,
-      subscriptionEnd: state.subscriptionEnd,
-      imageLimit: state.limit,
-      imageGenerationCount: state.imageGenerationCount,
-      lastResetDate: state.lastResetDate,
-      imageGenerationLimit: state.limit,
-      imagesRemaining: state.remaining,
-      subscriptionActive: state.active,
-      generationLimitReached: state.reachedLimit,
-      generationStatusLabel: state.statusLabel,
-      generationStatusMessage: state.statusMessage,
-      hasPaidAccess: state.hasPaidAccess,
-      canExport4k: state.canExport4k,
-      canRemoveWatermark: state.canRemoveWatermark,
-      canVirtualStage: state.canVirtualStage,
-      canEditDesigns: state.canEditDesigns,
-    };
+  args: {
+    anonymousId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await resolveViewer(ctx, {
+      anonymousId: args.anonymousId,
+      createGuest: false,
+      requireViewer: false,
+    });
+    return buildViewerResponse(viewer?.user ?? null);
   },
 });
 
@@ -217,16 +287,11 @@ export const syncRevenueCatSubscriptionInternal = mutationGeneric({
       });
 
       await ctx.db.insert("users", {
-        clerkId: args.clerkId,
-        credits: 3,
+        ...buildDefaultUserFields({
+          clerkId: args.clerkId,
+          referralCode: args.clerkId,
+        }),
         plan: initialSubscription.plan,
-        generationCount: 0,
-        reviewPrompted: false,
-        lastReviewPromptAt: 0,
-        lastRewardDate: now,
-        referralCode: args.clerkId,
-        referralCount: 0,
-        referredBy: undefined,
         subscriptionType: initialSubscription.subscriptionType,
         subscriptionEnd: initialSubscription.subscriptionEnd,
         imageLimit: initialSubscription.imageLimit,
@@ -251,111 +316,91 @@ export const syncRevenueCatSubscriptionInternal = mutationGeneric({
 });
 
 export const getGenerationStatus = queryGeneric({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    const user = await getUserByClerkId(ctx, identity.subject);
-    if (!user) {
-      return null;
-    }
-
-    const state = deriveSubscriptionState(user, Date.now());
-    return {
-      credits: state.remaining,
-      subscriptionType: state.subscriptionType,
-      subscriptionEnd: state.subscriptionEnd,
-      imageLimit: state.limit,
-      imageGenerationCount: state.imageGenerationCount,
-      imageGenerationLimit: state.limit,
-      imagesRemaining: state.remaining,
-      subscriptionActive: state.active,
-      generationLimitReached: state.reachedLimit,
-      generationStatusLabel: state.statusLabel,
-      generationStatusMessage: state.statusMessage,
-      hasPaidAccess: state.hasPaidAccess,
-      canExport4k: state.canExport4k,
-      canRemoveWatermark: state.canRemoveWatermark,
-      canVirtualStage: state.canVirtualStage,
-      canEditDesigns: state.canEditDesigns,
-    };
+  args: {
+    anonymousId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await resolveViewer(ctx, {
+      anonymousId: args.anonymousId,
+      createGuest: false,
+      requireViewer: false,
+    });
+    return buildViewerResponse(viewer?.user ?? null);
   },
 });
 
-async function consumeAllowance(ctx: any, ignoreCooldown?: boolean) {
-  const { user } = await getCurrentUser(ctx);
-  if (!user) {
-    throw new Error("No billing profile found.");
+async function consumeAllowance(ctx: any, anonymousId?: string, ignoreCooldown?: boolean) {
+  const viewer = await ensureViewerUser(ctx, anonymousId);
+  const user = viewer.user;
+
+  const now = Date.now();
+  const state = await syncDerivedSubscriptionState(ctx, user, now);
+  if (state.blocked) {
+    throw new ConvexError(getLimitExceededMessage(state));
   }
 
-    const now = Date.now();
-    const state = await syncDerivedSubscriptionState(ctx, user, now);
-    if (state.blocked) {
-      throw new ConvexError(getLimitExceededMessage(state));
-    }
+  const currentCount = typeof user.generationCount === "number" ? user.generationCount : 0;
+  const nextGenerationCount = currentCount + 1;
+  const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : state.imageGenerationCount + 1;
+  const lastPromptAt = typeof user.lastReviewPromptAt === "number" ? user.lastReviewPromptAt : 0;
+  const shouldPrompt = computeReviewPrompt(nextGenerationCount, lastPromptAt, ignoreCooldown);
 
-    const currentCount = typeof user.generationCount === "number" ? user.generationCount : 0;
-    const nextGenerationCount = currentCount + 1;
-    const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : state.imageGenerationCount + 1;
-    const lastPromptAt = typeof user.lastReviewPromptAt === "number" ? user.lastReviewPromptAt : 0;
-    const shouldPrompt = computeReviewPrompt(nextGenerationCount, lastPromptAt, ignoreCooldown);
+  await ctx.db.patch(user._id, {
+    generationCount: nextGenerationCount,
+    credits: state.subscriptionType === "free" ? Math.max(state.credits - 1, 0) : state.credits,
+    imageLimit: state.limit,
+    imageGenerationCount: nextImageGenerationCount,
+    lastResetDate: state.subscriptionType === "free" ? 0 : state.lastResetDate,
+    ...(state.patch.plan ? { plan: state.patch.plan } : {}),
+    ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
+    ...(typeof state.patch.subscriptionEnd === "number" ? { subscriptionEnd: state.patch.subscriptionEnd } : {}),
+    ...(typeof state.patch.imageLimit === "number" ? { imageLimit: state.patch.imageLimit } : {}),
+    ...(typeof state.patch.lastResetDate === "number" ? { lastResetDate: state.patch.lastResetDate } : {}),
+  });
 
-    await ctx.db.patch(user._id, {
-      generationCount: nextGenerationCount,
-      credits: state.subscriptionType === "free" ? Math.max(state.credits - 1, 0) : state.credits,
-      imageLimit: state.limit,
-      imageGenerationCount: nextImageGenerationCount,
-      lastResetDate: state.subscriptionType === "free" ? 0 : state.lastResetDate,
-      ...(state.patch.plan ? { plan: state.patch.plan } : {}),
-      ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
-      ...(typeof state.patch.subscriptionEnd === "number" ? { subscriptionEnd: state.patch.subscriptionEnd } : {}),
-      ...(typeof state.patch.imageLimit === "number" ? { imageLimit: state.patch.imageLimit } : {}),
-      ...(typeof state.patch.lastResetDate === "number" ? { lastResetDate: state.patch.lastResetDate } : {}),
-    });
+  const remaining =
+    state.subscriptionType === "free" ? Math.max(state.credits - 1, 0) : Math.max(state.limit - nextImageGenerationCount, 0);
+  const statusLabel =
+    state.subscriptionType === "weekly"
+      ? `${remaining} / ${state.limit} images left`
+      : state.subscriptionType === "yearly"
+        ? `${remaining} / ${state.limit} this month`
+        : `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`;
 
-  const remaining = state.subscriptionType === "free"
-    ? Math.max(state.credits - 1, 0)
-    : Math.max(state.limit - nextImageGenerationCount, 0);
-  const statusLabel = state.subscriptionType === "weekly"
-    ? `${remaining} / ${state.limit} images left`
-    : state.subscriptionType === "yearly"
-      ? `${remaining} / ${state.limit} this month`
-      : `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`;
-
-    return {
-      count: nextGenerationCount,
-      shouldPrompt,
-      credits: remaining,
-      imageGenerationCount: nextImageGenerationCount,
-      imageGenerationLimit: state.limit,
-      imagesRemaining: remaining,
+  return {
+    count: nextGenerationCount,
+    shouldPrompt,
+    credits: remaining,
+    imageGenerationCount: nextImageGenerationCount,
+    imageGenerationLimit: state.limit,
+    imagesRemaining: remaining,
     subscriptionType: state.subscriptionType,
     generationStatusLabel: statusLabel,
     generationStatusMessage: remaining <= 0 ? `Limit Reached - ${statusLabel}` : statusLabel,
   };
 }
+
 export const consumeGenerationAllowance = mutationGeneric({
   args: {
+    anonymousId: v.optional(v.string()),
     ignoreCooldown: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    return await consumeAllowance(ctx, args.ignoreCooldown);
+    return await consumeAllowance(ctx, args.anonymousId, args.ignoreCooldown);
   },
 });
 
 export const releaseGenerationAllowance = mutationGeneric({
-  args: {},
-  handler: async (ctx) => {
-    const { user } = await getCurrentUser(ctx);
-    if (!user) {
-      throw new Error("No billing profile found.");
-    }
+  args: {
+    anonymousId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await ensureViewerUser(ctx, args.anonymousId);
+    const user = viewer.user;
 
     const state = await syncDerivedSubscriptionState(ctx, user, Date.now());
-    const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : Math.max(state.imageGenerationCount - 1, 0);
+    const nextImageGenerationCount =
+      state.subscriptionType === "free" ? state.imageGenerationCount : Math.max(state.imageGenerationCount - 1, 0);
     const currentCount = typeof user.generationCount === "number" ? user.generationCount : 0;
     const nextGenerationCount = Math.max(currentCount - 1, 0);
 
@@ -366,25 +411,26 @@ export const releaseGenerationAllowance = mutationGeneric({
       generationCount: nextGenerationCount,
     });
 
-    const remaining = state.subscriptionType === "free"
-      ? Math.min(state.credits + 1, FREE_IMAGE_LIMIT)
-      : Math.max(state.limit - nextImageGenerationCount, 0);
+    const remaining =
+      state.subscriptionType === "free" ? Math.min(state.credits + 1, FREE_IMAGE_LIMIT) : Math.max(state.limit - nextImageGenerationCount, 0);
     return {
       ok: true,
       credits: remaining,
       imageGenerationCount: nextImageGenerationCount,
       imagesRemaining: remaining,
-      generationStatusLabel: state.subscriptionType === "weekly"
-        ? `${remaining} / ${state.limit} images left`
-        : state.subscriptionType === "yearly"
-          ? `${remaining} / ${state.limit} this month`
-          : `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`,
+      generationStatusLabel:
+        state.subscriptionType === "weekly"
+          ? `${remaining} / ${state.limit} images left`
+          : state.subscriptionType === "yearly"
+            ? `${remaining} / ${state.limit} this month`
+            : `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`,
     };
   },
 });
 
 export const trackGeneration = mutationGeneric({
   args: {
+    anonymousId: v.optional(v.string()),
     ignoreCooldown: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -393,12 +439,12 @@ export const trackGeneration = mutationGeneric({
 });
 
 export const markReviewPrompted = mutationGeneric({
-  args: {},
-  handler: async (ctx) => {
-    const { user } = await getCurrentUser(ctx);
-    if (!user) {
-      throw new Error("No billing profile found.");
-    }
+  args: {
+    anonymousId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await ensureViewerUser(ctx, args.anonymousId);
+    const user = viewer.user;
 
     await ctx.db.patch(user._id, {
       reviewPrompted: true,
@@ -414,7 +460,7 @@ export const applyReferral = mutationGeneric({
     referralCode: v.string(),
   },
   handler: async (ctx, args) => {
-    const { identity, user: current } = await getCurrentUser(ctx);
+    const { user: current } = await getCurrentUser(ctx);
     if (!current) {
       throw new Error("No billing profile found.");
     }
@@ -452,12 +498,12 @@ export const applyReferral = mutationGeneric({
 });
 
 export const claimThreeDayReward = mutationGeneric({
-  args: {},
-  handler: async (ctx) => {
-    const { user } = await getCurrentUser(ctx);
-    if (!user) {
-      throw new Error("No billing profile found.");
-    }
+  args: {
+    anonymousId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await ensureViewerUser(ctx, args.anonymousId);
+    const user = viewer.user;
 
     if (user.plan !== "free") {
       return {
@@ -481,7 +527,7 @@ export const deleteAccountData = mutationGeneric({
   args: {},
   handler: async (ctx) => {
     const { user } = await getCurrentUser(ctx);
-    if (!user) {
+    if (!user || !user.clerkId) {
       return { ok: true };
     }
 
@@ -519,5 +565,3 @@ export const deleteAccountData = mutationGeneric({
     return { ok: true };
   },
 });
-
-

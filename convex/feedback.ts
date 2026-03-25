@@ -1,14 +1,20 @@
 import { mutationGeneric } from "convex/server";
 import { v } from "convex/values";
 
+import { resolveViewer } from "./viewer";
+
 export const submit = mutationGeneric({
   args: {
+    anonymousId: v.optional(v.string()),
     message: v.string(),
     generationCount: v.optional(v.int64()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const viewer = await resolveViewer(ctx, {
+      anonymousId: args.anonymousId,
+      createGuest: true,
+    });
+    if (!viewer) {
       throw new Error("Unauthorized");
     }
 
@@ -18,7 +24,7 @@ export const submit = mutationGeneric({
     }
 
     const id = await ctx.db.insert("feedback", {
-      userId: identity.subject,
+      userId: viewer.userId,
       message: trimmed,
       createdAt: Date.now(),
       generationCount: args.generationCount,

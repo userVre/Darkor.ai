@@ -95,7 +95,10 @@ export default function SignInScreen() {
       </LuxPressable>
 
       <Text className="mt-4 text-center text-zinc-400">
-        No account? <Link href="/sign-up" className="text-cyan-300">Create one</Link>
+        No account?{" "}
+        <Link href={{ pathname: "/sign-up", params: { returnTo: nextRoute } }} className="text-cyan-300">
+          Create one
+        </Link>
       </Text>
     </View>
   );

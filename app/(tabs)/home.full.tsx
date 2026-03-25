@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/expo";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -11,6 +11,7 @@ import { ArrowUpRight } from "lucide-react-native";
 
 import { HomeHeader } from "../../components/home-header";
 import { LuxPressable } from "../../components/lux-pressable";
+import { useViewerSession } from "../../components/viewer-session-context";
 import { triggerHaptic } from "../../lib/haptics";
 
 const VIEWABILITY_CONFIG = {
@@ -179,19 +180,15 @@ const ServiceCard = memo(function ServiceCard({ item, height, active, onPress }:
 export default function HomeScreen() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
+  const { anonymousId, isReady: viewerReady } = useViewerSession();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [activeCardId, setActiveCardId] = useState(SERVICE_CARDS[0]?.id ?? "");
-  const me = useQuery("users:me" as any, isSignedIn ? {} : "skip") as { credits?: number } | null | undefined;
-  const ensureUser = useMutation("users:getOrCreateCurrentUser" as any);
-
-  useEffect(() => {
-    if (!isSignedIn) return;
-    ensureUser({}).catch(() => undefined);
-  }, [ensureUser, isSignedIn]);
+  const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
+  const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as { credits?: number } | null | undefined;
 
   const cardHeight = useMemo(() => Math.max(332, Math.min(408, Math.round(width * 0.92))), [width]);
-  const diamondCount = isSignedIn ? me?.credits ?? 3 : 3;
+  const diamondCount = viewerReady ? me?.credits ?? 3 : 3;
 
   const handleServicePress = useCallback(
     (item: ServiceCardData) => {

@@ -15,11 +15,11 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AppErrorBoundary } from "../components/app-error-boundary";
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
+import { ViewerSessionProvider } from "../components/viewer-session-context";
 import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
 import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
 import { getEnvReport, logEnvDiagnostics } from "../lib/env";
-import { hasDismissedLaunchPaywall } from "../lib/launch-paywall";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
 import { tokenCache } from "../lib/token-cache";
 import {
@@ -183,24 +183,6 @@ function ReferralGate() {
   return null;
 }
 
-function LaunchPaywallGate() {
-  const pathname = usePathname();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (DIAGNOSTIC_BYPASS || hasDismissedLaunchPaywall()) return;
-
-    const allowList = ["/paywall", "/sign-in", "/sign-up", "/privacy-policy", "/terms-of-service"];
-    if (allowList.some((route) => pathname.startsWith(route))) {
-      return;
-    }
-
-    router.replace("/paywall");
-  }, [pathname, router]);
-
-  return null;
-}
-
 function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {}, []);
 
@@ -208,7 +190,6 @@ function Providers({ children }: { children: React.ReactNode }) {
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       <ProSuccessProvider>
         {DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
-        {DIAGNOSTIC_BYPASS ? null : <LaunchPaywallGate />}
         {DIAGNOSTIC_BYPASS ? null : <ReferralGate />}
         {children}
       </ProSuccessProvider>
@@ -346,27 +327,29 @@ export default function RootLayout() {
         <ClerkProvider publishableKey={clerkKey ?? ""} tokenCache={tokenCache}>
           <AuthGate>
             <Providers>
-              <WorkspaceDraftProvider>
-                <BottomSheetModalProvider>
-                  <AppErrorBoundary>
-                    <Stack
-                      screenOptions={{
-                        headerShown: false,
-                        contentStyle: { backgroundColor: "#000000" },
-                        animation: "slide_from_right",
-                        animationDuration: 260,
-                      }}
-                    >
-                      <Stack.Screen name="(tabs)" />
-                      <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
-                      <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
-                      <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
-                      <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
-                      <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
-                    </Stack>
-                  </AppErrorBoundary>
-                </BottomSheetModalProvider>
-              </WorkspaceDraftProvider>
+              <ViewerSessionProvider>
+                <WorkspaceDraftProvider>
+                  <BottomSheetModalProvider>
+                    <AppErrorBoundary>
+                      <Stack
+                        screenOptions={{
+                          headerShown: false,
+                          contentStyle: { backgroundColor: "#000000" },
+                          animation: "slide_from_right",
+                          animationDuration: 260,
+                        }}
+                      >
+                        <Stack.Screen name="(tabs)" />
+                        <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
+                        <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
+                        <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
+                        <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
+                        <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
+                      </Stack>
+                    </AppErrorBoundary>
+                  </BottomSheetModalProvider>
+                </WorkspaceDraftProvider>
+              </ViewerSessionProvider>
             </Providers>
           </AuthGate>
         </ClerkProvider>
