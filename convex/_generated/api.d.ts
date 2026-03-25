@@ -10,8 +10,11 @@
 
 import type * as feedback from "../feedback.js";
 import type * as generations from "../generations.js";
+import type * as http from "../http.js";
 import type * as projects from "../projects.js";
+import type * as subscriptions from "../subscriptions.js";
 import type * as users from "../users.js";
+import type * as viewer from "../viewer.js";
 
 import type {
   ApiFromModules,
@@ -22,8 +25,11 @@ import type {
 declare const fullApi: ApiFromModules<{
   feedback: typeof feedback;
   generations: typeof generations;
+  http: typeof http;
   projects: typeof projects;
+  subscriptions: typeof subscriptions;
   users: typeof users;
+  viewer: typeof viewer;
 }>;
 
 /**

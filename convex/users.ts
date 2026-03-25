@@ -224,8 +224,8 @@ export const setPlanFromRevenueCat = mutationGeneric({
   args: {
     plan: v.string(),
     subscriptionType: v.optional(v.union(v.literal("weekly"), v.literal("yearly"), v.literal("free"))),
-    purchasedAt: v.optional(v.int64()),
-    subscriptionEnd: v.optional(v.int64()),
+    purchasedAt: v.optional(v.number()),
+    subscriptionEnd: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { identity, user } = await getCurrentUser(ctx);
@@ -264,8 +264,8 @@ export const syncRevenueCatSubscriptionInternal = mutationGeneric({
     clerkId: v.string(),
     plan: v.union(v.literal("free"), v.literal("trial"), v.literal("pro")),
     subscriptionType: v.union(v.literal("weekly"), v.literal("yearly"), v.literal("free")),
-    purchasedAt: v.optional(v.int64()),
-    subscriptionEnd: v.optional(v.int64()),
+    purchasedAt: v.optional(v.number()),
+    subscriptionEnd: v.optional(v.number()),
     internalToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -434,7 +434,7 @@ export const trackGeneration = mutationGeneric({
     ignoreCooldown: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    return await (consumeGenerationAllowance.handler as any)(ctx, args);
+    return await consumeAllowance(ctx, args.anonymousId, args.ignoreCooldown);
   },
 });
 
