@@ -53,7 +53,7 @@ const SERVICE_CARDS: ServiceCardData[] = [
   },
   {
     id: "ai-paint",
-    title: "AI Paint",
+    title: "Smart Wall Paint",
     subtitle: "Wall color transformations tuned for elegant tonal balance.",
     video: require("../../assets/videos/paint.mp4"),
     poster: require("../../assets/media/empty-room.jpg"),
