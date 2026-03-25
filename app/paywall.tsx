@@ -17,15 +17,20 @@ import {
   useWindowDimensions,
 } from "react-native";
 import Animated, {
+  Easing,
   Extrapolation,
   interpolate,
+  runOnJS,
   type SharedValue,
+  useAnimatedProps,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
   withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Circle } from "react-native-svg";
 import { ArrowRight, BadgeCheck, ShieldCheck, X } from "lucide-react-native";
 
 import { LuxPressable } from "../components/lux-pressable";
@@ -93,6 +98,12 @@ const LOOPED_HERO_SLIDES = [...HERO_SLIDES, ...HERO_SLIDES, ...HERO_SLIDES].map(
 }));
 
 const LOOP_OFFSET = HERO_SLIDES.length;
+const COUNTDOWN_MS = 5000;
+const TIMER_SIZE = 38;
+const TIMER_STROKE = 3;
+const TIMER_RADIUS = (TIMER_SIZE - TIMER_STROKE) / 2;
+const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 function TrialSwitch({ value, onPress }: { value: boolean; onPress: () => void }) {
   const translateX = useSharedValue(value ? 26 : 0);
@@ -228,6 +239,89 @@ function PlanCard({
         <Text style={styles.planSubtitle}>{subtitle}</Text>
       </LuxPressable>
     </MotiView>
+  );
+}
+
+function DwaraTimer({
+  onDismiss,
+}: {
+  onDismiss: () => void;
+}) {
+  const [canDismiss, setCanDismiss] = useState(false);
+  const countdownProgress = useSharedValue(0);
+  const revealProgress = useSharedValue(0);
+
+  useEffect(() => {
+    setCanDismiss(false);
+    countdownProgress.value = 0;
+    revealProgress.value = 0;
+    countdownProgress.value = withTiming(
+      1,
+      { duration: COUNTDOWN_MS, easing: Easing.linear },
+      (finished) => {
+        if (!finished) {
+          return;
+        }
+        runOnJS(setCanDismiss)(true);
+        revealProgress.value = withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) });
+      },
+    );
+  }, [countdownProgress, revealProgress]);
+
+  const ringAnimatedProps = useAnimatedProps(() => ({
+    strokeDashoffset: TIMER_CIRCUMFERENCE * countdownProgress.value,
+  }));
+
+  const timerStyle = useAnimatedStyle(() => ({
+    opacity: 1 - revealProgress.value,
+    transform: [{ scale: 1 - revealProgress.value * 0.08 }],
+  }));
+
+  const closeStyle = useAnimatedStyle(() => ({
+    opacity: revealProgress.value,
+    transform: [{ scale: 0.92 + revealProgress.value * 0.08 }],
+  }));
+
+  return (
+    <View style={styles.timerShell}>
+      <Animated.View pointerEvents="none" style={[styles.timerLayer, timerStyle]}>
+        <Svg width={TIMER_SIZE} height={TIMER_SIZE} style={{ transform: [{ rotate: "-90deg" }] }}>
+          <Circle
+            cx={TIMER_SIZE / 2}
+            cy={TIMER_SIZE / 2}
+            r={TIMER_RADIUS}
+            stroke="rgba(255,255,255,0.08)"
+            strokeWidth={TIMER_STROKE}
+            fill="none"
+          />
+          <AnimatedCircle
+            animatedProps={ringAnimatedProps}
+            cx={TIMER_SIZE / 2}
+            cy={TIMER_SIZE / 2}
+            r={TIMER_RADIUS}
+            stroke="#d946ef"
+            strokeWidth={TIMER_STROKE}
+            strokeLinecap="round"
+            strokeDasharray={TIMER_CIRCUMFERENCE}
+            fill="none"
+          />
+        </Svg>
+        <View style={styles.timerCore} />
+      </Animated.View>
+
+      <Animated.View style={[styles.timerLayer, closeStyle]}>
+        <LuxPressable
+          onPress={onDismiss}
+          disabled={!canDismiss}
+          className={pointerClassName}
+          style={styles.closeButton}
+          glowColor="rgba(217,70,239,0.14)"
+          scale={0.96}
+        >
+          <X color="#f4f4f5" size={18} strokeWidth={2.2} />
+        </LuxPressable>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -526,15 +620,7 @@ export default function PaywallScreen() {
 
       <View style={[styles.closeRow, { paddingTop: insets.top + 6 }]}>
         <View style={styles.closeSpacer} />
-        <LuxPressable
-          onPress={handleClose}
-          className={pointerClassName}
-          style={styles.closeButton}
-          glowColor="rgba(255,255,255,0.08)"
-          scale={0.96}
-        >
-          <X color="#f4f4f5" size={18} strokeWidth={2.2} />
-        </LuxPressable>
+        <DwaraTimer onDismiss={handleClose} />
       </View>
 
       <View
@@ -713,6 +799,19 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
   },
+  timerShell: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  timerLayer: {
+    position: "absolute",
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   closeButton: {
     width: 44,
     height: 44,
@@ -722,6 +821,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: "rgba(24,24,27,0.94)",
+  },
+  timerCore: {
+    position: "absolute",
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: "#d946ef",
   },
   layout: {
     flex: 1,

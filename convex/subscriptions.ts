@@ -12,12 +12,23 @@ export type BillingPlan = "free" | "trial" | "pro";
 type SubscriptionLikeUser = {
   plan?: string;
   subscriptionType?: string;
-  subscriptionEnd?: number;
-  credits?: number;
-  imageLimit?: number;
-  imageGenerationCount?: number;
-  lastResetDate?: number;
+  subscriptionEnd?: number | bigint;
+  credits?: number | bigint;
+  imageLimit?: number | bigint;
+  imageGenerationCount?: number | bigint;
+  lastResetDate?: number | bigint;
 };
+
+export function toFiniteNumber(value: number | bigint | null | undefined, fallback = 0) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "bigint") {
+    const coerced = Number(value);
+    return Number.isFinite(coerced) ? coerced : fallback;
+  }
+  return fallback;
+}
 
 function normalizeSubscriptionType(input?: string | null): SubscriptionType {
   if (input === "weekly" || input === "yearly") {
@@ -49,11 +60,11 @@ export function getSubscriptionEndForType(subscriptionType: SubscriptionType, pu
 export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number) {
   let plan = normalizePlan(user.plan);
   let subscriptionType = normalizeSubscriptionType(user.subscriptionType);
-  let subscriptionEnd = typeof user.subscriptionEnd === "number" ? user.subscriptionEnd : 0;
-  let credits = typeof user.credits === "number" ? Math.max(user.credits, 0) : FREE_IMAGE_LIMIT;
-  let imageLimit = typeof user.imageLimit === "number" ? user.imageLimit : getGenerationLimit(subscriptionType);
-  let imageGenerationCount = typeof user.imageGenerationCount === "number" ? user.imageGenerationCount : 0;
-  let lastResetDate = typeof user.lastResetDate === "number" ? user.lastResetDate : 0;
+  let subscriptionEnd = toFiniteNumber(user.subscriptionEnd);
+  let credits = Math.max(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), 0);
+  let imageLimit = toFiniteNumber(user.imageLimit, getGenerationLimit(subscriptionType));
+  let imageGenerationCount = toFiniteNumber(user.imageGenerationCount);
+  let lastResetDate = toFiniteNumber(user.lastResetDate);
 
   const patch: Record<string, number | string> = {};
 
@@ -181,17 +192,17 @@ export function buildSubscriptionPatch(args: {
   plan: BillingPlan;
   subscriptionType: SubscriptionType;
   purchasedAt: number;
-  subscriptionEnd?: number;
+  subscriptionEnd?: number | bigint;
   previousSubscriptionType?: string;
-  previousSubscriptionEnd?: number;
+  previousSubscriptionEnd?: number | bigint;
 }) {
   const nextEnd = args.subscriptionType === "free"
     ? 0
-    : typeof args.subscriptionEnd === "number"
-      ? args.subscriptionEnd
+    : args.subscriptionEnd !== undefined && args.subscriptionEnd !== null
+      ? toFiniteNumber(args.subscriptionEnd)
       : getSubscriptionEndForType(args.subscriptionType, args.purchasedAt);
   const previousType = normalizeSubscriptionType(args.previousSubscriptionType);
-  const previousEnd = typeof args.previousSubscriptionEnd === "number" ? args.previousSubscriptionEnd : 0;
+  const previousEnd = toFiniteNumber(args.previousSubscriptionEnd);
   const sameWindow = previousType === args.subscriptionType && previousEnd > 0 && nextEnd > 0 && Math.abs(previousEnd - nextEnd) < DAY_MS;
 
   if (args.subscriptionType === "free") {

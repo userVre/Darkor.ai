@@ -118,6 +118,30 @@ const patches = [
       "    return () => {};",
       "  })();"
     ].join("\n")
+  },
+  {
+    file: path.join(
+      __dirname,
+      "..",
+      "node_modules",
+      "expo-dev-menu",
+      "android",
+      "src",
+      "debug",
+      "java",
+      "expo",
+      "modules",
+      "devmenu",
+      "DevMenuPreferences.kt"
+    ),
+    find: [
+      "  override var showFab: Boolean",
+      "    by preferences(sharedPreferences, true)"
+    ].join("\n"),
+    replace: [
+      "  override var showFab: Boolean",
+      "    by preferences(sharedPreferences, false)"
+    ].join("\n")
   }
 ];
 

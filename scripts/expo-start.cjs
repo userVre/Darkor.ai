@@ -1,10 +1,12 @@
+const fs = require("fs");
 const { spawnSync } = require("child_process");
 const { resolve } = require("path");
 const { pathToFileURL } = require("url");
 const { getExpoDevServerStatus, resolvePort, setupAdbReverse } = require("./dev-server-utils.cjs");
 
 async function main() {
-  const metroConfig = pathToFileURL(resolve(__dirname, "..", "metro.config.js")).href;
+  const projectRoot = fs.realpathSync(resolve(__dirname, ".."));
+  const metroConfig = pathToFileURL(resolve(projectRoot, "metro.config.js")).href;
   process.env.EXPO_OVERRIDE_METRO_CONFIG = metroConfig;
   process.env.EXPO_DEV_PORT = process.env.EXPO_DEV_PORT || "8081";
   process.env.NODE_ENV = process.env.NODE_ENV || "development";
@@ -48,13 +50,14 @@ async function main() {
   }
 
   const expoHostMode = adbOk ? "localhost" : "lan";
-  const defaultArgs = ["expo", "start", "--clear", "--dev-client", "--host", expoHostMode, "--port", portString];
+  const defaultArgs = ["expo", "start", "--dev-client", "--host", expoHostMode, "--port", portString];
   const extraArgs = process.argv.slice(2).filter((arg) => arg !== "--non-interactive");
 
   const result = spawnSync("npx", [...defaultArgs, ...extraArgs], {
     stdio: "inherit",
     shell: true,
     env: process.env,
+    cwd: projectRoot,
   });
 
   process.exit(result.status ?? 1);

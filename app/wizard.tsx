@@ -1,1 +1,1 @@
-export { default } from "./(tabs)/workspace.full";
+export { default } from "./(tabs)/workspace";

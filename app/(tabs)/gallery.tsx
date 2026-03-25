@@ -11,12 +11,12 @@ import { useWorkspaceDraft } from "../../components/workspace-context";
 import { DISCOVER_SECTIONS, type DiscoverSection, type DiscoverTile } from "../../lib/discover-data";
 import { triggerHaptic } from "../../lib/haptics";
 
-const SCREEN_BG = "#09090b";
+const SCREEN_BG = "#000000";
 const EDGE_PADDING = 20;
 const SECTION_GAP = 32;
 const SHELF_GAP = 16;
 const CARD_BORDER_COLOR = "rgba(255,255,255,0.05)";
-const CARD_RADIUS = 28;
+const CARD_RADIUS = 24;
 
 function mapService(service: DiscoverTile["service"]) {
   if (service === "garden") return "garden";
@@ -70,7 +70,7 @@ const DiscoverShelfCard = memo(function DiscoverShelfCard({
     <LuxPressable
       onPress={handlePress}
       pressableClassName="cursor-pointer"
-      className="cursor-pointer"
+      className="cursor-pointer overflow-hidden rounded-[24px]"
       style={[styles.card, { width, height }]}
       glowColor="rgba(255, 255, 255, 0.08)"
       scale={0.985}
@@ -83,9 +83,9 @@ const DiscoverShelfCard = memo(function DiscoverShelfCard({
         cachePolicy="memory-disk"
       />
       <LinearGradient
-        colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.14)", "rgba(0,0,0,0.78)", "rgba(0,0,0,0.94)"]}
-        locations={[0, 0.42, 0.8, 1]}
-        style={StyleSheet.absoluteFillObject}
+        colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.82)", "rgba(0,0,0,0.98)"]}
+        locations={[0, 0.16, 0.68, 1]}
+        style={styles.cardGradient}
         pointerEvents="none"
       />
 
@@ -123,15 +123,6 @@ const DiscoverShelfSection = memo(function DiscoverShelfSection({
     [cardHeight, cardWidth, onCardPress],
   );
 
-  const getItemLayout = useCallback(
-    (_data: ArrayLike<DiscoverTile> | null | undefined, index: number) => ({
-      index,
-      length: snapToInterval,
-      offset: snapToInterval * index,
-    }),
-    [snapToInterval],
-  );
-
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{section.title}</Text>
@@ -147,7 +138,6 @@ const DiscoverShelfSection = memo(function DiscoverShelfSection({
         decelerationRate="fast"
         contentContainerStyle={styles.shelfContent}
         ItemSeparatorComponent={ShelfSpacer}
-        getItemLayout={getItemLayout}
         initialNumToRender={3}
         maxToRenderPerBatch={4}
         updateCellsBatchingPeriod={40}
@@ -205,7 +195,7 @@ export default function GalleryScreen() {
         contentInsetAdjustmentBehavior="never"
       >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Discover</Text>
+          <Text style={styles.headerTitle}>Discover Hub</Text>
         </View>
 
         {DISCOVER_SECTIONS.map((section) => (
@@ -253,34 +243,43 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
   },
   shelfContent: {
+    paddingLeft: EDGE_PADDING,
     paddingRight: EDGE_PADDING,
   },
   card: {
     overflow: "hidden",
     borderRadius: CARD_RADIUS,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: CARD_BORDER_COLOR,
     backgroundColor: "#111113",
   },
+  cardGradient: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 164,
+  },
   cardCopy: {
-    flex: 1,
-    justifyContent: "flex-end",
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
     paddingHorizontal: 20,
     paddingBottom: 20,
-    paddingTop: 96,
     gap: 4,
   },
   cardTitle: {
     color: "#ffffff",
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "800",
-    lineHeight: 28,
+    lineHeight: 26,
     letterSpacing: -0.45,
   },
   cardStyle: {
-    color: "rgba(255,255,255,0.88)",
-    fontSize: 14,
+    color: "rgba(255,255,255,0.92)",
+    fontSize: 13,
     fontWeight: "700",
-    lineHeight: 18,
+    lineHeight: 17,
   },
 });

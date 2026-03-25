@@ -7,7 +7,7 @@ export const submit = mutationGeneric({
   args: {
     anonymousId: v.optional(v.string()),
     message: v.string(),
-    generationCount: v.optional(v.int64()),
+    generationCount: v.optional(v.union(v.number(), v.int64())),
   },
   handler: async (ctx, args) => {
     const viewer = await resolveViewer(ctx, {

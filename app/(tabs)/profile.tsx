@@ -1,26 +1,12 @@
 import { useAuth, useUser } from "@clerk/expo";
 import { useMutation, useQuery } from "convex/react";
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 import * as Linking from "expo-linking";
+import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { memo, useCallback, useMemo } from "react";
-import { ActivityIndicator, Alert, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import {
-  ChevronRight,
-  FileQuestion,
-  FileText,
-  Gem,
-  Images,
-  LayoutDashboard,
-  Mail,
-  Share2,
-  Sparkles,
-  Shield,
-  Star,
-  Trash2,
-} from "lucide-react-native";
+import { useMemo } from "react";
+import { Alert, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { ChevronRight, FileQuestion, LayoutDashboard, Mail, Shield, Sparkles, Star, Trash2, Share2 } from "lucide-react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { LuxPressable } from "../../components/lux-pressable";
@@ -28,55 +14,28 @@ import { useViewerSession } from "../../components/viewer-session-context";
 import { triggerHaptic } from "../../lib/haptics";
 import { requestStoreReview } from "../../lib/store-review";
 
-const BRAND_COLOR = "#f59e0b";
+const POINTER_CLASS = "cursor-pointer";
 const SCREEN_BG = "#000000";
-const CARD_BG = "#111113";
+const SURFACE_BG = "#09090b";
+const CARD_BG = "#0d0d10";
 const BORDER_COLOR = "rgba(255,255,255,0.08)";
-const ICON_CONTAINER_SIZE = 44;
-const BOARD_GRID_GAP = 12;
 
 type MeResponse = {
-  generationStatusLabel?: string;
-  generationStatusMessage?: string;
-  imagesRemaining?: number;
-  imageGenerationLimit?: number;
   hasPaidAccess?: boolean;
 };
 
-type ArchiveGeneration = {
-  _id: string;
-  _creationTime: number;
-  imageUrl?: string | null;
-  sourceImageUrl?: string | null;
-  style?: string | null;
-  roomType?: string | null;
-  status?: "processing" | "ready" | "failed";
-  errorMessage?: string | null;
-  createdAt?: number;
-};
+type RowTone = "danger" | "default";
 
-type Tint = "premium" | "danger" | undefined;
-
-type MenuItem = {
+type SettingsRowItem = {
   id: string;
   label: string;
-  icon: typeof Gem;
-  tint?: Tint;
+  icon: typeof LayoutDashboard;
+  tone?: RowTone;
   onPress: () => void | Promise<void>;
 };
 
-type SettingsRowProps = {
-  icon: MenuItem["icon"];
-  label: string;
-  tint?: Tint;
-  onPress: MenuItem["onPress"];
-};
-
-function SettingsRow({ icon: Icon, label, tint, onPress }: SettingsRowProps) {
-  const isPremium = tint === "premium";
-  const isDanger = tint === "danger";
-  const iconColor = isDanger ? "#f87171" : isPremium ? BRAND_COLOR : "#e4e4e7";
-  const labelColor = isDanger ? "#fca5a5" : "#fafafa";
+function SettingsRow({ icon: Icon, label, onPress, tone = "default" }: Omit<SettingsRowItem, "id">) {
+  const isDanger = tone === "danger";
 
   return (
     <LuxPressable
@@ -84,124 +43,18 @@ function SettingsRow({ icon: Icon, label, tint, onPress }: SettingsRowProps) {
         triggerHaptic();
         void onPress();
       }}
-      pressableClassName="cursor-pointer"
-      className="overflow-hidden rounded-2xl"
-      style={{
-        backgroundColor: isDanger ? "rgba(127, 29, 29, 0.22)" : isPremium ? "rgba(245, 158, 11, 0.12)" : CARD_BG,
-        borderWidth: 1,
-        borderColor: isDanger ? "rgba(248, 113, 113, 0.28)" : isPremium ? "rgba(245, 158, 11, 0.22)" : BORDER_COLOR,
-      }}
-    >
-      <View className="flex-row items-center px-4 py-4">
-        <View
-          className="mr-4 items-center justify-center rounded-2xl"
-          style={{
-            width: ICON_CONTAINER_SIZE,
-            height: ICON_CONTAINER_SIZE,
-            backgroundColor: isDanger ? "rgba(248, 113, 113, 0.14)" : isPremium ? "rgba(245, 158, 11, 0.16)" : "rgba(255,255,255,0.04)",
-          }}
-        >
-          <Icon color={iconColor} size={20} />
-        </View>
-        <Text className="flex-1 text-base font-semibold" style={{ color: labelColor }}>
-          {label}
-        </Text>
-        <View className="w-5 items-end">
-          <ChevronRight color={isDanger ? "#fca5a5" : "#71717a"} size={18} />
-        </View>
-      </View>
-    </LuxPressable>
-  );
-}
-
-function formatBoardTitle(item: ArchiveGeneration) {
-  const styleLabel = item.style?.trim() || "Custom";
-  const roomLabel = item.roomType?.trim() || "Design";
-  return `${styleLabel} ${roomLabel}`.trim();
-}
-
-function formatBoardSubtitle(item: ArchiveGeneration) {
-  if (item.status === "processing") {
-    return "Generating now";
-  }
-
-  if (item.status === "failed") {
-    return "Needs review";
-  }
-
-  return "Open editor";
-}
-
-function ProfileBoardCard({
-  item,
-  width,
-  index,
-  onPress,
-}: {
-  item: ArchiveGeneration;
-  width: number;
-  index: number;
-  onPress: (item: ArchiveGeneration) => void;
-}) {
-  const previewImage = item.imageUrl ?? item.sourceImageUrl ?? null;
-  const isProcessing = item.status === "processing";
-  const isFailed = item.status === "failed";
-
-  return (
-    <LuxPressable
-      onPress={() => {
-        triggerHaptic();
-        onPress(item);
-      }}
-      pressableClassName="cursor-pointer"
-      className="cursor-pointer overflow-hidden rounded-[26px]"
-      style={{
-        width,
-        height: 214,
-        marginRight: index % 2 === 0 ? BOARD_GRID_GAP : 0,
-        marginBottom: BOARD_GRID_GAP,
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.08)",
-        backgroundColor: CARD_BG,
-      }}
-      glowColor="rgba(255,255,255,0.08)"
+      pressableClassName={POINTER_CLASS}
+      className="overflow-hidden rounded-[24px]"
+      style={[styles.row, isDanger ? styles.rowDanger : null]}
+      glowColor={isDanger ? "rgba(248,113,113,0.16)" : "rgba(255,255,255,0.08)"}
       scale={0.985}
     >
-      {previewImage ? (
-        <Image
-          source={{ uri: previewImage }}
-          style={StyleSheet.absoluteFillObject}
-          contentFit="cover"
-          transition={120}
-          cachePolicy="memory-disk"
-        />
-      ) : (
-        <View style={[StyleSheet.absoluteFillObject, styles.boardPlaceholder]}>
-          <Sparkles color="#71717a" size={24} />
+      <View style={styles.rowInner}>
+        <View style={[styles.rowIconWrap, isDanger ? styles.rowIconWrapDanger : null]}>
+          <Icon color={isDanger ? "#f87171" : "#ffffff"} size={19} strokeWidth={2.2} />
         </View>
-      )}
-
-      <LinearGradient
-        colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.2)", "rgba(0,0,0,0.84)", "rgba(0,0,0,0.96)"]}
-        locations={[0, 0.36, 0.76, 1]}
-        style={StyleSheet.absoluteFillObject}
-        pointerEvents="none"
-      />
-
-      {isProcessing ? (
-        <View style={styles.processingBadge}>
-          <ActivityIndicator size="small" color="#ffffff" />
-          <Text style={styles.processingText}>Processing</Text>
-        </View>
-      ) : null}
-
-      <View style={styles.boardCopy}>
-        <Text style={styles.boardTitle} numberOfLines={2}>
-          {formatBoardTitle(item)}
-        </Text>
-        <Text style={[styles.boardSubtitle, isFailed ? styles.failedText : null]} numberOfLines={1}>
-          {formatBoardSubtitle(item)}
-        </Text>
+        <Text style={[styles.rowLabel, isDanger ? styles.rowLabelDanger : null]}>{label}</Text>
+        <ChevronRight color={isDanger ? "#f87171" : "#71717a"} size={18} strokeWidth={2.3} />
       </View>
     </LuxPressable>
   );
@@ -209,33 +62,63 @@ function ProfileBoardCard({
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
-  const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const deleteAccountData = useMutation("users:deleteAccountData" as any);
   const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
   const me = useQuery("users:me" as any, viewerReady && isSignedIn ? viewerArgs : "skip") as MeResponse | null | undefined;
-  const generationArchive = useQuery("generations:getUserArchive" as any, viewerReady && isSignedIn ? viewerArgs : "skip") as
-    | ArchiveGeneration[]
-    | undefined;
 
-  const handleOpenSignIn = useCallback(() => {
-    router.push({ pathname: "/sign-in", params: { returnTo: "/profile" } });
-  }, [router]);
+  const hasPaidAccess = Boolean(me?.hasPaidAccess);
+  const accountTitle = hasPaidAccess ? "Your Account is PRO" : "Your Account is FREE";
+  const accountBody = isSignedIn
+    ? hasPaidAccess
+      ? "Your premium workspace is active. Manage support, privacy, and your design flow from one place."
+      : "Upgrade to PRO to unlock premium generations, higher export quality, and a faster design workflow."
+    : "Sign in when you want your board, purchases, and account controls synced across devices.";
+  const accountMeta = user?.primaryEmailAddress?.emailAddress ?? "Guest session";
+  const accountButtonLabel = hasPaidAccess ? "Manage PRO" : "\uD83D\uDC8E Upgrade PRO";
 
-  const handleOpenSignUp = useCallback(() => {
-    router.push({ pathname: "/sign-up", params: { returnTo: "/profile" } });
-  }, [router]);
+  const handleUpgrade = () => {
+    router.push("/paywall");
+  };
 
-  const commonMenuItems: MenuItem[] = [
+  const handleDeleteAccount = () => {
+    if (!isSignedIn || !user) {
+      router.push({ pathname: "/sign-in", params: { returnTo: "/profile" } });
+      return;
+    }
+
+    Alert.alert(
+      "Delete Account",
+      "This permanently removes your Darkor.ai account and saved data. This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteAccountData({});
+              await user.delete();
+              await signOut();
+              router.replace("/");
+            } catch {
+              Alert.alert("Delete failed", "Please contact support@darkor.ai so we can help complete the deletion.");
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const settingsRows: SettingsRowItem[] = [
     {
-      id: "upgrade",
-      label: "Upgrade PRO",
-      icon: Gem,
-      tint: "premium",
-      onPress: () => router.push("/paywall"),
+      id: "board",
+      label: "Your Board",
+      icon: LayoutDashboard,
+      onPress: () => router.push("/gallery"),
     },
     {
       id: "feedback",
@@ -257,15 +140,9 @@ export default function ProfileScreen() {
     },
     {
       id: "share",
-      label: "Share with Friends",
+      label: "Share",
       icon: Share2,
       onPress: () => Share.share({ message: "Darkor.ai helps me redesign spaces in seconds. Check it out." }),
-    },
-    {
-      id: "terms",
-      label: "Terms of Use",
-      icon: FileText,
-      onPress: () => router.push("/terms-of-service"),
     },
     {
       id: "privacy",
@@ -273,287 +150,77 @@ export default function ProfileScreen() {
       icon: Shield,
       onPress: () => router.push("/privacy-policy"),
     },
-  ];
-
-  if (!isSignedIn) {
-    return (
-      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: SCREEN_BG }}>
-        <StatusBar style="light" />
-        <ScrollView
-          style={{ flex: 1, backgroundColor: SCREEN_BG }}
-          contentContainerStyle={{
-            paddingTop: 10,
-            paddingBottom: Math.max(insets.bottom + 32, 40),
-            paddingHorizontal: 20,
-          }}
-          showsVerticalScrollIndicator={false}
-          contentInsetAdjustmentBehavior="never"
-        >
-          <View className="pb-8">
-            <Text className="text-3xl font-bold text-white">My Profile</Text>
-            <Text className="mt-2 text-sm leading-6 text-zinc-400">
-              Guest mode is live. Browse the tools now, then connect an account whenever you want sync and history.
-            </Text>
-          </View>
-
-          <View
-            className="mb-5 rounded-[28px] border px-5 py-5"
-            style={{
-              backgroundColor: "rgba(255,255,255,0.04)",
-              borderColor: BORDER_COLOR,
-              borderWidth: 1,
-            }}
-          >
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1 pr-4">
-                <Text className="text-xs font-semibold uppercase tracking-[1.8px] text-zinc-500">Account Status</Text>
-                <Text className="mt-2 text-2xl font-bold text-white">Guest Session</Text>
-              </View>
-              <View
-                className="items-center justify-center rounded-2xl"
-                style={{
-                  width: 52,
-                  height: 52,
-                  backgroundColor: "rgba(245, 158, 11, 0.16)",
-                }}
-              >
-                <Sparkles color={BRAND_COLOR} size={24} />
-              </View>
-            </View>
-            <Text className="mt-3 text-sm leading-6 text-zinc-400">
-              The home cards and workspace stay available in guest mode. Sign in only when you want your board, credits,
-              and purchases synced across devices.
-            </Text>
-
-            <View style={styles.guestActionRow}>
-              <LuxPressable onPress={handleOpenSignIn} className="flex-1 overflow-hidden rounded-2xl">
-                <View style={styles.guestPrimaryAction}>
-                  <Text style={styles.guestPrimaryActionText}>Sign In</Text>
-                </View>
-              </LuxPressable>
-              <LuxPressable onPress={handleOpenSignUp} className="flex-1 overflow-hidden rounded-2xl">
-                <View style={styles.guestSecondaryAction}>
-                  <Text style={styles.guestSecondaryActionText}>Create Account</Text>
-                </View>
-              </LuxPressable>
-            </View>
-          </View>
-
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIconWrap}>
-              <LayoutDashboard color={BRAND_COLOR} size={28} />
-            </View>
-            <Text style={styles.emptyTitle}>Your tools are ready right now.</Text>
-            <Text style={styles.emptyCopy}>
-              Open any service card from Home to start designing immediately. Saved history and account controls unlock
-              once you connect your account.
-            </Text>
-          </View>
-
-          <View className="gap-3">
-            {commonMenuItems.map((item) => (
-              <SettingsRow
-                key={item.id}
-                icon={item.icon}
-                label={item.label}
-                tint={item.tint}
-                onPress={item.onPress}
-              />
-            ))}
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  if (!viewerReady) {
-    return (
-      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: SCREEN_BG }}>
-        <StatusBar style="light" />
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color="#ffffff" />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const accountStatusLabel = me?.generationStatusLabel ?? (me?.hasPaidAccess ? "PRO Member" : "Free Plan");
-  const accountStatusMessage =
-    me?.generationStatusMessage ??
-    (typeof me?.imagesRemaining === "number" && typeof me?.imageGenerationLimit === "number"
-      ? `${me.imagesRemaining} of ${me.imageGenerationLimit} generations remaining.`
-      : "Manage your subscription, support, and account settings.");
-  const boardItems = generationArchive ?? [];
-  const boardCardWidth = Math.max((width - 40 - BOARD_GRID_GAP) / 2, 148);
-
-  const handleBoardItemPress = (item: ArchiveGeneration) => {
-    router.push({
-      pathname: "/workspace",
-      params: {
-        boardView: "editor",
-        boardItemId: item._id,
-        entrySource: "profile",
-      },
-    });
-  };
-
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      "Delete Account",
-      "This permanently removes your Darkor.ai account and saved data. This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteAccountData({});
-              if (user) {
-                await user.delete();
-              }
-              await signOut();
-              router.replace("/");
-            } catch {
-              Alert.alert("Delete failed", "Please contact support@darkor.ai so we can help complete the deletion.");
-            }
-          },
-        },
-      ],
-    );
-  };
-
-  const menuItems: MenuItem[] = [
-    ...commonMenuItems,
     {
       id: "delete",
       label: "Delete Account",
       icon: Trash2,
-      tint: "danger",
+      tone: "danger",
       onPress: handleDeleteAccount,
     },
   ];
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+    <SafeAreaView edges={["top"]} style={styles.screen}>
       <StatusBar style="light" />
       <ScrollView
-        style={{ flex: 1, backgroundColor: SCREEN_BG }}
+        style={styles.scroll}
         contentContainerStyle={{
-          paddingTop: 10,
-          paddingBottom: Math.max(insets.bottom + 32, 40),
-          paddingHorizontal: 20,
+          paddingTop: 14,
+          paddingBottom: Math.max(insets.bottom + 36, 44),
+          paddingHorizontal: 24,
         }}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
       >
-        <View className="pb-8">
-          <Text className="text-3xl font-bold text-white">My Profile</Text>
-          <Text className="mt-2 text-sm leading-6 text-zinc-400">
-            Manage your subscription, support, and account settings.
-          </Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>My Profile</Text>
+          <Text style={styles.subtitle}>A cleaner account hub built to match Darkor.ai's black-luxury shell.</Text>
         </View>
 
-        <View
-          className="mb-4 rounded-[28px] border px-5 py-5"
-          style={{
-            backgroundColor: "rgba(255,255,255,0.04)",
-            borderColor: BORDER_COLOR,
-            borderWidth: 1,
-          }}
-        >
-          <View className="flex-row items-center justify-between">
-            <View>
-              <Text className="text-xs font-semibold uppercase tracking-[1.8px] text-zinc-500">Account Status</Text>
-              <Text className="mt-2 text-2xl font-bold text-white">{accountStatusLabel}</Text>
+        <View style={styles.accountCard}>
+          <LinearGradient
+            colors={["rgba(255,255,255,0.12)", "rgba(255,255,255,0.04)", "rgba(255,255,255,0.01)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+            pointerEvents="none"
+          />
+
+          <View style={styles.accountTopRow}>
+            <View style={styles.accountIconWrap}>
+              <Sparkles color="#ffffff" size={20} strokeWidth={2.2} />
             </View>
-            <View
-              className="items-center justify-center rounded-2xl"
-              style={{
-                width: 52,
-                height: 52,
-                backgroundColor: me?.hasPaidAccess ? "rgba(245, 158, 11, 0.18)" : "rgba(255,255,255,0.06)",
-              }}
+            <View style={styles.accountCopy}>
+              <Text style={styles.accountEyebrow}>Account</Text>
+              <Text style={styles.accountTitle}>{accountTitle}</Text>
+              <Text style={styles.accountMeta}>{accountMeta}</Text>
+            </View>
+          </View>
+
+          <Text style={styles.accountBody}>{accountBody}</Text>
+
+          <LuxPressable
+            onPress={handleUpgrade}
+            pressableClassName={POINTER_CLASS}
+            className="overflow-hidden rounded-[20px]"
+            style={styles.accountButtonShadow}
+            glowColor="rgba(255,255,255,0.1)"
+            scale={0.985}
+          >
+            <LinearGradient
+              colors={["#ffffff", "#d4d4d8"]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.accountButton}
             >
-              <Gem color={me?.hasPaidAccess ? BRAND_COLOR : "#e4e4e7"} size={24} />
-            </View>
-          </View>
-          <Text className="mt-3 text-sm leading-6 text-zinc-400">{accountStatusMessage}</Text>
+              <Text style={styles.accountButtonText}>{accountButtonLabel}</Text>
+            </LinearGradient>
+          </LuxPressable>
         </View>
 
-        <View
-          className="mb-5 overflow-hidden rounded-[30px]"
-          style={{
-            borderWidth: 1,
-            borderColor: "rgba(245, 158, 11, 0.22)",
-            backgroundColor: "rgba(245, 158, 11, 0.08)",
-          }}
-        >
-          <View className="flex-row items-center px-5 py-5">
-            <View
-              className="items-center justify-center rounded-[22px]"
-              style={{
-                width: 60,
-                height: 60,
-                backgroundColor: "rgba(245, 158, 11, 0.16)",
-              }}
-            >
-              <LayoutDashboard color={BRAND_COLOR} size={28} />
-            </View>
-            <View className="ml-4 flex-1">
-              <Text className="text-2xl font-bold text-white">Your Board</Text>
-              <Text className="mt-2 text-sm leading-6 text-zinc-300">
-                Your generated designs sync here automatically from Convex.
-              </Text>
-            </View>
-            <View className="ml-4 items-center justify-center">
-              <Images color="#fde68a" size={22} />
-            </View>
-          </View>
-        </View>
-
-        {boardItems.length === 0 ? (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIconWrap}>
-              <LayoutDashboard color={BRAND_COLOR} size={28} />
-            </View>
-            <Text style={styles.emptyTitle}>Your board is ready for its first design.</Text>
-            <Text style={styles.emptyCopy}>
-              Generate a redesign and every saved image will appear here automatically from Convex.
-            </Text>
-          </View>
-        ) : (
-          <View className="mb-6">
-            <View className="mb-4 flex-row items-center justify-between">
-              <Text className="text-lg font-bold text-white">Your Board</Text>
-              <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-zinc-500">
-                {boardItems.length} saved
-              </Text>
-            </View>
-
-            <View style={styles.boardGrid}>
-              {boardItems.map((item, index) => (
-                <ProfileBoardCard
-                  key={item._id}
-                  item={item}
-                  width={boardCardWidth}
-                  index={index}
-                  onPress={handleBoardItemPress}
-                />
-              ))}
-            </View>
-          </View>
-        )}
-
-        <View className="gap-3">
-          {menuItems.map((item) => (
-            <SettingsRow
-              key={item.id}
-              icon={item.icon}
-              label={item.label}
-              tint={item.tint}
-              onPress={item.onPress}
-            />
+        <View style={styles.list}>
+          {settingsRows.map((item) => (
+            <SettingsRow key={item.id} icon={item.icon} label={item.label} tone={item.tone} onPress={item.onPress} />
           ))}
         </View>
       </ScrollView>
@@ -562,124 +229,136 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  boardGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+  screen: {
+    flex: 1,
+    backgroundColor: SCREEN_BG,
   },
-  boardPlaceholder: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: CARD_BG,
+  scroll: {
+    flex: 1,
+    backgroundColor: SCREEN_BG,
   },
-  processingBadge: {
-    position: "absolute",
-    top: 14,
-    right: 14,
-    flexDirection: "row",
-    alignItems: "center",
+  header: {
+    marginBottom: 28,
     gap: 8,
-    borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
   },
-  processingText: {
+  title: {
     color: "#ffffff",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  boardCopy: {
-    position: "absolute",
-    left: 14,
-    right: 14,
-    bottom: 14,
-  },
-  boardTitle: {
-    color: "#ffffff",
-    fontSize: 16,
+    fontSize: 32,
     fontWeight: "800",
-    lineHeight: 20,
-    letterSpacing: -0.3,
+    letterSpacing: -0.8,
   },
-  boardSubtitle: {
-    marginTop: 4,
-    color: "#d4d4d8",
-    fontSize: 12,
-    fontWeight: "700",
-    lineHeight: 16,
-  },
-  failedText: {
-    color: "#fca5a5",
-  },
-  emptyState: {
-    marginBottom: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "rgba(255,255,255,0.03)",
-    paddingHorizontal: 28,
-    paddingVertical: 34,
-  },
-  emptyIconWrap: {
-    width: 68,
-    height: 68,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(245, 158, 11, 0.14)",
-  },
-  emptyTitle: {
-    marginTop: 18,
-    color: "#ffffff",
-    fontSize: 22,
-    fontWeight: "800",
-    lineHeight: 28,
-    textAlign: "center",
-    letterSpacing: -0.4,
-  },
-  emptyCopy: {
-    marginTop: 10,
+  subtitle: {
     color: "#a1a1aa",
     fontSize: 14,
-    fontWeight: "500",
     lineHeight: 22,
-    textAlign: "center",
   },
-  guestActionRow: {
-    marginTop: 18,
+  accountCard: {
+    position: "relative",
+    overflow: "hidden",
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
+    backgroundColor: CARD_BG,
+    padding: 22,
+    marginBottom: 20,
+    gap: 18,
+  },
+  accountTopRow: {
     flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  accountIconWrap: {
+    width: 54,
+    height: 54,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  accountCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  accountEyebrow: {
+    color: "#71717a",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+  accountTitle: {
+    color: "#ffffff",
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: -0.55,
+  },
+  accountMeta: {
+    color: "#d4d4d8",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  accountBody: {
+    color: "#a1a1aa",
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  accountButtonShadow: {
+    alignSelf: "flex-start",
+  },
+  accountButton: {
+    minHeight: 50,
+    minWidth: 164,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  accountButtonText: {
+    color: "#000000",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0.1,
+  },
+  list: {
     gap: 12,
   },
-  guestPrimaryAction: {
-    minHeight: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 18,
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 16,
-  },
-  guestPrimaryActionText: {
-    color: "#09090b",
-    fontSize: 14,
-    fontWeight: "800",
-  },
-  guestSecondaryAction: {
-    minHeight: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 18,
+  row: {
+    backgroundColor: SURFACE_BG,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(255,255,255,0.04)",
-    paddingHorizontal: 16,
+    borderColor: BORDER_COLOR,
   },
-  guestSecondaryActionText: {
-    color: "#fafafa",
-    fontSize: 14,
-    fontWeight: "800",
+  rowDanger: {
+    borderColor: "rgba(248,113,113,0.16)",
+    backgroundColor: "rgba(28,10,12,0.92)",
+  },
+  rowInner: {
+    minHeight: 74,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingHorizontal: 18,
+  },
+  rowIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.05)",
+  },
+  rowIconWrapDanger: {
+    backgroundColor: "rgba(248,113,113,0.12)",
+  },
+  rowLabel: {
+    flex: 1,
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  rowLabelDanger: {
+    color: "#fca5a5",
   },
 });

@@ -1,25 +1,28 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+const numberLike = v.union(v.number(), v.int64());
+const optionalNumberLike = v.optional(numberLike);
+
 export default defineSchema({
   users: defineTable({
     clerkId: v.optional(v.string()),
     anonymousId: v.optional(v.string()),
     mergedIntoClerkId: v.optional(v.string()),
-    credits: v.int64(),
+    credits: numberLike,
     plan: v.string(),
-    generationCount: v.int64(),
+    generationCount: numberLike,
     reviewPrompted: v.boolean(),
-    lastReviewPromptAt: v.optional(v.int64()),
-    lastRewardDate: v.optional(v.int64()),
+    lastReviewPromptAt: optionalNumberLike,
+    lastRewardDate: optionalNumberLike,
     referralCode: v.optional(v.string()),
-    referralCount: v.optional(v.int64()),
+    referralCount: optionalNumberLike,
     referredBy: v.optional(v.string()),
     subscriptionType: v.optional(v.union(v.literal("weekly"), v.literal("yearly"), v.literal("free"))),
-    subscriptionEnd: v.optional(v.int64()),
-    imageLimit: v.optional(v.int64()),
-    imageGenerationCount: v.optional(v.int64()),
-    lastResetDate: v.optional(v.int64()),
+    subscriptionEnd: optionalNumberLike,
+    imageLimit: optionalNumberLike,
+    imageGenerationCount: optionalNumberLike,
+    lastResetDate: optionalNumberLike,
   })
     .index("by_clerkId", ["clerkId"])
     .index("by_anonymousId", ["anonymousId"]),
@@ -41,8 +44,8 @@ export default defineSchema({
     status: v.optional(v.union(v.literal("processing"), v.literal("ready"), v.literal("failed"))),
     errorMessage: v.optional(v.string()),
     planUsed: v.string(),
-    createdAt: v.optional(v.int64()),
-    completedAt: v.optional(v.int64()),
+    createdAt: optionalNumberLike,
+    completedAt: optionalNumberLike,
     isFavorite: v.optional(v.boolean()),
     feedback: v.optional(v.string()),
     feedbackReason: v.optional(v.string()),
@@ -53,13 +56,13 @@ export default defineSchema({
   projects: defineTable({
     userId: v.string(),
     name: v.string(),
-    createdAt: v.int64(),
+    createdAt: numberLike,
   }).index("by_userId", ["userId"]),
 
   feedback: defineTable({
     userId: v.string(),
     message: v.string(),
-    createdAt: v.int64(),
-    generationCount: v.optional(v.int64()),
+    createdAt: numberLike,
+    generationCount: optionalNumberLike,
   }).index("by_userId", ["userId"]),
 });

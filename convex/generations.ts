@@ -7,7 +7,7 @@ import {
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
-import { deriveSubscriptionState, FREE_IMAGE_LIMIT } from "./subscriptions";
+import { deriveSubscriptionState, FREE_IMAGE_LIMIT, toFiniteNumber } from "./subscriptions";
 import {
   buildDefaultUserFields,
   ensureGuestUser,
@@ -124,7 +124,7 @@ async function syncDerivedSubscriptionState(ctx: any, user: GenerationUser, now:
 }
 
 function getLimitExceededMessage(state: ReturnType<typeof deriveSubscriptionState>) {
-  return state.statusMessage;
+  return state.blocked ? "Payment Required" : state.statusMessage;
 }
 
 function computeReviewPrompt(nextCount: number, lastPromptAt: number, ignoreCooldown?: boolean) {
@@ -144,9 +144,9 @@ async function reserveGenerationAllowance(ctx: any, ownerId: string, ignoreCoold
     throw new ConvexError(getLimitExceededMessage(state));
   }
 
-  const currentCount = typeof user.generationCount === "number" ? user.generationCount : 0;
+  const currentCount = toFiniteNumber(user.generationCount);
   const nextGenerationCount = currentCount + 1;
-  const lastPromptAt = typeof user.lastReviewPromptAt === "number" ? user.lastReviewPromptAt : 0;
+  const lastPromptAt = toFiniteNumber(user.lastReviewPromptAt);
   const shouldPrompt = computeReviewPrompt(nextGenerationCount, lastPromptAt, ignoreCooldown);
   const nextCredits = state.subscriptionType === "free" ? Math.max(state.credits - 1, 0) : state.credits;
   const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : state.imageGenerationCount + 1;
@@ -182,7 +182,7 @@ async function releaseGenerationAllowance(ctx: any, ownerId: string) {
   }
 
   const state = await syncDerivedSubscriptionState(ctx, user, Date.now());
-  const currentCount = typeof user.generationCount === "number" ? user.generationCount : 0;
+  const currentCount = toFiniteNumber(user.generationCount);
   const nextGenerationCount = Math.max(currentCount - 1, 0);
   const nextCredits = state.subscriptionType === "free" ? Math.min(state.credits + 1, FREE_IMAGE_LIMIT) : state.credits;
   const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : Math.max(state.imageGenerationCount - 1, 0);
@@ -392,15 +392,14 @@ export const createSourceUploadUrl = mutationGeneric({
 export const startGeneration = mutationGeneric({
   args: {
     anonymousId: v.optional(v.string()),
-    sourceStorageId: v.id("_storage"),
+    imageStorageId: v.id("_storage"),
     maskStorageId: v.optional(v.id("_storage")),
+    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign")),
+    selection: v.string(),
     roomType: v.string(),
-    style: v.string(),
+    displayStyle: v.optional(v.string()),
     customPrompt: v.optional(v.string()),
     aspectRatio: v.string(),
-    colorPalette: v.string(),
-    modeLabel: v.string(),
-    modePromptHint: v.optional(v.string()),
     regenerate: v.optional(v.boolean()),
     ignoreReviewCooldown: v.optional(v.boolean()),
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
@@ -408,7 +407,7 @@ export const startGeneration = mutationGeneric({
   handler: async (ctx, args) => {
     const viewer = await ensureGenerationViewer(ctx, args.anonymousId);
 
-    const sourceMetadata = await ctx.db.system.get("_storage", args.sourceStorageId);
+    const sourceMetadata = await ctx.db.system.get("_storage", args.imageStorageId);
     if (!sourceMetadata) {
       throw new ConvexError("The selected source image is no longer available. Please upload it again.");
     }
@@ -420,30 +419,48 @@ export const startGeneration = mutationGeneric({
     }
 
     const allowance = await reserveGenerationAllowance(ctx, viewer.userId, args.ignoreReviewCooldown);
+    const normalizedSelection = trimOptional(args.selection) ?? "Premium";
     const prompt = buildGenerationPrompt({
       roomType: args.roomType,
-      style: args.style,
+      style: args.displayStyle ?? normalizedSelection,
       customPrompt: args.customPrompt,
       aspectRatio: normalizeAspectRatio(args.aspectRatio),
-      colorPalette: args.colorPalette,
-      modeLabel: args.modeLabel,
-      modePromptHint: args.modePromptHint,
+      colorPalette: normalizedSelection,
+      modeLabel:
+        args.serviceType === "paint"
+          ? "Smart Wall Paint"
+          : args.serviceType === "floor"
+            ? "Floor Restyle"
+            : "Complete Redesign",
+      modePromptHint: undefined,
       regenerate: args.regenerate,
     });
+    const resolvedStyle =
+      trimOptional(args.displayStyle) ??
+      (args.serviceType === "paint"
+        ? `${normalizedSelection} Paint`
+        : args.serviceType === "floor"
+          ? `${normalizedSelection} Floor`
+          : normalizedSelection);
 
     const generationId = await ctx.db.insert("generations", {
       userId: viewer.userId,
-      sourceImageStorageId: args.sourceStorageId,
+      sourceImageStorageId: args.imageStorageId,
       maskImageStorageId: args.maskStorageId,
       storageId: undefined,
       imageUrl: undefined,
       prompt,
-      style: args.style,
+      style: resolvedStyle,
       roomType: args.roomType,
       customPrompt: trimOptional(args.customPrompt),
-      colorPalette: args.colorPalette,
+      colorPalette: normalizedSelection,
       aspectRatio: normalizeAspectRatio(args.aspectRatio),
-      mode: args.modeLabel,
+      mode:
+        args.serviceType === "paint"
+          ? "Smart Wall Paint"
+          : args.serviceType === "floor"
+            ? "Floor Restyle"
+            : "Complete Redesign",
       speedTier: args.speedTier ?? "standard",
       status: "processing",
       errorMessage: undefined,
@@ -457,14 +474,16 @@ export const startGeneration = mutationGeneric({
       projectId: undefined,
     });
 
-    await ctx.scheduler.runAfter(0, (internal as any).generations.runGenerationJob, {
+    await ctx.scheduler.runAfter(0, (internal as any).ai.generateDesign, {
       generationId,
       ownerId: viewer.userId,
-      sourceStorageId: args.sourceStorageId,
+      imageStorageId: args.imageStorageId,
       maskStorageId: args.maskStorageId,
-      prompt,
+      serviceType: args.serviceType,
+      selection: normalizedSelection,
+      customPrompt: trimOptional(args.customPrompt),
+      roomType: args.roomType,
       aspectRatio: normalizeAspectRatio(args.aspectRatio),
-      speedTier: args.speedTier ?? "standard",
     });
 
     return {

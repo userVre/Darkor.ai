@@ -3,6 +3,9 @@ const net = require("net");
 const { spawnSync } = require("child_process");
 
 const DEFAULT_DEV_PORT_ALIASES = ["8081", "8082", "8083", "8084", "8085"];
+const DEFAULT_STATUS_HOSTS = ["127.0.0.1", "::1"];
+const ANDROID_BUNDLE_PREWARM_PATH =
+  "/node_modules/expo-router/entry.bundle?platform=android&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable";
 
 function isHostPortOpen(port, host) {
   return new Promise((resolve) => {
@@ -32,7 +35,7 @@ async function isPortAvailable(port) {
   return !ipv6Open;
 }
 
-function getExpoDevServerStatus(port, host = "127.0.0.1") {
+function requestExpoDevServerStatus(port, host) {
   return new Promise((resolve) => {
     const request = http.get(
       {
@@ -70,9 +73,24 @@ function getExpoDevServerStatus(port, host = "127.0.0.1") {
   });
 }
 
+async function getExpoDevServerStatus(port, host) {
+  const hosts = host ? [host] : DEFAULT_STATUS_HOSTS;
+  let lastStatus = { ok: false, isExpoServer: false, body: "" };
+
+  for (const candidateHost of hosts) {
+    const status = await requestExpoDevServerStatus(port, candidateHost);
+    if (status.ok || status.isExpoServer) {
+      return { ...status, host: candidateHost };
+    }
+    lastStatus = status;
+  }
+
+  return lastStatus;
+}
+
 async function waitForExpoDevServer(port, options = {}) {
   const {
-    host = "127.0.0.1",
+    host,
     timeoutMs = 45000,
     pollIntervalMs = 500,
   } = options;
@@ -83,6 +101,57 @@ async function waitForExpoDevServer(port, options = {}) {
     const status = await getExpoDevServerStatus(port, host);
     if (status.isExpoServer) {
       return true;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+  }
+
+  return false;
+}
+
+function requestBundlePrewarm(port, host) {
+  return new Promise((resolve) => {
+    const request = http.get(
+      {
+        host,
+        port,
+        path: ANDROID_BUNDLE_PREWARM_PATH,
+        timeout: 30000,
+      },
+      (response) => {
+        response.resume();
+        response.on("end", () => {
+          resolve(response.statusCode === 200);
+        });
+      },
+    );
+
+    request.on("timeout", () => {
+      request.destroy();
+      resolve(false);
+    });
+
+    request.on("error", () => {
+      resolve(false);
+    });
+  });
+}
+
+async function prewarmExpoAndroidBundle(port, options = {}) {
+  const {
+    host,
+    timeoutMs = 180000,
+    pollIntervalMs = 1000,
+  } = options;
+  const hosts = host ? [host] : DEFAULT_STATUS_HOSTS;
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    for (const candidateHost of hosts) {
+      const ok = await requestBundlePrewarm(port, candidateHost);
+      if (ok) {
+        return true;
+      }
     }
 
     await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
@@ -140,6 +209,7 @@ function setupAdbReverse(localPort) {
 
 module.exports = {
   getExpoDevServerStatus,
+  prewarmExpoAndroidBundle,
   resolvePort,
   setupAdbReverse,
   waitForExpoDevServer,

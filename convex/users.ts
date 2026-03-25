@@ -1,7 +1,7 @@
 import { mutationGeneric, queryGeneric } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
-import { BillingPlan, buildSubscriptionPatch, deriveSubscriptionState, FREE_IMAGE_LIMIT, SubscriptionType } from "./subscriptions";
+import { BillingPlan, buildSubscriptionPatch, deriveSubscriptionState, FREE_IMAGE_LIMIT, SubscriptionType, toFiniteNumber } from "./subscriptions";
 import {
   buildDefaultUserFields,
   ensureGuestUser,
@@ -80,14 +80,14 @@ async function getOrCreateClerkUser(ctx: any, clerkId: string) {
   const existing = await getUserByClerkId(ctx, clerkId);
   if (existing) {
     const now = Date.now();
-    const state = deriveSubscriptionState(existing, now);
-    const patch = omitUndefined({
-      credits: typeof existing.credits === "number" ? existing.credits : 3,
-      referralCode: existing.referralCode ?? clerkId,
-      referralCount: typeof existing.referralCount === "number" ? existing.referralCount : 0,
-      lastRewardDate: typeof existing.lastRewardDate === "number" ? existing.lastRewardDate : now,
-      ...state.patch,
-    });
+      const state = deriveSubscriptionState(existing, now);
+      const patch = omitUndefined({
+      credits: toFiniteNumber(existing.credits, 3),
+        referralCode: existing.referralCode ?? clerkId,
+        referralCount: toFiniteNumber(existing.referralCount),
+      lastRewardDate: toFiniteNumber(existing.lastRewardDate, now),
+        ...state.patch,
+      });
     if (Object.keys(patch).length > 0) {
       await ctx.db.patch(existing._id, patch);
     }
@@ -143,22 +143,22 @@ async function mergeAnonymousUserIntoClerkUser(ctx: any, clerkId: string, anonym
   }
 
   const guestOwnerId = toGuestUserId(normalizedAnonymousId);
-  const guestCredits = typeof guestUser.credits === "number" ? guestUser.credits : 0;
-  const guestGenerationCount = typeof guestUser.generationCount === "number" ? guestUser.generationCount : 0;
-  const guestImageGenerationCount = typeof guestUser.imageGenerationCount === "number" ? guestUser.imageGenerationCount : 0;
-  const guestReferralCount = typeof guestUser.referralCount === "number" ? guestUser.referralCount : 0;
+  const guestCredits = toFiniteNumber(guestUser.credits);
+  const guestGenerationCount = toFiniteNumber(guestUser.generationCount);
+  const guestImageGenerationCount = toFiniteNumber(guestUser.imageGenerationCount);
+  const guestReferralCount = toFiniteNumber(guestUser.referralCount);
 
   await transferOwnedDocuments(ctx, guestOwnerId, clerkId);
 
   await ctx.db.patch(accountUser._id, omitUndefined({
-    credits: (typeof accountUser.credits === "number" ? accountUser.credits : 0) + guestCredits,
-    generationCount: (typeof accountUser.generationCount === "number" ? accountUser.generationCount : 0) + guestGenerationCount,
+    credits: toFiniteNumber(accountUser.credits) + guestCredits,
+    generationCount: toFiniteNumber(accountUser.generationCount) + guestGenerationCount,
     imageGenerationCount:
-      (typeof accountUser.imageGenerationCount === "number" ? accountUser.imageGenerationCount : 0) + guestImageGenerationCount,
-    referralCount: (typeof accountUser.referralCount === "number" ? accountUser.referralCount : 0) + guestReferralCount,
+      toFiniteNumber(accountUser.imageGenerationCount) + guestImageGenerationCount,
+    referralCount: toFiniteNumber(accountUser.referralCount) + guestReferralCount,
     referredBy: accountUser.referredBy ?? guestUser.referredBy,
-    lastRewardDate: Math.max(accountUser.lastRewardDate ?? 0, guestUser.lastRewardDate ?? 0),
-    lastReviewPromptAt: Math.max(accountUser.lastReviewPromptAt ?? 0, guestUser.lastReviewPromptAt ?? 0),
+    lastRewardDate: Math.max(toFiniteNumber(accountUser.lastRewardDate), toFiniteNumber(guestUser.lastRewardDate)),
+    lastReviewPromptAt: Math.max(toFiniteNumber(accountUser.lastReviewPromptAt), toFiniteNumber(guestUser.lastReviewPromptAt)),
   }));
 
   await ctx.db.patch(guestUser._id, {
@@ -234,7 +234,7 @@ export const setPlanFromRevenueCat = mutationGeneric({
     }
 
     const now = Date.now();
-    const purchasedAt = typeof args.purchasedAt === "number" ? args.purchasedAt : now;
+    const purchasedAt = toFiniteNumber(args.purchasedAt, now);
     const nextPlan = args.plan === "trial" || args.plan === "pro" ? (args.plan as BillingPlan) : "free";
     const nextSubscriptionType = (args.subscriptionType ?? (nextPlan === "free" ? "free" : user.subscriptionType ?? "free")) as SubscriptionType;
     const subscriptionPatch = buildSubscriptionPatch({
@@ -275,7 +275,7 @@ export const syncRevenueCatSubscriptionInternal = mutationGeneric({
     }
 
     const now = Date.now();
-    const purchasedAt = typeof args.purchasedAt === "number" ? args.purchasedAt : now;
+    const purchasedAt = toFiniteNumber(args.purchasedAt, now);
     const existing = await getUserByClerkId(ctx, args.clerkId);
 
     if (!existing) {
@@ -339,10 +339,10 @@ async function consumeAllowance(ctx: any, anonymousId?: string, ignoreCooldown?:
     throw new ConvexError(getLimitExceededMessage(state));
   }
 
-  const currentCount = typeof user.generationCount === "number" ? user.generationCount : 0;
+  const currentCount = toFiniteNumber(user.generationCount);
   const nextGenerationCount = currentCount + 1;
   const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : state.imageGenerationCount + 1;
-  const lastPromptAt = typeof user.lastReviewPromptAt === "number" ? user.lastReviewPromptAt : 0;
+  const lastPromptAt = toFiniteNumber(user.lastReviewPromptAt);
   const shouldPrompt = computeReviewPrompt(nextGenerationCount, lastPromptAt, ignoreCooldown);
 
   await ctx.db.patch(user._id, {
@@ -401,7 +401,7 @@ export const releaseGenerationAllowance = mutationGeneric({
     const state = await syncDerivedSubscriptionState(ctx, user, Date.now());
     const nextImageGenerationCount =
       state.subscriptionType === "free" ? state.imageGenerationCount : Math.max(state.imageGenerationCount - 1, 0);
-    const currentCount = typeof user.generationCount === "number" ? user.generationCount : 0;
+    const currentCount = toFiniteNumber(user.generationCount);
     const nextGenerationCount = Math.max(currentCount - 1, 0);
 
     await ctx.db.patch(user._id, {
@@ -510,15 +510,15 @@ export const claimThreeDayReward = mutationGeneric({
         granted: false,
         creditsAdded: 0,
         credits: 0,
-        nextEligibleAt: user.lastRewardDate ?? 0,
+      nextEligibleAt: toFiniteNumber(user.lastRewardDate),
       };
     }
 
     return {
       granted: false,
       creditsAdded: 0,
-      credits: typeof user.credits === "number" ? Math.min(user.credits, FREE_IMAGE_LIMIT) : FREE_IMAGE_LIMIT,
-      nextEligibleAt: typeof user.lastRewardDate === "number" ? user.lastRewardDate : 0,
+      credits: Math.min(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), FREE_IMAGE_LIMIT),
+      nextEligibleAt: toFiniteNumber(user.lastRewardDate),
     };
   },
 });

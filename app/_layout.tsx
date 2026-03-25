@@ -3,10 +3,10 @@ import "react-native-reanimated";
 
 import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import * as Linking from "expo-linking";
-import { Stack } from "expo-router";
+import { Stack, usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
@@ -15,7 +15,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AppErrorBoundary } from "../components/app-error-boundary";
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
-import { ViewerSessionProvider } from "../components/viewer-session-context";
+import { ViewerSessionProvider, useViewerSession } from "../components/viewer-session-context";
 import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
 import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
@@ -32,6 +32,7 @@ import {
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
 import { tokenCache } from "../lib/token-cache";
+import { hasDismissedLaunchPaywall } from "../lib/launch-paywall";
 
 function RevenueCatGate() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -268,6 +269,75 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+type MeResponse = {
+  plan: "free" | "trial" | "pro";
+  hasPaidAccess?: boolean;
+};
+
+const LAUNCH_GATE_EXEMPT_PATHS = new Set([
+  "/paywall",
+  "/sign-in",
+  "/sign-up",
+  "/privacy-policy",
+  "/terms-of-service",
+  "/faq",
+]);
+
+function AppShell() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { anonymousId, isReady: viewerReady } = useViewerSession();
+  const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
+
+  const me = useQuery(
+    "users:me" as any,
+    DIAGNOSTIC_BYPASS ? "skip" : viewerReady ? viewerArgs : "skip",
+  ) as MeResponse | null | undefined;
+
+  const launchPaywallDismissed = hasDismissedLaunchPaywall();
+  const isExemptRoute = pathname ? LAUNCH_GATE_EXEMPT_PATHS.has(pathname) : false;
+  const isGateResolved = DIAGNOSTIC_BYPASS || (viewerReady && me !== undefined);
+  const shouldShowLaunchPaywall =
+    !DIAGNOSTIC_BYPASS &&
+    isGateResolved &&
+    (me?.plan ?? "free") === "free" &&
+    !launchPaywallDismissed;
+
+  useEffect(() => {
+    if (!shouldShowLaunchPaywall || isExemptRoute || pathname === "/paywall") {
+      return;
+    }
+
+    router.replace("/paywall");
+  }, [isExemptRoute, pathname, router, shouldShowLaunchPaywall]);
+
+  if (!isGateResolved && !isExemptRoute) {
+    return <BootScreen message="Loading your plan..." />;
+  }
+
+  if (shouldShowLaunchPaywall && !isExemptRoute) {
+    return <BootScreen message="Preparing your offer..." />;
+  }
+
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: "#000000" },
+        animation: "slide_from_right",
+        animationDuration: 260,
+      }}
+    >
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
+      <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
+      <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
+      <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
+      <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
+    </Stack>
+  );
+}
+
 export default function RootLayout() {
   const envReport = useMemo(() => getEnvReport(), []);
   const clerkKey = envReport.values.clerkPublishableKey;
@@ -303,21 +373,7 @@ export default function RootLayout() {
                 <ViewerSessionProvider>
                   <WorkspaceDraftProvider>
                     <BottomSheetModalProvider>
-                      <Stack
-                        screenOptions={{
-                          headerShown: false,
-                          contentStyle: { backgroundColor: "#000000" },
-                          animation: "slide_from_right",
-                          animationDuration: 260,
-                        }}
-                      >
-                        <Stack.Screen name="(tabs)" />
-                        <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
-                        <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
-                        <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
-                        <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
-                        <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
-                      </Stack>
+                      <AppShell />
                     </BottomSheetModalProvider>
                   </WorkspaceDraftProvider>
                 </ViewerSessionProvider>

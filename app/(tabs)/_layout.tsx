@@ -3,7 +3,8 @@ import { Pressable, type PressableProps } from "react-native";
 import { Tabs } from "expo-router";
 import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "lucide-react-native";
 
-const BRAND_COLOR = "#f59e0b";
+const ACTIVE_TINT = "#ffffff";
+const INACTIVE_TINT = "rgba(255,255,255,0.44)";
 
 type TabButtonProps = PressableProps & {
   children?: ReactNode;
@@ -14,7 +15,7 @@ function TabBarButton({ children, style, ...props }: TabButtonProps) {
     <Pressable
       {...props}
       className="cursor-pointer"
-      android_ripple={{ color: "rgba(245, 158, 11, 0.12)", borderless: false }}
+      android_ripple={{ color: "rgba(255,255,255,0.12)", borderless: false }}
       style={style}
     >
       {children}
@@ -29,8 +30,8 @@ export default function TabsLayout() {
         headerShown: false,
         lazy: true,
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: BRAND_COLOR,
-        tabBarInactiveTintColor: "#71717a",
+        tabBarActiveTintColor: ACTIVE_TINT,
+        tabBarInactiveTintColor: INACTIVE_TINT,
         tabBarButton: (props) => <TabBarButton {...props} />,
         tabBarItemStyle: {
           alignItems: "center",
@@ -45,15 +46,17 @@ export default function TabsLayout() {
           fontWeight: "700",
         },
         tabBarStyle: {
-          backgroundColor: "#09090b",
-          borderTopColor: "rgba(255,255,255,0.08)",
-          borderTopWidth: 1,
+          backgroundColor: "#000000",
+          borderTopColor: "transparent",
+          borderTopWidth: 0,
           height: 76,
           paddingTop: 8,
           paddingBottom: 10,
+          elevation: 0,
+          shadowOpacity: 0,
         },
         sceneStyle: {
-          backgroundColor: "#09090b",
+          backgroundColor: "#000000",
         },
       }}
     >
@@ -85,9 +88,6 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <UserCircle2 color={color} size={size} />,
         }}
       />
-      <Tabs.Screen name="home.full" options={{ href: null }} />
-      <Tabs.Screen name="workspace.full" options={{ href: null }} />
-      <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
 }

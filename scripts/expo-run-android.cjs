@@ -2,7 +2,7 @@ const fs = require("fs");
 const { spawn, spawnSync } = require("child_process");
 const { resolve } = require("path");
 const { pathToFileURL } = require("url");
-const { getExpoDevServerStatus, resolvePort, setupAdbReverse, waitForExpoDevServer } = require("./dev-server-utils.cjs");
+const { getExpoDevServerStatus, prewarmExpoAndroidBundle, resolvePort, setupAdbReverse, waitForExpoDevServer } = require("./dev-server-utils.cjs");
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -17,7 +17,7 @@ function run(command, args, options = {}) {
 }
 
 function startMetroInBackground({ projectRoot, env, hostMode, portString }) {
-  const args = ["expo", "start", "--clear", "--dev-client", "--host", hostMode, "--port", portString, "--non-interactive"];
+  const args = ["expo", "start", "--dev-client", "--host", hostMode, "--port", portString, "--non-interactive"];
 
   if (process.platform === "win32") {
     const child = spawn(process.env.ComSpec || "cmd.exe", ["/d", "/s", "/c", `npx ${args.join(" ")}`], {
@@ -40,7 +40,7 @@ function startMetroInBackground({ projectRoot, env, hostMode, portString }) {
 }
 
 async function main() {
-  const projectRoot = resolve(__dirname, "..");
+  const projectRoot = fs.realpathSync(resolve(__dirname, ".."));
   const metroConfig = pathToFileURL(resolve(projectRoot, "metro.config.js")).href;
   process.env.EXPO_OVERRIDE_METRO_CONFIG = metroConfig;
   process.env.EXPO_DEV_PORT = process.env.EXPO_DEV_PORT || "8081";
@@ -92,12 +92,14 @@ async function main() {
       portString,
     });
 
-    const ready = await waitForExpoDevServer(port, { host: "127.0.0.1", timeoutMs: 45000 });
+    const ready = await waitForExpoDevServer(port, { timeoutMs: 120000 });
     if (!ready) {
       console.error(`[dev] Metro did not become ready on port ${portString}.`);
       process.exit(1);
     }
   }
+
+  const prewarmPromise = prewarmExpoAndroidBundle(port, { timeoutMs: 180000 });
 
   const envKeys = [
     "GEMINI_API_KEY",
@@ -138,6 +140,11 @@ async function main() {
     cwd: androidDir,
     env: process.env,
   });
+
+  const prewarmed = await prewarmPromise;
+  if (!prewarmed) {
+    console.warn(`[dev] Android bundle prewarm timed out on port ${portString}; launching anyway.`);
+  }
 
   run("adb", [
     "shell",

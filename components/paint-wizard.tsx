@@ -6,18 +6,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-  type LayoutChangeEvent,
-} from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { runOnJS } from "react-native-reanimated";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle as SvgCircle, G, Path as SvgPath, Rect } from "react-native-svg";
 import { captureRef } from "react-native-view-shot";
@@ -33,7 +23,9 @@ import {
 } from "lucide-react-native";
 
 import { triggerHaptic } from "../lib/haptics";
+import { useProSuccess } from "./pro-success-context";
 import { LuxPressable } from "./lux-pressable";
+import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerSession } from "./viewer-session-context";
 
 type WizardStep = "intake" | "mask" | "colors" | "finish" | "processing" | "result";
@@ -42,17 +34,6 @@ type SelectedImage = {
   uri: string;
   width: number;
   height: number;
-};
-
-type MaskPoint = {
-  x: number;
-  y: number;
-};
-
-type MaskStroke = {
-  id: string;
-  width: number;
-  points: MaskPoint[];
 };
 
 type MeResponse = {
@@ -93,8 +74,6 @@ const MASK_CAPTURE_COLOR = "#FFFFFF";
 const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
 const DETECT_DURATION_MS = 1700;
-const LOUPE_SIZE = 116;
-const LOUPE_ZOOM = 1.8;
 
 const COLOR_CATEGORIES: ColorCategory[] = [
   {
@@ -159,25 +138,6 @@ const FINISH_OPTIONS: FinishOption[] = [
 
 const absoluteFill = StyleSheet.absoluteFillObject;
 
-function buildSmoothPath(points: MaskPoint[]) {
-  if (!points.length) return "";
-  if (points.length === 1) return `M ${points[0].x} ${points[0].y} L ${points[0].x} ${points[0].y}`;
-  if (points.length === 2) return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
-
-  let path = `M ${points[0].x} ${points[0].y}`;
-  for (let index = 1; index < points.length - 1; index += 1) {
-    const current = points[index];
-    const next = points[index + 1];
-    const midX = (current.x + next.x) / 2;
-    const midY = (current.y + next.y) / 2;
-    path += ` Q ${current.x} ${current.y} ${midX} ${midY}`;
-  }
-
-  const last = points[points.length - 1];
-  path += ` L ${last.x} ${last.y}`;
-  return path;
-}
-
 function simplifyRatio(width: number, height: number) {
   const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
   const safeWidth = Math.max(1, Math.round(width));
@@ -223,6 +183,7 @@ const ColorSwatchButton = memo(function ColorSwatchButton({
   return (
     <LuxPressable
       onPress={onPress}
+      pressableClassName={pointerClassName}
       className={pointerClassName}
       style={[styles.swatchButton, { width: size }]}
       glowColor={active ? "rgba(217,70,239,0.22)" : "rgba(255,255,255,0.04)"}
@@ -272,6 +233,7 @@ export function PaintWizard() {
   const { width, height } = useWindowDimensions();
   const { isSignedIn } = useAuth();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
+  const { showToast } = useProSuccess();
   const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
 
   const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as MeResponse | null | undefined;
@@ -283,44 +245,56 @@ export function PaintWizard() {
 
   const [step, setStep] = useState<WizardStep>("intake");
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
-  const [paintStrokes, setPaintStrokes] = useState<MaskStroke[]>([]);
-  const [currentStroke, setCurrentStroke] = useState<MaskStroke | null>(null);
-  const [brushWidth, setBrushWidth] = useState(24);
-  const [selectedColorValue, setSelectedColorValue] = useState(COLOR_CATEGORIES[0].colors[0].value);
+  const [selectedColorValue, setSelectedColorValue] = useState<string | null>(null);
   const [selectedFinishId, setSelectedFinishId] = useState(FINISH_OPTIONS[0].id);
   const [isDetecting, setIsDetecting] = useState(false);
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
-  const [sliderWidth, setSliderWidth] = useState(0);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
-  const [activePoint, setActivePoint] = useState<MaskPoint | null>(null);
-
-  const strokeIdRef = useRef(0);
-  const currentStrokeRef = useRef<MaskStroke | null>(null);
   const detectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sourceCaptureRef = useRef<View>(null);
   const maskCaptureRef = useRef<View>(null);
 
+  const {
+    strokes: paintStrokes,
+    renderedStrokes,
+    brushWidth,
+    brushProgress,
+    canvasSize,
+    sliderWidth,
+    setSliderWidth,
+    activePoint,
+    hasMask,
+    handleCanvasLayout,
+    clearMask,
+    undoLastStroke,
+    resetMaskDrawing,
+    drawGesture,
+    sliderGesture,
+    loupeMetrics,
+  } = useMaskDrawing({
+    disabled: isDetecting,
+    initialBrushWidth: 24,
+    minBrushWidth: BRUSH_MIN,
+    maxBrushWidth: BRUSH_MAX,
+  });
+
   const selectedColor = useMemo(
-    () =>
-      COLOR_CATEGORIES.flatMap((category) => category.colors).find((color) => color.value === selectedColorValue) ??
-      COLOR_CATEGORIES[0].colors[0],
+    () => COLOR_CATEGORIES.flatMap((category) => category.colors).find((color) => color.value === selectedColorValue) ?? null,
     [selectedColorValue],
   );
   const selectedFinish = useMemo(
     () => FINISH_OPTIONS.find((option) => option.id === selectedFinishId) ?? FINISH_OPTIONS[0],
     [selectedFinishId],
   );
-  const renderedStrokes = useMemo(
-    () => (currentStroke ? [...paintStrokes, currentStroke] : paintStrokes),
-    [currentStroke, paintStrokes],
-  );
-  const hasMask = paintStrokes.length > 0;
-  const brushProgress = sliderWidth > 0 ? (brushWidth - BRUSH_MIN) / (BRUSH_MAX - BRUSH_MIN) : 0.2;
   const creditBalance = viewerReady ? me?.credits ?? 3 : 3;
-  const canGenerate = Boolean(selectedImage && hasMask && !isGenerating);
+  const canGenerate = Boolean(selectedImage && hasMask && selectedColor && !isGenerating);
+  const currentStepNumber =
+    step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
+  const headerStepLabel = `Step ${currentStepNumber}/4`;
+  const progressWidth = (170 * currentStepNumber) / 4;
+  const canContinueFromColors = Boolean(selectedColor && selectedImage && hasMask && !isGenerating);
   const colorCardSize = Math.max(94, Math.floor((width - 72) / 3));
   const frameAspectRatio = selectedImage ? selectedImage.width / Math.max(selectedImage.height, 1) : 1;
   const previewHeight = Math.min(Math.max((width - 32) / Math.max(frameAspectRatio, 0.6), 240), height * 0.54);
@@ -339,17 +313,21 @@ export function PaintWizard() {
     if (generation.status === "ready" && generation.imageUrl) {
       setGeneratedImageUrl(generation.imageUrl);
       setIsGenerating(false);
-      setStep("result");
       triggerHaptic();
+      if (isSignedIn) {
+        router.replace({ pathname: "/workspace", params: { boardView: "editor", boardItemId: generation._id } });
+        return;
+      }
+      setStep("result");
       return;
     }
 
     if (generation.status === "failed") {
       setIsGenerating(false);
-      setStep("finish");
-      Alert.alert("Generation failed", generation.errorMessage ?? "Please try again.");
+      setStep("colors");
+      showToast(generation.errorMessage ?? "Unable to paint the walls right now.");
     }
-  }, [generationArchive, generationId]);
+  }, [generationArchive, generationId, isSignedIn, router, showToast]);
 
   const resetDetection = useCallback(() => {
     if (detectTimerRef.current) clearTimeout(detectTimerRef.current);
@@ -359,44 +337,16 @@ export function PaintWizard() {
     }, DETECT_DURATION_MS);
   }, []);
 
-  const clearMask = useCallback(() => {
-    setPaintStrokes([]);
-    setCurrentStroke(null);
-    currentStrokeRef.current = null;
-    setActivePoint(null);
-  }, []);
-
   const resetProject = useCallback(() => {
     setStep("intake");
     setSelectedImage(null);
     setGeneratedImageUrl(null);
     setGenerationId(null);
     setIsGenerating(false);
-    clearMask();
-    setCanvasSize({ width: 0, height: 0 });
-    setSelectedColorValue(COLOR_CATEGORIES[0].colors[0].value);
+    resetMaskDrawing({ resetBrush: true });
+    setSelectedColorValue(null);
     setSelectedFinishId(FINISH_OPTIONS[0].id);
-    setBrushWidth(24);
-  }, [clearMask]);
-
-  const clampPoint = useCallback(
-    (x: number, y: number) => ({
-      x: Math.max(0, Math.min(x, canvasSize.width)),
-      y: Math.max(0, Math.min(y, canvasSize.height)),
-    }),
-    [canvasSize.height, canvasSize.width],
-  );
-
-  const handleCanvasLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      const nextWidth = Math.round(event.nativeEvent.layout.width);
-      const nextHeight = Math.round(event.nativeEvent.layout.height);
-      if (nextWidth !== canvasSize.width || nextHeight !== canvasSize.height) {
-        setCanvasSize({ width: nextWidth, height: nextHeight });
-      }
-    },
-    [canvasSize.height, canvasSize.width],
-  );
+  }, [resetMaskDrawing]);
 
   const uploadBlobToStorage = useCallback(
     async (uri: string) => {
@@ -461,91 +411,16 @@ export function PaintWizard() {
         });
         setGeneratedImageUrl(null);
         setGenerationId(null);
-        clearMask();
+        resetMaskDrawing({ resetBrush: true });
+        setSelectedColorValue(null);
+        setSelectedFinishId(FINISH_OPTIONS[0].id);
         setStep("mask");
         resetDetection();
       } catch (error) {
         Alert.alert("Unable to open media", error instanceof Error ? error.message : "Please try again.");
       }
     },
-    [clearMask, resetDetection],
-  );
-
-  const startStroke = useCallback(
-    (x: number, y: number) => {
-      if (isDetecting || canvasSize.width <= 0 || canvasSize.height <= 0) return;
-
-      const point = clampPoint(x, y);
-      const stroke: MaskStroke = {
-        id: `stroke-${strokeIdRef.current++}`,
-        width: brushWidth,
-        points: [point],
-      };
-      currentStrokeRef.current = stroke;
-      setCurrentStroke(stroke);
-      setActivePoint(point);
-    },
-    [brushWidth, canvasSize.height, canvasSize.width, clampPoint, isDetecting],
-  );
-
-  const extendStroke = useCallback(
-    (x: number, y: number) => {
-      const activeStrokeValue = currentStrokeRef.current;
-      if (!activeStrokeValue) return;
-
-      const rawPoint = clampPoint(x, y);
-      const lastPoint = activeStrokeValue.points[activeStrokeValue.points.length - 1] ?? rawPoint;
-      const nextPoint = {
-        x: lastPoint.x + (rawPoint.x - lastPoint.x) * 0.42,
-        y: lastPoint.y + (rawPoint.y - lastPoint.y) * 0.42,
-      };
-
-      const updatedStroke = {
-        ...activeStrokeValue,
-        points: [...activeStrokeValue.points, nextPoint],
-      };
-      currentStrokeRef.current = updatedStroke;
-      setCurrentStroke(updatedStroke);
-      setActivePoint(rawPoint);
-    },
-    [clampPoint],
-  );
-
-  const finishStroke = useCallback(() => {
-    const activeStrokeValue = currentStrokeRef.current;
-    if (!activeStrokeValue) return;
-
-    currentStrokeRef.current = null;
-    setCurrentStroke(null);
-    setPaintStrokes((current) => [...current, activeStrokeValue]);
-    setActivePoint(null);
-  }, []);
-
-  const drawGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .minDistance(0)
-        .onBegin((event) => runOnJS(startStroke)(event.x, event.y))
-        .onUpdate((event) => runOnJS(extendStroke)(event.x, event.y))
-        .onFinalize(() => runOnJS(finishStroke)()),
-    [extendStroke, finishStroke, startStroke],
-  );
-
-  const updateBrushWidth = useCallback(
-    (x: number) => {
-      if (sliderWidth <= 0) return;
-      const ratio = Math.max(0, Math.min(x / sliderWidth, 1));
-      setBrushWidth(Math.round(BRUSH_MIN + ratio * (BRUSH_MAX - BRUSH_MIN)));
-    },
-    [sliderWidth],
-  );
-
-  const sliderGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .onBegin((event) => runOnJS(updateBrushWidth)(event.x))
-        .onUpdate((event) => runOnJS(updateBrushWidth)(event.x)),
-    [updateBrushWidth],
+    [resetDetection, resetMaskDrawing],
   );
 
   const handleGenerate = useCallback(async () => {
@@ -556,6 +431,11 @@ export function PaintWizard() {
 
     if (!selectedImage || !hasMask || !sourceCaptureRef.current || !maskCaptureRef.current) {
       Alert.alert("Mark the walls first", "Brush over the wall surfaces you want to repaint before generating.");
+      return;
+    }
+
+    if (!selectedColor) {
+      Alert.alert("Pick a color", "Choose a wall color before continuing.");
       return;
     }
 
@@ -592,23 +472,31 @@ export function PaintWizard() {
 
       const result = (await startGeneration({
         anonymousId,
-        sourceStorageId,
+        imageStorageId: sourceStorageId,
         maskStorageId,
+        serviceType: "paint",
+        selection: `${selectedColor.label} (${selectedColor.value}) with a realistic ${selectedFinish.label.toLowerCase()} finish`,
         roomType: "Room",
-        style: `${selectedColor.label} Paint`,
-        customPrompt: `Repaint only the masked walls using ${selectedColor.label} (${selectedColor.value}) with a realistic ${selectedFinish.label.toLowerCase()} finish. Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and original lighting exactly.`,
+        displayStyle: `${selectedColor.label} Paint`,
+        customPrompt: "Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.",
         aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
-        colorPalette: selectedColor.label,
-        modeLabel: `${selectedFinish.label} Finish`,
-        modePromptHint: `Use the provided wall mask exactly. Analyze wall texture and apply ${selectedColor.label.toLowerCase()} paint with a ${selectedFinish.label.toLowerCase()} finish only inside the selected wall region while preserving every unmasked area perfectly.`,
-        speedTier: "pro",
       })) as { generationId: string };
 
       setGenerationId(result.generationId);
     } catch (error) {
       setIsGenerating(false);
-      setStep("finish");
-      Alert.alert("Unable to paint the walls", error instanceof Error ? error.message : "Please try again.");
+      setStep("colors");
+      const message = error instanceof Error ? error.message : "Please try again.";
+      if (message === "Payment Required") {
+        if (!isSignedIn) {
+          setAwaitingAuth(true);
+          router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=paint" } });
+          return;
+        }
+        router.push("/paywall");
+        return;
+      }
+      showToast(message);
     }
   }, [
     anonymousId,
@@ -616,13 +504,13 @@ export function PaintWizard() {
     hasMask,
     isSignedIn,
     router,
-    selectedColor.label,
-    selectedColor.value,
     selectedFinish.label,
     selectedImage,
     startGeneration,
+    showToast,
     uploadBlobToStorage,
     viewerReady,
+    selectedColor,
   ]);
 
   useEffect(() => {
@@ -645,30 +533,10 @@ export function PaintWizard() {
     if (step === "mask") return setStep("intake");
     if (step === "colors") return setStep("mask");
     if (step === "finish") return setStep("colors");
-    if (step === "result") return setStep("finish");
+    if (step === "result") return setStep("colors");
   }, [router, step]);
 
-  const stepSubtitle =
-    step === "intake"
-      ? "Upload a room photo"
-      : step === "mask"
-        ? "Mark the wall surfaces"
-        : step === "colors"
-          ? "Choose a designer palette"
-          : step === "finish"
-            ? "Select a finish type"
-            : step === "processing"
-              ? "Rendering your wall paint"
-              : "Your painted result";
-
-  const loupeLeft = activePoint
-    ? Math.max(12, Math.min(activePoint.x - LOUPE_SIZE / 2, Math.max(canvasSize.width - LOUPE_SIZE - 12, 12)))
-    : 0;
-  const loupeTop = activePoint
-    ? Math.max(12, Math.min(activePoint.y - LOUPE_SIZE - 28, Math.max(canvasSize.height - LOUPE_SIZE - 12, 12)))
-    : 0;
-  const loupeTranslateX = activePoint ? -(activePoint.x * LOUPE_ZOOM - LOUPE_SIZE / 2) : 0;
-  const loupeTranslateY = activePoint ? -(activePoint.y * LOUPE_ZOOM - LOUPE_SIZE / 2) : 0;
+  const stepSubtitle = headerStepLabel;
 
   return (
     <View style={styles.screen}>
@@ -691,7 +559,7 @@ export function PaintWizard() {
               {paintStrokes.map((stroke) => (
                 <SvgPath
                   key={`mask-${stroke.id}`}
-                  d={buildSmoothPath(stroke.points)}
+                  d={stroke.path}
                   stroke={MASK_CAPTURE_COLOR}
                   strokeWidth={stroke.width}
                   strokeLinecap="round"
@@ -718,20 +586,15 @@ export function PaintWizard() {
         <View style={styles.topCopy}>
           <Text style={styles.topTitle}>Smart Wall Paint</Text>
           <Text style={styles.topSubtitle}>{stepSubtitle}</Text>
-          <View style={styles.stepRow}>
-            {[1, 2, 3, 4].map((number) => {
-              const active =
-                (step === "intake" && number === 1) ||
-                (step === "mask" && number === 2) ||
-                (step === "colors" && number === 3) ||
-                ((step === "finish" || step === "processing" || step === "result") && number === 4);
-
-              return (
-                <View key={number} style={[styles.stepPill, active ? styles.stepPillActive : null]}>
-                  <Text style={[styles.stepPillText, active ? styles.stepPillTextActive : null]}>{number}</Text>
-                </View>
-              );
-            })}
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFillWrap, { width: progressWidth }]}>
+              <LinearGradient
+                colors={["#D946EF", "#EC4899", "#7C3AED"]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={styles.progressFill}
+              />
+            </View>
           </View>
         </View>
 
@@ -805,7 +668,7 @@ export function PaintWizard() {
 
           <View style={styles.toolbarRow}>
             <LuxPressable
-              onPress={() => setPaintStrokes((current) => current.slice(0, -1))}
+              onPress={undoLastStroke}
               disabled={!paintStrokes.length}
               className={pointerClassName}
               style={styles.toolbarButton}
@@ -817,7 +680,7 @@ export function PaintWizard() {
             </LuxPressable>
             <LuxPressable
               onPress={clearMask}
-              disabled={!paintStrokes.length && !currentStroke}
+              disabled={!paintStrokes.length}
               className={pointerClassName}
               style={styles.toolbarButton}
               glowColor="rgba(255,255,255,0.04)"
@@ -838,7 +701,7 @@ export function PaintWizard() {
                       {renderedStrokes.map((stroke) => (
                         <SvgPath
                           key={stroke.id}
-                          d={buildSmoothPath(stroke.points)}
+                          d={stroke.path}
                           stroke={MASK_COLOR}
                           strokeWidth={stroke.width}
                           strokeLinecap="round"
@@ -850,7 +713,7 @@ export function PaintWizard() {
                   </View>
                 </GestureDetector>
 
-                {activePoint ? (
+                {activePoint && loupeMetrics ? (
                   <>
                     <View
                       pointerEvents="none"
@@ -867,25 +730,25 @@ export function PaintWizard() {
                       }}
                     />
 
-                    <View pointerEvents="none" style={[styles.loupe, { left: loupeLeft, top: loupeTop }]}>
+                    <View pointerEvents="none" style={[styles.loupe, { left: loupeMetrics.left, top: loupeMetrics.top, width: loupeMetrics.size, height: loupeMetrics.size }]}>
                       <View style={styles.loupeInner}>
                         <Image
                           source={{ uri: selectedImage.uri }}
                           style={{
                             position: "absolute",
-                            width: canvasSize.width * LOUPE_ZOOM,
-                            height: canvasSize.height * LOUPE_ZOOM,
-                            left: loupeTranslateX,
-                            top: loupeTranslateY,
+                            width: canvasSize.width * loupeMetrics.zoom,
+                            height: canvasSize.height * loupeMetrics.zoom,
+                            left: loupeMetrics.translateX,
+                            top: loupeMetrics.translateY,
                           }}
                           contentFit="contain"
                         />
-                        <Svg width={LOUPE_SIZE} height={LOUPE_SIZE} style={absoluteFill}>
-                          <G transform={`translate(${loupeTranslateX} ${loupeTranslateY}) scale(${LOUPE_ZOOM})`}>
+                        <Svg width={loupeMetrics.size} height={loupeMetrics.size} style={absoluteFill}>
+                          <G transform={`translate(${loupeMetrics.translateX} ${loupeMetrics.translateY}) scale(${loupeMetrics.zoom})`}>
                             {renderedStrokes.map((stroke) => (
                               <SvgPath
                                 key={`loupe-${stroke.id}`}
-                                d={buildSmoothPath(stroke.points)}
+                                d={stroke.path}
                                 stroke={MASK_COLOR}
                                 strokeWidth={stroke.width}
                                 strokeLinecap="round"
@@ -894,9 +757,9 @@ export function PaintWizard() {
                               />
                             ))}
                           </G>
-                          <SvgCircle cx={LOUPE_SIZE / 2} cy={LOUPE_SIZE / 2} r={8} fill="none" stroke="#ffffff" strokeWidth={1.5} />
-                          <SvgPath d={`M ${LOUPE_SIZE / 2 - 14} ${LOUPE_SIZE / 2} L ${LOUPE_SIZE / 2 + 14} ${LOUPE_SIZE / 2}`} stroke="#ffffff" strokeWidth={1} />
-                          <SvgPath d={`M ${LOUPE_SIZE / 2} ${LOUPE_SIZE / 2 - 14} L ${LOUPE_SIZE / 2} ${LOUPE_SIZE / 2 + 14}`} stroke="#ffffff" strokeWidth={1} />
+                          <SvgCircle cx={loupeMetrics.size / 2} cy={loupeMetrics.size / 2} r={8} fill="none" stroke="#ffffff" strokeWidth={1.5} />
+                          <SvgPath d={`M ${loupeMetrics.size / 2 - 14} ${loupeMetrics.size / 2} L ${loupeMetrics.size / 2 + 14} ${loupeMetrics.size / 2}`} stroke="#ffffff" strokeWidth={1} />
+                          <SvgPath d={`M ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 - 14} L ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 + 14}`} stroke="#ffffff" strokeWidth={1} />
                         </Svg>
                       </View>
                     </View>
@@ -970,78 +833,92 @@ export function PaintWizard() {
       ) : null}
 
       {step === "colors" ? (
-        <ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingTop: 10,
-            paddingBottom: Math.max(insets.bottom + 28, 34),
-            gap: 18,
-          }}
-          showsVerticalScrollIndicator={false}
-        >
-          <Text style={styles.stepTitle}>Select Your Color</Text>
-          <Text style={styles.stepText}>
-            Explore a premium palette hub designed to feel intentional, market-ready, and photoreal in upscale interiors.
-          </Text>
+        <>
+          <ScrollView
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom + 122, 138),
+              gap: 18,
+            }}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.stepTitle}>Select Color</Text>
+            <Text style={styles.stepText}>
+              Explore a premium palette hub designed to feel intentional, market-ready, and photoreal in upscale interiors.
+            </Text>
 
-          <View style={[styles.canvasFrame, { height: Math.min(previewHeight, 280) }]}> 
-            {selectedImage ? (
-              <>
-                <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="contain" />
-                <Svg width="100%" height="100%" style={absoluteFill}>
+            <View style={[styles.canvasFrame, { height: Math.min(previewHeight, 280) }]}>
+              {selectedImage ? (
+                <>
+                  <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="contain" />
+                  <Svg width="100%" height="100%" style={absoluteFill}>
                   {paintStrokes.map((stroke) => (
                     <SvgPath
                       key={`preview-${stroke.id}`}
-                      d={buildSmoothPath(stroke.points)}
-                      stroke={selectedColor.value}
-                      strokeOpacity={0.52}
-                      strokeWidth={stroke.width}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="none"
+                      d={stroke.path}
+                      stroke={selectedColor?.value ?? "#FFFFFF"}
+                        strokeOpacity={selectedColor ? 0.52 : 0.18}
+                        strokeWidth={stroke.width}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                      />
+                    ))}
+                  </Svg>
+                  <View style={styles.previewBadge}>
+                    <View style={[styles.previewSwatch, selectedColor ? { backgroundColor: selectedColor.value } : styles.previewSwatchEmpty]} />
+                    <Text style={styles.previewBadgeText}>{selectedColor?.label ?? "Choose a wall color"}</Text>
+                  </View>
+                </>
+              ) : null}
+            </View>
+
+            {COLOR_CATEGORIES.map((category) => (
+              <View key={category.id} style={styles.paletteCard}>
+                <Text style={styles.paletteTitle}>{category.title}</Text>
+                <View style={styles.swatchGrid}>
+                  {category.colors.map((color) => (
+                    <ColorSwatchButton
+                      key={color.id}
+                      color={color}
+                      active={color.id === selectedColor?.id}
+                      size={colorCardSize}
+                      onPress={() => {
+                        setSelectedColorValue(color.value);
+                        triggerHaptic();
+                      }}
                     />
                   ))}
-                </Svg>
-                <View style={styles.previewBadge}>
-                  <View style={[styles.previewSwatch, { backgroundColor: selectedColor.value }]} />
-                  <Text style={styles.previewBadgeText}>{selectedColor.label}</Text>
                 </View>
-              </>
-            ) : null}
-          </View>
-
-          {COLOR_CATEGORIES.map((category) => (
-            <View key={category.id} style={styles.paletteCard}>
-              <Text style={styles.paletteTitle}>{category.title}</Text>
-              <View style={styles.swatchGrid}>
-                {category.colors.map((color) => (
-                  <ColorSwatchButton
-                    key={color.id}
-                    color={color}
-                    active={color.id === selectedColor.id}
-                    size={colorCardSize}
-                    onPress={() => {
-                      setSelectedColorValue(color.value);
-                      triggerHaptic();
-                    }}
-                  />
-                ))}
               </View>
-            </View>
-          ))}
+            ))}
+          </ScrollView>
 
-          <LuxPressable
-            onPress={() => setStep("finish")}
-            className={pointerClassName}
-            style={{ width: "100%" }}
-            glowColor="rgba(217,70,239,0.2)"
-            scale={0.99}
-          >
-            <LinearGradient colors={["#D946EF", "#EC4899", "#7C3AED"]} style={styles.primaryButton}>
-              <Text style={styles.primaryText}>Continue to Finish</Text>
-            </LinearGradient>
-          </LuxPressable>
-        </ScrollView>
+          <View style={[styles.fixedContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
+            <LuxPressable
+              onPress={() => {
+                void handleGenerate();
+              }}
+              disabled={!canContinueFromColors}
+              pressableClassName={pointerClassName}
+              className={pointerClassName}
+              style={{ width: "100%" }}
+              glowColor="rgba(217,70,239,0.22)"
+              scale={0.99}
+            >
+              {canContinueFromColors ? (
+                <LinearGradient colors={["#D946EF", "#EC4899", "#7C3AED"]} style={styles.primaryButtonLarge}>
+                  <Text style={styles.primaryText}>Continue</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.disabledButtonLarge}>
+                  <Text style={styles.primaryText}>Continue</Text>
+                </View>
+              )}
+            </LuxPressable>
+          </View>
+        </>
       ) : null}
 
       {step === "finish" ? (
@@ -1060,10 +937,10 @@ export function PaintWizard() {
           </Text>
 
           <View style={[styles.summaryCard, styles.finishSummaryCard]}>
-            <View style={[styles.summarySwatch, { backgroundColor: selectedColor.value }]} />
+              <View style={[styles.summarySwatch, { backgroundColor: selectedColor?.value ?? "#ffffff" }]} />
             <View style={styles.summaryCopy}>
               <Text style={styles.summaryLabel}>Selected Color</Text>
-              <Text style={styles.summaryTitle}>{selectedColor.label}</Text>
+              <Text style={styles.summaryTitle}>{selectedColor?.label ?? "No color selected"}</Text>
               <Text style={styles.summaryText}>Wall color is locked. Now choose the final sheen profile for the render.</Text>
             </View>
           </View>
@@ -1104,21 +981,25 @@ export function PaintWizard() {
             style={styles.processingGlow}
           />
           <View style={styles.processingFrame}>
+            {selectedImage ? (
+              <Image source={{ uri: selectedImage.uri }} style={styles.processingImage} contentFit="cover" />
+            ) : null}
+            <View style={styles.processingScrim} />
             <MotiView
               animate={{ translateY: [-160, 180], opacity: [0, 1, 0] }}
               transition={{ duration: 1700, loop: true }}
               style={styles.processingScan}
             />
             <View style={styles.processingChip}>
-              <View style={[styles.processingChipSwatch, { backgroundColor: selectedColor.value }]} />
+              <View style={[styles.processingChipSwatch, { backgroundColor: selectedColor?.value ?? "#ffffff" }]} />
               <Text style={styles.processingChipText}>{selectedFinish.label} Finish</Text>
             </View>
           </View>
           <View style={styles.processingCopy}>
             <ActivityIndicator size="small" color="#ffffff" />
-            <Text style={styles.processingTitle}>{`Analyzing wall textures & applying ${selectedColor.label}...`}</Text>
+            <Text style={styles.processingTitle}>AI is analyzing your wall paint...</Text>
             <Text style={styles.processingText}>
-              Home AI is reading the wall geometry, preserving room details, and applying your selected finish with photoreal paint behavior.
+              Nano Banana is locking the room structure, isolating the masked walls, and applying {selectedColor?.label ?? "your color"} with a premium finish.
             </Text>
           </View>
         </View>
@@ -1146,7 +1027,7 @@ export function PaintWizard() {
 
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Applied Finish</Text>
-            <Text style={styles.summaryTitle}>{`${selectedColor.label} • ${selectedFinish.label}`}</Text>
+            <Text style={styles.summaryTitle}>{`${selectedColor?.label ?? "Selected Color"} • ${selectedFinish.label}`}</Text>
             <Text style={styles.summaryText}>
               Your walls were recolored from the mask you painted while preserving the structure, furnishings, trim, and natural light of the room.
             </Text>
@@ -1242,6 +1123,24 @@ const styles = StyleSheet.create({
   topSubtitle: {
     color: "#a1a1aa",
     fontSize: 12,
+    fontWeight: "700",
+  },
+  progressTrack: {
+    width: "100%",
+    maxWidth: 170,
+    height: 8,
+    borderRadius: 999,
+    overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.12)",
+  },
+  progressFillWrap: {
+    height: "100%",
+    overflow: "hidden",
+    borderRadius: 999,
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 999,
   },
   stepRow: {
     flexDirection: "row",
@@ -1431,8 +1330,8 @@ const styles = StyleSheet.create({
   },
   loupe: {
     position: "absolute",
-    width: LOUPE_SIZE,
-    height: LOUPE_SIZE,
+    width: 116,
+    height: 116,
     borderRadius: 999,
     padding: 5,
     backgroundColor: "rgba(255,255,255,0.08)",
@@ -1571,6 +1470,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
   },
+  disabledButtonLarge: {
+    minHeight: 62,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(39,39,42,0.92)",
+    opacity: 0.58,
+  },
   primaryText: {
     color: "#ffffff",
     fontSize: 15,
@@ -1598,10 +1505,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.7)",
   },
+  previewSwatchEmpty: {
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
   previewBadgeText: {
     color: "#ffffff",
     fontSize: 12,
     fontWeight: "700",
+  },
+  fixedContinueBar: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingTop: 14,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.06)",
+    backgroundColor: OLED_BLACK,
   },
   paletteCard: {
     borderRadius: 28,
@@ -1774,6 +1695,17 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
+  },
+  processingImage: {
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+  },
+  processingScrim: {
+    position: "absolute",
+    inset: 0,
+    backgroundColor: "rgba(0,0,0,0.42)",
   },
   processingScan: {
     position: "absolute",
