@@ -1781,13 +1781,6 @@ export default function WorkspaceScreen() {
     if (!effectiveSignedIn) {
       handledBoardRouteRef.current = routeSignature;
       router.replace("/workspace");
-      requestAnimationFrame(() => {
-        openAuthWall(
-          boardView === "editor" && boardItemId
-            ? `/workspace?boardView=editor&boardItemId=${encodeURIComponent(boardItemId)}`
-            : "/workspace?boardView=board",
-        );
-      });
       return;
     }
 

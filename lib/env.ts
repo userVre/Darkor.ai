@@ -46,12 +46,6 @@ export function getEnvReport(): EnvReport {
     if (!resolveEnv(key)) missing.push(key);
   }
 
-  const revenueMissing =
-    !values.revenueCatKey && !values.revenueCatIosKey && !values.revenueCatAndroidKey;
-  if (revenueMissing) {
-    missing.push("EXPO_PUBLIC_REVENUECAT_(IOS|ANDROID)_API_KEY");
-  }
-
   return {
     ok: missing.length === 0,
     missing,

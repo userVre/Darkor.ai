@@ -6,7 +6,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useMutation } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import * as Linking from "expo-linking";
-import { Stack, usePathname, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
@@ -21,10 +21,8 @@ import { convex } from "../lib/convex";
 import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
 import { getEnvReport, logEnvDiagnostics } from "../lib/env";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
-import { tokenCache } from "../lib/token-cache";
 import {
   configureRevenueCat,
-  getRevenueCatApiKey,
   hasActiveSubscription,
   inferBillingDurationFromCustomerInfo,
   inferPlanFromCustomerInfo,
@@ -33,6 +31,7 @@ import {
   type RevenueCatCustomerInfo,
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
+import { tokenCache } from "../lib/token-cache";
 
 function RevenueCatGate() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -184,8 +183,6 @@ function ReferralGate() {
 }
 
 function Providers({ children }: { children: React.ReactNode }) {
-  useEffect(() => {}, []);
-
   return (
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       <ProSuccessProvider>
@@ -248,89 +245,64 @@ function OfflineScreen({ message, onRetry }: { message: string; onRetry: () => v
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isLoaded } = useAuth();
-  const [authFallbackReady, setAuthFallbackReady] = useState(DIAGNOSTIC_BYPASS);
+  const [allowGuestShell, setAllowGuestShell] = useState(DIAGNOSTIC_BYPASS);
 
   useEffect(() => {
     if (isLoaded) {
-      setAuthFallbackReady(true);
+      setAllowGuestShell(true);
       return;
     }
 
     const timer = setTimeout(() => {
-      console.warn("[Boot] AuthGate timeout - rendering app before Clerk finished loading");
-      setAuthFallbackReady(true);
-    }, 2500);
+      console.warn("[Boot] AuthGate timeout - rendering the guest-safe shell before Clerk finished loading");
+      setAllowGuestShell(true);
+    }, 900);
 
     return () => clearTimeout(timer);
   }, [isLoaded]);
 
-  if (!isLoaded && !authFallbackReady) {
+  if (!isLoaded && !allowGuestShell) {
     return <BootScreen message="Loading your account..." />;
   }
 
   return <>{children}</>;
 }
 
-function LaunchDiagnostics() {
-  const { isLoaded, isSignedIn } = useAuth();
-  const pathname = usePathname();
-
-  useEffect(() => {}, [isLoaded, isSignedIn, pathname]);
-
-  return null;
-}
-
 export default function RootLayout() {
-  const [appReady, setAppReady] = useState(false);
   const envReport = useMemo(() => getEnvReport(), []);
   const clerkKey = envReport.values.clerkPublishableKey;
-  const revenueCatKey = getRevenueCatApiKey();
 
   useEffect(() => {
     logEnvDiagnostics(envReport);
   }, [envReport]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setAppReady(true);
-    }, 150);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
+    });
     const safetyTimer = setTimeout(() => {
       SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
     }, 4000);
-    return () => clearTimeout(safetyTimer);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
-  useEffect(() => {
-    if (!appReady) return;
-    SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
-  }, [appReady]);
-
-  if (!appReady) {
-    return <BootScreen message="Starting Darkor.ai..." />;
-  }
-
-  if (!DIAGNOSTIC_BYPASS && (!envReport.ok || !clerkKey || !revenueCatKey)) {
-    const missing = envReport.ok ? [] : envReport.missing;
-    if (!revenueCatKey && !missing.includes("EXPO_PUBLIC_REVENUECAT_(IOS|ANDROID)_API_KEY")) {
-      missing.push("EXPO_PUBLIC_REVENUECAT_(IOS|ANDROID)_API_KEY");
-    }
-    return <MissingEnv missing={missing} />;
+  if (!DIAGNOSTIC_BYPASS && !clerkKey) {
+    return <MissingEnv missing={["EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"]} />;
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <ClerkProvider publishableKey={clerkKey ?? ""} tokenCache={tokenCache}>
-          <AuthGate>
-            <Providers>
-              <ViewerSessionProvider>
-                <WorkspaceDraftProvider>
-                  <BottomSheetModalProvider>
-                    <AppErrorBoundary>
+      <AppErrorBoundary>
+        <SafeAreaProvider>
+          <ClerkProvider publishableKey={clerkKey ?? ""} tokenCache={tokenCache}>
+            <AuthGate>
+              <Providers>
+                <ViewerSessionProvider>
+                  <WorkspaceDraftProvider>
+                    <BottomSheetModalProvider>
                       <Stack
                         screenOptions={{
                           headerShown: false,
@@ -346,14 +318,14 @@ export default function RootLayout() {
                         <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
                         <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
                       </Stack>
-                    </AppErrorBoundary>
-                  </BottomSheetModalProvider>
-                </WorkspaceDraftProvider>
-              </ViewerSessionProvider>
-            </Providers>
-          </AuthGate>
-        </ClerkProvider>
-      </SafeAreaProvider>
+                    </BottomSheetModalProvider>
+                  </WorkspaceDraftProvider>
+                </ViewerSessionProvider>
+              </Providers>
+            </AuthGate>
+          </ClerkProvider>
+        </SafeAreaProvider>
+      </AppErrorBoundary>
     </GestureHandlerRootView>
   );
 }

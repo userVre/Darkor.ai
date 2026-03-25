@@ -32,7 +32,9 @@ export function ViewerSessionProvider({ children }: { children: ReactNode }) {
   const [anonymousId, setAnonymousId] = useState<string | null>(null);
   const [storageReady, setStorageReady] = useState(false);
   const [syncingViewer, setSyncingViewer] = useState(false);
+  const [syncRetryNonce, setSyncRetryNonce] = useState(0);
   const lastSyncKeyRef = useRef<string | null>(null);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +47,11 @@ export function ViewerSessionProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.warn("[Viewer] Failed to initialize anonymous id", error);
+        const fallbackAnonymousId = Crypto.randomUUID();
+        if (!cancelled) {
+          console.warn("[Viewer] Falling back to an in-memory anonymous id.");
+          setAnonymousId(fallbackAnonymousId);
+        }
       } finally {
         if (!cancelled) {
           setStorageReady(true);
@@ -55,6 +62,15 @@ export function ViewerSessionProvider({ children }: { children: ReactNode }) {
     void run();
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -70,15 +86,26 @@ export function ViewerSessionProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
     setSyncingViewer(true);
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
 
     const run = async () => {
       try {
         await ensureViewer({ anonymousId });
-      } catch (error) {
-        console.warn("[Viewer] Failed to sync viewer", error);
-      } finally {
         if (!cancelled) {
           lastSyncKeyRef.current = syncKey;
+        }
+      } catch (error) {
+        console.warn("[Viewer] Failed to sync viewer", error);
+        if (!cancelled) {
+          retryTimerRef.current = setTimeout(() => {
+            setSyncRetryNonce((current) => current + 1);
+          }, 2500);
+        }
+      } finally {
+        if (!cancelled) {
           setSyncingViewer(false);
         }
       }
@@ -88,16 +115,16 @@ export function ViewerSessionProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [anonymousId, ensureViewer, isLoaded, isSignedIn, storageReady]);
+  }, [anonymousId, ensureViewer, isLoaded, isSignedIn, storageReady, syncRetryNonce]);
 
   const value = useMemo<ViewerSessionContextValue>(
     () => ({
       anonymousId,
-      isReady: storageReady && isLoaded && !syncingViewer && Boolean(anonymousId),
-      isGuest: isLoaded ? !Boolean(isSignedIn) : false,
+      isReady: storageReady && Boolean(anonymousId),
+      isGuest: !Boolean(isSignedIn),
       isSignedIn: Boolean(isSignedIn),
     }),
-    [anonymousId, isLoaded, isSignedIn, storageReady, syncingViewer],
+    [anonymousId, isSignedIn, storageReady],
   );
 
   return <ViewerSessionContext.Provider value={value}>{children}</ViewerSessionContext.Provider>;

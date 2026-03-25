@@ -5,7 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import * as Linking from "expo-linking";
 import { StatusBar } from "expo-status-bar";
-import { memo, useCallback, useEffect, useMemo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { ActivityIndicator, Alert, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import {
   ChevronRight,
@@ -221,18 +221,152 @@ export default function ProfileScreen() {
     | ArchiveGeneration[]
     | undefined;
 
-  useEffect(() => {
-    if (!viewerReady || isSignedIn) {
-      return;
-    }
+  const handleOpenSignIn = useCallback(() => {
+    router.push({ pathname: "/sign-in", params: { returnTo: "/profile" } });
+  }, [router]);
 
-    router.replace("/(tabs)");
-    requestAnimationFrame(() => {
-      router.push({ pathname: "/sign-in", params: { returnTo: "/profile" } });
-    });
-  }, [isSignedIn, router, viewerReady]);
+  const handleOpenSignUp = useCallback(() => {
+    router.push({ pathname: "/sign-up", params: { returnTo: "/profile" } });
+  }, [router]);
 
-  if (!viewerReady || !isSignedIn) {
+  const commonMenuItems: MenuItem[] = [
+    {
+      id: "upgrade",
+      label: "Upgrade PRO",
+      icon: Gem,
+      tint: "premium",
+      onPress: () => router.push("/paywall"),
+    },
+    {
+      id: "feedback",
+      label: "Feedback",
+      icon: Mail,
+      onPress: () => Linking.openURL("mailto:support@darkor.ai?subject=Darkor.ai%20Feedback"),
+    },
+    {
+      id: "faq",
+      label: "FAQ",
+      icon: FileQuestion,
+      onPress: () => router.push("/faq"),
+    },
+    {
+      id: "rate",
+      label: "Rate Us",
+      icon: Star,
+      onPress: () => requestStoreReview(),
+    },
+    {
+      id: "share",
+      label: "Share with Friends",
+      icon: Share2,
+      onPress: () => Share.share({ message: "Darkor.ai helps me redesign spaces in seconds. Check it out." }),
+    },
+    {
+      id: "terms",
+      label: "Terms of Use",
+      icon: FileText,
+      onPress: () => router.push("/terms-of-service"),
+    },
+    {
+      id: "privacy",
+      label: "Privacy Policy",
+      icon: Shield,
+      onPress: () => router.push("/privacy-policy"),
+    },
+  ];
+
+  if (!isSignedIn) {
+    return (
+      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+        <StatusBar style="light" />
+        <ScrollView
+          style={{ flex: 1, backgroundColor: SCREEN_BG }}
+          contentContainerStyle={{
+            paddingTop: 10,
+            paddingBottom: Math.max(insets.bottom + 32, 40),
+            paddingHorizontal: 20,
+          }}
+          showsVerticalScrollIndicator={false}
+          contentInsetAdjustmentBehavior="never"
+        >
+          <View className="pb-8">
+            <Text className="text-3xl font-bold text-white">My Profile</Text>
+            <Text className="mt-2 text-sm leading-6 text-zinc-400">
+              Guest mode is live. Browse the tools now, then connect an account whenever you want sync and history.
+            </Text>
+          </View>
+
+          <View
+            className="mb-5 rounded-[28px] border px-5 py-5"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.04)",
+              borderColor: BORDER_COLOR,
+              borderWidth: 1,
+            }}
+          >
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 pr-4">
+                <Text className="text-xs font-semibold uppercase tracking-[1.8px] text-zinc-500">Account Status</Text>
+                <Text className="mt-2 text-2xl font-bold text-white">Guest Session</Text>
+              </View>
+              <View
+                className="items-center justify-center rounded-2xl"
+                style={{
+                  width: 52,
+                  height: 52,
+                  backgroundColor: "rgba(245, 158, 11, 0.16)",
+                }}
+              >
+                <Sparkles color={BRAND_COLOR} size={24} />
+              </View>
+            </View>
+            <Text className="mt-3 text-sm leading-6 text-zinc-400">
+              The home cards and workspace stay available in guest mode. Sign in only when you want your board, credits,
+              and purchases synced across devices.
+            </Text>
+
+            <View style={styles.guestActionRow}>
+              <LuxPressable onPress={handleOpenSignIn} className="flex-1 overflow-hidden rounded-2xl">
+                <View style={styles.guestPrimaryAction}>
+                  <Text style={styles.guestPrimaryActionText}>Sign In</Text>
+                </View>
+              </LuxPressable>
+              <LuxPressable onPress={handleOpenSignUp} className="flex-1 overflow-hidden rounded-2xl">
+                <View style={styles.guestSecondaryAction}>
+                  <Text style={styles.guestSecondaryActionText}>Create Account</Text>
+                </View>
+              </LuxPressable>
+            </View>
+          </View>
+
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIconWrap}>
+              <LayoutDashboard color={BRAND_COLOR} size={28} />
+            </View>
+            <Text style={styles.emptyTitle}>Your tools are ready right now.</Text>
+            <Text style={styles.emptyCopy}>
+              Open any service card from Home to start designing immediately. Saved history and account controls unlock
+              once you connect your account.
+            </Text>
+          </View>
+
+          <View className="gap-3">
+            {commonMenuItems.map((item) => (
+              <SettingsRow
+                key={item.id}
+                icon={item.icon}
+                label={item.label}
+                tint={item.tint}
+                onPress={item.onPress}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  if (!viewerReady) {
     return (
       <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: SCREEN_BG }}>
         <StatusBar style="light" />
@@ -290,49 +424,7 @@ export default function ProfileScreen() {
   };
 
   const menuItems: MenuItem[] = [
-    {
-      id: "upgrade",
-      label: "Upgrade PRO",
-      icon: Gem,
-      tint: "premium",
-      onPress: () => router.push("/paywall"),
-    },
-    {
-      id: "feedback",
-      label: "Feedback",
-      icon: Mail,
-      onPress: () => Linking.openURL("mailto:support@darkor.ai?subject=Darkor.ai%20Feedback"),
-    },
-    {
-      id: "faq",
-      label: "FAQ",
-      icon: FileQuestion,
-      onPress: () => router.push("/faq"),
-    },
-    {
-      id: "rate",
-      label: "Rate Us",
-      icon: Star,
-      onPress: () => requestStoreReview(),
-    },
-    {
-      id: "share",
-      label: "Share with Friends",
-      icon: Share2,
-      onPress: () => Share.share({ message: "Darkor.ai helps me redesign spaces in seconds. Check it out." }),
-    },
-    {
-      id: "terms",
-      label: "Terms of Use",
-      icon: FileText,
-      onPress: () => router.push("/terms-of-service"),
-    },
-    {
-      id: "privacy",
-      label: "Privacy Policy",
-      icon: Shield,
-      onPress: () => router.push("/privacy-policy"),
-    },
+    ...commonMenuItems,
     {
       id: "delete",
       label: "Delete Account",
@@ -556,5 +648,38 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     lineHeight: 22,
     textAlign: "center",
+  },
+  guestActionRow: {
+    marginTop: 18,
+    flexDirection: "row",
+    gap: 12,
+  },
+  guestPrimaryAction: {
+    minHeight: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 18,
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 16,
+  },
+  guestPrimaryActionText: {
+    color: "#09090b",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  guestSecondaryAction: {
+    minHeight: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    paddingHorizontal: 16,
+  },
+  guestSecondaryActionText: {
+    color: "#fafafa",
+    fontSize: 14,
+    fontWeight: "800",
   },
 });

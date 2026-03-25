@@ -1,10 +1,7 @@
 import type { ReactNode } from "react";
-import { useAuth } from "@clerk/expo";
 import { Pressable, type PressableProps } from "react-native";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs } from "expo-router";
 import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "lucide-react-native";
-
-import { useViewerSession } from "../../components/viewer-session-context";
 
 const BRAND_COLOR = "#f59e0b";
 
@@ -26,10 +23,6 @@ function TabBarButton({ children, style, ...props }: TabButtonProps) {
 }
 
 export default function TabsLayout() {
-  const router = useRouter();
-  const { isSignedIn } = useAuth();
-  const { isReady: viewerReady } = useViewerSession();
-
   return (
     <Tabs
       screenOptions={{
@@ -90,16 +83,6 @@ export default function TabsLayout() {
         options={{
           title: "My Profile",
           tabBarIcon: ({ color, size }) => <UserCircle2 color={color} size={size} />,
-        }}
-        listeners={{
-          tabPress: (event) => {
-            if (!viewerReady || isSignedIn) {
-              return;
-            }
-
-            event.preventDefault();
-            router.push({ pathname: "/sign-in", params: { returnTo: "/profile" } });
-          },
         }}
       />
       <Tabs.Screen name="home.full" options={{ href: null }} />
