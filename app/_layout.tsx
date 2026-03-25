@@ -3,10 +3,10 @@ import "react-native-reanimated";
 
 import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import * as Linking from "expo-linking";
-import { Stack, usePathname, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
@@ -32,7 +32,6 @@ import {
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
 import { tokenCache } from "../lib/token-cache";
-import { hasDismissedLaunchPaywall } from "../lib/launch-paywall";
 
 function RevenueCatGate() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -269,121 +268,25 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-type MeResponse = {
-  plan: "free" | "trial" | "pro";
-  hasPaidAccess?: boolean;
-};
-
-const LAUNCH_GATE_EXEMPT_PATHS = new Set([
-  "/paywall",
-  "/sign-in",
-  "/sign-up",
-  "/privacy-policy",
-  "/terms-of-service",
-  "/faq",
-]);
-
-function LaunchPaywallGate() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { anonymousId, isReady: viewerReady } = useViewerSession();
-  const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
-  const [gateTimedOut, setGateTimedOut] = useState(false);
-
-  const me = useQuery(
-    "users:me" as any,
-    DIAGNOSTIC_BYPASS ? "skip" : viewerReady ? viewerArgs : "skip",
-  ) as MeResponse | null | undefined;
-
-  const launchPaywallDismissed = hasDismissedLaunchPaywall();
-  const isExemptRoute = pathname ? LAUNCH_GATE_EXEMPT_PATHS.has(pathname) : false;
-  const isGateResolved = DIAGNOSTIC_BYPASS || gateTimedOut || (viewerReady && me !== undefined);
-  const shouldShowLaunchPaywall =
-    !DIAGNOSTIC_BYPASS &&
-    !gateTimedOut &&
-    viewerReady &&
-    me !== undefined &&
-    (me?.plan ?? "free") === "free" &&
-    !launchPaywallDismissed;
-
-  console.log("[Layout] Launch gate render", {
-    pathname,
-    viewerReady,
-    plan: me?.plan ?? null,
-    meResolved: me !== undefined,
-    gateTimedOut,
-    launchPaywallDismissed,
-  });
-
-  useEffect(() => {
-    console.log("[Layout] Launch gate mounted");
-  }, []);
-
-  useEffect(() => {
-    if (DIAGNOSTIC_BYPASS || isExemptRoute || gateTimedOut || (viewerReady && me !== undefined)) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      console.warn("[Layout] Plan lookup timed out after 2000ms. Continuing into free shell.");
-      setGateTimedOut(true);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [gateTimedOut, isExemptRoute, me, viewerReady]);
-
-  useEffect(() => {
-    if (!shouldShowLaunchPaywall || isExemptRoute || pathname === "/paywall") {
-      return;
-    }
-
-    console.log("[Layout] Redirecting free user to paywall", { pathname });
-    requestAnimationFrame(() => {
-      router.replace("/paywall");
-    });
-  }, [isExemptRoute, pathname, router, shouldShowLaunchPaywall]);
-
-  if (!isGateResolved && !isExemptRoute && pathname !== "/paywall") {
-    return (
-      <View
-        pointerEvents="none"
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0,
-          zIndex: 20,
-        }}
-      >
-        <BootScreen message="Checking your plan..." />
-      </View>
-    );
-  }
-
-  return null;
-}
-
 function AppShell() {
   return (
-    <View style={{ flex: 1, backgroundColor: "#000000" }}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: "#000000" },
-          animation: "slide_from_right",
-          animationDuration: 260,
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
-        <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
-        <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
-        <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
-        <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
-      </Stack>
-      <LaunchPaywallGate />
-    </View>
+    <Stack
+      initialRouteName="index"
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: "#000000" },
+        animation: "slide_from_right",
+        animationDuration: 260,
+      }}
+    >
+      <Stack.Screen name="index" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
+      <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
+      <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
+      <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
+      <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
+    </Stack>
   );
 }
 
