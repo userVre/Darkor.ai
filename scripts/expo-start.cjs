@@ -1,7 +1,7 @@
 const { spawnSync } = require("child_process");
 const { resolve } = require("path");
 const { pathToFileURL } = require("url");
-const { resolvePort, setupAdbReverse } = require("./dev-server-utils.cjs");
+const { getExpoDevServerStatus, resolvePort, setupAdbReverse } = require("./dev-server-utils.cjs");
 
 async function main() {
   const metroConfig = pathToFileURL(resolve(__dirname, "..", "metro.config.js")).href;
@@ -10,7 +10,11 @@ async function main() {
   process.env.NODE_ENV = process.env.NODE_ENV || "development";
   process.env.NODE_OPTIONS = [process.env.NODE_OPTIONS, "--dns-result-order=ipv4first"].filter(Boolean).join(" ");
 
-  const { port, autoSelected } = await resolvePort();
+  const preferredPort = Number(process.env.EXPO_DEV_PORT || "8081");
+  const existingServer = await getExpoDevServerStatus(preferredPort);
+  const { port, autoSelected } = existingServer.isExpoServer
+    ? { port: preferredPort, autoSelected: false }
+    : await resolvePort();
   const portString = String(port);
 
   if (autoSelected) {
@@ -37,6 +41,11 @@ async function main() {
   process.env.EXPO_DEV_CLIENT_SERVER_URL = serverUrl;
   process.env.EXPO_PACKAGER_PROXY_URL = serverUrl;
   process.env.EXPO_DEV_PORT = portString;
+
+  if (existingServer.isExpoServer && port === preferredPort) {
+    console.log(`[dev] Reusing existing Expo dev server on port ${portString}.`);
+    process.exit(0);
+  }
 
   const expoHostMode = adbOk ? "localhost" : "lan";
   const defaultArgs = ["expo", "start", "--clear", "--dev-client", "--host", expoHostMode, "--port", portString];
