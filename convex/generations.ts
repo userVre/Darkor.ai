@@ -192,6 +192,18 @@ function buildGenerationPrompt(args: {
       .join(" ");
   }
 
+  if (args.modeLabel === "Masked Floor Edit") {
+    return [
+      customPrompt ?? `Inpaint this image. Replace the masked floor area with ${args.colorPalette}. Keep the room realistic and perspective-correct.`,
+      modeHint ?? "Only edit the masked floor region. Preserve all unmasked walls, furniture, decor, shadows, reflections, and architecture exactly as shown.",
+      "Respect the original floor perspective, plank or tile scale, and room lighting so the new flooring looks physically installed in the scene.",
+      `Return a photorealistic edited image in a ${args.aspectRatio} frame.`,
+      args.regenerate ? "Create a fresh alternate floor material mapping while preserving the same masked region and composition." : undefined,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
   return [
     `Transform this ${args.roomType} into a ${args.style} design.`,
     `Mode: ${args.modeLabel}.`,
@@ -327,6 +339,7 @@ export const createSourceUploadUrl = mutationGeneric({
 export const startGeneration = mutationGeneric({
   args: {
     sourceStorageId: v.id("_storage"),
+    maskStorageId: v.optional(v.id("_storage")),
     roomType: v.string(),
     style: v.string(),
     customPrompt: v.optional(v.string()),
@@ -348,6 +361,12 @@ export const startGeneration = mutationGeneric({
     if (!sourceMetadata) {
       throw new ConvexError("The selected source image is no longer available. Please upload it again.");
     }
+    if (args.maskStorageId) {
+      const maskMetadata = await ctx.db.system.get("_storage", args.maskStorageId);
+      if (!maskMetadata) {
+        throw new ConvexError("The selected mask is no longer available. Please paint the walls again.");
+      }
+    }
 
     const allowance = await reserveGenerationAllowance(ctx, identity.subject, args.ignoreReviewCooldown);
     const prompt = buildGenerationPrompt({
@@ -364,6 +383,7 @@ export const startGeneration = mutationGeneric({
     const generationId = await ctx.db.insert("generations", {
       userId: identity.subject,
       sourceImageStorageId: args.sourceStorageId,
+      maskImageStorageId: args.maskStorageId,
       storageId: undefined,
       imageUrl: undefined,
       prompt,
@@ -390,6 +410,7 @@ export const startGeneration = mutationGeneric({
       generationId,
       clerkId: identity.subject,
       sourceStorageId: args.sourceStorageId,
+      maskStorageId: args.maskStorageId,
       prompt,
       aspectRatio: normalizeAspectRatio(args.aspectRatio),
       speedTier: args.speedTier ?? "standard",
@@ -457,6 +478,7 @@ export const runGenerationJob = internalActionGeneric({
     generationId: v.id("generations"),
     clerkId: v.string(),
     sourceStorageId: v.id("_storage"),
+    maskStorageId: v.optional(v.id("_storage")),
     prompt: v.string(),
     aspectRatio: v.string(),
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
@@ -480,8 +502,35 @@ export const runGenerationJob = internalActionGeneric({
       if (!sourceBlob) {
         throw new ConvexError("The source image could not be loaded from storage.");
       }
+      const maskBlob = args.maskStorageId ? await ctx.storage.get(args.maskStorageId) : null;
+      if (args.maskStorageId && !maskBlob) {
+        throw new ConvexError("The painted wall mask could not be loaded from storage.");
+      }
 
       const sourceBase64 = await blobToBase64(sourceBlob);
+      const maskBase64 = maskBlob ? await blobToBase64(maskBlob) : null;
+      const parts: GeminiInlinePart[] = [
+        { text: args.prompt },
+        {
+          inlineData: {
+            mimeType: sourceBlob.type || "image/jpeg",
+            data: sourceBase64,
+          },
+        },
+      ];
+
+      if (maskBlob && maskBase64) {
+        parts.push({
+          text: "The second image is a wall-selection mask. White shows where paint should be applied. Black must remain untouched.",
+        });
+        parts.push({
+          inlineData: {
+            mimeType: maskBlob.type || "image/png",
+            data: maskBase64,
+          },
+        });
+      }
+
       const response = await fetch(GEMINI_ENDPOINT, {
         method: "POST",
         headers: {
@@ -491,15 +540,7 @@ export const runGenerationJob = internalActionGeneric({
         body: JSON.stringify({
           contents: [
             {
-              parts: [
-                { text: args.prompt },
-                {
-                  inlineData: {
-                    mimeType: sourceBlob.type || "image/jpeg",
-                    data: sourceBase64,
-                  },
-                },
-              ],
+              parts,
             },
           ],
           generationConfig: {
@@ -652,6 +693,9 @@ export const deleteGeneration = mutationGeneric({
 
     if (item.storageId) {
       await ctx.storage.delete(item.storageId);
+    }
+    if (item.maskImageStorageId) {
+      await ctx.storage.delete(item.maskImageStorageId);
     }
     if (item.sourceImageStorageId) {
       await ctx.storage.delete(item.sourceImageStorageId);

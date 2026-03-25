@@ -7,8 +7,9 @@ import { VideoView, useVideoPlayer } from "expo-video";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Platform, StyleSheet, Text, View, type ViewToken, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowUpRight, Gem } from "lucide-react-native";
+import { ArrowUpRight } from "lucide-react-native";
 
+import { HomeHeader } from "../../components/home-header";
 import { LuxPressable } from "../../components/lux-pressable";
 import { triggerHaptic } from "../../lib/haptics";
 
@@ -199,8 +200,7 @@ export default function HomeScreen() {
     [router],
   );
 
-  const handleDiamondPress = useCallback(() => {
-    triggerHaptic();
+  const handleUpgradeToPro = useCallback(() => {
     router.push("/paywall");
   }, [router]);
 
@@ -224,27 +224,9 @@ export default function HomeScreen() {
 
   const header = useMemo(
     () => (
-      <View style={styles.header}>
-        <View style={styles.headerTopRow}>
-          <View style={styles.headerCopy}>
-            <Text style={styles.eyebrow}>Darkor.ai</Text>
-            <Text style={styles.title}>Choose Your Transformation</Text>
-          </View>
-
-          <LuxPressable
-            onPress={handleDiamondPress}
-            style={styles.diamondBadge}
-            className="cursor-pointer"
-            glowColor="rgba(125,211,252,0.14)"
-            scale={0.98}
-          >
-            <Gem color="#7dd3fc" size={15} strokeWidth={2.1} />
-            <Text style={styles.diamondBadgeText}>{diamondCount}</Text>
-          </LuxPressable>
-        </View>
-      </View>
+      <HomeHeader diamondCount={diamondCount} onUpgradeToPro={handleUpgradeToPro} />
     ),
-    [diamondCount, handleDiamondPress],
+    [diamondCount, handleUpgradeToPro],
   );
 
   return (
@@ -278,53 +260,6 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: "#000000",
-  },
-  header: {
-    marginBottom: 12,
-  },
-  headerTopRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  headerCopy: {
-    flex: 1,
-    gap: 12,
-    paddingRight: 12,
-  },
-  eyebrow: {
-    color: "#8b8b92",
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 2.6,
-    textTransform: "uppercase",
-  },
-  title: {
-    color: "#ffffff",
-    fontSize: 38,
-    fontWeight: "800",
-    lineHeight: 44,
-    letterSpacing: -1.2,
-  },
-  diamondBadge: {
-    marginTop: 8,
-    minHeight: 40,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    borderRadius: 999,
-    borderWidth: 0.5,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(8,8,10,0.92)",
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-  },
-  diamondBadgeText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "800",
-    letterSpacing: 0.2,
   },
   card: {
     position: "relative",

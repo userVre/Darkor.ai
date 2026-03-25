@@ -1,5 +1,5 @@
 import { useAuth, useUser } from "@clerk/expo";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import * as Linking from "expo-linking";
 import { StatusBar } from "expo-status-bar";
@@ -9,6 +9,8 @@ import {
   FileQuestion,
   FileText,
   Gem,
+  Images,
+  LayoutDashboard,
   Mail,
   Share2,
   Shield,
@@ -22,9 +24,18 @@ import { triggerHaptic } from "../../lib/haptics";
 import { requestStoreReview } from "../../lib/store-review";
 
 const BRAND_COLOR = "#f59e0b";
-const SCREEN_BG = "#09090b";
+const SCREEN_BG = "#000000";
 const CARD_BG = "#111113";
 const BORDER_COLOR = "rgba(255,255,255,0.08)";
+const ICON_CONTAINER_SIZE = 44;
+
+type MeResponse = {
+  generationStatusLabel?: string;
+  generationStatusMessage?: string;
+  imagesRemaining?: number;
+  imageGenerationLimit?: number;
+  hasPaidAccess?: boolean;
+};
 
 type Tint = "premium" | "danger" | undefined;
 
@@ -65,8 +76,10 @@ function SettingsRow({ icon: Icon, label, tint, onPress }: SettingsRowProps) {
     >
       <View className="flex-row items-center px-4 py-4">
         <View
-          className="mr-4 h-11 w-11 items-center justify-center rounded-2xl"
+          className="mr-4 items-center justify-center rounded-2xl"
           style={{
+            width: ICON_CONTAINER_SIZE,
+            height: ICON_CONTAINER_SIZE,
             backgroundColor: isDanger ? "rgba(248, 113, 113, 0.14)" : isPremium ? "rgba(245, 158, 11, 0.16)" : "rgba(255,255,255,0.04)",
           }}
         >
@@ -75,7 +88,9 @@ function SettingsRow({ icon: Icon, label, tint, onPress }: SettingsRowProps) {
         <Text className="flex-1 text-base font-semibold" style={{ color: labelColor }}>
           {label}
         </Text>
-        <ChevronRight color={isDanger ? "#fca5a5" : "#71717a"} size={18} />
+        <View className="w-5 items-end">
+          <ChevronRight color={isDanger ? "#fca5a5" : "#71717a"} size={18} />
+        </View>
       </View>
     </LuxPressable>
   );
@@ -87,6 +102,14 @@ export default function ProfileScreen() {
   const { user } = useUser();
   const insets = useSafeAreaInsets();
   const deleteAccountData = useMutation("users:deleteAccountData" as any);
+  const me = useQuery("users:me" as any, {}) as MeResponse | null | undefined;
+
+  const accountStatusLabel = me?.generationStatusLabel ?? (me?.hasPaidAccess ? "PRO Member" : "Free Plan");
+  const accountStatusMessage =
+    me?.generationStatusMessage ??
+    (typeof me?.imagesRemaining === "number" && typeof me?.imageGenerationLimit === "number"
+      ? `${me.imagesRemaining} of ${me.imageGenerationLimit} generations remaining.`
+      : "Manage your subscription, support, and account settings.");
 
   const handleDeleteAccount = () => {
     Alert.alert(
@@ -186,6 +209,72 @@ export default function ProfileScreen() {
             Manage your subscription, support, and account settings.
           </Text>
         </View>
+
+        <View
+          className="mb-4 rounded-[28px] border px-5 py-5"
+          style={{
+            backgroundColor: "rgba(255,255,255,0.04)",
+            borderColor: BORDER_COLOR,
+            borderWidth: 1,
+          }}
+        >
+          <View className="flex-row items-center justify-between">
+            <View>
+              <Text className="text-xs font-semibold uppercase tracking-[1.8px] text-zinc-500">Account Status</Text>
+              <Text className="mt-2 text-2xl font-bold text-white">{accountStatusLabel}</Text>
+            </View>
+            <View
+              className="items-center justify-center rounded-2xl"
+              style={{
+                width: 52,
+                height: 52,
+                backgroundColor: me?.hasPaidAccess ? "rgba(245, 158, 11, 0.18)" : "rgba(255,255,255,0.06)",
+              }}
+            >
+              <Gem color={me?.hasPaidAccess ? BRAND_COLOR : "#e4e4e7"} size={24} />
+            </View>
+          </View>
+          <Text className="mt-3 text-sm leading-6 text-zinc-400">{accountStatusMessage}</Text>
+        </View>
+
+        <LuxPressable
+          onPress={() => {
+            triggerHaptic();
+            router.push("/gallery");
+          }}
+          pressableClassName="cursor-pointer"
+          className="mb-5 overflow-hidden rounded-[30px] cursor-pointer"
+          glowColor="rgba(245, 158, 11, 0.18)"
+          scale={0.985}
+          style={{
+            borderWidth: 1,
+            borderColor: "rgba(245, 158, 11, 0.22)",
+            backgroundColor: "rgba(245, 158, 11, 0.08)",
+          }}
+        >
+          <View className="flex-row items-center px-5 py-5">
+            <View
+              className="items-center justify-center rounded-[22px]"
+              style={{
+                width: 60,
+                height: 60,
+                backgroundColor: "rgba(245, 158, 11, 0.16)",
+              }}
+            >
+              <LayoutDashboard color={BRAND_COLOR} size={28} />
+            </View>
+            <View className="ml-4 flex-1">
+              <Text className="text-2xl font-bold text-white">Your Board</Text>
+              <Text className="mt-2 text-sm leading-6 text-zinc-300">
+                Access all your generated designs and history.
+              </Text>
+            </View>
+            <View className="ml-4 items-center justify-center">
+              <Images color="#fde68a" size={18} />
+              <ChevronRight color="#fde68a" size={20} />
+            </View>
+          </View>
+        </LuxPressable>
 
         <View className="gap-3">
           {menuItems.map((item) => (

@@ -23,6 +23,7 @@ export default defineSchema({
   generations: defineTable({
     userId: v.string(),
     sourceImageStorageId: v.optional(v.id("_storage")),
+    maskImageStorageId: v.optional(v.id("_storage")),
     storageId: v.optional(v.id("_storage")),
     imageUrl: v.optional(v.string()),
     prompt: v.optional(v.string()),

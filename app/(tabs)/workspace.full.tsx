@@ -84,7 +84,9 @@ import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
 import { requestStoreReview } from "../../lib/store-review";
 import { GlassBackdrop } from "../../components/glass-backdrop";
+import { FloorWizard } from "../../components/floor-wizard";
 import { LuxPressable } from "../../components/lux-pressable";
+import { PaintWizard } from "../../components/paint-wizard";
 import { useWorkspaceDraft } from "../../components/workspace-context";
 import { useProSuccess } from "../../components/pro-success-context";
 import Logo from "../../components/logo";
@@ -1352,11 +1354,14 @@ const PHOTO_PERMISSION_ALERT_MESSAGE =
 export default function WorkspaceScreen() {
   const router = useRouter();
   const pathname = usePathname();
-  const { service, presetStyle, presetRoom, startStep } = useLocalSearchParams<{
+  const { service, presetStyle, presetRoom, startStep, boardView, boardItemId, entrySource } = useLocalSearchParams<{
     service?: string;
     presetStyle?: string;
     presetRoom?: string;
     startStep?: string;
+    boardView?: string;
+    boardItemId?: string;
+    entrySource?: string;
   }>();
   const { isSignedIn } = useAuth();
   const diagnostic = DIAGNOSTIC_BYPASS;
@@ -1438,6 +1443,7 @@ export default function WorkspaceScreen() {
   const feedbackSheetRef = useRef<BottomSheetModal>(null);
   const imageContainerRef = useRef<View>(null);
   const hasAppliedStartStepRef = useRef(false);
+  const handledBoardRouteRef = useRef<string | null>(null);
   const reviewHandledRef = useRef(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const generationAlertedFailureRef = useRef<string | null>(null);
@@ -1753,6 +1759,47 @@ export default function WorkspaceScreen() {
   );
   const activeEditorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
   const sliderSpring = useMemo(() => ({ damping: 15, stiffness: 100 }), []);
+
+  useEffect(() => {
+    if (!boardView) {
+      handledBoardRouteRef.current = null;
+      return;
+    }
+
+    const routeSignature = `${boardView}:${boardItemId ?? ""}:${entrySource ?? ""}`;
+    if (handledBoardRouteRef.current === routeSignature) {
+      return;
+    }
+
+    if (boardView === "board") {
+      handledBoardRouteRef.current = routeSignature;
+      setWorkflowStep(4);
+      setActiveBoardItemId(null);
+      setShowBeforeOnly(false);
+      return;
+    }
+
+    if (boardView !== "editor" || !boardItemId) {
+      return;
+    }
+
+    const targetItem = boardItems.find((item) => item.id === boardItemId || item.generationId === boardItemId) ?? null;
+    if (!targetItem) {
+      return;
+    }
+
+    handledBoardRouteRef.current = routeSignature;
+    setWorkflowStep(5);
+    setActiveBoardItemId(targetItem.id);
+    setGeneratedImageUrl(targetItem.imageUrl ?? null);
+    setGenerationId(targetItem.generationId ?? null);
+    setShowBeforeOnly(false);
+    setFeedbackState(null);
+    setFeedbackSubmitted(false);
+    if (sliderWidth.value > 0) {
+      sliderX.value = withSpring(sliderWidth.value / 2, sliderSpring);
+    }
+  }, [boardItemId, boardItems, boardView, entrySource, sliderSpring, sliderWidth, sliderX]);
 
   useEffect(() => {
     if (pendingBoardItems.length === 0 || archivedBoardItems.length === 0) {
@@ -2802,11 +2849,15 @@ export default function WorkspaceScreen() {
 
   const handleCloseBoardEditor = useCallback(() => {
     triggerHaptic();
+    if (entrySource === "gallery") {
+      router.replace("/gallery");
+      return;
+    }
     setWizardNavDirection(-1);
     setWorkflowStep(isFloorService ? 2 : 4);
     setActiveBoardItemId(null);
     setShowBeforeOnly(false);
-  }, [isFloorService]);
+  }, [entrySource, isFloorService, router]);
 
   const handleToggleBeforePreview = useCallback(() => {
     triggerHaptic();
@@ -2938,6 +2989,14 @@ export default function WorkspaceScreen() {
 
   const stepTransition = LUX_SPRING;
   const isPhotoPreviewBusy = isSelectingPhoto || isLoadingExample !== null;
+
+  if (isPaintService) {
+    return <PaintWizard />;
+  }
+
+  if (isFloorService) {
+    return <FloorWizard />;
+  }
 
   if (workflowStep <= 3) {
     const currentStepNumber = workflowStep + 1;

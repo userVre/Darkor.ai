@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Pressable, type PressableProps } from "react-native";
 import { Tabs } from "expo-router";
-import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "lucide-react-native";
+import { Images, LayoutGrid, Sparkles, UserCircle2 } from "lucide-react-native";
 
 const BRAND_COLOR = "#f59e0b";
 
@@ -74,8 +74,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="gallery"
         options={{
-          title: "Discover",
-          tabBarIcon: ({ color, size }) => <Compass color={color} size={size} />,
+          title: "Your Board",
+          tabBarIcon: ({ color, size }) => <Images color={color} size={size} />,
         }}
       />
       <Tabs.Screen
