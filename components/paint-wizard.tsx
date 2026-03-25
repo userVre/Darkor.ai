@@ -69,11 +69,12 @@ const pointerClassName = "cursor-pointer";
 const OLED_BLACK = "#000000";
 const CARD_BLACK = "#08080A";
 const CARD_BLACK_SOFT = "#0B0B0E";
-const MASK_COLOR = "rgba(217, 70, 239, 0.72)";
+const MASK_COLOR = "rgba(255, 0, 0, 0.5)";
 const MASK_CAPTURE_COLOR = "#FFFFFF";
 const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
 const DETECT_DURATION_MS = 1700;
+const MASK_CONTINUE_GRADIENT = ["#FF4D4D", "#FF0000"] as const;
 
 const COLOR_CATEGORIES: ColorCategory[] = [
   {
@@ -294,6 +295,7 @@ export function PaintWizard() {
     step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
   const headerStepLabel = `Step ${currentStepNumber}/4`;
   const progressWidth = (170 * currentStepNumber) / 4;
+  const canContinueFromMask = hasMask && !isDetecting;
   const canContinueFromColors = Boolean(selectedColor && selectedImage && hasMask && !isGenerating);
   const colorCardSize = Math.max(94, Math.floor((width - 72) / 3));
   const frameAspectRatio = selectedImage ? selectedImage.width / Math.max(selectedImage.height, 1) : 1;
@@ -536,7 +538,7 @@ export function PaintWizard() {
     if (step === "result") return setStep("colors");
   }, [router, step]);
 
-  const stepSubtitle = headerStepLabel;
+  const stepSubtitle = step === "mask" ? "Step 2" : headerStepLabel;
 
   return (
     <View style={styles.screen}>
@@ -556,7 +558,7 @@ export function PaintWizard() {
           >
             <Svg width={canvasSize.width} height={canvasSize.height}>
               <Rect x={0} y={0} width={canvasSize.width} height={canvasSize.height} fill={OLED_BLACK} />
-              {paintStrokes.map((stroke) => (
+              {renderedStrokes.map((stroke) => (
                 <SvgPath
                   key={`mask-${stroke.id}`}
                   d={stroke.path}
@@ -660,176 +662,194 @@ export function PaintWizard() {
       ) : null}
 
       {step === "mask" ? (
-        <View style={[styles.content, { paddingBottom: Math.max(insets.bottom + 18, 22) }]}>
-          <Text style={styles.stepTitle}>Mark the walls you want to repaint</Text>
-          <Text style={styles.stepText}>
-            Brush only over the wall surfaces. Use the loupe to stay clean around furniture, windows, trim, and decor.
-          </Text>
+        <>
+          <ScrollView
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom + 188, 204),
+              gap: 16,
+            }}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.stepTitle}>Mark the walls you want to repaint</Text>
+            <Text style={styles.stepText}>
+              Brush only over the wall surfaces. The loupe stays live while you paint so you can stay clean around furniture, windows, trim, and decor.
+            </Text>
 
-          <View style={styles.toolbarRow}>
-            <LuxPressable
-              onPress={undoLastStroke}
-              disabled={!paintStrokes.length}
-              className={pointerClassName}
-              style={styles.toolbarButton}
-              glowColor="rgba(255,255,255,0.04)"
-              scale={0.98}
-            >
-              <RotateCcw color="#ffffff" size={16} />
-              <Text style={styles.toolbarText}>Undo</Text>
-            </LuxPressable>
-            <LuxPressable
-              onPress={clearMask}
-              disabled={!paintStrokes.length}
-              className={pointerClassName}
-              style={styles.toolbarButton}
-              glowColor="rgba(255,255,255,0.04)"
-              scale={0.98}
-            >
-              <Trash2 color="#ffffff" size={16} />
-              <Text style={styles.toolbarText}>Clear All</Text>
-            </LuxPressable>
-          </View>
-
-          <View onLayout={handleCanvasLayout} style={[styles.canvasFrame, { height: previewHeight }]}> 
-            {selectedImage ? (
-              <>
-                <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="contain" transition={160} />
-                <GestureDetector gesture={drawGesture}>
-                  <View style={absoluteFill}>
-                    <Svg width="100%" height="100%">
-                      {renderedStrokes.map((stroke) => (
-                        <SvgPath
-                          key={stroke.id}
-                          d={stroke.path}
-                          stroke={MASK_COLOR}
-                          strokeWidth={stroke.width}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          fill="none"
-                        />
-                      ))}
-                    </Svg>
-                  </View>
-                </GestureDetector>
-
-                {activePoint && loupeMetrics ? (
-                  <>
-                    <View
-                      pointerEvents="none"
-                      style={{
-                        position: "absolute",
-                        left: Math.max(12, Math.min(activePoint.x - brushWidth / 2, Math.max(canvasSize.width - brushWidth - 12, 12))),
-                        top: Math.max(12, Math.min(activePoint.y - brushWidth / 2, Math.max(canvasSize.height - brushWidth - 12, 12))),
-                        width: brushWidth,
-                        height: brushWidth,
-                        borderRadius: 999,
-                        borderWidth: 1.5,
-                        borderColor: "rgba(255,255,255,0.8)",
-                        backgroundColor: "rgba(217,70,239,0.16)",
-                      }}
-                    />
-
-                    <View pointerEvents="none" style={[styles.loupe, { left: loupeMetrics.left, top: loupeMetrics.top, width: loupeMetrics.size, height: loupeMetrics.size }]}>
-                      <View style={styles.loupeInner}>
-                        <Image
-                          source={{ uri: selectedImage.uri }}
-                          style={{
-                            position: "absolute",
-                            width: canvasSize.width * loupeMetrics.zoom,
-                            height: canvasSize.height * loupeMetrics.zoom,
-                            left: loupeMetrics.translateX,
-                            top: loupeMetrics.translateY,
-                          }}
-                          contentFit="contain"
-                        />
-                        <Svg width={loupeMetrics.size} height={loupeMetrics.size} style={absoluteFill}>
-                          <G transform={`translate(${loupeMetrics.translateX} ${loupeMetrics.translateY}) scale(${loupeMetrics.zoom})`}>
-                            {renderedStrokes.map((stroke) => (
-                              <SvgPath
-                                key={`loupe-${stroke.id}`}
-                                d={stroke.path}
-                                stroke={MASK_COLOR}
-                                strokeWidth={stroke.width}
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                fill="none"
-                              />
-                            ))}
-                          </G>
-                          <SvgCircle cx={loupeMetrics.size / 2} cy={loupeMetrics.size / 2} r={8} fill="none" stroke="#ffffff" strokeWidth={1.5} />
-                          <SvgPath d={`M ${loupeMetrics.size / 2 - 14} ${loupeMetrics.size / 2} L ${loupeMetrics.size / 2 + 14} ${loupeMetrics.size / 2}`} stroke="#ffffff" strokeWidth={1} />
-                          <SvgPath d={`M ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 - 14} L ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 + 14}`} stroke="#ffffff" strokeWidth={1} />
-                        </Svg>
-                      </View>
-                    </View>
-                  </>
-                ) : null}
-
-                <View style={styles.hintPill}>
-                  <Text style={styles.hintText}>Use the fuchsia mask to cover only repaintable wall areas.</Text>
-                </View>
-
-                <AnimatePresence>
-                  {isDetecting ? (
-                    <MotiView
-                      from={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      style={styles.detectOverlay}
-                    >
-                      <MotiView
-                        animate={{ scale: [0.92, 1.08, 0.92], opacity: [0.14, 0.46, 0.14] }}
-                        transition={{ duration: 1700, loop: true }}
-                        style={styles.detectPulse}
-                      />
-                      <View style={styles.detectCopy}>
-                        <ActivityIndicator color="#ffffff" />
-                        <Text style={styles.detectTitle}>Preparing your masking surface...</Text>
-                        <Text style={styles.detectText}>
-                          Home AI is tuning the canvas so you can paint precise edges around built-ins, windows, and furniture.
-                        </Text>
-                      </View>
-                    </MotiView>
-                  ) : null}
-                </AnimatePresence>
-              </>
-            ) : null}
-          </View>
-
-          <View style={styles.panel}>
-            <View style={styles.brushRow}>
-              <Text style={styles.brushTitle}>Brush Size</Text>
-              <View style={styles.brushMeta}>
-                <BrushPreview width={brushWidth} />
-                <Text style={styles.brushMetaText}>{brushWidth}px</Text>
-              </View>
+            <View style={styles.toolbarRow}>
+              <LuxPressable
+                onPress={undoLastStroke}
+                disabled={!paintStrokes.length}
+                className={pointerClassName}
+                style={styles.toolbarButton}
+                glowColor="rgba(255,255,255,0.04)"
+                scale={0.98}
+              >
+                <RotateCcw color="#ffffff" size={16} />
+                <Text style={styles.toolbarText}>Undo</Text>
+              </LuxPressable>
+              <LuxPressable
+                onPress={clearMask}
+                disabled={!paintStrokes.length}
+                className={pointerClassName}
+                style={styles.toolbarButton}
+                glowColor="rgba(255,255,255,0.04)"
+                scale={0.98}
+              >
+                <Trash2 color="#ffffff" size={16} />
+                <Text style={styles.toolbarText}>Clear All</Text>
+              </LuxPressable>
             </View>
 
-            <GestureDetector gesture={sliderGesture}>
-              <View onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)} style={styles.sliderWrap}>
-                <View style={styles.sliderTrack} />
-                <LinearGradient colors={["#D946EF", "#EC4899"]} style={[styles.sliderFill, { width: Math.max(16, sliderWidth * brushProgress) }]} />
-                <View style={[styles.sliderThumb, { left: Math.max(0, sliderWidth * brushProgress - 16) }]}> 
-                  <View style={styles.sliderThumbDot} />
+            <View onLayout={handleCanvasLayout} style={[styles.canvasFrame, { height: previewHeight }]}>
+              {selectedImage ? (
+                <>
+                  <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="contain" transition={160} />
+                  <GestureDetector gesture={drawGesture}>
+                    <View style={absoluteFill}>
+                      <Svg width="100%" height="100%">
+                        {renderedStrokes.map((stroke) => (
+                          <SvgPath
+                            key={stroke.id}
+                            d={stroke.path}
+                            stroke={MASK_COLOR}
+                            strokeWidth={stroke.width}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            fill="none"
+                          />
+                        ))}
+                      </Svg>
+                    </View>
+                  </GestureDetector>
+
+                  {activePoint && loupeMetrics ? (
+                    <>
+                      <View
+                        pointerEvents="none"
+                        style={{
+                          position: "absolute",
+                          left: Math.max(12, Math.min(activePoint.x - brushWidth / 2, Math.max(canvasSize.width - brushWidth - 12, 12))),
+                          top: Math.max(12, Math.min(activePoint.y - brushWidth / 2, Math.max(canvasSize.height - brushWidth - 12, 12))),
+                          width: brushWidth,
+                          height: brushWidth,
+                          borderRadius: 999,
+                          borderWidth: 1.5,
+                          borderColor: "rgba(255,255,255,0.8)",
+                          backgroundColor: "rgba(255,0,0,0.18)",
+                        }}
+                      />
+
+                      <View pointerEvents="none" style={[styles.loupe, { left: loupeMetrics.left, top: loupeMetrics.top, width: loupeMetrics.size, height: loupeMetrics.size }]}>
+                        <View style={styles.loupeInner}>
+                          <Image
+                            source={{ uri: selectedImage.uri }}
+                            style={{
+                              position: "absolute",
+                              width: canvasSize.width * loupeMetrics.zoom,
+                              height: canvasSize.height * loupeMetrics.zoom,
+                              left: loupeMetrics.translateX,
+                              top: loupeMetrics.translateY,
+                            }}
+                            contentFit="contain"
+                          />
+                          <Svg width={loupeMetrics.size} height={loupeMetrics.size} style={absoluteFill}>
+                            <G transform={`translate(${loupeMetrics.translateX} ${loupeMetrics.translateY}) scale(${loupeMetrics.zoom})`}>
+                              {renderedStrokes.map((stroke) => (
+                                <SvgPath
+                                  key={`loupe-${stroke.id}`}
+                                  d={stroke.path}
+                                  stroke={MASK_COLOR}
+                                  strokeWidth={stroke.width}
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  fill="none"
+                                />
+                              ))}
+                            </G>
+                            <SvgCircle cx={loupeMetrics.size / 2} cy={loupeMetrics.size / 2} r={8} fill="none" stroke="#ffffff" strokeWidth={1.5} />
+                            <SvgPath d={`M ${loupeMetrics.size / 2 - 14} ${loupeMetrics.size / 2} L ${loupeMetrics.size / 2 + 14} ${loupeMetrics.size / 2}`} stroke="#ffffff" strokeWidth={1} />
+                            <SvgPath d={`M ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 - 14} L ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 + 14}`} stroke="#ffffff" strokeWidth={1} />
+                          </Svg>
+                        </View>
+                      </View>
+                    </>
+                  ) : null}
+
+                  <AnimatePresence>
+                    {isDetecting ? (
+                      <MotiView
+                        from={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        style={styles.detectOverlay}
+                      >
+                        <MotiView
+                          animate={{ scale: [0.92, 1.08, 0.92], opacity: [0.14, 0.46, 0.14] }}
+                          transition={{ duration: 1700, loop: true }}
+                          style={styles.detectPulse}
+                        />
+                        <View style={styles.detectCopy}>
+                          <ActivityIndicator color="#ffffff" />
+                          <Text style={styles.detectTitle}>Preparing your masking surface...</Text>
+                          <Text style={styles.detectText}>
+                            Home AI is tuning the canvas so you can paint precise edges around built-ins, windows, and furniture.
+                          </Text>
+                        </View>
+                      </MotiView>
+                    ) : null}
+                  </AnimatePresence>
+                </>
+              ) : null}
+            </View>
+
+            <View style={styles.panel}>
+              <View style={styles.brushRow}>
+                <Text style={styles.brushTitle}>Brush Width</Text>
+                <View style={styles.brushMeta}>
+                  <BrushPreview width={brushWidth} />
+                  <Text style={styles.brushMetaText}>{brushWidth}px</Text>
                 </View>
               </View>
-            </GestureDetector>
 
+              <GestureDetector gesture={sliderGesture}>
+                <View onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)} style={styles.sliderWrap}>
+                  <View style={styles.sliderTrack} />
+                  <LinearGradient colors={MASK_CONTINUE_GRADIENT} style={[styles.sliderFill, { width: Math.max(16, sliderWidth * brushProgress) }]} />
+                  <View style={[styles.sliderThumb, { left: Math.max(0, sliderWidth * brushProgress - 16) }]}>
+                    <View style={styles.sliderThumbDot} />
+                  </View>
+                </View>
+              </GestureDetector>
+            </View>
+          </ScrollView>
+
+          <View style={[styles.fixedContinueBar, styles.maskContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
             <LuxPressable
-              onPress={() => setStep("colors")}
-              disabled={!hasMask || isDetecting}
+              onPress={() => {
+                triggerHaptic();
+                setStep("colors");
+              }}
+              disabled={!canContinueFromMask}
+              pressableClassName={pointerClassName}
               className={pointerClassName}
               style={{ width: "100%" }}
-              glowColor="rgba(217,70,239,0.2)"
+              glowColor="rgba(255,0,0,0.2)"
               scale={0.99}
             >
-              <LinearGradient colors={["#D946EF", "#EC4899", "#7C3AED"]} style={styles.primaryButton}>
-                <Text style={styles.primaryText}>Continue to Color</Text>
-              </LinearGradient>
+              {canContinueFromMask ? (
+                <LinearGradient colors={MASK_CONTINUE_GRADIENT} style={styles.primaryButtonLarge}>
+                  <Text style={styles.primaryText}>Continue</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.disabledButtonLarge}>
+                  <Text style={styles.primaryText}>Continue</Text>
+                </View>
+              )}
             </LuxPressable>
           </View>
-        </View>
+        </>
       ) : null}
 
       {step === "colors" ? (
@@ -1454,7 +1474,7 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 999,
-    backgroundColor: "#D946EF",
+    backgroundColor: "#FF0000",
   },
   primaryButton: {
     minHeight: 58,
@@ -1523,6 +1543,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "rgba(255,255,255,0.06)",
     backgroundColor: OLED_BLACK,
+  },
+  maskContinueBar: {
+    zIndex: 30,
+    elevation: 30,
   },
   paletteCard: {
     borderRadius: 28,

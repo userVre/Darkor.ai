@@ -265,7 +265,7 @@ export function useMaskDrawing({
     canvasSize,
     sliderWidth,
     setSliderWidth,
-    hasMask: strokes.length > 0,
+    hasMask: renderedStrokes.length > 0,
     handleCanvasLayout,
     clearMask,
     undoLastStroke,

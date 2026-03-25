@@ -35,13 +35,14 @@ type MaterialOption = {
 };
 
 const pointerClassName = "cursor-pointer";
-const MASK_COLOR = "rgba(245,158,11,0.4)";
+const MASK_COLOR = "rgba(255, 0, 0, 0.5)";
 const MIN_BRUSH = 10;
 const MAX_BRUSH = 54;
 const DETECT_MS = 1500;
 const LOUPE_SIZE = 116;
 const LOUPE_ZOOM = 1.8;
 const absoluteFill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
+const MASK_CONTINUE_GRADIENT = ["#FF4D4D", "#FF0000"] as const;
 
 const MATERIALS: MaterialOption[] = [
   { id: "hardwood", title: "Hardwood", subtitle: "Wide-plank warmth with luxury matte depth.", promptLabel: "premium wide-plank hardwood flooring", paletteLabel: "Hardwood", colors: ["#6F4A32", "#A06E47", "#D0A173"], sample: "hardwood" },
@@ -163,6 +164,7 @@ export function FloorWizard() {
     step === "intake" ? 1 : step === "mask" ? 2 : step === "materials" ? 3 : 4;
   const headerStepLabel = `Step ${currentStepNumber}/4`;
   const progressWidth = (170 * currentStepNumber) / 4;
+  const canContinueFromMask = hasMask && !isDetecting;
   const aspectRatio = useMemo(() => {
     if (!selectedImage) return 1.15;
     const r = selectedImage.width / Math.max(selectedImage.height, 1);
@@ -348,7 +350,7 @@ export function FloorWizard() {
           <View ref={maskCaptureRef} collapsable={false} style={{ marginTop: 8, width: canvasSize.width, height: canvasSize.height, backgroundColor: "#000000" }}>
             <Svg width={canvasSize.width} height={canvasSize.height}>
               <Rect x={0} y={0} width={canvasSize.width} height={canvasSize.height} fill="#000000" />
-              {strokes.map((stroke) => <SvgPath key={`mask-${stroke.id}`} d={stroke.path} stroke="#FFFFFF" strokeWidth={stroke.width} strokeLinecap="round" strokeLinejoin="round" fill="none" />)}
+              {renderedStrokes.map((stroke) => <SvgPath key={`mask-${stroke.id}`} d={stroke.path} stroke="#FFFFFF" strokeWidth={stroke.width} strokeLinecap="round" strokeLinejoin="round" fill="none" />)}
             </Svg>
           </View>
         </View>
@@ -358,7 +360,7 @@ export function FloorWizard() {
         <LuxPressable onPress={handleBack} className={pointerClassName} style={styles.topButton} glowColor="rgba(255,255,255,0.06)" scale={0.97}><ArrowLeft color="#ffffff" size={18} /></LuxPressable>
         <View style={styles.topCopy}>
           <Text style={styles.topTitle}>Floor Restyle</Text>
-          <Text style={styles.topSubtitle}>{headerStepLabel}</Text>
+          <Text style={styles.topSubtitle}>{step === "mask" ? "Step 2" : headerStepLabel}</Text>
           <View style={styles.progressTrack}>
             <View style={[styles.progressFillWrap, { width: progressWidth }]}>
               <LinearGradient
@@ -387,45 +389,63 @@ export function FloorWizard() {
       ) : null}
 
       {step === "mask" ? (
-        <View style={[styles.content, { paddingBottom: Math.max(insets.bottom + 18, 22) }]}>
-          <Text style={styles.stepTitle}>Mark the area to restyle</Text>
-          <Text style={styles.stepText}>Brush directly over the visible floor. Keep walls, furniture, and built-ins untouched so the restyle stays precise.</Text>
-          <View style={styles.toolbarRow}>
-            <LuxPressable onPress={undoLastStroke} disabled={!strokes.length} className={pointerClassName} style={styles.toolbarButton} glowColor="rgba(255,255,255,0.04)" scale={0.98}><RotateCcw color="#ffffff" size={16} /><Text style={styles.toolbarText}>Undo</Text></LuxPressable>
-            <LuxPressable onPress={clearMask} disabled={!strokes.length} className={pointerClassName} style={styles.toolbarButton} glowColor="rgba(255,255,255,0.04)" scale={0.98}><Trash2 color="#ffffff" size={16} /><Text style={styles.toolbarText}>Clear All</Text></LuxPressable>
-          </View>
-          <View onLayout={handleCanvasLayout} style={[styles.frame, { aspectRatio }]}>
-            {selectedImage ? (
-              <>
-                <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="cover" transition={160} />
-                <GestureDetector gesture={drawGesture}><View style={absoluteFill}><Svg width="100%" height="100%">{renderedStrokes.map((stroke) => <SvgPath key={stroke.id} d={stroke.path} stroke={MASK_COLOR} strokeWidth={stroke.width} strokeLinecap="round" strokeLinejoin="round" fill="none" />)}</Svg></View></GestureDetector>
-                {activePoint ? <View pointerEvents="none" style={{ position: "absolute", left: Math.max(14, Math.min(activePoint.x - brushWidth * 0.5, Math.max(canvasSize.width - brushWidth - 14, 14))), top: Math.max(14, Math.min(activePoint.y - brushWidth * 0.5, Math.max(canvasSize.height - brushWidth - 14, 14))), width: brushWidth, height: brushWidth, borderRadius: 999, borderWidth: 1.5, borderColor: "rgba(255,255,255,0.78)", backgroundColor: "rgba(245,158,11,0.10)" }} /> : null}
-                {selectedImage && loupeMetrics ? (
-                  <View pointerEvents="none" style={[styles.loupe, { left: loupeMetrics.left, top: loupeMetrics.top, width: loupeMetrics.size, height: loupeMetrics.size }]}>
-                    <View style={styles.loupeInner}>
-                      <Image source={{ uri: selectedImage.uri }} style={{ position: "absolute", width: canvasSize.width * loupeMetrics.zoom, height: canvasSize.height * loupeMetrics.zoom, left: loupeMetrics.translateX, top: loupeMetrics.translateY }} contentFit="cover" />
-                      <Svg width={loupeMetrics.size} height={loupeMetrics.size} style={absoluteFill}>
-                        <G transform={`translate(${loupeMetrics.translateX} ${loupeMetrics.translateY}) scale(${loupeMetrics.zoom})`}>
-                          {renderedStrokes.map((stroke) => <SvgPath key={`loupe-${stroke.id}`} d={stroke.path} stroke={MASK_COLOR} strokeWidth={stroke.width} strokeLinecap="round" strokeLinejoin="round" fill="none" />)}
-                        </G>
-                        <SvgCircle cx={loupeMetrics.size / 2} cy={loupeMetrics.size / 2} r={8} fill="none" stroke="#ffffff" strokeWidth={1.5} />
-                        <SvgPath d={`M ${loupeMetrics.size / 2 - 14} ${loupeMetrics.size / 2} L ${loupeMetrics.size / 2 + 14} ${loupeMetrics.size / 2}`} stroke="#ffffff" strokeWidth={1} />
-                        <SvgPath d={`M ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 - 14} L ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 + 14}`} stroke="#ffffff" strokeWidth={1} />
-                      </Svg>
+        <>
+          <ScrollView
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom + 188, 204),
+              gap: 16,
+            }}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.stepTitle}>Mark the area to restyle</Text>
+            <Text style={styles.stepText}>Brush directly over the visible floor. Keep walls, furniture, and built-ins untouched so the restyle stays precise.</Text>
+            <View style={styles.toolbarRow}>
+              <LuxPressable onPress={undoLastStroke} disabled={!strokes.length} className={pointerClassName} style={styles.toolbarButton} glowColor="rgba(255,255,255,0.04)" scale={0.98}><RotateCcw color="#ffffff" size={16} /><Text style={styles.toolbarText}>Undo</Text></LuxPressable>
+              <LuxPressable onPress={clearMask} disabled={!strokes.length} className={pointerClassName} style={styles.toolbarButton} glowColor="rgba(255,255,255,0.04)" scale={0.98}><Trash2 color="#ffffff" size={16} /><Text style={styles.toolbarText}>Clear All</Text></LuxPressable>
+            </View>
+            <View onLayout={handleCanvasLayout} style={[styles.frame, { aspectRatio }]}>
+              {selectedImage ? (
+                <>
+                  <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="cover" transition={160} />
+                  <GestureDetector gesture={drawGesture}><View style={absoluteFill}><Svg width="100%" height="100%">{renderedStrokes.map((stroke) => <SvgPath key={stroke.id} d={stroke.path} stroke={MASK_COLOR} strokeWidth={stroke.width} strokeLinecap="round" strokeLinejoin="round" fill="none" />)}</Svg></View></GestureDetector>
+                  {activePoint ? <View pointerEvents="none" style={{ position: "absolute", left: Math.max(14, Math.min(activePoint.x - brushWidth * 0.5, Math.max(canvasSize.width - brushWidth - 14, 14))), top: Math.max(14, Math.min(activePoint.y - brushWidth * 0.5, Math.max(canvasSize.height - brushWidth - 14, 14))), width: brushWidth, height: brushWidth, borderRadius: 999, borderWidth: 1.5, borderColor: "rgba(255,255,255,0.78)", backgroundColor: "rgba(255,0,0,0.18)" }} /> : null}
+                  {selectedImage && loupeMetrics ? (
+                    <View pointerEvents="none" style={[styles.loupe, { left: loupeMetrics.left, top: loupeMetrics.top, width: loupeMetrics.size, height: loupeMetrics.size }]}>
+                      <View style={styles.loupeInner}>
+                        <Image source={{ uri: selectedImage.uri }} style={{ position: "absolute", width: canvasSize.width * loupeMetrics.zoom, height: canvasSize.height * loupeMetrics.zoom, left: loupeMetrics.translateX, top: loupeMetrics.translateY }} contentFit="cover" />
+                        <Svg width={loupeMetrics.size} height={loupeMetrics.size} style={absoluteFill}>
+                          <G transform={`translate(${loupeMetrics.translateX} ${loupeMetrics.translateY}) scale(${loupeMetrics.zoom})`}>
+                            {renderedStrokes.map((stroke) => <SvgPath key={`loupe-${stroke.id}`} d={stroke.path} stroke={MASK_COLOR} strokeWidth={stroke.width} strokeLinecap="round" strokeLinejoin="round" fill="none" />)}
+                          </G>
+                          <SvgCircle cx={loupeMetrics.size / 2} cy={loupeMetrics.size / 2} r={8} fill="none" stroke="#ffffff" strokeWidth={1.5} />
+                          <SvgPath d={`M ${loupeMetrics.size / 2 - 14} ${loupeMetrics.size / 2} L ${loupeMetrics.size / 2 + 14} ${loupeMetrics.size / 2}`} stroke="#ffffff" strokeWidth={1} />
+                          <SvgPath d={`M ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 - 14} L ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 + 14}`} stroke="#ffffff" strokeWidth={1} />
+                        </Svg>
+                      </View>
                     </View>
-                  </View>
-                ) : null}
-                <View style={styles.hintPill}><Text style={styles.hintText}>Paint only the floor zone you want Home AI to replace.</Text></View>
-                <AnimatePresence>{isDetecting ? <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.detectOverlay}><MotiView animate={{ scale: [0.92, 1.08, 0.92], opacity: [0.16, 0.52, 0.16] }} transition={{ duration: 1800, loop: true }} style={styles.detectPulse} /><View style={styles.detectCopy}><ActivityIndicator color="#ffffff" /><Text style={styles.detectTitle}>Preparing the floor plane...</Text><Text style={styles.detectText}>Setting up a precise masking surface so the material map stays clean around furniture and edges.</Text></View></MotiView> : null}</AnimatePresence>
-              </>
-            ) : null}
+                  ) : null}
+                  <AnimatePresence>{isDetecting ? <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.detectOverlay}><MotiView animate={{ scale: [0.92, 1.08, 0.92], opacity: [0.16, 0.52, 0.16] }} transition={{ duration: 1800, loop: true }} style={styles.detectPulse} /><View style={styles.detectCopy}><ActivityIndicator color="#ffffff" /><Text style={styles.detectTitle}>Preparing the floor plane...</Text><Text style={styles.detectText}>Setting up a precise masking surface so the material map stays clean around furniture and edges.</Text></View></MotiView> : null}</AnimatePresence>
+                </>
+              ) : null}
+            </View>
+            <View style={styles.panel}>
+              <View style={styles.brushRow}><Text style={styles.brushTitle}>Brush Width</Text><View style={styles.brushMeta}><View style={{ width: Math.max(brushWidth, 14), height: Math.max(brushWidth, 14), borderRadius: 999, backgroundColor: MASK_COLOR, borderWidth: 1, borderColor: "rgba(255,255,255,0.22)" }} /><Text style={styles.brushMetaText}>{brushWidth}px</Text></View></View>
+              <GestureDetector gesture={sliderGesture}><View onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)} style={styles.sliderWrap}><View style={styles.sliderTrack} /><LinearGradient colors={MASK_CONTINUE_GRADIENT} style={[styles.sliderFill, { width: Math.max(14, sliderWidth * brushProgress) }]} /><View style={[styles.sliderThumb, { left: Math.max(0, sliderWidth * brushProgress - 16) }]}><View style={styles.sliderThumbDot} /></View></View></GestureDetector>
+            </View>
+          </ScrollView>
+
+          <View style={[styles.fixedContinueBar, styles.maskContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
+            <LuxPressable onPress={() => { triggerHaptic(); setStep("materials"); }} disabled={!canContinueFromMask} pressableClassName={pointerClassName} className={pointerClassName} style={{ width: "100%" }} glowColor="rgba(255,0,0,0.2)" scale={0.99}>
+              {canContinueFromMask ? (
+                <LinearGradient colors={MASK_CONTINUE_GRADIENT} style={styles.primaryButtonLarge}><Text style={styles.primaryText}>Continue</Text></LinearGradient>
+              ) : (
+                <View style={styles.disabledButtonLarge}><Text style={styles.primaryText}>Continue</Text></View>
+              )}
+            </LuxPressable>
           </View>
-          <View style={styles.panel}>
-            <View style={styles.brushRow}><Text style={styles.brushTitle}>Brush Width</Text><View style={styles.brushMeta}><View style={{ width: Math.max(brushWidth, 14), height: Math.max(brushWidth, 14), borderRadius: 999, backgroundColor: MASK_COLOR, borderWidth: 1, borderColor: "rgba(255,255,255,0.22)" }} /><Text style={styles.brushMetaText}>{brushWidth}px</Text></View></View>
-            <GestureDetector gesture={sliderGesture}><View onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)} style={styles.sliderWrap}><View style={styles.sliderTrack} /><LinearGradient colors={["#F59E0B", "#F97316"]} style={[styles.sliderFill, { width: Math.max(14, sliderWidth * brushProgress) }]} /><View style={[styles.sliderThumb, { left: Math.max(0, sliderWidth * brushProgress - 16) }]}><View style={styles.sliderThumbDot} /></View></View></GestureDetector>
-            <LuxPressable onPress={() => setStep("materials")} disabled={!hasMask || isDetecting} className={pointerClassName} style={{ width: "100%" }} glowColor="rgba(245,158,11,0.16)" scale={0.99}><LinearGradient colors={["#F59E0B", "#D97706"]} style={styles.primaryButton}><Text style={styles.primaryText}>Continue to Material</Text></LinearGradient></LuxPressable>
-          </View>
-        </View>
+        </>
       ) : null}
 
       {step === "materials" ? (
@@ -544,7 +564,7 @@ const styles = StyleSheet.create({
   sliderTrack: { height: 6, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.12)" },
   sliderFill: { position: "absolute", left: 0, height: 6, borderRadius: 999 },
   sliderThumb: { position: "absolute", width: 32, height: 32, borderRadius: 999, backgroundColor: "#ffffff", alignItems: "center", justifyContent: "center" },
-  sliderThumbDot: { width: 14, height: 14, borderRadius: 999, backgroundColor: "#F59E0B" },
+  sliderThumbDot: { width: 14, height: 14, borderRadius: 999, backgroundColor: "#FF0000" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
   materialCard: { borderRadius: 30, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#0a0a0c" },
   materialCardActive: { borderColor: "#F59E0B", backgroundColor: "rgba(245,158,11,0.08)" },
@@ -560,6 +580,7 @@ const styles = StyleSheet.create({
   tileBlock: { flex: 1, borderRadius: 16 },
   summaryCard: { borderRadius: 28, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#0a0a0c", padding: 18, gap: 8 },
   fixedContinueBar: { position: "absolute", left: 0, right: 0, bottom: 0, paddingTop: 14, paddingHorizontal: 16, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.06)", backgroundColor: "#000000" },
+  maskContinueBar: { zIndex: 30, elevation: 30 },
   summaryLabel: { color: "#f59e0b", fontSize: 11, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase" },
   summaryTitle: { color: "#ffffff", fontSize: 22, fontWeight: "800", letterSpacing: -0.5 },
   summaryText: { color: "#b4b4bb", fontSize: 14, lineHeight: 22 },
