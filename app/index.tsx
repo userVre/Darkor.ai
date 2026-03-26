@@ -41,18 +41,6 @@ export default function Index() {
 
   const launchPaywallDismissed = hasDismissedLaunchPaywall();
 
-  console.log("[Index] Launch route render", {
-    viewerReady,
-    plan: me?.plan ?? null,
-    meResolved: me !== undefined,
-    gateTimedOut,
-    launchPaywallDismissed,
-  });
-
-  useEffect(() => {
-    console.log("[Index] Launch route mounted");
-  }, []);
-
   useEffect(() => {
     if (DIAGNOSTIC_BYPASS || gateTimedOut || (viewerReady && me !== undefined)) {
       return;

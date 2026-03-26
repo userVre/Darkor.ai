@@ -62,7 +62,7 @@ const FEATURE_ITEMS = [
   "Unlock 4K Ultra-HD renders",
   "20+ premium styles",
   "No watermarks",
-  "Faster Rendering",
+  "Priority rendering",
 ] as const;
 
 const PLAN_COPY = {
@@ -124,7 +124,7 @@ function TrialSwitch({ value, onPress }: { value: boolean; onPress: () => void }
       onPress={onPress}
       className={pointerClassName}
       style={[styles.toggleTrack, value ? styles.toggleTrackActive : null]}
-      glowColor="rgba(250,204,21,0.12)"
+      glowColor="rgba(217,70,239,0.16)"
       scale={0.985}
     >
       <Animated.View style={[styles.toggleThumb, thumbStyle]} />
@@ -210,15 +210,15 @@ function PlanCard({
   return (
     <MotiView animate={{ scale: active ? 1 : 0.985 }} transition={LUX_SPRING} style={styles.planCardMotion}>
       <LuxPressable
-        onPress={onPress}
-        className={pointerClassName}
-        style={[styles.planCard, active ? styles.planCardActive : null]}
-        glowColor={active ? "rgba(250,204,21,0.18)" : "rgba(255,255,255,0.04)"}
-        scale={0.99}
-      >
+      onPress={onPress}
+      className={pointerClassName}
+      style={[styles.planCard, active ? styles.planCardActive : null]}
+      glowColor={active ? "rgba(217,70,239,0.18)" : "rgba(255,255,255,0.04)"}
+      scale={0.99}
+    >
         {active ? (
           <LinearGradient
-            colors={["rgba(250,204,21,0.16)", "rgba(250,204,21,0.05)", "rgba(255,255,255,0)"]}
+            colors={["rgba(217,70,239,0.18)", "rgba(79,70,229,0.08)", "rgba(255,255,255,0)"]}
             locations={[0, 0.52, 1]}
             style={styles.planCardGlow}
             pointerEvents="none"
@@ -252,7 +252,6 @@ function DwaraTimer({
   const revealProgress = useSharedValue(0);
 
   useEffect(() => {
-    console.log("[Paywall] DwaraTimer start");
     setCanDismiss(false);
     countdownProgress.value = 0;
     revealProgress.value = 0;
@@ -267,9 +266,6 @@ function DwaraTimer({
         revealProgress.value = withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) });
       },
     );
-    return () => {
-      console.log("[Paywall] DwaraTimer cleanup");
-    };
   }, [countdownProgress, revealProgress]);
 
   const ringAnimatedProps = useAnimatedProps(() => ({
@@ -356,14 +352,6 @@ export default function PaywallScreen() {
   const heroSnapInterval = heroWidth + HERO_GAP;
   const heroInset = Math.max((contentWidth - heroWidth) / 2, 0);
 
-  console.log("[Paywall] Render", {
-    isSignedIn,
-    packageCount: packages.length,
-    isLoading,
-    selectedDuration,
-    freeTrialEnabled,
-  });
-
   const selectedPackage = useMemo(
     () => findRevenueCatPackage(packages, selectedDuration),
     [packages, selectedDuration],
@@ -402,10 +390,6 @@ export default function PaywallScreen() {
   );
 
   useEffect(() => {
-    console.log("[Paywall] Mounted");
-  }, []);
-
-  useEffect(() => {
     requestAnimationFrame(() => {
       syncCarouselToIndex(LOOP_OFFSET, false);
     });
@@ -421,8 +405,6 @@ export default function PaywallScreen() {
 
   useEffect(() => {
     let active = true;
-
-    console.log("[Paywall] Loading offerings");
 
     const loadOfferings = async () => {
       try {
@@ -656,7 +638,8 @@ export default function PaywallScreen() {
           <View style={[styles.heroSection, { gap: compactLevel === 2 ? 10 : 14 }]}>
             <View style={styles.headerCopy}>
               <Text style={styles.eyebrow}>HOME AI PRO</Text>
-              <Text style={[styles.title, compactLevel === 2 ? styles.titleCompact : null]}>Everything premium, on one screen.</Text>
+              <Text style={styles.eyebrow}>DARKOR.AI PRO</Text>
+              <Text style={[styles.title, compactLevel === 2 ? styles.titleCompact : null]}>Everything premium, composed in one place.</Text>
             </View>
 
             <View style={styles.carouselShell}>
@@ -747,18 +730,18 @@ export default function PaywallScreen() {
             disabled={isCtaDisabled}
             className={pointerClassName}
             style={[styles.ctaOuter, isCtaDisabled ? styles.ctaOuterDisabled : null]}
-            glowColor="rgba(250,204,21,0.18)"
+            glowColor="rgba(217,70,239,0.18)"
             scale={0.992}
           >
             <LinearGradient
-              colors={isCtaDisabled ? ["#4b4b4f", "#323236"] : ["#fff2d7", "#f3c98a", "#d99a4e"]}
+              colors={isCtaDisabled ? ["#4b4b4f", "#323236"] : ["#d946ef", "#4f46e5"]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               style={styles.ctaGradient}
             >
               {isLoading ? (
                 <View style={styles.loadingRow}>
-                  <ActivityIndicator color="#09090b" />
+                  <ActivityIndicator color="#ffffff" />
                   <Text style={styles.ctaText}>Processing...</Text>
                 </View>
               ) : (
@@ -770,7 +753,7 @@ export default function PaywallScreen() {
                   style={styles.ctaContent}
                 >
                   <Text style={styles.ctaText}>{ctaTitle}</Text>
-                  <ArrowRight color="#09090b" size={20} strokeWidth={2.5} />
+                  <ArrowRight color="#ffffff" size={20} strokeWidth={2.5} />
                 </MotiView>
               )}
             </LinearGradient>
@@ -985,7 +968,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#3f3f46",
   },
   toggleTrackActive: {
-    backgroundColor: "#f4e4c4",
+    backgroundColor: "#7c3aed",
   },
   toggleThumb: {
     width: 26,
@@ -1015,7 +998,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   planCardActive: {
-    borderColor: "rgba(253,224,71,0.48)",
+    borderColor: "rgba(217,70,239,0.46)",
     backgroundColor: "#18181b",
   },
   planCardGlow: {
@@ -1030,8 +1013,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   planBadgeActive: {
-    borderColor: "rgba(250,204,21,0.28)",
-    backgroundColor: "rgba(250,204,21,0.14)",
+    borderColor: "rgba(217,70,239,0.28)",
+    backgroundColor: "rgba(217,70,239,0.14)",
   },
   planBadgeText: {
     color: "#d4d4d8",
@@ -1042,7 +1025,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.55,
   },
   planBadgeTextActive: {
-    color: "#fef3c7",
+    color: "#f5d0fe",
   },
   planTitle: {
     color: "#fafafa",
@@ -1136,7 +1119,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   ctaText: {
-    color: "#09090b",
+    color: "#ffffff",
     fontSize: 18,
     lineHeight: 22,
     fontWeight: "800",

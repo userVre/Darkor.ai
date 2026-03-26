@@ -7,6 +7,7 @@ import {
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
+import { buildDesignPrompt as buildAIDesignPrompt, normalizeAspectRatio as normalizeAIAspectRatio } from "./ai";
 import { deriveSubscriptionState, FREE_IMAGE_LIMIT, toFiniteNumber } from "./subscriptions";
 import {
   buildDefaultUserFields,
@@ -476,21 +477,7 @@ export const startGeneration = mutationGeneric({
 
     const allowance = await reserveGenerationAllowance(ctx, viewer.userId, args.ignoreReviewCooldown);
     const normalizedSelection = trimOptional(args.selection) ?? "Premium";
-    const prompt = buildGenerationPrompt({
-      roomType: args.roomType,
-      style: args.displayStyle ?? normalizedSelection,
-      customPrompt: args.customPrompt,
-      aspectRatio: normalizeAspectRatio(args.aspectRatio),
-      colorPalette: normalizedSelection,
-      modeLabel:
-        args.serviceType === "paint"
-          ? "Smart Wall Paint"
-          : args.serviceType === "floor"
-            ? "Floor Restyle"
-            : "Complete Redesign",
-      modePromptHint: undefined,
-      regenerate: args.regenerate,
-    });
+    const normalizedAspectRatio = normalizeAIAspectRatio(args.aspectRatio);
     const resolvedStyle =
       trimOptional(args.displayStyle) ??
       (args.serviceType === "paint"
@@ -498,6 +485,15 @@ export const startGeneration = mutationGeneric({
         : args.serviceType === "floor"
           ? `${normalizedSelection} Floor`
           : normalizedSelection);
+    const prompt = buildAIDesignPrompt({
+      serviceType: args.serviceType,
+      roomType: args.roomType,
+      style: resolvedStyle,
+      customPrompt: args.customPrompt,
+      aspectRatio: normalizedAspectRatio,
+      colorPalette: normalizedSelection,
+      regenerate: args.regenerate,
+    });
 
     const generationId = await ctx.db.insert("generations", {
       userId: viewer.userId,
@@ -510,7 +506,7 @@ export const startGeneration = mutationGeneric({
       roomType: args.roomType,
       customPrompt: trimOptional(args.customPrompt),
       colorPalette: normalizedSelection,
-      aspectRatio: normalizeAspectRatio(args.aspectRatio),
+      aspectRatio: normalizedAspectRatio,
       mode:
         args.serviceType === "paint"
           ? "Smart Wall Paint"
@@ -530,13 +526,18 @@ export const startGeneration = mutationGeneric({
       projectId: undefined,
     });
 
-    await ctx.scheduler.runAfter(0, (internal as any).generations.runGenerationJob, {
+    await ctx.scheduler.runAfter(0, (internal as any).ai.generateDesign, {
       generationId,
       ownerId: viewer.userId,
-      sourceStorageId: args.imageStorageId,
+      imageStorageId: args.imageStorageId,
       maskStorageId: args.maskStorageId,
-      prompt,
-      aspectRatio: normalizeAspectRatio(args.aspectRatio),
+      serviceType: args.serviceType,
+      roomType: args.roomType,
+      style: resolvedStyle,
+      colorPalette: normalizedSelection,
+      customPrompt: trimOptional(args.customPrompt),
+      aspectRatio: normalizedAspectRatio,
+      regenerate: args.regenerate,
       speedTier: args.speedTier ?? "standard",
     });
 

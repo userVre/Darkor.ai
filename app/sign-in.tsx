@@ -1,5 +1,6 @@
 import { useOAuth } from "@clerk/expo";
 import { useSignIn } from "@clerk/expo/legacy";
+import { LinearGradient } from "expo-linear-gradient";
 import { Link, type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Text, TextInput, View } from "react-native";
@@ -76,10 +77,17 @@ export default function SignInScreen() {
 
       <LuxPressable
         onPress={() => void handleSignIn()}
-        className="mt-4 rounded-2xl bg-cyan-400 p-4"
+        className="mt-4 rounded-2xl"
         disabled={loading}
       >
-        <Text className="text-center font-semibold text-zinc-900">{loading ? "Signing in..." : "Continue"}</Text>
+        <LinearGradient
+          colors={["#d946ef", "#4f46e5"]}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          className="rounded-2xl p-4"
+        >
+          <Text className="text-center font-semibold text-white">{loading ? "Signing in..." : "Continue"}</Text>
+        </LinearGradient>
       </LuxPressable>
 
       <LuxPressable
@@ -96,7 +104,7 @@ export default function SignInScreen() {
 
       <Text className="mt-4 text-center text-zinc-400">
         No account?{" "}
-        <Link href={{ pathname: "/sign-up", params: { returnTo: nextRoute } }} className="text-cyan-300">
+        <Link href={{ pathname: "/sign-up", params: { returnTo: nextRoute } }} style={{ color: "#f0abfc" }}>
           Create one
         </Link>
       </Text>

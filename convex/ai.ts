@@ -5,8 +5,10 @@ import { internal } from "./_generated/api";
 
 const GEMINI_MODEL = "gemini-3.1-flash-image-preview";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const PRO_MIN_DELAY_MS = 4_000;
 
 type ServiceType = "paint" | "floor" | "redesign";
+type SpeedTier = "standard" | "pro" | "ultra";
 
 type GeminiInlinePart = {
   inlineData?: {
@@ -32,30 +34,38 @@ function trimOptional(value?: string | null) {
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
 }
 
-function normalizeAspectRatio(aspectRatio?: string | null) {
+export function normalizeAspectRatio(aspectRatio?: string | null) {
   const trimmed = aspectRatio?.trim();
   if (!trimmed) return "1:1";
   return /^\d+:\d+$/.test(trimmed) ? trimmed : "1:1";
 }
 
-function buildDesignPrompt(args: {
+export function buildDesignPrompt(args: {
   serviceType: ServiceType;
-  selection: string;
-  roomType?: string;
+  roomType: string;
+  style: string;
+  colorPalette: string;
   customPrompt?: string;
-  hasMask: boolean;
+  aspectRatio?: string;
+  regenerate?: boolean;
 }) {
-  const roomType = trimOptional(args.roomType) ?? "room";
-  const selection = trimOptional(args.selection) ?? "premium redesign";
+  const roomType = trimOptional(args.roomType) ?? "space";
+  const style = trimOptional(args.style) ?? "luxury contemporary";
+  const colorPalette = trimOptional(args.colorPalette) ?? style;
   const customPrompt = trimOptional(args.customPrompt);
+  const aspectRatio = normalizeAspectRatio(args.aspectRatio);
+  const variationInstruction = args.regenerate
+    ? "Create a fresh alternate variation while preserving the same architectural shell, framing, and level of realism."
+    : undefined;
 
   if (args.serviceType === "paint") {
     return [
-      `Keep the ${roomType.toLowerCase()} structure exactly the same, but repaint the masked area (walls) with the color ${selection}. High-end architectural finish.`,
-      "The second image is a binary wall-selection mask. White is the only editable region. Black must remain untouched.",
-      "Preserve the furniture, floors, trim, windows, doors, ceiling, lighting, shadows, reflections, and perspective exactly as they appear.",
-      customPrompt ? `Additional user direction: ${customPrompt}.` : undefined,
-      "Return a photorealistic interior edit with believable paint texture, material response, and premium staging quality.",
+      `You are an expert interior designer and architectural visualizer. Repaint only the masked wall area of this ${roomType.toLowerCase()} using a ${colorPalette} palette with a ${style} finish.`,
+      "The second image is the edit mask. White marks the only editable wall region. Black must remain untouched.",
+      "Preserve the room geometry, ceiling, trim, flooring, furniture, doors, windows, artwork, lighting, shadows, reflections, and camera framing exactly as they appear.",
+      customPrompt ? `Follow these instructions exactly: ${customPrompt}.` : "Deliver a premium, believable paint transformation with refined material response and professional styling.",
+      `Output a photorealistic architectural render in a ${aspectRatio} frame.`,
+      variationInstruction,
     ]
       .filter(Boolean)
       .join(" ");
@@ -63,21 +73,26 @@ function buildDesignPrompt(args: {
 
   if (args.serviceType === "floor") {
     return [
-      `Keep the furniture and walls exactly the same, but replace the masked floor area with ${selection} material. Ensure correct perspective and realistic reflections.`,
-      "The second image is a binary floor-selection mask. White is the only editable floor region. Black must remain untouched.",
-      "Preserve the walls, furniture, decor, doors, windows, baseboards, shadows, and camera framing exactly as they appear.",
-      customPrompt ? `Additional user direction: ${customPrompt}.` : undefined,
-      "Return a photorealistic architectural edit with realistic texture scale, grounding, and lighting continuity.",
+      `You are an expert interior designer and architectural visualizer. Replace only the masked floor area in this ${roomType.toLowerCase()} with a ${style} material direction using a ${colorPalette} palette.`,
+      "The second image is the edit mask. White marks the only editable floor region. Black must remain untouched.",
+      "Preserve the walls, furniture, decor, trim, windows, doors, lighting, shadows, reflections, and camera framing exactly as they appear.",
+      "Keep the floor perspective, material scale, joins, and grounding physically believable so the new finish looks installed in the real scene.",
+      customPrompt ? `Follow these instructions exactly: ${customPrompt}.` : "Deliver a premium, photorealistic architectural material replacement with clean edge transitions.",
+      `Output a photorealistic architectural render in a ${aspectRatio} frame.`,
+      variationInstruction,
     ]
       .filter(Boolean)
       .join(" ");
   }
 
   return [
-    `Complete ${roomType.toLowerCase()} transformation in ${selection} style. Maintain the original architectural layout but furniture and decor should be entirely redesigned.`,
-    "Preserve the original floorplan, wall positions, doors, windows, ceiling height, and camera framing exactly.",
-    customPrompt ? `Additional user direction: ${customPrompt}.` : "Keep the result premium, photorealistic, and publication-ready.",
-    "Output an 8K-quality architectural visualization with refined materials, cohesive lighting, and editorial-level realism.",
+    `You are an expert interior designer. Redesign this ${roomType} in a ${style} aesthetic.`,
+    customPrompt ? `Follow these instructions: ${customPrompt}.` : "Follow these instructions: elevate the space with a refined, premium, editorial-quality composition.",
+    `Use a ${colorPalette} theme.`,
+    "Preserve the original floorplan, walls, doors, windows, ceiling height, and camera framing while redesigning finishes, furniture, decor, and styling.",
+    "Do not warp the architecture, do not invent impossible geometry, and keep the result grounded in real-world materials and lighting.",
+    `Output: 8k photorealistic architectural render in a ${aspectRatio} frame.`,
+    variationInstruction,
   ]
     .filter(Boolean)
     .join(" ");
@@ -116,6 +131,21 @@ async function parseGeminiError(response: Response) {
   }
 }
 
+function shouldRetryGeminiStatus(status: number) {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+function shouldRetryGeminiErrorMessage(message: string) {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("network request failed") ||
+    normalized.includes("failed to fetch") ||
+    normalized.includes("fetch failed") ||
+    normalized.includes("network error") ||
+    normalized.includes("timed out")
+  );
+}
+
 function normalizeGenerationError(message?: string | null) {
   const raw = trimOptional(message) ?? "Generation failed.";
   const normalized = raw.toLowerCase();
@@ -149,6 +179,44 @@ function normalizeGenerationError(message?: string | null) {
   return raw;
 }
 
+async function requestGeminiWithRetry(body: string, apiKey: string) {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await fetch(GEMINI_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body,
+      });
+
+      if (!response.ok) {
+        const errorMessage = normalizeGenerationError(await parseGeminiError(response));
+        if (attempt === 0 && shouldRetryGeminiStatus(response.status)) {
+          await new Promise((resolve) => setTimeout(resolve, 1200));
+          continue;
+        }
+        throw new ConvexError(errorMessage || `Gemini request failed with status ${response.status}.`);
+      }
+
+      return response;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Gemini request failed.";
+      lastError = error instanceof Error ? error : new Error(message);
+      if (attempt === 0 && shouldRetryGeminiErrorMessage(message)) {
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw lastError ?? new ConvexError("Gemini request failed.");
+}
+
 function extractGeneratedImage(response: GeminiResponse) {
   const candidates = Array.isArray(response.candidates) ? response.candidates : [];
   for (const candidate of candidates) {
@@ -170,6 +238,22 @@ function extractGeneratedImage(response: GeminiResponse) {
   }
 
   throw new ConvexError("Gemini returned no image.");
+}
+
+function resolveImageSize(speedTier?: SpeedTier) {
+  return speedTier === "ultra" ? "4K" : "2K";
+}
+
+async function waitForMinimumDuration(startedAt: number, speedTier?: SpeedTier) {
+  if (speedTier !== "pro") {
+    return;
+  }
+
+  const elapsed = Date.now() - startedAt;
+  const remaining = PRO_MIN_DELAY_MS - elapsed;
+  if (remaining > 0) {
+    await new Promise((resolve) => setTimeout(resolve, remaining));
+  }
 }
 
 export const saveGeneration = internalMutationGeneric({
@@ -199,19 +283,25 @@ export const saveGeneration = internalMutationGeneric({
   },
 });
 
-export const generateDesign = internalActionGeneric({
+export const generateDesign: any = internalActionGeneric({
   args: {
     generationId: v.id("generations"),
     ownerId: v.string(),
     imageStorageId: v.id("_storage"),
     maskStorageId: v.optional(v.id("_storage")),
     serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign")),
-    selection: v.string(),
+    roomType: v.string(),
+    style: v.string(),
+    colorPalette: v.string(),
     customPrompt: v.optional(v.string()),
-    roomType: v.optional(v.string()),
     aspectRatio: v.optional(v.string()),
+    regenerate: v.optional(v.boolean()),
+    speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ ok: true; storageId: string; imageUrl: string | null }> => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       const message = normalizeGenerationError("Missing GEMINI_API_KEY in Convex environment variables.");
@@ -223,6 +313,7 @@ export const generateDesign = internalActionGeneric({
       throw new ConvexError(message);
     }
 
+    const startedAt = Date.now();
     let generatedStorageId: string | null = null;
 
     try {
@@ -236,16 +327,18 @@ export const generateDesign = internalActionGeneric({
         throw new ConvexError("The edit mask could not be loaded from storage.");
       }
 
+      const prompt = buildDesignPrompt({
+        serviceType: args.serviceType,
+        roomType: args.roomType,
+        style: args.style,
+        colorPalette: args.colorPalette,
+        customPrompt: args.customPrompt,
+        aspectRatio: args.aspectRatio,
+        regenerate: args.regenerate,
+      });
+
       const parts: GeminiInlinePart[] = [
-        {
-          text: buildDesignPrompt({
-            serviceType: args.serviceType,
-            selection: args.selection,
-            roomType: args.roomType,
-            customPrompt: args.customPrompt,
-            hasMask: Boolean(maskBlob),
-          }),
-        },
+        { text: prompt },
         {
           inlineData: {
             mimeType: sourceBlob.type || "image/jpeg",
@@ -258,8 +351,8 @@ export const generateDesign = internalActionGeneric({
         parts.push({
           text:
             args.serviceType === "paint"
-              ? "Reference mask for wall repainting. White marks the only editable wall region."
-              : "Reference mask for floor restyling. White marks the only editable floor region.",
+              ? "Reference edit mask for wall repainting. White marks the only editable wall region."
+              : "Reference edit mask for floor restyling. White marks the only editable floor region.",
         });
         parts.push({
           inlineData: {
@@ -269,31 +362,23 @@ export const generateDesign = internalActionGeneric({
         });
       }
 
-      const response = await fetch(GEMINI_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
+      const response = await requestGeminiWithRetry(
+        JSON.stringify({
           contents: [
             {
               parts,
             },
           ],
           generationConfig: {
-            responseModalities: ["Image"],
+            responseModalities: ["TEXT", "IMAGE"],
             imageConfig: {
               aspectRatio: normalizeAspectRatio(args.aspectRatio),
-              imageSize: "4K",
+              imageSize: resolveImageSize(args.speedTier as SpeedTier | undefined),
             },
           },
         }),
-      });
-
-      if (!response.ok) {
-        throw new ConvexError(normalizeGenerationError(await parseGeminiError(response)));
-      }
+        apiKey,
+      );
 
       const payload = (await response.json()) as GeminiResponse;
       const generated = extractGeneratedImage(payload);
@@ -301,11 +386,13 @@ export const generateDesign = internalActionGeneric({
       const imageBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
       const outputBlob = new Blob([imageBuffer], { type: generated.mimeType ?? "image/png" });
 
+      await waitForMinimumDuration(startedAt, (args.speedTier as SpeedTier | undefined) ?? "standard");
       generatedStorageId = (await ctx.storage.store(outputBlob)) as string;
-      const saveResult = await ctx.runMutation((internal as any).ai.saveGeneration, {
+
+      const saveResult = (await ctx.runMutation((internal as any).ai.saveGeneration, {
         generationId: args.generationId,
         storageId: generatedStorageId,
-      });
+      })) as { imageUrl?: string | null };
 
       return {
         ok: true,

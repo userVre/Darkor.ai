@@ -33,6 +33,8 @@ import {
 } from "../lib/revenuecat";
 import { tokenCache } from "../lib/token-cache";
 
+void SplashScreen.preventAutoHideAsync().catch(() => undefined);
+
 function RevenueCatGate() {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
@@ -294,13 +296,7 @@ export default function RootLayout() {
   const envReport = useMemo(() => getEnvReport(), []);
   const clerkKey = envReport.values.clerkPublishableKey;
 
-  console.log("[Layout] RootLayout render", {
-    hasClerkKey: Boolean(clerkKey),
-    diagnosticBypass: DIAGNOSTIC_BYPASS,
-  });
-
   useEffect(() => {
-    console.log("[Layout] RootLayout mounted");
     logEnvDiagnostics(envReport);
   }, [envReport]);
 

@@ -187,7 +187,7 @@ export function FloorWizard() {
       setComparisonPosition(0.52);
       triggerHaptic();
       if (isSignedIn) {
-        router.replace({ pathname: "/workspace", params: { boardView: "editor", boardItemId: generation._id } });
+        router.replace({ pathname: "/workspace", params: { boardView: "board" } });
         return;
       }
       setStep("result");

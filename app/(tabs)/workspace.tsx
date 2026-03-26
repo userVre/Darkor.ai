@@ -1864,8 +1864,14 @@ export default function WorkspaceScreen() {
     }
 
     if (currentGeneration.status === "ready" && currentGeneration.imageUrl) {
+      setIsGenerating(false);
       if (generatedImageUrl !== currentGeneration.imageUrl) {
         setGeneratedImageUrl(currentGeneration.imageUrl);
+      }
+
+      if (effectiveSignedIn && isGenerating) {
+        router.replace({ pathname: "/workspace", params: { boardView: "board" } });
+        return;
       }
 
       if (pendingReviewState) {
@@ -1881,11 +1887,12 @@ export default function WorkspaceScreen() {
     }
 
     if (currentGeneration.status === "failed" && generationAlertedFailureRef.current !== currentGeneration.id) {
+      setIsGenerating(false);
       generationAlertedFailureRef.current = currentGeneration.id;
       setPendingReviewState(null);
       showToast(currentGeneration.errorMessage ?? "Unable to generate your design right now.");
     }
-  }, [boardItems, generatedImageUrl, generationId, pendingReviewState, showToast]);
+  }, [boardItems, effectiveSignedIn, generatedImageUrl, generationId, isGenerating, pendingReviewState, router, showToast]);
 
   const handleSliderLayout = useCallback(
     (event: { nativeEvent: { layout: { width: number } } }) => {
@@ -2701,6 +2708,7 @@ export default function WorkspaceScreen() {
         setLastGenerationCount(startResult.reviewState.count);
       }
     } catch (error) {
+      setIsGenerating(false);
       const message = error instanceof Error ? error.message : "Please try again.";
       const isPaymentRequired = message === "Payment Required";
       if (!diagnostic && !hasGenerationCredits) {
@@ -2733,8 +2741,6 @@ export default function WorkspaceScreen() {
         return;
       }
       showToast(message);
-    } finally {
-      setIsGenerating(false);
     }
   }, [
     createSourceUploadUrl,

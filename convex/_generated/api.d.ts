@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as ai from "../ai.js";
 import type * as feedback from "../feedback.js";
 import type * as generations from "../generations.js";
 import type * as http from "../http.js";
@@ -23,6 +24,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  ai: typeof ai;
   feedback: typeof feedback;
   generations: typeof generations;
   http: typeof http;
