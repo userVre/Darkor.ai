@@ -78,6 +78,13 @@ export function getEnvReport(): EnvReport {
   for (const key of requiredKeys) {
     try {
       const value = resolveEnv(key);
+      if (key === "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY") {
+        if (!value?.trim()) {
+          missing.push(key);
+        }
+        continue;
+      }
+
       if (!resolvePublicEndpoint(value, key)) {
         missing.push(key);
       }
