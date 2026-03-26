@@ -71,12 +71,12 @@ export const CreditLimitModal = memo(function CreditLimitModal({
                   style={styles.iconShell}
                 >
                   <LinearGradient
-                    colors={["rgba(255,243,199,0.98)", "rgba(251,191,36,0.9)", "rgba(217,119,6,0.88)"]}
+                    colors={["rgba(245,208,254,0.98)", "rgba(217,70,239,0.92)", "rgba(79,70,229,0.9)"]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.iconGradient}
                   >
-                    <Gem color="#120a02" size={34} strokeWidth={2.2} />
+                    <Gem color="#100314" size={34} strokeWidth={2.2} />
                   </LinearGradient>
                 </MotiView>
 
@@ -91,11 +91,11 @@ export const CreditLimitModal = memo(function CreditLimitModal({
                   pressableClassName="cursor-pointer"
                   className="cursor-pointer"
                   style={styles.ctaOuter}
-                  glowColor="rgba(245, 158, 11, 0.24)"
+                  glowColor="rgba(217,70,239,0.24)"
                   scale={0.988}
                 >
                   <LinearGradient
-                    colors={["#fff2d7", "#f3c98a", "#d99a4e"]}
+                    colors={["#f5d0fe", "#d946ef", "#4f46e5"]}
                     start={{ x: 0, y: 0.5 }}
                     end={{ x: 1, y: 0.5 }}
                     style={styles.ctaGradient}
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 22,
     borderRadius: 999,
-    shadowColor: "#f59e0b",
+    shadowColor: "#d946ef",
     shadowOpacity: 0.22,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },

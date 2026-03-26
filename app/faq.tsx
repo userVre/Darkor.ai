@@ -81,9 +81,9 @@ export default function FaqScreen() {
               <View className="flex-row items-start gap-3">
                 <View
                   className="mt-0.5 h-10 w-10 items-center justify-center rounded-2xl"
-                  style={{ backgroundColor: "rgba(245, 158, 11, 0.14)" }}
+                  style={{ backgroundColor: "rgba(217, 70, 239, 0.14)" }}
                 >
-                  <CircleHelp color="#f59e0b" size={18} />
+                  <CircleHelp color="#d946ef" size={18} />
                 </View>
                 <View className="flex-1">
                   <Text className="text-base font-semibold text-white">{item.question}</Text>

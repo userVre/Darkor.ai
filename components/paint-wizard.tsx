@@ -614,7 +614,7 @@ export function PaintWizard() {
           <View style={styles.heroCard}>
             <Text style={styles.heroTitle}>Add a Photo</Text>
             <Text style={styles.heroText}>
-              Upload a room photo where walls are clearly visible for the best AI color application.
+              Upload a room photo with clear wall visibility so Darkor.ai can deliver a precise, designer-grade recoloring.
             </Text>
 
             <LuxPressable
@@ -795,7 +795,7 @@ export function PaintWizard() {
                           <ActivityIndicator color="#ffffff" />
                           <Text style={styles.detectTitle}>Preparing your masking surface...</Text>
                           <Text style={styles.detectText}>
-                            Home AI is tuning the canvas so you can paint precise edges around built-ins, windows, and furniture.
+                            Darkor.ai is refining the canvas so you can paint crisp edges around built-ins, windows, and furniture.
                           </Text>
                         </View>
                       </MotiView>
@@ -1018,9 +1018,9 @@ export function PaintWizard() {
           </View>
           <View style={styles.processingCopy}>
             <ActivityIndicator size="small" color="#ffffff" />
-            <Text style={styles.processingTitle}>AI is analyzing your wall paint...</Text>
+            <Text style={styles.processingTitle}>AI is crafting your masterpiece...</Text>
             <Text style={styles.processingText}>
-              Nano Banana is locking the room structure, isolating the masked walls, and applying {selectedColor?.label ?? "your color"} with a premium finish.
+              Darkor.ai is preserving the architecture, refining the masked wall planes, and layering {selectedColor?.label ?? "your selected hue"} with a luxury finish.
             </Text>
           </View>
         </View>
@@ -1036,6 +1036,13 @@ export function PaintWizard() {
           }}
           showsVerticalScrollIndicator={false}
         >
+          <View style={styles.resultIntro}>
+            <Text style={styles.resultHeading}>Behold your new interior</Text>
+            <Text style={styles.resultSubheading}>
+              A polished wall concept, composed to preserve the room's structure, furnishing layout, and natural light.
+            </Text>
+          </View>
+
           <View style={[styles.canvasFrame, { height: Math.min(height * 0.56, 460) }]}>
             {generatedImageUrl ? (
               <Image source={{ uri: generatedImageUrl }} style={styles.photoImage} contentFit="contain" />
@@ -1780,6 +1787,24 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: "center",
     maxWidth: 320,
+  },
+  resultIntro: {
+    alignItems: "center",
+    gap: 8,
+  },
+  resultHeading: {
+    color: "#ffffff",
+    fontSize: 28,
+    fontWeight: "800",
+    letterSpacing: -0.8,
+    textAlign: "center",
+  },
+  resultSubheading: {
+    color: "#b4b4bb",
+    fontSize: 14,
+    lineHeight: 22,
+    textAlign: "center",
+    maxWidth: 360,
   },
   resultFallback: {
     flex: 1,

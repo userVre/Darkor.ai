@@ -60,8 +60,8 @@ export const SERVICE_WIZARD_THEME = {
     disabledSurface: "rgba(39,39,42,0.92)",
   },
   gradients: {
-    accent: ["#d946ef", "#ec4899", "#7c3aed"] as const,
-    accentButton: ["#d946ef", "#c026d3"] as const,
+    accent: ["#d946ef", "#9333ea", "#4f46e5"] as const,
+    accentButton: ["#d946ef", "#4f46e5"] as const,
     hero: ["#111113", "#050506"] as const,
     accentWash: ["rgba(217,70,239,0.16)", "rgba(255,255,255,0.04)"] as const,
   },

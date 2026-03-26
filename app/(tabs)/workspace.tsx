@@ -24,7 +24,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
   useWindowDimensions,
 } from "react-native";
@@ -523,7 +522,7 @@ const FINISH_OPTIONS: FinishOption[] = [
     title: "Satin",
     description: "Balanced sheen that keeps texture visible and refined.",
     promptLabel: "satin",
-    accentColor: "#F59E0B",
+    accentColor: "#d946ef",
   },
 ];
 
@@ -882,9 +881,9 @@ const FLOOR_MASK_EDGE_PATH = "M 10 67 C 24 58 41 53 57 54 C 73 55 86 62 96 73";
 const PALETTE_OPTIONS: PaletteOption[] = [
   {
     id: "surprise",
-    label: "Surprise Me",
+    label: "Curated Mix",
     colors: ["#f7f7f5", "#f4d7a6", "#fd5d82", "#6b8afd", "#121212"],
-    description: "Unexpected yet balanced.",
+    description: "An editor's balanced palette composition.",
   },
   {
     id: "gray",
@@ -948,9 +947,9 @@ const PALETTE_OPTIONS: PaletteOption[] = [
   },
   {
     id: "sunset",
-    label: "Neon Sunset",
-    colors: ["#f59e0b", "#ff4db8", "#8b00ff", "#fff04d", "#ffd8a8"],
-    description: "High-contrast playful glow.",
+    label: "Fuchsia Noir",
+    colors: ["#16081f", "#4c1d95", "#7c3aed", "#d946ef", "#f5d0fe"],
+    description: "A couture fuchsia-to-indigo statement.",
   },
 ];
 
@@ -1059,7 +1058,7 @@ const MODE_OPTIONS: ModeOption[] = [
   {
     id: "preserve",
     title: "Structural Preservation",
-    description: "Follow your room's structure closely.",
+    description: "Respect the architecture while elevating materials, mood, and styling.",
     promptHint:
       "Preserve the original architecture, room structure, camera angle, and layout as closely as possible while upgrading furniture, finishes, and mood.",
     icon: PaintRoller,
@@ -1067,7 +1066,7 @@ const MODE_OPTIONS: ModeOption[] = [
   {
     id: "renovate",
     title: "Renovation Design",
-    description: "Have more freedom to change your space.",
+    description: "Introduce a bolder transformation while keeping the result coherent and believable.",
     promptHint:
       "Allow a more transformative renovation approach with stronger upgrades to built-ins, focal elements, and materials while keeping the result realistic and coherent.",
     icon: Wand2,
@@ -1098,19 +1097,17 @@ function inferBoardServiceType(styleLabel?: string | null, roomLabel?: string | 
 }
 
 function getProcessingLabel(serviceType?: string | null) {
-  if (serviceType === "paint") return "AI is analyzing your wall paint...";
-  if (serviceType === "floor") return "AI is analyzing your floor restyle...";
-  return "AI is analyzing your redesign...";
+  return "AI is crafting your masterpiece...";
 }
 
 function getProcessingStatusCopy(serviceType?: string | null) {
   if (serviceType === "paint") {
-    return "Nano Banana is isolating the walls and applying your selected finish.";
+    return "Darkor.ai is isolating the wall planes and layering your selected finish with gallery-grade realism.";
   }
   if (serviceType === "floor") {
-    return "Nano Banana is locking perspective and mapping the selected material.";
+    return "Darkor.ai is reading perspective, locking the floor plane, and composing the new material with premium detail.";
   }
-  return "Nano Banana is preserving the structure and rendering the redesign.";
+  return "Darkor.ai is preserving the architecture while composing a refined redesign.";
 }
 
 const FloorMaterialPreview = memo(function FloorMaterialPreview({
@@ -1671,11 +1668,42 @@ export default function WorkspaceScreen() {
 
   const ratioSpec = useMemo(() => resolveAspectRatio(selectedAspectRatio), [selectedAspectRatio]);
   const wizardColumnGap = 16;
-  const wizardCardWidth = useMemo(() => Math.max((width - 48 - wizardColumnGap) / 2, 148), [width]);
+  const wizardGridMaxWidth = useMemo(() => Math.min(width - 40, 980), [width]);
+  const wizardCardColumns = width >= 1100 ? 3 : 2;
+  const wizardCardWidth = useMemo(
+    () =>
+      Math.max(
+        Math.min((wizardGridMaxWidth - wizardColumnGap * (wizardCardColumns - 1)) / wizardCardColumns, 312),
+        148,
+      ),
+    [wizardCardColumns, wizardColumnGap, wizardGridMaxWidth],
+  );
   const wizardStyleGap = 12;
-  const wizardStyleCardWidth = useMemo(() => Math.max((width - 40 - wizardStyleGap * 2) / 3, 98), [width]);
+  const wizardStyleColumns = width >= 1100 ? 3 : 2;
+  const wizardStyleCardWidth = useMemo(
+    () =>
+      Math.max(
+        Math.min((wizardGridMaxWidth - wizardStyleGap * (wizardStyleColumns - 1)) / wizardStyleColumns, 252),
+        132,
+      ),
+    [wizardGridMaxWidth, wizardStyleColumns, wizardStyleGap],
+  );
   const wizardPaletteGap = 12;
-  const wizardPaletteCardWidth = useMemo(() => Math.max((width - 40 - wizardPaletteGap * 2) / 3, 98), [width]);
+  const wizardPaletteColumns = width >= 1100 ? 3 : 2;
+  const wizardPaletteCardWidth = useMemo(
+    () =>
+      Math.max(
+        Math.min((wizardGridMaxWidth - wizardPaletteGap * (wizardPaletteColumns - 1)) / wizardPaletteColumns, 228),
+        136,
+      ),
+    [wizardGridMaxWidth, wizardPaletteColumns, wizardPaletteGap],
+  );
+  const wizardModeGap = 12;
+  const wizardModeGridMaxWidth = Math.min(wizardGridMaxWidth, 760);
+  const wizardModeCardWidth = useMemo(
+    () => Math.max((wizardModeGridMaxWidth - wizardModeGap) / 2, 148),
+    [wizardModeGap, wizardModeGridMaxWidth],
+  );
   const wizardExampleCardSize = useMemo(() => Math.min(Math.max(width * 0.27, 92), 118), [width]);
   const wizardUploadSize = useMemo(() => Math.max(Math.min(width - 56, 336), 252), [width]);
 
@@ -2563,12 +2591,12 @@ export default function WorkspaceScreen() {
 
     if (isFloorService) {
       if (!selectedImage || !selectedRoom || !selectedStyle || !selectedFinishOption || !selectedFloorMaterialOption) {
-        Alert.alert("Complete the steps", "Add a room photo, choose a space, pick a material, and select a finish before continuing.");
+        Alert.alert("Complete the steps", "Add a room photo, select your space type, curate a material, and choose a finish before continuing.");
         return;
       }
     } else if (isPaintService) {
       if (!selectedImage || !selectedRoom || !selectedStyle || !selectedFinishOption || !selectedWallColorOption) {
-        Alert.alert("Complete the steps", "Add a room photo, choose a space, pick a color, and select a finish before continuing.");
+        Alert.alert("Complete the steps", "Add a room photo, select your space type, curate a wall color, and choose a finish before continuing.");
         return;
       }
     } else if (!selectedImage || !selectedRoom || !selectedStyle || !selectedPaletteOrDefault || !selectedModeOrDefault) {
@@ -3086,43 +3114,78 @@ export default function WorkspaceScreen() {
     const shouldPulseContinue = (isPhotoStep || isServiceFinishStep) ? isContinueActive : false;
     const continueButtonOpacity = isContinueActive ? 1 : 0.58;
     const selectedCustomPromptBlocks = new Set(getPromptBlocks(customPromptDraft));
-    const stepOneTitle = isFloorService ? "Floor Restyle" : isPaintService ? "Add a Photo" : isGardenService ? "Start Gardening" : isExteriorService ? "Add Exterior Photo" : "Add a Photo";
-    const emptyUploadTitle = isFloorService ? "Add Floor Photo" : isPaintService ? "Start Painting" : isGardenService ? "Start Gardening" : isExteriorService ? "Start Exterior Redesign" : "Start Redesigning";
+    const stepOneTitle = isFloorService ? "Floor Restyle" : isPaintService ? "Add a Photo" : isGardenService ? "Add a Garden Photo" : isExteriorService ? "Add an Exterior Photo" : "Add a Photo";
+    const emptyUploadTitle = isFloorService ? "Add Floor Photo" : isPaintService ? "Add a Photo" : isGardenService ? "Start Your Garden Redesign" : isExteriorService ? "Start Exterior Redesign" : "Start Redesigning";
     const stepOneDescription = isGardenService
-      ? "Redesign and beautify your garden"
+      ? "Upload an outdoor scene so Darkor.ai can elevate the landscape with a composed, architectural point of view."
       : isFloorService
-        ? "Mark, recolor, and transform your space effortlessly."
+        ? "Upload a room image so Darkor.ai can read the floor plane and stage a premium material transformation."
       : isPaintService
-        ? "Upload a room photo or choose one of the paint-ready examples below."
+        ? "Upload a room photo and Darkor.ai will prepare it for a precise, designer-led wall recoloring."
       : isExteriorService
-        ? "Upload a building photo or choose one of the exterior examples below."
-        : "Upload a room photo or choose one of the examples below.";
-    const stepTwoTitle = isExteriorService ? "Choose Building Type" : isGardenService ? "Select Area" : "Choose Space";
+        ? "Upload a building photo so Darkor.ai can reimagine the facade with a polished architectural language."
+        : "Upload a room photo so Darkor.ai can compose a coherent, elevated redesign.";
+    const stepTwoTitle = "Select your space type";
     const stepTwoDescription = isExteriorService
-      ? "Select the building category that best matches the exterior you want to transform."
+      ? "Choose the architectural envelope that best matches the facade you want to reimagine."
       : isGardenService
-        ? "Choose the garden area you want to redesign first."
-        : "Tell Darkor.ai what kind of room or area you want to transform.";
+        ? "Choose the outdoor zone you want Darkor.ai to elevate first."
+        : "Tell Darkor.ai which room typology it should redesign so the proposal stays architecturally grounded.";
     const stepThreeTitle = isPaintService
-      ? "Choose Wall Color"
+      ? "Curate the wall color"
       : isFloorService
-        ? "Choose Flooring Material"
-        : "Select Style";
+        ? "Curate the floor material"
+        : "Curate the style direction";
     const stepThreeDescription = isPaintService
-      ? "Pick the wall color palette Darkor.ai should apply after detecting the room surfaces."
+      ? "Select the wall tone Darkor.ai should introduce once the masked surfaces are refined."
       : isFloorService
-        ? "Choose the flooring material Darkor.ai should map into the visible floor area."
+        ? "Select the flooring material Darkor.ai should compose into the visible floor plane."
         : isExteriorService
-      ? "Choose an architectural direction for the exterior transformation."
+      ? "Choose the architectural language that should guide the exterior transformation."
       : isGardenService
-        ? "Choose a landscape style for the garden transformation."
-        : "Choose one of the design styles below, or write your own custom brief.";
-    const stepFourTitle = isPaintService ? "Refine Paint" : isFloorService ? "Refine Flooring" : "Personalize";
+        ? "Choose the landscape expression Darkor.ai should use for the garden redesign."
+        : "Choose a curated design direction, or write a custom architectural brief.";
+    const stepFourTitle = isPaintService ? "Refine the finish" : isFloorService ? "Refine the finish" : "Refine the creative direction";
     const stepFourDescription = isPaintService
-      ? "Choose a finish type for the selected wall color. We'll preserve the room geometry and lighting."
+      ? "Choose how the selected wall color should catch light so the render feels tailored, realistic, and high-end."
       : isFloorService
-        ? "Choose a finish type so the material reads correctly once Darkor.ai maps it onto the floor."
-        : "Pick the redesign mode and color palette before generating your result.";
+        ? "Choose how the selected flooring material should read under light once Darkor.ai maps it into the space."
+        : "Choose the design intensity and palette family before Darkor.ai unveils the final composition.";
+    const wizardSectionHeaderStyle = { gap: 12, alignItems: "center" as const };
+    const wizardSectionBodyStyle = {
+      color: wizardMutedTextColor,
+      fontSize: 15,
+      lineHeight: 24,
+      maxWidth: Math.min(wizardGridMaxWidth, 720),
+      textAlign: "center" as const,
+    };
+    const wizardCenteredGridStyle = {
+      width: "100%" as const,
+      maxWidth: wizardGridMaxWidth,
+      alignSelf: "center" as const,
+      flexDirection: "row" as const,
+      flexWrap: "wrap" as const,
+      justifyContent: "center" as const,
+      gap: wizardColumnGap,
+    };
+    const wizardPaletteGridStyle = {
+      width: "100%" as const,
+      maxWidth: wizardGridMaxWidth,
+      alignSelf: "center" as const,
+      flexDirection: "row" as const,
+      flexWrap: "wrap" as const,
+      justifyContent: "center" as const,
+      gap: wizardPaletteGap,
+    };
+    const wizardModeGridStyle = {
+      width: "100%" as const,
+      maxWidth: wizardModeGridMaxWidth,
+      alignSelf: "center" as const,
+      flexDirection: "row" as const,
+      flexWrap: "wrap" as const,
+      justifyContent: "center" as const,
+      gap: wizardModeGap,
+    };
     const showContinueBar = !isCustomPromptViewOpen;
     const continueLabel = isPhotoStep
       ? "Continue"
@@ -3211,12 +3274,14 @@ export default function WorkspaceScreen() {
                   )
                 }
                 rightAccessory={
-                  <TouchableOpacity
+                  <LuxPressable
                     onPress={handleCloseWizard}
                     onPressIn={() => setIsHeaderClosePressed(true)}
                     onPressOut={() => setIsHeaderClosePressed(false)}
-                    activeOpacity={0.82}
+                    pressableClassName="cursor-pointer"
                     className="cursor-pointer"
+                    glowColor={SERVICE_WIZARD_THEME.colors.accentGlowSoft}
+                    scale={0.96}
                   >
                     <MotiView
                       animate={{ scale: isHeaderClosePressed ? 0.94 : 1 }}
@@ -3234,7 +3299,7 @@ export default function WorkspaceScreen() {
                     >
                       <Close color={wizardPrimaryTextColor} size={20} strokeWidth={2.2} />
                     </MotiView>
-                  </TouchableOpacity>
+                  </LuxPressable>
                 }
               />
             </View>
@@ -3491,14 +3556,16 @@ export default function WorkspaceScreen() {
                 ) : null}
                 {workflowStep === 1 ? (
                   <>
-                      <View style={{ gap: 12 }}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>{stepTwoTitle}</Text>
-                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
+                      <View style={wizardSectionHeaderStyle}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                          {stepTwoTitle}
+                        </Text>
+                        <Text style={wizardSectionBodyStyle}>
                           {stepTwoDescription}
                         </Text>
                       </View>
 
-                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                      <View style={wizardCenteredGridStyle}>
                         {spaceOptions.map((option, index) => {
                           const active = selectedRoom === option;
                           const meta = ROOM_CARD_META[option as keyof typeof ROOM_CARD_META] ?? {
@@ -3594,14 +3661,16 @@ export default function WorkspaceScreen() {
                 {workflowStep === 2 ? (
                   isPaintService ? (
                     <>
-                      <View style={{ gap: 12 }}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>{stepThreeTitle}</Text>
-                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 360 }}>
+                      <View style={wizardSectionHeaderStyle}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                          {stepThreeTitle}
+                        </Text>
+                        <Text style={wizardSectionBodyStyle}>
                           {stepThreeDescription}
                         </Text>
                       </View>
 
-                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                      <View style={wizardCenteredGridStyle}>
                         {WALL_COLOR_OPTIONS.map((option, index) => {
                           const active = selectedStyle === option.title;
                           return (
@@ -3654,14 +3723,16 @@ export default function WorkspaceScreen() {
                     </>
                   ) : isFloorService ? (
                     <>
-                      <View style={{ gap: 12 }}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>{stepThreeTitle}</Text>
-                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 360 }}>
+                      <View style={wizardSectionHeaderStyle}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                          {stepThreeTitle}
+                        </Text>
+                        <Text style={wizardSectionBodyStyle}>
                           {stepThreeDescription}
                         </Text>
                       </View>
 
-                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                      <View style={wizardCenteredGridStyle}>
                         {FLOOR_MATERIAL_OPTIONS.map((material, index) => {
                           const active = selectedStyle === material.title;
                           return (
@@ -3702,15 +3773,17 @@ export default function WorkspaceScreen() {
                     </>
                   ) : (
                     <>
-                      <View style={{ gap: 12 }}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>{stepThreeTitle}</Text>
-                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
+                      <View style={wizardSectionHeaderStyle}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                          {stepThreeTitle}
+                        </Text>
+                        <Text style={wizardSectionBodyStyle}>
                           {stepThreeDescription}
                         </Text>
                       </View>
 
                       {isLeanGenerationService ? (
-                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardColumnGap }}>
+                        <View style={wizardCenteredGridStyle}>
                           {(isExteriorService ? EXTERIOR_STYLE_LIBRARY : GARDEN_STYLE_LIBRARY).map((style, index) => {
                             const active = selectedStyle === style.title;
                             const StyleIcon = style.icon;
@@ -3820,15 +3893,20 @@ export default function WorkspaceScreen() {
                 {workflowStep === 3 ? (
                   isPaintService || isFloorService ? (
                     <>
-                      <View style={{ gap: 12 }}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>{stepFourTitle}</Text>
-                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 360 }}>
+                      <View style={wizardSectionHeaderStyle}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                          {stepFourTitle}
+                        </Text>
+                        <Text style={wizardSectionBodyStyle}>
                           {stepFourDescription}
                         </Text>
                       </View>
 
                       <View
                         style={{
+                          width: "100%",
+                          maxWidth: wizardGridMaxWidth,
+                          alignSelf: "center",
                           borderRadius: 32,
                           borderWidth: 1,
                           borderColor: wizardSurfaceBorderColor,
@@ -3850,17 +3928,17 @@ export default function WorkspaceScreen() {
                           }}
                         >
                           <Text style={{ color: "#ffffff", fontSize: 23, fontWeight: "700", letterSpacing: -0.45 }}>
-                            {isPaintService ? selectedWallColorOption?.title ?? selectedStyle ?? "Pick a wall color" : selectedFloorMaterialOption?.title ?? selectedStyle ?? "Pick a floor material"}
+                            {isPaintService ? selectedWallColorOption?.title ?? selectedStyle ?? "Select a wall color" : selectedFloorMaterialOption?.title ?? selectedStyle ?? "Select a floor material"}
                           </Text>
                           <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
                             {selectedRoom
                               ? `Applying this selection to the ${selectedRoom.toLowerCase()} while preserving the existing structure and lighting.`
-                              : "Choose a room type to keep the material placement grounded."}
+                              : "Select a space type to keep the material placement grounded."}
                           </Text>
                           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
                             {[
-                              { label: selectedRoom ?? "No space", active: Boolean(selectedRoom) },
-                              { label: selectedStyle ?? (isPaintService ? "No color" : "No material"), active: Boolean(selectedStyle) },
+                              { label: selectedRoom ?? "Space type not selected", active: Boolean(selectedRoom) },
+                              { label: selectedStyle ?? (isPaintService ? "Wall color not selected" : "Material not selected"), active: Boolean(selectedStyle) },
                             ].map((item) => (
                               <View
                                 key={item.label}
@@ -3930,21 +4008,26 @@ export default function WorkspaceScreen() {
                     </>
                   ) : isLeanGenerationService ? (
                     <>
-                      <View style={{ gap: 12 }}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>Generate</Text>
-                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
+                      <View style={wizardSectionHeaderStyle}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                          Generate
+                        </Text>
+                        <Text style={wizardSectionBodyStyle}>
                           {isGardenService
                             ? effectiveSignedIn
-                              ? "Review your garden selections, then continue to generate and send the result to Your Board."
-                              : "Review your garden selections, then continue to generate instantly. Sign in later to save it to Your Board."
+                              ? "Review your garden selections, then generate a polished concept and send it to Your Board."
+                              : "Review your garden selections, then generate instantly. Sign in later to preserve it in Your Board."
                             : effectiveSignedIn
-                              ? "Review your exterior selections, then continue to generate and send the result to Your Board."
-                              : "Review your exterior selections, then continue to generate instantly. Sign in later to save it to Your Board."}
+                              ? "Review your exterior selections, then generate a polished concept and send it to Your Board."
+                              : "Review your exterior selections, then generate instantly. Sign in later to preserve it in Your Board."}
                         </Text>
                       </View>
 
                       <View
                         style={{
+                          width: "100%",
+                          maxWidth: wizardGridMaxWidth,
+                          alignSelf: "center",
                           borderRadius: 28,
                           borderWidth: 1,
                           borderColor: wizardSurfaceBorderColor,
@@ -3970,17 +4053,17 @@ export default function WorkspaceScreen() {
                         <View style={{ paddingHorizontal: 18, paddingTop: 18, paddingBottom: 20, gap: 18 }}>
                           <View style={{ gap: 8 }}>
                             <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.45 }}>
-                              {selectedRoom ?? (isGardenService ? "Choose a garden area" : "Choose a building type")}
+                              {selectedRoom ?? (isGardenService ? "Select a garden zone" : "Select a building type")}
                             </Text>
                             <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
-                              {selectedStyle ? `${selectedStyle} architectural direction selected.` : "Choose an exterior style to continue."}
+                              {selectedStyle ? `${selectedStyle} architectural direction selected.` : "Select an exterior style to continue."}
                             </Text>
                           </View>
 
                           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
                             {[
-                              { label: selectedRoom ?? "No building type", active: Boolean(selectedRoom) },
-                              { label: selectedStyle ?? "No style", active: Boolean(selectedStyle) },
+                              { label: selectedRoom ?? "Building type not selected", active: Boolean(selectedRoom) },
+                              { label: selectedStyle ?? "Style direction not selected", active: Boolean(selectedStyle) },
                             ].map((item) => (
                               <View
                                 key={item.label}
@@ -4002,21 +4085,23 @@ export default function WorkspaceScreen() {
                     </>
                   ) : (
                     <>
-                      <View style={{ gap: 12 }}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>Personalize</Text>
-                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
-                          Pick the redesign mode and color palette before generating your result.
+                      <View style={wizardSectionHeaderStyle}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                          Refine the creative direction
+                        </Text>
+                        <Text style={wizardSectionBodyStyle}>
+                          Set the design intensity and palette family before Darkor.ai reveals your final composition.
                         </Text>
                       </View>
 
-                      <View style={{ gap: 12 }}>
-                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Mode</Text>
-                        <View style={{ flexDirection: "row", gap: 12 }}>
+                      <View style={{ gap: 12, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
+                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4, textAlign: "center" }}>Mode</Text>
+                        <View style={wizardModeGridStyle}>
                           {MODE_OPTIONS.map((mode, index) => {
                             const active = selectedModeId === mode.id;
                             const ModeIcon = mode.icon;
                             return (
-                              <MotiView key={mode.id} {...staggerFadeUp(index, 40)} style={{ flex: 1 }}>
+                              <MotiView key={mode.id} {...staggerFadeUp(index, 40)} style={{ width: wizardModeCardWidth }}>
                                 <LuxPressable
                                   onPress={() => handleSelectMode(mode.id)}
                                   className="cursor-pointer rounded-[26px] border px-5 py-5"
@@ -4044,9 +4129,9 @@ export default function WorkspaceScreen() {
                         </View>
                       </View>
 
-                      <View style={{ gap: 12 }}>
-                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Palette</Text>
-                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardPaletteGap }}>
+                      <View style={{ gap: 12, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
+                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4, textAlign: "center" }}>Palette</Text>
+                        <View style={wizardPaletteGridStyle}>
                           {PALETTE_OPTIONS.slice(0, 8).map((palette, index) => {
                             const active = selectedPaletteId === palette.id;
                             return (
@@ -4484,7 +4569,13 @@ export default function WorkspaceScreen() {
                 >
                   <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
                     <Text style={[SERVICE_WIZARD_THEME.typography.heroTitle, { color: wizardPrimaryTextColor }]}>Custom Prompt</Text>
-                    <TouchableOpacity onPress={handleCloseCustomStyle} activeOpacity={0.82} className="cursor-pointer">
+                    <LuxPressable
+                      onPress={handleCloseCustomStyle}
+                      pressableClassName="cursor-pointer"
+                      className="cursor-pointer"
+                      glowColor={SERVICE_WIZARD_THEME.colors.accentGlowSoft}
+                      scale={0.96}
+                    >
                       <MotiView
                         animate={{ scale: 1 }}
                         style={{
@@ -4500,7 +4591,7 @@ export default function WorkspaceScreen() {
                       >
                         <Close color="#ffffff" size={18} strokeWidth={2.2} />
                       </MotiView>
-                    </TouchableOpacity>
+                    </LuxPressable>
                   </View>
 
                   <View style={{ gap: 12 }}>

@@ -389,8 +389,8 @@ export function FloorWizard() {
           <LinearGradient colors={SERVICE_WIZARD_THEME.gradients.hero} style={styles.heroCard}>
             <View style={styles.heroIcon}><Sparkles color={SERVICE_WIZARD_THEME.colors.accent} size={22} /></View>
             <Text style={styles.heroTitle}>Add a Photo</Text>
-            <Text style={styles.heroText}>Upload a clean room image so Home AI can read the floor plane, preserve furniture placement, and map new materials with real estate-grade precision.</Text>
-            <View style={styles.tipCard}><Text style={styles.tipLabel}>Tip</Text><Text style={styles.tipText}>For best results, make sure the floor is clearly visible.</Text></View>
+            <Text style={styles.heroText}>Upload a clean room image so Darkor.ai can read the floor plane, preserve furniture placement, and stage a premium material transformation.</Text>
+            <View style={styles.tipCard}><Text style={styles.tipLabel}>Tip</Text><Text style={styles.tipText}>For the cleanest render, keep the floor plane clearly visible.</Text></View>
             <LuxPressable onPress={() => handleSelectMedia("library")} className={pointerClassName} style={{ width: "100%" }} glowColor={SERVICE_WIZARD_THEME.colors.accentGlowSoft} scale={0.99}><LinearGradient colors={SERVICE_WIZARD_THEME.gradients.accentButton} style={styles.primaryButton}><ImagePlus color="#ffffff" size={18} /><Text style={styles.primaryText}>Upload Photo</Text></LinearGradient></LuxPressable>
             <LuxPressable onPress={() => handleSelectMedia("camera")} className={pointerClassName} style={{ width: "100%" }} glowColor="rgba(255,255,255,0.05)" scale={0.99}><View style={styles.secondaryButton}><Camera color="#ffffff" size={18} /><Text style={styles.secondaryText}>Capture with Camera</Text></View></LuxPressable>
           </LinearGradient>
@@ -463,9 +463,9 @@ export function FloorWizard() {
         <>
           <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: Math.max(insets.bottom + 122, 138), gap: 18 }} showsVerticalScrollIndicator={false}>
             <Text style={styles.stepTitle}>Select Material</Text>
-            <Text style={styles.stepText}>Choose a premium finish engineered to feel photoreal, perspective-aware, and market-ready in a modern listing presentation.</Text>
+            <Text style={styles.stepText}>Select a premium material curated to read as photoreal, perspective-aware, and listing-ready.</Text>
             <View style={styles.grid}>{MATERIALS.map((option) => <MaterialCard key={option.id} option={option} active={option.id === selectedMaterial?.id} width={materialCardWidth} onPress={() => { setSelectedMaterialId(option.id); triggerHaptic(); }} />)}</View>
-            <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Selected</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? "No material selected"}</Text><Text style={styles.summaryText}>{selectedMaterial?.subtitle ?? "Choose a flooring material to unlock the AI restyle."}</Text></View>
+            <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Selected Material</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? "No material selected"}</Text><Text style={styles.summaryText}>{selectedMaterial?.subtitle ?? "Select a flooring material to unlock the AI restyle."}</Text></View>
           </ScrollView>
 
           <View style={[styles.fixedContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
@@ -490,14 +490,20 @@ export function FloorWizard() {
           </View>
           <View style={styles.processingCopy}>
             <ActivityIndicator size="small" color="#ffffff" />
-            <Text style={styles.processingTitle}>AI is analyzing your floor restyle...</Text>
-            <Text style={styles.processingText}>Nano Banana is reading the room geometry, locking the floor plane, and mapping your selected material with realistic scale and reflections.</Text>
+            <Text style={styles.processingTitle}>AI is crafting your masterpiece...</Text>
+            <Text style={styles.processingText}>Darkor.ai is reading the room geometry, locking the floor plane, and composing your selected material with premium scale and light response.</Text>
           </View>
         </View>
       ) : null}
 
       {step === "result" ? (
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: Math.max(insets.bottom + 28, 34), gap: 18 }} showsVerticalScrollIndicator={false}>
+          <View style={styles.resultIntro}>
+            <Text style={styles.resultHeading}>Behold your new interior</Text>
+            <Text style={styles.resultSubheading}>
+              A material-led floor transformation designed to stay true to the room's perspective, furnishings, and natural light.
+            </Text>
+          </View>
           <View style={styles.resultFrame}>
             {selectedImage && generatedImageUrl ? (
               <View style={{ width: resultFrameWidth, aspectRatio, alignSelf: "center" }}>
@@ -607,6 +613,9 @@ const styles = StyleSheet.create({
   processingCopy: { alignItems: "center", gap: 12 },
   processingTitle: { color: "#ffffff", fontSize: 24, fontWeight: "800", textAlign: "center" },
   processingText: { color: "#c4c4cc", fontSize: 14, lineHeight: 22, textAlign: "center", maxWidth: 320 },
+  resultIntro: { alignItems: "center", gap: 8 },
+  resultHeading: { color: "#ffffff", fontSize: 28, fontWeight: "800", letterSpacing: -0.8, textAlign: "center" },
+  resultSubheading: { color: "#b4b4bb", fontSize: 14, lineHeight: 22, textAlign: "center", maxWidth: 360 },
   resultFrame: { borderRadius: 34, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#000000" },
   resultDivider: { position: "absolute", top: 0, bottom: 0, width: 2, backgroundColor: "rgba(255,255,255,0.92)" },
   resultHandle: { height: 46, width: 46, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.65)", borderWidth: 1, borderColor: "rgba(255,255,255,0.16)" },
