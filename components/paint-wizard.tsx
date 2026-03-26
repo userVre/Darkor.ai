@@ -23,7 +23,10 @@ import {
 } from "lucide-react-native";
 
 import { triggerHaptic } from "../lib/haptics";
+import { runWithFriendlyRetry } from "../lib/generation-retry";
+import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { useProSuccess } from "./pro-success-context";
+import { ServiceWizardHeader } from "./service-wizard-header";
 import { LuxPressable } from "./lux-pressable";
 import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerSession } from "./viewer-session-context";
@@ -67,14 +70,14 @@ type FinishOption = {
 
 const pointerClassName = "cursor-pointer";
 const OLED_BLACK = "#000000";
-const CARD_BLACK = "#08080A";
-const CARD_BLACK_SOFT = "#0B0B0E";
-const MASK_COLOR = "rgba(255, 0, 0, 0.5)";
+const CARD_BLACK = SERVICE_WIZARD_THEME.colors.surfaceRaised;
+const CARD_BLACK_SOFT = SERVICE_WIZARD_THEME.colors.surfaceSoft;
+const MASK_COLOR = "rgba(236, 72, 153, 0.58)";
 const MASK_CAPTURE_COLOR = "#FFFFFF";
 const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
 const DETECT_DURATION_MS = 1700;
-const MASK_CONTINUE_GRADIENT = ["#FF4D4D", "#FF0000"] as const;
+const MASK_CONTINUE_GRADIENT = SERVICE_WIZARD_THEME.gradients.accent;
 
 const COLOR_CATEGORIES: ColorCategory[] = [
   {
@@ -266,6 +269,7 @@ export function PaintWizard() {
     sliderWidth,
     setSliderWidth,
     activePoint,
+    isDrawing,
     hasMask,
     handleCanvasLayout,
     clearMask,
@@ -293,8 +297,6 @@ export function PaintWizard() {
   const canGenerate = Boolean(selectedImage && hasMask && selectedColor && !isGenerating);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
-  const headerStepLabel = `Step ${currentStepNumber}/4`;
-  const progressWidth = (170 * currentStepNumber) / 4;
   const canContinueFromMask = hasMask && !isDetecting;
   const canContinueFromColors = Boolean(selectedColor && selectedImage && hasMask && !isGenerating);
   const colorCardSize = Math.max(94, Math.floor((width - 72) / 3));
@@ -456,33 +458,38 @@ export function PaintWizard() {
       setIsGenerating(true);
       setStep("processing");
 
-      const sourceUri = await captureRef(sourceCaptureRef, {
-        format: "png",
-        quality: 1,
-        result: "tmpfile",
-      });
-      const maskUri = await captureRef(maskCaptureRef, {
-        format: "png",
-        quality: 1,
-        result: "tmpfile",
-      });
+      const result = (await runWithFriendlyRetry(
+        async () => {
+          const sourceUri = await captureRef(sourceCaptureRef, {
+            format: "png",
+            quality: 1,
+            result: "tmpfile",
+          });
+          const maskUri = await captureRef(maskCaptureRef, {
+            format: "png",
+            quality: 1,
+            result: "tmpfile",
+          });
 
-      const [sourceStorageId, maskStorageId] = await Promise.all([
-        uploadBlobToStorage(sourceUri),
-        uploadBlobToStorage(maskUri),
-      ]);
+          const [sourceStorageId, maskStorageId] = await Promise.all([
+            uploadBlobToStorage(sourceUri),
+            uploadBlobToStorage(maskUri),
+          ]);
 
-      const result = (await startGeneration({
-        anonymousId,
-        imageStorageId: sourceStorageId,
-        maskStorageId,
-        serviceType: "paint",
-        selection: `${selectedColor.label} (${selectedColor.value}) with a realistic ${selectedFinish.label.toLowerCase()} finish`,
-        roomType: "Room",
-        displayStyle: `${selectedColor.label} Paint`,
-        customPrompt: "Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.",
-        aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
-      })) as { generationId: string };
+          return (await startGeneration({
+            anonymousId,
+            imageStorageId: sourceStorageId,
+            maskStorageId,
+            serviceType: "paint",
+            selection: `${selectedColor.label} (${selectedColor.value}) with a realistic ${selectedFinish.label.toLowerCase()} finish`,
+            roomType: "Room",
+            displayStyle: `${selectedColor.label} Paint`,
+            customPrompt: "Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.",
+            aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
+          })) as { generationId: string };
+        },
+        showToast,
+      )) as { generationId: string };
 
       setGenerationId(result.generationId);
     } catch (error) {
@@ -538,8 +545,6 @@ export function PaintWizard() {
     if (step === "result") return setStep("colors");
   }, [router, step]);
 
-  const stepSubtitle = step === "mask" ? "Step 2" : headerStepLabel;
-
   return (
     <View style={styles.screen}>
       {selectedImage && canvasSize.width > 0 && canvasSize.height > 0 ? (
@@ -574,36 +579,27 @@ export function PaintWizard() {
         </View>
       ) : null}
 
-      <View style={[styles.topBar, { paddingTop: Math.max(insets.top + 8, 18) }]}> 
-        <LuxPressable
-          onPress={handleBack}
-          className={pointerClassName}
-          style={styles.topButton}
-          glowColor="rgba(255,255,255,0.06)"
-          scale={0.97}
-        >
-          <ArrowLeft color="#ffffff" size={18} />
-        </LuxPressable>
-
-        <View style={styles.topCopy}>
-          <Text style={styles.topTitle}>Smart Wall Paint</Text>
-          <Text style={styles.topSubtitle}>{stepSubtitle}</Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFillWrap, { width: progressWidth }]}>
-              <LinearGradient
-                colors={["#D946EF", "#EC4899", "#7C3AED"]}
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-                style={styles.progressFill}
-              />
-            </View>
+      <ServiceWizardHeader
+        title="Smart Wall Paint"
+        step={currentStepNumber}
+        topInset={insets.top}
+        leftAccessory={
+          <LuxPressable
+            onPress={handleBack}
+            className={pointerClassName}
+            style={styles.topButton}
+            glowColor="rgba(255,255,255,0.06)"
+            scale={0.97}
+          >
+            <ArrowLeft color="#ffffff" size={18} />
+          </LuxPressable>
+        }
+        rightAccessory={
+          <View style={styles.creditPill}>
+            <Text style={styles.creditText}>{creditBalance}</Text>
           </View>
-        </View>
-
-        <View style={styles.creditPill}>
-          <Text style={styles.creditText}>{creditBalance}</Text>
-        </View>
-      </View>
+        }
+      />
 
       {step === "intake" ? (
         <ScrollView
@@ -625,10 +621,10 @@ export function PaintWizard() {
               onPress={() => handleSelectMedia("library")}
               className={pointerClassName}
               style={styles.uploadSquarePressable}
-              glowColor="rgba(255,255,255,0.06)"
+              glowColor={SERVICE_WIZARD_THEME.colors.accentGlowSoft}
               scale={0.985}
             >
-              <LinearGradient colors={["#111113", "#050506"]} style={styles.uploadSquare}>
+              <LinearGradient colors={SERVICE_WIZARD_THEME.gradients.hero} style={styles.uploadSquare}>
                 <View style={styles.plusOrb}>
                   <Plus color="#ffffff" size={28} strokeWidth={2.4} />
                 </View>
@@ -664,43 +660,19 @@ export function PaintWizard() {
       {step === "mask" ? (
         <>
           <ScrollView
+            scrollEnabled={!isDrawing}
             contentContainerStyle={{
               paddingHorizontal: 16,
               paddingTop: 10,
-              paddingBottom: Math.max(insets.bottom + 188, 204),
+              paddingBottom: Math.max(insets.bottom + 248, 272),
               gap: 16,
             }}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.stepTitle}>Mark the walls you want to repaint</Text>
+            <Text style={styles.stepTitle}>Mark Area</Text>
             <Text style={styles.stepText}>
               Brush only over the wall surfaces. The loupe stays live while you paint so you can stay clean around furniture, windows, trim, and decor.
             </Text>
-
-            <View style={styles.toolbarRow}>
-              <LuxPressable
-                onPress={undoLastStroke}
-                disabled={!paintStrokes.length}
-                className={pointerClassName}
-                style={styles.toolbarButton}
-                glowColor="rgba(255,255,255,0.04)"
-                scale={0.98}
-              >
-                <RotateCcw color="#ffffff" size={16} />
-                <Text style={styles.toolbarText}>Undo</Text>
-              </LuxPressable>
-              <LuxPressable
-                onPress={clearMask}
-                disabled={!paintStrokes.length}
-                className={pointerClassName}
-                style={styles.toolbarButton}
-                glowColor="rgba(255,255,255,0.04)"
-                scale={0.98}
-              >
-                <Trash2 color="#ffffff" size={16} />
-                <Text style={styles.toolbarText}>Clear All</Text>
-              </LuxPressable>
-            </View>
 
             <View onLayout={handleCanvasLayout} style={[styles.canvasFrame, { height: previewHeight }]}>
               {selectedImage ? (
@@ -777,6 +749,35 @@ export function PaintWizard() {
                     </>
                   ) : null}
 
+                  <View style={styles.canvasToolbar}>
+                    <LuxPressable
+                      onPress={undoLastStroke}
+                      disabled={!paintStrokes.length}
+                      className={pointerClassName}
+                      style={styles.canvasToolbarButton}
+                      glowColor="rgba(255,255,255,0.04)"
+                      scale={0.98}
+                    >
+                      <RotateCcw color="#ffffff" size={16} />
+                      <Text style={styles.canvasToolbarText}>Undo</Text>
+                    </LuxPressable>
+                    <LuxPressable
+                      onPress={clearMask}
+                      disabled={!paintStrokes.length}
+                      className={pointerClassName}
+                      style={styles.canvasToolbarButton}
+                      glowColor="rgba(255,255,255,0.04)"
+                      scale={0.98}
+                    >
+                      <Trash2 color="#ffffff" size={16} />
+                      <Text style={styles.canvasToolbarText}>Clear All</Text>
+                    </LuxPressable>
+                  </View>
+
+                  <View pointerEvents="none" style={styles.hintPill}>
+                    <Text style={styles.hintText}>Paint directly on the walls. Use Undo or Clear All for quick corrections.</Text>
+                  </View>
+
                   <AnimatePresence>
                     {isDetecting ? (
                       <MotiView
@@ -803,10 +804,12 @@ export function PaintWizard() {
                 </>
               ) : null}
             </View>
+          </ScrollView>
 
-            <View style={styles.panel}>
+          <View style={[styles.fixedContinueBar, styles.maskContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
+            <View style={styles.maskControlCard}>
               <View style={styles.brushRow}>
-                <Text style={styles.brushTitle}>Brush Width</Text>
+                <Text style={styles.brushTitle}>Brush Size</Text>
                 <View style={styles.brushMeta}>
                   <BrushPreview width={brushWidth} />
                   <Text style={styles.brushMetaText}>{brushWidth}px</Text>
@@ -823,9 +826,7 @@ export function PaintWizard() {
                 </View>
               </GestureDetector>
             </View>
-          </ScrollView>
 
-          <View style={[styles.fixedContinueBar, styles.maskContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
             <LuxPressable
               onPress={() => {
                 triggerHaptic();
@@ -835,7 +836,7 @@ export function PaintWizard() {
               pressableClassName={pointerClassName}
               className={pointerClassName}
               style={{ width: "100%" }}
-              glowColor="rgba(255,0,0,0.2)"
+              glowColor={SERVICE_WIZARD_THEME.colors.accentGlow}
               scale={0.99}
             >
               {canContinueFromMask ? (
@@ -928,7 +929,7 @@ export function PaintWizard() {
               scale={0.99}
             >
               {canContinueFromColors ? (
-                <LinearGradient colors={["#D946EF", "#EC4899", "#7C3AED"]} style={styles.primaryButtonLarge}>
+                <LinearGradient colors={SERVICE_WIZARD_THEME.gradients.accent} style={styles.primaryButtonLarge}>
                   <Text style={styles.primaryText}>Continue</Text>
                 </LinearGradient>
               ) : (
@@ -985,7 +986,7 @@ export function PaintWizard() {
             glowColor="rgba(217,70,239,0.26)"
             scale={0.99}
           >
-            <LinearGradient colors={["#D946EF", "#EC4899", "#7C3AED"]} style={styles.primaryButtonLarge}>
+            <LinearGradient colors={SERVICE_WIZARD_THEME.gradients.accent} style={styles.primaryButtonLarge}>
               <Sparkles color="#ffffff" size={18} />
               <Text style={styles.primaryText}>{"Paint My Walls \u2728"}</Text>
             </LinearGradient>
@@ -1099,7 +1100,7 @@ export function PaintWizard() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: OLED_BLACK,
+    backgroundColor: SERVICE_WIZARD_THEME.colors.background,
   },
   captureStage: {
     position: "absolute",
@@ -1126,7 +1127,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: SERVICE_WIZARD_THEME.colors.border,
     backgroundColor: "rgba(255,255,255,0.05)",
   },
   topCopy: {
@@ -1197,7 +1198,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: SERVICE_WIZARD_THEME.colors.border,
     backgroundColor: "rgba(255,255,255,0.05)",
   },
   creditText: {
@@ -1208,21 +1209,18 @@ const styles = StyleSheet.create({
   heroCard: {
     borderRadius: 34,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: SERVICE_WIZARD_THEME.colors.border,
     backgroundColor: CARD_BLACK,
     padding: 22,
     gap: 18,
   },
   heroTitle: {
-    color: "#ffffff",
-    fontSize: 31,
-    fontWeight: "800",
-    letterSpacing: -1.1,
+    color: SERVICE_WIZARD_THEME.colors.textPrimary,
+    ...SERVICE_WIZARD_THEME.typography.heroTitle,
   },
   heroText: {
-    color: "#a1a1aa",
-    fontSize: 15,
-    lineHeight: 24,
+    color: SERVICE_WIZARD_THEME.colors.textMuted,
+    ...SERVICE_WIZARD_THEME.typography.bodyText,
     maxWidth: 320,
   },
   uploadSquarePressable: {
@@ -1233,7 +1231,7 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: 32,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: SERVICE_WIZARD_THEME.colors.border,
     alignItems: "center",
     justifyContent: "center",
     gap: 18,
@@ -1283,7 +1281,7 @@ const styles = StyleSheet.create({
   notesCard: {
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: SERVICE_WIZARD_THEME.colors.border,
     backgroundColor: CARD_BLACK_SOFT,
     padding: 18,
     gap: 10,
@@ -1303,39 +1301,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   stepTitle: {
-    color: "#ffffff",
-    fontSize: 29,
-    fontWeight: "800",
-    letterSpacing: -0.9,
+    color: SERVICE_WIZARD_THEME.colors.textPrimary,
+    ...SERVICE_WIZARD_THEME.typography.sectionTitle,
   },
   stepText: {
-    color: "#a1a1aa",
-    fontSize: 14,
-    lineHeight: 22,
+    color: SERVICE_WIZARD_THEME.colors.textMuted,
+    ...SERVICE_WIZARD_THEME.typography.compactBodyText,
     marginTop: 8,
     marginBottom: 14,
-  },
-  toolbarRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 12,
-  },
-  toolbarButton: {
-    flex: 1,
-    height: 44,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "rgba(255,255,255,0.04)",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  toolbarText: {
-    color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "700",
   },
   canvasFrame: {
     borderRadius: 30,
@@ -1343,6 +1316,30 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: "#020203",
     overflow: "hidden",
+  },
+  canvasToolbar: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+    flexDirection: "row",
+    gap: 8,
+  },
+  canvasToolbarButton: {
+    minHeight: 40,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(10,10,12,0.82)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  canvasToolbarText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "700",
   },
   photoImage: {
     width: "100%",
@@ -1417,14 +1414,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
     maxWidth: 280,
   },
-  panel: {
-    marginTop: 14,
-    borderRadius: 28,
+  maskControlCard: {
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: CARD_BLACK_SOFT,
-    padding: 18,
-    gap: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    gap: 14,
   },
   brushRow: {
     flexDirection: "row",
@@ -1474,7 +1471,7 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 999,
-    backgroundColor: "#FF0000",
+    backgroundColor: SERVICE_WIZARD_THEME.colors.accent,
   },
   primaryButton: {
     minHeight: 58,
@@ -1495,7 +1492,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(39,39,42,0.92)",
+    backgroundColor: SERVICE_WIZARD_THEME.colors.disabledSurface,
     opacity: 0.58,
   },
   primaryText: {
@@ -1540,9 +1537,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingTop: 14,
     paddingHorizontal: 16,
+    gap: 12,
     borderTopWidth: 1,
     borderTopColor: "rgba(255,255,255,0.06)",
-    backgroundColor: OLED_BLACK,
+    backgroundColor: SERVICE_WIZARD_THEME.colors.background,
   },
   maskContinueBar: {
     zIndex: 30,
@@ -1583,9 +1581,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.02)",
   },
   swatchOuterActive: {
-    borderColor: "#D946EF",
-    backgroundColor: "rgba(217,70,239,0.1)",
-    shadowColor: "#D946EF",
+    borderColor: SERVICE_WIZARD_THEME.colors.accent,
+    backgroundColor: SERVICE_WIZARD_THEME.colors.accentSurface,
+    shadowColor: SERVICE_WIZARD_THEME.colors.accent,
     shadowOpacity: 0.22,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
@@ -1692,8 +1690,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   finishCheckActive: {
-    borderColor: "#D946EF",
-    backgroundColor: "#D946EF",
+    borderColor: SERVICE_WIZARD_THEME.colors.accent,
+    backgroundColor: SERVICE_WIZARD_THEME.colors.accent,
   },
   processingScreen: {
     flex: 1,

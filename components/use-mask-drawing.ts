@@ -81,6 +81,7 @@ export function useMaskDrawing({
   const [strokes, setStrokes] = useState<MaskStroke[]>([]);
   const [currentStroke, setCurrentStroke] = useState<MaskStroke | null>(null);
   const [activePoint, setActivePoint] = useState<MaskPoint | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
   const [brushWidth, setBrushWidth] = useState(initialBrushWidth);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [sliderWidth, setSliderWidth] = useState(0);
@@ -131,6 +132,7 @@ export function useMaskDrawing({
 
       currentStrokeRef.current = stroke;
       activePointRef.current = point;
+      setIsDrawing(true);
       scheduleVisualState();
     },
     [brushWidth, canvasSize.height, canvasSize.width, disabled, scheduleVisualState],
@@ -177,6 +179,7 @@ export function useMaskDrawing({
     activePointRef.current = null;
     setCurrentStroke(null);
     setActivePoint(null);
+    setIsDrawing(false);
     setStrokes((current) => [...current, activeStrokeValue]);
   }, []);
 
@@ -185,6 +188,7 @@ export function useMaskDrawing({
     activePointRef.current = null;
     setCurrentStroke(null);
     setActivePoint(null);
+    setIsDrawing(false);
     setStrokes((current) => current.slice(0, -1));
   }, []);
 
@@ -193,6 +197,7 @@ export function useMaskDrawing({
     activePointRef.current = null;
     setCurrentStroke(null);
     setActivePoint(null);
+    setIsDrawing(false);
     setStrokes([]);
   }, []);
 
@@ -219,6 +224,9 @@ export function useMaskDrawing({
       Gesture.Pan()
         .runOnJS(true)
         .minDistance(0)
+        .maxPointers(1)
+        .averageTouches(true)
+        .shouldCancelWhenOutside(false)
         .onBegin((event) => startStroke(event.x, event.y))
         .onUpdate((event) => extendStroke(event.x, event.y))
         .onFinalize(() => finishStroke()),
@@ -259,6 +267,7 @@ export function useMaskDrawing({
     currentStroke,
     renderedStrokes,
     activePoint,
+    isDrawing,
     brushWidth,
     setBrushWidth: setBrushWidth as Dispatch<SetStateAction<number>>,
     brushProgress,

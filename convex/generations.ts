@@ -230,7 +230,7 @@ function buildGenerationPrompt(args: {
     ? "Create a fresh alternate variation while preserving the same room type, camera framing, and overall architectural shell."
     : undefined;
 
-  if (args.modeLabel === "Masked Paint Edit") {
+  if (args.modeLabel === "Masked Paint Edit" || args.modeLabel === "Smart Wall Paint") {
     return [
       customPrompt ?? `Inpaint this image. Change the color of the masked area to ${args.colorPalette} on a ${args.roomType.toLowerCase()} texture. Maintain realism and lighting.`,
       modeHint ?? "Only repaint the masked region. Preserve all unmasked objects, geometry, furniture, shadows, and lighting exactly as they appear in the source image.",
@@ -241,7 +241,7 @@ function buildGenerationPrompt(args: {
       .join(" ");
   }
 
-  if (args.modeLabel === "Masked Floor Edit") {
+  if (args.modeLabel === "Masked Floor Edit" || args.modeLabel === "Floor Restyle") {
     return [
       customPrompt ?? `Inpaint this image. Replace the masked floor area with ${args.colorPalette}. Keep the room realistic and perspective-correct.`,
       modeHint ?? "Only edit the masked floor region. Preserve all unmasked walls, furniture, decor, shadows, reflections, and architecture exactly as shown.",
@@ -297,6 +297,62 @@ async function parseGeminiError(response: Response) {
   } catch {
     return raw;
   }
+}
+
+function shouldRetryGeminiStatus(status: number) {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+function shouldRetryGeminiErrorMessage(message: string) {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("network request failed") ||
+    normalized.includes("failed to fetch") ||
+    normalized.includes("fetch failed") ||
+    normalized.includes("network error") ||
+    normalized.includes("timed out")
+  );
+}
+
+async function requestGeminiWithRetry(
+  body: string,
+  apiKey: string,
+) {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await fetch(GEMINI_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body,
+      });
+
+      if (!response.ok) {
+        const errorMessage = await parseGeminiError(response);
+        if (attempt === 0 && shouldRetryGeminiStatus(response.status)) {
+          await new Promise((resolve) => setTimeout(resolve, 1200));
+          continue;
+        }
+        throw new ConvexError(errorMessage || `Gemini request failed with status ${response.status}.`);
+      }
+
+      return response;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Gemini request failed.";
+      lastError = error instanceof Error ? error : new Error(message);
+      if (attempt === 0 && shouldRetryGeminiErrorMessage(message)) {
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw lastError ?? new ConvexError("Gemini request failed.");
 }
 
 function extractGeneratedImage(response: GeminiResponse) {
@@ -474,16 +530,14 @@ export const startGeneration = mutationGeneric({
       projectId: undefined,
     });
 
-    await ctx.scheduler.runAfter(0, (internal as any).ai.generateDesign, {
+    await ctx.scheduler.runAfter(0, (internal as any).generations.runGenerationJob, {
       generationId,
       ownerId: viewer.userId,
-      imageStorageId: args.imageStorageId,
+      sourceStorageId: args.imageStorageId,
       maskStorageId: args.maskStorageId,
-      serviceType: args.serviceType,
-      selection: normalizedSelection,
-      customPrompt: trimOptional(args.customPrompt),
-      roomType: args.roomType,
+      prompt,
       aspectRatio: normalizeAspectRatio(args.aspectRatio),
+      speedTier: args.speedTier ?? "standard",
     });
 
     return {
@@ -601,13 +655,8 @@ export const runGenerationJob = internalActionGeneric({
         });
       }
 
-      const response = await fetch(GEMINI_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
+      const response = await requestGeminiWithRetry(
+        JSON.stringify({
           contents: [
             {
               parts,
@@ -620,12 +669,8 @@ export const runGenerationJob = internalActionGeneric({
             },
           },
         }),
-      });
-
-      if (!response.ok) {
-        const errorMessage = await parseGeminiError(response);
-        throw new ConvexError(errorMessage || `Gemini request failed with status ${response.status}.`);
-      }
+        apiKey,
+      );
 
       const gemini = (await response.json()) as GeminiResponse;
       const generated = extractGeneratedImage(gemini);

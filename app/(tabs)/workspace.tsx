@@ -87,11 +87,13 @@ import { GlassBackdrop } from "../../components/glass-backdrop";
 import { FloorWizard } from "../../components/floor-wizard";
 import { LuxPressable } from "../../components/lux-pressable";
 import { PaintWizard } from "../../components/paint-wizard";
+import { ServiceWizardHeader } from "../../components/service-wizard-header";
 import { useWorkspaceDraft } from "../../components/workspace-context";
 import { useViewerSession } from "../../components/viewer-session-context";
 import { useProSuccess } from "../../components/pro-success-context";
 import Logo from "../../components/logo";
 import { captureRef } from "react-native-view-shot";
+import { SERVICE_WIZARD_THEME } from "../../lib/service-wizard-theme";
 type MeResponse = {
   plan: "free" | "trial" | "pro";
   credits: number;
@@ -493,17 +495,10 @@ const FLOOR_MATERIAL_OPTIONS: FloorMaterialOption[] = [
     colors: ["#4A4D54", "#6B7077", "#989DA4"],
   },
   {
-    id: "ceramic-tile",
-    title: "Ceramic Tile",
-    description: "Crisp tiled rhythm with clean grout definition.",
-    promptLabel: "ceramic tile flooring",
-    colors: ["#E8DDD0", "#CFC2B2", "#A9937E"],
-  },
-  {
     id: "herringbone-parquet",
-    title: "Herringbone Parquet",
+    title: "Parquet",
     description: "Classic parquet geometry with boutique-hotel richness.",
-    promptLabel: "herringbone parquet flooring",
+    promptLabel: "luxury parquet flooring",
     colors: ["#513424", "#7A5136", "#B67A53"],
   },
 ];
@@ -3063,15 +3058,14 @@ export default function WorkspaceScreen() {
     const hasSelectedPhoto = Boolean(selectedImage);
     const hasVisiblePhoto = Boolean(displayedSelectedImage);
     const activeExampleLabel = selectedImage?.label ?? null;
-    const wizardBackgroundColor = "#000000";
-    const wizardPrimaryTextColor = "#ffffff";
-    const wizardMutedTextColor = "#a1a1aa";
-    const wizardSurfaceColor = "rgba(255,255,255,0.04)";
-    const wizardSurfaceBorderColor = "rgba(255,255,255,0.1)";
-    const wizardActiveSurfaceColor = "rgba(217,70,239,0.1)";
-    const headerButtonBorderColor = "rgba(255,255,255,0.12)";
+    const wizardBackgroundColor = SERVICE_WIZARD_THEME.colors.background;
+    const wizardPrimaryTextColor = SERVICE_WIZARD_THEME.colors.textPrimary;
+    const wizardMutedTextColor = SERVICE_WIZARD_THEME.colors.textMuted;
+    const wizardSurfaceColor = SERVICE_WIZARD_THEME.colors.surface;
+    const wizardSurfaceBorderColor = SERVICE_WIZARD_THEME.colors.borderStrong;
+    const wizardActiveSurfaceColor = SERVICE_WIZARD_THEME.colors.accentSurface;
+    const headerButtonBorderColor = SERVICE_WIZARD_THEME.colors.borderStrong;
     const headerButtonBackgroundColor = "rgba(255,255,255,0.04)";
-    const progressTrackColor = "rgba(255,255,255,0.14)";
     const uploadTileSize = wizardUploadSize;
     const stepOneExampleCardWidth = Math.min(Math.max(width * 0.28, 112), 126);
     const stepOneExampleCardHeight = Math.round(stepOneExampleCardWidth * 1.2);
@@ -3194,9 +3188,13 @@ export default function WorkspaceScreen() {
         >
           <View style={{ flex: 1, gap: 24 }}>
             <View style={{ gap: isPhotoStep ? 18 : 14 }}>
-              <View style={{ minHeight: isPhotoStep ? 32 : 44, justifyContent: "center", alignItems: "center" }}>
-                {workflowStep > 0 ? (
-                  <View style={{ position: "absolute", left: 0, top: 0, bottom: 0, justifyContent: "center" }}>
+              <ServiceWizardHeader
+                title={serviceLabel}
+                step={currentStepNumber}
+                totalSteps={totalWizardSteps}
+                topInset={0}
+                leftAccessory={
+                  workflowStep > 0 ? (
                     <LuxPressable
                       onPress={handleBack}
                       className="cursor-pointer h-11 w-11 items-center justify-center rounded-full"
@@ -3208,30 +3206,11 @@ export default function WorkspaceScreen() {
                     >
                       <ArrowLeft color={wizardPrimaryTextColor} size={20} strokeWidth={2.2} />
                     </LuxPressable>
-                  </View>
-                ) : null}
-
-                <Text
-                  style={{
-                    color: wizardPrimaryTextColor,
-                    fontSize: 18,
-                    fontWeight: "800",
-                    letterSpacing: -0.35,
-                    textAlign: "center",
-                  }}
-                >
-                  {`Step ${currentStepNumber} / ${totalWizardSteps}`}
-                </Text>
-
-                <View
-                  style={{
-                    position: "absolute",
-                    right: 0,
-                    top: 0,
-                    bottom: 0,
-                    justifyContent: "center",
-                  }}
-                >
+                  ) : (
+                    <View style={{ height: 44, width: 44 }} />
+                  )
+                }
+                rightAccessory={
                   <TouchableOpacity
                     onPress={handleCloseWizard}
                     onPressIn={() => setIsHeaderClosePressed(true)}
@@ -3256,35 +3235,8 @@ export default function WorkspaceScreen() {
                       <Close color={wizardPrimaryTextColor} size={20} strokeWidth={2.2} />
                     </MotiView>
                   </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={{ flexDirection: "row", gap: 8 }}>
-                {Array.from({ length: 4 }).map((_, index) => {
-                  const isComplete = index < currentStepNumber;
-                  return (
-                    <View
-                      key={`wizard-progress-${index}`}
-                      style={{
-                        flex: 1,
-                        height: 8,
-                        borderRadius: 999,
-                        overflow: "hidden",
-                        backgroundColor: progressTrackColor,
-                      }}
-                    >
-                      {isComplete ? (
-                        <LinearGradient
-                          colors={["#ff4d6d", "#d946ef"]}
-                          start={{ x: 0, y: 0.5 }}
-                          end={{ x: 1, y: 0.5 }}
-                          style={{ height: "100%", width: "100%" }}
-                        />
-                      ) : null}
-                    </View>
-                  );
-                })}
-              </View>
+                }
+              />
             </View>
 
             <AnimatePresence exitBeforeEnter>
@@ -3300,13 +3252,13 @@ export default function WorkspaceScreen() {
                   <View style={{ flex: 1, gap: 24, paddingTop: 4 }}>
                     <View style={{ gap: 8, alignItems: "center" }}>
                       <Text
-                        style={{
-                          color: "#ffffff",
-                          fontSize: 28,
-                          fontWeight: "800",
-                          letterSpacing: -0.8,
-                          textAlign: "center",
-                        }}
+                        style={[
+                          SERVICE_WIZARD_THEME.typography.heroTitle,
+                          {
+                            color: wizardPrimaryTextColor,
+                            textAlign: "center",
+                          },
+                        ]}
                         >
                           {stepOneTitle}
                       </Text>
@@ -3493,7 +3445,7 @@ export default function WorkspaceScreen() {
                                     height: isFloorService ? Math.round(stepOneExampleCardWidth * 0.86) : stepOneExampleCardHeight,
                                     borderRadius: 22,
                                     borderWidth: active ? 1.5 : 1,
-                                    borderColor: active ? "#ff4d6d" : "rgba(255,255,255,0.12)",
+                                    borderColor: active ? SERVICE_WIZARD_THEME.colors.accent : "rgba(255,255,255,0.12)",
                                     backgroundColor: "#151515",
                                     overflow: "hidden",
                                   }}
@@ -3540,7 +3492,7 @@ export default function WorkspaceScreen() {
                 {workflowStep === 1 ? (
                   <>
                       <View style={{ gap: 12 }}>
-                        <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>{stepTwoTitle}</Text>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>{stepTwoTitle}</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
                           {stepTwoDescription}
                         </Text>
@@ -3643,7 +3595,7 @@ export default function WorkspaceScreen() {
                   isPaintService ? (
                     <>
                       <View style={{ gap: 12 }}>
-                        <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>{stepThreeTitle}</Text>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>{stepThreeTitle}</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 360 }}>
                           {stepThreeDescription}
                         </Text>
@@ -3703,7 +3655,7 @@ export default function WorkspaceScreen() {
                   ) : isFloorService ? (
                     <>
                       <View style={{ gap: 12 }}>
-                        <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>{stepThreeTitle}</Text>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>{stepThreeTitle}</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 360 }}>
                           {stepThreeDescription}
                         </Text>
@@ -3751,7 +3703,7 @@ export default function WorkspaceScreen() {
                   ) : (
                     <>
                       <View style={{ gap: 12 }}>
-                        <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>{stepThreeTitle}</Text>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>{stepThreeTitle}</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
                           {stepThreeDescription}
                         </Text>
@@ -3869,7 +3821,7 @@ export default function WorkspaceScreen() {
                   isPaintService || isFloorService ? (
                     <>
                       <View style={{ gap: 12 }}>
-                        <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>{stepFourTitle}</Text>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>{stepFourTitle}</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 360 }}>
                           {stepFourDescription}
                         </Text>
@@ -3979,7 +3931,7 @@ export default function WorkspaceScreen() {
                   ) : isLeanGenerationService ? (
                     <>
                       <View style={{ gap: 12 }}>
-                        <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Generate</Text>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>Generate</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
                           {isGardenService
                             ? effectiveSignedIn
@@ -4051,7 +4003,7 @@ export default function WorkspaceScreen() {
                   ) : (
                     <>
                       <View style={{ gap: 12 }}>
-                        <Text style={{ color: "#ffffff", fontSize: 34, fontWeight: "700", letterSpacing: -1.1 }}>Personalize</Text>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>Personalize</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: 340 }}>
                           Pick the redesign mode and color palette before generating your result.
                         </Text>
@@ -4531,7 +4483,7 @@ export default function WorkspaceScreen() {
                   contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 160, gap: 22 }}
                 >
                   <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-                    <Text style={{ color: "#ffffff", fontSize: 28, fontWeight: "800", letterSpacing: -0.8 }}>Custom Prompt</Text>
+                    <Text style={[SERVICE_WIZARD_THEME.typography.heroTitle, { color: wizardPrimaryTextColor }]}>Custom Prompt</Text>
                     <TouchableOpacity onPress={handleCloseCustomStyle} activeOpacity={0.82} className="cursor-pointer">
                       <MotiView
                         animate={{ scale: 1 }}

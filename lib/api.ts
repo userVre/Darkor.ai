@@ -17,14 +17,25 @@ type GenerateResponse = {
   error?: string;
 };
 
+function resolveApiBaseUrl() {
+  const rawBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
+  if (!rawBaseUrl) {
+    throw new Error("Missing EXPO_PUBLIC_API_BASE_URL");
+  }
+
+  const normalized = rawBaseUrl.replace(/\/+$/, "");
+  if (process.env.EXPO_OS === "android") {
+    return normalized.replace("://localhost", "://10.0.2.2").replace("://127.0.0.1", "://10.0.2.2");
+  }
+
+  return normalized;
+}
+
 export async function generateImage(
   payload: GenerateRequestPayload,
   clerkToken?: string | null,
 ): Promise<GenerateResponse> {
-  const apiBase = process.env.EXPO_PUBLIC_API_BASE_URL;
-  if (!apiBase) {
-    throw new Error("Missing EXPO_PUBLIC_API_BASE_URL");
-  }
+  const apiBase = resolveApiBaseUrl();
 
   const response = await fetch(`${apiBase}/api/generate`, {
     method: "POST",
