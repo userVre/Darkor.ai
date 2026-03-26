@@ -12,6 +12,7 @@ import { ArrowUpRight } from "lucide-react-native";
 import { HomeHeader } from "../../components/home-header";
 import { LuxPressable } from "../../components/lux-pressable";
 import { useViewerSession } from "../../components/viewer-session-context";
+import { DS, HAIRLINE, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow } from "../../lib/design-system";
 import { triggerHaptic } from "../../lib/haptics";
 
 const VIEWABILITY_CONFIG = {
@@ -201,6 +202,10 @@ export default function HomeScreen() {
     router.push("/paywall");
   }, [router]);
 
+  const handleOpenProfile = useCallback(() => {
+    router.push("/profile");
+  }, [router]);
+
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken<ServiceCardData>[] }) => {
       const firstVisible = viewableItems.find((entry) => entry.isViewable)?.item;
@@ -221,9 +226,13 @@ export default function HomeScreen() {
 
   const header = useMemo(
     () => (
-      <HomeHeader diamondCount={diamondCount} onUpgradeToPro={handleUpgradeToPro} />
+      <HomeHeader
+        diamondCount={diamondCount}
+        onUpgradeToPro={handleUpgradeToPro}
+        onOpenProfile={handleOpenProfile}
+      />
     ),
-    [diamondCount, handleUpgradeToPro],
+    [diamondCount, handleOpenProfile, handleUpgradeToPro],
   );
 
   return (
@@ -234,12 +243,12 @@ export default function HomeScreen() {
         renderItem={renderItem}
         ListHeaderComponent={header}
         contentContainerStyle={{
-          paddingTop: insets.top + 34,
-          paddingHorizontal: 16,
+          paddingTop: insets.top + DS.spacing[3],
+          paddingHorizontal: SCREEN_SIDE_PADDING,
           paddingBottom: Math.max(insets.bottom + 120, 136),
-          gap: 24,
+          gap: SCREEN_SECTION_GAP,
         }}
-        ItemSeparatorComponent={() => <View style={{ height: 24 }} />}
+        ItemSeparatorComponent={() => <View style={{ height: SCREEN_SECTION_GAP }} />}
         showsVerticalScrollIndicator={false}
         initialNumToRender={2}
         maxToRenderPerBatch={2}
@@ -261,10 +270,11 @@ const styles = StyleSheet.create({
   card: {
     position: "relative",
     overflow: "hidden",
-    borderRadius: 32,
-    borderWidth: 0.5,
-    borderColor: "rgba(255,255,255,0.1)",
-    backgroundColor: "#050505",
+    borderRadius: DS.radius.xxl,
+    borderWidth: HAIRLINE,
+    borderColor: DS.colors.borderSubtle,
+    backgroundColor: DS.colors.backgroundAlt,
+    ...glowShadow("rgba(0,0,0,0.34)", 26),
   },
   video: {
     ...StyleSheet.absoluteFillObject,
@@ -272,9 +282,9 @@ const styles = StyleSheet.create({
   cardFrame: {
     flex: 1,
     justifyContent: "flex-end",
-    paddingHorizontal: 24,
-    paddingBottom: 22,
-    paddingTop: 26,
+    paddingHorizontal: DS.spacing[3],
+    paddingBottom: DS.spacing[3],
+    paddingTop: DS.spacing[4],
   },
   cardBottomRow: {
     flexDirection: "row",
@@ -284,30 +294,25 @@ const styles = StyleSheet.create({
   },
   copyBlock: {
     flex: 1,
-    gap: 8,
+    gap: DS.spacing[1],
     paddingRight: 4,
   },
   cardTitle: {
-    color: "#ffffff",
-    fontSize: 31,
-    fontWeight: "800",
-    lineHeight: 35,
-    letterSpacing: -0.65,
+    color: DS.colors.textPrimary,
+    ...DS.typography.title,
   },
   cardSubtitle: {
-    color: "rgba(244,244,245,0.9)",
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: "500",
+    color: DS.colors.textSecondary,
+    ...DS.typography.body,
   },
   ctaButton: {
     alignSelf: "flex-end",
-    borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.86)",
-    borderWidth: 0.5,
-    borderColor: "rgba(255,255,255,0.14)",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderRadius: DS.radius.pill,
+    backgroundColor: "rgba(0,0,0,0.82)",
+    borderWidth: HAIRLINE,
+    borderColor: DS.colors.border,
+    paddingHorizontal: 18,
+    paddingVertical: 13,
   },
   ctaInner: {
     flexDirection: "row",
@@ -316,9 +321,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   ctaText: {
-    color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 0.15,
+    color: DS.colors.textPrimary,
+    ...DS.typography.button,
   },
 });

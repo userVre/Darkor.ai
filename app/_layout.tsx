@@ -9,15 +9,17 @@ import * as Linking from "expo-linking";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AppErrorBoundary } from "../components/app-error-boundary";
+import { LuxPressable } from "../components/lux-pressable";
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
 import { ViewerSessionProvider, useViewerSession } from "../components/viewer-session-context";
 import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
+import { DS, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
 import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
 import { getEnvReport, logEnvDiagnostics } from "../lib/env";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
@@ -198,26 +200,29 @@ function Providers({ children }: { children: React.ReactNode }) {
 
 function BootScreen({ message }: { message: string }) {
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#000", paddingHorizontal: 24 }}>
-      <ActivityIndicator color="#ffffff" />
-      <Text style={{ marginTop: 12, fontSize: 14, color: "#f4f4f5" }}>{message}</Text>
+    <View style={bootStyles.screen}>
+      <View style={bootStyles.card}>
+        <ActivityIndicator color={DS.colors.textPrimary} />
+        <Text style={bootStyles.title}>Loading Darkor.ai</Text>
+        <Text style={bootStyles.body}>{message}</Text>
+      </View>
     </View>
   );
 }
 
 function MissingEnv({ missing }: { missing: string[] }) {
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#000", paddingHorizontal: 24 }}>
-      <Text style={{ fontSize: 18, fontWeight: "600", color: "#f4f4f5" }}>Missing environment variables</Text>
-      <Text style={{ marginTop: 8, textAlign: "center", color: "#a1a1aa" }}>
-        The following variables are required before the app can start:
-      </Text>
-      <View style={{ marginTop: 12 }}>
+    <View style={bootStyles.screen}>
+      <View style={bootStyles.card}>
+        <Text style={bootStyles.title}>Missing Environment Variables</Text>
+        <Text style={bootStyles.body}>The following values are required before the app can start:</Text>
+        <View style={bootStyles.list}>
         {missing.map((item) => (
-          <Text key={item} style={{ color: "#e2e8f0", fontSize: 12, textAlign: "center" }}>
+            <Text key={item} style={bootStyles.listItem}>
             {item}
           </Text>
         ))}
+        </View>
       </View>
     </View>
   );
@@ -225,22 +230,14 @@ function MissingEnv({ missing }: { missing: string[] }) {
 
 function OfflineScreen({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#000", paddingHorizontal: 24 }}>
-      <Text style={{ fontSize: 18, fontWeight: "600", color: "#f4f4f5" }}>Connecting to Darkor.ai</Text>
-      <Text style={{ marginTop: 8, textAlign: "center", color: "#a1a1aa" }}>{message}</Text>
-      <Pressable
-        onPress={onRetry}
-        style={{
-          marginTop: 16,
-          borderRadius: 16,
-          borderWidth: 0.5,
-          borderColor: "rgba(255,255,255,0.2)",
-          paddingHorizontal: 18,
-          paddingVertical: 10,
-        }}
-      >
-        <Text style={{ color: "#e2e8f0", fontSize: 13, fontWeight: "600" }}>Retry</Text>
-      </Pressable>
+    <View style={bootStyles.screen}>
+      <View style={bootStyles.card}>
+        <Text style={bootStyles.title}>Connecting to Darkor.ai</Text>
+        <Text style={bootStyles.body}>{message}</Text>
+        <LuxPressable onPress={onRetry} style={bootStyles.button} className="cursor-pointer" glowColor={DS.colors.accentGlow}>
+          <Text style={bootStyles.buttonText}>Retry</Text>
+        </LuxPressable>
+      </View>
     </View>
   );
 }
@@ -313,8 +310,8 @@ export default function RootLayout() {
     };
   }, []);
 
-  if (!DIAGNOSTIC_BYPASS && !clerkKey) {
-    return <MissingEnv missing={["EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"]} />;
+  if (!DIAGNOSTIC_BYPASS && !envReport.ok) {
+    return <MissingEnv missing={envReport.missing} />;
   }
 
   return (
@@ -339,3 +336,55 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
+const bootStyles = {
+  screen: {
+    flex: 1,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    backgroundColor: DS.colors.background,
+    paddingHorizontal: SCREEN_SIDE_PADDING,
+  },
+  card: {
+    ...surfaceCard(),
+    ...glowShadow("rgba(0,0,0,0.34)", 22),
+    width: "100%" as const,
+    maxWidth: 420,
+    alignItems: "center" as const,
+    gap: DS.spacing[2],
+    paddingHorizontal: DS.spacing[3],
+    paddingVertical: DS.spacing[4],
+  },
+  title: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.cardTitle,
+    textAlign: "center" as const,
+  },
+  body: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.body,
+    textAlign: "center" as const,
+  },
+  list: {
+    width: "100%" as const,
+    gap: DS.spacing[1],
+  },
+  listItem: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.bodySm,
+    textAlign: "center" as const,
+  },
+  button: {
+    ...surfaceCard(DS.colors.surfaceMuted),
+    minHeight: 48,
+    minWidth: 120,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    paddingHorizontal: DS.spacing[3],
+    paddingVertical: DS.spacing[1.5],
+  },
+  buttonText: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.button,
+  },
+};

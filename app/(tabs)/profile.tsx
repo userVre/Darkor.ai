@@ -11,14 +11,15 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { LuxPressable } from "../../components/lux-pressable";
 import { useViewerSession } from "../../components/viewer-session-context";
+import { DS, HAIRLINE, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../../lib/design-system";
 import { triggerHaptic } from "../../lib/haptics";
 import { requestStoreReview } from "../../lib/store-review";
 
 const POINTER_CLASS = "cursor-pointer";
-const SCREEN_BG = "#000000";
-const SURFACE_BG = "#09090b";
-const CARD_BG = "#0d0d10";
-const BORDER_COLOR = "rgba(255,255,255,0.08)";
+const SCREEN_BG = DS.colors.background;
+const SURFACE_BG = DS.colors.surface;
+const CARD_BG = DS.colors.surfaceRaised;
+const BORDER_COLOR = DS.colors.borderSubtle;
 
 type MeResponse = {
   hasPaidAccess?: boolean;
@@ -47,7 +48,7 @@ function SettingsRow({ icon: Icon, label, onPress, tone = "default" }: Omit<Sett
       className="overflow-hidden rounded-[24px]"
       style={[styles.row, isDanger ? styles.rowDanger : null]}
       glowColor={isDanger ? "rgba(248,113,113,0.16)" : "rgba(255,255,255,0.08)"}
-      scale={0.985}
+      scale={0.96}
     >
       <View style={styles.rowInner}>
         <View style={[styles.rowIconWrap, isDanger ? styles.rowIconWrapDanger : null]}>
@@ -165,9 +166,9 @@ export default function ProfileScreen() {
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={{
-          paddingTop: 14,
-          paddingBottom: Math.max(insets.bottom + 36, 44),
-          paddingHorizontal: 24,
+          paddingTop: DS.spacing[3],
+          paddingBottom: Math.max(insets.bottom + DS.spacing[5], DS.spacing[6]),
+          paddingHorizontal: SCREEN_SIDE_PADDING,
         }}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
@@ -238,30 +239,25 @@ const styles = StyleSheet.create({
     backgroundColor: SCREEN_BG,
   },
   header: {
-    marginBottom: 28,
-    gap: 8,
+    marginBottom: DS.spacing[4],
+    gap: DS.spacing[1],
   },
   title: {
-    color: "#ffffff",
-    fontSize: 32,
-    fontWeight: "800",
-    letterSpacing: -0.8,
+    color: DS.colors.textPrimary,
+    ...DS.typography.title,
   },
   subtitle: {
-    color: "#a1a1aa",
-    fontSize: 14,
-    lineHeight: 22,
+    color: DS.colors.textSecondary,
+    ...DS.typography.body,
   },
   accountCard: {
     position: "relative",
     overflow: "hidden",
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: BORDER_COLOR,
-    backgroundColor: CARD_BG,
-    padding: 22,
-    marginBottom: 20,
-    gap: 18,
+    ...surfaceCard(CARD_BG),
+    ...glowShadow("rgba(0,0,0,0.34)", 22),
+    padding: DS.spacing[3],
+    marginBottom: DS.spacing[3],
+    gap: DS.spacing[2.5],
   },
   accountTopRow: {
     flexDirection: "row",
@@ -269,41 +265,34 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   accountIconWrap: {
-    width: 54,
-    height: 54,
-    borderRadius: 20,
+    width: 56,
+    height: 56,
+    borderRadius: DS.radius.md,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderWidth: HAIRLINE,
+    borderColor: DS.colors.borderSubtle,
   },
   accountCopy: {
     flex: 1,
     gap: 2,
   },
   accountEyebrow: {
-    color: "#71717a",
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
+    color: DS.colors.textTertiary,
+    ...DS.typography.label,
   },
   accountTitle: {
-    color: "#ffffff",
-    fontSize: 24,
-    fontWeight: "800",
-    letterSpacing: -0.55,
+    color: DS.colors.textPrimary,
+    ...DS.typography.sectionTitle,
   },
   accountMeta: {
-    color: "#d4d4d8",
-    fontSize: 13,
-    fontWeight: "600",
+    color: DS.colors.textSecondary,
+    ...DS.typography.bodySm,
   },
   accountBody: {
-    color: "#a1a1aa",
-    fontSize: 14,
-    lineHeight: 22,
+    color: DS.colors.textSecondary,
+    ...DS.typography.body,
   },
   accountButtonShadow: {
     alignSelf: "flex-start",
@@ -311,23 +300,21 @@ const styles = StyleSheet.create({
   accountButton: {
     minHeight: 50,
     minWidth: 164,
-    paddingHorizontal: 18,
-    borderRadius: 20,
+    paddingHorizontal: DS.spacing[3],
+    borderRadius: DS.radius.md,
     alignItems: "center",
     justifyContent: "center",
   },
   accountButtonText: {
     color: "#000000",
-    fontSize: 14,
-    fontWeight: "800",
-    letterSpacing: 0.1,
+    ...DS.typography.button,
   },
   list: {
-    gap: 12,
+    gap: DS.spacing[2],
   },
   row: {
     backgroundColor: SURFACE_BG,
-    borderWidth: 1,
+    borderWidth: HAIRLINE,
     borderColor: BORDER_COLOR,
   },
   rowDanger: {
@@ -335,16 +322,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(28,10,12,0.92)",
   },
   rowInner: {
-    minHeight: 74,
+    minHeight: 80,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    paddingHorizontal: 18,
+    gap: DS.spacing[2],
+    paddingHorizontal: DS.spacing[3],
   },
   rowIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: DS.radius.sm,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.05)",
@@ -354,9 +341,8 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     flex: 1,
-    color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "700",
+    color: DS.colors.textPrimary,
+    ...DS.typography.button,
   },
   rowLabelDanger: {
     color: "#fca5a5",

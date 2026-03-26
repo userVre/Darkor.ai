@@ -8,19 +8,22 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { LuxPressable } from "../../components/lux-pressable";
 import { useWorkspaceDraft } from "../../components/workspace-context";
-import { DISCOVER_SECTIONS, type DiscoverSection, type DiscoverTile } from "../../lib/discover-data";
+import { DISCOVER_SECTIONS, type DiscoverSection, type DiscoverTile } from "../../lib/data";
+import { DS, HAIRLINE, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow } from "../../lib/design-system";
 import { triggerHaptic } from "../../lib/haptics";
 
-const SCREEN_BG = "#000000";
-const EDGE_PADDING = 20;
-const SECTION_GAP = 32;
-const SHELF_GAP = 16;
-const CARD_BORDER_COLOR = "rgba(255,255,255,0.05)";
-const CARD_RADIUS = 24;
+const SCREEN_BG = DS.colors.background;
+const EDGE_PADDING = SCREEN_SIDE_PADDING;
+const SECTION_GAP = SCREEN_SECTION_GAP + DS.spacing[1];
+const SHELF_GAP = DS.spacing[2];
+const CARD_BORDER_COLOR = DS.colors.borderSubtle;
+const CARD_RADIUS = DS.radius.xl;
 
 function mapService(service: DiscoverTile["service"]) {
   if (service === "garden") return "garden";
   if (service === "exterior") return "facade";
+  if (service === "paint") return "paint";
+  if (service === "floor") return "floor";
   return "interior";
 }
 
@@ -72,8 +75,8 @@ const DiscoverShelfCard = memo(function DiscoverShelfCard({
       pressableClassName="cursor-pointer"
       className="cursor-pointer overflow-hidden rounded-[24px]"
       style={[styles.card, { width, height }]}
-      glowColor="rgba(255, 255, 255, 0.08)"
-      scale={0.985}
+      glowColor={DS.colors.accentGlow}
+      scale={0.96}
     >
       <Image
         source={item.image}
@@ -125,7 +128,15 @@ const DiscoverShelfSection = memo(function DiscoverShelfSection({
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{section.title}</Text>
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionTitleRow}>
+          <Text style={styles.sectionTitle}>{section.title}</Text>
+          <View style={styles.sectionCountPill}>
+            <Text style={styles.sectionCountText}>{section.items.length}</Text>
+          </View>
+        </View>
+        <Text style={styles.sectionDescription}>{section.description}</Text>
+      </View>
 
       <FlatList
         data={section.items}
@@ -157,6 +168,10 @@ export default function GalleryScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { setDraftRoom, setDraftStyle } = useWorkspaceDraft();
+  const totalOptions = useMemo(
+    () => DISCOVER_SECTIONS.reduce((count, section) => count + section.items.length, 0),
+    [],
+  );
 
   const cardWidth = useMemo(() => {
     if (width >= 1200) return 320;
@@ -173,8 +188,10 @@ export default function GalleryScreen() {
         pathname: "/wizard",
         params: {
           service: mapService(item.service),
-          presetRoom: item.spaceType,
-          presetStyle: item.style,
+          presetRoom: item.presetRoom ?? item.spaceType,
+          presetStyle: item.presetStyle ?? item.style,
+          startStep: item.startStep,
+          entrySource: "discover",
         },
       });
     },
@@ -187,15 +204,35 @@ export default function GalleryScreen() {
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={{
-          paddingTop: insets.top + 12,
-          paddingBottom: Math.max(insets.bottom + 28, 36),
+          paddingTop: insets.top + DS.spacing[3],
+          paddingBottom: Math.max(insets.bottom + DS.spacing[4], DS.spacing[5]),
           gap: SECTION_GAP,
         }}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
       >
         <View style={styles.header}>
+          <View style={styles.headerBadge}>
+            <Text style={styles.headerBadgeText}>Curated Discover Hub</Text>
+          </View>
           <Text style={styles.headerTitle}>Discover Hub</Text>
+          <Text style={styles.headerText}>
+            Browse {totalOptions} professional directions across interior scenes, surface palettes, gardens, and exterior forms.
+          </Text>
+          <View style={styles.headerMetaRow}>
+            <LinearGradient colors={["rgba(255,255,255,0.12)", "rgba(255,255,255,0.03)"]} style={styles.metaCard}>
+              <Text style={styles.metaValue}>{DISCOVER_SECTIONS.length}</Text>
+              <Text style={styles.metaLabel}>Collections</Text>
+            </LinearGradient>
+            <LinearGradient colors={["rgba(217,70,239,0.18)", "rgba(99,102,241,0.08)"]} style={styles.metaCard}>
+              <Text style={styles.metaValue}>{totalOptions}</Text>
+              <Text style={styles.metaLabel}>Curated Choices</Text>
+            </LinearGradient>
+            <LinearGradient colors={["rgba(251,191,36,0.16)", "rgba(249,115,22,0.08)"]} style={styles.metaCard}>
+              <Text style={styles.metaValue}>2</Text>
+              <Text style={styles.metaLabel}>Surface Labs</Text>
+            </LinearGradient>
+          </View>
         </View>
 
         {DISCOVER_SECTIONS.map((section) => (
@@ -223,6 +260,23 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: EDGE_PADDING,
+    gap: 14,
+  },
+  headerBadge: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  headerBadgeText: {
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   headerTitle: {
     color: "#ffffff",
@@ -231,16 +285,70 @@ const styles = StyleSheet.create({
     lineHeight: 38,
     letterSpacing: -0.8,
   },
+  headerText: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.body,
+    maxWidth: 720,
+  },
+  headerMetaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  metaCard: {
+    minWidth: 128,
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: HAIRLINE,
+    borderColor: DS.colors.borderSubtle,
+    gap: 4,
+  },
+  metaValue: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.cardTitle,
+  },
+  metaLabel: {
+    color: DS.colors.textTertiary,
+    ...DS.typography.bodySm,
+  },
   section: {
     gap: 16,
   },
-  sectionTitle: {
-    color: "#ffffff",
-    fontSize: 25,
-    fontWeight: "800",
-    lineHeight: 30,
+  sectionHeader: {
+    gap: 7,
     paddingHorizontal: EDGE_PADDING,
-    letterSpacing: -0.4,
+  },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  sectionTitle: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.sectionTitle,
+  },
+  sectionCountPill: {
+    minWidth: 34,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: HAIRLINE,
+    borderColor: DS.colors.borderSubtle,
+  },
+  sectionCountText: {
+    color: DS.colors.textSecondary,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  sectionDescription: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.bodySm,
+    maxWidth: 760,
   },
   shelfContent: {
     paddingLeft: EDGE_PADDING,
@@ -249,9 +357,10 @@ const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
     borderRadius: CARD_RADIUS,
-    borderWidth: 0.5,
+    borderWidth: HAIRLINE,
     borderColor: CARD_BORDER_COLOR,
-    backgroundColor: "#111113",
+    backgroundColor: DS.colors.surfaceRaised,
+    ...glowShadow("rgba(0,0,0,0.30)", 22),
   },
   cardGradient: {
     position: "absolute",
@@ -265,21 +374,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: DS.spacing[3],
+    paddingBottom: DS.spacing[3],
     gap: 4,
   },
   cardTitle: {
-    color: "#ffffff",
-    fontSize: 22,
-    fontWeight: "800",
-    lineHeight: 26,
-    letterSpacing: -0.45,
+    color: DS.colors.textPrimary,
+    ...DS.typography.cardTitle,
   },
   cardStyle: {
-    color: "rgba(255,255,255,0.92)",
-    fontSize: 13,
-    fontWeight: "700",
-    lineHeight: 17,
+    color: DS.colors.textSecondary,
+    ...DS.typography.bodySm,
+    fontWeight: "600",
   },
 });

@@ -2,6 +2,7 @@ import { MotiView } from "moti";
 import { PropsWithChildren, useMemo, useState } from "react";
 import { Pressable, PressableProps, StyleProp, ViewStyle } from "react-native";
 
+import { DS, glowShadow } from "../lib/design-system";
 import { LUX_SPRING } from "../lib/motion";
 
 type LuxPressableProps = PressableProps &
@@ -27,14 +28,7 @@ export function LuxPressable({
 
   const glowStyle = useMemo(() => {
     if (!pressed || disabled) return null;
-    const glow = glowColor ?? "rgba(255, 255, 255, 0.18)";
-    return {
-      shadowColor: glow,
-      shadowOpacity: 0.45,
-      shadowRadius: 16,
-      shadowOffset: { width: 0, height: 0 },
-      elevation: 8,
-    } as ViewStyle;
+    return glowShadow(glowColor ?? DS.colors.accentGlow);
   }, [disabled, glowColor, pressed]);
 
   return (
@@ -42,6 +36,7 @@ export function LuxPressable({
       {...props}
       disabled={disabled}
       className={pressableClassName ?? "cursor-pointer"}
+      style={{ cursor: "pointer" as any }}
       onPressIn={(event) => {
         setPressed(true);
         props.onPressIn?.(event);

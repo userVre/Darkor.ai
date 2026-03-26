@@ -1,69 +1,76 @@
 import type { TextStyle } from "react-native";
+import { DS } from "./design-system";
 
 const heroTitle: TextStyle = {
-  fontSize: 28,
+  fontSize: 30,
   fontWeight: "800",
+  lineHeight: 36,
   letterSpacing: -0.8,
 };
 
 const sectionTitle: TextStyle = {
-  fontSize: 34,
-  fontWeight: "700",
-  letterSpacing: -1.1,
+  fontSize: 28,
+  fontWeight: "800",
+  lineHeight: 34,
+  letterSpacing: -0.7,
 };
 
 const headerTitle: TextStyle = {
-  fontSize: 19,
+  fontSize: 18,
   fontWeight: "800",
+  lineHeight: 22,
   letterSpacing: -0.35,
 };
 
 const headerSubtitle: TextStyle = {
   fontSize: 12,
-  fontWeight: "700",
-  letterSpacing: 0.2,
+  fontWeight: "500",
+  lineHeight: 16,
+  letterSpacing: 0.1,
 };
 
 const bodyText: TextStyle = {
   fontSize: 15,
-  lineHeight: 24,
+  fontWeight: "400",
+  lineHeight: 22,
 };
 
 const compactBodyText: TextStyle = {
   fontSize: 14,
-  lineHeight: 22,
+  fontWeight: "400",
+  lineHeight: 20,
 };
 
 export const SERVICE_WIZARD_THEME = {
   colors: {
-    background: "#000000",
-    surface: "rgba(255,255,255,0.04)",
-    surfaceRaised: "#08080A",
-    surfaceSoft: "#0B0B0E",
-    surfaceOverlay: "#050506",
-    border: "rgba(255,255,255,0.08)",
-    borderStrong: "rgba(255,255,255,0.12)",
-    textPrimary: "#ffffff",
-    textMuted: "#a1a1aa",
-    textSoft: "#d4d4d8",
-    accent: "#d946ef",
-    accentStrong: "#c026d3",
-    accentSecondary: "#7c3aed",
-    accentSurface: "rgba(217,70,239,0.1)",
-    accentSurfaceStrong: "rgba(217,70,239,0.14)",
-    accentBorder: "rgba(217,70,239,0.28)",
-    accentBorderStrong: "rgba(217,70,239,0.42)",
-    accentGlow: "rgba(217,70,239,0.22)",
-    accentGlowSoft: "rgba(217,70,239,0.18)",
-    accentText: "#f5d0fe",
-    progressTrack: "rgba(255,255,255,0.14)",
-    disabledSurface: "rgba(39,39,42,0.92)",
+    background: DS.colors.background,
+    surface: "rgba(255,255,255,0.03)",
+    surfaceRaised: DS.colors.surfaceRaised,
+    surfaceSoft: DS.colors.surface,
+    surfaceOverlay: DS.colors.backgroundAlt,
+    border: DS.colors.borderSubtle,
+    borderStrong: DS.colors.border,
+    textPrimary: DS.colors.textPrimary,
+    textMuted: DS.colors.textMuted,
+    textSoft: DS.colors.textSecondary,
+    accent: DS.colors.accent,
+    accentStrong: DS.colors.accentStrong,
+    accentSecondary: DS.colors.accentSecondary,
+    accentSurface: "rgba(168,85,247,0.10)",
+    accentSurfaceStrong: "rgba(168,85,247,0.14)",
+    accentBorder: "rgba(192,132,252,0.22)",
+    accentBorderStrong: "rgba(192,132,252,0.34)",
+    accentGlow: DS.colors.accentGlowStrong,
+    accentGlowSoft: DS.colors.accentGlow,
+    accentText: "#F2D8FF",
+    progressTrack: "rgba(255,255,255,0.08)",
+    disabledSurface: "rgba(30,31,35,0.92)",
   },
   gradients: {
-    accent: ["#d946ef", "#9333ea", "#4f46e5"] as const,
-    accentButton: ["#d946ef", "#4f46e5"] as const,
-    hero: ["#111113", "#050506"] as const,
-    accentWash: ["rgba(217,70,239,0.16)", "rgba(255,255,255,0.04)"] as const,
+    accent: ["#A855F7", "#8B5CF6", "#6366F1"] as const,
+    accentButton: ["#A855F7", "#7C3AED"] as const,
+    hero: ["#111217", "#060608"] as const,
+    accentWash: ["rgba(168,85,247,0.12)", "rgba(255,255,255,0.03)"] as const,
   },
   typography: {
     heroTitle,

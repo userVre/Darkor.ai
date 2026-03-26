@@ -1,19 +1,23 @@
 import { memo, useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Gem } from "lucide-react-native";
+import { Gem, SlidersHorizontal } from "lucide-react-native";
 
 import { CreditLimitModal } from "./credit-limit-modal";
 import { LuxPressable } from "./lux-pressable";
+import Logo from "./logo";
+import { DS, SCREEN_SECTION_GAP, glowShadow, surfaceCard } from "../lib/design-system";
 import { triggerHaptic } from "../lib/haptics";
 
 type HomeHeaderProps = {
   diamondCount: number;
   onUpgradeToPro: () => void;
+  onOpenProfile: () => void;
 };
 
 export const HomeHeader = memo(function HomeHeader({
   diamondCount,
   onUpgradeToPro,
+  onOpenProfile,
 }: HomeHeaderProps) {
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
 
@@ -34,22 +38,47 @@ export const HomeHeader = memo(function HomeHeader({
   return (
     <>
       <View style={styles.header}>
-        <View style={styles.headerTopRow}>
-          <View style={styles.headerCopy}>
-            <Text style={styles.eyebrow}>Darkor.ai</Text>
-            <Text style={styles.title}>Choose Your Transformation</Text>
+        <View style={styles.topRow}>
+          <View style={styles.brandCluster}>
+            <View style={styles.logoShell}>
+              <Logo size={32} />
+            </View>
+            <View style={styles.brandCopy}>
+              <Text style={styles.eyebrow}>Darkor.ai</Text>
+              <Text style={styles.brandLabel}>Design Studio</Text>
+            </View>
           </View>
 
-          <LuxPressable
-            onPress={handleOpenCredits}
-            style={styles.diamondBadge}
-            className="cursor-pointer"
-            glowColor="rgba(125,211,252,0.14)"
-            scale={0.98}
-          >
-            <Gem color="#7dd3fc" size={15} strokeWidth={2.1} />
-            <Text style={styles.diamondBadgeText}>{diamondCount}</Text>
-          </LuxPressable>
+          <View style={styles.topActions}>
+            <LuxPressable
+              onPress={handleOpenCredits}
+              style={styles.diamondBadge}
+              className="cursor-pointer"
+              glowColor={DS.colors.accentGlow}
+              scale={0.96}
+            >
+              <Gem color={DS.colors.accentStrong} size={15} strokeWidth={2.1} />
+              <Text style={styles.diamondBadgeText}>{diamondCount}</Text>
+            </LuxPressable>
+            <LuxPressable
+              onPress={onOpenProfile}
+              style={styles.iconButton}
+              className="cursor-pointer"
+              glowColor={DS.colors.accentGlow}
+              scale={0.96}
+            >
+              <SlidersHorizontal color={DS.colors.textPrimary} size={17} strokeWidth={2.1} />
+            </LuxPressable>
+          </View>
+        </View>
+
+        <View style={styles.heroCard}>
+          <View style={styles.heroCopy}>
+            <Text style={styles.title}>Choose Your Transformation</Text>
+            <Text style={styles.description}>
+              A quieter, sharper workspace for premium redesign workflows across interiors, facades, gardens, paint, and flooring.
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -60,50 +89,87 @@ export const HomeHeader = memo(function HomeHeader({
 
 const styles = StyleSheet.create({
   header: {
-    marginBottom: 12,
+    gap: SCREEN_SECTION_GAP,
   },
-  headerTopRow: {
+  topRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
     gap: 16,
   },
-  headerCopy: {
-    flex: 1,
-    gap: 12,
-    paddingRight: 12,
+  brandCluster: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: DS.spacing[2],
+  },
+  logoShell: {
+    ...surfaceCard(DS.colors.surface),
+    ...glowShadow("rgba(255,255,255,0.04)", 18),
+    width: 56,
+    height: 56,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  brandCopy: {
+    gap: 4,
   },
   eyebrow: {
-    color: "#8b8b92",
+    color: DS.colors.textTertiary,
     fontSize: 12,
     fontWeight: "700",
-    letterSpacing: 2.6,
+    lineHeight: 16,
+    letterSpacing: 1.6,
     textTransform: "uppercase",
   },
-  title: {
-    color: "#ffffff",
-    fontSize: 38,
-    fontWeight: "800",
-    lineHeight: 44,
-    letterSpacing: -1.2,
+  brandLabel: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.bodySm,
+  },
+  topActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: DS.spacing[1.5],
   },
   diamondBadge: {
-    marginTop: 8,
-    minHeight: 40,
+    ...surfaceCard(DS.colors.surface),
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    borderRadius: 999,
-    borderWidth: 0.5,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(8,8,10,0.92)",
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    borderRadius: DS.radius.pill,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  iconButton: {
+    ...surfaceCard(DS.colors.surface),
+    width: 44,
+    height: 44,
+    borderRadius: DS.radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
   },
   diamondBadgeText: {
-    color: "#ffffff",
+    color: DS.colors.textPrimary,
     fontSize: 14,
     fontWeight: "800",
     letterSpacing: 0.2,
+  },
+  heroCard: {
+    ...surfaceCard(),
+    ...glowShadow("rgba(255,255,255,0.02)", 22),
+    paddingHorizontal: DS.spacing[3],
+    paddingVertical: DS.spacing[3],
+  },
+  heroCopy: {
+    gap: DS.spacing[2],
+  },
+  title: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.display,
+  },
+  description: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.body,
+    maxWidth: 620,
   },
 });

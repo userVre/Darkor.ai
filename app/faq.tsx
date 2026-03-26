@@ -1,28 +1,33 @@
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ScrollView, Text, View } from "react-native";
 import { ChevronLeft, CircleHelp } from "lucide-react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { LuxPressable } from "../components/lux-pressable";
+import { DS, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
 import { triggerHaptic } from "../lib/haptics";
 
 const FAQ_ITEMS = [
   {
     question: "How do credits work in Darkor.ai?",
-    answer: "Each redesign uses credits based on the workflow and export quality you choose. Your remaining balance updates automatically after every generation.",
+    answer:
+      "Each redesign uses credits based on the workflow and export quality you choose. Your remaining balance updates automatically after every generation.",
   },
   {
     question: "What do I unlock with PRO?",
-    answer: "PRO unlocks premium generation tools, faster processing, and higher-end output quality through the paywall flow in the app.",
+    answer:
+      "PRO unlocks premium generation tools, faster processing, and higher-end output quality through the paywall flow in the app.",
   },
   {
     question: "Why is my result taking longer than expected?",
-    answer: "Generation times depend on queue load, source image quality, and the workflow you selected. Keeping the app open on a stable connection helps avoid interruptions.",
+    answer:
+      "Generation times depend on queue load, source image quality, and the workflow you selected. Keeping the app open on a stable connection helps avoid interruptions.",
   },
   {
     question: "How do I delete my account?",
-    answer: "Open My Profile and choose Delete Account. This removes your account data and signs you out after confirmation.",
+    answer:
+      "Open My Profile and choose Delete Account. This removes your account data and signs you out after confirmation.",
   },
 ];
 
@@ -31,63 +36,49 @@ export default function FaqScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: "#09090b" }}>
+    <SafeAreaView edges={["top"]} style={styles.screen}>
       <StatusBar style="light" />
       <ScrollView
-        style={{ flex: 1, backgroundColor: "#09090b" }}
+        style={styles.scroll}
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingTop: 10,
-          paddingBottom: Math.max(insets.bottom + 32, 40),
+          paddingHorizontal: SCREEN_SIDE_PADDING,
+          paddingTop: DS.spacing[2],
+          paddingBottom: Math.max(insets.bottom + DS.spacing[5], DS.spacing[6]),
+          gap: SCREEN_SECTION_GAP,
         }}
-        contentInsetAdjustmentBehavior="never"
       >
-        <View className="flex-row items-center gap-4 pb-8">
+        <View style={styles.header}>
           <LuxPressable
             onPress={() => {
               triggerHaptic();
               router.back();
             }}
-            pressableClassName="cursor-pointer"
-            className="h-11 w-11 items-center justify-center rounded-2xl"
-            style={{
-              backgroundColor: "#111113",
-              borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.08)",
-            }}
+            style={styles.backButton}
+            className="cursor-pointer"
+            glowColor={DS.colors.accentGlow}
           >
-            <ChevronLeft color="#fafafa" size={20} />
+            <ChevronLeft color={DS.colors.textPrimary} size={18} strokeWidth={2.2} />
           </LuxPressable>
-          <View className="flex-1">
-            <Text className="text-3xl font-bold text-white">FAQ</Text>
-            <Text className="mt-2 text-sm leading-6 text-zinc-400">
-              Quick answers to the most common Darkor.ai questions.
-            </Text>
+
+          <View style={styles.heroCard}>
+            <Text style={styles.eyebrow}>Support</Text>
+            <Text style={styles.title}>FAQ</Text>
+            <Text style={styles.description}>Quick answers to the most common Darkor.ai questions.</Text>
           </View>
         </View>
 
-        <View className="gap-3">
+        <View style={styles.stack}>
           {FAQ_ITEMS.map((item) => (
-            <View
-              key={item.question}
-              className="rounded-3xl px-5 py-5"
-              style={{
-                backgroundColor: "#111113",
-                borderWidth: 1,
-                borderColor: "rgba(255,255,255,0.08)",
-              }}
-            >
-              <View className="flex-row items-start gap-3">
-                <View
-                  className="mt-0.5 h-10 w-10 items-center justify-center rounded-2xl"
-                  style={{ backgroundColor: "rgba(217, 70, 239, 0.14)" }}
-                >
-                  <CircleHelp color="#d946ef" size={18} />
+            <View key={item.question} style={styles.itemCard}>
+              <View style={styles.itemRow}>
+                <View style={styles.iconShell}>
+                  <CircleHelp color={DS.colors.accentStrong} size={18} />
                 </View>
-                <View className="flex-1">
-                  <Text className="text-base font-semibold text-white">{item.question}</Text>
-                  <Text className="mt-2 text-sm leading-6 text-zinc-400">{item.answer}</Text>
+                <View style={styles.itemCopy}>
+                  <Text style={styles.question}>{item.question}</Text>
+                  <Text style={styles.answer}>{item.answer}</Text>
                 </View>
               </View>
             </View>
@@ -97,3 +88,78 @@ export default function FaqScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: DS.colors.background,
+  },
+  scroll: {
+    flex: 1,
+    backgroundColor: DS.colors.background,
+  },
+  header: {
+    gap: DS.spacing[3],
+  },
+  backButton: {
+    ...surfaceCard(DS.colors.surface),
+    ...glowShadow("rgba(255,255,255,0.03)", 16),
+    width: 44,
+    height: 44,
+    borderRadius: DS.radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroCard: {
+    ...surfaceCard(),
+    ...glowShadow("rgba(0,0,0,0.32)", 22),
+    padding: DS.spacing[3],
+    gap: DS.spacing[1],
+  },
+  eyebrow: {
+    color: DS.colors.textTertiary,
+    ...DS.typography.label,
+  },
+  title: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.title,
+  },
+  description: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.body,
+    maxWidth: 520,
+  },
+  stack: {
+    gap: DS.spacing[2],
+  },
+  itemCard: {
+    ...surfaceCard(),
+    ...glowShadow("rgba(255,255,255,0.02)", 18),
+    padding: DS.spacing[3],
+  },
+  itemRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: DS.spacing[2],
+  },
+  iconShell: {
+    width: 44,
+    height: 44,
+    borderRadius: DS.radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: DS.colors.accentSurface,
+  },
+  itemCopy: {
+    flex: 1,
+    gap: DS.spacing[1],
+  },
+  question: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.cardTitle,
+  },
+  answer: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.body,
+  },
+});

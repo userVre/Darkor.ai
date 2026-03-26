@@ -1,7 +1,8 @@
 export const LUX_SPRING = {
   type: "spring",
-  damping: 15,
-  stiffness: 100,
+  damping: 18,
+  stiffness: 180,
+  mass: 0.8,
 } as const;
 
 export const staggerFadeUp = (index: number, delayStep = 90) => ({

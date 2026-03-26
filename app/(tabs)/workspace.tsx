@@ -18,7 +18,6 @@ import {
   ActionSheetIOS,
   Alert,
   Linking,
-  Pressable,
   ScrollView,
   Share,
   StyleSheet,
@@ -94,6 +93,7 @@ import { useViewerSession } from "../../components/viewer-session-context";
 import { useProSuccess } from "../../components/pro-success-context";
 import Logo from "../../components/logo";
 import { captureRef } from "react-native-view-shot";
+import { DS, HAIRLINE, glowShadow } from "../../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../../lib/service-wizard-theme";
 type MeResponse = {
   plan: "free" | "trial" | "pro";
@@ -1424,7 +1424,6 @@ export default function WorkspaceScreen() {
   const [awaitingAuth, setAwaitingAuth] = useState(false);
   const [pendingReviewState, setPendingReviewState] = useState<{ count: number; shouldPrompt: boolean } | null>(null);
   const [wizardNavDirection, setWizardNavDirection] = useState<1 | -1>(1);
-  const [isHeaderClosePressed, setIsHeaderClosePressed] = useState(false);
   const [paintTool, setPaintTool] = useState<PaintTool>("brush");
   const [paintBrushWidth, setPaintBrushWidth] = useState(28);
   const [paintColor, setPaintColor] = useState("#D946EF");
@@ -2389,8 +2388,13 @@ export default function WorkspaceScreen() {
   }, [setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle]);
 
   const handleCloseWizard = useCallback(() => {
+    if (workflowStep === 0) {
+      handleResetWizard();
+      router.replace("/(tabs)");
+      return;
+    }
     handleResetWizard();
-  }, [handleResetWizard]);
+  }, [handleResetWizard, router, workflowStep]);
 
   const cleanupTempFile = useCallback(async (uri: string | null | undefined) => {
     if (!uri) {
@@ -3111,8 +3115,6 @@ export default function WorkspaceScreen() {
     const wizardSurfaceColor = SERVICE_WIZARD_THEME.colors.surface;
     const wizardSurfaceBorderColor = SERVICE_WIZARD_THEME.colors.borderStrong;
     const wizardActiveSurfaceColor = SERVICE_WIZARD_THEME.colors.accentSurface;
-    const headerButtonBorderColor = SERVICE_WIZARD_THEME.colors.borderStrong;
-    const headerButtonBackgroundColor = "rgba(255,255,255,0.04)";
     const uploadTileSize = wizardUploadSize;
     const stepOneExampleCardWidth = Math.min(Math.max(width * 0.28, 112), 126);
     const stepOneExampleCardHeight = Math.round(stepOneExampleCardWidth * 1.2);
@@ -3170,7 +3172,7 @@ export default function WorkspaceScreen() {
       : isFloorService
         ? "Choose how the selected flooring material should read under light once Darkor.ai maps it into the space."
         : "Choose the design intensity and palette family before Darkor.ai unveils the final composition.";
-    const wizardSectionHeaderStyle = { gap: 12, alignItems: "center" as const };
+    const wizardSectionHeaderStyle = { gap: DS.spacing[1.5], alignItems: "center" as const };
     const wizardSectionBodyStyle = {
       color: wizardMutedTextColor,
       fontSize: 15,
@@ -3257,8 +3259,8 @@ export default function WorkspaceScreen() {
           scrollEnabled
           contentContainerStyle={{
             flexGrow: 1,
-            paddingHorizontal: isPhotoStep ? 24 : 20,
-            paddingTop: Math.max(insets.top + (isPhotoStep ? 14 : 8), isPhotoStep ? 22 : 20),
+            paddingHorizontal: isPhotoStep ? DS.spacing[3] : DS.spacing[2.5],
+            paddingTop: Math.max(insets.top + (isPhotoStep ? 16 : 10), isPhotoStep ? 24 : 22),
             paddingBottom: Math.max(
               insets.bottom + bottomBarOffset + (isPhotoStep ? 148 : 124),
               bottomBarOffset + (isPhotoStep ? 176 : 144),
@@ -3275,51 +3277,9 @@ export default function WorkspaceScreen() {
                 step={currentStepNumber}
                 totalSteps={totalWizardSteps}
                 topInset={0}
-                leftAccessory={
-                  workflowStep > 0 ? (
-                    <LuxPressable
-                      onPress={handleBack}
-                      className="cursor-pointer h-11 w-11 items-center justify-center rounded-full"
-                      style={{
-                        borderWidth: 0.5,
-                        borderColor: headerButtonBorderColor,
-                        backgroundColor: headerButtonBackgroundColor,
-                      }}
-                    >
-                      <ArrowLeft color={wizardPrimaryTextColor} size={20} strokeWidth={2.2} />
-                    </LuxPressable>
-                  ) : (
-                    <View style={{ height: 44, width: 44 }} />
-                  )
-                }
-                rightAccessory={
-                  <LuxPressable
-                    onPress={handleCloseWizard}
-                    onPressIn={() => setIsHeaderClosePressed(true)}
-                    onPressOut={() => setIsHeaderClosePressed(false)}
-                    pressableClassName="cursor-pointer"
-                    className="cursor-pointer"
-                    glowColor={SERVICE_WIZARD_THEME.colors.accentGlowSoft}
-                    scale={0.96}
-                  >
-                    <MotiView
-                      animate={{ scale: isHeaderClosePressed ? 0.94 : 1 }}
-                      transition={{ type: "timing", duration: 140 }}
-                      style={{
-                        height: 44,
-                        width: 44,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderRadius: 999,
-                        borderWidth: 0.5,
-                        borderColor: headerButtonBorderColor,
-                        backgroundColor: headerButtonBackgroundColor,
-                      }}
-                    >
-                      <Close color={wizardPrimaryTextColor} size={20} strokeWidth={2.2} />
-                    </MotiView>
-                  </LuxPressable>
-                }
+                canGoBack={workflowStep > 0}
+                onBack={handleBack}
+                onClose={handleCloseWizard}
               />
             </View>
 
@@ -3348,11 +3308,10 @@ export default function WorkspaceScreen() {
                       </Text>
                       <Text
                         style={{
-                          color: "#a1a1aa",
-                          fontSize: 14,
-                          lineHeight: 21,
+                          color: DS.colors.textSecondary,
+                          ...DS.typography.bodySm,
                           textAlign: "center",
-                          maxWidth: 280,
+                          maxWidth: 320,
                         }}
                       >
                         {stepOneDescription}
@@ -3372,15 +3331,16 @@ export default function WorkspaceScreen() {
                         style={{
                           width: uploadTileSize,
                           height: uploadTileSize,
-                          borderRadius: isFloorService ? 28 : 34,
-                          borderWidth: hasVisiblePhoto ? 1 : isFloorService ? 1 : 1.5,
-                          borderColor: hasVisiblePhoto ? "rgba(255,255,255,0.14)" : isFloorService ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.18)",
+                          borderRadius: isFloorService ? DS.radius.xl : 34,
+                          borderWidth: HAIRLINE,
+                          borderColor: hasVisiblePhoto ? DS.colors.borderStrong : DS.colors.border,
                           borderStyle: "solid",
                           overflow: "hidden",
                           alignSelf: "center",
-                          backgroundColor: "#0d0d0d",
+                          backgroundColor: DS.colors.surfaceRaised,
                           justifyContent: "center",
                           alignItems: "center",
+                          ...glowShadow(hasVisiblePhoto ? "rgba(255,255,255,0.04)" : "rgba(168,85,247,0.06)", 24),
                         }}
                       >
                         {hasVisiblePhoto ? (
@@ -3422,9 +3382,9 @@ export default function WorkspaceScreen() {
                                 width: isFloorService ? 84 : 70,
                                 height: isFloorService ? 84 : 70,
                                 borderRadius: isFloorService ? 24 : 35,
-                                borderWidth: 1,
-                                borderColor: "rgba(255,255,255,0.16)",
-                                backgroundColor: "rgba(255,255,255,0.04)",
+                                borderWidth: HAIRLINE,
+                                borderColor: DS.colors.border,
+                                backgroundColor: DS.colors.surfaceMuted,
                                 alignItems: "center",
                                 justifyContent: "center",
                               }}
@@ -3435,9 +3395,8 @@ export default function WorkspaceScreen() {
                               <View style={{ gap: 6, alignItems: "center" }}>
                                 <Text
                                   style={{
-                                    color: "#ffffff",
-                                    fontSize: 22,
-                                    fontWeight: "800",
+                                    color: DS.colors.textPrimary,
+                                    ...DS.typography.sectionTitle,
                                     textAlign: "center",
                                   }}
                                 >
@@ -3445,9 +3404,8 @@ export default function WorkspaceScreen() {
                                 </Text>
                                 <Text
                                   style={{
-                                    color: "#a1a1aa",
-                                    fontSize: 14,
-                                    lineHeight: 21,
+                                    color: DS.colors.textSecondary,
+                                    ...DS.typography.bodySm,
                                     textAlign: "center",
                                     maxWidth: 220,
                                   }}
@@ -3461,7 +3419,7 @@ export default function WorkspaceScreen() {
                         )}
 
                         {hasVisiblePhoto ? (
-                            <Pressable
+                            <LuxPressable
                               onPress={(event) => {
                                 event.stopPropagation();
                                 handleClearSelectedImage();
@@ -3471,20 +3429,21 @@ export default function WorkspaceScreen() {
                                 right: 14,
                                 top: 14,
                                 zIndex: 20,
-                                elevation: 20,
                                 width: 40,
                                 height: 40,
                                 alignItems: "center",
                                 justifyContent: "center",
                                 borderRadius: 999,
-                                borderWidth: 1,
-                                borderColor: "rgba(255,255,255,0.16)",
-                                backgroundColor: "rgba(10,10,10,0.78)",
+                                borderWidth: HAIRLINE,
+                                borderColor: DS.colors.border,
+                                backgroundColor: "rgba(8,9,11,0.88)",
+                                ...glowShadow("rgba(255,255,255,0.05)", 16),
                               }}
-                              android_ripple={{ color: "rgba(255,255,255,0.12)", borderless: false }}
+                              className="cursor-pointer"
+                              scale={0.96}
                             >
                               <Close color="#ffffff" size={16} strokeWidth={2.4} />
-                            </Pressable>
+                            </LuxPressable>
                         ) : null}
                       </LuxPressable>
                     </MotiView>
@@ -3492,10 +3451,8 @@ export default function WorkspaceScreen() {
                     <View style={{ gap: 12 }}>
                       <Text
                         style={{
-                          color: "#ffffff",
-                          fontSize: 16,
-                          fontWeight: "700",
-                          letterSpacing: -0.2,
+                          color: DS.colors.textPrimary,
+                          ...DS.typography.cardTitle,
                         }}
                       >
                         {isFloorService ? "Floor-focused Examples" : "Example Photos"}
@@ -3528,10 +3485,11 @@ export default function WorkspaceScreen() {
                                     width: stepOneExampleCardWidth,
                                     height: isFloorService ? Math.round(stepOneExampleCardWidth * 0.86) : stepOneExampleCardHeight,
                                     borderRadius: 22,
-                                    borderWidth: active ? 1.5 : 1,
-                                    borderColor: active ? SERVICE_WIZARD_THEME.colors.accent : "rgba(255,255,255,0.12)",
-                                    backgroundColor: "#151515",
+                                    borderWidth: HAIRLINE,
+                                    borderColor: active ? SERVICE_WIZARD_THEME.colors.accentBorderStrong : DS.colors.border,
+                                    backgroundColor: DS.colors.surfaceRaised,
                                     overflow: "hidden",
+                                    ...glowShadow(active ? DS.colors.accentGlow : "rgba(255,255,255,0.03)", active ? 22 : 14),
                                   }}
                                 >
                                   <Image
@@ -3599,14 +3557,10 @@ export default function WorkspaceScreen() {
                                 className="cursor-pointer rounded-[32px] border px-5 py-5"
                                 style={{
                                   minHeight: isExteriorService && meta.image ? 214 : 176,
-                                  borderWidth: active ? 1.5 : 1,
-                                  borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
+                                  borderWidth: HAIRLINE,
+                                  borderColor: active ? SERVICE_WIZARD_THEME.colors.accentBorderStrong : wizardSurfaceBorderColor,
                                   backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
-                                  shadowColor: "#d946ef",
-                                  shadowOpacity: active ? 0.24 : 0,
-                                  shadowRadius: active ? 18 : 0,
-                                  shadowOffset: { width: 0, height: 0 },
-                                  elevation: active ? 8 : 0,
+                                  ...glowShadow(active ? DS.colors.accentGlowStrong : "rgba(0,0,0,0.08)", active ? 24 : 12),
                                 }}
                               >
                                 <View style={{ flex: 1, gap: 22 }}>
@@ -4643,7 +4597,7 @@ export default function WorkspaceScreen() {
                         }}
                       />
                       {customPromptDraft.length > 0 ? (
-                        <Pressable
+                        <LuxPressable
                           onPress={handleClearCustomPromptDraft}
                           className="cursor-pointer"
                           style={{
@@ -4655,13 +4609,15 @@ export default function WorkspaceScreen() {
                             alignItems: "center",
                             justifyContent: "center",
                             borderRadius: 999,
-                            borderWidth: 1,
-                            borderColor: "rgba(255,255,255,0.08)",
-                            backgroundColor: "rgba(255,255,255,0.05)",
+                            borderWidth: HAIRLINE,
+                            borderColor: DS.colors.borderSubtle,
+                            backgroundColor: DS.colors.surfaceMuted,
                           }}
+                          glowColor="rgba(255,255,255,0.04)"
+                          scale={0.96}
                         >
                           <Close color="#ffffff" size={14} strokeWidth={2.2} />
-                        </Pressable>
+                        </LuxPressable>
                       ) : null}
                     </View>
                   </View>

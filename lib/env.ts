@@ -1,3 +1,6 @@
+import { env as expoEnv } from "expo/virtual/env";
+import Constants from "expo-constants";
+
 import { resolvePublicEndpoint } from "./public-endpoints";
 
 type EnvSnapshot = {
@@ -20,17 +23,30 @@ const requiredKeys = [
   "EXPO_PUBLIC_CONVEX_URL",
 ] as const;
 
-const optionalKeys = [
-  "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY",
-  "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY",
-  "EXPO_PUBLIC_REVENUECAT_API_KEY",
-  "EXPO_PUBLIC_API_BASE_URL",
-] as const;
+type PublicEnvKey =
+  | "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"
+  | "EXPO_PUBLIC_CONVEX_URL"
+  | "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"
+  | "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY"
+  | "EXPO_PUBLIC_REVENUECAT_API_KEY"
+  | "EXPO_PUBLIC_API_BASE_URL";
 
 let didLog = false;
 
-function resolveEnv(key: string) {
-  return process.env[key];
+const runtimePublicEnv = (
+  (Constants.expoConfig?.extra as { publicEnv?: Partial<Record<PublicEnvKey, string>> } | undefined)?.publicEnv ??
+  ((Constants as unknown as {
+    manifest2?: { extra?: { expoClient?: { extra?: { publicEnv?: Partial<Record<PublicEnvKey, string>> } } } };
+    manifest?: { extra?: { publicEnv?: Partial<Record<PublicEnvKey, string>> } };
+  }).manifest2?.extra?.expoClient?.extra?.publicEnv) ??
+  ((Constants as unknown as {
+    manifest?: { extra?: { publicEnv?: Partial<Record<PublicEnvKey, string>> } };
+  }).manifest?.extra?.publicEnv) ??
+  {}
+) as Partial<Record<PublicEnvKey, string>>;
+
+function resolveEnv(key: PublicEnvKey) {
+  return runtimePublicEnv[key] ?? expoEnv[key] ?? process.env[key];
 }
 
 export function getEnvReport(): EnvReport {
@@ -80,19 +96,10 @@ export function getEnvReport(): EnvReport {
 export function logEnvDiagnostics(report: EnvReport) {
   if (didLog) return;
   didLog = true;
-
-  const present: string[] = [];
   const missing = report.missing;
 
-  for (const key of requiredKeys) {
-    if (resolveEnv(key)) present.push(key);
-  }
-  for (const key of optionalKeys) {
-    if (resolveEnv(key)) present.push(key);
-  }
-
   if (missing.length) {
-    console.error("[Env] Missing required environment variables:", missing);
+    console.warn("[Env] Missing required environment variables:", missing);
   }
 }
 

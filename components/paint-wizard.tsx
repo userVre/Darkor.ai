@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
@@ -12,7 +12,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle as SvgCircle, G, Path as SvgPath, Rect } from "react-native-svg";
 import { captureRef } from "react-native-view-shot";
 import {
-  ArrowLeft,
   Camera,
   Check,
   ChevronLeft,
@@ -24,6 +23,7 @@ import {
 
 import { assertCloudUrl } from "../lib/public-endpoints";
 import { triggerHaptic } from "../lib/haptics";
+import { WALL_COLOR_CATEGORIES, WALL_COLOR_OPTIONS, type ColorCategory, type ColorSwatch } from "../lib/data";
 import { getFriendlyGenerationError, isProviderDownError } from "../lib/generation-errors";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
@@ -52,18 +52,6 @@ type ArchiveGeneration = {
   errorMessage?: string | null;
 };
 
-type ColorSwatch = {
-  id: string;
-  label: string;
-  value: string;
-};
-
-type ColorCategory = {
-  id: string;
-  title: string;
-  colors: ColorSwatch[];
-};
-
 type FinishOption = {
   id: string;
   label: string;
@@ -80,49 +68,6 @@ const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
 const DETECT_DURATION_MS = 1700;
 const MASK_CONTINUE_GRADIENT = SERVICE_WIZARD_THEME.gradients.accent;
-
-const COLOR_CATEGORIES: ColorCategory[] = [
-  {
-    id: "modern-neutrals",
-    title: "Modern Neutrals",
-    colors: [
-      { id: "misty-gray", label: "Misty Gray", value: "#C8C4BE" },
-      { id: "warm-beige", label: "Warm Beige", value: "#D8C1A6" },
-      { id: "off-white", label: "Off-White", value: "#F3EEE6" },
-      { id: "soft-taupe", label: "Soft Taupe", value: "#B5A89A" },
-    ],
-  },
-  {
-    id: "bold-dark",
-    title: "Bold & Dark",
-    colors: [
-      { id: "royal-navy", label: "Royal Navy", value: "#223A66" },
-      { id: "charcoal-ink", label: "Charcoal Ink", value: "#3B3E45" },
-      { id: "deep-olive", label: "Deep Olive", value: "#4C5540" },
-      { id: "aubergine", label: "Aubergine", value: "#4B314A" },
-    ],
-  },
-  {
-    id: "soft-pastels",
-    title: "Soft Pastels",
-    colors: [
-      { id: "dusty-rose", label: "Dusty Rose", value: "#DAB4B5" },
-      { id: "powder-blue", label: "Powder Blue", value: "#C8D7E8" },
-      { id: "pale-sage", label: "Pale Sage", value: "#C3D2C1" },
-      { id: "lavender-mist", label: "Lavender Mist", value: "#D9D2E8" },
-    ],
-  },
-  {
-    id: "nature-inspired",
-    title: "Nature Inspired",
-    colors: [
-      { id: "sage-green", label: "Sage Green", value: "#8EA486" },
-      { id: "terracotta", label: "Terracotta", value: "#C86F4C" },
-      { id: "olive-grove", label: "Olive Grove", value: "#6C7752" },
-      { id: "sandstone", label: "Sandstone", value: "#C7A78B" },
-    ],
-  },
-];
 
 const FINISH_OPTIONS: FinishOption[] = [
   {
@@ -235,6 +180,7 @@ const FinishCard = memo(function FinishCard({
 
 export function PaintWizard() {
   const router = useRouter();
+  const { presetStyle, startStep } = useLocalSearchParams<{ presetStyle?: string; startStep?: string }>();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const { isSignedIn } = useAuth();
@@ -258,6 +204,7 @@ export function PaintWizard() {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
+  const initialSelectionAppliedRef = useRef(false);
   const detectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sourceCaptureRef = useRef<View>(null);
   const maskCaptureRef = useRef<View>(null);
@@ -288,14 +235,14 @@ export function PaintWizard() {
   });
 
   const selectedColor = useMemo(
-    () => COLOR_CATEGORIES.flatMap((category) => category.colors).find((color) => color.value === selectedColorValue) ?? null,
+    () => WALL_COLOR_CATEGORIES.flatMap((category) => category.colors).find((color) => color.value === selectedColorValue) ?? null,
     [selectedColorValue],
   );
   const selectedFinish = useMemo(
     () => FINISH_OPTIONS.find((option) => option.id === selectedFinishId) ?? FINISH_OPTIONS[0],
     [selectedFinishId],
   );
-  const creditBalance = viewerReady ? me?.credits ?? 3 : 3;
+  const availableCredits = viewerReady ? me?.credits ?? 3 : 3;
   const canGenerate = Boolean(selectedImage && hasMask && selectedColor && !isGenerating);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
@@ -310,6 +257,26 @@ export function PaintWizard() {
       if (detectTimerRef.current) clearTimeout(detectTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (initialSelectionAppliedRef.current) {
+      return;
+    }
+
+    if (typeof presetStyle === "string") {
+      const normalized = presetStyle.trim().toLowerCase();
+      const matched = WALL_COLOR_OPTIONS.find((option) => option.title.toLowerCase() === normalized);
+      if (matched) {
+        setSelectedColorValue(matched.value);
+      }
+    }
+
+    if (String(startStep ?? "") === "3") {
+      setStep("colors");
+    }
+
+    initialSelectionAppliedRef.current = true;
+  }, [presetStyle, startStep]);
 
   useEffect(() => {
     if (!generationId || !generationArchive) return;
@@ -355,9 +322,23 @@ export function PaintWizard() {
     setGenerationId(null);
     setIsGenerating(false);
     resetMaskDrawing({ resetBrush: true });
-    setSelectedColorValue(null);
+    if (typeof presetStyle === "string") {
+      const normalized = presetStyle.trim().toLowerCase();
+      const matched = WALL_COLOR_OPTIONS.find((option) => option.title.toLowerCase() === normalized);
+      setSelectedColorValue(matched?.value ?? null);
+    } else {
+      setSelectedColorValue(null);
+    }
     setSelectedFinishId(FINISH_OPTIONS[0].id);
-  }, [resetMaskDrawing]);
+  }, [presetStyle, resetMaskDrawing]);
+
+  const handleClose = useCallback(() => {
+    triggerHaptic();
+    resetProject();
+    if (currentStepNumber === 1) {
+      router.replace("/(tabs)");
+    }
+  }, [currentStepNumber, resetProject, router]);
 
   const uploadBlobToStorage = useCallback(
     async (uri: string) => {
@@ -424,7 +405,6 @@ export function PaintWizard() {
         setGeneratedImageUrl(null);
         setGenerationId(null);
         resetMaskDrawing({ resetBrush: true });
-        setSelectedColorValue(null);
         setSelectedFinishId(FINISH_OPTIONS[0].id);
         setStep("mask");
         resetDetection();
@@ -451,7 +431,7 @@ export function PaintWizard() {
       return;
     }
 
-    if (creditBalance <= 0) {
+    if (availableCredits <= 0) {
       if (!isSignedIn) {
         setAwaitingAuth(true);
         router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=paint" } });
@@ -522,7 +502,7 @@ export function PaintWizard() {
     }
   }, [
     anonymousId,
-    creditBalance,
+    availableCredits,
     hasMask,
     isSignedIn,
     router,
@@ -548,15 +528,14 @@ export function PaintWizard() {
   }, [awaitingAuth, canGenerate, handleGenerate, isSignedIn, viewerReady]);
 
   const handleBack = useCallback(() => {
-    if (step === "intake") {
-      router.back();
-      return;
-    }
+    triggerHaptic();
+    if (step === "intake") return;
     if (step === "mask") return setStep("intake");
     if (step === "colors") return setStep("mask");
     if (step === "finish") return setStep("colors");
+    if (step === "processing") return setStep("colors");
     if (step === "result") return setStep("colors");
-  }, [router, step]);
+  }, [step]);
 
   return (
     <View style={styles.screen}>
@@ -596,22 +575,9 @@ export function PaintWizard() {
         title="Smart Wall Paint"
         step={currentStepNumber}
         topInset={insets.top}
-        leftAccessory={
-          <LuxPressable
-            onPress={handleBack}
-            className={pointerClassName}
-            style={styles.topButton}
-            glowColor="rgba(255,255,255,0.06)"
-            scale={0.97}
-          >
-            <ArrowLeft color="#ffffff" size={18} />
-          </LuxPressable>
-        }
-        rightAccessory={
-          <View style={styles.creditPill}>
-            <Text style={styles.creditText}>{creditBalance}</Text>
-          </View>
-        }
+        canGoBack={currentStepNumber > 1}
+        onBack={handleBack}
+        onClose={handleClose}
       />
 
       {step === "intake" ? (
@@ -908,7 +874,7 @@ export function PaintWizard() {
               ) : null}
             </View>
 
-            {COLOR_CATEGORIES.map((category) => (
+            {WALL_COLOR_CATEGORIES.map((category) => (
               <View key={category.id} style={styles.paletteCard}>
                 <Text style={styles.paletteTitle}>{category.title}</Text>
                 <View style={styles.swatchGrid}>

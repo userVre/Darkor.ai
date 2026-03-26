@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
@@ -12,11 +12,12 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle as SvgCircle, G, Path as SvgPath, Rect } from "react-native-svg";
 import { captureRef } from "react-native-view-shot";
-import { ArrowLeft, Camera, ChevronLeft, ImagePlus, MoveHorizontal, RotateCcw, Sparkles, Trash2 } from "lucide-react-native";
+import { Camera, ChevronLeft, ImagePlus, MoveHorizontal, RotateCcw, Sparkles, Trash2 } from "lucide-react-native";
 
 import { getFriendlyGenerationError, isProviderDownError } from "../lib/generation-errors";
 import { triggerHaptic } from "../lib/haptics";
 import { assertCloudUrl } from "../lib/public-endpoints";
+import { FLOOR_MATERIAL_OPTIONS, type FloorMaterialOption } from "../lib/data";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { LuxPressable } from "./lux-pressable";
@@ -29,15 +30,6 @@ type WizardStep = "intake" | "mask" | "materials" | "processing" | "result";
 type SelectedImage = { uri: string; width: number; height: number };
 type MeResponse = { credits: number };
 type ArchiveGeneration = { _id: string; imageUrl?: string | null; status?: "processing" | "ready" | "failed"; errorMessage?: string | null };
-type MaterialOption = {
-  id: string;
-  title: string;
-  subtitle: string;
-  promptLabel: string;
-  paletteLabel: string;
-  colors: [string, string, string];
-  sample: "hardwood" | "marble" | "tile" | "concrete" | "parquet";
-};
 
 const pointerClassName = "cursor-pointer";
 const MASK_COLOR = "rgba(236, 72, 153, 0.58)";
@@ -48,13 +40,6 @@ const LOUPE_SIZE = 116;
 const LOUPE_ZOOM = 1.8;
 const absoluteFill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
 const MASK_CONTINUE_GRADIENT = SERVICE_WIZARD_THEME.gradients.accent;
-
-const MATERIALS: MaterialOption[] = [
-  { id: "hardwood", title: "Hardwood", subtitle: "Wide-plank warmth with luxury matte depth.", promptLabel: "premium wide-plank hardwood flooring", paletteLabel: "Hardwood", colors: ["#6F4A32", "#A06E47", "#D0A173"], sample: "hardwood" },
-  { id: "marble", title: "Marble", subtitle: "Polished stone veining with upscale contrast.", promptLabel: "polished marble flooring with refined natural veining", paletteLabel: "Marble", colors: ["#F1EEEA", "#D4D0CB", "#B7B2AB"], sample: "marble" },
-  { id: "concrete", title: "Polished Concrete", subtitle: "Architectural grey with seamless gallery-grade texture.", promptLabel: "polished concrete flooring", paletteLabel: "Polished Concrete", colors: ["#4F5660", "#767D87", "#A7AEB6"], sample: "concrete" },
-  { id: "parquet", title: "Parquet", subtitle: "Boutique parquet geometry with rich movement.", promptLabel: "luxury parquet flooring with refined pattern direction", paletteLabel: "Parquet", colors: ["#4E3021", "#7F5438", "#BA8157"], sample: "parquet" },
-] as const;
 
 function simplifyRatio(width: number, height: number) {
   const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
@@ -72,33 +57,16 @@ async function readBlobFromUri(uri: string) {
   return await response.blob();
 }
 
-function MaterialSample({ option }: { option: MaterialOption }) {
-  const [c1, c2, c3] = option.colors;
-  if (option.sample === "tile") {
-    return <LinearGradient colors={[c1, c2]} style={styles.sample}>{[0, 1].map((r) => <View key={r} style={styles.tileRow}>{[0, 1].map((c) => <View key={`${r}-${c}`} style={[styles.tileBlock, { backgroundColor: (r + c) % 2 === 0 ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.08)" }]} />)}</View>)}</LinearGradient>;
-  }
-  if (option.sample === "concrete") {
-    return <LinearGradient colors={[c1, c2, c3]} style={styles.sample}>{[0, 1, 2, 3, 4].map((i) => <View key={i} style={{ position: "absolute", top: 16 + i * 22, left: 12 + i * 7, width: 100 - i * 8, height: 10, borderRadius: 999, backgroundColor: i % 2 === 0 ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)" }} />)}</LinearGradient>;
-  }
-  if (option.sample === "marble") {
-    return <LinearGradient colors={[c1, c2]} style={styles.sample}>{[0, 1, 2, 3].map((i) => <View key={i} style={{ position: "absolute", top: 10 + i * 28, left: i % 2 === 0 ? 18 : 66, width: 66, height: 108, borderRadius: 40, backgroundColor: i % 2 === 0 ? "rgba(255,255,255,0.16)" : "rgba(0,0,0,0.05)", transform: [{ rotate: `${i % 2 === 0 ? 28 : -26}deg` }] }} />)}</LinearGradient>;
-  }
-  if (option.sample === "parquet") {
-    return <LinearGradient colors={[c1, c2, c3]} style={styles.sample}>{[0, 1, 2, 3].map((i) => <View key={`l-${i}`} style={{ position: "absolute", top: 10 + i * 26, left: 18, width: 54, height: 15, borderRadius: 8, backgroundColor: "rgba(255,255,255,0.11)", transform: [{ rotate: "38deg" }] }} />)}{[0, 1, 2, 3].map((i) => <View key={`r-${i}`} style={{ position: "absolute", top: 12 + i * 26, right: 18, width: 54, height: 15, borderRadius: 8, backgroundColor: "rgba(0,0,0,0.14)", transform: [{ rotate: "-38deg" }] }} />)}</LinearGradient>;
-  }
-  return <LinearGradient colors={[c1, c2, c3]} style={[styles.sample, styles.hardwoodSample]}>{[0, 1, 2, 3].map((i) => <View key={i} style={{ flex: 1, borderRadius: 14, backgroundColor: i % 2 === 0 ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.12)" }} />)}</LinearGradient>;
-}
-
-const MaterialCard = memo(function MaterialCard({ option, active, width, onPress }: { option: MaterialOption; active: boolean; width: number; onPress: () => void }) {
+const MaterialCard = memo(function MaterialCard({ option, active, width, onPress }: { option: FloorMaterialOption; active: boolean; width: number; onPress: () => void }) {
   return (
     <LuxPressable onPress={onPress} pressableClassName={pointerClassName} className={pointerClassName} style={{ width }} glowColor={active ? SERVICE_WIZARD_THEME.colors.accentGlowSoft : "rgba(255,255,255,0.04)"} scale={0.99}>
       <View style={[styles.materialCard, active ? styles.materialCardActive : null]}>
         <View style={styles.materialPreview}>
-          <MaterialSample option={option} />
+          <Image source={option.image} style={styles.sample} contentFit="cover" transition={120} cachePolicy="memory-disk" />
           <LinearGradient colors={["transparent", "rgba(0,0,0,0.8)"]} style={styles.previewOverlay} />
           <View style={styles.previewCopy}>
             <Text style={styles.materialTitle}>{option.title}</Text>
-            <Text style={[styles.materialSubtitle, active ? styles.materialSubtitleActive : null]} numberOfLines={2}>{option.subtitle}</Text>
+            <Text style={[styles.materialSubtitle, active ? styles.materialSubtitleActive : null]} numberOfLines={2}>{option.description}</Text>
           </View>
         </View>
       </View>
@@ -108,6 +76,7 @@ const MaterialCard = memo(function MaterialCard({ option, active, width, onPress
 
 export function FloorWizard() {
   const router = useRouter();
+  const { presetStyle, startStep } = useLocalSearchParams<{ presetStyle?: string; startStep?: string }>();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { isSignedIn } = useAuth();
@@ -131,6 +100,7 @@ export function FloorWizard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
   const [comparisonPosition, setComparisonPosition] = useState(0.52);
+  const initialSelectionAppliedRef = useRef(false);
 
   const detectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sourceCaptureRef = useRef<View>(null);
@@ -163,8 +133,11 @@ export function FloorWizard() {
     loupeZoom: LOUPE_ZOOM,
   });
 
-  const selectedMaterial = useMemo(() => MATERIALS.find((m) => m.id === selectedMaterialId) ?? null, [selectedMaterialId]);
-  const creditBalance = viewerReady ? me?.credits ?? 3 : 3;
+  const selectedMaterial = useMemo(
+    () => FLOOR_MATERIAL_OPTIONS.find((material) => material.id === selectedMaterialId) ?? null,
+    [selectedMaterialId],
+  );
+  const availableCredits = viewerReady ? me?.credits ?? 3 : 3;
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "materials" ? 3 : 4;
   const canContinueFromMask = hasMask && !isDetecting;
@@ -178,6 +151,26 @@ export function FloorWizard() {
   const canContinueFromMaterials = Boolean(selectedImage && hasMask && selectedMaterial && !isGenerating);
 
   useEffect(() => () => { if (detectTimerRef.current) clearTimeout(detectTimerRef.current); }, []);
+
+  useEffect(() => {
+    if (initialSelectionAppliedRef.current) {
+      return;
+    }
+
+    if (typeof presetStyle === "string") {
+      const normalized = presetStyle.trim().toLowerCase();
+      const matched = FLOOR_MATERIAL_OPTIONS.find((material) => material.title.toLowerCase() === normalized);
+      if (matched) {
+        setSelectedMaterialId(matched.id);
+      }
+    }
+
+    if (String(startStep ?? "") === "3") {
+      setStep("materials");
+    }
+
+    initialSelectionAppliedRef.current = true;
+  }, [presetStyle, startStep]);
 
   useEffect(() => {
     if (!generationId || !generationArchive) return;
@@ -220,8 +213,22 @@ export function FloorWizard() {
     setGenerationId(null);
     setIsGenerating(false);
     resetMaskDrawing({ resetBrush: true });
+    if (typeof presetStyle === "string") {
+      const normalized = presetStyle.trim().toLowerCase();
+      const matched = FLOOR_MATERIAL_OPTIONS.find((material) => material.title.toLowerCase() === normalized);
+      setSelectedMaterialId(matched?.id ?? null);
+      return;
+    }
     setSelectedMaterialId(null);
-  }, [resetMaskDrawing]);
+  }, [presetStyle, resetMaskDrawing]);
+
+  const handleClose = useCallback(() => {
+    triggerHaptic();
+    resetProject();
+    if (currentStepNumber === 1) {
+      router.replace("/(tabs)");
+    }
+  }, [currentStepNumber, resetProject, router]);
 
   const uploadBlobToStorage = useCallback(async (uri: string) => {
     const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
@@ -250,7 +257,6 @@ export function FloorWizard() {
       setGeneratedImageUrl(null);
       setGenerationId(null);
       resetMaskDrawing({ resetBrush: true });
-      setSelectedMaterialId(null);
       setStep("mask");
       resetDetection();
     } catch (error) {
@@ -286,7 +292,7 @@ export function FloorWizard() {
       Alert.alert("Pick a material", "Choose a flooring material before continuing.");
       return;
     }
-    if (creditBalance <= 0) {
+    if (availableCredits <= 0) {
       if (!isSignedIn) {
         setAwaitingAuth(true);
         router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=floor" } });
@@ -344,7 +350,7 @@ export function FloorWizard() {
       }
       showToast(message);
     }
-  }, [anonymousId, creditBalance, hasMask, isSignedIn, router, selectedImage, selectedMaterial, showToast, startGeneration, uploadBlobToStorage, viewerReady]);
+  }, [anonymousId, availableCredits, hasMask, isSignedIn, router, selectedImage, selectedMaterial, showToast, startGeneration, uploadBlobToStorage, viewerReady]);
 
   useEffect(() => {
     if (!awaitingAuth || !isSignedIn || !viewerReady || !selectedImage || !hasMask) {
@@ -359,11 +365,13 @@ export function FloorWizard() {
   }, [awaitingAuth, handleGenerate, hasMask, isSignedIn, selectedImage, viewerReady]);
 
   const handleBack = useCallback(() => {
-    if (step === "intake") return router.back();
+    triggerHaptic();
+    if (step === "intake") return;
     if (step === "mask") return setStep("intake");
     if (step === "materials") return setStep("mask");
+    if (step === "processing") return setStep("materials");
     if (step === "result") return setStep("materials");
-  }, [router, step]);
+  }, [step]);
 
   return (
     <View style={styles.screen}>
@@ -385,16 +393,9 @@ export function FloorWizard() {
         title="Floor Restyle"
         step={currentStepNumber}
         topInset={insets.top}
-        leftAccessory={
-          <LuxPressable onPress={handleBack} className={pointerClassName} style={styles.topButton} glowColor="rgba(255,255,255,0.06)" scale={0.97}>
-            <ArrowLeft color="#ffffff" size={18} />
-          </LuxPressable>
-        }
-        rightAccessory={
-          <View style={styles.creditPill}>
-            <Text style={styles.creditText}>{creditBalance}</Text>
-          </View>
-        }
+        canGoBack={currentStepNumber > 1}
+        onBack={handleBack}
+        onClose={handleClose}
       />
 
       {step === "intake" ? (
@@ -477,8 +478,8 @@ export function FloorWizard() {
           <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: Math.max(insets.bottom + 122, 138), gap: 18 }} showsVerticalScrollIndicator={false}>
             <Text style={styles.stepTitle}>Select Material</Text>
             <Text style={styles.stepText}>Select a premium material curated to read as photoreal, perspective-aware, and listing-ready.</Text>
-            <View style={styles.grid}>{MATERIALS.map((option) => <MaterialCard key={option.id} option={option} active={option.id === selectedMaterial?.id} width={materialCardWidth} onPress={() => { setSelectedMaterialId(option.id); triggerHaptic(); }} />)}</View>
-            <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Selected Material</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? "No material selected"}</Text><Text style={styles.summaryText}>{selectedMaterial?.subtitle ?? "Select a flooring material to unlock the AI restyle."}</Text></View>
+            <View style={styles.grid}>{FLOOR_MATERIAL_OPTIONS.map((option) => <MaterialCard key={option.id} option={option} active={option.id === selectedMaterial?.id} width={materialCardWidth} onPress={() => { setSelectedMaterialId(option.id); triggerHaptic(); }} />)}</View>
+            <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Selected Material</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? "No material selected"}</Text><Text style={styles.summaryText}>{selectedMaterial?.description ?? "Select a flooring material to unlock the AI restyle."}</Text></View>
           </ScrollView>
 
           <View style={[styles.fixedContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>

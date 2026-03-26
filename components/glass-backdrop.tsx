@@ -30,7 +30,7 @@ export function GlassBackdrop({ animatedIndex, style, onPress }: GlassBackdropPr
       style={[StyleSheet.absoluteFillObject, styles.container, animatedStyle, style]}
     >
       <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFillObject} />
-      <Pressable style={StyleSheet.absoluteFillObject} onPress={onPress} />
+      <Pressable style={[StyleSheet.absoluteFillObject, { cursor: "pointer" as any }]} onPress={onPress} />
     </Animated.View>
   );
 }

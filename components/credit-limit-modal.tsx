@@ -6,6 +6,7 @@ import { memo, useCallback } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { LuxPressable } from "./lux-pressable";
+import { DS, HAIRLINE, glowShadow, surfaceCard } from "../lib/design-system";
 import { LUX_SPRING } from "../lib/motion";
 import { triggerHaptic } from "../lib/haptics";
 
@@ -41,7 +42,7 @@ export const CreditLimitModal = memo(function CreditLimitModal({
     >
       <View style={styles.screen}>
         <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFillObject} />
-        <Pressable style={styles.backdrop} onPress={handleClose} />
+        <Pressable style={[styles.backdrop, { cursor: "pointer" as any }]} onPress={handleClose} />
 
         <AnimatePresence>
           {visible ? (
@@ -128,79 +129,69 @@ const styles = StyleSheet.create({
     maxWidth: 420,
   },
   card: {
+    ...surfaceCard("rgba(13,14,18,0.94)"),
+    ...glowShadow("rgba(0,0,0,0.42)", 32),
     overflow: "hidden",
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.09)",
-    backgroundColor: "rgba(24,24,27,0.9)",
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 22,
+    borderRadius: DS.radius.xxl,
+    paddingHorizontal: DS.spacing[3],
+    paddingTop: DS.spacing[3],
+    paddingBottom: DS.spacing[3],
     alignItems: "center",
+    gap: DS.spacing[1],
   },
   closeButton: {
     position: "absolute",
-    top: 14,
-    right: 14,
+    top: DS.spacing[2],
+    right: DS.spacing[2],
     zIndex: 2,
     width: 36,
     height: 36,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "rgba(39,39,42,0.88)",
+    borderWidth: HAIRLINE,
+    borderColor: DS.colors.borderSubtle,
+    backgroundColor: DS.colors.surfaceMuted,
   },
   iconShell: {
-    marginTop: 8,
-    marginBottom: 22,
+    marginTop: DS.spacing[1],
+    marginBottom: DS.spacing[2],
     borderRadius: 999,
-    shadowColor: "#d946ef",
-    shadowOpacity: 0.22,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
+    boxShadow: "0px 0px 32px rgba(168,85,247,0.12)",
   },
   iconGradient: {
-    width: 88,
-    height: 88,
+    width: 92,
+    height: 92,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
   },
   title: {
-    color: "#ffffff",
-    fontSize: 28,
-    fontWeight: "800",
-    lineHeight: 32,
-    letterSpacing: -0.7,
+    color: DS.colors.textPrimary,
+    ...DS.typography.title,
     textAlign: "center",
   },
   description: {
-    marginTop: 14,
-    color: "#d4d4d8",
-    fontSize: 15,
-    fontWeight: "500",
-    lineHeight: 24,
+    marginTop: DS.spacing[1],
+    color: DS.colors.textSecondary,
+    ...DS.typography.body,
     textAlign: "center",
   },
   ctaOuter: {
     width: "100%",
-    marginTop: 28,
-    borderRadius: 20,
+    marginTop: DS.spacing[2],
+    borderRadius: DS.radius.md,
     overflow: "hidden",
   },
   ctaGradient: {
-    minHeight: 58,
+    minHeight: 56,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: DS.spacing[3],
+    borderRadius: DS.radius.md,
   },
   ctaText: {
-    color: "#09090b",
-    fontSize: 17,
-    fontWeight: "800",
-    letterSpacing: -0.2,
+    color: DS.colors.textPrimary,
+    ...DS.typography.button,
   },
 });

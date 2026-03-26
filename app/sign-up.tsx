@@ -3,11 +3,17 @@ import { useSignUp } from "@clerk/expo/legacy";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, Text, TextInput, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { ArrowLeft } from "lucide-react-native";
+
 import { LuxPressable } from "../components/lux-pressable";
+import { DS, HAIRLINE, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
+import { triggerHaptic } from "../lib/haptics";
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const { signUp, isLoaded } = useSignUp();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_apple" });
@@ -50,63 +56,191 @@ export default function SignUpScreen() {
   };
 
   return (
-    <View className="flex-1 justify-center bg-black px-5" style={{ backgroundColor: "#000000" }}>
-      <Text className="text-3xl font-bold text-zinc-100">Create account</Text>
-      <TextInput
-        className="mt-4 rounded-2xl border border-white/10 bg-black/60 p-4 text-zinc-100"
-        style={{ borderWidth: 0.5 }}
-        placeholder="Email"
-        placeholderTextColor="#71717a"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        className="mt-3 rounded-2xl border border-white/10 bg-black/60 p-4 text-zinc-100"
-        style={{ borderWidth: 0.5 }}
-        placeholder="Password"
-        placeholderTextColor="#71717a"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-
-      <LuxPressable
-        onPress={() => void handleSignUp()}
-        className="mt-4 rounded-2xl"
-        disabled={loading}
+    <SafeAreaView edges={["top"]} style={styles.screen}>
+      <ScrollView
+        style={styles.scroll}
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: SCREEN_SIDE_PADDING,
+          paddingTop: DS.spacing[3],
+          paddingBottom: Math.max(insets.bottom + DS.spacing[5], DS.spacing[6]),
+          gap: DS.spacing[4],
+        }}
       >
-        <LinearGradient
-          colors={["#d946ef", "#4f46e5"]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          className="rounded-2xl p-4"
+        <LuxPressable
+          onPress={() => {
+            triggerHaptic();
+            router.back();
+          }}
+          style={styles.backButton}
+          className="cursor-pointer"
+          glowColor={DS.colors.accentGlow}
         >
-          <Text className="text-center font-semibold text-white">{loading ? "Creating..." : "Create account"}</Text>
-        </LinearGradient>
-      </LuxPressable>
+          <ArrowLeft color={DS.colors.textPrimary} size={18} strokeWidth={2.2} />
+        </LuxPressable>
 
-      <LuxPressable
-        onPress={() => void handleAppleSignUp()}
-        className="mt-3 flex-row items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black py-3"
-        style={{ borderWidth: 0.5 }}
-        disabled={appleLoading}
-      >
-        <Text className="text-lg font-semibold text-white">{"\uF8FF"}</Text>
-        <Text className="text-sm font-semibold text-white">
-          {appleLoading ? "Connecting..." : "Continue with Apple"}
+        <View style={styles.hero}>
+          <Text style={styles.eyebrow}>Darkor.ai Account</Text>
+          <Text style={styles.title}>Create account</Text>
+          <Text style={styles.subtitle}>
+            Start with a cleaner premium shell, then carry your redesigns, subscriptions, and saved boards across devices.
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="you@company.com"
+              placeholderTextColor={DS.colors.textTertiary}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+            />
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Create a secure password"
+              placeholderTextColor={DS.colors.textTertiary}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+          </View>
+
+          <LuxPressable onPress={() => void handleSignUp()} style={styles.fullWidth} disabled={loading} glowColor={DS.colors.accentGlowStrong}>
+            <LinearGradient colors={["#A855F7", "#7C3AED"]} style={styles.primaryButton}>
+              <Text style={styles.primaryButtonText}>{loading ? "Creating..." : "Create account"}</Text>
+            </LinearGradient>
+          </LuxPressable>
+
+          <LuxPressable onPress={() => void handleAppleSignUp()} style={styles.fullWidth} disabled={appleLoading}>
+            <View style={styles.secondaryButton}>
+              <Text style={styles.appleIcon}>{"\uF8FF"}</Text>
+              <Text style={styles.secondaryButtonText}>{appleLoading ? "Connecting..." : "Continue with Apple"}</Text>
+            </View>
+          </LuxPressable>
+        </View>
+
+        <Text style={styles.footerText}>
+          Already have an account?{" "}
+          <Link href={{ pathname: "/sign-in", params: { returnTo: nextRoute } }} style={styles.footerLink}>
+            Sign in
+          </Link>
         </Text>
-      </LuxPressable>
-
-      <Text className="mt-4 text-center text-zinc-400">
-        Already have an account?{" "}
-        <Link href={{ pathname: "/sign-in", params: { returnTo: nextRoute } }} style={{ color: "#f0abfc" }}>
-          Sign in
-        </Link>
-      </Text>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: DS.colors.background,
+  },
+  scroll: {
+    flex: 1,
+    backgroundColor: DS.colors.background,
+  },
+  backButton: {
+    ...surfaceCard(DS.colors.surface),
+    width: 44,
+    height: 44,
+    borderRadius: DS.radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    ...glowShadow("rgba(255,255,255,0.03)", 16),
+  },
+  hero: {
+    gap: DS.spacing[1],
+  },
+  eyebrow: {
+    color: DS.colors.textTertiary,
+    ...DS.typography.label,
+  },
+  title: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.title,
+  },
+  subtitle: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.body,
+    maxWidth: 480,
+  },
+  card: {
+    ...surfaceCard(),
+    ...glowShadow("rgba(0,0,0,0.34)", 22),
+    padding: DS.spacing[3],
+    gap: DS.spacing[3],
+  },
+  fieldGroup: {
+    gap: DS.spacing[1],
+  },
+  label: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.bodySm,
+    fontWeight: "600",
+  },
+  input: {
+    minHeight: 56,
+    borderRadius: DS.radius.md,
+    borderWidth: HAIRLINE,
+    borderColor: DS.colors.borderSubtle,
+    backgroundColor: DS.colors.surface,
+    color: DS.colors.textPrimary,
+    paddingHorizontal: DS.spacing[2],
+    paddingVertical: DS.spacing[2],
+    fontSize: 15,
+    fontWeight: "400",
+  },
+  fullWidth: {
+    width: "100%",
+  },
+  primaryButton: {
+    minHeight: 56,
+    borderRadius: DS.radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: DS.spacing[3],
+  },
+  primaryButtonText: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.button,
+  },
+  secondaryButton: {
+    minHeight: 56,
+    borderRadius: DS.radius.md,
+    borderWidth: HAIRLINE,
+    borderColor: DS.colors.borderSubtle,
+    backgroundColor: DS.colors.surface,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: DS.spacing[1],
+    paddingHorizontal: DS.spacing[3],
+  },
+  appleIcon: {
+    color: DS.colors.textPrimary,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  secondaryButtonText: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.button,
+  },
+  footerText: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.bodySm,
+    textAlign: "center",
+  },
+  footerLink: {
+    color: DS.colors.accentStrong,
+    fontWeight: "700",
+  },
+});
