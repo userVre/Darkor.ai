@@ -1,7 +1,3 @@
 /// <reference types="expo/types" />
 
 // NOTE: This file should not be edited and should be in your git ignore
-
-declare module "expo/virtual/env" {
-  export const env: Record<string, string | undefined>;
-}
