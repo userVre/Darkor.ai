@@ -1,3 +1,5 @@
+import { resolvePublicEndpoint } from "./public-endpoints";
+
 export type PlanUsed = "free" | "trial" | "pro";
 
 export type GenerateRequestPayload = {
@@ -18,17 +20,9 @@ type GenerateResponse = {
 };
 
 function resolveApiBaseUrl() {
-  const rawBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
-  if (!rawBaseUrl) {
-    throw new Error("Missing EXPO_PUBLIC_API_BASE_URL");
-  }
-
-  const normalized = rawBaseUrl.replace(/\/+$/, "");
-  if (process.env.EXPO_OS === "android") {
-    return normalized.replace("://localhost", "://10.0.2.2").replace("://127.0.0.1", "://10.0.2.2");
-  }
-
-  return normalized;
+  return resolvePublicEndpoint(process.env.EXPO_PUBLIC_API_BASE_URL, "EXPO_PUBLIC_API_BASE_URL", {
+    required: true,
+  });
 }
 
 export async function generateImage(

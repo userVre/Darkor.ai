@@ -1,3 +1,5 @@
+import { resolvePublicEndpoint } from "./public-endpoints";
+
 type EnvSnapshot = {
   clerkPublishableKey?: string;
   convexUrl?: string;
@@ -32,18 +34,40 @@ function resolveEnv(key: string) {
 }
 
 export function getEnvReport(): EnvReport {
+  let convexUrl: string | undefined;
+  let apiBaseUrl: string | undefined;
+
+  try {
+    convexUrl = resolvePublicEndpoint(resolveEnv("EXPO_PUBLIC_CONVEX_URL"), "EXPO_PUBLIC_CONVEX_URL");
+  } catch {
+    convexUrl = undefined;
+  }
+
+  try {
+    apiBaseUrl = resolvePublicEndpoint(resolveEnv("EXPO_PUBLIC_API_BASE_URL"), "EXPO_PUBLIC_API_BASE_URL");
+  } catch {
+    apiBaseUrl = undefined;
+  }
+
   const values: EnvSnapshot = {
     clerkPublishableKey: resolveEnv("EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"),
-    convexUrl: resolveEnv("EXPO_PUBLIC_CONVEX_URL"),
+    convexUrl,
     revenueCatIosKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"),
     revenueCatAndroidKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY"),
     revenueCatKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_API_KEY"),
-    apiBaseUrl: resolveEnv("EXPO_PUBLIC_API_BASE_URL"),
+    apiBaseUrl,
   };
 
   const missing: string[] = [];
   for (const key of requiredKeys) {
-    if (!resolveEnv(key)) missing.push(key);
+    try {
+      const value = resolveEnv(key);
+      if (!resolvePublicEndpoint(value, key)) {
+        missing.push(key);
+      }
+    } catch {
+      missing.push(key);
+    }
   }
 
   return {

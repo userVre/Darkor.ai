@@ -14,7 +14,9 @@ import Svg, { Circle as SvgCircle, G, Path as SvgPath, Rect } from "react-native
 import { captureRef } from "react-native-view-shot";
 import { ArrowLeft, Camera, ChevronLeft, ImagePlus, MoveHorizontal, RotateCcw, Sparkles, Trash2 } from "lucide-react-native";
 
+import { getFriendlyGenerationError, isProviderDownError } from "../lib/generation-errors";
 import { triggerHaptic } from "../lib/haptics";
+import { assertCloudUrl } from "../lib/public-endpoints";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { LuxPressable } from "./lux-pressable";
@@ -196,7 +198,12 @@ export function FloorWizard() {
     if (generation.status === "failed") {
       setIsGenerating(false);
       setStep("materials");
-      showToast(generation.errorMessage ?? "Unable to restyle the floor right now.");
+      const message = getFriendlyGenerationError(generation.errorMessage);
+      if (isProviderDownError(generation.errorMessage)) {
+        Alert.alert("Darkor AI is busy", message);
+        return;
+      }
+      showToast(message);
     }
   }, [generationArchive, generationId, isSignedIn, router, showToast]);
 
@@ -218,6 +225,7 @@ export function FloorWizard() {
 
   const uploadBlobToStorage = useCallback(async (uri: string) => {
     const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
+    assertCloudUrl(uploadUrl, "Convex upload URL");
     const blob = await readBlobFromUri(uri);
     const response = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": blob.type || "image/png" }, body: blob });
     if (!response.ok) throw new Error("Unable to upload the selected floor image.");
@@ -319,7 +327,8 @@ export function FloorWizard() {
     } catch (error) {
       setIsGenerating(false);
       setStep("materials");
-      const message = error instanceof Error ? error.message : "Please try again.";
+      const rawMessage = error instanceof Error ? error.message : "Please try again.";
+      const message = getFriendlyGenerationError(rawMessage);
       if (message === "Payment Required") {
         if (!isSignedIn) {
           setAwaitingAuth(true);
@@ -327,6 +336,10 @@ export function FloorWizard() {
           return;
         }
         router.push("/paywall");
+        return;
+      }
+      if (isProviderDownError(rawMessage)) {
+        Alert.alert("Darkor AI is busy", message);
         return;
       }
       showToast(message);

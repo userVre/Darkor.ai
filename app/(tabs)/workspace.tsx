@@ -79,8 +79,10 @@ import {
 import Svg, { Defs, Mask, Path as SvgPath, Rect } from "react-native-svg";
 
 import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
+import { getFriendlyGenerationError, isProviderDownError } from "../../lib/generation-errors";
 import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
+import { assertCloudUrl } from "../../lib/public-endpoints";
 import { requestStoreReview } from "../../lib/store-review";
 import { GlassBackdrop } from "../../components/glass-backdrop";
 import { FloorWizard } from "../../components/floor-wizard";
@@ -1890,7 +1892,12 @@ export default function WorkspaceScreen() {
       setIsGenerating(false);
       generationAlertedFailureRef.current = currentGeneration.id;
       setPendingReviewState(null);
-      showToast(currentGeneration.errorMessage ?? "Unable to generate your design right now.");
+      const message = getFriendlyGenerationError(currentGeneration.errorMessage);
+      if (isProviderDownError(currentGeneration.errorMessage)) {
+        Alert.alert("Darkor AI is busy", message);
+        return;
+      }
+      showToast(message);
     }
   }, [boardItems, effectiveSignedIn, generatedImageUrl, generationId, isGenerating, pendingReviewState, router, showToast]);
 
@@ -2569,6 +2576,7 @@ export default function WorkspaceScreen() {
 
   const uploadSelectedImageToStorage = useCallback(async (image: SelectedImage) => {
     const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
+    assertCloudUrl(uploadUrl, "Convex upload URL");
     const blob = await readBlobFromUri(image.uri);
     const uploadResponse = await fetch(uploadUrl, {
       method: "POST",
@@ -2709,7 +2717,8 @@ export default function WorkspaceScreen() {
       }
     } catch (error) {
       setIsGenerating(false);
-      const message = error instanceof Error ? error.message : "Please try again.";
+      const rawMessage = error instanceof Error ? error.message : "Please try again.";
+      const message = getFriendlyGenerationError(rawMessage);
       const isPaymentRequired = message === "Payment Required";
       if (!diagnostic && !hasGenerationCredits) {
         setPendingBoardItems((current) => current.filter((item) => item.id !== temporaryBoardId));
@@ -2738,6 +2747,10 @@ export default function WorkspaceScreen() {
           return;
         }
         router.push("/paywall");
+        return;
+      }
+      if (isProviderDownError(rawMessage)) {
+        Alert.alert("Darkor AI is busy", message);
         return;
       }
       showToast(message);

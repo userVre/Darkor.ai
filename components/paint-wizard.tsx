@@ -22,7 +22,9 @@ import {
   Trash2,
 } from "lucide-react-native";
 
+import { assertCloudUrl } from "../lib/public-endpoints";
 import { triggerHaptic } from "../lib/haptics";
+import { getFriendlyGenerationError, isProviderDownError } from "../lib/generation-errors";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { useProSuccess } from "./pro-success-context";
@@ -329,7 +331,12 @@ export function PaintWizard() {
     if (generation.status === "failed") {
       setIsGenerating(false);
       setStep("colors");
-      showToast(generation.errorMessage ?? "Unable to paint the walls right now.");
+      const message = getFriendlyGenerationError(generation.errorMessage);
+      if (isProviderDownError(generation.errorMessage)) {
+        Alert.alert("Darkor AI is busy", message);
+        return;
+      }
+      showToast(message);
     }
   }, [generationArchive, generationId, isSignedIn, router, showToast]);
 
@@ -355,6 +362,7 @@ export function PaintWizard() {
   const uploadBlobToStorage = useCallback(
     async (uri: string) => {
       const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
+      assertCloudUrl(uploadUrl, "Convex upload URL");
       const blob = await readBlobFromUri(uri);
       const response = await fetch(uploadUrl, {
         method: "POST",
@@ -495,7 +503,8 @@ export function PaintWizard() {
     } catch (error) {
       setIsGenerating(false);
       setStep("colors");
-      const message = error instanceof Error ? error.message : "Please try again.";
+      const rawMessage = error instanceof Error ? error.message : "Please try again.";
+      const message = getFriendlyGenerationError(rawMessage);
       if (message === "Payment Required") {
         if (!isSignedIn) {
           setAwaitingAuth(true);
@@ -503,6 +512,10 @@ export function PaintWizard() {
           return;
         }
         router.push("/paywall");
+        return;
+      }
+      if (isProviderDownError(rawMessage)) {
+        Alert.alert("Darkor AI is busy", message);
         return;
       }
       showToast(message);
