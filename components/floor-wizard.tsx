@@ -6,13 +6,13 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Alert, Image as NativeImage, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle as SvgCircle, G, Path as SvgPath, Rect } from "react-native-svg";
 import { captureRef } from "react-native-view-shot";
-import { Camera, ChevronLeft, ImagePlus, MoveHorizontal, RotateCcw, Sparkles, Trash2 } from "lucide-react-native";
+import { ChevronLeft, MoveHorizontal, RotateCcw, Sparkles, Trash2 } from "lucide-react-native";
 
 import { getFriendlyGenerationError, isProviderDownError } from "../lib/generation-errors";
 import { triggerHaptic } from "../lib/haptics";
@@ -22,6 +22,7 @@ import { runWithFriendlyRetry } from "../lib/generation-retry";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { LuxPressable } from "./lux-pressable";
 import { ServiceWizardHeader } from "./service-wizard-header";
+import { ServiceIntakeStep, ServiceSelectionCard, type ServiceExamplePhoto } from "./service-wizard-shared";
 import { useProSuccess } from "./pro-success-context";
 import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerSession } from "./viewer-session-context";
@@ -32,14 +33,33 @@ type MeResponse = { credits: number };
 type ArchiveGeneration = { _id: string; imageUrl?: string | null; status?: "processing" | "ready" | "failed"; errorMessage?: string | null };
 
 const pointerClassName = "cursor-pointer";
-const MASK_COLOR = "rgba(236, 72, 153, 0.58)";
+const MASK_COLOR = "#FF0000";
 const MIN_BRUSH = 10;
 const MAX_BRUSH = 54;
 const DETECT_MS = 1500;
 const LOUPE_SIZE = 116;
 const LOUPE_ZOOM = 1.8;
 const absoluteFill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
-const MASK_CONTINUE_GRADIENT = SERVICE_WIZARD_THEME.gradients.accent;
+const MASK_CONTINUE_GRADIENT = SERVICE_WIZARD_THEME.gradients.maskAction;
+
+const FLOOR_EXAMPLE_PHOTOS: ServiceExamplePhoto[] = [
+  {
+    id: "floor-living-room",
+    source: require("../assets/media/discover/home/home-living-room.jpg"),
+  },
+  {
+    id: "floor-kitchen",
+    source: require("../assets/media/discover/home/home-kitchen.jpg"),
+  },
+  {
+    id: "floor-master-suite",
+    source: require("../assets/media/discover/home/home-master-suite.jpg"),
+  },
+  {
+    id: "floor-dining-room",
+    source: require("../assets/media/discover/home/home-dining-room.jpg"),
+  },
+];
 
 function simplifyRatio(width: number, height: number) {
   const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
@@ -50,23 +70,6 @@ function simplifyRatio(width: number, height: number) {
   if (w > h) return reduced.startsWith("4:3") ? "4:3" : "16:9";
   return reduced.startsWith("3:4") ? "3:4" : "9:16";
 }
-
-const MaterialCard = memo(function MaterialCard({ option, active, width, onPress }: { option: FloorMaterialOption; active: boolean; width: number; onPress: () => void }) {
-  return (
-    <LuxPressable onPress={onPress} pressableClassName={pointerClassName} className={pointerClassName} style={{ width }} glowColor={active ? SERVICE_WIZARD_THEME.colors.accentGlowSoft : "rgba(255,255,255,0.04)"} scale={0.99}>
-      <View style={[styles.materialCard, active ? styles.materialCardActive : null]}>
-        <View style={styles.materialPreview}>
-          <Image source={option.image} style={styles.sample} contentFit="cover" transition={120} cachePolicy="memory-disk" />
-          <LinearGradient colors={["transparent", "rgba(0,0,0,0.8)"]} style={styles.previewOverlay} />
-          <View style={styles.previewCopy}>
-            <Text style={styles.materialTitle}>{option.title}</Text>
-            <Text style={[styles.materialSubtitle, active ? styles.materialSubtitleActive : null]} numberOfLines={2}>{option.description}</Text>
-          </View>
-        </View>
-      </View>
-    </LuxPressable>
-  );
-});
 
 export function FloorWizard() {
   const router = useRouter();
@@ -159,10 +162,6 @@ export function FloorWizard() {
       }
     }
 
-    if (String(startStep ?? "") === "3") {
-      setStep("materials");
-    }
-
     initialSelectionAppliedRef.current = true;
   }, [presetStyle, startStep]);
 
@@ -219,10 +218,7 @@ export function FloorWizard() {
   const handleClose = useCallback(() => {
     triggerHaptic();
     resetProject();
-    if (currentStepNumber === 1) {
-      router.replace("/(tabs)");
-    }
-  }, [currentStepNumber, resetProject, router]);
+  }, [resetProject]);
 
   const uploadBlobToStorage = useCallback(async (uri: string) => {
     const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
@@ -231,6 +227,15 @@ export function FloorWizard() {
       errorLabel: "selected floor image",
     });
   }, [createSourceUploadUrl, viewerArgs]);
+
+  const beginMasking = useCallback((nextImage: SelectedImage) => {
+    setSelectedImage(nextImage);
+    setGeneratedImageUrl(null);
+    setGenerationId(null);
+    resetMaskDrawing({ resetBrush: true });
+    setStep("mask");
+    resetDetection();
+  }, [resetDetection, resetMaskDrawing]);
 
   const handleSelectMedia = useCallback(async (source: "camera" | "library") => {
     try {
@@ -244,16 +249,25 @@ export function FloorWizard() {
         : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 1 });
       if (result.canceled || !result.assets[0]) return;
       const asset = result.assets[0];
-      setSelectedImage({ uri: asset.uri, width: asset.width ?? 1080, height: asset.height ?? 1440 });
-      setGeneratedImageUrl(null);
-      setGenerationId(null);
-      resetMaskDrawing({ resetBrush: true });
-      setStep("mask");
-      resetDetection();
+      beginMasking({ uri: asset.uri, width: asset.width ?? 1080, height: asset.height ?? 1440 });
     } catch (error) {
       Alert.alert("Unable to open media", error instanceof Error ? error.message : "Please try again.");
     }
-  }, [resetDetection, resetMaskDrawing]);
+  }, [beginMasking]);
+
+  const handleSelectExample = useCallback((example: ServiceExamplePhoto) => {
+    const resolved = NativeImage.resolveAssetSource(example.source);
+    if (!resolved?.uri) {
+      Alert.alert("Example unavailable", "This example photo could not be opened.");
+      return;
+    }
+
+    beginMasking({
+      uri: resolved.uri,
+      width: resolved.width ?? 1080,
+      height: resolved.height ?? 1440,
+    });
+  }, [beginMasking]);
 
   const updateComparisonSlider = useCallback((x: number) => {
     const ratio = Math.max(0.05, Math.min(x / resultFrameWidth, 0.95));
@@ -390,15 +404,19 @@ export function FloorWizard() {
       />
 
       {step === "intake" ? (
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 10, paddingBottom: Math.max(insets.bottom + 28, 34), gap: 18 }} showsVerticalScrollIndicator={false}>
-          <LinearGradient colors={SERVICE_WIZARD_THEME.gradients.hero} style={styles.heroCard}>
-            <View style={styles.heroIcon}><Sparkles color={SERVICE_WIZARD_THEME.colors.accent} size={22} /></View>
-            <Text style={styles.heroTitle}>Add a Photo</Text>
-            <Text style={styles.heroText}>Upload a clean room image so Darkor.ai can read the floor plane, preserve furniture placement, and stage a premium material transformation.</Text>
-            <View style={styles.tipCard}><Text style={styles.tipLabel}>Tip</Text><Text style={styles.tipText}>For the cleanest render, keep the floor plane clearly visible.</Text></View>
-            <LuxPressable onPress={() => handleSelectMedia("library")} className={pointerClassName} style={{ width: "100%" }} glowColor={SERVICE_WIZARD_THEME.colors.accentGlowSoft} scale={0.99}><LinearGradient colors={SERVICE_WIZARD_THEME.gradients.accentButton} style={styles.primaryButton}><ImagePlus color="#ffffff" size={18} /><Text style={styles.primaryText}>Upload Photo</Text></LinearGradient></LuxPressable>
-            <LuxPressable onPress={() => handleSelectMedia("camera")} className={pointerClassName} style={{ width: "100%" }} glowColor="rgba(255,255,255,0.05)" scale={0.99}><View style={styles.secondaryButton}><Camera color="#ffffff" size={18} /><Text style={styles.secondaryText}>Capture with Camera</Text></View></LuxPressable>
-          </LinearGradient>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 10, paddingBottom: Math.max(insets.bottom + 28, 34) }} showsVerticalScrollIndicator={false}>
+          <ServiceIntakeStep
+            heading="Add a Photo of your Floor"
+            subtext="Upload a room photo to map new materials."
+            examples={FLOOR_EXAMPLE_PHOTOS}
+            onUploadPress={() => {
+              void handleSelectMedia("library");
+            }}
+            onCameraPress={() => {
+              void handleSelectMedia("camera");
+            }}
+            onExamplePress={handleSelectExample}
+          />
         </ScrollView>
       ) : null}
 
@@ -472,7 +490,22 @@ export function FloorWizard() {
           <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: Math.max(insets.bottom + 122, 138), gap: 18 }} showsVerticalScrollIndicator={false}>
             <Text style={styles.stepTitle}>Select Material</Text>
             <Text style={styles.stepText}>Select a premium material curated to read as photoreal, perspective-aware, and listing-ready.</Text>
-            <View style={styles.grid}>{FLOOR_MATERIAL_OPTIONS.map((option) => <MaterialCard key={option.id} option={option} active={option.id === selectedMaterial?.id} width={materialCardWidth} onPress={() => { setSelectedMaterialId(option.id); triggerHaptic(); }} />)}</View>
+            <View style={styles.grid}>
+              {FLOOR_MATERIAL_OPTIONS.map((option) => (
+                <ServiceSelectionCard
+                  key={option.id}
+                  title={option.title}
+                  description={option.description}
+                  image={option.image}
+                  active={option.id === selectedMaterial?.id}
+                  width={materialCardWidth}
+                  onPress={() => {
+                    setSelectedMaterialId(option.id);
+                    triggerHaptic();
+                  }}
+                />
+              ))}
+            </View>
             <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Selected Material</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? "No material selected"}</Text><Text style={styles.summaryText}>{selectedMaterial?.description ?? "Select a flooring material to unlock the AI restyle."}</Text></View>
           </ScrollView>
 
@@ -569,7 +602,7 @@ const styles = StyleSheet.create({
   toolbarRow: { flexDirection: "row", gap: 12 },
   toolbarButton: { flex: 1, height: 44, borderRadius: 999, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
   toolbarText: { color: "#ffffff", fontSize: 13, fontWeight: "700" },
-  frame: { width: "100%", borderRadius: 34, overflow: "hidden", borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border, backgroundColor: "#000000" },
+  frame: { width: "100%", borderRadius: 34, overflow: "hidden", borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border, backgroundColor: "#000000", zIndex: 0 },
   canvasToolbar: { position: "absolute", top: 14, right: 14, flexDirection: "row", gap: 8 },
   canvasToolbarButton: { minHeight: 40, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(10,10,12,0.82)", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   canvasToolbarText: { color: "#ffffff", fontSize: 12, fontWeight: "700" },
@@ -608,7 +641,7 @@ const styles = StyleSheet.create({
   tileBlock: { flex: 1, borderRadius: 16 },
   summaryCard: { borderRadius: 28, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#0a0a0c", padding: 18, gap: 8 },
   fixedContinueBar: { position: "absolute", left: 0, right: 0, bottom: 0, paddingTop: 14, paddingHorizontal: 16, gap: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.06)", backgroundColor: SERVICE_WIZARD_THEME.colors.background },
-  maskContinueBar: { zIndex: 30, elevation: 30 },
+  maskContinueBar: { zIndex: 120, elevation: 120 },
   summaryLabel: { color: SERVICE_WIZARD_THEME.colors.accentText, fontSize: 11, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase" },
   summaryTitle: { color: "#ffffff", fontSize: 22, fontWeight: "800", letterSpacing: -0.5 },
   summaryText: { color: "#b4b4bb", fontSize: 14, lineHeight: 22 },

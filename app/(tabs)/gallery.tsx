@@ -212,27 +212,10 @@ export default function GalleryScreen() {
         contentInsetAdjustmentBehavior="never"
       >
         <View style={styles.header}>
-          <View style={styles.headerBadge}>
-            <Text style={styles.headerBadgeText}>Curated Discover Hub</Text>
-          </View>
           <Text style={styles.headerTitle}>Discover Hub</Text>
           <Text style={styles.headerText}>
-            Browse {totalOptions} professional directions across interior scenes, surface palettes, gardens, and exterior forms.
+            Browse {totalOptions} real-world references across interiors, wall inspiration, floor styles, gardens, and exterior forms.
           </Text>
-          <View style={styles.headerMetaRow}>
-            <LinearGradient colors={["rgba(255,255,255,0.12)", "rgba(255,255,255,0.03)"]} style={styles.metaCard}>
-              <Text style={styles.metaValue}>{DISCOVER_SECTIONS.length}</Text>
-              <Text style={styles.metaLabel}>Collections</Text>
-            </LinearGradient>
-            <LinearGradient colors={["rgba(217,70,239,0.18)", "rgba(99,102,241,0.08)"]} style={styles.metaCard}>
-              <Text style={styles.metaValue}>{totalOptions}</Text>
-              <Text style={styles.metaLabel}>Curated Choices</Text>
-            </LinearGradient>
-            <LinearGradient colors={["rgba(251,191,36,0.16)", "rgba(249,115,22,0.08)"]} style={styles.metaCard}>
-              <Text style={styles.metaValue}>2</Text>
-              <Text style={styles.metaLabel}>Surface Labs</Text>
-            </LinearGradient>
-          </View>
         </View>
 
         {DISCOVER_SECTIONS.map((section) => (
@@ -260,23 +243,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: EDGE_PADDING,
-    gap: 14,
-  },
-  headerBadge: {
-    alignSelf: "flex-start",
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "rgba(255,255,255,0.04)",
-  },
-  headerBadgeText: {
-    color: "rgba(255,255,255,0.78)",
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
+    gap: 10,
   },
   headerTitle: {
     color: "#ffffff",
@@ -289,28 +256,6 @@ const styles = StyleSheet.create({
     color: DS.colors.textSecondary,
     ...DS.typography.body,
     maxWidth: 720,
-  },
-  headerMetaRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  metaCard: {
-    minWidth: 128,
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: HAIRLINE,
-    borderColor: DS.colors.borderSubtle,
-    gap: 4,
-  },
-  metaValue: {
-    color: DS.colors.textPrimary,
-    ...DS.typography.cardTitle,
-  },
-  metaLabel: {
-    color: DS.colors.textTertiary,
-    ...DS.typography.bodySm,
   },
   section: {
     gap: 16,

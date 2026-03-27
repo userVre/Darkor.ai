@@ -57,6 +57,7 @@ export function ServiceWizardHeader({
           {Array.from({ length: totalSteps }).map((_, index) => {
             const isActive = index + 1 === safeStep;
             const isComplete = index < safeStep - 1;
+            const isFilled = isComplete || isActive;
             return (
               <View
                 key={`wizard-progress-${index}`}
@@ -65,12 +66,12 @@ export function ServiceWizardHeader({
                   isActive ? styles.progressSegmentActive : null,
                 ]}
               >
-                {isComplete || isActive ? (
+                {isFilled ? (
                   <LinearGradient
-                    colors={isActive ? SERVICE_WIZARD_THEME.gradients.accentButton : ["rgba(255,255,255,0.28)", "rgba(255,255,255,0.14)"]}
+                    colors={SERVICE_WIZARD_THEME.gradients.accentButton}
                     start={{ x: 0, y: 0.5 }}
                     end={{ x: 1, y: 0.5 }}
-                    style={styles.progressFill}
+                    style={[styles.progressFill, isActive ? null : styles.progressFillComplete]}
                   />
                 ) : null}
               </View>
@@ -162,5 +163,8 @@ const styles = StyleSheet.create({
     height: "100%",
     width: "100%",
     borderRadius: 999,
+  },
+  progressFillComplete: {
+    opacity: 0.55,
   },
 });

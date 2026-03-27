@@ -6,16 +6,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Alert, Image as NativeImage, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle as SvgCircle, G, Path as SvgPath, Rect } from "react-native-svg";
 import { captureRef } from "react-native-view-shot";
 import {
-  Camera,
   Check,
   ChevronLeft,
-  Plus,
   RotateCcw,
   Sparkles,
   Trash2,
@@ -29,6 +27,7 @@ import { runWithFriendlyRetry } from "../lib/generation-retry";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { useProSuccess } from "./pro-success-context";
 import { ServiceWizardHeader } from "./service-wizard-header";
+import { ServiceIntakeStep, ServiceSelectionCard, type ServiceExamplePhoto } from "./service-wizard-shared";
 import { LuxPressable } from "./lux-pressable";
 import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerSession } from "./viewer-session-context";
@@ -62,12 +61,31 @@ const pointerClassName = "cursor-pointer";
 const OLED_BLACK = "#000000";
 const CARD_BLACK = SERVICE_WIZARD_THEME.colors.surfaceRaised;
 const CARD_BLACK_SOFT = SERVICE_WIZARD_THEME.colors.surfaceSoft;
-const MASK_COLOR = "rgba(236, 72, 153, 0.58)";
+const MASK_COLOR = "#FF0000";
 const MASK_CAPTURE_COLOR = "#FFFFFF";
 const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
 const DETECT_DURATION_MS = 1700;
-const MASK_CONTINUE_GRADIENT = SERVICE_WIZARD_THEME.gradients.accent;
+const MASK_CONTINUE_GRADIENT = SERVICE_WIZARD_THEME.gradients.maskAction;
+
+const PAINT_EXAMPLE_PHOTOS: ServiceExamplePhoto[] = [
+  {
+    id: "paint-living-room",
+    source: require("../assets/media/discover/home/home-living-room.jpg"),
+  },
+  {
+    id: "paint-master-suite",
+    source: require("../assets/media/discover/home/home-master-suite.jpg"),
+  },
+  {
+    id: "paint-kitchen",
+    source: require("../assets/media/discover/home/home-kitchen.jpg"),
+  },
+  {
+    id: "paint-hall",
+    source: require("../assets/media/discover/home/home-hall.jpg"),
+  },
+];
 
 const FINISH_OPTIONS: FinishOption[] = [
   {
@@ -111,42 +129,6 @@ const BrushPreview = memo(function BrushPreview({ width }: { width: number }) {
         borderColor: "rgba(255,255,255,0.18)",
       }}
     />
-  );
-});
-
-const WallColorCard = memo(function WallColorCard({
-  option,
-  active,
-  size,
-  onPress,
-}: {
-  option: WallColorOption;
-  active: boolean;
-  size: number;
-  onPress: () => void;
-}) {
-  return (
-    <LuxPressable
-      onPress={onPress}
-      pressableClassName={pointerClassName}
-      className={pointerClassName}
-      style={{ width: size }}
-      glowColor={active ? "rgba(217,70,239,0.22)" : "rgba(255,255,255,0.04)"}
-      scale={0.99}
-    >
-      <View style={[styles.selectionCard, active ? styles.selectionCardActive : null]}>
-        <View style={styles.selectionPreview}>
-          <Image source={option.image} style={styles.selectionSample} contentFit="cover" transition={120} cachePolicy="memory-disk" />
-          <LinearGradient colors={["transparent", "rgba(0,0,0,0.82)"]} style={styles.selectionOverlay} />
-          <View style={styles.selectionCopy}>
-            <Text style={styles.selectionTitle}>{option.title}</Text>
-            <Text style={[styles.selectionDescription, active ? styles.selectionDescriptionActive : null]} numberOfLines={2}>
-              {option.description}
-            </Text>
-          </View>
-        </View>
-      </View>
-    </LuxPressable>
   );
 });
 
@@ -273,10 +255,6 @@ export function PaintWizard() {
       }
     }
 
-    if (String(startStep ?? "") === "3") {
-      setStep("colors");
-    }
-
     initialSelectionAppliedRef.current = true;
   }, [presetStyle, startStep]);
 
@@ -337,10 +315,7 @@ export function PaintWizard() {
   const handleClose = useCallback(() => {
     triggerHaptic();
     resetProject();
-    if (currentStepNumber === 1) {
-      router.replace("/(tabs)");
-    }
-  }, [currentStepNumber, resetProject, router]);
+  }, [resetProject]);
 
   const uploadBlobToStorage = useCallback(
     async (uri: string) => {
@@ -351,6 +326,19 @@ export function PaintWizard() {
       });
     },
     [createSourceUploadUrl, viewerArgs],
+  );
+
+  const beginMasking = useCallback(
+    (nextImage: SelectedImage) => {
+      setSelectedImage(nextImage);
+      setGeneratedImageUrl(null);
+      setGenerationId(null);
+      resetMaskDrawing({ resetBrush: true });
+      setSelectedFinishId(FINISH_OPTIONS[0].id);
+      setStep("mask");
+      resetDetection();
+    },
+    [resetDetection, resetMaskDrawing],
   );
 
   const handleSelectMedia = useCallback(
@@ -385,22 +373,33 @@ export function PaintWizard() {
         if (result.canceled || !result.assets[0]) return;
 
         const asset = result.assets[0];
-        setSelectedImage({
+        beginMasking({
           uri: asset.uri,
           width: asset.width ?? 1080,
           height: asset.height ?? 1440,
         });
-        setGeneratedImageUrl(null);
-        setGenerationId(null);
-        resetMaskDrawing({ resetBrush: true });
-        setSelectedFinishId(FINISH_OPTIONS[0].id);
-        setStep("mask");
-        resetDetection();
       } catch (error) {
         Alert.alert("Unable to open media", error instanceof Error ? error.message : "Please try again.");
       }
     },
-    [resetDetection, resetMaskDrawing],
+    [beginMasking],
+  );
+
+  const handleSelectExample = useCallback(
+    (example: ServiceExamplePhoto) => {
+      const resolved = NativeImage.resolveAssetSource(example.source);
+      if (!resolved?.uri) {
+        Alert.alert("Example unavailable", "This example photo could not be opened.");
+        return;
+      }
+
+      beginMasking({
+        uri: resolved.uri,
+        width: resolved.width ?? 1080,
+        height: resolved.height ?? 1440,
+      });
+    },
+    [beginMasking],
   );
 
   const handleGenerate = useCallback(async () => {
@@ -574,53 +573,21 @@ export function PaintWizard() {
             paddingHorizontal: 18,
             paddingTop: 10,
             paddingBottom: Math.max(insets.bottom + 28, 34),
-            gap: 18,
           }}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.heroCard}>
-            <Text style={styles.heroTitle}>Add a Photo</Text>
-            <Text style={styles.heroText}>
-              Upload a room photo with clear wall visibility so Darkor.ai can deliver a precise, designer-grade recoloring.
-            </Text>
-
-            <LuxPressable
-              onPress={() => handleSelectMedia("library")}
-              className={pointerClassName}
-              style={styles.uploadSquarePressable}
-              glowColor={SERVICE_WIZARD_THEME.colors.accentGlowSoft}
-              scale={0.985}
-            >
-              <LinearGradient colors={SERVICE_WIZARD_THEME.gradients.hero} style={styles.uploadSquare}>
-                <View style={styles.plusOrb}>
-                  <Plus color="#ffffff" size={28} strokeWidth={2.4} />
-                </View>
-                <View style={styles.uploadCopy}>
-                  <Text style={styles.uploadTitle}>Upload Room Photo</Text>
-                  <Text style={styles.uploadText}>Start with a clean wall view so Darkor.ai can paint with precision.</Text>
-                </View>
-              </LinearGradient>
-            </LuxPressable>
-
-            <LuxPressable
-              onPress={() => handleSelectMedia("camera")}
-              className={pointerClassName}
-              style={{ width: "100%" }}
-              glowColor="rgba(255,255,255,0.04)"
-              scale={0.99}
-            >
-              <View style={styles.secondaryButton}>
-                <Camera color="#ffffff" size={18} />
-                <Text style={styles.secondaryText}>Capture with Camera</Text>
-              </View>
-            </LuxPressable>
-          </View>
-
-          <View style={styles.notesCard}>
-            <Text style={styles.notesTitle}>Designer Workflow</Text>
-            <Text style={styles.notesText}>Mark only the wall planes you want to recolor so windows, furniture, art, and trim stay untouched.</Text>
-            <Text style={styles.notesText}>Choose from curated premium palettes, then set the finish type that best matches the room’s mood and lighting.</Text>
-          </View>
+          <ServiceIntakeStep
+            heading="Add a Photo of your Room"
+            subtext="Upload a room photo for precise wall recoloring."
+            examples={PAINT_EXAMPLE_PHOTOS}
+            onUploadPress={() => {
+              void handleSelectMedia("library");
+            }}
+            onCameraPress={() => {
+              void handleSelectMedia("camera");
+            }}
+            onExamplePress={handleSelectExample}
+          />
         </ScrollView>
       ) : null}
 
@@ -867,11 +834,13 @@ export function PaintWizard() {
 
             <View style={styles.selectionGrid}>
               {WALL_COLOR_OPTIONS.map((option) => (
-                <WallColorCard
+                <ServiceSelectionCard
                   key={option.id}
-                  option={option}
+                  title={option.title}
+                  description={option.description}
+                  image={option.image}
                   active={option.id === selectedColor?.id}
-                  size={colorCardSize}
+                  width={colorCardSize}
                   onPress={() => {
                     setSelectedColorValue(option.value);
                     triggerHaptic();
@@ -1303,6 +1272,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: "#020203",
     overflow: "hidden",
+    zIndex: 0,
   },
   canvasToolbar: {
     position: "absolute",
@@ -1530,8 +1500,8 @@ const styles = StyleSheet.create({
     backgroundColor: SERVICE_WIZARD_THEME.colors.background,
   },
   maskContinueBar: {
-    zIndex: 30,
-    elevation: 30,
+    zIndex: 120,
+    elevation: 120,
   },
   selectionGrid: {
     flexDirection: "row",

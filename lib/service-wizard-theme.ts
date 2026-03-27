@@ -69,6 +69,7 @@ export const SERVICE_WIZARD_THEME = {
   gradients: {
     accent: ["#A855F7", "#8B5CF6", "#6366F1"] as const,
     accentButton: ["#A855F7", "#7C3AED"] as const,
+    maskAction: ["#FF2FA8", "#D946EF"] as const,
     hero: ["#111217", "#060608"] as const,
     accentWash: ["rgba(168,85,247,0.12)", "rgba(255,255,255,0.03)"] as const,
   },
