@@ -20,6 +20,7 @@ import { uploadLocalFileToCloud } from "../lib/native-upload";
 import { FLOOR_MATERIAL_OPTIONS } from "../lib/data";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
+import { FLOOR_WIZARD_EXAMPLE_PHOTOS } from "../lib/wizard-example-photos";
 import { LuxPressable } from "./lux-pressable";
 import { ServiceWizardHeader } from "./service-wizard-header";
 import { ServiceIntakeStep, ServiceSelectionCard, type ServiceExamplePhoto } from "./service-wizard-shared";
@@ -37,29 +38,11 @@ const MASK_COLOR = "#FF0000";
 const MIN_BRUSH = 10;
 const MAX_BRUSH = 54;
 const DETECT_MS = 1500;
+const TAB_BAR_CLEARANCE = 96;
 const LOUPE_SIZE = 116;
 const LOUPE_ZOOM = 1.8;
 const absoluteFill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
 const MASK_CONTINUE_GRADIENT = SERVICE_WIZARD_THEME.gradients.maskAction;
-
-const FLOOR_EXAMPLE_PHOTOS: ServiceExamplePhoto[] = [
-  {
-    id: "floor-living-room",
-    source: require("../assets/media/discover/home/home-living-room.jpg"),
-  },
-  {
-    id: "floor-kitchen",
-    source: require("../assets/media/discover/home/home-kitchen.jpg"),
-  },
-  {
-    id: "floor-master-suite",
-    source: require("../assets/media/discover/home/home-master-suite.jpg"),
-  },
-  {
-    id: "floor-dining-room",
-    source: require("../assets/media/discover/home/home-dining-room.jpg"),
-  },
-];
 
 function simplifyRatio(width: number, height: number) {
   const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
@@ -75,7 +58,7 @@ export function FloorWizard() {
   const router = useRouter();
   const { presetStyle, startStep } = useLocalSearchParams<{ presetStyle?: string; startStep?: string }>();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const { isSignedIn } = useAuth();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const { showToast } = useProSuccess();
@@ -97,6 +80,7 @@ export function FloorWizard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
   const [comparisonPosition, setComparisonPosition] = useState(0.52);
+  const [maskFooterHeight, setMaskFooterHeight] = useState(0);
   const initialSelectionAppliedRef = useRef(false);
 
   const detectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -146,6 +130,10 @@ export function FloorWizard() {
   const materialCardWidth = Math.max((width - 46) / 2, 154);
   const resultFrameWidth = Math.max(width - 32, 320);
   const canContinueFromMaterials = Boolean(selectedImage && hasMask && selectedMaterial && !isGenerating);
+  const maskPreviewHeight = Math.min((width - 32) / Math.max(aspectRatio, 0.72), Math.max(height * 0.4, 248));
+  const maskFooterBottomPadding = Math.max(insets.bottom + 12, 24);
+  const maskFooterBottomOffset = TAB_BAR_CLEARANCE;
+  const maskScrollPaddingBottom = Math.max(maskFooterHeight + maskFooterBottomOffset + 24, insets.bottom + 220);
 
   useEffect(() => () => { if (detectTimerRef.current) clearTimeout(detectTimerRef.current); }, []);
 
@@ -408,7 +396,7 @@ export function FloorWizard() {
           <ServiceIntakeStep
             heading="Add a Photo of your Floor"
             subtext="Upload a room photo to map new materials."
-            examples={FLOOR_EXAMPLE_PHOTOS}
+            examples={FLOOR_WIZARD_EXAMPLE_PHOTOS}
             onUploadPress={() => {
               void handleSelectMedia("library");
             }}
@@ -427,14 +415,14 @@ export function FloorWizard() {
             contentContainerStyle={{
               paddingHorizontal: 16,
               paddingTop: 10,
-              paddingBottom: Math.max(insets.bottom + 244, 268),
+              paddingBottom: maskScrollPaddingBottom,
               gap: 16,
             }}
             showsVerticalScrollIndicator={false}
           >
             <Text style={styles.stepTitle}>Mark Area</Text>
             <Text style={styles.stepText}>Brush directly over the visible floor. Keep walls, furniture, and built-ins untouched so the restyle stays precise.</Text>
-            <View onLayout={handleCanvasLayout} style={[styles.frame, { aspectRatio }]}>
+            <View onLayout={handleCanvasLayout} style={[styles.frame, { height: maskPreviewHeight }]}>
               {selectedImage ? (
                 <>
                   <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="cover" transition={160} />
@@ -468,17 +456,28 @@ export function FloorWizard() {
 
           <View
             pointerEvents="box-none"
-            style={[styles.fixedContinueBar, styles.maskContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}
+            onLayout={(event) => {
+              const nextHeight = Math.round(event.nativeEvent.layout.height);
+              setMaskFooterHeight((current) => (current === nextHeight ? current : nextHeight));
+            }}
+            style={[
+              styles.fixedContinueBar,
+              styles.maskContinueBar,
+              {
+                bottom: maskFooterBottomOffset,
+                paddingBottom: maskFooterBottomPadding,
+              },
+            ]}
           >
             <View style={styles.maskControlCard}>
               <View style={styles.brushRow}><Text style={styles.brushTitle}>Brush Size</Text><View style={styles.brushMeta}><View style={{ width: Math.max(brushWidth, 14), height: Math.max(brushWidth, 14), borderRadius: 999, backgroundColor: MASK_COLOR, borderWidth: 1, borderColor: "rgba(255,255,255,0.22)" }} /><Text style={styles.brushMetaText}>{brushWidth}px</Text></View></View>
               <GestureDetector gesture={sliderGesture}><View onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)} style={styles.sliderWrap}><View style={styles.sliderTrack} /><LinearGradient colors={MASK_CONTINUE_GRADIENT} style={[styles.sliderFill, { width: Math.max(14, sliderWidth * brushProgress) }]} /><View style={[styles.sliderThumb, { left: Math.max(0, sliderWidth * brushProgress - 16) }]}><View style={styles.sliderThumbDot} /></View></View></GestureDetector>
             </View>
-            <LuxPressable onPress={() => { triggerHaptic(); setStep("materials"); }} disabled={!canContinueFromMask} pressableClassName={pointerClassName} className={pointerClassName} style={{ width: "100%" }} glowColor={SERVICE_WIZARD_THEME.colors.accentGlow} scale={0.99}>
+            <LuxPressable onPress={() => { triggerHaptic(); setStep("materials"); }} disabled={!canContinueFromMask} pressableClassName={pointerClassName} className={pointerClassName} style={{ width: "100%", cursor: "pointer" as any }} glowColor={SERVICE_WIZARD_THEME.colors.accentGlow} scale={0.99}>
               {canContinueFromMask ? (
                 <LinearGradient colors={MASK_CONTINUE_GRADIENT} style={styles.primaryButtonLarge}><Text style={styles.primaryText}>Continue</Text></LinearGradient>
               ) : (
-                <View style={styles.disabledButtonLarge}><Text style={styles.primaryText}>Continue</Text></View>
+                <View style={styles.disabledButtonLarge}><Text style={styles.disabledButtonText}>Continue</Text></View>
               )}
             </LuxPressable>
           </View>
@@ -591,9 +590,10 @@ const styles = StyleSheet.create({
   tipLabel: { color: SERVICE_WIZARD_THEME.colors.accentText, fontSize: 11, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase" },
   tipText: { color: "#f4f4f5", fontSize: 13, lineHeight: 19, fontWeight: "600" },
   primaryButton: { minHeight: 58, borderRadius: 24, paddingHorizontal: 18, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
-  primaryButtonLarge: { minHeight: 62, borderRadius: 24, paddingHorizontal: 18, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
-  disabledButtonLarge: { minHeight: 62, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: SERVICE_WIZARD_THEME.colors.disabledSurface, opacity: 0.58 },
-  primaryText: { color: "#ffffff", fontSize: 15, fontWeight: "800" },
+  primaryButtonLarge: { minHeight: 58, borderRadius: 24, paddingHorizontal: 18, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
+  disabledButtonLarge: { minHeight: 58, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: SERVICE_WIZARD_THEME.colors.disabledSurface, opacity: 0.5 },
+  primaryText: { color: "#ffffff", fontSize: 16, fontWeight: "800", textAlign: "center" },
+  disabledButtonText: { color: "#9ca3af", fontSize: 16, fontWeight: "800", textAlign: "center" },
   secondaryButton: { minHeight: 58, borderRadius: 24, paddingHorizontal: 18, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(255,255,255,0.03)" },
   secondaryText: { color: "#ffffff", fontSize: 15, fontWeight: "700" },
   content: { flex: 1, paddingHorizontal: 16, gap: 14 },
@@ -616,16 +616,16 @@ const styles = StyleSheet.create({
   detectCopy: { alignItems: "center", gap: 12, paddingHorizontal: 24 },
   detectTitle: { color: "#ffffff", fontSize: 20, fontWeight: "800", textAlign: "center" },
   detectText: { color: "#d4d4d8", fontSize: 13, lineHeight: 20, textAlign: "center", maxWidth: 270 },
-  maskControlCard: { borderRadius: 24, borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border, backgroundColor: "#0a0a0c", paddingHorizontal: 18, paddingVertical: 16, gap: 14 },
+  maskControlCard: { borderRadius: 22, borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border, backgroundColor: "#0a0a0c", paddingHorizontal: 16, paddingVertical: 12, gap: 10 },
   brushRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  brushTitle: { color: "#ffffff", fontSize: 16, fontWeight: "800" },
-  brushMeta: { flexDirection: "row", alignItems: "center", gap: 10 },
-  brushMetaText: { color: "#d4d4d8", fontSize: 13, fontWeight: "700" },
-  sliderWrap: { height: 38, justifyContent: "center" },
-  sliderTrack: { height: 6, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.12)" },
-  sliderFill: { position: "absolute", left: 0, height: 6, borderRadius: 999 },
-  sliderThumb: { position: "absolute", width: 32, height: 32, borderRadius: 999, backgroundColor: "#ffffff", alignItems: "center", justifyContent: "center" },
-  sliderThumbDot: { width: 14, height: 14, borderRadius: 999, backgroundColor: SERVICE_WIZARD_THEME.colors.accent },
+  brushTitle: { color: "#ffffff", fontSize: 14, fontWeight: "800" },
+  brushMeta: { flexDirection: "row", alignItems: "center", gap: 8 },
+  brushMetaText: { color: "#d4d4d8", fontSize: 12, fontWeight: "700" },
+  sliderWrap: { height: 32, justifyContent: "center" },
+  sliderTrack: { height: 5, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.12)" },
+  sliderFill: { position: "absolute", left: 0, height: 5, borderRadius: 999 },
+  sliderThumb: { position: "absolute", width: 28, height: 28, borderRadius: 999, backgroundColor: "#ffffff", alignItems: "center", justifyContent: "center" },
+  sliderThumbDot: { width: 12, height: 12, borderRadius: 999, backgroundColor: SERVICE_WIZARD_THEME.colors.accent },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
   materialCard: { borderRadius: 30, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#0a0a0c" },
   materialCardActive: { borderColor: SERVICE_WIZARD_THEME.colors.accent, backgroundColor: SERVICE_WIZARD_THEME.colors.accentSurface },
@@ -640,8 +640,8 @@ const styles = StyleSheet.create({
   tileRow: { flex: 1, flexDirection: "row", gap: 6, paddingHorizontal: 8, paddingTop: 8 },
   tileBlock: { flex: 1, borderRadius: 16 },
   summaryCard: { borderRadius: 28, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#0a0a0c", padding: 18, gap: 8 },
-  fixedContinueBar: { position: "absolute", left: 0, right: 0, bottom: 0, paddingTop: 14, paddingHorizontal: 16, gap: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.06)", backgroundColor: SERVICE_WIZARD_THEME.colors.background },
-  maskContinueBar: { zIndex: 120, elevation: 120 },
+  fixedContinueBar: { position: "absolute", left: 0, right: 0, bottom: 0, paddingTop: 10, paddingHorizontal: 16, gap: 10, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.06)", backgroundColor: SERVICE_WIZARD_THEME.colors.background, shadowColor: "#000000", shadowOpacity: 0.24, shadowRadius: 18, shadowOffset: { width: 0, height: -8 } },
+  maskContinueBar: { zIndex: 120, elevation: 24 },
   summaryLabel: { color: SERVICE_WIZARD_THEME.colors.accentText, fontSize: 11, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase" },
   summaryTitle: { color: "#ffffff", fontSize: 22, fontWeight: "800", letterSpacing: -0.5 },
   summaryText: { color: "#b4b4bb", fontSize: 14, lineHeight: 22 },

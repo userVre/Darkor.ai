@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Camera, Check, Plus } from "lucide-react-native";
-import { Text, View, StyleSheet, useWindowDimensions, type ImageSourcePropType } from "react-native";
+import { ScrollView, Text, View, StyleSheet, useWindowDimensions, type ImageSourcePropType } from "react-native";
 
 import { DS, HAIRLINE, glowShadow } from "../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
@@ -41,7 +41,8 @@ export function ServiceIntakeStep({
   onExamplePress,
 }: ServiceIntakeStepProps) {
   const { width } = useWindowDimensions();
-  const exampleCardSize = Math.max(Math.min((width - 48) / 2, 192), 136);
+  const exampleCardWidth = Math.max(Math.min(width * 0.42, 176), 136);
+  const exampleCardHeight = Math.round(exampleCardWidth * 1.02);
 
   return (
     <View style={styles.intakeContent}>
@@ -86,14 +87,20 @@ export function ServiceIntakeStep({
 
       <View style={styles.examplesSection}>
         <Text style={styles.examplesTitle}>Example Photos</Text>
-        <View style={styles.examplesGrid}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          contentContainerStyle={styles.examplesRailContent}
+          style={{ cursor: "pointer" as any }}
+        >
           {examples.map((example) => (
             <LuxPressable
               key={example.id}
               onPress={() => onExamplePress(example)}
               className={pointerClassName}
               pressableClassName={pointerClassName}
-              style={{ width: exampleCardSize, height: exampleCardSize }}
+              style={{ width: exampleCardWidth, height: exampleCardHeight }}
               glowColor="rgba(255,255,255,0.04)"
               scale={0.985}
             >
@@ -102,7 +109,7 @@ export function ServiceIntakeStep({
               </View>
             </LuxPressable>
           ))}
-        </View>
+        </ScrollView>
       </View>
     </View>
   );
@@ -224,14 +231,13 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: -0.3,
   },
-  examplesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+  examplesRailContent: {
     gap: 12,
+    paddingRight: 2,
   },
   exampleCard: {
     flex: 1,
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: "hidden",
     borderWidth: HAIRLINE,
     borderColor: "rgba(255,255,255,0.08)",

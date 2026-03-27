@@ -77,6 +77,7 @@ import Logo from "../../components/logo";
 import { captureRef } from "react-native-view-shot";
 import { DS, HAIRLINE, glowShadow } from "../../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../../lib/service-wizard-theme";
+import { FLOOR_WIZARD_EXAMPLE_PHOTOS, PAINT_WIZARD_EXAMPLE_PHOTOS } from "../../lib/wizard-example-photos";
 type MeResponse = {
   plan: "free" | "trial" | "pro";
   credits: number;
@@ -374,51 +375,9 @@ const GARDEN_EXAMPLE_PHOTOS: ExamplePhoto[] = [
   },
 ];
 
-const FLOOR_EXAMPLE_PHOTOS: ExamplePhoto[] = [
-  {
-    id: "floor-concrete",
-    label: "Concrete",
-    source: require("../../assets/media/discover/home/home-living-room.jpg"),
-  },
-  {
-    id: "floor-tile",
-    label: "Tile",
-    source: require("../../assets/media/discover/home/home-kitchen.jpg"),
-  },
-  {
-    id: "floor-carpet",
-    label: "Carpet",
-    source: require("../../assets/media/discover/home/home-master-suite.jpg"),
-  },
-  {
-    id: "floor-hardwood",
-    label: "Hardwood",
-    source: require("../../assets/media/discover/home/home-dining-room.jpg"),
-  },
-];
+const FLOOR_EXAMPLE_PHOTOS: ExamplePhoto[] = FLOOR_WIZARD_EXAMPLE_PHOTOS;
 
-const PAINT_EXAMPLE_PHOTOS: ExamplePhoto[] = [
-  {
-    id: "paint-living-room",
-    label: "Living Room",
-    source: require("../../assets/media/discover/home/home-living-room.jpg"),
-  },
-  {
-    id: "paint-bedroom",
-    label: "Bedroom",
-    source: require("../../assets/media/discover/home/home-master-suite.jpg"),
-  },
-  {
-    id: "paint-kitchen",
-    label: "Kitchen",
-    source: require("../../assets/media/discover/home/home-kitchen.jpg"),
-  },
-  {
-    id: "paint-hall",
-    label: "Hall",
-    source: require("../../assets/media/discover/home/home-hall.jpg"),
-  },
-];
+const PAINT_EXAMPLE_PHOTOS: ExamplePhoto[] = PAINT_WIZARD_EXAMPLE_PHOTOS;
 
 const PAINT_SURFACE_OPTIONS: PaintSurfaceOption[] = [
   { value: "Auto", label: "Auto" },
@@ -2649,8 +2608,8 @@ export default function WorkspaceScreen() {
     const wizardSurfaceBorderColor = SERVICE_WIZARD_THEME.colors.borderStrong;
     const wizardActiveSurfaceColor = SERVICE_WIZARD_THEME.colors.accentSurface;
     const uploadTileSize = wizardUploadSize;
-    const stepOneExampleCardWidth = Math.min(Math.max(width * 0.28, 112), 126);
-    const stepOneExampleCardHeight = Math.round(stepOneExampleCardWidth * 1.2);
+    const stepOneExampleCardWidth = Math.min(Math.max(width * 0.36, 138), 168);
+    const stepOneExampleCardHeight = Math.round(stepOneExampleCardWidth * 1.02);
     const bottomBarOffset = isTabbedWorkspaceRoute ? 86 : 0;
     const stepContentMinHeight = Math.max(
       height -
@@ -3001,6 +2960,7 @@ export default function WorkspaceScreen() {
                           showsHorizontalScrollIndicator={false}
                           decelerationRate="fast"
                           contentContainerStyle={{ paddingRight: 2, gap: 12 }}
+                          style={{ cursor: "pointer" as any }}
                         >
                           {examplePhotos.slice(0, 4).map((example, index) => {
                             const active = activeExampleLabel === example.label;
@@ -3016,8 +2976,8 @@ export default function WorkspaceScreen() {
                                   className="cursor-pointer"
                                   style={{
                                     width: stepOneExampleCardWidth,
-                                    height: isFloorService ? Math.round(stepOneExampleCardWidth * 0.86) : stepOneExampleCardHeight,
-                                    borderRadius: 22,
+                                    height: stepOneExampleCardHeight,
+                                    borderRadius: 20,
                                     borderWidth: HAIRLINE,
                                     borderColor: active ? SERVICE_WIZARD_THEME.colors.accentBorderStrong : DS.colors.border,
                                     backgroundColor: DS.colors.surfaceRaised,
@@ -3045,16 +3005,6 @@ export default function WorkspaceScreen() {
                                       <ActivityIndicator size="small" color="#ffffff" />
                                     </View>
                                   ) : null}
-                                  <LinearGradient
-                                    colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.74)"]}
-                                    locations={[0.35, 1]}
-                                    style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 64 }}
-                                  />
-                                  <View style={{ position: "absolute", left: 12, right: 12, bottom: 12 }}>
-                                    <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "700" }} numberOfLines={1}>
-                                      {example.label}
-                                    </Text>
-                                  </View>
                                 </LuxPressable>
                               </MotiView>
                             );

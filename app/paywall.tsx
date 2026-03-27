@@ -31,7 +31,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
-import { ArrowRight, BadgeCheck, ShieldCheck, X } from "lucide-react-native";
+import { ArrowRight, BadgeCheck, X } from "lucide-react-native";
 
 import { LuxPressable } from "../components/lux-pressable";
 import { useProSuccess } from "../components/pro-success-context";
@@ -55,26 +55,29 @@ import {
 
 const pointerClassName = "cursor-pointer";
 const PREMIUM_FONT_FAMILY = process.env.EXPO_OS === "ios" ? "Avenir Next" : "sans-serif";
+const DISPLAY_FONT_FAMILY = process.env.EXPO_OS === "ios" ? "Avenir Next" : "sans-serif-condensed";
 const HERO_GAP = 12;
 const AUTO_SCROLL_MS = 2600;
 
 const FEATURE_ITEMS = [
-  "Unlock 4K Ultra-HD renders",
-  "20+ premium styles",
-  "No watermarks",
-  "Priority rendering",
+  "Redesign a room in 10 seconds",
+  "Impress clients with 4K renders",
+  "Unlock 50+ Premium AI Styles",
+  "Completely Watermark-free",
 ] as const;
 
 const PLAN_COPY = {
   yearly: {
-    badge: "BEST VALUE",
+    badge: null,
+    titleBadge: "SAVE 92%",
     title: "Yearly Access",
     price: "$0.90",
     priceSuffix: "/ week",
-    subtitle: "Billed at $47.52/year",
+    subtitle: "Billed annually at $47.52",
   },
   weekly: {
     badge: "FREE TRIAL",
+    titleBadge: null,
     title: "Weekly Access",
     price: "$11.90",
     priceSuffix: "/ week",
@@ -83,13 +86,13 @@ const PLAN_COPY = {
 } as const;
 
 const HERO_SLIDES = [
-  { id: "luxury-1", image: require("../assets/media/luxury-1.jpg") },
-  { id: "luxury-2", image: require("../assets/media/luxury-2.jpg") },
-  { id: "luxury-3", image: require("../assets/media/luxury-3.jpg") },
-  { id: "luxury-4", image: require("../assets/media/luxury-4.jpg") },
-  { id: "luxury-5", image: require("../assets/media/luxury-5.jpg") },
-  { id: "luxury-6", image: require("../assets/media/luxury-6.jpg") },
-  { id: "luxury-7", image: require("../assets/media/luxury-7.jpg") },
+  { id: "hero-luxury-lounge", image: require("../assets/media/paywall/paywall-luxury-lounge.png") },
+  { id: "hero-marble-kitchen", image: require("../assets/media/paywall/paywall-marble-kitchen.png") },
+  { id: "hero-boho-bedroom", image: require("../assets/media/paywall/paywall-boho-bedroom.png") },
+  { id: "hero-gaming-room", image: require("../assets/media/paywall/paywall-gaming-room.png") },
+  { id: "hero-garden-pool", image: require("../assets/media/paywall/paywall-garden-pool.png") },
+  { id: "hero-dining-room", image: require("../assets/media/paywall/paywall-dining-room.png") },
+  { id: "hero-soft-lounge", image: require("../assets/media/paywall/paywall-soft-lounge.png") },
 ] as const;
 
 const LOOPED_HERO_SLIDES = [...HERO_SLIDES, ...HERO_SLIDES, ...HERO_SLIDES].map((slide, index) => ({
@@ -106,10 +109,10 @@ const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 function TrialSwitch({ value, onPress }: { value: boolean; onPress: () => void }) {
-  const translateX = useSharedValue(value ? 26 : 0);
+  const translateX = useSharedValue(value ? 28 : 0);
 
   useEffect(() => {
-    translateX.value = withSpring(value ? 26 : 0, {
+    translateX.value = withSpring(value ? 28 : 0, {
       damping: 16,
       stiffness: 180,
     });
@@ -127,7 +130,7 @@ function TrialSwitch({ value, onPress }: { value: boolean; onPress: () => void }
       glowColor="rgba(217,70,239,0.16)"
       scale={0.985}
     >
-      <Animated.View style={[styles.toggleThumb, thumbStyle]} />
+      <Animated.View style={[styles.toggleThumb, value ? styles.toggleThumbActive : null, thumbStyle]} />
     </LuxPressable>
   );
 }
@@ -159,13 +162,15 @@ const HeroSlide = memo(function HeroSlide({
   const animatedStyle = useAnimatedStyle(() => {
     const center = index * snapInterval;
     const inputRange = [center - snapInterval, center, center + snapInterval];
-    const scale = interpolate(scrollX.value, inputRange, [0.8, 1.1, 0.8], Extrapolation.CLAMP);
-    const opacity = interpolate(scrollX.value, inputRange, [0.6, 1, 0.6], Extrapolation.CLAMP);
-    const translateY = interpolate(scrollX.value, inputRange, [10, -4, 10], Extrapolation.CLAMP);
+    const scale = interpolate(scrollX.value, inputRange, [0.78, 1.16, 0.78], Extrapolation.CLAMP);
+    const opacity = interpolate(scrollX.value, inputRange, [0.42, 1, 0.42], Extrapolation.CLAMP);
+    const translateY = interpolate(scrollX.value, inputRange, [16, -10, 16], Extrapolation.CLAMP);
+    const translateX = interpolate(scrollX.value, inputRange, [10, 0, -10], Extrapolation.CLAMP);
+    const rotateY = interpolate(scrollX.value, inputRange, [18, 0, -18], Extrapolation.CLAMP);
 
     return {
       opacity,
-      transform: [{ scale }, { translateY }],
+      transform: [{ perspective: 900 }, { translateX }, { scale }, { rotateY: `${rotateY}deg` }, { translateY }],
     };
   });
 
@@ -197,6 +202,7 @@ function PlanCard({
   priceSuffix,
   subtitle,
   badge,
+  titleBadge,
   onPress,
 }: {
   active: boolean;
@@ -205,6 +211,7 @@ function PlanCard({
   priceSuffix: string;
   subtitle: string;
   badge: string | null;
+  titleBadge: string | null;
   onPress: () => void;
 }) {
   return (
@@ -231,10 +238,19 @@ function PlanCard({
           </View>
         ) : null}
 
-        <Text style={styles.planTitle}>{title}</Text>
+        <View style={styles.planTitleRow}>
+          <Text style={styles.planTitle}>{title}</Text>
+          {titleBadge ? (
+            <View style={styles.planTitleBadge}>
+              <Text style={styles.planTitleBadgeText}>{titleBadge}</Text>
+            </View>
+          ) : null}
+        </View>
         <View style={styles.planPriceRow}>
-          <Text style={styles.planPrice}>{price}</Text>
-          <Text style={styles.planPriceSuffix}>{priceSuffix}</Text>
+          <Text style={styles.planPriceLine}>
+            <Text style={styles.planPrice}>{price}</Text>
+            <Text style={styles.planPriceSuffix}> {priceSuffix}</Text>
+          </Text>
         </View>
         <Text style={styles.planSubtitle}>{subtitle}</Text>
       </LuxPressable>
@@ -339,8 +355,8 @@ export default function PaywallScreen() {
 
   const scrollX = useSharedValue(0);
 
-  const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("yearly");
-  const [freeTrialEnabled, setFreeTrialEnabled] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("weekly");
+  const [freeTrialEnabled, setFreeTrialEnabled] = useState(true);
   const [packages, setPackages] = useState<RevenueCatPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -357,7 +373,7 @@ export default function PaywallScreen() {
     [packages, selectedDuration],
   );
   const isCtaDisabled = isLoading || !selectedPackage;
-  const ctaTitle = freeTrialEnabled && selectedDuration === "weekly" ? "Start Free Trial" : "Unlock Pro";
+  const ctaTitle = freeTrialEnabled ? "Start Free Trial & Subscribe" : "Unlock Pro";
   const weeklySubtitle = freeTrialEnabled ? "Trial starts now, then billed weekly" : "Billed weekly";
 
   const onHeroScroll = useAnimatedScrollHandler({
@@ -637,9 +653,10 @@ export default function PaywallScreen() {
         <View style={[styles.mainStack, { width: contentWidth, gap: compactLevel === 2 ? 14 : 18 }]}>
           <View style={[styles.heroSection, { gap: compactLevel === 2 ? 10 : 14 }]}>
             <View style={styles.headerCopy}>
-              <Text style={styles.eyebrow}>HOME AI PRO</Text>
-              <Text style={styles.eyebrow}>DARKOR.AI PRO</Text>
-              <Text style={[styles.title, compactLevel === 2 ? styles.titleCompact : null]}>Everything premium, composed in one place.</Text>
+              <Text style={styles.brandMark}>DARKOR.AI PRO</Text>
+              <Text style={[styles.title, compactLevel === 2 ? styles.titleCompact : null]}>
+                Transform any room with AI — photorealistic in seconds.
+              </Text>
             </View>
 
             <View style={styles.carouselShell}>
@@ -681,7 +698,6 @@ export default function PaywallScreen() {
             <View style={styles.toggleRow}>
               <View style={styles.toggleCopy}>
                 <Text style={styles.toggleEyebrow}>Free Trial</Text>
-                <Text style={styles.toggleLabel}>Turn on to auto-select Weekly</Text>
               </View>
               <TrialSwitch value={freeTrialEnabled} onPress={handleToggleTrial} />
             </View>
@@ -694,6 +710,7 @@ export default function PaywallScreen() {
                 priceSuffix={PLAN_COPY.weekly.priceSuffix}
                 subtitle={freeTrialEnabled ? weeklySubtitle : "Billed weekly"}
                 badge={freeTrialEnabled ? PLAN_COPY.weekly.badge : null}
+                titleBadge={PLAN_COPY.weekly.titleBadge}
                 onPress={() => handleSelectDuration("weekly")}
               />
               <PlanCard
@@ -703,6 +720,7 @@ export default function PaywallScreen() {
                 priceSuffix={PLAN_COPY.yearly.priceSuffix}
                 subtitle={PLAN_COPY.yearly.subtitle}
                 badge={PLAN_COPY.yearly.badge}
+                titleBadge={PLAN_COPY.yearly.titleBadge}
                 onPress={() => handleSelectDuration("yearly")}
               />
             </View>
@@ -710,13 +728,11 @@ export default function PaywallScreen() {
             <View style={styles.footerStack}>
               {freeTrialEnabled ? (
                 <View style={styles.footerRow}>
-                  <ShieldCheck color="#a1a1aa" size={14} strokeWidth={2.15} />
-                  <Text style={styles.footerText}>No Payment Now</Text>
+                  <Text style={styles.footerText}>{"\u{1F6E1}\uFE0F No Payment Now"}</Text>
                 </View>
               ) : null}
               <View style={styles.footerRow}>
-                <BadgeCheck color="#a1a1aa" size={14} strokeWidth={2.15} />
-                <Text style={styles.footerText}>Cancel Anytime</Text>
+                <Text style={styles.footerText}>{"\u2705 Cancel Anytime"}</Text>
               </View>
             </View>
 
@@ -778,6 +794,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: "#09090b",
+    cursor: "pointer",
   },
   topGlow: {
     position: "absolute",
@@ -823,6 +840,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: "rgba(24,24,27,0.94)",
+    cursor: "pointer",
   },
   timerCore: {
     position: "absolute",
@@ -835,6 +853,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
     alignItems: "center",
+    cursor: "pointer",
   },
   mainStack: {
     flex: 1,
@@ -848,34 +867,39 @@ const styles = StyleSheet.create({
   },
   headerCopy: {
     alignItems: "center",
-    gap: 6,
+    gap: 10,
     paddingHorizontal: 6,
+    paddingBottom: 18,
   },
-  eyebrow: {
-    color: "#a1a1aa",
-    fontSize: 11,
-    fontWeight: "800",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: 2.2,
+  brandMark: {
+    color: "#f4f4f5",
+    fontSize: 20,
+    lineHeight: 22,
+    fontWeight: "900",
+    fontFamily: DISPLAY_FONT_FAMILY,
+    letterSpacing: 2.8,
     textTransform: "uppercase",
+    marginTop: -4,
   },
   title: {
     color: "#fafafa",
-    fontSize: 27,
-    lineHeight: 30,
+    fontSize: 31,
+    lineHeight: 35,
     fontWeight: "800",
     fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -0.7,
+    letterSpacing: -0.95,
     textAlign: "center",
+    maxWidth: 330,
   },
   titleCompact: {
-    fontSize: 24,
-    lineHeight: 27,
+    fontSize: 27,
+    lineHeight: 31,
   },
   carouselShell: {
     width: "100%",
     alignItems: "center",
     overflow: "visible",
+    cursor: "pointer",
   },
   carouselList: {
     width: "100%",
@@ -891,6 +915,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
     backgroundColor: "#18181b",
+    cursor: "pointer",
   },
   featureGrid: {
     width: "100%",
@@ -914,6 +939,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(24,24,27,0.92)",
     paddingHorizontal: 12,
     paddingVertical: 10,
+    cursor: "pointer",
   },
   featureText: {
     flexShrink: 1,
@@ -939,10 +965,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(24,24,27,0.96)",
     paddingHorizontal: 16,
     paddingVertical: 14,
+    cursor: "pointer",
   },
   toggleCopy: {
     flex: 1,
-    gap: 3,
   },
   toggleEyebrow: {
     color: "#fafafa",
@@ -952,29 +978,30 @@ const styles = StyleSheet.create({
     fontFamily: PREMIUM_FONT_FAMILY,
     letterSpacing: 0.1,
   },
-  toggleLabel: {
-    color: "#a1a1aa",
-    fontSize: 12,
-    lineHeight: 17,
-    fontWeight: "600",
-    fontFamily: PREMIUM_FONT_FAMILY,
-  },
   toggleTrack: {
-    width: 58,
-    height: 32,
+    width: 66,
+    height: 38,
     borderRadius: 999,
     justifyContent: "center",
-    padding: 3,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
     backgroundColor: "#3f3f46",
+    boxShadow: "0 10px 26px rgba(0, 0, 0, 0.24)",
   },
   toggleTrackActive: {
     backgroundColor: "#7c3aed",
+    borderColor: "rgba(216,180,254,0.42)",
   },
   toggleThumb: {
-    width: 26,
-    height: 26,
+    width: 30,
+    height: 30,
     borderRadius: 999,
     backgroundColor: "#ffffff",
+    boxShadow: "0 5px 14px rgba(0, 0, 0, 0.22)",
+  },
+  toggleThumbActive: {
+    backgroundColor: "#fdf4ff",
   },
   planRow: {
     flexDirection: "row",
@@ -1036,11 +1063,39 @@ const styles = StyleSheet.create({
     letterSpacing: -0.25,
     textAlign: "center",
   },
-  planPriceRow: {
+  planTitleRow: {
+    minHeight: 42,
+    width: "100%",
     flexDirection: "row",
-    alignItems: "flex-end",
+    flexWrap: "wrap",
+    alignItems: "center",
     justifyContent: "center",
-    gap: 4,
+    gap: 6,
+  },
+  planTitleBadge: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(251, 191, 36, 0.34)",
+    backgroundColor: "#22c55e",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  planTitleBadgeText: {
+    color: "#052e16",
+    fontSize: 10,
+    lineHeight: 12,
+    fontWeight: "900",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    letterSpacing: 0.45,
+  },
+  planPriceRow: {
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: 38,
+  },
+  planPriceLine: {
+    textAlign: "center",
   },
   planPrice: {
     color: "#ffffff",
@@ -1052,11 +1107,10 @@ const styles = StyleSheet.create({
   },
   planPriceSuffix: {
     color: "#d4d4d8",
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: "700",
     fontFamily: PREMIUM_FONT_FAMILY,
-    marginBottom: 3,
   },
   planSubtitle: {
     color: "#a1a1aa",
@@ -1073,10 +1127,9 @@ const styles = StyleSheet.create({
     minHeight: 36,
   },
   footerRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    width: "100%",
     justifyContent: "center",
-    gap: 8,
+    alignItems: "center",
   },
   footerText: {
     color: "#a1a1aa",
@@ -1085,6 +1138,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontFamily: PREMIUM_FONT_FAMILY,
     textAlign: "center",
+    width: "100%",
   },
   errorText: {
     color: "#fca5a5",
@@ -1136,6 +1190,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     paddingHorizontal: 10,
     paddingVertical: 6,
+    cursor: "pointer",
   },
   restoreText: {
     color: "#a1a1aa",

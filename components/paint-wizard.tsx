@@ -25,6 +25,7 @@ import { WALL_COLOR_OPTIONS } from "../lib/data";
 import { getFriendlyGenerationError, isProviderDownError } from "../lib/generation-errors";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
+import { PAINT_WIZARD_EXAMPLE_PHOTOS } from "../lib/wizard-example-photos";
 import { useProSuccess } from "./pro-success-context";
 import { ServiceWizardHeader } from "./service-wizard-header";
 import { ServiceIntakeStep, ServiceSelectionCard, type ServiceExamplePhoto } from "./service-wizard-shared";
@@ -67,25 +68,7 @@ const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
 const DETECT_DURATION_MS = 1700;
 const MASK_CONTINUE_GRADIENT = SERVICE_WIZARD_THEME.gradients.maskAction;
-
-const PAINT_EXAMPLE_PHOTOS: ServiceExamplePhoto[] = [
-  {
-    id: "paint-living-room",
-    source: require("../assets/media/discover/home/home-living-room.jpg"),
-  },
-  {
-    id: "paint-master-suite",
-    source: require("../assets/media/discover/home/home-master-suite.jpg"),
-  },
-  {
-    id: "paint-kitchen",
-    source: require("../assets/media/discover/home/home-kitchen.jpg"),
-  },
-  {
-    id: "paint-hall",
-    source: require("../assets/media/discover/home/home-hall.jpg"),
-  },
-];
+const TAB_BAR_CLEARANCE = 96;
 
 const FINISH_OPTIONS: FinishOption[] = [
   {
@@ -188,6 +171,7 @@ export function PaintWizard() {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
+  const [maskFooterHeight, setMaskFooterHeight] = useState(0);
   const initialSelectionAppliedRef = useRef(false);
   const detectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sourceCaptureRef = useRef<View>(null);
@@ -235,6 +219,10 @@ export function PaintWizard() {
   const colorCardSize = Math.max((width - 46) / 2, 154);
   const frameAspectRatio = selectedImage ? selectedImage.width / Math.max(selectedImage.height, 1) : 1;
   const previewHeight = Math.min(Math.max((width - 32) / Math.max(frameAspectRatio, 0.6), 240), height * 0.54);
+  const maskPreviewHeight = Math.min(previewHeight, Math.max(height * 0.4, 248));
+  const maskFooterBottomPadding = Math.max(insets.bottom + 12, 24);
+  const maskFooterBottomOffset = TAB_BAR_CLEARANCE;
+  const maskScrollPaddingBottom = Math.max(maskFooterHeight + maskFooterBottomOffset + 24, insets.bottom + 224);
 
   useEffect(() => {
     return () => {
@@ -579,7 +567,7 @@ export function PaintWizard() {
           <ServiceIntakeStep
             heading="Add a Photo of your Room"
             subtext="Upload a room photo for precise wall recoloring."
-            examples={PAINT_EXAMPLE_PHOTOS}
+            examples={PAINT_WIZARD_EXAMPLE_PHOTOS}
             onUploadPress={() => {
               void handleSelectMedia("library");
             }}
@@ -598,7 +586,7 @@ export function PaintWizard() {
             contentContainerStyle={{
               paddingHorizontal: 16,
               paddingTop: 10,
-              paddingBottom: Math.max(insets.bottom + 248, 272),
+              paddingBottom: maskScrollPaddingBottom,
               gap: 16,
             }}
             showsVerticalScrollIndicator={false}
@@ -608,7 +596,7 @@ export function PaintWizard() {
               Brush only over the wall surfaces. The loupe stays live while you paint so you can stay clean around furniture, windows, trim, and decor.
             </Text>
 
-            <View onLayout={handleCanvasLayout} style={[styles.canvasFrame, { height: previewHeight }]}>
+            <View onLayout={handleCanvasLayout} style={[styles.canvasFrame, { height: maskPreviewHeight }]}>
               {selectedImage ? (
                 <>
                   <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="contain" transition={160} />
@@ -742,7 +730,18 @@ export function PaintWizard() {
 
           <View
             pointerEvents="box-none"
-            style={[styles.fixedContinueBar, styles.maskContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}
+            onLayout={(event) => {
+              const nextHeight = Math.round(event.nativeEvent.layout.height);
+              setMaskFooterHeight((current) => (current === nextHeight ? current : nextHeight));
+            }}
+            style={[
+              styles.fixedContinueBar,
+              styles.maskContinueBar,
+              {
+                bottom: maskFooterBottomOffset,
+                paddingBottom: maskFooterBottomPadding,
+              },
+            ]}
           >
             <View style={styles.maskControlCard}>
               <View style={styles.brushRow}>
@@ -772,7 +771,7 @@ export function PaintWizard() {
               disabled={!canContinueFromMask}
               pressableClassName={pointerClassName}
               className={pointerClassName}
-              style={{ width: "100%" }}
+              style={{ width: "100%", cursor: "pointer" as any }}
               glowColor={SERVICE_WIZARD_THEME.colors.accentGlow}
               scale={0.99}
             >
@@ -782,7 +781,7 @@ export function PaintWizard() {
                 </LinearGradient>
               ) : (
                 <View style={styles.disabledButtonLarge}>
-                  <Text style={styles.primaryText}>Continue</Text>
+                  <Text style={styles.disabledButtonText}>Continue</Text>
                 </View>
               )}
             </LuxPressable>
@@ -1372,13 +1371,13 @@ const styles = StyleSheet.create({
     maxWidth: 280,
   },
   maskControlCard: {
-    borderRadius: 24,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: CARD_BLACK_SOFT,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 10,
   },
   brushRow: {
     flexDirection: "row",
@@ -1387,46 +1386,46 @@ const styles = StyleSheet.create({
   },
   brushTitle: {
     color: "#ffffff",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "700",
   },
   brushMeta: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
   },
   brushMetaText: {
     color: "#d4d4d8",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
   },
   sliderWrap: {
-    height: 38,
+    height: 32,
     justifyContent: "center",
   },
   sliderTrack: {
-    height: 6,
+    height: 5,
     borderRadius: 999,
     backgroundColor: "rgba(255,255,255,0.12)",
   },
   sliderFill: {
     position: "absolute",
     left: 0,
-    height: 6,
+    height: 5,
     borderRadius: 999,
   },
   sliderThumb: {
     position: "absolute",
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 28,
     borderRadius: 999,
     backgroundColor: "#ffffff",
     alignItems: "center",
     justifyContent: "center",
   },
   sliderThumbDot: {
-    width: 14,
-    height: 14,
+    width: 12,
+    height: 12,
     borderRadius: 999,
     backgroundColor: SERVICE_WIZARD_THEME.colors.accent,
   },
@@ -1437,7 +1436,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   primaryButtonLarge: {
-    minHeight: 62,
+    minHeight: 58,
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
@@ -1445,18 +1444,26 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   disabledButtonLarge: {
-    minHeight: 62,
+    minHeight: 58,
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: SERVICE_WIZARD_THEME.colors.disabledSurface,
-    opacity: 0.58,
+    opacity: 0.5,
   },
   primaryText: {
     color: "#ffffff",
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "800",
     letterSpacing: -0.2,
+    textAlign: "center",
+  },
+  disabledButtonText: {
+    color: "#9ca3af",
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+    textAlign: "center",
   },
   previewBadge: {
     position: "absolute",
@@ -1492,16 +1499,20 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingTop: 14,
+    paddingTop: 10,
     paddingHorizontal: 16,
-    gap: 12,
+    gap: 10,
     borderTopWidth: 1,
     borderTopColor: "rgba(255,255,255,0.06)",
     backgroundColor: SERVICE_WIZARD_THEME.colors.background,
+    shadowColor: "#000000",
+    shadowOpacity: 0.24,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: -8 },
   },
   maskContinueBar: {
     zIndex: 120,
-    elevation: 120,
+    elevation: 24,
   },
   selectionGrid: {
     flexDirection: "row",
