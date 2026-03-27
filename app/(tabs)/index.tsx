@@ -59,7 +59,7 @@ const SERVICE_CARDS: ServiceCardData[] = [
     title: "Smart Wall Paint",
     subtitle: "Wall color transformations tuned for elegant tonal balance.",
     video: require("../../assets/videos/paint.mp4"),
-    poster: require("../../assets/media/empty-room.jpg"),
+    poster: require("../../assets/media/discover/wall/sage-green.jpg"),
     serviceParam: "paint",
   },
   {
@@ -67,7 +67,7 @@ const SERVICE_CARDS: ServiceCardData[] = [
     title: "Floor Restyle",
     subtitle: "Material swaps from tile to hardwood with cleaner detailing.",
     video: require("../../assets/videos/floor.mp4"),
-    poster: require("../../assets/media/sketch.jpg"),
+    poster: require("../../assets/media/discover/floor/carrara-marble.jpg"),
     serviceParam: "floor",
   },
 ] as const;

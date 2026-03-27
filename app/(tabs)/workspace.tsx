@@ -81,7 +81,7 @@ import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
 import { getFriendlyGenerationError, isProviderDownError } from "../../lib/generation-errors";
 import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
-import { assertCloudUrl } from "../../lib/public-endpoints";
+import { uploadLocalFileToCloud } from "../../lib/native-upload";
 import { requestStoreReview } from "../../lib/store-review";
 import { GlassBackdrop } from "../../components/glass-backdrop";
 import { FloorWizard } from "../../components/floor-wizard";
@@ -1339,15 +1339,6 @@ async function readBase64FromUri(uri: string) {
   return markerIndex === -1 ? dataUrl : dataUrl.slice(markerIndex + marker.length);
 }
 
-async function readBlobFromUri(uri: string) {
-  const response = await fetch(uri);
-  if (!response.ok) {
-    throw new Error("Unable to load the selected image.");
-  }
-
-  return await response.blob();
-}
-
 const PHOTO_PERMISSION_ALERT_TITLE = "Permission Required";
 const PHOTO_PERMISSION_ALERT_MESSAGE =
   "Please enable camera/photo access in your system settings to continue.";
@@ -2580,26 +2571,10 @@ export default function WorkspaceScreen() {
 
   const uploadSelectedImageToStorage = useCallback(async (image: SelectedImage) => {
     const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
-    assertCloudUrl(uploadUrl, "Convex upload URL");
-    const blob = await readBlobFromUri(image.uri);
-    const uploadResponse = await fetch(uploadUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": blob.type || "image/jpeg",
-      },
-      body: blob,
+    return await uploadLocalFileToCloud(uploadUrl, image.uri, {
+      fallbackMimeType: "image/jpeg",
+      errorLabel: "source image",
     });
-
-    if (!uploadResponse.ok) {
-      throw new Error("Unable to upload the source image to Convex Storage.");
-    }
-
-    const uploadResult = (await uploadResponse.json()) as { storageId?: string };
-    if (!uploadResult.storageId) {
-      throw new Error("Convex did not return a storage id for the uploaded source image.");
-    }
-
-    return uploadResult.storageId;
   }, [createSourceUploadUrl, viewerArgs]);
 
   const handleGenerate = useCallback(async (options?: { regenerate?: boolean; customPromptOverride?: string }) => {

@@ -16,7 +16,7 @@ import { Camera, ChevronLeft, ImagePlus, MoveHorizontal, RotateCcw, Sparkles, Tr
 
 import { getFriendlyGenerationError, isProviderDownError } from "../lib/generation-errors";
 import { triggerHaptic } from "../lib/haptics";
-import { assertCloudUrl } from "../lib/public-endpoints";
+import { uploadLocalFileToCloud } from "../lib/native-upload";
 import { FLOOR_MATERIAL_OPTIONS, type FloorMaterialOption } from "../lib/data";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
@@ -49,12 +49,6 @@ function simplifyRatio(width: number, height: number) {
   const reduced = `${w / gcd(w, h)}:${h / gcd(w, h)}`;
   if (w > h) return reduced.startsWith("4:3") ? "4:3" : "16:9";
   return reduced.startsWith("3:4") ? "3:4" : "9:16";
-}
-
-async function readBlobFromUri(uri: string) {
-  const response = await fetch(uri);
-  if (!response.ok) throw new Error("Unable to load the selected image.");
-  return await response.blob();
 }
 
 const MaterialCard = memo(function MaterialCard({ option, active, width, onPress }: { option: FloorMaterialOption; active: boolean; width: number; onPress: () => void }) {
@@ -232,13 +226,10 @@ export function FloorWizard() {
 
   const uploadBlobToStorage = useCallback(async (uri: string) => {
     const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
-    assertCloudUrl(uploadUrl, "Convex upload URL");
-    const blob = await readBlobFromUri(uri);
-    const response = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": blob.type || "image/png" }, body: blob });
-    if (!response.ok) throw new Error("Unable to upload the selected floor image.");
-    const json = (await response.json()) as { storageId?: string };
-    if (!json.storageId) throw new Error("Convex did not return a storage id.");
-    return json.storageId;
+    return await uploadLocalFileToCloud(uploadUrl, uri, {
+      fallbackMimeType: "image/png",
+      errorLabel: "selected floor image",
+    });
   }, [createSourceUploadUrl, viewerArgs]);
 
   const handleSelectMedia = useCallback(async (source: "camera" | "library") => {
@@ -446,7 +437,7 @@ export function FloorWizard() {
                       </View>
                     </View>
                   ) : null}
-                  <View style={styles.canvasToolbar}>
+                  <View pointerEvents="box-none" style={styles.canvasToolbar}>
                     <LuxPressable onPress={undoLastStroke} disabled={!strokes.length} className={pointerClassName} style={styles.canvasToolbarButton} glowColor="rgba(255,255,255,0.04)" scale={0.98}><RotateCcw color="#ffffff" size={16} /><Text style={styles.canvasToolbarText}>Undo</Text></LuxPressable>
                     <LuxPressable onPress={clearMask} disabled={!strokes.length} className={pointerClassName} style={styles.canvasToolbarButton} glowColor="rgba(255,255,255,0.04)" scale={0.98}><Trash2 color="#ffffff" size={16} /><Text style={styles.canvasToolbarText}>Clear All</Text></LuxPressable>
                   </View>
@@ -457,7 +448,10 @@ export function FloorWizard() {
             </View>
           </ScrollView>
 
-          <View style={[styles.fixedContinueBar, styles.maskContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
+          <View
+            pointerEvents="box-none"
+            style={[styles.fixedContinueBar, styles.maskContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}
+          >
             <View style={styles.maskControlCard}>
               <View style={styles.brushRow}><Text style={styles.brushTitle}>Brush Size</Text><View style={styles.brushMeta}><View style={{ width: Math.max(brushWidth, 14), height: Math.max(brushWidth, 14), borderRadius: 999, backgroundColor: MASK_COLOR, borderWidth: 1, borderColor: "rgba(255,255,255,0.22)" }} /><Text style={styles.brushMetaText}>{brushWidth}px</Text></View></View>
               <GestureDetector gesture={sliderGesture}><View onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)} style={styles.sliderWrap}><View style={styles.sliderTrack} /><LinearGradient colors={MASK_CONTINUE_GRADIENT} style={[styles.sliderFill, { width: Math.max(14, sliderWidth * brushProgress) }]} /><View style={[styles.sliderThumb, { left: Math.max(0, sliderWidth * brushProgress - 16) }]}><View style={styles.sliderThumbDot} /></View></View></GestureDetector>
@@ -482,7 +476,7 @@ export function FloorWizard() {
             <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Selected Material</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? "No material selected"}</Text><Text style={styles.summaryText}>{selectedMaterial?.description ?? "Select a flooring material to unlock the AI restyle."}</Text></View>
           </ScrollView>
 
-          <View style={[styles.fixedContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
+          <View pointerEvents="box-none" style={[styles.fixedContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
             <LuxPressable onPress={() => { void handleGenerate(); }} disabled={!canContinueFromMaterials} pressableClassName={pointerClassName} className={pointerClassName} style={{ width: "100%" }} glowColor={SERVICE_WIZARD_THEME.colors.accentGlowSoft} scale={0.99}>
               {canContinueFromMaterials ? (
                 <LinearGradient colors={SERVICE_WIZARD_THEME.gradients.accentButton} style={styles.primaryButtonLarge}><Text style={styles.primaryText}>Continue</Text></LinearGradient>

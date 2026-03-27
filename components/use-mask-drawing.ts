@@ -226,7 +226,7 @@ export function useMaskDrawing({
         .minDistance(0)
         .maxPointers(1)
         .averageTouches(true)
-        .shouldCancelWhenOutside(false)
+        .shouldCancelWhenOutside(true)
         .onBegin((event) => startStroke(event.x, event.y))
         .onUpdate((event) => extendStroke(event.x, event.y))
         .onFinalize(() => finishStroke()),

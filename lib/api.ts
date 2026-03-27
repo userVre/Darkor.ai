@@ -19,10 +19,16 @@ type GenerateResponse = {
   error?: string;
 };
 
+const PRODUCTION_API_BASE_URL = "https://9o39o3.vercel.app";
+
 function resolveApiBaseUrl() {
-  return resolvePublicEndpoint(process.env.EXPO_PUBLIC_API_BASE_URL, "EXPO_PUBLIC_API_BASE_URL", {
-    required: true,
-  });
+  try {
+    return resolvePublicEndpoint(process.env.EXPO_PUBLIC_API_BASE_URL, "EXPO_PUBLIC_API_BASE_URL", {
+      required: true,
+    });
+  } catch {
+    return PRODUCTION_API_BASE_URL;
+  }
 }
 
 export async function generateImage(

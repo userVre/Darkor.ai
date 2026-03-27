@@ -21,9 +21,9 @@ import {
   Trash2,
 } from "lucide-react-native";
 
-import { assertCloudUrl } from "../lib/public-endpoints";
 import { triggerHaptic } from "../lib/haptics";
-import { WALL_COLOR_CATEGORIES, WALL_COLOR_OPTIONS, type ColorCategory, type ColorSwatch } from "../lib/data";
+import { uploadLocalFileToCloud } from "../lib/native-upload";
+import { WALL_COLOR_OPTIONS, type WallColorOption } from "../lib/data";
 import { getFriendlyGenerationError, isProviderDownError } from "../lib/generation-errors";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
@@ -99,12 +99,6 @@ function simplifyRatio(width: number, height: number) {
   return reduced.startsWith("3:4") ? "3:4" : "9:16";
 }
 
-async function readBlobFromUri(uri: string) {
-  const response = await fetch(uri);
-  if (!response.ok) throw new Error("Unable to load the selected image.");
-  return await response.blob();
-}
-
 const BrushPreview = memo(function BrushPreview({ width }: { width: number }) {
   return (
     <View
@@ -120,13 +114,13 @@ const BrushPreview = memo(function BrushPreview({ width }: { width: number }) {
   );
 });
 
-const ColorSwatchButton = memo(function ColorSwatchButton({
-  color,
+const WallColorCard = memo(function WallColorCard({
+  option,
   active,
   size,
   onPress,
 }: {
-  color: ColorSwatch;
+  option: WallColorOption;
   active: boolean;
   size: number;
   onPress: () => void;
@@ -136,14 +130,22 @@ const ColorSwatchButton = memo(function ColorSwatchButton({
       onPress={onPress}
       pressableClassName={pointerClassName}
       className={pointerClassName}
-      style={[styles.swatchButton, { width: size }]}
+      style={{ width: size }}
       glowColor={active ? "rgba(217,70,239,0.22)" : "rgba(255,255,255,0.04)"}
-      scale={0.97}
+      scale={0.99}
     >
-      <View style={[styles.swatchOuter, active ? styles.swatchOuterActive : null]}>
-        <View style={[styles.swatchInner, { backgroundColor: color.value }]} />
+      <View style={[styles.selectionCard, active ? styles.selectionCardActive : null]}>
+        <View style={styles.selectionPreview}>
+          <Image source={option.image} style={styles.selectionSample} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+          <LinearGradient colors={["transparent", "rgba(0,0,0,0.82)"]} style={styles.selectionOverlay} />
+          <View style={styles.selectionCopy}>
+            <Text style={styles.selectionTitle}>{option.title}</Text>
+            <Text style={[styles.selectionDescription, active ? styles.selectionDescriptionActive : null]} numberOfLines={2}>
+              {option.description}
+            </Text>
+          </View>
+        </View>
       </View>
-      <Text style={[styles.swatchLabel, active ? styles.swatchLabelActive : null]}>{color.label}</Text>
     </LuxPressable>
   );
 });
@@ -235,7 +237,7 @@ export function PaintWizard() {
   });
 
   const selectedColor = useMemo(
-    () => WALL_COLOR_CATEGORIES.flatMap((category) => category.colors).find((color) => color.value === selectedColorValue) ?? null,
+    () => WALL_COLOR_OPTIONS.find((option) => option.value === selectedColorValue) ?? null,
     [selectedColorValue],
   );
   const selectedFinish = useMemo(
@@ -247,8 +249,8 @@ export function PaintWizard() {
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
   const canContinueFromMask = hasMask && !isDetecting;
-  const canContinueFromColors = Boolean(selectedColor && selectedImage && hasMask && !isGenerating);
-  const colorCardSize = Math.max(94, Math.floor((width - 72) / 3));
+  const canContinueFromColors = Boolean(selectedColor && selectedImage && hasMask);
+  const colorCardSize = Math.max((width - 46) / 2, 154);
   const frameAspectRatio = selectedImage ? selectedImage.width / Math.max(selectedImage.height, 1) : 1;
   const previewHeight = Math.min(Math.max((width - 32) / Math.max(frameAspectRatio, 0.6), 240), height * 0.54);
 
@@ -297,7 +299,7 @@ export function PaintWizard() {
 
     if (generation.status === "failed") {
       setIsGenerating(false);
-      setStep("colors");
+      setStep("finish");
       const message = getFriendlyGenerationError(generation.errorMessage);
       if (isProviderDownError(generation.errorMessage)) {
         Alert.alert("Darkor AI is busy", message);
@@ -343,24 +345,10 @@ export function PaintWizard() {
   const uploadBlobToStorage = useCallback(
     async (uri: string) => {
       const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
-      assertCloudUrl(uploadUrl, "Convex upload URL");
-      const blob = await readBlobFromUri(uri);
-      const response = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { "Content-Type": blob.type || "image/png" },
-        body: blob,
+      return await uploadLocalFileToCloud(uploadUrl, uri, {
+        fallbackMimeType: "image/png",
+        errorLabel: "wall-paint assets",
       });
-
-      if (!response.ok) {
-        throw new Error("Unable to upload the wall-paint assets to storage.");
-      }
-
-      const json = (await response.json()) as { storageId?: string };
-      if (!json.storageId) {
-        throw new Error("Storage upload completed without a storage id.");
-      }
-
-      return json.storageId;
     },
     [createSourceUploadUrl, viewerArgs],
   );
@@ -469,9 +457,9 @@ export function PaintWizard() {
             imageStorageId: sourceStorageId,
             maskStorageId,
             serviceType: "paint",
-            selection: `${selectedColor.label} (${selectedColor.value}) with a realistic ${selectedFinish.label.toLowerCase()} finish`,
+            selection: `${selectedColor.title} (${selectedColor.value}) with a realistic ${selectedFinish.label.toLowerCase()} finish`,
             roomType: "Room",
-            displayStyle: `${selectedColor.label} Paint`,
+            displayStyle: `${selectedColor.title} Paint`,
             customPrompt: "Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.",
             aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
           })) as { generationId: string };
@@ -482,7 +470,7 @@ export function PaintWizard() {
       setGenerationId(result.generationId);
     } catch (error) {
       setIsGenerating(false);
-      setStep("colors");
+      setStep("finish");
       const rawMessage = error instanceof Error ? error.message : "Please try again.";
       const message = getFriendlyGenerationError(rawMessage);
       if (message === "Payment Required") {
@@ -533,8 +521,8 @@ export function PaintWizard() {
     if (step === "mask") return setStep("intake");
     if (step === "colors") return setStep("mask");
     if (step === "finish") return setStep("colors");
-    if (step === "processing") return setStep("colors");
-    if (step === "result") return setStep("colors");
+    if (step === "processing") return setStep("finish");
+    if (step === "result") return setStep("finish");
   }, [step]);
 
   return (
@@ -728,7 +716,7 @@ export function PaintWizard() {
                     </>
                   ) : null}
 
-                  <View style={styles.canvasToolbar}>
+                  <View pointerEvents="box-none" style={styles.canvasToolbar}>
                     <LuxPressable
                       onPress={undoLastStroke}
                       disabled={!paintStrokes.length}
@@ -785,7 +773,10 @@ export function PaintWizard() {
             </View>
           </ScrollView>
 
-          <View style={[styles.fixedContinueBar, styles.maskContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
+          <View
+            pointerEvents="box-none"
+            style={[styles.fixedContinueBar, styles.maskContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}
+          >
             <View style={styles.maskControlCard}>
               <View style={styles.brushRow}>
                 <Text style={styles.brushTitle}>Brush Size</Text>
@@ -845,7 +836,7 @@ export function PaintWizard() {
           >
             <Text style={styles.stepTitle}>Select Color</Text>
             <Text style={styles.stepText}>
-              Explore a premium palette hub designed to feel intentional, market-ready, and photoreal in upscale interiors.
+              Pick from the real wall-finish thumbnails so Darkor.ai carries the exact tone into the final render.
             </Text>
 
             <View style={[styles.canvasFrame, { height: Math.min(previewHeight, 280) }]}>
@@ -868,37 +859,41 @@ export function PaintWizard() {
                   </Svg>
                   <View style={styles.previewBadge}>
                     <View style={[styles.previewSwatch, selectedColor ? { backgroundColor: selectedColor.value } : styles.previewSwatchEmpty]} />
-                    <Text style={styles.previewBadgeText}>{selectedColor?.label ?? "Choose a wall color"}</Text>
+                    <Text style={styles.previewBadgeText}>{selectedColor?.title ?? "Choose a wall color"}</Text>
                   </View>
                 </>
               ) : null}
             </View>
 
-            {WALL_COLOR_CATEGORIES.map((category) => (
-              <View key={category.id} style={styles.paletteCard}>
-                <Text style={styles.paletteTitle}>{category.title}</Text>
-                <View style={styles.swatchGrid}>
-                  {category.colors.map((color) => (
-                    <ColorSwatchButton
-                      key={color.id}
-                      color={color}
-                      active={color.id === selectedColor?.id}
-                      size={colorCardSize}
-                      onPress={() => {
-                        setSelectedColorValue(color.value);
-                        triggerHaptic();
-                      }}
-                    />
-                  ))}
-                </View>
-              </View>
-            ))}
+            <View style={styles.selectionGrid}>
+              {WALL_COLOR_OPTIONS.map((option) => (
+                <WallColorCard
+                  key={option.id}
+                  option={option}
+                  active={option.id === selectedColor?.id}
+                  size={colorCardSize}
+                  onPress={() => {
+                    setSelectedColorValue(option.value);
+                    triggerHaptic();
+                  }}
+                />
+              ))}
+            </View>
+
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Selected Color</Text>
+              <Text style={styles.summaryTitle}>{selectedColor?.title ?? "No wall color selected"}</Text>
+              <Text style={styles.summaryText}>
+                {selectedColor?.description ?? "Choose a wall color thumbnail to unlock the finish step."}
+              </Text>
+            </View>
           </ScrollView>
 
-          <View style={[styles.fixedContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
+          <View pointerEvents="box-none" style={[styles.fixedContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
             <LuxPressable
               onPress={() => {
-                void handleGenerate();
+                triggerHaptic();
+                setStep("finish");
               }}
               disabled={!canContinueFromColors}
               pressableClassName={pointerClassName}
@@ -937,11 +932,17 @@ export function PaintWizard() {
           </Text>
 
           <View style={[styles.summaryCard, styles.finishSummaryCard]}>
-              <View style={[styles.summarySwatch, { backgroundColor: selectedColor?.value ?? "#ffffff" }]} />
+            {selectedColor ? (
+              <Image source={selectedColor.image} style={styles.finishSelectionThumb} contentFit="cover" transition={120} />
+            ) : (
+              <View style={[styles.summarySwatch, { backgroundColor: "#ffffff" }]} />
+            )}
             <View style={styles.summaryCopy}>
               <Text style={styles.summaryLabel}>Selected Color</Text>
-              <Text style={styles.summaryTitle}>{selectedColor?.label ?? "No color selected"}</Text>
-              <Text style={styles.summaryText}>Wall color is locked. Now choose the final sheen profile for the render.</Text>
+              <Text style={styles.summaryTitle}>{selectedColor?.title ?? "No color selected"}</Text>
+              <Text style={styles.summaryText}>
+                {selectedColor?.description ?? "Wall color is locked. Now choose the final sheen profile for the render."}
+              </Text>
             </View>
           </View>
 
@@ -999,7 +1000,7 @@ export function PaintWizard() {
             <ActivityIndicator size="small" color="#ffffff" />
             <Text style={styles.processingTitle}>AI is crafting your masterpiece...</Text>
             <Text style={styles.processingText}>
-              Darkor.ai is preserving the architecture, refining the masked wall planes, and layering {selectedColor?.label ?? "your selected hue"} with a luxury finish.
+              Darkor.ai is preserving the architecture, refining the masked wall planes, and layering {selectedColor?.title ?? "your selected hue"} with a luxury finish.
             </Text>
           </View>
         </View>
@@ -1034,7 +1035,7 @@ export function PaintWizard() {
 
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Applied Finish</Text>
-            <Text style={styles.summaryTitle}>{`${selectedColor?.label ?? "Selected Color"} • ${selectedFinish.label}`}</Text>
+            <Text style={styles.summaryTitle}>{`${selectedColor?.title ?? "Selected Color"} • ${selectedFinish.label}`}</Text>
             <Text style={styles.summaryText}>
               Your walls were recolored from the mask you painted while preserving the structure, furnishings, trim, and natural light of the room.
             </Text>
@@ -1532,6 +1533,56 @@ const styles = StyleSheet.create({
     zIndex: 30,
     elevation: 30,
   },
+  selectionGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 14,
+  },
+  selectionCard: {
+    borderRadius: 30,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: CARD_BLACK_SOFT,
+  },
+  selectionCardActive: {
+    borderColor: SERVICE_WIZARD_THEME.colors.accent,
+    backgroundColor: SERVICE_WIZARD_THEME.colors.accentSurface,
+  },
+  selectionPreview: {
+    aspectRatio: 1,
+    backgroundColor: "#101012",
+  },
+  selectionSample: {
+    flex: 1,
+  },
+  selectionOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 100,
+  },
+  selectionCopy: {
+    position: "absolute",
+    left: 14,
+    right: 14,
+    bottom: 14,
+  },
+  selectionTitle: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  selectionDescription: {
+    color: "#d4d4d8",
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  selectionDescriptionActive: {
+    color: SERVICE_WIZARD_THEME.colors.accentText,
+  },
   paletteCard: {
     borderRadius: 28,
     borderWidth: 1,
@@ -1609,6 +1660,11 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.7)",
+  },
+  finishSelectionThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 22,
   },
   summaryCopy: {
     flex: 1,
