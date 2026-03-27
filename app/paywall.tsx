@@ -162,14 +162,16 @@ const HeroSlide = memo(function HeroSlide({
   const animatedStyle = useAnimatedStyle(() => {
     const center = index * snapInterval;
     const inputRange = [center - snapInterval, center, center + snapInterval];
-    const scale = interpolate(scrollX.value, inputRange, [0.78, 1.16, 0.78], Extrapolation.CLAMP);
-    const opacity = interpolate(scrollX.value, inputRange, [0.42, 1, 0.42], Extrapolation.CLAMP);
-    const translateY = interpolate(scrollX.value, inputRange, [16, -10, 16], Extrapolation.CLAMP);
-    const translateX = interpolate(scrollX.value, inputRange, [10, 0, -10], Extrapolation.CLAMP);
-    const rotateY = interpolate(scrollX.value, inputRange, [18, 0, -18], Extrapolation.CLAMP);
+    const scale = interpolate(scrollX.value, inputRange, [0.74, 1.18, 0.74], Extrapolation.CLAMP);
+    const opacity = interpolate(scrollX.value, inputRange, [0.38, 1, 0.38], Extrapolation.CLAMP);
+    const translateY = interpolate(scrollX.value, inputRange, [18, -12, 18], Extrapolation.CLAMP);
+    const translateX = interpolate(scrollX.value, inputRange, [14, 0, -14], Extrapolation.CLAMP);
+    const rotateY = interpolate(scrollX.value, inputRange, [22, 0, -22], Extrapolation.CLAMP);
+    const zIndex = interpolate(scrollX.value, inputRange, [1, 30, 1], Extrapolation.CLAMP);
 
     return {
       opacity,
+      zIndex,
       transform: [{ perspective: 900 }, { translateX }, { scale }, { rotateY: `${rotateY}deg` }, { translateY }],
     };
   });
@@ -860,16 +862,19 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     justifyContent: "space-between",
+    cursor: "pointer",
   },
   heroSection: {
     width: "100%",
     alignItems: "center",
+    cursor: "pointer",
   },
   headerCopy: {
     alignItems: "center",
     gap: 10,
     paddingHorizontal: 6,
     paddingBottom: 18,
+    cursor: "pointer",
   },
   brandMark: {
     color: "#f4f4f5",
@@ -904,9 +909,11 @@ const styles = StyleSheet.create({
   carouselList: {
     width: "100%",
     overflow: "visible",
+    cursor: "pointer",
   },
   heroSlideWrap: {
     overflow: "visible",
+    cursor: "pointer",
   },
   heroSlideCard: {
     flex: 1,
@@ -915,6 +922,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
     backgroundColor: "#18181b",
+    boxShadow: "0 18px 40px rgba(0, 0, 0, 0.28)",
     cursor: "pointer",
   },
   featureGrid: {
@@ -953,6 +961,7 @@ const styles = StyleSheet.create({
   },
   pricingStack: {
     width: "100%",
+    cursor: "pointer",
   },
   toggleRow: {
     flexDirection: "row",
@@ -1006,6 +1015,7 @@ const styles = StyleSheet.create({
   planRow: {
     flexDirection: "row",
     gap: 10,
+    cursor: "pointer",
   },
   planCardMotion: {
     flex: 1,
@@ -1023,6 +1033,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     overflow: "hidden",
+    cursor: "pointer",
   },
   planCardActive: {
     borderColor: "rgba(217,70,239,0.46)",
@@ -1125,11 +1136,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     minHeight: 36,
+    cursor: "pointer",
   },
   footerRow: {
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
+    cursor: "pointer",
   },
   footerText: {
     color: "#a1a1aa",
@@ -1151,10 +1164,12 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: 8,
     alignItems: "center",
+    cursor: "pointer",
   },
   ctaOuter: {
     width: "100%",
     borderRadius: 999,
+    cursor: "pointer",
   },
   ctaOuterDisabled: {
     opacity: 0.72,
@@ -1165,6 +1180,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 26,
+    cursor: "pointer",
   },
   ctaContent: {
     flexDirection: "row",
