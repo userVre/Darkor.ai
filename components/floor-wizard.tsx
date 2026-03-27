@@ -12,12 +12,12 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle as SvgCircle, G, Path as SvgPath, Rect } from "react-native-svg";
 import { captureRef } from "react-native-view-shot";
-import { ChevronLeft, MoveHorizontal, RotateCcw, Sparkles, Trash2 } from "lucide-react-native";
+import { ChevronLeft, MoveHorizontal, RotateCcw, Trash2 } from "lucide-react-native";
 
 import { getFriendlyGenerationError, isProviderDownError } from "../lib/generation-errors";
 import { triggerHaptic } from "../lib/haptics";
 import { uploadLocalFileToCloud } from "../lib/native-upload";
-import { FLOOR_MATERIAL_OPTIONS, type FloorMaterialOption } from "../lib/data";
+import { FLOOR_MATERIAL_OPTIONS } from "../lib/data";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { LuxPressable } from "./lux-pressable";

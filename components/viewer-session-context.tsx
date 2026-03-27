@@ -31,7 +31,6 @@ export function ViewerSessionProvider({ children }: { children: ReactNode }) {
   const ensureViewer = useMutation("users:getOrCreateCurrentUser" as any);
   const [anonymousId, setAnonymousId] = useState<string | null>(null);
   const [storageReady, setStorageReady] = useState(false);
-  const [syncingViewer, setSyncingViewer] = useState(false);
   const [syncRetryNonce, setSyncRetryNonce] = useState(0);
   const lastSyncKeyRef = useRef<string | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -85,7 +84,6 @@ export function ViewerSessionProvider({ children }: { children: ReactNode }) {
     }
 
     let cancelled = false;
-    setSyncingViewer(true);
     if (retryTimerRef.current) {
       clearTimeout(retryTimerRef.current);
       retryTimerRef.current = null;
@@ -103,10 +101,6 @@ export function ViewerSessionProvider({ children }: { children: ReactNode }) {
           retryTimerRef.current = setTimeout(() => {
             setSyncRetryNonce((current) => current + 1);
           }, 2500);
-        }
-      } finally {
-        if (!cancelled) {
-          setSyncingViewer(false);
         }
       }
     };

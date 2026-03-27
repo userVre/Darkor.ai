@@ -1,4 +1,3 @@
-import { useAuth } from "@clerk/expo";
 import { useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -180,7 +179,6 @@ const ServiceCard = memo(function ServiceCard({ item, height, active, onPress }:
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { isSignedIn } = useAuth();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();

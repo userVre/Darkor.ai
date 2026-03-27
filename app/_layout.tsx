@@ -14,9 +14,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AppErrorBoundary } from "../components/app-error-boundary";
-import { LuxPressable } from "../components/lux-pressable";
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
-import { ViewerSessionProvider, useViewerSession } from "../components/viewer-session-context";
+import { ViewerSessionProvider } from "../components/viewer-session-context";
 import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
 import { DS, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
@@ -223,20 +222,6 @@ function MissingEnv({ missing }: { missing: string[] }) {
           </Text>
         ))}
         </View>
-      </View>
-    </View>
-  );
-}
-
-function OfflineScreen({ message, onRetry }: { message: string; onRetry: () => void }) {
-  return (
-    <View style={bootStyles.screen}>
-      <View style={bootStyles.card}>
-        <Text style={bootStyles.title}>Connecting to Darkor.ai</Text>
-        <Text style={bootStyles.body}>{message}</Text>
-        <LuxPressable onPress={onRetry} style={bootStyles.button} className="cursor-pointer" glowColor={DS.colors.accentGlow}>
-          <Text style={bootStyles.buttonText}>Retry</Text>
-        </LuxPressable>
       </View>
     </View>
   );

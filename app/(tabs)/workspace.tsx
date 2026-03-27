@@ -2,7 +2,6 @@ import { useAuth } from "@clerk/expo";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery } from "convex/react";
 import { Asset } from "expo-asset";
-import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
@@ -20,7 +19,6 @@ import {
   Linking,
   ScrollView,
   Share,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -32,14 +30,10 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withSequence,
   withSpring,
 } from "react-native-reanimated";
 import {
-  ArrowLeft,
-  ArrowRight,
   BadgeCheck,
-  BoxSelect,
   X as Close,
   Bath,
   Baby,
@@ -47,43 +41,31 @@ import {
   Building2,
   Check,
   CarFront,
-  ChevronDown,
   CookingPot,
   Download,
   DoorOpen,
-  Droplet,
-  Eraser,
   Fence,
   Flower2,
-  History,
   House,
   Plus,
   Monitor,
-  Package2,
-  Paintbrush,
   PaintRoller,
   Projector,
-  Redo2,
   Send,
   Sofa,
   Sparkles,
   Store,
   SunMedium,
   Trees,
-  Undo2,
   UtensilsCrossed,
   MoveHorizontal,
   Wand2,
 } from "lucide-react-native";
-import Svg, { Defs, Mask, Path as SvgPath, Rect } from "react-native-svg";
-
 import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
 import { getFriendlyGenerationError, isProviderDownError } from "../../lib/generation-errors";
 import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
 import { uploadLocalFileToCloud } from "../../lib/native-upload";
-import { requestStoreReview } from "../../lib/store-review";
-import { GlassBackdrop } from "../../components/glass-backdrop";
 import { FloorWizard } from "../../components/floor-wizard";
 import { LuxPressable } from "../../components/lux-pressable";
 import { PaintWizard } from "../../components/paint-wizard";
@@ -267,7 +249,7 @@ const BoardGridCard = memo(function BoardGridCard({
   const isProcessing = item.status === "processing";
   const isFailed = item.status === "failed";
   const itemServiceType = item.serviceType ?? inferBoardServiceType(item.styleLabel, item.roomLabel);
-  const processingLabel = getProcessingLabel(itemServiceType);
+  const processingLabel = getProcessingLabel();
   const statusCopy = isProcessing
     ? getProcessingStatusCopy(itemServiceType)
     : isFailed
@@ -869,17 +851,6 @@ const CUSTOM_STYLE_EXAMPLE_PROMPTS = [
   "Reimagine the patio as a Mediterranean outdoor lounge with curved built-ins, olive trees, and sunset warmth.",
 ];
 
-const FLOOR_PROMPT_CHIPS = [
-  "smooth polished concrete flooring with subtle matte finish",
-  "luxury hardwood parquet flooring with herringbone pattern",
-  "high-end white Carrara marble flooring with soft grey veins",
-  "rustic farmhouse style natural stone tile flooring",
-  "red and beige glossy marble flooring",
-];
-
-const FLOOR_MASK_PATH = "M 0 100 L 0 76 L 11 67 L 28 58 L 46 54 L 67 56 L 84 63 L 96 73 L 100 84 L 100 100 Z";
-const FLOOR_MASK_EDGE_PATH = "M 10 67 C 24 58 41 53 57 54 C 73 55 86 62 96 73";
-
 const PALETTE_OPTIONS: PaletteOption[] = [
   {
     id: "surprise",
@@ -1075,14 +1046,6 @@ const MODE_OPTIONS: ModeOption[] = [
   },
 ];
 
-const WIZARD_CARD_SHADOW = {
-  shadowColor: "#111827",
-  shadowOpacity: 0.08,
-  shadowRadius: 22,
-  shadowOffset: { width: 0, height: 12 },
-  elevation: 4,
-} as const;
-
 const SERVICE_LABELS: Record<string, string> = {
   interior: "Interior Redesign",
   exterior: "Exterior Redesign",
@@ -1098,7 +1061,7 @@ function inferBoardServiceType(styleLabel?: string | null, roomLabel?: string | 
   return null;
 }
 
-function getProcessingLabel(serviceType?: string | null) {
+function getProcessingLabel() {
   return "AI is crafting your masterpiece...";
 }
 
@@ -1294,19 +1257,6 @@ function togglePromptBlock(value: string, block: string) {
   return nextBlocks.join("\n\n");
 }
 
-function buildPaintPath(points: PaintPoint[]) {
-  if (points.length === 0) {
-    return "";
-  }
-
-  if (points.length === 1) {
-    const point = points[0];
-    return `M ${point.x} ${point.y} L ${point.x} ${point.y}`;
-  }
-
-  return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
-}
-
 function normalizeHexColor(value: string) {
   const trimmed = value.trim();
   const normalized = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
@@ -1314,29 +1264,6 @@ function normalizeHexColor(value: string) {
     return normalized.toUpperCase();
   }
   return null;
-}
-
-async function readBase64FromUri(uri: string) {
-  if (uri.startsWith("file://")) {
-    return await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-  }
-
-  const response = await fetch(uri);
-  if (!response.ok) {
-    throw new Error("Unable to load the selected image.");
-  }
-
-  const blob = await response.blob();
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(String(reader.result ?? ""));
-    reader.onerror = () => reject(new Error("Unable to read image data."));
-    reader.readAsDataURL(blob);
-  });
-
-  const marker = "base64,";
-  const markerIndex = dataUrl.indexOf(marker);
-  return markerIndex === -1 ? dataUrl : dataUrl.slice(markerIndex + marker.length);
 }
 
 const PHOTO_PERMISSION_ALERT_TITLE = "Permission Required";
@@ -1376,10 +1303,6 @@ export default function WorkspaceScreen() {
   ) as ArchiveGeneration[] | undefined;
   const createSourceUploadUrl = useMutation("generations:createSourceUploadUrl" as any);
   const startGeneration = useMutation("generations:startGeneration" as any);
-  const markReviewPrompted = useMutation("users:markReviewPrompted" as any);
-  const submitFeedback = useMutation("feedback:submit" as any);
-  const submitGenerationFeedback = useMutation("generations:submitFeedback" as any);
-  const deleteGeneration = useMutation("generations:deleteGeneration" as any);
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
@@ -1396,61 +1319,48 @@ export default function WorkspaceScreen() {
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [pendingBoardItems, setPendingBoardItems] = useState<BoardRenderItem[]>([]);
   const [activeBoardItemId, setActiveBoardItemId] = useState<string | null>(null);
-  const [showBeforeOnly, setShowBeforeOnly] = useState(false);
+  const [, setShowBeforeOnly] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isDeletingGeneration, setIsDeletingGeneration] = useState(false);
   const [isSharingResult, setIsSharingResult] = useState(false);
   const [isDownloading, setIsDownloading] = useState<"standard" | "ultra" | null>(null);
   const [isLoadingExample, setIsLoadingExample] = useState<string | null>(null);
   const [isSelectingPhoto, setIsSelectingPhoto] = useState(false);
-  const [reviewPromptOpen, setReviewPromptOpen] = useState(false);
-  const [ratePromptOpen, setRatePromptOpen] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState("");
-  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
-  const [feedbackState, setFeedbackState] = useState<"liked" | "disliked" | null>(null);
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
-  const [lastGenerationCount, setLastGenerationCount] = useState<number | null>(null);
+  const [, setReviewPromptOpen] = useState(false);
+  const [, setRatePromptOpen] = useState(false);
+  const [, setFeedbackOpen] = useState(false);
+  const [, setFeedbackMessage] = useState("");
+  const [, setFeedbackState] = useState<"liked" | "disliked" | null>(null);
+  const [, setFeedbackSubmitted] = useState(false);
+  const [, setLastGenerationCount] = useState<number | null>(null);
   const [showResumeToast, setShowResumeToast] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
   const [pendingReviewState, setPendingReviewState] = useState<{ count: number; shouldPrompt: boolean } | null>(null);
   const [wizardNavDirection, setWizardNavDirection] = useState<1 | -1>(1);
-  const [paintTool, setPaintTool] = useState<PaintTool>("brush");
-  const [paintBrushWidth, setPaintBrushWidth] = useState(28);
+  const [, setPaintTool] = useState<PaintTool>("brush");
+  const [, setPaintBrushWidth] = useState(28);
   const [paintColor, setPaintColor] = useState("#D946EF");
   const [paintColorDraft, setPaintColorDraft] = useState("#D946EF");
   const [paintSurface, setPaintSurface] = useState<PaintSurfaceOption["value"]>("Auto");
-  const [paintStrokes, setPaintStrokes] = useState<PaintStroke[]>([]);
-  const [paintRedoStrokes, setPaintRedoStrokes] = useState<PaintStroke[]>([]);
-  const [paintCurrentStroke, setPaintCurrentStroke] = useState<PaintStroke | null>(null);
+  const [, setPaintStrokes] = useState<PaintStroke[]>([]);
+  const [, setPaintRedoStrokes] = useState<PaintStroke[]>([]);
+  const [, setPaintCurrentStroke] = useState<PaintStroke | null>(null);
   const [paintTutorialOpen, setPaintTutorialOpen] = useState(false);
-  const [paintTutorialSeen, setPaintTutorialSeen] = useState(false);
+  const [, setPaintTutorialSeen] = useState(false);
   const [paintColorPickerOpen, setPaintColorPickerOpen] = useState(false);
   const [paintSurfacePickerOpen, setPaintSurfacePickerOpen] = useState(false);
-  const [paintCanvasSize, setPaintCanvasSize] = useState({ width: 0, height: 0 });
-  const [paintSliderWidth, setPaintSliderWidth] = useState(0);
 
   const reviewSheetRef = useRef<BottomSheetModal>(null);
-  const rateSheetRef = useRef<BottomSheetModal>(null);
-  const feedbackSheetRef = useRef<BottomSheetModal>(null);
   const imageContainerRef = useRef<View>(null);
   const hasAppliedStartStepRef = useRef(false);
   const handledBoardRouteRef = useRef<string | null>(null);
   const reviewHandledRef = useRef(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const generationAlertedFailureRef = useRef<string | null>(null);
-  const paintStrokeIdRef = useRef(0);
   const paintCurrentStrokeRef = useRef<PaintStroke | null>(null);
   const sliderX = useSharedValue(0);
   const sliderWidth = useSharedValue(0);
   const sliderStart = useSharedValue(0);
-  const likeScale = useSharedValue(1);
-  const dislikeScale = useSharedValue(1);
 
-  const isSmallScreen = height < 740;
-  const reviewSnapPoints = useMemo(() => ["38%"], []);
-  const rateSnapPoints = useMemo(() => ["36%"], []);
-  const feedbackSnapPoints = useMemo(() => [isSmallScreen ? "95%" : "58%"], [isSmallScreen]);
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = getServiceType(serviceKey);
   const serviceLabel = SERVICE_LABELS[serviceType] ?? "Interior Redesign";
@@ -1696,7 +1606,6 @@ export default function WorkspaceScreen() {
     () => Math.max((wizardModeGridMaxWidth - wizardModeGap) / 2, 148),
     [wizardModeGap, wizardModeGridMaxWidth],
   );
-  const wizardExampleCardSize = useMemo(() => Math.min(Math.max(width * 0.27, 92), 118), [width]);
   const wizardUploadSize = useMemo(() => Math.max(Math.min(width - 56, 336), 252), [width]);
 
   const spaceOptions = useMemo(() => {
@@ -1711,13 +1620,6 @@ export default function WorkspaceScreen() {
     if (serviceType === "paint") return PAINT_EXAMPLE_PHOTOS;
     return INTERIOR_EXAMPLE_PHOTOS;
   }, [serviceType]);
-  const styleOptions = useMemo(() => {
-    if (serviceType === "exterior") return EXTERIOR_STYLE_OPTIONS;
-    if (serviceType === "garden") return GARDEN_STYLE_OPTIONS;
-    if (serviceType === "floor") return [] as string[];
-    if (serviceType === "paint") return [] as string[];
-    return STYLE_OPTIONS;
-  }, [serviceType]);
   const selectedPaletteOrDefault = useMemo(
     () => selectedPalette ?? (isLeanGenerationService ? PALETTE_OPTIONS[0] : null),
     [isLeanGenerationService, selectedPalette],
@@ -1727,8 +1629,6 @@ export default function WorkspaceScreen() {
     [isLeanGenerationService, selectedMode],
   );
 
-  const plan = diagnostic ? "pro" : me?.plan ?? "free";
-  const planUsed = plan === "pro" ? "pro" : plan === "trial" ? "trial" : "free";
   const hasPaidAccess = diagnostic ? true : me?.hasPaidAccess ?? false;
   const canExport4k = diagnostic ? true : me?.canExport4k ?? false;
   const canRemoveWatermark = diagnostic ? true : me?.canRemoveWatermark ?? false;
@@ -1754,10 +1654,6 @@ export default function WorkspaceScreen() {
     },
     [router],
   );
-  const paintColorMeta = useMemo(
-    () => PAINT_COLOR_SWATCHES.find((swatch) => swatch.value.toLowerCase() === paintColor.toLowerCase()) ?? null,
-    [paintColor],
-  );
   const selectedFinishOption = useMemo(
     () => FINISH_OPTIONS.find((option) => option.id === selectedFinishId) ?? null,
     [selectedFinishId],
@@ -1769,17 +1665,6 @@ export default function WorkspaceScreen() {
   const selectedFloorMaterialOption = useMemo(
     () => FLOOR_MATERIAL_OPTIONS.find((option) => option.title === selectedStyle) ?? null,
     [selectedStyle],
-  );
-  const paintSurfaceLabel = paintSurface === "Auto" ? "Wall" : paintSurface;
-  const paintHasMask = useMemo(() => paintStrokes.some((stroke) => stroke.tool !== "eraser"), [paintStrokes]);
-  const paintRenderedStrokes = useMemo(
-    () => (paintCurrentStroke ? [...paintStrokes, paintCurrentStroke] : paintStrokes),
-    [paintCurrentStroke, paintStrokes],
-  );
-  const paintBrushRatio = useMemo(() => (paintBrushWidth - 12) / (68 - 12), [paintBrushWidth]);
-  const paintPreviewOverlayColor = useMemo(
-    () => (paintColor.length === 7 ? `${paintColor}66` : "#ff000066"),
-    [paintColor],
   );
   const activeEditorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
   const sliderSpring = useMemo(() => ({ damping: 15, stiffness: 100 }), []);
@@ -1922,14 +1807,6 @@ export default function WorkspaceScreen() {
 
   const sliderBarStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: sliderX.value - 1 }],
-  }));
-
-  const likeButtonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: likeScale.value }],
-  }));
-
-  const dislikeButtonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: dislikeScale.value }],
   }));
 
   const canContinue = useMemo(() => {
@@ -2132,116 +2009,6 @@ export default function WorkspaceScreen() {
     }
   }, []);
 
-  const clampPaintPoint = useCallback(
-    (x: number, y: number) => ({
-      x: Math.max(0, Math.min(x, paintCanvasSize.width)),
-      y: Math.max(0, Math.min(y, paintCanvasSize.height)),
-    }),
-    [paintCanvasSize.height, paintCanvasSize.width],
-  );
-
-  const startPaintStroke = useCallback(
-    (x: number, y: number) => {
-      if (!isPaintService || paintCanvasSize.width <= 0 || paintCanvasSize.height <= 0) {
-        return;
-      }
-
-      const point = clampPaintPoint(x, y);
-      const width = paintTool === "object" ? Math.max(paintBrushWidth * 2.35, 58) : paintBrushWidth;
-      const stroke: PaintStroke = {
-        id: `paint-stroke-${paintStrokeIdRef.current++}`,
-        tool: paintTool,
-        width,
-        points: [point],
-      };
-      paintCurrentStrokeRef.current = stroke;
-      setPaintCurrentStroke(stroke);
-    },
-    [clampPaintPoint, isPaintService, paintBrushWidth, paintCanvasSize.height, paintCanvasSize.width, paintTool],
-  );
-
-  const extendPaintStroke = useCallback(
-    (x: number, y: number) => {
-      const activeStroke = paintCurrentStrokeRef.current;
-      if (!activeStroke) {
-        return;
-      }
-
-      const nextPoint = clampPaintPoint(x, y);
-      const nextStroke = {
-        ...activeStroke,
-        points: [...activeStroke.points, nextPoint],
-      };
-      paintCurrentStrokeRef.current = nextStroke;
-      setPaintCurrentStroke(nextStroke);
-    },
-    [clampPaintPoint],
-  );
-
-  const finishPaintStroke = useCallback(() => {
-    const activeStroke = paintCurrentStrokeRef.current;
-    if (!activeStroke) {
-      return;
-    }
-
-    const committedStroke =
-      activeStroke.points.length === 1
-        ? {
-            ...activeStroke,
-            points: [...activeStroke.points, activeStroke.points[0]],
-          }
-        : activeStroke;
-
-    paintCurrentStrokeRef.current = null;
-    setPaintCurrentStroke(null);
-    setPaintRedoStrokes([]);
-    setPaintStrokes((current) => [...current, committedStroke]);
-  }, []);
-
-  const handleSelectPaintTool = useCallback((tool: PaintTool) => {
-    triggerHaptic();
-    setPaintTool(tool);
-  }, []);
-
-  const handlePaintUndo = useCallback(() => {
-    triggerHaptic();
-    setPaintStrokes((current) => {
-      if (current.length === 0) {
-        return current;
-      }
-      const previous = current[current.length - 1];
-      setPaintRedoStrokes((redo) => [previous, ...redo]);
-      return current.slice(0, -1);
-    });
-  }, []);
-
-  const handlePaintRedo = useCallback(() => {
-    triggerHaptic();
-    setPaintRedoStrokes((current) => {
-      if (current.length === 0) {
-        return current;
-      }
-      const [nextStroke, ...remaining] = current;
-      setPaintStrokes((strokes) => [...strokes, nextStroke]);
-      return remaining;
-    });
-  }, []);
-
-  const updatePaintBrushWidth = useCallback((locationX: number) => {
-    if (paintSliderWidth <= 0) {
-      return;
-    }
-    const ratio = Math.max(0, Math.min(locationX / paintSliderWidth, 1));
-    const nextWidth = Math.round(12 + ratio * (68 - 12));
-    setPaintBrushWidth(nextWidth);
-  }, [paintSliderWidth]);
-
-  const handleOpenPaintColorPicker = useCallback(() => {
-    triggerHaptic();
-    setPaintColorDraft(paintColor);
-    setPaintColorPickerOpen(true);
-  }, [paintColor]);
-
   const handleClosePaintColorPicker = useCallback(() => {
     triggerHaptic();
     setPaintColorPickerOpen(false);
@@ -2274,38 +2041,6 @@ export default function WorkspaceScreen() {
     triggerHaptic();
     setPaintTutorialOpen(false);
   }, []);
-
-  const paintGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .minDistance(0)
-        .onBegin((event) => {
-          runOnJS(startPaintStroke)(event.x, event.y);
-        })
-        .onUpdate((event) => {
-          runOnJS(extendPaintStroke)(event.x, event.y);
-        })
-        .onEnd(() => {
-          runOnJS(finishPaintStroke)();
-        })
-        .onFinalize(() => {
-          runOnJS(finishPaintStroke)();
-        }),
-    [extendPaintStroke, finishPaintStroke, startPaintStroke],
-  );
-
-  const paintSliderGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .minDistance(0)
-        .onBegin((event) => {
-          runOnJS(updatePaintBrushWidth)(event.x);
-        })
-        .onUpdate((event) => {
-          runOnJS(updatePaintBrushWidth)(event.x);
-        }),
-    [updatePaintBrushWidth],
-  );
 
   const handleBack = useCallback(() => {
     triggerHaptic();
@@ -2525,48 +2260,6 @@ export default function WorkspaceScreen() {
     }
   }, [activeEditorImageUrl, canExport4k, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, handleUpgrade, showToast]);
 
-
-
-  const animateFeedbackButton = useCallback((target: "liked" | "disliked") => {
-    const scale = target === "liked" ? likeScale : dislikeScale;
-    scale.value = withSequence(withSpring(1.14, { damping: 11, stiffness: 260 }), withSpring(1, { damping: 13, stiffness: 220 }));
-  }, [dislikeScale, likeScale]);
-
-  const handleLike = useCallback(async () => {
-    if (!generationId || feedbackSubmitted) return;
-    triggerHaptic();
-    animateFeedbackButton("liked");
-    setFeedbackState("liked");
-    setFeedbackSubmitted(true);
-    try {
-      await submitGenerationFeedback({ anonymousId, id: generationId, sentiment: "liked" });
-      showToast("Feedback saved. We will lean into results like this.");
-    } catch (error) {
-      setFeedbackState(null);
-      setFeedbackSubmitted(false);
-      Alert.alert("Feedback failed", error instanceof Error ? error.message : "Please try again.");
-    }
-  }, [animateFeedbackButton, anonymousId, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
-
-  const handleDislike = useCallback(async () => {
-    if (!generationId || feedbackSubmitted) return;
-    triggerHaptic();
-    animateFeedbackButton("disliked");
-    setFeedbackState("disliked");
-    setFeedbackSubmitted(true);
-    try {
-      await submitGenerationFeedback({
-        anonymousId,
-        id: generationId,
-        sentiment: "disliked",
-      });
-      showToast("Feedback saved. We will use it to improve future renders.");
-    } catch (error) {
-      setFeedbackState(null);
-      setFeedbackSubmitted(false);
-      Alert.alert("Feedback failed", error instanceof Error ? error.message : "Please try again.");
-    }
-  }, [animateFeedbackButton, anonymousId, feedbackSubmitted, generationId, showToast, submitGenerationFeedback]);
 
 
   const uploadSelectedImageToStorage = useCallback(async (image: SelectedImage) => {
@@ -2872,11 +2565,6 @@ export default function WorkspaceScreen() {
     setSelectedModeId(value);
   }, []);
 
-  const handleSelectAspectRatio = useCallback((value: AspectRatioOption["id"]) => {
-    triggerHaptic();
-    setSelectedAspectRatioId(value);
-  }, []);
-
   const handleOpenBoardItem = useCallback((item: BoardRenderItem) => {
     if (!effectiveSignedIn) {
       openAuthWall(`/workspace?boardView=editor&boardItemId=${encodeURIComponent(item.id)}`);
@@ -2928,135 +2616,6 @@ export default function WorkspaceScreen() {
     setShowBeforeOnly(false);
   }, [effectiveSignedIn, entrySource, isFloorService, router]);
 
-  const handleToggleBeforePreview = useCallback(() => {
-    triggerHaptic();
-    const nextValue = !showBeforeOnly;
-    setShowBeforeOnly(nextValue);
-    if (sliderWidth.value > 0) {
-      sliderX.value = withSpring(nextValue ? 0 : sliderWidth.value / 2, sliderSpring);
-    }
-  }, [showBeforeOnly, sliderSpring, sliderWidth, sliderX]);
-
-  const performDeleteBoardItem = useCallback(async () => {
-    const item = activeBoardItem;
-    if (!item) {
-      return;
-    }
-
-    try {
-      setIsDeletingGeneration(true);
-      if (item.generationId) {
-        await deleteGeneration({ anonymousId, id: item.generationId });
-      }
-
-      setPendingBoardItems((current) => current.filter((entry) => entry.id !== item.id));
-      setActiveBoardItemId(null);
-      setGeneratedImageUrl(null);
-      setGenerationId(null);
-      generationAlertedFailureRef.current = null;
-      setPendingReviewState(null);
-      setShowBeforeOnly(false);
-      showToast("Design removed from your board.");
-    } catch (error) {
-      Alert.alert("Delete failed", error instanceof Error ? error.message : "Please try again.");
-    } finally {
-      setIsDeletingGeneration(false);
-    }
-  }, [activeBoardItem, anonymousId, deleteGeneration, showToast]);
-
-  const handleDeleteBoardItem = useCallback(() => {
-    const item = activeBoardItem;
-    if (!item) {
-      return;
-    }
-
-    triggerHaptic();
-    Alert.alert(
-      "Delete design",
-      "This will remove the design from your board and delete it from your gallery.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            void performDeleteBoardItem();
-          },
-        },
-      ],
-    );
-  }, [activeBoardItem, performDeleteBoardItem]);
-
-  const handleBoardHistory = useCallback(() => {
-    triggerHaptic();
-    showToast("Generation history is coming next.");
-  }, [showToast]);
-
-  const handleReviewYes = useCallback(async () => {
-    triggerHaptic();
-    reviewHandledRef.current = true;
-    setReviewPromptOpen(false);
-    reviewSheetRef.current?.dismiss();
-    try {
-      await markReviewPrompted({ anonymousId });
-    } catch {
-      // noop
-    }
-    setRatePromptOpen(true);
-    requestAnimationFrame(() => rateSheetRef.current?.present());
-  }, [anonymousId, markReviewPrompted]);
-
-  const handleReviewNo = useCallback(async () => {
-    triggerHaptic();
-    reviewHandledRef.current = true;
-    setReviewPromptOpen(false);
-    reviewSheetRef.current?.dismiss();
-    try {
-      await markReviewPrompted({ anonymousId });
-    } catch {
-      // noop
-    }
-    setFeedbackOpen(true);
-    requestAnimationFrame(() => feedbackSheetRef.current?.present());
-  }, [anonymousId, markReviewPrompted]);
-
-  const handleRateNow = useCallback(async () => {
-    triggerHaptic();
-    setRatePromptOpen(false);
-    rateSheetRef.current?.dismiss();
-    await requestStoreReview();
-  }, []);
-
-  const handleRateLater = useCallback(() => {
-    triggerHaptic();
-    setRatePromptOpen(false);
-    rateSheetRef.current?.dismiss();
-  }, []);
-
-  const handleSubmitFeedback = useCallback(async () => {
-    if (feedbackMessage.trim().length < 3) {
-      Alert.alert("Feedback", "Please add a few words so we can help.");
-      return;
-    }
-    triggerHaptic();
-    setIsSubmittingFeedback(true);
-    try {
-      await submitFeedback({
-        anonymousId,
-        message: feedbackMessage.trim(),
-        generationCount: lastGenerationCount ?? undefined,
-      });
-        setFeedbackMessage("");
-        setFeedbackOpen(false);
-        feedbackSheetRef.current?.dismiss();
-      Alert.alert("Thank you", "Your feedback helps us improve quickly.");
-    } catch (error) {
-      Alert.alert("Feedback", error instanceof Error ? error.message : "Unable to send feedback.");
-    } finally {
-      setIsSubmittingFeedback(false);
-    }
-  }, [anonymousId, feedbackMessage, lastGenerationCount, submitFeedback]);
-
   const stepTransition = LUX_SPRING;
   const isPhotoPreviewBusy = isSelectingPhoto || isLoadingExample !== null;
 
@@ -3080,9 +2639,8 @@ export default function WorkspaceScreen() {
     const isServiceFinishStep = (isPaintService || isFloorService) && workflowStep === 3;
     const isLeanGenerateStep = isLeanGenerationService && workflowStep === 3;
     const isTabbedWorkspaceRoute = pathname === "/workspace";
-    const displayedSelectedImage = selectedImage;
-    const hasSelectedPhoto = Boolean(selectedImage);
-    const hasVisiblePhoto = Boolean(displayedSelectedImage);
+  const displayedSelectedImage = selectedImage;
+  const hasVisiblePhoto = Boolean(displayedSelectedImage);
     const activeExampleLabel = selectedImage?.label ?? null;
     const wizardBackgroundColor = SERVICE_WIZARD_THEME.colors.background;
     const wizardPrimaryTextColor = SERVICE_WIZARD_THEME.colors.textPrimary;
@@ -4726,14 +4284,14 @@ export default function WorkspaceScreen() {
     const editorTitle = editorServiceType === "floor" ? "Floor Restyle" : editorServiceType === "paint" ? "Smart Wall Paint" : editorStyleLabel + " " + editorRoomLabel;
     const editorSubtitle = editorServiceType === "floor"
       ? isEditorProcessing
-        ? getProcessingLabel(editorServiceType)
+        ? getProcessingLabel()
         : "Material-led floor transformation with a live before and after slider."
       : editorServiceType === "paint"
         ? isEditorProcessing
-          ? getProcessingLabel(editorServiceType)
+          ? getProcessingLabel()
           : "Wall recoloring tuned to your selected finish and room lighting."
       : isEditorProcessing
-        ? getProcessingLabel(editorServiceType)
+        ? getProcessingLabel()
         : "Curated inside your premium Darkor board.";
     const editorImageSource = editorImageUrl ? { uri: editorImageUrl } : null;
     const beforeImageSource = beforeImageUrl ? { uri: beforeImageUrl } : null;
@@ -4939,7 +4497,7 @@ export default function WorkspaceScreen() {
                     >
                       <ActivityIndicator size="small" color="#ffffff" />
                       <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", textAlign: "center" }}>
-                        {getProcessingLabel(editorServiceType)}
+                        {getProcessingLabel()}
                       </Text>
                       <Text style={{ color: "#d4d4d8", fontSize: 13, lineHeight: 20, textAlign: "center" }}>
                         {getProcessingStatusCopy(editorServiceType)}

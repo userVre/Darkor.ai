@@ -21,7 +21,7 @@ import {
 
 import { triggerHaptic } from "../lib/haptics";
 import { uploadLocalFileToCloud } from "../lib/native-upload";
-import { WALL_COLOR_OPTIONS, type WallColorOption } from "../lib/data";
+import { WALL_COLOR_OPTIONS } from "../lib/data";
 import { getFriendlyGenerationError, isProviderDownError } from "../lib/generation-errors";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
