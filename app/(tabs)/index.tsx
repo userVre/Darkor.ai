@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/expo";
 import { useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -23,6 +24,7 @@ type ServiceCardData = {
   id: string;
   title: string;
   subtitle: string;
+  eyebrow: string;
   video: number;
   poster: number;
   serviceParam: string;
@@ -32,7 +34,8 @@ const SERVICE_CARDS: ServiceCardData[] = [
   {
     id: "interior-design",
     title: "Interior Design",
-    subtitle: "Luxury suite redesigns with premium material realism.",
+    subtitle: "Designer interiors with realistic materials and luxury light.",
+    eyebrow: "Most Popular",
     video: require("../../assets/videos/master-suite.mp4"),
     poster: require("../../assets/media/discover/home/home-master-suite.jpg"),
     serviceParam: "interior",
@@ -40,7 +43,8 @@ const SERVICE_CARDS: ServiceCardData[] = [
   {
     id: "exterior-design",
     title: "Exterior Design",
-    subtitle: "Modern facade studies with sharper curb appeal direction.",
+    subtitle: "Architectural facade upgrades with stronger curb appeal.",
+    eyebrow: "Curb Appeal",
     video: require("../../assets/videos/facade.mp4"),
     poster: require("../../assets/media/discover/exterior/exterior-modern-villa.jpg"),
     serviceParam: "facade",
@@ -48,7 +52,8 @@ const SERVICE_CARDS: ServiceCardData[] = [
   {
     id: "garden-design",
     title: "Garden Design",
-    subtitle: "Backyard oasis concepts with lighting, fire, and flow.",
+    subtitle: "Landscape concepts for patios, pools, fire pits, and flow.",
+    eyebrow: "Outdoor Living",
     video: require("../../assets/videos/garden.mp4"),
     poster: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
     serviceParam: "garden",
@@ -56,17 +61,19 @@ const SERVICE_CARDS: ServiceCardData[] = [
   {
     id: "ai-paint",
     title: "Smart Wall Paint",
-    subtitle: "Wall color transformations tuned for elegant tonal balance.",
+    subtitle: "Premium wall recolors with exact masking and polished finish.",
+    eyebrow: "Precision Edit",
     video: require("../../assets/videos/paint.mp4"),
-    poster: require("../../assets/media/discover/wall/sage-green.jpg"),
+    poster: require("../../assets/media/discover/wall-scenes/sage-green-suite.jpg"),
     serviceParam: "paint",
   },
   {
     id: "floor-restyle",
     title: "Floor Restyle",
-    subtitle: "Material swaps from tile to hardwood with cleaner detailing.",
+    subtitle: "Floor material swaps with clean perspective and natural light.",
+    eyebrow: "Material Upgrade",
     video: require("../../assets/videos/floor.mp4"),
-    poster: require("../../assets/media/discover/floor/carrara-marble.jpg"),
+    poster: require("../../assets/media/discover/floor-scenes/polished-carrara-marble.jpg"),
     serviceParam: "floor",
   },
 ] as const;
@@ -151,23 +158,28 @@ const ServiceCard = memo(function ServiceCard({ item, height, active, onPress }:
       />
 
       <View style={styles.cardFrame}>
-        <View style={styles.cardBottomRow}>
+        <View style={styles.cardCopyStack}>
           <View style={styles.copyBlock}>
+            <View style={styles.cardEyebrowPill}>
+              <Text style={styles.cardEyebrowText}>{item.eyebrow}</Text>
+            </View>
             <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardSubtitle} numberOfLines={1}>
+            <Text style={styles.cardSubtitle} numberOfLines={2}>
               {item.subtitle}
             </Text>
           </View>
+        </View>
 
+        <View style={styles.cardActionRow}>
           <LuxPressable
             onPress={handlePress}
             className="cursor-pointer"
             style={styles.ctaButton}
-            glowColor="rgba(255,255,255,0.08)"
+            glowColor="rgba(217,70,239,0.18)"
             scale={0.97}
           >
             <View style={styles.ctaInner}>
-              <Text style={styles.ctaText}>Try it</Text>
+              <Text style={styles.ctaText}>Try it!</Text>
               <ArrowUpRight color="#ffffff" size={15} strokeWidth={2.5} />
             </View>
           </LuxPressable>
@@ -179,21 +191,30 @@ const ServiceCard = memo(function ServiceCard({ item, height, active, onPress }:
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { isSignedIn } = useAuth();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [activeCardId, setActiveCardId] = useState(SERVICE_CARDS[0]?.id ?? "");
   const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
-  const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as { credits?: number } | null | undefined;
+  const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as
+    | { credits?: number; imagesRemaining?: number }
+    | null
+    | undefined;
 
-  const cardHeight = useMemo(() => Math.max(332, Math.min(408, Math.round(width * 0.92))), [width]);
-  const diamondCount = viewerReady ? me?.credits ?? 3 : 3;
+  const cardHeight = useMemo(() => Math.max(356, Math.min(430, Math.round(width * 0.96))), [width]);
+  const remainingRenders = viewerReady ? me?.imagesRemaining ?? me?.credits ?? 3 : 3;
 
   const handleServicePress = useCallback(
     (item: ServiceCardData) => {
+      if (!isSignedIn) {
+        router.push({ pathname: "/sign-in", params: { returnTo: `/workspace?service=${item.serviceParam}` } });
+        return;
+      }
+
       router.push({ pathname: "/workspace", params: { service: item.serviceParam } });
     },
-    [router],
+    [isSignedIn, router],
   );
 
   const handleUpgradeToPro = useCallback(() => {
@@ -225,12 +246,12 @@ export default function HomeScreen() {
   const header = useMemo(
     () => (
       <HomeHeader
-        diamondCount={diamondCount}
+        remainingRenders={remainingRenders}
         onUpgradeToPro={handleUpgradeToPro}
         onOpenProfile={handleOpenProfile}
       />
     ),
-    [diamondCount, handleOpenProfile, handleUpgradeToPro],
+    [handleOpenProfile, handleUpgradeToPro, remainingRenders],
   );
 
   return (
@@ -283,34 +304,57 @@ const styles = StyleSheet.create({
     paddingHorizontal: DS.spacing[3],
     paddingBottom: DS.spacing[3],
     paddingTop: DS.spacing[4],
+    gap: 16,
   },
-  cardBottomRow: {
+  cardCopyStack: {
+    gap: 12,
+  },
+  cardActionRow: {
     flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: 14,
+    justifyContent: "flex-start",
   },
   copyBlock: {
-    flex: 1,
-    gap: DS.spacing[1],
-    paddingRight: 4,
+    gap: 10,
+    maxWidth: "88%",
+  },
+  cardEyebrowPill: {
+    alignSelf: "flex-start",
+    borderRadius: DS.radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderWidth: HAIRLINE,
+    borderColor: "rgba(255,255,255,0.16)",
+  },
+  cardEyebrowText: {
+    color: "#f5d0fe",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   cardTitle: {
     color: DS.colors.textPrimary,
     ...DS.typography.title,
+    fontSize: 30,
+    lineHeight: 34,
+    fontWeight: "900",
+    letterSpacing: -0.8,
   },
   cardSubtitle: {
-    color: DS.colors.textSecondary,
+    color: "rgba(255,255,255,0.88)",
     ...DS.typography.body,
+    fontSize: 15,
+    lineHeight: 22,
   },
   ctaButton: {
     alignSelf: "flex-end",
     borderRadius: DS.radius.pill,
-    backgroundColor: "rgba(0,0,0,0.82)",
+    backgroundColor: "rgba(0,0,0,0.72)",
     borderWidth: HAIRLINE,
-    borderColor: DS.colors.border,
-    paddingHorizontal: 18,
-    paddingVertical: 13,
+    borderColor: "rgba(255,255,255,0.12)",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
   },
   ctaInner: {
     flexDirection: "row",
@@ -321,5 +365,6 @@ const styles = StyleSheet.create({
   ctaText: {
     color: DS.colors.textPrimary,
     ...DS.typography.button,
+    fontSize: 15,
   },
 });

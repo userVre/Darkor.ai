@@ -1,8 +1,9 @@
+import { useAuth } from "@clerk/expo";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { FlatList, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -50,6 +51,21 @@ function getCardStyle(item: DiscoverTile) {
   return derivedStyle ?? "Featured";
 }
 
+function getCardCategory(item: DiscoverTile) {
+  const category = item.spaceType.trim();
+  if (category.length > 0) {
+    return category;
+  }
+
+  const derived = item.subtitle
+    .split("/")
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .at(0);
+
+  return derived ?? "Space";
+}
+
 const DiscoverShelfCard = memo(function DiscoverShelfCard({
   item,
   width,
@@ -63,6 +79,7 @@ const DiscoverShelfCard = memo(function DiscoverShelfCard({
 }) {
   const title = getCardTitle(item);
   const styleName = getCardStyle(item);
+  const categoryName = getCardCategory(item);
 
   const handlePress = useCallback(() => {
     triggerHaptic();
@@ -93,10 +110,15 @@ const DiscoverShelfCard = memo(function DiscoverShelfCard({
       />
 
       <View style={styles.cardCopy}>
+        <View style={styles.cardMetaRow}>
+          <View style={styles.cardCategoryPill}>
+            <Text style={styles.cardCategoryText}>{categoryName}</Text>
+          </View>
+        </View>
         <Text style={styles.cardTitle} numberOfLines={2}>
           {title}
         </Text>
-        <Text style={styles.cardStyle} numberOfLines={1}>
+        <Text style={styles.cardStyle}>
           {styleName}
         </Text>
       </View>
@@ -108,11 +130,15 @@ const DiscoverShelfSection = memo(function DiscoverShelfSection({
   section,
   cardWidth,
   cardHeight,
+  expanded,
+  onToggleExpanded,
   onCardPress,
 }: {
   section: DiscoverSection;
   cardWidth: number;
   cardHeight: number;
+  expanded: boolean;
+  onToggleExpanded: () => void;
   onCardPress: (item: DiscoverTile) => void;
 }) {
   const snapToInterval = cardWidth + SHELF_GAP;
@@ -130,31 +156,57 @@ const DiscoverShelfSection = memo(function DiscoverShelfSection({
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <View style={styles.sectionTitleRow}>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
-          <View style={styles.sectionCountPill}>
-            <Text style={styles.sectionCountText}>{section.items.length}</Text>
+          <View style={styles.sectionTitleCluster}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+            <View style={styles.sectionCountPill}>
+              <Text style={styles.sectionCountText}>{section.items.length}</Text>
+            </View>
           </View>
+          <LuxPressable
+            onPress={onToggleExpanded}
+            pressableClassName="cursor-pointer"
+            className="cursor-pointer"
+            style={styles.sectionActionButton}
+            glowColor="rgba(217,70,239,0.16)"
+            scale={0.97}
+          >
+            <Text style={styles.sectionActionText}>{expanded ? "Show Less" : "See All"}</Text>
+          </LuxPressable>
         </View>
         <Text style={styles.sectionDescription}>{section.description}</Text>
       </View>
 
-      <FlatList
-        data={section.items}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={snapToInterval}
-        snapToAlignment="start"
-        decelerationRate="fast"
-        contentContainerStyle={styles.shelfContent}
-        ItemSeparatorComponent={ShelfSpacer}
-        initialNumToRender={3}
-        maxToRenderPerBatch={4}
-        updateCellsBatchingPeriod={40}
-        windowSize={4}
-        removeClippedSubviews
-      />
+      {expanded ? (
+        <View style={styles.expandedGrid}>
+          {section.items.map((item) => (
+            <DiscoverShelfCard
+              key={item.id}
+              item={item}
+              width={cardWidth}
+              height={cardHeight}
+              onPress={onCardPress}
+            />
+          ))}
+        </View>
+      ) : (
+        <FlatList
+          data={section.items}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={snapToInterval}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          contentContainerStyle={styles.shelfContent}
+          ItemSeparatorComponent={ShelfSpacer}
+          initialNumToRender={3}
+          maxToRenderPerBatch={4}
+          updateCellsBatchingPeriod={40}
+          windowSize={4}
+          removeClippedSubviews
+        />
+      )}
     </View>
   );
 });
@@ -165,9 +217,11 @@ function ShelfSpacer() {
 
 export default function GalleryScreen() {
   const router = useRouter();
+  const { isSignedIn } = useAuth();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { setDraftRoom, setDraftStyle } = useWorkspaceDraft();
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const totalOptions = useMemo(
     () => DISCOVER_SECTIONS.reduce((count, section) => count + section.items.length, 0),
     [],
@@ -180,22 +234,42 @@ export default function GalleryScreen() {
 
   const cardHeight = useMemo(() => Math.round(cardWidth * 1.22), [cardWidth]);
 
+  const handleToggleSection = useCallback((sectionId: string) => {
+    setExpandedSections((current) => ({
+      ...current,
+      [sectionId]: !current[sectionId],
+    }));
+  }, []);
+
   const handleCardPress = useCallback(
     (item: DiscoverTile) => {
+      const params = {
+        service: mapService(item.service),
+        presetRoom: item.presetRoom ?? item.spaceType,
+        presetStyle: item.presetStyle ?? item.style,
+        startStep: item.startStep,
+        entrySource: "discover",
+      } as const;
+
+      if (!isSignedIn) {
+        const search = new URLSearchParams();
+        for (const [key, value] of Object.entries(params)) {
+          if (typeof value === "string" && value.length > 0) {
+            search.set(key, value);
+          }
+        }
+        router.push({ pathname: "/sign-in", params: { returnTo: `/wizard?${search.toString()}` } });
+        return;
+      }
+
       setDraftRoom(item.spaceType);
       setDraftStyle(item.style);
       router.push({
         pathname: "/wizard",
-        params: {
-          service: mapService(item.service),
-          presetRoom: item.presetRoom ?? item.spaceType,
-          presetStyle: item.presetStyle ?? item.style,
-          startStep: item.startStep,
-          entrySource: "discover",
-        },
+        params,
       });
     },
-    [router, setDraftRoom, setDraftStyle],
+    [isSignedIn, router, setDraftRoom, setDraftStyle],
   );
 
   return (
@@ -216,6 +290,9 @@ export default function GalleryScreen() {
           <Text style={styles.headerText}>
             Browse {totalOptions} real-world references across interiors, wall inspiration, floor styles, gardens, and exterior forms.
           </Text>
+          <Text style={styles.headerInstruction}>
+            Tap any image to instantly redesign your own space in that exact style.
+          </Text>
         </View>
 
         {DISCOVER_SECTIONS.map((section) => (
@@ -224,6 +301,8 @@ export default function GalleryScreen() {
             section={section}
             cardWidth={cardWidth}
             cardHeight={cardHeight}
+            expanded={Boolean(expandedSections[section.id])}
+            onToggleExpanded={() => handleToggleSection(section.id)}
             onCardPress={handleCardPress}
           />
         ))}
@@ -257,6 +336,13 @@ const styles = StyleSheet.create({
     ...DS.typography.body,
     maxWidth: 720,
   },
+  headerInstruction: {
+    color: "#a1a1aa",
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "500",
+    maxWidth: 720,
+  },
   section: {
     gap: 16,
   },
@@ -269,6 +355,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
+  },
+  sectionTitleCluster: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+    minWidth: 0,
   },
   sectionTitle: {
     color: DS.colors.textPrimary,
@@ -295,9 +388,30 @@ const styles = StyleSheet.create({
     ...DS.typography.bodySm,
     maxWidth: 760,
   },
+  sectionActionButton: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderWidth: HAIRLINE,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  sectionActionText: {
+    color: "#f5d0fe",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.45,
+    textTransform: "uppercase",
+  },
   shelfContent: {
     paddingLeft: EDGE_PADDING,
     paddingRight: EDGE_PADDING,
+  },
+  expandedGrid: {
+    paddingHorizontal: EDGE_PADDING,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: SHELF_GAP,
   },
   card: {
     overflow: "hidden",
@@ -321,15 +435,35 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: DS.spacing[3],
     paddingBottom: DS.spacing[3],
-    gap: 4,
+    gap: 8,
+  },
+  cardMetaRow: {
+    flexDirection: "row",
+  },
+  cardCategoryPill: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderWidth: HAIRLINE,
+    borderColor: "rgba(255,255,255,0.14)",
+  },
+  cardCategoryText: {
+    color: "#fafafa",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.7,
+    textTransform: "uppercase",
   },
   cardTitle: {
     color: DS.colors.textPrimary,
     ...DS.typography.cardTitle,
   },
   cardStyle: {
-    color: DS.colors.textSecondary,
+    color: "#d4d4d8",
     ...DS.typography.bodySm,
     fontWeight: "600",
+    lineHeight: 19,
   },
 });

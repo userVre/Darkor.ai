@@ -22,13 +22,24 @@ type GenerateResponse = {
 const PRODUCTION_API_BASE_URL = "https://9o39o3.vercel.app";
 
 function resolveApiBaseUrl() {
-  try {
-    return resolvePublicEndpoint(process.env.EXPO_PUBLIC_API_BASE_URL, "EXPO_PUBLIC_API_BASE_URL", {
-      required: true,
-    });
-  } catch {
-    return PRODUCTION_API_BASE_URL;
+  const candidates: Array<[string | undefined, string]> = [
+    [process.env.EXPO_PUBLIC_APP_URL, "EXPO_PUBLIC_APP_URL"],
+    [process.env.NEXT_PUBLIC_APP_URL, "NEXT_PUBLIC_APP_URL"],
+    [process.env.EXPO_PUBLIC_API_BASE_URL, "EXPO_PUBLIC_API_BASE_URL"],
+  ];
+
+  for (const [value, label] of candidates) {
+    try {
+      const resolved = resolvePublicEndpoint(value, label, { required: true });
+      if (resolved) {
+        return resolved;
+      }
+    } catch {
+      continue;
+    }
   }
+
+  return PRODUCTION_API_BASE_URL;
 }
 
 export async function generateImage(

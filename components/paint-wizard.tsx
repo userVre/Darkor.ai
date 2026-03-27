@@ -22,7 +22,7 @@ import {
 import { triggerHaptic } from "../lib/haptics";
 import { uploadLocalFileToCloud } from "../lib/native-upload";
 import { WALL_COLOR_OPTIONS } from "../lib/data";
-import { getFriendlyGenerationError, isProviderDownError } from "../lib/generation-errors";
+import { GENERATION_FAILED_TOAST } from "../lib/generation-errors";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { PAINT_WIZARD_EXAMPLE_PHOTOS } from "../lib/wizard-example-photos";
@@ -214,6 +214,7 @@ export function PaintWizard() {
   const canGenerate = Boolean(selectedImage && hasMask && selectedColor && !isGenerating);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
+  const canContinueFromIntake = Boolean(selectedImage);
   const canContinueFromMask = hasMask && !isDetecting;
   const canContinueFromColors = Boolean(selectedColor && selectedImage && hasMask);
   const colorCardSize = Math.max((width - 46) / 2, 154);
@@ -266,12 +267,7 @@ export function PaintWizard() {
     if (generation.status === "failed") {
       setIsGenerating(false);
       setStep("finish");
-      const message = getFriendlyGenerationError(generation.errorMessage);
-      if (isProviderDownError(generation.errorMessage)) {
-        Alert.alert("Darkor AI is busy", message);
-        return;
-      }
-      showToast(message);
+      showToast(GENERATION_FAILED_TOAST);
     }
   }, [generationArchive, generationId, isSignedIn, router, showToast]);
 
@@ -302,8 +298,13 @@ export function PaintWizard() {
 
   const handleClose = useCallback(() => {
     triggerHaptic();
+    if (step === "intake") {
+      resetProject();
+      router.replace("/(tabs)");
+      return;
+    }
     resetProject();
-  }, [resetProject]);
+  }, [resetProject, router, step]);
 
   const uploadBlobToStorage = useCallback(
     async (uri: string) => {
@@ -316,18 +317,34 @@ export function PaintWizard() {
     [createSourceUploadUrl, viewerArgs],
   );
 
-  const beginMasking = useCallback(
+  const applySelectedImage = useCallback(
     (nextImage: SelectedImage) => {
       setSelectedImage(nextImage);
       setGeneratedImageUrl(null);
       setGenerationId(null);
       resetMaskDrawing({ resetBrush: true });
       setSelectedFinishId(FINISH_OPTIONS[0].id);
-      setStep("mask");
-      resetDetection();
     },
-    [resetDetection, resetMaskDrawing],
+    [resetMaskDrawing],
   );
+
+  const handleContinueFromIntake = useCallback(() => {
+    if (!selectedImage) {
+      return;
+    }
+    triggerHaptic();
+    setStep("mask");
+    resetDetection();
+  }, [resetDetection, selectedImage]);
+
+  const handleClearSelectedImage = useCallback(() => {
+    triggerHaptic();
+    setSelectedImage(null);
+    setGeneratedImageUrl(null);
+    setGenerationId(null);
+    setIsGenerating(false);
+    resetMaskDrawing({ resetBrush: true });
+  }, [resetMaskDrawing]);
 
   const handleSelectMedia = useCallback(
     async (source: "camera" | "library") => {
@@ -361,7 +378,7 @@ export function PaintWizard() {
         if (result.canceled || !result.assets[0]) return;
 
         const asset = result.assets[0];
-        beginMasking({
+        applySelectedImage({
           uri: asset.uri,
           width: asset.width ?? 1080,
           height: asset.height ?? 1440,
@@ -370,7 +387,7 @@ export function PaintWizard() {
         Alert.alert("Unable to open media", error instanceof Error ? error.message : "Please try again.");
       }
     },
-    [beginMasking],
+    [applySelectedImage],
   );
 
   const handleSelectExample = useCallback(
@@ -381,13 +398,13 @@ export function PaintWizard() {
         return;
       }
 
-      beginMasking({
+      applySelectedImage({
         uri: resolved.uri,
         width: resolved.width ?? 1080,
         height: resolved.height ?? 1440,
       });
     },
-    [beginMasking],
+    [applySelectedImage],
   );
 
   const handleGenerate = useCallback(async () => {
@@ -459,8 +476,7 @@ export function PaintWizard() {
       setIsGenerating(false);
       setStep("finish");
       const rawMessage = error instanceof Error ? error.message : "Please try again.";
-      const message = getFriendlyGenerationError(rawMessage);
-      if (message === "Payment Required") {
+      if (rawMessage === "Payment Required") {
         if (!isSignedIn) {
           setAwaitingAuth(true);
           router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=paint" } });
@@ -469,11 +485,7 @@ export function PaintWizard() {
         router.push("/paywall");
         return;
       }
-      if (isProviderDownError(rawMessage)) {
-        Alert.alert("Darkor AI is busy", message);
-        return;
-      }
-      showToast(message);
+      showToast(GENERATION_FAILED_TOAST);
     }
   }, [
     anonymousId,
@@ -556,27 +568,54 @@ export function PaintWizard() {
       />
 
       {step === "intake" ? (
-        <ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: 18,
-            paddingTop: 10,
-            paddingBottom: Math.max(insets.bottom + 28, 34),
-          }}
-          showsVerticalScrollIndicator={false}
-        >
-          <ServiceIntakeStep
-            heading="Add a Photo of your Room"
-            subtext="Upload a room photo for precise wall recoloring."
-            examples={PAINT_WIZARD_EXAMPLE_PHOTOS}
-            onUploadPress={() => {
-              void handleSelectMedia("library");
+        <>
+          <ScrollView
+            contentContainerStyle={{
+              paddingHorizontal: 18,
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom + 132, 148),
             }}
-            onCameraPress={() => {
-              void handleSelectMedia("camera");
-            }}
-            onExamplePress={handleSelectExample}
-          />
-        </ScrollView>
+            showsVerticalScrollIndicator={false}
+          >
+            <ServiceIntakeStep
+              heading="Add a Photo of your Room"
+              subtext="Upload a room photo for precise wall recoloring."
+              examples={PAINT_WIZARD_EXAMPLE_PHOTOS}
+              selectedImageUri={selectedImage?.uri ?? null}
+              selectedImageLabel="Room photo ready"
+              onClearSelection={handleClearSelectedImage}
+              onUploadPress={() => {
+                void handleSelectMedia("library");
+              }}
+              onCameraPress={() => {
+                void handleSelectMedia("camera");
+              }}
+              onExamplePress={handleSelectExample}
+            />
+          </ScrollView>
+
+          <View pointerEvents="box-none" style={[styles.fixedContinueBar, styles.actionContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
+            <LuxPressable
+              onPress={handleContinueFromIntake}
+              disabled={!canContinueFromIntake}
+              pressableClassName={pointerClassName}
+              className={pointerClassName}
+              style={{ width: "100%" }}
+              glowColor="rgba(217,70,239,0.22)"
+              scale={0.99}
+            >
+              {canContinueFromIntake ? (
+                <LinearGradient colors={SERVICE_WIZARD_THEME.gradients.accent} style={styles.primaryButtonLarge}>
+                  <Text style={styles.primaryText}>Continue</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.disabledButtonLarge}>
+                  <Text style={styles.disabledButtonText}>Continue</Text>
+                </View>
+              )}
+            </LuxPressable>
+          </View>
+        </>
       ) : null}
 
       {step === "mask" ? (
@@ -857,7 +896,7 @@ export function PaintWizard() {
             </View>
           </ScrollView>
 
-          <View pointerEvents="box-none" style={[styles.fixedContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
+          <View pointerEvents="box-none" style={[styles.fixedContinueBar, styles.actionContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
             <LuxPressable
               onPress={() => {
                 triggerHaptic();
@@ -1509,6 +1548,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.24,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: -8 },
+  },
+  actionContinueBar: {
+    zIndex: 80,
+    elevation: 18,
   },
   maskContinueBar: {
     zIndex: 120,

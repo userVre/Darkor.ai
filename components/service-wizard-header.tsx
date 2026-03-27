@@ -26,7 +26,7 @@ export function ServiceWizardHeader({
   onClose,
 }: ServiceWizardHeaderProps) {
   const safeStep = Math.max(1, Math.min(step, totalSteps));
-  const showBack = canGoBack && onBack;
+  const showBack = safeStep > 1 && canGoBack && Boolean(onBack);
 
   return (
     <View style={[styles.container, { paddingTop: Math.max(topInset + DS.spacing[2], DS.spacing[3]) }]}>

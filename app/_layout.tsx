@@ -6,7 +6,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useMutation } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import * as Linking from "expo-linking";
-import { Stack } from "expo-router";
+import { Stack, useGlobalSearchParams, usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
@@ -252,6 +252,58 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function buildReturnToPath(pathname: string, params: Record<string, string | string[] | undefined>) {
+  const searchParams = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === "string" && value.length > 0) {
+      searchParams.set(key, value);
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        if (entry.length > 0) {
+          searchParams.append(key, entry);
+        }
+      }
+    }
+  }
+
+  const query = searchParams.toString();
+  return query.length > 0 ? `${pathname}?${query}` : pathname;
+}
+
+function CreateAccessGate({ children }: { children: React.ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useGlobalSearchParams();
+
+  useEffect(() => {
+    if (!isLoaded || isSignedIn) {
+      return;
+    }
+
+    if (pathname !== "/workspace" && pathname !== "/wizard") {
+      return;
+    }
+
+    const returnTo = buildReturnToPath(pathname, params);
+    router.replace({ pathname: "/sign-in", params: { returnTo } });
+  }, [isLoaded, isSignedIn, params, pathname, router]);
+
+  if (!isLoaded) {
+    return <>{children}</>;
+  }
+
+  if (!isSignedIn && (pathname === "/workspace" || pathname === "/wizard")) {
+    return <BootScreen message="Secure your account to start creating..." />;
+  }
+
+  return <>{children}</>;
+}
+
 function AppShell() {
   return (
     <Stack
@@ -309,7 +361,9 @@ export default function RootLayout() {
                 <ViewerSessionProvider>
                   <WorkspaceDraftProvider>
                     <BottomSheetModalProvider>
-                      <AppShell />
+                      <CreateAccessGate>
+                        <AppShell />
+                      </CreateAccessGate>
                     </BottomSheetModalProvider>
                   </WorkspaceDraftProvider>
                 </ViewerSessionProvider>

@@ -62,7 +62,7 @@ import {
   Wand2,
 } from "lucide-react-native";
 import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
-import { getFriendlyGenerationError, isProviderDownError } from "../../lib/generation-errors";
+import { GENERATION_FAILED_TOAST } from "../../lib/generation-errors";
 import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
 import { uploadLocalFileToCloud } from "../../lib/native-upload";
@@ -1726,12 +1726,7 @@ export default function WorkspaceScreen() {
       setIsGenerating(false);
       generationAlertedFailureRef.current = currentGeneration.id;
       setPendingReviewState(null);
-      const message = getFriendlyGenerationError(currentGeneration.errorMessage);
-      if (isProviderDownError(currentGeneration.errorMessage)) {
-        Alert.alert("Darkor AI is busy", message);
-        return;
-      }
-      showToast(message);
+      showToast(GENERATION_FAILED_TOAST);
     }
   }, [boardItems, effectiveSignedIn, generatedImageUrl, generationId, isGenerating, pendingReviewState, router, showToast]);
 
@@ -2349,8 +2344,7 @@ export default function WorkspaceScreen() {
     } catch (error) {
       setIsGenerating(false);
       const rawMessage = error instanceof Error ? error.message : "Please try again.";
-      const message = getFriendlyGenerationError(rawMessage);
-      const isPaymentRequired = message === "Payment Required";
+      const isPaymentRequired = rawMessage === "Payment Required";
       if (!diagnostic && !hasGenerationCredits) {
         setPendingBoardItems((current) => current.filter((item) => item.id !== temporaryBoardId));
         if (!effectiveSignedIn) {
@@ -2366,7 +2360,7 @@ export default function WorkspaceScreen() {
             ? {
                 ...item,
                 status: "failed",
-                errorMessage: message,
+                errorMessage: GENERATION_FAILED_TOAST,
               }
             : item,
         ),
@@ -2380,11 +2374,7 @@ export default function WorkspaceScreen() {
         router.push("/paywall");
         return;
       }
-      if (isProviderDownError(rawMessage)) {
-        Alert.alert("Darkor AI is busy", message);
-        return;
-      }
-      showToast(message);
+      showToast(GENERATION_FAILED_TOAST);
     }
   }, [
     createSourceUploadUrl,
@@ -2610,7 +2600,7 @@ export default function WorkspaceScreen() {
     const uploadTileSize = wizardUploadSize;
     const stepOneExampleCardWidth = Math.min(Math.max(width * 0.36, 138), 168);
     const stepOneExampleCardHeight = Math.round(stepOneExampleCardWidth * 1.02);
-    const bottomBarOffset = isTabbedWorkspaceRoute ? 86 : 0;
+    const bottomBarOffset = isTabbedWorkspaceRoute ? 96 : 0;
     const stepContentMinHeight = Math.max(
       height -
         Math.max(insets.top + (isPhotoStep ? 18 : 8), isPhotoStep ? 24 : 20) -
@@ -3885,7 +3875,7 @@ export default function WorkspaceScreen() {
           className="absolute inset-x-0 bottom-0 px-5 pt-4"
           style={{
             bottom: bottomBarOffset,
-            zIndex: 30,
+            zIndex: 120,
             paddingBottom: Math.max(insets.bottom + (isPhotoStep ? 16 : 12), isPhotoStep ? 28 : 24),
             borderTopWidth: 1,
             borderTopColor: "rgba(255,255,255,0.06)",
@@ -3894,7 +3884,7 @@ export default function WorkspaceScreen() {
             shadowOpacity: 0.24,
             shadowRadius: 18,
             shadowOffset: { width: 0, height: -8 },
-            elevation: 14,
+            elevation: 24,
           }}
         >
           <View style={{ position: "relative" }}>

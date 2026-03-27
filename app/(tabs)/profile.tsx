@@ -23,6 +23,9 @@ const BORDER_COLOR = DS.colors.borderSubtle;
 
 type MeResponse = {
   hasPaidAccess?: boolean;
+  imagesRemaining?: number;
+  imageGenerationLimit?: number;
+  imageGenerationCount?: number;
 };
 
 type RowTone = "danger" | "default";
@@ -69,17 +72,21 @@ export default function ProfileScreen() {
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const deleteAccountData = useMutation("users:deleteAccountData" as any);
   const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
-  const me = useQuery("users:me" as any, viewerReady && isSignedIn ? viewerArgs : "skip") as MeResponse | null | undefined;
+  const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as MeResponse | null | undefined;
 
   const hasPaidAccess = Boolean(me?.hasPaidAccess);
-  const accountTitle = hasPaidAccess ? "Your Account is PRO" : "Your Account is FREE";
-  const accountBody = isSignedIn
-    ? hasPaidAccess
-      ? "Your premium workspace is active. Manage support, privacy, and your design flow from one place."
-      : "Upgrade to PRO to unlock premium generations, higher export quality, and a faster design workflow."
-    : "Sign in when you want your board, purchases, and account controls synced across devices.";
-  const accountMeta = user?.primaryEmailAddress?.emailAddress ?? "Guest session";
-  const accountButtonLabel = hasPaidAccess ? "Manage PRO" : "\uD83D\uDC8E Upgrade PRO";
+  const renderLimit = me?.imageGenerationLimit ?? 3;
+  const rendersRemaining = me?.imagesRemaining ?? 3;
+  const rendersUsed = Math.max(0, renderLimit - rendersRemaining);
+  const usageProgress = renderLimit > 0 ? Math.min(rendersUsed / renderLimit, 1) : 0;
+  const accountTitle = hasPaidAccess ? "PRO Plan Active" : `Free Plan: ${rendersRemaining} Renders Remaining`;
+  const accountBody = hasPaidAccess
+    ? "Your premium workspace is active with faster output, 4K exports, and watermark-free delivery."
+    : "Free access is limited to 3 renders a day. Upgrade now to remove the cap and keep your redesign momentum going.";
+  const accountMeta = hasPaidAccess
+    ? user?.primaryEmailAddress?.emailAddress ?? "Premium access enabled"
+    : `${rendersUsed}/${renderLimit} used today`;
+  const accountButtonLabel = hasPaidAccess ? "Manage PRO Access" : "Upgrade to PRO";
 
   const handleUpgrade = () => {
     router.push("/paywall");
@@ -200,16 +207,30 @@ export default function ProfileScreen() {
 
           <Text style={styles.accountBody}>{accountBody}</Text>
 
+          {!hasPaidAccess ? (
+            <View style={styles.progressBlock}>
+              <View style={styles.progressTrack}>
+                <LinearGradient
+                  colors={["#d946ef", "#4f46e5"]}
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={[styles.progressFill, { width: `${Math.max(usageProgress * 100, rendersUsed > 0 ? 10 : 0)}%` }]}
+                />
+              </View>
+              <Text style={styles.progressLabel}>{`${rendersUsed}/${renderLimit} used`}</Text>
+            </View>
+          ) : null}
+
           <LuxPressable
             onPress={handleUpgrade}
             pressableClassName={POINTER_CLASS}
             className="overflow-hidden rounded-[20px]"
             style={styles.accountButtonShadow}
-            glowColor="rgba(255,255,255,0.1)"
+            glowColor="rgba(217,70,239,0.34)"
             scale={0.985}
           >
             <LinearGradient
-              colors={["#ffffff", "#d4d4d8"]}
+              colors={["#d946ef", "#4f46e5"]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               style={styles.accountButton}
@@ -294,20 +315,46 @@ const styles = StyleSheet.create({
     color: DS.colors.textSecondary,
     ...DS.typography.body,
   },
+  progressBlock: {
+    gap: 8,
+  },
+  progressTrack: {
+    width: "100%",
+    height: 10,
+    borderRadius: 999,
+    overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: HAIRLINE,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 999,
+  },
+  progressLabel: {
+    color: "#d4d4d8",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+  },
   accountButtonShadow: {
-    alignSelf: "flex-start",
+    alignSelf: "stretch",
+    borderRadius: DS.radius.lg,
   },
   accountButton: {
-    minHeight: 50,
-    minWidth: 164,
+    minHeight: 60,
+    width: "100%",
     paddingHorizontal: DS.spacing[3],
-    borderRadius: DS.radius.md,
+    borderRadius: DS.radius.lg,
     alignItems: "center",
     justifyContent: "center",
+    ...glowShadow("rgba(217,70,239,0.26)", 26),
   },
   accountButtonText: {
-    color: "#000000",
+    color: "#ffffff",
     ...DS.typography.button,
+    fontSize: 17,
+    fontWeight: "800",
   },
   list: {
     gap: DS.spacing[2],

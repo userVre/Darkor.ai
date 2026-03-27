@@ -1,89 +1,74 @@
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Gem, SlidersHorizontal } from "lucide-react-native";
+import { SlidersHorizontal } from "lucide-react-native";
 
-import { CreditLimitModal } from "./credit-limit-modal";
 import { LuxPressable } from "./lux-pressable";
 import Logo from "./logo";
 import { DS, SCREEN_SECTION_GAP, glowShadow, surfaceCard } from "../lib/design-system";
 import { triggerHaptic } from "../lib/haptics";
 
 type HomeHeaderProps = {
-  diamondCount: number;
+  remainingRenders: number;
   onUpgradeToPro: () => void;
   onOpenProfile: () => void;
 };
 
 export const HomeHeader = memo(function HomeHeader({
-  diamondCount,
+  remainingRenders,
   onUpgradeToPro,
   onOpenProfile,
 }: HomeHeaderProps) {
-  const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
-
   const handleOpenCredits = useCallback(() => {
     triggerHaptic();
-    setIsCreditModalOpen(true);
-  }, []);
-
-  const handleCloseCredits = useCallback(() => {
-    setIsCreditModalOpen(false);
-  }, []);
-
-  const handleUpgrade = useCallback(() => {
-    setIsCreditModalOpen(false);
     onUpgradeToPro();
   }, [onUpgradeToPro]);
 
   return (
-    <>
-      <View style={styles.header}>
-        <View style={styles.topRow}>
-          <View style={styles.brandCluster}>
-            <View style={styles.logoShell}>
-              <Logo size={32} />
-            </View>
-            <View style={styles.brandCopy}>
-              <Text style={styles.eyebrow}>Darkor.ai</Text>
-              <Text style={styles.brandLabel}>Design Studio</Text>
-            </View>
+    <View style={styles.header}>
+      <View style={styles.topRow}>
+        <View style={styles.brandCluster}>
+          <View style={styles.logoShell}>
+            <Logo size={32} />
           </View>
-
-          <View style={styles.topActions}>
-            <LuxPressable
-              onPress={handleOpenCredits}
-              style={styles.diamondBadge}
-              className="cursor-pointer"
-              glowColor={DS.colors.accentGlow}
-              scale={0.96}
-            >
-              <Gem color={DS.colors.accentStrong} size={15} strokeWidth={2.1} />
-              <Text style={styles.diamondBadgeText}>{diamondCount}</Text>
-            </LuxPressable>
-            <LuxPressable
-              onPress={onOpenProfile}
-              style={styles.iconButton}
-              className="cursor-pointer"
-              glowColor={DS.colors.accentGlow}
-              scale={0.96}
-            >
-              <SlidersHorizontal color={DS.colors.textPrimary} size={17} strokeWidth={2.1} />
-            </LuxPressable>
+          <View style={styles.brandCopy}>
+            <Text style={styles.eyebrow}>Darkor.ai</Text>
+            <Text style={styles.brandLabel}>Design Studio</Text>
           </View>
         </View>
 
-        <View style={styles.heroCard}>
-          <View style={styles.heroCopy}>
-            <Text style={styles.title}>Choose Your Transformation</Text>
-            <Text style={styles.description}>
-              A quieter, sharper workspace for premium redesign workflows across interiors, facades, gardens, paint, and flooring.
-            </Text>
-          </View>
-        </View>
+        <LuxPressable
+          onPress={onOpenProfile}
+          style={styles.iconButton}
+          className="cursor-pointer"
+          glowColor={DS.colors.accentGlow}
+          scale={0.96}
+        >
+          <SlidersHorizontal color={DS.colors.textPrimary} size={17} strokeWidth={2.1} />
+        </LuxPressable>
       </View>
 
-      <CreditLimitModal visible={isCreditModalOpen} onClose={handleCloseCredits} onUpgrade={handleUpgrade} />
-    </>
+      <LuxPressable
+        onPress={handleOpenCredits}
+        style={styles.creditBarShadow}
+        className="cursor-pointer"
+        glowColor="rgba(217,70,239,0.38)"
+        scale={0.985}
+      >
+        <View style={styles.creditBar}>
+          <Text style={styles.creditBarText}>{`${remainingRenders} ${remainingRenders === 1 ? "Render" : "Renders"} Left Today`}</Text>
+          <Text style={styles.creditBarAction}>Upgrade</Text>
+        </View>
+      </LuxPressable>
+
+      <View style={styles.heroCard}>
+        <View style={styles.heroCopy}>
+          <Text style={styles.title}>Redesign Any Room with AI in Seconds</Text>
+          <Text style={styles.description}>
+            Professional grade interior and exterior redesigns at your fingertips.
+          </Text>
+        </View>
+      </View>
+    </View>
   );
 });
 
@@ -130,16 +115,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: DS.spacing[1.5],
   },
-  diamondBadge: {
-    ...surfaceCard(DS.colors.surface),
-    minHeight: 44,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    borderRadius: DS.radius.pill,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
   iconButton: {
     ...surfaceCard(DS.colors.surface),
     width: 44,
@@ -148,28 +123,57 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  diamondBadgeText: {
-    color: DS.colors.textPrimary,
-    fontSize: 14,
+  creditBarShadow: {
+    borderRadius: DS.radius.pill,
+  },
+  creditBar: {
+    minHeight: 56,
+    borderRadius: DS.radius.pill,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
+    backgroundColor: "#d946ef",
+    ...glowShadow("rgba(217,70,239,0.34)", 26),
+  },
+  creditBarText: {
+    flex: 1,
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: -0.35,
+  },
+  creditBarAction: {
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 13,
     fontWeight: "800",
-    letterSpacing: 0.2,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   heroCard: {
     ...surfaceCard(),
     ...glowShadow("rgba(255,255,255,0.02)", 22),
     paddingHorizontal: DS.spacing[3],
-    paddingVertical: DS.spacing[3],
+    paddingVertical: 28,
   },
   heroCopy: {
-    gap: DS.spacing[2],
+    gap: DS.spacing[1.5],
   },
   title: {
     color: DS.colors.textPrimary,
     ...DS.typography.display,
+    fontSize: 38,
+    lineHeight: 42,
+    fontWeight: "900",
+    letterSpacing: -1.2,
   },
   description: {
     color: DS.colors.textSecondary,
     ...DS.typography.body,
-    maxWidth: 620,
+    fontSize: 16,
+    lineHeight: 24,
+    maxWidth: 560,
   },
 });

@@ -1,10 +1,12 @@
 import { LinearGradient } from "expo-linear-gradient";
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, View, type PressableProps } from "react-native";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "lucide-react-native";
+import { useAuth } from "@clerk/expo";
 
 import { DS, HAIRLINE, glowShadow } from "../../lib/design-system";
+import { triggerHaptic } from "../../lib/haptics";
 
 const ACTIVE_TINT = DS.colors.accentStrong;
 const INACTIVE_TINT = "rgba(255,255,255,0.42)";
@@ -54,6 +56,9 @@ function TabIcon({
 }
 
 export default function TabsLayout() {
+  const router = useRouter();
+  const { isSignedIn } = useAuth();
+
   return (
     <Tabs
       screenOptions={{
@@ -112,6 +117,21 @@ export default function TabsLayout() {
         options={{
           title: "Create",
           tabBarIcon: ({ color, size, focused }) => <TabIcon Icon={Sparkles} color={color} size={size} focused={focused} />,
+          tabBarButton: (props) => (
+            <TabBarButton
+              {...props}
+              onPress={(event) => {
+                if (!isSignedIn) {
+                  event.preventDefault();
+                  triggerHaptic();
+                  router.push({ pathname: "/sign-in", params: { returnTo: "/workspace" } });
+                  return;
+                }
+
+                props.onPress?.(event);
+              }}
+            />
+          ),
         }}
       />
       <Tabs.Screen

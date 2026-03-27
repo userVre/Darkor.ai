@@ -9,6 +9,7 @@ type EnvSnapshot = {
   revenueCatIosKey?: string;
   revenueCatAndroidKey?: string;
   revenueCatKey?: string;
+  appUrl?: string;
   apiBaseUrl?: string;
 };
 
@@ -29,7 +30,10 @@ type PublicEnvKey =
   | "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"
   | "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY"
   | "EXPO_PUBLIC_REVENUECAT_API_KEY"
+  | "EXPO_PUBLIC_APP_URL"
   | "EXPO_PUBLIC_API_BASE_URL";
+
+type RuntimeOnlyEnvKey = "NEXT_PUBLIC_APP_URL";
 
 let didLog = false;
 
@@ -49,7 +53,12 @@ function resolveEnv(key: PublicEnvKey) {
   return runtimePublicEnv[key] ?? expoEnv[key] ?? process.env[key];
 }
 
+function resolveRuntimeOnlyEnv(key: RuntimeOnlyEnvKey) {
+  return process.env[key];
+}
+
 export function getEnvReport(): EnvReport {
+  let appUrl: string | undefined;
   let convexUrl: string | undefined;
   let apiBaseUrl: string | undefined;
 
@@ -57,6 +66,15 @@ export function getEnvReport(): EnvReport {
     convexUrl = resolvePublicEndpoint(resolveEnv("EXPO_PUBLIC_CONVEX_URL"), "EXPO_PUBLIC_CONVEX_URL");
   } catch {
     convexUrl = undefined;
+  }
+
+  try {
+    appUrl = resolvePublicEndpoint(
+      resolveEnv("EXPO_PUBLIC_APP_URL") ?? resolveRuntimeOnlyEnv("NEXT_PUBLIC_APP_URL"),
+      "EXPO_PUBLIC_APP_URL",
+    );
+  } catch {
+    appUrl = undefined;
   }
 
   try {
@@ -71,6 +89,7 @@ export function getEnvReport(): EnvReport {
     revenueCatIosKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"),
     revenueCatAndroidKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY"),
     revenueCatKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_API_KEY"),
+    appUrl,
     apiBaseUrl,
   };
 

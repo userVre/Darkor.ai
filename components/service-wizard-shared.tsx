@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { Camera, Check, Plus } from "lucide-react-native";
+import { Camera, Check, Plus, X } from "lucide-react-native";
 import { ScrollView, Text, View, StyleSheet, useWindowDimensions, type ImageSourcePropType } from "react-native";
 
 import { DS, HAIRLINE, glowShadow } from "../lib/design-system";
@@ -18,6 +18,9 @@ type ServiceIntakeStepProps = {
   heading: string;
   subtext: string;
   examples: ServiceExamplePhoto[];
+  selectedImageUri?: string | null;
+  selectedImageLabel?: string | null;
+  onClearSelection?: () => void;
   onUploadPress: () => void;
   onCameraPress: () => void;
   onExamplePress: (example: ServiceExamplePhoto) => void;
@@ -36,6 +39,9 @@ export function ServiceIntakeStep({
   heading,
   subtext,
   examples,
+  selectedImageUri,
+  selectedImageLabel,
+  onClearSelection,
   onUploadPress,
   onCameraPress,
   onExamplePress,
@@ -65,9 +71,39 @@ export function ServiceIntakeStep({
           end={{ x: 1, y: 1 }}
           style={styles.uploadSquare}
         >
-          <View style={styles.plusTile}>
-            <Plus color="#FFFFFF" size={32} strokeWidth={2.2} />
-          </View>
+          {selectedImageUri ? (
+            <>
+              <Image source={{ uri: selectedImageUri }} style={styles.selectedImagePreview} contentFit="cover" transition={140} cachePolicy="memory-disk" />
+              <LinearGradient
+                colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.12)", "rgba(0,0,0,0.56)"]}
+                locations={[0, 0.45, 1]}
+                style={StyleSheet.absoluteFillObject}
+              />
+              <View style={styles.selectedImageBadge}>
+                <Text style={styles.selectedImageBadgeLabel}>{selectedImageLabel ?? "Photo ready"}</Text>
+                <Text style={styles.selectedImageBadgeText}>Continue when you're ready to map the next step.</Text>
+              </View>
+              {onClearSelection ? (
+                <LuxPressable
+                  onPress={(event) => {
+                    event.stopPropagation();
+                    onClearSelection();
+                  }}
+                  className={pointerClassName}
+                  pressableClassName={pointerClassName}
+                  style={styles.clearSelectionButton}
+                  glowColor="rgba(255,255,255,0.05)"
+                  scale={0.96}
+                >
+                  <X color="#FFFFFF" size={16} strokeWidth={2.4} />
+                </LuxPressable>
+              ) : null}
+            </>
+          ) : (
+            <View style={styles.plusTile}>
+              <Plus color="#FFFFFF" size={32} strokeWidth={2.2} />
+            </View>
+          )}
         </LinearGradient>
       </LuxPressable>
 
@@ -191,6 +227,40 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     ...glowShadow("rgba(255,255,255,0.02)", 16),
+  },
+  selectedImagePreview: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  selectedImageBadge: {
+    position: "absolute",
+    left: 18,
+    right: 18,
+    bottom: 18,
+    gap: 4,
+  },
+  selectedImageBadgeLabel: {
+    color: "#FFFFFF",
+    fontSize: 17,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+  },
+  selectedImageBadgeText: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  clearSelectionButton: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: HAIRLINE,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(10,10,12,0.82)",
   },
   plusTile: {
     width: 92,

@@ -14,7 +14,7 @@ import Svg, { Circle as SvgCircle, G, Path as SvgPath, Rect } from "react-native
 import { captureRef } from "react-native-view-shot";
 import { ChevronLeft, MoveHorizontal, RotateCcw, Trash2 } from "lucide-react-native";
 
-import { getFriendlyGenerationError, isProviderDownError } from "../lib/generation-errors";
+import { GENERATION_FAILED_TOAST } from "../lib/generation-errors";
 import { triggerHaptic } from "../lib/haptics";
 import { uploadLocalFileToCloud } from "../lib/native-upload";
 import { FLOOR_MATERIAL_OPTIONS } from "../lib/data";
@@ -121,6 +121,7 @@ export function FloorWizard() {
   const availableCredits = viewerReady ? me?.credits ?? 3 : 3;
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "materials" ? 3 : 4;
+  const canContinueFromIntake = Boolean(selectedImage);
   const canContinueFromMask = hasMask && !isDetecting;
   const aspectRatio = useMemo(() => {
     if (!selectedImage) return 1.15;
@@ -172,12 +173,7 @@ export function FloorWizard() {
     if (generation.status === "failed") {
       setIsGenerating(false);
       setStep("materials");
-      const message = getFriendlyGenerationError(generation.errorMessage);
-      if (isProviderDownError(generation.errorMessage)) {
-        Alert.alert("Darkor AI is busy", message);
-        return;
-      }
-      showToast(message);
+      showToast(GENERATION_FAILED_TOAST);
     }
   }, [generationArchive, generationId, isSignedIn, router, showToast]);
 
@@ -205,8 +201,13 @@ export function FloorWizard() {
 
   const handleClose = useCallback(() => {
     triggerHaptic();
+    if (step === "intake") {
+      resetProject();
+      router.replace("/(tabs)");
+      return;
+    }
     resetProject();
-  }, [resetProject]);
+  }, [resetProject, router, step]);
 
   const uploadBlobToStorage = useCallback(async (uri: string) => {
     const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
@@ -216,14 +217,30 @@ export function FloorWizard() {
     });
   }, [createSourceUploadUrl, viewerArgs]);
 
-  const beginMasking = useCallback((nextImage: SelectedImage) => {
+  const applySelectedImage = useCallback((nextImage: SelectedImage) => {
     setSelectedImage(nextImage);
     setGeneratedImageUrl(null);
     setGenerationId(null);
     resetMaskDrawing({ resetBrush: true });
+  }, [resetMaskDrawing]);
+
+  const handleContinueFromIntake = useCallback(() => {
+    if (!selectedImage) {
+      return;
+    }
+    triggerHaptic();
     setStep("mask");
     resetDetection();
-  }, [resetDetection, resetMaskDrawing]);
+  }, [resetDetection, selectedImage]);
+
+  const handleClearSelectedImage = useCallback(() => {
+    triggerHaptic();
+    setSelectedImage(null);
+    setGeneratedImageUrl(null);
+    setGenerationId(null);
+    setIsGenerating(false);
+    resetMaskDrawing({ resetBrush: true });
+  }, [resetMaskDrawing]);
 
   const handleSelectMedia = useCallback(async (source: "camera" | "library") => {
     try {
@@ -237,11 +254,11 @@ export function FloorWizard() {
         : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 1 });
       if (result.canceled || !result.assets[0]) return;
       const asset = result.assets[0];
-      beginMasking({ uri: asset.uri, width: asset.width ?? 1080, height: asset.height ?? 1440 });
+      applySelectedImage({ uri: asset.uri, width: asset.width ?? 1080, height: asset.height ?? 1440 });
     } catch (error) {
       Alert.alert("Unable to open media", error instanceof Error ? error.message : "Please try again.");
     }
-  }, [beginMasking]);
+  }, [applySelectedImage]);
 
   const handleSelectExample = useCallback((example: ServiceExamplePhoto) => {
     const resolved = NativeImage.resolveAssetSource(example.source);
@@ -250,12 +267,12 @@ export function FloorWizard() {
       return;
     }
 
-    beginMasking({
+    applySelectedImage({
       uri: resolved.uri,
       width: resolved.width ?? 1080,
       height: resolved.height ?? 1440,
     });
-  }, [beginMasking]);
+  }, [applySelectedImage]);
 
   const updateComparisonSlider = useCallback((x: number) => {
     const ratio = Math.max(0.05, Math.min(x / resultFrameWidth, 0.95));
@@ -327,8 +344,7 @@ export function FloorWizard() {
       setIsGenerating(false);
       setStep("materials");
       const rawMessage = error instanceof Error ? error.message : "Please try again.";
-      const message = getFriendlyGenerationError(rawMessage);
-      if (message === "Payment Required") {
+      if (rawMessage === "Payment Required") {
         if (!isSignedIn) {
           setAwaitingAuth(true);
           router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=floor" } });
@@ -337,11 +353,7 @@ export function FloorWizard() {
         router.push("/paywall");
         return;
       }
-      if (isProviderDownError(rawMessage)) {
-        Alert.alert("Darkor AI is busy", message);
-        return;
-      }
-      showToast(message);
+      showToast(GENERATION_FAILED_TOAST);
     }
   }, [anonymousId, availableCredits, hasMask, isSignedIn, router, selectedImage, selectedMaterial, showToast, startGeneration, uploadBlobToStorage, viewerReady]);
 
@@ -392,20 +404,35 @@ export function FloorWizard() {
       />
 
       {step === "intake" ? (
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 10, paddingBottom: Math.max(insets.bottom + 28, 34) }} showsVerticalScrollIndicator={false}>
-          <ServiceIntakeStep
-            heading="Add a Photo of your Floor"
-            subtext="Upload a room photo to map new materials."
-            examples={FLOOR_WIZARD_EXAMPLE_PHOTOS}
-            onUploadPress={() => {
-              void handleSelectMedia("library");
-            }}
-            onCameraPress={() => {
-              void handleSelectMedia("camera");
-            }}
-            onExamplePress={handleSelectExample}
-          />
-        </ScrollView>
+        <>
+          <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 10, paddingBottom: Math.max(insets.bottom + 132, 148) }} showsVerticalScrollIndicator={false}>
+            <ServiceIntakeStep
+              heading="Add a Photo of your Floor"
+              subtext="Upload a room photo to map new materials."
+              examples={FLOOR_WIZARD_EXAMPLE_PHOTOS}
+              selectedImageUri={selectedImage?.uri ?? null}
+              selectedImageLabel="Floor photo ready"
+              onClearSelection={handleClearSelectedImage}
+              onUploadPress={() => {
+                void handleSelectMedia("library");
+              }}
+              onCameraPress={() => {
+                void handleSelectMedia("camera");
+              }}
+              onExamplePress={handleSelectExample}
+            />
+          </ScrollView>
+
+          <View pointerEvents="box-none" style={[styles.fixedContinueBar, styles.actionContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
+            <LuxPressable onPress={handleContinueFromIntake} disabled={!canContinueFromIntake} pressableClassName={pointerClassName} className={pointerClassName} style={{ width: "100%" }} glowColor={SERVICE_WIZARD_THEME.colors.accentGlowSoft} scale={0.99}>
+              {canContinueFromIntake ? (
+                <LinearGradient colors={SERVICE_WIZARD_THEME.gradients.accentButton} style={styles.primaryButtonLarge}><Text style={styles.primaryText}>Continue</Text></LinearGradient>
+              ) : (
+                <View style={styles.disabledButtonLarge}><Text style={styles.disabledButtonText}>Continue</Text></View>
+              )}
+            </LuxPressable>
+          </View>
+        </>
       ) : null}
 
       {step === "mask" ? (
@@ -508,7 +535,7 @@ export function FloorWizard() {
             <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Selected Material</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? "No material selected"}</Text><Text style={styles.summaryText}>{selectedMaterial?.description ?? "Select a flooring material to unlock the AI restyle."}</Text></View>
           </ScrollView>
 
-          <View pointerEvents="box-none" style={[styles.fixedContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
+          <View pointerEvents="box-none" style={[styles.fixedContinueBar, styles.actionContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
             <LuxPressable onPress={() => { void handleGenerate(); }} disabled={!canContinueFromMaterials} pressableClassName={pointerClassName} className={pointerClassName} style={{ width: "100%" }} glowColor={SERVICE_WIZARD_THEME.colors.accentGlowSoft} scale={0.99}>
               {canContinueFromMaterials ? (
                 <LinearGradient colors={SERVICE_WIZARD_THEME.gradients.accentButton} style={styles.primaryButtonLarge}><Text style={styles.primaryText}>Continue</Text></LinearGradient>
@@ -641,6 +668,7 @@ const styles = StyleSheet.create({
   tileBlock: { flex: 1, borderRadius: 16 },
   summaryCard: { borderRadius: 28, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#0a0a0c", padding: 18, gap: 8 },
   fixedContinueBar: { position: "absolute", left: 0, right: 0, bottom: 0, paddingTop: 10, paddingHorizontal: 16, gap: 10, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.06)", backgroundColor: SERVICE_WIZARD_THEME.colors.background, shadowColor: "#000000", shadowOpacity: 0.24, shadowRadius: 18, shadowOffset: { width: 0, height: -8 } },
+  actionContinueBar: { zIndex: 80, elevation: 18 },
   maskContinueBar: { zIndex: 120, elevation: 24 },
   summaryLabel: { color: SERVICE_WIZARD_THEME.colors.accentText, fontSize: 11, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase" },
   summaryTitle: { color: "#ffffff", fontSize: 22, fontWeight: "800", letterSpacing: -0.5 },

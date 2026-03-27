@@ -1,4 +1,5 @@
 export const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
+export const GENERATION_FAILED_TOAST = "Generation failed. Please check your connection and try again.";
 
 export function getFriendlyGenerationError(message?: string | null) {
   if (!message) {
