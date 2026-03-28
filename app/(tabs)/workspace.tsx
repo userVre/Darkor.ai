@@ -38,7 +38,9 @@ import {
   Bath,
   Baby,
   BedDouble,
+  BookOpen,
   Building2,
+  Camera,
   Check,
   CarFront,
   CookingPot,
@@ -47,7 +49,6 @@ import {
   Fence,
   Flower2,
   House,
-  Plus,
   Monitor,
   PaintRoller,
   Projector,
@@ -140,14 +141,26 @@ type StyleLibraryItem = {
   title: string;
   description: string;
   image: number;
+  eyebrow?: string;
+};
+
+type DisplayStyleCard = {
+  id: string;
+  title: string;
+  description: string;
+  image: number | null;
+  eyebrow?: string;
+  icon?: any;
+  isCustom?: boolean;
 };
 
 type ExteriorStyleItem = {
   id: string;
   title: string;
   description: string;
+  image: number;
   icon: any;
-  colors: [string, string];
+  eyebrow?: string;
 };
 
 type GenerationStatus = "processing" | "ready" | "failed";
@@ -184,6 +197,8 @@ type ModeOption = {
   description: string;
   promptHint: string;
   icon: any;
+  previewLabel: string;
+  previewCaption: string;
 };
 
 type RoomCardMeta = {
@@ -500,6 +515,8 @@ const SPACE_OPTIONS = {
   garden: ["Backyard", "Front yard", "Patio", "Pool", "Terrace", "Deck"],
 } as const;
 
+const DEFAULT_SPACE_IMAGE = require("../../assets/media/discover/home/home-study.jpg");
+
 const STYLE_LIBRARY: StyleLibraryItem[] = [
   {
     id: "modern",
@@ -654,64 +671,73 @@ const EXTERIOR_STYLE_LIBRARY: ExteriorStyleItem[] = [
     id: "modern",
     title: "Modern",
     description: "Crisp lines, warm lighting, and clean facade geometry.",
+    image: require("../../assets/media/styles/style-modern.jpg"),
     icon: House,
-    colors: ["rgba(255,255,255,0.08)", "rgba(99,102,241,0.2)"],
+    eyebrow: "Popular",
   },
   {
     id: "luxury",
     title: "Luxury",
     description: "High-end frontage with dramatic glazing and premium materials.",
+    image: require("../../assets/media/styles/style-luxury.jpg"),
     icon: Sparkles,
-    colors: ["rgba(217,70,239,0.16)", "rgba(249,115,22,0.18)"],
+    eyebrow: "Signature",
   },
   {
     id: "minimalist",
     title: "Minimalist",
     description: "Quiet massing, fewer gestures, and gallery-like restraint.",
+    image: require("../../assets/media/styles/style-minimalist.jpg"),
     icon: DoorOpen,
-    colors: ["rgba(255,255,255,0.08)", "rgba(148,163,184,0.16)"],
+    eyebrow: "Clean lines",
   },
   {
     id: "mediterranean",
     title: "Mediterranean",
     description: "Sun-washed stucco, arches, and resort-level softness.",
+    image: require("../../assets/media/styles/style-mediterranean.jpg"),
     icon: SunMedium,
-    colors: ["rgba(251,191,36,0.14)", "rgba(249,115,22,0.14)"],
+    eyebrow: "Sun-washed",
   },
   {
     id: "brutalist",
     title: "Brutalist",
     description: "Stronger concrete forms with a sculpted urban presence.",
+    image: require("../../assets/media/styles/style-brutalist.jpg"),
     icon: Building2,
-    colors: ["rgba(82,82,91,0.18)", "rgba(161,161,170,0.12)"],
+    eyebrow: "Sculptural",
   },
   {
     id: "gothic",
     title: "Gothic",
     description: "Vertical drama, ornamental silhouettes, and moody depth.",
+    image: require("../../assets/media/styles/style-vintage.jpg"),
     icon: BadgeCheck,
-    colors: ["rgba(88,28,135,0.16)", "rgba(17,24,39,0.24)"],
+    eyebrow: "Dramatic",
   },
   {
     id: "italianate",
     title: "Italianate",
     description: "Balanced classical rhythms with refined villa detailing.",
+    image: require("../../assets/media/styles/style-french-country.jpg"),
     icon: House,
-    colors: ["rgba(180,83,9,0.16)", "rgba(251,191,36,0.12)"],
+    eyebrow: "Timeless",
   },
   {
     id: "chinese",
     title: "Chinese",
     description: "Layered rooflines and elegant symmetry with cultural detail.",
+    image: require("../../assets/media/styles/style-art-nouveau.jpg"),
     icon: Store,
-    colors: ["rgba(220,38,38,0.16)", "rgba(245,158,11,0.12)"],
+    eyebrow: "Layered",
   },
   {
     id: "neo-classical",
     title: "Neo Classical",
     description: "Monumental balance with columns, order, and polished stone.",
+    image: require("../../assets/media/styles/style-neo-classic-alt.jpg"),
     icon: Building2,
-    colors: ["rgba(226,232,240,0.08)", "rgba(148,163,184,0.18)"],
+    eyebrow: "Editorial",
   },
 ];
 
@@ -722,57 +748,65 @@ const GARDEN_STYLE_LIBRARY: ExteriorStyleItem[] = [
     id: "tropical",
     title: "Tropical",
     description: "Lush planting, resort warmth, and layered outdoor comfort.",
+    image: require("../../assets/media/styles/style-tropical.jpg"),
     icon: Trees,
-    colors: ["rgba(34,197,94,0.16)", "rgba(250,204,21,0.1)"],
+    eyebrow: "Resort",
   },
   {
     id: "zen",
     title: "Zen",
     description: "Calm geometry, stone balance, and quiet meditative rhythm.",
+    image: require("../../assets/media/styles/style-japandi.jpg"),
     icon: Flower2,
-    colors: ["rgba(148,163,184,0.16)", "rgba(226,232,240,0.08)"],
+    eyebrow: "Calm",
   },
   {
     id: "mediterranean",
     title: "Mediterranean",
     description: "Sunlit terraces, olive tones, and warm natural textures.",
+    image: require("../../assets/media/styles/style-mediterranean.jpg"),
     icon: SunMedium,
-    colors: ["rgba(249,115,22,0.16)", "rgba(251,191,36,0.12)"],
+    eyebrow: "Sunlit",
   },
   {
     id: "coastal",
     title: "Coastal",
     description: "Airy poolside light with soft stone and sea-toned calm.",
+    image: require("../../assets/media/styles/style-coastal.jpg"),
     icon: Sparkles,
-    colors: ["rgba(56,189,248,0.14)", "rgba(226,232,240,0.08)"],
+    eyebrow: "Breezy",
   },
   {
     id: "modern",
     title: "Modern",
     description: "Sharpened hardscape lines with minimal landscape structure.",
+    image: require("../../assets/media/styles/style-modern.jpg"),
     icon: House,
-    colors: ["rgba(255,255,255,0.08)", "rgba(99,102,241,0.16)"],
+    eyebrow: "Minimal",
   },
   {
     id: "japandi",
     title: "Japandi",
     description: "Natural wood, low-profile planting, and restrained warmth.",
+    image: require("../../assets/media/styles/style-japandi.jpg"),
     icon: Fence,
-    colors: ["rgba(120,113,108,0.18)", "rgba(245,245,244,0.08)"],
+    eyebrow: "Soft balance",
   },
   {
     id: "rustic",
     title: "Rustic",
     description: "Weathered stone, timber detail, and relaxed outdoor texture.",
+    image: require("../../assets/media/styles/style-rustic.jpg"),
     icon: Trees,
-    colors: ["rgba(120,53,15,0.18)", "rgba(217,119,6,0.12)"],
+    eyebrow: "Textural",
   },
   {
     id: "luxury",
     title: "Luxury",
     description: "Hotel-level outdoor staging with premium fire-and-water drama.",
+    image: require("../../assets/media/styles/style-luxury.jpg"),
     icon: Sparkles,
-    colors: ["rgba(217,70,239,0.14)", "rgba(249,115,22,0.14)"],
+    eyebrow: "Statement",
   },
 ];
 
@@ -921,14 +955,66 @@ const ASPECT_RATIO_OPTIONS: AspectRatioOption[] = [
 ];
 
 const ROOM_CARD_META: Record<string, RoomCardMeta> = {
-  "Living Room": { icon: Sofa, description: "Layered lounge refinement." },
-  Bedroom: { icon: BedDouble, description: "A calmer, hotel-like retreat." },
-  Kitchen: { icon: CookingPot, description: "Sharper culinary flow and finishes." },
-  Bathroom: { icon: Bath, description: "Spa-driven comfort and texture." },
-  "Home Office": { icon: Monitor, description: "Focused executive atmosphere." },
-  "Dining Room": { icon: UtensilsCrossed, description: "Gathering-ready statement dining." },
-  Nursery: { icon: Baby, description: "Soft comfort with practical balance." },
-  "Home Theater": { icon: Projector, description: "Immersive cinematic ambiance." },
+  "Living Room": {
+    icon: Sofa,
+    description: "Layered lounge refinement.",
+    image: require("../../assets/media/discover/home/home-living-room.jpg"),
+  },
+  Bedroom: {
+    icon: BedDouble,
+    description: "A calmer, hotel-like retreat.",
+    image: require("../../assets/media/discover/home/home-master-suite.jpg"),
+  },
+  Kitchen: {
+    icon: CookingPot,
+    description: "Sharper culinary flow and finishes.",
+    image: require("../../assets/media/discover/home/home-kitchen.jpg"),
+  },
+  Bathroom: {
+    icon: Bath,
+    description: "Spa-driven comfort and texture.",
+    image: require("../../assets/media/discover/home/home-bathroom.jpg"),
+  },
+  "Home Office": {
+    icon: Monitor,
+    description: "Focused executive atmosphere.",
+    image: require("../../assets/media/discover/home/home-home-office.jpg"),
+  },
+  "Dining Room": {
+    icon: UtensilsCrossed,
+    description: "Gathering-ready statement dining.",
+    image: require("../../assets/media/discover/home/home-dining-room.jpg"),
+  },
+  Nursery: {
+    icon: Baby,
+    description: "Soft comfort with practical balance.",
+    image: require("../../assets/media/discover/home/home-nursery.jpg"),
+  },
+  "Home Theater": {
+    icon: Projector,
+    description: "Immersive cinematic ambiance.",
+    image: require("../../assets/media/discover/home/home-home-theater.jpg"),
+  },
+  "Gaming Room": {
+    icon: Monitor,
+    description: "Sharper play-and-stream atmosphere.",
+    image: require("../../assets/media/discover/home/home-gaming-room.jpg"),
+  },
+  Hall: {
+    icon: DoorOpen,
+    description: "An elevated transition space with presence.",
+    image: require("../../assets/media/discover/home/home-hall.jpg"),
+  },
+  Library: {
+    icon: BookOpen,
+    description: "Collected calm with tailored warmth.",
+    image: require("../../assets/media/discover/home/home-library.jpg"),
+  },
+  Laundry: {
+    icon: Sparkles,
+    description: "Utility upgraded with boutique order.",
+    image: require("../../assets/media/discover/home/home-laundry.jpg"),
+  },
   "Modern House": {
     icon: House,
     description: "Contemporary curbside presence.",
@@ -994,21 +1080,118 @@ const ROOM_CARD_META: Record<string, RoomCardMeta> = {
 const MODE_OPTIONS: ModeOption[] = [
   {
     id: "preserve",
-    title: "Structural Preservation",
-    description: "Respect the architecture while elevating materials, mood, and styling.",
+    title: "Subtle Refresh",
+    description: "Keep the room structure familiar while elevating styling, finishes, and atmosphere.",
     promptHint:
       "Preserve the original architecture, room structure, camera angle, and layout as closely as possible while upgrading furniture, finishes, and mood.",
     icon: PaintRoller,
+    previewLabel: "Subtle after",
+    previewCaption: "Same layout, lighter styling upgrades.",
   },
   {
     id: "renovate",
-    title: "Renovation Design",
-    description: "Introduce a bolder transformation while keeping the result coherent and believable.",
+    title: "Full Transformation",
+    description: "Give Darkor.ai more freedom to reshape focal points, materials, and the overall visual impact.",
     promptHint:
       "Allow a more transformative renovation approach with stronger upgrades to built-ins, focal elements, and materials while keeping the result realistic and coherent.",
     icon: Wand2,
+    previewLabel: "Bold after",
+    previewCaption: "More freedom for dramatic change.",
   },
 ];
+
+function ModeDifferencePreview({ mode, active }: { mode: ModeOption; active: boolean }) {
+  const isSubtleMode = mode.id === "preserve";
+  const beforeBorderColor = active ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.08)";
+  const beforeSurfaceColor = "rgba(255,255,255,0.03)";
+  const afterBorderColor = isSubtleMode
+    ? active
+      ? "rgba(244,114,182,0.34)"
+      : "rgba(244,114,182,0.22)"
+    : active
+      ? "rgba(217,70,239,0.4)"
+      : "rgba(217,70,239,0.28)";
+  const afterSurfaceColor = isSubtleMode ? "rgba(244,114,182,0.08)" : "rgba(217,70,239,0.12)";
+  const accentColor = isSubtleMode ? "#fb7185" : "#d946ef";
+
+  return (
+    <View style={{ marginTop: 18, gap: 10 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <Text style={{ color: "#d4d4d8", fontSize: 11, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" }}>
+          Before
+        </Text>
+        <MoveHorizontal color={active ? "#ffffff" : "#a1a1aa"} size={15} strokeWidth={2} />
+        <Text style={{ color: active ? "#ffffff" : "#d4d4d8", fontSize: 11, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" }}>
+          {mode.previewLabel}
+        </Text>
+      </View>
+
+      <View style={{ flexDirection: "row", gap: 10 }}>
+        <View
+          style={{
+            flex: 1,
+            borderRadius: 18,
+            borderWidth: 1,
+            borderColor: beforeBorderColor,
+            backgroundColor: beforeSurfaceColor,
+            paddingHorizontal: 12,
+            paddingVertical: 12,
+            gap: 8,
+          }}
+        >
+          <View style={{ width: "38%", height: 12, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.14)" }} />
+          <View style={{ width: "82%", height: 10, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.08)" }} />
+          <View style={{ width: "100%", height: 22, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.05)" }} />
+        </View>
+
+        <View
+          style={{
+            flex: 1,
+            borderRadius: 18,
+            borderWidth: 1,
+            borderColor: afterBorderColor,
+            backgroundColor: afterSurfaceColor,
+            paddingHorizontal: 12,
+            paddingVertical: 12,
+            gap: 8,
+          }}
+        >
+          <View style={{ flexDirection: "row", gap: 6 }}>
+            <View
+              style={{
+                width: isSubtleMode ? 34 : 24,
+                height: isSubtleMode ? 14 : 20,
+                borderRadius: 999,
+                backgroundColor: isSubtleMode ? "rgba(251,113,133,0.18)" : "rgba(217,70,239,0.22)",
+              }}
+            />
+            <View
+              style={{
+                width: isSubtleMode ? 16 : 22,
+                height: isSubtleMode ? 14 : 20,
+                borderRadius: 999,
+                backgroundColor: isSubtleMode ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.12)",
+              }}
+            />
+          </View>
+          <View style={{ width: isSubtleMode ? "86%" : "68%", height: 10, borderRadius: 999, backgroundColor: accentColor }} />
+          <View
+            style={{
+              width: isSubtleMode ? "100%" : "74%",
+              height: isSubtleMode ? 22 : 30,
+              borderRadius: 12,
+              backgroundColor: isSubtleMode ? "rgba(255,255,255,0.08)" : "rgba(217,70,239,0.24)",
+            }}
+          />
+        </View>
+      </View>
+
+      <Text style={{ color: active ? "#f5d0fe" : "#d4d4d8", fontSize: 12.5, lineHeight: 18 }}>
+        {mode.previewCaption}
+      </Text>
+    </View>
+  );
+}
 
 const SERVICE_LABELS: Record<string, string> = {
   interior: "Interior Redesign",
@@ -1302,6 +1485,7 @@ export default function WorkspaceScreen() {
   const [awaitingAuth, setAwaitingAuth] = useState(false);
   const [pendingReviewState, setPendingReviewState] = useState<{ count: number; shouldPrompt: boolean } | null>(null);
   const [wizardNavDirection, setWizardNavDirection] = useState<1 | -1>(1);
+  const [processingStatusIndex, setProcessingStatusIndex] = useState(0);
   const [, setPaintTool] = useState<PaintTool>("brush");
   const [, setPaintBrushWidth] = useState(28);
   const [paintColor, setPaintColor] = useState("#D946EF");
@@ -1534,6 +1718,23 @@ export default function WorkspaceScreen() {
     [activeBoardItemId, boardItems],
   );
 
+  useEffect(() => {
+    const isProcessingStep = workflowStep === 5 && activeBoardItem?.status === "processing";
+    if (!isProcessingStep) {
+      setProcessingStatusIndex(0);
+      return;
+    }
+
+    setProcessingStatusIndex(0);
+    const firstTimer = setTimeout(() => setProcessingStatusIndex(1), 1500);
+    const secondTimer = setTimeout(() => setProcessingStatusIndex(2), 3300);
+
+    return () => {
+      clearTimeout(firstTimer);
+      clearTimeout(secondTimer);
+    };
+  }, [activeBoardItem?.id, activeBoardItem?.status, workflowStep]);
+
   const ratioSpec = useMemo(() => resolveAspectRatio(selectedAspectRatio), [selectedAspectRatio]);
   const wizardColumnGap = 16;
   const wizardGridMaxWidth = useMemo(() => Math.min(width - 40, 980), [width]);
@@ -1545,16 +1746,6 @@ export default function WorkspaceScreen() {
         148,
       ),
     [wizardCardColumns, wizardColumnGap, wizardGridMaxWidth],
-  );
-  const wizardStyleGap = 12;
-  const wizardStyleColumns = width >= 1100 ? 3 : 2;
-  const wizardStyleCardWidth = useMemo(
-    () =>
-      Math.max(
-        Math.min((wizardGridMaxWidth - wizardStyleGap * (wizardStyleColumns - 1)) / wizardStyleColumns, 252),
-        132,
-      ),
-    [wizardGridMaxWidth, wizardStyleColumns, wizardStyleGap],
   );
   const wizardPaletteGap = 12;
   const wizardPaletteColumns = width >= 1100 ? 3 : 2;
@@ -1579,6 +1770,24 @@ export default function WorkspaceScreen() {
     if (serviceType === "garden") return SPACE_OPTIONS.garden;
     return SPACE_OPTIONS.interior;
   }, [serviceType]);
+  const spaceCatalogItems = useMemo(
+    () =>
+      spaceOptions.map((option) => {
+        const meta = ROOM_CARD_META[option as keyof typeof ROOM_CARD_META] ?? {
+          icon: House,
+          description: "A polished redesign starting point.",
+          image: DEFAULT_SPACE_IMAGE,
+        };
+
+        return {
+          title: option,
+          icon: meta.icon,
+          description: meta.description,
+          image: meta.image ?? DEFAULT_SPACE_IMAGE,
+        };
+      }),
+    [spaceOptions],
+  );
   const examplePhotos = useMemo(() => {
     if (serviceType === "exterior") return EXTERIOR_EXAMPLE_PHOTOS;
     if (serviceType === "garden") return GARDEN_EXAMPLE_PHOTOS;
@@ -1586,6 +1795,52 @@ export default function WorkspaceScreen() {
     if (serviceType === "paint") return PAINT_EXAMPLE_PHOTOS;
     return INTERIOR_EXAMPLE_PHOTOS;
   }, [serviceType]);
+  const styleCatalogItems = useMemo(() => {
+    if (isExteriorService) {
+      return EXTERIOR_STYLE_LIBRARY;
+    }
+
+    if (isGardenService) {
+      return GARDEN_STYLE_LIBRARY;
+    }
+
+    return STYLE_LIBRARY;
+  }, [isExteriorService, isGardenService]);
+  const displayedStyleCards = useMemo<DisplayStyleCard[]>(() => {
+    if (isPaintService || isFloorService) {
+      return [];
+    }
+
+    const baseCards = styleCatalogItems.map((style) => ({
+      id: style.id,
+      title: style.title,
+      description: style.description,
+      image: style.image,
+      eyebrow: style.eyebrow,
+      icon: "icon" in style ? style.icon : undefined,
+      isCustom: false,
+    }));
+
+    if (isLeanGenerationService) {
+      return baseCards;
+    }
+
+    return [
+      {
+        id: "custom",
+        title: "Custom",
+        description:
+          customPrompt.trim().length > 0
+            ? customPrompt.trim()
+            : "Write your own design brief for a one-of-one art direction.",
+        image: null,
+        eyebrow: "Bespoke",
+        icon: Sparkles,
+        isCustom: true,
+      },
+      ...baseCards,
+    ];
+  }, [customPrompt, isFloorService, isLeanGenerationService, isPaintService, styleCatalogItems]);
   const selectedPaletteOrDefault = useMemo(
     () => selectedPalette ?? (isLeanGenerationService ? PALETTE_OPTIONS[0] : null),
     [isLeanGenerationService, selectedPalette],
@@ -1594,6 +1849,15 @@ export default function WorkspaceScreen() {
     () => selectedMode ?? (isLeanGenerationService ? MODE_OPTIONS[0] : null),
     [isLeanGenerationService, selectedMode],
   );
+  const finalPreviewImage = useMemo(() => {
+    const selectedStyleCard = displayedStyleCards.find((card) => card.title === selectedStyle && card.image);
+    if (selectedStyleCard?.image) {
+      return selectedStyleCard.image;
+    }
+
+    const selectedSpaceCard = spaceCatalogItems.find((card) => card.title === selectedRoom);
+    return selectedSpaceCard?.image ?? DEFAULT_SPACE_IMAGE;
+  }, [displayedStyleCards, selectedRoom, selectedStyle, spaceCatalogItems]);
 
   const hasPaidAccess = diagnostic ? true : me?.hasPaidAccess ?? false;
   const canExport4k = diagnostic ? true : me?.canExport4k ?? false;
@@ -1614,7 +1878,12 @@ export default function WorkspaceScreen() {
       ? me?.credits ?? GUEST_TESTING_STARTER_CREDITS
       : GUEST_TESTING_STARTER_CREDITS;
   const hasGenerationCredits = creditBalance > 0;
+  const remainingCreditsAfterGenerate = Math.max(creditBalance - 1, 0);
+  const generationCreditLabel = hasGenerationCredits
+    ? `Uses 1 credit (${remainingCreditsAfterGenerate} remaining)`
+    : "Requires 1 credit to generate";
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
+  const showStyleScrollCue = !isPaintService && !isFloorService && displayedStyleCards.length > 6;
   const isDownloadingStandard = isDownloading === "standard";
   const isDownloadingUltra = isDownloading === "ultra";
   const openAuthWall = useCallback(
@@ -1908,7 +2177,7 @@ export default function WorkspaceScreen() {
         {
           title: "Add Room Photo",
           message: "Choose how you'd like to start Step 1.",
-          options: ["Cancel", "📸 Take Photo", "🖼️ Upload from Gallery"],
+          options: ["Cancel", "ðŸ“¸ Take Photo", "ðŸ–¼ï¸ Upload from Gallery"],
           cancelButtonIndex: 0,
           userInterfaceStyle: "dark",
         },
@@ -1928,8 +2197,8 @@ export default function WorkspaceScreen() {
 
     Alert.alert("Add Room Photo", "Choose how you'd like to start Step 1.", [
       { text: "Cancel", style: "cancel" },
-      { text: "📸 Take Photo", onPress: () => openSource("camera") },
-      { text: "🖼️ Upload from Gallery", onPress: () => openSource("library") },
+      { text: "ðŸ“¸ Take Photo", onPress: () => openSource("camera") },
+      { text: "ðŸ–¼ï¸ Upload from Gallery", onPress: () => openSource("library") },
     ]);
   }, [isSelectingPhoto, launchPhotoSource]);
 
@@ -2591,6 +2860,7 @@ export default function WorkspaceScreen() {
     const currentStepNumber = workflowStep + 1;
     const totalWizardSteps = 4;
     const isFinalWizardStep = workflowStep === 3;
+    const isGenerationReviewStep = isFinalWizardStep;
     const isPhotoStep = workflowStep === 0;
     const isSpaceStep = workflowStep === 1;
     const isPaintSelectionStep = isPaintService && workflowStep === 2;
@@ -2612,22 +2882,37 @@ export default function WorkspaceScreen() {
     const stepOneExampleCardWidth = Math.min(Math.max(width * 0.36, 138), 168);
     const stepOneExampleCardHeight = Math.round(stepOneExampleCardWidth * 1.02);
     const bottomBarOffset = isTabbedWorkspaceRoute ? 96 : 0;
+    const isRefineDirectionStep = workflowStep === 3 && !isPaintService && !isFloorService && !isLeanGenerationService;
     const stepContentMinHeight = Math.max(
       height -
         Math.max(insets.top + (isPhotoStep ? 18 : 8), isPhotoStep ? 24 : 20) -
         Math.max(
-          insets.bottom + bottomBarOffset + (isPhotoStep ? 148 : 124),
-          bottomBarOffset + (isPhotoStep ? 176 : 144),
+          insets.bottom + bottomBarOffset + (isPhotoStep ? 148 : isGenerationReviewStep ? 236 : isRefineDirectionStep ? 194 : 124),
+          bottomBarOffset + (isPhotoStep ? 176 : isGenerationReviewStep ? 260 : isRefineDirectionStep ? 214 : 144),
         ),
       isPhotoStep ? 520 : 460,
     );
-    const continueButtonHeight = isPhotoStep ? 64 : 62;
-    const continueButtonRadius = isPhotoStep ? 20 : 24;
+    const continueButtonHeight = isPhotoStep ? 64 : isGenerationReviewStep ? 78 : isRefineDirectionStep ? 68 : 62;
+    const continueButtonRadius = isPhotoStep ? 20 : isGenerationReviewStep ? 30 : isRefineDirectionStep ? 26 : 24;
     const isContinueDisabled = !canContinue || (isFinalWizardStep && isGenerating);
     const isContinueActive = canContinue && !isContinueDisabled;
-    const shouldPulseContinue = (isPhotoStep || isServiceFinishStep) ? isContinueActive : false;
+    const shouldPulseContinue = (isPhotoStep || isServiceFinishStep || isGenerationReviewStep || isRefineDirectionStep) ? isContinueActive : false;
     const continueButtonOpacity = isContinueActive ? 1 : 0.58;
     const selectedCustomPromptBlocks = new Set(getPromptBlocks(customPromptDraft));
+    const expectationPreviewCopy = isLeanGenerationService
+      ? "A polished exterior concept with premium detailing, realistic materials, and architectural coherence."
+      : "A polished, photoreal interior concept with elevated materials, refined lighting, and editorial-level realism.";
+    const finalSelectionChips = isLeanGenerationService
+      ? [
+          { label: selectedRoom ?? "Space type not selected", active: Boolean(selectedRoom) },
+          { label: selectedStyle ?? "Style direction not selected", active: Boolean(selectedStyle) },
+        ]
+      : [
+          { label: selectedRoom ?? "Space type not selected", active: Boolean(selectedRoom) },
+          { label: selectedStyle ?? "Style direction not selected", active: Boolean(selectedStyle) },
+          { label: selectedModeOrDefault?.title ?? "Mode not selected", active: Boolean(selectedModeOrDefault) },
+          { label: selectedPaletteOrDefault?.label ?? "Palette not selected", active: Boolean(selectedPaletteOrDefault) },
+        ];
     const stepOneTitle = isFloorService ? "Floor Restyle" : isPaintService ? "Add a Photo" : isGardenService ? "Add a Garden Photo" : isExteriorService ? "Add an Exterior Photo" : "Add a Photo";
     const emptyUploadTitle = isFloorService ? "Add Floor Photo" : isPaintService ? "Add a Photo" : isGardenService ? "Start Your Garden Redesign" : isExteriorService ? "Start Exterior Redesign" : "Start Redesigning";
     const stepOneDescription = isGardenService
@@ -2659,12 +2944,12 @@ export default function WorkspaceScreen() {
       : isGardenService
         ? "Choose the landscape expression Darkor.ai should use for the garden redesign."
         : "Choose a curated design direction, or write a custom architectural brief.";
-    const stepFourTitle = isPaintService ? "Refine the finish" : isFloorService ? "Refine the finish" : "Refine the creative direction";
+    const stepFourTitle = isPaintService ? "Refine the finish" : isFloorService ? "Refine the finish" : "Refine Direction";
     const stepFourDescription = isPaintService
       ? "Choose how the selected wall color should catch light so the render feels tailored, realistic, and high-end."
       : isFloorService
         ? "Choose how the selected flooring material should read under light once Darkor.ai maps it into the space."
-        : "Choose the design intensity and palette family before Darkor.ai unveils the final composition.";
+        : "Choose how bold the redesign should feel, then pick the palette family Darkor.ai should weave through the space.";
     const wizardSectionHeaderStyle = { gap: DS.spacing[1.5], alignItems: "center" as const };
     const wizardSectionBodyStyle = {
       color: wizardMutedTextColor,
@@ -2704,14 +2989,14 @@ export default function WorkspaceScreen() {
     const continueLabel = isPhotoStep
       ? "Continue"
       : isFinalWizardStep
-      ? isGenerating
-        ? "Generating..."
+        ? isGenerating
+        ? "Generating Design..."
         : isLeanGenerateStep || isServiceFinishStep
           ? hasGenerationCredits
-            ? "Generate Render"
+            ? "Generate Design"
             : "Get more credits"
           : hasGenerationCredits
-            ? "Generate Renders"
+            ? "Generate Design"
             : "Get more credits"
       : isSpaceStep && (isPaintService || isFloorService)
         ? "Continue to Step 3"
@@ -2753,10 +3038,10 @@ export default function WorkspaceScreen() {
           contentContainerStyle={{
             flexGrow: 1,
             paddingHorizontal: isPhotoStep ? DS.spacing[3] : DS.spacing[2.5],
-            paddingTop: Math.max(insets.top + (isPhotoStep ? 16 : 10), isPhotoStep ? 24 : 22),
+            paddingTop: isPhotoStep ? 14 : 10,
             paddingBottom: Math.max(
-              insets.bottom + bottomBarOffset + (isPhotoStep ? 148 : 124),
-              bottomBarOffset + (isPhotoStep ? 176 : 144),
+              insets.bottom + bottomBarOffset + (isPhotoStep ? 148 : isRefineDirectionStep ? 194 : 124),
+              bottomBarOffset + (isPhotoStep ? 176 : isRefineDirectionStep ? 214 : 144),
             ),
             minHeight: height,
           }}
@@ -2769,7 +3054,6 @@ export default function WorkspaceScreen() {
                 title={serviceLabel}
                 step={currentStepNumber}
                 totalSteps={totalWizardSteps}
-                topInset={0}
                 canGoBack={workflowStep > 0}
                 onBack={handleBack}
                 onClose={handleCloseWizard}
@@ -2825,9 +3109,9 @@ export default function WorkspaceScreen() {
                           width: uploadTileSize,
                           height: uploadTileSize,
                           borderRadius: isFloorService ? DS.radius.xl : 34,
-                          borderWidth: HAIRLINE,
-                          borderColor: hasVisiblePhoto ? DS.colors.borderStrong : DS.colors.border,
-                          borderStyle: "solid",
+                          borderWidth: hasVisiblePhoto ? HAIRLINE : 1.5,
+                          borderColor: hasVisiblePhoto ? DS.colors.borderStrong : "rgba(255,107,242,0.72)",
+                          borderStyle: hasVisiblePhoto ? "solid" : "dashed",
                           overflow: "hidden",
                           alignSelf: "center",
                           backgroundColor: DS.colors.surfaceRaised,
@@ -2865,26 +3149,57 @@ export default function WorkspaceScreen() {
                               flex: 1,
                               alignItems: "center",
                               justifyContent: "center",
-                              gap: isFloorService ? 18 : 14,
-                              paddingHorizontal: 30,
-                              paddingVertical: 30,
+                              gap: isFloorService ? 20 : 16,
+                              paddingHorizontal: 28,
+                              paddingVertical: 28,
+                              width: "100%",
                             }}
                           >
+                            <MotiView
+                              pointerEvents="none"
+                              animate={{ opacity: [0.22, 0.5, 0.22], scale: [0.98, 1.02, 0.98] }}
+                              transition={{ duration: 2300, loop: true }}
+                              style={{
+                                position: "absolute",
+                                width: "76%",
+                                height: "76%",
+                                borderRadius: 999,
+                                backgroundColor: "rgba(217,70,239,0.12)",
+                              }}
+                            />
                             <View
                               style={{
-                                width: isFloorService ? 84 : 70,
-                                height: isFloorService ? 84 : 70,
-                                borderRadius: isFloorService ? 24 : 35,
-                                borderWidth: HAIRLINE,
-                                borderColor: DS.colors.border,
-                                backgroundColor: DS.colors.surfaceMuted,
+                                width: "86%",
+                                height: "86%",
+                                borderRadius: isFloorService ? 26 : 30,
+                                borderWidth: 1.5,
+                                borderStyle: "dashed",
+                                borderColor: "rgba(255,107,242,0.72)",
+                                backgroundColor: "rgba(255,255,255,0.02)",
                                 alignItems: "center",
                                 justifyContent: "center",
+                                gap: 18,
+                                paddingHorizontal: 24,
                               }}
                             >
-                              <Plus color="#ffffff" size={isFloorService ? 30 : 26} strokeWidth={2.4} />
-                            </View>
-                            {!isFloorService ? (
+                              <LinearGradient
+                                colors={["rgba(255,255,255,0.16)", "rgba(255,255,255,0.04)"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={{
+                                  width: isFloorService ? 98 : 92,
+                                  height: isFloorService ? 98 : 92,
+                                  borderRadius: 28,
+                                  borderWidth: HAIRLINE,
+                                  borderColor: "rgba(255,255,255,0.16)",
+                                  backgroundColor: "rgba(255,255,255,0.05)",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  ...glowShadow("rgba(217,70,239,0.18)", 22),
+                                }}
+                              >
+                                <Camera color="#ffffff" size={isFloorService ? 34 : 30} strokeWidth={2.05} />
+                              </LinearGradient>
                               <View style={{ gap: 6, alignItems: "center" }}>
                                 <Text
                                   style={{
@@ -2897,16 +3212,16 @@ export default function WorkspaceScreen() {
                                 </Text>
                                 <Text
                                   style={{
-                                    color: DS.colors.textSecondary,
+                                    color: "rgba(255,255,255,0.76)",
                                     ...DS.typography.bodySm,
                                     textAlign: "center",
-                                    maxWidth: 220,
+                                    maxWidth: 232,
                                   }}
                                 >
                                   Tap to add a photo from your camera or library
                                 </Text>
                               </View>
-                            ) : null}
+                            </View>
                             {isPhotoPreviewBusy ? <ActivityIndicator size="small" color="#ffffff" /> : null}
                           </View>
                         )}
@@ -2960,7 +3275,7 @@ export default function WorkspaceScreen() {
                           horizontal
                           showsHorizontalScrollIndicator={false}
                           decelerationRate="fast"
-                          contentContainerStyle={{ paddingRight: 2, gap: 12 }}
+                          contentContainerStyle={{ paddingHorizontal: 2, gap: 14 }}
                           style={{ cursor: "pointer" as any }}
                         >
                           {examplePhotos.slice(0, 4).map((example, index) => {
@@ -3027,83 +3342,76 @@ export default function WorkspaceScreen() {
                       </View>
 
                       <View style={wizardCenteredGridStyle}>
-                        {spaceOptions.map((option, index) => {
-                          const active = selectedRoom === option;
-                          const meta = ROOM_CARD_META[option as keyof typeof ROOM_CARD_META] ?? {
-                            icon: House,
-                            description: "A polished redesign starting point.",
-                          };
-                          const RoomIcon = meta.icon;
+                        {spaceCatalogItems.map((item, index) => {
+                          const active = selectedRoom === item.title;
+                          const RoomIcon = item.icon;
                           return (
-                            <MotiView key={option} {...staggerFadeUp(index, 40)} style={{ width: wizardCardWidth }}>
+                            <MotiView key={item.title} {...staggerFadeUp(index, 40)} style={{ width: wizardCardWidth }}>
                               <LuxPressable
-                                onPress={() => handleSelectRoom(option)}
-                                className="cursor-pointer rounded-[32px] border px-5 py-5"
+                                onPress={() => handleSelectRoom(item.title)}
+                                className="cursor-pointer overflow-hidden rounded-[32px] border"
                                 style={{
-                                  minHeight: isExteriorService && meta.image ? 214 : 176,
-                                  borderWidth: HAIRLINE,
-                                  borderColor: active ? SERVICE_WIZARD_THEME.colors.accentBorderStrong : wizardSurfaceBorderColor,
-                                  backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
-                                  ...glowShadow(active ? DS.colors.accentGlowStrong : "rgba(0,0,0,0.08)", active ? 24 : 12),
+                                  width: "100%",
+                                  minHeight: 224,
+                                  borderWidth: active ? 1.5 : 1,
+                                  borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
+                                  backgroundColor: wizardSurfaceColor,
+                                  ...glowShadow(active ? DS.colors.accentGlowStrong : "rgba(0,0,0,0.1)", active ? 28 : 14),
                                 }}
                               >
-                                <View style={{ flex: 1, gap: 22 }}>
-                                  {isExteriorService && meta.image ? (
+                                <View style={{ flex: 1 }}>
+                                  <View style={{ height: 154, backgroundColor: "#0f0f10" }}>
+                                    <Image source={item.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
+                                    <LinearGradient
+                                      colors={["rgba(9,9,11,0.04)", "rgba(9,9,11,0.16)", "rgba(9,9,11,0.82)"]}
+                                      locations={[0, 0.45, 1]}
+                                      style={{ position: "absolute", inset: 0 }}
+                                    />
                                     <View
                                       style={{
-                                        height: 102,
-                                        overflow: "hidden",
-                                        borderRadius: 24,
-                                        backgroundColor: "#0f0f10",
+                                        position: "absolute",
+                                        left: 14,
+                                        top: 14,
+                                        height: 44,
+                                        width: 44,
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        borderRadius: 16,
+                                        borderWidth: 1,
+                                        borderColor: active ? "rgba(255,107,242,0.55)" : "rgba(255,255,255,0.16)",
+                                        backgroundColor: "rgba(8,8,10,0.58)",
                                       }}
                                     >
-                                      <Image source={meta.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={140} cachePolicy="memory-disk" />
-                                      <LinearGradient
-                                        colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.62)"]}
-                                        locations={[0, 0.52, 1]}
-                                        style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }}
-                                      />
+                                      <RoomIcon color="#ffffff" size={18} strokeWidth={2} />
+                                    </View>
+                                    {active ? (
                                       <View
                                         style={{
                                           position: "absolute",
-                                          left: 10,
-                                          top: 10,
-                                          height: 40,
-                                          width: 40,
+                                          right: 14,
+                                          top: 14,
+                                          height: 34,
+                                          minWidth: 34,
+                                          paddingHorizontal: 10,
                                           alignItems: "center",
                                           justifyContent: "center",
-                                          borderRadius: 14,
+                                          borderRadius: 999,
                                           borderWidth: 1,
-                                          borderColor: active ? "rgba(217,70,239,0.28)" : "rgba(255,255,255,0.12)",
-                                          backgroundColor: "rgba(10,10,10,0.5)",
+                                          borderColor: "rgba(255,107,242,0.48)",
+                                          backgroundColor: "rgba(18,6,26,0.84)",
                                         }}
                                       >
-                                        <RoomIcon color={active ? "#d946ef" : "#ffffff"} size={18} strokeWidth={2} />
+                                        <BadgeCheck color="#FF6BF2" size={16} strokeWidth={2} />
                                       </View>
-                                    </View>
-                                  ) : (
-                                    <View
-                                      style={{
-                                        height: 50,
-                                        width: 50,
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        borderRadius: 20,
-                                        borderWidth: 1,
-                                        borderColor: active ? "rgba(217,70,239,0.28)" : "rgba(255,255,255,0.08)",
-                                        backgroundColor: active ? "rgba(217,70,239,0.14)" : "rgba(255,255,255,0.03)",
-                                      }}
-                                    >
-                                      <RoomIcon color={active ? "#d946ef" : "#ffffff"} size={22} strokeWidth={2} />
-                                    </View>
-                                  )}
+                                    ) : null}
+                                  </View>
 
-                                  <View style={{ marginTop: "auto", gap: 8 }}>
-                                    <Text style={{ color: "#ffffff", fontSize: 21, fontWeight: "700", letterSpacing: -0.45 }}>
-                                      {option}
+                                  <View style={{ flex: 1, gap: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16 }}>
+                                    <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", letterSpacing: -0.4 }}>
+                                      {item.title}
                                     </Text>
                                     <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
-                                      {meta.description}
+                                      {item.description}
                                     </Text>
                                   </View>
                                 </View>
@@ -3239,110 +3547,97 @@ export default function WorkspaceScreen() {
                         </Text>
                       </View>
 
-                      {isLeanGenerationService ? (
-                        <View style={wizardCenteredGridStyle}>
-                          {(isExteriorService ? EXTERIOR_STYLE_LIBRARY : GARDEN_STYLE_LIBRARY).map((style, index) => {
-                            const active = selectedStyle === style.title;
-                            const StyleIcon = style.icon;
-                            return (
-                              <MotiView key={style.id} {...staggerFadeUp(index, 28)} style={{ width: wizardCardWidth }}>
-                                <LuxPressable
-                                  onPress={() => handleSelectStyle(style.title)}
-                                  className="cursor-pointer rounded-[32px] border"
-                                  style={{
-                                    minHeight: 176,
-                                    overflow: "hidden",
-                                    borderWidth: active ? 1.5 : 1,
-                                    borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
-                                    backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
-                                  }}
-                                >
+                      {showStyleScrollCue ? (
+                        <MotiView
+                          animate={{ opacity: [0.48, 0.82, 0.48], translateY: [0, 4, 0] }}
+                          transition={{ duration: 1800, loop: true }}
+                          style={{ alignItems: "center", gap: 4 }}
+                        >
+                          <Text style={{ color: "rgba(255,255,255,0.58)", fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" }}>
+                            Scroll for more
+                          </Text>
+                          <Text style={{ color: "#d946ef", fontSize: 16, lineHeight: 18 }}>v</Text>
+                        </MotiView>
+                      ) : null}
+
+                      <View style={wizardCenteredGridStyle}>
+                        {displayedStyleCards.map((style, index) => {
+                          const active = selectedStyle === style.title;
+                          const StyleIcon = style.icon ?? Sparkles;
+                          return (
+                            <MotiView key={style.id} {...staggerFadeUp(index, 22)} style={{ width: wizardCardWidth }}>
+                              <LuxPressable
+                                onPress={() => handleSelectStyle(style.title)}
+                                className="cursor-pointer overflow-hidden rounded-[30px] border"
+                                style={{
+                                  width: "100%",
+                                  minHeight: 238,
+                                  borderWidth: active ? 1.5 : 1,
+                                  borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
+                                  backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
+                                  ...glowShadow(active ? DS.colors.accentGlowStrong : "rgba(255,255,255,0.04)", active ? 26 : 14),
+                                }}
+                              >
+                                {style.image ? (
+                                  <View style={{ height: 136, backgroundColor: "#0f0f10" }}>
+                                    <Image source={style.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
+                                    <LinearGradient
+                                      colors={["rgba(8,8,10,0.04)", "rgba(8,8,10,0.14)", "rgba(8,8,10,0.78)"]}
+                                      locations={[0, 0.46, 1]}
+                                      style={{ position: "absolute", inset: 0 }}
+                                    />
+                                  </View>
+                                ) : (
                                   <LinearGradient
-                                    colors={style.colors}
+                                    colors={["rgba(217,70,239,0.18)", "rgba(255,255,255,0.04)"]}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 1 }}
-                                    style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 18, flex: 1 }}
+                                    style={{ height: 136, alignItems: "center", justifyContent: "center" }}
                                   >
-                                    <View
-                                      style={{
-                                        height: 44,
-                                        width: 44,
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        borderRadius: 16,
-                                        borderWidth: 1,
-                                        borderColor: active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
-                                        backgroundColor: "rgba(10,10,10,0.26)",
-                                      }}
-                                    >
-                                      <StyleIcon color={active ? "#d946ef" : "#ffffff"} size={20} strokeWidth={2} />
-                                    </View>
-
-                                    <View style={{ marginTop: "auto", gap: 8 }}>
-                                      <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.35 }}>
-                                        {style.title}
-                                      </Text>
-                                      <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
-                                        {style.description}
-                                      </Text>
-                                    </View>
+                                    <Sparkles color="#d946ef" size={30} strokeWidth={2.1} />
                                   </LinearGradient>
+                                )}
 
-                                  {active ? (
-                                    <View className="absolute right-2 top-2 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "#0f0f10" }}>
-                                      <BadgeCheck color="#d946ef" size={16} strokeWidth={2} />
-                                    </View>
-                                  ) : null}
-                                </LuxPressable>
-                              </MotiView>
-                            );
-                          })}
-                        </View>
-                      ) : (
-                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: wizardStyleGap }}>
-                          {[{ id: "custom", title: "Custom", image: null }, ...STYLE_LIBRARY].map((style, index) => {
-                            const isCustomCard = style.title === "Custom";
-                            const active = selectedStyle === style.title;
-                            return (
-                              <MotiView key={style.id} {...staggerFadeUp(index, 18)} style={{ width: wizardStyleCardWidth }}>
-                                <LuxPressable
-                                  onPress={() => handleSelectStyle(style.title)}
-                                  className="cursor-pointer overflow-hidden rounded-[32px] border"
-                                  style={{
-                                    borderWidth: active ? 1.5 : 1,
-                                    borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
-                                    backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
-                                  }}
-                                >
-                                  {isCustomCard ? (
-                                    <LinearGradient
-                                      colors={["rgba(217,70,239,0.16)", "rgba(255,255,255,0.04)"]}
-                                      start={{ x: 0, y: 0 }}
-                                      end={{ x: 1, y: 1 }}
-                                      style={{ height: 120, alignItems: "center", justifyContent: "center" }}
-                                    >
-                                      <Sparkles color="#d946ef" size={28} strokeWidth={2.1} />
-                                    </LinearGradient>
-                                  ) : (
-                                    <Image source={style.image} style={{ width: "100%", height: 120 }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
-                                  )}
-                                  <View style={{ paddingHorizontal: 12, paddingVertical: 12 }}>
-                                    <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }} numberOfLines={2}>{style.title}</Text>
-                                    {isCustomCard && customPrompt.trim().length > 0 ? (
-                                      <Text style={{ marginTop: 8, color: wizardMutedTextColor, fontSize: 12, lineHeight: 18 }} numberOfLines={2}>{customPrompt}</Text>
-                                    ) : null}
+                                <View style={{ position: "absolute", left: 12, top: 12, right: 12, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                  <View
+                                    style={{
+                                      borderRadius: 999,
+                                      borderWidth: 1,
+                                      borderColor: active ? "rgba(255,107,242,0.45)" : "rgba(255,255,255,0.14)",
+                                      backgroundColor: "rgba(8,8,10,0.68)",
+                                      paddingHorizontal: 10,
+                                      paddingVertical: 6,
+                                      flexDirection: "row",
+                                      alignItems: "center",
+                                      gap: 6,
+                                      maxWidth: "78%",
+                                    }}
+                                  >
+                                    <StyleIcon color="#ffffff" size={13} strokeWidth={2} />
+                                    <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" }} numberOfLines={1}>
+                                      {style.eyebrow ?? "Design"}
+                                    </Text>
                                   </View>
                                   {active ? (
-                                    <View className="absolute right-2 top-2 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "#0f0f10" }}>
-                                      <BadgeCheck color="#d946ef" size={16} strokeWidth={2} />
+                                    <View className="rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(255,107,242,0.42)", backgroundColor: "rgba(18,6,26,0.84)" }}>
+                                      <BadgeCheck color="#FF6BF2" size={16} strokeWidth={2} />
                                     </View>
                                   ) : null}
-                                </LuxPressable>
-                              </MotiView>
-                            );
-                          })}
-                        </View>
-                      )}
+                                </View>
+
+                                <View style={{ flex: 1, gap: 8, paddingHorizontal: 14, paddingTop: 14, paddingBottom: 16 }}>
+                                  <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700", lineHeight: 22, letterSpacing: -0.28 }} numberOfLines={2}>
+                                    {style.title}
+                                  </Text>
+                                  <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 12.5, lineHeight: 18.5 }} numberOfLines={3}>
+                                    {style.description}
+                                  </Text>
+                                </View>
+                              </LuxPressable>
+                            </MotiView>
+                          );
+                        })}
+                      </View>
                     </>
                   )
                 ) : null}
@@ -3539,20 +3834,94 @@ export default function WorkspaceScreen() {
                           </View>
                         </View>
                       </View>
+
+                      <View
+                        style={{
+                          width: "100%",
+                          maxWidth: wizardGridMaxWidth,
+                          alignSelf: "center",
+                          borderRadius: 30,
+                          borderWidth: 1,
+                          borderColor: "rgba(255,255,255,0.08)",
+                          backgroundColor: "rgba(255,255,255,0.03)",
+                          paddingHorizontal: 18,
+                          paddingVertical: 18,
+                          gap: 16,
+                        }}
+                      >
+                        <View style={{ flexDirection: "row", gap: 16, alignItems: "center" }}>
+                          <View style={{ flex: 1, gap: 6 }}>
+                            <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>
+                              Your masterpiece will be ready in ~15 seconds
+                            </Text>
+                            <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
+                              {expectationPreviewCopy}
+                            </Text>
+                          </View>
+
+                          <View
+                            style={{
+                              width: 116,
+                              height: 148,
+                              borderRadius: 24,
+                              overflow: "hidden",
+                              borderWidth: 1,
+                              borderColor: "rgba(255,255,255,0.08)",
+                              backgroundColor: "#0f0f10",
+                            }}
+                          >
+                            <Image source={finalPreviewImage} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
+                            <LinearGradient
+                              colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.2)", "rgba(0,0,0,0.84)"]}
+                              style={{ position: "absolute", inset: 0 }}
+                            />
+                            <View style={{ position: "absolute", left: 10, right: 10, bottom: 10 }}>
+                              <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: "rgba(255,255,255,0.14)", paddingHorizontal: 8, paddingVertical: 5 }}>
+                                <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" }}>
+                                  Preview
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                          {finalSelectionChips.map((item) => (
+                            <View
+                              key={item.label}
+                              style={{
+                                borderRadius: 999,
+                                borderWidth: 1,
+                                borderColor: item.active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
+                                backgroundColor: item.active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
+                                paddingHorizontal: 12,
+                                paddingVertical: 8,
+                              }}
+                            >
+                              <Text style={{ color: item.active ? "#f5d0fe" : "#d4d4d8", fontSize: 12, fontWeight: "600" }}>
+                                {item.label}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
                     </>
                   ) : (
                     <>
                       <View style={wizardSectionHeaderStyle}>
                         <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
-                          Refine the creative direction
+                          {stepFourTitle}
                         </Text>
                         <Text style={wizardSectionBodyStyle}>
-                          Set the design intensity and palette family before Darkor.ai reveals your final composition.
+                          {stepFourDescription}
                         </Text>
                       </View>
 
                       <View style={{ gap: 12, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
-                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4, textAlign: "center" }}>Mode</Text>
+                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4, textAlign: "center" }}>Choose Redesign Mode</Text>
+                        <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22, textAlign: "center" }}>
+                          Pick a softer lift to keep the layout recognizable, or choose a full transformation for a more dramatic redesign.
+                        </Text>
                         <View style={wizardModeGridStyle}>
                           {MODE_OPTIONS.map((mode, index) => {
                             const active = selectedModeId === mode.id;
@@ -3563,7 +3932,7 @@ export default function WorkspaceScreen() {
                                   onPress={() => handleSelectMode(mode.id)}
                                   className="cursor-pointer rounded-[26px] border px-5 py-5"
                                   style={{
-                                    minHeight: 188,
+                                    minHeight: 284,
                                     borderWidth: active ? 1.5 : 1,
                                     borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
                                     backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
@@ -3579,6 +3948,7 @@ export default function WorkspaceScreen() {
                                     <Text style={{ color: "#ffffff", fontSize: 21, fontWeight: "700", lineHeight: 28 }}>{mode.title}</Text>
                                     <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>{mode.description}</Text>
                                   </View>
+                                  <ModeDifferencePreview mode={mode} active={active} />
                                 </LuxPressable>
                               </MotiView>
                             );
@@ -3587,7 +3957,10 @@ export default function WorkspaceScreen() {
                       </View>
 
                       <View style={{ gap: 12, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
-                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4, textAlign: "center" }}>Palette</Text>
+                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4, textAlign: "center" }}>Select Palette</Text>
+                        <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22, textAlign: "center" }}>
+                          Applied to: walls, furniture, and accent pieces
+                        </Text>
                         <View style={wizardPaletteGridStyle}>
                           {PALETTE_OPTIONS.slice(0, 8).map((palette, index) => {
                             const active = selectedPaletteId === palette.id;
@@ -3619,6 +3992,112 @@ export default function WorkspaceScreen() {
                               </MotiView>
                             );
                           })}
+                        </View>
+                      </View>
+
+                      <View
+                        style={{
+                          width: "100%",
+                          maxWidth: wizardGridMaxWidth,
+                          alignSelf: "center",
+                          borderRadius: 30,
+                          borderWidth: 1,
+                          borderColor: wizardSurfaceBorderColor,
+                          backgroundColor: wizardSurfaceColor,
+                          overflow: "hidden",
+                        }}
+                      >
+                        {selectedImage ? (
+                          <View style={{ height: 232 }}>
+                            <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={140} cachePolicy="memory-disk" />
+                            <LinearGradient
+                              colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.82)"]}
+                              locations={[0, 0.5, 1]}
+                              style={{ position: "absolute", inset: 0 }}
+                            />
+                          </View>
+                        ) : null}
+
+                        <View style={{ paddingHorizontal: 18, paddingTop: 18, paddingBottom: 20, gap: 16 }}>
+                          <View style={{ gap: 8 }}>
+                            <Text style={{ color: "#ffffff", fontSize: 23, fontWeight: "700", letterSpacing: -0.45 }}>
+                              Ready for the payoff
+                            </Text>
+                            <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
+                              Darkor.ai will combine your selected room, style, mode, and palette into one polished high-end redesign.
+                            </Text>
+                          </View>
+
+                          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+                            {finalSelectionChips.map((item) => (
+                              <View
+                                key={item.label}
+                                style={{
+                                  borderRadius: 999,
+                                  borderWidth: 1,
+                                  borderColor: item.active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
+                                  backgroundColor: item.active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
+                                  paddingHorizontal: 12,
+                                  paddingVertical: 8,
+                                }}
+                              >
+                                <Text style={{ color: item.active ? "#f5d0fe" : "#d4d4d8", fontSize: 12, fontWeight: "600" }}>
+                                  {item.label}
+                                </Text>
+                              </View>
+                            ))}
+                          </View>
+                        </View>
+                      </View>
+
+                      <View
+                        style={{
+                          width: "100%",
+                          maxWidth: wizardGridMaxWidth,
+                          alignSelf: "center",
+                          borderRadius: 30,
+                          borderWidth: 1,
+                          borderColor: "rgba(255,255,255,0.08)",
+                          backgroundColor: "rgba(255,255,255,0.03)",
+                          paddingHorizontal: 18,
+                          paddingVertical: 18,
+                          gap: 16,
+                        }}
+                      >
+                        <View style={{ flexDirection: "row", gap: 16, alignItems: "center" }}>
+                          <View style={{ flex: 1, gap: 6 }}>
+                            <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>
+                              Your masterpiece will be ready in ~15 seconds
+                            </Text>
+                            <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
+                              {expectationPreviewCopy}
+                            </Text>
+                          </View>
+
+                          <View
+                            style={{
+                              width: 116,
+                              height: 148,
+                              borderRadius: 24,
+                              overflow: "hidden",
+                              borderWidth: 1,
+                              borderColor: "rgba(255,255,255,0.08)",
+                              backgroundColor: "#0f0f10",
+                            }}
+                          >
+                            <Image source={finalPreviewImage} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
+                            <LinearGradient
+                              colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.2)", "rgba(0,0,0,0.84)"]}
+                              style={{ position: "absolute", inset: 0 }}
+                            />
+                            <View style={{ position: "absolute", left: 10, right: 10, bottom: 10 }}>
+                              <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: "rgba(255,255,255,0.14)", paddingHorizontal: 8, paddingVertical: 5 }}>
+                                <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" }}>
+                                  Preview
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
                         </View>
                       </View>
                     </>
@@ -3887,7 +4366,7 @@ export default function WorkspaceScreen() {
           style={{
             bottom: bottomBarOffset,
             zIndex: 120,
-            paddingBottom: Math.max(insets.bottom + (isPhotoStep ? 16 : 12), isPhotoStep ? 28 : 24),
+            paddingBottom: Math.max(insets.bottom + (isPhotoStep ? 16 : isGenerationReviewStep ? 18 : 12), isPhotoStep ? 28 : isGenerationReviewStep ? 30 : 24),
             borderTopWidth: 1,
             borderTopColor: "rgba(255,255,255,0.06)",
             backgroundColor: wizardBackgroundColor,
@@ -3898,101 +4377,166 @@ export default function WorkspaceScreen() {
             elevation: 24,
           }}
         >
-          <View style={{ position: "relative" }}>
-            <MotiView
-              pointerEvents="none"
-              animate={
-                shouldPulseContinue
-                  ? { opacity: [0.16, 0.32, 0.16], scale: [0.985, 1.02, 0.985] }
-                  : { opacity: 0, scale: 1 }
-              }
-              transition={shouldPulseContinue ? { duration: 2100, loop: true } : { duration: 180 }}
-              style={{
-                position: "absolute",
-                left: 4,
-                right: 4,
-                top: 2,
-                bottom: 2,
-                borderRadius: continueButtonRadius + 4,
-                backgroundColor: "#d946ef",
-              }}
-            />
-
-            <MotiView
-              animate={shouldPulseContinue ? { scale: [1, 1.01, 1], translateY: [0, -1, 0] } : { scale: 1, translateY: 0 }}
-              transition={shouldPulseContinue ? { duration: 2100, loop: true } : { duration: 180 }}
-            >
-              <LuxPressable
-                onPress={handleContinue}
-                disabled={isContinueDisabled}
-                pressableClassName="cursor-pointer"
-                className="cursor-pointer"
-                style={{ width: "100%" }}
+          <View style={{ gap: isRefineDirectionStep ? 12 : 0 }}>
+            {isRefineDirectionStep ? (
+              <View
+                style={{
+                  borderRadius: 22,
+                  borderWidth: 1,
+                  borderColor: isContinueActive ? "rgba(217,70,239,0.22)" : "rgba(255,255,255,0.08)",
+                  backgroundColor: "rgba(9,9,11,0.92)",
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  gap: 10,
+                }}
               >
-                {isContinueActive ? (
-                  <LinearGradient
-                    colors={isPhotoStep ? ["#d946ef", "#4f46e5"] : ["#d946ef", "#7c3aed"]}
-                    start={{ x: 0, y: 0.5 }}
-                    end={{ x: 1, y: 0.5 }}
-                    style={{
-                      width: "100%",
-                      minHeight: continueButtonHeight,
-                      borderRadius: continueButtonRadius,
-                      opacity: continueButtonOpacity,
-                      overflow: "hidden",
-                    }}
-                  >
-                    {isPhotoStep ? (
-                      <MotiView
-                        pointerEvents="none"
-                        animate={shouldPulseContinue ? { translateX: [-140, 260], opacity: [0, 0.2, 0] } : { translateX: 0, opacity: 0 }}
-                        transition={shouldPulseContinue ? { duration: 1800, loop: true } : { duration: 140 }}
+                <View style={{ gap: 4 }}>
+                  <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700" }}>
+                    Ready to generate?
+                  </Text>
+                  <Text style={{ color: wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
+                    {isContinueActive
+                      ? "Your selections are locked in. Generate to see Darkor.ai turn this direction into a polished redesign."
+                      : "Choose a redesign mode and palette to unlock your final render."}
+                  </Text>
+                </View>
+
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                  {[
+                    { label: selectedMode?.title ?? "Mode not selected", active: Boolean(selectedMode) },
+                    { label: selectedPalette?.label ?? "Palette not selected", active: Boolean(selectedPalette) },
+                  ].map((item) => (
+                    <View
+                      key={item.label}
+                      style={{
+                        borderRadius: 999,
+                        borderWidth: 1,
+                        borderColor: item.active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
+                        backgroundColor: item.active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                      }}
+                    >
+                      <Text style={{ color: item.active ? "#f5d0fe" : "#d4d4d8", fontSize: 12, fontWeight: "600" }}>
+                        {item.label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : null}
+
+            <View style={{ position: "relative" }}>
+              <MotiView
+                pointerEvents="none"
+                animate={
+                  shouldPulseContinue
+                    ? { opacity: [0.16, 0.32, 0.16], scale: [0.985, 1.02, 0.985] }
+                    : { opacity: 0, scale: 1 }
+                }
+                transition={shouldPulseContinue ? { duration: 2100, loop: true } : { duration: 180 }}
+                style={{
+                  position: "absolute",
+                  left: 4,
+                  right: 4,
+                  top: 2,
+                  bottom: 2,
+                  borderRadius: continueButtonRadius + 4,
+                  backgroundColor: "#d946ef",
+                }}
+              />
+
+              <MotiView
+                animate={shouldPulseContinue ? { scale: [1, 1.01, 1], translateY: [0, -1, 0] } : { scale: 1, translateY: 0 }}
+                transition={shouldPulseContinue ? { duration: 2100, loop: true } : { duration: 180 }}
+              >
+                <LuxPressable
+                  onPress={handleContinue}
+                  disabled={isContinueDisabled}
+                  pressableClassName="cursor-pointer"
+                  className="cursor-pointer"
+                  style={{ width: "100%" }}
+                >
+                  {isContinueActive ? (
+                    <LinearGradient
+                      colors={isPhotoStep ? ["#d946ef", "#4f46e5"] : ["#d946ef", "#7c3aed"]}
+                      start={{ x: 0, y: 0.5 }}
+                      end={{ x: 1, y: 0.5 }}
+                      style={{
+                        width: "100%",
+                        minHeight: continueButtonHeight,
+                        borderRadius: continueButtonRadius,
+                        opacity: continueButtonOpacity,
+                        overflow: "hidden",
+                      }}
+                    >
+                      {isPhotoStep ? (
+                        <MotiView
+                          pointerEvents="none"
+                          animate={shouldPulseContinue ? { translateX: [-140, 260], opacity: [0, 0.2, 0] } : { translateX: 0, opacity: 0 }}
+                          transition={shouldPulseContinue ? { duration: 1800, loop: true } : { duration: 140 }}
+                          style={{
+                            position: "absolute",
+                            top: -10,
+                            bottom: -10,
+                            width: 88,
+                            backgroundColor: "rgba(255,255,255,0.26)",
+                            transform: [{ skewX: "-18deg" }],
+                          }}
+                        />
+                      ) : null}
+                      <View
                         style={{
-                          position: "absolute",
-                          top: -10,
-                          bottom: -10,
-                          width: 88,
-                          backgroundColor: "rgba(255,255,255,0.26)",
-                          transform: [{ skewX: "-18deg" }],
+                          width: "100%",
+                          minHeight: continueButtonHeight,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          paddingHorizontal: 20,
+                          gap: isGenerationReviewStep ? 4 : 0,
                         }}
-                      />
-                    ) : null}
+                      >
+                        {isGenerationReviewStep ? (
+                          <Text style={{ color: "rgba(255,255,255,0.74)", fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" }}>
+                            Final Step
+                          </Text>
+                        ) : null}
+                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                          {isGenerationReviewStep ? <Sparkles color="#ffffff" size={20} strokeWidth={2.2} /> : null}
+                          <Text style={{ color: "#ffffff", fontSize: isGenerationReviewStep ? 22 : 17, fontWeight: "700", textAlign: "center" }}>
+                            {continueLabel}
+                          </Text>
+                        </View>
+                      </View>
+                    </LinearGradient>
+                  ) : (
                     <View
                       style={{
                         width: "100%",
                         minHeight: continueButtonHeight,
+                        borderRadius: continueButtonRadius,
+                        backgroundColor: "rgba(39,39,42,0.82)",
+                        opacity: continueButtonOpacity,
+                        borderWidth: 0,
+                        borderColor: "transparent",
                         alignItems: "center",
                         justifyContent: "center",
                         paddingHorizontal: 20,
                       }}
                     >
-                      <Text style={{ color: "#ffffff", fontSize: 17, fontWeight: "700", textAlign: "center" }}>
+                      <Text style={{ color: "#9ca3af", fontSize: 17, fontWeight: "600", textAlign: "center" }}>
                         {continueLabel}
                       </Text>
                     </View>
-                  </LinearGradient>
-                ) : (
-                  <View
-                    style={{
-                      width: "100%",
-                      minHeight: continueButtonHeight,
-                      borderRadius: continueButtonRadius,
-                      backgroundColor: "rgba(39,39,42,0.82)",
-                      opacity: continueButtonOpacity,
-                      borderWidth: 0,
-                      borderColor: "transparent",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      paddingHorizontal: 20,
-                    }}
-                  >
-                    <Text style={{ color: "#9ca3af", fontSize: 17, fontWeight: "600", textAlign: "center" }}>
-                      {continueLabel}
-                    </Text>
-                  </View>
-                )}
-              </LuxPressable>
-            </MotiView>
+                  )}
+                </LuxPressable>
+              </MotiView>
+            </View>
+
+            {isGenerationReviewStep ? (
+              <Text style={{ color: isContinueActive ? "#f5d0fe" : "#a1a1aa", fontSize: 13, fontWeight: "600", textAlign: "center", marginTop: 10 }}>
+                {generationCreditLabel}
+              </Text>
+            ) : null}
           </View>
         </View>
         ) : null}
@@ -4246,6 +4790,15 @@ export default function WorkspaceScreen() {
         : "Curated inside your premium Darkor board.";
     const editorImageSource = editorImageUrl ? { uri: editorImageUrl } : null;
     const beforeImageSource = beforeImageUrl ? { uri: beforeImageUrl } : null;
+    const processingStyleStatusLabel =
+      editorStyleLabel.trim().length > 30 || editorStyleLabel.toLowerCase() === "custom"
+        ? "custom direction"
+        : editorStyleLabel;
+    const processingStatuses = [
+      "Analyzing architecture...",
+      `Applying ${processingStyleStatusLabel}...`,
+      "Polishing 4K details...",
+    ];
 
     if (!activeBoardItem) {
       return (
@@ -4290,6 +4843,235 @@ export default function WorkspaceScreen() {
             }
             removeClippedSubviews
           />
+        </View>
+      );
+    }
+
+    if (isEditorProcessing) {
+      return (
+        <View className="flex-1 bg-black" style={{ backgroundColor: "#050507" }}>
+          <View
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundColor: "#050507",
+            }}
+          >
+            <MotiView
+              animate={{ opacity: [0.18, 0.34, 0.18], scale: [0.96, 1.04, 0.96] }}
+              transition={{ duration: 2600, loop: true }}
+              style={{
+                position: "absolute",
+                top: "10%",
+                left: -40,
+                width: 260,
+                height: 260,
+                borderRadius: 999,
+                backgroundColor: "rgba(217,70,239,0.16)",
+              }}
+            />
+            <MotiView
+              animate={{ opacity: [0.12, 0.26, 0.12], scale: [0.98, 1.02, 0.98] }}
+              transition={{ duration: 2800, loop: true }}
+              style={{
+                position: "absolute",
+                right: -30,
+                bottom: "14%",
+                width: 240,
+                height: 240,
+                borderRadius: 999,
+                backgroundColor: "rgba(79,70,229,0.14)",
+              }}
+            />
+          </View>
+
+          <View className="px-5" style={{ paddingTop: Math.max(insets.top + 10, 20), zIndex: 2 }}>
+            <View className="flex-row items-center justify-between">
+              <View className="rounded-full border border-white/10 bg-zinc-950/90 px-4 py-2" style={{ borderWidth: 0.5 }}>
+                <Text className="text-sm font-semibold text-white">{"Diamonds " + creditBalance}</Text>
+              </View>
+              <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>AI Processing</Text>
+              <LuxPressable
+                onPress={handleCloseBoardEditor}
+                className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
+                style={{ borderWidth: 0.5 }}
+              >
+                <Close color="#ffffff" size={18} strokeWidth={2.2} />
+              </LuxPressable>
+            </View>
+          </View>
+
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{
+              flexGrow: 1,
+              paddingHorizontal: 20,
+              paddingTop: 28,
+              paddingBottom: Math.max(insets.bottom + 34, 42),
+            }}
+            contentInsetAdjustmentBehavior="never"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={{ flex: 1, justifyContent: "center", gap: 24 }}>
+              <View style={{ alignItems: "center", gap: 10 }}>
+                <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(217,70,239,0.24)", backgroundColor: "rgba(217,70,239,0.12)", paddingHorizontal: 14, paddingVertical: 8 }}>
+                  <Text style={{ color: "#f5d0fe", fontSize: 11, fontWeight: "700", letterSpacing: 1.1, textTransform: "uppercase" }}>
+                    Neural Render Pipeline
+                  </Text>
+                </View>
+                <Text style={{ color: "#ffffff", fontSize: 32, fontWeight: "800", textAlign: "center", letterSpacing: -0.8 }}>
+                  Generating your design
+                </Text>
+                <Text style={{ color: "#d4d4d8", fontSize: 15, lineHeight: 24, textAlign: "center", maxWidth: 360 }}>
+                  Your masterpiece will be ready in ~15 seconds.
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  borderRadius: 36,
+                  borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.08)",
+                  backgroundColor: "rgba(12,12,16,0.92)",
+                  paddingHorizontal: 18,
+                  paddingVertical: 18,
+                  gap: 18,
+                }}
+              >
+                <View
+                  style={{
+                    height: Math.min(Math.max(width * 1.08, 340), 430),
+                    borderRadius: 30,
+                    overflow: "hidden",
+                    borderWidth: 1,
+                    borderColor: "rgba(255,255,255,0.08)",
+                    backgroundColor: "#0f0f10",
+                  }}
+                >
+                  {beforeImageSource ? (
+                    <Image source={beforeImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+                  ) : (
+                    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                      <Sparkles color="#71717a" size={30} />
+                    </View>
+                  )}
+                  <LinearGradient
+                    colors={["rgba(6,6,8,0.08)", "rgba(6,6,8,0.28)", "rgba(6,6,8,0.82)"]}
+                    locations={[0, 0.4, 1]}
+                    style={{ position: "absolute", inset: 0 }}
+                  />
+                  <MotiView
+                    animate={{ translateY: ["-28%", "118%"], opacity: [0, 0.55, 0] }}
+                    transition={{ duration: 1800, loop: true }}
+                    style={{
+                      position: "absolute",
+                      left: 10,
+                      right: 10,
+                      height: 124,
+                      borderRadius: 30,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <LinearGradient
+                      colors={["rgba(255,255,255,0)", "rgba(217,70,239,0.28)", "rgba(255,255,255,0)"]}
+                      locations={[0, 0.5, 1]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={{ flex: 1 }}
+                    />
+                  </MotiView>
+                  <MotiView
+                    animate={{ translateY: ["-16%", "112%"], opacity: [0, 0.78, 0] }}
+                    transition={{ duration: 1800, loop: true }}
+                    style={{
+                      position: "absolute",
+                      left: 20,
+                      right: 20,
+                      height: 36,
+                      borderRadius: 999,
+                      backgroundColor: "rgba(255,255,255,0.18)",
+                    }}
+                  />
+
+                  <View style={{ position: "absolute", left: 16, right: 16, top: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(0,0,0,0.4)", paddingHorizontal: 12, paddingVertical: 7 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "700", letterSpacing: 0.9, textTransform: "uppercase" }}>
+                        Source Photo
+                      </Text>
+                    </View>
+                    <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "rgba(18,6,26,0.72)", paddingHorizontal: 12, paddingVertical: 7 }}>
+                      <Text style={{ color: "#f5d0fe", fontSize: 11, fontWeight: "700", letterSpacing: 0.9, textTransform: "uppercase" }}>
+                        {editorStyleLabel}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={{ position: "absolute", left: 16, right: 16, bottom: 16, flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                    {[editorRoomLabel, selectedModeOrDefault?.title, selectedPaletteOrDefault?.label]
+                      .filter((item): item is string => Boolean(item))
+                      .map((item) => (
+                      <View
+                        key={item}
+                        style={{
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: "rgba(255,255,255,0.1)",
+                          backgroundColor: "rgba(0,0,0,0.38)",
+                          paddingHorizontal: 11,
+                          paddingVertical: 7,
+                        }}
+                      >
+                        <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "700" }}>{item}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={{ gap: 12 }}>
+                  {processingStatuses.map((status, index) => {
+                    const active = index === processingStatusIndex;
+                    const completed = index < processingStatusIndex;
+                    return (
+                      <MotiView
+                        key={status}
+                        animate={active ? { opacity: [0.78, 1, 0.78], scale: [0.995, 1, 0.995] } : { opacity: completed ? 0.9 : 0.5, scale: 1 }}
+                        transition={active ? { duration: 1400, loop: true } : { duration: 180 }}
+                        style={{
+                          borderRadius: 24,
+                          borderWidth: 1,
+                          borderColor: active ? "rgba(217,70,239,0.28)" : "rgba(255,255,255,0.08)",
+                          backgroundColor: active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
+                          paddingHorizontal: 16,
+                          paddingVertical: 14,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 12,
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: 26,
+                            height: 26,
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: completed || active ? "rgba(217,70,239,0.28)" : "rgba(255,255,255,0.12)",
+                            backgroundColor: completed ? "rgba(217,70,239,0.22)" : active ? "rgba(217,70,239,0.16)" : "rgba(255,255,255,0.04)",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {completed ? <Check color="#f5d0fe" size={14} strokeWidth={2.4} /> : <View style={{ width: 8, height: 8, borderRadius: 999, backgroundColor: active ? "#f5d0fe" : "#71717a" }} />}
+                        </View>
+                        <Text style={{ color: active || completed ? "#ffffff" : "#d4d4d8", fontSize: 15, fontWeight: active ? "700" : "600", flex: 1 }}>
+                          {status}
+                        </Text>
+                      </MotiView>
+                    );
+                  })}
+                </View>
+              </View>
+            </View>
+          </ScrollView>
         </View>
       );
     }
@@ -4552,6 +5334,7 @@ export default function WorkspaceScreen() {
   }
 
 }
+
 
 
 

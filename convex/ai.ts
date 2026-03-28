@@ -1,4 +1,4 @@
-import { internalActionGeneric, internalMutationGeneric } from "convex/server";
+import { actionGeneric, internalActionGeneric, internalMutationGeneric } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
@@ -28,6 +28,17 @@ type GeminiResponse = {
   promptFeedback?: {
     blockReason?: string;
   };
+};
+
+type DetectionPoint = {
+  x: number;
+  y: number;
+};
+
+type DetectionResponse = {
+  confidence?: number;
+  polygons?: DetectionPoint[][];
+  reason?: string;
 };
 
 function trimOptional(value?: string | null) {
@@ -259,6 +270,95 @@ function extractGeneratedImage(response: GeminiResponse) {
   throw new ConvexError("Gemini returned no image.");
 }
 
+function extractTextResponse(response: GeminiResponse) {
+  const candidates = Array.isArray(response.candidates) ? response.candidates : [];
+  const textParts: string[] = [];
+  for (const candidate of candidates) {
+    const parts = candidate.content?.parts ?? [];
+    for (const part of parts) {
+      if (typeof part.text === "string" && part.text.trim().length > 0) {
+        textParts.push(part.text.trim());
+      }
+    }
+  }
+
+  const blockReason = response.promptFeedback?.blockReason;
+  if (!textParts.length && blockReason) {
+    throw new ConvexError(normalizeGenerationError(`Gemini blocked the request (${blockReason}).`));
+  }
+
+  if (!textParts.length) {
+    throw new ConvexError("Gemini returned no detection result.");
+  }
+
+  return textParts.join("\n");
+}
+
+function parseJsonPayload<T>(raw: string): T {
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
+  const candidate = fenced ?? raw;
+  const start = candidate.indexOf("{");
+  const end = candidate.lastIndexOf("}");
+  const jsonText = start >= 0 && end >= start ? candidate.slice(start, end + 1) : candidate;
+  return JSON.parse(jsonText) as T;
+}
+
+function clampDetectionCoordinate(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(1000, Math.round(value)));
+}
+
+function sanitizeDetectionResponse(raw: DetectionResponse) {
+  const confidence = Math.max(0, Math.min(100, Math.round(raw.confidence ?? 0)));
+  const polygons = Array.isArray(raw.polygons)
+    ? raw.polygons
+        .map((polygon) =>
+          Array.isArray(polygon)
+            ? polygon
+                .map((point) => ({
+                  x: clampDetectionCoordinate(point?.x ?? 0),
+                  y: clampDetectionCoordinate(point?.y ?? 0),
+                }))
+                .filter((point, index, points) => {
+                  if (index === 0) return true;
+                  const previous = points[index - 1];
+                  return previous.x !== point.x || previous.y !== point.y;
+                })
+            : [],
+        )
+        .filter((polygon) => polygon.length >= 3)
+    : [];
+
+  return {
+    confidence,
+    polygons,
+    reason: trimOptional(raw.reason) ?? null,
+  };
+}
+
+function buildDetectionPrompt(target: "paint" | "floor") {
+  const subject =
+    target === "paint"
+      ? "all visible wall surfaces that should be repaintable"
+      : "all visible floor surfaces that should be restylable";
+  const exclusions =
+    target === "paint"
+      ? "furniture, windows, doors, trim, baseboards, ceiling, art, mirrors, lamps, rugs, and flooring"
+      : "walls, baseboards, rugs, mats, furniture, furniture legs, decor, stairs, and reflections";
+
+  return [
+    `Analyze this interior photo and detect ${subject}.`,
+    `Exclude ${exclusions}.`,
+    "Return JSON only with this exact shape:",
+    '{"confidence": 0, "polygons": [[{"x": 0, "y": 0}]], "reason": ""}',
+    "Use image-space coordinates from 0 to 1000 for both x and y.",
+    "Each polygon should tightly trace one contiguous editable surface.",
+    "Return up to 8 polygons.",
+    "If confidence is below 70 or the target surface is unclear, return confidence below 70 and an empty polygons array.",
+    "Do not include markdown fences or any text outside the JSON object.",
+  ].join(" ");
+}
+
 function resolveImageSize(speedTier?: SpeedTier) {
   return speedTier === "ultra" ? "4K" : "2K";
 }
@@ -471,5 +571,50 @@ export const generateDesign: any = internalActionGeneric({
       });
       throw new ConvexError(message);
     }
+  },
+});
+
+export const detectEditMask: any = actionGeneric({
+  args: {
+    imageStorageId: v.id("_storage"),
+    target: v.union(v.literal("paint"), v.literal("floor")),
+  },
+  handler: async (ctx, args) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new ConvexError(normalizeGenerationError("Missing GEMINI_API_KEY in Convex environment variables."));
+    }
+
+    const sourceBlob = await ctx.storage.get(args.imageStorageId);
+    if (!sourceBlob) {
+      throw new ConvexError("The source image could not be loaded from storage.");
+    }
+
+    const response = await requestGeminiWithRetry(
+      JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: buildDetectionPrompt(args.target) },
+              {
+                inlineData: {
+                  mimeType: sourceBlob.type || "image/jpeg",
+                  data: await blobToBase64(sourceBlob),
+                },
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 2048,
+        },
+      }),
+      apiKey,
+    );
+
+    const payload = (await response.json()) as GeminiResponse;
+    const rawText = extractTextResponse(payload);
+    return sanitizeDetectionResponse(parseJsonPayload<DetectionResponse>(rawText));
   },
 });

@@ -1,6 +1,8 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { Camera, Check, Plus, X } from "lucide-react-native";
+import { MotiView } from "moti";
+import { Camera, Check, ImagePlus, X } from "lucide-react-native";
+import { Children, cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
 import { ScrollView, Text, View, StyleSheet, useWindowDimensions, type ImageSourcePropType } from "react-native";
 
 import { DS, HAIRLINE, glowShadow } from "../lib/design-system";
@@ -19,7 +21,6 @@ type ServiceIntakeStepProps = {
   subtext: string;
   examples: ServiceExamplePhoto[];
   selectedImageUri?: string | null;
-  selectedImageLabel?: string | null;
   onClearSelection?: () => void;
   onUploadPress: () => void;
   onCameraPress: () => void;
@@ -33,6 +34,12 @@ type ServiceSelectionCardProps = {
   width: number;
   active: boolean;
   onPress: () => void;
+  fullWidth?: boolean;
+  recommended?: boolean;
+};
+
+type ServiceSelectionGridProps = {
+  children: ReactNode;
 };
 
 export function ServiceIntakeStep({
@@ -40,7 +47,6 @@ export function ServiceIntakeStep({
   subtext,
   examples,
   selectedImageUri,
-  selectedImageLabel,
   onClearSelection,
   onUploadPress,
   onCameraPress,
@@ -74,14 +80,9 @@ export function ServiceIntakeStep({
           {selectedImageUri ? (
             <>
               <Image source={{ uri: selectedImageUri }} style={styles.selectedImagePreview} contentFit="cover" transition={140} cachePolicy="memory-disk" />
-              <LinearGradient
-                colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.12)", "rgba(0,0,0,0.56)"]}
-                locations={[0, 0.45, 1]}
-                style={StyleSheet.absoluteFillObject}
-              />
               <View style={styles.selectedImageBadge}>
-                <Text style={styles.selectedImageBadgeLabel}>{selectedImageLabel ?? "Photo ready"}</Text>
-                <Text style={styles.selectedImageBadgeText}>Continue when you're ready to map the next step.</Text>
+                <Check color="#DCFCE7" size={14} strokeWidth={2.7} />
+                <Text style={styles.selectedImageBadgeLabel}>Photo ready</Text>
               </View>
               {onClearSelection ? (
                 <LuxPressable
@@ -100,26 +101,46 @@ export function ServiceIntakeStep({
               ) : null}
             </>
           ) : (
-            <View style={styles.plusTile}>
-              <Plus color="#FFFFFF" size={32} strokeWidth={2.2} />
-            </View>
+            <MotiView
+              pointerEvents="none"
+              animate={{ opacity: [0.46, 0.92, 0.46], scale: [0.994, 1.006, 0.994] }}
+              transition={{ duration: 2000, loop: true, type: "timing" }}
+              style={styles.dashedUploadFrame}
+            >
+              <View style={styles.uploadIconWrap}>
+                <LinearGradient
+                  colors={["rgba(168,85,247,0.24)", "rgba(124,58,237,0.08)"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.uploadIconBadge}
+                >
+                  <ImagePlus color="#F5F3FF" size={28} strokeWidth={1.9} />
+                </LinearGradient>
+              </View>
+              <View style={styles.uploadEmptyCopy}>
+                <Text style={styles.uploadEmptyTitle}>Tap to add your photo</Text>
+                <Text style={styles.uploadEmptyText}>or drag from your gallery</Text>
+              </View>
+            </MotiView>
           )}
         </LinearGradient>
       </LuxPressable>
 
-      <LuxPressable
-        onPress={onCameraPress}
-        className={pointerClassName}
-        pressableClassName={pointerClassName}
-        style={styles.cameraButtonWrap}
-        glowColor="rgba(255,255,255,0.05)"
-        scale={0.99}
-      >
-        <View style={styles.cameraButton}>
-          <Camera color="#FFFFFF" size={18} strokeWidth={2.1} />
-          <Text style={styles.cameraText}>Use Camera</Text>
-        </View>
-      </LuxPressable>
+      {!selectedImageUri ? (
+        <LuxPressable
+          onPress={onCameraPress}
+          className={pointerClassName}
+          pressableClassName={pointerClassName}
+          style={styles.cameraButtonWrap}
+          glowColor="rgba(255,255,255,0.05)"
+          scale={0.99}
+        >
+          <View style={styles.cameraButton}>
+            <Camera color="#FFFFFF" size={18} strokeWidth={2.1} />
+            <Text style={styles.cameraText}>Use Camera</Text>
+          </View>
+        </LuxPressable>
+      ) : null}
 
       <View style={styles.examplesSection}>
         <Text style={styles.examplesTitle}>Example Photos</Text>
@@ -153,38 +174,77 @@ export function ServiceIntakeStep({
 
 export function ServiceSelectionCard({
   title,
-  description,
+  description: _description,
   image,
   width,
   active,
   onPress,
+  fullWidth = false,
+  recommended = false,
 }: ServiceSelectionCardProps) {
   return (
     <LuxPressable
       onPress={onPress}
       className={pointerClassName}
       pressableClassName={pointerClassName}
-      style={{ width }}
+      style={{ width: fullWidth ? "100%" : width }}
       glowColor={active ? "rgba(217,70,239,0.22)" : "rgba(255,255,255,0.04)"}
       scale={0.99}
     >
       <View style={[styles.selectionCard, active ? styles.selectionCardActive : null]}>
         <View style={styles.selectionImageWrap}>
           <Image source={image} style={styles.selectionImage} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+          <LinearGradient
+            colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.2)", "rgba(0,0,0,0.84)", "rgba(0,0,0,0.96)"]}
+            locations={[0, 0.18, 0.72, 1]}
+            style={styles.selectionGradient}
+            pointerEvents="none"
+          />
           {active ? (
-            <View style={styles.selectionBadge}>
+            <View style={[styles.selectionBadge, recommended ? styles.selectionBadgeOffset : null]}>
               <Check color="#FFFFFF" size={14} strokeWidth={2.6} />
             </View>
           ) : null}
-        </View>
-        <View style={styles.selectionCopy}>
-          <Text style={styles.selectionTitle}>{title}</Text>
-          <Text style={[styles.selectionDescription, active ? styles.selectionDescriptionActive : null]} numberOfLines={2}>
-            {description}
-          </Text>
+          {recommended ? (
+            <View style={styles.selectionRecommendedBadge}>
+              <Text style={styles.selectionRecommendedText}>Recommended</Text>
+            </View>
+          ) : null}
+          <View style={[styles.selectionCopy, fullWidth ? styles.selectionCopyCentered : null]}>
+            <Text
+              style={[styles.selectionTitle, fullWidth ? styles.selectionTitleCentered : null]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.82}
+            >
+              {title}
+            </Text>
+          </View>
         </View>
       </View>
     </LuxPressable>
+  );
+}
+
+export function ServiceSelectionGrid({ children }: ServiceSelectionGridProps) {
+  const items = Children.toArray(children);
+  const hasOddLastItem = items.length % 2 === 1;
+  const lastIndex = items.length - 1;
+
+  return (
+    <View style={styles.selectionGrid}>
+      {items.map((child, index) => {
+        const isLastOddItem = hasOddLastItem && index === lastIndex;
+        if (!isValidElement(child)) {
+          return <View key={`selection-grid-item-${index}`}>{child}</View>;
+        }
+
+        return cloneElement(child as ReactElement<ServiceSelectionCardProps>, {
+          fullWidth: isLastOddItem,
+          recommended: isLastOddItem,
+        });
+      })}
+    </View>
   );
 }
 
@@ -228,31 +288,48 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     ...glowShadow("rgba(255,255,255,0.02)", 16),
   },
+  dashedUploadFrame: {
+    width: "87%",
+    height: "87%",
+    borderRadius: 28,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "rgba(124,58,237,0.88)",
+    backgroundColor: "rgba(124,58,237,0.05)",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 18,
+    paddingHorizontal: 24,
+    ...glowShadow("rgba(124,58,237,0.18)", 18),
+  },
   selectedImagePreview: {
     ...StyleSheet.absoluteFillObject,
   },
   selectedImageBadge: {
     position: "absolute",
-    left: 18,
-    right: 18,
-    bottom: 18,
-    gap: 4,
+    top: 16,
+    right: 16,
+    minHeight: 34,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: HAIRLINE,
+    borderColor: "rgba(74,222,128,0.42)",
+    backgroundColor: "rgba(22,101,52,0.84)",
   },
   selectedImageBadgeLabel: {
-    color: "#FFFFFF",
-    fontSize: 17,
+    color: "#F0FDF4",
+    fontSize: 12,
     fontWeight: "800",
-    letterSpacing: -0.3,
-  },
-  selectedImageBadgeText: {
-    color: "rgba(255,255,255,0.82)",
-    fontSize: 13,
-    lineHeight: 18,
+    letterSpacing: -0.1,
   },
   clearSelectionButton: {
     position: "absolute",
     top: 16,
-    right: 16,
+    left: 16,
     width: 40,
     height: 40,
     borderRadius: 999,
@@ -262,15 +339,38 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.12)",
     backgroundColor: "rgba(10,10,12,0.82)",
   },
-  plusTile: {
-    width: 92,
-    height: 92,
-    borderRadius: 28,
-    borderWidth: HAIRLINE,
-    borderColor: "rgba(255,255,255,0.14)",
-    backgroundColor: "rgba(255,255,255,0.05)",
+  uploadIconWrap: {
     alignItems: "center",
     justifyContent: "center",
+  },
+  uploadIconBadge: {
+    width: 92,
+    height: 92,
+    borderRadius: 26,
+    borderWidth: HAIRLINE,
+    borderColor: "rgba(192,132,252,0.28)",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    alignItems: "center",
+    justifyContent: "center",
+    ...glowShadow("rgba(124,58,237,0.22)", 18),
+  },
+  uploadEmptyCopy: {
+    gap: 6,
+    alignItems: "center",
+  },
+  uploadEmptyTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "800",
+    letterSpacing: -0.35,
+    textAlign: "center",
+  },
+  uploadEmptyText: {
+    color: "rgba(212,212,216,0.82)",
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: "center",
+    maxWidth: 210,
   },
   cameraButtonWrap: {
     alignSelf: "center",
@@ -302,8 +402,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   examplesRailContent: {
-    gap: 12,
-    paddingRight: 2,
+    gap: 14,
+    paddingHorizontal: 2,
   },
   exampleCard: {
     flex: 1,
@@ -318,6 +418,8 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   selectionCard: {
+    flex: 1,
+    minHeight: 252,
     borderRadius: 24,
     overflow: "hidden",
     borderWidth: HAIRLINE,
@@ -329,12 +431,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(168,85,247,0.08)",
   },
   selectionImageWrap: {
-    aspectRatio: 1,
+    flex: 1,
     backgroundColor: "#111214",
   },
   selectionImage: {
-    width: "100%",
-    height: "100%",
+    ...StyleSheet.absoluteFillObject,
+  },
+  selectionGradient: {
+    ...StyleSheet.absoluteFillObject,
   },
   selectionBadge: {
     position: "absolute",
@@ -349,24 +453,53 @@ const styles = StyleSheet.create({
     borderWidth: HAIRLINE,
     borderColor: "rgba(255,255,255,0.2)",
   },
+  selectionBadgeOffset: {
+    right: 120,
+  },
+  selectionRecommendedBadge: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+    minHeight: 28,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(12,12,16,0.78)",
+    borderWidth: HAIRLINE,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  selectionRecommendedText: {
+    color: "#F5E9FF",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.1,
+  },
   selectionCopy: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 16,
-    gap: 6,
+    position: "absolute",
+    left: 14,
+    right: 14,
+    bottom: 14,
+  },
+  selectionCopyCentered: {
+    alignItems: "center",
   },
   selectionTitle: {
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "800",
+    lineHeight: 22,
     letterSpacing: -0.35,
+    textShadowColor: "rgba(0,0,0,0.38)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
-  selectionDescription: {
-    color: "#C9CBD1",
-    fontSize: 13,
-    lineHeight: 19,
+  selectionTitleCentered: {
+    textAlign: "center",
   },
-  selectionDescriptionActive: {
-    color: SERVICE_WIZARD_THEME.colors.accentText,
+  selectionGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 14,
   },
 });

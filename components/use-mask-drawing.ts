@@ -9,6 +9,7 @@ export type MaskPoint = {
 
 export type MaskStroke = {
   id: string;
+  kind?: "stroke" | "region";
   width: number;
   points: MaskPoint[];
   path: string;
@@ -51,6 +52,24 @@ function buildSmoothPath(points: MaskPoint[]) {
   const last = points[points.length - 1];
   path += ` L ${last.x} ${last.y}`;
   return path;
+}
+
+function buildClosedPath(points: MaskPoint[]) {
+  if (!points.length) return "";
+  const [first, ...rest] = points;
+  let path = `M ${first.x} ${first.y}`;
+  for (const point of rest) {
+    path += ` L ${point.x} ${point.y}`;
+  }
+  path += " Z";
+  return path;
+}
+
+function buildCompoundClosedPath(regions: MaskPoint[][]) {
+  return regions
+    .filter((points) => points.length >= 3)
+    .map((points) => buildClosedPath(points))
+    .join(" ");
 }
 
 function cloneStroke(stroke: MaskStroke | null) {
@@ -125,6 +144,7 @@ export function useMaskDrawing({
       const point = clampPoint({ x, y }, canvasSize.width, canvasSize.height);
       const stroke: MaskStroke = {
         id: `mask-stroke-${strokeIdRef.current++}`,
+        kind: "stroke",
         width: brushWidth,
         points: [point],
         path: buildSmoothPath([point]),
@@ -200,6 +220,31 @@ export function useMaskDrawing({
     setIsDrawing(false);
     setStrokes([]);
   }, []);
+
+  const replaceMaskWithRegions = useCallback(
+    (regions: MaskPoint[][]) => {
+      const sanitizedRegions = regions.filter((points) => points.length >= 3);
+      currentStrokeRef.current = null;
+      activePointRef.current = null;
+      setCurrentStroke(null);
+      setActivePoint(null);
+      setIsDrawing(false);
+      setStrokes(
+        sanitizedRegions.length
+          ? [
+              {
+                id: `mask-region-${strokeIdRef.current++}`,
+                kind: "region" as const,
+                width: 0,
+                points: sanitizedRegions[0],
+                path: buildCompoundClosedPath(sanitizedRegions),
+              },
+            ]
+          : [],
+      );
+    },
+    [],
+  );
 
   const resetMaskDrawing = useCallback((options?: { resetBrush?: boolean }) => {
     clearMask();
@@ -279,6 +324,7 @@ export function useMaskDrawing({
     clearMask,
     undoLastStroke,
     resetMaskDrawing,
+    replaceMaskWithRegions,
     drawGesture,
     sliderGesture,
     loupeMetrics,

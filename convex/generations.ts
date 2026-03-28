@@ -564,6 +564,9 @@ export const markGenerationReady = internalMutationGeneric({
     if (!generation) {
       throw new ConvexError("Generation not found");
     }
+    if (generation.status !== "processing") {
+      return { ok: false, status: generation.status ?? "failed" };
+    }
     await ctx.db.patch(args.generationId, {
       storageId: args.storageId,
       imageUrl: undefined,
@@ -573,7 +576,7 @@ export const markGenerationReady = internalMutationGeneric({
     });
 
     const imageUrl = await ctx.storage.getUrl(args.storageId);
-    return { ok: true, imageUrl };
+    return { ok: true, imageUrl, status: "ready" as const };
   },
 });
 
@@ -585,16 +588,50 @@ export const markGenerationFailed = internalMutationGeneric({
   },
   handler: async (ctx, args) => {
     const generation = await ctx.db.get(args.generationId);
-    if (generation) {
-      await ctx.db.patch(args.generationId, {
-        status: "failed",
-        errorMessage: args.errorMessage,
-        completedAt: Date.now(),
-      });
+    if (!generation) {
+      return { ok: true, skipped: true };
     }
+
+    if (generation.status !== "processing") {
+      return { ok: true, skipped: true };
+    }
+
+    await ctx.db.patch(args.generationId, {
+      status: "failed",
+      errorMessage: args.errorMessage,
+      completedAt: Date.now(),
+    });
 
     await releaseGenerationAllowance(ctx, args.ownerId);
     return { ok: true };
+  },
+});
+
+export const cancelGeneration = mutationGeneric({
+  args: {
+    anonymousId: v.optional(v.string()),
+    id: v.id("generations"),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await ensureGenerationViewer(ctx, args.anonymousId);
+    const item = await ctx.db.get(args.id);
+    if (!item) {
+      throw new Error("Generation not found");
+    }
+    if (item.userId !== viewer.userId) {
+      throw new Error("Forbidden");
+    }
+    if (item.status !== "processing") {
+      return { ok: true, cancelled: false };
+    }
+
+    await ctx.db.patch(args.id, {
+      status: "failed",
+      errorMessage: "Cancelled by user.",
+      completedAt: Date.now(),
+    });
+    await releaseGenerationAllowance(ctx, viewer.userId);
+    return { ok: true, cancelled: true };
   },
 });
 
@@ -682,10 +719,15 @@ export const runGenerationJob = internalActionGeneric({
       await waitForMinimumDuration(startedAt, (args.speedTier as SpeedTier | undefined) ?? "standard");
       generatedStorageId = (await ctx.storage.store(blob)) as string;
 
-      await ctx.runMutation((internal as any).generations.markGenerationReady, {
+      const readyState = (await ctx.runMutation((internal as any).generations.markGenerationReady, {
         generationId: args.generationId,
         storageId: generatedStorageId,
-      });
+      })) as { ok: boolean; status?: string };
+
+      if (!readyState.ok) {
+        await ctx.storage.delete(generatedStorageId as any);
+        return { ok: false, storageId: generatedStorageId, status: readyState.status ?? "failed" };
+      }
 
       return { ok: true, storageId: generatedStorageId };
     } catch (error) {
