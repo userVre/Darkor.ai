@@ -17,6 +17,8 @@ import {
   ActionSheetIOS,
   Alert,
   Linking,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   ScrollView,
   Share,
   Text,
@@ -70,6 +72,7 @@ import { uploadLocalFileToCloud } from "../../lib/native-upload";
 import { FloorWizard } from "../../components/floor-wizard";
 import { LuxPressable } from "../../components/lux-pressable";
 import { PaintWizard } from "../../components/paint-wizard";
+import { ServiceContinueButton } from "../../components/service-continue-button";
 import { ServiceWizardHeader } from "../../components/service-wizard-header";
 import { useWorkspaceDraft } from "../../components/workspace-context";
 import { useViewerSession } from "../../components/viewer-session-context";
@@ -204,7 +207,21 @@ type ModeOption = {
 type RoomCardMeta = {
   icon: any;
   description: string;
-  image?: number;
+  image: number;
+};
+
+type StyleCardBadgeTone = "amber" | "green" | "violet";
+
+type StyleCardBadge = {
+  label: string;
+  tone: StyleCardBadgeTone;
+};
+
+type ConfirmationSummaryChip = {
+  key: string;
+  title: string;
+  value: string;
+  missing: boolean;
 };
 
 type PaintTool = "brush" | "eraser" | "object";
@@ -527,13 +544,13 @@ const STYLE_LIBRARY: StyleLibraryItem[] = [
   {
     id: "luxury",
     title: "Luxury",
-    description: "Statement chandeliers, marble drama, and bespoke warmth.",
+    description: "Chandeliers, velvet, and drama.",
     image: require("../../assets/media/styles/style-luxury.jpg"),
   },
   {
     id: "japandi",
     title: "Japandi",
-    description: "Soft natural calm with minimal Nordic restraint.",
+    description: "Natural calm with clean structure.",
     image: require("../../assets/media/styles/style-japandi.jpg"),
   },
   {
@@ -703,7 +720,7 @@ const EXTERIOR_STYLE_LIBRARY: ExteriorStyleItem[] = [
     id: "brutalist",
     title: "Brutalist",
     description: "Stronger concrete forms with a sculpted urban presence.",
-    image: require("../../assets/media/styles/style-brutalist.jpg"),
+    image: require("../../assets/media/styles/style-exterior-brutalist.jpg"),
     icon: Building2,
     eyebrow: "Sculptural",
   },
@@ -711,7 +728,7 @@ const EXTERIOR_STYLE_LIBRARY: ExteriorStyleItem[] = [
     id: "gothic",
     title: "Gothic",
     description: "Vertical drama, ornamental silhouettes, and moody depth.",
-    image: require("../../assets/media/styles/style-vintage.jpg"),
+    image: require("../../assets/media/styles/style-exterior-gothic.jpg"),
     icon: BadgeCheck,
     eyebrow: "Dramatic",
   },
@@ -849,6 +866,125 @@ const CUSTOM_STYLE_EXAMPLE_PROMPTS = [
   "Reimagine the patio as a Mediterranean outdoor lounge with curved built-ins, olive trees, and sunset warmth.",
 ];
 
+const CUSTOM_STYLE_COLLAGE_IMAGES = [
+  require("../../assets/media/styles/style-modern.jpg"),
+  require("../../assets/media/styles/style-japandi.jpg"),
+  require("../../assets/media/styles/style-luxury.jpg"),
+  require("../../assets/media/styles/style-mediterranean.jpg"),
+] as const;
+
+const STYLE_PREVIEW_OUTPUTS: Record<string, number> = {
+  modern: require("../../assets/media/styles/style-modern.jpg"),
+  luxury: require("../../assets/media/styles/style-luxury.jpg"),
+  japandi: require("../../assets/media/styles/style-japandi.jpg"),
+  cyberpunk: require("../../assets/media/styles/style-cyberpunk.jpg"),
+  tropical: require("../../assets/media/styles/style-tropical.jpg"),
+  minimalist: require("../../assets/media/styles/style-minimalist.jpg"),
+  scandinavian: require("../../assets/media/styles/style-scandinavian.jpg"),
+  bohemian: require("../../assets/media/styles/style-bohemian.jpg"),
+  midcentury: require("../../assets/media/styles/style-midcentury.jpg"),
+  "art-deco": require("../../assets/media/styles/style-art-deco.jpg"),
+  coastal: require("../../assets/media/styles/style-coastal.jpg"),
+  rustic: require("../../assets/media/styles/style-rustic.jpg"),
+  vintage: require("../../assets/media/styles/style-vintage.jpg"),
+  mediterranean: require("../../assets/media/styles/style-mediterranean.jpg"),
+  glam: require("../../assets/media/styles/style-glam.jpg"),
+  "coastal-retreat": require("../../assets/media/styles/style-coastal-alt.jpg"),
+  "rustic-manor": require("../../assets/media/styles/style-rustic-alt.jpg"),
+  "hollywood-regency": require("../../assets/media/styles/style-hollywood-regency.jpg"),
+  "hollywood-regency-noir": require("../../assets/media/styles/style-hollywood-regency-alt.jpg"),
+  "neo-classic": require("../../assets/media/styles/style-neo-classic.jpg"),
+  "neo-classical": require("../../assets/media/styles/style-neo-classic-alt.jpg"),
+  "shabby-chic": require("../../assets/media/styles/style-shabby-chic.jpg"),
+  "french-country": require("../../assets/media/styles/style-french-country.jpg"),
+  brutalist: require("../../assets/media/styles/style-brutalist.jpg"),
+  "art-nouveau": require("../../assets/media/styles/style-art-nouveau.jpg"),
+  gothic: require("../../assets/media/styles/style-vintage.jpg"),
+  italianate: require("../../assets/media/styles/style-french-country.jpg"),
+  chinese: require("../../assets/media/styles/style-art-nouveau.jpg"),
+  zen: require("../../assets/media/styles/style-japandi.jpg"),
+  custom: require("../../assets/media/styles/style-luxury.jpg"),
+};
+
+function getStyleCardBadge(style: Pick<DisplayStyleCard, "id" | "title" | "isCustom">): StyleCardBadge | null {
+  if (style.isCustom) {
+    return { label: "Bespoke", tone: "violet" };
+  }
+
+  const normalizedId = style.id.toLowerCase();
+  const normalizedTitle = style.title.toLowerCase();
+  if (normalizedId === "modern" || normalizedId === "japandi" || normalizedTitle === "modern" || normalizedTitle === "japandi") {
+    return { label: "Trending", tone: "amber" };
+  }
+
+  if (normalizedId === "luxury" || normalizedTitle === "luxury") {
+    return { label: "Popular", tone: "green" };
+  }
+
+  return null;
+}
+
+function getStyleCardBadgeColors(tone: StyleCardBadgeTone) {
+  switch (tone) {
+    case "amber":
+      return {
+        borderColor: "rgba(251,191,36,0.42)",
+        backgroundColor: "rgba(120,53,15,0.84)",
+        textColor: "#FEF3C7",
+      };
+    case "green":
+      return {
+        borderColor: "rgba(74,222,128,0.34)",
+        backgroundColor: "rgba(20,83,45,0.82)",
+        textColor: "#DCFCE7",
+      };
+    default:
+      return {
+        borderColor: "rgba(216,180,254,0.34)",
+        backgroundColor: "rgba(76,29,149,0.82)",
+        textColor: "#F5E9FF",
+      };
+  }
+}
+
+function normalizeStylePreviewKey(value: string | null | undefined) {
+  return (value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/\s+/g, "-");
+}
+
+function getStylePreviewImage(styleName: string | null | undefined, fallbackImage: number) {
+  const normalized = normalizeStylePreviewKey(styleName);
+  return STYLE_PREVIEW_OUTPUTS[normalized] ?? fallbackImage;
+}
+
+function resolveMissingWorkspaceSelectionLabel({
+  hasImage,
+  hasRoom,
+  hasStyle,
+  hasMode,
+  hasPalette,
+}: {
+  hasImage: boolean;
+  hasRoom: boolean;
+  hasStyle: boolean;
+  hasMode: boolean;
+  hasPalette: boolean;
+}) {
+  if (!hasImage) return "photo";
+  if (!hasRoom) return "room";
+  if (!hasStyle) return "style";
+  if (!hasMode) return "mode";
+  if (!hasPalette) return "palette";
+  return null;
+}
+
+function shouldSpanFullWidthInTwoColumnGrid(index: number, totalItems: number, columnCount: number) {
+  return columnCount === 2 && totalItems % 2 === 1 && index === totalItems - 1;
+}
+
 const PALETTE_OPTIONS: PaletteOption[] = [
   {
     id: "surprise",
@@ -924,6 +1060,8 @@ const PALETTE_OPTIONS: PaletteOption[] = [
   },
 ];
 
+const POPULAR_PALETTE_IDS = new Set(["surprise", "gray"]);
+
 const ASPECT_RATIO_OPTIONS: AspectRatioOption[] = [
   {
     id: "post",
@@ -988,12 +1126,12 @@ const ROOM_CARD_META: Record<string, RoomCardMeta> = {
   Nursery: {
     icon: Baby,
     description: "Soft comfort with practical balance.",
-    image: require("../../assets/media/discover/home/home-nursery.jpg"),
+    image: require("../../assets/media/rooms/room-nursery.jpg"),
   },
   "Home Theater": {
     icon: Projector,
     description: "Immersive cinematic ambiance.",
-    image: require("../../assets/media/discover/home/home-home-theater.jpg"),
+    image: require("../../assets/media/rooms/room-home-theater.jpg"),
   },
   "Gaming Room": {
     icon: Monitor,
@@ -1038,12 +1176,12 @@ const ROOM_CARD_META: Record<string, RoomCardMeta> = {
   Retail: {
     icon: Store,
     description: "Street-facing brand appeal.",
-    image: require("../../assets/media/discover/exterior/exterior-retail-store.jpg"),
+    image: require("../../assets/media/discover/exterior/exterior-retail-storefront.jpg"),
   },
   Garage: {
     icon: CarFront,
     description: "Polished practical shell.",
-    image: require("../../assets/media/discover/exterior/exterior-garage-suite.jpg"),
+    image: require("../../assets/media/discover/exterior/exterior-premium-garage.jpg"),
   },
   Backyard: {
     icon: Trees,
@@ -1102,17 +1240,150 @@ const MODE_OPTIONS: ModeOption[] = [
 
 function ModeDifferencePreview({ mode, active }: { mode: ModeOption; active: boolean }) {
   const isSubtleMode = mode.id === "preserve";
-  const beforeBorderColor = active ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.08)";
+  const beforeBorderColor = active ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.08)";
   const beforeSurfaceColor = "rgba(255,255,255,0.03)";
   const afterBorderColor = isSubtleMode
     ? active
-      ? "rgba(244,114,182,0.34)"
-      : "rgba(244,114,182,0.22)"
+      ? "rgba(251,146,60,0.42)"
+      : "rgba(251,146,60,0.24)"
     : active
-      ? "rgba(217,70,239,0.4)"
+      ? "rgba(217,70,239,0.44)"
       : "rgba(217,70,239,0.28)";
-  const afterSurfaceColor = isSubtleMode ? "rgba(244,114,182,0.08)" : "rgba(217,70,239,0.12)";
-  const accentColor = isSubtleMode ? "#fb7185" : "#d946ef";
+  const afterSurfaceColor = isSubtleMode ? "rgba(251,146,60,0.09)" : "rgba(217,70,239,0.12)";
+  const wallColor = isSubtleMode ? "#B58D72" : "#6D28D9";
+  const floorColor = isSubtleMode ? "#6F5548" : "#2A1A42";
+  const sofaColor = isSubtleMode ? "#D9C1A8" : "#EC4899";
+  const accentColor = isSubtleMode ? "#F59E0B" : "#F472B6";
+
+  const RoomPanel = ({
+    variant,
+    borderColor,
+    backgroundColor,
+  }: {
+    variant: "before" | "subtle" | "transform";
+    borderColor: string;
+    backgroundColor: string;
+  }) => {
+    const isBefore = variant === "before";
+    const isTransform = variant === "transform";
+
+    return (
+      <View
+        style={{
+          flex: 1,
+          borderRadius: 18,
+          borderWidth: 1,
+          borderColor,
+          backgroundColor,
+          paddingHorizontal: 10,
+          paddingVertical: 10,
+          overflow: "hidden",
+        }}
+      >
+        <View
+          style={{
+            position: "absolute",
+            left: 10,
+            right: 10,
+            top: 10,
+            height: 34,
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+            backgroundColor: isBefore ? "rgba(255,255,255,0.04)" : wallColor,
+          }}
+        />
+        <View
+          style={{
+            position: "absolute",
+            left: 10,
+            right: 10,
+            bottom: 10,
+            height: 28,
+            borderBottomLeftRadius: 12,
+            borderBottomRightRadius: 12,
+            backgroundColor: isBefore ? "rgba(255,255,255,0.06)" : floorColor,
+          }}
+        />
+        <View
+          style={{
+            position: "absolute",
+            left: 24,
+            top: 18,
+            width: isTransform ? 20 : 16,
+            height: isTransform ? 24 : 18,
+            borderRadius: 6,
+            borderWidth: 1,
+            borderColor: isBefore ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.22)",
+            backgroundColor: isBefore ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.14)",
+          }}
+        />
+        <View
+          style={{
+            position: "absolute",
+            right: 18,
+            top: isTransform ? 24 : 20,
+            width: isTransform ? 26 : 30,
+            height: isTransform ? 4 : 2,
+            borderRadius: 999,
+            backgroundColor: isBefore ? "rgba(255,255,255,0.08)" : accentColor,
+          }}
+        />
+        <View
+          style={{
+            position: "absolute",
+            left: isTransform ? 18 : 16,
+            bottom: 34,
+            width: isTransform ? 34 : 42,
+            height: isTransform ? 22 : 18,
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+            borderBottomLeftRadius: 8,
+            borderBottomRightRadius: 8,
+            borderWidth: 1,
+            borderColor: isBefore ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.16)",
+            backgroundColor: isBefore ? "rgba(255,255,255,0.04)" : sofaColor,
+          }}
+        />
+        <View
+          style={{
+            position: "absolute",
+            left: isTransform ? 58 : 64,
+            bottom: isTransform ? 30 : 33,
+            width: isTransform ? 12 : 10,
+            height: isTransform ? 28 : 18,
+            borderRadius: 6,
+            backgroundColor: isBefore ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.2)",
+          }}
+        />
+        <View
+          style={{
+            position: "absolute",
+            right: isTransform ? 18 : 16,
+            bottom: isTransform ? 38 : 36,
+            width: isTransform ? 24 : 18,
+            height: isTransform ? 16 : 10,
+            borderRadius: 7,
+            borderWidth: 1,
+            borderColor: isBefore ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.18)",
+            backgroundColor: isBefore ? "rgba(255,255,255,0.03)" : accentColor,
+          }}
+        />
+        {isTransform ? (
+          <View
+            style={{
+              position: "absolute",
+              right: 32,
+              bottom: 26,
+              width: 18,
+              height: 18,
+              borderRadius: 999,
+              backgroundColor: "rgba(255,255,255,0.18)",
+            }}
+          />
+        ) : null}
+      </View>
+    );
+  };
 
   return (
     <View style={{ marginTop: 18, gap: 10 }}>
@@ -1127,63 +1398,12 @@ function ModeDifferencePreview({ mode, active }: { mode: ModeOption; active: boo
       </View>
 
       <View style={{ flexDirection: "row", gap: 10 }}>
-        <View
-          style={{
-            flex: 1,
-            borderRadius: 18,
-            borderWidth: 1,
-            borderColor: beforeBorderColor,
-            backgroundColor: beforeSurfaceColor,
-            paddingHorizontal: 12,
-            paddingVertical: 12,
-            gap: 8,
-          }}
-        >
-          <View style={{ width: "38%", height: 12, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.14)" }} />
-          <View style={{ width: "82%", height: 10, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.08)" }} />
-          <View style={{ width: "100%", height: 22, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.05)" }} />
-        </View>
-
-        <View
-          style={{
-            flex: 1,
-            borderRadius: 18,
-            borderWidth: 1,
-            borderColor: afterBorderColor,
-            backgroundColor: afterSurfaceColor,
-            paddingHorizontal: 12,
-            paddingVertical: 12,
-            gap: 8,
-          }}
-        >
-          <View style={{ flexDirection: "row", gap: 6 }}>
-            <View
-              style={{
-                width: isSubtleMode ? 34 : 24,
-                height: isSubtleMode ? 14 : 20,
-                borderRadius: 999,
-                backgroundColor: isSubtleMode ? "rgba(251,113,133,0.18)" : "rgba(217,70,239,0.22)",
-              }}
-            />
-            <View
-              style={{
-                width: isSubtleMode ? 16 : 22,
-                height: isSubtleMode ? 14 : 20,
-                borderRadius: 999,
-                backgroundColor: isSubtleMode ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.12)",
-              }}
-            />
-          </View>
-          <View style={{ width: isSubtleMode ? "86%" : "68%", height: 10, borderRadius: 999, backgroundColor: accentColor }} />
-          <View
-            style={{
-              width: isSubtleMode ? "100%" : "74%",
-              height: isSubtleMode ? 22 : 30,
-              borderRadius: 12,
-              backgroundColor: isSubtleMode ? "rgba(255,255,255,0.08)" : "rgba(217,70,239,0.24)",
-            }}
-          />
-        </View>
+        <RoomPanel variant="before" borderColor={beforeBorderColor} backgroundColor={beforeSurfaceColor} />
+        <RoomPanel
+          variant={isSubtleMode ? "subtle" : "transform"}
+          borderColor={afterBorderColor}
+          backgroundColor={afterSurfaceColor}
+        />
       </View>
 
       <Text style={{ color: active ? "#f5d0fe" : "#d4d4d8", fontSize: 12.5, lineHeight: 18 }}>
@@ -1463,6 +1683,8 @@ export default function WorkspaceScreen() {
   const [customPromptDraft, setCustomPromptDraft] = useState("");
   const [isCustomPromptViewOpen, setIsCustomPromptViewOpen] = useState(false);
   const [selectedPaletteId, setSelectedPaletteId] = useState<string | null>(null);
+  const [refinePaletteSectionY, setRefinePaletteSectionY] = useState(0);
+  const [showRefineStickyLabel, setShowRefineStickyLabel] = useState(false);
   const [selectedAspectRatioId, setSelectedAspectRatioId] = useState<AspectRatioOption["id"]>("post");
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [generationId, setGenerationId] = useState<string | null>(null);
@@ -1783,7 +2005,7 @@ export default function WorkspaceScreen() {
           title: option,
           icon: meta.icon,
           description: meta.description,
-          image: meta.image ?? DEFAULT_SPACE_IMAGE,
+          image: meta.image,
         };
       }),
     [spaceOptions],
@@ -1816,7 +2038,6 @@ export default function WorkspaceScreen() {
       title: style.title,
       description: style.description,
       image: style.image,
-      eyebrow: style.eyebrow,
       icon: "icon" in style ? style.icon : undefined,
       isCustom: false,
     }));
@@ -1834,7 +2055,6 @@ export default function WorkspaceScreen() {
             ? customPrompt.trim()
             : "Write your own design brief for a one-of-one art direction.",
         image: null,
-        eyebrow: "Bespoke",
         icon: Sparkles,
         isCustom: true,
       },
@@ -1850,14 +2070,41 @@ export default function WorkspaceScreen() {
     [isLeanGenerationService, selectedMode],
   );
   const finalPreviewImage = useMemo(() => {
-    const selectedStyleCard = displayedStyleCards.find((card) => card.title === selectedStyle && card.image);
-    if (selectedStyleCard?.image) {
-      return selectedStyleCard.image;
-    }
-
     const selectedSpaceCard = spaceCatalogItems.find((card) => card.title === selectedRoom);
-    return selectedSpaceCard?.image ?? DEFAULT_SPACE_IMAGE;
-  }, [displayedStyleCards, selectedRoom, selectedStyle, spaceCatalogItems]);
+    const fallbackImage = selectedSpaceCard?.image ?? DEFAULT_SPACE_IMAGE;
+    return getStylePreviewImage(selectedStyle, fallbackImage);
+  }, [selectedRoom, selectedStyle, spaceCatalogItems]);
+  const previewThumbnailLabel = `Sample output \u00b7 ${selectedStyle ?? "Custom"}`;
+  const confirmationSummaryChips = useMemo<ConfirmationSummaryChip[]>(
+    () => [
+      {
+        key: "room",
+        title: "Room Type",
+        value: selectedRoom ?? "\u26a0 Missing",
+        missing: !selectedRoom,
+      },
+      {
+        key: "style",
+        title: "Style",
+        value: selectedStyle ?? "\u26a0 Missing",
+        missing: !selectedStyle,
+      },
+      {
+        key: "mode",
+        title: "Mode",
+        value: selectedMode?.title ?? "\u26a0 Missing",
+        missing: !selectedMode,
+      },
+      {
+        key: "palette",
+        title: "Palette",
+        value: selectedPalette?.label ?? "\u26a0 Missing",
+        missing: !selectedPalette,
+      },
+    ],
+    [selectedMode, selectedPalette, selectedRoom, selectedStyle],
+  );
+  const hasBrokenGenerateSummary = confirmationSummaryChips.some((item) => item.missing);
 
   const hasPaidAccess = diagnostic ? true : me?.hasPaidAccess ?? false;
   const canExport4k = diagnostic ? true : me?.canExport4k ?? false;
@@ -1879,13 +2126,35 @@ export default function WorkspaceScreen() {
       : GUEST_TESTING_STARTER_CREDITS;
   const hasGenerationCredits = creditBalance > 0;
   const remainingCreditsAfterGenerate = Math.max(creditBalance - 1, 0);
-  const generationCreditLabel = hasGenerationCredits
-    ? `Uses 1 credit (${remainingCreditsAfterGenerate} remaining)`
-    : "Requires 1 credit to generate";
+  const generationCreditLabel = `Uses 1 credit \u00b7 ${remainingCreditsAfterGenerate} remaining`;
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const showStyleScrollCue = !isPaintService && !isFloorService && displayedStyleCards.length > 6;
   const isDownloadingStandard = isDownloading === "standard";
   const isDownloadingUltra = isDownloading === "ultra";
+
+  useEffect(() => {
+    if (!(workflowStep === 3 && !isPaintService && !isFloorService && !isLeanGenerationService)) {
+      setShowRefineStickyLabel(false);
+    }
+  }, [isFloorService, isLeanGenerationService, isPaintService, workflowStep]);
+
+  const handleWizardScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (!(workflowStep === 3 && !isPaintService && !isFloorService && !isLeanGenerationService)) {
+        if (showRefineStickyLabel) {
+          setShowRefineStickyLabel(false);
+        }
+        return;
+      }
+
+      const threshold = Math.max(refinePaletteSectionY - 88, 0);
+      const nextVisible = refinePaletteSectionY > 0 && event.nativeEvent.contentOffset.y >= threshold;
+      if (nextVisible !== showRefineStickyLabel) {
+        setShowRefineStickyLabel(nextVisible);
+      }
+    },
+    [isFloorService, isLeanGenerationService, isPaintService, refinePaletteSectionY, showRefineStickyLabel, workflowStep],
+  );
   const openAuthWall = useCallback(
     (returnTo: string, resumeGeneration = false) => {
       setAwaitingAuth(resumeGeneration);
@@ -2074,6 +2343,48 @@ export default function WorkspaceScreen() {
     selectedRoom,
     selectedStyle,
     workflowStep,
+  ]);
+
+  const ensureWorkspaceSelectionsComplete = useCallback(() => {
+    const missingSelection = resolveMissingWorkspaceSelectionLabel({
+      hasImage: Boolean(selectedImage),
+      hasRoom: Boolean(selectedRoom),
+      hasStyle: Boolean(selectedStyle),
+      hasMode: isLeanGenerationService || isPaintService || isFloorService || Boolean(selectedModeId),
+      hasPalette: isLeanGenerationService || isPaintService || isFloorService || Boolean(selectedPaletteId),
+    });
+
+    if (!missingSelection) {
+      return true;
+    }
+
+    const fallbackStep =
+      missingSelection === "photo"
+        ? 0
+        : missingSelection === "room"
+          ? 1
+          : missingSelection === "style"
+            ? 2
+            : 3;
+
+    setWizardNavDirection(-1);
+    setWorkflowStep(fallbackStep);
+    showToast(
+      missingSelection === "mode" || missingSelection === "palette"
+        ? "Complete your style selections to generate."
+        : `Please select a ${missingSelection} to continue.`,
+    );
+    return false;
+  }, [
+    isFloorService,
+    isLeanGenerationService,
+    isPaintService,
+    selectedImage,
+    selectedModeId,
+    selectedPaletteId,
+    selectedRoom,
+    selectedStyle,
+    showToast,
   ]);
 
   const openSystemSettings = useCallback(() => {
@@ -2510,6 +2821,10 @@ export default function WorkspaceScreen() {
       return;
     }
 
+    if (!isPaintService && !isFloorService && !ensureWorkspaceSelectionsComplete()) {
+      return;
+    }
+
     if (isFloorService) {
       if (!selectedImage || !selectedRoom || !selectedStyle || !selectedFinishOption || !selectedFloorMaterialOption) {
         Alert.alert("Complete the steps", "Add a room photo, select your space type, curate a material, and choose a finish before continuing.");
@@ -2670,6 +2985,7 @@ export default function WorkspaceScreen() {
     openAuthWall,
     ratioSpec.ratioLabel,
     router,
+    ensureWorkspaceSelectionsComplete,
     selectedFinishOption,
     selectedFloorMaterialOption,
     selectedImage,
@@ -2892,12 +3208,16 @@ export default function WorkspaceScreen() {
         ),
       isPhotoStep ? 520 : 460,
     );
-    const continueButtonHeight = isPhotoStep ? 64 : isGenerationReviewStep ? 78 : isRefineDirectionStep ? 68 : 62;
-    const continueButtonRadius = isPhotoStep ? 20 : isGenerationReviewStep ? 30 : isRefineDirectionStep ? 26 : 24;
-    const isContinueDisabled = !canContinue || (isFinalWizardStep && isGenerating);
+    const showGenerateConfirmation = isGenerationReviewStep && !isPaintService && !isFloorService && !isLeanGenerationService && Boolean(selectedMode && selectedPalette);
+    const isContinueDisabled = !canContinue || (isFinalWizardStep && isGenerating) || (isGenerationReviewStep && hasBrokenGenerateSummary);
     const isContinueActive = canContinue && !isContinueDisabled;
-    const shouldPulseContinue = (isPhotoStep || isServiceFinishStep || isGenerationReviewStep || isRefineDirectionStep) ? isContinueActive : false;
-    const continueButtonOpacity = isContinueActive ? 1 : 0.58;
+    const shouldPulseContinue = isGenerationReviewStep && isContinueActive;
+    const continueHint =
+      isGenerationReviewStep && hasBrokenGenerateSummary
+        ? "Complete your style selections to generate."
+        : isGenerationReviewStep && !isContinueActive
+          ? "Please select a mode and palette to continue."
+          : null;
     const selectedCustomPromptBlocks = new Set(getPromptBlocks(customPromptDraft));
     const expectationPreviewCopy = isLeanGenerationService
       ? "A polished exterior concept with premium detailing, realistic materials, and architectural coherence."
@@ -2910,9 +3230,9 @@ export default function WorkspaceScreen() {
       : [
           { label: selectedRoom ?? "Space type not selected", active: Boolean(selectedRoom) },
           { label: selectedStyle ?? "Style direction not selected", active: Boolean(selectedStyle) },
-          { label: selectedModeOrDefault?.title ?? "Mode not selected", active: Boolean(selectedModeOrDefault) },
-          { label: selectedPaletteOrDefault?.label ?? "Palette not selected", active: Boolean(selectedPaletteOrDefault) },
-        ];
+          { label: selectedMode?.title ?? null, active: Boolean(selectedMode) },
+          { label: selectedPalette?.label ?? null, active: Boolean(selectedPalette) },
+        ].filter((item): item is { label: string; active: boolean } => Boolean(item.label));
     const stepOneTitle = isFloorService ? "Floor Restyle" : isPaintService ? "Add a Photo" : isGardenService ? "Add a Garden Photo" : isExteriorService ? "Add an Exterior Photo" : "Add a Photo";
     const emptyUploadTitle = isFloorService ? "Add Floor Photo" : isPaintService ? "Add a Photo" : isGardenService ? "Start Your Garden Redesign" : isExteriorService ? "Start Exterior Redesign" : "Start Redesigning";
     const stepOneDescription = isGardenService
@@ -2986,23 +3306,44 @@ export default function WorkspaceScreen() {
       gap: wizardModeGap,
     };
     const showContinueBar = !isCustomPromptViewOpen;
-    const continueLabel = isPhotoStep
-      ? "Continue"
-      : isFinalWizardStep
-        ? isGenerating
-        ? "Generating Design..."
-        : isLeanGenerateStep || isServiceFinishStep
-          ? hasGenerationCredits
-            ? "Generate Design"
-            : "Get more credits"
-          : hasGenerationCredits
-            ? "Generate Design"
-            : "Get more credits"
-      : isSpaceStep && (isPaintService || isFloorService)
-        ? "Continue to Step 3"
-      : isPaintSelectionStep || isFloorSelectionStep
-        ? "Continue to Refine"
-        : `Continue to Step ${currentStepNumber + 1}`;
+    const continueButtonVisible = true;
+    const continueLabel = isGenerating
+      ? "Generating Design..."
+      : isPhotoStep
+        ? "Continue \u2192"
+        : isSpaceStep && selectedRoom
+          ? `Continue with ${selectedRoom} \u2192`
+          : isStyleStep && selectedStyle
+            ? `Continue with ${selectedStyle} \u2192`
+            : "Generate My Design \u2192";
+    const stepButtonLabel = isPhotoStep
+      ? selectedImage
+        ? "Continue \u2192"
+        : "Add a Photo to Start"
+      : isSpaceStep
+        ? selectedRoom
+          ? `Continue with ${selectedRoom} \u2192`
+          : "Select a Space Type"
+        : isStyleStep
+          ? selectedStyle
+            ? `Continue with ${selectedStyle} \u2192`
+            : "Select a Style"
+          : "Generate My Design \u2192";
+    const stepButtonActive = isPhotoStep
+      ? Boolean(selectedImage)
+      : isSpaceStep
+        ? Boolean(selectedRoom)
+        : isStyleStep
+          ? Boolean(selectedStyle)
+          : isContinueActive;
+    const stepButtonAttention = isPhotoStep
+      ? Boolean(selectedImage)
+      : isSpaceStep
+        ? Boolean(selectedRoom)
+        : isStyleStep
+          ? Boolean(selectedStyle)
+          : false;
+    const stepButtonSupportingText = isGenerationReviewStep ? generationCreditLabel : null;
 
     return (
       <View className="flex-1" style={{ backgroundColor: wizardBackgroundColor }}>
@@ -3031,10 +3372,48 @@ export default function WorkspaceScreen() {
           </MotiView>
         ) : null}
 
+        <AnimatePresence>
+          {showRefineStickyLabel ? (
+            <MotiView
+              key="refine-direction-sticky-label"
+              from={{ opacity: 0, translateY: -8 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              exit={{ opacity: 0, translateY: -8 }}
+              transition={{ type: "timing", duration: 220 }}
+              style={{
+                position: "absolute",
+                top: insets.top + 12,
+                left: 20,
+                right: 20,
+                zIndex: 30,
+                alignItems: "center",
+              }}
+              pointerEvents="none"
+            >
+              <View
+                style={{
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.08)",
+                  backgroundColor: "rgba(9,9,11,0.88)",
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                }}
+              >
+                <Text style={{ color: "rgba(255,255,255,0.54)", fontSize: 12, fontWeight: "700", letterSpacing: 0.5 }}>
+                  Step 4: Refine Direction
+                </Text>
+              </View>
+            </MotiView>
+          ) : null}
+        </AnimatePresence>
+
         <ScrollView
           className="flex-1"
           style={{ backgroundColor: wizardBackgroundColor }}
           scrollEnabled
+          onScroll={handleWizardScroll}
+          scrollEventThrottle={16}
           contentContainerStyle={{
             flexGrow: 1,
             paddingHorizontal: isPhotoStep ? DS.spacing[3] : DS.spacing[2.5],
@@ -3344,9 +3723,10 @@ export default function WorkspaceScreen() {
                       <View style={wizardCenteredGridStyle}>
                         {spaceCatalogItems.map((item, index) => {
                           const active = selectedRoom === item.title;
+                          const isFullWidthRoomCard = shouldSpanFullWidthInTwoColumnGrid(index, spaceCatalogItems.length, wizardCardColumns);
                           const RoomIcon = item.icon;
                           return (
-                            <MotiView key={item.title} {...staggerFadeUp(index, 40)} style={{ width: wizardCardWidth }}>
+                            <MotiView key={item.title} {...staggerFadeUp(index, 40)} style={{ width: isFullWidthRoomCard ? "100%" : wizardCardWidth }}>
                               <LuxPressable
                                 onPress={() => handleSelectRoom(item.title)}
                                 className="cursor-pointer overflow-hidden rounded-[32px] border"
@@ -3390,27 +3770,26 @@ export default function WorkspaceScreen() {
                                           position: "absolute",
                                           right: 14,
                                           top: 14,
-                                          height: 34,
-                                          minWidth: 34,
-                                          paddingHorizontal: 10,
+                                          height: 36,
+                                          width: 36,
                                           alignItems: "center",
                                           justifyContent: "center",
                                           borderRadius: 999,
                                           borderWidth: 1,
-                                          borderColor: "rgba(255,107,242,0.48)",
-                                          backgroundColor: "rgba(18,6,26,0.84)",
+                                          borderColor: "rgba(255,255,255,0.22)",
+                                          backgroundColor: "#d946ef",
                                         }}
                                       >
-                                        <BadgeCheck color="#FF6BF2" size={16} strokeWidth={2} />
+                                        <Check color="#ffffff" size={16} strokeWidth={2.5} />
                                       </View>
                                     ) : null}
                                   </View>
 
-                                  <View style={{ flex: 1, gap: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16 }}>
-                                    <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", letterSpacing: -0.4 }}>
+                                  <View style={{ flex: 1, gap: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16, alignItems: isFullWidthRoomCard ? "center" : "flex-start" }}>
+                                    <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", letterSpacing: -0.4, textAlign: isFullWidthRoomCard ? "center" : "left" }}>
                                       {item.title}
                                     </Text>
-                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
+                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: isFullWidthRoomCard ? "center" : "left", maxWidth: isFullWidthRoomCard ? 320 : undefined }}>
                                       {item.description}
                                     </Text>
                                   </View>
@@ -3438,8 +3817,9 @@ export default function WorkspaceScreen() {
                       <View style={wizardCenteredGridStyle}>
                         {WALL_COLOR_OPTIONS.map((option, index) => {
                           const active = selectedStyle === option.title;
+                          const isFullWidthWallOption = shouldSpanFullWidthInTwoColumnGrid(index, WALL_COLOR_OPTIONS.length, wizardCardColumns);
                           return (
-                            <MotiView key={option.id} {...staggerFadeUp(index, 24)} style={{ width: wizardCardWidth }}>
+                            <MotiView key={option.id} {...staggerFadeUp(index, 24)} style={{ width: isFullWidthWallOption ? "100%" : wizardCardWidth }}>
                               <LuxPressable
                                 onPress={() => handleSelectStyle(option.title)}
                                 className="cursor-pointer rounded-[32px] border"
@@ -3500,8 +3880,9 @@ export default function WorkspaceScreen() {
                       <View style={wizardCenteredGridStyle}>
                         {FLOOR_MATERIAL_OPTIONS.map((material, index) => {
                           const active = selectedStyle === material.title;
+                          const isFullWidthMaterialCard = shouldSpanFullWidthInTwoColumnGrid(index, FLOOR_MATERIAL_OPTIONS.length, wizardCardColumns);
                           return (
-                            <MotiView key={material.id} {...staggerFadeUp(index, 24)} style={{ width: wizardCardWidth }}>
+                            <MotiView key={material.id} {...staggerFadeUp(index, 24)} style={{ width: isFullWidthMaterialCard ? "100%" : wizardCardWidth }}>
                               <LuxPressable
                                 onPress={() => handleSelectStyle(material.title)}
                                 className="cursor-pointer rounded-[32px] border"
@@ -3517,11 +3898,11 @@ export default function WorkspaceScreen() {
                                 }}
                               >
                                 <FloorMaterialPreview material={material} active={active} />
-                                <View style={{ gap: 8 }}>
-                                  <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.35 }}>
+                                <View style={{ gap: 8, alignItems: isFullWidthMaterialCard ? "center" : "flex-start" }}>
+                                  <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.35, textAlign: isFullWidthMaterialCard ? "center" : "left" }}>
                                     {material.title}
                                   </Text>
-                                  <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
+                                  <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: isFullWidthMaterialCard ? "center" : "left", maxWidth: isFullWidthMaterialCard ? 360 : undefined }}>
                                     {material.description}
                                   </Text>
                                 </View>
@@ -3563,9 +3944,12 @@ export default function WorkspaceScreen() {
                       <View style={wizardCenteredGridStyle}>
                         {displayedStyleCards.map((style, index) => {
                           const active = selectedStyle === style.title;
+                          const isFullWidthStyleCard = shouldSpanFullWidthInTwoColumnGrid(index, displayedStyleCards.length, wizardCardColumns);
                           const StyleIcon = style.icon ?? Sparkles;
+                          const styleBadge = getStyleCardBadge(style) ?? (isFullWidthStyleCard ? { label: "Editorial", tone: "violet" as const } : null);
+                          const badgeColors = styleBadge ? getStyleCardBadgeColors(styleBadge.tone) : null;
                           return (
-                            <MotiView key={style.id} {...staggerFadeUp(index, 22)} style={{ width: wizardCardWidth }}>
+                            <MotiView key={style.id} {...staggerFadeUp(index, 22)} style={{ width: isFullWidthStyleCard ? "100%" : wizardCardWidth }}>
                               <LuxPressable
                                 onPress={() => handleSelectStyle(style.title)}
                                 className="cursor-pointer overflow-hidden rounded-[30px] border"
@@ -3589,49 +3973,158 @@ export default function WorkspaceScreen() {
                                   </View>
                                 ) : (
                                   <LinearGradient
-                                    colors={["rgba(217,70,239,0.18)", "rgba(255,255,255,0.04)"]}
+                                    colors={["rgba(217,70,239,0.22)", "rgba(255,255,255,0.04)"]}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 1 }}
-                                    style={{ height: 136, alignItems: "center", justifyContent: "center" }}
+                                    style={{ height: 136, padding: 12 }}
                                   >
-                                    <Sparkles color="#d946ef" size={30} strokeWidth={2.1} />
+                                    <View style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                                      {CUSTOM_STYLE_COLLAGE_IMAGES.map((imageSource, collageIndex) => (
+                                        <View
+                                          key={`custom-style-collage-${collageIndex}`}
+                                          style={{
+                                            width: "47%",
+                                            height: "47%",
+                                            borderRadius: 16,
+                                            overflow: "hidden",
+                                            opacity: 0.4,
+                                          }}
+                                        >
+                                          <Image source={imageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+                                        </View>
+                                      ))}
+                                    </View>
+                                    <View
+                                      style={{
+                                        position: "absolute",
+                                        inset: 0,
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                      }}
+                                    >
+                                      <LinearGradient
+                                        colors={["rgba(217,70,239,0.88)", "rgba(124,58,237,0.92)"]}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 1 }}
+                                        style={{
+                                          height: 58,
+                                          width: 58,
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          borderRadius: 20,
+                                          borderWidth: 1,
+                                          borderColor: "rgba(255,255,255,0.26)",
+                                          ...glowShadow("rgba(217,70,239,0.24)", 18),
+                                        }}
+                                      >
+                                        <Sparkles color="#ffffff" size={24} strokeWidth={2.1} />
+                                      </LinearGradient>
+                                    </View>
                                   </LinearGradient>
                                 )}
 
                                 <View style={{ position: "absolute", left: 12, top: 12, right: 12, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                  <View
-                                    style={{
-                                      borderRadius: 999,
-                                      borderWidth: 1,
-                                      borderColor: active ? "rgba(255,107,242,0.45)" : "rgba(255,255,255,0.14)",
-                                      backgroundColor: "rgba(8,8,10,0.68)",
-                                      paddingHorizontal: 10,
-                                      paddingVertical: 6,
-                                      flexDirection: "row",
-                                      alignItems: "center",
-                                      gap: 6,
-                                      maxWidth: "78%",
-                                    }}
-                                  >
-                                    <StyleIcon color="#ffffff" size={13} strokeWidth={2} />
-                                    <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" }} numberOfLines={1}>
-                                      {style.eyebrow ?? "Design"}
-                                    </Text>
+                                  <View style={{ gap: 8, maxWidth: "78%" }}>
+                                    {!style.isCustom && !isFullWidthStyleCard ? (
+                                      <View
+                                        style={{
+                                          alignSelf: "flex-start",
+                                          height: 42,
+                                          width: 42,
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          borderRadius: 15,
+                                          borderWidth: 1,
+                                          borderColor: active ? "rgba(255,107,242,0.55)" : "rgba(255,255,255,0.16)",
+                                          backgroundColor: "rgba(8,8,10,0.62)",
+                                        }}
+                                      >
+                                        <StyleIcon color="#ffffff" size={18} strokeWidth={2} />
+                                      </View>
+                                    ) : null}
+                                    {styleBadge && badgeColors ? (
+                                      <View
+                                        style={{
+                                          alignSelf: "flex-start",
+                                          borderRadius: 999,
+                                          borderWidth: 1,
+                                          borderColor: badgeColors.borderColor,
+                                          backgroundColor: badgeColors.backgroundColor,
+                                          paddingHorizontal: 10,
+                                          paddingVertical: 6,
+                                        }}
+                                      >
+                                        <Text
+                                          style={{
+                                            color: badgeColors.textColor,
+                                            fontSize: 10,
+                                            fontWeight: "800",
+                                            letterSpacing: 0.9,
+                                            textTransform: "uppercase",
+                                          }}
+                                          numberOfLines={1}
+                                        >
+                                          {styleBadge.label}
+                                        </Text>
+                                      </View>
+                                    ) : null}
                                   </View>
                                   {active ? (
-                                    <View className="rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(255,107,242,0.42)", backgroundColor: "rgba(18,6,26,0.84)" }}>
-                                      <BadgeCheck color="#FF6BF2" size={16} strokeWidth={2} />
+                                    <View
+                                      style={{
+                                        height: 36,
+                                        width: 36,
+                                        borderRadius: 999,
+                                        borderWidth: 1,
+                                        borderColor: "rgba(255,255,255,0.22)",
+                                        backgroundColor: "#d946ef",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                      }}
+                                    >
+                                      <Check color="#ffffff" size={16} strokeWidth={2.5} />
                                     </View>
                                   ) : null}
                                 </View>
 
-                                <View style={{ flex: 1, gap: 8, paddingHorizontal: 14, paddingTop: 14, paddingBottom: 16 }}>
-                                  <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700", lineHeight: 22, letterSpacing: -0.28 }} numberOfLines={2}>
+                                <View
+                                  style={{
+                                    flex: 1,
+                                    gap: isFullWidthStyleCard ? 10 : 8,
+                                    paddingHorizontal: 14,
+                                    paddingTop: isFullWidthStyleCard ? 18 : 14,
+                                    paddingBottom: 16,
+                                    alignItems: isFullWidthStyleCard ? "center" : "flex-start",
+                                    justifyContent: isFullWidthStyleCard ? "center" : "flex-start",
+                                  }}
+                                >
+                                  {!style.isCustom && isFullWidthStyleCard ? (
+                                    <View
+                                      style={{
+                                        height: 48,
+                                        width: 48,
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        borderRadius: 16,
+                                        borderWidth: 1,
+                                        borderColor: active ? "rgba(255,107,242,0.55)" : "rgba(255,255,255,0.16)",
+                                        backgroundColor: "rgba(8,8,10,0.62)",
+                                      }}
+                                    >
+                                      <StyleIcon color="#ffffff" size={20} strokeWidth={2} />
+                                    </View>
+                                  ) : null}
+                                  <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700", lineHeight: 22, letterSpacing: -0.28, textAlign: isFullWidthStyleCard ? "center" : "left" }} numberOfLines={2}>
                                     {style.title}
                                   </Text>
-                                  <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 12.5, lineHeight: 18.5 }} numberOfLines={3}>
+                                  <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 12, lineHeight: 17.5, textAlign: isFullWidthStyleCard ? "center" : "left", maxWidth: isFullWidthStyleCard ? 360 : undefined }} numberOfLines={3}>
                                     {style.description}
                                   </Text>
+                                  {isFullWidthStyleCard ? (
+                                    <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: "600", letterSpacing: 0.5, textTransform: "uppercase" }}>
+                                      Final option
+                                    </Text>
+                                  ) : null}
                                 </View>
                               </LuxPressable>
                             </MotiView>
@@ -3908,26 +4401,27 @@ export default function WorkspaceScreen() {
                     </>
                   ) : (
                     <>
-                      <View style={wizardSectionHeaderStyle}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                      <View style={{ gap: 10, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>
                           {stepFourTitle}
                         </Text>
-                        <Text style={wizardSectionBodyStyle}>
+                        <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: Math.min(wizardGridMaxWidth, 720) }}>
                           {stepFourDescription}
                         </Text>
                       </View>
 
                       <View style={{ gap: 12, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
-                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4, textAlign: "center" }}>Choose Redesign Mode</Text>
-                        <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22, textAlign: "center" }}>
+                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Choose Redesign Mode</Text>
+                        <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
                           Pick a softer lift to keep the layout recognizable, or choose a full transformation for a more dramatic redesign.
                         </Text>
                         <View style={wizardModeGridStyle}>
                           {MODE_OPTIONS.map((mode, index) => {
                             const active = selectedModeId === mode.id;
+                            const isFullWidthModeCard = shouldSpanFullWidthInTwoColumnGrid(index, MODE_OPTIONS.length, 2);
                             const ModeIcon = mode.icon;
                             return (
-                              <MotiView key={mode.id} {...staggerFadeUp(index, 40)} style={{ width: wizardModeCardWidth }}>
+                              <MotiView key={mode.id} {...staggerFadeUp(index, 40)} style={{ width: isFullWidthModeCard ? "100%" : wizardModeCardWidth }}>
                                 <LuxPressable
                                   onPress={() => handleSelectMode(mode.id)}
                                   className="cursor-pointer rounded-[26px] border px-5 py-5"
@@ -3956,16 +4450,26 @@ export default function WorkspaceScreen() {
                         </View>
                       </View>
 
-                      <View style={{ gap: 12, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
-                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4, textAlign: "center" }}>Select Palette</Text>
-                        <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22, textAlign: "center" }}>
-                          Applied to: walls, furniture, and accent pieces
+                      <View
+                        onLayout={(event) => {
+                          const nextY = event.nativeEvent.layout.y;
+                          if (Math.abs(nextY - refinePaletteSectionY) > 4) {
+                            setRefinePaletteSectionY(nextY);
+                          }
+                        }}
+                        style={{ gap: 12, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}
+                      >
+                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Select Palette</Text>
+                        <Text style={{ color: wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
+                          {selectedPalette ? `Selected Palette: ${selectedPalette.label}` : "Applied to: walls, furniture, and accent pieces"}
                         </Text>
                         <View style={wizardPaletteGridStyle}>
                           {PALETTE_OPTIONS.slice(0, 8).map((palette, index) => {
                             const active = selectedPaletteId === palette.id;
+                            const isPopular = POPULAR_PALETTE_IDS.has(palette.id);
+                            const isFullWidthPaletteCard = shouldSpanFullWidthInTwoColumnGrid(index, PALETTE_OPTIONS.slice(0, 8).length, wizardPaletteColumns);
                             return (
-                              <MotiView key={palette.id} {...staggerFadeUp(index, 18)} style={{ width: wizardPaletteCardWidth }}>
+                              <MotiView key={palette.id} {...staggerFadeUp(index, 18)} style={{ width: isFullWidthPaletteCard ? "100%" : wizardPaletteCardWidth }}>
                                 <LuxPressable
                                   onPress={() => handleSelectPalette(palette.id)}
                                   className="cursor-pointer overflow-hidden rounded-[22px] border"
@@ -3980,8 +4484,30 @@ export default function WorkspaceScreen() {
                                       <View key={color} style={{ flex: 1, backgroundColor: color }} />
                                     ))}
                                   </View>
-                                  <View style={{ paddingHorizontal: 12, paddingVertical: 12 }}>
-                                    <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }} numberOfLines={2}>{palette.label}</Text>
+                                  {isPopular ? (
+                                    <View
+                                      style={{
+                                        position: "absolute",
+                                        left: 10,
+                                        top: 10,
+                                        borderRadius: 999,
+                                        borderWidth: 1,
+                                        borderColor: "rgba(74,222,128,0.32)",
+                                        backgroundColor: "rgba(22,101,52,0.9)",
+                                        paddingHorizontal: 8,
+                                        paddingVertical: 5,
+                                      }}
+                                    >
+                                      <Text style={{ color: "#DCFCE7", fontSize: 10, fontWeight: "800", letterSpacing: 0.8 }}>
+                                        POPULAR
+                                      </Text>
+                                    </View>
+                                  ) : null}
+                                  <View style={{ paddingHorizontal: 12, paddingVertical: 12, alignItems: isFullWidthPaletteCard ? "center" : "flex-start" }}>
+                                    <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700", textAlign: isFullWidthPaletteCard ? "center" : "left" }} numberOfLines={2}>{palette.label}</Text>
+                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 12, lineHeight: 18, marginTop: 4, textAlign: isFullWidthPaletteCard ? "center" : "left", maxWidth: isFullWidthPaletteCard ? 320 : undefined }} numberOfLines={2}>
+                                      {palette.description}
+                                    </Text>
                                   </View>
                                   {active ? (
                                     <View className="absolute right-2 top-2 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "#0f0f10" }}>
@@ -3995,111 +4521,115 @@ export default function WorkspaceScreen() {
                         </View>
                       </View>
 
-                      <View
-                        style={{
-                          width: "100%",
-                          maxWidth: wizardGridMaxWidth,
-                          alignSelf: "center",
-                          borderRadius: 30,
-                          borderWidth: 1,
-                          borderColor: wizardSurfaceBorderColor,
-                          backgroundColor: wizardSurfaceColor,
-                          overflow: "hidden",
-                        }}
-                      >
-                        {selectedImage ? (
-                          <View style={{ height: 232 }}>
-                            <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={140} cachePolicy="memory-disk" />
-                            <LinearGradient
-                              colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.82)"]}
-                              locations={[0, 0.5, 1]}
-                              style={{ position: "absolute", inset: 0 }}
-                            />
-                          </View>
-                        ) : null}
+                      {showGenerateConfirmation ? (
+                        <>
+                          <View
+                            style={{
+                              width: "100%",
+                              maxWidth: wizardGridMaxWidth,
+                              alignSelf: "center",
+                              borderRadius: 30,
+                              borderWidth: 1,
+                              borderColor: wizardSurfaceBorderColor,
+                              backgroundColor: wizardSurfaceColor,
+                              overflow: "hidden",
+                            }}
+                          >
+                            {selectedImage ? (
+                              <View style={{ height: 232 }}>
+                                <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={140} cachePolicy="memory-disk" />
+                                <LinearGradient
+                                  colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.82)"]}
+                                  locations={[0, 0.5, 1]}
+                                  style={{ position: "absolute", inset: 0 }}
+                                />
+                              </View>
+                            ) : null}
 
-                        <View style={{ paddingHorizontal: 18, paddingTop: 18, paddingBottom: 20, gap: 16 }}>
-                          <View style={{ gap: 8 }}>
-                            <Text style={{ color: "#ffffff", fontSize: 23, fontWeight: "700", letterSpacing: -0.45 }}>
-                              Ready for the payoff
-                            </Text>
-                            <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
-                              Darkor.ai will combine your selected room, style, mode, and palette into one polished high-end redesign.
-                            </Text>
-                          </View>
-
-                          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-                            {finalSelectionChips.map((item) => (
-                              <View
-                                key={item.label}
-                                style={{
-                                  borderRadius: 999,
-                                  borderWidth: 1,
-                                  borderColor: item.active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
-                                  backgroundColor: item.active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
-                                  paddingHorizontal: 12,
-                                  paddingVertical: 8,
-                                }}
-                              >
-                                <Text style={{ color: item.active ? "#f5d0fe" : "#d4d4d8", fontSize: 12, fontWeight: "600" }}>
-                                  {item.label}
+                            <View style={{ paddingHorizontal: 18, paddingTop: 18, paddingBottom: 20, gap: 16 }}>
+                              <View style={{ gap: 8 }}>
+                                <Text style={{ color: "#ffffff", fontSize: 23, fontWeight: "700", letterSpacing: -0.45 }}>
+                                  Ready for the payoff
+                                </Text>
+                                <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
+                                  Darkor.ai will combine your selected room, style, mode, and palette into one polished high-end redesign.
                                 </Text>
                               </View>
-                            ))}
-                          </View>
-                        </View>
-                      </View>
 
-                      <View
-                        style={{
-                          width: "100%",
-                          maxWidth: wizardGridMaxWidth,
-                          alignSelf: "center",
-                          borderRadius: 30,
-                          borderWidth: 1,
-                          borderColor: "rgba(255,255,255,0.08)",
-                          backgroundColor: "rgba(255,255,255,0.03)",
-                          paddingHorizontal: 18,
-                          paddingVertical: 18,
-                          gap: 16,
-                        }}
-                      >
-                        <View style={{ flexDirection: "row", gap: 16, alignItems: "center" }}>
-                          <View style={{ flex: 1, gap: 6 }}>
-                            <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>
-                              Your masterpiece will be ready in ~15 seconds
-                            </Text>
-                            <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
-                              {expectationPreviewCopy}
-                            </Text>
+                              <View style={{ gap: 10 }}>
+                                {confirmationSummaryChips.map((item) => (
+                                  <View
+                                    key={item.key}
+                                    style={{
+                                      borderRadius: 999,
+                                      borderWidth: 1,
+                                      borderColor: item.missing ? "rgba(248,113,113,0.5)" : "rgba(217,70,239,0.3)",
+                                      backgroundColor: item.missing ? "rgba(127,29,29,0.34)" : "rgba(11,11,15,0.94)",
+                                      paddingHorizontal: 14,
+                                      paddingVertical: 11,
+                                    }}
+                                  >
+                                    <Text style={{ color: item.missing ? "#FECACA" : "#ffffff", fontSize: 13, fontWeight: "700" }}>
+                                      {`${item.title} · ${item.value}`}
+                                    </Text>
+                                  </View>
+                                ))}
+                              </View>
+                            </View>
                           </View>
 
                           <View
                             style={{
-                              width: 116,
-                              height: 148,
-                              borderRadius: 24,
-                              overflow: "hidden",
+                              width: "100%",
+                              maxWidth: wizardGridMaxWidth,
+                              alignSelf: "center",
+                              borderRadius: 30,
                               borderWidth: 1,
                               borderColor: "rgba(255,255,255,0.08)",
-                              backgroundColor: "#0f0f10",
+                              backgroundColor: "rgba(255,255,255,0.03)",
+                              paddingHorizontal: 18,
+                              paddingVertical: 18,
+                              gap: 16,
                             }}
                           >
-                            <Image source={finalPreviewImage} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
-                            <LinearGradient
-                              colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.2)", "rgba(0,0,0,0.84)"]}
-                              style={{ position: "absolute", inset: 0 }}
-                            />
-                            <View style={{ position: "absolute", left: 10, right: 10, bottom: 10 }}>
-                              <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: "rgba(255,255,255,0.14)", paddingHorizontal: 8, paddingVertical: 5 }}>
-                                <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" }}>
-                                  Preview
+                            <View style={{ flexDirection: "row", gap: 16, alignItems: "center" }}>
+                              <View style={{ flex: 1, gap: 6 }}>
+                                <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>
+                                  Your masterpiece will be ready in ~15 seconds
                                 </Text>
+                                <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
+                                  {expectationPreviewCopy}
+                                </Text>
+                              </View>
+
+                              <View
+                                style={{
+                                  width: 122,
+                                  height: 156,
+                                  borderRadius: 24,
+                                  overflow: "hidden",
+                                  borderWidth: 1,
+                                  borderColor: "rgba(255,255,255,0.08)",
+                                  backgroundColor: "#0f0f10",
+                                }}
+                              >
+                                <Image source={finalPreviewImage} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
+                                <LinearGradient
+                                  colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.2)", "rgba(0,0,0,0.84)"]}
+                                  style={{ position: "absolute", inset: 0 }}
+                                />
+                                <View style={{ position: "absolute", left: 10, right: 10, bottom: 10 }}>
+                                  <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: "rgba(0,0,0,0.44)", borderWidth: 1, borderColor: "rgba(217,70,239,0.24)", paddingHorizontal: 8, paddingVertical: 5 }}>
+                                    <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "700", letterSpacing: 0.4 }} numberOfLines={2}>
+                                      {previewThumbnailLabel}
+                                    </Text>
+                                  </View>
+                                </View>
                               </View>
                             </View>
                           </View>
-                        </View>
-                      </View>
+                        </>
+                      ) : null}
                     </>
                   )
                 ) : null}
@@ -4361,184 +4891,123 @@ export default function WorkspaceScreen() {
         ) : null}
 
         {showContinueBar ? (
-        <View
-          className="absolute inset-x-0 bottom-0 px-5 pt-4"
-          style={{
-            bottom: bottomBarOffset,
-            zIndex: 120,
-            paddingBottom: Math.max(insets.bottom + (isPhotoStep ? 16 : isGenerationReviewStep ? 18 : 12), isPhotoStep ? 28 : isGenerationReviewStep ? 30 : 24),
-            borderTopWidth: 1,
-            borderTopColor: "rgba(255,255,255,0.06)",
-            backgroundColor: wizardBackgroundColor,
-            shadowColor: "#000000",
-            shadowOpacity: 0.24,
-            shadowRadius: 18,
-            shadowOffset: { width: 0, height: -8 },
-            elevation: 24,
-          }}
-        >
-          <View style={{ gap: isRefineDirectionStep ? 12 : 0 }}>
-            {isRefineDirectionStep ? (
-              <View
-                style={{
-                  borderRadius: 22,
-                  borderWidth: 1,
-                  borderColor: isContinueActive ? "rgba(217,70,239,0.22)" : "rgba(255,255,255,0.08)",
-                  backgroundColor: "rgba(9,9,11,0.92)",
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  gap: 10,
-                }}
-              >
-                <View style={{ gap: 4 }}>
-                  <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700" }}>
-                    Ready to generate?
-                  </Text>
-                  <Text style={{ color: wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
-                    {isContinueActive
-                      ? "Your selections are locked in. Generate to see Darkor.ai turn this direction into a polished redesign."
-                      : "Choose a redesign mode and palette to unlock your final render."}
-                  </Text>
-                </View>
-
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                  {[
-                    { label: selectedMode?.title ?? "Mode not selected", active: Boolean(selectedMode) },
-                    { label: selectedPalette?.label ?? "Palette not selected", active: Boolean(selectedPalette) },
-                  ].map((item) => (
-                    <View
-                      key={item.label}
-                      style={{
-                        borderRadius: 999,
-                        borderWidth: 1,
-                        borderColor: item.active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
-                        backgroundColor: item.active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
-                        paddingHorizontal: 12,
-                        paddingVertical: 8,
-                      }}
-                    >
-                      <Text style={{ color: item.active ? "#f5d0fe" : "#d4d4d8", fontSize: 12, fontWeight: "600" }}>
-                        {item.label}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            ) : null}
-
-            <View style={{ position: "relative" }}>
-              <MotiView
-                pointerEvents="none"
-                animate={
-                  shouldPulseContinue
-                    ? { opacity: [0.16, 0.32, 0.16], scale: [0.985, 1.02, 0.985] }
-                    : { opacity: 0, scale: 1 }
-                }
-                transition={shouldPulseContinue ? { duration: 2100, loop: true } : { duration: 180 }}
-                style={{
-                  position: "absolute",
-                  left: 4,
-                  right: 4,
-                  top: 2,
-                  bottom: 2,
-                  borderRadius: continueButtonRadius + 4,
-                  backgroundColor: "#d946ef",
-                }}
-              />
-
-              <MotiView
-                animate={shouldPulseContinue ? { scale: [1, 1.01, 1], translateY: [0, -1, 0] } : { scale: 1, translateY: 0 }}
-                transition={shouldPulseContinue ? { duration: 2100, loop: true } : { duration: 180 }}
-              >
-                <LuxPressable
-                  onPress={handleContinue}
-                  disabled={isContinueDisabled}
-                  pressableClassName="cursor-pointer"
-                  className="cursor-pointer"
-                  style={{ width: "100%" }}
+          <View
+            className="absolute inset-x-0 bottom-0 px-4 pt-4"
+            style={{
+              bottom: bottomBarOffset,
+              zIndex: 120,
+              paddingBottom: Math.max(insets.bottom + 12, 24),
+              borderTopWidth: 1,
+              borderTopColor: "rgba(255,255,255,0.06)",
+              backgroundColor: wizardBackgroundColor,
+              shadowColor: "#000000",
+              shadowOpacity: 0.24,
+              shadowRadius: 18,
+              shadowOffset: { width: 0, height: -8 },
+              elevation: 24,
+            }}
+          >
+            <View style={{ gap: isGenerationReviewStep ? 12 : 0 }}>
+              {isGenerationReviewStep ? (
+                <View
+                  style={{
+                    borderRadius: 22,
+                    borderWidth: 1,
+                    borderColor: isContinueActive ? "rgba(217,70,239,0.22)" : "rgba(255,255,255,0.08)",
+                    backgroundColor: "rgba(9,9,11,0.92)",
+                    paddingHorizontal: 16,
+                    paddingVertical: 14,
+                    gap: 10,
+                  }}
                 >
-                  {isContinueActive ? (
-                    <LinearGradient
-                      colors={isPhotoStep ? ["#d946ef", "#4f46e5"] : ["#d946ef", "#7c3aed"]}
-                      start={{ x: 0, y: 0.5 }}
-                      end={{ x: 1, y: 0.5 }}
-                      style={{
-                        width: "100%",
-                        minHeight: continueButtonHeight,
-                        borderRadius: continueButtonRadius,
-                        opacity: continueButtonOpacity,
-                        overflow: "hidden",
-                      }}
-                    >
-                      {isPhotoStep ? (
-                        <MotiView
-                          pointerEvents="none"
-                          animate={shouldPulseContinue ? { translateX: [-140, 260], opacity: [0, 0.2, 0] } : { translateX: 0, opacity: 0 }}
-                          transition={shouldPulseContinue ? { duration: 1800, loop: true } : { duration: 140 }}
+                  <View style={{ gap: 4 }}>
+                    <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700" }}>
+                      Ready to generate?
+                    </Text>
+                    <Text style={{ color: wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
+                      {isContinueActive
+                        ? "Your selections are locked in. Generate to see Darkor.ai turn this direction into a polished redesign."
+                        : "Choose a redesign mode and palette to unlock your final render."}
+                    </Text>
+                  </View>
+
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                    {[selectedMode?.title, selectedPalette?.label]
+                      .filter((label): label is string => Boolean(label))
+                      .map((label) => (
+                        <View
+                          key={label}
                           style={{
-                            position: "absolute",
-                            top: -10,
-                            bottom: -10,
-                            width: 88,
-                            backgroundColor: "rgba(255,255,255,0.26)",
-                            transform: [{ skewX: "-18deg" }],
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: "rgba(217,70,239,0.24)",
+                            backgroundColor: "rgba(217,70,239,0.12)",
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
                           }}
-                        />
-                      ) : null}
-                      <View
-                        style={{
-                          width: "100%",
-                          minHeight: continueButtonHeight,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          paddingHorizontal: 20,
-                          gap: isGenerationReviewStep ? 4 : 0,
-                        }}
-                      >
-                        {isGenerationReviewStep ? (
-                          <Text style={{ color: "rgba(255,255,255,0.74)", fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" }}>
-                            Final Step
-                          </Text>
-                        ) : null}
-                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                          {isGenerationReviewStep ? <Sparkles color="#ffffff" size={20} strokeWidth={2.2} /> : null}
-                          <Text style={{ color: "#ffffff", fontSize: isGenerationReviewStep ? 22 : 17, fontWeight: "700", textAlign: "center" }}>
-                            {continueLabel}
+                        >
+                          <Text style={{ color: "#f5d0fe", fontSize: 12, fontWeight: "600" }}>
+                            {label}
                           </Text>
                         </View>
-                      </View>
-                    </LinearGradient>
-                  ) : (
-                    <View
-                      style={{
-                        width: "100%",
-                        minHeight: continueButtonHeight,
-                        borderRadius: continueButtonRadius,
-                        backgroundColor: "rgba(39,39,42,0.82)",
-                        opacity: continueButtonOpacity,
-                        borderWidth: 0,
-                        borderColor: "transparent",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        paddingHorizontal: 20,
-                      }}
-                    >
-                      <Text style={{ color: "#9ca3af", fontSize: 17, fontWeight: "600", textAlign: "center" }}>
-                        {continueLabel}
-                      </Text>
-                    </View>
-                  )}
-                </LuxPressable>
-              </MotiView>
-            </View>
+                      ))}
+                  </View>
+                </View>
+              ) : null}
 
-            {isGenerationReviewStep ? (
-              <Text style={{ color: isContinueActive ? "#f5d0fe" : "#a1a1aa", fontSize: 13, fontWeight: "600", textAlign: "center", marginTop: 10 }}>
-                {generationCreditLabel}
-              </Text>
-            ) : null}
+              <ServiceContinueButton
+                active={stepButtonActive}
+                attention={stepButtonAttention}
+                label={stepButtonLabel}
+                loading={isGenerating}
+                onPress={() => {
+                  if (isPhotoStep) {
+                    if (!selectedImage) {
+                      void launchPhotoSource("library");
+                      return;
+                    }
+
+                    handleContinue();
+                    return;
+                  }
+
+                  if (isSpaceStep && !selectedRoom) {
+                    showToast("Tap a card to select your space type.");
+                    return;
+                  }
+
+                  if (isStyleStep && !selectedStyle) {
+                    showToast("Tap a card to select your style.");
+                    return;
+                  }
+
+                  if (isGenerationReviewStep && !isContinueActive) {
+                    showToast(continueHint ?? "Complete this step to continue.");
+                    return;
+                  }
+
+                  handleContinue();
+                }}
+                pulse={isGenerationReviewStep && isContinueActive}
+                secondaryActionLabel={isPhotoStep ? "or use camera" : null}
+                onSecondaryAction={
+                  isPhotoStep
+                    ? () => {
+                        void launchPhotoSource("camera");
+                      }
+                    : null
+                }
+                supportingText={stepButtonSupportingText}
+                visible={continueButtonVisible}
+              />
+
+              {isGenerationReviewStep && !isRefineDirectionStep && !stepButtonSupportingText ? (
+                <Text style={{ color: isContinueActive ? "#f5d0fe" : "#a1a1aa", fontSize: 13, fontWeight: "600", textAlign: "center", marginTop: 10 }}>
+                  {generationCreditLabel}
+                </Text>
+              ) : null}
+            </View>
           </View>
-        </View>
         ) : null}
 
         <AnimatePresence>

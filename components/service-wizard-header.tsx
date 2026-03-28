@@ -64,7 +64,6 @@ export function ServiceWizardHeader({
             {Array.from({ length: totalSteps }).map((_, index) => {
               const isActive = index + 1 === safeStep;
               const isComplete = index < safeStep - 1;
-              const isFilled = isComplete || isActive;
               return (
                 <View
                   key={`wizard-progress-${index}`}
@@ -74,12 +73,13 @@ export function ServiceWizardHeader({
                     isActive ? styles.progressSegmentActive : null,
                   ]}
                 >
-                  {isFilled ? (
+                  {isComplete ? <View style={[styles.progressFill, styles.progressFillComplete]} /> : null}
+                  {isActive ? (
                     <LinearGradient
-                      colors={isActive ? ["#FF6BF2", "#D946EF", "#7C3AED"] : ["#FF4FDE", "#D946EF", "#9333EA"]}
+                      colors={["#FF6BF2", "#D946EF", "#7C3AED"]}
                       start={{ x: 0, y: 0.5 }}
                       end={{ x: 1, y: 0.5 }}
-                      style={[styles.progressFill, isComplete ? styles.progressFillComplete : null]}
+                      style={styles.progressFill}
                     />
                   ) : null}
                 </View>
@@ -165,12 +165,12 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: DS.radius.pill,
     overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(255,255,255,0.3)",
     borderWidth: HAIRLINE,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: "rgba(255,255,255,0.2)",
   },
   progressSegmentComplete: {
-    borderColor: "rgba(255,107,242,0.4)",
+    borderColor: "rgba(255,255,255,0.38)",
   },
   progressSegmentActive: {
     height: 12,
@@ -183,6 +183,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   progressFillComplete: {
-    opacity: 0.98,
+    backgroundColor: "rgba(255,255,255,1)",
   },
 });

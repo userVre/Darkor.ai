@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -31,7 +32,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
-import { ArrowRight, BadgeCheck, X } from "lucide-react-native";
+import { ArrowRight, BadgeCheck, Check, X } from "lucide-react-native";
 
 import { LuxPressable } from "../components/lux-pressable";
 import { useProSuccess } from "../components/pro-success-context";
@@ -60,28 +61,26 @@ const HERO_GAP = 12;
 const AUTO_SCROLL_MS = 2600;
 
 const FEATURE_ITEMS = [
+  "Completely Watermark-free",
   "Redesign a room in 10 seconds",
   "Impress clients with 4K renders",
   "Unlock 50+ Premium AI Styles",
-  "Completely Watermark-free",
 ] as const;
 
 const PLAN_COPY = {
   yearly: {
-    badge: null,
-    titleBadge: "SAVE 92%",
-    title: "Yearly Access",
+    savingsBadge: "SAVE 92%",
+    valueBadge: "BEST VALUE",
     price: "$0.90",
-    priceSuffix: "/ week",
+    priceSuffix: "/week",
     subtitle: "Billed annually at $47.52",
+    trial: "7-day free trial included",
+    noTrial: "Instant access after checkout",
   },
   weekly: {
-    badge: "FREE TRIAL",
-    titleBadge: null,
     title: "Weekly Access",
     price: "$11.90",
-    priceSuffix: "/ week",
-    subtitle: "Auto-selected for trial",
+    subtitle: "Billed weekly - no commitment",
   },
 } as const;
 
@@ -101,6 +100,7 @@ const LOOPED_HERO_SLIDES = [...HERO_SLIDES, ...HERO_SLIDES, ...HERO_SLIDES].map(
 }));
 
 const LOOP_OFFSET = HERO_SLIDES.length;
+const HERO_DOT_COUNT = 3;
 const COUNTDOWN_MS = 5000;
 const TIMER_SIZE = 38;
 const TIMER_STROKE = 3;
@@ -127,7 +127,7 @@ function TrialSwitch({ value, onPress }: { value: boolean; onPress: () => void }
       onPress={onPress}
       className={pointerClassName}
       style={[styles.toggleTrack, value ? styles.toggleTrackActive : null]}
-      glowColor="rgba(217,70,239,0.16)"
+      glowColor={value ? "rgba(124,58,237,0.18)" : "rgba(255,255,255,0.04)"}
       scale={0.985}
     >
       <Animated.View style={[styles.toggleThumb, value ? styles.toggleThumbActive : null, thumbStyle]} />
@@ -198,63 +198,85 @@ const HeroSlide = memo(function HeroSlide({
 });
 
 function PlanCard({
+  duration,
   active,
-  title,
-  price,
-  priceSuffix,
-  subtitle,
-  badge,
-  titleBadge,
+  freeTrialEnabled,
   onPress,
 }: {
+  duration: BillingDuration;
   active: boolean;
-  title: string;
-  price: string;
-  priceSuffix: string;
-  subtitle: string;
-  badge: string | null;
-  titleBadge: string | null;
+  freeTrialEnabled: boolean;
   onPress: () => void;
 }) {
+  const isYearly = duration === "yearly";
+
   return (
-    <MotiView animate={{ scale: active ? 1 : 0.985 }} transition={LUX_SPRING} style={styles.planCardMotion}>
-      <LuxPressable
-      onPress={onPress}
-      className={pointerClassName}
-      style={[styles.planCard, active ? styles.planCardActive : null]}
-      glowColor={active ? "rgba(217,70,239,0.18)" : "rgba(255,255,255,0.04)"}
-      scale={0.99}
+    <MotiView
+      animate={{ opacity: active || isYearly ? 1 : 0.85, scale: active ? 1 : isYearly ? 0.992 : 0.985 }}
+      transition={LUX_SPRING}
+      style={styles.planCardMotion}
     >
-        {active ? (
+      <LuxPressable
+        onPress={onPress}
+        className={pointerClassName}
+        style={[
+          styles.planCard,
+          isYearly ? styles.planCardYearly : styles.planCardWeekly,
+          active ? styles.planCardSelected : null,
+        ]}
+        glowColor={active ? "rgba(124,58,237,0.24)" : isYearly ? "rgba(124,58,237,0.16)" : "rgba(255,255,255,0.04)"}
+        scale={0.992}
+      >
+        {isYearly ? (
           <LinearGradient
-            colors={["rgba(217,70,239,0.18)", "rgba(79,70,229,0.08)", "rgba(255,255,255,0)"]}
-            locations={[0, 0.52, 1]}
+            colors={["#4C1D95", "#7C3AED"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.planCardGlow}
             pointerEvents="none"
           />
         ) : null}
 
-        {badge ? (
-          <View style={[styles.planBadge, active ? styles.planBadgeActive : null]}>
-            <Text style={[styles.planBadgeText, active ? styles.planBadgeTextActive : null]}>{badge}</Text>
+        {active ? (
+          <View style={styles.planSelectedCheck}>
+            <Check color="#ffffff" size={15} strokeWidth={3} />
           </View>
         ) : null}
 
-        <View style={styles.planTitleRow}>
-          <Text style={styles.planTitle}>{title}</Text>
-          {titleBadge ? (
-            <View style={styles.planTitleBadge}>
-              <Text style={styles.planTitleBadgeText}>{titleBadge}</Text>
+        {isYearly ? (
+          <View style={styles.planContent}>
+            <View style={styles.yearlyBadgeStack}>
+              <View style={styles.yearlySavingsBadge}>
+                <Text style={styles.yearlySavingsBadgeText}>{PLAN_COPY.yearly.savingsBadge}</Text>
+              </View>
+              <View style={styles.yearlyValueBadge}>
+                <Text style={styles.yearlyValueBadgeText}>{PLAN_COPY.yearly.valueBadge}</Text>
+              </View>
             </View>
-          ) : null}
-        </View>
-        <View style={styles.planPriceRow}>
-          <Text style={styles.planPriceLine}>
-            <Text style={styles.planPrice}>{price}</Text>
-            <Text style={styles.planPriceSuffix}> {priceSuffix}</Text>
-          </Text>
-        </View>
-        <Text style={styles.planSubtitle}>{subtitle}</Text>
+
+            <View style={styles.yearlyPriceRow}>
+              <Text style={styles.yearlyPrice}>{PLAN_COPY.yearly.price}</Text>
+              <Text style={styles.yearlyPriceSuffix}>{PLAN_COPY.yearly.priceSuffix}</Text>
+            </View>
+
+            <Text style={styles.yearlyBillingText}>{PLAN_COPY.yearly.subtitle}</Text>
+
+            <View style={[styles.yearlyTrialRow, !freeTrialEnabled ? styles.yearlyTrialRowMuted : null]}>
+              <View style={[styles.yearlyTrialCheck, !freeTrialEnabled ? styles.yearlyTrialCheckMuted : null]}>
+                <Check color="#052e16" size={14} strokeWidth={3} />
+              </View>
+              <Text style={[styles.yearlyTrialText, !freeTrialEnabled ? styles.yearlyTrialTextMuted : null]}>
+                {freeTrialEnabled ? PLAN_COPY.yearly.trial : PLAN_COPY.yearly.noTrial}
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.planContent}>
+            <Text style={styles.weeklyLabel}>{PLAN_COPY.weekly.title}</Text>
+            <Text style={styles.weeklyPrice}>{PLAN_COPY.weekly.price}</Text>
+            <Text style={styles.weeklySubtitle}>{PLAN_COPY.weekly.subtitle}</Text>
+          </View>
+        )}
       </LuxPressable>
     </MotiView>
   );
@@ -357,11 +379,13 @@ export default function PaywallScreen() {
 
   const scrollX = useSharedValue(0);
 
-  const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("weekly");
+  const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("yearly");
   const [freeTrialEnabled, setFreeTrialEnabled] = useState(true);
   const [packages, setPackages] = useState<RevenueCatPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [bottomDockHeight, setBottomDockHeight] = useState(204);
+  const [activeHeroSlide, setActiveHeroSlide] = useState(0);
 
   const compactLevel = height < 720 ? 2 : height < 840 ? 1 : 0;
   const contentWidth = Math.min(width - 28, 428);
@@ -375,8 +399,9 @@ export default function PaywallScreen() {
     [packages, selectedDuration],
   );
   const isCtaDisabled = isLoading || !selectedPackage;
-  const ctaTitle = freeTrialEnabled ? "Start Free Trial & Subscribe" : "Unlock Pro";
-  const weeklySubtitle = freeTrialEnabled ? "Trial starts now, then billed weekly" : "Billed weekly";
+  const toggleLabel = freeTrialEnabled
+    ? "Free Trial: 7 days free, then billed"
+    : "No trial - subscribe immediately";
 
   const onHeroScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -384,14 +409,20 @@ export default function PaywallScreen() {
     },
   });
 
+  const normalizeHeroSlideIndex = useCallback((index: number) => {
+    const slideCount = HERO_SLIDES.length;
+    return ((index % slideCount) + slideCount) % slideCount;
+  }, []);
+
   const syncCarouselToIndex = useCallback(
     (index: number, animated: boolean) => {
       const nextOffset = index * heroSnapInterval;
       currentIndexRef.current = index;
       scrollX.value = nextOffset;
+      setActiveHeroSlide(normalizeHeroSlideIndex(index));
       carouselRef.current?.scrollToOffset({ offset: nextOffset, animated });
     },
-    [heroSnapInterval, scrollX],
+    [heroSnapInterval, normalizeHeroSlideIndex, scrollX],
   );
 
   const normalizeLoopIndex = useCallback(
@@ -477,24 +508,14 @@ export default function PaywallScreen() {
     router.replace("/(tabs)");
   }, [router]);
 
-  const handleToggleTrial = useCallback(() => {
-    triggerHaptic();
-    setFreeTrialEnabled((current) => {
-      const next = !current;
-      setSelectedDuration(next ? "weekly" : "yearly");
-      return next;
-    });
-  }, []);
-
   const handleSelectDuration = useCallback((duration: BillingDuration) => {
     triggerHaptic();
     setSelectedDuration(duration);
+  }, []);
 
-    if (duration === "weekly") {
-      return;
-    }
-
-    setFreeTrialEnabled(false);
+  const handleToggleTrial = useCallback(() => {
+    triggerHaptic();
+    setFreeTrialEnabled((current) => !current);
   }, []);
 
   const handleRestore = useCallback(async () => {
@@ -524,7 +545,7 @@ export default function PaywallScreen() {
       }
 
       if (inferredPlan === "trial") {
-        showToast("Your 3-day Darkor.ai Pro trial is active.");
+        showToast("Your 7-day Darkor.ai Pro trial is active.");
       } else {
         showSuccess();
       }
@@ -561,14 +582,14 @@ export default function PaywallScreen() {
         throw new Error("We could not confirm your subscription. Please try again.");
       }
 
-      const purchasedPlan: BillingPlan = freeTrialEnabled && selectedDuration === "weekly" ? "trial" : "pro";
+      const purchasedPlan: BillingPlan = inferPlanFromCustomerInfo(result.customerInfo);
 
       if (isSignedIn) {
         await persistPurchasedPlan(purchasedPlan, selectedDuration, Date.now(), null);
       }
 
-      if (purchasedPlan === "trial") {
-        showToast("Your 3-day Darkor.ai Pro trial is active.");
+      if (freeTrialEnabled && purchasedPlan === "trial") {
+        showToast("Your 7-day Darkor.ai Pro trial is active.");
       } else {
         showSuccess();
       }
@@ -583,10 +604,10 @@ export default function PaywallScreen() {
       setIsLoading(false);
     }
   }, [
-    freeTrialEnabled,
     isSignedIn,
     persistPurchasedPlan,
     router,
+    freeTrialEnabled,
     selectedDuration,
     selectedPackage,
     showSuccess,
@@ -597,9 +618,10 @@ export default function PaywallScreen() {
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const nextIndex = Math.round(event.nativeEvent.contentOffset.x / heroSnapInterval);
       currentIndexRef.current = nextIndex;
+      setActiveHeroSlide(normalizeHeroSlideIndex(nextIndex));
       normalizeLoopIndex(nextIndex);
     },
-    [heroSnapInterval, normalizeLoopIndex],
+    [heroSnapInterval, normalizeHeroSlideIndex, normalizeLoopIndex],
   );
 
   const renderHeroItem = useCallback(
@@ -642,20 +664,28 @@ export default function PaywallScreen() {
         <DwaraTimer onDismiss={handleClose} />
       </View>
 
-      <View
-        style={[
-          styles.layout,
-          {
-            paddingTop: insets.top + (compactLevel === 2 ? 52 : 58),
-            paddingBottom: Math.max(insets.bottom + 12, 18),
-            paddingHorizontal: 14,
-          },
-        ]}
-      >
+      <View style={styles.layout}>
+        <ScrollView
+          contentInsetAdjustmentBehavior="never"
+          showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingTop: insets.top + (compactLevel === 2 ? 52 : 58),
+              paddingBottom: bottomDockHeight + Math.max(insets.bottom + 20, 28),
+              paddingHorizontal: 14,
+            },
+          ]}
+        >
         <View style={[styles.mainStack, { width: contentWidth, gap: compactLevel === 2 ? 14 : 18 }]}>
           <View style={[styles.heroSection, { gap: compactLevel === 2 ? 10 : 14 }]}>
             <View style={styles.headerCopy}>
               <Text style={styles.brandMark}>DARKOR.AI PRO</Text>
+              <View style={styles.ratingPill}>
+                <Text style={styles.ratingStars}>★★★★★</Text>
+                <Text style={styles.ratingText}>4.8 · 2,400+ happy designers</Text>
+              </View>
               <Text style={[styles.title, compactLevel === 2 ? styles.titleCompact : null]}>
                 Transform any room with AI — photorealistic in seconds.
               </Text>
@@ -689,6 +719,19 @@ export default function PaywallScreen() {
               />
             </View>
 
+            <View style={styles.carouselDots}>
+              {Array.from({ length: HERO_DOT_COUNT }).map((_, index) => {
+                const isActive = activeHeroSlide % HERO_DOT_COUNT === index;
+
+                return (
+                  <View
+                    key={`hero-dot-${index}`}
+                    style={[styles.carouselDot, isActive ? styles.carouselDotActive : null]}
+                  />
+                );
+              })}
+            </View>
+
             <View style={[styles.featureGrid, compactLevel === 2 ? styles.featureGridCompact : null]}>
               {FEATURE_ITEMS.map((item) => (
                 <FeaturePill key={item} label={item} />
@@ -697,95 +740,123 @@ export default function PaywallScreen() {
           </View>
 
           <View style={[styles.pricingStack, { gap: compactLevel === 2 ? 10 : 12 }]}>
-            <View style={styles.toggleRow}>
-              <View style={styles.toggleCopy}>
-                <Text style={styles.toggleEyebrow}>Free Trial</Text>
-              </View>
-              <TrialSwitch value={freeTrialEnabled} onPress={handleToggleTrial} />
+            <View style={styles.urgencyBanner}>
+              <Text style={styles.urgencyBannerText}>🔥 Limited Offer — Free trial ends soon</Text>
             </View>
-
-            <View style={styles.planRow}>
+            <View style={styles.planStack}>
               <PlanCard
-                active={selectedDuration === "weekly"}
-                title={PLAN_COPY.weekly.title}
-                price={PLAN_COPY.weekly.price}
-                priceSuffix={PLAN_COPY.weekly.priceSuffix}
-                subtitle={freeTrialEnabled ? weeklySubtitle : "Billed weekly"}
-                badge={freeTrialEnabled ? PLAN_COPY.weekly.badge : null}
-                titleBadge={PLAN_COPY.weekly.titleBadge}
-                onPress={() => handleSelectDuration("weekly")}
-              />
-              <PlanCard
+                duration="yearly"
                 active={selectedDuration === "yearly"}
-                title={PLAN_COPY.yearly.title}
-                price={PLAN_COPY.yearly.price}
-                priceSuffix={PLAN_COPY.yearly.priceSuffix}
-                subtitle={PLAN_COPY.yearly.subtitle}
-                badge={PLAN_COPY.yearly.badge}
-                titleBadge={PLAN_COPY.yearly.titleBadge}
+                freeTrialEnabled={freeTrialEnabled}
                 onPress={() => handleSelectDuration("yearly")}
               />
+              <PlanCard
+                duration="weekly"
+                active={selectedDuration === "weekly"}
+                freeTrialEnabled={freeTrialEnabled}
+                onPress={() => handleSelectDuration("weekly")}
+              />
             </View>
-
-            <View style={styles.footerStack}>
-              {freeTrialEnabled ? (
-                <View style={styles.footerRow}>
-                  <Text style={styles.footerText}>{"\u{1F6E1}\uFE0F No Payment Now"}</Text>
-                </View>
-              ) : null}
-              <View style={styles.footerRow}>
-                <Text style={styles.footerText}>{"\u2705 Cancel Anytime"}</Text>
-              </View>
-            </View>
-
-            {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
           </View>
         </View>
 
-        <View style={[styles.bottomDock, { width: contentWidth, marginTop: compactLevel === 2 ? 10 : 14 }]}>
-          <LuxPressable
-            onPress={handlePurchase}
-            disabled={isCtaDisabled}
-            className={pointerClassName}
-            style={[styles.ctaOuter, isCtaDisabled ? styles.ctaOuterDisabled : null]}
-            glowColor="rgba(217,70,239,0.18)"
-            scale={0.992}
-          >
-            <LinearGradient
-              colors={isCtaDisabled ? ["#4b4b4f", "#323236"] : ["#d946ef", "#4f46e5"]}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              style={styles.ctaGradient}
-            >
-              {isLoading ? (
-                <View style={styles.loadingRow}>
-                  <ActivityIndicator color="#ffffff" />
-                  <Text style={styles.ctaText}>Processing...</Text>
-                </View>
-              ) : (
-                <MotiView
-                  key={`cta-${ctaTitle}`}
-                  from={{ opacity: 0, translateY: 4 }}
-                  animate={{ opacity: 1, translateY: 0 }}
-                  transition={LUX_SPRING}
-                  style={styles.ctaContent}
-                >
-                  <Text style={styles.ctaText}>{ctaTitle}</Text>
-                  <ArrowRight color="#ffffff" size={20} strokeWidth={2.5} />
-                </MotiView>
-              )}
-            </LinearGradient>
-          </LuxPressable>
+        </ScrollView>
 
-          <LuxPressable
-            onPress={handleRestore}
-            className={pointerClassName}
-            style={styles.restoreButton}
-            glowColor="rgba(255,255,255,0.04)"
-            scale={0.99}
-          >
-            <Text style={styles.restoreText}>Restore purchase</Text>
-          </LuxPressable>
+        <View
+          onLayout={(event) => setBottomDockHeight(event.nativeEvent.layout.height)}
+          style={[
+            styles.bottomDockWrap,
+            {
+              paddingHorizontal: 14,
+              paddingBottom: Math.max(insets.bottom, 10),
+            },
+          ]}
+        >
+          <View style={[styles.bottomDock, { width: contentWidth }]}>
+            <View style={styles.toggleRow}>
+              <MotiView
+                key={`trial-copy-${freeTrialEnabled ? "on" : "off"}`}
+                from={{ opacity: 0, translateY: 6 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={LUX_SPRING}
+                style={styles.toggleCopy}
+              >
+                <Text style={[styles.toggleLabel, freeTrialEnabled ? styles.toggleLabelOn : styles.toggleLabelOff]}>
+                  {toggleLabel}
+                </Text>
+              </MotiView>
+              <TrialSwitch value={freeTrialEnabled} onPress={handleToggleTrial} />
+            </View>
+
+            {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+            <View style={styles.ctaPulseShell}>
+              {!isCtaDisabled ? (
+                <MotiView
+                  from={{ opacity: 0.3, scale: 0.98 }}
+                  animate={{ opacity: 0.58, scale: 1.03 }}
+                  transition={{ type: "timing", duration: 2000, loop: true, repeatReverse: true }}
+                  style={styles.ctaPulse}
+                />
+              ) : null}
+
+              <LuxPressable
+                onPress={handlePurchase}
+                disabled={isCtaDisabled}
+                className={pointerClassName}
+                style={[styles.ctaOuter, isCtaDisabled ? styles.ctaOuterDisabled : null]}
+                glowColor="rgba(124,58,237,0.22)"
+                scale={0.992}
+              >
+                <LinearGradient
+                  colors={isCtaDisabled ? ["#4b4b4f", "#323236"] : ["#7C3AED", "#EC4899"]}
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={styles.ctaGradient}
+                >
+                  {isLoading ? (
+                    <View style={styles.loadingRow}>
+                      <ActivityIndicator color="#ffffff" />
+                      <Text style={styles.ctaText}>Processing...</Text>
+                    </View>
+                  ) : (
+                    <MotiView
+                      key={`cta-${freeTrialEnabled ? "trial" : "pro"}`}
+                      from={{ opacity: 0, translateY: 6 }}
+                      animate={{ opacity: 1, translateY: 0 }}
+                      transition={LUX_SPRING}
+                      style={styles.ctaContent}
+                    >
+                      {freeTrialEnabled ? (
+                        <>
+                          <Text style={styles.ctaText}>Start Free Trial</Text>
+                          <ArrowRight color="#ffffff" size={18} strokeWidth={2.5} />
+                          <Text style={styles.ctaAccentText}>7 Days Free</Text>
+                        </>
+                      ) : (
+                        <>
+                          <Text style={styles.ctaText}>Unlock Pro Access</Text>
+                          <ArrowRight color="#ffffff" size={18} strokeWidth={2.5} />
+                        </>
+                      )}
+                    </MotiView>
+                  )}
+                </LinearGradient>
+              </LuxPressable>
+            </View>
+
+            <Text style={styles.trustRow}>✓ Cancel anytime  ·  ✓ Secure payment  ·  ✓ Instant access</Text>
+
+            <LuxPressable
+              onPress={handleRestore}
+              className={pointerClassName}
+              style={styles.restoreButton}
+              glowColor="rgba(255,255,255,0.04)"
+              scale={0.99}
+            >
+              <Text style={styles.restoreText}>Already subscribed? Restore purchase</Text>
+            </LuxPressable>
+          </View>
         </View>
       </View>
     </View>
@@ -853,15 +924,18 @@ const styles = StyleSheet.create({
   },
   layout: {
     flex: 1,
-    justifyContent: "space-between",
-    alignItems: "center",
     cursor: "pointer",
   },
-  mainStack: {
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    alignItems: "center",
+  },
+  mainStack: {
     width: "100%",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 18,
     cursor: "pointer",
   },
   heroSection: {
@@ -885,6 +959,34 @@ const styles = StyleSheet.create({
     letterSpacing: 2.8,
     textTransform: "uppercase",
     marginTop: -4,
+  },
+  ratingPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderCurve: "continuous",
+  },
+  ratingStars: {
+    color: "#FBBF24",
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: "900",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    letterSpacing: 0.2,
+  },
+  ratingText: {
+    color: "#F4F4F5",
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: "700",
+    fontFamily: PREMIUM_FONT_FAMILY,
   },
   title: {
     color: "#fafafa",
@@ -910,6 +1012,22 @@ const styles = StyleSheet.create({
     width: "100%",
     overflow: "visible",
     cursor: "pointer",
+  },
+  carouselDots: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 2,
+  },
+  carouselDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.3)",
+  },
+  carouselDotActive: {
+    backgroundColor: "#FFFFFF",
   },
   heroSlideWrap: {
     overflow: "visible",
@@ -963,29 +1081,244 @@ const styles = StyleSheet.create({
     width: "100%",
     cursor: "pointer",
   },
+  urgencyBanner: {
+    width: "100%",
+    borderRadius: 14,
+    backgroundColor: "#92400E",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderCurve: "continuous",
+  },
+  urgencyBannerText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: "900",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    textAlign: "center",
+  },
+  planStack: {
+    width: "100%",
+    gap: 12,
+    cursor: "pointer",
+  },
+  planCardMotion: {
+    width: "100%",
+  },
+  planCard: {
+    width: "100%",
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    cursor: "pointer",
+    borderCurve: "continuous",
+    boxShadow: "0 18px 42px rgba(0, 0, 0, 0.22)",
+    position: "relative",
+  },
+  planCardYearly: {
+    minHeight: 224,
+    backgroundColor: "#4C1D95",
+  },
+  planCardWeekly: {
+    minHeight: 148,
+    backgroundColor: "#1A1A2E",
+    borderColor: "#3D3D5C",
+    paddingVertical: 18,
+  },
+  planCardSelected: {
+    borderWidth: 2,
+    borderColor: "#A855F7",
+  },
+  planCardGlow: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  planSelectedCheck: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+    width: 28,
+    height: 28,
+    borderRadius: 999,
+    backgroundColor: "#A855F7",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
+    boxShadow: "0 8px 18px rgba(76, 29, 149, 0.36)",
+  },
+  planContent: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    zIndex: 1,
+  },
+  yearlyBadgeStack: {
+    width: "100%",
+    alignItems: "center",
+    gap: 8,
+  },
+  yearlySavingsBadge: {
+    borderRadius: 999,
+    backgroundColor: "#22C55E",
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderCurve: "continuous",
+  },
+  yearlySavingsBadgeText: {
+    color: "#052E16",
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: "900",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    letterSpacing: 0.2,
+    textAlign: "center",
+  },
+  yearlyValueBadge: {
+    borderRadius: 999,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderCurve: "continuous",
+  },
+  yearlyValueBadgeText: {
+    color: "#4C1D95",
+    fontSize: 13,
+    lineHeight: 17,
+    fontWeight: "900",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    letterSpacing: 0.35,
+    textAlign: "center",
+  },
+  yearlyPriceRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  yearlyPrice: {
+    color: "#ffffff",
+    fontSize: 48,
+    lineHeight: 52,
+    fontWeight: "900",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    letterSpacing: -1.4,
+  },
+  yearlyPriceSuffix: {
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: "700",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    marginTop: 14,
+  },
+  yearlyBillingText: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "700",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    textAlign: "center",
+  },
+  yearlyTrialRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(5,46,22,0.22)",
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderWidth: 1,
+    borderColor: "rgba(34,197,94,0.34)",
+    borderCurve: "continuous",
+  },
+  yearlyTrialCheck: {
+    width: 20,
+    height: 20,
+    borderRadius: 999,
+    backgroundColor: "#22C55E",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  yearlyTrialText: {
+    color: "#ECFDF5",
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: "800",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    textAlign: "center",
+  },
+  yearlyTrialRowMuted: {
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderColor: "rgba(255,255,255,0.14)",
+  },
+  yearlyTrialCheckMuted: {
+    backgroundColor: "rgba(255,255,255,0.78)",
+  },
+  yearlyTrialTextMuted: {
+    color: "rgba(255,255,255,0.9)",
+  },
+  weeklyLabel: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 15,
+    lineHeight: 19,
+    fontWeight: "700",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    textAlign: "center",
+  },
+  weeklyPrice: {
+    color: "#ffffff",
+    fontSize: 32,
+    lineHeight: 36,
+    fontWeight: "900",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    letterSpacing: -1,
+    textAlign: "center",
+  },
+  weeklySubtitle: {
+    color: "#9CA3AF",
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "600",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    textAlign: "center",
+  },
   toggleRow: {
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
-    borderRadius: 24,
+    gap: 14,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "rgba(24,24,27,0.96)",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    cursor: "pointer",
+    backgroundColor: "rgba(17,17,27,0.96)",
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    borderCurve: "continuous",
   },
   toggleCopy: {
     flex: 1,
   },
-  toggleEyebrow: {
-    color: "#fafafa",
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: "800",
+  toggleLabel: {
+    fontSize: 13,
+    lineHeight: 17,
+    fontWeight: "700",
     fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: 0.1,
+  },
+  toggleLabelOn: {
+    color: "#86EFAC",
+  },
+  toggleLabelOff: {
+    color: "#9CA3AF",
   },
   toggleTrack: {
     width: 66,
@@ -995,163 +1328,22 @@ const styles = StyleSheet.create({
     padding: 4,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "#3f3f46",
+    backgroundColor: "#312E81",
     boxShadow: "0 10px 26px rgba(0, 0, 0, 0.24)",
   },
   toggleTrackActive: {
-    backgroundColor: "#7c3aed",
-    borderColor: "rgba(216,180,254,0.42)",
+    backgroundColor: "#7C3AED",
+    borderColor: "rgba(216,180,254,0.46)",
   },
   toggleThumb: {
     width: 30,
     height: 30,
     borderRadius: 999,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#E5E7EB",
     boxShadow: "0 5px 14px rgba(0, 0, 0, 0.22)",
   },
   toggleThumbActive: {
-    backgroundColor: "#fdf4ff",
-  },
-  planRow: {
-    flexDirection: "row",
-    gap: 10,
-    cursor: "pointer",
-  },
-  planCardMotion: {
-    flex: 1,
-  },
-  planCard: {
-    minHeight: 136,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "rgba(24,24,27,0.96)",
-    paddingHorizontal: 12,
-    paddingTop: 16,
-    paddingBottom: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    overflow: "hidden",
-    cursor: "pointer",
-  },
-  planCardActive: {
-    borderColor: "rgba(217,70,239,0.46)",
-    backgroundColor: "#18181b",
-  },
-  planCardGlow: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  planBadge: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
-    backgroundColor: "rgba(255,255,255,0.04)",
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-  },
-  planBadgeActive: {
-    borderColor: "rgba(217,70,239,0.28)",
-    backgroundColor: "rgba(217,70,239,0.14)",
-  },
-  planBadgeText: {
-    color: "#d4d4d8",
-    fontSize: 10,
-    lineHeight: 12,
-    fontWeight: "900",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: 0.55,
-  },
-  planBadgeTextActive: {
-    color: "#f5d0fe",
-  },
-  planTitle: {
-    color: "#fafafa",
-    fontSize: 15,
-    lineHeight: 18,
-    fontWeight: "800",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -0.25,
-    textAlign: "center",
-  },
-  planTitleRow: {
-    minHeight: 42,
-    width: "100%",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-  },
-  planTitleBadge: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(251, 191, 36, 0.34)",
-    backgroundColor: "#22c55e",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  planTitleBadgeText: {
-    color: "#052e16",
-    fontSize: 10,
-    lineHeight: 12,
-    fontWeight: "900",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: 0.45,
-  },
-  planPriceRow: {
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: 38,
-  },
-  planPriceLine: {
-    textAlign: "center",
-  },
-  planPrice: {
-    color: "#ffffff",
-    fontSize: 28,
-    lineHeight: 31,
-    fontWeight: "800",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -0.85,
-  },
-  planPriceSuffix: {
-    color: "#d4d4d8",
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: "700",
-    fontFamily: PREMIUM_FONT_FAMILY,
-  },
-  planSubtitle: {
-    color: "#a1a1aa",
-    fontSize: 11,
-    lineHeight: 15,
-    fontWeight: "600",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    textAlign: "center",
-  },
-  footerStack: {
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    minHeight: 36,
-    cursor: "pointer",
-  },
-  footerRow: {
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    cursor: "pointer",
-  },
-  footerText: {
-    color: "#a1a1aa",
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: "700",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    textAlign: "center",
-    width: "100%",
+    backgroundColor: "#ffffff",
   },
   errorText: {
     color: "#fca5a5",
@@ -1160,41 +1352,73 @@ const styles = StyleSheet.create({
     fontFamily: PREMIUM_FONT_FAMILY,
     textAlign: "center",
   },
+  bottomDockWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(9,9,11,0.96)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.06)",
+  },
   bottomDock: {
     width: "100%",
-    gap: 8,
+    gap: 10,
     alignItems: "center",
     cursor: "pointer",
+    alignSelf: "center",
+    paddingTop: 14,
+  },
+  ctaPulseShell: {
+    width: "100%",
+    position: "relative",
+  },
+  ctaPulse: {
+    position: "absolute",
+    top: 3,
+    right: -4,
+    bottom: 3,
+    left: -4,
+    borderRadius: 20,
+    backgroundColor: "rgba(168,85,247,0.28)",
   },
   ctaOuter: {
     width: "100%",
-    borderRadius: 999,
+    borderRadius: 16,
     cursor: "pointer",
   },
   ctaOuterDisabled: {
     opacity: 0.72,
   },
   ctaGradient: {
-    minHeight: 62,
-    borderRadius: 999,
+    minHeight: 58,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 26,
+    paddingHorizontal: 20,
     cursor: "pointer",
   },
   ctaContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: 8,
   },
   ctaText: {
     color: "#ffffff",
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: "800",
+    fontSize: 17,
+    lineHeight: 21,
+    fontWeight: "900",
     fontFamily: PREMIUM_FONT_FAMILY,
     letterSpacing: -0.25,
+  },
+  ctaAccentText: {
+    color: "#FCE7F3",
+    fontSize: 15,
+    lineHeight: 19,
+    fontWeight: "800",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    letterSpacing: -0.2,
   },
   loadingRow: {
     flexDirection: "row",
@@ -1202,19 +1426,27 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
   },
-  restoreButton: {
-    alignSelf: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    cursor: "pointer",
-  },
-  restoreText: {
-    color: "#a1a1aa",
-    fontSize: 12,
+  trustRow: {
+    color: "#9CA3AF",
+    fontSize: 11,
     lineHeight: 16,
     fontWeight: "600",
     fontFamily: PREMIUM_FONT_FAMILY,
     textAlign: "center",
-    textDecorationLine: "underline",
+    width: "100%",
+  },
+  restoreButton: {
+    alignSelf: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    cursor: "pointer",
+  },
+  restoreText: {
+    color: "#71717A",
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: "600",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    textAlign: "center",
   },
 });

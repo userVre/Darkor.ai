@@ -1,3 +1,4 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { memo, useCallback } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SlidersHorizontal } from "lucide-react-native";
@@ -9,12 +10,14 @@ import { triggerHaptic } from "../lib/haptics";
 
 type HomeHeaderProps = {
   remainingRenders: number;
+  progressValue: number;
   onUpgradeToPro: () => void;
   onOpenProfile: () => void;
 };
 
 export const HomeHeader = memo(function HomeHeader({
   remainingRenders,
+  progressValue,
   onUpgradeToPro,
   onOpenProfile,
 }: HomeHeaderProps) {
@@ -51,20 +54,26 @@ export const HomeHeader = memo(function HomeHeader({
         onPress={handleOpenCredits}
         style={styles.creditBarShadow}
         className="cursor-pointer"
-        glowColor="rgba(217,70,239,0.38)"
+        glowColor="rgba(124,58,237,0.3)"
         scale={0.985}
       >
-        <View style={styles.creditBar}>
-          <Text style={styles.creditBarText}>{`${remainingRenders} ${remainingRenders === 1 ? "Render" : "Renders"} Left Today`}</Text>
-          <Text style={styles.creditBarAction}>Upgrade</Text>
-        </View>
+        <LinearGradient colors={["#7C3AED", "#6D28D9"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.creditBar}>
+          <View style={styles.creditBarRow}>
+            <Text style={styles.creditBarText}>{`${remainingRenders} ${remainingRenders === 1 ? "Render" : "Renders"} Left Today`}</Text>
+            <Text style={styles.creditBarAction}>UPGRADE</Text>
+          </View>
+
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${Math.max(progressValue * 100, 0)}%` }]} />
+          </View>
+        </LinearGradient>
       </LuxPressable>
 
       <View style={styles.heroCard}>
         <View style={styles.heroCopy}>
           <Text style={styles.title}>Redesign Any Room with AI in Seconds</Text>
           <Text style={styles.description}>
-            Professional grade interior and exterior redesigns at your fingertips.
+            Trusted by 10,000+ homeowners and designers worldwide
           </Text>
         </View>
       </View>
@@ -127,16 +136,18 @@ const styles = StyleSheet.create({
     borderRadius: DS.radius.pill,
   },
   creditBar: {
-    minHeight: 56,
+    minHeight: 68,
     borderRadius: DS.radius.pill,
     paddingHorizontal: 20,
     paddingVertical: 14,
+    gap: 10,
+    ...glowShadow("rgba(124,58,237,0.32)", 26),
+  },
+  creditBarRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 16,
-    backgroundColor: "#d946ef",
-    ...glowShadow("rgba(217,70,239,0.34)", 26),
   },
   creditBarText: {
     flex: 1,
@@ -144,13 +155,24 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "900",
     letterSpacing: -0.35,
+    fontVariant: ["tabular-nums"],
   },
   creditBarAction: {
     color: "rgba(255,255,255,0.9)",
     fontSize: 13,
-    fontWeight: "800",
-    textTransform: "uppercase",
+    fontWeight: "900",
     letterSpacing: 0.8,
+  },
+  progressTrack: {
+    height: 4,
+    borderRadius: DS.radius.pill,
+    backgroundColor: "rgba(255,255,255,0.16)",
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: DS.radius.pill,
+    backgroundColor: "rgba(255,255,255,0.4)",
   },
   heroCard: {
     ...surfaceCard(),

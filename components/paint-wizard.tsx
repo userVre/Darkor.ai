@@ -76,7 +76,6 @@ const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
 const DETECT_DURATION_MS = 1700;
 const TAB_BAR_CLEARANCE = 96;
-const INTAKE_CONTINUE_HINT = "Add a photo to continue.";
 const MASK_CONTINUE_HINT = "Brush over the area you want to repaint to continue.";
 const COLORS_CONTINUE_HINT = "Choose a wall color to continue.";
 const AUTO_DETECT_SUCCESS_MESSAGE = "Walls detected - brush to refine if needed";
@@ -818,10 +817,22 @@ export function PaintWizard() {
 
           <View pointerEvents="box-none" style={[styles.fixedContinueBar, styles.actionContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
             <ServiceContinueButton
-              disabled={!selectedImage}
-              hint={INTAKE_CONTINUE_HINT}
+              active={Boolean(selectedImage)}
+              attention={Boolean(selectedImage)}
+              label={selectedImage ? "Continue \u2192" : "Add a Photo to Start"}
               loading={loadingContinueStep === "intake"}
-              onPress={() => runDeferredContinue("intake", handleContinueFromIntake)}
+              onPress={() => {
+                if (!selectedImage) {
+                  void handleSelectMedia("library");
+                  return;
+                }
+
+                runDeferredContinue("intake", handleContinueFromIntake);
+              }}
+              secondaryActionLabel="or use camera"
+              onSecondaryAction={() => {
+                void handleSelectMedia("camera");
+              }}
             />
           </View>
         </>
@@ -1029,15 +1040,20 @@ export function PaintWizard() {
             </View>
 
             <ServiceContinueButton
-              disabled={!canContinueFromMask}
-              hint={MASK_CONTINUE_HINT}
+              active={canContinueFromMask}
+              label={canContinueFromMask ? "Continue \u2192" : "Brush the Area to Continue"}
               loading={loadingContinueStep === "mask"}
-              onPress={() =>
+              onPress={() => {
+                if (!canContinueFromMask) {
+                  showToast(MASK_CONTINUE_HINT);
+                  return;
+                }
+
                 runDeferredContinue("mask", () => {
                   triggerHaptic();
                   setStep("colors");
-                })
-              }
+                });
+              }}
             />
           </View>
         </>
@@ -1114,15 +1130,20 @@ export function PaintWizard() {
 
           <View pointerEvents="box-none" style={[styles.fixedContinueBar, styles.actionContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
             <ServiceContinueButton
-              disabled={!canContinueFromColors}
-              hint={COLORS_CONTINUE_HINT}
+              active={canContinueFromColors}
+              label={selectedColor ? `Continue with ${selectedColor.title} \u2192` : "Select a Wall Color"}
               loading={loadingContinueStep === "colors"}
-              onPress={() =>
+              onPress={() => {
+                if (!canContinueFromColors) {
+                  showToast(COLORS_CONTINUE_HINT);
+                  return;
+                }
+
                 runDeferredContinue("colors", () => {
                   triggerHaptic();
                   setStep("finish");
-                })
-              }
+                });
+              }}
             />
           </View>
         </>
@@ -1182,19 +1203,21 @@ export function PaintWizard() {
             }}
             style={[styles.fixedContinueBar, styles.actionContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}
           >
-            <LuxPressable
-              onPress={handleGenerate}
-              disabled={!canGenerate}
-              className={pointerClassName}
-              style={{ width: "100%" }}
-              glowColor="rgba(217,70,239,0.26)"
-              scale={0.99}
-            >
-              <LinearGradient colors={SERVICE_WIZARD_THEME.gradients.accent} style={styles.primaryButtonLarge}>
-                <Sparkles color="#ffffff" size={18} />
-                <Text style={styles.primaryText}>{"Paint My Walls \u2728"}</Text>
-              </LinearGradient>
-            </LuxPressable>
+            <ServiceContinueButton
+              active={canGenerate}
+              label="Generate My Design \u2192"
+              loading={isGenerating}
+              onPress={() => {
+                if (!canGenerate) {
+                  showToast("Choose a wall color and finish to continue.");
+                  return;
+                }
+
+                void handleGenerate();
+              }}
+              pulse={canGenerate}
+              supportingText={`Uses 1 credit \u00b7 ${Math.max(availableCredits - 1, 0)} remaining`}
+            />
           </View>
         </>
       ) : null}

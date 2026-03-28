@@ -50,7 +50,6 @@ const TAB_BAR_CLEARANCE = 96;
 const LOUPE_SIZE = 116;
 const LOUPE_ZOOM = 1.8;
 const absoluteFill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
-const INTAKE_CONTINUE_HINT = "Add a photo to continue.";
 const MASK_CONTINUE_HINT = "Brush over the area you want to restyle to continue.";
 const MATERIALS_CONTINUE_HINT = "Choose a material to continue.";
 const AUTO_DETECT_SUCCESS_MESSAGE = "Floor detected - brush to refine if needed";
@@ -640,10 +639,22 @@ export function FloorWizard() {
 
           <View pointerEvents="box-none" style={[styles.fixedContinueBar, styles.actionContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
             <ServiceContinueButton
-              disabled={!selectedImage}
-              hint={INTAKE_CONTINUE_HINT}
+              active={Boolean(selectedImage)}
+              attention={Boolean(selectedImage)}
+              label={selectedImage ? "Continue \u2192" : "Add a Photo to Start"}
               loading={loadingContinueStep === "intake"}
-              onPress={() => runDeferredContinue("intake", handleContinueFromIntake)}
+              onPress={() => {
+                if (!selectedImage) {
+                  void handleSelectMedia("library");
+                  return;
+                }
+
+                runDeferredContinue("intake", handleContinueFromIntake);
+              }}
+              secondaryActionLabel="or use camera"
+              onSecondaryAction={() => {
+                void handleSelectMedia("camera");
+              }}
             />
           </View>
         </>
@@ -754,15 +765,20 @@ export function FloorWizard() {
               <GestureDetector gesture={sliderGesture}><View onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)} style={styles.sliderWrap}><View style={styles.sliderTrack} /><LinearGradient colors={[MASK_ACCENT, MASK_ACCENT]} style={[styles.sliderFill, { width: Math.max(14, sliderWidth * brushProgress) }]} /><View style={[styles.sliderThumb, { left: Math.max(0, sliderWidth * brushProgress - 16) }]}><View style={styles.sliderThumbDot} /></View></View></GestureDetector>
             </View>
             <ServiceContinueButton
-              disabled={!canContinueFromMask}
-              hint={MASK_CONTINUE_HINT}
+              active={canContinueFromMask}
+              label={canContinueFromMask ? "Continue \u2192" : "Brush the Area to Continue"}
               loading={loadingContinueStep === "mask"}
-              onPress={() =>
+              onPress={() => {
+                if (!canContinueFromMask) {
+                  showToast(MASK_CONTINUE_HINT);
+                  return;
+                }
+
                 runDeferredContinue("mask", () => {
                   triggerHaptic();
                   setStep("materials");
-                })
-              }
+                });
+              }}
             />
           </View>
         </>
@@ -794,12 +810,19 @@ export function FloorWizard() {
 
           <View pointerEvents="box-none" style={[styles.fixedContinueBar, styles.actionContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
             <ServiceContinueButton
-              disabled={!canContinueFromMaterials}
-              hint={MATERIALS_CONTINUE_HINT}
+              active={canContinueFromMaterials}
+              label={selectedMaterial ? "Generate My Design \u2192" : "Select a Material"}
               loading={loadingContinueStep === "materials"}
               onPress={async () => {
+                if (!canContinueFromMaterials) {
+                  showToast(MATERIALS_CONTINUE_HINT);
+                  return;
+                }
+
                 await runAsyncContinue("materials", handleGenerate);
               }}
+              pulse={canContinueFromMaterials}
+              supportingText={`Uses 1 credit \u00b7 ${Math.max(availableCredits - 1, 0)} remaining`}
             />
           </View>
         </>

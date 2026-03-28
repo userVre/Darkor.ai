@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { MotiView } from "moti";
-import { Camera, Check, ImagePlus, X } from "lucide-react-native";
+import { Check, ImagePlus, X } from "lucide-react-native";
 import { Children, cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
 import { ScrollView, Text, View, StyleSheet, useWindowDimensions, type ImageSourcePropType } from "react-native";
 
@@ -23,7 +23,7 @@ type ServiceIntakeStepProps = {
   selectedImageUri?: string | null;
   onClearSelection?: () => void;
   onUploadPress: () => void;
-  onCameraPress: () => void;
+  onCameraPress?: () => void;
   onExamplePress: (example: ServiceExamplePhoto) => void;
 };
 
@@ -49,7 +49,6 @@ export function ServiceIntakeStep({
   selectedImageUri,
   onClearSelection,
   onUploadPress,
-  onCameraPress,
   onExamplePress,
 }: ServiceIntakeStepProps) {
   const { width } = useWindowDimensions();
@@ -125,23 +124,6 @@ export function ServiceIntakeStep({
           )}
         </LinearGradient>
       </LuxPressable>
-
-      {!selectedImageUri ? (
-        <LuxPressable
-          onPress={onCameraPress}
-          className={pointerClassName}
-          pressableClassName={pointerClassName}
-          style={styles.cameraButtonWrap}
-          glowColor="rgba(255,255,255,0.05)"
-          scale={0.99}
-        >
-          <View style={styles.cameraButton}>
-            <Camera color="#FFFFFF" size={18} strokeWidth={2.1} />
-            <Text style={styles.cameraText}>Use Camera</Text>
-          </View>
-        </LuxPressable>
-      ) : null}
-
       <View style={styles.examplesSection}>
         <Text style={styles.examplesTitle}>Example Photos</Text>
         <ScrollView

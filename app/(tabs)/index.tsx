@@ -4,10 +4,11 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
+import { AnimatePresence, MotiView } from "moti";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Platform, StyleSheet, Text, View, type ViewToken, useWindowDimensions } from "react-native";
+import { FlatList, Platform, StyleSheet, Text, View, type NativeSyntheticEvent, type NativeScrollEvent, type ViewToken, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowUpRight } from "lucide-react-native";
+import { ArrowDown } from "lucide-react-native";
 
 import { HomeHeader } from "../../components/home-header";
 import { LuxPressable } from "../../components/lux-pressable";
@@ -26,9 +27,31 @@ type ServiceCardData = {
   title: string;
   subtitle: string;
   eyebrow: string;
+  section: "full-ai-redesign" | "precision-edits";
   video: number;
   poster: number;
   serviceParam: string;
+  requiresPro?: boolean;
+};
+
+type ServiceListItem =
+  | {
+      id: string;
+      type: "section";
+      label: string;
+    }
+  | {
+      id: string;
+      type: "card";
+      item: ServiceCardData;
+    };
+
+const SECTION_CARD_GAP = 12;
+const SECTION_BREAK_GAP = 16;
+
+const SERVICE_SECTION_LABELS = {
+  "full-ai-redesign": "✦ Full AI Redesign",
+  "precision-edits": "✦ Precision Edits",
 };
 
 const SERVICE_CARDS: ServiceCardData[] = [
@@ -37,6 +60,7 @@ const SERVICE_CARDS: ServiceCardData[] = [
     title: "Interior Design",
     subtitle: "Designer interiors with realistic materials and luxury light.",
     eyebrow: "Most Popular",
+    section: "full-ai-redesign",
     video: require("../../assets/videos/master-suite.mp4"),
     poster: require("../../assets/media/discover/home/home-master-suite.jpg"),
     serviceParam: "interior",
@@ -46,6 +70,7 @@ const SERVICE_CARDS: ServiceCardData[] = [
     title: "Exterior Design",
     subtitle: "Architectural facade upgrades with stronger curb appeal.",
     eyebrow: "Curb Appeal",
+    section: "full-ai-redesign",
     video: require("../../assets/videos/facade.mp4"),
     poster: require("../../assets/media/discover/exterior/exterior-modern-villa.jpg"),
     serviceParam: "facade",
@@ -55,6 +80,7 @@ const SERVICE_CARDS: ServiceCardData[] = [
     title: "Garden Design",
     subtitle: "Landscape concepts for patios, pools, fire pits, and flow.",
     eyebrow: "Outdoor Living",
+    section: "full-ai-redesign",
     video: require("../../assets/videos/garden.mp4"),
     poster: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
     serviceParam: "garden",
@@ -64,20 +90,47 @@ const SERVICE_CARDS: ServiceCardData[] = [
     title: "Smart Wall Paint",
     subtitle: "Premium wall recolors with exact masking and polished finish.",
     eyebrow: "Precision Edit",
+    section: "precision-edits",
     video: require("../../assets/videos/paint.mp4"),
     poster: require("../../assets/media/discover/wall-scenes/sage-green-suite.jpg"),
     serviceParam: "paint",
+    requiresPro: true,
   },
   {
     id: "floor-restyle",
     title: "Floor Restyle",
     subtitle: "Floor material swaps with clean perspective and natural light.",
     eyebrow: "Material Upgrade",
+    section: "precision-edits",
     video: require("../../assets/videos/floor.mp4"),
     poster: require("../../assets/media/discover/floor-scenes/polished-carrara-marble.jpg"),
     serviceParam: "floor",
+    requiresPro: true,
   },
 ] as const;
+
+const SERVICE_LIST_ITEMS: ServiceListItem[] = [
+  {
+    id: "section-full-ai-redesign",
+    type: "section",
+    label: SERVICE_SECTION_LABELS["full-ai-redesign"],
+  },
+  ...SERVICE_CARDS.filter((card) => card.section === "full-ai-redesign").map((item) => ({
+    id: item.id,
+    type: "card" as const,
+    item,
+  })),
+  {
+    id: "section-precision-edits",
+    type: "section",
+    label: SERVICE_SECTION_LABELS["precision-edits"],
+  },
+  ...SERVICE_CARDS.filter((card) => card.section === "precision-edits").map((item) => ({
+    id: item.id,
+    type: "card" as const,
+    item,
+  })),
+];
 
 type CardMediaProps = {
   item: ServiceCardData;
@@ -139,53 +192,77 @@ type ServiceCardProps = {
   item: ServiceCardData;
   height: number;
   active: boolean;
+  showScrollHint: boolean;
   onPress: (item: ServiceCardData) => void;
 };
 
-const ServiceCard = memo(function ServiceCard({ item, height, active, onPress }: ServiceCardProps) {
+const ServiceCard = memo(function ServiceCard({ item, height, active, showScrollHint, onPress }: ServiceCardProps) {
   const handlePress = useCallback(() => {
     triggerHaptic();
     onPress(item);
   }, [item, onPress]);
 
   return (
-    <View style={[styles.card, { height }]}>
-      <CardMedia item={item} active={active} />
-      <LinearGradient
-        colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.12)", "rgba(0,0,0,0.44)", "rgba(0,0,0,0.82)"]}
-        locations={[0, 0.42, 0.74, 1]}
-        style={StyleSheet.absoluteFillObject}
-        pointerEvents="none"
-      />
+    <View style={styles.cardStack}>
+      <View style={[styles.card, { height }]}>
+        <CardMedia item={item} active={active} />
+        <LinearGradient
+          colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.12)", "rgba(0,0,0,0.44)", "rgba(0,0,0,0.82)"]}
+          locations={[0, 0.42, 0.74, 1]}
+          style={StyleSheet.absoluteFillObject}
+          pointerEvents="none"
+        />
 
-      <View style={styles.cardFrame}>
-        <View style={styles.cardCopyStack}>
-          <View style={styles.copyBlock}>
-            <View style={styles.cardEyebrowPill}>
-              <Text style={styles.cardEyebrowText}>{item.eyebrow}</Text>
+        {item.requiresPro ? (
+          <View style={styles.proBadge}>
+            <Text style={styles.proBadgeText}>💎 PRO</Text>
+          </View>
+        ) : null}
+
+        <View style={styles.cardFrame}>
+          <View style={styles.cardCopyStack}>
+            <View style={styles.copyBlock}>
+              <View style={styles.cardEyebrowPill}>
+                <Text style={styles.cardEyebrowText}>{item.eyebrow}</Text>
+              </View>
+              <Text style={styles.cardTitle}>{item.title}</Text>
+              <Text style={styles.cardSubtitle} numberOfLines={2}>
+                {item.subtitle}
+              </Text>
             </View>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardSubtitle} numberOfLines={2}>
-              {item.subtitle}
-            </Text>
+          </View>
+
+          <View style={styles.cardActionRow}>
+            <LuxPressable
+              onPress={handlePress}
+              className="cursor-pointer"
+              style={styles.ctaButton}
+              glowColor="rgba(124,58,237,0.28)"
+              scale={0.98}
+            >
+              <LinearGradient colors={["#7C3AED", "#6D28D9"]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={styles.ctaGradient}>
+                <Text style={styles.ctaText}>Start Redesign →</Text>
+              </LinearGradient>
+            </LuxPressable>
           </View>
         </View>
-
-        <View style={styles.cardActionRow}>
-          <LuxPressable
-            onPress={handlePress}
-            className="cursor-pointer"
-            style={styles.ctaButton}
-            glowColor="rgba(217,70,239,0.18)"
-            scale={0.97}
-          >
-            <View style={styles.ctaInner}>
-              <Text style={styles.ctaText}>Try it!</Text>
-              <ArrowUpRight color="#ffffff" size={15} strokeWidth={2.5} />
-            </View>
-          </LuxPressable>
-        </View>
       </View>
+
+      <AnimatePresence>
+        {showScrollHint ? (
+          <MotiView
+            key="scroll-hint"
+            from={{ opacity: 0, translateY: -6 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            exit={{ opacity: 0, translateY: -8 }}
+            transition={{ type: "timing", duration: 240 }}
+            style={styles.scrollHintRow}
+          >
+            <ArrowDown color="rgba(255,255,255,0.52)" size={14} strokeWidth={2.1} />
+            <Text style={styles.scrollHintText}>Scroll to explore all tools</Text>
+          </MotiView>
+        ) : null}
+      </AnimatePresence>
     </View>
   );
 });
@@ -197,10 +274,11 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [activeCardId, setActiveCardId] = useState(SERVICE_CARDS[0]?.id ?? "");
+  const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
   const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as
-    | { credits?: number; imagesRemaining?: number }
+    | { credits?: number; imagesRemaining?: number; imageGenerationLimit?: number }
     | null
     | undefined;
 
@@ -208,6 +286,10 @@ export default function HomeScreen() {
   const remainingRenders = viewerReady
     ? me?.imagesRemaining ?? me?.credits ?? GUEST_TESTING_STARTER_CREDITS
     : GUEST_TESTING_STARTER_CREDITS;
+  const renderLimit = viewerReady
+    ? me?.imageGenerationLimit ?? Math.max(remainingRenders, 5)
+    : Math.max(GUEST_TESTING_STARTER_CREDITS, 5);
+  const remainingRenderProgress = renderLimit > 0 ? Math.min(remainingRenders / renderLimit, 1) : 0;
 
   const handleServicePress = useCallback(
     (item: ServiceCardData) => {
@@ -230,38 +312,69 @@ export default function HomeScreen() {
   }, [router]);
 
   const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: ViewToken<ServiceCardData>[] }) => {
-      const firstVisible = viewableItems.find((entry) => entry.isViewable)?.item;
-      if (firstVisible?.id) {
-        setActiveCardId((current) => (current === firstVisible.id ? current : firstVisible.id));
+    ({ viewableItems }: { viewableItems: ViewToken<ServiceListItem>[] }) => {
+      const firstVisible = viewableItems.find((entry) => entry.isViewable && entry.item.type === "card")?.item;
+      if (firstVisible?.type === "card") {
+        setActiveCardId((current) => (current === firstVisible.item.id ? current : firstVisible.item.id));
       }
     },
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: ServiceCardData }) => (
-      <ServiceCard item={item} height={cardHeight} active={item.id === activeCardId} onPress={handleServicePress} />
-    ),
-    [activeCardId, cardHeight, handleServicePress],
+    ({ item, index }: { item: ServiceListItem; index: number }) => {
+      const previousItem = index > 0 ? SERVICE_LIST_ITEMS[index - 1] : null;
+      const marginTop =
+        item.type === "section"
+          ? index === 0
+            ? 0
+            : SECTION_BREAK_GAP
+          : previousItem?.type === "section"
+            ? SECTION_CARD_GAP
+            : SCREEN_SECTION_GAP;
+
+      return (
+        <View style={marginTop > 0 ? { marginTop } : null}>
+          {item.type === "section" ? (
+            <Text style={styles.sectionHeader}>{item.label}</Text>
+          ) : (
+            <ServiceCard
+              item={item.item}
+              height={cardHeight}
+              active={item.item.id === activeCardId}
+              showScrollHint={item.item.id === "interior-design" && !hasScrolledOnce}
+              onPress={handleServicePress}
+            />
+          )}
+        </View>
+      );
+    },
+    [activeCardId, cardHeight, handleServicePress, hasScrolledOnce],
   );
 
-  const keyExtractor = useCallback((item: ServiceCardData) => item.id, []);
+  const keyExtractor = useCallback((item: ServiceListItem) => item.id, []);
+
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!hasScrolledOnce && event.nativeEvent.contentOffset.y > 18) {
+      setHasScrolledOnce(true);
+    }
+  }, [hasScrolledOnce]);
 
   const header = useMemo(
     () => (
       <HomeHeader
         remainingRenders={remainingRenders}
+        progressValue={remainingRenderProgress}
         onUpgradeToPro={handleUpgradeToPro}
         onOpenProfile={handleOpenProfile}
       />
     ),
-    [handleOpenProfile, handleUpgradeToPro, remainingRenders],
+    [handleOpenProfile, handleUpgradeToPro, remainingRenderProgress, remainingRenders],
   );
 
   return (
     <View style={styles.screen}>
       <FlatList
-        data={SERVICE_CARDS}
+        data={SERVICE_LIST_ITEMS}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         ListHeaderComponent={header}
@@ -269,15 +382,15 @@ export default function HomeScreen() {
           paddingTop: insets.top + DS.spacing[3],
           paddingHorizontal: SCREEN_SIDE_PADDING,
           paddingBottom: Math.max(insets.bottom + 120, 136),
-          gap: SCREEN_SECTION_GAP,
         }}
-        ItemSeparatorComponent={() => <View style={{ height: SCREEN_SECTION_GAP }} />}
         showsVerticalScrollIndicator={false}
         initialNumToRender={2}
         maxToRenderPerBatch={2}
         updateCellsBatchingPeriod={40}
         windowSize={3}
         removeClippedSubviews
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         onViewableItemsChanged={onViewableItemsChanged.current}
         viewabilityConfig={VIEWABILITY_CONFIG}
       />
@@ -289,6 +402,16 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: "#000000",
+  },
+  sectionHeader: {
+    color: "rgba(255,255,255,0.54)",
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 1.3,
+    textTransform: "uppercase",
+  },
+  cardStack: {
+    gap: 12,
   },
   card: {
     position: "relative",
@@ -308,18 +431,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: DS.spacing[3],
     paddingBottom: DS.spacing[3],
     paddingTop: DS.spacing[4],
-    gap: 16,
+    gap: 18,
   },
   cardCopyStack: {
     gap: 12,
   },
   cardActionRow: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
+    width: "100%",
   },
   copyBlock: {
     gap: 10,
-    maxWidth: "88%",
+    maxWidth: "92%",
   },
   cardEyebrowPill: {
     alignSelf: "flex-start",
@@ -351,24 +473,50 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
   },
-  ctaButton: {
-    alignSelf: "flex-end",
+  proBadge: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    zIndex: 2,
     borderRadius: DS.radius.pill,
-    backgroundColor: "rgba(0,0,0,0.72)",
     borderWidth: HAIRLINE,
-    borderColor: "rgba(255,255,255,0.12)",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    borderColor: "rgba(255,255,255,0.14)",
+    backgroundColor: "rgba(8,8,12,0.76)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  ctaInner: {
-    flexDirection: "row",
+  proBadgeText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0.7,
+  },
+  ctaButton: {
+    width: "100%",
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  ctaGradient: {
+    minHeight: 48,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
   },
   ctaText: {
-    color: DS.colors.textPrimary,
-    ...DS.typography.button,
-    fontSize: 15,
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: 0.1,
+  },
+  scrollHintRow: {
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  scrollHintText: {
+    color: "rgba(255,255,255,0.52)",
+    fontSize: 13,
+    fontWeight: "600",
   },
 });
