@@ -32,7 +32,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
-import { ArrowRight, BadgeCheck, Check, X } from "lucide-react-native";
+import { ArrowRight, Check, X } from "lucide-react-native";
 
 import { LuxPressable } from "../components/lux-pressable";
 import { useProSuccess } from "../components/pro-success-context";
@@ -61,10 +61,9 @@ const HERO_GAP = 12;
 const AUTO_SCROLL_MS = 2600;
 
 const FEATURE_ITEMS = [
-  "Completely Watermark-free",
-  "Redesign a room in 10 seconds",
-  "Impress clients with 4K renders",
-  "Unlock 50+ Premium AI Styles",
+  "Watermark-free",
+  "4K renders",
+  "50+ styles",
 ] as const;
 
 const PLAN_COPY = {
@@ -109,10 +108,10 @@ const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 function TrialSwitch({ value, onPress }: { value: boolean; onPress: () => void }) {
-  const translateX = useSharedValue(value ? 28 : 0);
+  const translateX = useSharedValue(value ? 20 : 0);
 
   useEffect(() => {
-    translateX.value = withSpring(value ? 28 : 0, {
+    translateX.value = withSpring(value ? 20 : 0, {
       damping: 16,
       stiffness: 180,
     });
@@ -135,11 +134,11 @@ function TrialSwitch({ value, onPress }: { value: boolean; onPress: () => void }
   );
 }
 
-const FeaturePill = memo(function FeaturePill({ label }: { label: string }) {
+const InlineFeature = memo(function InlineFeature({ label }: { label: string }) {
   return (
-    <View style={styles.featurePill}>
-      <BadgeCheck color="#e4e4e7" size={15} strokeWidth={2.1} />
-      <Text style={styles.featureText}>{label}</Text>
+    <View style={styles.inlineFeatureItem}>
+      <Text style={styles.inlineFeatureCheck}>{"\u2713"}</Text>
+      <Text style={styles.inlineFeatureText}>{label}</Text>
     </View>
   );
 });
@@ -162,11 +161,11 @@ const HeroSlide = memo(function HeroSlide({
   const animatedStyle = useAnimatedStyle(() => {
     const center = index * snapInterval;
     const inputRange = [center - snapInterval, center, center + snapInterval];
-    const scale = interpolate(scrollX.value, inputRange, [0.74, 1.18, 0.74], Extrapolation.CLAMP);
-    const opacity = interpolate(scrollX.value, inputRange, [0.38, 1, 0.38], Extrapolation.CLAMP);
-    const translateY = interpolate(scrollX.value, inputRange, [18, -12, 18], Extrapolation.CLAMP);
-    const translateX = interpolate(scrollX.value, inputRange, [14, 0, -14], Extrapolation.CLAMP);
-    const rotateY = interpolate(scrollX.value, inputRange, [22, 0, -22], Extrapolation.CLAMP);
+    const scale = interpolate(scrollX.value, inputRange, [0.82, 1.1, 0.82], Extrapolation.CLAMP);
+    const opacity = interpolate(scrollX.value, inputRange, [0.45, 1, 0.45], Extrapolation.CLAMP);
+    const translateY = interpolate(scrollX.value, inputRange, [12, -8, 12], Extrapolation.CLAMP);
+    const translateX = interpolate(scrollX.value, inputRange, [10, 0, -10], Extrapolation.CLAMP);
+    const rotateY = interpolate(scrollX.value, inputRange, [18, 0, -18], Extrapolation.CLAMP);
     const zIndex = interpolate(scrollX.value, inputRange, [1, 30, 1], Extrapolation.CLAMP);
 
     return {
@@ -245,7 +244,7 @@ function PlanCard({
 
         {isYearly ? (
           <View style={styles.planContent}>
-            <View style={styles.yearlyBadgeStack}>
+            <View style={styles.yearlyBadgeRow}>
               <View style={styles.yearlySavingsBadge}>
                 <Text style={styles.yearlySavingsBadgeText}>{PLAN_COPY.yearly.savingsBadge}</Text>
               </View>
@@ -271,10 +270,12 @@ function PlanCard({
             </View>
           </View>
         ) : (
-          <View style={styles.planContent}>
-            <Text style={styles.weeklyLabel}>{PLAN_COPY.weekly.title}</Text>
+          <View style={[styles.planContent, styles.weeklyContent]}>
+            <View style={styles.weeklyCopy}>
+              <Text style={styles.weeklyLabel}>{PLAN_COPY.weekly.title}</Text>
+              <Text style={styles.weeklySubtitle}>{PLAN_COPY.weekly.subtitle}</Text>
+            </View>
             <Text style={styles.weeklyPrice}>{PLAN_COPY.weekly.price}</Text>
-            <Text style={styles.weeklySubtitle}>{PLAN_COPY.weekly.subtitle}</Text>
           </View>
         )}
       </LuxPressable>
@@ -384,13 +385,12 @@ export default function PaywallScreen() {
   const [packages, setPackages] = useState<RevenueCatPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [bottomDockHeight, setBottomDockHeight] = useState(204);
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
 
-  const compactLevel = height < 720 ? 2 : height < 840 ? 1 : 0;
+  const compactLevel = height < 680 ? 3 : height < 760 ? 2 : height < 840 ? 1 : 0;
   const contentWidth = Math.min(width - 28, 428);
-  const heroWidth = compactLevel === 2 ? 96 : compactLevel === 1 ? 108 : 118;
-  const heroHeight = compactLevel === 2 ? 132 : compactLevel === 1 ? 148 : 164;
+  const heroWidth = compactLevel === 3 ? 100 : compactLevel === 2 ? 104 : compactLevel === 1 ? 112 : 118;
+  const heroHeight = compactLevel === 3 ? 140 : compactLevel === 2 ? 144 : compactLevel === 1 ? 152 : 160;
   const heroSnapInterval = heroWidth + HERO_GAP;
   const heroInset = Math.max((contentWidth - heroWidth) / 2, 0);
 
@@ -672,22 +672,21 @@ export default function PaywallScreen() {
           contentContainerStyle={[
             styles.scrollContent,
             {
-              paddingTop: insets.top + (compactLevel === 2 ? 52 : 58),
-              paddingBottom: bottomDockHeight + Math.max(insets.bottom + 20, 28),
+              paddingTop: insets.top + (compactLevel >= 2 ? 34 : 42),
+              paddingBottom: Math.max(insets.bottom + (compactLevel >= 2 ? 14 : 20), compactLevel >= 2 ? 20 : 28),
               paddingHorizontal: 14,
             },
           ]}
         >
-        <View style={[styles.mainStack, { width: contentWidth, gap: compactLevel === 2 ? 14 : 18 }]}>
-          <View style={[styles.heroSection, { gap: compactLevel === 2 ? 10 : 14 }]}>
+        <View style={[styles.mainStack, { width: contentWidth, gap: compactLevel >= 2 ? 10 : 12 }]}>
+          <View style={[styles.heroSection, { gap: compactLevel >= 2 ? 6 : 8 }]}>
             <View style={styles.headerCopy}>
               <Text style={styles.brandMark}>DARKOR.AI PRO</Text>
-              <View style={styles.ratingPill}>
-                <Text style={styles.ratingStars}>★★★★★</Text>
-                <Text style={styles.ratingText}>4.8 · 2,400+ happy designers</Text>
+              <View style={styles.positioningPill}>
+                <Text style={styles.positioningText}>{"\u{1F3C6} #1 AI Interior Design App"}</Text>
               </View>
-              <Text style={[styles.title, compactLevel === 2 ? styles.titleCompact : null]}>
-                Transform any room with AI — photorealistic in seconds.
+              <Text style={[styles.title, compactLevel === 3 ? styles.titleCompact : null]}>
+                {"Transform any room with AI \u2014 photorealistic in seconds."}
               </Text>
             </View>
 
@@ -732,16 +731,18 @@ export default function PaywallScreen() {
               })}
             </View>
 
-            <View style={[styles.featureGrid, compactLevel === 2 ? styles.featureGridCompact : null]}>
-              {FEATURE_ITEMS.map((item) => (
-                <FeaturePill key={item} label={item} />
-              ))}
+            <View style={styles.featureRow}>
+              <InlineFeature label={FEATURE_ITEMS[0]} />
+              <Text style={styles.featureDivider}>{"\u00B7"}</Text>
+              <InlineFeature label={FEATURE_ITEMS[1]} />
+              <Text style={styles.featureDivider}>{"\u00B7"}</Text>
+              <InlineFeature label={FEATURE_ITEMS[2]} />
             </View>
           </View>
 
-          <View style={[styles.pricingStack, { gap: compactLevel === 2 ? 10 : 12 }]}>
+          <View style={[styles.pricingStack, { gap: compactLevel >= 2 ? 8 : 10 }]}>
             <View style={styles.urgencyBanner}>
-              <Text style={styles.urgencyBannerText}>🔥 Limited Offer — Free trial ends soon</Text>
+              <Text style={styles.urgencyBannerText}>{"\u{1F525} Limited Offer \u2014 Free trial ends soon"}</Text>
             </View>
             <View style={styles.planStack}>
               <PlanCard
@@ -758,20 +759,7 @@ export default function PaywallScreen() {
               />
             </View>
           </View>
-        </View>
 
-        </ScrollView>
-
-        <View
-          onLayout={(event) => setBottomDockHeight(event.nativeEvent.layout.height)}
-          style={[
-            styles.bottomDockWrap,
-            {
-              paddingHorizontal: 14,
-              paddingBottom: Math.max(insets.bottom, 10),
-            },
-          ]}
-        >
           <View style={[styles.bottomDock, { width: contentWidth }]}>
             <View style={styles.toggleRow}>
               <MotiView
@@ -845,7 +833,7 @@ export default function PaywallScreen() {
               </LuxPressable>
             </View>
 
-            <Text style={styles.trustRow}>✓ Cancel anytime  ·  ✓ Secure payment  ·  ✓ Instant access</Text>
+            <Text style={styles.trustRow}>{"\u2713 Cancel anytime  \u00B7  \u2713 Secure payment  \u00B7  \u2713 Instant access"}</Text>
 
             <LuxPressable
               onPress={handleRestore}
@@ -857,9 +845,11 @@ export default function PaywallScreen() {
               <Text style={styles.restoreText}>Already subscribed? Restore purchase</Text>
             </LuxPressable>
           </View>
+
+        </View>
+        </ScrollView>
         </View>
       </View>
-    </View>
   );
 }
 
@@ -945,62 +935,52 @@ const styles = StyleSheet.create({
   },
   headerCopy: {
     alignItems: "center",
-    gap: 10,
+    gap: 6,
     paddingHorizontal: 6,
-    paddingBottom: 18,
+    paddingBottom: 4,
     cursor: "pointer",
   },
   brandMark: {
     color: "#f4f4f5",
-    fontSize: 20,
-    lineHeight: 22,
+    fontSize: 12,
+    lineHeight: 14,
     fontWeight: "900",
     fontFamily: DISPLAY_FONT_FAMILY,
-    letterSpacing: 2.8,
+    letterSpacing: 2.2,
     textTransform: "uppercase",
-    marginTop: -4,
+    marginTop: -2,
   },
-  ratingPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+  positioningPill: {
     borderRadius: 999,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 7,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(24,24,27,0.94)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "#92400E",
     borderCurve: "continuous",
   },
-  ratingStars: {
-    color: "#FBBF24",
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: "900",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: 0.2,
-  },
-  ratingText: {
+  positioningText: {
     color: "#F4F4F5",
     fontSize: 13,
     lineHeight: 16,
-    fontWeight: "700",
+    fontWeight: "900",
     fontFamily: PREMIUM_FONT_FAMILY,
+    letterSpacing: -0.1,
+    textAlign: "center",
   },
   title: {
     color: "#fafafa",
-    fontSize: 31,
-    lineHeight: 35,
+    fontSize: 24,
+    lineHeight: 27,
     fontWeight: "800",
     fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -0.95,
+    letterSpacing: -0.55,
     textAlign: "center",
-    maxWidth: 330,
+    maxWidth: 380,
   },
   titleCompact: {
-    fontSize: 27,
-    lineHeight: 31,
+    fontSize: 22,
+    lineHeight: 26,
   },
   carouselShell: {
     width: "100%",
@@ -1017,8 +997,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    marginTop: 2,
+    gap: 6,
   },
   carouselDot: {
     width: 6,
@@ -1036,45 +1015,49 @@ const styles = StyleSheet.create({
   heroSlideCard: {
     flex: 1,
     overflow: "hidden",
-    borderRadius: 28,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
     backgroundColor: "#18181b",
-    boxShadow: "0 18px 40px rgba(0, 0, 0, 0.28)",
+    boxShadow: "0 14px 28px rgba(0, 0, 0, 0.24)",
     cursor: "pointer",
   },
-  featureGrid: {
+  featureRow: {
     width: "100%",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: 10,
-  },
-  featureGridCompact: {
-    gap: 8,
-  },
-  featurePill: {
-    minWidth: "46%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.07)",
-    backgroundColor: "rgba(24,24,27,0.92)",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    cursor: "pointer",
+    gap: 6,
   },
-  featureText: {
-    flexShrink: 1,
-    color: "#f4f4f5",
-    fontSize: 13,
-    lineHeight: 17,
+  featureDivider: {
+    color: "rgba(255,255,255,0.42)",
+    fontSize: 12,
+    lineHeight: 14,
     fontWeight: "700",
     fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -0.12,
+  },
+  inlineFeatureItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    flexShrink: 1,
+  },
+  inlineFeatureCheck: {
+    color: "#D1FAE5",
+    fontSize: 12,
+    lineHeight: 13,
+    fontWeight: "900",
+    fontFamily: PREMIUM_FONT_FAMILY,
+  },
+  inlineFeatureText: {
+    flexShrink: 1,
+    color: "rgba(244,244,245,0.82)",
+    fontSize: 12,
+    lineHeight: 13,
+    fontWeight: "600",
+    fontFamily: PREMIUM_FONT_FAMILY,
+    letterSpacing: -0.1,
     textAlign: "center",
   },
   pricingStack: {
@@ -1086,22 +1069,22 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: "#92400E",
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 7,
     alignItems: "center",
     justifyContent: "center",
     borderCurve: "continuous",
   },
   urgencyBannerText: {
     color: "#FFFFFF",
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 14,
     fontWeight: "900",
     fontFamily: PREMIUM_FONT_FAMILY,
     textAlign: "center",
   },
   planStack: {
     width: "100%",
-    gap: 12,
+    gap: 8,
     cursor: "pointer",
   },
   planCardMotion: {
@@ -1109,11 +1092,11 @@ const styles = StyleSheet.create({
   },
   planCard: {
     width: "100%",
-    borderRadius: 28,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -1123,14 +1106,14 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   planCardYearly: {
-    minHeight: 224,
+    minHeight: 148,
     backgroundColor: "#4C1D95",
   },
   planCardWeekly: {
-    minHeight: 148,
+    minHeight: 76,
     backgroundColor: "#1A1A2E",
     borderColor: "#3D3D5C",
-    paddingVertical: 18,
+    paddingVertical: 14,
   },
   planCardSelected: {
     borderWidth: 2,
@@ -1141,40 +1124,42 @@ const styles = StyleSheet.create({
   },
   planSelectedCheck: {
     position: "absolute",
-    top: 14,
-    right: 14,
-    width: 28,
-    height: 28,
+    top: 12,
+    right: 12,
+    width: 24,
+    height: 24,
     borderRadius: 999,
     backgroundColor: "#A855F7",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
-    boxShadow: "0 8px 18px rgba(76, 29, 149, 0.36)",
+    boxShadow: "0 6px 14px rgba(76, 29, 149, 0.32)",
   },
   planContent: {
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
+    gap: 6,
     zIndex: 1,
   },
-  yearlyBadgeStack: {
+  yearlyBadgeRow: {
     width: "100%",
+    flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    justifyContent: "center",
+    gap: 6,
   },
   yearlySavingsBadge: {
     borderRadius: 999,
     backgroundColor: "#22C55E",
-    paddingHorizontal: 16,
-    paddingVertical: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderCurve: "continuous",
   },
   yearlySavingsBadgeText: {
     color: "#052E16",
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 15,
     fontWeight: "900",
     fontFamily: PREMIUM_FONT_FAMILY,
     letterSpacing: 0.2,
@@ -1183,14 +1168,14 @@ const styles = StyleSheet.create({
   yearlyValueBadge: {
     borderRadius: 999,
     backgroundColor: "#FFFFFF",
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderCurve: "continuous",
   },
   yearlyValueBadgeText: {
     color: "#4C1D95",
-    fontSize: 13,
-    lineHeight: 17,
+    fontSize: 12,
+    lineHeight: 15,
     fontWeight: "900",
     fontFamily: PREMIUM_FONT_FAMILY,
     letterSpacing: 0.35,
@@ -1205,24 +1190,24 @@ const styles = StyleSheet.create({
   },
   yearlyPrice: {
     color: "#ffffff",
-    fontSize: 48,
-    lineHeight: 52,
+    fontSize: 38,
+    lineHeight: 40,
     fontWeight: "900",
     fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -1.4,
+    letterSpacing: -1.15,
   },
   yearlyPriceSuffix: {
     color: "rgba(255,255,255,0.78)",
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: "700",
     fontFamily: PREMIUM_FONT_FAMILY,
-    marginTop: 14,
+    marginTop: 8,
   },
   yearlyBillingText: {
     color: "rgba(255,255,255,0.7)",
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 14,
     fontWeight: "700",
     fontFamily: PREMIUM_FONT_FAMILY,
     textAlign: "center",
@@ -1231,18 +1216,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 6,
     borderRadius: 999,
     backgroundColor: "rgba(5,46,22,0.22)",
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderWidth: 1,
     borderColor: "rgba(34,197,94,0.34)",
     borderCurve: "continuous",
   },
   yearlyTrialCheck: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     borderRadius: 999,
     backgroundColor: "#22C55E",
     alignItems: "center",
@@ -1250,8 +1235,8 @@ const styles = StyleSheet.create({
   },
   yearlyTrialText: {
     color: "#ECFDF5",
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 15,
     fontWeight: "800",
     fontFamily: PREMIUM_FONT_FAMILY,
     textAlign: "center",
@@ -1266,51 +1251,61 @@ const styles = StyleSheet.create({
   yearlyTrialTextMuted: {
     color: "rgba(255,255,255,0.9)",
   },
+  weeklyContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  weeklyCopy: {
+    flex: 1,
+    gap: 1,
+    paddingRight: 12,
+  },
   weeklyLabel: {
     color: "rgba(255,255,255,0.8)",
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 13,
+    lineHeight: 16,
     fontWeight: "700",
     fontFamily: PREMIUM_FONT_FAMILY,
-    textAlign: "center",
+    textAlign: "left",
   },
   weeklyPrice: {
     color: "#ffffff",
-    fontSize: 32,
-    lineHeight: 36,
+    fontSize: 28,
+    lineHeight: 30,
     fontWeight: "900",
     fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -1,
-    textAlign: "center",
+    letterSpacing: -0.9,
+    textAlign: "right",
   },
   weeklySubtitle: {
     color: "#9CA3AF",
     fontSize: 12,
-    lineHeight: 16,
+    lineHeight: 15,
     fontWeight: "600",
     fontFamily: PREMIUM_FONT_FAMILY,
-    textAlign: "center",
+    textAlign: "left",
   },
   toggleRow: {
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 14,
-    borderRadius: 18,
+    gap: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: "rgba(17,17,27,0.96)",
     paddingHorizontal: 14,
-    paddingVertical: 13,
+    paddingVertical: 8,
     borderCurve: "continuous",
   },
   toggleCopy: {
     flex: 1,
   },
   toggleLabel: {
-    fontSize: 13,
-    lineHeight: 17,
+    fontSize: 12,
+    lineHeight: 15,
     fontWeight: "700",
     fontFamily: PREMIUM_FONT_FAMILY,
   },
@@ -1321,23 +1316,23 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
   },
   toggleTrack: {
-    width: 66,
-    height: 38,
+    width: 52,
+    height: 30,
     borderRadius: 999,
     justifyContent: "center",
     padding: 4,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
     backgroundColor: "#312E81",
-    boxShadow: "0 10px 26px rgba(0, 0, 0, 0.24)",
+    boxShadow: "0 8px 20px rgba(0, 0, 0, 0.22)",
   },
   toggleTrackActive: {
     backgroundColor: "#7C3AED",
     borderColor: "rgba(216,180,254,0.46)",
   },
   toggleThumb: {
-    width: 30,
-    height: 30,
+    width: 24,
+    height: 24,
     borderRadius: 999,
     backgroundColor: "#E5E7EB",
     boxShadow: "0 5px 14px rgba(0, 0, 0, 0.22)",
@@ -1347,27 +1342,18 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: "#fca5a5",
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 10,
+    lineHeight: 13,
     fontFamily: PREMIUM_FONT_FAMILY,
     textAlign: "center",
   },
-  bottomDockWrap: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(9,9,11,0.96)",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.06)",
-  },
   bottomDock: {
     width: "100%",
-    gap: 10,
+    gap: 6,
     alignItems: "center",
     cursor: "pointer",
     alignSelf: "center",
-    paddingTop: 14,
+    paddingTop: 6,
   },
   ctaPulseShell: {
     width: "100%",
@@ -1391,11 +1377,11 @@ const styles = StyleSheet.create({
     opacity: 0.72,
   },
   ctaGradient: {
-    minHeight: 58,
+    minHeight: 48,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     cursor: "pointer",
   },
   ctaContent: {
@@ -1406,16 +1392,16 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     color: "#ffffff",
-    fontSize: 17,
-    lineHeight: 21,
+    fontSize: 15,
+    lineHeight: 19,
     fontWeight: "900",
     fontFamily: PREMIUM_FONT_FAMILY,
     letterSpacing: -0.25,
   },
   ctaAccentText: {
     color: "#FCE7F3",
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 17,
     fontWeight: "800",
     fontFamily: PREMIUM_FONT_FAMILY,
     letterSpacing: -0.2,
@@ -1428,8 +1414,8 @@ const styles = StyleSheet.create({
   },
   trustRow: {
     color: "#9CA3AF",
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 10,
+    lineHeight: 12,
     fontWeight: "600",
     fontFamily: PREMIUM_FONT_FAMILY,
     textAlign: "center",
@@ -1437,14 +1423,14 @@ const styles = StyleSheet.create({
   },
   restoreButton: {
     alignSelf: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     cursor: "pointer",
   },
   restoreText: {
     color: "#71717A",
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 10,
+    lineHeight: 12,
     fontWeight: "600",
     fontFamily: PREMIUM_FONT_FAMILY,
     textAlign: "center",
