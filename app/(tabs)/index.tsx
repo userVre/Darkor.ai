@@ -13,6 +13,7 @@ import { HomeHeader } from "../../components/home-header";
 import { LuxPressable } from "../../components/lux-pressable";
 import { useViewerSession } from "../../components/viewer-session-context";
 import { DS, HAIRLINE, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow } from "../../lib/design-system";
+import { ENABLE_GUEST_WIZARD_TEST_MODE, GUEST_TESTING_STARTER_CREDITS } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
 
 const VIEWABILITY_CONFIG = {
@@ -197,24 +198,27 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const [activeCardId, setActiveCardId] = useState(SERVICE_CARDS[0]?.id ?? "");
   const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
+  const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as
     | { credits?: number; imagesRemaining?: number }
     | null
     | undefined;
 
   const cardHeight = useMemo(() => Math.max(356, Math.min(430, Math.round(width * 0.96))), [width]);
-  const remainingRenders = viewerReady ? me?.imagesRemaining ?? me?.credits ?? 3 : 3;
+  const remainingRenders = viewerReady
+    ? me?.imagesRemaining ?? me?.credits ?? GUEST_TESTING_STARTER_CREDITS
+    : GUEST_TESTING_STARTER_CREDITS;
 
   const handleServicePress = useCallback(
     (item: ServiceCardData) => {
-      if (!isSignedIn) {
+      if (!canCreateAsGuest) {
         router.push({ pathname: "/sign-in", params: { returnTo: `/workspace?service=${item.serviceParam}` } });
         return;
       }
 
       router.push({ pathname: "/workspace", params: { service: item.serviceParam } });
     },
-    [isSignedIn, router],
+    [canCreateAsGuest, router],
   );
 
   const handleUpgradeToPro = useCallback(() => {

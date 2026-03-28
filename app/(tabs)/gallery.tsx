@@ -11,6 +11,7 @@ import { LuxPressable } from "../../components/lux-pressable";
 import { useWorkspaceDraft } from "../../components/workspace-context";
 import { DISCOVER_SECTIONS, type DiscoverSection, type DiscoverTile } from "../../lib/data";
 import { DS, HAIRLINE, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow } from "../../lib/design-system";
+import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
 
 const SCREEN_BG = DS.colors.background;
@@ -222,6 +223,7 @@ export default function GalleryScreen() {
   const { width } = useWindowDimensions();
   const { setDraftRoom, setDraftStyle } = useWorkspaceDraft();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const totalOptions = useMemo(
     () => DISCOVER_SECTIONS.reduce((count, section) => count + section.items.length, 0),
     [],
@@ -251,7 +253,7 @@ export default function GalleryScreen() {
         entrySource: "discover",
       } as const;
 
-      if (!isSignedIn) {
+      if (!canCreateAsGuest) {
         const search = new URLSearchParams();
         for (const [key, value] of Object.entries(params)) {
           if (typeof value === "string" && value.length > 0) {
@@ -269,7 +271,7 @@ export default function GalleryScreen() {
         params,
       });
     },
-    [isSignedIn, router, setDraftRoom, setDraftStyle],
+    [canCreateAsGuest, router, setDraftRoom, setDraftStyle],
   );
 
   return (

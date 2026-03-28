@@ -78,6 +78,11 @@ import { captureRef } from "react-native-view-shot";
 import { DS, HAIRLINE, glowShadow } from "../../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../../lib/service-wizard-theme";
 import { FLOOR_WIZARD_EXAMPLE_PHOTOS, PAINT_WIZARD_EXAMPLE_PHOTOS } from "../../lib/wizard-example-photos";
+import {
+  GUEST_TESTING_STARTER_CREDITS,
+  isGuestWizardTestingSession,
+  resolveGuestWizardViewerId,
+} from "../../lib/guest-testing";
 type MeResponse = {
   plan: "free" | "trial" | "pro";
   credits: number;
@@ -1243,14 +1248,16 @@ export default function WorkspaceScreen() {
   }>();
   const { isSignedIn } = useAuth();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
+  const guestWizardTestingSession = isGuestWizardTestingSession(isSignedIn);
+  const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const diagnostic = DIAGNOSTIC_BYPASS;
-  const effectiveSignedIn = isSignedIn;
+  const effectiveSignedIn = isSignedIn || guestWizardTestingSession;
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { draft, setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle } =
     useWorkspaceDraft();
   const { showToast } = useProSuccess();
-  const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
+  const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
 
   const me = useQuery(
     "users:me" as any,
@@ -1601,7 +1608,11 @@ export default function WorkspaceScreen() {
     }
     return "standard";
   }, [hasPaidAccess, me?.subscriptionType]);
-  const creditBalance = diagnostic ? 999 : viewerReady ? me?.credits ?? 3 : 3;
+  const creditBalance = diagnostic
+    ? 999
+    : viewerReady
+      ? me?.credits ?? GUEST_TESTING_STARTER_CREDITS
+      : GUEST_TESTING_STARTER_CREDITS;
   const hasGenerationCredits = creditBalance > 0;
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const isDownloadingStandard = isDownloading === "standard";
@@ -2309,7 +2320,7 @@ export default function WorkspaceScreen() {
 
       const imageStorageId = await uploadSelectedImageToStorage(activeSelectedImage);
       const startResult = (await startGeneration({
-        anonymousId,
+        anonymousId: viewerId,
         imageStorageId,
         serviceType: backendServiceType,
         selection: generationSelection,

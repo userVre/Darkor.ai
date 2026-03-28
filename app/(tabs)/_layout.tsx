@@ -6,6 +6,7 @@ import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "lucide-react-native"
 import { useAuth } from "@clerk/expo";
 
 import { DS, HAIRLINE, glowShadow } from "../../lib/design-system";
+import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
 
 const ACTIVE_TINT = DS.colors.accentStrong;
@@ -58,6 +59,7 @@ function TabIcon({
 export default function TabsLayout() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
+  const canOpenCreateTab = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
 
   return (
     <Tabs
@@ -121,7 +123,7 @@ export default function TabsLayout() {
             <TabBarButton
               {...props}
               onPress={(event) => {
-                if (!isSignedIn) {
+                if (!canOpenCreateTab) {
                   event.preventDefault();
                   triggerHaptic();
                   router.push({ pathname: "/sign-in", params: { returnTo: "/workspace" } });

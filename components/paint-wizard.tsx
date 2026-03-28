@@ -24,6 +24,11 @@ import { uploadLocalFileToCloud } from "../lib/native-upload";
 import { WALL_COLOR_OPTIONS } from "../lib/data";
 import { GENERATION_FAILED_TOAST } from "../lib/generation-errors";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
+import {
+  GUEST_TESTING_STARTER_CREDITS,
+  isGuestWizardTestingSession,
+  resolveGuestWizardViewerId,
+} from "../lib/guest-testing";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { PAINT_WIZARD_EXAMPLE_PHOTOS } from "../lib/wizard-example-photos";
 import { useProSuccess } from "./pro-success-context";
@@ -152,8 +157,11 @@ export function PaintWizard() {
   const { width, height } = useWindowDimensions();
   const { isSignedIn } = useAuth();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
+  const guestWizardTestingSession = isGuestWizardTestingSession(isSignedIn);
+  const effectiveSignedIn = isSignedIn || guestWizardTestingSession;
+  const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const { showToast } = useProSuccess();
-  const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
+  const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
 
   const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as MeResponse | null | undefined;
   const generationArchive = useQuery("generations:getUserArchive" as any, viewerReady ? viewerArgs : "skip") as
@@ -210,7 +218,7 @@ export function PaintWizard() {
     () => FINISH_OPTIONS.find((option) => option.id === selectedFinishId) ?? FINISH_OPTIONS[0],
     [selectedFinishId],
   );
-  const availableCredits = viewerReady ? me?.credits ?? 3 : 3;
+  const availableCredits = viewerReady ? me?.credits ?? GUEST_TESTING_STARTER_CREDITS : GUEST_TESTING_STARTER_CREDITS;
   const canGenerate = Boolean(selectedImage && hasMask && selectedColor && !isGenerating);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
@@ -256,7 +264,7 @@ export function PaintWizard() {
       setGeneratedImageUrl(generation.imageUrl);
       setIsGenerating(false);
       triggerHaptic();
-      if (isSignedIn) {
+      if (effectiveSignedIn) {
         router.replace({ pathname: "/workspace", params: { boardView: "board" } });
         return;
       }
@@ -269,7 +277,7 @@ export function PaintWizard() {
       setStep("finish");
       showToast(GENERATION_FAILED_TOAST);
     }
-  }, [generationArchive, generationId, isSignedIn, router, showToast]);
+  }, [effectiveSignedIn, generationArchive, generationId, router, showToast]);
 
   const resetDetection = useCallback(() => {
     if (detectTimerRef.current) clearTimeout(detectTimerRef.current);
@@ -424,7 +432,7 @@ export function PaintWizard() {
     }
 
     if (availableCredits <= 0) {
-      if (!isSignedIn) {
+      if (!effectiveSignedIn) {
         setAwaitingAuth(true);
         router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=paint" } });
         return;
@@ -457,7 +465,7 @@ export function PaintWizard() {
           ]);
 
           return (await startGeneration({
-            anonymousId,
+            anonymousId: viewerId,
             imageStorageId: sourceStorageId,
             maskStorageId,
             serviceType: "paint",
@@ -477,7 +485,7 @@ export function PaintWizard() {
       setStep("finish");
       const rawMessage = error instanceof Error ? error.message : "Please try again.";
       if (rawMessage === "Payment Required") {
-        if (!isSignedIn) {
+        if (!effectiveSignedIn) {
           setAwaitingAuth(true);
           router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=paint" } });
           return;
@@ -498,12 +506,13 @@ export function PaintWizard() {
     startGeneration,
     showToast,
     uploadBlobToStorage,
+    viewerId,
     viewerReady,
     selectedColor,
   ]);
 
   useEffect(() => {
-    if (!awaitingAuth || !isSignedIn || !viewerReady || !canGenerate) {
+    if (!awaitingAuth || !effectiveSignedIn || !viewerReady || !canGenerate) {
       return;
     }
 
@@ -512,7 +521,7 @@ export function PaintWizard() {
       void handleGenerate();
     }, 300);
     return () => clearTimeout(timer);
-  }, [awaitingAuth, canGenerate, handleGenerate, isSignedIn, viewerReady]);
+  }, [awaitingAuth, canGenerate, effectiveSignedIn, handleGenerate, viewerReady]);
 
   const handleBack = useCallback(() => {
     triggerHaptic();

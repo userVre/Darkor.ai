@@ -21,6 +21,7 @@ import { convex } from "../lib/convex";
 import { DS, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
 import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
 import { getEnvReport, logEnvDiagnostics } from "../lib/env";
+import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../lib/guest-testing";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
 import {
   configureRevenueCat,
@@ -279,9 +280,11 @@ function CreateAccessGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useGlobalSearchParams();
+  const allowGuestCreateAccess =
+    ENABLE_GUEST_WIZARD_TEST_MODE && (pathname === "/workspace" || pathname === "/wizard");
 
   useEffect(() => {
-    if (!isLoaded || isSignedIn) {
+    if (allowGuestCreateAccess || !isLoaded || isSignedIn) {
       return;
     }
 
@@ -291,9 +294,9 @@ function CreateAccessGate({ children }: { children: React.ReactNode }) {
 
     const returnTo = buildReturnToPath(pathname, params);
     router.replace({ pathname: "/sign-in", params: { returnTo } });
-  }, [isLoaded, isSignedIn, params, pathname, router]);
+  }, [allowGuestCreateAccess, isLoaded, isSignedIn, params, pathname, router]);
 
-  if (!isLoaded) {
+  if (!isLoaded || allowGuestCreateAccess) {
     return <>{children}</>;
   }
 
