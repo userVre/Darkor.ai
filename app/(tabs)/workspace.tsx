@@ -947,8 +947,13 @@ function getStyleCardBadgeColors(tone: StyleCardBadgeTone) {
   }
 }
 
+function normalizeStyleDisplayName(value: string | null | undefined) {
+  if (!value) return null;
+  return value.trim().replace(/Art Nouveeu/gi, "Art Nouveau");
+}
+
 function normalizeStylePreviewKey(value: string | null | undefined) {
-  return (value ?? "")
+  return (normalizeStyleDisplayName(value) ?? "")
     .trim()
     .toLowerCase()
     .replace(/&/g, "and")
@@ -1912,7 +1917,7 @@ export default function WorkspaceScreen() {
       id: generation._id,
       imageUrl: generation.imageUrl ?? null,
       originalImageUrl: generation.sourceImageUrl ?? null,
-      styleLabel: generation.style ?? "Custom",
+      styleLabel: normalizeStyleDisplayName(generation.style) ?? "Custom",
       roomLabel: generation.roomType ?? serviceLabel,
       serviceType: inferBoardServiceType(generation.style, generation.roomType),
       generationId: generation._id,
@@ -2074,7 +2079,8 @@ export default function WorkspaceScreen() {
     const fallbackImage = selectedSpaceCard?.image ?? DEFAULT_SPACE_IMAGE;
     return getStylePreviewImage(selectedStyle, fallbackImage);
   }, [selectedRoom, selectedStyle, spaceCatalogItems]);
-  const previewThumbnailLabel = `Sample output \u00b7 ${selectedStyle ?? "Custom"}`;
+  const selectedStyleDisplayName = normalizeStyleDisplayName(selectedStyle);
+  const previewThumbnailLabel = `Sample output \u00b7 ${selectedStyleDisplayName ?? "Custom"}`;
   const confirmationSummaryChips = useMemo<ConfirmationSummaryChip[]>(
     () => [
       {
@@ -2086,8 +2092,8 @@ export default function WorkspaceScreen() {
       {
         key: "style",
         title: "Style",
-        value: selectedStyle ?? "\u26a0 Missing",
-        missing: !selectedStyle,
+        value: selectedStyleDisplayName ?? "\u26a0 Missing",
+        missing: !selectedStyleDisplayName,
       },
       {
         key: "mode",
@@ -2102,7 +2108,7 @@ export default function WorkspaceScreen() {
         missing: !selectedPalette,
       },
     ],
-    [selectedMode, selectedPalette, selectedRoom, selectedStyle],
+    [selectedMode, selectedPalette, selectedRoom, selectedStyleDisplayName],
   );
   const hasBrokenGenerateSummary = confirmationSummaryChips.some((item) => item.missing);
 
@@ -2858,10 +2864,10 @@ export default function WorkspaceScreen() {
     const temporaryBoardId = `pending-${requestStartedAt}`;
     const selectedSpaceLabel = selectedRoom ?? serviceLabel;
     const finishLabel = selectedFinishOption?.title ?? "Matte";
-    const paintColorLabel = selectedWallColorOption?.title ?? selectedStyle ?? "Sage Green";
+    const paintColorLabel = selectedWallColorOption?.title ?? selectedStyleDisplayName ?? "Sage Green";
     const paintColorValue = selectedWallColorOption?.value ?? "#7C9174";
     const paintStyleLabel = `${paintColorLabel} Paint`;
-    const floorMaterialLabel = selectedFloorMaterialOption?.title ?? selectedStyle ?? "Hardwood";
+    const floorMaterialLabel = selectedFloorMaterialOption?.title ?? selectedStyleDisplayName ?? "Hardwood";
     const floorStyleLabel = `${floorMaterialLabel} Flooring`;
     const generationSelection = isFloorService
       ? `${selectedFloorMaterialOption?.promptLabel ?? floorMaterialLabel} with a ${finishLabel.toLowerCase()} finish`
@@ -3198,20 +3204,22 @@ export default function WorkspaceScreen() {
     const stepOneExampleCardWidth = Math.min(Math.max(width * 0.36, 138), 168);
     const stepOneExampleCardHeight = Math.round(stepOneExampleCardWidth * 1.02);
     const bottomBarOffset = isTabbedWorkspaceRoute ? 96 : 0;
+    const continueBarOffset = bottomBarOffset + (isGenerationReviewStep ? 8 : 0);
+    const topSafeAreaInset = process.env.EXPO_OS === "android" ? Math.max(insets.top, 44) : Math.max(insets.top, 20);
     const isRefineDirectionStep = workflowStep === 3 && !isPaintService && !isFloorService && !isLeanGenerationService;
     const stepContentMinHeight = Math.max(
       height -
         Math.max(insets.top + (isPhotoStep ? 18 : 8), isPhotoStep ? 24 : 20) -
         Math.max(
-          insets.bottom + bottomBarOffset + (isPhotoStep ? 148 : isGenerationReviewStep ? 236 : isRefineDirectionStep ? 194 : 124),
-          bottomBarOffset + (isPhotoStep ? 176 : isGenerationReviewStep ? 260 : isRefineDirectionStep ? 214 : 144),
+          insets.bottom + continueBarOffset + (isPhotoStep ? 148 : isGenerationReviewStep ? 160 : isRefineDirectionStep ? 194 : 124),
+          continueBarOffset + (isPhotoStep ? 176 : isGenerationReviewStep ? 184 : isRefineDirectionStep ? 214 : 144),
         ),
       isPhotoStep ? 520 : 460,
     );
     const showGenerateConfirmation = isGenerationReviewStep && !isPaintService && !isFloorService && !isLeanGenerationService && Boolean(selectedMode && selectedPalette);
     const isContinueDisabled = !canContinue || (isFinalWizardStep && isGenerating) || (isGenerationReviewStep && hasBrokenGenerateSummary);
     const isContinueActive = canContinue && !isContinueDisabled;
-    const shouldPulseContinue = isGenerationReviewStep && isContinueActive;
+    const shouldPulseContinue = isGenerationReviewStep && isContinueActive && hasGenerationCredits;
     const continueHint =
       isGenerationReviewStep && hasBrokenGenerateSummary
         ? "Complete your style selections to generate."
@@ -3222,17 +3230,6 @@ export default function WorkspaceScreen() {
     const expectationPreviewCopy = isLeanGenerationService
       ? "A polished exterior concept with premium detailing, realistic materials, and architectural coherence."
       : "A polished, photoreal interior concept with elevated materials, refined lighting, and editorial-level realism.";
-    const finalSelectionChips = isLeanGenerationService
-      ? [
-          { label: selectedRoom ?? "Space type not selected", active: Boolean(selectedRoom) },
-          { label: selectedStyle ?? "Style direction not selected", active: Boolean(selectedStyle) },
-        ]
-      : [
-          { label: selectedRoom ?? "Space type not selected", active: Boolean(selectedRoom) },
-          { label: selectedStyle ?? "Style direction not selected", active: Boolean(selectedStyle) },
-          { label: selectedMode?.title ?? null, active: Boolean(selectedMode) },
-          { label: selectedPalette?.label ?? null, active: Boolean(selectedPalette) },
-        ].filter((item): item is { label: string; active: boolean } => Boolean(item.label));
     const stepOneTitle = isFloorService ? "Floor Restyle" : isPaintService ? "Add a Photo" : isGardenService ? "Add a Garden Photo" : isExteriorService ? "Add an Exterior Photo" : "Add a Photo";
     const emptyUploadTitle = isFloorService ? "Add Floor Photo" : isPaintService ? "Add a Photo" : isGardenService ? "Start Your Garden Redesign" : isExteriorService ? "Start Exterior Redesign" : "Start Redesigning";
     const stepOneDescription = isGardenService
@@ -3270,6 +3267,20 @@ export default function WorkspaceScreen() {
       : isFloorService
         ? "Choose how the selected flooring material should read under light once Darkor.ai maps it into the space."
         : "Choose how bold the redesign should feel, then pick the palette family Darkor.ai should weave through the space.";
+    const stepOneHeading = hasVisiblePhoto
+      ? isPaintService
+        ? "Photo added — mark the wall area next."
+        : isFloorService
+          ? "Photo added — mark the floor area next."
+          : "Photo added — choose your space type next."
+      : stepOneTitle;
+    const stepOneBody = hasVisiblePhoto
+      ? isPaintService
+        ? "Your photo is locked in. Next, brush the wall surfaces so the recolor stays crisp around trim, furniture, and decor."
+        : isFloorService
+          ? "Your photo is locked in. Next, brush the floor plane so the material restyle lands cleanly around furniture and walls."
+          : "Your photo is locked in. Next, choose the space type so Darkor.ai can keep the redesign architecturally grounded."
+      : stepOneDescription;
     const wizardSectionHeaderStyle = { gap: DS.spacing[1.5], alignItems: "center" as const };
     const wizardSectionBodyStyle = {
       color: wizardMutedTextColor,
@@ -3313,9 +3324,11 @@ export default function WorkspaceScreen() {
         ? "Continue \u2192"
         : isSpaceStep && selectedRoom
           ? `Continue with ${selectedRoom} \u2192`
-          : isStyleStep && selectedStyle
-            ? `Continue with ${selectedStyle} \u2192`
-            : "Generate My Design \u2192";
+          : isStyleStep && selectedStyleDisplayName
+            ? `Continue with ${selectedStyleDisplayName} \u2192`
+            : isGenerationReviewStep && !hasGenerationCredits
+              ? "Get More Credits \u2192"
+              : "Generate My Design \u2192";
     const stepButtonLabel = isPhotoStep
       ? selectedImage
         ? "Continue \u2192"
@@ -3325,10 +3338,12 @@ export default function WorkspaceScreen() {
           ? `Continue with ${selectedRoom} \u2192`
           : "Select a Space Type"
         : isStyleStep
-          ? selectedStyle
-            ? `Continue with ${selectedStyle} \u2192`
+          ? selectedStyleDisplayName
+            ? `Continue with ${selectedStyleDisplayName} \u2192`
             : "Select a Style"
-          : "Generate My Design \u2192";
+          : isGenerationReviewStep && !hasGenerationCredits
+            ? "Get More Credits \u2192"
+            : "Generate My Design \u2192";
     const stepButtonActive = isPhotoStep
       ? Boolean(selectedImage)
       : isSpaceStep
@@ -3354,7 +3369,7 @@ export default function WorkspaceScreen() {
             exit={{ opacity: 0, translateY: -12 }}
             transition={LUX_SPRING}
             className="absolute left-5 right-5 z-20"
-            style={{ top: insets.top + 8 }}
+            style={{ top: topSafeAreaInset + 8 }}
             pointerEvents="none"
           >
             <View
@@ -3382,7 +3397,7 @@ export default function WorkspaceScreen() {
               transition={{ type: "timing", duration: 220 }}
               style={{
                 position: "absolute",
-                top: insets.top + 12,
+                top: topSafeAreaInset + 12,
                 left: 20,
                 right: 20,
                 zIndex: 30,
@@ -3419,8 +3434,8 @@ export default function WorkspaceScreen() {
             paddingHorizontal: isPhotoStep ? DS.spacing[3] : DS.spacing[2.5],
             paddingTop: isPhotoStep ? 14 : 10,
             paddingBottom: Math.max(
-              insets.bottom + bottomBarOffset + (isPhotoStep ? 148 : isRefineDirectionStep ? 194 : 124),
-              bottomBarOffset + (isPhotoStep ? 176 : isRefineDirectionStep ? 214 : 144),
+              insets.bottom + continueBarOffset + (isPhotoStep ? 148 : isGenerationReviewStep ? 160 : isRefineDirectionStep ? 194 : 124),
+              continueBarOffset + (isPhotoStep ? 176 : isGenerationReviewStep ? 184 : isRefineDirectionStep ? 214 : 144),
             ),
             minHeight: height,
           }}
@@ -3460,7 +3475,7 @@ export default function WorkspaceScreen() {
                           },
                         ]}
                         >
-                          {stepOneTitle}
+                          {stepOneHeading}
                       </Text>
                       <Text
                         style={{
@@ -3470,7 +3485,7 @@ export default function WorkspaceScreen() {
                           maxWidth: 320,
                         }}
                       >
-                        {stepOneDescription}
+                        {stepOneBody}
                       </Text>
                     </View>
 
@@ -4173,7 +4188,9 @@ export default function WorkspaceScreen() {
                           }}
                         >
                           <Text style={{ color: "#ffffff", fontSize: 23, fontWeight: "700", letterSpacing: -0.45 }}>
-                            {isPaintService ? selectedWallColorOption?.title ?? selectedStyle ?? "Select a wall color" : selectedFloorMaterialOption?.title ?? selectedStyle ?? "Select a floor material"}
+                            {isPaintService
+                              ? selectedWallColorOption?.title ?? selectedStyleDisplayName ?? "Select a wall color"
+                              : selectedFloorMaterialOption?.title ?? selectedStyleDisplayName ?? "Select a floor material"}
                           </Text>
                           <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
                             {selectedRoom
@@ -4183,7 +4200,10 @@ export default function WorkspaceScreen() {
                           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
                             {[
                               { label: selectedRoom ?? "Space type not selected", active: Boolean(selectedRoom) },
-                              { label: selectedStyle ?? (isPaintService ? "Wall color not selected" : "Material not selected"), active: Boolean(selectedStyle) },
+                              {
+                                label: selectedStyleDisplayName ?? (isPaintService ? "Wall color not selected" : "Material not selected"),
+                                active: Boolean(selectedStyleDisplayName),
+                              },
                             ].map((item) => (
                               <View
                                 key={item.label}
@@ -4301,14 +4321,16 @@ export default function WorkspaceScreen() {
                               {selectedRoom ?? (isGardenService ? "Select a garden zone" : "Select a building type")}
                             </Text>
                             <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
-                              {selectedStyle ? `${selectedStyle} architectural direction selected.` : "Select an exterior style to continue."}
+                              {selectedStyleDisplayName
+                                ? `${selectedStyleDisplayName} architectural direction selected.`
+                                : "Select an exterior style to continue."}
                             </Text>
                           </View>
 
                           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
                             {[
                               { label: selectedRoom ?? "Building type not selected", active: Boolean(selectedRoom) },
-                              { label: selectedStyle ?? "Style direction not selected", active: Boolean(selectedStyle) },
+                              { label: selectedStyleDisplayName ?? "Style direction not selected", active: Boolean(selectedStyleDisplayName) },
                             ].map((item) => (
                               <View
                                 key={item.label}
@@ -4378,25 +4400,6 @@ export default function WorkspaceScreen() {
                           </View>
                         </View>
 
-                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                          {finalSelectionChips.map((item) => (
-                            <View
-                              key={item.label}
-                              style={{
-                                borderRadius: 999,
-                                borderWidth: 1,
-                                borderColor: item.active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
-                                backgroundColor: item.active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
-                                paddingHorizontal: 12,
-                                paddingVertical: 8,
-                              }}
-                            >
-                              <Text style={{ color: item.active ? "#f5d0fe" : "#d4d4d8", fontSize: 12, fontWeight: "600" }}>
-                                {item.label}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
                       </View>
                     </>
                   ) : (
@@ -4894,7 +4897,7 @@ export default function WorkspaceScreen() {
           <View
             className="absolute inset-x-0 bottom-0 px-4 pt-4"
             style={{
-              bottom: bottomBarOffset,
+              bottom: continueBarOffset,
               zIndex: 120,
               paddingBottom: Math.max(insets.bottom + 12, 24),
               borderTopWidth: 1,
@@ -4907,54 +4910,7 @@ export default function WorkspaceScreen() {
               elevation: 24,
             }}
           >
-            <View style={{ gap: isGenerationReviewStep ? 12 : 0 }}>
-              {isGenerationReviewStep ? (
-                <View
-                  style={{
-                    borderRadius: 22,
-                    borderWidth: 1,
-                    borderColor: isContinueActive ? "rgba(217,70,239,0.22)" : "rgba(255,255,255,0.08)",
-                    backgroundColor: "rgba(9,9,11,0.92)",
-                    paddingHorizontal: 16,
-                    paddingVertical: 14,
-                    gap: 10,
-                  }}
-                >
-                  <View style={{ gap: 4 }}>
-                    <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700" }}>
-                      Ready to generate?
-                    </Text>
-                    <Text style={{ color: wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
-                      {isContinueActive
-                        ? "Your selections are locked in. Generate to see Darkor.ai turn this direction into a polished redesign."
-                        : "Choose a redesign mode and palette to unlock your final render."}
-                    </Text>
-                  </View>
-
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                    {[selectedMode?.title, selectedPalette?.label]
-                      .filter((label): label is string => Boolean(label))
-                      .map((label) => (
-                        <View
-                          key={label}
-                          style={{
-                            borderRadius: 999,
-                            borderWidth: 1,
-                            borderColor: "rgba(217,70,239,0.24)",
-                            backgroundColor: "rgba(217,70,239,0.12)",
-                            paddingHorizontal: 12,
-                            paddingVertical: 8,
-                          }}
-                        >
-                          <Text style={{ color: "#f5d0fe", fontSize: 12, fontWeight: "600" }}>
-                            {label}
-                          </Text>
-                        </View>
-                      ))}
-                  </View>
-                </View>
-              ) : null}
-
+            <View>
               <ServiceContinueButton
                 active={stepButtonActive}
                 attention={stepButtonAttention}
@@ -4988,7 +4944,7 @@ export default function WorkspaceScreen() {
 
                   handleContinue();
                 }}
-                pulse={isGenerationReviewStep && isContinueActive}
+                pulse={shouldPulseContinue}
                 secondaryActionLabel={isPhotoStep ? "or use camera" : null}
                 onSecondaryAction={
                   isPhotoStep
@@ -5000,12 +4956,6 @@ export default function WorkspaceScreen() {
                 supportingText={stepButtonSupportingText}
                 visible={continueButtonVisible}
               />
-
-              {isGenerationReviewStep && !isRefineDirectionStep && !stepButtonSupportingText ? (
-                <Text style={{ color: isContinueActive ? "#f5d0fe" : "#a1a1aa", fontSize: 13, fontWeight: "600", textAlign: "center", marginTop: 10 }}>
-                  {generationCreditLabel}
-                </Text>
-              ) : null}
             </View>
           </View>
         ) : null}
@@ -5028,7 +4978,7 @@ export default function WorkspaceScreen() {
               <View
                 style={{
                   flex: 1,
-                  paddingTop: Math.max(insets.top + 16, 26),
+                  paddingTop: Math.max(topSafeAreaInset + 16, 26),
                   paddingBottom: Math.max(insets.bottom + bottomBarOffset + 20, bottomBarOffset + 32),
                 }}
               >
@@ -5239,7 +5189,7 @@ export default function WorkspaceScreen() {
     const boardCardWidth = Math.max((width - 52) / 2, 150);
     const editorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
     const beforeImageUrl = activeBoardItem ? activeBoardItem.originalImageUrl ?? editorImageUrl : selectedImage?.uri ?? editorImageUrl;
-    const editorStyleLabel = activeBoardItem?.styleLabel ?? selectedStyle ?? "Custom";
+    const editorStyleLabel = normalizeStyleDisplayName(activeBoardItem?.styleLabel ?? selectedStyle) ?? "Custom";
     const editorRoomLabel = activeBoardItem?.roomLabel ?? selectedRoom ?? serviceLabel;
     const editorServiceType = activeBoardItem?.serviceType ?? inferBoardServiceType(editorStyleLabel, editorRoomLabel) ?? serviceType;
     const showSliderComparison = Boolean(editorImageUrl && beforeImageUrl);
@@ -5355,18 +5305,24 @@ export default function WorkspaceScreen() {
           </View>
 
           <View className="px-5" style={{ paddingTop: Math.max(insets.top + 10, 20), zIndex: 2 }}>
-            <View className="flex-row items-center justify-between">
-              <View className="rounded-full border border-white/10 bg-zinc-950/90 px-4 py-2" style={{ borderWidth: 0.5 }}>
-                <Text className="text-sm font-semibold text-white">{"Diamonds " + creditBalance}</Text>
+            <View style={{ minHeight: 44, alignItems: "center", justifyContent: "center" }}>
+              <View style={{ position: "absolute", left: 0, top: 0, bottom: 0, justifyContent: "center" }}>
+                <View className="rounded-full border border-white/10 bg-zinc-950/90 px-4 py-2" style={{ borderWidth: 0.5 }}>
+                  <Text className="text-sm font-semibold text-white">{"Diamonds " + creditBalance}</Text>
+                </View>
               </View>
-              <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>AI Processing</Text>
-              <LuxPressable
-                onPress={handleCloseBoardEditor}
-                className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
-                style={{ borderWidth: 0.5 }}
-              >
-                <Close color="#ffffff" size={18} strokeWidth={2.2} />
-              </LuxPressable>
+              <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.3, textAlign: "center" }}>
+                Generating Your Design
+              </Text>
+              <View style={{ position: "absolute", right: 0, top: 0, bottom: 0, justifyContent: "center" }}>
+                <LuxPressable
+                  onPress={handleCloseBoardEditor}
+                  className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
+                  style={{ borderWidth: 0.5 }}
+                >
+                  <Close color="#ffffff" size={18} strokeWidth={2.2} />
+                </LuxPressable>
+              </View>
             </View>
           </View>
 
@@ -5388,9 +5344,6 @@ export default function WorkspaceScreen() {
                     Neural Render Pipeline
                   </Text>
                 </View>
-                <Text style={{ color: "#ffffff", fontSize: 32, fontWeight: "800", textAlign: "center", letterSpacing: -0.8 }}>
-                  Generating your design
-                </Text>
                 <Text style={{ color: "#d4d4d8", fontSize: 15, lineHeight: 24, textAlign: "center", maxWidth: 360 }}>
                   Your masterpiece will be ready in ~15 seconds.
                 </Text>

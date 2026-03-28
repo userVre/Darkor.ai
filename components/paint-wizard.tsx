@@ -296,6 +296,10 @@ export function PaintWizard() {
   const canGenerate = Boolean(selectedImage && hasMask && selectedColor && !isGenerating);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
+  const intakeHeading = selectedImage ? "Photo added — mark the wall area next." : "Add a Photo of your Room";
+  const intakeSubtext = selectedImage
+    ? "Your photo is locked in. Next, brush the wall surfaces so the recolor stays precise around trim, furniture, and decor."
+    : "Upload a room photo for precise wall recoloring.";
   const canContinueFromMask = hasMask && !isDetecting && !isAutoDetecting;
   const canContinueFromColors = Boolean(selectedColor && selectedImage && hasMask);
   const colorCardSize = Math.max((width - 46) / 2, 154);
@@ -800,8 +804,8 @@ export function PaintWizard() {
             showsVerticalScrollIndicator={false}
           >
             <ServiceIntakeStep
-              heading="Add a Photo of your Room"
-              subtext="Upload a room photo for precise wall recoloring."
+              heading={intakeHeading}
+              subtext={intakeSubtext}
               examples={PAINT_WIZARD_EXAMPLE_PHOTOS}
               selectedImageUri={selectedImage?.uri ?? null}
               onClearSelection={handleClearSelectedImage}

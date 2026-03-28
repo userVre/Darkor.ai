@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { ArrowLeft, X as Close } from "lucide-react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DS, HAIRLINE, glowShadow } from "../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
@@ -25,8 +25,10 @@ export function ServiceWizardHeader({
   onBack,
   onClose,
 }: ServiceWizardHeaderProps) {
+  const insets = useSafeAreaInsets();
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showBack = safeStep > 1 && canGoBack && Boolean(onBack);
+  const topInset = process.env.EXPO_OS === "android" ? Math.max(insets.top, 44) : Math.max(insets.top, 20);
   const handleClosePress = useCallback(() => {
     Alert.alert("Leave wizard?", "Are you sure? Your progress will be lost.", [
       { text: "Stay", style: "cancel" },
@@ -35,8 +37,8 @@ export function ServiceWizardHeader({
   }, [onClose]);
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.safeArea}>
-      <View style={styles.container}>
+    <View style={styles.safeArea}>
+      <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.sideSlot}>
           {showBack ? (
             <LuxPressable
@@ -101,7 +103,7 @@ export function ServiceWizardHeader({
           </LuxPressable>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

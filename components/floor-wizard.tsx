@@ -166,6 +166,10 @@ export function FloorWizard() {
   const availableCredits = viewerReady ? me?.credits ?? GUEST_TESTING_STARTER_CREDITS : GUEST_TESTING_STARTER_CREDITS;
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "materials" ? 3 : 4;
+  const intakeHeading = selectedImage ? "Photo added — mark the floor area next." : "Add a Photo of your Floor";
+  const intakeSubtext = selectedImage
+    ? "Your photo is locked in. Next, brush the floor plane so the material restyle lands cleanly around furniture, rugs, and walls."
+    : "Upload a room photo to map new materials.";
   const canContinueFromMask = hasMask && !isDetecting && !isAutoDetecting;
   const aspectRatio = useMemo(() => {
     if (!selectedImage) return 1.15;
@@ -622,8 +626,8 @@ export function FloorWizard() {
         <>
           <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 10, paddingBottom: Math.max(insets.bottom + 132, 148) }} showsVerticalScrollIndicator={false}>
             <ServiceIntakeStep
-              heading="Add a Photo of your Floor"
-              subtext="Upload a room photo to map new materials."
+              heading={intakeHeading}
+              subtext={intakeSubtext}
               examples={FLOOR_WIZARD_EXAMPLE_PHOTOS}
               selectedImageUri={selectedImage?.uri ?? null}
               onClearSelection={handleClearSelectedImage}
