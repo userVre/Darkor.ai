@@ -8,7 +8,7 @@ import * as MediaLibrary from "expo-media-library";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
-import { useLocalSearchParams, usePathname, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation, usePathname, useRouter } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -87,6 +87,7 @@ import {
   isGuestWizardTestingSession,
   resolveGuestWizardViewerId,
 } from "../../lib/guest-testing";
+import { DEFAULT_TAB_BAR_STYLE } from "./_layout";
 type MeResponse = {
   plan: "free" | "trial" | "pro";
   credits: number;
@@ -1644,6 +1645,7 @@ const PHOTO_PERMISSION_ALERT_MESSAGE =
 
 export default function WorkspaceScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const pathname = usePathname();
   const { service, presetStyle, presetRoom, startStep, boardView, boardItemId, entrySource } = useLocalSearchParams<{
     service?: string;
@@ -1713,6 +1715,7 @@ export default function WorkspaceScreen() {
   const [pendingReviewState, setPendingReviewState] = useState<{ count: number; shouldPrompt: boolean } | null>(null);
   const [wizardNavDirection, setWizardNavDirection] = useState<1 | -1>(1);
   const [processingStatusIndex, setProcessingStatusIndex] = useState(0);
+  const [isServiceProcessing, setIsServiceProcessing] = useState(false);
   const [, setPaintTool] = useState<PaintTool>("brush");
   const [, setPaintBrushWidth] = useState(28);
   const [paintColor, setPaintColor] = useState("#D946EF");
@@ -1752,6 +1755,22 @@ export default function WorkspaceScreen() {
       : serviceType === "garden"
         ? SPACE_OPTIONS.garden
         : SPACE_OPTIONS.interior;
+
+  useEffect(() => {
+    navigation.setOptions({
+      tabBarStyle: isServiceProcessing ? { display: "none" } : DEFAULT_TAB_BAR_STYLE,
+    });
+
+    return () => {
+      navigation.setOptions({ tabBarStyle: DEFAULT_TAB_BAR_STYLE });
+    };
+  }, [isServiceProcessing, navigation]);
+
+  useEffect(() => {
+    if (!isPaintService && !isFloorService) {
+      setIsServiceProcessing(false);
+    }
+  }, [isFloorService, isPaintService]);
 
   useEffect(() => {
     if (draft.room && !selectedRoom) {
@@ -3171,11 +3190,11 @@ export default function WorkspaceScreen() {
   const isPhotoPreviewBusy = isSelectingPhoto || isLoadingExample !== null;
 
   if (isPaintService) {
-    return <PaintWizard />;
+    return <PaintWizard onProcessingStateChange={setIsServiceProcessing} />;
   }
 
   if (isFloorService) {
-    return <FloorWizard />;
+    return <FloorWizard onProcessingStateChange={setIsServiceProcessing} />;
   }
 
   if (workflowStep <= 3) {
@@ -5756,13 +5775,6 @@ export default function WorkspaceScreen() {
   }
 
 }
-
-
-
-
-
-
-
 
 
 

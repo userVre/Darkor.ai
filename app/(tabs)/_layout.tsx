@@ -11,6 +11,25 @@ import { triggerHaptic } from "../../lib/haptics";
 
 const ACTIVE_TINT = DS.colors.accentStrong;
 const INACTIVE_TINT = "rgba(255,255,255,0.42)";
+export const DEFAULT_TAB_BAR_STYLE = {
+  position: "absolute" as const,
+  left: 16,
+  right: 16,
+  bottom: 14,
+  backgroundColor: "#000000",
+  borderTopColor: DS.colors.borderSubtle,
+  borderTopWidth: HAIRLINE,
+  borderWidth: HAIRLINE,
+  borderColor: DS.colors.borderSubtle,
+  height: 78,
+  paddingTop: 10,
+  paddingBottom: 12,
+  paddingHorizontal: 8,
+  borderRadius: 26,
+  elevation: 0,
+  shadowOpacity: 0,
+  ...glowShadow("rgba(0,0,0,0.42)", 30),
+};
 
 type TabButtonProps = PressableProps & {
   children?: ReactNode;
@@ -83,25 +102,7 @@ export default function TabsLayout() {
           fontSize: 11,
           fontWeight: "600",
         },
-        tabBarStyle: {
-          position: "absolute",
-          left: 16,
-          right: 16,
-          bottom: 14,
-          backgroundColor: "#000000",
-          borderTopColor: DS.colors.borderSubtle,
-          borderTopWidth: HAIRLINE,
-          borderWidth: HAIRLINE,
-          borderColor: DS.colors.borderSubtle,
-          height: 78,
-          paddingTop: 10,
-          paddingBottom: 12,
-          paddingHorizontal: 8,
-          borderRadius: 26,
-          elevation: 0,
-          shadowOpacity: 0,
-          ...glowShadow("rgba(0,0,0,0.42)", 30),
-        },
+        tabBarStyle: DEFAULT_TAB_BAR_STYLE,
         sceneStyle: {
           backgroundColor: "#000000",
         },

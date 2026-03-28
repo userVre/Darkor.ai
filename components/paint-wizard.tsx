@@ -35,7 +35,13 @@ import { useProSuccess } from "./pro-success-context";
 import { ServiceContinueButton } from "./service-continue-button";
 import { ServiceProcessingScreen } from "./service-processing-screen";
 import { ServiceWizardHeader } from "./service-wizard-header";
-import { ServiceIntakeStep, ServiceSelectionCard, ServiceSelectionGrid, type ServiceExamplePhoto } from "./service-wizard-shared";
+import {
+  ServiceIntakeStep,
+  ServiceSelectionCard,
+  ServiceSelectionGrid,
+  ServiceWizardStepScreen,
+  type ServiceExamplePhoto,
+} from "./service-wizard-shared";
 import { LuxPressable } from "./lux-pressable";
 import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerSession } from "./viewer-session-context";
@@ -44,6 +50,7 @@ type WizardStep = "intake" | "mask" | "colors" | "finish" | "processing" | "resu
 
 type SelectedImage = {
   uri: string;
+  photoUri?: string | null;
   width: number;
   height: number;
 };
@@ -65,6 +72,10 @@ type FinishOption = {
   description: string;
 };
 
+type PaintWizardProps = {
+  onProcessingStateChange?: (isProcessing: boolean) => void;
+};
+
 const pointerClassName = "cursor-pointer";
 const OLED_BLACK = "#000000";
 const CARD_BLACK = SERVICE_WIZARD_THEME.colors.surfaceRaised;
@@ -75,11 +86,9 @@ const MASK_CAPTURE_COLOR = "#FFFFFF";
 const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
 const DETECT_DURATION_MS = 1700;
-const TAB_BAR_CLEARANCE = 96;
-const MASK_CONTINUE_HINT = "Brush over the area you want to repaint to continue.";
-const COLORS_CONTINUE_HINT = "Choose a wall color to continue.";
+const FIXED_FOOTER_OFFSET = 96;
 const AUTO_DETECT_SUCCESS_MESSAGE = "Walls detected - brush to refine if needed";
-const AUTO_DETECT_FAILURE_MESSAGE = "Couldn't detect automatically - please brush manually.";
+const AUTO_DETECT_FAILURE_MESSAGE = "Auto-detect couldn't run — please brush manually.";
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 const CANCEL_SUCCESS_TOAST = "Generation canceled. Your credit was kept.";
 
@@ -134,6 +143,11 @@ function mapDetectionPointToCanvas(
   };
 }
 
+function logAutoDetectFailure(error: unknown) {
+  const message = error instanceof Error ? error.message : "Unknown auto-detect failure";
+  console.log("[PaintWizard] Auto-detect failed", { message });
+}
+
 const BrushPreview = memo(function BrushPreview({ width }: { width: number }) {
   return (
     <View
@@ -141,7 +155,7 @@ const BrushPreview = memo(function BrushPreview({ width }: { width: number }) {
         width: Math.max(width, 16),
         height: Math.max(width, 16),
         borderRadius: 999,
-        backgroundColor: MASK_COLOR,
+        backgroundColor: MASK_ACCENT,
         borderWidth: 1,
         borderColor: "rgba(255,255,255,0.18)",
       }}
@@ -215,7 +229,7 @@ const FinishCard = memo(function FinishCard({
   );
 });
 
-export function PaintWizard() {
+export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const router = useRouter();
   const { presetStyle, startStep } = useLocalSearchParams<{ presetStyle?: string; startStep?: string }>();
   const insets = useSafeAreaInsets();
@@ -246,8 +260,6 @@ export function PaintWizard() {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
-  const [maskFooterHeight, setMaskFooterHeight] = useState(0);
-  const [finishFooterHeight, setFinishFooterHeight] = useState(0);
   const [isAutoDetecting, setIsAutoDetecting] = useState(false);
   const [detectedSourceStorageId, setDetectedSourceStorageId] = useState<string | null>(null);
   const [isCancellingGeneration, setIsCancellingGeneration] = useState(false);
@@ -306,10 +318,6 @@ export function PaintWizard() {
   const frameAspectRatio = selectedImage ? selectedImage.width / Math.max(selectedImage.height, 1) : 1;
   const previewHeight = Math.min(Math.max((width - 32) / Math.max(frameAspectRatio, 0.6), 240), height * 0.54);
   const maskPreviewHeight = Math.min(previewHeight, Math.max(height * 0.4, 248));
-  const maskFooterBottomPadding = Math.max(insets.bottom + 12, 24);
-  const maskFooterBottomOffset = TAB_BAR_CLEARANCE;
-  const maskScrollPaddingBottom = Math.max(maskFooterHeight + maskFooterBottomOffset + 24, insets.bottom + 224);
-  const finishScrollPaddingBottom = Math.max(finishFooterHeight + Math.max(insets.bottom + 12, 24) + 24, insets.bottom + 176);
 
   useEffect(() => {
     return () => {
@@ -421,7 +429,11 @@ export function PaintWizard() {
       return detectedSourceStorageId;
     }
 
-    const storageId = await uploadBlobToStorage(selectedImage.uri);
+    if (!selectedImage.photoUri) {
+      throw new Error("No uploaded room photo is available for auto-detect.");
+    }
+
+    const storageId = await uploadBlobToStorage(selectedImage.photoUri);
     setDetectedSourceStorageId(storageId);
     return storageId;
   }, [detectedSourceStorageId, selectedImage, uploadBlobToStorage]);
@@ -477,16 +489,16 @@ export function PaintWizard() {
   }, [resetMaskDrawing]);
 
   const handleAutoDetectMask = useCallback(async () => {
-    if (!viewerReady) {
-      showToast("Preparing your session. Please try again in a moment.");
-      return;
-    }
-
-    if (!selectedImage || canvasSize.width <= 0 || canvasSize.height <= 0 || isAutoDetecting || isDetecting) {
-      return;
-    }
-
     try {
+      if (!viewerReady) {
+        showToast("Preparing your session. Please try again in a moment.");
+        return;
+      }
+
+      if (!selectedImage || canvasSize.width <= 0 || canvasSize.height <= 0 || isAutoDetecting || isDetecting) {
+        return;
+      }
+
       setIsAutoDetecting(true);
       const imageStorageId = await ensureDetectableSourceStorageId();
       const detection = (await detectEditMask({
@@ -522,7 +534,7 @@ export function PaintWizard() {
       triggerHaptic();
       showToast(AUTO_DETECT_SUCCESS_MESSAGE);
     } catch (error) {
-      console.error("[PaintWizard] Auto-detect failed", error);
+      logAutoDetectFailure(error);
       showToast(AUTO_DETECT_FAILURE_MESSAGE);
     } finally {
       setIsAutoDetecting(false);
@@ -574,6 +586,7 @@ export function PaintWizard() {
         const asset = result.assets[0];
         applySelectedImage({
           uri: asset.uri,
+          photoUri: asset.uri,
           width: asset.width ?? 1080,
           height: asset.height ?? 1440,
         });
@@ -594,6 +607,7 @@ export function PaintWizard() {
 
       applySelectedImage({
         uri: resolved.uri,
+        photoUri: null,
         width: resolved.width ?? 1080,
         height: resolved.height ?? 1440,
       });
@@ -739,6 +753,14 @@ export function PaintWizard() {
     return () => clearTimeout(timer);
   }, [awaitingAuth, canGenerate, effectiveSignedIn, handleGenerate, viewerReady]);
 
+  useEffect(() => {
+    onProcessingStateChange?.(step === "processing");
+
+    return () => {
+      onProcessingStateChange?.(false);
+    };
+  }, [onProcessingStateChange, step]);
+
   const handleBack = useCallback(() => {
     triggerHaptic();
     if (step === "intake") return;
@@ -794,15 +816,37 @@ export function PaintWizard() {
       ) : null}
 
       {step === "intake" ? (
-        <>
-          <ScrollView
-            contentContainerStyle={{
-              paddingHorizontal: 18,
-              paddingTop: 10,
-              paddingBottom: Math.max(insets.bottom + 132, 148),
-            }}
-            showsVerticalScrollIndicator={false}
-          >
+        <ServiceWizardStepScreen
+          footerOffset={FIXED_FOOTER_OFFSET}
+          contentContainerStyle={{
+            paddingHorizontal: 18,
+            paddingTop: 10,
+          }}
+          footer={
+            <ServiceContinueButton
+              active={Boolean(selectedImage)}
+              attention={Boolean(selectedImage)}
+              label={selectedImage ? "Continue \u2192" : "Add a Photo to Start"}
+              loading={loadingContinueStep === "intake"}
+              onPress={() => {
+                if (!selectedImage) {
+                  return;
+                }
+
+                runDeferredContinue("intake", handleContinueFromIntake);
+              }}
+              secondaryActionLabel={selectedImage ? null : "or use camera"}
+              onSecondaryAction={
+                selectedImage
+                  ? null
+                  : () => {
+                      void handleSelectMedia("camera");
+                    }
+              }
+            />
+          }
+        >
+          <View>
             <ServiceIntakeStep
               heading={intakeHeading}
               subtext={intakeSubtext}
@@ -817,43 +861,60 @@ export function PaintWizard() {
               }}
               onExamplePress={handleSelectExample}
             />
-          </ScrollView>
-
-          <View pointerEvents="box-none" style={[styles.fixedContinueBar, styles.actionContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
-            <ServiceContinueButton
-              active={Boolean(selectedImage)}
-              attention={Boolean(selectedImage)}
-              label={selectedImage ? "Continue \u2192" : "Add a Photo to Start"}
-              loading={loadingContinueStep === "intake"}
-              onPress={() => {
-                if (!selectedImage) {
-                  void handleSelectMedia("library");
-                  return;
-                }
-
-                runDeferredContinue("intake", handleContinueFromIntake);
-              }}
-              secondaryActionLabel="or use camera"
-              onSecondaryAction={() => {
-                void handleSelectMedia("camera");
-              }}
-            />
           </View>
-        </>
+        </ServiceWizardStepScreen>
       ) : null}
 
       {step === "mask" ? (
-        <>
-          <ScrollView
-            scrollEnabled={!isDrawing}
-            contentContainerStyle={{
-              paddingHorizontal: 16,
-              paddingTop: 10,
-              paddingBottom: maskScrollPaddingBottom,
-              gap: 16,
-            }}
-            showsVerticalScrollIndicator={false}
-          >
+        <ServiceWizardStepScreen
+          footerOffset={FIXED_FOOTER_OFFSET}
+          scrollEnabled={!isDrawing}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 10,
+            gap: 16,
+          }}
+          footer={
+            <>
+              <View style={styles.maskControlCard}>
+                <View style={styles.brushRow}>
+                  <Text style={styles.brushTitle}>Brush Size</Text>
+                  <View style={styles.brushMeta}>
+                    <BrushPreview width={brushWidth} />
+                    <Text style={styles.brushMetaText}>{brushWidth}px</Text>
+                  </View>
+                </View>
+
+                <GestureDetector gesture={sliderGesture}>
+                  <View onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)} style={styles.sliderWrap}>
+                    <View style={styles.sliderTrack} />
+                    <LinearGradient colors={[MASK_ACCENT, MASK_ACCENT]} style={[styles.sliderFill, { width: Math.max(16, sliderWidth * brushProgress) }]} />
+                    <View style={[styles.sliderThumb, { left: Math.max(0, sliderWidth * brushProgress - 16) }]}>
+                      <View style={styles.sliderThumbDot} />
+                    </View>
+                  </View>
+                </GestureDetector>
+              </View>
+
+              <ServiceContinueButton
+                active={canContinueFromMask}
+                label={canContinueFromMask ? "Continue \u2192" : "Brush the Area to Continue"}
+                loading={loadingContinueStep === "mask"}
+                onPress={() => {
+                  if (!canContinueFromMask) {
+                    return;
+                  }
+
+                  runDeferredContinue("mask", () => {
+                    triggerHaptic();
+                    setStep("colors");
+                  });
+                }}
+              />
+            </>
+          }
+        >
+          <View>
             <Text style={styles.stepTitle}>Mark Area</Text>
             <Text style={styles.stepText}>
               Brush only over the wall surfaces. The loupe stays live while you paint so you can stay clean around furniture, windows, trim, and decor.
@@ -1006,101 +1067,48 @@ export function PaintWizard() {
                 </>
               ) : null}
             </View>
-          </ScrollView>
-
-          <View
-            pointerEvents="box-none"
-            onLayout={(event) => {
-              const nextHeight = Math.round(event.nativeEvent.layout.height);
-              setMaskFooterHeight((current) => (current === nextHeight ? current : nextHeight));
-            }}
-            style={[
-              styles.fixedContinueBar,
-              styles.maskContinueBar,
-              {
-                bottom: maskFooterBottomOffset,
-                paddingBottom: maskFooterBottomPadding,
-              },
-            ]}
-          >
-            <View style={styles.maskControlCard}>
-              <View style={styles.brushRow}>
-                <Text style={styles.brushTitle}>Brush Size</Text>
-                <View style={styles.brushMeta}>
-                  <BrushPreview width={brushWidth} />
-                  <Text style={styles.brushMetaText}>{brushWidth}px</Text>
-                </View>
-              </View>
-
-              <GestureDetector gesture={sliderGesture}>
-                <View onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)} style={styles.sliderWrap}>
-                  <View style={styles.sliderTrack} />
-                  <LinearGradient colors={[MASK_ACCENT, MASK_ACCENT]} style={[styles.sliderFill, { width: Math.max(16, sliderWidth * brushProgress) }]} />
-                  <View style={[styles.sliderThumb, { left: Math.max(0, sliderWidth * brushProgress - 16) }]}>
-                    <View style={styles.sliderThumbDot} />
-                  </View>
-                </View>
-              </GestureDetector>
-            </View>
-
-            <ServiceContinueButton
-              active={canContinueFromMask}
-              label={canContinueFromMask ? "Continue \u2192" : "Brush the Area to Continue"}
-              loading={loadingContinueStep === "mask"}
-              onPress={() => {
-                if (!canContinueFromMask) {
-                  showToast(MASK_CONTINUE_HINT);
-                  return;
-                }
-
-                runDeferredContinue("mask", () => {
-                  triggerHaptic();
-                  setStep("colors");
-                });
-              }}
-            />
           </View>
-        </>
+        </ServiceWizardStepScreen>
       ) : null}
 
       {step === "colors" ? (
-        <>
-          <ScrollView
-            contentContainerStyle={{
-              paddingHorizontal: 16,
-              paddingTop: 10,
-              paddingBottom: Math.max(insets.bottom + 132, 148),
-              gap: 18,
-            }}
-            showsVerticalScrollIndicator={false}
-          >
+        <ServiceWizardStepScreen
+          footerOffset={FIXED_FOOTER_OFFSET}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 10,
+            gap: 16,
+          }}
+          footer={
+            <ServiceContinueButton
+              active={canContinueFromColors}
+              label={selectedColor ? "Generate My Design \u2192" : "Select a Color"}
+              loading={loadingContinueStep === "colors"}
+              onPress={() => {
+                if (!canContinueFromColors) {
+                  return;
+                }
+
+                runDeferredContinue("colors", () => {
+                  triggerHaptic();
+                  setStep("finish");
+                });
+              }}
+            />
+          }
+        >
+          <View>
             <Text style={styles.stepTitle}>Select Color</Text>
             <Text style={styles.stepText}>
               Pick from the real wall-finish thumbnails so Darkor.ai carries the exact tone into the final render.
             </Text>
 
-            <View style={[styles.canvasFrame, { height: Math.min(previewHeight, 280) }]}>
+            <View style={styles.roomReferenceFrame}>
               {selectedImage ? (
                 <>
-                  <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="contain" />
-                  <Svg width="100%" height="100%" style={absoluteFill}>
-                  {paintStrokes.map((stroke) => (
-                    <SvgPath
-                      key={`preview-${stroke.id}`}
-                      d={stroke.path}
-                      stroke={stroke.kind === "region" ? "none" : selectedColor?.value ?? "#FFFFFF"}
-                      strokeOpacity={stroke.kind === "region" ? 1 : selectedColor ? 0.52 : 0.18}
-                      strokeWidth={stroke.kind === "region" ? 0 : stroke.width}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill={stroke.kind === "region" ? selectedColor?.value ?? "#FFFFFF" : "none"}
-                      fillOpacity={stroke.kind === "region" ? (selectedColor ? 0.42 : 0.14) : 0}
-                    />
-                    ))}
-                  </Svg>
-                  <View style={styles.previewBadge}>
-                    <View style={[styles.previewSwatch, selectedColor ? { backgroundColor: selectedColor.value } : styles.previewSwatchEmpty]} />
-                    <Text style={styles.previewBadgeText}>{selectedColor?.title ?? "Choose a wall color"}</Text>
+                  <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="cover" transition={160} />
+                  <View style={styles.roomReferenceBadge}>
+                    <Text style={styles.roomReferenceBadgeText}>Your Room</Text>
                   </View>
                 </>
               ) : null}
@@ -1130,40 +1138,36 @@ export function PaintWizard() {
                 {selectedColor?.description ?? "Choose a wall color thumbnail to unlock the finish step."}
               </Text>
             </View>
-          </ScrollView>
-
-          <View pointerEvents="box-none" style={[styles.fixedContinueBar, styles.actionContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
-            <ServiceContinueButton
-              active={canContinueFromColors}
-              label={selectedColor ? `Continue with ${selectedColor.title} \u2192` : "Select a Wall Color"}
-              loading={loadingContinueStep === "colors"}
-              onPress={() => {
-                if (!canContinueFromColors) {
-                  showToast(COLORS_CONTINUE_HINT);
-                  return;
-                }
-
-                runDeferredContinue("colors", () => {
-                  triggerHaptic();
-                  setStep("finish");
-                });
-              }}
-            />
           </View>
-        </>
+        </ServiceWizardStepScreen>
       ) : null}
 
       {step === "finish" ? (
-        <>
-          <ScrollView
-            contentContainerStyle={{
-              paddingHorizontal: 16,
-              paddingTop: 10,
-              paddingBottom: finishScrollPaddingBottom,
-              gap: 18,
-            }}
-            showsVerticalScrollIndicator={false}
-          >
+        <ServiceWizardStepScreen
+          footerOffset={FIXED_FOOTER_OFFSET}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 10,
+            gap: 16,
+          }}
+          footer={
+            <ServiceContinueButton
+              active={canGenerate}
+              label="Paint My Walls ✨"
+              loading={isGenerating}
+              onPress={() => {
+                if (!canGenerate) {
+                  return;
+                }
+
+                void handleGenerate();
+              }}
+              pulse={canGenerate}
+              supportingText={`Uses 1 credit \u00b7 ${Math.max(availableCredits - 1, 0)} remaining`}
+            />
+          }
+        >
+          <View>
             <Text style={styles.stepTitle}>Finish Type</Text>
             <Text style={styles.stepText}>
               Choose how the paint should catch light so the walls read correctly in a polished, designer-grade render.
@@ -1197,33 +1201,8 @@ export function PaintWizard() {
                 />
               ))}
             </View>
-          </ScrollView>
-
-          <View
-            pointerEvents="box-none"
-            onLayout={(event) => {
-              const nextHeight = Math.round(event.nativeEvent.layout.height);
-              setFinishFooterHeight((current) => (current === nextHeight ? current : nextHeight));
-            }}
-            style={[styles.fixedContinueBar, styles.actionContinueBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}
-          >
-            <ServiceContinueButton
-              active={canGenerate}
-              label="Generate My Design \u2192"
-              loading={isGenerating}
-              onPress={() => {
-                if (!canGenerate) {
-                  showToast("Choose a wall color and finish to continue.");
-                  return;
-                }
-
-                void handleGenerate();
-              }}
-              pulse={canGenerate}
-              supportingText={`Uses 1 credit \u00b7 ${Math.max(availableCredits - 1, 0)} remaining`}
-            />
           </View>
-        </>
+        </ServiceWizardStepScreen>
       ) : null}
 
       {step === "processing" ? (
@@ -1232,7 +1211,7 @@ export function PaintWizard() {
           subtitlePhrases={[
             "Analyzing your room geometry...",
             `Applying ${selectedColor?.title ?? "your selected color"}...`,
-            "Rendering final details...",
+            "Rendering final lighting...",
           ]}
           onCancel={() => {
             void handleCancelGeneration();
@@ -1735,74 +1714,32 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
     textAlign: "center",
   },
-  maskContinueHint: {
-    color: "rgba(255,255,255,0.68)",
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 18,
-    textAlign: "center",
-  },
-  continueButtonWrap: {
-    width: "100%",
-    position: "relative",
-  },
-  continueButtonPulse: {
-    ...StyleSheet.absoluteFillObject,
+  roomReferenceFrame: {
+    height: 120,
     borderRadius: 24,
-    backgroundColor: SERVICE_WIZARD_THEME.colors.accentGlowSoft,
-  },
-  previewBadge: {
-    position: "absolute",
-    left: 14,
-    top: 14,
-    height: 36,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.66)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    backgroundColor: "#020203",
+    overflow: "hidden",
   },
-  previewSwatch: {
-    width: 16,
-    height: 16,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.7)",
-  },
-  previewSwatchEmpty: {
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  previewBadgeText: {
-    color: "#ffffff",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  fixedContinueBar: {
+  roomReferenceBadge: {
     position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingTop: 10,
-    paddingHorizontal: 16,
-    gap: 10,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.06)",
-    backgroundColor: SERVICE_WIZARD_THEME.colors.background,
-    shadowColor: "#000000",
-    shadowOpacity: 0.24,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: -8 },
+    left: 12,
+    top: 12,
+    minHeight: 28,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.72)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    justifyContent: "center",
   },
-  actionContinueBar: {
-    zIndex: 80,
-    elevation: 18,
-  },
-  maskContinueBar: {
-    zIndex: 120,
-    elevation: 24,
+  roomReferenceBadgeText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.2,
   },
   selectionGrid: {
     flexDirection: "row",

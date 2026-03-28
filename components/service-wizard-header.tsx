@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { ArrowLeft, X as Close } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -74,17 +73,7 @@ export function ServiceWizardHeader({
                     isComplete ? styles.progressSegmentComplete : null,
                     isActive ? styles.progressSegmentActive : null,
                   ]}
-                >
-                  {isComplete ? <View style={[styles.progressFill, styles.progressFillComplete]} /> : null}
-                  {isActive ? (
-                    <LinearGradient
-                      colors={["#FF6BF2", "#D946EF", "#7C3AED"]}
-                      start={{ x: 0, y: 0.5 }}
-                      end={{ x: 1, y: 0.5 }}
-                      style={styles.progressFill}
-                    />
-                  ) : null}
-                </View>
+                />
               );
             })}
           </View>
@@ -167,24 +156,17 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: DS.radius.pill,
     overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.3)",
+    backgroundColor: "rgba(255,255,255,0.25)",
     borderWidth: HAIRLINE,
-    borderColor: "rgba(255,255,255,0.2)",
+    borderColor: "rgba(255,255,255,0.12)",
   },
   progressSegmentComplete: {
-    borderColor: "rgba(255,255,255,0.38)",
+    backgroundColor: "#FFFFFF",
+    borderColor: "rgba(255,255,255,0.5)",
   },
   progressSegmentActive: {
-    height: 12,
-    borderColor: "rgba(255,107,242,0.7)",
-    ...glowShadow("rgba(217,70,239,0.36)", 20),
-  },
-  progressFill: {
-    height: "100%",
-    width: "100%",
-    borderRadius: 999,
-  },
-  progressFillComplete: {
-    backgroundColor: "rgba(255,255,255,1)",
+    backgroundColor: "#7C3AED",
+    borderColor: "rgba(124,58,237,0.66)",
+    ...glowShadow("rgba(124,58,237,0.34)", 18),
   },
 });

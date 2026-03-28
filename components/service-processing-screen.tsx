@@ -32,10 +32,9 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   const [subtitleIndex, setSubtitleIndex] = useState(0);
   const [progress, setProgress] = useState(0);
 
-  const photoHeight = Math.min(Math.max(height * 0.38, 280), 380);
   const subtitleSignature = subtitlePhrases.join("|");
   const activeSubtitle = useMemo(
-    () => subtitlePhrases[subtitleIndex % Math.max(subtitlePhrases.length, 1)] ?? "Rendering final details...",
+    () => subtitlePhrases[subtitleIndex % Math.max(subtitlePhrases.length, 1)] ?? "Rendering final lighting...",
     [subtitleIndex, subtitlePhrases],
   );
 
@@ -63,58 +62,64 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.photoSection, { height: photoHeight + insets.top }]}>
-        {imageUri ? <Image source={{ uri: imageUri }} style={styles.photoImage} contentFit="cover" transition={140} /> : null}
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} style={styles.photoImage} contentFit="cover" transition={180} />
+      ) : (
+        <View style={styles.photoFallback} />
+      )}
+
+      <LinearGradient
+        colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.14)", "rgba(0,0,0,0.42)", "rgba(0,0,0,0.85)"]}
+        locations={[0, 0.28, 0.58, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      <MotiView
+        animate={{ translateX: [-width * 0.8, width * 0.92] }}
+        transition={{ duration: SHIMMER_DURATION_MS, loop: true, type: "timing" }}
+        style={[styles.scanSweepWrap, { top: -height * 0.12, height: height * 1.18 }]}
+        pointerEvents="none"
+      >
         <LinearGradient
-          colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.12)", "rgba(0,0,0,0.32)"]}
-          locations={[0, 0.54, 1]}
-          style={styles.photoScrim}
+          colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.03)", "rgba(124,58,237,0.18)", "rgba(255,255,255,0.03)", "rgba(255,255,255,0)"]}
+          locations={[0, 0.22, 0.5, 0.78, 1]}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={styles.scanSweep}
         />
-        <MotiView
-          animate={{ translateX: [-width, width] }}
-          transition={{ duration: SHIMMER_DURATION_MS, loop: true, type: "timing" }}
-          style={styles.scanSweepWrap}
-          pointerEvents="none"
-        >
-          <LinearGradient
-            colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.06)", "rgba(124,58,237,0.22)", "rgba(255,255,255,0.06)", "rgba(255,255,255,0)"]}
-            locations={[0, 0.22, 0.5, 0.78, 1]}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={styles.scanSweep}
-          />
-        </MotiView>
-      </View>
+      </MotiView>
 
-      <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${Math.max(progress * 100, 2)}%` }]} />
-      </View>
+      <View style={[styles.content, { paddingTop: insets.top + 12 }]}>
+        <View style={styles.bottomContent}>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${Math.max(progress * 100, 2)}%` }]} />
+          </View>
 
-      <View style={styles.copyBlock}>
-        <Text style={styles.title}>AI is crafting your masterpiece...</Text>
-        <View style={styles.subtitleWrap}>
-          <AnimatePresence>
-            <MotiView
-              key={activeSubtitle}
-              from={{ opacity: 0, translateY: 12 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              exit={{ opacity: 0, translateY: -12 }}
-              transition={{ duration: 320, type: "timing" }}
-            >
-              <Text style={styles.subtitle}>{activeSubtitle}</Text>
-            </MotiView>
-          </AnimatePresence>
+          <View style={styles.copyBlock}>
+            <Text style={styles.title}>AI is crafting your masterpiece...</Text>
+            <View style={styles.subtitleWrap}>
+              <AnimatePresence>
+                <MotiView
+                  key={activeSubtitle}
+                  from={{ opacity: 0, translateY: 12 }}
+                  animate={{ opacity: 1, translateY: 0 }}
+                  exit={{ opacity: 0, translateY: -12 }}
+                  transition={{ duration: 320, type: "timing" }}
+                >
+                  <Text style={styles.subtitle}>{activeSubtitle}</Text>
+                </MotiView>
+              </AnimatePresence>
+            </View>
+            <Text style={styles.eta}>Usually ready in ~15 seconds</Text>
+          </View>
         </View>
-        <Text style={styles.eta}>Usually ready in ~15 seconds</Text>
-      </View>
 
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom + 14, 24) }]}>
         <LuxPressable
           onPress={onCancel}
           disabled={cancelDisabled}
           className={pointerClassName}
           pressableClassName={pointerClassName}
-          style={styles.cancelWrap}
+          style={[styles.cancelWrap, { paddingBottom: Math.max(insets.bottom + 8, 14) }]}
           glowColor="rgba(255,255,255,0.02)"
           scale={0.98}
         >
@@ -132,32 +137,37 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: SERVICE_WIZARD_THEME.colors.background,
   },
-  photoSection: {
-    width: "100%",
-    overflow: "hidden",
-    backgroundColor: "#050506",
-  },
   photoImage: {
     ...StyleSheet.absoluteFillObject,
   },
-  photoScrim: {
+  photoFallback: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#050506",
   },
   scanSweepWrap: {
     position: "absolute",
-    top: 0,
-    bottom: 0,
-    width: 180,
-    opacity: 0.92,
+    width: 220,
+    opacity: 0.75,
     transform: [{ skewX: "-12deg" }],
   },
   scanSweep: {
     flex: 1,
   },
+  content: {
+    flex: 1,
+    justifyContent: "flex-end",
+    paddingHorizontal: 24,
+  },
+  bottomContent: {
+    gap: 18,
+    paddingBottom: 28,
+  },
   progressTrack: {
-    height: 4,
+    height: 3,
     width: "100%",
-    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.14)",
+    overflow: "hidden",
   },
   progressFill: {
     height: "100%",
@@ -165,26 +175,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#7C3AED",
   },
   copyBlock: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 28,
-    paddingTop: 32,
-    paddingBottom: 20,
     gap: 12,
   },
   title: {
     color: "#FFFFFF",
-    fontSize: 31,
+    fontSize: 34,
     fontWeight: "800",
-    lineHeight: 36,
+    lineHeight: 40,
     letterSpacing: -0.8,
-    textAlign: "center",
-    maxWidth: 360,
+    textAlign: "left",
+    maxWidth: 340,
   },
   subtitleWrap: {
-    minHeight: 50,
-    alignItems: "center",
+    minHeight: 48,
     justifyContent: "center",
   },
   subtitle: {
@@ -192,26 +195,23 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "700",
     lineHeight: 24,
-    textAlign: "center",
+    textAlign: "left",
   },
   eta: {
     color: "rgba(212,212,216,0.72)",
     fontSize: 13,
     fontWeight: "600",
     lineHeight: 19,
-    textAlign: "center",
-  },
-  footer: {
-    paddingHorizontal: 24,
-    alignItems: "center",
+    textAlign: "left",
   },
   cancelWrap: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    alignSelf: "center",
+    paddingHorizontal: 10,
+    paddingTop: 4,
   },
   cancelText: {
     color: "rgba(161,161,170,0.9)",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
     textAlign: "center",
   },

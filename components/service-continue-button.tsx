@@ -2,7 +2,6 @@ import { AnimatePresence, MotiView } from "moti";
 import { LinearGradient } from "expo-linear-gradient";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
-import { glowShadow } from "../lib/design-system";
 import { LuxPressable } from "./lux-pressable";
 
 const pointerClassName = "cursor-pointer";
@@ -34,8 +33,7 @@ export function ServiceContinueButton({
   attention = false,
   visible = true,
 }: ServiceContinueButtonProps) {
-  const isBlocked = loading;
-  const effectiveOpacity = active ? 1 : 0.7;
+  const isBlocked = loading || !active;
 
   return (
     <AnimatePresence>
@@ -51,8 +49,8 @@ export function ServiceContinueButton({
           {pulse && active && !isBlocked ? (
             <MotiView
               pointerEvents="none"
-              animate={{ opacity: [0.12, 0.28, 0.12], scale: [0.985, 1.02, 0.985] }}
-              transition={{ duration: 2200, loop: true, type: "timing" }}
+              animate={{ opacity: [0.16, 0.32, 0.16], scale: [0.985, 1.018, 0.985] }}
+              transition={{ duration: 2000, loop: true, type: "timing" }}
               style={styles.pulseGlow}
             />
           ) : null}
@@ -85,10 +83,10 @@ export function ServiceContinueButton({
               scale={0.99}
             >
               <LinearGradient
-                colors={[CONTINUE_PURPLE, CONTINUE_PURPLE_DARK]}
+                colors={active ? [CONTINUE_PURPLE, CONTINUE_PURPLE_DARK] : ["#7C3AED66", "#6D28D966"]}
                 start={{ x: 0, y: 0.5 }}
                 end={{ x: 1, y: 0.5 }}
-                style={[styles.button, active ? styles.buttonActive : styles.buttonInactive, { opacity: effectiveOpacity }]}
+                style={[styles.button, active ? styles.buttonActive : styles.buttonInactive]}
               >
                 {loading ? (
                   <View style={styles.loadingRow}>
@@ -96,7 +94,7 @@ export function ServiceContinueButton({
                     <Text style={styles.buttonText}>Loading...</Text>
                   </View>
                 ) : (
-                  <Text style={styles.buttonText}>{label}</Text>
+                  <Text style={[styles.buttonText, active ? null : styles.buttonTextInactive]}>{label}</Text>
                 )}
               </LinearGradient>
             </LuxPressable>
@@ -136,24 +134,32 @@ const styles = StyleSheet.create({
     right: 4,
     top: 6,
     bottom: 0,
-    borderRadius: 18,
+    borderRadius: 14,
     backgroundColor: CONTINUE_PURPLE,
   },
   pressable: {
     width: "100%",
   },
   button: {
-    minHeight: 56,
+    height: 56,
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 18,
   },
   buttonActive: {
-    ...glowShadow("rgba(124,58,237,0.24)", 18),
+    shadowColor: CONTINUE_PURPLE,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
   buttonInactive: {
-    ...glowShadow("rgba(124,58,237,0.14)", 14),
+    shadowColor: CONTINUE_PURPLE,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    elevation: 2,
   },
   buttonText: {
     color: "#FFFFFF",
@@ -161,6 +167,9 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textAlign: "center",
     letterSpacing: -0.2,
+  },
+  buttonTextInactive: {
+    color: "rgba(255,255,255,0.7)",
   },
   loadingRow: {
     flexDirection: "row",

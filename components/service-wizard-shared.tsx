@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { MotiView } from "moti";
 import { Check, ImagePlus, X } from "lucide-react-native";
-import { Children, cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
+import { Children, cloneElement, isValidElement, useState, type ComponentProps, type ReactElement, type ReactNode } from "react";
 import { ScrollView, Text, View, StyleSheet, useWindowDimensions, type ImageSourcePropType } from "react-native";
 
 import { DS, HAIRLINE, glowShadow } from "../lib/design-system";
@@ -42,6 +42,15 @@ type ServiceSelectionGridProps = {
   children: ReactNode;
 };
 
+type ServiceWizardStepScreenProps = {
+  children: ReactNode;
+  footer?: ReactNode;
+  footerOffset?: number;
+  scrollEnabled?: boolean;
+  showsVerticalScrollIndicator?: boolean;
+  contentContainerStyle?: ComponentProps<typeof ScrollView>["contentContainerStyle"];
+};
+
 export function ServiceIntakeStep({
   heading,
   subtext,
@@ -52,11 +61,12 @@ export function ServiceIntakeStep({
   onExamplePress,
 }: ServiceIntakeStepProps) {
   const { width } = useWindowDimensions();
+  const hasSelectedImage = Boolean(selectedImageUri);
   const exampleCardWidth = Math.max(Math.min(width * 0.42, 176), 136);
   const exampleCardHeight = Math.round(exampleCardWidth * 1.02);
 
   return (
-    <View style={styles.intakeContent}>
+    <View style={[styles.intakeContent, hasSelectedImage ? styles.intakeContentUploaded : null]}>
       <View style={styles.intakeCopy}>
         <Text style={styles.intakeTitle}>{heading}</Text>
         <Text style={styles.intakeText}>{subtext}</Text>
@@ -124,32 +134,34 @@ export function ServiceIntakeStep({
           )}
         </LinearGradient>
       </LuxPressable>
-      <View style={styles.examplesSection}>
-        <Text style={styles.examplesTitle}>Example Photos</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          contentContainerStyle={styles.examplesRailContent}
-          style={{ cursor: "pointer" as any }}
-        >
-          {examples.map((example) => (
-            <LuxPressable
-              key={example.id}
-              onPress={() => onExamplePress(example)}
-              className={pointerClassName}
-              pressableClassName={pointerClassName}
-              style={{ width: exampleCardWidth, height: exampleCardHeight }}
-              glowColor="rgba(255,255,255,0.04)"
-              scale={0.985}
-            >
-              <View style={styles.exampleCard}>
-                <Image source={example.source} style={styles.exampleImage} contentFit="cover" transition={120} cachePolicy="memory-disk" />
-              </View>
-            </LuxPressable>
-          ))}
-        </ScrollView>
-      </View>
+      {hasSelectedImage ? null : (
+        <View style={styles.examplesSection}>
+          <Text style={styles.examplesTitle}>Example Photos</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            decelerationRate="fast"
+            contentContainerStyle={styles.examplesRailContent}
+            style={{ cursor: "pointer" as any }}
+          >
+            {examples.map((example) => (
+              <LuxPressable
+                key={example.id}
+                onPress={() => onExamplePress(example)}
+                className={pointerClassName}
+                pressableClassName={pointerClassName}
+                style={{ width: exampleCardWidth, height: exampleCardHeight }}
+                glowColor="rgba(255,255,255,0.04)"
+                scale={0.985}
+              >
+                <View style={styles.exampleCard}>
+                  <Image source={example.source} style={styles.exampleImage} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+                </View>
+              </LuxPressable>
+            ))}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 }
@@ -210,22 +222,85 @@ export function ServiceSelectionCard({
 
 export function ServiceSelectionGrid({ children }: ServiceSelectionGridProps) {
   const items = Children.toArray(children);
-  const hasOddLastItem = items.length % 2 === 1;
-  const lastIndex = items.length - 1;
+  const rows: ReactNode[][] = [];
+
+  for (let index = 0; index < items.length; index += 2) {
+    const rowItems = items.slice(index, index + 2);
+    rows.push(rowItems);
+  }
 
   return (
     <View style={styles.selectionGrid}>
-      {items.map((child, index) => {
-        const isLastOddItem = hasOddLastItem && index === lastIndex;
-        if (!isValidElement(child)) {
-          return <View key={`selection-grid-item-${index}`}>{child}</View>;
-        }
+      {rows.map((rowItems, rowIndex) => {
+        const isOddLastRow = rowItems.length === 1 && rowIndex === rows.length - 1;
 
-        return cloneElement(child as ReactElement<ServiceSelectionCardProps>, {
-          fullWidth: isLastOddItem,
-          recommended: isLastOddItem,
-        });
+        return (
+          <View key={`selection-grid-row-${rowIndex}`} style={styles.selectionGridRow}>
+            {rowItems.map((child, itemIndex) => {
+              const itemKey = `selection-grid-item-${rowIndex}-${itemIndex}`;
+
+              if (!isValidElement(child)) {
+                return (
+                  <View key={itemKey} style={isOddLastRow ? styles.selectionGridSingleItem : styles.selectionGridHalfItem}>
+                    {child}
+                  </View>
+                );
+              }
+
+              return (
+                <View key={itemKey} style={isOddLastRow ? styles.selectionGridSingleItem : styles.selectionGridHalfItem}>
+                  {cloneElement(child as ReactElement<ServiceSelectionCardProps>, {
+                    fullWidth: isOddLastRow,
+                    recommended: isOddLastRow,
+                  })}
+                </View>
+              );
+            })}
+          </View>
+        );
       })}
+    </View>
+  );
+}
+
+export function ServiceWizardStepScreen({
+  children,
+  footer,
+  footerOffset = 96,
+  scrollEnabled = true,
+  showsVerticalScrollIndicator = false,
+  contentContainerStyle,
+}: ServiceWizardStepScreenProps) {
+  const [footerHeight, setFooterHeight] = useState(0);
+  const flattenedContentStyle = StyleSheet.flatten(contentContainerStyle);
+  const existingPaddingBottom =
+    typeof flattenedContentStyle?.paddingBottom === "number" ? flattenedContentStyle.paddingBottom : 0;
+  const resolvedPaddingBottom = footer ? Math.max(existingPaddingBottom, footerHeight + 16) : existingPaddingBottom;
+
+  return (
+    <View style={styles.stepScreen}>
+      <ScrollView
+        style={styles.stepScroll}
+        scrollEnabled={scrollEnabled}
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
+        contentContainerStyle={[contentContainerStyle, footer ? { paddingBottom: resolvedPaddingBottom } : null]}
+      >
+        {children}
+      </ScrollView>
+
+      {footer ? (
+        <View
+          onLayout={(event) => {
+            const nextHeight = Math.round(event.nativeEvent.layout.height);
+            setFooterHeight((current) => (current === nextHeight ? current : nextHeight));
+          }}
+          pointerEvents="box-none"
+          style={[styles.fixedFooterWrap, { paddingBottom: footerOffset }]}
+        >
+          <View style={styles.fixedFooterContent}>{footer}</View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -233,6 +308,9 @@ export function ServiceSelectionGrid({ children }: ServiceSelectionGridProps) {
 const styles = StyleSheet.create({
   intakeContent: {
     gap: 22,
+  },
+  intakeContentUploaded: {
+    gap: 18,
   },
   intakeCopy: {
     alignItems: "center",
@@ -400,7 +478,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   selectionCard: {
-    flex: 1,
+    width: "100%",
     minHeight: 252,
     borderRadius: 24,
     overflow: "hidden",
@@ -480,8 +558,39 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   selectionGrid: {
+    gap: 16,
+  },
+  selectionGridRow: {
+    width: "100%",
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 14,
+    gap: 16,
+    alignItems: "stretch",
+  },
+  selectionGridHalfItem: {
+    flex: 1,
+    minWidth: 0,
+  },
+  selectionGridSingleItem: {
+    width: "100%",
+  },
+  stepScreen: {
+    flex: 1,
+  },
+  stepScroll: {
+    flex: 1,
+  },
+  fixedFooterWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingTop: 10,
+    paddingHorizontal: 16,
+    borderTopWidth: HAIRLINE,
+    borderTopColor: "rgba(255,255,255,0.06)",
+    backgroundColor: SERVICE_WIZARD_THEME.colors.background,
+  },
+  fixedFooterContent: {
+    gap: 10,
   },
 });
