@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowRight, Check, ShieldCheck, X } from "lucide-react-native";
+import Svg, { Circle } from "react-native-svg";
 
 import { LuxPressable } from "../components/lux-pressable";
 import { useProSuccess } from "../components/pro-success-context";
@@ -53,6 +55,13 @@ const TOGGLE_OFF = "#3A3A3A";
 const CTA_RED = "#E53935";
 const CLOSE_BG = "#2A2A2A";
 const CHECK_BACKGROUND = "#343434";
+const CLOSE_PROGRESS = "#999999";
+const CLOSE_COUNTDOWN_MS = 5000;
+const CLOSE_COUNTDOWN_TICK_MS = 50;
+const CLOSE_BUTTON_SIZE = 32;
+const CLOSE_RING_STROKE_WIDTH = 2.5;
+const CLOSE_RING_RADIUS = (CLOSE_BUTTON_SIZE - CLOSE_RING_STROKE_WIDTH) / 2;
+const CLOSE_RING_CIRCUMFERENCE = 2 * Math.PI * CLOSE_RING_RADIUS;
 
 const FEATURE_ITEMS = [
   "Faster Rendering",
@@ -118,6 +127,8 @@ export default function PaywallScreen() {
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
   const { showSuccess, showToast } = useProSuccess();
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
+  const closeCountdownDeadlineRef = useRef<number | null>(null);
+  const closeCountdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [activeImageIndex, setActiveImageIndex] = useState(1);
   const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("weekly");
@@ -125,6 +136,9 @@ export default function PaywallScreen() {
   const [packages, setPackages] = useState<RevenueCatPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [canClose, setCanClose] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(5);
+  const [countdownProgress, setCountdownProgress] = useState(0);
 
   const displayedImages = useMemo(() => {
     const total = PAYWALL_IMAGES.length;
@@ -203,11 +217,71 @@ export default function PaywallScreen() {
     [setPlan],
   );
 
+  const clearCloseCountdownInterval = useCallback(() => {
+    if (closeCountdownIntervalRef.current) {
+      clearInterval(closeCountdownIntervalRef.current);
+      closeCountdownIntervalRef.current = null;
+    }
+  }, []);
+
+  const syncCloseCountdown = useCallback(() => {
+    const deadline = closeCountdownDeadlineRef.current;
+    if (!deadline) {
+      return;
+    }
+
+    const remainingMs = Math.max(0, deadline - Date.now());
+    const progress = 1 - remainingMs / CLOSE_COUNTDOWN_MS;
+
+    setCountdownProgress(Math.min(1, Math.max(0, progress)));
+    setSecondsLeft(remainingMs > 0 ? Math.ceil(remainingMs / 1000) : 0);
+
+    if (remainingMs <= 0) {
+      setCanClose(true);
+      clearCloseCountdownInterval();
+    }
+  }, [clearCloseCountdownInterval]);
+
+  const ensureCloseCountdownInterval = useCallback(() => {
+    const deadline = closeCountdownDeadlineRef.current;
+    if (!deadline || closeCountdownIntervalRef.current || Date.now() >= deadline) {
+      return;
+    }
+
+    closeCountdownIntervalRef.current = setInterval(syncCloseCountdown, CLOSE_COUNTDOWN_TICK_MS);
+  }, [syncCloseCountdown]);
+
+  const stopCloseCountdown = useCallback(() => {
+    clearCloseCountdownInterval();
+    closeCountdownDeadlineRef.current = null;
+  }, [clearCloseCountdownInterval]);
+
+  useEffect(() => {
+    closeCountdownDeadlineRef.current = Date.now() + CLOSE_COUNTDOWN_MS;
+    syncCloseCountdown();
+    ensureCloseCountdownInterval();
+
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState !== "active") {
+        return;
+      }
+
+      syncCloseCountdown();
+      ensureCloseCountdownInterval();
+    });
+
+    return () => {
+      subscription.remove();
+      stopCloseCountdown();
+    };
+  }, [ensureCloseCountdownInterval, stopCloseCountdown, syncCloseCountdown]);
+
   const handleClose = useCallback(() => {
+    stopCloseCountdown();
     triggerHaptic();
     dismissLaunchPaywall();
     router.replace("/(tabs)");
-  }, [router]);
+  }, [router, stopCloseCountdown]);
 
   const applyTrialState = useCallback((enabled: boolean) => {
     setFreeTrialEnabled(enabled);
@@ -264,6 +338,7 @@ export default function PaywallScreen() {
         showSuccess();
       }
 
+      stopCloseCountdown();
       dismissLaunchPaywall();
       router.replace("/(tabs)");
     } catch (error) {
@@ -271,7 +346,7 @@ export default function PaywallScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [isSignedIn, persistPurchasedPlan, router, showSuccess, showToast]);
+  }, [isSignedIn, persistPurchasedPlan, router, showSuccess, showToast, stopCloseCountdown]);
 
   const handlePurchase = useCallback(async () => {
     triggerHaptic();
@@ -308,6 +383,7 @@ export default function PaywallScreen() {
         showSuccess();
       }
 
+      stopCloseCountdown();
       dismissLaunchPaywall();
       router.replace("/(tabs)");
     } catch (error) {
@@ -326,7 +402,10 @@ export default function PaywallScreen() {
     selectedPackage,
     showSuccess,
     showToast,
+    stopCloseCountdown,
   ]);
+
+  const closeRingStrokeDashoffset = CLOSE_RING_CIRCUMFERENCE * (1 - countdownProgress);
 
   return (
     <View style={styles.screen}>
@@ -517,9 +596,44 @@ export default function PaywallScreen() {
         <Text style={styles.restoreText}>Restore</Text>
       </LuxPressable>
 
-      <LuxPressable onPress={handleClose} style={styles.closeButton} scale={0.96}>
-        <X color={TEXT_PRIMARY} size={16} strokeWidth={2.4} />
-      </LuxPressable>
+      <View pointerEvents={canClose ? "auto" : "none"} style={styles.closeButtonAnchor}>
+        {canClose ? (
+          <MotiView
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ type: "timing", duration: 200 }}
+          >
+            <LuxPressable onPress={handleClose} style={styles.closeButton} scale={0.96}>
+              <X color={TEXT_PRIMARY} size={16} strokeWidth={2.4} />
+            </LuxPressable>
+          </MotiView>
+        ) : (
+          <View style={styles.closeCountdownShell}>
+            <Svg height={CLOSE_BUTTON_SIZE} width={CLOSE_BUTTON_SIZE} style={styles.closeCountdownRing}>
+              <Circle
+                cx={CLOSE_BUTTON_SIZE / 2}
+                cy={CLOSE_BUTTON_SIZE / 2}
+                r={CLOSE_RING_RADIUS}
+                fill="none"
+                stroke={CLOSE_BG}
+                strokeWidth={CLOSE_RING_STROKE_WIDTH}
+              />
+              <Circle
+                cx={CLOSE_BUTTON_SIZE / 2}
+                cy={CLOSE_BUTTON_SIZE / 2}
+                r={CLOSE_RING_RADIUS}
+                fill="none"
+                stroke={CLOSE_PROGRESS}
+                strokeDasharray={`${CLOSE_RING_CIRCUMFERENCE} ${CLOSE_RING_CIRCUMFERENCE}`}
+                strokeDashoffset={closeRingStrokeDashoffset}
+                strokeLinecap="round"
+                strokeWidth={CLOSE_RING_STROKE_WIDTH}
+              />
+            </Svg>
+            <Text style={styles.closeCountdownText}>{secondsLeft}</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 }
@@ -528,6 +642,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: SCREEN_BG,
+    position: "relative",
   },
   scrollView: {
     flex: 1,
@@ -787,7 +902,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 40,
     left: 20,
-    zIndex: 2,
+    zIndex: 10,
   },
   restoreText: {
     color: TEXT_RESTORE,
@@ -796,16 +911,40 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium.fontFamily,
     fontWeight: fonts.medium.fontWeight,
   },
-  closeButton: {
+  closeButtonAnchor: {
     position: "absolute",
     top: 28,
     right: 24,
-    width: 32,
-    height: 32,
+    width: CLOSE_BUTTON_SIZE,
+    height: CLOSE_BUTTON_SIZE,
+    zIndex: 10,
+  },
+  closeCountdownShell: {
+    width: CLOSE_BUTTON_SIZE,
+    height: CLOSE_BUTTON_SIZE,
     borderRadius: 16,
     backgroundColor: CLOSE_BG,
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 2,
+    overflow: "hidden",
+  },
+  closeCountdownRing: {
+    position: "absolute",
+    transform: [{ rotate: "-90deg" }],
+  },
+  closeCountdownText: {
+    color: TEXT_PRIMARY,
+    fontSize: 11,
+    lineHeight: 13,
+    fontFamily: fonts.bold.fontFamily,
+    fontWeight: fonts.bold.fontWeight,
+  },
+  closeButton: {
+    width: CLOSE_BUTTON_SIZE,
+    height: CLOSE_BUTTON_SIZE,
+    borderRadius: 16,
+    backgroundColor: CLOSE_BG,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
