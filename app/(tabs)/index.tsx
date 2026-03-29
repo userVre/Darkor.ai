@@ -1,7 +1,6 @@
 import { useAuth } from "@clerk/expo";
 import { useQuery } from "convex/react";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { AnimatePresence, MotiView } from "moti";
@@ -9,6 +8,10 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Platform, StyleSheet, Text, View, type NativeSyntheticEvent, type NativeScrollEvent, type ViewToken, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowDown } from "lucide-react-native";
+import { fonts } from "../../styles/typography";
+import { spacing } from "../../styles/spacing";
+import { dark as colors } from "@/styles/theme";
+import { buttonStyles } from "../../styles/buttons";
 
 import { HomeHeader } from "../../components/home-header";
 import { LuxPressable } from "../../components/lux-pressable";
@@ -46,8 +49,8 @@ type ServiceListItem =
       item: ServiceCardData;
     };
 
-const SECTION_CARD_GAP = 12;
-const SECTION_BREAK_GAP = 16;
+const SECTION_CARD_GAP = spacing.md;
+const SECTION_BREAK_GAP = spacing.xl;
 
 const SERVICE_SECTION_LABELS = {
   "full-ai-redesign": "✦ Full AI Redesign",
@@ -206,12 +209,7 @@ const ServiceCard = memo(function ServiceCard({ item, height, active, showScroll
     <View style={styles.cardStack}>
       <View style={[styles.card, { height }]}>
         <CardMedia item={item} active={active} />
-        <LinearGradient
-          colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.12)", "rgba(0,0,0,0.44)", "rgba(0,0,0,0.82)"]}
-          locations={[0, 0.42, 0.74, 1]}
-          style={StyleSheet.absoluteFillObject}
-          pointerEvents="none"
-        />
+        <View pointerEvents="none" style={styles.mediaOverlay} />
 
         {item.requiresPro ? (
           <View style={styles.proBadge}>
@@ -237,12 +235,12 @@ const ServiceCard = memo(function ServiceCard({ item, height, active, showScroll
               onPress={handlePress}
               className="cursor-pointer"
               style={styles.ctaButton}
-              glowColor="rgba(124,58,237,0.28)"
+              glowColor={colors.brand}
               scale={0.98}
             >
-              <LinearGradient colors={["#7C3AED", "#6D28D9"]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={styles.ctaGradient}>
+              <View style={styles.ctaGradient}>
                 <Text style={styles.ctaText}>Start Redesign →</Text>
-              </LinearGradient>
+              </View>
             </LuxPressable>
           </View>
         </View>
@@ -258,7 +256,7 @@ const ServiceCard = memo(function ServiceCard({ item, height, active, showScroll
             transition={{ type: "timing", duration: 240 }}
             style={styles.scrollHintRow}
           >
-            <ArrowDown color="rgba(255,255,255,0.52)" size={14} strokeWidth={2.1} />
+            <ArrowDown color={colors.textMuted} size={14} strokeWidth={2.1} />
             <Text style={styles.scrollHintText}>Scroll to explore all tools</Text>
           </MotiView>
         ) : null}
@@ -305,10 +303,6 @@ export default function HomeScreen() {
 
   const handleUpgradeToPro = useCallback(() => {
     router.push("/paywall");
-  }, [router]);
-
-  const handleOpenProfile = useCallback(() => {
-    router.push("/profile");
   }, [router]);
 
   const onViewableItemsChanged = useRef(
@@ -365,10 +359,9 @@ export default function HomeScreen() {
         remainingRenders={remainingRenders}
         progressValue={remainingRenderProgress}
         onUpgradeToPro={handleUpgradeToPro}
-        onOpenProfile={handleOpenProfile}
       />
     ),
-    [handleOpenProfile, handleUpgradeToPro, remainingRenderProgress, remainingRenders],
+    [handleUpgradeToPro, remainingRenderProgress, remainingRenders],
   );
 
   return (
@@ -378,10 +371,11 @@ export default function HomeScreen() {
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         ListHeaderComponent={header}
+        ListHeaderComponentStyle={styles.headerSpacer}
         contentContainerStyle={{
-          paddingTop: insets.top + DS.spacing[3],
+          paddingTop: insets.top + spacing.md,
           paddingHorizontal: SCREEN_SIDE_PADDING,
-          paddingBottom: Math.max(insets.bottom + 120, 136),
+          paddingBottom: Math.max(insets.bottom + spacing.xxl * 2, spacing.xxl * 2 + spacing.sm),
         }}
         showsVerticalScrollIndicator={false}
         initialNumToRender={2}
@@ -401,17 +395,21 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#000000",
+    backgroundColor: colors.bg,
+  },
+  headerSpacer: {
+    paddingBottom: spacing.xl,
   },
   sectionHeader: {
-    color: "rgba(255,255,255,0.54)",
+    color: colors.textSecondary,
     fontSize: 13,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
     letterSpacing: 1.3,
     textTransform: "uppercase",
   },
   cardStack: {
-    gap: 12,
+    gap: spacing.md,
   },
   card: {
     position: "relative",
@@ -420,41 +418,44 @@ const styles = StyleSheet.create({
     borderWidth: HAIRLINE,
     borderColor: DS.colors.borderSubtle,
     backgroundColor: DS.colors.backgroundAlt,
-    ...glowShadow("rgba(0,0,0,0.34)", 26),
+    ...glowShadow(colors.shadow, 26),
   },
   video: {
     ...StyleSheet.absoluteFillObject,
   },
+  mediaOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.surfaceOverlay,
+  },
   cardFrame: {
     flex: 1,
     justifyContent: "flex-end",
-    paddingHorizontal: DS.spacing[3],
-    paddingBottom: DS.spacing[3],
-    paddingTop: DS.spacing[4],
-    gap: 18,
+    padding: spacing.md,
+    gap: spacing.lg,
   },
   cardCopyStack: {
-    gap: 12,
+    gap: spacing.md,
   },
   cardActionRow: {
     width: "100%",
   },
   copyBlock: {
-    gap: 10,
+    gap: spacing.sm,
     maxWidth: "92%",
   },
   cardEyebrowPill: {
     alignSelf: "flex-start",
     borderRadius: DS.radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: "rgba(255,255,255,0.12)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.surfaceHigh,
     borderWidth: HAIRLINE,
-    borderColor: "rgba(255,255,255,0.16)",
+    borderColor: colors.borderLight,
   },
   cardEyebrowText: {
-    color: "#f5d0fe",
+    color: colors.textPrimary,
     fontSize: 11,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
     letterSpacing: 0.8,
     textTransform: "uppercase",
@@ -464,47 +465,48 @@ const styles = StyleSheet.create({
     ...DS.typography.title,
     fontSize: 30,
     lineHeight: 34,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "900",
     letterSpacing: -0.8,
   },
   cardSubtitle: {
-    color: "rgba(255,255,255,0.88)",
+    color: colors.textSecondary,
     ...DS.typography.body,
     fontSize: 15,
     lineHeight: 22,
   },
   proBadge: {
     position: "absolute",
-    top: 16,
-    right: 16,
+    top: spacing.md,
+    right: spacing.md,
     zIndex: 2,
     borderRadius: DS.radius.pill,
     borderWidth: HAIRLINE,
-    borderColor: "rgba(255,255,255,0.14)",
-    backgroundColor: "rgba(8,8,12,0.76)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.surfaceHigh,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   proBadgeText: {
-    color: "#ffffff",
+    color: colors.textPrimary,
     fontSize: 11,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "900",
     letterSpacing: 0.7,
   },
   ctaButton: {
     width: "100%",
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: "hidden",
   },
   ctaGradient: {
-    minHeight: 48,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
+    ...buttonStyles.primary,
+    height: 56,
   },
   ctaText: {
-    color: "#ffffff",
+    color: colors.textPrimary,
     fontSize: 16,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
     letterSpacing: 0.1,
   },
@@ -512,11 +514,14 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   scrollHintText: {
-    color: "rgba(255,255,255,0.52)",
+    color: colors.textMuted,
     fontSize: 13,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "600",
   },
 });
+
+

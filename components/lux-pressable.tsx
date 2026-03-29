@@ -48,7 +48,7 @@ export function LuxPressable({
     >
       <MotiView
         className={className}
-        style={[style, glowStyle, disabled ? { opacity: 0.6 } : null]}
+        style={[style, glowStyle, disabled ? { opacity: 0.4 } : null]}
         animate={{ scale: pressed ? scale : 1 }}
         transition={LUX_SPRING}
       >

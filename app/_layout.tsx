@@ -5,11 +5,12 @@ import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useMutation } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
+import { useFonts } from "expo-font";
 import * as Linking from "expo-linking";
 import { Stack, useGlobalSearchParams, usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Text, TextInput, View, type TextInputProps, type TextProps } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -33,9 +34,33 @@ import {
   type RevenueCatCustomerInfo,
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
+import { fonts } from "../styles/typography";
 import { tokenCache } from "../lib/token-cache";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
+
+const TextWithDefaults = Text as typeof Text & { defaultProps?: TextProps };
+const TextInputWithDefaults = TextInput as typeof TextInput & { defaultProps?: TextInputProps };
+
+let typographyDefaultsApplied = false;
+
+function applyGlobalTypographyDefaults() {
+  if (typographyDefaultsApplied) {
+    return;
+  }
+
+  TextWithDefaults.defaultProps = {
+    ...TextWithDefaults.defaultProps,
+    style: [fonts.regular, TextWithDefaults.defaultProps?.style],
+  };
+
+  TextInputWithDefaults.defaultProps = {
+    ...TextInputWithDefaults.defaultProps,
+    style: [fonts.regular, TextInputWithDefaults.defaultProps?.style],
+  };
+
+  typographyDefaultsApplied = true;
+}
 
 function RevenueCatGate() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -330,25 +355,35 @@ function AppShell() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Inter: require("../assets/Fonts/InterVariable.ttf"),
+    "Inter-Italic": require("../assets/Fonts/InterVariable-Italic.ttf"),
+  });
   const envReport = useMemo(() => getEnvReport(), []);
   const clerkKey = envReport.values.clerkPublishableKey;
+
+  if (fontsLoaded) {
+    applyGlobalTypographyDefaults();
+  }
 
   useEffect(() => {
     logEnvDiagnostics(envReport);
   }, [envReport]);
 
   useEffect(() => {
+    if (!fontsLoaded) {
+      return;
+    }
+
     const frame = requestAnimationFrame(() => {
       SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
     });
-    const safetyTimer = setTimeout(() => {
-      SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
-    }, 4000);
-    return () => {
-      cancelAnimationFrame(frame);
-      clearTimeout(safetyTimer);
-    };
-  }, []);
+    return () => cancelAnimationFrame(frame);
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   if (!DIAGNOSTIC_BYPASS && !envReport.ok) {
     return <MissingEnv missing={envReport.missing} />;
@@ -400,12 +435,10 @@ const bootStyles = {
   title: {
     color: DS.colors.textPrimary,
     ...DS.typography.cardTitle,
-    textAlign: "center" as const,
   },
   body: {
     color: DS.colors.textSecondary,
     ...DS.typography.body,
-    textAlign: "center" as const,
   },
   list: {
     width: "100%" as const,
@@ -414,7 +447,6 @@ const bootStyles = {
   listItem: {
     color: DS.colors.textPrimary,
     ...DS.typography.bodySm,
-    textAlign: "center" as const,
   },
   button: {
     ...surfaceCard(DS.colors.surfaceMuted),

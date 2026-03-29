@@ -1,9 +1,11 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { fonts } from "../styles/typography";
+import { spacing } from "../styles/spacing";
+import { type Theme, useTheme } from "@/styles/theme";
 
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { LuxPressable } from "./lux-pressable";
@@ -27,6 +29,8 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   onCancel,
   cancelDisabled = false,
 }: ServiceProcessingScreenProps) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [subtitleIndex, setSubtitleIndex] = useState(0);
@@ -68,11 +72,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
         <View style={styles.photoFallback} />
       )}
 
-      <LinearGradient
-        colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.14)", "rgba(0,0,0,0.42)", "rgba(0,0,0,0.85)"]}
-        locations={[0, 0.28, 0.58, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
+      <View style={styles.photoOverlay} />
 
       <MotiView
         animate={{ translateX: [-width * 0.8, width * 0.92] }}
@@ -80,13 +80,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
         style={[styles.scanSweepWrap, { top: -height * 0.12, height: height * 1.18 }]}
         pointerEvents="none"
       >
-        <LinearGradient
-          colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.03)", "rgba(124,58,237,0.18)", "rgba(255,255,255,0.03)", "rgba(255,255,255,0)"]}
-          locations={[0, 0.22, 0.5, 0.78, 1]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={styles.scanSweep}
-        />
+        <View style={styles.scanSweep} />
       </MotiView>
 
       <View style={[styles.content, { paddingTop: insets.top + 12 }]}>
@@ -120,7 +114,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
           className={pointerClassName}
           pressableClassName={pointerClassName}
           style={[styles.cancelWrap, { paddingBottom: Math.max(insets.bottom + 8, 14) }]}
-          glowColor="rgba(255,255,255,0.02)"
+          glowColor={colors.surfaceHigh}
           scale={0.98}
         >
           <Text style={[styles.cancelText, cancelDisabled ? styles.cancelTextDisabled : null]}>
@@ -132,90 +126,100 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   );
 });
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: SERVICE_WIZARD_THEME.colors.background,
-  },
-  photoImage: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  photoFallback: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#050506",
-  },
-  scanSweepWrap: {
-    position: "absolute",
-    width: 220,
-    opacity: 0.75,
-    transform: [{ skewX: "-12deg" }],
-  },
-  scanSweep: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "flex-end",
-    paddingHorizontal: 24,
-  },
-  bottomContent: {
-    gap: 18,
-    paddingBottom: 28,
-  },
-  progressTrack: {
-    height: 3,
-    width: "100%",
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.14)",
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 999,
-    backgroundColor: "#7C3AED",
-  },
-  copyBlock: {
-    gap: 12,
-  },
-  title: {
-    color: "#FFFFFF",
-    fontSize: 34,
-    fontWeight: "800",
-    lineHeight: 40,
-    letterSpacing: -0.8,
-    textAlign: "left",
-    maxWidth: 340,
-  },
-  subtitleWrap: {
-    minHeight: 48,
-    justifyContent: "center",
-  },
-  subtitle: {
-    color: "#E4E4E7",
-    fontSize: 17,
-    fontWeight: "700",
-    lineHeight: 24,
-    textAlign: "left",
-  },
-  eta: {
-    color: "rgba(212,212,216,0.72)",
-    fontSize: 13,
-    fontWeight: "600",
-    lineHeight: 19,
-    textAlign: "left",
-  },
-  cancelWrap: {
-    alignSelf: "center",
-    paddingHorizontal: 10,
-    paddingTop: 4,
-  },
-  cancelText: {
-    color: "rgba(161,161,170,0.9)",
-    fontSize: 12,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  cancelTextDisabled: {
-    color: "rgba(113,113,122,0.76)",
-  },
-});
+function createStyles(colors: Theme) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    photoImage: {
+      ...StyleSheet.absoluteFillObject,
+    },
+    photoFallback: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: colors.surface,
+    },
+    photoOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: colors.surfaceOverlay,
+    },
+    scanSweepWrap: {
+      position: "absolute",
+      width: 220,
+      opacity: 0.75,
+      transform: [{ skewX: "-12deg" }],
+    },
+    scanSweep: {
+      flex: 1,
+      backgroundColor: colors.brandSurface,
+    },
+    content: {
+      flex: 1,
+      justifyContent: "flex-end",
+      paddingHorizontal: spacing.lg,
+    },
+    bottomContent: {
+      gap: spacing.md,
+      paddingBottom: spacing.lg,
+    },
+    progressTrack: {
+      height: 3,
+      width: "100%",
+      borderRadius: 999,
+      backgroundColor: colors.borderLight,
+      overflow: "hidden",
+    },
+    progressFill: {
+      height: "100%",
+      borderRadius: 999,
+      backgroundColor: colors.brand,
+    },
+    copyBlock: {
+      gap: spacing.sm,
+    },
+    title: {
+      color: colors.textPrimary,
+      fontSize: 34,
+      fontFamily: fonts.regular.fontFamily,
+      fontWeight: "800",
+      lineHeight: 40,
+      letterSpacing: -0.8,
+      textAlign: "left",
+      maxWidth: 340,
+    },
+    subtitleWrap: {
+      minHeight: 48,
+      justifyContent: "center",
+    },
+    subtitle: {
+      color: colors.textSecondary,
+      fontSize: 17,
+      fontFamily: fonts.regular.fontFamily,
+      fontWeight: "700",
+      lineHeight: 24,
+      textAlign: "left",
+    },
+    eta: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      fontFamily: fonts.regular.fontFamily,
+      fontWeight: "600",
+      lineHeight: 19,
+      textAlign: "left",
+    },
+    cancelWrap: {
+      alignSelf: "center",
+      paddingHorizontal: spacing.sm,
+      paddingTop: spacing.xs,
+    },
+    cancelText: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      fontFamily: fonts.regular.fontFamily,
+      fontWeight: "600",
+    },
+    cancelTextDisabled: {
+      color: colors.textMuted,
+    },
+  });
+}

@@ -2,6 +2,7 @@ import { useQuery } from "convex/react";
 import { Redirect } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
+import { spacing } from "../styles/spacing";
 
 import { useViewerSession } from "../components/viewer-session-context";
 import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
@@ -20,11 +21,11 @@ function LaunchScreen({ message }: { message: string }) {
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: "#000000",
-        paddingHorizontal: 24,
+        paddingHorizontal: spacing.lg,
       }}
     >
       <ActivityIndicator color="#ffffff" />
-      <Text style={{ marginTop: 12, fontSize: 14, color: "#f4f4f5" }}>{message}</Text>
+      <Text style={{ marginTop: spacing.sm, fontSize: 14, color: "#f4f4f5" }}>{message}</Text>
     </View>
   );
 }

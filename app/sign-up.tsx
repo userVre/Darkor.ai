@@ -1,11 +1,12 @@
 import { useOAuth } from "@clerk/expo";
 import { useSignUp } from "@clerk/expo/legacy";
-import { LinearGradient } from "expo-linear-gradient";
 import { Link, type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
+import { fonts } from "../styles/typography";
+import { buttonStyles } from "../styles/buttons";
 
 import { LuxPressable } from "../components/lux-pressable";
 import { DS, HAIRLINE, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
@@ -115,9 +116,9 @@ export default function SignUpScreen() {
           </View>
 
           <LuxPressable onPress={() => void handleSignUp()} style={styles.fullWidth} disabled={loading} glowColor={DS.colors.accentGlowStrong}>
-            <LinearGradient colors={["#A855F7", "#7C3AED"]} style={styles.primaryButton}>
+            <View style={styles.primaryButton}>
               <Text style={styles.primaryButtonText}>{loading ? "Creating..." : "Create account"}</Text>
-            </LinearGradient>
+            </View>
           </LuxPressable>
 
           <LuxPressable onPress={() => void handleAppleSignUp()} style={styles.fullWidth} disabled={appleLoading}>
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
     borderRadius: DS.radius.pill,
     alignItems: "center",
     justifyContent: "center",
-    ...glowShadow("rgba(255,255,255,0.03)", 16),
+    ...glowShadow(DS.colors.border, 16),
   },
   hero: {
     gap: DS.spacing[1],
@@ -175,7 +176,7 @@ const styles = StyleSheet.create({
   },
   card: {
     ...surfaceCard(),
-    ...glowShadow("rgba(0,0,0,0.34)", 22),
+    ...glowShadow(DS.colors.background, 22),
     padding: DS.spacing[3],
     gap: DS.spacing[3],
   },
@@ -185,6 +186,7 @@ const styles = StyleSheet.create({
   label: {
     color: DS.colors.textSecondary,
     ...DS.typography.bodySm,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "600",
   },
   input: {
@@ -197,16 +199,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: DS.spacing[2],
     paddingVertical: DS.spacing[2],
     fontSize: 15,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "400",
   },
   fullWidth: {
     width: "100%",
   },
   primaryButton: {
-    minHeight: 56,
-    borderRadius: DS.radius.md,
-    alignItems: "center",
-    justifyContent: "center",
+    ...buttonStyles.primary,
     paddingHorizontal: DS.spacing[3],
   },
   primaryButtonText: {
@@ -214,20 +214,17 @@ const styles = StyleSheet.create({
     ...DS.typography.button,
   },
   secondaryButton: {
+    ...buttonStyles.secondary,
     minHeight: 56,
     borderRadius: DS.radius.md,
-    borderWidth: HAIRLINE,
-    borderColor: DS.colors.borderSubtle,
-    backgroundColor: DS.colors.surface,
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
     gap: DS.spacing[1],
     paddingHorizontal: DS.spacing[3],
   },
   appleIcon: {
     color: DS.colors.textPrimary,
     fontSize: 18,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
   secondaryButtonText: {
@@ -237,10 +234,12 @@ const styles = StyleSheet.create({
   footerText: {
     color: DS.colors.textSecondary,
     ...DS.typography.bodySm,
-    textAlign: "center",
   },
   footerLink: {
     color: DS.colors.accentStrong,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
 });
+
+

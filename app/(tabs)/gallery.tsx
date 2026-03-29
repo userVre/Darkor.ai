@@ -1,23 +1,25 @@
 import { useAuth } from "@clerk/expo";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { memo, useCallback, useMemo, useState } from "react";
 import { FlatList, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { fonts } from "../../styles/typography";
+import { spacing } from "../../styles/spacing";
+import { dark as colors } from "@/styles/theme";
 
 import { LuxPressable } from "../../components/lux-pressable";
 import { useWorkspaceDraft } from "../../components/workspace-context";
 import { DISCOVER_SECTIONS, type DiscoverSection, type DiscoverTile } from "../../lib/data";
-import { DS, HAIRLINE, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow } from "../../lib/design-system";
+import { DS, HAIRLINE, SCREEN_SIDE_PADDING, glowShadow } from "../../lib/design-system";
 import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
 
 const SCREEN_BG = DS.colors.background;
 const EDGE_PADDING = SCREEN_SIDE_PADDING;
-const SECTION_GAP = SCREEN_SECTION_GAP + DS.spacing[1];
-const SHELF_GAP = DS.spacing[2];
+const SECTION_GAP = spacing.xl;
+const SHELF_GAP = spacing.md;
 const CARD_BORDER_COLOR = DS.colors.borderSubtle;
 const CARD_RADIUS = DS.radius.xl;
 
@@ -103,12 +105,7 @@ const DiscoverShelfCard = memo(function DiscoverShelfCard({
         transition={120}
         cachePolicy="memory-disk"
       />
-      <LinearGradient
-        colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.82)", "rgba(0,0,0,0.98)"]}
-        locations={[0, 0.16, 0.68, 1]}
-        style={styles.cardGradient}
-        pointerEvents="none"
-      />
+      <View pointerEvents="none" style={styles.cardGradient} />
 
       <View style={styles.cardCopy}>
         <View style={styles.cardMetaRow}>
@@ -168,7 +165,7 @@ const DiscoverShelfSection = memo(function DiscoverShelfSection({
             pressableClassName="cursor-pointer"
             className="cursor-pointer"
             style={styles.sectionActionButton}
-            glowColor="rgba(217,70,239,0.16)"
+            glowColor={colors.brand}
             scale={0.97}
           >
             <Text style={styles.sectionActionText}>{expanded ? "Show Less" : "See All"}</Text>
@@ -280,7 +277,8 @@ export default function GalleryScreen() {
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={{
-          paddingTop: insets.top + DS.spacing[3],
+          paddingTop: insets.top + spacing.md,
+          paddingHorizontal: EDGE_PADDING,
           paddingBottom: Math.max(insets.bottom + DS.spacing[4], DS.spacing[5]),
           gap: SECTION_GAP,
         }}
@@ -323,12 +321,12 @@ const styles = StyleSheet.create({
     backgroundColor: SCREEN_BG,
   },
   header: {
-    paddingHorizontal: EDGE_PADDING,
-    gap: 10,
+    gap: spacing.sm,
   },
   headerTitle: {
-    color: "#ffffff",
+    color: colors.textPrimary,
     fontSize: 32,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
     lineHeight: 38,
     letterSpacing: -0.8,
@@ -339,29 +337,29 @@ const styles = StyleSheet.create({
     maxWidth: 720,
   },
   headerInstruction: {
-    color: "#a1a1aa",
+    color: colors.textSecondary,
     fontSize: 14,
     lineHeight: 20,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "500",
     maxWidth: 720,
   },
   section: {
-    gap: 16,
+    gap: spacing.md,
   },
   sectionHeader: {
-    gap: 7,
-    paddingHorizontal: EDGE_PADDING,
+    gap: spacing.sm,
   },
   sectionTitleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: spacing.md,
   },
   sectionTitleCluster: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: spacing.sm,
     flex: 1,
     minWidth: 0,
   },
@@ -374,15 +372,16 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: "rgba(255,255,255,0.04)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.surfaceHigh,
     borderWidth: HAIRLINE,
     borderColor: DS.colors.borderSubtle,
   },
   sectionCountText: {
     color: DS.colors.textSecondary,
     fontSize: 12,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
   },
   sectionDescription: {
@@ -392,25 +391,23 @@ const styles = StyleSheet.create({
   },
   sectionActionButton: {
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderWidth: HAIRLINE,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(255,255,255,0.04)",
+    borderColor: colors.borderLight,
+    backgroundColor: colors.surfaceHigh,
   },
   sectionActionText: {
-    color: "#f5d0fe",
+    color: colors.textPrimary,
     fontSize: 12,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
     letterSpacing: 0.45,
     textTransform: "uppercase",
   },
   shelfContent: {
-    paddingLeft: EDGE_PADDING,
-    paddingRight: EDGE_PADDING,
   },
   expandedGrid: {
-    paddingHorizontal: EDGE_PADDING,
     flexDirection: "row",
     flexWrap: "wrap",
     gap: SHELF_GAP,
@@ -421,7 +418,7 @@ const styles = StyleSheet.create({
     borderWidth: HAIRLINE,
     borderColor: CARD_BORDER_COLOR,
     backgroundColor: DS.colors.surfaceRaised,
-    ...glowShadow("rgba(0,0,0,0.30)", 22),
+    ...glowShadow(colors.shadow, 22),
   },
   cardGradient: {
     position: "absolute",
@@ -429,15 +426,15 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: 164,
+    backgroundColor: colors.surfaceOverlay,
   },
   cardCopy: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: DS.spacing[3],
-    paddingBottom: DS.spacing[3],
-    gap: 8,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
   cardMetaRow: {
     flexDirection: "row",
@@ -445,15 +442,16 @@ const styles = StyleSheet.create({
   cardCategoryPill: {
     alignSelf: "flex-start",
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: "rgba(255,255,255,0.12)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.surfaceHigh,
     borderWidth: HAIRLINE,
-    borderColor: "rgba(255,255,255,0.14)",
+    borderColor: colors.borderLight,
   },
   cardCategoryText: {
-    color: "#fafafa",
+    color: colors.textPrimary,
     fontSize: 11,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
     letterSpacing: 0.7,
     textTransform: "uppercase",
@@ -463,9 +461,12 @@ const styles = StyleSheet.create({
     ...DS.typography.cardTitle,
   },
   cardStyle: {
-    color: "#d4d4d8",
+    color: colors.textSecondary,
     ...DS.typography.bodySm,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "600",
     lineHeight: 19,
   },
 });
+
+

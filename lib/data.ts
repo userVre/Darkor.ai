@@ -1,4 +1,5 @@
 import type { ImageSourcePropType } from "react-native";
+import { palette } from "@/styles/theme";
 
 export type DiscoverSectionId = "home" | "wall" | "floor" | "garden" | "exterior";
 export type DiscoverService = "interior" | "garden" | "exterior" | "floor" | "paint";
@@ -57,7 +58,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
   {
     id: "sage-green",
     title: "Sage Green",
-    value: "#A7AF81",
+    value: palette.sageGreen,
     description: "Soft green calm for bright, polished living spaces.",
     image: require("../assets/media/discover/wall-scenes/sage-green-suite.jpg"),
     discoverSubtitle: "Wall / Botanical Calm",
@@ -65,7 +66,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
   {
     id: "midnight-navy",
     title: "Midnight Navy",
-    value: "#1D2333",
+    value: palette.midnightNavy,
     description: "Tailored navy depth with crisp architectural contrast.",
     image: require("../assets/media/discover/wall-scenes/midnight-navy-bedroom.jpg"),
     discoverSubtitle: "Wall / Tailored Contrast",
@@ -73,7 +74,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
   {
     id: "terracotta-glow",
     title: "Terracotta Glow",
-    value: "#C86B33",
+    value: palette.terracottaGlow,
     description: "Warm clay color with grounded, editorial energy.",
     image: require("../assets/media/discover/wall-scenes/terracotta-dining.jpg"),
     discoverSubtitle: "Wall / Warm Clay",
@@ -81,7 +82,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
   {
     id: "dusty-rose",
     title: "Dusty Rose",
-    value: "#C78E9F",
+    value: palette.dustyRose,
     description: "Muted blush warmth with soft boutique appeal.",
     image: require("../assets/media/discover/wall-scenes/dusty-rose-retreat.jpg"),
     discoverSubtitle: "Wall / Boutique Blush",
@@ -89,7 +90,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
   {
     id: "gallery-charcoal",
     title: "Gallery Charcoal",
-    value: "#3B3E43",
+    value: palette.galleryCharcoal,
     description: "Refined charcoal for moody, art-forward rooms.",
     image: require("../assets/media/discover/wall-scenes/gallery-charcoal-lounge.jpg"),
     discoverSubtitle: "Wall / Moody Gallery",
@@ -97,7 +98,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
   {
     id: "soft-ivory",
     title: "Soft Ivory",
-    value: "#E8D5B8",
+    value: palette.softIvory,
     description: "Luminous neutral that keeps rooms light, never flat.",
     image: require("../assets/media/discover/wall-scenes/soft-ivory-kitchen.jpg"),
     discoverSubtitle: "Wall / Quiet Neutral",
@@ -105,7 +106,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
   {
     id: "olive-grove",
     title: "Olive Grove",
-    value: "#5A6544",
+    value: palette.oliveGrove,
     description: "Earthy olive depth with a grounded designer mood.",
     image: require("../assets/media/discover/wall-scenes/deep-olive-study.jpg"),
     discoverSubtitle: "Wall / Earthy Depth",
@@ -113,7 +114,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
   {
     id: "lavender-mist",
     title: "Lavender Mist",
-    value: "#BEA0C7",
+    value: palette.lavenderMist,
     description: "Soft violet haze for elevated pastel rooms.",
     image: require("../assets/media/discover/wall-scenes/lavender-mist-bath.jpg"),
     discoverSubtitle: "Wall / Soft Pastel",
@@ -121,7 +122,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
   {
     id: "pearl-gray",
     title: "Pearl Gray",
-    value: "#D0D2D6",
+    value: palette.pearlGray,
     description: "Light tonal gray with polished everyday flexibility.",
     image: require("../assets/media/discover/wall-scenes/pearl-gray-salon.jpg"),
     discoverSubtitle: "Wall / Modern Neutral",
@@ -133,27 +134,27 @@ export const WALL_COLOR_CATEGORIES: ColorCategory[] = [
     id: "calm-neutrals",
     title: "Calm Neutrals",
     colors: [
-      { id: "soft-ivory", label: "Soft Ivory", value: "#E8D5B8" },
-      { id: "pearl-gray", label: "Pearl Gray", value: "#D0D2D6" },
-      { id: "sage-green", label: "Sage Green", value: "#A7AF81" },
+      { id: "soft-ivory", label: "Soft Ivory", value: palette.softIvory },
+      { id: "pearl-gray", label: "Pearl Gray", value: palette.pearlGray },
+      { id: "sage-green", label: "Sage Green", value: palette.sageGreen },
     ],
   },
   {
     id: "boutique-pastels",
     title: "Boutique Pastels",
     colors: [
-      { id: "dusty-rose", label: "Dusty Rose", value: "#C78E9F" },
-      { id: "lavender-mist", label: "Lavender Mist", value: "#BEA0C7" },
-      { id: "terracotta-glow", label: "Terracotta Glow", value: "#C86B33" },
+      { id: "dusty-rose", label: "Dusty Rose", value: palette.dustyRose },
+      { id: "lavender-mist", label: "Lavender Mist", value: palette.lavenderMist },
+      { id: "terracotta-glow", label: "Terracotta Glow", value: palette.terracottaGlow },
     ],
   },
   {
     id: "architectural-depth",
     title: "Architectural Depth",
     colors: [
-      { id: "midnight-navy", label: "Midnight Navy", value: "#1D2333" },
-      { id: "gallery-charcoal", label: "Gallery Charcoal", value: "#3B3E43" },
-      { id: "olive-grove", label: "Olive Grove", value: "#5A6544" },
+      { id: "midnight-navy", label: "Midnight Navy", value: palette.midnightNavy },
+      { id: "gallery-charcoal", label: "Gallery Charcoal", value: palette.galleryCharcoal },
+      { id: "olive-grove", label: "Olive Grove", value: palette.oliveGrove },
     ],
   },
 ];

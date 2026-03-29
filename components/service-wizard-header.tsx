@@ -1,7 +1,8 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { ArrowLeft, X as Close } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { type Theme, useTheme } from "@/styles/theme";
 
 import { DS, HAIRLINE, glowShadow } from "../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
@@ -24,6 +25,8 @@ export function ServiceWizardHeader({
   onBack,
   onClose,
 }: ServiceWizardHeaderProps) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showBack = safeStep > 1 && canGoBack && Boolean(onBack);
@@ -45,7 +48,7 @@ export function ServiceWizardHeader({
               pressableClassName="cursor-pointer"
               className="cursor-pointer"
               style={styles.iconButton}
-              glowColor="rgba(217,70,239,0.3)"
+              glowColor={colors.brand}
               scale={0.96}
             >
               <ArrowLeft color={SERVICE_WIZARD_THEME.colors.textPrimary} size={18} strokeWidth={2.2} />
@@ -85,7 +88,7 @@ export function ServiceWizardHeader({
             pressableClassName="cursor-pointer"
             className="cursor-pointer"
             style={styles.iconButton}
-            glowColor="rgba(217,70,239,0.3)"
+            glowColor={colors.brand}
             scale={0.96}
           >
             <Close color={SERVICE_WIZARD_THEME.colors.textPrimary} size={18} strokeWidth={2.2} />
@@ -96,9 +99,10 @@ export function ServiceWizardHeader({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Theme) {
+  return StyleSheet.create({
   safeArea: {
-    backgroundColor: DS.colors.background,
+    backgroundColor: colors.bg,
   },
   container: {
     paddingHorizontal: DS.spacing[3],
@@ -107,7 +111,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: DS.spacing[2],
-    backgroundColor: DS.colors.background,
+    backgroundColor: colors.bg,
   },
   sideSlot: {
     width: 56,
@@ -122,8 +126,8 @@ const styles = StyleSheet.create({
     borderRadius: DS.radius.pill,
     borderWidth: HAIRLINE,
     borderColor: SERVICE_WIZARD_THEME.colors.border,
-    backgroundColor: DS.colors.surface,
-    ...glowShadow("rgba(255,255,255,0.03)", 16),
+    backgroundColor: colors.surface,
+    ...glowShadow(colors.border, 16),
   },
   sidePlaceholder: {
     height: 44,
@@ -132,18 +136,16 @@ const styles = StyleSheet.create({
   copy: {
     flex: 1,
     minWidth: 0,
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: DS.spacing[1.5],
   },
   title: {
     color: SERVICE_WIZARD_THEME.colors.textPrimary,
     ...SERVICE_WIZARD_THEME.typography.headerTitle,
-    textAlign: "center",
   },
   subtitle: {
     color: SERVICE_WIZARD_THEME.colors.textMuted,
     ...SERVICE_WIZARD_THEME.typography.headerSubtitle,
-    textAlign: "center",
   },
   progressRow: {
     width: "100%",
@@ -156,17 +158,18 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: DS.radius.pill,
     overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.25)",
+    backgroundColor: colors.surfaceHigh,
     borderWidth: HAIRLINE,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: colors.borderLight,
   },
   progressSegmentComplete: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "rgba(255,255,255,0.5)",
+    backgroundColor: colors.textPrimary,
+    borderColor: colors.textSecondary,
   },
   progressSegmentActive: {
-    backgroundColor: "#7C3AED",
-    borderColor: "rgba(124,58,237,0.66)",
-    ...glowShadow("rgba(124,58,237,0.34)", 18),
+    backgroundColor: colors.brand,
+    borderColor: colors.brand,
+    ...glowShadow(colors.brand, 18),
   },
-});
+  });
+}

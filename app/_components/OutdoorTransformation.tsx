@@ -1,6 +1,7 @@
 import { MotiImage, MotiView } from "moti";
 import { StyleSheet, useWindowDimensions, View, Text } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import { fonts } from "../../styles/typography";
 
 const beforeGarden = require("../../assets/media/garden-before.jpg");
 const afterGarden = require("../../assets/media/garden-after.jpg");
@@ -12,7 +13,7 @@ export default function OutdoorTransformation() {
 
   return (
     <View className="rounded-3xl border border-white/10 bg-zinc-900 px-3 py-4" style={styles.card}>
-      <Text className="mb-3 text-base font-semibold text-zinc-100">Design gardens and outdoor spaces</Text>
+      <Text className="mb-3 text-base font-semibold text-zinc-100" style={fonts.semibold}>Design gardens and outdoor spaces</Text>
 
       <View className="flex-row items-center justify-between">
         <MotiView

@@ -1,44 +1,24 @@
 import { useAuth, useUser } from "@clerk/expo";
 import { useMutation } from "convex/react";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { MotiView } from "moti";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, MotiView } from "moti";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  useWindowDimensions,
 } from "react-native";
-import Animated, {
-  Easing,
-  Extrapolation,
-  interpolate,
-  runOnJS,
-  type SharedValue,
-  useAnimatedProps,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  withSpring,
-} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Circle } from "react-native-svg";
-import { ArrowRight, Check, X } from "lucide-react-native";
+import { ArrowRight, Check, ShieldCheck, X } from "lucide-react-native";
 
 import { LuxPressable } from "../components/lux-pressable";
 import { useProSuccess } from "../components/pro-success-context";
 import { triggerHaptic } from "../lib/haptics";
 import { dismissLaunchPaywall } from "../lib/launch-paywall";
-import { LUX_SPRING } from "../lib/motion";
 import {
   configureRevenueCat,
   findRevenueCatPackage,
@@ -53,316 +33,80 @@ import {
   type RevenueCatPackage,
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
+import { fonts } from "../styles/typography";
 
-const pointerClassName = "cursor-pointer";
-const PREMIUM_FONT_FAMILY = process.env.EXPO_OS === "ios" ? "Avenir Next" : "sans-serif";
-const DISPLAY_FONT_FAMILY = process.env.EXPO_OS === "ios" ? "Avenir Next" : "sans-serif-condensed";
-const HERO_GAP = 12;
-const AUTO_SCROLL_MS = 2600;
+const AUTO_ROTATE_MS = 3000;
+const SIDE_IMAGE_WIDTH = 130;
+const SIDE_IMAGE_HEIGHT = 160;
+const CENTER_IMAGE_SIZE = 188;
+const IMAGE_GAP = 12;
+const HERO_TRACK_WIDTH = SIDE_IMAGE_WIDTH * 2 + CENTER_IMAGE_SIZE + IMAGE_GAP * 2;
+
+const SCREEN_BG = "#0D0D0D";
+const SURFACE = "#1C1C1C";
+const SURFACE_ACCENT = "#25030D";
+const BORDER = "#2A2A2A";
+const TEXT_PRIMARY = "#FFFFFF";
+const TEXT_SECONDARY = "#A0A0A0";
+const TEXT_RESTORE = "#B3B3B3";
+const TOGGLE_OFF = "#3A3A3A";
+const CTA_RED = "#E53935";
+const CLOSE_BG = "#2A2A2A";
+const CHECK_BACKGROUND = "#343434";
 
 const FEATURE_ITEMS = [
-  "Watermark-free",
-  "4K renders",
-  "50+ styles",
+  "Faster Rendering",
+  "Ad-free Experience",
+  "Unlimited Design Renders",
 ] as const;
 
-const PLAN_COPY = {
-  yearly: {
-    savingsBadge: "SAVE 92%",
-    valueBadge: "BEST VALUE",
-    price: "$0.90",
-    priceSuffix: "/week",
-    subtitle: "Billed annually at $47.52",
-    trial: "7-day free trial included",
-    noTrial: "Instant access after checkout",
+const PAYWALL_IMAGES = [
+  {
+    id: "paywall-soft-lounge",
+    source: require("../assets/media/paywall/paywall-soft-lounge.png"),
   },
-  weekly: {
-    title: "Weekly Access",
-    price: "$11.90",
-    subtitle: "Billed weekly - no commitment",
+  {
+    id: "paywall-luxury-lounge",
+    source: require("../assets/media/paywall/paywall-luxury-lounge.png"),
   },
-} as const;
-
-const HERO_SLIDES = [
-  { id: "hero-luxury-lounge", image: require("../assets/media/paywall/paywall-luxury-lounge.png") },
-  { id: "hero-marble-kitchen", image: require("../assets/media/paywall/paywall-marble-kitchen.png") },
-  { id: "hero-boho-bedroom", image: require("../assets/media/paywall/paywall-boho-bedroom.png") },
-  { id: "hero-gaming-room", image: require("../assets/media/paywall/paywall-gaming-room.png") },
-  { id: "hero-garden-pool", image: require("../assets/media/paywall/paywall-garden-pool.png") },
-  { id: "hero-dining-room", image: require("../assets/media/paywall/paywall-dining-room.png") },
-  { id: "hero-soft-lounge", image: require("../assets/media/paywall/paywall-soft-lounge.png") },
+  {
+    id: "paywall-marble-kitchen",
+    source: require("../assets/media/paywall/paywall-marble-kitchen.png"),
+  },
 ] as const;
 
-const LOOPED_HERO_SLIDES = [...HERO_SLIDES, ...HERO_SLIDES, ...HERO_SLIDES].map((slide, index) => ({
-  ...slide,
-  key: `${slide.id}-${index}`,
-}));
+function wrapIndex(index: number, length: number) {
+  return ((index % length) + length) % length;
+}
 
-const LOOP_OFFSET = HERO_SLIDES.length;
-const HERO_DOT_COUNT = 3;
-const COUNTDOWN_MS = 5000;
-const TIMER_SIZE = 38;
-const TIMER_STROKE = 3;
-const TIMER_RADIUS = (TIMER_SIZE - TIMER_STROKE) / 2;
-const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-
-function TrialSwitch({ value, onPress }: { value: boolean; onPress: () => void }) {
-  const translateX = useSharedValue(value ? 20 : 0);
-
-  useEffect(() => {
-    translateX.value = withSpring(value ? 20 : 0, {
-      damping: 16,
-      stiffness: 180,
-    });
-  }, [translateX, value]);
-
-  const thumbStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-
+function FeatureRow({ label }: { label: string }) {
   return (
-    <LuxPressable
-      onPress={onPress}
-      className={pointerClassName}
-      style={[styles.toggleTrack, value ? styles.toggleTrackActive : null]}
-      glowColor={value ? "rgba(124,58,237,0.18)" : "rgba(255,255,255,0.04)"}
-      scale={0.985}
-    >
-      <Animated.View style={[styles.toggleThumb, value ? styles.toggleThumbActive : null, thumbStyle]} />
-    </LuxPressable>
+    <View style={styles.featureRow}>
+      <View style={styles.featureCheck}>
+        <Check color={TEXT_PRIMARY} size={12} strokeWidth={3} />
+      </View>
+      <Text style={styles.featureText}>{label}</Text>
+    </View>
   );
 }
 
-const InlineFeature = memo(function InlineFeature({ label }: { label: string }) {
-  return (
-    <View style={styles.inlineFeatureItem}>
-      <Text style={styles.inlineFeatureCheck}>{"\u2713"}</Text>
-      <Text style={styles.inlineFeatureText}>{label}</Text>
-    </View>
-  );
-});
-
-const HeroSlide = memo(function HeroSlide({
-  image,
-  index,
-  width,
-  height,
-  snapInterval,
-  scrollX,
-}: {
-  image: number;
-  index: number;
-  width: number;
-  height: number;
-  snapInterval: number;
-  scrollX: SharedValue<number>;
-}) {
-  const animatedStyle = useAnimatedStyle(() => {
-    const center = index * snapInterval;
-    const inputRange = [center - snapInterval, center, center + snapInterval];
-    const scale = interpolate(scrollX.value, inputRange, [0.82, 1.1, 0.82], Extrapolation.CLAMP);
-    const opacity = interpolate(scrollX.value, inputRange, [0.45, 1, 0.45], Extrapolation.CLAMP);
-    const translateY = interpolate(scrollX.value, inputRange, [12, -8, 12], Extrapolation.CLAMP);
-    const translateX = interpolate(scrollX.value, inputRange, [10, 0, -10], Extrapolation.CLAMP);
-    const rotateY = interpolate(scrollX.value, inputRange, [18, 0, -18], Extrapolation.CLAMP);
-    const zIndex = interpolate(scrollX.value, inputRange, [1, 30, 1], Extrapolation.CLAMP);
-
-    return {
-      opacity,
-      zIndex,
-      transform: [{ perspective: 900 }, { translateX }, { scale }, { rotateY: `${rotateY}deg` }, { translateY }],
-    };
-  });
-
-  return (
-    <Animated.View style={[styles.heroSlideWrap, { width, height }, animatedStyle]}>
-      <View style={styles.heroSlideCard}>
-        <Image
-          source={image}
-          style={StyleSheet.absoluteFillObject}
-          contentFit="cover"
-          cachePolicy="memory-disk"
-          transition={140}
-        />
-        <LinearGradient
-          colors={["rgba(255,255,255,0.04)", "rgba(0,0,0,0.06)", "rgba(0,0,0,0.48)"]}
-          locations={[0, 0.4, 1]}
-          style={StyleSheet.absoluteFillObject}
-          pointerEvents="none"
-        />
-      </View>
-    </Animated.View>
-  );
-});
-
-function PlanCard({
-  duration,
-  active,
-  freeTrialEnabled,
+function TrialToggle({
+  value,
   onPress,
 }: {
-  duration: BillingDuration;
-  active: boolean;
-  freeTrialEnabled: boolean;
+  value: boolean;
   onPress: () => void;
 }) {
-  const isYearly = duration === "yearly";
-
   return (
-    <MotiView
-      animate={{ opacity: active || isYearly ? 1 : 0.85, scale: active ? 1 : isYearly ? 0.992 : 0.985 }}
-      transition={LUX_SPRING}
-      style={styles.planCardMotion}
-    >
-      <LuxPressable
-        onPress={onPress}
-        className={pointerClassName}
-        style={[
-          styles.planCard,
-          isYearly ? styles.planCardYearly : styles.planCardWeekly,
-          active ? styles.planCardSelected : null,
-        ]}
-        glowColor={active ? "rgba(124,58,237,0.24)" : isYearly ? "rgba(124,58,237,0.16)" : "rgba(255,255,255,0.04)"}
-        scale={0.992}
+    <LuxPressable onPress={onPress} style={[styles.toggleSwitch, value ? styles.toggleSwitchOn : styles.toggleSwitchOff]} scale={0.98}>
+      <MotiView
+        animate={{ translateX: value ? 20 : 0 }}
+        transition={{ type: "timing", duration: 200 }}
+        style={styles.toggleThumbWrap}
       >
-        {isYearly ? (
-          <LinearGradient
-            colors={["#4C1D95", "#7C3AED"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.planCardGlow}
-            pointerEvents="none"
-          />
-        ) : null}
-
-        {active ? (
-          <View style={styles.planSelectedCheck}>
-            <Check color="#ffffff" size={15} strokeWidth={3} />
-          </View>
-        ) : null}
-
-        {isYearly ? (
-          <View style={styles.planContent}>
-            <View style={styles.yearlyBadgeRow}>
-              <View style={styles.yearlySavingsBadge}>
-                <Text style={styles.yearlySavingsBadgeText}>{PLAN_COPY.yearly.savingsBadge}</Text>
-              </View>
-              <View style={styles.yearlyValueBadge}>
-                <Text style={styles.yearlyValueBadgeText}>{PLAN_COPY.yearly.valueBadge}</Text>
-              </View>
-            </View>
-
-            <View style={styles.yearlyPriceRow}>
-              <Text style={styles.yearlyPrice}>{PLAN_COPY.yearly.price}</Text>
-              <Text style={styles.yearlyPriceSuffix}>{PLAN_COPY.yearly.priceSuffix}</Text>
-            </View>
-
-            <Text style={styles.yearlyBillingText}>{PLAN_COPY.yearly.subtitle}</Text>
-
-            <View style={[styles.yearlyTrialRow, !freeTrialEnabled ? styles.yearlyTrialRowMuted : null]}>
-              <View style={[styles.yearlyTrialCheck, !freeTrialEnabled ? styles.yearlyTrialCheckMuted : null]}>
-                <Check color="#052e16" size={14} strokeWidth={3} />
-              </View>
-              <Text style={[styles.yearlyTrialText, !freeTrialEnabled ? styles.yearlyTrialTextMuted : null]}>
-                {freeTrialEnabled ? PLAN_COPY.yearly.trial : PLAN_COPY.yearly.noTrial}
-              </Text>
-            </View>
-          </View>
-        ) : (
-          <View style={[styles.planContent, styles.weeklyContent]}>
-            <View style={styles.weeklyCopy}>
-              <Text style={styles.weeklyLabel}>{PLAN_COPY.weekly.title}</Text>
-              <Text style={styles.weeklySubtitle}>{PLAN_COPY.weekly.subtitle}</Text>
-            </View>
-            <Text style={styles.weeklyPrice}>{PLAN_COPY.weekly.price}</Text>
-          </View>
-        )}
-      </LuxPressable>
-    </MotiView>
-  );
-}
-
-function DwaraTimer({
-  onDismiss,
-}: {
-  onDismiss: () => void;
-}) {
-  const [canDismiss, setCanDismiss] = useState(false);
-  const countdownProgress = useSharedValue(0);
-  const revealProgress = useSharedValue(0);
-
-  useEffect(() => {
-    setCanDismiss(false);
-    countdownProgress.value = 0;
-    revealProgress.value = 0;
-    countdownProgress.value = withTiming(
-      1,
-      { duration: COUNTDOWN_MS, easing: Easing.linear },
-      (finished) => {
-        if (!finished) {
-          return;
-        }
-        runOnJS(setCanDismiss)(true);
-        revealProgress.value = withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) });
-      },
-    );
-  }, [countdownProgress, revealProgress]);
-
-  const ringAnimatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: TIMER_CIRCUMFERENCE * countdownProgress.value,
-  }));
-
-  const timerStyle = useAnimatedStyle(() => ({
-    opacity: 1 - revealProgress.value,
-    transform: [{ scale: 1 - revealProgress.value * 0.08 }],
-  }));
-
-  const closeStyle = useAnimatedStyle(() => ({
-    opacity: revealProgress.value,
-    transform: [{ scale: 0.92 + revealProgress.value * 0.08 }],
-  }));
-
-  return (
-    <View style={styles.timerShell}>
-      <Animated.View pointerEvents="none" style={[styles.timerLayer, timerStyle]}>
-        <Svg width={TIMER_SIZE} height={TIMER_SIZE} style={{ transform: [{ rotate: "-90deg" }] }}>
-          <Circle
-            cx={TIMER_SIZE / 2}
-            cy={TIMER_SIZE / 2}
-            r={TIMER_RADIUS}
-            stroke="rgba(255,255,255,0.08)"
-            strokeWidth={TIMER_STROKE}
-            fill="none"
-          />
-          <AnimatedCircle
-            animatedProps={ringAnimatedProps}
-            cx={TIMER_SIZE / 2}
-            cy={TIMER_SIZE / 2}
-            r={TIMER_RADIUS}
-            stroke="#d946ef"
-            strokeWidth={TIMER_STROKE}
-            strokeLinecap="round"
-            strokeDasharray={TIMER_CIRCUMFERENCE}
-            fill="none"
-          />
-        </Svg>
-        <View style={styles.timerCore} />
-      </Animated.View>
-
-      <Animated.View style={[styles.timerLayer, closeStyle]}>
-        <LuxPressable
-          onPress={onDismiss}
-          disabled={!canDismiss}
-          className={pointerClassName}
-          style={styles.closeButton}
-          glowColor="rgba(217,70,239,0.14)"
-          scale={0.96}
-        >
-          <X color="#f4f4f5" size={18} strokeWidth={2.2} />
-        </LuxPressable>
-      </Animated.View>
-    </View>
+        <View style={styles.toggleThumb} />
+      </MotiView>
+    </LuxPressable>
   );
 }
 
@@ -371,86 +115,40 @@ export default function PaywallScreen() {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
   const { showSuccess, showToast } = useProSuccess();
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
-  const carouselRef = useRef<FlatList<(typeof LOOPED_HERO_SLIDES)[number]> | null>(null);
-  const currentIndexRef = useRef<number>(LOOP_OFFSET);
 
-  const scrollX = useSharedValue(0);
-
-  const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("yearly");
+  const [activeImageIndex, setActiveImageIndex] = useState(1);
+  const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("weekly");
   const [freeTrialEnabled, setFreeTrialEnabled] = useState(true);
   const [packages, setPackages] = useState<RevenueCatPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [activeHeroSlide, setActiveHeroSlide] = useState(0);
 
-  const compactLevel = height < 680 ? 3 : height < 760 ? 2 : height < 840 ? 1 : 0;
-  const contentWidth = Math.min(width - 28, 428);
-  const heroWidth = compactLevel === 3 ? 100 : compactLevel === 2 ? 104 : compactLevel === 1 ? 112 : 118;
-  const heroHeight = compactLevel === 3 ? 140 : compactLevel === 2 ? 144 : compactLevel === 1 ? 152 : 160;
-  const heroSnapInterval = heroWidth + HERO_GAP;
-  const heroInset = Math.max((contentWidth - heroWidth) / 2, 0);
+  const displayedImages = useMemo(() => {
+    const total = PAYWALL_IMAGES.length;
+    return [
+      PAYWALL_IMAGES[wrapIndex(activeImageIndex - 1, total)],
+      PAYWALL_IMAGES[wrapIndex(activeImageIndex, total)],
+      PAYWALL_IMAGES[wrapIndex(activeImageIndex + 1, total)],
+    ];
+  }, [activeImageIndex]);
 
   const selectedPackage = useMemo(
     () => findRevenueCatPackage(packages, selectedDuration),
     [packages, selectedDuration],
   );
+
   const isCtaDisabled = isLoading || !selectedPackage;
-  const toggleLabel = freeTrialEnabled
-    ? "Free Trial: 7 days free, then billed"
-    : "No trial - subscribe immediately";
-
-  const onHeroScroll = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollX.value = event.contentOffset.x;
-    },
-  });
-
-  const normalizeHeroSlideIndex = useCallback((index: number) => {
-    const slideCount = HERO_SLIDES.length;
-    return ((index % slideCount) + slideCount) % slideCount;
-  }, []);
-
-  const syncCarouselToIndex = useCallback(
-    (index: number, animated: boolean) => {
-      const nextOffset = index * heroSnapInterval;
-      currentIndexRef.current = index;
-      scrollX.value = nextOffset;
-      setActiveHeroSlide(normalizeHeroSlideIndex(index));
-      carouselRef.current?.scrollToOffset({ offset: nextOffset, animated });
-    },
-    [heroSnapInterval, normalizeHeroSlideIndex, scrollX],
-  );
-
-  const normalizeLoopIndex = useCallback(
-    (index: number) => {
-      const slideCount = HERO_SLIDES.length;
-      if (index < slideCount || index >= slideCount * 2) {
-        const normalized = LOOP_OFFSET + (((index % slideCount) + slideCount) % slideCount);
-        requestAnimationFrame(() => {
-          syncCarouselToIndex(normalized, false);
-        });
-      }
-    },
-    [syncCarouselToIndex],
-  );
-
-  useEffect(() => {
-    requestAnimationFrame(() => {
-      syncCarouselToIndex(LOOP_OFFSET, false);
-    });
-  }, [syncCarouselToIndex]);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      syncCarouselToIndex(currentIndexRef.current + 1, true);
-    }, AUTO_SCROLL_MS);
+      setActiveImageIndex((current) => wrapIndex(current + 1, PAYWALL_IMAGES.length));
+    }, AUTO_ROTATE_MS);
 
     return () => clearInterval(timer);
-  }, [syncCarouselToIndex]);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -468,7 +166,10 @@ export default function PaywallScreen() {
         }
 
         const offerings = await purchasesRef.current.getOfferings();
-        if (!active) return;
+        if (!active) {
+          return;
+        }
+
         setPackages(offerings.current?.availablePackages ?? []);
       } catch {
         if (active) {
@@ -508,15 +209,28 @@ export default function PaywallScreen() {
     router.replace("/(tabs)");
   }, [router]);
 
-  const handleSelectDuration = useCallback((duration: BillingDuration) => {
-    triggerHaptic();
-    setSelectedDuration(duration);
+  const applyTrialState = useCallback((enabled: boolean) => {
+    setFreeTrialEnabled(enabled);
+    setSelectedDuration(enabled ? "weekly" : "yearly");
   }, []);
 
   const handleToggleTrial = useCallback(() => {
     triggerHaptic();
-    setFreeTrialEnabled((current) => !current);
-  }, []);
+    setErrorMessage(null);
+    applyTrialState(!freeTrialEnabled);
+  }, [applyTrialState, freeTrialEnabled]);
+
+  const handleSelectYearly = useCallback(() => {
+    triggerHaptic();
+    setErrorMessage(null);
+    applyTrialState(false);
+  }, [applyTrialState]);
+
+  const handleSelectWeekly = useCallback(() => {
+    triggerHaptic();
+    setErrorMessage(null);
+    applyTrialState(true);
+  }, [applyTrialState]);
 
   const handleRestore = useCallback(async () => {
     triggerHaptic();
@@ -545,7 +259,7 @@ export default function PaywallScreen() {
       }
 
       if (inferredPlan === "trial") {
-        showToast("Your 7-day Darkor.ai Pro trial is active.");
+        showToast("Your 7-day Darkor AI Pro trial is active.");
       } else {
         showSuccess();
       }
@@ -582,14 +296,14 @@ export default function PaywallScreen() {
         throw new Error("We could not confirm your subscription. Please try again.");
       }
 
-      const purchasedPlan: BillingPlan = inferPlanFromCustomerInfo(result.customerInfo);
+      const purchasedPlan = inferPlanFromCustomerInfo(result.customerInfo);
 
       if (isSignedIn) {
         await persistPurchasedPlan(purchasedPlan, selectedDuration, Date.now(), null);
       }
 
       if (freeTrialEnabled && purchasedPlan === "trial") {
-        showToast("Your 7-day Darkor.ai Pro trial is active.");
+        showToast("Your 7-day Darkor AI Pro trial is active.");
       } else {
         showSuccess();
       }
@@ -604,785 +318,457 @@ export default function PaywallScreen() {
       setIsLoading(false);
     }
   }, [
+    freeTrialEnabled,
     isSignedIn,
     persistPurchasedPlan,
     router,
-    freeTrialEnabled,
     selectedDuration,
     selectedPackage,
     showSuccess,
     showToast,
   ]);
 
-  const handleCarouselMomentumEnd = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const nextIndex = Math.round(event.nativeEvent.contentOffset.x / heroSnapInterval);
-      currentIndexRef.current = nextIndex;
-      setActiveHeroSlide(normalizeHeroSlideIndex(nextIndex));
-      normalizeLoopIndex(nextIndex);
-    },
-    [heroSnapInterval, normalizeHeroSlideIndex, normalizeLoopIndex],
-  );
-
-  const renderHeroItem = useCallback(
-    ({
-      item,
-      index,
-    }: {
-      item: (typeof LOOPED_HERO_SLIDES)[number];
-      index: number;
-    }) => (
-      <HeroSlide
-        image={item.image}
-        index={index}
-        width={heroWidth}
-        height={heroHeight}
-        snapInterval={heroSnapInterval}
-        scrollX={scrollX}
-      />
-    ),
-    [heroHeight, heroSnapInterval, heroWidth, scrollX],
-  );
-
   return (
     <View style={styles.screen}>
-      <LinearGradient
-        colors={["#09090b", "#09090b", "#050505"]}
-        locations={[0, 0.46, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
-      <LinearGradient
-        colors={["rgba(255,255,255,0.10)", "rgba(255,255,255,0.02)", "rgba(255,255,255,0)"]}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.8, y: 1 }}
-        style={styles.topGlow}
-        pointerEvents="none"
-      />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="never"
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: Math.max(insets.bottom + 28, 28) },
+        ]}
+      >
+        <View style={styles.heroViewport}>
+          <View style={styles.heroTrack}>
+            <MotiView
+              key={`left-${displayedImages[0].id}`}
+              from={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ type: "timing", duration: 200 }}
+              style={styles.sideImageWrap}
+            >
+              <Image source={displayedImages[0].source} style={styles.sideImage} contentFit="cover" />
+            </MotiView>
 
-      <View style={[styles.closeRow, { paddingTop: insets.top + 6 }]}>
-        <View style={styles.closeSpacer} />
-        <DwaraTimer onDismiss={handleClose} />
-      </View>
+            <MotiView
+              key={`center-${displayedImages[1].id}`}
+              from={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ type: "timing", duration: 200 }}
+              style={styles.centerImageWrap}
+            >
+              <Image source={displayedImages[1].source} style={styles.centerImage} contentFit="cover" />
+            </MotiView>
 
-      <View style={styles.layout}>
-        <ScrollView
-          contentInsetAdjustmentBehavior="never"
-          showsVerticalScrollIndicator={false}
-          style={styles.scrollView}
-          contentContainerStyle={[
-            styles.scrollContent,
-            {
-              paddingTop: insets.top + (compactLevel >= 2 ? 34 : 42),
-              paddingBottom: Math.max(insets.bottom + (compactLevel >= 2 ? 14 : 20), compactLevel >= 2 ? 20 : 28),
-              paddingHorizontal: 14,
-            },
-          ]}
-        >
-        <View style={[styles.mainStack, { width: contentWidth, gap: compactLevel >= 2 ? 10 : 12 }]}>
-          <View style={[styles.heroSection, { gap: compactLevel >= 2 ? 6 : 8 }]}>
-            <View style={styles.headerCopy}>
-              <Text style={styles.brandMark}>DARKOR.AI PRO</Text>
-              <View style={styles.positioningPill}>
-                <Text style={styles.positioningText}>{"\u{1F3C6} #1 AI Interior Design App"}</Text>
-              </View>
-              <Text style={[styles.title, compactLevel === 3 ? styles.titleCompact : null]}>
-                {"Transform any room with AI \u2014 photorealistic in seconds."}
+            <MotiView
+              key={`right-${displayedImages[2].id}`}
+              from={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ type: "timing", duration: 200 }}
+              style={styles.sideImageWrap}
+            >
+              <Image source={displayedImages[2].source} style={styles.sideImage} contentFit="cover" />
+            </MotiView>
+          </View>
+        </View>
+
+        <View style={styles.featureList}>
+          {FEATURE_ITEMS.map((item, index) => (
+            <View key={item} style={index === 0 ? null : styles.featureRowSpacing}>
+              <FeatureRow label={item} />
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.toggleBar}>
+          <AnimatePresence>
+            <MotiView
+              key={freeTrialEnabled ? "trial-on" : "trial-off"}
+              from={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ type: "timing", duration: 200 }}
+            >
+              <Text style={styles.toggleLabel}>
+                {freeTrialEnabled ? "Free trial enabled" : "Enable free trial"}
               </Text>
-            </View>
+            </MotiView>
+          </AnimatePresence>
+          <TrialToggle value={freeTrialEnabled} onPress={handleToggleTrial} />
+        </View>
 
-            <View style={styles.carouselShell}>
-              <Animated.FlatList
-                ref={carouselRef as any}
-                data={LOOPED_HERO_SLIDES}
-                keyExtractor={(item) => item.key}
-                renderItem={renderHeroItem}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                snapToInterval={heroSnapInterval}
-                snapToAlignment="start"
-                decelerationRate="fast"
-                bounces={false}
-                contentInsetAdjustmentBehavior="never"
-                scrollEventThrottle={16}
-                onScroll={onHeroScroll}
-                onMomentumScrollEnd={handleCarouselMomentumEnd}
-                contentContainerStyle={{ paddingHorizontal: heroInset }}
-                ItemSeparatorComponent={() => <View style={{ width: HERO_GAP }} />}
-                getItemLayout={(_, index) => ({
-                  index,
-                  length: heroSnapInterval,
-                  offset: heroSnapInterval * index,
-                })}
-                style={styles.carouselList}
-                removeClippedSubviews={false}
-              />
-            </View>
-
-            <View style={styles.carouselDots}>
-              {Array.from({ length: HERO_DOT_COUNT }).map((_, index) => {
-                const isActive = activeHeroSlide % HERO_DOT_COUNT === index;
-
-                return (
-                  <View
-                    key={`hero-dot-${index}`}
-                    style={[styles.carouselDot, isActive ? styles.carouselDotActive : null]}
-                  />
-                );
-              })}
-            </View>
-
-            <View style={styles.featureRow}>
-              <InlineFeature label={FEATURE_ITEMS[0]} />
-              <Text style={styles.featureDivider}>{"\u00B7"}</Text>
-              <InlineFeature label={FEATURE_ITEMS[1]} />
-              <Text style={styles.featureDivider}>{"\u00B7"}</Text>
-              <InlineFeature label={FEATURE_ITEMS[2]} />
-            </View>
+        <LuxPressable onPress={handleSelectYearly} style={[styles.planBar, !freeTrialEnabled ? styles.planBarSelected : styles.planBarIdle]} scale={0.99}>
+          <View style={styles.planCopyLeft}>
+            <Text style={styles.planTitle}>YEARLY ACCESS</Text>
+            <Text style={styles.planSubtitle}>Just MAD 484.99 per year</Text>
           </View>
 
-          <View style={[styles.pricingStack, { gap: compactLevel >= 2 ? 8 : 10 }]}>
-            <View style={styles.urgencyBanner}>
-              <Text style={styles.urgencyBannerText}>{"\u{1F525} Limited Offer \u2014 Free trial ends soon"}</Text>
-            </View>
-            <View style={styles.planStack}>
-              <PlanCard
-                duration="yearly"
-                active={selectedDuration === "yearly"}
-                freeTrialEnabled={freeTrialEnabled}
-                onPress={() => handleSelectDuration("yearly")}
-              />
-              <PlanCard
-                duration="weekly"
-                active={selectedDuration === "weekly"}
-                freeTrialEnabled={freeTrialEnabled}
-                onPress={() => handleSelectDuration("weekly")}
-              />
-            </View>
+          <View style={styles.planCopyRight}>
+            <Text style={styles.planPrice}>MAD9.33</Text>
+            <Text style={styles.planPriceCaption}>per week</Text>
           </View>
 
-          <View style={[styles.bottomDock, { width: contentWidth }]}>
-            <View style={styles.toggleRow}>
-              <MotiView
-                key={`trial-copy-${freeTrialEnabled ? "on" : "off"}`}
-                from={{ opacity: 0, translateY: 6 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={LUX_SPRING}
-                style={styles.toggleCopy}
-              >
-                <Text style={[styles.toggleLabel, freeTrialEnabled ? styles.toggleLabelOn : styles.toggleLabelOff]}>
-                  {toggleLabel}
-                </Text>
-              </MotiView>
-              <TrialSwitch value={freeTrialEnabled} onPress={handleToggleTrial} />
-            </View>
+          <View style={styles.bestOfferBadge}>
+            <Text style={styles.bestOfferText}>BEST OFFER</Text>
+          </View>
+        </LuxPressable>
 
-            {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-
-            <View style={styles.ctaPulseShell}>
-              {!isCtaDisabled ? (
-                <MotiView
-                  from={{ opacity: 0.3, scale: 0.98 }}
-                  animate={{ opacity: 0.58, scale: 1.03 }}
-                  transition={{ type: "timing", duration: 2000, loop: true, repeatReverse: true }}
-                  style={styles.ctaPulse}
-                />
-              ) : null}
-
-              <LuxPressable
-                onPress={handlePurchase}
-                disabled={isCtaDisabled}
-                className={pointerClassName}
-                style={[styles.ctaOuter, isCtaDisabled ? styles.ctaOuterDisabled : null]}
-                glowColor="rgba(124,58,237,0.22)"
-                scale={0.992}
-              >
-                <LinearGradient
-                  colors={isCtaDisabled ? ["#4b4b4f", "#323236"] : ["#7C3AED", "#EC4899"]}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  style={styles.ctaGradient}
-                >
-                  {isLoading ? (
-                    <View style={styles.loadingRow}>
-                      <ActivityIndicator color="#ffffff" />
-                      <Text style={styles.ctaText}>Processing...</Text>
-                    </View>
-                  ) : (
-                    <MotiView
-                      key={`cta-${freeTrialEnabled ? "trial" : "pro"}`}
-                      from={{ opacity: 0, translateY: 6 }}
-                      animate={{ opacity: 1, translateY: 0 }}
-                      transition={LUX_SPRING}
-                      style={styles.ctaContent}
-                    >
-                      {freeTrialEnabled ? (
-                        <>
-                          <Text style={styles.ctaText}>Start Free Trial</Text>
-                          <ArrowRight color="#ffffff" size={18} strokeWidth={2.5} />
-                          <Text style={styles.ctaAccentText}>7 Days Free</Text>
-                        </>
-                      ) : (
-                        <>
-                          <Text style={styles.ctaText}>Unlock Pro Access</Text>
-                          <ArrowRight color="#ffffff" size={18} strokeWidth={2.5} />
-                        </>
-                      )}
-                    </MotiView>
-                  )}
-                </LinearGradient>
-              </LuxPressable>
-            </View>
-
-            <Text style={styles.trustRow}>{"\u2713 Cancel anytime  \u00B7  \u2713 Secure payment  \u00B7  \u2713 Instant access"}</Text>
-
+        <AnimatePresence>
+          <MotiView
+            key={freeTrialEnabled ? "trial-card" : "weekly-card"}
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ type: "timing", duration: 200 }}
+          >
             <LuxPressable
-              onPress={handleRestore}
-              className={pointerClassName}
-              style={styles.restoreButton}
-              glowColor="rgba(255,255,255,0.04)"
+              onPress={handleSelectWeekly}
+              style={[
+                styles.planBar,
+                styles.secondaryPlanBar,
+                freeTrialEnabled ? styles.planBarSelected : styles.planBarIdle,
+                freeTrialEnabled ? styles.trialBarSelected : null,
+              ]}
               scale={0.99}
             >
-              <Text style={styles.restoreText}>Already subscribed? Restore purchase</Text>
-            </LuxPressable>
-          </View>
+              {freeTrialEnabled ? (
+                <>
+                  <View style={styles.planCopyLeft}>
+                    <Text style={styles.planTitle}>3-DAYS FREE TRIAL</Text>
+                  </View>
 
-        </View>
-        </ScrollView>
-        </View>
-      </View>
+                  <View style={styles.planCopyRight}>
+                    <Text style={styles.trialPrice}>then MAD 119.99</Text>
+                    <Text style={styles.planPriceCaption}>per week</Text>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <View style={styles.planCopyLeft}>
+                    <Text style={styles.planTitle}>WEEKLY ACCESS</Text>
+                  </View>
+
+                  <View style={styles.planCopyRight}>
+                    <Text style={styles.trialPrice}>MAD 119.99</Text>
+                    <Text style={styles.planPriceCaption}>per week</Text>
+                  </View>
+                </>
+              )}
+            </LuxPressable>
+          </MotiView>
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {freeTrialEnabled ? (
+            <MotiView
+              key="no-payment-now"
+              from={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ type: "timing", duration: 200 }}
+              style={styles.trustNoteTrial}
+            >
+              <ShieldCheck color={TEXT_SECONDARY} size={15} strokeWidth={2.2} />
+              <Text style={styles.trustNoteText}>No Payment Now</Text>
+            </MotiView>
+          ) : (
+            <MotiView
+              key="cancel-anytime"
+              from={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ type: "timing", duration: 200 }}
+              style={styles.trustNoteWeekly}
+            >
+              <ShieldCheck color={TEXT_SECONDARY} size={15} strokeWidth={2.2} />
+              <Text style={styles.trustNoteText}>Cancel Anytime</Text>
+            </MotiView>
+          )}
+        </AnimatePresence>
+
+        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+        <LuxPressable onPress={handlePurchase} disabled={isCtaDisabled} style={styles.ctaButton} scale={0.985}>
+          {isLoading ? (
+            <View style={styles.ctaContent}>
+              <ActivityIndicator color={TEXT_PRIMARY} />
+              <Text style={styles.ctaText}>Processing...</Text>
+            </View>
+          ) : (
+            <AnimatePresence>
+              <MotiView
+                key={freeTrialEnabled ? "cta-trial" : "cta-continue"}
+                from={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ type: "timing", duration: 200 }}
+                style={styles.ctaContent}
+              >
+                <Text style={styles.ctaText}>{freeTrialEnabled ? "Try for Free" : "Continue"}</Text>
+                <ArrowRight color={TEXT_PRIMARY} size={20} strokeWidth={2.5} />
+              </MotiView>
+            </AnimatePresence>
+          )}
+        </LuxPressable>
+      </ScrollView>
+
+      <LuxPressable onPress={handleRestore} style={styles.restoreButton} scale={0.98}>
+        <Text style={styles.restoreText}>Restore</Text>
+      </LuxPressable>
+
+      <LuxPressable onPress={handleClose} style={styles.closeButton} scale={0.96}>
+        <X color={TEXT_PRIMARY} size={16} strokeWidth={2.4} />
+      </LuxPressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#09090b",
-    cursor: "pointer",
-  },
-  topGlow: {
-    position: "absolute",
-    top: -60,
-    left: -24,
-    right: -24,
-    height: 280,
-    borderRadius: 280,
-  },
-  closeRow: {
-    position: "absolute",
-    top: 0,
-    left: 16,
-    right: 16,
-    zIndex: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  closeSpacer: {
-    width: 44,
-    height: 44,
-  },
-  timerShell: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  timerLayer: {
-    position: "absolute",
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "rgba(24,24,27,0.94)",
-    cursor: "pointer",
-  },
-  timerCore: {
-    position: "absolute",
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: "#d946ef",
-  },
-  layout: {
-    flex: 1,
-    cursor: "pointer",
+    backgroundColor: SCREEN_BG,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    alignItems: "center",
+    paddingTop: 0,
   },
-  mainStack: {
+  heroViewport: {
     width: "100%",
-    alignItems: "center",
-    gap: 18,
-    cursor: "pointer",
-  },
-  heroSection: {
-    width: "100%",
-    alignItems: "center",
-    cursor: "pointer",
-  },
-  headerCopy: {
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 6,
-    paddingBottom: 4,
-    cursor: "pointer",
-  },
-  brandMark: {
-    color: "#f4f4f5",
-    fontSize: 12,
-    lineHeight: 14,
-    fontWeight: "900",
-    fontFamily: DISPLAY_FONT_FAMILY,
-    letterSpacing: 2.2,
-    textTransform: "uppercase",
-    marginTop: -2,
-  },
-  positioningPill: {
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    backgroundColor: "rgba(24,24,27,0.94)",
-    borderWidth: 1,
-    borderColor: "#92400E",
-    borderCurve: "continuous",
-  },
-  positioningText: {
-    color: "#F4F4F5",
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: "900",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -0.1,
-    textAlign: "center",
-  },
-  title: {
-    color: "#fafafa",
-    fontSize: 24,
-    lineHeight: 27,
-    fontWeight: "800",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -0.55,
-    textAlign: "center",
-    maxWidth: 380,
-  },
-  titleCompact: {
-    fontSize: 22,
-    lineHeight: 26,
-  },
-  carouselShell: {
-    width: "100%",
-    alignItems: "center",
-    overflow: "visible",
-    cursor: "pointer",
-  },
-  carouselList: {
-    width: "100%",
-    overflow: "visible",
-    cursor: "pointer",
-  },
-  carouselDots: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-  },
-  carouselDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.3)",
-  },
-  carouselDotActive: {
-    backgroundColor: "#FFFFFF",
-  },
-  heroSlideWrap: {
-    overflow: "visible",
-    cursor: "pointer",
-  },
-  heroSlideCard: {
-    flex: 1,
     overflow: "hidden",
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "#18181b",
-    boxShadow: "0 14px 28px rgba(0, 0, 0, 0.24)",
-    cursor: "pointer",
+    marginBottom: 36,
+  },
+  heroTrack: {
+    width: HERO_TRACK_WIDTH,
+    flexDirection: "row",
+    alignSelf: "center",
+    gap: IMAGE_GAP,
+  },
+  sideImageWrap: {
+    marginTop: 92,
+  },
+  centerImageWrap: {
+    marginTop: 64,
+  },
+  sideImage: {
+    width: SIDE_IMAGE_WIDTH,
+    height: SIDE_IMAGE_HEIGHT,
+    borderRadius: 16,
+    backgroundColor: SURFACE,
+  },
+  centerImage: {
+    width: CENTER_IMAGE_SIZE,
+    height: CENTER_IMAGE_SIZE,
+    borderRadius: 20,
+    backgroundColor: SURFACE,
+  },
+  featureList: {
+    marginHorizontal: 82,
+    marginBottom: 36,
   },
   featureRow: {
-    width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
   },
-  featureDivider: {
-    color: "rgba(255,255,255,0.42)",
-    fontSize: 12,
-    lineHeight: 14,
-    fontWeight: "700",
-    fontFamily: PREMIUM_FONT_FAMILY,
+  featureRowSpacing: {
+    marginTop: 24,
   },
-  inlineFeatureItem: {
-    flexDirection: "row",
+  featureCheck: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    backgroundColor: CHECK_BACKGROUND,
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
-    flexShrink: 1,
+    marginRight: 12,
   },
-  inlineFeatureCheck: {
-    color: "#D1FAE5",
-    fontSize: 12,
-    lineHeight: 13,
-    fontWeight: "900",
-    fontFamily: PREMIUM_FONT_FAMILY,
+  featureText: {
+    color: TEXT_PRIMARY,
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: fonts.medium.fontFamily,
+    fontWeight: fonts.medium.fontWeight,
   },
-  inlineFeatureText: {
-    flexShrink: 1,
-    color: "rgba(244,244,245,0.82)",
-    fontSize: 12,
-    lineHeight: 13,
-    fontWeight: "600",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -0.1,
-    textAlign: "center",
-  },
-  pricingStack: {
-    width: "100%",
-    cursor: "pointer",
-  },
-  urgencyBanner: {
-    width: "100%",
-    borderRadius: 14,
-    backgroundColor: "#92400E",
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    alignItems: "center",
-    justifyContent: "center",
-    borderCurve: "continuous",
-  },
-  urgencyBannerText: {
-    color: "#FFFFFF",
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: "900",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    textAlign: "center",
-  },
-  planStack: {
-    width: "100%",
-    gap: 8,
-    cursor: "pointer",
-  },
-  planCardMotion: {
-    width: "100%",
-  },
-  planCard: {
-    width: "100%",
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+  toggleBar: {
+    height: 56,
+    marginHorizontal: 16,
+    marginBottom: 20,
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    cursor: "pointer",
-    borderCurve: "continuous",
-    boxShadow: "0 18px 42px rgba(0, 0, 0, 0.22)",
-    position: "relative",
-  },
-  planCardYearly: {
-    minHeight: 148,
-    backgroundColor: "#4C1D95",
-  },
-  planCardWeekly: {
-    minHeight: 76,
-    backgroundColor: "#1A1A2E",
-    borderColor: "#3D3D5C",
-    paddingVertical: 14,
-  },
-  planCardSelected: {
-    borderWidth: 2,
-    borderColor: "#A855F7",
-  },
-  planCardGlow: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  planSelectedCheck: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    width: 24,
-    height: 24,
-    borderRadius: 999,
-    backgroundColor: "#A855F7",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 2,
-    boxShadow: "0 6px 14px rgba(76, 29, 149, 0.32)",
-  },
-  planContent: {
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    zIndex: 1,
-  },
-  yearlyBadgeRow: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-  },
-  yearlySavingsBadge: {
-    borderRadius: 999,
-    backgroundColor: "#22C55E",
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderCurve: "continuous",
-  },
-  yearlySavingsBadgeText: {
-    color: "#052E16",
-    fontSize: 12,
-    lineHeight: 15,
-    fontWeight: "900",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: 0.2,
-    textAlign: "center",
-  },
-  yearlyValueBadge: {
-    borderRadius: 999,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderCurve: "continuous",
-  },
-  yearlyValueBadgeText: {
-    color: "#4C1D95",
-    fontSize: 12,
-    lineHeight: 15,
-    fontWeight: "900",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: 0.35,
-    textAlign: "center",
-  },
-  yearlyPriceRow: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  yearlyPrice: {
-    color: "#ffffff",
-    fontSize: 38,
-    lineHeight: 40,
-    fontWeight: "900",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -1.15,
-  },
-  yearlyPriceSuffix: {
-    color: "rgba(255,255,255,0.78)",
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: "700",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    marginTop: 8,
-  },
-  yearlyBillingText: {
-    color: "rgba(255,255,255,0.7)",
-    fontSize: 12,
-    lineHeight: 14,
-    fontWeight: "700",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    textAlign: "center",
-  },
-  yearlyTrialRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    borderRadius: 999,
-    backgroundColor: "rgba(5,46,22,0.22)",
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderWidth: 1,
-    borderColor: "rgba(34,197,94,0.34)",
-    borderCurve: "continuous",
-  },
-  yearlyTrialCheck: {
-    width: 18,
-    height: 18,
-    borderRadius: 999,
-    backgroundColor: "#22C55E",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  yearlyTrialText: {
-    color: "#ECFDF5",
-    fontSize: 12,
-    lineHeight: 15,
-    fontWeight: "800",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    textAlign: "center",
-  },
-  yearlyTrialRowMuted: {
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderColor: "rgba(255,255,255,0.14)",
-  },
-  yearlyTrialCheckMuted: {
-    backgroundColor: "rgba(255,255,255,0.78)",
-  },
-  yearlyTrialTextMuted: {
-    color: "rgba(255,255,255,0.9)",
-  },
-  weeklyContent: {
+    borderRadius: 14,
+    backgroundColor: SURFACE,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  weeklyCopy: {
-    flex: 1,
-    gap: 1,
-    paddingRight: 12,
-  },
-  weeklyLabel: {
-    color: "rgba(255,255,255,0.8)",
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: "700",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    textAlign: "left",
-  },
-  weeklyPrice: {
-    color: "#ffffff",
-    fontSize: 28,
-    lineHeight: 30,
-    fontWeight: "900",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -0.9,
-    textAlign: "right",
-  },
-  weeklySubtitle: {
-    color: "#9CA3AF",
-    fontSize: 12,
-    lineHeight: 15,
-    fontWeight: "600",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    textAlign: "left",
-  },
-  toggleRow: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "rgba(17,17,27,0.96)",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderCurve: "continuous",
-  },
-  toggleCopy: {
-    flex: 1,
   },
   toggleLabel: {
-    fontSize: 12,
-    lineHeight: 15,
-    fontWeight: "700",
-    fontFamily: PREMIUM_FONT_FAMILY,
+    color: TEXT_PRIMARY,
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: fonts.medium.fontFamily,
+    fontWeight: fonts.medium.fontWeight,
   },
-  toggleLabelOn: {
-    color: "#86EFAC",
-  },
-  toggleLabelOff: {
-    color: "#9CA3AF",
-  },
-  toggleTrack: {
+  toggleSwitch: {
     width: 52,
-    height: 30,
-    borderRadius: 999,
+    height: 32,
+    borderRadius: 16,
+    paddingHorizontal: 2,
     justifyContent: "center",
-    padding: 4,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "#312E81",
-    boxShadow: "0 8px 20px rgba(0, 0, 0, 0.22)",
   },
-  toggleTrackActive: {
-    backgroundColor: "#7C3AED",
-    borderColor: "rgba(216,180,254,0.46)",
+  toggleSwitchOn: {
+    backgroundColor: CTA_RED,
+  },
+  toggleSwitchOff: {
+    backgroundColor: TOGGLE_OFF,
+  },
+  toggleThumbWrap: {
+    width: 28,
+    height: 28,
+    justifyContent: "center",
   },
   toggleThumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 999,
-    backgroundColor: "#E5E7EB",
-    boxShadow: "0 5px 14px rgba(0, 0, 0, 0.22)",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: TEXT_PRIMARY,
   },
-  toggleThumbActive: {
-    backgroundColor: "#ffffff",
-  },
-  errorText: {
-    color: "#fca5a5",
-    fontSize: 10,
-    lineHeight: 13,
-    fontFamily: PREMIUM_FONT_FAMILY,
-    textAlign: "center",
-  },
-  bottomDock: {
-    width: "100%",
-    gap: 6,
+  planBar: {
+    height: 72,
+    marginHorizontal: 16,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    backgroundColor: SURFACE,
+    borderWidth: 1,
+    borderColor: BORDER,
+    flexDirection: "row",
     alignItems: "center",
-    cursor: "pointer",
-    alignSelf: "center",
-    paddingTop: 6,
-  },
-  ctaPulseShell: {
-    width: "100%",
+    justifyContent: "space-between",
     position: "relative",
   },
-  ctaPulse: {
+  planBarIdle: {
+    borderWidth: 1,
+    borderColor: BORDER,
+  },
+  planBarSelected: {
+    borderWidth: 2,
+    borderColor: CTA_RED,
+  },
+  secondaryPlanBar: {
+    marginTop: 12,
+  },
+  trialBarSelected: {
+    backgroundColor: SURFACE_ACCENT,
+  },
+  planCopyLeft: {
+    flexShrink: 1,
+    paddingRight: 12,
+  },
+  planCopyRight: {
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
+  planTitle: {
+    color: TEXT_PRIMARY,
+    fontSize: 12,
+    lineHeight: 16,
+    textTransform: "uppercase",
+    fontFamily: fonts.bold.fontFamily,
+    fontWeight: fonts.bold.fontWeight,
+  },
+  planSubtitle: {
+    marginTop: 4,
+    color: TEXT_SECONDARY,
+    fontSize: 12,
+    lineHeight: 16,
+    fontFamily: fonts.regular.fontFamily,
+    fontWeight: fonts.regular.fontWeight,
+  },
+  planPrice: {
+    color: TEXT_PRIMARY,
+    fontSize: 20,
+    lineHeight: 24,
+    fontFamily: fonts.bold.fontFamily,
+    fontWeight: fonts.bold.fontWeight,
+  },
+  trialPrice: {
+    color: TEXT_PRIMARY,
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: fonts.bold.fontFamily,
+    fontWeight: fonts.bold.fontWeight,
+  },
+  planPriceCaption: {
+    marginTop: 2,
+    color: TEXT_SECONDARY,
+    fontSize: 12,
+    lineHeight: 16,
+    fontFamily: fonts.regular.fontFamily,
+    fontWeight: fonts.regular.fontWeight,
+  },
+  bestOfferBadge: {
     position: "absolute",
-    top: 3,
-    right: -4,
-    bottom: 3,
-    left: -4,
+    top: -10,
+    right: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 20,
-    backgroundColor: "rgba(168,85,247,0.28)",
+    backgroundColor: CTA_RED,
   },
-  ctaOuter: {
-    width: "100%",
-    borderRadius: 16,
-    cursor: "pointer",
+  bestOfferText: {
+    color: TEXT_PRIMARY,
+    fontSize: 11,
+    lineHeight: 13,
+    textTransform: "uppercase",
+    fontFamily: fonts.bold.fontFamily,
+    fontWeight: fonts.bold.fontWeight,
   },
-  ctaOuterDisabled: {
-    opacity: 0.72,
-  },
-  ctaGradient: {
-    minHeight: 48,
-    borderRadius: 16,
+  trustNoteTrial: {
+    marginTop: 16,
+    marginLeft: 136,
+    marginRight: 132,
+    marginBottom: 42,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 18,
-    cursor: "pointer",
+  },
+  trustNoteWeekly: {
+    marginTop: 16,
+    marginBottom: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  trustNoteText: {
+    marginLeft: 6,
+    color: TEXT_SECONDARY,
+    fontSize: 13,
+    lineHeight: 18,
+    fontFamily: fonts.medium.fontFamily,
+    fontWeight: fonts.medium.fontWeight,
+  },
+  errorText: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    color: CTA_RED,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
+    fontFamily: fonts.medium.fontFamily,
+    fontWeight: fonts.medium.fontWeight,
+  },
+  ctaButton: {
+    height: 58,
+    marginHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: CTA_RED,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: CTA_RED,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
   },
   ctaContent: {
     flexDirection: "row",
@@ -1391,48 +777,35 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   ctaText: {
-    color: "#ffffff",
-    fontSize: 15,
-    lineHeight: 19,
-    fontWeight: "900",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -0.25,
-  },
-  ctaAccentText: {
-    color: "#FCE7F3",
-    fontSize: 14,
-    lineHeight: 17,
-    fontWeight: "800",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    letterSpacing: -0.2,
-  },
-  loadingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-  },
-  trustRow: {
-    color: "#9CA3AF",
-    fontSize: 10,
-    lineHeight: 12,
-    fontWeight: "600",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    textAlign: "center",
-    width: "100%",
+    color: TEXT_PRIMARY,
+    fontSize: 17,
+    lineHeight: 22,
+    fontFamily: fonts.bold.fontFamily,
+    fontWeight: fonts.bold.fontWeight,
   },
   restoreButton: {
-    alignSelf: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    cursor: "pointer",
+    position: "absolute",
+    top: 40,
+    left: 20,
+    zIndex: 2,
   },
   restoreText: {
-    color: "#71717A",
-    fontSize: 10,
-    lineHeight: 12,
-    fontWeight: "600",
-    fontFamily: PREMIUM_FONT_FAMILY,
-    textAlign: "center",
+    color: TEXT_RESTORE,
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: fonts.medium.fontFamily,
+    fontWeight: fonts.medium.fontWeight,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 28,
+    right: 24,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: CLOSE_BG,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
   },
 });

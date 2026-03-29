@@ -1,9 +1,11 @@
 import { BlurView } from "expo-blur";
-import { LinearGradient } from "expo-linear-gradient";
 import { AnimatePresence, MotiView } from "moti";
 import { Gem, X } from "lucide-react-native";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { spacing } from "../styles/spacing";
+import { createButtonStyles } from "@/styles/buttons";
+import { type Theme, useTheme } from "@/styles/theme";
 
 import { LuxPressable } from "./lux-pressable";
 import { DS, HAIRLINE, glowShadow, surfaceCard } from "../lib/design-system";
@@ -21,6 +23,8 @@ export const CreditLimitModal = memo(function CreditLimitModal({
   onClose,
   onUpgrade,
 }: CreditLimitModalProps) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const handleClose = useCallback(() => {
     triggerHaptic();
     onClose();
@@ -59,10 +63,10 @@ export const CreditLimitModal = memo(function CreditLimitModal({
                   pressableClassName="cursor-pointer"
                   className="cursor-pointer"
                   style={styles.closeButton}
-                  glowColor="rgba(255,255,255,0.08)"
+                  glowColor={colors.surfaceHigh}
                   scale={0.94}
                 >
-                  <X color="#f4f4f5" size={16} strokeWidth={2.3} />
+                  <X color={colors.textPrimary} size={16} strokeWidth={2.3} />
                 </LuxPressable>
 
                 <MotiView
@@ -71,14 +75,9 @@ export const CreditLimitModal = memo(function CreditLimitModal({
                   transition={{ type: "timing", duration: 1100, loop: true }}
                   style={styles.iconShell}
                 >
-                  <LinearGradient
-                    colors={["rgba(245,208,254,0.98)", "rgba(217,70,239,0.92)", "rgba(79,70,229,0.9)"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.iconGradient}
-                  >
-                    <Gem color="#100314" size={34} strokeWidth={2.2} />
-                  </LinearGradient>
+                  <View style={styles.iconGradient}>
+                    <Gem color={colors.textPrimary} size={34} strokeWidth={2.2} />
+                  </View>
                 </MotiView>
 
                 <Text style={styles.title}>Daily Credit Limit</Text>
@@ -92,17 +91,12 @@ export const CreditLimitModal = memo(function CreditLimitModal({
                   pressableClassName="cursor-pointer"
                   className="cursor-pointer"
                   style={styles.ctaOuter}
-                  glowColor="rgba(217,70,239,0.24)"
+                  glowColor={colors.brand}
                   scale={0.988}
                 >
-                  <LinearGradient
-                    colors={["#f5d0fe", "#d946ef", "#4f46e5"]}
-                    start={{ x: 0, y: 0.5 }}
-                    end={{ x: 1, y: 0.5 }}
-                    style={styles.ctaGradient}
-                  >
+                  <View style={styles.ctaGradient}>
                     <Text style={styles.ctaText}>Upgrade to Pro</Text>
-                  </LinearGradient>
+                  </View>
                 </LuxPressable>
               </View>
             </MotiView>
@@ -113,13 +107,16 @@ export const CreditLimitModal = memo(function CreditLimitModal({
   );
 });
 
-const styles = StyleSheet.create({
+function createStyles(colors: Theme) {
+  const buttonStyles = createButtonStyles(colors);
+
+  return StyleSheet.create({
   screen: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.48)",
-    paddingHorizontal: 22,
+    backgroundColor: colors.surfaceOverlay,
+    paddingHorizontal: spacing.lg,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -129,8 +126,8 @@ const styles = StyleSheet.create({
     maxWidth: 420,
   },
   card: {
-    ...surfaceCard("rgba(13,14,18,0.94)"),
-    ...glowShadow("rgba(0,0,0,0.42)", 32),
+    ...surfaceCard(colors.surfaceHigh),
+    ...glowShadow(colors.shadow, 32),
     overflow: "hidden",
     borderRadius: DS.radius.xxl,
     paddingHorizontal: DS.spacing[3],
@@ -157,25 +154,30 @@ const styles = StyleSheet.create({
     marginTop: DS.spacing[1],
     marginBottom: DS.spacing[2],
     borderRadius: 999,
-    boxShadow: "0px 0px 32px rgba(168,85,247,0.12)",
+    shadowColor: colors.brand,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 6,
   },
   iconGradient: {
     width: 92,
     height: 92,
     borderRadius: 999,
+    backgroundColor: colors.brand,
     alignItems: "center",
     justifyContent: "center",
   },
   title: {
     color: DS.colors.textPrimary,
     ...DS.typography.title,
-    textAlign: "center",
+    textAlign: "left",
   },
   description: {
     marginTop: DS.spacing[1],
     color: DS.colors.textSecondary,
     ...DS.typography.body,
-    textAlign: "center",
+    textAlign: "left",
   },
   ctaOuter: {
     width: "100%",
@@ -184,14 +186,12 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   ctaGradient: {
-    minHeight: 56,
-    alignItems: "center",
-    justifyContent: "center",
+    ...buttonStyles.primary,
     paddingHorizontal: DS.spacing[3],
-    borderRadius: DS.radius.md,
   },
   ctaText: {
     color: DS.colors.textPrimary,
     ...DS.typography.button,
   },
-});
+  });
+}

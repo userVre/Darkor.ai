@@ -48,6 +48,15 @@
       "expo-router",
       "expo-secure-store",
       [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/Fonts/InterVariable.ttf",
+            "./assets/Fonts/InterVariable-Italic.ttf"
+          ]
+        }
+      ],
+      [
         "expo-camera",
         {
           "cameraPermission": "Allow Darkor.ai to access your camera to take room photos?",

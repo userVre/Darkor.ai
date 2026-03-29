@@ -1,6 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
+import { spacing } from "../styles/spacing";
 import {
   createContext,
   useCallback,
@@ -15,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, Sparkles } from "lucide-react-native";
 
 import { LUX_SPRING } from "../lib/motion";
+import { fonts } from "../styles/typography";
 import { LuxPressable } from "./lux-pressable";
 
 type ProSuccessContextValue = {
@@ -57,12 +59,12 @@ function ProSuccessOverlay({
             colors={["#d946ef", "#6366f1"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ borderRadius: 32, padding: 2 }}
+            style={{ borderRadius: 32, padding: spacing.xs }}
           >
             <View className="rounded-[30px] border border-white/10 bg-black px-6 py-8" style={{ borderWidth: 0.5 }}>
               <View className="flex-row items-center gap-2">
                 <Sparkles color="#f5f3ff" size={20} />
-                <Text className="text-xl font-medium text-white">Welcome to Darkor Pro! {"\u2728"}</Text>
+                <Text className="text-xl font-medium text-white" style={fonts.medium}>Welcome to Darkor Pro! {"\u2728"}</Text>
               </View>
               <Text className="mt-3 text-sm text-zinc-400">You're fully powered up. Here's what's unlocked:</Text>
 
@@ -76,7 +78,7 @@ function ProSuccessOverlay({
                     <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
                       <Check color="#f8fafc" size={16} />
                     </View>
-                    <Text className="text-sm font-semibold text-zinc-100">{item}</Text>
+                    <Text className="text-sm font-semibold text-zinc-100" style={fonts.semibold}>{item}</Text>
                   </View>
                 ))}
               </View>
@@ -86,9 +88,9 @@ function ProSuccessOverlay({
                   colors={["#f43f5e", "#d946ef"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={{ paddingVertical: 14, alignItems: "center", borderRadius: 18 }}
+                  style={{ paddingVertical: spacing.md, alignItems: "center", borderRadius: 18 }}
                 >
-                  <Text className="text-sm font-semibold text-white">Start Designing</Text>
+                  <Text className="text-sm font-semibold text-white" style={fonts.semibold}>Start Designing</Text>
                 </LinearGradient>
               </LuxPressable>
             </View>
@@ -187,7 +189,7 @@ function ProToast({
       pointerEvents="none"
     >
       <View className="rounded-2xl border border-white/10 bg-black/80 px-4 py-3" style={{ borderWidth: 0.5 }}>
-        <Text className="text-center text-sm font-semibold text-white">{message}</Text>
+        <Text className="text-center text-sm font-semibold text-white" style={fonts.semibold}>{message}</Text>
       </View>
     </MotiView>
   );
@@ -255,4 +257,3 @@ export function useProSuccess() {
   }
   return context;
 }
-

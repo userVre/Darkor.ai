@@ -1,6 +1,5 @@
 import { useAuth, useUser } from "@clerk/expo";
 import { useMutation, useQuery } from "convex/react";
-import { LinearGradient } from "expo-linear-gradient";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -8,6 +7,10 @@ import { useMemo } from "react";
 import { Alert, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { ChevronRight, FileQuestion, LayoutDashboard, Mail, Shield, Sparkles, Star, Trash2, Share2 } from "lucide-react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { fonts } from "../../styles/typography";
+import { spacing } from "../../styles/spacing";
+import { dark as colors } from "@/styles/theme";
+import { buttonStyles } from "../../styles/buttons";
 
 import { LuxPressable } from "../../components/lux-pressable";
 import { useViewerSession } from "../../components/viewer-session-context";
@@ -50,15 +53,15 @@ function SettingsRow({ icon: Icon, label, onPress, tone = "default" }: Omit<Sett
       pressableClassName={POINTER_CLASS}
       className="overflow-hidden rounded-[24px]"
       style={[styles.row, isDanger ? styles.rowDanger : null]}
-      glowColor={isDanger ? "rgba(248,113,113,0.16)" : "rgba(255,255,255,0.08)"}
+      glowColor={isDanger ? colors.error : colors.surfaceHigh}
       scale={0.96}
     >
       <View style={styles.rowInner}>
         <View style={[styles.rowIconWrap, isDanger ? styles.rowIconWrapDanger : null]}>
-          <Icon color={isDanger ? "#f87171" : "#ffffff"} size={19} strokeWidth={2.2} />
+          <Icon color={isDanger ? colors.error : colors.textPrimary} size={19} strokeWidth={2.2} />
         </View>
         <Text style={[styles.rowLabel, isDanger ? styles.rowLabelDanger : null]}>{label}</Text>
-        <ChevronRight color={isDanger ? "#f87171" : "#71717a"} size={18} strokeWidth={2.3} />
+        <ChevronRight color={isDanger ? colors.error : colors.textMuted} size={18} strokeWidth={2.3} />
       </View>
     </LuxPressable>
   );
@@ -186,17 +189,11 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.accountCard}>
-          <LinearGradient
-            colors={["rgba(255,255,255,0.12)", "rgba(255,255,255,0.04)", "rgba(255,255,255,0.01)"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
-            pointerEvents="none"
-          />
+          <View pointerEvents="none" style={StyleSheet.absoluteFillObject} />
 
           <View style={styles.accountTopRow}>
             <View style={styles.accountIconWrap}>
-              <Sparkles color="#ffffff" size={20} strokeWidth={2.2} />
+              <Sparkles color={colors.textPrimary} size={20} strokeWidth={2.2} />
             </View>
             <View style={styles.accountCopy}>
               <Text style={styles.accountEyebrow}>Account</Text>
@@ -210,12 +207,7 @@ export default function ProfileScreen() {
           {!hasPaidAccess ? (
             <View style={styles.progressBlock}>
               <View style={styles.progressTrack}>
-                <LinearGradient
-                  colors={["#d946ef", "#4f46e5"]}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  style={[styles.progressFill, { width: `${Math.max(usageProgress * 100, rendersUsed > 0 ? 10 : 0)}%` }]}
-                />
+                <View style={[styles.progressFill, { width: `${Math.max(usageProgress * 100, rendersUsed > 0 ? 10 : 0)}%` }]} />
               </View>
               <Text style={styles.progressLabel}>{`${rendersUsed}/${renderLimit} used`}</Text>
             </View>
@@ -226,17 +218,12 @@ export default function ProfileScreen() {
             pressableClassName={POINTER_CLASS}
             className="overflow-hidden rounded-[20px]"
             style={styles.accountButtonShadow}
-            glowColor="rgba(217,70,239,0.34)"
+            glowColor={colors.brand}
             scale={0.985}
           >
-            <LinearGradient
-              colors={["#d946ef", "#4f46e5"]}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              style={styles.accountButton}
-            >
+            <View style={styles.accountButton}>
               <Text style={styles.accountButtonText}>{accountButtonLabel}</Text>
-            </LinearGradient>
+            </View>
           </LuxPressable>
         </View>
 
@@ -260,8 +247,8 @@ const styles = StyleSheet.create({
     backgroundColor: SCREEN_BG,
   },
   header: {
-    marginBottom: DS.spacing[4],
-    gap: DS.spacing[1],
+    marginBottom: spacing.xl,
+    gap: spacing.sm,
   },
   title: {
     color: DS.colors.textPrimary,
@@ -275,15 +262,15 @@ const styles = StyleSheet.create({
     position: "relative",
     overflow: "hidden",
     ...surfaceCard(CARD_BG),
-    ...glowShadow("rgba(0,0,0,0.34)", 22),
-    padding: DS.spacing[3],
-    marginBottom: DS.spacing[3],
-    gap: DS.spacing[2.5],
+    ...glowShadow(colors.shadow, 22),
+    padding: spacing.md,
+    marginBottom: spacing.xl,
+    gap: spacing.lg,
   },
   accountTopRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: spacing.md,
   },
   accountIconWrap: {
     width: 56,
@@ -291,13 +278,13 @@ const styles = StyleSheet.create({
     borderRadius: DS.radius.md,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: colors.surfaceHigh,
     borderWidth: HAIRLINE,
     borderColor: DS.colors.borderSubtle,
   },
   accountCopy: {
     flex: 1,
-    gap: 2,
+    gap: spacing.xs,
   },
   accountEyebrow: {
     color: DS.colors.textTertiary,
@@ -316,24 +303,26 @@ const styles = StyleSheet.create({
     ...DS.typography.body,
   },
   progressBlock: {
-    gap: 8,
+    gap: spacing.sm,
   },
   progressTrack: {
     width: "100%",
     height: 10,
     borderRadius: 999,
     overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: colors.border,
     borderWidth: HAIRLINE,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: colors.border,
   },
   progressFill: {
     height: "100%",
     borderRadius: 999,
+    backgroundColor: colors.brand,
   },
   progressLabel: {
-    color: "#d4d4d8",
+    color: colors.textSecondary,
     fontSize: 12,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
     letterSpacing: 0.2,
   },
@@ -342,22 +331,21 @@ const styles = StyleSheet.create({
     borderRadius: DS.radius.lg,
   },
   accountButton: {
-    minHeight: 60,
+    ...buttonStyles.primary,
     width: "100%",
+    height: 56,
     paddingHorizontal: DS.spacing[3],
     borderRadius: DS.radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    ...glowShadow("rgba(217,70,239,0.26)", 26),
   },
   accountButtonText: {
-    color: "#ffffff",
+    color: colors.textPrimary,
     ...DS.typography.button,
     fontSize: 17,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
   },
   list: {
-    gap: DS.spacing[2],
+    gap: spacing.sm,
   },
   row: {
     backgroundColor: SURFACE_BG,
@@ -365,8 +353,8 @@ const styles = StyleSheet.create({
     borderColor: BORDER_COLOR,
   },
   rowDanger: {
-    borderColor: "rgba(248,113,113,0.16)",
-    backgroundColor: "rgba(28,10,12,0.92)",
+    borderColor: colors.error,
+    backgroundColor: colors.errorSurface,
   },
   rowInner: {
     minHeight: 80,
@@ -381,10 +369,10 @@ const styles = StyleSheet.create({
     borderRadius: DS.radius.sm,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: colors.surfaceHigh,
   },
   rowIconWrapDanger: {
-    backgroundColor: "rgba(248,113,113,0.12)",
+    backgroundColor: colors.errorSurfaceHigh,
   },
   rowLabel: {
     flex: 1,
@@ -392,6 +380,8 @@ const styles = StyleSheet.create({
     ...DS.typography.button,
   },
   rowLabelDanger: {
-    color: "#fca5a5",
+    color: colors.textError,
   },
 });
+
+

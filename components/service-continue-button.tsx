@@ -1,12 +1,14 @@
 import { AnimatePresence, MotiView } from "moti";
-import { LinearGradient } from "expo-linear-gradient";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useMemo } from "react";
+import { fonts } from "../styles/typography";
+import { spacing } from "../styles/spacing";
+import { createButtonStyles } from "@/styles/buttons";
+import { type Theme, useTheme } from "@/styles/theme";
 
 import { LuxPressable } from "./lux-pressable";
 
 const pointerClassName = "cursor-pointer";
-const CONTINUE_PURPLE = "#7C3AED";
-const CONTINUE_PURPLE_DARK = "#6D28D9";
 
 type ServiceContinueButtonProps = {
   active?: boolean;
@@ -33,6 +35,8 @@ export function ServiceContinueButton({
   attention = false,
   visible = true,
 }: ServiceContinueButtonProps) {
+  const colors = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const isBlocked = loading || !active;
 
   return (
@@ -79,24 +83,19 @@ export function ServiceContinueButton({
               className={pointerClassName}
               pressableClassName={pointerClassName}
               style={styles.pressable}
-              glowColor={isBlocked || !active ? "rgba(124,58,237,0.12)" : "rgba(124,58,237,0.22)"}
+              glowColor={colors.brand}
               scale={0.99}
             >
-              <LinearGradient
-                colors={active ? [CONTINUE_PURPLE, CONTINUE_PURPLE_DARK] : ["#7C3AED66", "#6D28D966"]}
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-                style={[styles.button, active ? styles.buttonActive : styles.buttonInactive]}
-              >
+              <View style={[styles.button, active ? styles.buttonActive : styles.buttonInactive]}>
                 {loading ? (
                   <View style={styles.loadingRow}>
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <ActivityIndicator size="small" color={colors.textPrimary} />
                     <Text style={styles.buttonText}>Loading...</Text>
                   </View>
                 ) : (
                   <Text style={[styles.buttonText, active ? null : styles.buttonTextInactive]}>{label}</Text>
                 )}
-              </LinearGradient>
+              </View>
             </LuxPressable>
           </MotiView>
 
@@ -109,7 +108,7 @@ export function ServiceContinueButton({
               className={pointerClassName}
               pressableClassName={pointerClassName}
               style={styles.secondaryActionWrap}
-              glowColor="rgba(0,0,0,0)"
+              glowColor={colors.surfaceHigh}
               scale={0.98}
             >
               <Text style={styles.secondaryActionText}>{secondaryActionLabel}</Text>
@@ -123,74 +122,73 @@ export function ServiceContinueButton({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    width: "100%",
-    gap: 10,
-  },
-  pulseGlow: {
-    position: "absolute",
-    left: 4,
-    right: 4,
-    top: 6,
-    bottom: 0,
-    borderRadius: 14,
-    backgroundColor: CONTINUE_PURPLE,
-  },
-  pressable: {
-    width: "100%",
-  },
-  button: {
-    height: 56,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 18,
-  },
-  buttonActive: {
-    shadowColor: CONTINUE_PURPLE,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  buttonInactive: {
-    shadowColor: CONTINUE_PURPLE,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.14,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "800",
-    textAlign: "center",
-    letterSpacing: -0.2,
-  },
-  buttonTextInactive: {
-    color: "rgba(255,255,255,0.7)",
-  },
-  loadingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-  },
-  secondaryActionWrap: {
-    alignSelf: "center",
-  },
-  secondaryActionText: {
-    color: "rgba(255,255,255,0.62)",
-    fontSize: 12,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  supportingText: {
-    color: "rgba(255,255,255,0.56)",
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 18,
-    textAlign: "center",
-  },
-});
+function createStyles(colors: Theme) {
+  const buttonStyles = createButtonStyles(colors);
+
+  return StyleSheet.create({
+    wrap: {
+      width: "100%",
+      gap: spacing.sm,
+    },
+    pulseGlow: {
+      position: "absolute",
+      left: 4,
+      right: 4,
+      top: 6,
+      bottom: 0,
+      borderRadius: 14,
+      backgroundColor: colors.brand,
+    },
+    pressable: {
+      width: "100%",
+    },
+    button: {
+      ...buttonStyles.primary,
+      width: "100%",
+    },
+    buttonActive: {
+      shadowOpacity: 0.3,
+    },
+    buttonInactive: {
+      backgroundColor: colors.surfaceHigh,
+      shadowColor: colors.surfaceHigh,
+      shadowOpacity: 0.12,
+      elevation: 2,
+    },
+    buttonText: {
+      color: colors.textPrimary,
+      fontSize: 16,
+      fontFamily: fonts.regular.fontFamily,
+      fontWeight: "800",
+      textAlign: "left",
+      letterSpacing: -0.2,
+    },
+    buttonTextInactive: {
+      color: colors.textSecondary,
+    },
+    loadingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: spacing.sm,
+    },
+    secondaryActionWrap: {
+      alignSelf: "center",
+    },
+    secondaryActionText: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      fontFamily: fonts.regular.fontFamily,
+      fontWeight: "600",
+      textAlign: "left",
+    },
+    supportingText: {
+      color: colors.textMuted,
+      fontSize: 12,
+      fontFamily: fonts.regular.fontFamily,
+      fontWeight: "600",
+      lineHeight: 18,
+      textAlign: "left",
+    },
+  });
+}

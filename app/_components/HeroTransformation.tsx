@@ -2,6 +2,7 @@ import { MotiImage, MotiView } from "moti";
 import { useEffect, useState } from "react";
 import { ImageSourcePropType, StyleSheet, useWindowDimensions, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import { spacing } from "../../styles/spacing";
 
 type StackCardProps = {
   source: ImageSourcePropType;
@@ -145,7 +146,7 @@ export default function HeroTransformation({ compact = false }: HeroTransformati
 
 const styles = StyleSheet.create({
   compactWrap: {
-    marginTop: 14,
+    marginTop: spacing.md,
   },
   heroShell: {
     borderRadius: 28,

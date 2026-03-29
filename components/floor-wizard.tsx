@@ -1,3 +1,4 @@
+import { spacing } from "../styles/spacing";
 
 import { useAuth } from "@clerk/expo";
 import { useAction, useMutation, useQuery } from "convex/react";
@@ -615,7 +616,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
           <View ref={sourceCaptureRef} collapsable={false} style={{ width: canvasSize.width, height: canvasSize.height, backgroundColor: "#000000" }}>
             <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="cover" />
           </View>
-          <View ref={maskCaptureRef} collapsable={false} style={{ marginTop: 8, width: canvasSize.width, height: canvasSize.height, backgroundColor: "#000000" }}>
+          <View ref={maskCaptureRef} collapsable={false} style={{ marginTop: spacing.sm, width: canvasSize.width, height: canvasSize.height, backgroundColor: "#000000" }}>
             <Svg width={canvasSize.width} height={canvasSize.height}>
               <Rect x={0} y={0} width={canvasSize.width} height={canvasSize.height} fill="#000000" />
               {renderedStrokes.map((stroke) => (
@@ -647,7 +648,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       {step === "intake" ? (
         <ServiceWizardStepScreen
           footerOffset={FIXED_FOOTER_OFFSET}
-          contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 10 }}
+          contentContainerStyle={{ paddingHorizontal: spacing.md, paddingTop: spacing.sm }}
           footer={
             <ServiceContinueButton
               active={Boolean(selectedImage)}
@@ -696,9 +697,9 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
           footerOffset={FIXED_FOOTER_OFFSET}
           scrollEnabled={!isDrawing}
           contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingTop: 10,
-            gap: 16,
+            paddingHorizontal: spacing.md,
+            paddingTop: spacing.sm,
+            gap: spacing.md,
           }}
           footer={
             <>
@@ -817,7 +818,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       {step === "materials" ? (
         <ServiceWizardStepScreen
           footerOffset={FIXED_FOOTER_OFFSET}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, gap: 16 }}
+          contentContainerStyle={{ paddingHorizontal: spacing.md, paddingTop: spacing.sm, gap: spacing.md }}
           footer={
             <ServiceContinueButton
               active={canContinueFromMaterials}
@@ -875,7 +876,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       ) : null}
 
       {step === "result" ? (
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: Math.max(insets.bottom + 28, 34), gap: 18 }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: Math.max(insets.bottom + 28, 34), gap: spacing.md }} showsVerticalScrollIndicator={false}>
           <View style={styles.resultIntro}>
             <Text style={styles.resultHeading}>Behold your new interior</Text>
             <Text style={styles.resultSubheading}>
@@ -905,103 +906,105 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: SERVICE_WIZARD_THEME.colors.background },
   captureStage: { position: "absolute", left: -10000, top: 0, opacity: 0.01 },
-  topBar: { paddingHorizontal: 16, paddingBottom: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  topBar: { paddingHorizontal: spacing.md, paddingBottom: spacing.sm, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
   topButton: { height: 44, width: 44, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.06)", borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border },
-  topCopy: { flex: 1, alignItems: "center", gap: 6 },
+  topCopy: { flex: 1, alignItems: "center", gap: spacing.xs },
   topTitle: { color: "#ffffff", fontSize: 19, fontWeight: "800", letterSpacing: -0.3 },
   topSubtitle: { color: "#a1a1aa", fontSize: 12, fontWeight: "700" },
   progressTrack: { width: "100%", maxWidth: 170, height: 8, borderRadius: 999, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.12)" },
   progressFillWrap: { height: "100%", overflow: "hidden", borderRadius: 999 },
   progressFill: { height: "100%", borderRadius: 999 },
-  stepRow: { flexDirection: "row", gap: 8 },
+  stepRow: { flexDirection: "row", gap: spacing.sm },
   stepPill: { height: 24, width: 24, borderRadius: 999, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "rgba(255,255,255,0.03)" },
   stepPillActive: { borderColor: SERVICE_WIZARD_THEME.colors.accentBorderStrong, backgroundColor: SERVICE_WIZARD_THEME.colors.accentSurfaceStrong },
   stepPillText: { color: "#71717a", fontSize: 11, fontWeight: "800" },
   stepPillTextActive: { color: "#ffffff" },
-  creditPill: { minWidth: 44, height: 44, paddingHorizontal: 12, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.06)", borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border },
+  creditPill: { minWidth: 44, height: 44, paddingHorizontal: spacing.sm, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.06)", borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border },
   creditText: { color: "#ffffff", fontSize: 12, fontWeight: "800" },
-  heroCard: { minHeight: 360, borderRadius: 34, borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border, padding: 24, gap: 18, backgroundColor: SERVICE_WIZARD_THEME.colors.surfaceOverlay },
+  heroCard: { minHeight: 360, borderRadius: 34, borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border, padding: spacing.lg, gap: spacing.md, backgroundColor: SERVICE_WIZARD_THEME.colors.surfaceOverlay },
   heroIcon: { height: 54, width: 54, borderRadius: 18, backgroundColor: SERVICE_WIZARD_THEME.colors.accentSurfaceStrong, alignItems: "center", justifyContent: "center" },
   heroTitle: { color: SERVICE_WIZARD_THEME.colors.textPrimary, lineHeight: 34, ...SERVICE_WIZARD_THEME.typography.heroTitle },
   heroText: { color: SERVICE_WIZARD_THEME.colors.textMuted, ...SERVICE_WIZARD_THEME.typography.compactBodyText },
-  tipCard: { borderRadius: 24, borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.accentBorder, backgroundColor: SERVICE_WIZARD_THEME.colors.accentSurface, paddingHorizontal: 16, paddingVertical: 14, gap: 4 },
+  tipCard: { borderRadius: 24, borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.accentBorder, backgroundColor: SERVICE_WIZARD_THEME.colors.accentSurface, paddingHorizontal: spacing.md, paddingVertical: spacing.md, gap: spacing.xs },
   tipLabel: { color: SERVICE_WIZARD_THEME.colors.accentText, fontSize: 11, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase" },
   tipText: { color: "#f4f4f5", fontSize: 13, lineHeight: 19, fontWeight: "600" },
-  primaryButton: { minHeight: 58, borderRadius: 24, paddingHorizontal: 18, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
-  primaryButtonLarge: { minHeight: 58, borderRadius: 24, paddingHorizontal: 18, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
+  primaryButton: { minHeight: 58, borderRadius: 24, paddingHorizontal: spacing.md, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.sm },
+  primaryButtonLarge: { minHeight: 58, borderRadius: 24, paddingHorizontal: spacing.md, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.sm },
   disabledButtonLarge: { minHeight: 58, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: SERVICE_WIZARD_THEME.colors.disabledSurface, opacity: 0.5 },
-  primaryText: { color: "#ffffff", fontSize: 16, fontWeight: "800", textAlign: "center" },
-  disabledButtonText: { color: "#9ca3af", fontSize: 16, fontWeight: "800", textAlign: "center" },
-  secondaryButton: { minHeight: 58, borderRadius: 24, paddingHorizontal: 18, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(255,255,255,0.03)" },
+  primaryText: { color: "#ffffff", fontSize: 16, fontWeight: "800", textAlign: "left" },
+  disabledButtonText: { color: "#9ca3af", fontSize: 16, fontWeight: "800", textAlign: "left" },
+  secondaryButton: { minHeight: 58, borderRadius: 24, paddingHorizontal: spacing.md, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.sm, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(255,255,255,0.03)" },
   secondaryText: { color: "#ffffff", fontSize: 15, fontWeight: "700" },
-  content: { flex: 1, paddingHorizontal: 16, gap: 14 },
+  content: { flex: 1, paddingHorizontal: spacing.md, gap: spacing.md },
   stepTitle: { color: SERVICE_WIZARD_THEME.colors.textPrimary, lineHeight: 34, ...SERVICE_WIZARD_THEME.typography.sectionTitle },
   stepText: { color: SERVICE_WIZARD_THEME.colors.textMuted, ...SERVICE_WIZARD_THEME.typography.compactBodyText },
-  toolbarRow: { flexDirection: "row", gap: 12 },
-  toolbarButton: { flex: 1, height: 44, borderRadius: 999, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
+  toolbarRow: { flexDirection: "row", gap: spacing.sm },
+  toolbarButton: { flex: 1, height: 44, borderRadius: 999, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.sm, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
   toolbarText: { color: "#ffffff", fontSize: 13, fontWeight: "700" },
   frame: { width: "100%", borderRadius: 34, overflow: "hidden", borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border, backgroundColor: "#000000", zIndex: 0 },
-  canvasToolbar: { position: "absolute", top: 14, left: 14, right: 14, flexDirection: "row", gap: 8 },
-  canvasToolbarButton: { minHeight: 40, flex: 1, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(10,10,12,0.82)", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
+  canvasToolbar: { position: "absolute", top: 14, left: 14, right: 14, flexDirection: "row", gap: spacing.sm },
+  canvasToolbarButton: { minHeight: 40, flex: 1, paddingHorizontal: spacing.md, borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(10,10,12,0.82)", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.sm },
   canvasToolbarText: { color: "#ffffff", fontSize: 11, fontWeight: "700", flexShrink: 1 },
   photoImage: { width: "100%", height: "100%" },
-  loupe: { position: "absolute", width: 116, height: 116, borderRadius: 999, padding: 5, backgroundColor: "rgba(255,255,255,0.08)", borderWidth: 1, borderColor: "rgba(255,255,255,0.2)", shadowColor: "#000000", shadowOpacity: 0.28, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } },
+  loupe: { position: "absolute", width: 116, height: 116, borderRadius: 999, padding: spacing.xs, backgroundColor: "rgba(255,255,255,0.08)", borderWidth: 1, borderColor: "rgba(255,255,255,0.2)", shadowColor: "#000000", shadowOpacity: 0.28, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } },
   loupeInner: { flex: 1, borderRadius: 999, overflow: "hidden", backgroundColor: "#060607" },
-  hintPill: { position: "absolute", left: 16, right: 16, bottom: 16, borderRadius: 999, backgroundColor: "rgba(0,0,0,0.66)", paddingHorizontal: 14, paddingVertical: 9 },
-  hintText: { color: "#ffffff", fontSize: 12, fontWeight: "700", textAlign: "center" },
+  hintPill: { position: "absolute", left: 16, right: 16, bottom: 16, borderRadius: 999, backgroundColor: "rgba(0,0,0,0.66)", paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  hintText: { color: "#ffffff", fontSize: 12, fontWeight: "700", textAlign: "left" },
   detectOverlay: { ...absoluteFill, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(5,5,6,0.52)" },
   detectPulse: { position: "absolute", width: 220, height: 220, borderRadius: 999, backgroundColor: SERVICE_WIZARD_THEME.colors.accentGlowSoft },
-  detectCopy: { alignItems: "center", gap: 12, paddingHorizontal: 24 },
-  detectTitle: { color: "#ffffff", fontSize: 20, fontWeight: "800", textAlign: "center" },
-  detectText: { color: "#d4d4d8", fontSize: 13, lineHeight: 20, textAlign: "center", maxWidth: 270 },
-  maskControlCard: { borderRadius: 22, borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border, backgroundColor: "#0a0a0c", paddingHorizontal: 16, paddingVertical: 12, gap: 10 },
+  detectCopy: { alignItems: "center", gap: spacing.sm, paddingHorizontal: spacing.lg },
+  detectTitle: { color: "#ffffff", fontSize: 20, fontWeight: "800", textAlign: "left" },
+  detectText: { color: "#d4d4d8", fontSize: 13, lineHeight: 20, textAlign: "left", maxWidth: 270 },
+  maskControlCard: { borderRadius: 22, borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border, backgroundColor: "#0a0a0c", paddingHorizontal: spacing.md, paddingVertical: spacing.sm, gap: spacing.sm },
   brushRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   brushTitle: { color: "#ffffff", fontSize: 14, fontWeight: "800" },
-  brushMeta: { flexDirection: "row", alignItems: "center", gap: 8 },
+  brushMeta: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   brushMetaText: { color: "#d4d4d8", fontSize: 12, fontWeight: "700" },
   sliderWrap: { height: 32, justifyContent: "center" },
   sliderTrack: { height: 5, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.12)" },
   sliderFill: { position: "absolute", left: 0, height: 5, borderRadius: 999 },
   sliderThumb: { position: "absolute", width: 28, height: 28, borderRadius: 999, backgroundColor: MASK_ACCENT, alignItems: "center", justifyContent: "center" },
   sliderThumbDot: { width: 12, height: 12, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.92)" },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
   materialCard: { borderRadius: 30, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#0a0a0c" },
   materialCardActive: { borderColor: SERVICE_WIZARD_THEME.colors.accent, backgroundColor: SERVICE_WIZARD_THEME.colors.accentSurface },
   materialPreview: { aspectRatio: 1, backgroundColor: "#101012" },
   previewOverlay: { position: "absolute", left: 0, right: 0, bottom: 0, height: 96 },
   previewCopy: { position: "absolute", left: 14, right: 14, bottom: 14 },
   materialTitle: { color: "#ffffff", fontSize: 18, fontWeight: "800" },
-  materialSubtitle: { color: "#d4d4d8", fontSize: 12, lineHeight: 18, marginTop: 4 },
+  materialSubtitle: { color: "#d4d4d8", fontSize: 12, lineHeight: 18, marginTop: spacing.xs },
   materialSubtitleActive: { color: SERVICE_WIZARD_THEME.colors.accentText },
   sample: { flex: 1 },
-  hardwoodSample: { paddingHorizontal: 8, paddingVertical: 10, gap: 8 },
-  tileRow: { flex: 1, flexDirection: "row", gap: 6, paddingHorizontal: 8, paddingTop: 8 },
+  hardwoodSample: { paddingHorizontal: spacing.sm, paddingVertical: spacing.sm, gap: spacing.sm },
+  tileRow: { flex: 1, flexDirection: "row", gap: spacing.xs, paddingHorizontal: spacing.sm, paddingTop: spacing.sm },
   tileBlock: { flex: 1, borderRadius: 16 },
-  summaryCard: { borderRadius: 28, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#0a0a0c", padding: 18, gap: 8 },
+  summaryCard: { borderRadius: 28, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#0a0a0c", padding: spacing.md, gap: spacing.sm },
   summaryLabel: { color: SERVICE_WIZARD_THEME.colors.accentText, fontSize: 11, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase" },
   summaryTitle: { color: "#ffffff", fontSize: 22, fontWeight: "800", letterSpacing: -0.5 },
   summaryText: { color: "#b4b4bb", fontSize: 14, lineHeight: 22 },
-  processingScreen: { flex: 1, paddingHorizontal: 22, alignItems: "center", justifyContent: "center" },
+  processingScreen: { flex: 1, paddingHorizontal: spacing.lg, alignItems: "center", justifyContent: "center" },
   processingPulse: { position: "absolute", width: 250, height: 250, borderRadius: 999, backgroundColor: SERVICE_WIZARD_THEME.colors.accentGlowSoft },
-  processingFrame: { width: 220, height: 280, borderRadius: 34, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#050505", alignItems: "center", justifyContent: "center", marginBottom: 22 },
+  processingFrame: { width: 220, height: 280, borderRadius: 34, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#050505", alignItems: "center", justifyContent: "center", marginBottom: spacing.lg },
   processingImage: { position: "absolute", inset: 0, width: "100%", height: "100%" },
   processingScrim: { position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.42)" },
   processingBeam: { position: "absolute", left: 14, right: 14, height: 120, borderRadius: 28, backgroundColor: SERVICE_WIZARD_THEME.colors.accentSurface, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)" },
-  processingCopy: { alignItems: "center", gap: 12 },
-  processingTitle: { color: "#ffffff", fontSize: 24, fontWeight: "800", textAlign: "center" },
-  processingText: { color: "#c4c4cc", fontSize: 14, lineHeight: 22, textAlign: "center", maxWidth: 320 },
-  resultIntro: { alignItems: "center", gap: 8 },
-  resultHeading: { color: "#ffffff", fontSize: 28, fontWeight: "800", letterSpacing: -0.8, textAlign: "center" },
-  resultSubheading: { color: "#b4b4bb", fontSize: 14, lineHeight: 22, textAlign: "center", maxWidth: 360 },
+  processingCopy: { alignItems: "center", gap: spacing.sm },
+  processingTitle: { color: "#ffffff", fontSize: 24, fontWeight: "800", textAlign: "left" },
+  processingText: { color: "#c4c4cc", fontSize: 14, lineHeight: 22, textAlign: "left", maxWidth: 320 },
+  resultIntro: { alignItems: "center", gap: spacing.sm },
+  resultHeading: { color: "#ffffff", fontSize: 28, fontWeight: "800", letterSpacing: -0.8, textAlign: "left" },
+  resultSubheading: { color: "#b4b4bb", fontSize: 14, lineHeight: 22, textAlign: "left", maxWidth: 360 },
   resultFrame: { borderRadius: 34, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#000000" },
   resultDivider: { position: "absolute", top: 0, bottom: 0, width: 2, backgroundColor: "rgba(255,255,255,0.92)" },
   resultHandle: { height: 46, width: 46, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.65)", borderWidth: 1, borderColor: "rgba(255,255,255,0.16)" },
-  badge: { position: "absolute", top: 14, borderRadius: 999, backgroundColor: "rgba(0,0,0,0.45)", paddingHorizontal: 12, paddingVertical: 8 },
+  badge: { position: "absolute", top: 14, borderRadius: 999, backgroundColor: "rgba(0,0,0,0.45)", paddingHorizontal: spacing.sm, paddingVertical: spacing.sm },
   badgeText: { color: "#ffffff", fontSize: 12, fontWeight: "700" },
   resultFallback: { height: 320, alignItems: "center", justifyContent: "center" },
-  resultRow: { flexDirection: "row", gap: 12 },
+  resultRow: { flexDirection: "row", gap: spacing.sm },
   secondaryAction: { minHeight: 56, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)" },
   secondaryActionText: { color: "#ffffff", fontSize: 14, fontWeight: "700" },
-  restartButton: { minHeight: 56, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)", flexDirection: "row", gap: 8 },
+  restartButton: { minHeight: 56, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)", flexDirection: "row", gap: spacing.sm },
   restartText: { color: "#ffffff", fontSize: 14, fontWeight: "700" },
 });
+
+

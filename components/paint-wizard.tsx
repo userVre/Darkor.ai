@@ -1,4 +1,4 @@
-﻿import { useAuth } from "@clerk/expo";
+import { useAuth } from "@clerk/expo";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -11,6 +11,7 @@ import { GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle as SvgCircle, G, Path as SvgPath, Rect } from "react-native-svg";
 import { captureRef } from "react-native-view-shot";
+import { spacing } from "../styles/spacing";
 import {
   Check,
   ChevronLeft,
@@ -18,6 +19,7 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react-native";
+import { fonts } from "../styles/typography";
 
 import { triggerHaptic } from "../lib/haptics";
 import { uploadLocalFileToCloud } from "../lib/native-upload";
@@ -88,7 +90,7 @@ const BRUSH_MAX = 64;
 const DETECT_DURATION_MS = 1700;
 const FIXED_FOOTER_OFFSET = 96;
 const AUTO_DETECT_SUCCESS_MESSAGE = "Walls detected - brush to refine if needed";
-const AUTO_DETECT_FAILURE_MESSAGE = "Auto-detect couldn't run — please brush manually.";
+const AUTO_DETECT_FAILURE_MESSAGE = "Auto-detect couldn't run � please brush manually.";
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 const CANCEL_SUCCESS_TOAST = "Generation canceled. Your credit was kept.";
 
@@ -308,7 +310,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const canGenerate = Boolean(selectedImage && hasMask && selectedColor && !isGenerating);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
-  const intakeHeading = selectedImage ? "Photo added — mark the wall area next." : "Add a Photo of your Room";
+  const intakeHeading = selectedImage ? "Photo added � mark the wall area next." : "Add a Photo of your Room";
   const intakeSubtext = selectedImage
     ? "Your photo is locked in. Next, brush the wall surfaces so the recolor stays precise around trim, furniture, and decor."
     : "Upload a room photo for precise wall recoloring.";
@@ -785,7 +787,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
           <View
             ref={maskCaptureRef}
             collapsable={false}
-            style={{ width: canvasSize.width, height: canvasSize.height, marginTop: 8, backgroundColor: OLED_BLACK }}
+            style={{ width: canvasSize.width, height: canvasSize.height, marginTop: spacing.sm, backgroundColor: OLED_BLACK }}
           >
             <Svg width={canvasSize.width} height={canvasSize.height}>
               <Rect x={0} y={0} width={canvasSize.width} height={canvasSize.height} fill={OLED_BLACK} />
@@ -819,8 +821,8 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
         <ServiceWizardStepScreen
           footerOffset={FIXED_FOOTER_OFFSET}
           contentContainerStyle={{
-            paddingHorizontal: 18,
-            paddingTop: 10,
+            paddingHorizontal: spacing.md,
+            paddingTop: spacing.sm,
           }}
           footer={
             <ServiceContinueButton
@@ -870,9 +872,9 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
           footerOffset={FIXED_FOOTER_OFFSET}
           scrollEnabled={!isDrawing}
           contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingTop: 10,
-            gap: 16,
+            paddingHorizontal: spacing.md,
+            paddingTop: spacing.sm,
+            gap: spacing.md,
           }}
           footer={
             <>
@@ -1075,9 +1077,9 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
         <ServiceWizardStepScreen
           footerOffset={FIXED_FOOTER_OFFSET}
           contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingTop: 10,
-            gap: 16,
+            paddingHorizontal: spacing.md,
+            paddingTop: spacing.sm,
+            gap: spacing.md,
           }}
           footer={
             <ServiceContinueButton
@@ -1146,14 +1148,14 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
         <ServiceWizardStepScreen
           footerOffset={FIXED_FOOTER_OFFSET}
           contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingTop: 10,
-            gap: 16,
+            paddingHorizontal: spacing.md,
+            paddingTop: spacing.sm,
+            gap: spacing.md,
           }}
           footer={
             <ServiceContinueButton
               active={canGenerate}
-              label="Paint My Walls ✨"
+              label="Paint My Walls ?"
               loading={isGenerating}
               onPress={() => {
                 if (!canGenerate) {
@@ -1223,10 +1225,10 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       {step === "result" ? (
         <ScrollView
           contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingTop: 10,
+            paddingHorizontal: spacing.md,
+            paddingTop: spacing.sm,
             paddingBottom: Math.max(insets.bottom + 28, 34),
-            gap: 18,
+            gap: spacing.md,
           }}
           showsVerticalScrollIndicator={false}
         >
@@ -1249,7 +1251,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Applied Finish</Text>
-            <Text style={styles.summaryTitle}>{`${selectedColor?.title ?? "Selected Color"} • ${selectedFinish.label}`}</Text>
+            <Text style={styles.summaryTitle}>{`${selectedColor?.title ?? "Selected Color"} � ${selectedFinish.label}`}</Text>
             <Text style={styles.summaryText}>
               Your walls were recolored from the mask you painted while preserving the structure, furnishings, trim, and natural light of the room.
             </Text>
@@ -1314,12 +1316,12 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   topBar: {
-    paddingHorizontal: 18,
-    paddingBottom: 12,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: spacing.sm,
   },
   topButton: {
     width: 44,
@@ -1334,17 +1336,19 @@ const styles = StyleSheet.create({
   topCopy: {
     flex: 1,
     alignItems: "center",
-    gap: 4,
+    gap: spacing.xs,
   },
   topTitle: {
     color: "#ffffff",
     fontSize: 19,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
     letterSpacing: -0.4,
   },
   topSubtitle: {
     color: "#a1a1aa",
     fontSize: 12,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
   progressTrack: {
@@ -1366,8 +1370,8 @@ const styles = StyleSheet.create({
   },
   stepRow: {
     flexDirection: "row",
-    gap: 6,
-    marginTop: 2,
+    gap: spacing.xs,
+    marginTop: spacing.xs,
   },
   stepPill: {
     width: 28,
@@ -1386,6 +1390,7 @@ const styles = StyleSheet.create({
   stepPillText: {
     color: "#d4d4d8",
     fontSize: 12,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
   stepPillTextActive: {
@@ -1394,7 +1399,7 @@ const styles = StyleSheet.create({
   creditPill: {
     minWidth: 44,
     height: 44,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.sm,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
@@ -1405,6 +1410,7 @@ const styles = StyleSheet.create({
   creditText: {
     color: "#ffffff",
     fontSize: 12,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
   heroCard: {
@@ -1412,8 +1418,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: SERVICE_WIZARD_THEME.colors.border,
     backgroundColor: CARD_BLACK,
-    padding: 22,
-    gap: 18,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
   heroTitle: {
     color: SERVICE_WIZARD_THEME.colors.textPrimary,
@@ -1435,8 +1441,8 @@ const styles = StyleSheet.create({
     borderColor: SERVICE_WIZARD_THEME.colors.border,
     alignItems: "center",
     justifyContent: "center",
-    gap: 18,
-    paddingHorizontal: 28,
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   plusOrb: {
     width: 82,
@@ -1450,18 +1456,19 @@ const styles = StyleSheet.create({
   },
   uploadCopy: {
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   uploadTitle: {
     color: "#ffffff",
     fontSize: 19,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
   uploadText: {
     color: "#a1a1aa",
     fontSize: 14,
     lineHeight: 22,
-    textAlign: "center",
+    textAlign: "left",
   },
   secondaryButton: {
     minHeight: 56,
@@ -1472,11 +1479,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: spacing.sm,
   },
   secondaryText: {
     color: "#ffffff",
     fontSize: 15,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
   notesCard: {
@@ -1484,12 +1492,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: SERVICE_WIZARD_THEME.colors.border,
     backgroundColor: CARD_BLACK_SOFT,
-    padding: 18,
-    gap: 10,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
   notesTitle: {
     color: "#ffffff",
     fontSize: 16,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
   notesText: {
@@ -1499,7 +1508,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
   },
   stepTitle: {
     color: SERVICE_WIZARD_THEME.colors.textPrimary,
@@ -1508,8 +1517,8 @@ const styles = StyleSheet.create({
   stepText: {
     color: SERVICE_WIZARD_THEME.colors.textMuted,
     ...SERVICE_WIZARD_THEME.typography.compactBodyText,
-    marginTop: 8,
-    marginBottom: 14,
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
   },
   canvasFrame: {
     borderRadius: 30,
@@ -1525,12 +1534,12 @@ const styles = StyleSheet.create({
     left: 14,
     right: 14,
     flexDirection: "row",
-    gap: 8,
+    gap: spacing.sm,
   },
   canvasToolbarButton: {
     minHeight: 40,
     flex: 1,
-    paddingHorizontal: 14,
+    paddingHorizontal: spacing.md,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
@@ -1538,11 +1547,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   canvasToolbarText: {
     color: "#ffffff",
     fontSize: 11,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
     flexShrink: 1,
   },
@@ -1555,7 +1565,7 @@ const styles = StyleSheet.create({
     width: 116,
     height: 116,
     borderRadius: 999,
-    padding: 5,
+    padding: spacing.xs,
     backgroundColor: "rgba(255,255,255,0.08)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.2)",
@@ -1575,8 +1585,8 @@ const styles = StyleSheet.create({
     left: 14,
     right: 14,
     bottom: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderRadius: 999,
     backgroundColor: "rgba(0,0,0,0.62)",
     borderWidth: 1,
@@ -1585,8 +1595,9 @@ const styles = StyleSheet.create({
   hintText: {
     color: "#ffffff",
     fontSize: 12,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "600",
-    textAlign: "center",
+    textAlign: "left",
   },
   detectOverlay: {
     ...absoluteFill,
@@ -1603,20 +1614,21 @@ const styles = StyleSheet.create({
   },
   detectCopy: {
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 28,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
   },
   detectTitle: {
     color: "#ffffff",
     fontSize: 20,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
-    textAlign: "center",
+    textAlign: "left",
   },
   detectText: {
     color: "#d4d4d8",
     fontSize: 13,
     lineHeight: 21,
-    textAlign: "center",
+    textAlign: "left",
     maxWidth: 280,
   },
   maskControlCard: {
@@ -1624,9 +1636,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: CARD_BLACK_SOFT,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
   },
   brushRow: {
     flexDirection: "row",
@@ -1636,16 +1648,18 @@ const styles = StyleSheet.create({
   brushTitle: {
     color: "#ffffff",
     fontSize: 14,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
   brushMeta: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   brushMetaText: {
     color: "#d4d4d8",
     fontSize: 12,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
   sliderWrap: {
@@ -1690,7 +1704,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
-    gap: 10,
+    gap: spacing.sm,
   },
   disabledButtonLarge: {
     minHeight: 58,
@@ -1703,16 +1717,18 @@ const styles = StyleSheet.create({
   primaryText: {
     color: "#ffffff",
     fontSize: 16,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
     letterSpacing: -0.2,
-    textAlign: "center",
+    textAlign: "left",
   },
   disabledButtonText: {
     color: "#9ca3af",
     fontSize: 16,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
     letterSpacing: -0.2,
-    textAlign: "center",
+    textAlign: "left",
   },
   roomReferenceFrame: {
     height: 120,
@@ -1727,8 +1743,8 @@ const styles = StyleSheet.create({
     left: 12,
     top: 12,
     minHeight: 28,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderRadius: 999,
     backgroundColor: "rgba(0,0,0,0.72)",
     borderWidth: 1,
@@ -1738,13 +1754,14 @@ const styles = StyleSheet.create({
   roomReferenceBadgeText: {
     color: "#ffffff",
     fontSize: 11,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
     letterSpacing: 0.2,
   },
   selectionGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 14,
+    gap: spacing.md,
   },
   selectionCard: {
     borderRadius: 30,
@@ -1780,13 +1797,14 @@ const styles = StyleSheet.create({
   selectionTitle: {
     color: "#ffffff",
     fontSize: 18,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
   },
   selectionDescription: {
     color: "#d4d4d8",
     fontSize: 12,
     lineHeight: 18,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   selectionDescriptionActive: {
     color: SERVICE_WIZARD_THEME.colors.accentText,
@@ -1796,24 +1814,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: CARD_BLACK_SOFT,
-    padding: 16,
-    gap: 16,
+    padding: spacing.md,
+    gap: spacing.md,
   },
   paletteTitle: {
     color: "#ffffff",
     fontSize: 18,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
   swatchGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: spacing.sm,
     justifyContent: "space-between",
   },
   swatchButton: {
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 2,
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   swatchOuter: {
     width: 84,
@@ -1843,8 +1862,9 @@ const styles = StyleSheet.create({
   swatchLabel: {
     color: "#d4d4d8",
     fontSize: 13,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "600",
-    textAlign: "center",
+    textAlign: "left",
   },
   swatchLabelActive: {
     color: "#ffffff",
@@ -1852,15 +1872,15 @@ const styles = StyleSheet.create({
   finishSummaryCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: spacing.md,
   },
   summaryCard: {
     borderRadius: 28,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: CARD_BLACK_SOFT,
-    padding: 18,
-    gap: 8,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
   summarySwatch: {
     width: 54,
@@ -1876,11 +1896,12 @@ const styles = StyleSheet.create({
   },
   summaryCopy: {
     flex: 1,
-    gap: 4,
+    gap: spacing.xs,
   },
   summaryLabel: {
     color: "#a1a1aa",
     fontSize: 12,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
     letterSpacing: 0.3,
     textTransform: "uppercase",
@@ -1888,6 +1909,7 @@ const styles = StyleSheet.create({
   summaryTitle: {
     color: "#ffffff",
     fontSize: 24,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
     letterSpacing: -0.6,
   },
@@ -1902,11 +1924,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: CARD_BLACK_SOFT,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: spacing.md,
   },
   finishCardActive: {
     borderColor: "rgba(217,70,239,0.42)",
@@ -1955,11 +1977,12 @@ const styles = StyleSheet.create({
   },
   finishCopy: {
     flex: 1,
-    gap: 4,
+    gap: spacing.xs,
   },
   finishTitle: {
     color: "#ffffff",
     fontSize: 18,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
   finishTitleActive: {
@@ -1985,14 +2008,14 @@ const styles = StyleSheet.create({
     backgroundColor: MASK_ACCENT,
   },
   finishList: {
-    gap: 12,
+    gap: spacing.sm,
   },
   processingScreen: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 24,
-    gap: 20,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
   },
   processingGlow: {
     position: "absolute",
@@ -2035,14 +2058,14 @@ const styles = StyleSheet.create({
   },
   processingChip: {
     height: 40,
-    paddingHorizontal: 14,
+    paddingHorizontal: spacing.md,
     borderRadius: 999,
     backgroundColor: "rgba(0,0,0,0.58)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: spacing.sm,
   },
   processingChipSwatch: {
     width: 16,
@@ -2054,43 +2077,46 @@ const styles = StyleSheet.create({
   processingChipText: {
     color: "#ffffff",
     fontSize: 12,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
   processingCopy: {
     alignItems: "center",
-    gap: 12,
+    gap: spacing.sm,
   },
   processingTitle: {
     color: "#ffffff",
     fontSize: 24,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
     letterSpacing: -0.7,
-    textAlign: "center",
+    textAlign: "left",
     maxWidth: 340,
   },
   processingText: {
     color: "#a1a1aa",
     fontSize: 14,
     lineHeight: 22,
-    textAlign: "center",
+    textAlign: "left",
     maxWidth: 320,
   },
   resultIntro: {
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   resultHeading: {
     color: "#ffffff",
     fontSize: 28,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
     letterSpacing: -0.8,
-    textAlign: "center",
+    textAlign: "left",
   },
   resultSubheading: {
     color: "#b4b4bb",
     fontSize: 14,
     lineHeight: 22,
-    textAlign: "center",
+    textAlign: "left",
     maxWidth: 360,
   },
   resultFallback: {
@@ -2100,7 +2126,7 @@ const styles = StyleSheet.create({
   },
   resultRow: {
     flexDirection: "row",
-    gap: 12,
+    gap: spacing.sm,
   },
   secondaryAction: {
     minHeight: 56,
@@ -2114,6 +2140,7 @@ const styles = StyleSheet.create({
   secondaryActionText: {
     color: "#ffffff",
     fontSize: 14,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
   restartButton: {
@@ -2125,11 +2152,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   restartText: {
     color: "#ffffff",
     fontSize: 14,
+    fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
   },
 });
+

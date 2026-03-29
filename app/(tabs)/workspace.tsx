@@ -12,6 +12,7 @@ import { useLocalSearchParams, useNavigation, usePathname, useRouter } from "exp
 import { FlashList } from "@shopify/flash-list";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { spacing } from "../../styles/spacing";
 import {
   ActivityIndicator,
   ActionSheetIOS,
@@ -88,6 +89,7 @@ import {
   resolveGuestWizardViewerId,
 } from "../../lib/guest-testing";
 import { DEFAULT_TAB_BAR_STYLE } from "./_layout";
+import { fonts } from "../../styles/typography";
 type MeResponse = {
   plan: "free" | "trial" | "pro";
   credits: number;
@@ -296,7 +298,7 @@ const BoardGridCard = memo(function BoardGridCard({
       : "Tap to open your design editor";
 
   return (
-    <View style={{ width, marginBottom: 12, marginRight: index % 2 === 0 ? 12 : 0 }}>
+    <View style={{ width, marginBottom: spacing.sm, marginRight: index % 2 === 0 ? 12 : 0 }}>
       <LuxPressable
         onPress={() => onPress(item)}
         className="cursor-pointer overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950"
@@ -325,7 +327,7 @@ const BoardGridCard = memo(function BoardGridCard({
                 <ActivityIndicator size="small" color="#ffffff" />
               </View>
             </MotiView>
-            <Text className="px-6 text-center text-sm font-semibold leading-5 text-white">{processingLabel}</Text>
+            <Text className="px-6 text-center text-sm font-semibold leading-5 text-white" style={fonts.semibold}>{processingLabel}</Text>
           </View>
         ) : null}
 
@@ -336,7 +338,7 @@ const BoardGridCard = memo(function BoardGridCard({
           style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 108 }}
         />
         <View style={{ position: "absolute", left: 14, right: 14, bottom: 14 }}>
-          <Text className="text-base font-semibold text-white">{item.styleLabel + " " + item.roomLabel}</Text>
+          <Text className="text-base font-semibold text-white" style={fonts.semibold}>{item.styleLabel + " " + item.roomLabel}</Text>
           <Text className="mt-1 text-xs text-zinc-300">{statusCopy}</Text>
         </View>
       </LuxPressable>
@@ -1281,8 +1283,8 @@ function ModeDifferencePreview({ mode, active }: { mode: ModeOption; active: boo
           borderWidth: 1,
           borderColor,
           backgroundColor,
-          paddingHorizontal: 10,
-          paddingVertical: 10,
+          paddingHorizontal: spacing.sm,
+          paddingVertical: spacing.sm,
           overflow: "hidden",
         }}
       >
@@ -1392,7 +1394,7 @@ function ModeDifferencePreview({ mode, active }: { mode: ModeOption; active: boo
   };
 
   return (
-    <View style={{ marginTop: 18, gap: 10 }}>
+    <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
         <Text style={{ color: "#d4d4d8", fontSize: 11, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" }}>
           Before
@@ -1403,7 +1405,7 @@ function ModeDifferencePreview({ mode, active }: { mode: ModeOption; active: boo
         </Text>
       </View>
 
-      <View style={{ flexDirection: "row", gap: 10 }}>
+      <View style={{ flexDirection: "row", gap: spacing.sm }}>
         <RoomPanel variant="before" borderColor={beforeBorderColor} backgroundColor={beforeSurfaceColor} />
         <RoomPanel
           variant={isSubtleMode ? "subtle" : "transform"}
@@ -3306,7 +3308,7 @@ export default function WorkspaceScreen() {
       fontSize: 15,
       lineHeight: 24,
       maxWidth: Math.min(wizardGridMaxWidth, 720),
-      textAlign: "center" as const,
+      textAlign: "left" as const,
     };
     const wizardCenteredGridStyle = {
       width: "100%" as const,
@@ -3399,7 +3401,7 @@ export default function WorkspaceScreen() {
                 backgroundColor: isPhotoStep ? "rgba(17,17,19,0.94)" : "#ffffff",
               }}
             >
-              <Text className="text-center text-sm font-semibold" style={{ color: wizardPrimaryTextColor }}>
+              <Text className="text-center text-sm font-semibold" style={[fonts.semibold, { color: wizardPrimaryTextColor }]}>
                 Resuming your saved wizard draft.
               </Text>
             </View>
@@ -3430,8 +3432,8 @@ export default function WorkspaceScreen() {
                   borderWidth: 1,
                   borderColor: "rgba(255,255,255,0.08)",
                   backgroundColor: "rgba(9,9,11,0.88)",
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
+                  paddingHorizontal: spacing.sm,
+                  paddingVertical: spacing.sm,
                 }}
               >
                 <Text style={{ color: "rgba(255,255,255,0.54)", fontSize: 12, fontWeight: "700", letterSpacing: 0.5 }}>
@@ -3461,7 +3463,7 @@ export default function WorkspaceScreen() {
           contentInsetAdjustmentBehavior="never"
           showsVerticalScrollIndicator={false}
         >
-          <View style={{ flex: 1, gap: 24 }}>
+          <View style={{ flex: 1, gap: spacing.lg }}>
             <View style={{ gap: isPhotoStep ? 18 : 14 }}>
               <ServiceWizardHeader
                 title={serviceLabel}
@@ -3480,17 +3482,17 @@ export default function WorkspaceScreen() {
                 animate={{ opacity: 1, translateX: 0, scale: 1 }}
                 exit={{ opacity: 0, translateX: wizardNavDirection === 1 ? -14 : 14, scale: 0.99 }}
                 transition={stepTransition}
-                style={isPhotoStep ? { flex: 1, minHeight: stepContentMinHeight, gap: 24 } : { gap: 24 }}
+                style={isPhotoStep ? { flex: 1, minHeight: stepContentMinHeight, gap: spacing.lg } : { gap: spacing.lg }}
               >
                 {workflowStep === 0 ? (
-                  <View style={{ flex: 1, gap: 24, paddingTop: 4 }}>
-                    <View style={{ gap: 8, alignItems: "center" }}>
+                  <View style={{ flex: 1, gap: spacing.lg, paddingTop: spacing.xs }}>
+                    <View style={{ gap: spacing.sm, alignItems: "center" }}>
                       <Text
                         style={[
                           SERVICE_WIZARD_THEME.typography.heroTitle,
                           {
                             color: wizardPrimaryTextColor,
-                            textAlign: "center",
+                            textAlign: "left",
                           },
                         ]}
                         >
@@ -3500,7 +3502,7 @@ export default function WorkspaceScreen() {
                         style={{
                           color: DS.colors.textSecondary,
                           ...DS.typography.bodySm,
-                          textAlign: "center",
+                          textAlign: "left",
                           maxWidth: 320,
                         }}
                       >
@@ -3563,8 +3565,8 @@ export default function WorkspaceScreen() {
                               alignItems: "center",
                               justifyContent: "center",
                               gap: isFloorService ? 20 : 16,
-                              paddingHorizontal: 28,
-                              paddingVertical: 28,
+                              paddingHorizontal: spacing.lg,
+                              paddingVertical: spacing.lg,
                               width: "100%",
                             }}
                           >
@@ -3591,8 +3593,8 @@ export default function WorkspaceScreen() {
                                 backgroundColor: "rgba(255,255,255,0.02)",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                gap: 18,
-                                paddingHorizontal: 24,
+                                gap: spacing.md,
+                                paddingHorizontal: spacing.lg,
                               }}
                             >
                               <LinearGradient
@@ -3613,12 +3615,12 @@ export default function WorkspaceScreen() {
                               >
                                 <Camera color="#ffffff" size={isFloorService ? 34 : 30} strokeWidth={2.05} />
                               </LinearGradient>
-                              <View style={{ gap: 6, alignItems: "center" }}>
+                              <View style={{ gap: spacing.xs, alignItems: "center" }}>
                                 <Text
                                   style={{
                                     color: DS.colors.textPrimary,
                                     ...DS.typography.sectionTitle,
-                                    textAlign: "center",
+                                    textAlign: "left",
                                   }}
                                 >
                                   {emptyUploadTitle}
@@ -3627,7 +3629,7 @@ export default function WorkspaceScreen() {
                                   style={{
                                     color: "rgba(255,255,255,0.76)",
                                     ...DS.typography.bodySm,
-                                    textAlign: "center",
+                                    textAlign: "left",
                                     maxWidth: 232,
                                   }}
                                 >
@@ -3669,7 +3671,7 @@ export default function WorkspaceScreen() {
                       </LuxPressable>
                     </MotiView>
 
-                    <View style={{ gap: 12 }}>
+                    <View style={{ gap: spacing.sm }}>
                       <Text
                         style={{
                           color: DS.colors.textPrimary,
@@ -3688,7 +3690,7 @@ export default function WorkspaceScreen() {
                           horizontal
                           showsHorizontalScrollIndicator={false}
                           decelerationRate="fast"
-                          contentContainerStyle={{ paddingHorizontal: 2, gap: 14 }}
+                          contentContainerStyle={{ paddingHorizontal: spacing.xs, gap: spacing.md }}
                           style={{ cursor: "pointer" as any }}
                         >
                           {examplePhotos.slice(0, 4).map((example, index) => {
@@ -3746,7 +3748,7 @@ export default function WorkspaceScreen() {
                 {workflowStep === 1 ? (
                   <>
                       <View style={wizardSectionHeaderStyle}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "left" }]}>
                           {stepTwoTitle}
                         </Text>
                         <Text style={wizardSectionBodyStyle}>
@@ -3819,7 +3821,7 @@ export default function WorkspaceScreen() {
                                     ) : null}
                                   </View>
 
-                                  <View style={{ flex: 1, gap: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16, alignItems: isFullWidthRoomCard ? "center" : "flex-start" }}>
+                                  <View style={{ flex: 1, gap: spacing.sm, paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.md, alignItems: isFullWidthRoomCard ? "center" : "flex-start" }}>
                                     <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", letterSpacing: -0.4, textAlign: isFullWidthRoomCard ? "center" : "left" }}>
                                       {item.title}
                                     </Text>
@@ -3840,7 +3842,7 @@ export default function WorkspaceScreen() {
                   isPaintService ? (
                     <>
                       <View style={wizardSectionHeaderStyle}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "left" }]}>
                           {stepThreeTitle}
                         </Text>
                         <Text style={wizardSectionBodyStyle}>
@@ -3862,11 +3864,11 @@ export default function WorkspaceScreen() {
                                   borderWidth: active ? 1.5 : 1,
                                   borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
                                   backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
-                                  paddingHorizontal: 18,
-                                  paddingVertical: 18,
+                                  paddingHorizontal: spacing.md,
+                                  paddingVertical: spacing.md,
                                 }}
                               >
-                                <View style={{ flex: 1, gap: 18 }}>
+                                <View style={{ flex: 1, gap: spacing.md }}>
                                   <View
                                     style={{
                                       height: 86,
@@ -3880,11 +3882,11 @@ export default function WorkspaceScreen() {
                                       backgroundColor: option.value,
                                     }}
                                   />
-                                  <View style={{ gap: 8 }}>
-                                    <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", textAlign: "center", letterSpacing: -0.35 }}>
+                                  <View style={{ gap: spacing.sm }}>
+                                    <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", textAlign: "left", letterSpacing: -0.35 }}>
                                       {option.title}
                                     </Text>
-                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: "center" }}>
+                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: "left" }}>
                                       {option.description}
                                     </Text>
                                   </View>
@@ -3903,7 +3905,7 @@ export default function WorkspaceScreen() {
                   ) : isFloorService ? (
                     <>
                       <View style={wizardSectionHeaderStyle}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "left" }]}>
                           {stepThreeTitle}
                         </Text>
                         <Text style={wizardSectionBodyStyle}>
@@ -3925,14 +3927,14 @@ export default function WorkspaceScreen() {
                                   borderWidth: active ? 1.5 : 1,
                                   borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
                                   backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
-                                  paddingHorizontal: 14,
-                                  paddingTop: 14,
-                                  paddingBottom: 16,
-                                  gap: 14,
+                                  paddingHorizontal: spacing.md,
+                                  paddingTop: spacing.md,
+                                  paddingBottom: spacing.md,
+                                  gap: spacing.md,
                                 }}
                               >
                                 <FloorMaterialPreview material={material} active={active} />
-                                <View style={{ gap: 8, alignItems: isFullWidthMaterialCard ? "center" : "flex-start" }}>
+                                <View style={{ gap: spacing.sm, alignItems: isFullWidthMaterialCard ? "center" : "flex-start" }}>
                                   <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.35, textAlign: isFullWidthMaterialCard ? "center" : "left" }}>
                                     {material.title}
                                   </Text>
@@ -3954,7 +3956,7 @@ export default function WorkspaceScreen() {
                   ) : (
                     <>
                       <View style={wizardSectionHeaderStyle}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "left" }]}>
                           {stepThreeTitle}
                         </Text>
                         <Text style={wizardSectionBodyStyle}>
@@ -3966,7 +3968,7 @@ export default function WorkspaceScreen() {
                         <MotiView
                           animate={{ opacity: [0.48, 0.82, 0.48], translateY: [0, 4, 0] }}
                           transition={{ duration: 1800, loop: true }}
-                          style={{ alignItems: "center", gap: 4 }}
+                          style={{ alignItems: "center", gap: spacing.xs }}
                         >
                           <Text style={{ color: "rgba(255,255,255,0.58)", fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" }}>
                             Scroll for more
@@ -4010,9 +4012,9 @@ export default function WorkspaceScreen() {
                                     colors={["rgba(217,70,239,0.22)", "rgba(255,255,255,0.04)"]}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 1 }}
-                                    style={{ height: 136, padding: 12 }}
+                                    style={{ height: 136, padding: spacing.sm }}
                                   >
-                                    <View style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                                    <View style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
                                       {CUSTOM_STYLE_COLLAGE_IMAGES.map((imageSource, collageIndex) => (
                                         <View
                                           key={`custom-style-collage-${collageIndex}`}
@@ -4058,7 +4060,7 @@ export default function WorkspaceScreen() {
                                 )}
 
                                 <View style={{ position: "absolute", left: 12, top: 12, right: 12, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                  <View style={{ gap: 8, maxWidth: "78%" }}>
+                                  <View style={{ gap: spacing.sm, maxWidth: "78%" }}>
                                     {!style.isCustom && !isFullWidthStyleCard ? (
                                       <View
                                         style={{
@@ -4084,14 +4086,15 @@ export default function WorkspaceScreen() {
                                           borderWidth: 1,
                                           borderColor: badgeColors.borderColor,
                                           backgroundColor: badgeColors.backgroundColor,
-                                          paddingHorizontal: 10,
-                                          paddingVertical: 6,
+                                          paddingHorizontal: spacing.sm,
+                                          paddingVertical: spacing.xs,
                                         }}
                                       >
                                         <Text
                                           style={{
                                             color: badgeColors.textColor,
                                             fontSize: 10,
+                                            fontFamily: fonts.regular.fontFamily,
                                             fontWeight: "800",
                                             letterSpacing: 0.9,
                                             textTransform: "uppercase",
@@ -4125,9 +4128,9 @@ export default function WorkspaceScreen() {
                                   style={{
                                     flex: 1,
                                     gap: isFullWidthStyleCard ? 10 : 8,
-                                    paddingHorizontal: 14,
+                                    paddingHorizontal: spacing.md,
                                     paddingTop: isFullWidthStyleCard ? 18 : 14,
-                                    paddingBottom: 16,
+                                    paddingBottom: spacing.md,
                                     alignItems: isFullWidthStyleCard ? "center" : "flex-start",
                                     justifyContent: isFullWidthStyleCard ? "center" : "flex-start",
                                   }}
@@ -4173,7 +4176,7 @@ export default function WorkspaceScreen() {
                   isPaintService || isFloorService ? (
                     <>
                       <View style={wizardSectionHeaderStyle}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "left" }]}>
                           {stepFourTitle}
                         </Text>
                         <Text style={wizardSectionBodyStyle}>
@@ -4190,9 +4193,9 @@ export default function WorkspaceScreen() {
                           borderWidth: 1,
                           borderColor: wizardSurfaceBorderColor,
                           backgroundColor: wizardSurfaceColor,
-                          paddingHorizontal: 18,
-                          paddingVertical: 18,
-                          gap: 18,
+                          paddingHorizontal: spacing.md,
+                          paddingVertical: spacing.md,
+                          gap: spacing.md,
                         }}
                       >
                         <View
@@ -4201,9 +4204,9 @@ export default function WorkspaceScreen() {
                             borderWidth: 1,
                             borderColor: "rgba(255,255,255,0.08)",
                             backgroundColor: "rgba(255,255,255,0.03)",
-                            paddingHorizontal: 18,
-                            paddingVertical: 18,
-                            gap: 10,
+                            paddingHorizontal: spacing.md,
+                            paddingVertical: spacing.md,
+                            gap: spacing.sm,
                           }}
                         >
                           <Text style={{ color: "#ffffff", fontSize: 23, fontWeight: "700", letterSpacing: -0.45 }}>
@@ -4216,7 +4219,7 @@ export default function WorkspaceScreen() {
                               ? `Applying this selection to the ${selectedRoom.toLowerCase()} while preserving the existing structure and lighting.`
                               : "Select a space type to keep the material placement grounded."}
                           </Text>
-                          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+                          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
                             {[
                               { label: selectedRoom ?? "Space type not selected", active: Boolean(selectedRoom) },
                               {
@@ -4231,8 +4234,8 @@ export default function WorkspaceScreen() {
                                   borderWidth: 1,
                                   borderColor: item.active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
                                   backgroundColor: item.active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
-                                  paddingHorizontal: 12,
-                                  paddingVertical: 8,
+                                  paddingHorizontal: spacing.sm,
+                                  paddingVertical: spacing.sm,
                                 }}
                               >
                                 <Text style={{ color: item.active ? "#f5d0fe" : "#d4d4d8", fontSize: 12, fontWeight: "600" }}>{item.label}</Text>
@@ -4241,9 +4244,9 @@ export default function WorkspaceScreen() {
                           </View>
                         </View>
 
-                        <View style={{ gap: 12 }}>
+                        <View style={{ gap: spacing.sm }}>
                           <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Finish Type</Text>
-                          <View style={{ gap: 12 }}>
+                          <View style={{ gap: spacing.sm }}>
                             {FINISH_OPTIONS.map((finish, index) => {
                               const active = selectedFinishId === finish.id;
                               return (
@@ -4255,11 +4258,11 @@ export default function WorkspaceScreen() {
                                       borderWidth: active ? 1.5 : 1,
                                       borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
                                       backgroundColor: active ? wizardActiveSurfaceColor : "rgba(255,255,255,0.03)",
-                                      paddingHorizontal: 18,
-                                      paddingVertical: 16,
+                                      paddingHorizontal: spacing.md,
+                                      paddingVertical: spacing.md,
                                     }}
                                   >
-                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+                                    <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
                                       <LinearGradient
                                         colors={[finish.accentColor, "rgba(255,255,255,0.1)"]}
                                         start={{ x: 0, y: 0 }}
@@ -4274,7 +4277,7 @@ export default function WorkspaceScreen() {
                                       >
                                         <Sparkles color="#ffffff" size={20} strokeWidth={2} />
                                       </LinearGradient>
-                                      <View style={{ flex: 1, gap: 4 }}>
+                                      <View style={{ flex: 1, gap: spacing.xs }}>
                                         <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700" }}>{finish.title}</Text>
                                         <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
                                           {finish.description}
@@ -4293,7 +4296,7 @@ export default function WorkspaceScreen() {
                   ) : isLeanGenerationService ? (
                     <>
                       <View style={wizardSectionHeaderStyle}>
-                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "center" }]}>
+                        <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor, textAlign: "left" }]}>
                           Generate
                         </Text>
                         <Text style={wizardSectionBodyStyle}>
@@ -4334,8 +4337,8 @@ export default function WorkspaceScreen() {
                           </View>
                         )}
 
-                        <View style={{ paddingHorizontal: 18, paddingTop: 18, paddingBottom: 20, gap: 18 }}>
-                          <View style={{ gap: 8 }}>
+                        <View style={{ paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.md, gap: spacing.md }}>
+                          <View style={{ gap: spacing.sm }}>
                             <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.45 }}>
                               {selectedRoom ?? (isGardenService ? "Select a garden zone" : "Select a building type")}
                             </Text>
@@ -4346,7 +4349,7 @@ export default function WorkspaceScreen() {
                             </Text>
                           </View>
 
-                          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+                          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
                             {[
                               { label: selectedRoom ?? "Building type not selected", active: Boolean(selectedRoom) },
                               { label: selectedStyleDisplayName ?? "Style direction not selected", active: Boolean(selectedStyleDisplayName) },
@@ -4358,8 +4361,8 @@ export default function WorkspaceScreen() {
                                   borderWidth: 1,
                                   borderColor: item.active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
                                   backgroundColor: item.active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
-                                  paddingHorizontal: 12,
-                                  paddingVertical: 8,
+                                  paddingHorizontal: spacing.sm,
+                                  paddingVertical: spacing.sm,
                                 }}
                               >
                                 <Text style={{ color: item.active ? "#f5d0fe" : "#d4d4d8", fontSize: 13, fontWeight: "600" }}>{item.label}</Text>
@@ -4378,13 +4381,13 @@ export default function WorkspaceScreen() {
                           borderWidth: 1,
                           borderColor: "rgba(255,255,255,0.08)",
                           backgroundColor: "rgba(255,255,255,0.03)",
-                          paddingHorizontal: 18,
-                          paddingVertical: 18,
-                          gap: 16,
+                          paddingHorizontal: spacing.md,
+                          paddingVertical: spacing.md,
+                          gap: spacing.md,
                         }}
                       >
-                        <View style={{ flexDirection: "row", gap: 16, alignItems: "center" }}>
-                          <View style={{ flex: 1, gap: 6 }}>
+                        <View style={{ flexDirection: "row", gap: spacing.md, alignItems: "center" }}>
+                          <View style={{ flex: 1, gap: spacing.xs }}>
                             <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>
                               Your masterpiece will be ready in ~15 seconds
                             </Text>
@@ -4410,7 +4413,7 @@ export default function WorkspaceScreen() {
                               style={{ position: "absolute", inset: 0 }}
                             />
                             <View style={{ position: "absolute", left: 10, right: 10, bottom: 10 }}>
-                              <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: "rgba(255,255,255,0.14)", paddingHorizontal: 8, paddingVertical: 5 }}>
+                              <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: "rgba(255,255,255,0.14)", paddingHorizontal: spacing.sm, paddingVertical: spacing.xs }}>
                                 <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" }}>
                                   Preview
                                 </Text>
@@ -4423,7 +4426,7 @@ export default function WorkspaceScreen() {
                     </>
                   ) : (
                     <>
-                      <View style={{ gap: 10, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
+                      <View style={{ gap: spacing.sm, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
                         <Text style={[SERVICE_WIZARD_THEME.typography.sectionTitle, { color: wizardPrimaryTextColor }]}>
                           {stepFourTitle}
                         </Text>
@@ -4432,7 +4435,7 @@ export default function WorkspaceScreen() {
                         </Text>
                       </View>
 
-                      <View style={{ gap: 12, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
+                      <View style={{ gap: spacing.sm, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
                         <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Choose Redesign Mode</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
                           Pick a softer lift to keep the layout recognizable, or choose a full transformation for a more dramatic redesign.
@@ -4460,7 +4463,7 @@ export default function WorkspaceScreen() {
                                     </View>
                                     {active ? <BadgeCheck color="#d946ef" size={19} strokeWidth={2.1} /> : null}
                                   </View>
-                                  <View style={{ marginTop: 18, gap: 8 }}>
+                                  <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
                                     <Text style={{ color: "#ffffff", fontSize: 21, fontWeight: "700", lineHeight: 28 }}>{mode.title}</Text>
                                     <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>{mode.description}</Text>
                                   </View>
@@ -4479,7 +4482,7 @@ export default function WorkspaceScreen() {
                             setRefinePaletteSectionY(nextY);
                           }
                         }}
-                        style={{ gap: 12, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}
+                        style={{ gap: spacing.sm, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}
                       >
                         <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Select Palette</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
@@ -4516,8 +4519,8 @@ export default function WorkspaceScreen() {
                                         borderWidth: 1,
                                         borderColor: "rgba(74,222,128,0.32)",
                                         backgroundColor: "rgba(22,101,52,0.9)",
-                                        paddingHorizontal: 8,
-                                        paddingVertical: 5,
+                                        paddingHorizontal: spacing.sm,
+                                        paddingVertical: spacing.xs,
                                       }}
                                     >
                                       <Text style={{ color: "#DCFCE7", fontSize: 10, fontWeight: "800", letterSpacing: 0.8 }}>
@@ -4525,9 +4528,9 @@ export default function WorkspaceScreen() {
                                       </Text>
                                     </View>
                                   ) : null}
-                                  <View style={{ paddingHorizontal: 12, paddingVertical: 12, alignItems: isFullWidthPaletteCard ? "center" : "flex-start" }}>
+                                  <View style={{ paddingHorizontal: spacing.sm, paddingVertical: spacing.sm, alignItems: isFullWidthPaletteCard ? "center" : "flex-start" }}>
                                     <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700", textAlign: isFullWidthPaletteCard ? "center" : "left" }} numberOfLines={2}>{palette.label}</Text>
-                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 12, lineHeight: 18, marginTop: 4, textAlign: isFullWidthPaletteCard ? "center" : "left", maxWidth: isFullWidthPaletteCard ? 320 : undefined }} numberOfLines={2}>
+                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 12, lineHeight: 18, marginTop: spacing.xs, textAlign: isFullWidthPaletteCard ? "center" : "left", maxWidth: isFullWidthPaletteCard ? 320 : undefined }} numberOfLines={2}>
                                       {palette.description}
                                     </Text>
                                   </View>
@@ -4568,8 +4571,8 @@ export default function WorkspaceScreen() {
                               </View>
                             ) : null}
 
-                            <View style={{ paddingHorizontal: 18, paddingTop: 18, paddingBottom: 20, gap: 16 }}>
-                              <View style={{ gap: 8 }}>
+                            <View style={{ paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.md, gap: spacing.md }}>
+                              <View style={{ gap: spacing.sm }}>
                                 <Text style={{ color: "#ffffff", fontSize: 23, fontWeight: "700", letterSpacing: -0.45 }}>
                                   Ready for the payoff
                                 </Text>
@@ -4578,7 +4581,7 @@ export default function WorkspaceScreen() {
                                 </Text>
                               </View>
 
-                              <View style={{ gap: 10 }}>
+                              <View style={{ gap: spacing.sm }}>
                                 {confirmationSummaryChips.map((item) => (
                                   <View
                                     key={item.key}
@@ -4587,8 +4590,8 @@ export default function WorkspaceScreen() {
                                       borderWidth: 1,
                                       borderColor: item.missing ? "rgba(248,113,113,0.5)" : "rgba(217,70,239,0.3)",
                                       backgroundColor: item.missing ? "rgba(127,29,29,0.34)" : "rgba(11,11,15,0.94)",
-                                      paddingHorizontal: 14,
-                                      paddingVertical: 11,
+                                      paddingHorizontal: spacing.md,
+                                      paddingVertical: spacing.sm,
                                     }}
                                   >
                                     <Text style={{ color: item.missing ? "#FECACA" : "#ffffff", fontSize: 13, fontWeight: "700" }}>
@@ -4609,13 +4612,13 @@ export default function WorkspaceScreen() {
                               borderWidth: 1,
                               borderColor: "rgba(255,255,255,0.08)",
                               backgroundColor: "rgba(255,255,255,0.03)",
-                              paddingHorizontal: 18,
-                              paddingVertical: 18,
-                              gap: 16,
+                              paddingHorizontal: spacing.md,
+                              paddingVertical: spacing.md,
+                              gap: spacing.md,
                             }}
                           >
-                            <View style={{ flexDirection: "row", gap: 16, alignItems: "center" }}>
-                              <View style={{ flex: 1, gap: 6 }}>
+                            <View style={{ flexDirection: "row", gap: spacing.md, alignItems: "center" }}>
+                              <View style={{ flex: 1, gap: spacing.xs }}>
                                 <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>
                                   Your masterpiece will be ready in ~15 seconds
                                 </Text>
@@ -4641,7 +4644,7 @@ export default function WorkspaceScreen() {
                                   style={{ position: "absolute", inset: 0 }}
                                 />
                                 <View style={{ position: "absolute", left: 10, right: 10, bottom: 10 }}>
-                                  <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: "rgba(0,0,0,0.44)", borderWidth: 1, borderColor: "rgba(217,70,239,0.24)", paddingHorizontal: 8, paddingVertical: 5 }}>
+                                  <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: "rgba(0,0,0,0.44)", borderWidth: 1, borderColor: "rgba(217,70,239,0.24)", paddingHorizontal: spacing.sm, paddingVertical: spacing.xs }}>
                                     <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "700", letterSpacing: 0.4 }} numberOfLines={2}>
                                       {previewThumbnailLabel}
                                     </Text>
@@ -4669,7 +4672,7 @@ export default function WorkspaceScreen() {
               alignItems: "center",
               justifyContent: "center",
               backgroundColor: "rgba(0,0,0,0.66)",
-              paddingHorizontal: 24,
+              paddingHorizontal: spacing.lg,
             }}
           >
             <View
@@ -4680,12 +4683,12 @@ export default function WorkspaceScreen() {
                 borderWidth: 1,
                 borderColor: "rgba(255,255,255,0.1)",
                 backgroundColor: "#09090b",
-                paddingHorizontal: 18,
-                paddingVertical: 18,
-                gap: 16,
+                paddingHorizontal: spacing.md,
+                paddingVertical: spacing.md,
+                gap: spacing.md,
               }}
             >
-              <View style={{ gap: 6 }}>
+              <View style={{ gap: spacing.xs }}>
                 <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Paint Tutorial</Text>
                 <Text style={{ color: "#a1a1aa", fontSize: 14, lineHeight: 21 }}>
                   Draw directly over the wall or surface you want to recolor. Use the eraser if you overshoot before continuing.
@@ -4766,7 +4769,7 @@ export default function WorkspaceScreen() {
               alignItems: "center",
               justifyContent: "center",
               backgroundColor: "rgba(0,0,0,0.72)",
-              paddingHorizontal: 20,
+              paddingHorizontal: spacing.md,
             }}
           >
             <View
@@ -4777,22 +4780,22 @@ export default function WorkspaceScreen() {
                 borderWidth: 1,
                 borderColor: "rgba(255,255,255,0.1)",
                 backgroundColor: "#09090b",
-                paddingHorizontal: 18,
-                paddingVertical: 18,
-                gap: 16,
+                paddingHorizontal: spacing.md,
+                paddingVertical: spacing.md,
+                gap: spacing.md,
               }}
             >
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                 <View>
                   <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Color Picker</Text>
-                  <Text style={{ color: "#a1a1aa", fontSize: 13, marginTop: 4 }}>Choose the new paint tone for the masked surface.</Text>
+                  <Text style={{ color: "#a1a1aa", fontSize: 13, marginTop: spacing.xs }}>Choose the new paint tone for the masked surface.</Text>
                 </View>
                 <LuxPressable onPress={handleClosePaintColorPicker} className="cursor-pointer" style={{ height: 40, width: 40, alignItems: "center", justifyContent: "center", borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)" }}>
                   <Close color="#ffffff" size={18} strokeWidth={2.1} />
                 </LuxPressable>
               </View>
 
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
                 {PAINT_COLOR_SWATCHES.map((swatch) => {
                   const active = paintColorDraft.toLowerCase() === swatch.value.toLowerCase();
                   return (
@@ -4807,20 +4810,20 @@ export default function WorkspaceScreen() {
                         borderWidth: 1,
                         borderColor: active ? "rgba(217,70,239,0.32)" : "rgba(255,255,255,0.08)",
                         backgroundColor: active ? "rgba(217,70,239,0.1)" : "rgba(255,255,255,0.03)",
-                        paddingHorizontal: 8,
-                        paddingVertical: 10,
+                        paddingHorizontal: spacing.sm,
+                        paddingVertical: spacing.sm,
                         alignItems: "center",
-                        gap: 8,
+                        gap: spacing.sm,
                       }}
                     >
                       <View style={{ height: 26, width: 26, borderRadius: 999, backgroundColor: swatch.value, borderWidth: 1, borderColor: "rgba(255,255,255,0.16)" }} />
-                      <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "600", textAlign: "center" }} numberOfLines={2}>{swatch.label}</Text>
+                      <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "600", textAlign: "left" }} numberOfLines={2}>{swatch.label}</Text>
                     </LuxPressable>
                   );
                 })}
               </View>
 
-              <View style={{ gap: 8 }}>
+              <View style={{ gap: spacing.sm }}>
                 <Text style={{ color: "#d4d4d8", fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 }}>Custom Hex</Text>
                 <TextInput
                   value={paintColorDraft}
@@ -4835,9 +4838,10 @@ export default function WorkspaceScreen() {
                     borderColor: "rgba(255,255,255,0.1)",
                     backgroundColor: "rgba(255,255,255,0.03)",
                     color: "#ffffff",
-                    paddingHorizontal: 14,
-                    paddingVertical: 14,
+                    paddingHorizontal: spacing.md,
+                    paddingVertical: spacing.md,
                     fontSize: 15,
+                    fontFamily: fonts.regular.fontFamily,
                     fontWeight: "600",
                   }}
                 />
@@ -4861,7 +4865,7 @@ export default function WorkspaceScreen() {
               alignItems: "center",
               justifyContent: "center",
               backgroundColor: "rgba(0,0,0,0.72)",
-              paddingHorizontal: 20,
+              paddingHorizontal: spacing.md,
             }}
           >
             <View
@@ -4872,9 +4876,9 @@ export default function WorkspaceScreen() {
                 borderWidth: 1,
                 borderColor: "rgba(255,255,255,0.1)",
                 backgroundColor: "#09090b",
-                paddingHorizontal: 18,
-                paddingVertical: 18,
-                gap: 12,
+                paddingHorizontal: spacing.md,
+                paddingVertical: spacing.md,
+                gap: spacing.sm,
               }}
             >
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
@@ -4896,8 +4900,8 @@ export default function WorkspaceScreen() {
                       borderWidth: 1,
                       borderColor: active ? "rgba(217,70,239,0.32)" : "rgba(255,255,255,0.08)",
                       backgroundColor: active ? "rgba(217,70,239,0.1)" : "rgba(255,255,255,0.03)",
-                      paddingHorizontal: 14,
-                      paddingVertical: 14,
+                      paddingHorizontal: spacing.md,
+                      paddingVertical: spacing.md,
                       flexDirection: "row",
                       alignItems: "center",
                       justifyContent: "space-between",
@@ -5004,9 +5008,9 @@ export default function WorkspaceScreen() {
                 <ScrollView
                   style={{ flex: 1 }}
                   showsVerticalScrollIndicator={false}
-                  contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 160, gap: 22 }}
+                  contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: spacing.xxl, gap: spacing.lg }}
                 >
-                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md }}>
                     <Text style={[SERVICE_WIZARD_THEME.typography.heroTitle, { color: wizardPrimaryTextColor }]}>Custom Prompt</Text>
                     <LuxPressable
                       onPress={handleCloseCustomStyle}
@@ -5033,7 +5037,7 @@ export default function WorkspaceScreen() {
                     </LuxPressable>
                   </View>
 
-                  <View style={{ gap: 12 }}>
+                  <View style={{ gap: spacing.sm }}>
                     <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700" }}>Enter Prompt</Text>
                     <View
                       style={{
@@ -5042,9 +5046,9 @@ export default function WorkspaceScreen() {
                         borderWidth: 1,
                         borderColor: "rgba(255,255,255,0.1)",
                         backgroundColor: "rgba(255,255,255,0.04)",
-                        paddingHorizontal: 18,
-                        paddingTop: 18,
-                        paddingBottom: 18,
+                        paddingHorizontal: spacing.md,
+                        paddingTop: spacing.md,
+                        paddingBottom: spacing.md,
                       }}
                     >
                       <TextInput
@@ -5059,7 +5063,7 @@ export default function WorkspaceScreen() {
                           fontSize: 15,
                           lineHeight: 24,
                           minHeight: 176,
-                          paddingRight: 42,
+                          paddingRight: spacing.xxl,
                         }}
                       />
                       {customPromptDraft.length > 0 ? (
@@ -5088,9 +5092,9 @@ export default function WorkspaceScreen() {
                     </View>
                   </View>
 
-                  <View style={{ gap: 12 }}>
+                  <View style={{ gap: spacing.sm }}>
                     <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700" }}>Example Prompts</Text>
-                    <View style={{ gap: 10 }}>
+                    <View style={{ gap: spacing.sm }}>
                       {CUSTOM_STYLE_EXAMPLE_PROMPTS.map((prompt) => {
                         const active = selectedCustomPromptBlocks.has(prompt);
                         return (
@@ -5120,8 +5124,8 @@ export default function WorkspaceScreen() {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    paddingHorizontal: 20,
-                    paddingTop: 14,
+                    paddingHorizontal: spacing.md,
+                    paddingTop: spacing.md,
                     paddingBottom: Math.max(insets.bottom + bottomBarOffset + 12, bottomBarOffset + 24),
                     borderTopWidth: 1,
                     borderTopColor: "rgba(255,255,255,0.06)",
@@ -5139,10 +5143,10 @@ export default function WorkspaceScreen() {
                         borderRadius: 24,
                         alignItems: "center",
                         justifyContent: "center",
-                        paddingHorizontal: 20,
+                        paddingHorizontal: spacing.md,
                       }}
                     >
-                      <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700", textAlign: "center" }}>Save</Text>
+                      <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700", textAlign: "left" }}>Save</Text>
                     </LinearGradient>
                   </LuxPressable>
                 </View>
@@ -5169,12 +5173,12 @@ export default function WorkspaceScreen() {
           numColumns={2}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingHorizontal: 20,
+            paddingHorizontal: spacing.md,
             paddingTop: Math.max(insets.top + 14, 28),
             paddingBottom: Math.max(insets.bottom + 32, 40),
           }}
           ListHeaderComponent={
-            <View style={{ marginBottom: 28 }} className="flex-row items-center justify-between">
+            <View style={{ marginBottom: spacing.lg }} className="flex-row items-center justify-between">
               <View style={{ width: 42 }} />
               <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>Your Board</Text>
               <LuxPressable
@@ -5192,7 +5196,7 @@ export default function WorkspaceScreen() {
               style={{ width: boardCardWidth, height: 236, borderWidth: 0.5 }}
             >
               <Sparkles color="#71717a" size={28} />
-              <Text className="mt-4 text-base font-semibold text-white">Your first board appears here</Text>
+              <Text className="mt-4 text-base font-semibold text-white" style={fonts.semibold}>Your first board appears here</Text>
               <Text className="mt-2 px-6 text-center text-sm leading-6 text-zinc-500">
                 Generate a redesign to start building your collection.
               </Text>
@@ -5250,12 +5254,12 @@ export default function WorkspaceScreen() {
             numColumns={2}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
-              paddingHorizontal: 20,
+              paddingHorizontal: spacing.md,
               paddingTop: Math.max(insets.top + 14, 28),
               paddingBottom: Math.max(insets.bottom + 32, 40),
             }}
             ListHeaderComponent={
-              <View style={{ marginBottom: 28 }} className="flex-row items-center justify-between">
+              <View style={{ marginBottom: spacing.lg }} className="flex-row items-center justify-between">
                 <View style={{ width: 42 }} />
                 <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>Your Board</Text>
                 <LuxPressable
@@ -5273,7 +5277,7 @@ export default function WorkspaceScreen() {
                 style={{ width: boardCardWidth, height: 236, borderWidth: 0.5 }}
               >
                 <Sparkles color="#71717a" size={28} />
-                <Text className="mt-4 text-base font-semibold text-white">Your first board appears here</Text>
+                <Text className="mt-4 text-base font-semibold text-white" style={fonts.semibold}>Your first board appears here</Text>
                 <Text className="mt-2 px-6 text-center text-sm leading-6 text-zinc-500">
                   Generate a redesign to start building your collection.
                 </Text>
@@ -5327,10 +5331,10 @@ export default function WorkspaceScreen() {
             <View style={{ minHeight: 44, alignItems: "center", justifyContent: "center" }}>
               <View style={{ position: "absolute", left: 0, top: 0, bottom: 0, justifyContent: "center" }}>
                 <View className="rounded-full border border-white/10 bg-zinc-950/90 px-4 py-2" style={{ borderWidth: 0.5 }}>
-                  <Text className="text-sm font-semibold text-white">{"Diamonds " + creditBalance}</Text>
+                  <Text className="text-sm font-semibold text-white" style={fonts.semibold}>{"Diamonds " + creditBalance}</Text>
                 </View>
               </View>
-              <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.3, textAlign: "center" }}>
+              <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.3, textAlign: "left" }}>
                 Generating Your Design
               </Text>
               <View style={{ position: "absolute", right: 0, top: 0, bottom: 0, justifyContent: "center" }}>
@@ -5349,21 +5353,21 @@ export default function WorkspaceScreen() {
             className="flex-1"
             contentContainerStyle={{
               flexGrow: 1,
-              paddingHorizontal: 20,
-              paddingTop: 28,
+              paddingHorizontal: spacing.md,
+              paddingTop: spacing.lg,
               paddingBottom: Math.max(insets.bottom + 34, 42),
             }}
             contentInsetAdjustmentBehavior="never"
             showsVerticalScrollIndicator={false}
           >
-            <View style={{ flex: 1, justifyContent: "center", gap: 24 }}>
-              <View style={{ alignItems: "center", gap: 10 }}>
-                <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(217,70,239,0.24)", backgroundColor: "rgba(217,70,239,0.12)", paddingHorizontal: 14, paddingVertical: 8 }}>
+            <View style={{ flex: 1, justifyContent: "center", gap: spacing.lg }}>
+              <View style={{ alignItems: "center", gap: spacing.sm }}>
+                <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(217,70,239,0.24)", backgroundColor: "rgba(217,70,239,0.12)", paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}>
                   <Text style={{ color: "#f5d0fe", fontSize: 11, fontWeight: "700", letterSpacing: 1.1, textTransform: "uppercase" }}>
                     Neural Render Pipeline
                   </Text>
                 </View>
-                <Text style={{ color: "#d4d4d8", fontSize: 15, lineHeight: 24, textAlign: "center", maxWidth: 360 }}>
+                <Text style={{ color: "#d4d4d8", fontSize: 15, lineHeight: 24, textAlign: "left", maxWidth: 360 }}>
                   Your masterpiece will be ready in ~15 seconds.
                 </Text>
               </View>
@@ -5374,9 +5378,9 @@ export default function WorkspaceScreen() {
                   borderWidth: 1,
                   borderColor: "rgba(255,255,255,0.08)",
                   backgroundColor: "rgba(12,12,16,0.92)",
-                  paddingHorizontal: 18,
-                  paddingVertical: 18,
-                  gap: 18,
+                  paddingHorizontal: spacing.md,
+                  paddingVertical: spacing.md,
+                  gap: spacing.md,
                 }}
               >
                 <View
@@ -5435,19 +5439,19 @@ export default function WorkspaceScreen() {
                   />
 
                   <View style={{ position: "absolute", left: 16, right: 16, top: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                    <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(0,0,0,0.4)", paddingHorizontal: 12, paddingVertical: 7 }}>
+                    <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(0,0,0,0.4)", paddingHorizontal: spacing.sm, paddingVertical: spacing.sm }}>
                       <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "700", letterSpacing: 0.9, textTransform: "uppercase" }}>
                         Source Photo
                       </Text>
                     </View>
-                    <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "rgba(18,6,26,0.72)", paddingHorizontal: 12, paddingVertical: 7 }}>
+                    <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "rgba(18,6,26,0.72)", paddingHorizontal: spacing.sm, paddingVertical: spacing.sm }}>
                       <Text style={{ color: "#f5d0fe", fontSize: 11, fontWeight: "700", letterSpacing: 0.9, textTransform: "uppercase" }}>
                         {editorStyleLabel}
                       </Text>
                     </View>
                   </View>
 
-                  <View style={{ position: "absolute", left: 16, right: 16, bottom: 16, flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                  <View style={{ position: "absolute", left: 16, right: 16, bottom: 16, flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
                     {[editorRoomLabel, selectedModeOrDefault?.title, selectedPaletteOrDefault?.label]
                       .filter((item): item is string => Boolean(item))
                       .map((item) => (
@@ -5458,8 +5462,8 @@ export default function WorkspaceScreen() {
                           borderWidth: 1,
                           borderColor: "rgba(255,255,255,0.1)",
                           backgroundColor: "rgba(0,0,0,0.38)",
-                          paddingHorizontal: 11,
-                          paddingVertical: 7,
+                          paddingHorizontal: spacing.sm,
+                          paddingVertical: spacing.sm,
                         }}
                       >
                         <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "700" }}>{item}</Text>
@@ -5468,7 +5472,7 @@ export default function WorkspaceScreen() {
                   </View>
                 </View>
 
-                <View style={{ gap: 12 }}>
+                <View style={{ gap: spacing.sm }}>
                   {processingStatuses.map((status, index) => {
                     const active = index === processingStatusIndex;
                     const completed = index < processingStatusIndex;
@@ -5482,11 +5486,11 @@ export default function WorkspaceScreen() {
                           borderWidth: 1,
                           borderColor: active ? "rgba(217,70,239,0.28)" : "rgba(255,255,255,0.08)",
                           backgroundColor: active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
-                          paddingHorizontal: 16,
-                          paddingVertical: 14,
+                          paddingHorizontal: spacing.md,
+                          paddingVertical: spacing.md,
                           flexDirection: "row",
                           alignItems: "center",
-                          gap: 12,
+                          gap: spacing.sm,
                         }}
                       >
                         <View
@@ -5522,7 +5526,7 @@ export default function WorkspaceScreen() {
         <View className="px-5" style={{ paddingTop: Math.max(insets.top + 10, 20) }}>
           <View className="flex-row items-center justify-between">
             <View className="rounded-full border border-white/10 bg-zinc-950 px-4 py-2" style={{ borderWidth: 0.5 }}>
-              <Text className="text-sm font-semibold text-white">{"Diamonds " + creditBalance}</Text>
+              <Text className="text-sm font-semibold text-white" style={fonts.semibold}>{"Diamonds " + creditBalance}</Text>
             </View>
             <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Your Design</Text>
             <LuxPressable
@@ -5539,8 +5543,8 @@ export default function WorkspaceScreen() {
           className="flex-1 bg-black"
           style={{ backgroundColor: "#000000" }}
           contentContainerStyle={{
-            paddingHorizontal: 20,
-            paddingTop: 22,
+            paddingHorizontal: spacing.md,
+            paddingTop: spacing.lg,
             paddingBottom: Math.max(insets.bottom + 34, 42),
           }}
           contentInsetAdjustmentBehavior="never"
@@ -5613,10 +5617,10 @@ export default function WorkspaceScreen() {
 
                 <View className="absolute left-4 right-4 top-4 flex-row items-center justify-between">
                   <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
-                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85">Before</Text>
+                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>Before</Text>
                   </View>
                   <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
-                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85">
+                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>
                       {showSliderComparison ? "After" : isEditorProcessing ? "Rendering" : "Preview"}
                     </Text>
                   </View>
@@ -5629,7 +5633,7 @@ export default function WorkspaceScreen() {
                       inset: 0,
                       alignItems: "center",
                       justifyContent: "center",
-                      paddingHorizontal: 28,
+                      paddingHorizontal: spacing.lg,
                     }}
                   >
                     <MotiView
@@ -5663,17 +5667,17 @@ export default function WorkspaceScreen() {
                         borderWidth: 1,
                         borderColor: "rgba(255,255,255,0.12)",
                         backgroundColor: "rgba(0,0,0,0.58)",
-                        paddingHorizontal: 24,
-                        paddingVertical: 20,
+                        paddingHorizontal: spacing.lg,
+                        paddingVertical: spacing.md,
                         alignItems: "center",
-                        gap: 12,
+                        gap: spacing.sm,
                       }}
                     >
                       <ActivityIndicator size="small" color="#ffffff" />
-                      <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", textAlign: "center" }}>
+                      <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", textAlign: "left" }}>
                         {getProcessingLabel()}
                       </Text>
-                      <Text style={{ color: "#d4d4d8", fontSize: 13, lineHeight: 20, textAlign: "center" }}>
+                      <Text style={{ color: "#d4d4d8", fontSize: 13, lineHeight: 20, textAlign: "left" }}>
                         {getProcessingStatusCopy(editorServiceType)}
                       </Text>
                     </View>
@@ -5691,12 +5695,12 @@ export default function WorkspaceScreen() {
                       borderWidth: 1,
                       borderColor: "rgba(255,255,255,0.08)",
                       backgroundColor: "rgba(10,10,10,0.82)",
-                      paddingHorizontal: 16,
-                      paddingVertical: 14,
+                      paddingHorizontal: spacing.md,
+                      paddingVertical: spacing.md,
                     }}
                   >
                     <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>Generation failed</Text>
-                    <Text style={{ color: "#a1a1aa", fontSize: 13, lineHeight: 20, marginTop: 4 }}>
+                    <Text style={{ color: "#a1a1aa", fontSize: 13, lineHeight: 20, marginTop: spacing.xs }}>
                       {activeBoardItem?.errorMessage ?? "Please go back and try another prompt."}
                     </Text>
                   </View>
@@ -5710,11 +5714,11 @@ export default function WorkspaceScreen() {
                           colors={["#d946ef", "#6366f1"]}
                           start={{ x: 0, y: 0.5 }}
                           end={{ x: 1, y: 0.5 }}
-                          style={{ borderRadius: 999, paddingHorizontal: 18, paddingVertical: 11 }}
+                          style={{ borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}
                         >
                           <View className="flex-row items-center gap-2">
                             <Sparkles color="#ffffff" size={15} />
-                            <Text className="text-sm font-semibold text-white">Remove Watermark</Text>
+                            <Text className="text-sm font-semibold text-white" style={fonts.semibold}>Remove Watermark</Text>
                           </View>
                         </LinearGradient>
                       </LuxPressable>
@@ -5732,7 +5736,7 @@ export default function WorkspaceScreen() {
           </MotiView>
 
           <View className="mt-5">
-            <Text className="text-lg font-semibold text-white">{editorTitle}</Text>
+            <Text className="text-lg font-semibold text-white" style={fonts.semibold}>{editorTitle}</Text>
             <Text className="mt-1 text-sm text-zinc-400">{editorSubtitle}</Text>
           </View>
 
@@ -5763,7 +5767,7 @@ export default function WorkspaceScreen() {
                     style={{ borderWidth: 0.5, opacity: action.loading || action.disabled ? 0.52 : 1 }}
                   >
                     {action.loading ? <ActivityIndicator color="#ffffff" /> : <Icon color="#ffffff" size={20} strokeWidth={2.1} />}
-                    <Text className="text-base font-semibold text-white">{action.label}</Text>
+                    <Text className="text-base font-semibold text-white" style={fonts.semibold}>{action.label}</Text>
                   </View>
                 </LuxPressable>
               );
@@ -5775,6 +5779,7 @@ export default function WorkspaceScreen() {
   }
 
 }
+
 
 
 
