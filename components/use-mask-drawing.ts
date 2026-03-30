@@ -10,6 +10,7 @@ export type MaskPoint = {
 export type MaskStroke = {
   id: string;
   kind?: "stroke" | "region";
+  tool?: "brush" | "eraser";
   width: number;
   points: MaskPoint[];
   path: string;
@@ -17,6 +18,7 @@ export type MaskStroke = {
 
 type UseMaskDrawingOptions = {
   disabled?: boolean;
+  toolMode?: "brush" | "eraser";
   initialBrushWidth: number;
   minBrushWidth: number;
   maxBrushWidth: number;
@@ -89,6 +91,7 @@ function clampPoint(point: MaskPoint, width: number, height: number) {
 
 export function useMaskDrawing({
   disabled = false,
+  toolMode = "brush",
   initialBrushWidth,
   minBrushWidth,
   maxBrushWidth,
@@ -99,6 +102,7 @@ export function useMaskDrawing({
 }: UseMaskDrawingOptions) {
   const [strokes, setStrokes] = useState<MaskStroke[]>([]);
   const [currentStroke, setCurrentStroke] = useState<MaskStroke | null>(null);
+  const [redoStrokes, setRedoStrokes] = useState<MaskStroke[]>([]);
   const [activePoint, setActivePoint] = useState<MaskPoint | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushWidth, setBrushWidth] = useState(initialBrushWidth);
@@ -145,6 +149,7 @@ export function useMaskDrawing({
       const stroke: MaskStroke = {
         id: `mask-stroke-${strokeIdRef.current++}`,
         kind: "stroke",
+        tool: toolMode,
         width: brushWidth,
         points: [point],
         path: buildSmoothPath([point]),
@@ -155,7 +160,7 @@ export function useMaskDrawing({
       setIsDrawing(true);
       scheduleVisualState();
     },
-    [brushWidth, canvasSize.height, canvasSize.width, disabled, scheduleVisualState],
+    [brushWidth, canvasSize.height, canvasSize.width, disabled, scheduleVisualState, toolMode],
   );
 
   const extendStroke = useCallback(
@@ -201,6 +206,7 @@ export function useMaskDrawing({
     setActivePoint(null);
     setIsDrawing(false);
     setStrokes((current) => [...current, activeStrokeValue]);
+    setRedoStrokes([]);
   }, []);
 
   const undoLastStroke = useCallback(() => {
@@ -209,7 +215,32 @@ export function useMaskDrawing({
     setCurrentStroke(null);
     setActivePoint(null);
     setIsDrawing(false);
-    setStrokes((current) => current.slice(0, -1));
+    setStrokes((current) => {
+      if (!current.length) {
+        return current;
+      }
+
+      const nextStroke = current[current.length - 1];
+      setRedoStrokes((redoCurrent) => [...redoCurrent, nextStroke]);
+      return current.slice(0, -1);
+    });
+  }, []);
+
+  const redoLastStroke = useCallback(() => {
+    currentStrokeRef.current = null;
+    activePointRef.current = null;
+    setCurrentStroke(null);
+    setActivePoint(null);
+    setIsDrawing(false);
+    setRedoStrokes((current) => {
+      if (!current.length) {
+        return current;
+      }
+
+      const nextStroke = current[current.length - 1];
+      setStrokes((strokesCurrent) => [...strokesCurrent, nextStroke]);
+      return current.slice(0, -1);
+    });
   }, []);
 
   const clearMask = useCallback(() => {
@@ -219,6 +250,7 @@ export function useMaskDrawing({
     setActivePoint(null);
     setIsDrawing(false);
     setStrokes([]);
+    setRedoStrokes([]);
   }, []);
 
   const replaceMaskWithRegions = useCallback(
@@ -235,6 +267,7 @@ export function useMaskDrawing({
               {
                 id: `mask-region-${strokeIdRef.current++}`,
                 kind: "region" as const,
+                tool: "brush" as const,
                 width: 0,
                 points: sanitizedRegions[0],
                 path: buildCompoundClosedPath(sanitizedRegions),
@@ -242,6 +275,7 @@ export function useMaskDrawing({
             ]
           : [],
       );
+      setRedoStrokes([]);
     },
     [],
   );
@@ -328,5 +362,7 @@ export function useMaskDrawing({
     drawGesture,
     sliderGesture,
     loupeMetrics,
+    redoLastStroke,
+    canRedo: redoStrokes.length > 0,
   };
 }

@@ -71,10 +71,16 @@ import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
 import { uploadLocalFileToCloud } from "../../lib/native-upload";
 import { FloorWizard } from "../../components/floor-wizard";
+import { GardenRedesignStepOne } from "../../components/garden-redesign-step-one";
+import { GardenRedesignStepTwo } from "../../components/garden-redesign-step-two";
+import { GardenRedesignStepThree } from "../../components/garden-redesign-step-three";
 import { InteriorRedesignStepOne } from "../../components/interior-redesign-step-one";
 import { InteriorRedesignStepTwo } from "../../components/interior-redesign-step-two";
 import { InteriorRedesignStepThree } from "../../components/interior-redesign-step-three";
 import { InteriorRedesignStepFour } from "../../components/interior-redesign-step-four";
+import { ExteriorRedesignStepTwo } from "../../components/exterior-redesign-step-two";
+import { ExteriorRedesignStepThree } from "../../components/exterior-redesign-step-three";
+import { ExteriorRedesignStepFour } from "../../components/exterior-redesign-step-four";
 import { LuxPressable } from "../../components/lux-pressable";
 import { PaintWizard } from "../../components/paint-wizard";
 import { ServiceContinueButton } from "../../components/service-continue-button";
@@ -529,12 +535,12 @@ const SPACE_OPTIONS = {
     "Laundry",
   ],
   exterior: [
-    "Modern House",
+    "House",
     "Villa",
     "Apartment",
-    "Office",
+    "Office Building",
     "Retail",
-    "Garage",
+    "Residential",
   ],
   garden: ["Backyard", "Front yard", "Patio", "Pool", "Terrace", "Deck"],
 } as const;
@@ -837,21 +843,24 @@ const GARDEN_STYLE_LIBRARY: ExteriorStyleItem[] = [
 const GARDEN_STYLE_OPTIONS = GARDEN_STYLE_LIBRARY.map((style) => style.title);
 
 const EXTERIOR_BUILDING_PRESET_ALIASES: Record<string, string> = {
-  "modern house": "Modern House",
+  house: "House",
+  "modern house": "House",
   "modern villa": "Villa",
   "luxury villa": "Villa",
   villa: "Villa",
   apartment: "Apartment",
   "apartment block": "Apartment",
   "urban apartments": "Apartment",
-  office: "Office",
-  "office building": "Office",
-  "glass office": "Office",
+  office: "Office Building",
+  "office building": "Office Building",
+  "glass office": "Office Building",
   retail: "Retail",
   "retail store": "Retail",
   "retail frontage": "Retail",
-  garage: "Garage",
-  "garage studio": "Garage",
+  residential: "Residential",
+  "residential home": "Residential",
+  garage: "Residential",
+  "garage studio": "Residential",
 };
 
 const GARDEN_AREA_PRESET_ALIASES: Record<string, string> = {
@@ -1072,6 +1081,81 @@ const PALETTE_OPTIONS: PaletteOption[] = [
   },
 ];
 
+const GARDEN_PALETTE_OPTIONS: PaletteOption[] = [
+  {
+    id: "garden-surprise",
+    label: "Surprise Me",
+    colors: ["#F7F5EE", "#DCC9A3", "#6F8B4E", "#2B3A1F"],
+    description: "An elegant outdoor mix with warm stone and planted depth.",
+  },
+  {
+    id: "garden-gray",
+    label: "Millennial Gray",
+    colors: ["#F3F1EC", "#D7D4CE", "#9B9891", "#5E5B57"],
+    description: "Quiet mineral grays for a polished landscape.",
+  },
+  {
+    id: "garden-terracotta",
+    label: "Terracotta Mirage",
+    colors: ["#FFF4E8", "#F2C7A1", "#D78658", "#8C4A2F"],
+    description: "Mediterranean clay warmth with sunbaked character.",
+  },
+  {
+    id: "garden-neon-sunset",
+    label: "Neon Sunset",
+    colors: ["#1E1230", "#8B3FD9", "#FF5F8A", "#FFD3A8"],
+    description: "Statement dusk tones with vibrant patio energy.",
+  },
+  {
+    id: "garden-forest",
+    label: "Forest Hues",
+    colors: ["#E9F1D8", "#AABD85", "#5E7B50", "#2D4730"],
+    description: "Layered greens inspired by dense planted gardens.",
+  },
+  {
+    id: "garden-peach",
+    label: "Peach Orchard",
+    colors: ["#FFF2E7", "#F7CDBA", "#E79D7B", "#B56549"],
+    description: "Soft orchard warmth and sunlit stone accents.",
+  },
+  {
+    id: "garden-fuschia",
+    label: "Fuschia Blossom",
+    colors: ["#FFF0F7", "#F7B4D6", "#D94C93", "#7F1F4E"],
+    description: "Floral pink intensity with editorial contrast.",
+  },
+  {
+    id: "garden-emerald",
+    label: "Emerald Gem",
+    colors: ["#EDF7F0", "#A6CFB0", "#4F8A65", "#1F4A32"],
+    description: "Refined emerald planting tones with dark grounding.",
+  },
+  {
+    id: "garden-pastel",
+    label: "Pastel Breeze",
+    colors: ["#EAF4FF", "#FDF4D6", "#EADFF2", "#C8D9C1"],
+    description: "Airy resort pastels softened for outdoor living.",
+  },
+  {
+    id: "garden-azure",
+    label: "Azure Mirage",
+    colors: ["#E8F7FF", "#9FD7F2", "#4A97C7", "#24516F"],
+    description: "Poolside blues with crisp reflective clarity.",
+  },
+  {
+    id: "garden-twilight",
+    label: "Twilight Blues",
+    colors: ["#E6ECF8", "#8FA6CF", "#4F6797", "#243454"],
+    description: "Cool evening blues for contemporary terraces.",
+  },
+  {
+    id: "garden-earthy",
+    label: "Earthy Harmony",
+    colors: ["#F4EBDD", "#C7A77A", "#8A6A45", "#4B3A28"],
+    description: "Grounded natural browns with handcrafted warmth.",
+  },
+];
+
 const POPULAR_PALETTE_IDS = new Set(["surprise", "gray"]);
 
 const ASPECT_RATIO_OPTIONS: AspectRatioOption[] = [
@@ -1165,7 +1249,7 @@ const ROOM_CARD_META: Record<string, RoomCardMeta> = {
     description: "Utility upgraded with boutique order.",
     image: require("../../assets/media/discover/home/home-laundry.jpg"),
   },
-  "Modern House": {
+  House: {
     icon: House,
     description: "Contemporary curbside presence.",
     image: require("../../assets/media/discover/exterior/exterior-modern-villa.jpg"),
@@ -1180,7 +1264,7 @@ const ROOM_CARD_META: Record<string, RoomCardMeta> = {
     description: "Refined urban facade refresh.",
     image: require("../../assets/media/discover/exterior/exterior-apartment-block.jpg"),
   },
-  Office: {
+  "Office Building": {
     icon: Building2,
     description: "Sharper executive frontage.",
     image: require("../../assets/media/discover/exterior/exterior-glass-office.jpg"),
@@ -1190,10 +1274,10 @@ const ROOM_CARD_META: Record<string, RoomCardMeta> = {
     description: "Street-facing brand appeal.",
     image: require("../../assets/media/discover/exterior/exterior-retail-storefront.jpg"),
   },
-  Garage: {
+  Residential: {
     icon: CarFront,
-    description: "Polished practical shell.",
-    image: require("../../assets/media/discover/exterior/exterior-premium-garage.jpg"),
+    description: "Elevated home exterior character.",
+    image: require("../../assets/media/discover/exterior/exterior-stone-manor.jpg"),
   },
   Backyard: {
     icon: Trees,
@@ -1756,7 +1840,8 @@ export default function WorkspaceScreen() {
   const isFloorService = serviceType === "floor";
   const isPaintService = serviceType === "paint";
   const isLeanGenerationService = isExteriorService || isGardenService;
-  const shouldHideNativeTabBar = isServiceProcessing || (isInteriorService && workflowStep <= 3);
+  const shouldHideNativeTabBar =
+    isServiceProcessing || ((isInteriorService && workflowStep <= 3) || (isExteriorService && workflowStep <= 3));
   const presetRoomOptions =
     serviceType === "exterior"
       ? SPACE_OPTIONS.exterior
@@ -1931,8 +2016,8 @@ export default function WorkspaceScreen() {
   }, [isPaintService, selectedImage?.uri]);
 
   const selectedPalette = useMemo(
-    () => PALETTE_OPTIONS.find((palette) => palette.id === selectedPaletteId) ?? null,
-    [selectedPaletteId],
+    () => (isGardenService ? GARDEN_PALETTE_OPTIONS : PALETTE_OPTIONS).find((palette) => palette.id === selectedPaletteId) ?? null,
+    [isGardenService, selectedPaletteId],
   );
 
   const selectedMode = useMemo(
@@ -2136,10 +2221,177 @@ export default function WorkspaceScreen() {
       })),
     [],
   );
-  const selectedPaletteOrDefault = useMemo(
-    () => selectedPalette ?? (isLeanGenerationService ? PALETTE_OPTIONS[0] : null),
-    [isLeanGenerationService, selectedPalette],
+  const exteriorBuildingCards = useMemo(
+    () => [
+      {
+        id: "apartment",
+        title: "Apartment",
+        image: require("../../assets/media/discover/exterior/exterior-apartment-block.jpg"),
+      },
+      {
+        id: "house",
+        title: "House",
+        image: require("../../assets/media/discover/exterior/exterior-modern-villa.jpg"),
+      },
+      {
+        id: "office-building",
+        title: "Office Building",
+        image: require("../../assets/media/discover/exterior/exterior-glass-office.jpg"),
+      },
+      {
+        id: "residential",
+        title: "Residential",
+        image: require("../../assets/media/discover/exterior/exterior-stone-manor.jpg"),
+      },
+      {
+        id: "retail",
+        title: "Retail",
+        image: require("../../assets/media/discover/exterior/exterior-retail-storefront.jpg"),
+      },
+      {
+        id: "villa",
+        title: "Villa",
+        image: require("../../assets/media/discover/exterior/exterior-pool-house.jpg"),
+      },
+    ],
+    [],
   );
+  const selectedExteriorBuildingType = useMemo(
+    () => (selectedRoom ? EXTERIOR_BUILDING_PRESET_ALIASES[selectedRoom.trim().toLowerCase()] ?? selectedRoom : null),
+    [selectedRoom],
+  );
+  const exteriorStyleGalleryCards = useMemo(
+    () => [
+      {
+        id: "custom",
+        title: "Custom",
+        image: require("../../assets/media/styles/style-luxury.jpg"),
+      },
+      {
+        id: "art-deco",
+        title: "Art Deco",
+        image: require("../../assets/media/styles/style-art-deco.jpg"),
+      },
+      {
+        id: "brutalist",
+        title: "Brutalist",
+        image: require("../../assets/media/styles/style-exterior-brutalist.jpg"),
+      },
+      {
+        id: "chinese",
+        title: "Chinese",
+        image: require("../../assets/media/styles/style-art-nouveau.jpg"),
+      },
+      {
+        id: "cottage",
+        title: "Cottage",
+        image: require("../../assets/media/styles/style-rustic-alt.jpg"),
+      },
+      {
+        id: "farm-house",
+        title: "Farm House",
+        image: require("../../assets/media/styles/style-rustic.jpg"),
+      },
+      {
+        id: "french",
+        title: "French",
+        image: require("../../assets/media/styles/style-french-country.jpg"),
+      },
+      {
+        id: "gothic",
+        title: "Gothic",
+        image: require("../../assets/media/styles/style-exterior-gothic.jpg"),
+      },
+      {
+        id: "italianate",
+        title: "Italianate",
+        image: require("../../assets/media/styles/style-neo-classic-alt.jpg"),
+      },
+    ],
+    [],
+  );
+  const selectedExteriorStyle = useMemo(
+    () => (exteriorStyleGalleryCards.some((style) => style.title === selectedStyle) ? selectedStyle : null),
+    [exteriorStyleGalleryCards, selectedStyle],
+  );
+  const exteriorPaletteCards = useMemo(
+    () => [
+      { id: "surprise", label: "Surprise Me", colors: ["#f7f7f5", "#f4d7a6", "#fd5d82", "#6b8afd", "#121212"] },
+      { id: "gray", label: "Millennial Gray", colors: ["#f5f5f4", "#d6d3d1", "#a8a29e", "#78716c", "#44403c"] },
+      { id: "terracotta", label: "Terracotta Mirage", colors: ["#fff7ed", "#fed7aa", "#fdba74", "#fb923c", "#ea580c"] },
+      { id: "sunset", label: "Neon Sunset", colors: ["#16081f", "#4c1d95", "#7c3aed", "#d946ef", "#f5d0fe"] },
+      { id: "forest", label: "Forest Hues", colors: ["#ecfccb", "#cbd5b1", "#9caf88", "#6f8f72", "#334d36"] },
+      { id: "peach", label: "Peach Orchard", colors: ["#fff7ed", "#fde1d3", "#fac9b8", "#f3b49f", "#e68a73"] },
+      { id: "fuchsia", label: "Fuschia Blossom", colors: ["#fdf2f8", "#fbcfe8", "#f9a8d4", "#ec4899", "#be185d"] },
+      { id: "emerald", label: "Emerald Gem", colors: ["#e8f5ec", "#bfd8c2", "#7aa182", "#425a41", "#1f2f23"] },
+      { id: "pastel", label: "Pastel Breeze", colors: ["#e0f2fe", "#fffbea", "#eef6f0", "#f5f4f7", "#e9d5ff"] },
+    ],
+    [],
+  );
+  const gardenPaletteCards = useMemo(
+    () =>
+      GARDEN_PALETTE_OPTIONS.map((palette) => ({
+        id: palette.id,
+        label: palette.label,
+        colors: palette.colors,
+      })),
+    [],
+  );
+  const gardenStyleGalleryCards = useMemo(
+    () => [
+      {
+        id: "custom",
+        title: "Custom",
+        image: require("../../assets/media/discover/garden/garden-backyard.jpg"),
+      },
+      {
+        id: "christmas",
+        title: "Christmas",
+        image: require("../../assets/media/discover/garden/garden-villa-entry.jpg"),
+      },
+      {
+        id: "modern",
+        title: "Modern",
+        image: require("../../assets/media/discover/garden/garden-terrace.jpg"),
+      },
+      {
+        id: "tropical",
+        title: "Tropical",
+        image: require("../../assets/media/discover/garden/garden-swimming-pool.jpg"),
+      },
+      {
+        id: "minimalistic",
+        title: "Minimalistic",
+        image: require("../../assets/media/discover/garden/garden-deck.jpg"),
+      },
+      {
+        id: "bohemian",
+        title: "Bohemian",
+        image: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
+      },
+      {
+        id: "rustic",
+        title: "Rustic",
+        image: require("../../assets/media/discover/garden/garden-patio.jpg"),
+      },
+      {
+        id: "vintage",
+        title: "Vintage",
+        image: require("../../assets/media/discover/garden/garden-front-yard.jpg"),
+      },
+      {
+        id: "baroque",
+        title: "Baroque",
+        image: require("../../assets/media/discover/garden/garden-pool-courtyard.jpg"),
+      },
+    ],
+    [],
+  );
+  const selectedGardenStyle = useMemo(
+    () => (gardenStyleGalleryCards.some((style) => style.title === selectedStyle) ? selectedStyle : null),
+    [gardenStyleGalleryCards, selectedStyle],
+  );
+  const selectedPaletteOrDefault = useMemo(() => selectedPalette ?? null, [selectedPalette]);
   const selectedModeOrDefault = useMemo(
     () => selectedMode ?? (isLeanGenerationService ? MODE_OPTIONS[0] : null),
     [isLeanGenerationService, selectedMode],
@@ -2392,7 +2644,7 @@ export default function WorkspaceScreen() {
     if (workflowStep === 0) return Boolean(selectedImage);
     if (workflowStep === 1) return Boolean(selectedRoom);
     if (workflowStep === 2) {
-      if (!isPaintService && !isFloorService && selectedStyle === "Custom") {
+      if (!isPaintService && !isFloorService && !isLeanGenerationService && selectedStyle === "Custom") {
         return customPrompt.trim().length > 0;
       }
       return Boolean(selectedStyle);
@@ -2401,8 +2653,11 @@ export default function WorkspaceScreen() {
       if (isPaintService || isFloorService) {
         return Boolean(selectedFinishId);
       }
-      if (isLeanGenerationService) {
-        return Boolean(selectedImage && selectedRoom && selectedStyle);
+      if (isExteriorService) {
+        return Boolean(selectedPaletteId);
+      }
+      if (isGardenService) {
+        return Boolean(selectedPaletteId);
       }
       return Boolean(selectedModeId && selectedPaletteId);
     }
@@ -2426,8 +2681,8 @@ export default function WorkspaceScreen() {
       hasImage: Boolean(selectedImage),
       hasRoom: Boolean(selectedRoom),
       hasStyle: Boolean(selectedStyle),
-      hasMode: isLeanGenerationService || isPaintService || isFloorService || Boolean(selectedModeId),
-      hasPalette: isLeanGenerationService || isPaintService || isFloorService || Boolean(selectedPaletteId),
+      hasMode: isExteriorService || isGardenService || isPaintService || isFloorService || Boolean(selectedModeId),
+      hasPalette: isGardenService || isPaintService || isFloorService || Boolean(selectedPaletteId),
     });
 
     if (!missingSelection) {
@@ -2770,6 +3025,11 @@ export default function WorkspaceScreen() {
       router.back();
       return;
     }
+    if (isGardenService && workflowStep === 2) {
+      setWizardNavDirection(-1);
+      setWorkflowStep(0);
+      return;
+    }
     if (workflowStep === 4) {
       return;
     }
@@ -2780,7 +3040,7 @@ export default function WorkspaceScreen() {
     }
     setWizardNavDirection(-1);
     setWorkflowStep((prev) => Math.max(prev - 1, 0));
-  }, [effectiveSignedIn, router, workflowStep]);
+  }, [effectiveSignedIn, isGardenService, router, workflowStep]);
 
   const handleResetWizard = useCallback(() => {
     triggerHaptic();
@@ -3218,6 +3478,24 @@ export default function WorkspaceScreen() {
     });
   }, [canContinue, diagnostic, effectiveSignedIn, handleGenerate, hasGenerationCredits, openAuthWall, router, workflowStep]);
 
+  const handleContinueFromGardenPhotoStep = useCallback(() => {
+    if (!selectedImage) {
+      Alert.alert("Complete this step", "Please add a photo to continue.");
+      return;
+    }
+
+    const inferredGardenArea =
+      (selectedImage.label ? GARDEN_AREA_PRESET_ALIASES[selectedImage.label.trim().toLowerCase()] : null) ?? "Backyard";
+
+    triggerHaptic();
+    setSelectedRoom(inferredGardenArea);
+    setDraftRoom(inferredGardenArea);
+    setWizardNavDirection(1);
+    startTransition(() => {
+      setWorkflowStep(2);
+    });
+  }, [selectedImage, setDraftRoom]);
+
   const handleSelectRoom = useCallback(
     (value: string) => {
       triggerHaptic();
@@ -3246,6 +3524,77 @@ export default function WorkspaceScreen() {
     setDraftRoom(selectedRoom);
     handleContinue();
   }, [handleContinue, selectedRoom, setDraftRoom]);
+
+  const handleSetSelectedExteriorBuildingType = useCallback(
+    (buildingType: string | null) => {
+      setSelectedRoom(buildingType);
+      setDraftRoom(buildingType);
+    },
+    [setDraftRoom],
+  );
+
+  const handleContinueFromExteriorBuildingStep = useCallback(() => {
+    const normalizedBuildingType = selectedExteriorBuildingType ?? null;
+    if (!normalizedBuildingType) {
+      return;
+    }
+
+    setSelectedRoom(normalizedBuildingType);
+    setDraftRoom(normalizedBuildingType);
+    handleContinue();
+  }, [handleContinue, selectedExteriorBuildingType, setDraftRoom]);
+
+  const handleSetSelectedExteriorStyle = useCallback(
+    (style: string | null) => {
+      setSelectedStyle(style);
+      setDraftStyle(style);
+    },
+    [setDraftStyle],
+  );
+
+  const handleContinueFromExteriorStyleStep = useCallback(() => {
+    if (!selectedExteriorStyle) {
+      return;
+    }
+
+    setDraftStyle(selectedExteriorStyle);
+    handleContinue();
+  }, [handleContinue, selectedExteriorStyle, setDraftStyle]);
+
+  const handleContinueFromExteriorPaletteStep = useCallback(() => {
+    if (!selectedPaletteId) {
+      return;
+    }
+
+    setDraftPalette(selectedPaletteId);
+    handleContinue();
+  }, [handleContinue, selectedPaletteId, setDraftPalette]);
+
+  const handleSetSelectedGardenStyle = useCallback(
+    (style: string | null) => {
+      setSelectedStyle(style);
+      setDraftStyle(style);
+    },
+    [setDraftStyle],
+  );
+
+  const handleContinueFromGardenStyleStep = useCallback(() => {
+    if (!selectedGardenStyle) {
+      return;
+    }
+
+    setDraftStyle(selectedGardenStyle);
+    handleContinue();
+  }, [handleContinue, selectedGardenStyle, setDraftStyle]);
+
+  const handleContinueFromGardenPaletteStep = useCallback(() => {
+    if (!selectedPaletteId) {
+      return;
+    }
+
+    setDraftPalette(selectedPaletteId);
+    handleContinue();
+  }, [handleContinue, selectedPaletteId, setDraftPalette]);
 
   const handleSetSelectedStyle = useCallback(
     (style: string | null) => {
@@ -3430,6 +3779,109 @@ export default function WorkspaceScreen() {
     );
   }
 
+  if (isExteriorService && workflowStep === 0) {
+    return (
+      <InteriorRedesignStepOne
+        creditCount={creditBalance}
+        photoUri={selectedImage?.uri ?? null}
+        examplePhotos={[EXTERIOR_EXAMPLE_PHOTOS[0], EXTERIOR_EXAMPLE_PHOTOS[1], EXTERIOR_EXAMPLE_PHOTOS[2]]}
+        emptyStateSubtitle="Redesign and beautify your home"
+        loadingExampleId={isLoadingExample}
+        onTakePhoto={handleInteriorTakePhoto}
+        onChooseFromGallery={handleInteriorChooseFromGallery}
+        onRemovePhoto={handleClearSelectedImage}
+        onSelectExample={(example) => {
+          void handleSelectExample(example);
+        }}
+        onContinue={handleContinue}
+        onExit={handleCloseWizard}
+      />
+    );
+  }
+
+  if (isGardenService && workflowStep === 0) {
+    return (
+      <GardenRedesignStepOne
+        creditCount={creditBalance}
+        photoUri={selectedImage?.uri ?? null}
+        examplePhotos={[GARDEN_EXAMPLE_PHOTOS[0], GARDEN_EXAMPLE_PHOTOS[2], GARDEN_EXAMPLE_PHOTOS[1]]}
+        loadingExampleId={isLoadingExample}
+        onTakePhoto={handleInteriorTakePhoto}
+        onChooseFromGallery={handleInteriorChooseFromGallery}
+        onRemovePhoto={handleClearSelectedImage}
+        onSelectExample={(example) => {
+          void handleSelectExample(example);
+        }}
+        onContinue={handleContinueFromGardenPhotoStep}
+        onExit={handleCloseWizard}
+      />
+    );
+  }
+
+  if (isExteriorService && workflowStep === 1) {
+    return (
+      <ExteriorRedesignStepTwo
+        cards={exteriorBuildingCards}
+        selectedBuildingType={selectedExteriorBuildingType}
+        onSelectBuildingType={handleSetSelectedExteriorBuildingType}
+        onBack={handleBack}
+        onContinue={handleContinueFromExteriorBuildingStep}
+        onExit={handleCloseWizard}
+      />
+    );
+  }
+
+  if (isExteriorService && workflowStep === 2) {
+    return (
+      <ExteriorRedesignStepThree
+        creditCount={creditBalance}
+        styles={exteriorStyleGalleryCards}
+        selectedStyle={selectedExteriorStyle}
+        onSelectStyle={handleSetSelectedExteriorStyle}
+        onContinue={handleContinueFromExteriorStyleStep}
+        onExit={handleCloseWizard}
+      />
+    );
+  }
+
+  if (isGardenService && workflowStep === 2) {
+    return (
+      <GardenRedesignStepTwo
+        styles={gardenStyleGalleryCards}
+        selectedStyle={selectedGardenStyle}
+        onSelectStyle={handleSetSelectedGardenStyle}
+        onBack={handleBack}
+        onContinue={handleContinueFromGardenStyleStep}
+        onExit={handleCloseWizard}
+      />
+    );
+  }
+
+  if (isExteriorService && workflowStep === 3) {
+    return (
+      <ExteriorRedesignStepFour
+        creditCount={creditBalance}
+        palettes={exteriorPaletteCards}
+        selectedPaletteId={selectedPaletteId}
+        onSelectPalette={handleSetSelectedPaletteId}
+        onContinue={handleContinueFromExteriorPaletteStep}
+        onExit={handleCloseWizard}
+      />
+    );
+  }
+
+  if (isGardenService && workflowStep === 3) {
+    return (
+      <GardenRedesignStepThree
+        palettes={gardenPaletteCards}
+        selectedPaletteId={selectedPaletteId}
+        onSelectPalette={handleSetSelectedPaletteId}
+        onContinue={handleContinueFromGardenPaletteStep}
+        onExit={handleCloseWizard}
+      />
+    );
+  }
+
   if (isInteriorService && workflowStep === 1) {
     return (
       <InteriorRedesignStepTwo
@@ -3473,8 +3925,16 @@ export default function WorkspaceScreen() {
   }
 
   if (workflowStep <= 3) {
-    const currentStepNumber = workflowStep + 1;
-    const totalWizardSteps = 4;
+    const currentStepNumber = isGardenService
+      ? workflowStep === 0
+        ? 1
+        : workflowStep === 2
+          ? 2
+          : workflowStep === 3
+            ? 3
+            : 1
+      : workflowStep + 1;
+    const totalWizardSteps = isGardenService ? 3 : 4;
     const isFinalWizardStep = workflowStep === 3;
     const isGenerationReviewStep = isFinalWizardStep;
     const isPhotoStep = workflowStep === 0;

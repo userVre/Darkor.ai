@@ -1,10 +1,10 @@
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Camera, Gem, Image as GalleryIcon, Plus } from "lucide-react-native";
+import { Camera, Diamond, Image as GalleryIcon, Plus } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -15,24 +15,22 @@ import Animated, {
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
-import { HomeToolsBottomNav } from "./home-tools-bottom-nav";
 
-export type InteriorRedesignStepOneExamplePhoto = {
+type GardenRedesignStepOneExamplePhoto = {
   id: string;
   label: string;
   source: number;
 };
 
-type InteriorRedesignStepOneProps = {
+type GardenRedesignStepOneProps = {
   creditCount: number;
   photoUri: string | null;
-  examplePhotos: InteriorRedesignStepOneExamplePhoto[];
-  emptyStateSubtitle?: string;
+  examplePhotos: GardenRedesignStepOneExamplePhoto[];
   loadingExampleId?: string | null;
   onTakePhoto: () => Promise<boolean>;
   onChooseFromGallery: () => Promise<boolean>;
   onRemovePhoto: () => void;
-  onSelectExample: (example: InteriorRedesignStepOneExamplePhoto) => void;
+  onSelectExample: (example: GardenRedesignStepOneExamplePhoto) => void;
   onContinue: () => void;
   onExit: () => void;
 };
@@ -50,11 +48,10 @@ function scaleValue(value: number, scale: number) {
   return value * scale;
 }
 
-export function InteriorRedesignStepOne({
+export function GardenRedesignStepOne({
   creditCount,
   photoUri,
   examplePhotos,
-  emptyStateSubtitle = "Redesign and beautify your room",
   loadingExampleId,
   onTakePhoto,
   onChooseFromGallery,
@@ -62,9 +59,9 @@ export function InteriorRedesignStepOne({
   onSelectExample,
   onContinue,
   onExit,
-}: InteriorRedesignStepOneProps) {
-  const router = useRouter();
+}: GardenRedesignStepOneProps) {
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
@@ -76,11 +73,13 @@ export function InteriorRedesignStepOne({
   const containerSize = mainWidth;
   const innerScale = containerSize / 416;
   const thumbnailSize = scaleValue(124, layoutScale);
-  const continueBottom = 64 + scaleValue(24, layoutScale);
-  const canContinue = Boolean(photoUri);
-  const progressSegmentWidth = scaleValue(92, layoutScale);
   const progressGap = scaleValue(16, layoutScale);
+  const progressSegmentWidth = (mainWidth - progressGap * 2) / 3;
+  const bottomContainerHeight = scaleValue(132, layoutScale);
+  const buttonHeight = scaleValue(60, layoutScale);
+  const buttonTop = scaleValue(52, layoutScale);
   const removeOffset = 20;
+  const canContinue = Boolean(photoUri);
 
   const [isSheetMounted, setIsSheetMounted] = useState(false);
   const [pendingSource, setPendingSource] = useState<MediaSourceOption | null>(null);
@@ -191,24 +190,12 @@ export function InteriorRedesignStepOne({
     ]);
   };
 
-  const handleToolsPress = () => {
+  const handleContinuePress = () => {
+    if (!canContinue) {
+      return;
+    }
     triggerHaptic();
-    router.navigate("/");
-  };
-
-  const handleCreatePress = () => {
-    triggerHaptic();
-    router.navigate("/workspace");
-  };
-
-  const handleDiscoverPress = () => {
-    triggerHaptic();
-    router.navigate("/gallery");
-  };
-
-  const handleProfilePress = () => {
-    triggerHaptic();
-    router.push("/profile");
+    onContinue();
   };
 
   return (
@@ -216,14 +203,15 @@ export function InteriorRedesignStepOne({
       <StatusBar style="dark" />
 
       <View style={[styles.creditBadge, { top: topBadgeTop, left: sideInset }]}>
-        <Gem color="#FFFFFF" size={13} strokeWidth={2.1} />
+        <Diamond color="#FFFFFF" size={13} strokeWidth={2.1} />
         <Text style={styles.creditText}>{creditCount}</Text>
       </View>
 
-      <Text style={[styles.stepText, { top: topTitleTop }]}>Step 1 / 4</Text>
+      <Text style={[styles.stepText, { top: topTitleTop }]}>Step 1 / 3</Text>
 
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel="Close garden upload"
         onPress={handleExitPress}
         style={[styles.closeButton, { top: topTitleTop, right: scaleValue(36, layoutScale) }]}
       >
@@ -231,14 +219,14 @@ export function InteriorRedesignStepOne({
       </Pressable>
 
       <View style={[styles.progressRow, { top: progressTop, width: mainWidth, right: sideInset }]}>
-        {Array.from({ length: 4 }).map((_, index) => (
+        {Array.from({ length: 3 }).map((_, index) => (
           <View
-            key={`interior-progress-${index}`}
+            key={`garden-progress-${index}`}
             style={[
               styles.progressSegment,
               {
                 width: progressSegmentWidth,
-                marginRight: index === 3 ? 0 : progressGap,
+                marginRight: index === 2 ? 0 : progressGap,
                 backgroundColor: index === 0 ? "#0A0A0A" : "#E0E0E0",
               },
             ]}
@@ -246,7 +234,15 @@ export function InteriorRedesignStepOne({
         ))}
       </View>
 
-      <View style={[styles.content, { paddingTop: contentTop }]}>
+      <ScrollView
+        style={styles.content}
+        contentInsetAdjustmentBehavior="never"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingTop: contentTop,
+          paddingBottom: bottomContainerHeight + insets.bottom + scaleValue(36, layoutScale),
+        }}
+      >
         <Text style={[styles.header, { marginLeft: sideInset }]}>Add a Photo</Text>
 
         <View
@@ -281,9 +277,9 @@ export function InteriorRedesignStepOne({
             </>
           ) : (
             <>
-              <Text style={[styles.emptyTitle, { marginTop: scaleValue(148, innerScale) }]}>Start Redesigning</Text>
+              <Text style={[styles.emptyTitle, { marginTop: scaleValue(148, innerScale) }]}>Start Gardening</Text>
               <Text style={[styles.emptySubtitle, { marginTop: scaleValue(24, innerScale) }]}>
-                {emptyStateSubtitle}
+                Redesign and beautify your garden
               </Text>
               <Pressable
                 accessibilityRole="button"
@@ -291,26 +287,15 @@ export function InteriorRedesignStepOne({
                 style={[
                   styles.addPhotoButton,
                   {
-                    left: scaleValue(124, innerScale),
-                    right: scaleValue(124, innerScale),
+                    left: scaleValue(118, innerScale),
+                    right: scaleValue(118, innerScale),
                     bottom: scaleValue(144, innerScale),
                     height: scaleValue(48, innerScale),
                     borderRadius: scaleValue(24, innerScale),
                   },
                 ]}
               >
-                <View
-                  style={[
-                    styles.addPhotoIconCircle,
-                    {
-                      width: scaleValue(16, innerScale),
-                      height: scaleValue(16, innerScale),
-                      borderRadius: scaleValue(8, innerScale),
-                    },
-                  ]}
-                >
-                  <Plus color="#0A0A0A" size={12} strokeWidth={2.6} />
-                </View>
+                <Plus color="#FFFFFF" size={14} strokeWidth={2.6} />
                 <Text style={styles.addPhotoButtonText}>Add a Photo</Text>
               </Pressable>
             </>
@@ -342,39 +327,40 @@ export function InteriorRedesignStepOne({
               }}
             >
               <View style={styles.thumbnailFrame}>
-                <Image source={example.source} style={styles.thumbnailImage} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+                <Image
+                  source={example.source}
+                  style={styles.thumbnailImage}
+                  contentFit="cover"
+                  transition={120}
+                  cachePolicy="memory-disk"
+                />
                 {loadingExampleId === example.id ? <View style={styles.thumbnailOverlay} /> : null}
               </View>
             </Pressable>
           ))}
         </ScrollView>
-      </View>
+      </ScrollView>
 
-      <Pressable
-        accessibilityRole="button"
-        disabled={!canContinue}
-        onPress={onContinue}
-        pointerEvents={canContinue ? "auto" : "none"}
-        style={[
-          styles.continueButton,
-          {
-            width: mainWidth,
-            bottom: continueBottom,
-            backgroundColor: canContinue ? ACTIVE_CONTINUE_COLOR : "#E8E8E8",
-          },
-        ]}
-      >
-        <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>Continue</Text>
-      </Pressable>
-
-      <View style={styles.bottomNavWrap}>
-        <HomeToolsBottomNav
-          activeTab="create"
-          onToolsPress={handleToolsPress}
-          onCreatePress={handleCreatePress}
-          onDiscoverPress={handleDiscoverPress}
-          onProfilePress={handleProfilePress}
-        />
+      <View style={[styles.bottomContainer, { paddingBottom: insets.bottom }]}>
+        <View style={[styles.bottomContainerInner, { height: bottomContainerHeight }]}>
+          <Pressable
+            accessibilityRole="button"
+            disabled={!canContinue}
+            onPress={handleContinuePress}
+            pointerEvents={canContinue ? "auto" : "none"}
+            style={[
+              styles.continueButton,
+              {
+                width: mainWidth,
+                height: buttonHeight,
+                marginTop: buttonTop,
+                backgroundColor: canContinue ? ACTIVE_CONTINUE_COLOR : "#E8E8E8",
+              },
+            ]}
+          >
+            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>Continue</Text>
+          </Pressable>
+        </View>
       </View>
 
       {isSheetMounted ? (
@@ -548,11 +534,6 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: "#0A0A0A",
   },
-  addPhotoIconCircle: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-  },
   addPhotoButtonText: {
     color: "#FFFFFF",
     fontSize: 14,
@@ -579,12 +560,20 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(10,10,10,0.14)",
   },
-  continueButton: {
+  bottomContainer: {
     position: "absolute",
     left: 0,
     right: 0,
-    alignSelf: "center",
-    height: 60,
+    bottom: 0,
+    backgroundColor: "#FFFFFF",
+  },
+  bottomContainerInner: {
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "#F1F1F1",
+    backgroundColor: "#FFFFFF",
+  },
+  continueButton: {
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
@@ -593,12 +582,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
     ...fonts.semibold,
-  },
-  bottomNavWrap: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
   sheetOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -678,6 +661,6 @@ const styles = StyleSheet.create({
     color: "#0A0A0A",
     fontSize: 15,
     lineHeight: 18,
-    ...fonts.medium,
+    ...fonts.semibold,
   },
 });

@@ -3,21 +3,25 @@ import { useAction, useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
+import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Image as NativeImage, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Alert, Image as NativeImage, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Circle as SvgCircle, G, Path as SvgPath, Rect } from "react-native-svg";
+import Svg, { Circle as SvgCircle, Defs, G, Mask as SvgMask, Path as SvgPath, Rect } from "react-native-svg";
 import { captureRef } from "react-native-view-shot";
 import { spacing } from "../styles/spacing";
 import {
+  Box,
+  BrushCleaning,
   Check,
   ChevronLeft,
-  RotateCcw,
-  Sparkles,
-  Trash2,
+  Eraser,
+  Redo2,
+  Undo2,
+  X,
 } from "lucide-react-native";
 import { fonts } from "../styles/typography";
 
@@ -33,22 +37,22 @@ import {
 } from "../lib/guest-testing";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { PAINT_WIZARD_EXAMPLE_PHOTOS } from "../lib/wizard-example-photos";
+import { PaintIntroScreen, type PaintIntroExamplePhoto } from "./paint-intro-screen";
 import { useProSuccess } from "./pro-success-context";
 import { ServiceContinueButton } from "./service-continue-button";
 import { ServiceProcessingScreen } from "./service-processing-screen";
 import { ServiceWizardHeader } from "./service-wizard-header";
 import {
-  ServiceIntakeStep,
   ServiceSelectionCard,
   ServiceSelectionGrid,
   ServiceWizardStepScreen,
-  type ServiceExamplePhoto,
 } from "./service-wizard-shared";
 import { LuxPressable } from "./lux-pressable";
 import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerSession } from "./viewer-session-context";
 
 type WizardStep = "intake" | "mask" | "colors" | "finish" | "processing" | "result";
+type MaskTool = "brush" | "eraser" | "surface";
 
 type SelectedImage = {
   uri: string;
@@ -82,8 +86,8 @@ const pointerClassName = "cursor-pointer";
 const OLED_BLACK = "#000000";
 const CARD_BLACK = SERVICE_WIZARD_THEME.colors.surfaceRaised;
 const CARD_BLACK_SOFT = SERVICE_WIZARD_THEME.colors.surfaceSoft;
-const MASK_COLOR = "#7C3AED80";
-const MASK_ACCENT = "#7C3AED";
+const MASK_COLOR = "rgba(255,59,48,0.42)";
+const MASK_ACCENT = "#FF3B30";
 const MASK_CAPTURE_COLOR = "#FFFFFF";
 const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
@@ -254,6 +258,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const startGeneration = useMutation("generations:startGeneration" as any);
 
   const [step, setStep] = useState<WizardStep>("intake");
+  const [maskTool, setMaskTool] = useState<MaskTool>("brush");
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
   const [selectedColorValue, setSelectedColorValue] = useState<string | null>(null);
   const [selectedFinishId, setSelectedFinishId] = useState(FINISH_OPTIONS[0].id);
@@ -286,13 +291,16 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     handleCanvasLayout,
     clearMask,
     undoLastStroke,
+    redoLastStroke,
     replaceMaskWithRegions,
     resetMaskDrawing,
     drawGesture,
     sliderGesture,
     loupeMetrics,
+    canRedo,
   } = useMaskDrawing({
-    disabled: isDetecting || isAutoDetecting,
+    disabled: isDetecting || isAutoDetecting || maskTool === "surface",
+    toolMode: maskTool === "eraser" ? "eraser" : "brush",
     initialBrushWidth: 24,
     minBrushWidth: BRUSH_MIN,
     maxBrushWidth: BRUSH_MAX,
@@ -316,10 +324,14 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     : "Upload a room photo for precise wall recoloring.";
   const canContinueFromMask = hasMask && !isDetecting && !isAutoDetecting;
   const canContinueFromColors = Boolean(selectedColor && selectedImage && hasMask);
+  const activeMaskTool = maskTool === "surface" ? "brush" : maskTool;
+  const maskWidthLabel = activeMaskTool === "eraser" ? "Eraser Width" : "Brush Width";
   const colorCardSize = Math.max((width - 46) / 2, 154);
   const frameAspectRatio = selectedImage ? selectedImage.width / Math.max(selectedImage.height, 1) : 1;
   const previewHeight = Math.min(Math.max((width - 32) / Math.max(frameAspectRatio, 0.6), 240), height * 0.54);
   const maskPreviewHeight = Math.min(previewHeight, Math.max(height * 0.4, 248));
+  const maskCanvasWidth = Math.min(width - 48, 412);
+  const maskCanvasHeight = Math.min(Math.max(height * 0.45, 352), 416);
 
   useEffect(() => {
     return () => {
@@ -383,6 +395,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
   const resetProject = useCallback(() => {
     setStep("intake");
+    setMaskTool("brush");
     setSelectedImage(null);
     setGeneratedImageUrl(null);
     setGenerationId(null);
@@ -442,6 +455,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
   const applySelectedImage = useCallback(
     (nextImage: SelectedImage) => {
+      setMaskTool("brush");
       setSelectedImage(nextImage);
       setGeneratedImageUrl(null);
       setGenerationId(null);
@@ -453,6 +467,12 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     },
     [resetMaskDrawing],
   );
+
+  const advanceToMaskStep = useCallback(() => {
+    triggerHaptic();
+    setStep("mask");
+    resetDetection();
+  }, [resetDetection]);
 
   const handleContinueFromIntake = useCallback(() => {
     if (!selectedImage) {
@@ -480,6 +500,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
   const handleClearSelectedImage = useCallback(() => {
     triggerHaptic();
+    setMaskTool("brush");
     setSelectedImage(null);
     setGeneratedImageUrl(null);
     setGenerationId(null);
@@ -552,7 +573,19 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     selectedImage,
     showToast,
     viewerReady,
-  ]);
+    ]);
+
+  const handleSelectMaskTool = useCallback(
+    (tool: MaskTool) => {
+      triggerHaptic();
+      setMaskTool(tool);
+
+      if (tool === "surface") {
+        void handleAutoDetectMask();
+      }
+    },
+    [handleAutoDetectMask],
+  );
 
   const handleSelectMedia = useCallback(
     async (source: "camera" | "library") => {
@@ -569,7 +602,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
               ? "Please enable camera access to capture a room photo."
               : "Please enable photo library access to upload a room photo.",
           );
-          return;
+          return false;
         }
 
         const result =
@@ -583,7 +616,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                 quality: 1,
               });
 
-        if (result.canceled || !result.assets[0]) return;
+        if (result.canceled || !result.assets[0]) return false;
 
         const asset = result.assets[0];
         applySelectedImage({
@@ -592,15 +625,18 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
           width: asset.width ?? 1080,
           height: asset.height ?? 1440,
         });
+        advanceToMaskStep();
+        return true;
       } catch (error) {
         Alert.alert("Unable to open media", error instanceof Error ? error.message : "Please try again.");
+        return false;
       }
     },
-    [applySelectedImage],
+    [advanceToMaskStep, applySelectedImage],
   );
 
   const handleSelectExample = useCallback(
-    (example: ServiceExamplePhoto) => {
+    (example: PaintIntroExamplePhoto) => {
       const resolved = NativeImage.resolveAssetSource(example.source);
       if (!resolved?.uri) {
         Alert.alert("Example unavailable", "This example photo could not be opened.");
@@ -613,8 +649,9 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
         width: resolved.width ?? 1080,
         height: resolved.height ?? 1440,
       });
+      advanceToMaskStep();
     },
-    [applySelectedImage],
+    [advanceToMaskStep, applySelectedImage],
   );
 
   const handleGenerate = useCallback(async () => {
@@ -795,11 +832,11 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                 <SvgPath
                   key={`mask-${stroke.id}`}
                   d={stroke.path}
-                  stroke={stroke.kind === "region" ? "none" : MASK_CAPTURE_COLOR}
+                  stroke={stroke.kind === "region" ? "none" : stroke.tool === "eraser" ? OLED_BLACK : MASK_CAPTURE_COLOR}
                   strokeWidth={stroke.kind === "region" ? 0 : stroke.width}
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  fill={stroke.kind === "region" ? MASK_CAPTURE_COLOR : "none"}
+                  fill={stroke.kind === "region" ? MASK_CAPTURE_COLOR : stroke.tool === "eraser" ? OLED_BLACK : "none"}
                 />
               ))}
             </Svg>
@@ -807,9 +844,9 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
         </View>
       ) : null}
 
-      {step !== "processing" ? (
+      {step !== "processing" && step !== "intake" && step !== "mask" ? (
         <ServiceWizardHeader
-          title="Smart Wall Paint"
+          title="Paint"
           step={currentStepNumber}
           canGoBack={currentStepNumber > 1}
           onBack={handleBack}
@@ -818,235 +855,127 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       ) : null}
 
       {step === "intake" ? (
-        <ServiceWizardStepScreen
-          footerOffset={FIXED_FOOTER_OFFSET}
-          contentContainerStyle={{
-            paddingHorizontal: spacing.md,
-            paddingTop: spacing.sm,
-          }}
-          footer={
-            <ServiceContinueButton
-              active={Boolean(selectedImage)}
-              attention={Boolean(selectedImage)}
-              label={selectedImage ? "Continue \u2192" : "Add a Photo to Start"}
-              loading={loadingContinueStep === "intake"}
-              onPress={() => {
-                if (!selectedImage) {
-                  return;
-                }
-
-                runDeferredContinue("intake", handleContinueFromIntake);
-              }}
-              secondaryActionLabel={selectedImage ? null : "or use camera"}
-              onSecondaryAction={
-                selectedImage
-                  ? null
-                  : () => {
-                      void handleSelectMedia("camera");
-                    }
-              }
-            />
-          }
-        >
-          <View>
-            <ServiceIntakeStep
-              heading={intakeHeading}
-              subtext={intakeSubtext}
-              examples={PAINT_WIZARD_EXAMPLE_PHOTOS}
-              selectedImageUri={selectedImage?.uri ?? null}
-              onClearSelection={handleClearSelectedImage}
-              onUploadPress={() => {
-                void handleSelectMedia("library");
-              }}
-              onCameraPress={() => {
-                void handleSelectMedia("camera");
-              }}
-              onExamplePress={handleSelectExample}
-            />
-          </View>
-        </ServiceWizardStepScreen>
+        <PaintIntroScreen
+          creditCount={availableCredits}
+          examples={PAINT_WIZARD_EXAMPLE_PHOTOS}
+          onTakePhoto={() => handleSelectMedia("camera")}
+          onChooseFromGallery={() => handleSelectMedia("library")}
+          onExamplePress={handleSelectExample}
+          onExit={handleClose}
+        />
       ) : null}
 
       {step === "mask" ? (
-        <ServiceWizardStepScreen
-          footerOffset={FIXED_FOOTER_OFFSET}
-          scrollEnabled={!isDrawing}
-          contentContainerStyle={{
-            paddingHorizontal: spacing.md,
-            paddingTop: spacing.sm,
-            gap: spacing.md,
-          }}
-          footer={
-            <>
-              <View style={styles.maskControlCard}>
-                <View style={styles.brushRow}>
-                  <Text style={styles.brushTitle}>Brush Size</Text>
-                  <View style={styles.brushMeta}>
-                    <BrushPreview width={brushWidth} />
-                    <Text style={styles.brushMetaText}>{brushWidth}px</Text>
-                  </View>
-                </View>
+        <View style={styles.maskScreen}>
+          <StatusBar style="dark" />
 
-                <GestureDetector gesture={sliderGesture}>
-                  <View onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)} style={styles.sliderWrap}>
-                    <View style={styles.sliderTrack} />
-                    <LinearGradient colors={[MASK_ACCENT, MASK_ACCENT]} style={[styles.sliderFill, { width: Math.max(16, sliderWidth * brushProgress) }]} />
-                    <View style={[styles.sliderThumb, { left: Math.max(0, sliderWidth * brushProgress - 16) }]}>
-                      <View style={styles.sliderThumbDot} />
-                    </View>
-                  </View>
-                </GestureDetector>
-              </View>
+          <Pressable accessibilityRole="button" onPress={handleBack} style={[styles.maskBackButton, { top: Math.max(insets.top + 18, 70) }]}>
+            <ChevronLeft color="#0A0A0A" size={22} strokeWidth={2.4} />
+          </Pressable>
 
-              <ServiceContinueButton
-                active={canContinueFromMask}
-                label={canContinueFromMask ? "Continue \u2192" : "Brush the Area to Continue"}
-                loading={loadingContinueStep === "mask"}
-                onPress={() => {
-                  if (!canContinueFromMask) {
-                    return;
-                  }
+          <Text style={[styles.maskHeaderTitle, { top: Math.max(insets.top + 20, 72) }]}>Select Area to Paint</Text>
 
-                  runDeferredContinue("mask", () => {
-                    triggerHaptic();
-                    setStep("colors");
-                  });
-                }}
-              />
-            </>
-          }
-        >
-          <View>
-            <Text style={styles.stepTitle}>Mark Area</Text>
-            <Text style={styles.stepText}>
-              Brush only over the wall surfaces. The loupe stays live while you paint so you can stay clean around furniture, windows, trim, and decor.
-            </Text>
+          <Pressable accessibilityRole="button" onPress={handleClose} style={[styles.maskCloseButton, { top: Math.max(insets.top + 18, 70) }]}>
+            <X color="#0A0A0A" size={20} strokeWidth={2.4} />
+          </Pressable>
 
-            <View onLayout={handleCanvasLayout} style={[styles.canvasFrame, { height: maskPreviewHeight }]}>
+          <View style={[styles.maskCanvasWrap, { marginTop: Math.max(insets.top + 104, 156) }]}>
+            <View onLayout={handleCanvasLayout} style={[styles.maskCanvasFrame, { width: maskCanvasWidth, height: maskCanvasHeight }]}>
               {selectedImage ? (
                 <>
                   <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="contain" transition={160} />
+
                   <GestureDetector gesture={drawGesture}>
                     <View style={absoluteFill}>
                       <Svg width="100%" height="100%">
-                        {renderedStrokes.map((stroke) => (
-                          <SvgPath
-                            key={stroke.id}
-                            d={stroke.path}
-                            stroke={stroke.kind === "region" ? "none" : MASK_COLOR}
-                            strokeWidth={stroke.kind === "region" ? 0 : stroke.width}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            fill={stroke.kind === "region" ? MASK_COLOR : "none"}
-                          />
-                        ))}
+                        <Defs>
+                          <SvgMask id="paint-mask">
+                            <Rect x="0" y="0" width="100%" height="100%" fill="#000000" />
+                            {renderedStrokes.map((stroke) => (
+                              <SvgPath
+                                key={`paint-mask-${stroke.id}`}
+                                d={stroke.path}
+                                stroke={stroke.kind === "region" ? "none" : stroke.tool === "eraser" ? "#000000" : "#FFFFFF"}
+                                strokeWidth={stroke.kind === "region" ? 0 : stroke.width}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                fill={stroke.kind === "region" ? "#FFFFFF" : stroke.tool === "eraser" ? "#000000" : "none"}
+                              />
+                            ))}
+                          </SvgMask>
+                        </Defs>
+                        <Rect x="0" y="0" width="100%" height="100%" fill={MASK_COLOR} mask="url(#paint-mask)" />
                       </Svg>
                     </View>
                   </GestureDetector>
 
-                  {activePoint && loupeMetrics ? (
-                    <>
-                      <View
-                        pointerEvents="none"
-                        style={{
-                          position: "absolute",
+                  {activePoint ? (
+                    <MotiView
+                      pointerEvents="none"
+                      animate={{
+                        width: brushWidth,
+                        height: brushWidth,
+                        opacity: 1,
+                        scale: [0.96, 1, 0.96],
+                      }}
+                      transition={{ duration: 140, type: "timing" }}
+                      style={[
+                        styles.maskCursor,
+                        {
                           left: Math.max(12, Math.min(activePoint.x - brushWidth / 2, Math.max(canvasSize.width - brushWidth - 12, 12))),
                           top: Math.max(12, Math.min(activePoint.y - brushWidth / 2, Math.max(canvasSize.height - brushWidth - 12, 12))),
-                          width: brushWidth,
-                          height: brushWidth,
-                          borderRadius: 999,
-                          borderWidth: 1.5,
-                          borderColor: "rgba(255,255,255,0.8)",
-                          backgroundColor: MASK_COLOR,
-                        }}
-                      />
-
-                      <View pointerEvents="none" style={[styles.loupe, { left: loupeMetrics.left, top: loupeMetrics.top, width: loupeMetrics.size, height: loupeMetrics.size }]}>
-                        <View style={styles.loupeInner}>
-                          <Image
-                            source={{ uri: selectedImage.uri }}
-                            style={{
-                              position: "absolute",
-                              width: canvasSize.width * loupeMetrics.zoom,
-                              height: canvasSize.height * loupeMetrics.zoom,
-                              left: loupeMetrics.translateX,
-                              top: loupeMetrics.translateY,
-                            }}
-                            contentFit="contain"
-                          />
-                          <Svg width={loupeMetrics.size} height={loupeMetrics.size} style={absoluteFill}>
-                            <G transform={`translate(${loupeMetrics.translateX} ${loupeMetrics.translateY}) scale(${loupeMetrics.zoom})`}>
-                              {renderedStrokes.map((stroke) => (
-                                <SvgPath
-                                  key={`loupe-${stroke.id}`}
-                                  d={stroke.path}
-                                  stroke={stroke.kind === "region" ? "none" : MASK_COLOR}
-                                  strokeWidth={stroke.kind === "region" ? 0 : stroke.width}
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  fill={stroke.kind === "region" ? MASK_COLOR : "none"}
-                                />
-                              ))}
-                            </G>
-                            <SvgCircle cx={loupeMetrics.size / 2} cy={loupeMetrics.size / 2} r={8} fill="none" stroke="#ffffff" strokeWidth={1.5} />
-                            <SvgPath d={`M ${loupeMetrics.size / 2 - 14} ${loupeMetrics.size / 2} L ${loupeMetrics.size / 2 + 14} ${loupeMetrics.size / 2}`} stroke="#ffffff" strokeWidth={1} />
-                            <SvgPath d={`M ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 - 14} L ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 + 14}`} stroke="#ffffff" strokeWidth={1} />
-                          </Svg>
-                        </View>
-                      </View>
-                    </>
+                          borderColor: activeMaskTool === "eraser" ? "rgba(10,10,10,0.86)" : "rgba(255,255,255,0.82)",
+                          backgroundColor: activeMaskTool === "eraser" ? "rgba(255,255,255,0.2)" : MASK_COLOR,
+                        },
+                      ]}
+                    />
                   ) : null}
 
-                  <View pointerEvents="box-none" style={styles.canvasToolbar}>
-                    <LuxPressable
-                      onPress={() => {
-                        void handleAutoDetectMask();
-                      }}
-                      disabled={isAutoDetecting || isDetecting}
-                      className={pointerClassName}
-                      style={styles.canvasToolbarButton}
-                      glowColor="rgba(255,255,255,0.04)"
-                      scale={0.98}
-                    >
-                      {isAutoDetecting ? <ActivityIndicator color="#ffffff" size="small" /> : <Sparkles color="#ffffff" size={16} />}
-                      <Text style={styles.canvasToolbarText}>Auto-Detect</Text>
-                    </LuxPressable>
-                    <LuxPressable
-                      onPress={undoLastStroke}
-                      disabled={!paintStrokes.length}
-                      className={pointerClassName}
-                      style={styles.canvasToolbarButton}
-                      glowColor="rgba(255,255,255,0.04)"
-                      scale={0.98}
-                    >
-                      <RotateCcw color="#ffffff" size={16} />
-                      <Text style={styles.canvasToolbarText}>Undo</Text>
-                    </LuxPressable>
-                    <LuxPressable
-                      onPress={clearMask}
-                      disabled={!paintStrokes.length}
-                      className={pointerClassName}
-                      style={styles.canvasToolbarButton}
-                      glowColor="rgba(255,255,255,0.04)"
-                      scale={0.98}
-                    >
-                      <Trash2 color="#ffffff" size={16} />
-                      <Text style={styles.canvasToolbarText}>Clear All</Text>
-                    </LuxPressable>
-                  </View>
-
-                  <View pointerEvents="none" style={styles.hintPill}>
-                    <Text style={styles.hintText}>Paint directly on the walls. Use Undo or Clear All for quick corrections.</Text>
-                  </View>
+                  {selectedImage && loupeMetrics ? (
+                    <View pointerEvents="none" style={[styles.loupe, { left: loupeMetrics.left, top: loupeMetrics.top, width: loupeMetrics.size, height: loupeMetrics.size }]}>
+                      <View style={styles.loupeInner}>
+                        <Image
+                          source={{ uri: selectedImage.uri }}
+                          style={{
+                            position: "absolute",
+                            width: canvasSize.width * loupeMetrics.zoom,
+                            height: canvasSize.height * loupeMetrics.zoom,
+                            left: loupeMetrics.translateX,
+                            top: loupeMetrics.translateY,
+                          }}
+                          contentFit="contain"
+                        />
+                        <Svg width={loupeMetrics.size} height={loupeMetrics.size} style={absoluteFill}>
+                          <Defs>
+                            <SvgMask id="paint-loupe-mask">
+                              <Rect x="0" y="0" width={loupeMetrics.size} height={loupeMetrics.size} fill="#000000" />
+                              <G transform={`translate(${loupeMetrics.translateX} ${loupeMetrics.translateY}) scale(${loupeMetrics.zoom})`}>
+                                {renderedStrokes.map((stroke) => (
+                                  <SvgPath
+                                    key={`loupe-mask-${stroke.id}`}
+                                    d={stroke.path}
+                                    stroke={stroke.kind === "region" ? "none" : stroke.tool === "eraser" ? "#000000" : "#FFFFFF"}
+                                    strokeWidth={stroke.kind === "region" ? 0 : stroke.width}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    fill={stroke.kind === "region" ? "#FFFFFF" : stroke.tool === "eraser" ? "#000000" : "none"}
+                                  />
+                                ))}
+                              </G>
+                            </SvgMask>
+                          </Defs>
+                          <Rect x="0" y="0" width={loupeMetrics.size} height={loupeMetrics.size} fill={MASK_COLOR} mask="url(#paint-loupe-mask)" />
+                          <SvgCircle cx={loupeMetrics.size / 2} cy={loupeMetrics.size / 2} r={8} fill="none" stroke="#ffffff" strokeWidth={1.5} />
+                          <SvgPath d={`M ${loupeMetrics.size / 2 - 14} ${loupeMetrics.size / 2} L ${loupeMetrics.size / 2 + 14} ${loupeMetrics.size / 2}`} stroke="#ffffff" strokeWidth={1} />
+                          <SvgPath d={`M ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 - 14} L ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 + 14}`} stroke="#ffffff" strokeWidth={1} />
+                        </Svg>
+                      </View>
+                    </View>
+                  ) : null}
 
                   <AnimatePresence>
                     {isDetecting || isAutoDetecting ? (
-                      <MotiView
-                        from={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        style={styles.detectOverlay}
-                      >
+                      <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.detectOverlay}>
                         <MotiView
                           animate={{ scale: [0.92, 1.08, 0.92], opacity: [0.14, 0.46, 0.14] }}
                           transition={{ duration: 1700, loop: true }}
@@ -1055,7 +984,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                         <View style={styles.detectCopy}>
                           <ActivityIndicator color="#ffffff" />
                           <Text style={styles.detectTitle}>
-                            {isAutoDetecting ? "Auto-detecting walls..." : "Preparing your masking surface..."}
+                            {isAutoDetecting ? "Detecting paintable surfaces..." : "Preparing your masking surface..."}
                           </Text>
                           <Text style={styles.detectText}>
                             {isAutoDetecting
@@ -1070,7 +999,117 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
               ) : null}
             </View>
           </View>
-        </ServiceWizardStepScreen>
+
+          <View style={styles.maskToolBar}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => handleSelectMaskTool("brush")}
+              style={[styles.maskToolButton, { left: 24 }, maskTool === "brush" ? styles.maskToolButtonActive : null]}
+            >
+              <BrushCleaning color={maskTool === "brush" ? "#FFFFFF" : "#0A0A0A"} size={20} strokeWidth={2} />
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => handleSelectMaskTool("eraser")}
+              style={[styles.maskToolButton, { left: 124 }, maskTool === "eraser" ? styles.maskToolButtonActive : null]}
+            >
+              <Eraser color={maskTool === "eraser" ? "#FFFFFF" : "#0A0A0A"} size={20} strokeWidth={2} />
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => handleSelectMaskTool("surface")}
+              style={[styles.maskToolButton, { left: 208 }, maskTool === "surface" || isAutoDetecting ? styles.maskToolButtonActive : null]}
+            >
+              {isAutoDetecting ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Box color={maskTool === "surface" ? "#FFFFFF" : "#0A0A0A"} size={20} strokeWidth={2} />
+              )}
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              disabled={!paintStrokes.length}
+              onPress={undoLastStroke}
+              style={[styles.maskToolButton, styles.maskHistoryButton, { right: 88 }, !paintStrokes.length ? styles.maskToolButtonDisabled : null]}
+            >
+              <Undo2 color={!paintStrokes.length ? "#B8B8B8" : "#0A0A0A"} size={20} strokeWidth={2} />
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              disabled={!canRedo}
+              onPress={redoLastStroke}
+              style={[styles.maskToolButton, styles.maskHistoryButton, { right: 24 }, !canRedo ? styles.maskToolButtonDisabled : null]}
+            >
+              <Redo2 color={!canRedo ? "#B8B8B8" : "#0A0A0A"} size={20} strokeWidth={2} />
+            </Pressable>
+          </View>
+
+          <View style={styles.maskSliderSection}>
+            <View style={styles.maskSliderHeader}>
+              <Text style={styles.maskSliderLabel}>{maskWidthLabel}</Text>
+              <View style={styles.maskSliderValueWrap}>
+                <View
+                  style={[
+                    styles.maskSliderPreview,
+                    {
+                      width: Math.max(brushWidth, 12),
+                      height: Math.max(brushWidth, 12),
+                      backgroundColor: activeMaskTool === "eraser" ? "rgba(255,255,255,0.28)" : MASK_COLOR,
+                      borderColor: activeMaskTool === "eraser" ? "rgba(10,10,10,0.82)" : "rgba(255,255,255,0.78)",
+                    },
+                  ]}
+                />
+                <Text style={styles.maskSliderValue}>{brushWidth}px</Text>
+              </View>
+            </View>
+
+            <GestureDetector gesture={sliderGesture}>
+              <View onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)} style={styles.maskSliderWrap}>
+                <View style={styles.maskSliderTrack} />
+                <LinearGradient colors={[MASK_ACCENT, MASK_ACCENT]} style={[styles.maskSliderFill, { width: Math.max(16, sliderWidth * brushProgress) }]} />
+                <MotiView
+                  animate={{ left: Math.max(0, sliderWidth * brushProgress - 16) }}
+                  transition={{ duration: 120, type: "timing" }}
+                  style={styles.maskSliderThumb}
+                >
+                  <View style={styles.maskSliderThumbDot} />
+                </MotiView>
+              </View>
+            </GestureDetector>
+          </View>
+
+          <Pressable
+            accessibilityRole="button"
+            disabled={!canContinueFromMask}
+            onPress={() => {
+              if (!canContinueFromMask) {
+                return;
+              }
+
+              runDeferredContinue("mask", () => {
+                triggerHaptic();
+                setStep("colors");
+              });
+            }}
+            style={[
+              styles.maskContinueButton,
+              {
+                bottom: Math.max(insets.bottom + 44, 44),
+                backgroundColor: canContinueFromMask ? MASK_ACCENT : "#E8E8E8",
+              },
+            ]}
+          >
+            {loadingContinueStep === "mask" ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={[styles.maskContinueText, { color: canContinueFromMask ? "#FFFFFF" : "#A0A0A0" }]}>Continue</Text>
+            )}
+          </Pressable>
+        </View>
       ) : null}
 
       {step === "colors" ? (
@@ -1100,7 +1139,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
           }
         >
           <View>
-            <Text style={styles.stepTitle}>Select Color</Text>
+            <Text style={styles.stepTitle}>Color & Surface</Text>
             <Text style={styles.stepText}>
               Pick from the real wall-finish thumbnails so Darkor.ai carries the exact tone into the final render.
             </Text>
@@ -1520,6 +1559,156 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     marginBottom: spacing.md,
   },
+  maskScreen: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  maskBackButton: {
+    position: "absolute",
+    left: 24,
+    zIndex: 4,
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  maskHeaderTitle: {
+    position: "absolute",
+    left: 72,
+    right: 144,
+    zIndex: 4,
+    color: "#0A0A0A",
+    fontSize: 20,
+    lineHeight: 24,
+    ...fonts.bold,
+  },
+  maskCloseButton: {
+    position: "absolute",
+    right: 40,
+    zIndex: 4,
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  maskCanvasWrap: {
+    alignItems: "center",
+  },
+  maskCanvasFrame: {
+    borderRadius: 28,
+    overflow: "hidden",
+    backgroundColor: "#050505",
+  },
+  maskCursor: {
+    position: "absolute",
+    borderRadius: 999,
+    borderWidth: 1.5,
+  },
+  maskToolBar: {
+    marginTop: 40,
+    height: 56,
+  },
+  maskToolButton: {
+    position: "absolute",
+    top: 0,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E3E3E3",
+    backgroundColor: "#FFFFFF",
+  },
+  maskToolButtonActive: {
+    borderColor: MASK_ACCENT,
+    backgroundColor: MASK_ACCENT,
+  },
+  maskToolButtonDisabled: {
+    borderColor: "#ECECEC",
+    backgroundColor: "#F4F4F4",
+  },
+  maskHistoryButton: {
+    top: 4,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  maskSliderSection: {
+    marginTop: 36,
+    marginHorizontal: 24,
+    gap: 16,
+  },
+  maskSliderHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  maskSliderLabel: {
+    color: "#0A0A0A",
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.bold,
+  },
+  maskSliderValueWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  maskSliderPreview: {
+    borderRadius: 999,
+    borderWidth: 1.5,
+  },
+  maskSliderValue: {
+    color: "#6A6A6A",
+    fontSize: 13,
+    lineHeight: 16,
+    ...fonts.semibold,
+  },
+  maskSliderWrap: {
+    height: 36,
+    justifyContent: "center",
+  },
+  maskSliderTrack: {
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: "#E5E5E5",
+  },
+  maskSliderFill: {
+    position: "absolute",
+    left: 0,
+    height: 6,
+    borderRadius: 999,
+  },
+  maskSliderThumb: {
+    position: "absolute",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: MASK_ACCENT,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  maskSliderThumbDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 999,
+    backgroundColor: "#FFFFFF",
+  },
+  maskContinueButton: {
+    position: "absolute",
+    left: 24,
+    right: 24,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  maskContinueText: {
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.semibold,
+  },
   canvasFrame: {
     borderRadius: 30,
     borderWidth: 1,
@@ -1610,7 +1799,7 @@ const styles = StyleSheet.create({
     width: 230,
     height: 230,
     borderRadius: 999,
-    backgroundColor: "rgba(217,70,239,0.18)",
+    backgroundColor: "rgba(255,59,48,0.18)",
   },
   detectCopy: {
     alignItems: "center",
@@ -2161,4 +2350,3 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 });
-
