@@ -78,7 +78,7 @@ export function InteriorRedesignStepOne({
   const canContinue = Boolean(photoUri);
   const progressSegmentWidth = scaleValue(92, layoutScale);
   const progressGap = scaleValue(16, layoutScale);
-  const removeOffset = scaleValue(20, innerScale);
+  const removeOffset = 20;
 
   const [isSheetMounted, setIsSheetMounted] = useState(false);
   const [pendingSource, setPendingSource] = useState<MediaSourceOption | null>(null);
@@ -269,7 +269,9 @@ export function InteriorRedesignStepOne({
               />
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel="Remove selected photo"
                 onPress={onRemovePhoto}
+                hitSlop={10}
                 style={[styles.removeButton, { top: removeOffset, right: removeOffset }]}
               >
                 <Text style={styles.removeButtonText}>{"\u00D7"}</Text>

@@ -72,6 +72,9 @@ import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
 import { uploadLocalFileToCloud } from "../../lib/native-upload";
 import { FloorWizard } from "../../components/floor-wizard";
 import { InteriorRedesignStepOne } from "../../components/interior-redesign-step-one";
+import { InteriorRedesignStepTwo } from "../../components/interior-redesign-step-two";
+import { InteriorRedesignStepThree } from "../../components/interior-redesign-step-three";
+import { InteriorRedesignStepFour } from "../../components/interior-redesign-step-four";
 import { LuxPressable } from "../../components/lux-pressable";
 import { PaintWizard } from "../../components/paint-wizard";
 import { ServiceContinueButton } from "../../components/service-continue-button";
@@ -1753,7 +1756,7 @@ export default function WorkspaceScreen() {
   const isFloorService = serviceType === "floor";
   const isPaintService = serviceType === "paint";
   const isLeanGenerationService = isExteriorService || isGardenService;
-  const shouldHideNativeTabBar = isServiceProcessing || (isInteriorService && workflowStep === 0);
+  const shouldHideNativeTabBar = isServiceProcessing || (isInteriorService && workflowStep <= 3);
   const presetRoomOptions =
     serviceType === "exterior"
       ? SPACE_OPTIONS.exterior
@@ -2096,6 +2099,43 @@ export default function WorkspaceScreen() {
       ...baseCards,
     ];
   }, [customPrompt, isFloorService, isLeanGenerationService, isPaintService, styleCatalogItems]);
+  const interiorStyleGalleryCards = useMemo(
+    () =>
+      STYLE_LIBRARY.map((style) => ({
+        id: style.id,
+        title: style.title,
+        image: style.image,
+      })),
+    [],
+  );
+  const selectedInteriorStyle = useMemo(
+    () => (interiorStyleGalleryCards.some((style) => style.title === selectedStyle) ? selectedStyle : null),
+    [interiorStyleGalleryCards, selectedStyle],
+  );
+  const interiorModeCards = useMemo(
+    () => [
+      {
+        id: "preserve",
+        title: "Structural Preservation",
+        description: "Keep the original structure recognizable while refining the styling.",
+      },
+      {
+        id: "renovate",
+        title: "Renovation Design",
+        description: "Allow a bolder redesign with stronger visual transformation.",
+      },
+    ],
+    [],
+  );
+  const interiorPaletteCards = useMemo(
+    () =>
+      PALETTE_OPTIONS.map((palette) => ({
+        id: palette.id,
+        label: palette.label,
+        colors: palette.colors,
+      })),
+    [],
+  );
   const selectedPaletteOrDefault = useMemo(
     () => selectedPalette ?? (isLeanGenerationService ? PALETTE_OPTIONS[0] : null),
     [isLeanGenerationService, selectedPalette],
@@ -2456,14 +2496,25 @@ export default function WorkspaceScreen() {
     return false;
   }, [showPermissionAlert]);
 
-  const applyPickedAsset = useCallback((asset: ImagePicker.ImagePickerAsset, label: string) => {
-    startTransition(() => {
-      setSelectedImage({
+  const commitSelectedImage = useCallback(
+    (image: SelectedImage | null) => {
+      startTransition(() => {
+        setSelectedImage(image);
+        setDraftImage(image);
+      });
+    },
+    [setDraftImage],
+  );
+
+  const applyPickedAsset = useCallback(
+    (asset: ImagePicker.ImagePickerAsset, label: string) => {
+      commitSelectedImage({
         uri: asset.uri,
         label,
       });
-    });
-  }, []);
+    },
+    [commitSelectedImage],
+  );
 
   const showSettingsPermissionAlert = useCallback(
     (title: string, message: string) => {
@@ -2653,16 +2704,14 @@ export default function WorkspaceScreen() {
 
   const handleClearSelectedImage = useCallback(() => {
     triggerHaptic();
-    startTransition(() => {
-      setSelectedImage(null);
-    });
+    commitSelectedImage(null);
     paintCurrentStrokeRef.current = null;
     setPaintCurrentStroke(null);
     setPaintStrokes([]);
     setPaintRedoStrokes([]);
     setIsLoadingExample(null);
     setIsSelectingPhoto(false);
-  }, []);
+  }, [commitSelectedImage]);
 
   const handleSelectExample = useCallback(async (example: ExamplePhoto) => {
     try {
@@ -2674,15 +2723,13 @@ export default function WorkspaceScreen() {
       if (!uri) {
         throw new Error("Example image unavailable.");
       }
-      startTransition(() => {
-        setSelectedImage({ uri, label: example.label });
-      });
+      commitSelectedImage({ uri, label: example.label });
     } catch (error) {
       Alert.alert("Example unavailable", error instanceof Error ? error.message : "Please try another image.");
     } finally {
       setIsLoadingExample(null);
     }
-  }, []);
+  }, [commitSelectedImage]);
 
   const handleClosePaintColorPicker = useCallback(() => {
     triggerHaptic();
@@ -3171,10 +3218,72 @@ export default function WorkspaceScreen() {
     });
   }, [canContinue, diagnostic, effectiveSignedIn, handleGenerate, hasGenerationCredits, openAuthWall, router, workflowStep]);
 
-  const handleSelectRoom = useCallback((value: string) => {
-    triggerHaptic();
-    setSelectedRoom((current) => (current === value ? null : value));
+  const handleSelectRoom = useCallback(
+    (value: string) => {
+      triggerHaptic();
+      setSelectedRoom((current) => {
+        const nextRoom = current === value ? null : value;
+        setDraftRoom(nextRoom);
+        return nextRoom;
+      });
+    },
+    [setDraftRoom],
+  );
+
+  const handleSetSelectedRoom = useCallback(
+    (room: string | null) => {
+      setSelectedRoom(room);
+      setDraftRoom(room);
+    },
+    [setDraftRoom],
+  );
+
+  const handleContinueFromInteriorRoomStep = useCallback(() => {
+    if (!selectedRoom) {
+      return;
+    }
+
+    setDraftRoom(selectedRoom);
+    handleContinue();
+  }, [handleContinue, selectedRoom, setDraftRoom]);
+
+  const handleSetSelectedStyle = useCallback(
+    (style: string | null) => {
+      setSelectedStyle(style);
+      setDraftStyle(style);
+    },
+    [setDraftStyle],
+  );
+
+  const handleContinueFromInteriorStyleStep = useCallback(() => {
+    if (!selectedInteriorStyle) {
+      return;
+    }
+
+    setDraftStyle(selectedInteriorStyle);
+    handleContinue();
+  }, [handleContinue, selectedInteriorStyle, setDraftStyle]);
+
+  const handleSetSelectedModeId = useCallback((modeId: string | null) => {
+    setSelectedModeId((modeId as ModeOption["id"] | null) ?? null);
   }, []);
+
+  const handleSetSelectedPaletteId = useCallback(
+    (paletteId: string | null) => {
+      setSelectedPaletteId(paletteId);
+      setDraftPalette(paletteId);
+    },
+    [setDraftPalette],
+  );
+
+  const handleContinueFromInteriorFinalStep = useCallback(() => {
+    if (!selectedModeId || !selectedPaletteId) {
+      return;
+    }
+
+    setDraftPalette(selectedPaletteId);
+    handleContinue();
+  }, [handleContinue, selectedModeId, selectedPaletteId, setDraftPalette]);
 
   const handleCloseCustomStyle = useCallback(() => {
     triggerHaptic();
@@ -3316,6 +3425,48 @@ export default function WorkspaceScreen() {
           void handleSelectExample(example);
         }}
         onContinue={handleContinue}
+        onExit={handleCloseWizard}
+      />
+    );
+  }
+
+  if (isInteriorService && workflowStep === 1) {
+    return (
+      <InteriorRedesignStepTwo
+        creditCount={creditBalance}
+        roomOptions={[...SPACE_OPTIONS.interior]}
+        selectedRoom={selectedRoom}
+        onSelectRoom={handleSetSelectedRoom}
+        onContinue={handleContinueFromInteriorRoomStep}
+        onExit={handleCloseWizard}
+      />
+    );
+  }
+
+  if (isInteriorService && workflowStep === 2) {
+    return (
+      <InteriorRedesignStepThree
+        creditCount={creditBalance}
+        styles={interiorStyleGalleryCards}
+        selectedStyle={selectedInteriorStyle}
+        onSelectStyle={handleSetSelectedStyle}
+        onContinue={handleContinueFromInteriorStyleStep}
+        onExit={handleCloseWizard}
+      />
+    );
+  }
+
+  if (isInteriorService && workflowStep === 3) {
+    return (
+      <InteriorRedesignStepFour
+        creditCount={creditBalance}
+        modes={interiorModeCards}
+        palettes={interiorPaletteCards}
+        selectedModeId={selectedModeId}
+        selectedPaletteId={selectedPaletteId}
+        onSelectMode={handleSetSelectedModeId}
+        onSelectPalette={handleSetSelectedPaletteId}
+        onContinue={handleContinueFromInteriorFinalStep}
         onExit={handleCloseWizard}
       />
     );
