@@ -27,7 +27,7 @@ const FAQ_ITEMS = [
   {
     question: "How do I delete my account?",
     answer:
-      "Open My Profile and choose Delete Account. This removes your account data and signs you out after confirmation.",
+      "Open Settings and choose Delete Information. This removes your account data and signs you out after confirmation.",
   },
 ];
 

@@ -71,6 +71,7 @@ import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
 import { uploadLocalFileToCloud } from "../../lib/native-upload";
 import { FloorWizard } from "../../components/floor-wizard";
+import { InteriorRedesignStepOne } from "../../components/interior-redesign-step-one";
 import { LuxPressable } from "../../components/lux-pressable";
 import { PaintWizard } from "../../components/paint-wizard";
 import { ServiceContinueButton } from "../../components/service-continue-button";
@@ -1746,11 +1747,13 @@ export default function WorkspaceScreen() {
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = getServiceType(serviceKey);
   const serviceLabel = SERVICE_LABELS[serviceType] ?? "Interior Redesign";
+  const isInteriorService = serviceType === "interior";
   const isExteriorService = serviceType === "exterior";
   const isGardenService = serviceType === "garden";
   const isFloorService = serviceType === "floor";
   const isPaintService = serviceType === "paint";
   const isLeanGenerationService = isExteriorService || isGardenService;
+  const shouldHideNativeTabBar = isServiceProcessing || (isInteriorService && workflowStep === 0);
   const presetRoomOptions =
     serviceType === "exterior"
       ? SPACE_OPTIONS.exterior
@@ -1760,19 +1763,25 @@ export default function WorkspaceScreen() {
 
   useEffect(() => {
     navigation.setOptions({
-      tabBarStyle: isServiceProcessing ? { display: "none" } : DEFAULT_TAB_BAR_STYLE,
+      tabBarStyle: shouldHideNativeTabBar ? { display: "none" } : DEFAULT_TAB_BAR_STYLE,
     });
 
     return () => {
       navigation.setOptions({ tabBarStyle: DEFAULT_TAB_BAR_STYLE });
     };
-  }, [isServiceProcessing, navigation]);
+  }, [navigation, shouldHideNativeTabBar]);
 
   useEffect(() => {
     if (!isPaintService && !isFloorService) {
       setIsServiceProcessing(false);
     }
   }, [isFloorService, isPaintService]);
+
+  useEffect(() => {
+    if (draft.image && !selectedImage) {
+      setSelectedImage(draft.image);
+    }
+  }, [draft.image, selectedImage]);
 
   useEffect(() => {
     if (draft.room && !selectedRoom) {
@@ -2456,6 +2465,100 @@ export default function WorkspaceScreen() {
     });
   }, []);
 
+  const showSettingsPermissionAlert = useCallback(
+    (title: string, message: string) => {
+      Alert.alert(title, message, [
+        { text: "Cancel", style: "cancel" },
+        { text: "Open Settings", onPress: openSystemSettings },
+      ]);
+    },
+    [openSystemSettings],
+  );
+
+  const handleInteriorTakePhoto = useCallback(async () => {
+    if (isSelectingPhoto) {
+      return false;
+    }
+
+    triggerHaptic();
+    setIsSelectingPhoto(true);
+
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        showSettingsPermissionAlert(
+          "Camera Access Needed",
+          "Please allow camera access in Settings to take a photo",
+        );
+        return false;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
+        allowsEditing: true,
+        aspect: [1, 1],
+      });
+
+      if (result.canceled || !result.assets?.[0]) {
+        return false;
+      }
+
+      applyPickedAsset(result.assets[0], "Captured Photo");
+      return true;
+    } catch (error) {
+      Alert.alert(
+        "Camera Unavailable",
+        error instanceof Error ? error.message : "We couldn't open the camera. Please try again.",
+      );
+      return false;
+    } finally {
+      setIsSelectingPhoto(false);
+    }
+  }, [applyPickedAsset, isSelectingPhoto, showSettingsPermissionAlert]);
+
+  const handleInteriorChooseFromGallery = useCallback(async () => {
+    if (isSelectingPhoto) {
+      return false;
+    }
+
+    triggerHaptic();
+    setIsSelectingPhoto(true);
+
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        showSettingsPermissionAlert(
+          "Photo Library Access Needed",
+          "Please allow photo library access in Settings",
+        );
+        return false;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
+        allowsEditing: true,
+        aspect: [1, 1],
+      });
+
+      if (result.canceled || !result.assets?.[0]) {
+        return false;
+      }
+
+      applyPickedAsset(result.assets[0], "Uploaded Photo");
+      return true;
+    } catch (error) {
+      Alert.alert(
+        "Photo Library Unavailable",
+        error instanceof Error ? error.message : "We couldn't open the photo library. Please try again.",
+      );
+      return false;
+    } finally {
+      setIsSelectingPhoto(false);
+    }
+  }, [applyPickedAsset, isSelectingPhoto, showSettingsPermissionAlert]);
+
   const launchPhotoSource = useCallback(
     async (source: PhotoSource) => {
       const hasPermission =
@@ -2513,11 +2616,11 @@ export default function WorkspaceScreen() {
     if (process.env.EXPO_OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          title: "Add Room Photo",
-          message: "Choose how you'd like to start Step 1.",
-          options: ["Cancel", "ðŸ“¸ Take Photo", "ðŸ–¼ï¸ Upload from Gallery"],
+          title: "Add a Photo",
+          message: "Choose how you'd like to add your image.",
+          options: ["Cancel", "Take Photo", "Choose from Gallery"],
           cancelButtonIndex: 0,
-          userInterfaceStyle: "dark",
+          userInterfaceStyle: "light",
         },
         (buttonIndex) => {
           if (buttonIndex === 1) {
@@ -2533,10 +2636,10 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    Alert.alert("Add Room Photo", "Choose how you'd like to start Step 1.", [
+    Alert.alert("Add a Photo", "Choose how you'd like to add your image.", [
       { text: "Cancel", style: "cancel" },
-      { text: "ðŸ“¸ Take Photo", onPress: () => openSource("camera") },
-      { text: "ðŸ–¼ï¸ Upload from Gallery", onPress: () => openSource("library") },
+      { text: "Take Photo", onPress: () => openSource("camera") },
+      { text: "Choose from Gallery", onPress: () => openSource("library") },
     ]);
   }, [isSelectingPhoto, launchPhotoSource]);
 
@@ -3197,6 +3300,25 @@ export default function WorkspaceScreen() {
 
   if (isFloorService) {
     return <FloorWizard onProcessingStateChange={setIsServiceProcessing} />;
+  }
+
+  if (isInteriorService && workflowStep === 0) {
+    return (
+      <InteriorRedesignStepOne
+        creditCount={creditBalance}
+        photoUri={selectedImage?.uri ?? null}
+        examplePhotos={[INTERIOR_EXAMPLE_PHOTOS[0], INTERIOR_EXAMPLE_PHOTOS[3], INTERIOR_EXAMPLE_PHOTOS[1]]}
+        loadingExampleId={isLoadingExample}
+        onTakePhoto={handleInteriorTakePhoto}
+        onChooseFromGallery={handleInteriorChooseFromGallery}
+        onRemovePhoto={handleClearSelectedImage}
+        onSelectExample={(example) => {
+          void handleSelectExample(example);
+        }}
+        onContinue={handleContinue}
+        onExit={handleCloseWizard}
+      />
+    );
   }
 
   if (workflowStep <= 3) {
@@ -5779,9 +5901,5 @@ export default function WorkspaceScreen() {
   }
 
 }
-
-
-
-
 
 

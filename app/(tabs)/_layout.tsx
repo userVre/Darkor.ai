@@ -136,6 +136,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Tools",
+          tabBarStyle: { display: "none" },
           tabBarIcon: ({ color, size, focused }) => <TabIcon Icon={LayoutGrid} color={color} size={size} focused={focused} theme={colors} />,
         }}
       />
@@ -171,7 +172,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: "My Profile",
           tabBarIcon: ({ color, size, focused }) => <TabIcon Icon={UserCircle2} color={color} size={size} focused={focused} theme={colors} />,
         }}
       />

@@ -346,6 +346,7 @@ function AppShell() {
       <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
+      <Stack.Screen name="settings" />
       <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
       <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
       <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />

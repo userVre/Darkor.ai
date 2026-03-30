@@ -1,392 +1,167 @@
 import { useAuth } from "@clerk/expo";
-import { useQuery } from "convex/react";
-import { Image } from "expo-image";
+import { Gem, Settings } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { VideoView, useVideoPlayer } from "expo-video";
-import { AnimatePresence, MotiView } from "moti";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Platform, StyleSheet, Text, View, type NativeSyntheticEvent, type NativeScrollEvent, type ViewToken, useWindowDimensions } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowDown } from "lucide-react-native";
-import { fonts } from "../../styles/typography";
-import { spacing } from "../../styles/spacing";
-import { dark as colors } from "@/styles/theme";
-import { buttonStyles } from "../../styles/buttons";
+import { StatusBar } from "expo-status-bar";
+import { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { HomeHeader } from "../../components/home-header";
-import { LuxPressable } from "../../components/lux-pressable";
-import { useViewerSession } from "../../components/viewer-session-context";
-import { DS, HAIRLINE, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow } from "../../lib/design-system";
-import { ENABLE_GUEST_WIZARD_TEST_MODE, GUEST_TESTING_STARTER_CREDITS } from "../../lib/guest-testing";
+import { CreditLimitModal } from "../../components/credit-limit-modal";
+import { HomeToolsBottomNav } from "../../components/home-tools-bottom-nav";
+import { HomeToolCard, type HomeToolCardItem } from "../../components/home-tool-card";
+import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
+import { fonts } from "../../styles/typography";
 
-const VIEWABILITY_CONFIG = {
-  itemVisiblePercentThreshold: 62,
-  minimumViewTime: 180,
-};
+const FLOATING_TITLE_TOP = 48;
+const FLOATING_TITLE_LINE_HEIGHT = 22;
+const FIRST_CARD_TOP_GAP = 36;
+const SCROLL_TOP_SPACER = FLOATING_TITLE_TOP + FLOATING_TITLE_LINE_HEIGHT + FIRST_CARD_TOP_GAP;
 
-type ServiceCardData = {
-  id: string;
-  title: string;
-  subtitle: string;
-  eyebrow: string;
-  section: "full-ai-redesign" | "precision-edits";
-  video: number;
-  poster: number;
-  serviceParam: string;
-  requiresPro?: boolean;
-};
-
-type ServiceListItem =
-  | {
-      id: string;
-      type: "section";
-      label: string;
-    }
-  | {
-      id: string;
-      type: "card";
-      item: ServiceCardData;
-    };
-
-const SECTION_CARD_GAP = spacing.md;
-const SECTION_BREAK_GAP = spacing.xl;
-
-const SERVICE_SECTION_LABELS = {
-  "full-ai-redesign": "✦ Full AI Redesign",
-  "precision-edits": "✦ Precision Edits",
-};
-
-const SERVICE_CARDS: ServiceCardData[] = [
+const TOOL_CARDS: HomeToolCardItem[] = [
   {
     id: "interior-design",
+    image: require("../../assets/media/discover/home/home-dining-room.jpg"),
     title: "Interior Design",
-    subtitle: "Designer interiors with realistic materials and luxury light.",
-    eyebrow: "Most Popular",
-    section: "full-ai-redesign",
-    video: require("../../assets/videos/master-suite.mp4"),
-    poster: require("../../assets/media/discover/home/home-master-suite.jpg"),
+    description: "Upload a pic, choose a style, let AI design the room!",
     serviceParam: "interior",
   },
   {
     id: "exterior-design",
+    image: require("../../assets/media/discover/exterior/exterior-modern-villa.jpg"),
     title: "Exterior Design",
-    subtitle: "Architectural facade upgrades with stronger curb appeal.",
-    eyebrow: "Curb Appeal",
-    section: "full-ai-redesign",
-    video: require("../../assets/videos/facade.mp4"),
-    poster: require("../../assets/media/discover/exterior/exterior-modern-villa.jpg"),
+    description: "Snap your home, pick a vibe, let AI craft the facade!",
     serviceParam: "facade",
   },
   {
     id: "garden-design",
+    image: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
     title: "Garden Design",
-    subtitle: "Landscape concepts for patios, pools, fire pits, and flow.",
-    eyebrow: "Outdoor Living",
-    section: "full-ai-redesign",
-    video: require("../../assets/videos/garden.mp4"),
-    poster: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
+    description: "Choose a style you adore and give your garden a whole new vibe with just a simple touch!",
     serviceParam: "garden",
   },
   {
-    id: "ai-paint",
-    title: "Smart Wall Paint",
-    subtitle: "Premium wall recolors with exact masking and polished finish.",
-    eyebrow: "Precision Edit",
-    section: "precision-edits",
-    video: require("../../assets/videos/paint.mp4"),
-    poster: require("../../assets/media/discover/wall-scenes/sage-green-suite.jpg"),
+    id: "paint",
+    image: require("../../assets/media/discover/wall-scenes/sage-green-suite.jpg"),
+    title: "Paint",
+    description: "Pick any color you love and transform your space with just a touch!",
     serviceParam: "paint",
-    requiresPro: true,
   },
   {
     id: "floor-restyle",
+    image: require("../../assets/media/discover/floor-scenes/polished-carrara-marble.jpg"),
     title: "Floor Restyle",
-    subtitle: "Floor material swaps with clean perspective and natural light.",
-    eyebrow: "Material Upgrade",
-    section: "precision-edits",
-    video: require("../../assets/videos/floor.mp4"),
-    poster: require("../../assets/media/discover/floor-scenes/polished-carrara-marble.jpg"),
+    description: "Edit floor plans with AI \u2014 rearrange rooms in one tap!",
     serviceParam: "floor",
-    requiresPro: true,
   },
-] as const;
-
-const SERVICE_LIST_ITEMS: ServiceListItem[] = [
-  {
-    id: "section-full-ai-redesign",
-    type: "section",
-    label: SERVICE_SECTION_LABELS["full-ai-redesign"],
-  },
-  ...SERVICE_CARDS.filter((card) => card.section === "full-ai-redesign").map((item) => ({
-    id: item.id,
-    type: "card" as const,
-    item,
-  })),
-  {
-    id: "section-precision-edits",
-    type: "section",
-    label: SERVICE_SECTION_LABELS["precision-edits"],
-  },
-  ...SERVICE_CARDS.filter((card) => card.section === "precision-edits").map((item) => ({
-    id: item.id,
-    type: "card" as const,
-    item,
-  })),
 ];
-
-type CardMediaProps = {
-  item: ServiceCardData;
-  active: boolean;
-};
-
-const CardPoster = memo(function CardPoster({ source }: { source: number }) {
-  return (
-    <Image
-      source={source}
-      style={StyleSheet.absoluteFillObject}
-      contentFit="cover"
-      cachePolicy="memory-disk"
-      transition={120}
-    />
-  );
-});
-
-const ActiveCardVideo = memo(function ActiveCardVideo({ item }: { item: ServiceCardData }) {
-  const player = useVideoPlayer(item.video);
-
-  useEffect(() => {
-    player.loop = true;
-    player.muted = true;
-    player.volume = 0;
-    player.timeUpdateEventInterval = 0;
-    player.keepScreenOnWhilePlaying = false;
-    player.staysActiveInBackground = false;
-    player.play();
-
-    return () => {
-      player.keepScreenOnWhilePlaying = false;
-      player.pause();
-      player.currentTime = 0;
-    };
-  }, [player]);
-
-  return (
-    <VideoView
-      player={player}
-      style={styles.video}
-      contentFit="cover"
-      surfaceType="textureView"
-      nativeControls={false}
-      pointerEvents="none"
-    />
-  );
-});
-
-const CardMedia = memo(function CardMedia({ item, active }: CardMediaProps) {
-  if (!active || Platform.OS === "android") {
-    return <CardPoster source={item.poster} />;
-  }
-
-  return <ActiveCardVideo item={item} />;
-});
-
-type ServiceCardProps = {
-  item: ServiceCardData;
-  height: number;
-  active: boolean;
-  showScrollHint: boolean;
-  onPress: (item: ServiceCardData) => void;
-};
-
-const ServiceCard = memo(function ServiceCard({ item, height, active, showScrollHint, onPress }: ServiceCardProps) {
-  const handlePress = useCallback(() => {
-    triggerHaptic();
-    onPress(item);
-  }, [item, onPress]);
-
-  return (
-    <View style={styles.cardStack}>
-      <View style={[styles.card, { height }]}>
-        <CardMedia item={item} active={active} />
-        <View pointerEvents="none" style={styles.mediaOverlay} />
-
-        {item.requiresPro ? (
-          <View style={styles.proBadge}>
-            <Text style={styles.proBadgeText}>💎 PRO</Text>
-          </View>
-        ) : null}
-
-        <View style={styles.cardFrame}>
-          <View style={styles.cardCopyStack}>
-            <View style={styles.copyBlock}>
-              <View style={styles.cardEyebrowPill}>
-                <Text style={styles.cardEyebrowText}>{item.eyebrow}</Text>
-              </View>
-              <Text style={styles.cardTitle}>{item.title}</Text>
-              <Text style={styles.cardSubtitle} numberOfLines={2}>
-                {item.subtitle}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.cardActionRow}>
-            <LuxPressable
-              onPress={handlePress}
-              className="cursor-pointer"
-              style={styles.ctaButton}
-              glowColor={colors.brand}
-              scale={0.98}
-            >
-              <View style={styles.ctaGradient}>
-                <Text style={styles.ctaText}>Start Redesign →</Text>
-              </View>
-            </LuxPressable>
-          </View>
-        </View>
-      </View>
-
-      <AnimatePresence>
-        {showScrollHint ? (
-          <MotiView
-            key="scroll-hint"
-            from={{ opacity: 0, translateY: -6 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            exit={{ opacity: 0, translateY: -8 }}
-            transition={{ type: "timing", duration: 240 }}
-            style={styles.scrollHintRow}
-          >
-            <ArrowDown color={colors.textMuted} size={14} strokeWidth={2.1} />
-            <Text style={styles.scrollHintText}>Scroll to explore all tools</Text>
-          </MotiView>
-        ) : null}
-      </AnimatePresence>
-    </View>
-  );
-});
 
 export default function HomeScreen() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
-  const { anonymousId, isReady: viewerReady } = useViewerSession();
-  const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const [activeCardId, setActiveCardId] = useState(SERVICE_CARDS[0]?.id ?? "");
-  const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
-  const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
+  const [isCreditModalVisible, setIsCreditModalVisible] = useState(false);
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
-  const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as
-    | { credits?: number; imagesRemaining?: number; imageGenerationLimit?: number }
-    | null
-    | undefined;
 
-  const cardHeight = useMemo(() => Math.max(356, Math.min(430, Math.round(width * 0.96))), [width]);
-  const remainingRenders = viewerReady
-    ? me?.imagesRemaining ?? me?.credits ?? GUEST_TESTING_STARTER_CREDITS
-    : GUEST_TESTING_STARTER_CREDITS;
-  const renderLimit = viewerReady
-    ? me?.imageGenerationLimit ?? Math.max(remainingRenders, 5)
-    : Math.max(GUEST_TESTING_STARTER_CREDITS, 5);
-  const remainingRenderProgress = renderLimit > 0 ? Math.min(remainingRenders / renderLimit, 1) : 0;
-
-  const handleServicePress = useCallback(
-    (item: ServiceCardData) => {
-      if (!canCreateAsGuest) {
-        router.push({ pathname: "/sign-in", params: { returnTo: `/workspace?service=${item.serviceParam}` } });
-        return;
-      }
-
-      router.push({ pathname: "/workspace", params: { service: item.serviceParam } });
-    },
-    [canCreateAsGuest, router],
-  );
-
-  const handleUpgradeToPro = useCallback(() => {
-    router.push("/paywall");
-  }, [router]);
-
-  const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: ViewToken<ServiceListItem>[] }) => {
-      const firstVisible = viewableItems.find((entry) => entry.isViewable && entry.item.type === "card")?.item;
-      if (firstVisible?.type === "card") {
-        setActiveCardId((current) => (current === firstVisible.item.id ? current : firstVisible.item.id));
-      }
-    },
-  );
-
-  const renderItem = useCallback(
-    ({ item, index }: { item: ServiceListItem; index: number }) => {
-      const previousItem = index > 0 ? SERVICE_LIST_ITEMS[index - 1] : null;
-      const marginTop =
-        item.type === "section"
-          ? index === 0
-            ? 0
-            : SECTION_BREAK_GAP
-          : previousItem?.type === "section"
-            ? SECTION_CARD_GAP
-            : SCREEN_SECTION_GAP;
-
-      return (
-        <View style={marginTop > 0 ? { marginTop } : null}>
-          {item.type === "section" ? (
-            <Text style={styles.sectionHeader}>{item.label}</Text>
-          ) : (
-            <ServiceCard
-              item={item.item}
-              height={cardHeight}
-              active={item.item.id === activeCardId}
-              showScrollHint={item.item.id === "interior-design" && !hasScrolledOnce}
-              onPress={handleServicePress}
-            />
-          )}
-        </View>
-      );
-    },
-    [activeCardId, cardHeight, handleServicePress, hasScrolledOnce],
-  );
-
-  const keyExtractor = useCallback((item: ServiceListItem) => item.id, []);
-
-  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (!hasScrolledOnce && event.nativeEvent.contentOffset.y > 18) {
-      setHasScrolledOnce(true);
+  const handleToolPress = (serviceParam: HomeToolCardItem["serviceParam"]) => {
+    if (!canCreateAsGuest) {
+      router.push({ pathname: "/sign-in", params: { returnTo: `/workspace?service=${serviceParam}` } });
+      return;
     }
-  }, [hasScrolledOnce]);
 
-  const header = useMemo(
-    () => (
-      <HomeHeader
-        remainingRenders={remainingRenders}
-        progressValue={remainingRenderProgress}
-        onUpgradeToPro={handleUpgradeToPro}
-      />
-    ),
-    [handleUpgradeToPro, remainingRenderProgress, remainingRenders],
-  );
+    router.push({ pathname: "/workspace", params: { service: serviceParam } });
+  };
+
+  const handleCreatePress = () => {
+    triggerHaptic();
+
+    if (!canCreateAsGuest) {
+      router.push({ pathname: "/sign-in", params: { returnTo: "/workspace" } });
+      return;
+    }
+
+    router.navigate("/workspace");
+  };
+
+  const handleDiscoverPress = () => {
+    triggerHaptic();
+    router.navigate("/gallery");
+  };
+
+  const handleProfilePress = () => {
+    triggerHaptic();
+    router.push("/profile");
+  };
+
+  const handleToolsPress = () => {
+    triggerHaptic();
+    router.navigate("/");
+  };
+
+  const handleSettingsPress = () => {
+    triggerHaptic();
+    router.push("/settings" as any);
+  };
+
+  const handleCreditsPress = () => {
+    setIsCreditModalVisible(true);
+  };
+
+  const handleCreditModalClose = () => {
+    setIsCreditModalVisible(false);
+  };
+
+  const handleCreditModalUpgrade = () => {
+    setIsCreditModalVisible(false);
+    router.push("/paywall");
+  };
 
   return (
     <View style={styles.screen}>
-      <FlatList
-        data={SERVICE_LIST_ITEMS}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        ListHeaderComponent={header}
-        ListHeaderComponentStyle={styles.headerSpacer}
-        contentContainerStyle={{
-          paddingTop: insets.top + spacing.md,
-          paddingHorizontal: SCREEN_SIDE_PADDING,
-          paddingBottom: Math.max(insets.bottom + spacing.xxl * 2, spacing.xxl * 2 + spacing.sm),
-        }}
+      <StatusBar style="dark" />
+
+      <View pointerEvents="box-none" style={styles.headerOverlay}>
+        <Pressable accessibilityRole="button" onPress={handleCreditsPress} style={styles.creditsBadge}>
+          <Gem color="#FFFFFF" size={13} strokeWidth={2.2} />
+          <Text style={styles.creditsText}>3</Text>
+        </Pressable>
+
+        <Text style={styles.title}>Darkor AI</Text>
+
+        <Pressable accessibilityRole="button" onPress={handleSettingsPress} style={styles.settingsButton}>
+          <Settings color="#0A0A0A" size={22} strokeWidth={2.2} />
+        </Pressable>
+      </View>
+
+      <ScrollView
+        contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
-        initialNumToRender={2}
-        maxToRenderPerBatch={2}
-        updateCellsBatchingPeriod={40}
-        windowSize={3}
-        removeClippedSubviews
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        onViewableItemsChanged={onViewableItemsChanged.current}
-        viewabilityConfig={VIEWABILITY_CONFIG}
+        horizontal={false}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={{ height: SCROLL_TOP_SPACER }} />
+
+        {TOOL_CARDS.map((card, index) => (
+          <HomeToolCard
+            key={card.id}
+            item={card}
+            onPress={handleToolPress}
+            style={index === TOOL_CARDS.length - 1 ? styles.lastCard : styles.cardSpacing}
+          />
+        ))}
+      </ScrollView>
+
+      <HomeToolsBottomNav
+        activeTab="tools"
+        onToolsPress={handleToolsPress}
+        onCreatePress={handleCreatePress}
+        onDiscoverPress={handleDiscoverPress}
+        onProfilePress={handleProfilePress}
+      />
+
+      <CreditLimitModal
+        visible={isCreditModalVisible}
+        onClose={handleCreditModalClose}
+        onUpgrade={handleCreditModalUpgrade}
       />
     </View>
   );
@@ -395,133 +170,64 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: "#FFFFFF",
   },
-  headerSpacer: {
-    paddingBottom: spacing.xl,
-  },
-  sectionHeader: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "800",
-    letterSpacing: 1.3,
-    textTransform: "uppercase",
-  },
-  cardStack: {
-    gap: spacing.md,
-  },
-  card: {
-    position: "relative",
-    overflow: "hidden",
-    borderRadius: DS.radius.xxl,
-    borderWidth: HAIRLINE,
-    borderColor: DS.colors.borderSubtle,
-    backgroundColor: DS.colors.backgroundAlt,
-    ...glowShadow(colors.shadow, 26),
-  },
-  video: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  mediaOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.surfaceOverlay,
-  },
-  cardFrame: {
-    flex: 1,
-    justifyContent: "flex-end",
-    padding: spacing.md,
-    gap: spacing.lg,
-  },
-  cardCopyStack: {
-    gap: spacing.md,
-  },
-  cardActionRow: {
-    width: "100%",
-  },
-  copyBlock: {
-    gap: spacing.sm,
-    maxWidth: "92%",
-  },
-  cardEyebrowPill: {
-    alignSelf: "flex-start",
-    borderRadius: DS.radius.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.surfaceHigh,
-    borderWidth: HAIRLINE,
-    borderColor: colors.borderLight,
-  },
-  cardEyebrowText: {
-    color: colors.textPrimary,
-    fontSize: 11,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "800",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-  },
-  cardTitle: {
-    color: DS.colors.textPrimary,
-    ...DS.typography.title,
-    fontSize: 30,
-    lineHeight: 34,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "900",
-    letterSpacing: -0.8,
-  },
-  cardSubtitle: {
-    color: colors.textSecondary,
-    ...DS.typography.body,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  proBadge: {
+  headerOverlay: {
     position: "absolute",
-    top: spacing.md,
-    right: spacing.md,
+    top: 0,
+    left: 0,
+    right: 0,
     zIndex: 2,
-    borderRadius: DS.radius.pill,
-    borderWidth: HAIRLINE,
-    borderColor: colors.borderLight,
-    backgroundColor: colors.surfaceHigh,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    pointerEvents: "box-none",
   },
-  proBadgeText: {
-    color: colors.textPrimary,
-    fontSize: 11,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "900",
-    letterSpacing: 0.7,
-  },
-  ctaButton: {
-    width: "100%",
-    borderRadius: 14,
-    overflow: "hidden",
-  },
-  ctaGradient: {
-    ...buttonStyles.primary,
-    height: 56,
-  },
-  ctaText: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "800",
-    letterSpacing: 0.1,
-  },
-  scrollHintRow: {
-    alignSelf: "center",
+  creditsBadge: {
+    position: "absolute",
+    top: 36,
+    left: 20,
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.sm,
+    gap: 6,
+    borderRadius: 20,
+    backgroundColor: "#0A0A0A",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  scrollHintText: {
-    color: colors.textMuted,
+  creditsText: {
+    color: "#FFFFFF",
     fontSize: 13,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "600",
+    lineHeight: 13,
+    ...fonts.bold,
+  },
+  title: {
+    position: "absolute",
+    top: FLOATING_TITLE_TOP,
+    left: 0,
+    right: 0,
+    textAlign: "center",
+    color: "#0A0A0A",
+    fontSize: 22,
+    lineHeight: FLOATING_TITLE_LINE_HEIGHT,
+    ...fonts.bold,
+  },
+  settingsButton: {
+    position: "absolute",
+    top: 44,
+    right: 32,
+    width: 22,
+    height: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 0,
+  },
+  cardSpacing: {
+    marginBottom: 12,
+  },
+  lastCard: {
+    marginBottom: 32,
   },
 });
-
-
