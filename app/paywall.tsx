@@ -8,9 +8,6 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 import {
   ActivityIndicator,
   Alert,
-  Animated as RNAnimated,
-  AppState,
-  Easing as RNEasing,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -23,7 +20,6 @@ import {
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, Shield, X } from "lucide-react-native";
-import Svg, { Circle } from "react-native-svg";
 
 import { useProSuccess } from "../components/pro-success-context";
 import { useViewerCredits } from "../components/viewer-credits-context";
@@ -57,10 +53,7 @@ const TEXT_RESTORE = "#B3B3B3";
 const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 3000;
 const CLOSE_DELAY_MS = 5000;
-const CLOSE_SIZE = 32;
-const CLOSE_STROKE_WIDTH = 2.5;
-const CLOSE_RADIUS = (CLOSE_SIZE - CLOSE_STROKE_WIDTH) / 2;
-const CLOSE_CIRCUMFERENCE = 2 * Math.PI * CLOSE_RADIUS;
+const CLOSE_VISUAL_SIZE = 40;
 const SIDE_IMAGE_WIDTH = 130;
 const SIDE_IMAGE_HEIGHT = 160;
 const CENTER_IMAGE_SIZE = 188;
@@ -77,7 +70,6 @@ const FEATURE_ITEMS = [
   "Ad-free Experience",
   "Unlimited Design Renders",
 ] as const;
-const AnimatedCircle = RNAnimated.createAnimatedComponent(Circle);
 
 function FadeSwap({
   children,
@@ -231,54 +223,25 @@ function WeeklyPlanCard({
 }
 
 function CountdownCloseButton({
-  canClose,
+  isTimerFinished,
   onPress,
-  progress,
   secondsLeft,
 }: {
-  canClose: boolean;
+  isTimerFinished: boolean;
   onPress: () => void;
-  progress: RNAnimated.Value;
   secondsLeft: number;
 }) {
-  const strokeDashoffset = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [CLOSE_CIRCUMFERENCE, 0],
-  });
-
   return (
-    <FadeSwap swapKey={canClose ? "close-ready" : "close-countdown"}>
-      {canClose ? (
+    <FadeSwap swapKey={isTimerFinished ? "close-ready" : `close-${secondsLeft}`}>
+      {isTimerFinished ? (
         <Pressable accessibilityLabel="Close paywall" accessibilityRole="button" onPress={onPress} style={styles.closeButton}>
           <View style={styles.closeButtonInner}>
-            <X color={TEXT_PRIMARY} size={16} strokeWidth={2.4} />
+            <X color="#0A0A0A" size={16} strokeWidth={2.4} />
           </View>
         </Pressable>
       ) : (
         <View pointerEvents="none" style={styles.closeButton}>
           <View style={styles.countdownWrap}>
-            <Svg height={CLOSE_SIZE} style={styles.countdownSvg} width={CLOSE_SIZE}>
-              <Circle
-                cx={CLOSE_SIZE / 2}
-                cy={CLOSE_SIZE / 2}
-                fill="transparent"
-                r={CLOSE_RADIUS}
-                stroke={PANEL_BORDER}
-                strokeWidth={CLOSE_STROKE_WIDTH}
-              />
-              <AnimatedCircle
-                cx={CLOSE_SIZE / 2}
-                cy={CLOSE_SIZE / 2}
-                fill="transparent"
-                r={CLOSE_RADIUS}
-                stroke="#999999"
-                strokeDasharray={`${CLOSE_CIRCUMFERENCE} ${CLOSE_CIRCUMFERENCE}`}
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-                strokeWidth={CLOSE_STROKE_WIDTH}
-                transform={`rotate(-90 ${CLOSE_SIZE / 2} ${CLOSE_SIZE / 2})`}
-              />
-            </Svg>
             <Text style={styles.countdownText}>{Math.max(secondsLeft, 1)}</Text>
           </View>
         </View>
@@ -303,12 +266,9 @@ export default function PaywallScreen() {
   const { showSuccess } = useProSuccess();
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
   const entranceProgress = useSharedValue(0);
-  const countdownDeadlineRef = useRef<number>(Date.now() + CLOSE_DELAY_MS);
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const countdownAnimationRef = useRef<RNAnimated.CompositeAnimation | null>(null);
-  const countdownProgress = useRef(new RNAnimated.Value(0)).current;
 
-  const [canClose, setCanClose] = useState(false);
+  const [isTimerFinished, setIsTimerFinished] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("yearly");
   const [freeTrialEnabled, setFreeTrialEnabled] = useState(true);
   const [packages, setPackages] = useState<RevenueCatPackage[]>([]);
@@ -340,78 +300,32 @@ export default function PaywallScreen() {
     });
   }, [entranceProgress]);
 
-  const startCountdownAnimation = useCallback(
-    (remainingMs: number) => {
-      countdownAnimationRef.current?.stop();
-      countdownProgress.setValue(Math.min(Math.max(1 - remainingMs / CLOSE_DELAY_MS, 0), 1));
-
-      if (remainingMs <= 0) {
-        countdownProgress.setValue(1);
-        countdownAnimationRef.current = null;
-        return;
-      }
-
-      const animation = RNAnimated.timing(countdownProgress, {
-        toValue: 1,
-        duration: remainingMs,
-        easing: RNEasing.linear,
-        useNativeDriver: false,
-      });
-      countdownAnimationRef.current = animation;
-      animation.start(({ finished }) => {
-        if (finished) {
-          countdownAnimationRef.current = null;
-        }
-      });
-    },
-    [countdownProgress],
-  );
-
-  const syncCloseCountdown = useCallback(
-    (restartAnimation: boolean) => {
-      const remainingMs = Math.max(0, countdownDeadlineRef.current - Date.now());
-      const nextCanClose = remainingMs <= 0;
-      const nextSeconds = nextCanClose ? 0 : Math.ceil(remainingMs / 1000);
-
-      setSecondsLeft((current) => (current === nextSeconds ? current : nextSeconds));
-      setCanClose((current) => (current === nextCanClose ? current : nextCanClose));
-
-      if (restartAnimation) {
-        startCountdownAnimation(remainingMs);
-      }
-
-      if (nextCanClose && countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-        countdownIntervalRef.current = null;
-      }
-    },
-    [startCountdownAnimation],
-  );
-
   useEffect(() => {
-    countdownDeadlineRef.current = Date.now() + CLOSE_DELAY_MS;
-    setCanClose(false);
+    setIsTimerFinished(false);
     setSecondsLeft(5);
-    startCountdownAnimation(CLOSE_DELAY_MS);
-    syncCloseCountdown(false);
-    countdownIntervalRef.current = setInterval(() => {
-      syncCloseCountdown(false);
-    }, 250);
 
-    const appStateSubscription = AppState.addEventListener("change", () => {
-      syncCloseCountdown(true);
-    });
+    countdownIntervalRef.current = setInterval(() => {
+      setSecondsLeft((current) => {
+        if (current <= 1) {
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+          setIsTimerFinished(true);
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
 
     return () => {
       if (countdownIntervalRef.current) {
         clearInterval(countdownIntervalRef.current);
         countdownIntervalRef.current = null;
       }
-      countdownAnimationRef.current?.stop();
-      countdownAnimationRef.current = null;
-      appStateSubscription.remove();
     };
-  }, [startCountdownAnimation, syncCloseCountdown]);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -670,7 +584,7 @@ export default function PaywallScreen() {
           <Text style={styles.restoreText}>Restore</Text>
         </Pressable>
 
-        <CountdownCloseButton canClose={canClose} onPress={handleClose} progress={countdownProgress} secondsLeft={secondsLeft} />
+        <CountdownCloseButton isTimerFinished={isTimerFinished} onPress={handleClose} secondsLeft={secondsLeft} />
 
         <ScrollView
           contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 24, 24) }]}
@@ -758,8 +672,8 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: "absolute",
-    top: 20,
-    right: 20,
+    top: 40,
+    right: 25,
     zIndex: 10,
     width: 44,
     height: 44,
@@ -768,24 +682,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   closeButtonInner: {
-    width: 32,
-    height: 32,
+    width: CLOSE_VISUAL_SIZE,
+    height: CLOSE_VISUAL_SIZE,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 16,
-    backgroundColor: PANEL_BORDER,
+    borderRadius: CLOSE_VISUAL_SIZE / 2,
+    backgroundColor: "#FFFFFF",
   },
   countdownWrap: {
-    width: CLOSE_SIZE,
-    height: CLOSE_SIZE,
+    width: CLOSE_VISUAL_SIZE,
+    height: CLOSE_VISUAL_SIZE,
     alignItems: "center",
     justifyContent: "center",
-  },
-  countdownSvg: {
-    position: "absolute",
+    borderRadius: CLOSE_VISUAL_SIZE / 2,
+    backgroundColor: "#FFFFFF",
   },
   countdownText: {
-    color: TEXT_PRIMARY,
+    color: "#0A0A0A",
     fontSize: 11,
     lineHeight: 11,
     ...fonts.bold,
