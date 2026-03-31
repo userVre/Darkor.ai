@@ -25,7 +25,7 @@ export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
 
   return (
     <View style={[styles.card, style]}>
-      <Image source={item.image} style={styles.image} contentFit="cover" transition={100} />
+      <Image source={item.image} style={styles.image} contentFit="cover" transition={0} cachePolicy="memory-disk" />
 
       <View style={styles.divider} />
 
@@ -45,11 +45,13 @@ export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    width: 332,
+    width: "auto",
+    maxWidth: 420,
     marginHorizontal: 24,
     borderRadius: 20,
     overflow: "hidden",
     backgroundColor: "#F5F5F5",
+    alignSelf: "stretch",
   },
   image: {
     width: "100%",
@@ -78,6 +80,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginLeft: 20,
     marginRight: 20,
+    maxWidth: "60%",
     color: "#808080",
     fontSize: 14,
     lineHeight: 20,

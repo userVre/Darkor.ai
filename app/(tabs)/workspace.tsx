@@ -46,6 +46,7 @@ import {
   DoorOpen,
   Fence,
   Flower2,
+  Gem,
   House,
   Monitor,
   PaintRoller,
@@ -1775,15 +1776,38 @@ function normalizeHexColor(value: string) {
   return null;
 }
 
+function hasDraftFlowData(draft: {
+  image?: SelectedImage | null;
+  room?: string | null;
+  style?: string | null;
+  paletteId?: string | null;
+  modeId?: string | null;
+  finishId?: string | null;
+  prompt?: string | null;
+  aspectRatio?: string | null;
+}) {
+  return Boolean(
+    draft.image?.uri
+      || draft.room
+      || draft.style
+      || draft.paletteId
+      || draft.modeId
+      || draft.finishId
+      || draft.prompt
+      || draft.aspectRatio,
+  );
+}
+
 const PHOTO_PERMISSION_ALERT_TITLE = "Permission Required";
 const PHOTO_PERMISSION_ALERT_MESSAGE =
   "Please enable camera/photo access in your system settings to continue.";
+const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 
 export default function WorkspaceScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const pathname = usePathname();
-  const { service, presetStyle, presetRoom, startStep, boardView, boardItemId, entrySource } = useLocalSearchParams<{
+  const { service, presetStyle, presetRoom, startStep, boardView, boardItemId, entrySource, flowId } = useLocalSearchParams<{
     service?: string;
     presetStyle?: string;
     presetRoom?: string;
@@ -1791,6 +1815,7 @@ export default function WorkspaceScreen() {
     boardView?: string;
     boardItemId?: string;
     entrySource?: string;
+    flowId?: string;
   }>();
   const { isSignedIn } = useAuth();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
@@ -1888,6 +1913,8 @@ export default function WorkspaceScreen() {
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const generationAlertedFailureRef = useRef<string | null>(null);
   const paintCurrentStrokeRef = useRef<PaintStroke | null>(null);
+  const lastFlowIdRef = useRef<string | null>(null);
+  const hydratedDraftFlowIdRef = useRef<string | null>(null);
   const sliderX = useSharedValue(0);
   const sliderWidth = useSharedValue(0);
 
@@ -1926,68 +1953,15 @@ export default function WorkspaceScreen() {
   }, [isFloorService, isPaintService]);
 
   useEffect(() => {
-    if (draft.image && !selectedImage) {
-      setSelectedImage(draft.image);
-    }
-  }, [draft.image, selectedImage]);
-
-  useEffect(() => {
-    if (draft.room && !selectedRoom) {
-      setSelectedRoom(draft.room);
-    }
-  }, [draft.room, selectedRoom]);
-
-  useEffect(() => {
-    if (draft.style && !selectedStyle) {
-      setSelectedStyle(draft.style);
-    }
-  }, [draft.style, selectedStyle]);
-
-  useEffect(() => {
-    if (draft.paletteId && !selectedPaletteId) {
-      setSelectedPaletteId(draft.paletteId);
-    }
-  }, [draft.paletteId, selectedPaletteId]);
-
-  useEffect(() => {
-    if (draft.modeId && !selectedModeId) {
-      setSelectedModeId(draft.modeId as ModeOption["id"]);
-    }
-  }, [draft.modeId, selectedModeId]);
-
-  useEffect(() => {
-    if (draft.finishId && !selectedFinishId) {
-      setSelectedFinishId(draft.finishId as FinishOption["id"]);
-    }
-  }, [draft.finishId, selectedFinishId]);
-
-  useEffect(() => {
-    if (draft.prompt && customPrompt.length === 0) {
-      setCustomPrompt(draft.prompt);
-      setCustomPromptDraft(draft.prompt);
-    }
-  }, [customPrompt.length, draft.prompt]);
-
-  useEffect(() => {
-    if (draft.aspectRatio && draft.aspectRatio !== selectedAspectRatioId) {
-      setSelectedAspectRatioId(draft.aspectRatio as AspectRatioOption["id"]);
-    }
-  }, [draft.aspectRatio, selectedAspectRatioId]);
-
-  useEffect(() => {
     setDraftImage(selectedImage ?? null);
   }, [selectedImage, setDraftImage]);
 
   useEffect(() => {
-    if (selectedRoom) {
-      setDraftRoom(selectedRoom);
-    }
+    setDraftRoom(selectedRoom ?? null);
   }, [selectedRoom, setDraftRoom]);
 
   useEffect(() => {
-    if (selectedStyle) {
-      setDraftStyle(selectedStyle);
-    }
+    setDraftStyle(selectedStyle ?? null);
   }, [selectedStyle, setDraftStyle]);
 
   useEffect(() => {
@@ -2012,12 +1986,68 @@ export default function WorkspaceScreen() {
   }, [selectedAspectRatioId, setDraftAspectRatio]);
 
   useEffect(() => {
+    if (typeof flowId !== "string" || flowId.trim().length === 0) {
+      return;
+    }
+
+    if (lastFlowIdRef.current === flowId && hydratedDraftFlowIdRef.current === flowId) {
+      return;
+    }
+
+    lastFlowIdRef.current = flowId;
+    if (!hasDraftFlowData(draft)) {
+      return;
+    }
+
+    hydratedDraftFlowIdRef.current = flowId;
+    hasAppliedStartStepRef.current = false;
+    handledBoardRouteRef.current = null;
+    generationAlertedFailureRef.current = null;
+    previousBoardStatusesRef.current = {};
+
+    startTransition(() => {
+      setWizardNavDirection(1);
+      setWorkflowStep(0);
+      setSelectedImage(draft.image ?? null);
+      setSelectedRoom(draft.room ?? null);
+      setSelectedStyle(draft.style ?? null);
+      setSelectedFinishId((draft.finishId as FinishOption["id"] | null) ?? null);
+      setSelectedModeId((draft.modeId as ModeOption["id"] | null) ?? null);
+      setCustomPrompt(draft.prompt ?? "");
+      setCustomPromptDraft(draft.prompt ?? "");
+      setIsCustomPromptViewOpen(false);
+      setSelectedPaletteId(draft.paletteId ?? null);
+      setSelectedAspectRatioId((draft.aspectRatio as AspectRatioOption["id"] | null) ?? "post");
+      setGeneratedImageUrl(null);
+      setGenerationId(null);
+      setPendingBoardItems([]);
+      setNewlyReadyBoardIds([]);
+      setActiveBoardItemId(null);
+      setIsGenerating(false);
+      setPendingReviewState(null);
+      setShowBeforeOnly(false);
+      setShowResumeToast(false);
+      setAwaitingAuth(false);
+      setIsServiceProcessing(false);
+      setPaintTool("brush");
+      setPaintBrushWidth(28);
+      setPaintColor("#D946EF");
+      setPaintColorDraft("#D946EF");
+      setPaintSurface("Auto");
+      setPaintStrokes([]);
+      setPaintRedoStrokes([]);
+      setPaintCurrentStroke(null);
+    });
+    paintCurrentStrokeRef.current = null;
+  }, [draft, flowId]);
+
+  useEffect(() => {
     if (!startStep || hasAppliedStartStepRef.current) return;
     const canSkip = Boolean(draft.image && draft.room);
     const hasStyle = Boolean(presetStyle || draft.style || selectedStyle);
     if (canSkip && hasStyle) {
       const parsed = Number(startStep);
-      const nextStep = Number.isFinite(parsed) ? Math.max(0, Math.min(parsed, 3)) : 3;
+      const nextStep = Number.isFinite(parsed) ? Math.max(0, Math.min(parsed - 1, 3)) : 0;
       setWorkflowStep(nextStep);
       setShowResumeToast(true);
       if (toastTimeoutRef.current) {
@@ -2776,6 +2806,7 @@ export default function WorkspaceScreen() {
     if (
       currentGenerationStatus === "failed"
       && !hasResultImage
+      && currentGeneration.errorMessage !== CANCELLED_GENERATION_MESSAGE
       && generationAlertedFailureRef.current !== currentGeneration.id
     ) {
       setIsGenerating(false);
@@ -3167,7 +3198,12 @@ export default function WorkspaceScreen() {
   const handleBack = useCallback(() => {
     triggerHaptic();
     if (workflowStep === 0) {
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+        return;
+      }
+
+      router.replace("/(tabs)");
       return;
     }
     if (isGardenService && workflowStep === 2) {
@@ -3445,7 +3481,7 @@ export default function WorkspaceScreen() {
       }
 
       if (generationAccess.reason === "paywall") {
-        router.push("/paywall");
+        openGenerationPaywall();
         return;
       }
 
@@ -4130,8 +4166,8 @@ export default function WorkspaceScreen() {
     const isSpaceStep = workflowStep === 1;
     const isStyleStep = workflowStep === 2;
     const isTabbedWorkspaceRoute = pathname === "/workspace";
-  const displayedSelectedImage = selectedImage;
-  const hasVisiblePhoto = Boolean(displayedSelectedImage);
+    const displayedSelectedImage = selectedImage;
+    const hasVisiblePhoto = Boolean(displayedSelectedImage);
     const activeExampleLabel = selectedImage?.label ?? null;
     const wizardBackgroundColor = SERVICE_WIZARD_THEME.colors.background;
     const wizardPrimaryTextColor = SERVICE_WIZARD_THEME.colors.textPrimary;
@@ -4155,6 +4191,36 @@ export default function WorkspaceScreen() {
         ),
       isPhotoStep ? 520 : 460,
     );
+    const uploadTileHeight = Math.max(uploadTileSize, Math.min(stepContentMinHeight - 216, 468));
+    const photoStepHeaderAccessory = isPhotoStep ? (
+      <View
+        style={{
+          minHeight: 44,
+          paddingHorizontal: 12,
+          borderRadius: DS.radius.pill,
+          borderWidth: HAIRLINE,
+          borderColor: SERVICE_WIZARD_THEME.colors.border,
+          backgroundColor: wizardSurfaceColor,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          ...glowShadow(DS.colors.border, 16),
+        }}
+      >
+        <Gem color={SERVICE_WIZARD_THEME.colors.textPrimary} size={14} strokeWidth={2.1} />
+        <Text
+          style={{
+            color: SERVICE_WIZARD_THEME.colors.textPrimary,
+            fontSize: 13,
+            lineHeight: 14,
+            ...fonts.semibold,
+          }}
+        >
+          {creditBalance}
+        </Text>
+      </View>
+    ) : undefined;
     const showGenerateConfirmation = isGenerationReviewStep && !isPaintService && !isFloorService && !isLeanGenerationService && Boolean(selectedMode && selectedPalette);
     const isContinueDisabled = !canContinue || (isFinalWizardStep && isGenerating) || (isGenerationReviewStep && hasBrokenGenerateSummary);
     const isContinueActive = canContinue && !isContinueDisabled;
@@ -4377,6 +4443,7 @@ export default function WorkspaceScreen() {
                 step={currentStepNumber}
                 totalSteps={totalWizardSteps}
                 canGoBack={workflowStep > 0}
+                leftAccessory={photoStepHeaderAccessory}
                 onBack={handleBack}
                 onClose={handleCloseWizard}
               />
@@ -4422,14 +4489,14 @@ export default function WorkspaceScreen() {
                       from={{ opacity: 0, scale: 0.985, translateY: 12 }}
                       animate={{ opacity: 1, scale: 1, translateY: 0 }}
                       transition={LUX_SPRING}
-                      style={{ alignItems: "center", justifyContent: "center" }}
+                      style={{ alignItems: "center", justifyContent: "center", minHeight: uploadTileHeight }}
                     >
                       <LuxPressable
                         onPress={handlePickPhoto}
                         className="cursor-pointer self-center"
                         style={{
                           width: uploadTileSize,
-                          height: uploadTileSize,
+                          height: uploadTileHeight,
                           borderRadius: isFloorService ? DS.radius.xl : 34,
                           borderWidth: hasVisiblePhoto ? HAIRLINE : 1.5,
                           borderColor: hasVisiblePhoto ? DS.colors.borderStrong : "rgba(255,107,242,0.72)",

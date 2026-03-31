@@ -1,5 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from "react-native";
-import { ArrowRight } from "lucide-react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import { ChevronRight } from "lucide-react-native";
 import type { ComponentType, ReactNode } from "react";
 
 import { fonts } from "../styles/typography";
@@ -42,46 +42,49 @@ export function SettingsRow({
       }}
       style={[styles.row, style]}
     >
-      <Icon color={iconColor} size={20} strokeWidth={2.2} style={styles.leftIcon} />
-      <Text style={[styles.label, { color: textColor }]}>{label}</Text>
+      <View style={styles.leftSide}>
+        <Icon color={iconColor} size={20} strokeWidth={2.1} />
+        <Text style={[styles.label, { color: textColor }]}>{label}</Text>
+      </View>
 
-      {loading ? <ActivityIndicator color={loadingColor} style={styles.spinner} /> : null}
-      {!loading && showChevron ? <ArrowRight color="#A0A0A0" size={20} strokeWidth={2.2} style={styles.chevron} /> : null}
-      {!loading ? rightAccessory : null}
+      <View style={styles.rightSide}>
+        {loading ? <ActivityIndicator color={loadingColor} /> : null}
+        {!loading ? rightAccessory : null}
+        {!loading && showChevron ? <ChevronRight color="#B8B8B8" size={18} strokeWidth={1.9} /> : null}
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   row: {
-    position: "relative",
-    height: 76,
+    minHeight: 68,
     marginHorizontal: 16,
-    marginBottom: 8,
-    borderRadius: 12,
-    backgroundColor: "#F5F5F5",
+    marginBottom: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#EFEFEF",
+    backgroundColor: "#FAFAFA",
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-  leftIcon: {
-    position: "absolute",
-    left: 20,
-    top: 28,
+  leftSide: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
   },
   label: {
-    marginLeft: 52,
-    marginTop: 32,
-    marginBottom: 32,
     fontSize: 15,
-    lineHeight: 15,
+    lineHeight: 18,
     ...fonts.medium,
   },
-  chevron: {
-    position: "absolute",
-    right: 16,
-    top: 24,
-  },
-  spinner: {
-    position: "absolute",
-    right: 16,
-    top: 28,
+  rightSide: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
 });

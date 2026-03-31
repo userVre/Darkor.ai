@@ -50,6 +50,7 @@ import { ServiceWizardHeader } from "./service-wizard-header";
 import { ServiceWizardStepScreen } from "./service-wizard-shared";
 import { LuxPressable } from "./lux-pressable";
 import { useMaskDrawing } from "./use-mask-drawing";
+import { useViewerCredits } from "./viewer-credits-context";
 import { useViewerSession } from "./viewer-session-context";
 
 type WizardStep = "intake" | "mask" | "colors" | "finish" | "processing" | "result";
@@ -317,8 +318,7 @@ function mapDetectionPointToCanvas(
 }
 
 function logAutoDetectFailure(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unknown auto-detect failure";
-  console.log("[PaintWizard] Auto-detect failed", { message });
+  void error;
 }
 
 const FinishPreview = memo(function FinishPreview({ finishId }: { finishId: FinishOption["id"] }) {
@@ -398,6 +398,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const effectiveSignedIn = isSignedIn || guestWizardTestingSession;
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const { showToast } = useProSuccess();
+  const { setOptimisticCredits } = useViewerCredits();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
 
   const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as MeResponse | null | undefined;
@@ -1078,7 +1079,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       }
 
       if (generationAccess.reason === "paywall") {
-        router.push("/paywall");
+        router.push({ pathname: "/paywall", params: { source: "generate" } } as any);
         return;
       }
 
@@ -1119,11 +1120,14 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
             displayStyle: `${selectedColorTitle} Paint`,
             customPrompt: `Repaint only the selected ${selectedSurface.toLowerCase()} surface. Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`,
             aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
-          })) as { generationId: string };
+          })) as { generationId: string; creditsRemaining?: number };
         },
         showToast,
-      )) as { generationId: string };
+      )) as { generationId: string; creditsRemaining?: number };
 
+      if (typeof result.creditsRemaining === "number") {
+        setOptimisticCredits(result.creditsRemaining);
+      }
       setGenerationId(result.generationId);
     } catch (error) {
       setIsGenerating(false);
@@ -1139,7 +1143,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
           router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=paint" } });
           return;
         }
-        router.push("/paywall");
+        router.push({ pathname: "/paywall", params: { source: "generate" } } as any);
         return;
       }
       showToast(GENERATION_FAILED_TOAST);
@@ -1159,6 +1163,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     viewerReady,
     selectedColorTitle,
     selectedColorValue,
+    setOptimisticCredits,
   ]);
 
   const handleCancelGeneration = useCallback(async () => {

@@ -48,9 +48,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
+    paddingHorizontal: 24,
   },
   modalCard: {
-    marginHorizontal: 28,
     backgroundColor: "#FFFFFF",
     borderRadius: 24,
     overflow: "hidden",
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   title: {
     marginTop: 36,
     marginBottom: 28,
-    marginHorizontal: 100,
+    marginHorizontal: 24,
     color: "#0A0A0A",
     textAlign: "center",
     fontSize: 20,

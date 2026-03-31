@@ -254,10 +254,6 @@ async function requestModelWithRetry(args: {
       if (!response.ok) {
         const errorMessage = normalizeGenerationError(await parseGeminiError(response));
         if (attempt === 0 && shouldRetryGeminiStatus(response.status)) {
-          console.log(`[AI] ${args.providerLabel} transient failure, retrying`, {
-            attempt: attempt + 1,
-            status: response.status,
-          });
           await new Promise((resolve) => setTimeout(resolve, 1200));
           continue;
         }
@@ -272,10 +268,6 @@ async function requestModelWithRetry(args: {
       const message = error instanceof Error ? error.message : "Gemini request failed.";
       lastError = error instanceof Error ? error : new Error(message);
       if (attempt === 0 && shouldRetryGeminiErrorMessage(message)) {
-        console.log(`[AI] ${args.providerLabel} network error, retrying`, {
-          attempt: attempt + 1,
-          message,
-        });
         await new Promise((resolve) => setTimeout(resolve, 1200));
         continue;
       }
@@ -558,32 +550,14 @@ export const generateDesign: any = internalActionGeneric({
     let generatedStorageId: string | null = null;
 
     try {
-      console.log("[AI] generateDesign started", {
-        generationId: args.generationId,
-        serviceType: args.serviceType,
-        speedTier: args.speedTier ?? "standard",
-      });
-
       const sourceBlob = await ctx.storage.get(args.imageStorageId);
       if (!sourceBlob) {
         throw new ConvexError("The source image could not be loaded from storage.");
       }
-      console.log("[AI] Source image loaded", {
-        generationId: args.generationId,
-        mimeType: sourceBlob.type || "image/jpeg",
-        sizeBytes: sourceBlob.size,
-      });
 
       const maskBlob = args.maskStorageId ? await ctx.storage.get(args.maskStorageId) : null;
       if (args.serviceType !== "redesign" && !maskBlob) {
         throw new ConvexError("The edit mask could not be loaded from storage.");
-      }
-      if (maskBlob) {
-        console.log("[AI] Mask image loaded", {
-          generationId: args.generationId,
-          mimeType: maskBlob.type || "image/png",
-          sizeBytes: maskBlob.size,
-        });
       }
 
       const promptOptimizationInstruction = buildPromptOptimizationInstruction({
@@ -596,11 +570,6 @@ export const generateDesign: any = internalActionGeneric({
         regenerate: args.regenerate,
       });
 
-      console.log("[AI] Gemini prompt optimization started", {
-        generationId: args.generationId,
-        model: GEMINI_TEXT_MODEL,
-        endpoint: GEMINI_TEXT_ENDPOINT,
-      });
       const promptResponse = await requestModelWithRetry({
         body: JSON.stringify({
           contents: [
@@ -622,10 +591,6 @@ export const generateDesign: any = internalActionGeneric({
       await ctx.runMutation((internal as any).ai.saveOptimizedPrompt, {
         generationId: args.generationId,
         prompt: optimizedPrompt,
-      });
-      console.log("[AI] Gemini prompt optimization completed", {
-        generationId: args.generationId,
-        promptLength: optimizedPrompt.length,
       });
 
       const parts: GeminiInlinePart[] = [
@@ -653,11 +618,6 @@ export const generateDesign: any = internalActionGeneric({
         });
       }
 
-      console.log("[AI] Nano Banana generation started", {
-        generationId: args.generationId,
-        model: NANO_BANANA_MODEL,
-        endpoint: NANO_BANANA_ENDPOINT,
-      });
       const response = await requestModelWithRetry({
         body: JSON.stringify({
           contents: [
@@ -680,31 +640,17 @@ export const generateDesign: any = internalActionGeneric({
 
       const payload = (await response.json()) as GeminiResponse;
       const generated = extractGeneratedImage(payload);
-      console.log("[AI] Nano Banana generation completed", {
-        generationId: args.generationId,
-        mimeType: generated.mimeType ?? "image/png",
-        base64Length: generated.data.length,
-      });
       const bytes = decodeBase64ToBytes(generated.data);
       const imageBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
       const outputBlob = new Blob([imageBuffer], { type: generated.mimeType ?? "image/png" });
 
       await waitForMinimumDuration(startedAt, (args.speedTier as SpeedTier | undefined) ?? "standard");
       generatedStorageId = (await ctx.storage.store(outputBlob)) as string;
-      console.log("[AI] Generated image stored", {
-        generationId: args.generationId,
-        storageId: generatedStorageId,
-        sizeBytes: outputBlob.size,
-      });
 
       const saveResult = (await ctx.runMutation((internal as any).ai.saveGeneration, {
         generationId: args.generationId,
         storageId: generatedStorageId,
       })) as { imageUrl?: string | null };
-      console.log("[AI] Generation saved", {
-        generationId: args.generationId,
-        imageUrl: saveResult.imageUrl ?? null,
-      });
 
       return {
         ok: true,
@@ -717,10 +663,6 @@ export const generateDesign: any = internalActionGeneric({
       }
 
       const message = normalizeGenerationError(error instanceof Error ? error.message : "Generation failed.");
-      console.log("[AI] Generation failed", {
-        generationId: args.generationId,
-        message,
-      });
       await ctx.runMutation((internal as any).generations.markGenerationFailed, {
         generationId: args.generationId,
         ownerId: args.ownerId,

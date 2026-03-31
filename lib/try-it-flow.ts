@@ -38,6 +38,14 @@ export type PreparedTryItFlow = {
   style: string;
 };
 
+export function withWorkspaceFlowId(path: string, flowId: string = Date.now().toString()) {
+  const [pathname, search = ""] = path.split("?");
+  const params = new URLSearchParams(search);
+  params.set("flowId", flowId);
+  const nextSearch = params.toString();
+  return nextSearch.length > 0 ? `${pathname}?${nextSearch}` : pathname;
+}
+
 function mapDiscoverService(service: DiscoverTile["service"]) {
   if (service === "garden") return "garden";
   if (service === "exterior") return "facade";
@@ -70,7 +78,7 @@ export function normalizeDiscoverTryItTile(item: DiscoverTile): TryItExampleInpu
     style: item.style,
     presetRoom: item.presetRoom ?? item.spaceType,
     presetStyle: item.presetStyle ?? item.style,
-    startStep: item.startStep ?? "3",
+    startStep: "1",
     entrySource: "discover",
   };
 }
@@ -91,7 +99,7 @@ export function normalizeFeaturedTryItExample(
     finishId: item.finishId ?? null,
     prompt: item.prompt,
     aspectRatioId: item.aspectRatioId,
-    startStep: "3",
+    startStep: "1",
     entrySource,
   };
 }
@@ -99,7 +107,7 @@ export function normalizeFeaturedTryItExample(
 export function buildTryItRedirectPath(example: TryItExampleInput) {
   const search = new URLSearchParams({
     service: example.serviceParam,
-    startStep: example.startStep ?? "3",
+    startStep: example.startStep ?? "1",
   });
 
   const presetRoom = example.presetRoom ?? example.room;
@@ -117,7 +125,7 @@ export function buildTryItRedirectPath(example: TryItExampleInput) {
     search.set("entrySource", example.entrySource);
   }
 
-  return `/workspace?${search.toString()}`;
+  return withWorkspaceFlowId(`/workspace?${search.toString()}`);
 }
 
 export async function prepareTryItFlow(

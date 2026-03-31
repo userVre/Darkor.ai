@@ -13,7 +13,7 @@ import { FEATURED_TRY_IT_BY_ID } from "../../lib/featured-try-it";
 import { useViewerCredits } from "../../components/viewer-credits-context";
 import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
-import { normalizeFeaturedTryItExample, prepareTryItFlow } from "../../lib/try-it-flow";
+import { normalizeFeaturedTryItExample, prepareTryItFlow, withWorkspaceFlowId } from "../../lib/try-it-flow";
 import { fonts } from "../../styles/typography";
 
 const FLOATING_TITLE_TOP = 48;
@@ -65,6 +65,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
   const {
+    clearDraft,
     setDraftAspectRatio,
     setDraftFinish,
     setDraftImage,
@@ -104,7 +105,8 @@ export default function HomeScreen() {
   const handleTryIt = useCallback(async (item: HomeToolCardItem) => {
     const featuredExample = FEATURED_TRY_IT_BY_ID.get(item.id);
     if (!featuredExample) {
-      return `/workspace?service=${item.serviceParam}`;
+      clearDraft();
+      return withWorkspaceFlowId(`/workspace?service=${item.serviceParam}`);
     }
 
     const prepared = await prepareTryItFlow(
@@ -123,6 +125,7 @@ export default function HomeScreen() {
 
     return prepared.redirectTo;
   }, [
+    clearDraft,
     setDraftAspectRatio,
     setDraftFinish,
     setDraftImage,
@@ -151,13 +154,16 @@ export default function HomeScreen() {
 
   const handleCreatePress = () => {
     triggerHaptic();
+    const nextWorkspaceRoute = withWorkspaceFlowId("/workspace");
 
     if (!canCreateAsGuest) {
-      router.push({ pathname: "/sign-in", params: { returnTo: "/workspace" } });
+      clearDraft();
+      router.push({ pathname: "/sign-in", params: { returnTo: nextWorkspaceRoute } });
       return;
     }
 
-    routeToToolFlow("/workspace");
+    clearDraft();
+    routeToToolFlow(nextWorkspaceRoute);
   };
 
   const handleDiscoverPress = () => {

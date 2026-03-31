@@ -174,11 +174,21 @@ function ProToast({
   const insets = useSafeAreaInsets();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  if (!message) return null;
+  useEffect(() => {
+    if (!message) {
+      return;
+    }
 
-  if (!timeoutRef.current) {
     timeoutRef.current = setTimeout(onHide, 2200);
-  }
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [message, onHide]);
+
+  if (!message) return null;
 
   return (
     <MotiView

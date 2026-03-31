@@ -11,12 +11,13 @@ import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
 import { Alert, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import * as SecureStore from "expo-secure-store";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  ArrowRight,
+  ChevronRight,
   Copy,
+  Diamond,
   FileQuestion,
   FileText,
-  Gem,
   Mail,
   RotateCcw,
   Share2,
@@ -66,6 +67,7 @@ function joinAppUrl(path: string) {
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
   const { clearDraft } = useWorkspaceDraft();
@@ -79,6 +81,7 @@ export default function SettingsScreen() {
   const fullUserId = user?.id ?? "";
   const truncatedUserId = fullUserId ? truncateUserId(fullUserId) : "Not signed in";
   const shouldShowCopy = Boolean(fullUserId);
+  const heroTopInset = Math.max(insets.top + 8, 48);
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -300,13 +303,6 @@ export default function SettingsScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={styles.headerBlock}>
-          <Text style={styles.headerTitle}>Settings</Text>
-          <Pressable accessibilityRole="button" onPress={handleBack} style={styles.backArrow}>
-            <Text style={styles.backArrowText}>{"<"}</Text>
-          </Pressable>
-        </View>
-
         <View style={styles.heroSection}>
           <Image
             source={require("../assets/media/paywall/paywall-luxury-lounge.png")}
@@ -315,13 +311,20 @@ export default function SettingsScreen() {
           />
           <View pointerEvents="none" style={styles.heroOverlay} />
 
-          <View style={styles.heroContent}>
+          <Pressable accessibilityRole="button" onPress={handleBack} style={[styles.backArrow, { top: heroTopInset }]}>
+            <Text style={styles.backArrowText}>{"\u2039"}</Text>
+          </Pressable>
+
+          <View style={[styles.heroContent, { paddingTop: heroTopInset + 48 }]}>
+            <Text style={styles.headerTitle}>Settings</Text>
             <Text style={styles.heroTitle}>Your Account is FREE</Text>
 
             <View style={styles.featureList}>
               {FEATURE_ITEMS.map((item) => (
                 <View key={item} style={styles.featureRow}>
-                  <ArrowRight color="#FFFFFF" size={18} strokeWidth={2.2} />
+                  <View style={styles.featureIconBox}>
+                    <ChevronRight color="#0A0A0A" size={14} strokeWidth={2.4} />
+                  </View>
                   <Text style={styles.featureText}>{item}</Text>
                 </View>
               ))}
@@ -329,7 +332,7 @@ export default function SettingsScreen() {
 
             <Pressable accessibilityRole="button" onPress={handleUpgrade} style={styles.upgradeButton}>
               <View style={styles.upgradeButtonContent}>
-                <Gem color="#0A0A0A" size={16} strokeWidth={2.2} />
+                <Diamond color="#0A0A0A" size={16} strokeWidth={2.2} />
                 <Text style={styles.upgradeButtonText}>Upgrade PRO</Text>
               </View>
             </Pressable>
@@ -399,110 +402,107 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 32,
   },
-  headerBlock: {
-    position: "relative",
-    height: 126,
-    backgroundColor: "#0A0A0A",
-  },
-  headerTitle: {
-    marginTop: 56,
-    marginBottom: 52,
-    color: "#FFFFFF",
-    textAlign: "center",
-    fontSize: 18,
-    lineHeight: 18,
-    ...fonts.bold,
-  },
   backArrow: {
     position: "absolute",
     left: 16,
-    top: 56,
     width: 44,
     height: 44,
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 3,
   },
   backArrowText: {
     color: "#FFFFFF",
-    fontSize: 20,
-    lineHeight: 20,
-    ...fonts.regular,
+    fontSize: 34,
+    lineHeight: 34,
+    ...fonts.medium,
   },
   heroSection: {
     position: "relative",
     width: "100%",
-    height: 320,
+    minHeight: 404,
     overflow: "hidden",
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(0,0,0,0.42)",
   },
   heroContent: {
     flex: 1,
-    paddingTop: 32,
     paddingLeft: 24,
     paddingRight: 24,
+    paddingBottom: 12,
+    justifyContent: "flex-end",
+  },
+  headerTitle: {
+    marginBottom: 12,
+    color: "#FFFFFF",
+    fontSize: 16,
+    lineHeight: 18,
+    ...fonts.semibold,
   },
   heroTitle: {
     color: "#FFFFFF",
-    fontSize: 22,
-    lineHeight: 26,
+    fontSize: 28,
+    lineHeight: 32,
     ...fonts.bold,
   },
   featureList: {
-    marginTop: 24,
-    marginBottom: 16,
-    gap: 24,
+    marginTop: 22,
+    marginBottom: 22,
+    gap: 16,
   },
   featureRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginLeft: 0,
+    gap: 10,
+  },
+  featureIconBox: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
   },
   featureText: {
-    marginLeft: 10,
     color: "#FFFFFF",
     fontSize: 15,
     lineHeight: 18,
     ...fonts.medium,
   },
   upgradeButton: {
-    height: 44,
-    marginRight: 256,
-    marginBottom: 32,
-    borderRadius: 24,
+    alignSelf: "flex-start",
+    minHeight: 48,
+    borderRadius: 999,
     backgroundColor: "#FFFFFF",
     justifyContent: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
   },
   upgradeButtonContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: 8,
   },
   upgradeButtonText: {
     color: "#0A0A0A",
-    fontSize: 14,
-    lineHeight: 16,
+    fontSize: 15,
+    lineHeight: 18,
     ...fonts.semibold,
   },
   rowsSection: {
-    marginTop: 0,
+    marginTop: 20,
   },
   restoreRow: {
-    marginTop: 28,
+    marginTop: 20,
   },
   userIdAccessory: {
-    position: "absolute",
-    right: 16,
-    top: 30,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    maxWidth: 180,
+    maxWidth: 190,
   },
   userIdText: {
     color: "#A0A0A0",
@@ -511,15 +511,19 @@ const styles = StyleSheet.create({
     ...fonts.regular,
   },
   copyButton: {
+    width: 28,
+    height: 28,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: 14,
+    backgroundColor: "#F0F0F0",
   },
   versionLabel: {
-    marginTop: 24,
+    marginTop: 20,
     marginBottom: 32,
     color: "#A0A0A0",
     textAlign: "center",
-    fontSize: 13,
+    fontSize: 12,
     lineHeight: 16,
     ...fonts.regular,
   },

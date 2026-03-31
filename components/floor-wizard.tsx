@@ -42,6 +42,7 @@ import {
 } from "./service-wizard-shared";
 import { useProSuccess } from "./pro-success-context";
 import { useMaskDrawing } from "./use-mask-drawing";
+import { useViewerCredits } from "./viewer-credits-context";
 import { useViewerSession } from "./viewer-session-context";
 import { fonts } from "../styles/typography";
 
@@ -114,8 +115,7 @@ function mapDetectionPointToCanvas(
 }
 
 function logAutoDetectFailure(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unknown auto-detect failure";
-  console.log("[FloorWizard] Auto-detect failed", { message });
+  void error;
 }
 
 function scaleMaskValue(value: number, scale: number) {
@@ -133,6 +133,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const effectiveSignedIn = isSignedIn || guestWizardTestingSession;
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const { showToast } = useProSuccess();
+  const { setOptimisticCredits } = useViewerCredits();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
 
   const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as MeResponse | null | undefined;
@@ -700,7 +701,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       }
 
       if (generationAccess.reason === "paywall") {
-        router.push("/paywall");
+        router.push({ pathname: "/paywall", params: { source: "generate" } } as any);
         return;
       }
 
@@ -731,10 +732,13 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
             displayStyle: `${selectedMaterial.title} Floor`,
             customPrompt: `${customPrompt.trim()}\n\nPreserve perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`,
             aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
-          })) as { generationId: string };
+          })) as { generationId: string; creditsRemaining?: number };
         },
         showToast,
-      )) as { generationId: string };
+      )) as { generationId: string; creditsRemaining?: number };
+      if (typeof result.creditsRemaining === "number") {
+        setOptimisticCredits(result.creditsRemaining);
+      }
       setGenerationId(result.generationId);
     } catch (error) {
       setIsGenerating(false);
@@ -750,12 +754,12 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
           router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=floor" } });
           return;
         }
-        router.push("/paywall");
+        router.push({ pathname: "/paywall", params: { source: "generate" } } as any);
         return;
       }
       showToast(GENERATION_FAILED_TOAST);
     }
-  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, router, selectedImage, selectedMaterial, showToast, startGeneration, uploadBlobToStorage, viewerId, viewerReady]);
+  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, uploadBlobToStorage, viewerId, viewerReady]);
 
   const handleCancelGeneration = useCallback(async () => {
     if (!generationId || isCancellingGeneration) {

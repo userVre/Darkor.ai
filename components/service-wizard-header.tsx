@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { type ReactNode, useCallback, useMemo } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { ArrowLeft, X as Close } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,6 +13,7 @@ type ServiceWizardHeaderProps = {
   step: number;
   totalSteps?: number;
   canGoBack?: boolean;
+  leftAccessory?: ReactNode;
   onBack?: () => void;
   onClose: () => void;
 };
@@ -22,6 +23,7 @@ export function ServiceWizardHeader({
   step,
   totalSteps = 4,
   canGoBack = false,
+  leftAccessory,
   onBack,
   onClose,
 }: ServiceWizardHeaderProps) {
@@ -42,7 +44,9 @@ export function ServiceWizardHeader({
     <View style={styles.safeArea}>
       <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.sideSlot}>
-          {showBack ? (
+          {leftAccessory ? (
+            leftAccessory
+          ) : showBack ? (
             <LuxPressable
               onPress={onBack}
               pressableClassName="cursor-pointer"
@@ -109,12 +113,13 @@ function createStyles(colors: Theme) {
     paddingTop: DS.spacing[1.5],
     paddingBottom: DS.spacing[2.5],
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
     gap: DS.spacing[2],
     backgroundColor: colors.bg,
   },
   sideSlot: {
-    width: 56,
+    minWidth: 56,
     alignItems: "center",
     justifyContent: "center",
   },

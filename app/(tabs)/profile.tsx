@@ -5,6 +5,7 @@ import { Image as ImageIcon } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BoardActionsModal } from "../../components/board-actions-modal";
 import { BoardImageCard } from "../../components/board-image-card";
@@ -34,6 +35,7 @@ const GRID_VERTICAL_GAP = 28;
 
 export default function ProfileScreen() {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const { showToast } = useProSuccess();
   const deleteGeneration = useMutation("generations:deleteGeneration" as any);
@@ -112,6 +114,7 @@ export default function ProfileScreen() {
   }, [width]);
 
   const gridWidth = columnWidth * 2 + GRID_COLUMN_GAP;
+  const bottomContentInset = Math.max(insets.bottom + 112, 128);
 
   const handleImagePress = (item: BoardItem) => {
     const itemStatus = resolveGenerationStatus(item.status, item.imageUri);
@@ -212,12 +215,16 @@ export default function ProfileScreen() {
         horizontal={false}
         style={styles.scrollView}
         contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={[styles.scrollContent, boardItems.length === 0 ? styles.emptyScrollContent : null]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: bottomContentInset },
+          boardItems.length === 0 ? styles.emptyScrollContent : null,
+        ]}
       >
         <Text style={styles.title}>Your Board</Text>
 
         {boardItems.length === 0 ? (
-          <View style={styles.emptyState}>
+          <View style={[styles.emptyState, { paddingBottom: bottomContentInset }]}>
             <ImageIcon color="#D0D0D0" size={48} strokeWidth={1.9} />
             <Text style={styles.emptyTitle}>No designs yet</Text>
             <Text style={styles.emptySubtitle}>Your generated designs will appear here</Text>
@@ -274,7 +281,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 28,
-    paddingBottom: 48,
   },
   emptyScrollContent: {
     flexGrow: 1,
