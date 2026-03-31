@@ -480,12 +480,6 @@ export default function PaywallScreen() {
     if (source === "launch") {
       dismissLaunchPaywall();
     }
-
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-
     router.replace("/(tabs)");
   }, [router, source]);
 
@@ -764,15 +758,18 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: "absolute",
-    top: 28,
-    right: 24,
+    top: 20,
+    right: 20,
     zIndex: 10,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
   },
   closeButtonInner: {
-    flex: 1,
+    width: 32,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 16,
