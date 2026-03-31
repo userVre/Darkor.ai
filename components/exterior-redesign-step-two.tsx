@@ -78,9 +78,9 @@ export function ExteriorRedesignStepTwo({
   const handleExitPress = () => {
     triggerHaptic();
     Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "Cancel", style: "cancel" },
+      { text: "CANCEL", style: "cancel" },
       {
-        text: "Exit",
+        text: "EXIT",
         style: "destructive",
         onPress: () => {
           onExit();
@@ -91,7 +91,16 @@ export function ExteriorRedesignStepTwo({
 
   const handleBackPress = () => {
     triggerHaptic();
-    onBack();
+    Alert.alert("Exit?", "Your progress will be lost.", [
+      { text: "CANCEL", style: "cancel" },
+      {
+        text: "EXIT",
+        style: "destructive",
+        onPress: () => {
+          onExit();
+        },
+      },
+    ]);
   };
 
   const handleCardPress = (title: string) => {

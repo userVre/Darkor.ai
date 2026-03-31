@@ -33,10 +33,10 @@ export function ServiceWizardHeader({
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showBack = safeStep > 1 && canGoBack && Boolean(onBack);
   const topInset = process.env.EXPO_OS === "android" ? Math.max(insets.top, 44) : Math.max(insets.top, 20);
-  const handleClosePress = useCallback(() => {
-    Alert.alert("Leave wizard?", "Are you sure? Your progress will be lost.", [
-      { text: "Stay", style: "cancel" },
-      { text: "Leave", style: "destructive", onPress: onClose },
+  const handleExitPress = useCallback(() => {
+    Alert.alert("Exit?", "Your progress will be lost.", [
+      { text: "CANCEL", style: "cancel" },
+      { text: "EXIT", style: "destructive", onPress: onClose },
     ]);
   }, [onClose]);
 
@@ -48,7 +48,7 @@ export function ServiceWizardHeader({
             leftAccessory
           ) : showBack ? (
             <LuxPressable
-              onPress={onBack}
+              onPress={handleExitPress}
               pressableClassName="cursor-pointer"
               className="cursor-pointer"
               style={styles.iconButton}
@@ -88,7 +88,7 @@ export function ServiceWizardHeader({
 
         <View style={styles.sideSlot}>
           <LuxPressable
-            onPress={handleClosePress}
+            onPress={handleExitPress}
             pressableClassName="cursor-pointer"
             className="cursor-pointer"
             style={styles.iconButton}

@@ -11,6 +11,7 @@ import { useTheme } from "@/styles/theme";
 import { DS, HAIRLINE } from "../../lib/design-system";
 import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
+import { useFlowUI } from "../../components/flow-ui-context";
 
 export const DEFAULT_TAB_BAR_STYLE = {
   position: "absolute" as const,
@@ -70,6 +71,7 @@ function TabIcon({
 export default function TabsLayout() {
   const colors = useTheme();
   const router = useRouter();
+  const { isFlowActive } = useFlowUI();
   const { isSignedIn } = useAuth();
   const canOpenCreateTab = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const defaultTabBarStyle = useMemo(
@@ -116,7 +118,7 @@ export default function TabsLayout() {
           lineHeight: 10,
           ...fonts.medium,
         },
-        tabBarStyle: defaultTabBarStyle,
+        tabBarStyle: isFlowActive ? { display: "none" } : defaultTabBarStyle,
         sceneStyle: {
           backgroundColor: "#FFFFFF",
         },
@@ -126,7 +128,6 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Tools",
-          tabBarStyle: { display: "none" },
           tabBarIcon: ({ color, focused }) => <TabIcon Icon={LayoutGrid} color={color} size={24} focused={focused} />,
         }}
       />

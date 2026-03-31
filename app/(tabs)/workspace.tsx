@@ -62,10 +62,11 @@ import {
   Wand2,
 } from "lucide-react-native";
 import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
-import { GENERATION_FAILED_TOAST } from "../../lib/generation-errors";
+import { GENERATION_FAILED_TOAST, getFriendlyGenerationError } from "../../lib/generation-errors";
 import { triggerHaptic } from "../../lib/haptics";
 import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
 import { uploadLocalFileToCloud } from "../../lib/native-upload";
+import { loadLocalBoardItems, persistLocalBoardItems, type LocalBoardItem } from "../../lib/local-board-cache";
 import { FloorWizard } from "../../components/floor-wizard";
 import { GardenRedesignStepOne } from "../../components/garden-redesign-step-one";
 import { GardenRedesignStepTwo } from "../../components/garden-redesign-step-two";
@@ -83,6 +84,7 @@ import { ServiceContinueButton } from "../../components/service-continue-button"
 import { GENERATION_STATUS_MESSAGES } from "../../components/service-processing-screen";
 import { ServiceWizardHeader } from "../../components/service-wizard-header";
 import { BeforeAfterSlider } from "../../components/before-after-slider";
+import { useFlowUI } from "../../components/flow-ui-context";
 import { useViewerCredits } from "../../components/viewer-credits-context";
 import { useWorkspaceDraft } from "../../components/workspace-context";
 import { useViewerSession } from "../../components/viewer-session-context";
@@ -1838,6 +1840,7 @@ export default function WorkspaceScreen() {
     setDraftStyle,
   } =
     useWorkspaceDraft();
+  const { setIsFlowActive } = useFlowUI();
   const { showToast } = useProSuccess();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
 
@@ -1868,6 +1871,7 @@ export default function WorkspaceScreen() {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [pendingBoardItems, setPendingBoardItems] = useState<BoardRenderItem[]>([]);
+  const [cachedBoardItems, setCachedBoardItems] = useState<BoardRenderItem[]>([]);
   const [newlyReadyBoardIds, setNewlyReadyBoardIds] = useState<string[]>([]);
   const [activeBoardItemId, setActiveBoardItemId] = useState<string | null>(null);
   const [, setShowBeforeOnly] = useState(false);
@@ -1927,8 +1931,7 @@ export default function WorkspaceScreen() {
   const isFloorService = serviceType === "floor";
   const isPaintService = serviceType === "paint";
   const isLeanGenerationService = isExteriorService || isGardenService;
-  const shouldHideNativeTabBar =
-    isServiceProcessing || ((isInteriorService && workflowStep <= 3) || (isExteriorService && workflowStep <= 3));
+  const shouldHideNativeTabBar = pathname === "/workspace";
   const presetRoomOptions =
     serviceType === "exterior"
       ? SPACE_OPTIONS.exterior
@@ -1945,6 +1948,13 @@ export default function WorkspaceScreen() {
       navigation.setOptions({ tabBarStyle: DEFAULT_TAB_BAR_STYLE });
     };
   }, [navigation, shouldHideNativeTabBar]);
+
+  useEffect(() => {
+    setIsFlowActive(true);
+    return () => {
+      setIsFlowActive(false);
+    };
+  }, [setIsFlowActive]);
 
   useEffect(() => {
     if (!isPaintService && !isFloorService) {
@@ -2141,7 +2151,7 @@ export default function WorkspaceScreen() {
   );
 
   const archivedBoardItems = useMemo<BoardRenderItem[]>(() => {
-    return (generationArchive ?? []).map((generation) => ({
+    const remoteItems = (generationArchive ?? []).map((generation) => ({
       id: generation._id,
       imageUrl: generation.imageUrl ?? null,
       originalImageUrl: generation.sourceImageUrl ?? null,
@@ -2153,7 +2163,15 @@ export default function WorkspaceScreen() {
       errorMessage: generation.errorMessage ?? null,
       createdAt: generation.createdAt ?? generation._creationTime,
     }));
-  }, [generationArchive, serviceLabel]);
+    const merged = new Map<string, BoardRenderItem>();
+    for (const item of cachedBoardItems) {
+      merged.set(item.id, item);
+    }
+    for (const item of remoteItems) {
+      merged.set(item.id, item);
+    }
+    return Array.from(merged.values()).sort((left, right) => right.createdAt - left.createdAt);
+  }, [cachedBoardItems, generationArchive, serviceLabel]);
 
   const boardItems = useMemo<BoardRenderItem[]>(() => {
     const newBoardIdSet = new Set(newlyReadyBoardIds);
@@ -2179,6 +2197,29 @@ export default function WorkspaceScreen() {
     () => boardItems.find((item) => item.id === activeBoardItemId) ?? null,
     [activeBoardItemId, boardItems],
   );
+
+  useEffect(() => {
+    void (async () => {
+      const localItems = await loadLocalBoardItems(viewerId);
+      setCachedBoardItems(localItems as BoardRenderItem[]);
+    })();
+  }, [viewerId]);
+
+  useEffect(() => {
+    const snapshot: LocalBoardItem[] = boardItems.map((item) => ({
+      id: item.id,
+      imageUrl: item.imageUrl ?? null,
+      originalImageUrl: item.originalImageUrl ?? null,
+      styleLabel: item.styleLabel,
+      roomLabel: item.roomLabel,
+      serviceType: item.serviceType ?? null,
+      generationId: item.generationId ?? null,
+      status: item.status,
+      errorMessage: item.errorMessage ?? null,
+      createdAt: item.createdAt,
+    }));
+    void persistLocalBoardItems(viewerId, snapshot);
+  }, [boardItems, viewerId]);
 
   useEffect(() => {
     const isProcessingStep = workflowStep === 5 && activeBoardItem?.status === "processing";
@@ -2812,7 +2853,7 @@ export default function WorkspaceScreen() {
       setIsGenerating(false);
       generationAlertedFailureRef.current = currentGeneration.id;
       setPendingReviewState(null);
-      showToast(GENERATION_FAILED_TOAST);
+      showToast(getFriendlyGenerationError(currentGeneration.errorMessage ?? GENERATION_FAILED_TOAST));
     }
   }, [boardItems, effectiveSignedIn, generatedImageUrl, generationId, isGenerating, pendingReviewState, router, showToast]);
 
@@ -3450,6 +3491,10 @@ export default function WorkspaceScreen() {
   }, [createSourceUploadUrl, viewerArgs]);
 
   const handleGenerate = useCallback(async (options?: { regenerate?: boolean; customPromptOverride?: string }) => {
+    if (isGenerating) {
+      return;
+    }
+
     if (!diagnostic && !viewerReady) {
       Alert.alert("Preparing your session", "Your guest profile is still loading. Please try again in a moment.");
       return;
@@ -3619,7 +3664,7 @@ export default function WorkspaceScreen() {
         openGenerationPaywall();
         return;
       }
-      showToast(GENERATION_FAILED_TOAST);
+      showToast(getFriendlyGenerationError(rawMessage));
     }
   }, [
     createSourceUploadUrl,
@@ -4323,21 +4368,11 @@ export default function WorkspaceScreen() {
     };
     const showContinueBar = !isCustomPromptViewOpen;
     const continueButtonVisible = true;
-    const stepButtonLabel = isPhotoStep
-      ? selectedImage
-        ? "Continue \u2192"
-        : "Add a Photo to Start"
-      : isSpaceStep
-        ? selectedRoom
-          ? `Continue with ${selectedRoom} \u2192`
-          : "Select a Space Type"
-        : isStyleStep
-          ? selectedStyleDisplayName
-            ? `Continue with ${selectedStyleDisplayName} \u2192`
-            : "Select a Style"
-          : isGenerationReviewStep && !hasGenerationCredits
-            ? "Get More Credits \u2192"
-            : "Generate My Design \u2192";
+    const stepButtonLabel = !isGenerationReviewStep
+      ? "Continue \u2192"
+      : !hasGenerationCredits
+        ? "Get More Credits \u2192"
+        : "Generate My Design \u2192";
     const stepButtonActive = isPhotoStep
       ? Boolean(selectedImage)
       : isSpaceStep

@@ -9,6 +9,9 @@ import { type Theme, useTheme } from "@/styles/theme";
 import { LuxPressable } from "./lux-pressable";
 
 const pointerClassName = "cursor-pointer";
+const ACTIVE_BUTTON_COLOR = "#E53935";
+const INACTIVE_BUTTON_COLOR = "#4A4A4A";
+const INACTIVE_TEXT_COLOR = "#CFCFCF";
 
 type ServiceContinueButtonProps = {
   active?: boolean;
@@ -83,7 +86,7 @@ export function ServiceContinueButton({
               className={pointerClassName}
               pressableClassName={pointerClassName}
               style={styles.pressable}
-              glowColor={colors.brand}
+              glowColor={ACTIVE_BUTTON_COLOR}
               scale={0.99}
             >
               <View style={[styles.button, active ? styles.buttonActive : styles.buttonInactive]}>
@@ -137,7 +140,7 @@ function createStyles(colors: Theme) {
       top: 6,
       bottom: 0,
       borderRadius: 14,
-      backgroundColor: colors.brand,
+      backgroundColor: ACTIVE_BUTTON_COLOR,
     },
     pressable: {
       width: "100%",
@@ -147,11 +150,13 @@ function createStyles(colors: Theme) {
       width: "100%",
     },
     buttonActive: {
+      backgroundColor: ACTIVE_BUTTON_COLOR,
+      shadowColor: ACTIVE_BUTTON_COLOR,
       shadowOpacity: 0.3,
     },
     buttonInactive: {
-      backgroundColor: colors.surfaceHigh,
-      shadowColor: colors.surfaceHigh,
+      backgroundColor: INACTIVE_BUTTON_COLOR,
+      shadowColor: INACTIVE_BUTTON_COLOR,
       shadowOpacity: 0.12,
       elevation: 2,
     },
@@ -160,11 +165,11 @@ function createStyles(colors: Theme) {
       fontSize: 16,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "800",
-      textAlign: "left",
+      textAlign: "center",
       letterSpacing: -0.2,
     },
     buttonTextInactive: {
-      color: colors.textSecondary,
+      color: INACTIVE_TEXT_COLOR,
     },
     loadingRow: {
       flexDirection: "row",
@@ -180,7 +185,7 @@ function createStyles(colors: Theme) {
       fontSize: 12,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "600",
-      textAlign: "left",
+      textAlign: "center",
     },
     supportingText: {
       color: colors.textMuted,
@@ -188,7 +193,7 @@ function createStyles(colors: Theme) {
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "600",
       lineHeight: 18,
-      textAlign: "left",
+      textAlign: "center",
     },
   });
 }

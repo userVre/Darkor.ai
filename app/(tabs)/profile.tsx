@@ -14,6 +14,7 @@ import { useProSuccess } from "../../components/pro-success-context";
 import { useViewerSession } from "../../components/viewer-session-context";
 import { mapArchiveToBoardItems, splitBoardColumns, type BoardItem, type BoardItemStatus } from "../../lib/board";
 import { hasGenerationImage, resolveGenerationStatus } from "../../lib/generation-status";
+import { loadLocalBoardItems, persistLocalBoardItems, type LocalBoardItem } from "../../lib/local-board-cache";
 import { fonts } from "../../styles/typography";
 
 type ArchiveGeneration = {
@@ -46,11 +47,25 @@ export default function ProfileScreen() {
 
   const [previewItem, setPreviewItem] = useState<BoardItem | null>(null);
   const [actionItem, setActionItem] = useState<BoardItem | null>(null);
+  const [cachedBoardItems, setCachedBoardItems] = useState<BoardItem[]>([]);
   const [newBoardItemIds, setNewBoardItemIds] = useState<string[]>([]);
   const previousStatusesRef = useRef<Record<string, BoardItemStatus>>({});
   const newBadgeTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const archiveBoardItems = useMemo(() => mapArchiveToBoardItems(generationArchive ?? []), [generationArchive]);
+  const archiveBoardItems = useMemo(() => {
+    const remoteItems = mapArchiveToBoardItems(generationArchive ?? []);
+    const mergedItems = new Map<string, BoardItem>();
+
+    for (const item of cachedBoardItems) {
+      mergedItems.set(item.id, item);
+    }
+
+    for (const item of remoteItems) {
+      mergedItems.set(item.id, item);
+    }
+
+    return Array.from(mergedItems.values()).sort((left, right) => right.createdAt - left.createdAt);
+  }, [cachedBoardItems, generationArchive]);
   const newBoardItemIdSet = useMemo(() => new Set(newBoardItemIds), [newBoardItemIds]);
   const boardItems = useMemo(
     () =>
@@ -61,6 +76,39 @@ export default function ProfileScreen() {
     [archiveBoardItems, newBoardItemIdSet],
   );
   const { leftColumnImages, rightColumnImages } = useMemo(() => splitBoardColumns(boardItems), [boardItems]);
+
+  useEffect(() => {
+    void (async () => {
+      const localItems = await loadLocalBoardItems(anonymousId);
+      setCachedBoardItems(
+        localItems.map((item) => ({
+          id: item.id,
+          imageUri: item.imageUrl ?? null,
+          originalImageUri: item.originalImageUrl ?? null,
+          styleName: item.styleLabel,
+          roomType: item.roomLabel,
+          createdAt: item.createdAt,
+          status: item.status,
+          errorMessage: item.errorMessage ?? null,
+        })),
+      );
+    })();
+  }, [anonymousId]);
+
+  useEffect(() => {
+    const snapshot: LocalBoardItem[] = boardItems.map((item) => ({
+      id: item.id,
+      imageUrl: item.imageUri ?? null,
+      originalImageUrl: item.originalImageUri ?? null,
+      styleLabel: item.styleName,
+      roomLabel: item.roomType,
+      status: item.status,
+      errorMessage: item.errorMessage ?? null,
+      createdAt: item.createdAt,
+    }));
+
+    void persistLocalBoardItems(anonymousId, snapshot);
+  }, [anonymousId, boardItems]);
 
   useEffect(() => {
     const nextStatuses: Record<string, BoardItemStatus> = {};
@@ -197,6 +245,7 @@ export default function ProfileScreen() {
         onPress: async () => {
           try {
             await deleteGeneration({ anonymousId: anonymousId ?? undefined, id: currentItem.id });
+            setCachedBoardItems((current) => current.filter((item) => item.id !== currentItem.id));
             showToast("Deleted from Board");
           } catch (error) {
             showToast(error instanceof Error ? error.message : "Unable to delete this design.");

@@ -49,6 +49,21 @@ type DetectionResponse = {
   reason?: string;
 };
 
+type NanoBananaGenerationPayload = {
+  image_base64: string;
+  image_mime_type: string;
+  mask_base64?: string | null;
+  mask_mime_type?: string | null;
+  room_type: string;
+  design_style: string;
+  target_color?: string | null;
+  color_category?: string | null;
+  surface_type?: string | null;
+  user_prompt: string;
+  service_type: ServiceType;
+  aspect_ratio: string;
+};
+
 function trimOptional(value?: string | null) {
   const trimmed = value?.trim();
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
@@ -198,12 +213,21 @@ function normalizeGenerationError(message?: string | null) {
     return "Darkor AI is temporarily at capacity. Please try again in a few minutes.";
   }
 
+  if (
+    normalized.includes("invalid image") ||
+    normalized.includes("unsupported image") ||
+    normalized.includes("unable to decode image") ||
+    normalized.includes("image could not be loaded")
+  ) {
+    return "AI is busy, please try again in a moment.";
+  }
+
   if (normalized.includes("blocked")) {
     return "This request could not be processed safely. Try a different photo or prompt.";
   }
 
   if (normalized.includes("timed out")) {
-    return "Darkor AI took too long to reach the image service. Please try again.";
+    return "AI is busy, please try again in a moment.";
   }
 
   return raw;
@@ -399,6 +423,9 @@ function buildPromptOptimizationInstruction(args: {
   style: string;
   colorPalette: string;
   customPrompt?: string;
+  targetColor?: string;
+  targetColorCategory?: string;
+  targetSurface?: string;
   aspectRatio?: string;
   regenerate?: boolean;
 }) {
@@ -410,17 +437,88 @@ function buildPromptOptimizationInstruction(args: {
     `Room type: ${args.roomType}.`,
     `Style direction: ${args.style}.`,
     `Palette direction: ${args.colorPalette}.`,
+    args.targetColor ? `Target color: ${args.targetColor}.` : undefined,
+    args.targetColorCategory ? `Color family: ${args.targetColorCategory}.` : undefined,
+    args.targetSurface ? `Surface type: ${args.targetSurface}.` : undefined,
     args.customPrompt ? `User notes: ${args.customPrompt}.` : "User notes: none.",
     `Aspect ratio: ${normalizeAspectRatio(args.aspectRatio)}.`,
     args.regenerate ? "This is a regeneration request. Preserve the concept while varying the styling details." : undefined,
     "Refine the following draft into a single vivid, high-conversion architectural image prompt.",
     "Keep it photorealistic, composition-aware, and specific about materials, lighting, styling, and preservation constraints.",
+    "If a target color or surface is provided, weave it naturally into a professional architectural description.",
     "Do not mention camera UI, markdown, JSON, bullet points, or safety policies.",
     "Return only the final optimized prompt as plain text.",
     `Draft prompt: ${basePrompt}`,
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+function buildNanoBananaGenerationPayload(args: {
+  imageBase64: string;
+  imageMimeType: string;
+  maskBase64?: string | null;
+  maskMimeType?: string | null;
+  serviceType: ServiceType;
+  roomType: string;
+  style: string;
+  optimizedPrompt: string;
+  targetColor?: string;
+  targetColorCategory?: string;
+  targetSurface?: string;
+  aspectRatio?: string;
+}) {
+  return {
+    image_base64: args.imageBase64,
+    image_mime_type: args.imageMimeType,
+    mask_base64: args.maskBase64 ?? null,
+    mask_mime_type: args.maskMimeType ?? null,
+    room_type: trimOptional(args.roomType) ?? "space",
+    design_style: trimOptional(args.style) ?? "premium architectural",
+    target_color: trimOptional(args.targetColor) ?? null,
+    color_category: trimOptional(args.targetColorCategory) ?? null,
+    surface_type: trimOptional(args.targetSurface) ?? null,
+    user_prompt: args.optimizedPrompt,
+    service_type: args.serviceType,
+    aspect_ratio: normalizeAspectRatio(args.aspectRatio),
+  } satisfies NanoBananaGenerationPayload;
+}
+
+function buildNanoBananaRequestContext(args: {
+  serviceType: ServiceType;
+  roomType: string;
+  style: string;
+  colorPalette: string;
+  customPrompt?: string;
+  targetColor?: string;
+  targetColorHex?: string;
+  targetColorCategory?: string;
+  targetSurface?: string;
+  aspectRatio?: string;
+  optimizedPrompt: string;
+  hasMask: boolean;
+}) {
+  return {
+    serviceType: args.serviceType,
+    roomType: trimOptional(args.roomType) ?? "space",
+    selectedColorOrMaterial: trimOptional(args.colorPalette) ?? null,
+    selectedSurfaceOrStyle: trimOptional(args.style) ?? null,
+    userPrompt: trimOptional(args.customPrompt) ?? null,
+    target_color: trimOptional(args.targetColor) ?? null,
+    target_color_hex: trimOptional(args.targetColorHex) ?? null,
+    target_color_category: trimOptional(args.targetColorCategory) ?? null,
+    target_surface: trimOptional(args.targetSurface) ?? null,
+    optimizedPrompt: args.optimizedPrompt,
+    aspectRatio: normalizeAspectRatio(args.aspectRatio),
+    editMask:
+      args.hasMask
+        ? args.serviceType === "paint"
+          ? "white = editable wall region"
+          : args.serviceType === "floor"
+            ? "white = editable floor region"
+            : "white = editable redesign region"
+        : null,
+  };
 }
 
 function sanitizeOptimizedPrompt(raw: string) {
@@ -516,6 +614,10 @@ export const generateDesign: any = internalActionGeneric({
     style: v.string(),
     colorPalette: v.string(),
     customPrompt: v.optional(v.string()),
+    targetColor: v.optional(v.string()),
+    targetColorHex: v.optional(v.string()),
+    targetColorCategory: v.optional(v.string()),
+    targetSurface: v.optional(v.string()),
     aspectRatio: v.optional(v.string()),
     regenerate: v.optional(v.boolean()),
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
@@ -566,6 +668,9 @@ export const generateDesign: any = internalActionGeneric({
         style: args.style,
         colorPalette: args.colorPalette,
         customPrompt: args.customPrompt,
+        targetColor: args.targetColor,
+        targetColorCategory: args.targetColorCategory,
+        targetSurface: args.targetSurface,
         aspectRatio: args.aspectRatio,
         regenerate: args.regenerate,
       });
@@ -592,13 +697,51 @@ export const generateDesign: any = internalActionGeneric({
         generationId: args.generationId,
         prompt: optimizedPrompt,
       });
+      const sourceBase64 = await blobToBase64(sourceBlob);
+      const maskBase64 = maskBlob ? await blobToBase64(maskBlob) : null;
+      const generationPayload = buildNanoBananaGenerationPayload({
+        imageBase64: sourceBase64,
+        imageMimeType: sourceBlob.type || "image/jpeg",
+        maskBase64,
+        maskMimeType: maskBlob?.type || "image/png",
+        serviceType: args.serviceType,
+        roomType: args.roomType,
+        style: args.style,
+        optimizedPrompt,
+        targetColor: args.targetColor,
+        targetColorCategory: args.targetColorCategory,
+        targetSurface: args.targetSurface,
+        aspectRatio: args.aspectRatio,
+      });
+      const requestContext = buildNanoBananaRequestContext({
+        serviceType: args.serviceType,
+        roomType: args.roomType,
+        style: args.style,
+        colorPalette: args.colorPalette,
+        customPrompt: args.customPrompt,
+        targetColor: args.targetColor,
+        targetColorHex: args.targetColorHex,
+        targetColorCategory: args.targetColorCategory,
+        targetSurface: args.targetSurface,
+        aspectRatio: args.aspectRatio,
+        optimizedPrompt,
+        hasMask: Boolean(maskBlob),
+      });
 
       const parts: GeminiInlinePart[] = [
-        { text: optimizedPrompt },
+        { text: `Optimized prompt:\n${optimizedPrompt}` },
+        { text: `Structured generation context JSON:\n${JSON.stringify(requestContext)}` },
+        {
+          text: `Nano Banana generation payload JSON:\n${JSON.stringify({
+            ...generationPayload,
+            image_base64: `[base64:${generationPayload.image_base64.length}]`,
+            mask_base64: generationPayload.mask_base64 ? `[base64:${generationPayload.mask_base64.length}]` : null,
+          })}`,
+        },
         {
           inlineData: {
-            mimeType: sourceBlob.type || "image/jpeg",
-            data: await blobToBase64(sourceBlob),
+            mimeType: generationPayload.image_mime_type,
+            data: generationPayload.image_base64,
           },
         },
       ];
@@ -612,8 +755,8 @@ export const generateDesign: any = internalActionGeneric({
         });
         parts.push({
           inlineData: {
-            mimeType: maskBlob.type || "image/png",
-            data: await blobToBase64(maskBlob),
+            mimeType: generationPayload.mask_mime_type || "image/png",
+            data: generationPayload.mask_base64 || "",
           },
         });
       }

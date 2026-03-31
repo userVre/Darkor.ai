@@ -1,6 +1,7 @@
 import { useQuery } from "convex/react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { loadGenerationAccessSnapshot, persistGenerationAccessSnapshot } from "../lib/generation-access";
 import { GUEST_TESTING_STARTER_CREDITS } from "../lib/guest-testing";
 import { useViewerSession } from "./viewer-session-context";
 
@@ -37,11 +38,15 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
     viewerReady ? viewerArgs : "skip",
   ) as ViewerCreditsSnapshot;
   const [optimisticState, setOptimisticState] = useState<OptimisticViewerCreditsState>(null);
+  const [cachedState, setCachedState] = useState<ViewerCreditsSnapshot>(null);
 
-  const serverCredits = viewerReady ? me?.credits ?? GUEST_TESTING_STARTER_CREDITS : GUEST_TESTING_STARTER_CREDITS;
+  const serverCredits =
+    viewerReady
+      ? me?.credits ?? cachedState?.credits ?? GUEST_TESTING_STARTER_CREDITS
+      : cachedState?.credits ?? GUEST_TESTING_STARTER_CREDITS;
   const credits = typeof optimisticState?.credits === "number" ? optimisticState.credits : serverCredits;
-  const hasPaidAccess = optimisticState?.hasPaidAccess ?? Boolean(me?.hasPaidAccess);
-  const subscriptionType = optimisticState?.subscriptionType ?? me?.subscriptionType;
+  const hasPaidAccess = optimisticState?.hasPaidAccess ?? me?.hasPaidAccess ?? cachedState?.hasPaidAccess ?? false;
+  const subscriptionType = optimisticState?.subscriptionType ?? me?.subscriptionType ?? cachedState?.subscriptionType;
   const clearOptimisticCredits = useCallback(() => {
     setOptimisticState(null);
   }, []);
@@ -76,8 +81,32 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    void (async () => {
+      const cached = await loadGenerationAccessSnapshot();
+      setCachedState(
+        cached
+          ? {
+              credits: typeof cached.credits === "number" ? cached.credits : undefined,
+              hasPaidAccess: typeof cached.hasPaidAccess === "boolean" ? cached.hasPaidAccess : undefined,
+              subscriptionType: cached.subscriptionType ?? undefined,
+            }
+          : null,
+      );
+    })();
+  }, []);
+
+  useEffect(() => {
     setOptimisticState(null);
   }, [anonymousId, me?.credits, me?.hasPaidAccess, me?.subscriptionType, viewerReady]);
+
+  useEffect(() => {
+    const snapshot = {
+      credits,
+      hasPaidAccess,
+      subscriptionType,
+    };
+    void persistGenerationAccessSnapshot(snapshot);
+  }, [credits, hasPaidAccess, subscriptionType]);
 
   const value = useMemo<ViewerCreditsContextValue>(
     () => ({

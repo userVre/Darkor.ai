@@ -55,21 +55,21 @@ const styles = StyleSheet.create({
   },
   image: {
     width: "100%",
-    height: 232,
+    height: 214,
   },
   divider: {
     height: 1,
-    marginTop: 24,
+    marginTop: 12,
     marginHorizontal: 20,
     backgroundColor: "#E0E0E0",
   },
   content: {
     position: "relative",
-    minHeight: 120,
-    paddingBottom: 28,
+    minHeight: 102,
+    paddingBottom: 22,
   },
   title: {
-    marginTop: 16,
+    marginTop: 14,
     marginLeft: 20,
     color: "#0A0A0A",
     fontSize: 20,
@@ -89,11 +89,11 @@ const styles = StyleSheet.create({
   button: {
     position: "absolute",
     right: 20,
-    bottom: 28,
+    bottom: 20,
     borderRadius: 24,
     backgroundColor: "#0A0A0A",
     paddingHorizontal: 18,
-    paddingVertical: 10,
+    paddingVertical: 9,
   },
   buttonText: {
     color: "#FFFFFF",

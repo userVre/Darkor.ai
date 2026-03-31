@@ -1,5 +1,20 @@
 import { StatusBar } from "expo-status-bar";
-import { Gem } from "lucide-react-native";
+import {
+  Bath,
+  Baby,
+  BedDouble,
+  BookOpen,
+  CookingPot,
+  DoorOpen,
+  Gem,
+  Home,
+  Monitor,
+  Projector,
+  Sofa,
+  Sparkles,
+  UtensilsCrossed,
+  type LucideIcon,
+} from "lucide-react-native";
 import { useMemo } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,6 +35,12 @@ type InteriorRedesignStepTwoProps = {
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
 const ACTIVE_CONTINUE_COLOR = "#FF3B30";
+const INACTIVE_CARD_BG = "#F5F5F5";
+const INACTIVE_CARD_BORDER = "#E3E3E3";
+const ACTIVE_CARD_BG = "#FFF2F0";
+const ACTIVE_CARD_BORDER = "#FF3B30";
+const ACTIVE_ICON_BG = "#FFE3DE";
+const INACTIVE_ICON_BG = "#FFFFFF";
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -32,6 +53,21 @@ function chunkIntoRows(items: string[], size: number) {
   }
   return rows;
 }
+
+const ROOM_ICONS: Record<string, LucideIcon> = {
+  "Living Room": Sofa,
+  Bedroom: BedDouble,
+  Kitchen: CookingPot,
+  Bathroom: Bath,
+  "Home Office": Monitor,
+  "Dining Room": UtensilsCrossed,
+  Nursery: Baby,
+  "Home Theater": Projector,
+  "Gaming Room": Monitor,
+  Hall: DoorOpen,
+  Library: BookOpen,
+  Laundry: Sparkles,
+};
 
 export function InteriorRedesignStepTwo({
   creditCount,
@@ -58,22 +94,21 @@ export function InteriorRedesignStepTwo({
   const gridTopGap = scaleValue(28, layoutScale);
   const progressSegmentWidth = scaleValue(92, layoutScale);
   const progressGap = scaleValue(16, layoutScale);
-  const gridHeight = scaleValue(764, layoutScale);
-  const pillHeight = scaleValue(16, layoutScale);
   const bottomContainerHeight = scaleValue(132, layoutScale);
   const buttonWidth = mainWidth;
   const buttonHeight = scaleValue(60, layoutScale);
   const buttonTop = scaleValue(52, layoutScale);
-  const pillWidth = Math.max((width - leftColumnInset - rightColumnInset - columnGap) / 2, scaleValue(120, layoutScale));
+  const roomCardWidth = Math.max((width - leftColumnInset - rightColumnInset - columnGap) / 2, scaleValue(160, layoutScale));
+  const roomCardHeight = scaleValue(92, layoutScale);
   const roomRows = useMemo(() => chunkIntoRows(roomOptions, 2), [roomOptions]);
   const canContinue = Boolean(selectedRoom);
 
   const handleExitPress = () => {
     triggerHaptic();
     Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "Cancel", style: "cancel" },
+      { text: "CANCEL", style: "cancel" },
       {
-        text: "Exit",
+        text: "EXIT",
         style: "destructive",
         onPress: () => {
           onExit();
@@ -136,12 +171,13 @@ export function InteriorRedesignStepTwo({
           Select a room to design and see it transformed in your chosen style.
         </Text>
 
-        <View style={{ marginTop: gridTopGap, height: gridHeight }}>
+        <View style={{ marginTop: gridTopGap }}>
           <View style={[styles.grid, { paddingLeft: leftColumnInset, paddingRight: rightColumnInset }]}>
             {roomRows.map((row, rowIndex) => (
               <View key={`interior-room-row-${rowIndex}`} style={styles.gridRow}>
                 {row.map((room, columnIndex) => {
                   const active = selectedRoom === room;
+                  const RoomIcon = ROOM_ICONS[room] ?? Home;
 
                   return (
                     <Pressable
@@ -151,24 +187,38 @@ export function InteriorRedesignStepTwo({
                       hitSlop={12}
                       onPress={() => handleRoomPress(room)}
                       style={[
-                        styles.roomPill,
+                        styles.roomCard,
                         {
-                          width: pillWidth,
-                          height: pillHeight,
+                          width: roomCardWidth,
+                          minHeight: roomCardHeight,
                           marginRight: columnIndex === 0 && row.length > 1 ? columnGap : 0,
-                          backgroundColor: active ? ACTIVE_CONTINUE_COLOR : "#F3F3F3",
-                          borderColor: active ? ACTIVE_CONTINUE_COLOR : "#E2E2E2",
+                          backgroundColor: active ? ACTIVE_CARD_BG : INACTIVE_CARD_BG,
+                          borderColor: active ? ACTIVE_CARD_BORDER : INACTIVE_CARD_BORDER,
                         },
                       ]}
                     >
-                      <Text style={[styles.roomPillText, { color: active ? "#FFFFFF" : "#0A0A0A" }]} numberOfLines={1}>
-                        {room}
-                      </Text>
+                      <View
+                        style={[
+                          styles.roomIconWrap,
+                          { backgroundColor: active ? ACTIVE_ICON_BG : INACTIVE_ICON_BG },
+                        ]}
+                      >
+                        <RoomIcon color="#0A0A0A" size={20} strokeWidth={2.2} />
+                      </View>
+
+                      <View style={styles.roomCopy}>
+                        <Text style={styles.roomCardTitle} numberOfLines={2}>
+                          {room}
+                        </Text>
+                        <Text style={styles.roomCardHint}>
+                          {active ? "Selected" : "Tap to choose"}
+                        </Text>
+                      </View>
                     </Pressable>
                   );
                 })}
 
-                {row.length === 1 ? <View style={{ width: pillWidth }} /> : null}
+                {row.length === 1 ? <View style={{ width: roomCardWidth }} /> : null}
               </View>
             ))}
           </View>
@@ -263,24 +313,44 @@ const styles = StyleSheet.create({
     ...fonts.regular,
   },
   grid: {
-    flex: 1,
-    justifyContent: "space-between",
+    gap: 14,
   },
   gridRow: {
     flexDirection: "row",
+    alignItems: "stretch",
+  },
+  roomCard: {
+    borderRadius: 22,
+    borderWidth: 1.5,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: "row",
     alignItems: "center",
   },
-  roomPill: {
-    borderRadius: 999,
-    borderWidth: 1,
+  roomIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 10,
+    marginRight: 12,
   },
-  roomPillText: {
-    fontSize: 10,
-    lineHeight: 12,
+  roomCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  roomCardTitle: {
+    color: "#0A0A0A",
+    fontSize: 15,
+    lineHeight: 19,
     ...fonts.semibold,
+  },
+  roomCardHint: {
+    marginTop: 4,
+    color: "#7C7C7C",
+    fontSize: 12,
+    lineHeight: 15,
+    ...fonts.medium,
   },
   bottomContainer: {
     position: "absolute",

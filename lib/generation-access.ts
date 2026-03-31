@@ -82,3 +82,17 @@ export async function persistGenerationAccessSnapshot(snapshot: GenerationAccess
     }),
   );
 }
+
+export async function loadGenerationAccessSnapshot() {
+  try {
+    const stored = await AsyncStorage.getItem(GENERATION_ACCESS_CACHE_KEY);
+    if (!stored) {
+      return null;
+    }
+
+    const parsed = JSON.parse(stored) as GenerationAccessState | null;
+    return parsed ?? null;
+  } catch {
+    return null;
+  }
+}

@@ -35,7 +35,7 @@ import {
 import { HAIRLINE } from "../../lib/design-system";
 import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
-import { normalizeDiscoverTryItTile, prepareTryItFlow } from "../../lib/try-it-flow";
+import { withWorkspaceFlowId } from "../../lib/try-it-flow";
 import { spacing } from "../../styles/spacing";
 import { fonts } from "../../styles/typography";
 
@@ -282,14 +282,7 @@ export default function GalleryScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const {
-    setDraftAspectRatio,
-    setDraftFinish,
-    setDraftImage,
-    setDraftMode,
-    setDraftPalette,
-    setDraftPrompt,
-    setDraftRoom,
-    setDraftStyle,
+    clearDraft,
   } = useWorkspaceDraft();
   const { credits: creditBalance, hasPaidAccess } = useViewerCredits();
   const [activeTab, setActiveTab] = useState<DiscoverTabId>("home");
@@ -330,31 +323,20 @@ export default function GalleryScreen() {
   );
 
   const handleTryIt = useCallback(async (item: DiscoverTile) => {
-    const prepared = await prepareTryItFlow(
-      {
-        setDraftImage,
-        setDraftRoom,
-        setDraftStyle,
-        setDraftPalette,
-        setDraftMode,
-        setDraftFinish,
-        setDraftPrompt,
-        setDraftAspectRatio,
-      },
-      normalizeDiscoverTryItTile(item),
-    );
+    const serviceParam =
+      item.service === "garden"
+        ? "garden"
+        : item.service === "exterior"
+          ? "facade"
+          : item.service === "paint"
+            ? "paint"
+            : item.service === "floor"
+              ? "floor"
+              : "interior";
 
-    return prepared.redirectTo;
-  }, [
-    setDraftAspectRatio,
-    setDraftFinish,
-    setDraftImage,
-    setDraftMode,
-    setDraftPalette,
-    setDraftPrompt,
-    setDraftRoom,
-    setDraftStyle,
-  ]);
+    clearDraft();
+    return withWorkspaceFlowId(`/workspace?service=${serviceParam}`);
+  }, [clearDraft]);
 
   const handleCardPress = useCallback(
     async (item: DiscoverTile) => {

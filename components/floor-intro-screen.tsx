@@ -174,9 +174,9 @@ export function FloorIntroScreen({
   const handleExitPress = () => {
     triggerHaptic();
     Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "Cancel", style: "cancel" },
+      { text: "CANCEL", style: "cancel" },
       {
-        text: "Exit",
+        text: "EXIT",
         style: "destructive",
         onPress: () => {
           onExit();

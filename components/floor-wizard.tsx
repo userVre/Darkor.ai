@@ -16,7 +16,7 @@ import Svg, { Path as SvgPath, Rect } from "react-native-svg";
 import { captureRef } from "react-native-view-shot";
 import { ChevronLeft, MoveHorizontal, X } from "lucide-react-native";
 
-import { GENERATION_FAILED_TOAST } from "../lib/generation-errors";
+import { GENERATION_FAILED_TOAST, getFriendlyGenerationError } from "../lib/generation-errors";
 import { canUserGenerate as canUserGenerateNow } from "../lib/generation-access";
 import { triggerHaptic } from "../lib/haptics";
 import { uploadLocalFileToCloud } from "../lib/native-upload";
@@ -133,7 +133,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const effectiveSignedIn = isSignedIn || guestWizardTestingSession;
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const { showToast } = useProSuccess();
-  const { setOptimisticCredits } = useViewerCredits();
+  const { credits: sharedCredits, setOptimisticCredits } = useViewerCredits();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
 
   const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as MeResponse | null | undefined;
@@ -188,7 +188,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     () => FLOOR_MATERIAL_OPTIONS.find((material) => material.id === selectedMaterialId) ?? null,
     [selectedMaterialId],
   );
-  const availableCredits = viewerReady ? me?.credits ?? GUEST_TESTING_STARTER_CREDITS : GUEST_TESTING_STARTER_CREDITS;
+  const availableCredits = sharedCredits;
   const generationAccess = canUserGenerateNow(me);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "materials" ? 3 : 4;
@@ -209,9 +209,6 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const promptLabelTop = promptCardTop - scaleMaskValue(28, maskLayoutScale);
   const maskButtonBottom = Math.max(insets.bottom + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(44, maskLayoutScale));
   const promptModalTitleTop = Math.max(insets.top + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(92, maskLayoutScale));
-  const promptModalInputTop = promptModalTitleTop + scaleMaskValue(32, maskLayoutScale);
-  const promptModalExamplesTitleTop = promptModalInputTop + scaleMaskValue(208, maskLayoutScale) + scaleMaskValue(32, maskLayoutScale);
-  const promptModalButtonsTop = promptModalExamplesTitleTop + scaleMaskValue(44, maskLayoutScale);
   const promptModalSaveBottom = Math.max(insets.bottom + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(12, maskLayoutScale));
   const canSaveCustomPrompt = customPromptDraft.trim().length > 0;
 
@@ -284,7 +281,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
         return;
       }
       setStep("materials");
-      showToast(GENERATION_FAILED_TOAST);
+      showToast(getFriendlyGenerationError(generation.errorMessage ?? GENERATION_FAILED_TOAST));
     }
   }, [effectiveSignedIn, generationArchive, generationId, router, showToast]);
 
@@ -403,13 +400,21 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
 
   const handleClose = useCallback(() => {
     triggerHaptic();
-    if (step === "intake") {
-      resetProject();
-      router.replace("/(tabs)");
-      return;
-    }
     resetProject();
-  }, [resetProject, router, step]);
+    router.replace("/(tabs)");
+  }, [resetProject, router]);
+
+  const confirmExitDesignFlow = useCallback(() => {
+    triggerHaptic();
+    Alert.alert("Exit?", "Your progress will be lost.", [
+      { text: "CANCEL", style: "cancel" },
+      {
+        text: "EXIT",
+        style: "destructive",
+        onPress: handleClose,
+      },
+    ]);
+  }, [handleClose]);
 
   const uploadBlobToStorage = useCallback(async (uri: string) => {
     const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
@@ -676,6 +681,10 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   );
 
   const handleGenerate = useCallback(async () => {
+    if (isGenerating) {
+      return;
+    }
+
     if (!viewerReady) {
       Alert.alert("Preparing your session", "Your guest profile is still loading. Please try again in a moment.");
       return;
@@ -757,9 +766,9 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
         router.push({ pathname: "/paywall", params: { source: "generate" } } as any);
         return;
       }
-      showToast(GENERATION_FAILED_TOAST);
+      showToast(getFriendlyGenerationError(rawMessage));
     }
-  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, uploadBlobToStorage, viewerId, viewerReady]);
+  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isGenerating, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, uploadBlobToStorage, viewerId, viewerReady]);
 
   const handleCancelGeneration = useCallback(async () => {
     if (!generationId || isCancellingGeneration) {
@@ -785,7 +794,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       setStep("materials");
       showToast(CANCEL_SUCCESS_TOAST);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Unable to cancel right now.");
+      showToast(getFriendlyGenerationError(error instanceof Error ? error.message : "Unable to cancel right now."));
     } finally {
       setIsCancellingGeneration(false);
     }
@@ -876,7 +885,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Back to floor upload"
-            onPress={handleBack}
+            onPress={confirmExitDesignFlow}
             style={[styles.maskNavButton, { top: maskTitleTop - scaleMaskValue(2, maskLayoutScale), left: scaleMaskValue(24, maskLayoutScale) }]}
           >
             <ChevronLeft color="#0A0A0A" size={22} strokeWidth={2.4} />
@@ -885,7 +894,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Close floor restyle flow"
-            onPress={handleClose}
+            onPress={confirmExitDesignFlow}
             style={[styles.maskNavButton, { top: maskTitleTop - scaleMaskValue(2, maskLayoutScale), right: scaleMaskValue(40, maskLayoutScale) }]}
           >
             <X color="#0A0A0A" size={20} strokeWidth={2.4} />
@@ -993,95 +1002,80 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
                 exit={{ opacity: 0 }}
                 style={styles.promptModalScreen}
               >
-                <Text
-                  style={[
-                    styles.promptModalTitle,
-                    {
-                      top: promptModalTitleTop,
-                      left: scaleMaskValue(20, maskLayoutScale),
-                    },
-                  ]}
-                >
-                  Custom Prompt
-                </Text>
-
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={handleCloseCustomPrompt}
-                  style={[
-                    styles.promptModalCloseButton,
-                    {
-                      top: promptModalTitleTop,
-                      right: scaleMaskValue(28, maskLayoutScale),
-                    },
-                  ]}
-                >
-                  <X color="#0A0A0A" size={18} strokeWidth={2.3} />
-                </Pressable>
-
                 <View
                   style={[
-                    styles.promptModalInputWrap,
+                    styles.promptModalHeader,
                     {
-                      top: promptModalInputTop,
-                      left: scaleMaskValue(20, maskLayoutScale),
-                      right: scaleMaskValue(20, maskLayoutScale),
-                      height: scaleMaskValue(208, maskLayoutScale),
+                      paddingTop: promptModalTitleTop,
+                      paddingHorizontal: scaleMaskValue(20, maskLayoutScale),
                     },
                   ]}
                 >
-                  <Text style={styles.promptModalInputLabel}>Enter Prompt</Text>
-                  <View style={styles.promptModalTextField}>
-                    <TextInput
-                      value={customPromptDraft}
-                      onChangeText={handleChangeCustomPrompt}
-                      multiline
-                      placeholder="Type here a detailed description of what you want to see in your home design"
-                      placeholderTextColor="#9CA3AF"
-                      textAlignVertical="top"
-                      style={styles.promptModalInput}
-                    />
-                    {customPromptDraft.length > 0 ? (
-                      <Pressable accessibilityRole="button" onPress={handleClearCustomPromptDraft} style={styles.promptModalClearButton}>
-                        <X color="#0A0A0A" size={14} strokeWidth={2.4} />
-                      </Pressable>
-                    ) : null}
+                  <Text style={styles.promptModalTitle}>Enter Prompt</Text>
+
+                  <Pressable accessibilityRole="button" onPress={handleCloseCustomPrompt} style={styles.promptModalCloseButton}>
+                    <X color="#0A0A0A" size={18} strokeWidth={2.3} />
+                  </Pressable>
+                </View>
+
+                <ScrollView
+                  bounces={false}
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={[
+                    styles.promptModalContent,
+                    {
+                      paddingTop: scaleMaskValue(32, maskLayoutScale),
+                      paddingHorizontal: scaleMaskValue(20, maskLayoutScale),
+                      paddingBottom: scaleMaskValue(132, maskLayoutScale),
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.promptModalInputWrap,
+                      {
+                        minHeight: scaleMaskValue(208, maskLayoutScale),
+                      },
+                    ]}
+                  >
+                    <Text style={styles.promptModalInputLabel}>Enter Prompt</Text>
+                    <View style={styles.promptModalTextField}>
+                      <TextInput
+                        value={customPromptDraft}
+                        onChangeText={handleChangeCustomPrompt}
+                        multiline
+                        placeholder="Type here a detailed description of what you want to see in your home design"
+                        placeholderTextColor="#9CA3AF"
+                        textAlignVertical="top"
+                        style={styles.promptModalInput}
+                      />
+                      {customPromptDraft.length > 0 ? (
+                        <Pressable accessibilityRole="button" onPress={handleClearCustomPromptDraft} style={styles.promptModalClearButton}>
+                          <X color="#0A0A0A" size={14} strokeWidth={2.4} />
+                        </Pressable>
+                      ) : null}
+                    </View>
                   </View>
-                </View>
 
-                <Text
-                  style={[
-                    styles.promptExampleTitle,
-                    {
-                      top: promptModalExamplesTitleTop,
-                      left: scaleMaskValue(24, maskLayoutScale),
-                    },
-                  ]}
-                >
-                  Example prompts
-                </Text>
+                  <Text style={[styles.promptExampleTitle, { marginTop: scaleMaskValue(32, maskLayoutScale) }]}>Example prompts</Text>
 
-                <View
-                  style={[
-                    styles.promptExampleList,
-                    {
-                      top: promptModalButtonsTop,
-                      left: scaleMaskValue(24, maskLayoutScale),
-                      right: scaleMaskValue(24, maskLayoutScale),
-                    },
-                  ]}
-                >
-                  {FLOOR_PROMPT_EXAMPLES.map((prompt) => (
-                    <Pressable
-                      key={prompt}
-                      accessibilityRole="button"
-                      onPress={() => handleSelectCustomPromptExample(prompt)}
-                      style={styles.promptExampleChip}
-                    >
-                      <Text style={styles.promptExampleText}>{prompt}</Text>
-                    </Pressable>
-                  ))}
-                </View>
+                  <View style={[styles.promptExampleList, { marginTop: scaleMaskValue(16, maskLayoutScale) }]}>
+                    {FLOOR_PROMPT_EXAMPLES.map((prompt) => {
+                      const isActive = customPromptDraft.trim() === prompt.trim();
+
+                      return (
+                        <Pressable
+                          key={prompt}
+                          accessibilityRole="button"
+                          onPress={() => handleSelectCustomPromptExample(prompt)}
+                          style={[styles.promptExampleChip, isActive ? styles.promptExampleChipActive : null]}
+                        >
+                          <Text style={[styles.promptExampleText, isActive ? styles.promptExampleTextActive : null]}>{prompt}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
 
                 <Pressable
                   accessibilityRole="button"
@@ -1226,17 +1220,21 @@ const styles = StyleSheet.create({
   maskContinueButton: { position: "absolute", borderRadius: 22, alignItems: "center", justifyContent: "center" },
   maskContinueText: { fontSize: 16, lineHeight: 20, fontWeight: "700" },
   promptModalScreen: { ...StyleSheet.absoluteFillObject, backgroundColor: "#FFFFFF", zIndex: 10 },
-  promptModalTitle: { position: "absolute", color: "#0A0A0A", fontSize: 24, lineHeight: 28, fontWeight: "700" },
-  promptModalCloseButton: { position: "absolute", width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  promptModalInputWrap: { position: "absolute", borderRadius: 24, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#F8F8F8" },
-  promptModalInputLabel: { position: "absolute", top: 28, left: 20, color: "#0A0A0A", fontSize: 16, lineHeight: 20, fontWeight: "600" },
-  promptModalTextField: { position: "absolute", top: 72, left: 20, right: 20, bottom: 20 },
+  promptModalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  promptModalTitle: { color: "#0A0A0A", fontSize: 24, lineHeight: 28, fontWeight: "700" },
+  promptModalCloseButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center", marginRight: -8 },
+  promptModalContent: { flexGrow: 1 },
+  promptModalInputWrap: { borderRadius: 24, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#F8F8F8", paddingTop: 28, paddingHorizontal: 20, paddingBottom: 20 },
+  promptModalInputLabel: { color: "#0A0A0A", fontSize: 16, lineHeight: 20, fontWeight: "600" },
+  promptModalTextField: { flex: 1, minHeight: 116, marginTop: 24 },
   promptModalInput: { flex: 1, color: "#111827", fontSize: 15, lineHeight: 22, padding: 0, paddingRight: 24 },
   promptModalClearButton: { position: "absolute", top: 24, right: 24, width: 18, height: 18, borderRadius: 999, alignItems: "center", justifyContent: "center" },
-  promptExampleTitle: { position: "absolute", color: "#0A0A0A", fontSize: 16, lineHeight: 20, fontWeight: "600" },
-  promptExampleList: { position: "absolute", gap: 16 },
+  promptExampleTitle: { color: "#0A0A0A", fontSize: 16, lineHeight: 20, fontWeight: "600" },
+  promptExampleList: { gap: 16 },
   promptExampleChip: { height: 48, borderRadius: 999, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#F8F8F8", alignItems: "center", justifyContent: "center", paddingHorizontal: 20 },
+  promptExampleChipActive: { borderColor: "#FF3B30", backgroundColor: "#FFF1F0" },
   promptExampleText: { color: "#6B7280", fontSize: 14, lineHeight: 18, textAlign: "center" },
+  promptExampleTextActive: { color: "#0A0A0A", fontWeight: "600" },
   promptModalSaveButton: { position: "absolute", borderRadius: 22, alignItems: "center", justifyContent: "center" },
   promptModalSaveText: { fontSize: 16, lineHeight: 20, fontWeight: "700" },
   topBar: { paddingHorizontal: spacing.md, paddingBottom: spacing.sm, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },

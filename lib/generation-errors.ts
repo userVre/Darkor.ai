@@ -1,4 +1,5 @@
 export const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
+export const AI_BUSY_TOAST = "AI is busy, please try again in a moment.";
 export const GENERATION_FAILED_TOAST = "Generation failed. Please check your connection and try again.";
 
 export function getFriendlyGenerationError(message?: string | null) {
@@ -7,7 +8,11 @@ export function getFriendlyGenerationError(message?: string | null) {
   }
 
   if (message === AI_PROVIDER_DOWN) {
-    return "Darkor AI is temporarily unavailable. Please try again in a moment.";
+    return AI_BUSY_TOAST;
+  }
+
+  if (message === AI_BUSY_TOAST) {
+    return AI_BUSY_TOAST;
   }
 
   return message;

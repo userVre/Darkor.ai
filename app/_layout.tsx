@@ -16,6 +16,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AppErrorBoundary } from "../components/app-error-boundary";
 import { GenerationAccessCacheGate } from "../components/generation-access-cache-gate";
+import { FlowUIProvider } from "../components/flow-ui-context";
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
 import { ViewerCreditsProvider } from "../components/viewer-credits-context";
 import { ViewerSessionProvider } from "../components/viewer-session-context";
@@ -400,14 +401,16 @@ export default function RootLayout() {
               <Providers>
                 <ViewerSessionProvider>
                   <ViewerCreditsProvider>
-                    <WorkspaceDraftProvider>
-                      <BottomSheetModalProvider>
-                        <GenerationAccessCacheGate />
-                        <CreateAccessGate>
-                          <AppShell />
-                        </CreateAccessGate>
-                      </BottomSheetModalProvider>
-                    </WorkspaceDraftProvider>
+                    <FlowUIProvider>
+                      <WorkspaceDraftProvider>
+                        <BottomSheetModalProvider>
+                          <GenerationAccessCacheGate />
+                          <CreateAccessGate>
+                            <AppShell />
+                          </CreateAccessGate>
+                        </BottomSheetModalProvider>
+                      </WorkspaceDraftProvider>
+                    </FlowUIProvider>
                   </ViewerCreditsProvider>
                 </ViewerSessionProvider>
               </Providers>
