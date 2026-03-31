@@ -232,21 +232,28 @@ function CountdownCloseButton({
   secondsLeft: number;
 }) {
   return (
-    <FadeSwap swapKey={isTimerFinished ? "close-ready" : `close-${secondsLeft}`}>
-      {isTimerFinished ? (
-        <Pressable accessibilityLabel="Close paywall" accessibilityRole="button" onPress={onPress} style={styles.closeButton}>
-          <View style={styles.closeButtonInner}>
-            <X color="#0A0A0A" size={16} strokeWidth={2.4} />
-          </View>
-        </Pressable>
-      ) : (
-        <View pointerEvents="none" style={styles.closeButton}>
-          <View style={styles.countdownWrap}>
-            <Text style={styles.countdownText}>{Math.max(secondsLeft, 1)}</Text>
-          </View>
-        </View>
-      )}
-    </FadeSwap>
+    <View pointerEvents="box-none" style={styles.closeSlot}>
+      <AnimatePresence exitBeforeEnter>
+        <MotiView
+          key={isTimerFinished ? "close-ready" : `close-${secondsLeft}`}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          from={{ opacity: 0 }}
+          style={styles.closeBubble}
+          transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
+        >
+          {isTimerFinished ? (
+            <Pressable accessibilityLabel="Close paywall" accessibilityRole="button" onPress={onPress} style={styles.closeButtonInner}>
+              <X color="#0A0A0A" size={16} strokeWidth={2.4} />
+            </Pressable>
+          ) : (
+            <View pointerEvents="none" style={styles.countdownWrap}>
+              <Text style={styles.countdownText}>{Math.max(secondsLeft, 1)}</Text>
+            </View>
+          )}
+        </MotiView>
+      </AnimatePresence>
+    </View>
   );
 }
 
@@ -670,16 +677,23 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     ...fonts.medium,
   },
-  closeButton: {
+  closeSlot: {
     position: "absolute",
     top: 40,
     right: 25,
     zIndex: 10,
     width: 44,
     height: 44,
-    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
+  },
+  closeBubble: {
+    width: CLOSE_VISUAL_SIZE,
+    height: CLOSE_VISUAL_SIZE,
+    borderRadius: CLOSE_VISUAL_SIZE / 2,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
   },
   closeButtonInner: {
     width: CLOSE_VISUAL_SIZE,
