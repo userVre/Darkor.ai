@@ -8,12 +8,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Image as NativeImage, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Alert, Image as NativeImage, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Circle as SvgCircle, G, Path as SvgPath, Rect } from "react-native-svg";
+import Svg, { Path as SvgPath, Rect } from "react-native-svg";
 import { captureRef } from "react-native-view-shot";
-import { ChevronLeft, MoveHorizontal, RotateCcw, Sparkles, Trash2 } from "lucide-react-native";
+import { ChevronLeft, MoveHorizontal, X } from "lucide-react-native";
 
 import { GENERATION_FAILED_TOAST } from "../lib/generation-errors";
 import { triggerHaptic } from "../lib/haptics";
@@ -27,16 +27,15 @@ import {
 } from "../lib/guest-testing";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { FLOOR_WIZARD_EXAMPLE_PHOTOS } from "../lib/wizard-example-photos";
+import { FloorIntroScreen, type FloorIntroExamplePhoto } from "./floor-intro-screen";
 import { LuxPressable } from "./lux-pressable";
 import { ServiceContinueButton } from "./service-continue-button";
 import { ServiceProcessingScreen } from "./service-processing-screen";
 import { ServiceWizardHeader } from "./service-wizard-header";
 import {
-  ServiceIntakeStep,
   ServiceSelectionCard,
   ServiceSelectionGrid,
   ServiceWizardStepScreen,
-  type ServiceExamplePhoto,
 } from "./service-wizard-shared";
 import { useProSuccess } from "./pro-success-context";
 import { useMaskDrawing } from "./use-mask-drawing";
@@ -58,13 +57,20 @@ const MIN_BRUSH = 10;
 const MAX_BRUSH = 54;
 const DETECT_MS = 1500;
 const FIXED_FOOTER_OFFSET = 96;
-const LOUPE_SIZE = 116;
-const LOUPE_ZOOM = 1.8;
+const MASK_SCREEN_REFERENCE_WIDTH = 456;
+const MASK_SCREEN_REFERENCE_HEIGHT = 932;
 const absoluteFill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
-const AUTO_DETECT_SUCCESS_MESSAGE = "Floor detected - brush to refine if needed";
+const AUTO_DETECT_SUCCESS_MESSAGE = "Floor masked and ready.";
 const AUTO_DETECT_FAILURE_MESSAGE = "Auto-detect couldn't run — please brush manually.";
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 const CANCEL_SUCCESS_TOAST = "Generation canceled. Your credit was kept.";
+const FLOOR_PROMPT_EXAMPLES = [
+  "Lay warm natural oak planks with a matte finish while preserving the room layout and lighting.",
+  "Restyle the floor in polished Carrara marble with crisp veining and premium editorial contrast.",
+  "Apply a soft concrete floor with subtle texture and realistic reflections for a modern gallery feel.",
+  "Introduce light travertine flooring with soft natural variation and warm afternoon light response.",
+  "Design a refined herringbone walnut floor that feels luxurious, grounded, and photorealistic.",
+] as const;
 
 function simplifyRatio(width: number, height: number) {
   const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
@@ -102,6 +108,10 @@ function logAutoDetectFailure(error: unknown) {
   console.log("[FloorWizard] Auto-detect failed", { message });
 }
 
+function scaleMaskValue(value: number, scale: number) {
+  return value * scale;
+}
+
 export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const router = useRouter();
   const { presetStyle, startStep } = useLocalSearchParams<{ presetStyle?: string; startStep?: string }>();
@@ -137,7 +147,11 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const [detectedSourceStorageId, setDetectedSourceStorageId] = useState<string | null>(null);
   const [isCancellingGeneration, setIsCancellingGeneration] = useState(false);
   const [loadingContinueStep, setLoadingContinueStep] = useState<"intake" | "mask" | "materials" | null>(null);
+  const [customPrompt, setCustomPrompt] = useState("");
+  const [customPromptDraft, setCustomPromptDraft] = useState("");
+  const [isCustomPromptOpen, setIsCustomPromptOpen] = useState(false);
   const initialSelectionAppliedRef = useRef(false);
+  const autoMaskAttemptKeyRef = useRef<string | null>(null);
 
   const detectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const continueTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -145,31 +159,17 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const maskCaptureRef = useRef<View>(null);
 
   const {
-    strokes,
     renderedStrokes,
-    brushWidth,
-    brushProgress,
     canvasSize,
-    sliderWidth,
-    setSliderWidth,
-    activePoint,
-    isDrawing,
     hasMask,
     handleCanvasLayout,
-    clearMask,
-    undoLastStroke,
     replaceMaskWithRegions,
     resetMaskDrawing,
-    drawGesture,
-    sliderGesture,
-    loupeMetrics,
   } = useMaskDrawing({
     disabled: isDetecting || isAutoDetecting,
     initialBrushWidth: 24,
     minBrushWidth: MIN_BRUSH,
     maxBrushWidth: MAX_BRUSH,
-    loupeSize: LOUPE_SIZE,
-    loupeZoom: LOUPE_ZOOM,
   });
 
   const selectedMaterial = useMemo(
@@ -179,11 +179,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const availableCredits = viewerReady ? me?.credits ?? GUEST_TESTING_STARTER_CREDITS : GUEST_TESTING_STARTER_CREDITS;
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "materials" ? 3 : 4;
-  const intakeHeading = selectedImage ? "Photo added — mark the floor area next." : "Add a Photo of your Floor";
-  const intakeSubtext = selectedImage
-    ? "Your photo is locked in. Next, brush the floor plane so the material restyle lands cleanly around furniture, rugs, and walls."
-    : "Upload a room photo to map new materials.";
-  const canContinueFromMask = hasMask && !isDetecting && !isAutoDetecting;
+  const canContinueFromMask = customPrompt.trim().length > 0;
   const aspectRatio = useMemo(() => {
     if (!selectedImage) return 1.15;
     const r = selectedImage.width / Math.max(selectedImage.height, 1);
@@ -192,7 +188,19 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const materialCardWidth = Math.max((width - 46) / 2, 154);
   const resultFrameWidth = Math.max(width - 32, 320);
   const canContinueFromMaterials = Boolean(selectedImage && hasMask && selectedMaterial && !isGenerating);
-  const maskPreviewHeight = Math.min((width - 32) / Math.max(aspectRatio, 0.72), Math.max(height * 0.4, 248));
+  const maskLayoutScale = Math.min(width / MASK_SCREEN_REFERENCE_WIDTH, height / MASK_SCREEN_REFERENCE_HEIGHT, 1);
+  const maskTitleTop = Math.max(insets.top + scaleMaskValue(16, maskLayoutScale), scaleMaskValue(72, maskLayoutScale));
+  const maskImageTop = maskTitleTop + scaleMaskValue(60, maskLayoutScale);
+  const maskPreviewHeight = scaleMaskValue(412, maskLayoutScale);
+  const promptCardTop = maskImageTop + maskPreviewHeight + scaleMaskValue(132, maskLayoutScale);
+  const promptLabelTop = promptCardTop - scaleMaskValue(28, maskLayoutScale);
+  const maskButtonBottom = Math.max(insets.bottom + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(44, maskLayoutScale));
+  const promptModalTitleTop = Math.max(insets.top + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(92, maskLayoutScale));
+  const promptModalInputTop = promptModalTitleTop + scaleMaskValue(32, maskLayoutScale);
+  const promptModalExamplesTitleTop = promptModalInputTop + scaleMaskValue(208, maskLayoutScale) + scaleMaskValue(32, maskLayoutScale);
+  const promptModalButtonsTop = promptModalExamplesTitleTop + scaleMaskValue(44, maskLayoutScale);
+  const promptModalSaveBottom = Math.max(insets.bottom + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(12, maskLayoutScale));
+  const canSaveCustomPrompt = customPromptDraft.trim().length > 0;
 
   useEffect(() => () => {
     if (detectTimerRef.current) clearTimeout(detectTimerRef.current);
@@ -258,6 +266,10 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     setIsAutoDetecting(false);
     setDetectedSourceStorageId(null);
     setIsCancellingGeneration(false);
+    setCustomPrompt("");
+    setCustomPromptDraft("");
+    setIsCustomPromptOpen(false);
+    autoMaskAttemptKeyRef.current = null;
     resetMaskDrawing({ resetBrush: true });
     if (typeof presetStyle === "string") {
       const normalized = presetStyle.trim().toLowerCase();
@@ -295,11 +307,12 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       return detectedSourceStorageId;
     }
 
-    if (!selectedImage.photoUri) {
-      throw new Error("No uploaded room photo is available for auto-detect.");
+    const sourceUri = selectedImage.photoUri ?? selectedImage.uri;
+    if (!sourceUri) {
+      throw new Error("No room photo is available for auto-detect.");
     }
 
-    const storageId = await uploadBlobToStorage(selectedImage.photoUri);
+    const storageId = await uploadBlobToStorage(sourceUri);
     setDetectedSourceStorageId(storageId);
     return storageId;
   }, [detectedSourceStorageId, selectedImage, uploadBlobToStorage]);
@@ -311,17 +324,19 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     setDetectedSourceStorageId(null);
     setIsAutoDetecting(false);
     setIsCancellingGeneration(false);
+    setCustomPrompt("");
+    setCustomPromptDraft("");
+    setIsCustomPromptOpen(false);
+    autoMaskAttemptKeyRef.current = null;
     resetMaskDrawing({ resetBrush: true });
   }, [resetMaskDrawing]);
 
-  const handleContinueFromIntake = useCallback(() => {
-    if (!selectedImage) {
-      return;
-    }
+  const advanceToMaskStep = useCallback(() => {
     triggerHaptic();
+    autoMaskAttemptKeyRef.current = null;
     setStep("mask");
     resetDetection();
-  }, [resetDetection, selectedImage]);
+  }, [resetDetection]);
 
   const runDeferredContinue = useCallback(
     (key: "intake" | "mask", action: () => void) => {
@@ -358,17 +373,44 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     [loadingContinueStep],
   );
 
-  const handleClearSelectedImage = useCallback(() => {
+  const handleOpenCustomPrompt = useCallback(() => {
     triggerHaptic();
-    setSelectedImage(null);
-    setGeneratedImageUrl(null);
-    setGenerationId(null);
-    setIsGenerating(false);
-    setIsAutoDetecting(false);
-    setDetectedSourceStorageId(null);
-    setIsCancellingGeneration(false);
-    resetMaskDrawing({ resetBrush: true });
-  }, [resetMaskDrawing]);
+    setCustomPromptDraft(customPrompt);
+    setIsCustomPromptOpen(true);
+  }, [customPrompt]);
+
+  const handleCloseCustomPrompt = useCallback(() => {
+    triggerHaptic();
+    setCustomPromptDraft(customPrompt);
+    setIsCustomPromptOpen(false);
+  }, [customPrompt]);
+
+  const handleClearCustomPromptDraft = useCallback(() => {
+    triggerHaptic();
+    setCustomPromptDraft("");
+  }, []);
+
+  const handleChangeCustomPrompt = useCallback((value: string) => {
+    setCustomPromptDraft(value);
+  }, []);
+
+  const handleSelectCustomPromptExample = useCallback((value: string) => {
+    triggerHaptic();
+    setCustomPromptDraft(value);
+  }, []);
+
+  const handleApplyCustomPrompt = useCallback(() => {
+    const trimmed = customPromptDraft.trim();
+    if (!trimmed) {
+      Alert.alert("Add a prompt", "Describe the exact floor transformation you want before continuing.");
+      return;
+    }
+
+    triggerHaptic();
+    setCustomPrompt(trimmed);
+    setCustomPromptDraft(trimmed);
+    setIsCustomPromptOpen(false);
+  }, [customPromptDraft]);
 
   const handleAutoDetectMask = useCallback(async () => {
     try {
@@ -377,7 +419,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
         return;
       }
 
-      if (!selectedImage || canvasSize.width <= 0 || canvasSize.height <= 0 || isAutoDetecting || isDetecting) {
+      if (!selectedImage || canvasSize.width <= 0 || canvasSize.height <= 0 || isAutoDetecting) {
         return;
       }
 
@@ -427,32 +469,60 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     detectEditMask,
     ensureDetectableSourceStorageId,
     isAutoDetecting,
-    isDetecting,
     replaceMaskWithRegions,
     selectedImage,
     showToast,
     viewerReady,
   ]);
 
-  const handleSelectMedia = useCallback(async (source: "camera" | "library") => {
-    try {
-      const permission = source === "camera" ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert(source === "camera" ? "Camera access needed" : "Photo access needed", source === "camera" ? "Please enable camera access to capture a floor photo." : "Please enable photo library access to upload a floor photo.");
-        return;
-      }
-      const result = source === "camera"
-        ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 1 })
-        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 1 });
-      if (result.canceled || !result.assets[0]) return;
-      const asset = result.assets[0];
-      applySelectedImage({ uri: asset.uri, photoUri: asset.uri, width: asset.width ?? 1080, height: asset.height ?? 1440 });
-    } catch (error) {
-      Alert.alert("Unable to open media", error instanceof Error ? error.message : "Please try again.");
+  useEffect(() => {
+    if (step !== "mask" || !selectedImage || canvasSize.width <= 0 || canvasSize.height <= 0 || hasMask || isAutoDetecting) {
+      return;
     }
-  }, [applySelectedImage]);
 
-  const handleSelectExample = useCallback((example: ServiceExamplePhoto) => {
+    const attemptKey = `${selectedImage.uri}:${Math.round(canvasSize.width)}x${Math.round(canvasSize.height)}`;
+    if (autoMaskAttemptKeyRef.current === attemptKey) {
+      return;
+    }
+
+    autoMaskAttemptKeyRef.current = attemptKey;
+    void handleAutoDetectMask();
+  }, [canvasSize.height, canvasSize.width, handleAutoDetectMask, hasMask, isAutoDetecting, selectedImage, step]);
+
+  const handleSelectMedia = useCallback(
+    async (source: "camera" | "library") => {
+      try {
+        const permission =
+          source === "camera"
+            ? await ImagePicker.requestCameraPermissionsAsync()
+            : await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+          Alert.alert(
+            source === "camera" ? "Camera access needed" : "Photo access needed",
+            source === "camera"
+              ? "Please enable camera access to capture a floor photo."
+              : "Please enable photo library access to upload a floor photo.",
+          );
+          return false;
+        }
+        const result =
+          source === "camera"
+            ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 1 })
+            : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 1 });
+        if (result.canceled || !result.assets[0]) return false;
+        const asset = result.assets[0];
+        applySelectedImage({ uri: asset.uri, photoUri: asset.uri, width: asset.width ?? 1080, height: asset.height ?? 1440 });
+        advanceToMaskStep();
+        return true;
+      } catch (error) {
+        Alert.alert("Unable to open media", error instanceof Error ? error.message : "Please try again.");
+        return false;
+      }
+    },
+    [advanceToMaskStep, applySelectedImage],
+  );
+
+  const handleSelectExample = useCallback((example: FloorIntroExamplePhoto) => {
     const resolved = NativeImage.resolveAssetSource(example.source);
     if (!resolved?.uri) {
       Alert.alert("Example unavailable", "This example photo could not be opened.");
@@ -465,7 +535,8 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       width: resolved.width ?? 1080,
       height: resolved.height ?? 1440,
     });
-  }, [applySelectedImage]);
+    advanceToMaskStep();
+  }, [advanceToMaskStep, applySelectedImage]);
 
   const updateComparisonSlider = useCallback((x: number) => {
     const ratio = Math.max(0.05, Math.min(x / resultFrameWidth, 0.95));
@@ -489,6 +560,10 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
 
     if (!selectedImage || !hasMask || !sourceCaptureRef.current || !maskCaptureRef.current) {
       Alert.alert("Mark the floor first", "Brush over the floor area you want to restyle before continuing.");
+      return;
+    }
+    if (!customPrompt.trim()) {
+      Alert.alert("Add a prompt", "Choose a custom floor prompt before generating.");
       return;
     }
     if (!selectedMaterial) {
@@ -526,7 +601,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
             selection: selectedMaterial.promptLabel,
             roomType: "Room",
             displayStyle: `${selectedMaterial.title} Floor`,
-            customPrompt: "Preserve perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.",
+            customPrompt: `${customPrompt.trim()}\n\nPreserve perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`,
             aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
           })) as { generationId: string };
         },
@@ -548,7 +623,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       }
       showToast(GENERATION_FAILED_TOAST);
     }
-  }, [availableCredits, effectiveSignedIn, hasMask, router, selectedImage, selectedMaterial, showToast, startGeneration, uploadBlobToStorage, viewerId, viewerReady]);
+  }, [availableCredits, customPrompt, effectiveSignedIn, hasMask, router, selectedImage, selectedMaterial, showToast, startGeneration, uploadBlobToStorage, viewerId, viewerReady]);
 
   const handleCancelGeneration = useCallback(async () => {
     if (!generationId || isCancellingGeneration) {
@@ -635,7 +710,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
         </View>
       ) : null}
 
-      {step !== "processing" ? (
+      {step !== "processing" && step !== "intake" && step !== "mask" ? (
         <ServiceWizardHeader
           title="Floor Restyle"
           step={currentStepNumber}
@@ -646,173 +721,256 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       ) : null}
 
       {step === "intake" ? (
-        <ServiceWizardStepScreen
-          footerOffset={FIXED_FOOTER_OFFSET}
-          contentContainerStyle={{ paddingHorizontal: spacing.md, paddingTop: spacing.sm }}
-          footer={
-            <ServiceContinueButton
-              active={Boolean(selectedImage)}
-              attention={Boolean(selectedImage)}
-              label={selectedImage ? "Continue \u2192" : "Add a Photo to Start"}
-              loading={loadingContinueStep === "intake"}
-              onPress={() => {
-                if (!selectedImage) {
-                  return;
-                }
-
-                runDeferredContinue("intake", handleContinueFromIntake);
-              }}
-              secondaryActionLabel={selectedImage ? null : "or use camera"}
-              onSecondaryAction={
-                selectedImage
-                  ? null
-                  : () => {
-                      void handleSelectMedia("camera");
-                    }
-              }
-            />
-          }
-        >
-          <View>
-            <ServiceIntakeStep
-              heading={intakeHeading}
-              subtext={intakeSubtext}
-              examples={FLOOR_WIZARD_EXAMPLE_PHOTOS}
-              selectedImageUri={selectedImage?.uri ?? null}
-              onClearSelection={handleClearSelectedImage}
-              onUploadPress={() => {
-                void handleSelectMedia("library");
-              }}
-              onCameraPress={() => {
-                void handleSelectMedia("camera");
-              }}
-              onExamplePress={handleSelectExample}
-            />
-          </View>
-        </ServiceWizardStepScreen>
+        <FloorIntroScreen
+          creditCount={availableCredits}
+          examples={FLOOR_WIZARD_EXAMPLE_PHOTOS}
+          onTakePhoto={() => handleSelectMedia("camera")}
+          onChooseFromGallery={() => handleSelectMedia("library")}
+          onExamplePress={handleSelectExample}
+          onExit={handleClose}
+        />
       ) : null}
 
       {step === "mask" ? (
-        <ServiceWizardStepScreen
-          footerOffset={FIXED_FOOTER_OFFSET}
-          scrollEnabled={!isDrawing}
-          contentContainerStyle={{
-            paddingHorizontal: spacing.md,
-            paddingTop: spacing.sm,
-            gap: spacing.md,
-          }}
-          footer={
-            <>
-              <View style={styles.maskControlCard}>
-                <View style={styles.brushRow}>
-                  <Text style={styles.brushTitle}>Brush Size</Text>
-                  <View style={styles.brushMeta}>
-                    <View style={{ width: Math.max(brushWidth, 14), height: Math.max(brushWidth, 14), borderRadius: 999, backgroundColor: MASK_ACCENT, borderWidth: 1, borderColor: "rgba(255,255,255,0.22)" }} />
-                    <Text style={styles.brushMetaText}>{brushWidth}px</Text>
+        <View style={styles.maskScreen}>
+          <Text style={[styles.maskScreenTitle, { top: maskTitleTop }]}>Floor Restyle</Text>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Back to floor upload"
+            onPress={handleBack}
+            style={[styles.maskNavButton, { top: maskTitleTop - scaleMaskValue(2, maskLayoutScale), left: scaleMaskValue(24, maskLayoutScale) }]}
+          >
+            <ChevronLeft color="#0A0A0A" size={22} strokeWidth={2.4} />
+          </Pressable>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close floor restyle flow"
+            onPress={handleClose}
+            style={[styles.maskNavButton, { top: maskTitleTop - scaleMaskValue(2, maskLayoutScale), right: scaleMaskValue(40, maskLayoutScale) }]}
+          >
+            <X color="#0A0A0A" size={20} strokeWidth={2.4} />
+          </Pressable>
+
+          <View
+            onLayout={handleCanvasLayout}
+            style={[
+              styles.maskPreviewFrame,
+              {
+                top: maskImageTop,
+                left: scaleMaskValue(24, maskLayoutScale),
+                right: scaleMaskValue(24, maskLayoutScale),
+                height: maskPreviewHeight,
+              },
+            ]}
+          >
+            {selectedImage ? (
+              <>
+                <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="cover" transition={160} />
+                <View pointerEvents="none" style={absoluteFill}>
+                  <Svg width="100%" height="100%">
+                    {renderedStrokes.map((stroke) => (
+                      <SvgPath
+                        key={stroke.id}
+                        d={stroke.path}
+                        stroke={stroke.kind === "region" ? "none" : "rgba(255,59,48,0.58)"}
+                        strokeWidth={stroke.kind === "region" ? 0 : stroke.width}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill={stroke.kind === "region" ? "rgba(255,59,48,0.58)" : "none"}
+                      />
+                    ))}
+                  </Svg>
+                </View>
+                <AnimatePresence>
+                  {isDetecting || isAutoDetecting ? (
+                    <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.maskDetectOverlay}>
+                      <ActivityIndicator color="#FFFFFF" />
+                      <Text style={styles.maskDetectTitle}>Masking your floor...</Text>
+                    </MotiView>
+                  ) : null}
+                </AnimatePresence>
+              </>
+            ) : null}
+          </View>
+
+          <Text style={[styles.maskPromptLabel, { top: promptLabelTop, left: scaleMaskValue(24, maskLayoutScale) }]}>Enter Prompt</Text>
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={handleOpenCustomPrompt}
+            style={[
+              styles.maskPromptCard,
+              {
+                top: promptCardTop,
+                left: scaleMaskValue(24, maskLayoutScale),
+                right: scaleMaskValue(24, maskLayoutScale),
+                minHeight: scaleMaskValue(112, maskLayoutScale),
+              },
+            ]}
+          >
+            {customPrompt.trim().length > 0 ? (
+              <Text numberOfLines={3} style={styles.maskPromptValue}>{customPrompt}</Text>
+            ) : null}
+          </Pressable>
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              if (!canContinueFromMask) {
+                return;
+              }
+
+              if (!hasMask || isAutoDetecting || isDetecting) {
+                showToast("Preparing the automatic floor mask. Please wait a moment.");
+                return;
+              }
+
+              runDeferredContinue("mask", () => {
+                triggerHaptic();
+                setStep("materials");
+              });
+            }}
+            style={[
+              styles.maskContinueButton,
+              {
+                left: scaleMaskValue(24, maskLayoutScale),
+                right: scaleMaskValue(24, maskLayoutScale),
+                bottom: maskButtonBottom,
+                height: scaleMaskValue(60, maskLayoutScale),
+                backgroundColor: canContinueFromMask ? "#FF3B30" : "#E7E7E7",
+              },
+            ]}
+          >
+            <Text style={[styles.maskContinueText, { color: canContinueFromMask ? "#FFFFFF" : "#9CA3AF" }]}>Continue</Text>
+          </Pressable>
+
+          <AnimatePresence>
+            {isCustomPromptOpen ? (
+              <MotiView
+                key="floor-custom-prompt-modal"
+                from={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={styles.promptModalScreen}
+              >
+                <Text
+                  style={[
+                    styles.promptModalTitle,
+                    {
+                      top: promptModalTitleTop,
+                      left: scaleMaskValue(20, maskLayoutScale),
+                    },
+                  ]}
+                >
+                  Custom Prompt
+                </Text>
+
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={handleCloseCustomPrompt}
+                  style={[
+                    styles.promptModalCloseButton,
+                    {
+                      top: promptModalTitleTop,
+                      right: scaleMaskValue(28, maskLayoutScale),
+                    },
+                  ]}
+                >
+                  <X color="#0A0A0A" size={18} strokeWidth={2.3} />
+                </Pressable>
+
+                <View
+                  style={[
+                    styles.promptModalInputWrap,
+                    {
+                      top: promptModalInputTop,
+                      left: scaleMaskValue(20, maskLayoutScale),
+                      right: scaleMaskValue(20, maskLayoutScale),
+                      height: scaleMaskValue(208, maskLayoutScale),
+                    },
+                  ]}
+                >
+                  <Text style={styles.promptModalInputLabel}>Enter Prompt</Text>
+                  <View style={styles.promptModalTextField}>
+                    <TextInput
+                      value={customPromptDraft}
+                      onChangeText={handleChangeCustomPrompt}
+                      multiline
+                      placeholder="Type here a detailed description of what you want to see in your home design"
+                      placeholderTextColor="#9CA3AF"
+                      textAlignVertical="top"
+                      style={styles.promptModalInput}
+                    />
+                    {customPromptDraft.length > 0 ? (
+                      <Pressable accessibilityRole="button" onPress={handleClearCustomPromptDraft} style={styles.promptModalClearButton}>
+                        <X color="#0A0A0A" size={14} strokeWidth={2.4} />
+                      </Pressable>
+                    ) : null}
                   </View>
                 </View>
-                <GestureDetector gesture={sliderGesture}>
-                  <View onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)} style={styles.sliderWrap}>
-                    <View style={styles.sliderTrack} />
-                    <LinearGradient colors={[MASK_ACCENT, MASK_ACCENT]} style={[styles.sliderFill, { width: Math.max(14, sliderWidth * brushProgress) }]} />
-                    <View style={[styles.sliderThumb, { left: Math.max(0, sliderWidth * brushProgress - 16) }]}>
-                      <View style={styles.sliderThumbDot} />
-                    </View>
-                  </View>
-                </GestureDetector>
-              </View>
-              <ServiceContinueButton
-                active={canContinueFromMask}
-                label={canContinueFromMask ? "Continue \u2192" : "Brush the Area to Continue"}
-                loading={loadingContinueStep === "mask"}
-                onPress={() => {
-                  if (!canContinueFromMask) {
-                    return;
-                  }
 
-                  runDeferredContinue("mask", () => {
-                    triggerHaptic();
-                    setStep("materials");
-                  });
-                }}
-              />
-            </>
-          }
-        >
-          <View>
-            <Text style={styles.stepTitle}>Mark Area</Text>
-            <Text style={styles.stepText}>Brush directly over the visible floor. Keep walls, furniture, and built-ins untouched so the restyle stays precise.</Text>
-            <View onLayout={handleCanvasLayout} style={[styles.frame, { height: maskPreviewHeight }]}>
-              {selectedImage ? (
-                <>
-                  <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="cover" transition={160} />
-                  <GestureDetector gesture={drawGesture}>
-                    <View style={absoluteFill}>
-                      <Svg width="100%" height="100%">
-                        {renderedStrokes.map((stroke) => (
-                          <SvgPath
-                            key={stroke.id}
-                            d={stroke.path}
-                            stroke={stroke.kind === "region" ? "none" : MASK_COLOR}
-                            strokeWidth={stroke.kind === "region" ? 0 : stroke.width}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            fill={stroke.kind === "region" ? MASK_COLOR : "none"}
-                          />
-                        ))}
-                      </Svg>
-                    </View>
-                  </GestureDetector>
-                  {activePoint ? <View pointerEvents="none" style={{ position: "absolute", left: Math.max(14, Math.min(activePoint.x - brushWidth * 0.5, Math.max(canvasSize.width - brushWidth - 14, 14))), top: Math.max(14, Math.min(activePoint.y - brushWidth * 0.5, Math.max(canvasSize.height - brushWidth - 14, 14))), width: brushWidth, height: brushWidth, borderRadius: 999, borderWidth: 1.5, borderColor: "rgba(255,255,255,0.78)", backgroundColor: MASK_COLOR }} /> : null}
-                  {selectedImage && loupeMetrics ? (
-                    <View pointerEvents="none" style={[styles.loupe, { left: loupeMetrics.left, top: loupeMetrics.top, width: loupeMetrics.size, height: loupeMetrics.size }]}>
-                      <View style={styles.loupeInner}>
-                        <Image source={{ uri: selectedImage.uri }} style={{ position: "absolute", width: canvasSize.width * loupeMetrics.zoom, height: canvasSize.height * loupeMetrics.zoom, left: loupeMetrics.translateX, top: loupeMetrics.translateY }} contentFit="cover" />
-                        <Svg width={loupeMetrics.size} height={loupeMetrics.size} style={absoluteFill}>
-                          <G transform={`translate(${loupeMetrics.translateX} ${loupeMetrics.translateY}) scale(${loupeMetrics.zoom})`}>
-                            {renderedStrokes.map((stroke) => (
-                              <SvgPath
-                                key={`loupe-${stroke.id}`}
-                                d={stroke.path}
-                                stroke={stroke.kind === "region" ? "none" : MASK_COLOR}
-                                strokeWidth={stroke.kind === "region" ? 0 : stroke.width}
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                fill={stroke.kind === "region" ? MASK_COLOR : "none"}
-                              />
-                            ))}
-                          </G>
-                          <SvgCircle cx={loupeMetrics.size / 2} cy={loupeMetrics.size / 2} r={8} fill="none" stroke="#ffffff" strokeWidth={1.5} />
-                          <SvgPath d={`M ${loupeMetrics.size / 2 - 14} ${loupeMetrics.size / 2} L ${loupeMetrics.size / 2 + 14} ${loupeMetrics.size / 2}`} stroke="#ffffff" strokeWidth={1} />
-                          <SvgPath d={`M ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 - 14} L ${loupeMetrics.size / 2} ${loupeMetrics.size / 2 + 14}`} stroke="#ffffff" strokeWidth={1} />
-                        </Svg>
-                      </View>
-                    </View>
-                  ) : null}
-                  <View pointerEvents="box-none" style={styles.canvasToolbar}>
-                    <LuxPressable
-                      onPress={() => {
-                        void handleAutoDetectMask();
-                      }}
-                      disabled={isAutoDetecting || isDetecting}
-                      className={pointerClassName}
-                      style={styles.canvasToolbarButton}
-                      glowColor="rgba(255,255,255,0.04)"
-                      scale={0.98}
+                <Text
+                  style={[
+                    styles.promptExampleTitle,
+                    {
+                      top: promptModalExamplesTitleTop,
+                      left: scaleMaskValue(24, maskLayoutScale),
+                    },
+                  ]}
+                >
+                  Example prompts
+                </Text>
+
+                <View
+                  style={[
+                    styles.promptExampleList,
+                    {
+                      top: promptModalButtonsTop,
+                      left: scaleMaskValue(24, maskLayoutScale),
+                      right: scaleMaskValue(24, maskLayoutScale),
+                    },
+                  ]}
+                >
+                  {FLOOR_PROMPT_EXAMPLES.map((prompt) => (
+                    <Pressable
+                      key={prompt}
+                      accessibilityRole="button"
+                      onPress={() => handleSelectCustomPromptExample(prompt)}
+                      style={styles.promptExampleChip}
                     >
-                      {isAutoDetecting ? <ActivityIndicator color="#ffffff" size="small" /> : <Sparkles color="#ffffff" size={16} />}
-                      <Text style={styles.canvasToolbarText}>Auto-Detect</Text>
-                    </LuxPressable>
-                    <LuxPressable onPress={undoLastStroke} disabled={!strokes.length} className={pointerClassName} style={styles.canvasToolbarButton} glowColor="rgba(255,255,255,0.04)" scale={0.98}><RotateCcw color="#ffffff" size={16} /><Text style={styles.canvasToolbarText}>Undo</Text></LuxPressable>
-                    <LuxPressable onPress={clearMask} disabled={!strokes.length} className={pointerClassName} style={styles.canvasToolbarButton} glowColor="rgba(255,255,255,0.04)" scale={0.98}><Trash2 color="#ffffff" size={16} /><Text style={styles.canvasToolbarText}>Clear All</Text></LuxPressable>
-                  </View>
-                  <View pointerEvents="none" style={styles.hintPill}><Text style={styles.hintText}>Brush only the floor plane. The loupe follows your finger for cleaner edges.</Text></View>
-                  <AnimatePresence>{isDetecting || isAutoDetecting ? <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.detectOverlay}><MotiView animate={{ scale: [0.92, 1.08, 0.92], opacity: [0.16, 0.52, 0.16] }} transition={{ duration: 1800, loop: true }} style={styles.detectPulse} /><View style={styles.detectCopy}><ActivityIndicator color="#ffffff" /><Text style={styles.detectTitle}>{isAutoDetecting ? "Auto-detecting floors..." : "Preparing the floor plane..."}</Text><Text style={styles.detectText}>{isAutoDetecting ? "Darkor.ai is tracing the visible floor surface while leaving walls, rugs, and furniture untouched." : "Setting up a precise masking surface so the material map stays clean around furniture and edges."}</Text></View></MotiView> : null}</AnimatePresence>
-                </>
-              ) : null}
-            </View>
-          </View>
-        </ServiceWizardStepScreen>
+                      <Text style={styles.promptExampleText}>{prompt}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={!canSaveCustomPrompt}
+                  onPress={() => {
+                    if (!canSaveCustomPrompt) {
+                      return;
+                    }
+                    handleApplyCustomPrompt();
+                  }}
+                  style={[
+                    styles.promptModalSaveButton,
+                    {
+                      left: scaleMaskValue(20, maskLayoutScale),
+                      right: scaleMaskValue(20, maskLayoutScale),
+                      bottom: promptModalSaveBottom,
+                      height: scaleMaskValue(60, maskLayoutScale),
+                      backgroundColor: canSaveCustomPrompt ? "#FF3B30" : "#E7E7E7",
+                    },
+                  ]}
+                >
+                  <Text style={[styles.promptModalSaveText, { color: canSaveCustomPrompt ? "#FFFFFF" : "#9CA3AF" }]}>Save</Text>
+                </Pressable>
+              </MotiView>
+            ) : null}
+          </AnimatePresence>
+        </View>
       ) : null}
 
       {step === "materials" ? (
@@ -906,6 +1064,31 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: SERVICE_WIZARD_THEME.colors.background },
   captureStage: { position: "absolute", left: -10000, top: 0, opacity: 0.01 },
+  maskScreen: { flex: 1, backgroundColor: "#FFFFFF" },
+  maskScreenTitle: { position: "absolute", left: 0, right: 0, textAlign: "center", color: "#0A0A0A", fontSize: 20, lineHeight: 24, fontWeight: "700", zIndex: 2 },
+  maskNavButton: { position: "absolute", zIndex: 2, width: 24, height: 24, alignItems: "center", justifyContent: "center" },
+  maskPreviewFrame: { position: "absolute", borderRadius: 28, overflow: "hidden", backgroundColor: "#0F0F10" },
+  maskDetectOverlay: { ...absoluteFill, alignItems: "center", justifyContent: "center", gap: spacing.sm, backgroundColor: "rgba(8,8,8,0.28)" },
+  maskDetectTitle: { color: "#FFFFFF", fontSize: 16, lineHeight: 20, fontWeight: "600" },
+  maskPromptLabel: { position: "absolute", color: "#0A0A0A", fontSize: 16, lineHeight: 20, fontWeight: "600" },
+  maskPromptCard: { position: "absolute", borderRadius: 24, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#F6F7F8", paddingTop: 28, paddingHorizontal: 20, paddingBottom: 16 },
+  maskPromptValue: { color: "#111827", fontSize: 15, lineHeight: 22 },
+  maskContinueButton: { position: "absolute", borderRadius: 22, alignItems: "center", justifyContent: "center" },
+  maskContinueText: { fontSize: 16, lineHeight: 20, fontWeight: "700" },
+  promptModalScreen: { ...StyleSheet.absoluteFillObject, backgroundColor: "#FFFFFF", zIndex: 10 },
+  promptModalTitle: { position: "absolute", color: "#0A0A0A", fontSize: 24, lineHeight: 28, fontWeight: "700" },
+  promptModalCloseButton: { position: "absolute", width: 28, height: 28, alignItems: "center", justifyContent: "center" },
+  promptModalInputWrap: { position: "absolute", borderRadius: 24, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#F8F8F8" },
+  promptModalInputLabel: { position: "absolute", top: 28, left: 20, color: "#0A0A0A", fontSize: 16, lineHeight: 20, fontWeight: "600" },
+  promptModalTextField: { position: "absolute", top: 72, left: 20, right: 20, bottom: 20 },
+  promptModalInput: { flex: 1, color: "#111827", fontSize: 15, lineHeight: 22, padding: 0, paddingRight: 24 },
+  promptModalClearButton: { position: "absolute", top: 24, right: 24, width: 18, height: 18, borderRadius: 999, alignItems: "center", justifyContent: "center" },
+  promptExampleTitle: { position: "absolute", color: "#0A0A0A", fontSize: 16, lineHeight: 20, fontWeight: "600" },
+  promptExampleList: { position: "absolute", gap: 16 },
+  promptExampleChip: { height: 48, borderRadius: 999, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#F8F8F8", alignItems: "center", justifyContent: "center", paddingHorizontal: 20 },
+  promptExampleText: { color: "#6B7280", fontSize: 14, lineHeight: 18, textAlign: "center" },
+  promptModalSaveButton: { position: "absolute", borderRadius: 22, alignItems: "center", justifyContent: "center" },
+  promptModalSaveText: { fontSize: 16, lineHeight: 20, fontWeight: "700" },
   topBar: { paddingHorizontal: spacing.md, paddingBottom: spacing.sm, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
   topButton: { height: 44, width: 44, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.06)", borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border },
   topCopy: { flex: 1, alignItems: "center", gap: spacing.xs },
@@ -1006,5 +1189,3 @@ const styles = StyleSheet.create({
   restartButton: { minHeight: 56, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)", flexDirection: "row", gap: spacing.sm },
   restartText: { color: "#ffffff", fontSize: 14, fontWeight: "700" },
 });
-
-

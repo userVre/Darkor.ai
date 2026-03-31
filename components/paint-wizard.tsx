@@ -8,7 +8,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Image as NativeImage, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { GestureDetector } from "react-native-gesture-handler";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle as SvgCircle, Defs, G, Mask as SvgMask, Path as SvgPath, Rect } from "react-native-svg";
 import { captureRef } from "react-native-view-shot";
@@ -42,11 +43,7 @@ import { useProSuccess } from "./pro-success-context";
 import { ServiceContinueButton } from "./service-continue-button";
 import { ServiceProcessingScreen } from "./service-processing-screen";
 import { ServiceWizardHeader } from "./service-wizard-header";
-import {
-  ServiceSelectionCard,
-  ServiceSelectionGrid,
-  ServiceWizardStepScreen,
-} from "./service-wizard-shared";
+import { ServiceWizardStepScreen } from "./service-wizard-shared";
 import { LuxPressable } from "./lux-pressable";
 import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerSession } from "./viewer-session-context";
@@ -82,6 +79,23 @@ type PaintWizardProps = {
   onProcessingStateChange?: (isProcessing: boolean) => void;
 };
 
+type PaintSurfaceOption = {
+  value: "Auto" | "Brick" | "Cabinet" | "Door" | "Wall" | "Outside Wall";
+  label: string;
+};
+
+type RgbColor = {
+  r: number;
+  g: number;
+  b: number;
+};
+
+type HsvColor = {
+  hue: number;
+  saturation: number;
+  value: number;
+};
+
 const pointerClassName = "cursor-pointer";
 const OLED_BLACK = "#000000";
 const CARD_BLACK = SERVICE_WIZARD_THEME.colors.surfaceRaised;
@@ -97,6 +111,9 @@ const AUTO_DETECT_SUCCESS_MESSAGE = "Walls detected - brush to refine if needed"
 const AUTO_DETECT_FAILURE_MESSAGE = "Auto-detect couldn't run � please brush manually.";
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 const CANCEL_SUCCESS_TOAST = "Generation canceled. Your credit was kept.";
+const SELECTION_REFERENCE_WIDTH = 456;
+const SELECTION_REFERENCE_HEIGHT = 932;
+const COLOR_PICKER_DEFAULT_HEX = "#FF69B4";
 
 const FINISH_OPTIONS: FinishOption[] = [
   {
@@ -116,6 +133,24 @@ const FINISH_OPTIONS: FinishOption[] = [
   },
 ];
 
+const PAINT_SURFACE_OPTIONS: PaintSurfaceOption[] = [
+  { value: "Auto", label: "Auto" },
+  { value: "Brick", label: "Brick" },
+  { value: "Cabinet", label: "Cabinet" },
+  { value: "Door", label: "Door" },
+  { value: "Wall", label: "Wall" },
+  { value: "Outside Wall", label: "Outside Wall" },
+];
+
+const COLOR_PICKER_PRESET_SWATCHES = [
+  { id: "pink", value: "#FF69B4" },
+  { id: "blue", value: "#3B82F6" },
+  { id: "green", value: "#34C759" },
+  { id: "yellow", value: "#FACC15" },
+  { id: "gray", value: "#9CA3AF" },
+  { id: "red", value: "#FF3B30" },
+] as const;
+
 const absoluteFill = StyleSheet.absoluteFillObject;
 
 function simplifyRatio(width: number, height: number) {
@@ -126,6 +161,128 @@ function simplifyRatio(width: number, height: number) {
   const reduced = `${safeWidth / gcd(safeWidth, safeHeight)}:${safeHeight / gcd(safeWidth, safeHeight)}`;
   if (safeWidth > safeHeight) return reduced.startsWith("4:3") ? "4:3" : "16:9";
   return reduced.startsWith("3:4") ? "3:4" : "9:16";
+}
+
+function scaleSelectionValue(value: number, scale: number) {
+  return value * scale;
+}
+
+function resolveContrastTextColor(hexColor: string) {
+  const normalized = hexColor.replace("#", "");
+  if (normalized.length !== 6) {
+    return "#0A0A0A";
+  }
+
+  const red = Number.parseInt(normalized.slice(0, 2), 16);
+  const green = Number.parseInt(normalized.slice(2, 4), 16);
+  const blue = Number.parseInt(normalized.slice(4, 6), 16);
+  const luminance = (red * 299 + green * 587 + blue * 114) / 1000;
+
+  return luminance > 150 ? "#0A0A0A" : "#FFFFFF";
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function rgbToHex({ r, g, b }: RgbColor) {
+  return `#${[r, g, b]
+    .map((channel) => clamp(Math.round(channel), 0, 255).toString(16).padStart(2, "0"))
+    .join("")
+    .toUpperCase()}`;
+}
+
+function hexToRgb(hexColor: string): RgbColor | null {
+  const normalized = hexColor.trim().replace("#", "");
+  if (!/^[0-9A-Fa-f]{6}$/.test(normalized)) {
+    return null;
+  }
+
+  return {
+    r: Number.parseInt(normalized.slice(0, 2), 16),
+    g: Number.parseInt(normalized.slice(2, 4), 16),
+    b: Number.parseInt(normalized.slice(4, 6), 16),
+  };
+}
+
+function hsvToRgb(hue: number, saturation: number, value: number): RgbColor {
+  const normalizedHue = ((hue % 360) + 360) % 360;
+  const safeSaturation = clamp(saturation, 0, 1);
+  const safeValue = clamp(value, 0, 1);
+  const chroma = safeValue * safeSaturation;
+  const segment = normalizedHue / 60;
+  const intermediate = chroma * (1 - Math.abs((segment % 2) - 1));
+  const match = safeValue - chroma;
+
+  let red = 0;
+  let green = 0;
+  let blue = 0;
+
+  if (segment >= 0 && segment < 1) {
+    red = chroma;
+    green = intermediate;
+  } else if (segment >= 1 && segment < 2) {
+    red = intermediate;
+    green = chroma;
+  } else if (segment >= 2 && segment < 3) {
+    green = chroma;
+    blue = intermediate;
+  } else if (segment >= 3 && segment < 4) {
+    green = intermediate;
+    blue = chroma;
+  } else if (segment >= 4 && segment < 5) {
+    red = intermediate;
+    blue = chroma;
+  } else {
+    red = chroma;
+    blue = intermediate;
+  }
+
+  return {
+    r: Math.round((red + match) * 255),
+    g: Math.round((green + match) * 255),
+    b: Math.round((blue + match) * 255),
+  };
+}
+
+function rgbToHsv({ r, g, b }: RgbColor): HsvColor {
+  const red = r / 255;
+  const green = g / 255;
+  const blue = b / 255;
+  const max = Math.max(red, green, blue);
+  const min = Math.min(red, green, blue);
+  const delta = max - min;
+
+  let hue = 0;
+
+  if (delta !== 0) {
+    if (max === red) {
+      hue = 60 * (((green - blue) / delta) % 6);
+    } else if (max === green) {
+      hue = 60 * ((blue - red) / delta + 2);
+    } else {
+      hue = 60 * ((red - green) / delta + 4);
+    }
+  }
+
+  return {
+    hue: hue < 0 ? hue + 360 : hue,
+    saturation: max === 0 ? 0 : delta / max,
+    value: max,
+  };
+}
+
+function hexToHsv(hexColor: string): HsvColor | null {
+  const rgb = hexToRgb(hexColor);
+  if (!rgb) {
+    return null;
+  }
+
+  return rgbToHsv(rgb);
+}
+
+function formatRgbLabel(rgb: RgbColor) {
+  return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
 }
 
 function mapDetectionPointToCanvas(
@@ -261,6 +418,20 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const [maskTool, setMaskTool] = useState<MaskTool>("brush");
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
   const [selectedColorValue, setSelectedColorValue] = useState<string | null>(null);
+  const [selectedSurface, setSelectedSurface] = useState<PaintSurfaceOption["value"]>("Auto");
+  const [isColorConfirmed, setIsColorConfirmed] = useState(false);
+  const [isSurfaceConfirmed, setIsSurfaceConfirmed] = useState(false);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [isSurfacePickerOpen, setIsSurfacePickerOpen] = useState(false);
+  const [surfacePickerDraft, setSurfacePickerDraft] = useState<PaintSurfaceOption["value"]>("Auto");
+  const [colorPickerDraft, setColorPickerDraft] = useState(() => {
+    const initialHsv = hexToHsv(COLOR_PICKER_DEFAULT_HEX) ?? { hue: 330, saturation: 0.588, value: 1 };
+    return {
+      ...initialHsv,
+      hex: COLOR_PICKER_DEFAULT_HEX,
+      rgbLabel: "rgb(255, 105, 180)",
+    };
+  });
   const [selectedFinishId, setSelectedFinishId] = useState(FINISH_OPTIONS[0].id);
   const [isDetecting, setIsDetecting] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
@@ -276,6 +447,9 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const continueTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sourceCaptureRef = useRef<View>(null);
   const maskCaptureRef = useRef<View>(null);
+  const colorPickerHue = useSharedValue(colorPickerDraft.hue);
+  const colorPickerSaturation = useSharedValue(colorPickerDraft.saturation);
+  const colorPickerValue = useSharedValue(colorPickerDraft.value);
 
   const {
     strokes: paintStrokes,
@@ -286,10 +460,8 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     sliderWidth,
     setSliderWidth,
     activePoint,
-    isDrawing,
     hasMask,
     handleCanvasLayout,
-    clearMask,
     undoLastStroke,
     redoLastStroke,
     replaceMaskWithRegions,
@@ -306,7 +478,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     maxBrushWidth: BRUSH_MAX,
   });
 
-  const selectedColor = useMemo(
+  const selectedColorOption = useMemo(
     () => WALL_COLOR_OPTIONS.find((option) => option.value === selectedColorValue) ?? null,
     [selectedColorValue],
   );
@@ -314,24 +486,56 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     () => FINISH_OPTIONS.find((option) => option.id === selectedFinishId) ?? FINISH_OPTIONS[0],
     [selectedFinishId],
   );
+  const selectedColorRgb = useMemo(() => (selectedColorValue ? hexToRgb(selectedColorValue) : null), [selectedColorValue]);
+  const selectedColorRgbLabel = useMemo(
+    () => (selectedColorRgb ? formatRgbLabel(selectedColorRgb) : "rgb(255, 255, 255)"),
+    [selectedColorRgb],
+  );
+  const selectedColorTitle = selectedColorOption?.title ?? (selectedColorValue ? selectedColorRgbLabel : "No color selected");
+  const selectedColorDescription =
+    selectedColorOption?.description ??
+    (selectedColorValue ? "Custom wall tone selected from the precision color picker." : "Choose a wall color before continuing.");
   const availableCredits = viewerReady ? me?.credits ?? GUEST_TESTING_STARTER_CREDITS : GUEST_TESTING_STARTER_CREDITS;
-  const canGenerate = Boolean(selectedImage && hasMask && selectedColor && !isGenerating);
+  const canGenerate = Boolean(selectedImage && hasMask && selectedColorValue && !isGenerating);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
+  const selectionLayoutScale = Math.min(width / SELECTION_REFERENCE_WIDTH, height / SELECTION_REFERENCE_HEIGHT, 1);
+  const selectionHeaderTop = Math.max(insets.top + scaleSelectionValue(16, selectionLayoutScale), scaleSelectionValue(72, selectionLayoutScale));
+  const selectionPreviewWidth = Math.min(width - scaleSelectionValue(48, selectionLayoutScale), scaleSelectionValue(408, selectionLayoutScale));
+  const selectionPreviewHeight = scaleSelectionValue(416, selectionLayoutScale);
+  const selectionCardGap = scaleSelectionValue(12, selectionLayoutScale);
+  const selectionCardWidth = Math.min(
+    scaleSelectionValue(200, selectionLayoutScale),
+    (width - scaleSelectionValue(48, selectionLayoutScale) - selectionCardGap) / 2,
+  );
+  const selectionCardHeight = scaleSelectionValue(116, selectionLayoutScale);
+  const selectionFooterHeight = scaleSelectionValue(132, selectionLayoutScale) + insets.bottom;
+  const colorPickerSheetHeight = Math.min(
+    scaleSelectionValue(824, selectionLayoutScale) + insets.bottom,
+    height - Math.max(insets.top - scaleSelectionValue(24, selectionLayoutScale), 0),
+  );
+  const surfacePickerSheetHeight = Math.min(
+    scaleSelectionValue(868, selectionLayoutScale) + insets.bottom,
+    height - Math.max(insets.top - scaleSelectionValue(24, selectionLayoutScale), 0),
+  );
+  const colorPickerSquareSize = scaleSelectionValue(408, selectionLayoutScale);
+  const colorPickerHueSliderHeight = scaleSelectionValue(32, selectionLayoutScale);
+  const colorPickerHandleSize = scaleSelectionValue(24, selectionLayoutScale);
+  const colorPickerSwatchSize = scaleSelectionValue(24, selectionLayoutScale);
   const intakeHeading = selectedImage ? "Photo added � mark the wall area next." : "Add a Photo of your Room";
   const intakeSubtext = selectedImage
     ? "Your photo is locked in. Next, brush the wall surfaces so the recolor stays precise around trim, furniture, and decor."
     : "Upload a room photo for precise wall recoloring.";
+  const canContinueFromSelection = Boolean(selectedColorValue && isColorConfirmed && isSurfaceConfirmed);
   const canContinueFromMask = hasMask && !isDetecting && !isAutoDetecting;
-  const canContinueFromColors = Boolean(selectedColor && selectedImage && hasMask);
   const activeMaskTool = maskTool === "surface" ? "brush" : maskTool;
   const maskWidthLabel = activeMaskTool === "eraser" ? "Eraser Width" : "Brush Width";
-  const colorCardSize = Math.max((width - 46) / 2, 154);
-  const frameAspectRatio = selectedImage ? selectedImage.width / Math.max(selectedImage.height, 1) : 1;
-  const previewHeight = Math.min(Math.max((width - 32) / Math.max(frameAspectRatio, 0.6), 240), height * 0.54);
-  const maskPreviewHeight = Math.min(previewHeight, Math.max(height * 0.4, 248));
   const maskCanvasWidth = Math.min(width - 48, 412);
   const maskCanvasHeight = Math.min(Math.max(height * 0.45, 352), 416);
+  const selectedColorButtonText = isColorConfirmed && selectedColorValue ? (selectedColorOption?.title ?? "Applied") : "Choose";
+  const selectedColorButtonBackground = isColorConfirmed && selectedColorValue ? selectedColorValue : "#FFFFFF";
+  const selectedColorButtonTextColor =
+    isColorConfirmed && selectedColorValue ? resolveContrastTextColor(selectedColorValue) : "#0A0A0A";
 
   useEffect(() => {
     return () => {
@@ -350,6 +554,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       const matched = WALL_COLOR_OPTIONS.find((option) => option.title.toLowerCase() === normalized);
       if (matched) {
         setSelectedColorValue(matched.value);
+        setIsColorConfirmed(true);
       }
     }
 
@@ -397,19 +602,25 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     setStep("intake");
     setMaskTool("brush");
     setSelectedImage(null);
+    setSelectedSurface("Auto");
+    setIsSurfaceConfirmed(false);
     setGeneratedImageUrl(null);
     setGenerationId(null);
     setIsGenerating(false);
     setIsAutoDetecting(false);
     setDetectedSourceStorageId(null);
     setIsCancellingGeneration(false);
+    setIsColorPickerOpen(false);
+    setIsSurfacePickerOpen(false);
     resetMaskDrawing({ resetBrush: true });
     if (typeof presetStyle === "string") {
       const normalized = presetStyle.trim().toLowerCase();
       const matched = WALL_COLOR_OPTIONS.find((option) => option.title.toLowerCase() === normalized);
       setSelectedColorValue(matched?.value ?? null);
+      setIsColorConfirmed(Boolean(matched));
     } else {
       setSelectedColorValue(null);
+      setIsColorConfirmed(false);
     }
     setSelectedFinishId(FINISH_OPTIONS[0].id);
   }, [presetStyle, resetMaskDrawing]);
@@ -457,11 +668,15 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     (nextImage: SelectedImage) => {
       setMaskTool("brush");
       setSelectedImage(nextImage);
+      setSelectedSurface("Auto");
+      setIsSurfaceConfirmed(false);
       setGeneratedImageUrl(null);
       setGenerationId(null);
       setDetectedSourceStorageId(null);
       setIsAutoDetecting(false);
       setIsCancellingGeneration(false);
+      setIsColorPickerOpen(false);
+      setIsSurfacePickerOpen(false);
       resetMaskDrawing({ resetBrush: true });
       setSelectedFinishId(FINISH_OPTIONS[0].id);
     },
@@ -471,8 +686,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const advanceToMaskStep = useCallback(() => {
     triggerHaptic();
     setStep("mask");
-    resetDetection();
-  }, [resetDetection]);
+  }, []);
 
   const handleContinueFromIntake = useCallback(() => {
     if (!selectedImage) {
@@ -480,8 +694,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     }
     triggerHaptic();
     setStep("mask");
-    resetDetection();
-  }, [resetDetection, selectedImage]);
+  }, [selectedImage]);
 
   const runDeferredContinue = useCallback(
     (key: "intake" | "mask" | "colors", action: () => void) => {
@@ -502,14 +715,125 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     triggerHaptic();
     setMaskTool("brush");
     setSelectedImage(null);
+    setSelectedSurface("Auto");
+    setIsSurfaceConfirmed(false);
     setGeneratedImageUrl(null);
     setGenerationId(null);
     setIsGenerating(false);
     setIsAutoDetecting(false);
     setDetectedSourceStorageId(null);
     setIsCancellingGeneration(false);
+    setIsColorPickerOpen(false);
+    setIsSurfacePickerOpen(false);
     resetMaskDrawing({ resetBrush: true });
-  }, [resetMaskDrawing]);
+    if (typeof presetStyle === "string") {
+      const normalized = presetStyle.trim().toLowerCase();
+      const matched = WALL_COLOR_OPTIONS.find((option) => option.title.toLowerCase() === normalized);
+      setSelectedColorValue(matched?.value ?? null);
+      setIsColorConfirmed(Boolean(matched));
+    } else {
+      setSelectedColorValue(null);
+      setIsColorConfirmed(false);
+    }
+  }, [presetStyle, resetMaskDrawing]);
+
+  const syncColorPickerDraft = useCallback((hue: number, saturation: number, value: number) => {
+    const rgb = hsvToRgb(hue, saturation, value);
+    setColorPickerDraft({
+      hue,
+      saturation,
+      value,
+      hex: rgbToHex(rgb),
+      rgbLabel: formatRgbLabel(rgb),
+    });
+  }, []);
+
+  const primeColorPickerFromHex = useCallback(
+    (hexColor: string | null) => {
+      const normalizedHex = hexColor ?? selectedColorValue ?? COLOR_PICKER_DEFAULT_HEX;
+      const nextHsv = hexToHsv(normalizedHex) ?? (hexToHsv(COLOR_PICKER_DEFAULT_HEX) as HsvColor);
+
+      colorPickerHue.value = nextHsv.hue;
+      colorPickerSaturation.value = nextHsv.saturation;
+      colorPickerValue.value = nextHsv.value;
+      syncColorPickerDraft(nextHsv.hue, nextHsv.saturation, nextHsv.value);
+    },
+    [colorPickerHue, colorPickerSaturation, colorPickerValue, selectedColorValue, syncColorPickerDraft],
+  );
+
+  const handleOpenColorPicker = useCallback(() => {
+    triggerHaptic();
+    primeColorPickerFromHex(selectedColorValue);
+    setIsColorPickerOpen(true);
+  }, [primeColorPickerFromHex, selectedColorValue]);
+
+  const handleOpenSurfacePicker = useCallback(() => {
+    triggerHaptic();
+    setSurfacePickerDraft(selectedSurface);
+    setIsSurfacePickerOpen(true);
+  }, [selectedSurface]);
+
+  const handleCloseColorPicker = useCallback(() => {
+    triggerHaptic();
+    setIsColorPickerOpen(false);
+  }, []);
+
+  const handleCloseSurfacePicker = useCallback(() => {
+    triggerHaptic();
+    setIsSurfacePickerOpen(false);
+  }, []);
+
+  const handleApplyColorPicker = useCallback(() => {
+    triggerHaptic();
+    setSelectedColorValue(colorPickerDraft.hex);
+    setIsColorConfirmed(true);
+    setIsColorPickerOpen(false);
+  }, [colorPickerDraft.hex]);
+
+  const handlePresetColorPress = useCallback(
+    (hexColor: string) => {
+      const nextHsv = hexToHsv(hexColor);
+      if (!nextHsv) {
+        return;
+      }
+
+      triggerHaptic();
+      colorPickerHue.value = nextHsv.hue;
+      colorPickerSaturation.value = nextHsv.saturation;
+      colorPickerValue.value = nextHsv.value;
+      syncColorPickerDraft(nextHsv.hue, nextHsv.saturation, nextHsv.value);
+    },
+    [colorPickerHue, colorPickerSaturation, colorPickerValue, syncColorPickerDraft],
+  );
+
+  const handleColorSquareGesture = useCallback(
+    (x: number, y: number) => {
+      const nextSaturation = clamp(x / colorPickerSquareSize, 0, 1);
+      const nextValue = clamp(1 - y / colorPickerSquareSize, 0, 1);
+      syncColorPickerDraft(colorPickerHue.value, nextSaturation, nextValue);
+    },
+    [colorPickerHue, colorPickerSquareSize, syncColorPickerDraft],
+  );
+
+  const handleHueSliderGesture = useCallback(
+    (x: number) => {
+      const nextHue = clamp(x / colorPickerSquareSize, 0, 1) * 360;
+      syncColorPickerDraft(nextHue, colorPickerSaturation.value, colorPickerValue.value);
+    },
+    [colorPickerSaturation, colorPickerSquareSize, colorPickerValue, syncColorPickerDraft],
+  );
+
+  const handleSelectSurfaceDraft = useCallback((value: PaintSurfaceOption["value"]) => {
+    triggerHaptic();
+    setSurfacePickerDraft(value);
+  }, []);
+
+  const handleApplySurfacePicker = useCallback(() => {
+    triggerHaptic();
+    setSelectedSurface(surfacePickerDraft);
+    setIsSurfaceConfirmed(true);
+    setIsSurfacePickerOpen(false);
+  }, [surfacePickerDraft]);
 
   const handleAutoDetectMask = useCallback(async () => {
     try {
@@ -665,7 +989,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       return;
     }
 
-    if (!selectedColor) {
+    if (!selectedColorValue) {
       Alert.alert("Pick a color", "Choose a wall color before continuing.");
       return;
     }
@@ -708,10 +1032,10 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
             imageStorageId: sourceStorageId,
             maskStorageId,
             serviceType: "paint",
-            selection: `${selectedColor.title} (${selectedColor.value}) with a realistic ${selectedFinish.label.toLowerCase()} finish`,
+            selection: `${selectedColorTitle} (${selectedColorValue}) on the ${selectedSurface.toLowerCase()} surface with a realistic ${selectedFinish.label.toLowerCase()} finish`,
             roomType: "Room",
-            displayStyle: `${selectedColor.title} Paint`,
-            customPrompt: "Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.",
+            displayStyle: `${selectedColorTitle} Paint`,
+            customPrompt: `Repaint only the selected ${selectedSurface.toLowerCase()} surface. Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`,
             aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
           })) as { generationId: string };
         },
@@ -747,7 +1071,8 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     uploadBlobToStorage,
     viewerId,
     viewerReady,
-    selectedColor,
+    selectedColorTitle,
+    selectedColorValue,
   ]);
 
   const handleCancelGeneration = useCallback(async () => {
@@ -810,6 +1135,57 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     if (step === "result") return setStep("finish");
   }, [step]);
 
+  const colorPickerSquareGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .onBegin((event) => {
+          const clampedX = clamp(event.x, 0, colorPickerSquareSize);
+          const clampedY = clamp(event.y, 0, colorPickerSquareSize);
+          colorPickerSaturation.value = clampedX / colorPickerSquareSize;
+          colorPickerValue.value = 1 - clampedY / colorPickerSquareSize;
+          runOnJS(handleColorSquareGesture)(clampedX, clampedY);
+        })
+        .onUpdate((event) => {
+          const clampedX = clamp(event.x, 0, colorPickerSquareSize);
+          const clampedY = clamp(event.y, 0, colorPickerSquareSize);
+          colorPickerSaturation.value = clampedX / colorPickerSquareSize;
+          colorPickerValue.value = 1 - clampedY / colorPickerSquareSize;
+          runOnJS(handleColorSquareGesture)(clampedX, clampedY);
+        }),
+    [colorPickerSaturation, colorPickerSquareSize, colorPickerValue, handleColorSquareGesture],
+  );
+
+  const colorPickerHueGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .onBegin((event) => {
+          const clampedX = clamp(event.x, 0, colorPickerSquareSize);
+          colorPickerHue.value = (clampedX / colorPickerSquareSize) * 360;
+          runOnJS(handleHueSliderGesture)(clampedX);
+        })
+        .onUpdate((event) => {
+          const clampedX = clamp(event.x, 0, colorPickerSquareSize);
+          colorPickerHue.value = (clampedX / colorPickerSquareSize) * 360;
+          runOnJS(handleHueSliderGesture)(clampedX);
+        }),
+    [colorPickerHue, colorPickerSquareSize, handleHueSliderGesture],
+  );
+
+  const colorPickerSquareHandleStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: colorPickerSaturation.value * colorPickerSquareSize - colorPickerHandleSize / 2 },
+      { translateY: (1 - colorPickerValue.value) * colorPickerSquareSize - colorPickerHandleSize / 2 },
+    ],
+  }));
+
+  const colorPickerHueHandleStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: (colorPickerHue.value / 360) * colorPickerSquareSize - colorPickerHandleSize / 2 }],
+  }));
+
+  const colorPickerHueFillStyle = useAnimatedStyle(() => ({
+    backgroundColor: `hsl(${colorPickerHue.value}, 100%, 50%)`,
+  }));
+
   return (
     <View style={styles.screen}>
       {selectedImage && canvasSize.width > 0 && canvasSize.height > 0 ? (
@@ -844,7 +1220,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
         </View>
       ) : null}
 
-      {step !== "processing" && step !== "intake" && step !== "mask" ? (
+      {step !== "processing" && step !== "intake" && step !== "mask" && step !== "colors" ? (
         <ServiceWizardHeader
           title="Paint"
           step={currentStepNumber}
@@ -866,6 +1242,326 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       ) : null}
 
       {step === "mask" ? (
+        <View style={styles.selectionStepScreen}>
+          <StatusBar style="dark" />
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={handleBack}
+            style={[
+              styles.selectionHeaderButton,
+              {
+                top: selectionHeaderTop - scaleSelectionValue(2, selectionLayoutScale),
+                left: scaleSelectionValue(24, selectionLayoutScale),
+              },
+            ]}
+          >
+            <ChevronLeft color="#0A0A0A" size={22} strokeWidth={2.4} />
+          </Pressable>
+
+          <Text style={[styles.selectionHeaderTitle, { top: selectionHeaderTop }]}>Select Area to Paint</Text>
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={handleClose}
+            style={[
+              styles.selectionHeaderButton,
+              {
+                top: selectionHeaderTop - scaleSelectionValue(2, selectionLayoutScale),
+                right: scaleSelectionValue(24, selectionLayoutScale),
+              },
+            ]}
+          >
+            <X color="#0A0A0A" size={20} strokeWidth={2.4} />
+          </Pressable>
+
+          <View
+            style={[
+              styles.selectionStepContent,
+              {
+                paddingTop: selectionHeaderTop + scaleSelectionValue(88, selectionLayoutScale),
+                paddingBottom: selectionFooterHeight + scaleSelectionValue(24, selectionLayoutScale),
+              },
+            ]}
+          >
+            <View style={[styles.selectionPreviewFrame, { width: selectionPreviewWidth, height: selectionPreviewHeight }]}>
+              {selectedImage ? (
+                <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="contain" transition={160} />
+              ) : null}
+            </View>
+
+            <View style={[styles.selectionCardsRow, { gap: selectionCardGap, marginTop: scaleSelectionValue(44, selectionLayoutScale) }]}>
+              <View style={[styles.selectionChoiceCard, { width: selectionCardWidth, minHeight: selectionCardHeight }]}>
+                <View style={styles.selectionCardIconWrap}>
+                  <BrushCleaning color="#0A0A0A" size={18} strokeWidth={2.1} />
+                </View>
+                <Text style={styles.selectionCardLabel}>Color</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={handleOpenColorPicker}
+                  style={[
+                    styles.selectionColorButton,
+                    {
+                      width: Math.min(scaleSelectionValue(164, selectionLayoutScale), selectionCardWidth - scaleSelectionValue(36, selectionLayoutScale)),
+                      backgroundColor: selectedColorButtonBackground,
+                    },
+                  ]}
+                >
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.selectionColorButtonText,
+                      {
+                        color: selectedColorButtonTextColor,
+                      },
+                    ]}
+                  >
+                    {selectedColorButtonText}
+                  </Text>
+                </Pressable>
+              </View>
+
+              <View style={[styles.selectionChoiceCard, { width: selectionCardWidth, minHeight: selectionCardHeight }]}>
+                <View style={styles.selectionCardIconWrap}>
+                  <Box color="#0A0A0A" size={18} strokeWidth={2.1} />
+                </View>
+                <Text style={styles.selectionCardLabel}>Surface</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={handleOpenSurfacePicker}
+                  style={[
+                    styles.selectionSurfaceButton,
+                    {
+                      width: Math.min(scaleSelectionValue(164, selectionLayoutScale), selectionCardWidth - scaleSelectionValue(36, selectionLayoutScale)),
+                    },
+                    isSurfaceConfirmed ? styles.selectionSurfaceButtonConfirmed : null,
+                  ]}
+                >
+                  <Text style={[styles.selectionSurfaceButtonText, isSurfaceConfirmed ? styles.selectionSurfaceButtonTextConfirmed : null]}>
+                    {selectedSurface}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+
+          <View
+            style={[
+              styles.selectionFooter,
+              {
+                minHeight: selectionFooterHeight,
+                paddingBottom: Math.max(insets.bottom + scaleSelectionValue(24, selectionLayoutScale), scaleSelectionValue(24, selectionLayoutScale)),
+              },
+            ]}
+          >
+            <Pressable
+              accessibilityRole="button"
+              disabled={!canContinueFromSelection}
+              onPress={() => {
+                if (!canContinueFromSelection) {
+                  return;
+                }
+
+                runDeferredContinue("mask", () => {
+                  triggerHaptic();
+                  resetDetection();
+                  setStep("colors");
+                });
+              }}
+              style={[
+                styles.selectionContinueButton,
+                canContinueFromSelection ? styles.selectionContinueButtonActive : styles.selectionContinueButtonDisabled,
+              ]}
+            >
+              {loadingContinueStep === "mask" ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text
+                  style={[
+                    styles.selectionContinueButtonText,
+                    canContinueFromSelection ? styles.selectionContinueButtonTextActive : styles.selectionContinueButtonTextDisabled,
+                  ]}
+                >
+                  Continue
+                </Text>
+              )}
+            </Pressable>
+          </View>
+
+          {isColorPickerOpen ? (
+            <View style={styles.colorPickerOverlay}>
+              <Pressable accessibilityRole="button" onPress={handleCloseColorPicker} style={StyleSheet.absoluteFillObject} />
+              <View style={[styles.colorPickerSheet, { height: colorPickerSheetHeight, paddingBottom: Math.max(insets.bottom + scaleSelectionValue(24, selectionLayoutScale), scaleSelectionValue(24, selectionLayoutScale)) }]}>
+                <Text style={[styles.colorPickerTitle, { marginTop: scaleSelectionValue(32, selectionLayoutScale) }]}>Choose a color for your wall</Text>
+
+                <View style={{ marginTop: scaleSelectionValue(52, selectionLayoutScale), alignItems: "center" }}>
+                  <GestureDetector gesture={colorPickerSquareGesture}>
+                    <View style={[styles.colorPickerSquare, { width: colorPickerSquareSize, height: colorPickerSquareSize }]}>
+                      <Animated.View style={[StyleSheet.absoluteFillObject, colorPickerHueFillStyle]} />
+                      <LinearGradient
+                        colors={["#FFFFFF", "rgba(255,255,255,0)"]}
+                        start={{ x: 0, y: 0.5 }}
+                        end={{ x: 1, y: 0.5 }}
+                        style={StyleSheet.absoluteFillObject}
+                      />
+                      <LinearGradient
+                        colors={["rgba(0,0,0,0)", "#000000"]}
+                        start={{ x: 0.5, y: 0 }}
+                        end={{ x: 0.5, y: 1 }}
+                        style={StyleSheet.absoluteFillObject}
+                      />
+                      <Animated.View style={[styles.colorPickerHandle, { width: colorPickerHandleSize, height: colorPickerHandleSize, borderRadius: colorPickerHandleSize / 2 }, colorPickerSquareHandleStyle]} />
+                    </View>
+                  </GestureDetector>
+
+                  <GestureDetector gesture={colorPickerHueGesture}>
+                    <View style={[styles.colorPickerHueSlider, { width: colorPickerSquareSize, height: colorPickerHueSliderHeight, marginTop: scaleSelectionValue(20, selectionLayoutScale) }]}>
+                      <LinearGradient
+                        colors={["#FF9500", "#FFD60A", "#34C759", "#32D7FF", "#0A84FF", "#BF5AF2", "#FF3B30"]}
+                        locations={[0, 0.16, 0.33, 0.5, 0.66, 0.82, 1]}
+                        start={{ x: 0, y: 0.5 }}
+                        end={{ x: 1, y: 0.5 }}
+                        style={StyleSheet.absoluteFillObject}
+                      />
+                      <Animated.View style={[styles.colorPickerHueHandle, { width: colorPickerHandleSize, height: colorPickerHandleSize, borderRadius: colorPickerHandleSize / 2 }, colorPickerHueHandleStyle]} />
+                    </View>
+                  </GestureDetector>
+
+                  <View style={[styles.colorPickerPresetRow, { marginTop: scaleSelectionValue(40, selectionLayoutScale), paddingLeft: scaleSelectionValue(32, selectionLayoutScale), gap: scaleSelectionValue(40, selectionLayoutScale) }]}>
+                    {COLOR_PICKER_PRESET_SWATCHES.map((swatch) => {
+                      const isActive = colorPickerDraft.hex === swatch.value;
+                      return (
+                        <Pressable
+                          key={swatch.id}
+                          accessibilityRole="button"
+                          onPress={() => handlePresetColorPress(swatch.value)}
+                          style={[
+                            styles.colorPickerPresetSwatch,
+                            {
+                              width: colorPickerSwatchSize,
+                              height: colorPickerSwatchSize,
+                              borderRadius: colorPickerSwatchSize / 2,
+                              backgroundColor: swatch.value,
+                            },
+                            isActive ? styles.colorPickerPresetSwatchActive : null,
+                          ]}
+                        />
+                      );
+                    })}
+                  </View>
+
+                  <View style={[styles.colorPickerSeparator, { width: colorPickerSquareSize, marginTop: scaleSelectionValue(40, selectionLayoutScale) }]} />
+
+                  <Text style={[styles.colorPickerRgbText, { width: colorPickerSquareSize, marginTop: scaleSelectionValue(24, selectionLayoutScale) }]}>
+                    {colorPickerDraft.rgbLabel}
+                  </Text>
+
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={handleApplyColorPicker}
+                    style={[styles.colorPickerApplyButton, { width: colorPickerSquareSize, marginTop: scaleSelectionValue(44, selectionLayoutScale) }]}
+                  >
+                    <Text style={styles.colorPickerApplyText}>Apply</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          ) : null}
+
+          {isSurfacePickerOpen ? (
+            <View style={styles.colorPickerOverlay}>
+              <Pressable accessibilityRole="button" onPress={handleCloseSurfacePicker} style={StyleSheet.absoluteFillObject} />
+              <View
+                style={[
+                  styles.surfacePickerSheet,
+                  {
+                    height: surfacePickerSheetHeight,
+                    paddingBottom: Math.max(insets.bottom + scaleSelectionValue(24, selectionLayoutScale), scaleSelectionValue(24, selectionLayoutScale)),
+                  },
+                ]}
+              >
+                <View style={[styles.surfacePickerHandle, { marginTop: scaleSelectionValue(12, selectionLayoutScale) }]} />
+
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={handleCloseSurfacePicker}
+                  style={[styles.surfacePickerCloseButton, { top: scaleSelectionValue(20, selectionLayoutScale), right: scaleSelectionValue(20, selectionLayoutScale) }]}
+                >
+                  <X color="#0A0A0A" size={18} strokeWidth={2.2} />
+                </Pressable>
+
+                <Text
+                  style={[
+                    styles.surfacePickerTitle,
+                    {
+                      marginTop: scaleSelectionValue(56, selectionLayoutScale),
+                      marginLeft: scaleSelectionValue(28, selectionLayoutScale),
+                    },
+                  ]}
+                >
+                  Select Surface Type
+                </Text>
+
+                <View
+                  style={[
+                    styles.surfacePickerList,
+                    {
+                      marginTop: scaleSelectionValue(28, selectionLayoutScale),
+                      marginHorizontal: scaleSelectionValue(24, selectionLayoutScale),
+                    },
+                  ]}
+                >
+                  {PAINT_SURFACE_OPTIONS.map((option, index) => {
+                    const active = option.value === surfacePickerDraft;
+                    const isAuto = index === 0;
+
+                    return (
+                      <Pressable
+                        key={option.value}
+                        accessibilityRole="button"
+                        onPress={() => handleSelectSurfaceDraft(option.value)}
+                        style={[
+                          styles.surfacePickerRow,
+                          { height: scaleSelectionValue(72, selectionLayoutScale) },
+                          isAuto ? styles.surfacePickerRowAuto : null,
+                          active ? styles.surfacePickerRowActive : null,
+                        ]}
+                      >
+                        <View style={styles.surfacePickerRowLeading}>
+                          <View style={styles.surfacePickerIconWrap}>
+                            <Box color={active ? "#FF3B30" : "#0A0A0A"} size={18} strokeWidth={2} />
+                          </View>
+                          <Text style={[styles.surfacePickerRowText, active ? styles.surfacePickerRowTextActive : null]}>{option.label}</Text>
+                        </View>
+
+                        <View style={[styles.surfacePickerCheckCircle, active ? styles.surfacePickerCheckCircleActive : null]}>
+                          {active ? <Check color="#FFFFFF" size={14} strokeWidth={2.4} /> : null}
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={handleApplySurfacePicker}
+                  style={[
+                    styles.surfacePickerApplyButton,
+                    {
+                      marginTop: scaleSelectionValue(260, selectionLayoutScale),
+                      marginHorizontal: scaleSelectionValue(24, selectionLayoutScale),
+                    },
+                  ]}
+                >
+                  <Text style={styles.surfacePickerApplyText}>Apply</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+
+      {step === "colors" ? (
         <View style={styles.maskScreen}>
           <StatusBar style="dark" />
 
@@ -873,7 +1569,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
             <ChevronLeft color="#0A0A0A" size={22} strokeWidth={2.4} />
           </Pressable>
 
-          <Text style={[styles.maskHeaderTitle, { top: Math.max(insets.top + 20, 72) }]}>Select Area to Paint</Text>
+          <Text style={[styles.maskHeaderTitle, { top: Math.max(insets.top + 20, 72) }]}>Refine Paint Area</Text>
 
           <Pressable accessibilityRole="button" onPress={handleClose} style={[styles.maskCloseButton, { top: Math.max(insets.top + 18, 70) }]}>
             <X color="#0A0A0A" size={20} strokeWidth={2.4} />
@@ -1090,9 +1786,9 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                 return;
               }
 
-              runDeferredContinue("mask", () => {
+              runDeferredContinue("colors", () => {
                 triggerHaptic();
-                setStep("colors");
+                setStep("finish");
               });
             }}
             style={[
@@ -1103,84 +1799,13 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
               },
             ]}
           >
-            {loadingContinueStep === "mask" ? (
+            {loadingContinueStep === "colors" ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={[styles.maskContinueText, { color: canContinueFromMask ? "#FFFFFF" : "#A0A0A0" }]}>Continue</Text>
             )}
           </Pressable>
         </View>
-      ) : null}
-
-      {step === "colors" ? (
-        <ServiceWizardStepScreen
-          footerOffset={FIXED_FOOTER_OFFSET}
-          contentContainerStyle={{
-            paddingHorizontal: spacing.md,
-            paddingTop: spacing.sm,
-            gap: spacing.md,
-          }}
-          footer={
-            <ServiceContinueButton
-              active={canContinueFromColors}
-              label={selectedColor ? "Generate My Design \u2192" : "Select a Color"}
-              loading={loadingContinueStep === "colors"}
-              onPress={() => {
-                if (!canContinueFromColors) {
-                  return;
-                }
-
-                runDeferredContinue("colors", () => {
-                  triggerHaptic();
-                  setStep("finish");
-                });
-              }}
-            />
-          }
-        >
-          <View>
-            <Text style={styles.stepTitle}>Color & Surface</Text>
-            <Text style={styles.stepText}>
-              Pick from the real wall-finish thumbnails so Darkor.ai carries the exact tone into the final render.
-            </Text>
-
-            <View style={styles.roomReferenceFrame}>
-              {selectedImage ? (
-                <>
-                  <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="cover" transition={160} />
-                  <View style={styles.roomReferenceBadge}>
-                    <Text style={styles.roomReferenceBadgeText}>Your Room</Text>
-                  </View>
-                </>
-              ) : null}
-            </View>
-
-            <ServiceSelectionGrid>
-              {WALL_COLOR_OPTIONS.map((option) => (
-                <ServiceSelectionCard
-                  key={option.id}
-                  title={option.title}
-                  description={option.description}
-                  image={option.image}
-                  active={option.id === selectedColor?.id}
-                  width={colorCardSize}
-                  onPress={() => {
-                    setSelectedColorValue(option.value);
-                    triggerHaptic();
-                  }}
-                />
-              ))}
-            </ServiceSelectionGrid>
-
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Selected Color</Text>
-              <Text style={styles.summaryTitle}>{selectedColor?.title ?? "No wall color selected"}</Text>
-              <Text style={styles.summaryText}>
-                {selectedColor?.description ?? "Choose a wall color thumbnail to unlock the finish step."}
-              </Text>
-            </View>
-          </View>
-        </ServiceWizardStepScreen>
       ) : null}
 
       {step === "finish" ? (
@@ -1215,16 +1840,18 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
             </Text>
 
             <View style={[styles.summaryCard, styles.finishSummaryCard]}>
-              {selectedColor ? (
-                <Image source={selectedColor.image} style={styles.finishSelectionThumb} contentFit="cover" transition={120} />
+              {selectedColorOption ? (
+                <Image source={selectedColorOption.image} style={styles.finishSelectionThumb} contentFit="cover" transition={120} />
               ) : (
-                <View style={[styles.summarySwatch, { backgroundColor: "#ffffff" }]} />
+                <View style={[styles.summarySwatch, { backgroundColor: selectedColorValue ?? "#ffffff" }]} />
               )}
               <View style={styles.summaryCopy}>
                 <Text style={styles.summaryLabel}>Selected Color</Text>
-                <Text style={styles.summaryTitle}>{selectedColor?.title ?? "No color selected"}</Text>
+                <Text style={styles.summaryTitle}>{selectedColorTitle}</Text>
                 <Text style={styles.summaryText}>
-                  {selectedColor?.description ?? "Wall color is locked. Now choose the final sheen profile for the render."}
+                  {selectedColorValue
+                    ? `${selectedColorDescription} Surface: ${selectedSurface}.`
+                    : "Wall color is locked. Now choose the final sheen profile for the render."}
                 </Text>
               </View>
             </View>
@@ -1251,7 +1878,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
           imageUri={selectedImage?.uri ?? null}
           subtitlePhrases={[
             "Analyzing your room geometry...",
-            `Applying ${selectedColor?.title ?? "your selected color"}...`,
+            `Applying ${selectedColorTitle.toLowerCase()}...`,
             "Rendering final lighting...",
           ]}
           onCancel={() => {
@@ -1290,15 +1917,15 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Applied Finish</Text>
-            <Text style={styles.summaryTitle}>{`${selectedColor?.title ?? "Selected Color"} � ${selectedFinish.label}`}</Text>
+            <Text style={styles.summaryTitle}>{`${selectedColorTitle} � ${selectedFinish.label}`}</Text>
             <Text style={styles.summaryText}>
-              Your walls were recolored from the mask you painted while preserving the structure, furnishings, trim, and natural light of the room.
+              {`Your ${selectedSurface.toLowerCase()} surface was recolored from the mask you painted while preserving the structure, furnishings, trim, and natural light of the room.`}
             </Text>
           </View>
 
           <View style={styles.resultRow}>
             <LuxPressable
-              onPress={() => setStep("colors")}
+              onPress={() => setStep("mask")}
               className={pointerClassName}
               style={{ flex: 1 }}
               glowColor="rgba(255,255,255,0.04)"
@@ -1309,7 +1936,10 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
               </View>
             </LuxPressable>
             <LuxPressable
-              onPress={() => setStep("mask")}
+              onPress={() => {
+                resetDetection();
+                setStep("colors");
+              }}
               className={pointerClassName}
               style={{ flex: 1 }}
               glowColor="rgba(255,255,255,0.04)"
@@ -1353,6 +1983,460 @@ const styles = StyleSheet.create({
   captureImage: {
     width: "100%",
     height: "100%",
+  },
+  selectionStepScreen: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  selectionHeaderButton: {
+    position: "absolute",
+    zIndex: 4,
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  selectionHeaderTitle: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    zIndex: 4,
+    color: "#0A0A0A",
+    fontSize: 20,
+    lineHeight: 24,
+    textAlign: "center",
+    ...fonts.bold,
+  },
+  selectionStepContent: {
+    flex: 1,
+    alignItems: "center",
+  },
+  selectionPreviewFrame: {
+    borderRadius: 32,
+    overflow: "hidden",
+    backgroundColor: "#F4F4F5",
+    borderWidth: 1,
+    borderColor: "#ECECEC",
+  },
+  selectionCardsRow: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    justifyContent: "center",
+  },
+  selectionChoiceCard: {
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: "#ECECEC",
+    backgroundColor: "#F8F8F8",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  selectionCardIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#ECECEC",
+  },
+  selectionCardLabel: {
+    marginTop: -34,
+    marginLeft: 56,
+    color: "#0A0A0A",
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.bold,
+  },
+  selectionColorButton: {
+    marginTop: 24,
+    width: 164,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E2E2E2",
+  },
+  selectionColorButtonText: {
+    fontSize: 15,
+    lineHeight: 18,
+    ...fonts.semibold,
+  },
+  selectionSurfaceButton: {
+    marginTop: 24,
+    width: 164,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "#111111",
+    backgroundColor: "#FFFFFF",
+  },
+  selectionSurfaceButtonConfirmed: {
+    backgroundColor: "#0A0A0A",
+    borderColor: "#0A0A0A",
+  },
+  selectionSurfaceButtonText: {
+    color: "#0A0A0A",
+    fontSize: 15,
+    lineHeight: 18,
+    ...fonts.semibold,
+  },
+  selectionSurfaceButtonTextConfirmed: {
+    color: "#FFFFFF",
+  },
+  selectionFooter: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  selectionContinueButton: {
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  selectionContinueButtonActive: {
+    backgroundColor: "#FF3B30",
+  },
+  selectionContinueButtonDisabled: {
+    backgroundColor: "#E8E8E8",
+  },
+  selectionContinueButtonText: {
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.semibold,
+  },
+  selectionContinueButtonTextActive: {
+    color: "#FFFFFF",
+  },
+  selectionContinueButtonTextDisabled: {
+    color: "#A0A0A0",
+  },
+  colorPickerOverlay: {
+    ...absoluteFill,
+    zIndex: 14,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.7)",
+  },
+  colorPickerSheet: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    overflow: "hidden",
+  },
+  colorPickerTitle: {
+    marginHorizontal: 24,
+    color: "#0A0A0A",
+    fontSize: 24,
+    lineHeight: 30,
+    ...fonts.bold,
+  },
+  colorPickerSquare: {
+    overflow: "hidden",
+    borderRadius: 24,
+    backgroundColor: "#FF69B4",
+  },
+  colorPickerHandle: {
+    position: "absolute",
+    borderWidth: 3,
+    borderColor: "#FFFFFF",
+    backgroundColor: "transparent",
+    shadowColor: "#000000",
+    shadowOpacity: 0.24,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  colorPickerHueSlider: {
+    overflow: "hidden",
+    borderRadius: 16,
+  },
+  colorPickerHueHandle: {
+    position: "absolute",
+    top: -1,
+    borderWidth: 3,
+    borderColor: "#FFFFFF",
+    backgroundColor: "#0A0A0A",
+    shadowColor: "#000000",
+    shadowOpacity: 0.24,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  colorPickerPresetRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  colorPickerPresetSwatch: {
+    borderWidth: 1,
+    borderColor: "rgba(10,10,10,0.12)",
+  },
+  colorPickerPresetSwatchActive: {
+    borderWidth: 3,
+    borderColor: "#0A0A0A",
+  },
+  colorPickerSeparator: {
+    height: 1,
+    backgroundColor: "#E5E5E5",
+  },
+  colorPickerRgbText: {
+    color: "#0A0A0A",
+    fontSize: 18,
+    lineHeight: 22,
+    ...fonts.semibold,
+  },
+  colorPickerApplyButton: {
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0A0A0A",
+  },
+  colorPickerApplyText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.semibold,
+  },
+  surfacePickerSheet: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    overflow: "hidden",
+  },
+  surfacePickerHandle: {
+    alignSelf: "center",
+    width: 36,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: "#D4D4D8",
+  },
+  surfacePickerCloseButton: {
+    position: "absolute",
+    zIndex: 2,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F3F4F6",
+  },
+  surfacePickerTitle: {
+    color: "#0A0A0A",
+    fontSize: 24,
+    lineHeight: 30,
+    ...fonts.bold,
+  },
+  surfacePickerList: {
+    gap: 12,
+  },
+  surfacePickerRow: {
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#ECECEC",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  surfacePickerRowAuto: {
+    backgroundColor: "#F8F8F8",
+    borderColor: "#E5E7EB",
+  },
+  surfacePickerRowActive: {
+    borderColor: "#FF3B30",
+    backgroundColor: "#FFF3F2",
+  },
+  surfacePickerRowLeading: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 20,
+  },
+  surfacePickerIconWrap: {
+    marginLeft: 0,
+    width: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  surfacePickerRowText: {
+    color: "#0A0A0A",
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.semibold,
+  },
+  surfacePickerRowTextActive: {
+    color: "#0A0A0A",
+  },
+  surfacePickerCheckCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: "#D4D4D8",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  surfacePickerCheckCircleActive: {
+    borderColor: "#FF3B30",
+    backgroundColor: "#FF3B30",
+  },
+  surfacePickerApplyButton: {
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FF3B30",
+  },
+  surfacePickerApplyText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.semibold,
+  },
+  selectionModalOverlay: {
+    ...absoluteFill,
+    zIndex: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.52)",
+    paddingHorizontal: 24,
+  },
+  selectionModalCard: {
+    width: "100%",
+    maxWidth: 396,
+    maxHeight: "78%",
+    borderRadius: 28,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+    gap: 16,
+  },
+  selectionSurfaceModalCard: {
+    width: "100%",
+    maxWidth: 360,
+    borderRadius: 28,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
+    gap: 16,
+  },
+  selectionModalHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  selectionModalCopy: {
+    flex: 1,
+    gap: 6,
+  },
+  selectionModalTitle: {
+    color: "#0A0A0A",
+    fontSize: 22,
+    lineHeight: 26,
+    ...fonts.bold,
+  },
+  selectionModalText: {
+    color: "#666666",
+    fontSize: 13,
+    lineHeight: 19,
+    ...fonts.regular,
+  },
+  selectionModalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F3F4F6",
+  },
+  selectionModalScroll: {
+    width: "100%",
+  },
+  selectionModalGrid: {
+    gap: 12,
+    paddingBottom: 4,
+  },
+  selectionSwatchCard: {
+    width: "100%",
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "#ECECEC",
+    backgroundColor: "#FAFAFA",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  selectionSwatchCardActive: {
+    borderColor: "#FF3B30",
+    backgroundColor: "#FFF3F2",
+  },
+  selectionSwatchDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(10,10,10,0.08)",
+  },
+  selectionSwatchCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  selectionSwatchTitle: {
+    color: "#0A0A0A",
+    fontSize: 15,
+    lineHeight: 18,
+    ...fonts.semibold,
+  },
+  selectionSwatchText: {
+    color: "#666666",
+    fontSize: 12,
+    lineHeight: 17,
+    ...fonts.regular,
+  },
+  selectionSurfaceList: {
+    gap: 10,
+  },
+  selectionSurfaceRow: {
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#ECECEC",
+    backgroundColor: "#FAFAFA",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  selectionSurfaceRowActive: {
+    borderColor: "#FF3B30",
+    backgroundColor: "#FFF3F2",
+  },
+  selectionSurfaceRowText: {
+    color: "#0A0A0A",
+    fontSize: 15,
+    lineHeight: 18,
+    ...fonts.semibold,
+  },
+  selectionSurfaceRowTextActive: {
+    color: "#0A0A0A",
   },
   topBar: {
     paddingHorizontal: spacing.md,

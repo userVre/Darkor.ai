@@ -11,7 +11,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { Easing, Platform, Text, ToastAndroid, View, useWindowDimensions } from "react-native";
+import { Platform, Text, ToastAndroid, View, useWindowDimensions } from "react-native";
+import { Easing } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, Sparkles } from "lucide-react-native";
 

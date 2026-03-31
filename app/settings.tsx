@@ -310,7 +310,7 @@ export default function SettingsScreen() {
 
         <View style={styles.heroSection}>
           <Image
-            source={require("../../assets/media/paywall/paywall-luxury-lounge.png")}
+            source={require("../assets/media/paywall/paywall-luxury-lounge.png")}
             style={StyleSheet.absoluteFillObject}
             contentFit="cover"
           />
