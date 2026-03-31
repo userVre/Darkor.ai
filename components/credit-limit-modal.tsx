@@ -22,7 +22,9 @@ export function CreditLimitModal({ visible, onClose, onUpgrade }: CreditLimitMod
       <View style={styles.overlay}>
         <View style={styles.modalCard}>
           <Pressable accessibilityRole="button" onPress={onClose} style={styles.closeButton}>
-            <X color="#0A0A0A" size={16} strokeWidth={2.2} />
+            <View style={styles.closeButtonVisual}>
+              <X color="#0A0A0A" size={16} strokeWidth={2.2} />
+            </View>
           </Pressable>
 
           <Text style={styles.title}>Daily Credit Limit</Text>
@@ -58,6 +60,15 @@ const styles = StyleSheet.create({
     top: 28,
     right: 28,
     zIndex: 1,
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  closeButtonVisual: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },

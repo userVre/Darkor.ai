@@ -1,13 +1,15 @@
 import { useAuth } from "@clerk/expo";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
+import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
+import * as MediaLibrary from "expo-media-library";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Image as NativeImage, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Alert, Image as NativeImage, Linking, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -32,6 +34,7 @@ import { WALL_COLOR_OPTIONS } from "../lib/data";
 import { GENERATION_FAILED_TOAST } from "../lib/generation-errors";
 import { canUserGenerate as canUserGenerateNow } from "../lib/generation-access";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
+import { hasGenerationImage, resolveGenerationStatus } from "../lib/generation-status";
 import {
   GUEST_TESTING_STARTER_CREDITS,
   isGuestWizardTestingSession,
@@ -42,7 +45,7 @@ import { PAINT_WIZARD_EXAMPLE_PHOTOS } from "../lib/wizard-example-photos";
 import { PaintIntroScreen, type PaintIntroExamplePhoto } from "./paint-intro-screen";
 import { useProSuccess } from "./pro-success-context";
 import { ServiceContinueButton } from "./service-continue-button";
-import { ServiceProcessingScreen } from "./service-processing-screen";
+import { GENERATION_STATUS_MESSAGES, ServiceProcessingScreen } from "./service-processing-screen";
 import { ServiceWizardHeader } from "./service-wizard-header";
 import { ServiceWizardStepScreen } from "./service-wizard-shared";
 import { LuxPressable } from "./lux-pressable";
@@ -429,6 +432,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [processingComplete, setProcessingComplete] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
   const [isAutoDetecting, setIsAutoDetecting] = useState(false);
   const [detectedSourceStorageId, setDetectedSourceStorageId] = useState<string | null>(null);
@@ -561,21 +565,28 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     const generation = generationArchive.find((item) => item._id === generationId);
     if (!generation) return;
 
-    if (generation.status === "ready" && generation.imageUrl) {
+    const resultImageUrl = generation.imageUrl ?? null;
+    const generationStatus = resolveGenerationStatus(generation.status, resultImageUrl);
+    const hasResultImage = hasGenerationImage(resultImageUrl);
+
+    if (generationStatus === "ready" && hasResultImage) {
       setGenerationId(null);
-      setGeneratedImageUrl(generation.imageUrl);
+      setGeneratedImageUrl(resultImageUrl);
       setIsGenerating(false);
       setIsCancellingGeneration(false);
-      triggerHaptic();
-      if (effectiveSignedIn) {
-        router.replace({ pathname: "/workspace", params: { boardView: "board" } });
-        return;
-      }
-      setStep("result");
-      return;
+      setProcessingComplete(true);
+      const revealTimer = setTimeout(() => {
+        triggerHaptic();
+        if (effectiveSignedIn) {
+          router.replace({ pathname: "/workspace", params: { boardView: "board" } });
+          return;
+        }
+        setStep("result");
+      }, 180);
+      return () => clearTimeout(revealTimer);
     }
 
-    if (generation.status === "failed") {
+    if (generationStatus === "failed" && !hasResultImage) {
       setGenerationId(null);
       setIsGenerating(false);
       setIsCancellingGeneration(false);
@@ -638,7 +649,89 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       setIsColorConfirmed(false);
     }
     setSelectedFinishId(FINISH_OPTIONS[0].id);
-  }, [clearContinueTimer, clearDetectTimer, presetStyle, resetMaskDrawing]);
+    }, [clearContinueTimer, clearDetectTimer, presetStyle, resetMaskDrawing]);
+
+  const promptOpenSettings = useCallback((title: string, message: string) => {
+    Alert.alert(title, message, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Open Settings",
+        onPress: () => {
+          void Linking.openSettings();
+        },
+      },
+    ]);
+  }, []);
+
+  const prepareGeneratedImageFile = useCallback(async () => {
+    if (!generatedImageUrl) {
+      throw new Error("Generate an image first.");
+    }
+
+    if (generatedImageUrl.startsWith("file://")) {
+      return { uri: generatedImageUrl, temporary: false };
+    }
+
+    const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}darkor-paint-result-${Date.now()}.jpg`;
+    const download = await FileSystem.downloadAsync(generatedImageUrl, targetUri);
+    return { uri: download.uri, temporary: true };
+  }, [generatedImageUrl]);
+
+  const cleanupTempFile = useCallback(async (uri: string | null | undefined, temporary: boolean) => {
+    if (!uri || !temporary) {
+      return;
+    }
+
+    try {
+      await FileSystem.deleteAsync(uri, { idempotent: true });
+    } catch {
+      // ignore cleanup errors
+    }
+  }, []);
+
+  const handleSaveResult = useCallback(async () => {
+    triggerHaptic();
+
+    let tempUri: string | null = null;
+    let temporary = false;
+    try {
+      const permission = await MediaLibrary.requestPermissionsAsync();
+      if (!permission.granted) {
+        promptOpenSettings("Photo Access Needed", "Please allow photo library access to save your result to the device gallery.");
+        return;
+      }
+
+      const prepared = await prepareGeneratedImageFile();
+      tempUri = prepared.uri;
+      temporary = prepared.temporary;
+      await MediaLibrary.saveToLibraryAsync(prepared.uri);
+      showToast("Saved to your gallery");
+    } catch (error) {
+      Alert.alert("Save failed", error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      await cleanupTempFile(tempUri, temporary);
+    }
+  }, [cleanupTempFile, prepareGeneratedImageFile, promptOpenSettings, showToast]);
+
+  const handleShareResult = useCallback(async () => {
+    triggerHaptic();
+
+    let tempUri: string | null = null;
+    let temporary = false;
+    try {
+      const prepared = await prepareGeneratedImageFile();
+      tempUri = prepared.uri;
+      temporary = prepared.temporary;
+      await Share.share({
+        message: "Designed with Darkor.ai",
+        url: prepared.uri,
+      });
+    } catch (error) {
+      Alert.alert("Share failed", error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      await cleanupTempFile(tempUri, temporary);
+    }
+  }, [cleanupTempFile, prepareGeneratedImageFile]);
 
   const handleClose = useCallback(() => {
     triggerHaptic();
@@ -995,6 +1088,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
     try {
       setIsGenerating(true);
+      setProcessingComplete(false);
       setStep("processing");
 
       const result = (await runWithFriendlyRetry(
@@ -1870,15 +1964,12 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       {step === "processing" ? (
         <ServiceProcessingScreen
           imageUri={selectedImage?.uri ?? null}
-          subtitlePhrases={[
-            "Analyzing your room geometry...",
-            `Applying ${selectedColorTitle.toLowerCase()}...`,
-            "Rendering final lighting...",
-          ]}
+          subtitlePhrases={GENERATION_STATUS_MESSAGES}
           onCancel={() => {
             void handleCancelGeneration();
           }}
           cancelDisabled={!generationId || isCancellingGeneration}
+          complete={processingComplete}
         />
       ) : null}
 
@@ -1917,46 +2008,25 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
             </Text>
           </View>
 
-          <View style={styles.resultRow}>
-            <LuxPressable
-              onPress={() => setStep("colors")}
-              className={pointerClassName}
-              style={{ flex: 1 }}
-              glowColor="rgba(255,255,255,0.04)"
-              scale={0.99}
-            >
-              <View style={styles.secondaryAction}>
-                <Text style={styles.secondaryActionText}>Try Another Color</Text>
-              </View>
-            </LuxPressable>
-            <LuxPressable
-              onPress={() => {
-                resetDetection();
-                setStep("mask");
-              }}
-              className={pointerClassName}
-              style={{ flex: 1 }}
-              glowColor="rgba(255,255,255,0.04)"
-              scale={0.99}
-            >
-              <View style={styles.secondaryAction}>
-                <Text style={styles.secondaryActionText}>Refine Mask</Text>
-              </View>
-            </LuxPressable>
-          </View>
+            <View style={styles.resultActions}>
+              <LuxPressable onPress={handleSaveResult} className={pointerClassName} style={{ width: "100%" }} scale={0.99}>
+                <View style={[styles.resultActionButton, styles.resultActionSave]}>
+                  <Text style={styles.resultActionSaveText}>Save to Gallery</Text>
+                </View>
+              </LuxPressable>
 
-          <LuxPressable
-            onPress={resetProject}
-            className={pointerClassName}
-            style={{ width: "100%" }}
-            glowColor="rgba(255,255,255,0.04)"
-            scale={0.99}
-          >
-            <View style={styles.restartButton}>
-              <ChevronLeft color="#ffffff" size={16} />
-              <Text style={styles.restartText}>Start New Room</Text>
+              <LuxPressable onPress={handleShareResult} className={pointerClassName} style={{ width: "100%" }} scale={0.99}>
+                <View style={[styles.resultActionButton, styles.resultActionShare]}>
+                  <Text style={styles.resultActionShareText}>Share</Text>
+                </View>
+              </LuxPressable>
+
+              <LuxPressable onPress={resetProject} className={pointerClassName} style={{ width: "100%" }} scale={0.99}>
+                <View style={[styles.resultActionButton, styles.resultActionRetry]}>
+                  <Text style={styles.resultActionRetryText}>Try Again</Text>
+                </View>
+              </LuxPressable>
             </View>
-          </LuxPressable>
         </ScrollView>
       ) : null}
     </View>
@@ -1985,8 +2055,8 @@ const styles = StyleSheet.create({
   selectionHeaderButton: {
     position: "absolute",
     zIndex: 4,
-    width: 28,
-    height: 28,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -2219,9 +2289,9 @@ const styles = StyleSheet.create({
   surfacePickerCloseButton: {
     position: "absolute",
     zIndex: 2,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#F3F4F6",
@@ -2352,9 +2422,9 @@ const styles = StyleSheet.create({
     ...fonts.regular,
   },
   selectionModalCloseButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#F3F4F6",
@@ -2645,8 +2715,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 24,
     zIndex: 4,
-    width: 28,
-    height: 28,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -2664,8 +2734,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 40,
     zIndex: 4,
-    width: 24,
-    height: 24,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -3394,6 +3464,43 @@ const styles = StyleSheet.create({
   resultRow: {
     flexDirection: "row",
     gap: spacing.sm,
+  },
+  resultActions: {
+    gap: 12,
+  },
+  resultActionButton: {
+    marginHorizontal: 20,
+    height: 56,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resultActionSave: {
+    backgroundColor: "#E53935",
+  },
+  resultActionShare: {
+    backgroundColor: "#0A0A0A",
+  },
+  resultActionRetry: {
+    backgroundColor: "#F0F0F0",
+  },
+  resultActionSaveText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.semibold,
+  },
+  resultActionShareText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.semibold,
+  },
+  resultActionRetryText: {
+    color: "#0A0A0A",
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.semibold,
   },
   secondaryAction: {
     minHeight: 56,

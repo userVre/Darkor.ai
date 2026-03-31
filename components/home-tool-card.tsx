@@ -8,6 +8,7 @@ export type HomeToolCardItem = {
   image: ImageSourcePropType;
   title: string;
   description: string;
+  descriptionPaddingRight?: number;
   serviceParam: "interior" | "facade" | "garden" | "paint" | "floor";
 };
 
@@ -30,7 +31,7 @@ export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
 
       <View style={styles.content}>
         <Text style={styles.title}>{item.title}</Text>
-        <Text numberOfLines={2} style={styles.description}>
+        <Text numberOfLines={2} style={[styles.description, item.descriptionPaddingRight ? { paddingRight: item.descriptionPaddingRight } : null]}>
           {item.description}
         </Text>
 
@@ -76,7 +77,7 @@ const styles = StyleSheet.create({
   description: {
     marginTop: 4,
     marginLeft: 20,
-    marginRight: 80,
+    marginRight: 20,
     color: "#808080",
     fontSize: 14,
     lineHeight: 20,

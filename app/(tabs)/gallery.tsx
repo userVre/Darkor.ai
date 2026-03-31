@@ -1,57 +1,83 @@
 import { useAuth } from "@clerk/expo";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { memo, useCallback, useMemo, useState } from "react";
-import { FlatList, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { fonts } from "../../styles/typography";
-import { spacing } from "../../styles/spacing";
-import { dark as colors } from "@/styles/theme";
+import {
+  Bath,
+  BedDouble,
+  BookOpen,
+  Building2,
+  CookingPot,
+  Home,
+  Monitor,
+  PaintRoller,
+  Projector,
+  Sofa,
+  Sparkles,
+  Store,
+  Trees,
+  Warehouse,
+  type LucideIcon,
+} from "lucide-react-native";
 
 import { LuxPressable } from "../../components/lux-pressable";
+import { useViewerCredits } from "../../components/viewer-credits-context";
 import { useWorkspaceDraft } from "../../components/workspace-context";
-import { DISCOVER_SECTIONS, type DiscoverSection, type DiscoverTile } from "../../lib/data";
-import { DS, HAIRLINE, SCREEN_SIDE_PADDING, glowShadow } from "../../lib/design-system";
+import {
+  DISCOVER_SECTIONS,
+  type DiscoverSection,
+  type DiscoverSectionId,
+  type DiscoverTile,
+} from "../../lib/data";
+import { HAIRLINE } from "../../lib/design-system";
 import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
+import { normalizeDiscoverTryItTile, prepareTryItFlow } from "../../lib/try-it-flow";
+import { spacing } from "../../styles/spacing";
+import { fonts } from "../../styles/typography";
 
-const SCREEN_BG = DS.colors.background;
-const EDGE_PADDING = SCREEN_SIDE_PADDING;
-const SECTION_GAP = spacing.xl;
-const SHELF_GAP = spacing.md;
-const CARD_BORDER_COLOR = DS.colors.borderSubtle;
-const CARD_RADIUS = DS.radius.xl;
+const SCREEN_BG = "#FFFFFF";
+const PRIMARY_TEXT = "#0A0A0A";
+const SECONDARY_TEXT = "#575757";
+const MUTED_TEXT = "#A1A1AA";
+const TAB_INACTIVE = "#CFCFD4";
+const CARD_BORDER = "#ECECEC";
+const CARD_SHADOW = "rgba(15,23,42,0.08)";
+const SCREEN_SIDE_MARGIN = 20;
+const TAB_LEFT_MARGIN = 24;
+const SECTION_GAP = 32;
+const HEADER_TO_CONTENT_GAP = 20;
+const GRID_GAP = 12;
+const HOME_CARD_RADIUS = 20;
+const RAIL_CARD_RADIUS = 18;
 
-function mapService(service: DiscoverTile["service"]) {
-  if (service === "garden") return "garden";
-  if (service === "exterior") return "facade";
-  if (service === "paint") return "paint";
-  if (service === "floor") return "floor";
-  return "interior";
-}
+type DiscoverTabConfig = {
+  id: "home" | "garden" | "exterior";
+  label: string;
+  sectionIds: DiscoverSectionId[];
+};
+
+const CATEGORY_TABS: DiscoverTabConfig[] = [
+  { id: "home", label: "Home", sectionIds: ["home", "wall", "floor"] },
+  { id: "garden", label: "Garden", sectionIds: ["garden"] },
+  { id: "exterior", label: "Exterior Design", sectionIds: ["exterior"] },
+] as const;
+
+type DiscoverTabId = DiscoverTabConfig["id"];
 
 function getCardTitle(item: DiscoverTile) {
   const title = item.title.trim();
   if (title.length > 0) return title;
-
-  const fallbackTitle = item.spaceType.trim();
-  if (fallbackTitle.length > 0) return fallbackTitle;
-
-  return "Curated Space";
+  return item.spaceType.trim().length > 0 ? item.spaceType : "Curated Space";
 }
 
 function getCardStyle(item: DiscoverTile) {
   const style = item.style.trim();
   if (style.length > 0) return style;
-
-  const derivedStyle = item.subtitle
-    .split("/")
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .at(-1);
-
-  return derivedStyle ?? "Featured";
+  return "Featured";
 }
 
 function getCardCategory(item: DiscoverTile) {
@@ -59,179 +85,294 @@ function getCardCategory(item: DiscoverTile) {
   if (category.length > 0) {
     return category;
   }
-
-  const derived = item.subtitle
-    .split("/")
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .at(0);
-
-  return derived ?? "Space";
+  return "Space";
 }
 
-const DiscoverShelfCard = memo(function DiscoverShelfCard({
+function getCategoryIcon(item: DiscoverTile): LucideIcon {
+  const key = `${item.service}:${item.spaceType}`.toLowerCase();
+
+  if (item.service === "paint") return PaintRoller;
+  if (item.service === "floor") return Sparkles;
+  if (item.service === "garden") return Trees;
+
+  if (key.includes("living")) return Sofa;
+  if (key.includes("bed")) return BedDouble;
+  if (key.includes("kitchen")) return CookingPot;
+  if (key.includes("bath")) return Bath;
+  if (key.includes("office")) return Monitor;
+  if (key.includes("theater")) return Projector;
+  if (key.includes("library")) return BookOpen;
+  if (key.includes("retail")) return Store;
+  if (key.includes("garage")) return Warehouse;
+  if (item.service === "exterior") return Building2;
+
+  return Home;
+}
+
+const DiscoverCategoryTabs = memo(function DiscoverCategoryTabs({
+  activeTab,
+  onSelectTab,
+}: {
+  activeTab: DiscoverTabId;
+  onSelectTab: (tabId: DiscoverTabId) => void;
+}) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.tabsContent}
+      style={styles.tabsRail}
+    >
+      {CATEGORY_TABS.map((tab, index) => {
+        const active = tab.id === activeTab;
+        return (
+          <LuxPressable
+            key={tab.id}
+            onPress={() => onSelectTab(tab.id)}
+            pressableClassName="cursor-pointer"
+            className="cursor-pointer"
+            style={[
+              styles.tabButton,
+              index === 0 ? { marginLeft: TAB_LEFT_MARGIN } : null,
+              active ? styles.tabButtonActive : null,
+            ]}
+            glowColor="rgba(10,10,10,0.08)"
+            scale={0.98}
+          >
+            <Text style={[styles.tabLabel, active ? styles.tabLabelActive : null]}>{tab.label}</Text>
+            <View style={[styles.tabUnderline, active ? styles.tabUnderlineActive : null]} />
+          </LuxPressable>
+        );
+      })}
+    </ScrollView>
+  );
+});
+
+const DiscoverMagazineCard = memo(function DiscoverMagazineCard({
   item,
   width,
-  height,
+  compact = false,
   onPress,
 }: {
   item: DiscoverTile;
   width: number;
-  height: number;
+  compact?: boolean;
   onPress: (item: DiscoverTile) => void;
 }) {
   const title = getCardTitle(item);
   const styleName = getCardStyle(item);
   const categoryName = getCardCategory(item);
+  const CategoryIcon = getCategoryIcon(item);
+  const imageHeight = compact ? Math.round(width * 0.88) : Math.round(width * 0.98);
 
   const handlePress = useCallback(() => {
     triggerHaptic();
-    onPress(item);
+    void onPress(item);
   }, [item, onPress]);
 
   return (
     <LuxPressable
       onPress={handlePress}
       pressableClassName="cursor-pointer"
-      className="cursor-pointer overflow-hidden rounded-[24px]"
-      style={[styles.card, { width, height }]}
-      glowColor={DS.colors.accentGlow}
-      scale={0.96}
+      className="cursor-pointer"
+      style={[
+        styles.card,
+        compact ? styles.compactCard : styles.homeCard,
+        {
+          width,
+          borderRadius: compact ? RAIL_CARD_RADIUS : HOME_CARD_RADIUS,
+        },
+      ]}
+      glowColor="rgba(15,23,42,0.08)"
+      scale={0.985}
     >
-      <Image
-        source={item.image}
-        style={StyleSheet.absoluteFillObject}
-        contentFit="cover"
-        transition={120}
-        cachePolicy="memory-disk"
-      />
-      <View pointerEvents="none" style={styles.cardGradient} />
+      <Image source={item.image} style={{ width: "100%", height: imageHeight }} contentFit="cover" transition={120} cachePolicy="memory-disk" />
 
-      <View style={styles.cardCopy}>
-        <View style={styles.cardMetaRow}>
-          <View style={styles.cardCategoryPill}>
-            <Text style={styles.cardCategoryText}>{categoryName}</Text>
+      <View style={styles.cardFooter}>
+        <View style={styles.cardLabelBar}>
+          <View style={styles.cardIconWrap}>
+            <CategoryIcon color={PRIMARY_TEXT} size={14} strokeWidth={2.2} />
           </View>
+          <Text style={styles.cardCategory}>{categoryName}</Text>
         </View>
+
         <Text style={styles.cardTitle} numberOfLines={2}>
           {title}
         </Text>
-        <Text style={styles.cardStyle}>
-          {styleName}
-        </Text>
+
+        <View style={styles.cardMetaRow}>
+          <Text style={styles.cardStyle}>{styleName}</Text>
+          <View style={styles.tryItPill}>
+            <Text style={styles.tryItPillText}>Try It!</Text>
+          </View>
+        </View>
       </View>
     </LuxPressable>
   );
 });
 
-const DiscoverShelfSection = memo(function DiscoverShelfSection({
+const DiscoverSectionBlock = memo(function DiscoverSectionBlock({
   section,
-  cardWidth,
-  cardHeight,
   expanded,
   onToggleExpanded,
   onCardPress,
+  homeCardWidth,
+  railCardWidth,
 }: {
   section: DiscoverSection;
-  cardWidth: number;
-  cardHeight: number;
   expanded: boolean;
   onToggleExpanded: () => void;
   onCardPress: (item: DiscoverTile) => void;
+  homeCardWidth: number;
+  railCardWidth: number;
 }) {
-  const snapToInterval = cardWidth + SHELF_GAP;
-
-  const keyExtractor = useCallback((item: DiscoverTile) => item.id, []);
-
-  const renderItem = useCallback(
-    ({ item }: { item: DiscoverTile }) => (
-      <DiscoverShelfCard item={item} width={cardWidth} height={cardHeight} onPress={onCardPress} />
-    ),
-    [cardHeight, cardWidth, onCardPress],
-  );
+  const isRailSection = section.id === "wall" || section.id === "floor";
+  const isHomeGridSection = section.id === "home" || section.id === "garden" || section.id === "exterior";
 
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <View style={styles.sectionTitleRow}>
-          <View style={styles.sectionTitleCluster}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            <View style={styles.sectionCountPill}>
-              <Text style={styles.sectionCountText}>{section.items.length}</Text>
-            </View>
-          </View>
-          <LuxPressable
-            onPress={onToggleExpanded}
-            pressableClassName="cursor-pointer"
-            className="cursor-pointer"
-            style={styles.sectionActionButton}
-            glowColor={colors.brand}
-            scale={0.97}
-          >
-            <Text style={styles.sectionActionText}>{expanded ? "Show Less" : "See All"}</Text>
-          </LuxPressable>
-        </View>
-        <Text style={styles.sectionDescription}>{section.description}</Text>
+        <Text style={styles.sectionTitle}>{section.title}</Text>
+        <LuxPressable
+          onPress={onToggleExpanded}
+          pressableClassName="cursor-pointer"
+          className="cursor-pointer"
+          style={styles.sectionAction}
+          glowColor="rgba(10,10,10,0.06)"
+          scale={0.98}
+        >
+          <Text style={styles.sectionActionText}>{expanded ? "Show Less" : "See All"}</Text>
+        </LuxPressable>
       </View>
 
-      {expanded ? (
-        <View style={styles.expandedGrid}>
-          {section.items.map((item) => (
-            <DiscoverShelfCard
-              key={item.id}
-              item={item}
-              width={cardWidth}
-              height={cardHeight}
-              onPress={onCardPress}
-            />
-          ))}
-        </View>
-      ) : (
-        <FlatList
-          data={section.items}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          snapToInterval={snapToInterval}
-          snapToAlignment="start"
-          decelerationRate="fast"
-          contentContainerStyle={styles.shelfContent}
-          ItemSeparatorComponent={ShelfSpacer}
-          initialNumToRender={3}
-          maxToRenderPerBatch={4}
-          updateCellsBatchingPeriod={40}
-          windowSize={4}
-          removeClippedSubviews
-        />
-      )}
+      <View style={{ marginTop: HEADER_TO_CONTENT_GAP }}>
+        {isRailSection && !expanded ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.railContent}
+          >
+            {section.items.map((item, index) => (
+              <View key={item.id} style={{ marginRight: index === section.items.length - 1 ? 0 : GRID_GAP }}>
+                <DiscoverMagazineCard item={item} width={railCardWidth} compact onPress={onCardPress} />
+              </View>
+            ))}
+          </ScrollView>
+        ) : (
+          <View style={styles.gridWrap}>
+            {section.items.map((item) => (
+              <DiscoverMagazineCard
+                key={item.id}
+                item={item}
+                width={isHomeGridSection ? homeCardWidth : railCardWidth}
+                compact={!isHomeGridSection}
+                onPress={onCardPress}
+              />
+            ))}
+          </View>
+        )}
+      </View>
     </View>
   );
 });
-
-function ShelfSpacer() {
-  return <View style={{ width: SHELF_GAP }} />;
-}
 
 export default function GalleryScreen() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { setDraftRoom, setDraftStyle } = useWorkspaceDraft();
+  const {
+    setDraftAspectRatio,
+    setDraftFinish,
+    setDraftImage,
+    setDraftMode,
+    setDraftPalette,
+    setDraftPrompt,
+    setDraftRoom,
+    setDraftStyle,
+  } = useWorkspaceDraft();
+  const { credits: creditBalance, hasPaidAccess } = useViewerCredits();
+  const [activeTab, setActiveTab] = useState<DiscoverTabId>("home");
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
-  const totalOptions = useMemo(
-    () => DISCOVER_SECTIONS.reduce((count, section) => count + section.items.length, 0),
-    [],
+
+  const homeCardWidth = useMemo(
+    () => Math.floor((width - SCREEN_SIDE_MARGIN * 2 - GRID_GAP) / 2),
+    [width],
+  );
+  const railCardWidth = useMemo(() => Math.min(248, Math.max(width * 0.56, 214)), [width]);
+
+  const sectionsForActiveTab = useMemo(() => {
+    const activeSectionIds = CATEGORY_TABS.find((tab) => tab.id === activeTab)?.sectionIds ?? ["home"];
+    return DISCOVER_SECTIONS.filter((section) => activeSectionIds.includes(section.id));
+  }, [activeTab]);
+
+  const openDesignFlowPaywall = useCallback((redirectTo: string) => {
+    router.push({
+      pathname: "/paywall",
+      params: {
+        source: "design-flow",
+        redirectTo,
+      },
+    } as any);
+  }, [router]);
+
+  const routeToToolFlow = useCallback(
+    (redirectTo: string) => {
+      if (hasPaidAccess || creditBalance > 0) {
+        router.push(redirectTo as any);
+        return;
+      }
+
+      openDesignFlowPaywall(redirectTo);
+    },
+    [creditBalance, hasPaidAccess, openDesignFlowPaywall, router],
   );
 
-  const cardWidth = useMemo(() => {
-    if (width >= 1200) return 320;
-    return Math.min(280, Math.max(width - 44, 248));
-  }, [width]);
+  const handleTryIt = useCallback(async (item: DiscoverTile) => {
+    const prepared = await prepareTryItFlow(
+      {
+        setDraftImage,
+        setDraftRoom,
+        setDraftStyle,
+        setDraftPalette,
+        setDraftMode,
+        setDraftFinish,
+        setDraftPrompt,
+        setDraftAspectRatio,
+      },
+      normalizeDiscoverTryItTile(item),
+    );
 
-  const cardHeight = useMemo(() => Math.round(cardWidth * 1.22), [cardWidth]);
+    return prepared.redirectTo;
+  }, [
+    setDraftAspectRatio,
+    setDraftFinish,
+    setDraftImage,
+    setDraftMode,
+    setDraftPalette,
+    setDraftPrompt,
+    setDraftRoom,
+    setDraftStyle,
+  ]);
+
+  const handleCardPress = useCallback(
+    async (item: DiscoverTile) => {
+      try {
+        const redirectTo = await handleTryIt(item);
+
+        if (!canCreateAsGuest) {
+          router.push({ pathname: "/sign-in", params: { returnTo: redirectTo } });
+          return;
+        }
+
+        routeToToolFlow(redirectTo);
+      } catch (error) {
+        Alert.alert("Try It unavailable", error instanceof Error ? error.message : "Please try again.");
+      }
+    },
+    [canCreateAsGuest, handleTryIt, routeToToolFlow, router],
+  );
 
   const handleToggleSection = useCallback((sectionId: string) => {
     setExpandedSections((current) => ({
@@ -240,75 +381,41 @@ export default function GalleryScreen() {
     }));
   }, []);
 
-  const handleCardPress = useCallback(
-    (item: DiscoverTile) => {
-      const params = {
-        service: mapService(item.service),
-        presetRoom: item.presetRoom ?? item.spaceType,
-        presetStyle: item.presetStyle ?? item.style,
-        startStep: item.startStep,
-        entrySource: "discover",
-      } as const;
-      const search = new URLSearchParams();
-      for (const [key, value] of Object.entries(params)) {
-        if (typeof value === "string" && value.length > 0) {
-          search.set(key, value);
-        }
-      }
-
-      if (!canCreateAsGuest) {
-        router.push({ pathname: "/sign-in", params: { returnTo: `/wizard?${search.toString()}` } });
-        return;
-      }
-
-      setDraftRoom(item.spaceType);
-      setDraftStyle(item.style);
-      router.push({
-        pathname: "/paywall",
-        params: {
-          source: "design-flow",
-          redirectTo: `/wizard?${search.toString()}`,
-        },
-      } as any);
-    },
-    [canCreateAsGuest, router, setDraftRoom, setDraftStyle],
-  );
-
   return (
     <View style={styles.screen}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={{
-          paddingTop: insets.top + spacing.md,
-          paddingHorizontal: EDGE_PADDING,
-          paddingBottom: Math.max(insets.bottom + DS.spacing[4], DS.spacing[5]),
-          gap: SECTION_GAP,
+          paddingTop: insets.top + 8,
+          paddingBottom: Math.max(insets.bottom + 28, 36),
         }}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
       >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Discover Hub</Text>
-          <Text style={styles.headerText}>
-            Browse {totalOptions} real-world references across interiors, wall inspiration, floor styles, gardens, and exterior forms.
-          </Text>
-          <Text style={styles.headerInstruction}>
-            Tap any image to instantly redesign your own space in that exact style.
+        <View style={styles.hero}>
+          <Text style={styles.heroTitle}>Discover</Text>
+          <Text style={styles.heroSubtitle}>
+            Curated interiors, wall palettes, garden scenes, and exterior concepts designed to launch you straight into a polished redesign flow.
           </Text>
         </View>
 
-        {DISCOVER_SECTIONS.map((section) => (
-          <DiscoverShelfSection
-            key={section.id}
-            section={section}
-            cardWidth={cardWidth}
-            cardHeight={cardHeight}
-            expanded={Boolean(expandedSections[section.id])}
-            onToggleExpanded={() => handleToggleSection(section.id)}
-            onCardPress={handleCardPress}
-          />
-        ))}
+        <DiscoverCategoryTabs activeTab={activeTab} onSelectTab={setActiveTab} />
+
+        <View style={styles.sectionsWrap}>
+          {sectionsForActiveTab.map((section) => (
+            <DiscoverSectionBlock
+              key={section.id}
+              section={section}
+              expanded={Boolean(expandedSections[section.id])}
+              onToggleExpanded={() => handleToggleSection(section.id)}
+              onCardPress={handleCardPress}
+              homeCardWidth={homeCardWidth}
+              railCardWidth={railCardWidth}
+            />
+          ))}
+        </View>
       </ScrollView>
     </View>
   );
@@ -323,153 +430,179 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: SCREEN_BG,
   },
-  header: {
-    gap: spacing.sm,
+  hero: {
+    paddingHorizontal: SCREEN_SIDE_MARGIN,
+    gap: 8,
   },
-  headerTitle: {
-    color: colors.textPrimary,
-    fontSize: 32,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "800",
-    lineHeight: 38,
-    letterSpacing: -0.8,
+  heroTitle: {
+    color: PRIMARY_TEXT,
+    fontSize: 34,
+    lineHeight: 40,
+    letterSpacing: -0.9,
+    ...fonts.bold,
   },
-  headerText: {
-    color: DS.colors.textSecondary,
-    ...DS.typography.body,
+  heroSubtitle: {
+    color: SECONDARY_TEXT,
+    fontSize: 15,
+    lineHeight: 24,
     maxWidth: 720,
+    ...fonts.regular,
   },
-  headerInstruction: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "500",
-    maxWidth: 720,
+  tabsRail: {
+    marginTop: 28,
+  },
+  tabsContent: {
+    paddingRight: 24,
+    alignItems: "flex-end",
+  },
+  tabButton: {
+    marginRight: 24,
+    paddingHorizontal: 4,
+    paddingBottom: 14,
+    minWidth: 88,
+  },
+  tabButtonActive: {
+    minWidth: 108,
+  },
+  tabLabel: {
+    color: TAB_INACTIVE,
+    fontSize: 19,
+    lineHeight: 24,
+    ...fonts.semibold,
+  },
+  tabLabelActive: {
+    color: PRIMARY_TEXT,
+    ...fonts.bold,
+  },
+  tabUnderline: {
+    marginTop: 10,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "transparent",
+  },
+  tabUnderlineActive: {
+    backgroundColor: PRIMARY_TEXT,
+  },
+  sectionsWrap: {
+    marginTop: 28,
+    paddingHorizontal: SCREEN_SIDE_MARGIN,
+    gap: SECTION_GAP,
   },
   section: {
-    gap: spacing.md,
+    gap: 0,
   },
   sectionHeader: {
-    gap: spacing.sm,
-  },
-  sectionTitleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.md,
   },
-  sectionTitleCluster: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    flex: 1,
-    minWidth: 0,
-  },
   sectionTitle: {
-    color: DS.colors.textPrimary,
-    ...DS.typography.sectionTitle,
+    flex: 1,
+    color: PRIMARY_TEXT,
+    fontSize: 24,
+    lineHeight: 29,
+    ...fonts.bold,
   },
-  sectionCountPill: {
-    minWidth: 34,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.surfaceHigh,
-    borderWidth: HAIRLINE,
-    borderColor: DS.colors.borderSubtle,
-  },
-  sectionCountText: {
-    color: DS.colors.textSecondary,
-    fontSize: 12,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "800",
-  },
-  sectionDescription: {
-    color: DS.colors.textSecondary,
-    ...DS.typography.bodySm,
-    maxWidth: 760,
-  },
-  sectionActionButton: {
-    borderRadius: 999,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderWidth: HAIRLINE,
-    borderColor: colors.borderLight,
-    backgroundColor: colors.surfaceHigh,
+  sectionAction: {
+    paddingHorizontal: 2,
+    paddingVertical: 4,
   },
   sectionActionText: {
-    color: colors.textPrimary,
-    fontSize: 12,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "800",
-    letterSpacing: 0.45,
+    color: MUTED_TEXT,
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 1.2,
     textTransform: "uppercase",
+    ...fonts.semibold,
   },
-  shelfContent: {
+  railContent: {
+    paddingRight: 4,
   },
-  expandedGrid: {
+  gridWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: SHELF_GAP,
+    gap: GRID_GAP,
   },
   card: {
     overflow: "hidden",
-    borderRadius: CARD_RADIUS,
+    backgroundColor: "#FFFFFF",
     borderWidth: HAIRLINE,
-    borderColor: CARD_BORDER_COLOR,
-    backgroundColor: DS.colors.surfaceRaised,
-    ...glowShadow(colors.shadow, 22),
+    borderColor: CARD_BORDER,
+    shadowColor: CARD_SHADOW,
+    shadowOpacity: 1,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 5,
   },
-  cardGradient: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 164,
-    backgroundColor: colors.surfaceOverlay,
+  homeCard: {
+    flexGrow: 0,
   },
-  cardCopy: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    padding: spacing.md,
-    gap: spacing.sm,
+  compactCard: {
+    flexGrow: 0,
+  },
+  cardFooter: {
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 14,
+    gap: 8,
+    backgroundColor: "#FFFFFF",
+  },
+  cardLabelBar: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 999,
+    backgroundColor: "#F5F5F5",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  cardIconWrap: {
+    width: 18,
+    height: 18,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ECECEC",
+  },
+  cardCategory: {
+    color: PRIMARY_TEXT,
+    fontSize: 12,
+    lineHeight: 15,
+    ...fonts.semibold,
+  },
+  cardTitle: {
+    color: PRIMARY_TEXT,
+    fontSize: 18,
+    lineHeight: 22,
+    ...fonts.bold,
   },
   cardMetaRow: {
     flexDirection: "row",
-  },
-  cardCategoryPill: {
-    alignSelf: "flex-start",
-    borderRadius: 999,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.surfaceHigh,
-    borderWidth: HAIRLINE,
-    borderColor: colors.borderLight,
-  },
-  cardCategoryText: {
-    color: colors.textPrimary,
-    fontSize: 11,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "800",
-    letterSpacing: 0.7,
-    textTransform: "uppercase",
-  },
-  cardTitle: {
-    color: DS.colors.textPrimary,
-    ...DS.typography.cardTitle,
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
   },
   cardStyle: {
-    color: colors.textSecondary,
-    ...DS.typography.bodySm,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "600",
-    lineHeight: 19,
+    flex: 1,
+    color: SECONDARY_TEXT,
+    fontSize: 14,
+    lineHeight: 18,
+    ...fonts.medium,
+  },
+  tryItPill: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    backgroundColor: "#0A0A0A",
+  },
+  tryItPillText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    lineHeight: 13,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+    ...fonts.bold,
   },
 });
-
-

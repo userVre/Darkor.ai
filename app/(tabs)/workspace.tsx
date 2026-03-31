@@ -8,7 +8,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
-import * as Sharing from "expo-sharing";
 import { useLocalSearchParams, useNavigation, usePathname, useRouter } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
 import { AnimatePresence, MotiView } from "moti";
@@ -18,6 +17,7 @@ import {
   ActivityIndicator,
   ActionSheetIOS,
   Alert,
+  Image as NativeImage,
   Linking,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -79,8 +79,10 @@ import { ExteriorRedesignStepFour } from "../../components/exterior-redesign-ste
 import { LuxPressable } from "../../components/lux-pressable";
 import { PaintWizard } from "../../components/paint-wizard";
 import { ServiceContinueButton } from "../../components/service-continue-button";
+import { GENERATION_STATUS_MESSAGES } from "../../components/service-processing-screen";
 import { ServiceWizardHeader } from "../../components/service-wizard-header";
 import { BeforeAfterSlider } from "../../components/before-after-slider";
+import { useViewerCredits } from "../../components/viewer-credits-context";
 import { useWorkspaceDraft } from "../../components/workspace-context";
 import { useViewerSession } from "../../components/viewer-session-context";
 import { useProSuccess } from "../../components/pro-success-context";
@@ -90,6 +92,7 @@ import { DS, HAIRLINE, glowShadow } from "../../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../../lib/service-wizard-theme";
 import { FLOOR_WIZARD_EXAMPLE_PHOTOS, PAINT_WIZARD_EXAMPLE_PHOTOS } from "../../lib/wizard-example-photos";
 import { canUserGenerate as canUserGenerateNow } from "../../lib/generation-access";
+import { hasGenerationImage, isGenerationFailure, resolveGenerationStatus } from "../../lib/generation-status";
 import {
   GUEST_TESTING_STARTER_CREDITS,
   isGuestWizardTestingSession,
@@ -299,9 +302,10 @@ const BoardGridCard = memo(function BoardGridCard({
   onPress: (item: BoardRenderItem) => void;
 }) {
   const previewImage = item.imageUrl ?? item.originalImageUrl ?? null;
-  const isProcessing = item.status === "processing";
-  const isFailed = item.status === "failed";
-  const showNewBadge = item.isNew && item.status === "ready";
+  const resolvedStatus = resolveGenerationStatus(item.status, item.imageUrl);
+  const isProcessing = resolvedStatus === "processing";
+  const isFailed = resolvedStatus === "failed";
+  const showNewBadge = item.isNew && resolvedStatus === "ready";
   const itemServiceType = item.serviceType ?? inferBoardServiceType(item.styleLabel, item.roomLabel);
   const processingLabel = getProcessingLabel();
   const statusCopy = isProcessing
@@ -394,6 +398,9 @@ const BoardGridCard = memo(function BoardGridCard({
     </View>
   );
 });
+
+const WORKSPACE_GENERATION_PROGRESS_MS = 15_000;
+const WORKSPACE_GENERATION_PROGRESS_MAX = 0.9;
 
 const INTERIOR_EXAMPLE_PHOTOS: ExamplePhoto[] = [
   {
@@ -1787,6 +1794,7 @@ export default function WorkspaceScreen() {
   }>();
   const { isSignedIn } = useAuth();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
+  const { credits: sharedCreditBalance, clearOptimisticCredits, setOptimisticCredits } = useViewerCredits();
   const guestWizardTestingSession = isGuestWizardTestingSession(isSignedIn);
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const diagnostic = DIAGNOSTIC_BYPASS;
@@ -1818,7 +1826,6 @@ export default function WorkspaceScreen() {
   ) as ArchiveGeneration[] | undefined;
   const createSourceUploadUrl = useMutation("generations:createSourceUploadUrl" as any);
   const startGeneration = useMutation("generations:startGeneration" as any);
-  const [optimisticCreditBalance, setOptimisticCreditBalance] = useState<number | null>(null);
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
@@ -1856,6 +1863,7 @@ export default function WorkspaceScreen() {
   const [pendingReviewState, setPendingReviewState] = useState<{ count: number; shouldPrompt: boolean } | null>(null);
   const [wizardNavDirection, setWizardNavDirection] = useState<1 | -1>(1);
   const [processingStatusIndex, setProcessingStatusIndex] = useState(0);
+  const [processingProgress, setProcessingProgress] = useState(0);
   const [isServiceProcessing, setIsServiceProcessing] = useState(false);
   const [, setPaintTool] = useState<PaintTool>("brush");
   const [, setPaintBrushWidth] = useState(28);
@@ -2111,7 +2119,7 @@ export default function WorkspaceScreen() {
       roomLabel: generation.roomType ?? serviceLabel,
       serviceType: inferBoardServiceType(generation.style, generation.roomType),
       generationId: generation._id,
-      status: generation.status ?? ((generation.imageUrl ?? "").length > 0 ? "ready" : "processing"),
+      status: resolveGenerationStatus(generation.status, generation.imageUrl),
       errorMessage: generation.errorMessage ?? null,
       createdAt: generation.createdAt ?? generation._creationTime,
     }));
@@ -2146,16 +2154,25 @@ export default function WorkspaceScreen() {
     const isProcessingStep = workflowStep === 5 && activeBoardItem?.status === "processing";
     if (!isProcessingStep) {
       setProcessingStatusIndex(0);
+      setProcessingProgress(0);
       return;
     }
 
     setProcessingStatusIndex(0);
-    const firstTimer = setTimeout(() => setProcessingStatusIndex(1), 1500);
-    const secondTimer = setTimeout(() => setProcessingStatusIndex(2), 3300);
+    setProcessingProgress(0);
+    const statusInterval = setInterval(() => {
+      setProcessingStatusIndex((current) => Math.min(current + 1, GENERATION_STATUS_MESSAGES.length - 1));
+    }, 3_000);
+    const progressStartedAt = Date.now();
+    const progressInterval = setInterval(() => {
+      const elapsed = Date.now() - progressStartedAt;
+      const nextProgress = Math.min((elapsed / WORKSPACE_GENERATION_PROGRESS_MS) * WORKSPACE_GENERATION_PROGRESS_MAX, WORKSPACE_GENERATION_PROGRESS_MAX);
+      setProcessingProgress(nextProgress);
+    }, 120);
 
     return () => {
-      clearTimeout(firstTimer);
-      clearTimeout(secondTimer);
+      clearInterval(statusInterval);
+      clearInterval(progressInterval);
     };
   }, [activeBoardItem?.id, activeBoardItem?.status, workflowStep]);
 
@@ -2528,13 +2545,21 @@ export default function WorkspaceScreen() {
   }, [hasPaidAccess, me?.subscriptionType]);
   const serverCreditBalance = diagnostic
     ? 999
-    : viewerReady
-      ? me?.credits ?? GUEST_TESTING_STARTER_CREDITS
-      : GUEST_TESTING_STARTER_CREDITS;
-  const creditBalance = optimisticCreditBalance ?? serverCreditBalance;
+    : sharedCreditBalance;
+  const creditBalance = serverCreditBalance;
+  const effectiveGenerationState = diagnostic
+    ? me
+    : {
+        ...me,
+        credits: creditBalance,
+        imagesRemaining:
+          typeof me?.imagesRemaining === "number"
+            ? Math.min(Math.max(me.imagesRemaining, 0), creditBalance)
+            : creditBalance,
+      };
   const generationAccess = diagnostic
     ? { allowed: true, reason: "ok" as const, remaining: creditBalance, hasPaidAccess: true, message: "" }
-    : canUserGenerateNow(me);
+    : canUserGenerateNow(effectiveGenerationState);
   const hasGenerationCredits = generationAccess.allowed;
   const remainingCreditsAfterGenerate = Math.max(creditBalance - 1, 0);
   const generationCreditLabel = hasPaidAccess
@@ -2554,8 +2579,10 @@ export default function WorkspaceScreen() {
   const isDownloadingUltra = isDownloading === "ultra";
 
   useEffect(() => {
-    setOptimisticCreditBalance(null);
-  }, [diagnostic, me?.credits, viewerId]);
+    if (!diagnostic) {
+      clearOptimisticCredits();
+    }
+  }, [clearOptimisticCredits, diagnostic, me?.credits, viewerId]);
 
   useEffect(() => {
     if (!(workflowStep === 3 && !isPaintService && !isFloorService && !isLeanGenerationService)) {
@@ -2719,10 +2746,14 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    if (currentGeneration.status === "ready" && currentGeneration.imageUrl) {
+    const currentGenerationStatus = resolveGenerationStatus(currentGeneration.status, currentGeneration.imageUrl);
+    const resultImageUrl = currentGeneration.imageUrl ?? null;
+    const hasResultImage = hasGenerationImage(resultImageUrl);
+
+    if (currentGenerationStatus === "ready" && hasResultImage) {
       setIsGenerating(false);
-      if (generatedImageUrl !== currentGeneration.imageUrl) {
-        setGeneratedImageUrl(currentGeneration.imageUrl);
+      if (generatedImageUrl !== resultImageUrl) {
+        setGeneratedImageUrl(resultImageUrl);
       }
 
       if (effectiveSignedIn && isGenerating) {
@@ -2742,7 +2773,11 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    if (currentGeneration.status === "failed" && generationAlertedFailureRef.current !== currentGeneration.id) {
+    if (
+      currentGenerationStatus === "failed"
+      && !hasResultImage
+      && generationAlertedFailureRef.current !== currentGeneration.id
+    ) {
       setIsGenerating(false);
       generationAlertedFailureRef.current = currentGeneration.id;
       setPendingReviewState(null);
@@ -3225,15 +3260,27 @@ export default function WorkspaceScreen() {
     }
   }, []);
 
+  const promptOpenSettings = useCallback((title: string, message: string) => {
+    Alert.alert(title, message, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Open Settings",
+        onPress: () => {
+          void Linking.openSettings();
+        },
+      },
+    ]);
+  }, []);
+
   const ensureGallerySavePermission = useCallback(async () => {
     const permission = await MediaLibrary.requestPermissionsAsync();
     if (permission.granted) {
       return true;
     }
 
-    Alert.alert("Permission required", "Please allow photo access to save your render.");
+    promptOpenSettings("Photo Access Needed", "Please allow photo library access to save your result to the device gallery.");
     return false;
-  }, []);
+  }, [promptOpenSettings]);
 
   const exportCurrentRender = useCallback(async () => {
     if (canRemoveWatermark) {
@@ -3272,20 +3319,15 @@ export default function WorkspaceScreen() {
     }
 
     let tempUri: string | null = null;
-    try {
-      setIsSharingResult(true);
-      tempUri = await exportCurrentRender();
-      const canShare = await Sharing.isAvailableAsync();
-      if (canShare) {
-        await Sharing.shareAsync(tempUri, { dialogTitle: "Share your Darkor design" });
-      } else {
+      try {
+        setIsSharingResult(true);
+        tempUri = await exportCurrentRender();
         await Share.share({ message: "Designed with Darkor.ai", url: tempUri });
-      }
-    } catch (error) {
-      Alert.alert("Share failed", error instanceof Error ? error.message : "Please try again.");
-    } finally {
-      await cleanupTempFile(tempUri);
-      setIsSharingResult(false);
+      } catch (error) {
+        Alert.alert("Share failed", error instanceof Error ? error.message : "Please try again.");
+      } finally {
+        await cleanupTempFile(tempUri);
+        setIsSharingResult(false);
     }
   }, [activeEditorImageUrl, cleanupTempFile, exportCurrentRender]);
 
@@ -3317,11 +3359,11 @@ export default function WorkspaceScreen() {
       const granted = await ensureGallerySavePermission();
       if (!granted) {
         return;
-      }
+        }
 
-      tempUri = await exportCurrentRender();
-      await MediaLibrary.saveToLibraryAsync(tempUri);
-      showToast("Saved to Photos");
+        tempUri = await exportCurrentRender();
+        await MediaLibrary.saveToLibraryAsync(tempUri);
+        showToast("Saved to your gallery");
     } catch (error) {
       Alert.alert("Download failed", error instanceof Error ? error.message : "Please try again.");
     } finally {
@@ -3348,11 +3390,11 @@ export default function WorkspaceScreen() {
       const granted = await ensureGallerySavePermission();
       if (!granted) {
         return;
-      }
+        }
 
-      tempUri = await exportCurrentRender();
-      await MediaLibrary.saveToLibraryAsync(tempUri);
-      showToast("Saved to Photos");
+        tempUri = await exportCurrentRender();
+        await MediaLibrary.saveToLibraryAsync(tempUri);
+        showToast("Saved to your gallery");
     } catch (error) {
       Alert.alert("Download failed", error instanceof Error ? error.message : "Please try again.");
     } finally {
@@ -3481,7 +3523,7 @@ export default function WorkspaceScreen() {
       };
 
       if (!diagnostic && typeof startResult.creditsRemaining === "number") {
-        setOptimisticCreditBalance(startResult.creditsRemaining);
+        setOptimisticCredits(startResult.creditsRemaining);
       }
 
       setPendingBoardItems((current) =>
@@ -3574,6 +3616,7 @@ export default function WorkspaceScreen() {
     serviceType,
     showToast,
     startGeneration,
+    setOptimisticCredits,
     uploadSelectedImageToStorage,
     viewerReady,
   ]);
@@ -3847,12 +3890,15 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    if (item.status === "processing") {
+    const itemStatus = resolveGenerationStatus(item.status, item.imageUrl);
+    const resultImageUrl = item.imageUrl ?? null;
+
+    if (itemStatus === "processing") {
       showToast("Work in progress");
       return;
     }
 
-    if (item.status === "failed" || !item.imageUrl) {
+    if (!hasGenerationImage(resultImageUrl)) {
       Alert.alert("Generation failed", item.errorMessage ?? "This redesign did not finish. Please try generating again.");
       return;
     }
@@ -3866,7 +3912,7 @@ export default function WorkspaceScreen() {
     setWizardNavDirection(1);
     setWorkflowStep(5);
     setActiveBoardItemId(item.id);
-    setGeneratedImageUrl(item.imageUrl);
+    setGeneratedImageUrl(resultImageUrl);
     setGenerationId(item.generationId ?? null);
     setShowBeforeOnly(false);
     setFeedbackState(null);
@@ -4513,8 +4559,8 @@ export default function WorkspaceScreen() {
                                 right: 14,
                                 top: 14,
                                 zIndex: 20,
-                                width: 40,
-                                height: 40,
+                                width: 44,
+                                height: 44,
                                 alignItems: "center",
                                 justifyContent: "center",
                                 borderRadius: 999,
@@ -5651,7 +5697,7 @@ export default function WorkspaceScreen() {
                   <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Color Picker</Text>
                   <Text style={{ color: "#a1a1aa", fontSize: 13, marginTop: spacing.xs }}>Choose the new paint tone for the masked surface.</Text>
                 </View>
-                <LuxPressable onPress={handleClosePaintColorPicker} className="cursor-pointer" style={{ height: 40, width: 40, alignItems: "center", justifyContent: "center", borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)" }}>
+                <LuxPressable onPress={handleClosePaintColorPicker} className="cursor-pointer" style={{ height: 44, width: 44, alignItems: "center", justifyContent: "center", borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)" }}>
                   <Close color="#ffffff" size={18} strokeWidth={2.1} />
                 </LuxPressable>
               </View>
@@ -5744,7 +5790,7 @@ export default function WorkspaceScreen() {
             >
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                 <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Surface Type</Text>
-                <LuxPressable onPress={() => setPaintSurfacePickerOpen(false)} className="cursor-pointer" style={{ height: 40, width: 40, alignItems: "center", justifyContent: "center", borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)" }}>
+                <LuxPressable onPress={() => setPaintSurfacePickerOpen(false)} className="cursor-pointer" style={{ height: 44, width: 44, alignItems: "center", justifyContent: "center", borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)" }}>
                   <Close color="#ffffff" size={18} strokeWidth={2.1} />
                 </LuxPressable>
               </View>
@@ -5883,8 +5929,8 @@ export default function WorkspaceScreen() {
                       <MotiView
                         animate={{ scale: 1 }}
                         style={{
-                          height: 42,
-                          width: 42,
+                          height: 44,
+                          width: 44,
                           alignItems: "center",
                           justifyContent: "center",
                           borderRadius: 999,
@@ -5935,8 +5981,8 @@ export default function WorkspaceScreen() {
                             position: "absolute",
                             right: 14,
                             top: 14,
-                            height: 32,
-                            width: 32,
+                            height: 44,
+                            width: 44,
                             alignItems: "center",
                             justifyContent: "center",
                             borderRadius: 999,
@@ -6072,13 +6118,16 @@ export default function WorkspaceScreen() {
   if (workflowStep === 5) {
     const boardCardWidth = Math.max((width - 52) / 2, 150);
     const editorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
-    const beforeImageUrl = activeBoardItem ? activeBoardItem.originalImageUrl ?? editorImageUrl : selectedImage?.uri ?? editorImageUrl;
+      const processingPreviewUri = draft.image?.uri ?? selectedImage?.uri ?? null;
+      const beforeImageUrl = activeBoardItem
+        ? processingPreviewUri ?? activeBoardItem.originalImageUrl ?? editorImageUrl
+        : processingPreviewUri ?? editorImageUrl;
     const editorStyleLabel = normalizeStyleDisplayName(activeBoardItem?.styleLabel ?? selectedStyle) ?? "Custom";
     const editorRoomLabel = activeBoardItem?.roomLabel ?? selectedRoom ?? serviceLabel;
     const editorServiceType = activeBoardItem?.serviceType ?? inferBoardServiceType(editorStyleLabel, editorRoomLabel) ?? serviceType;
     const showSliderComparison = Boolean(editorImageUrl && beforeImageUrl);
     const isEditorProcessing = activeBoardItem?.status === "processing";
-    const isEditorFailed = activeBoardItem?.status === "failed";
+    const isEditorFailed = isGenerationFailure(activeBoardItem?.status, activeBoardItem?.imageUrl);
     const editorTitle = editorServiceType === "floor" ? "Floor Restyle" : editorServiceType === "paint" ? "Smart Wall Paint" : editorStyleLabel + " " + editorRoomLabel;
     const editorSubtitle = editorServiceType === "floor"
       ? isEditorProcessing
@@ -6093,15 +6142,7 @@ export default function WorkspaceScreen() {
         : "Curated inside your premium Darkor board.";
     const editorImageSource = editorImageUrl ? { uri: editorImageUrl } : null;
     const beforeImageSource = beforeImageUrl ? { uri: beforeImageUrl } : null;
-    const processingStyleStatusLabel =
-      editorStyleLabel.trim().length > 30 || editorStyleLabel.toLowerCase() === "custom"
-        ? "custom direction"
-        : editorStyleLabel;
-    const processingStatuses = [
-      "Analyzing architecture...",
-      `Applying ${processingStyleStatusLabel}...`,
-      "Polishing 4K details...",
-    ];
+    const processingStatuses = GENERATION_STATUS_MESSAGES;
 
     if (!activeBoardItem) {
       return (
@@ -6255,8 +6296,8 @@ export default function WorkspaceScreen() {
                     backgroundColor: "#0f0f10",
                   }}
                 >
-                  {beforeImageSource ? (
-                    <Image source={beforeImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+                  {beforeImageUrl ? (
+                    <NativeImage source={{ uri: beforeImageUrl }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
                   ) : (
                     <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
                       <Sparkles color="#71717a" size={30} />
@@ -6335,46 +6376,45 @@ export default function WorkspaceScreen() {
                 </View>
 
                 <View style={{ gap: spacing.sm }}>
-                  {processingStatuses.map((status, index) => {
-                    const active = index === processingStatusIndex;
-                    const completed = index < processingStatusIndex;
-                    return (
+                  <View
+                    style={{
+                      height: 3,
+                      width: "100%",
+                      borderRadius: 2,
+                      backgroundColor: "rgba(255,255,255,0.12)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <View
+                      style={{
+                        height: "100%",
+                        width: `${Math.max(processingProgress * 100, 2)}%`,
+                        borderRadius: 2,
+                        backgroundColor: "#E53935",
+                      }}
+                    />
+                  </View>
+
+                  <View
+                    style={{
+                      minHeight: 32,
+                      justifyContent: "center",
+                    }}
+                  >
+                    <AnimatePresence>
                       <MotiView
-                        key={status}
-                        animate={active ? { opacity: [0.78, 1, 0.78], scale: [0.995, 1, 0.995] } : { opacity: completed ? 0.9 : 0.5, scale: 1 }}
-                        transition={active ? { duration: 1400, loop: true } : { duration: 180 }}
-                        style={{
-                          borderRadius: 24,
-                          borderWidth: 1,
-                          borderColor: active ? "rgba(217,70,239,0.28)" : "rgba(255,255,255,0.08)",
-                          backgroundColor: active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
-                          paddingHorizontal: spacing.md,
-                          paddingVertical: spacing.md,
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: spacing.sm,
-                        }}
+                        key={processingStatuses[processingStatusIndex] ?? "processing-status"}
+                        from={{ opacity: 0, translateY: 10 }}
+                        animate={{ opacity: 1, translateY: 0 }}
+                        exit={{ opacity: 0, translateY: -10 }}
+                        transition={{ duration: 280, type: "timing" }}
                       >
-                        <View
-                          style={{
-                            width: 26,
-                            height: 26,
-                            borderRadius: 999,
-                            borderWidth: 1,
-                            borderColor: completed || active ? "rgba(217,70,239,0.28)" : "rgba(255,255,255,0.12)",
-                            backgroundColor: completed ? "rgba(217,70,239,0.22)" : active ? "rgba(217,70,239,0.16)" : "rgba(255,255,255,0.04)",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          {completed ? <Check color="#f5d0fe" size={14} strokeWidth={2.4} /> : <View style={{ width: 8, height: 8, borderRadius: 999, backgroundColor: active ? "#f5d0fe" : "#71717a" }} />}
-                        </View>
-                        <Text style={{ color: active || completed ? "#ffffff" : "#d4d4d8", fontSize: 15, fontWeight: active ? "700" : "600", flex: 1 }}>
-                          {status}
+                        <Text style={{ color: "#ffffff", fontSize: 15, lineHeight: 24, fontWeight: "700" }}>
+                          {processingStatuses[processingStatusIndex] ?? processingStatuses[processingStatuses.length - 1]}
                         </Text>
                       </MotiView>
-                    );
-                  })}
+                    </AnimatePresence>
+                  </View>
                 </View>
               </View>
             </View>
@@ -6585,39 +6625,70 @@ export default function WorkspaceScreen() {
             <Text className="mt-1 text-sm text-zinc-400">{editorSubtitle}</Text>
           </View>
 
-          <View className="mt-6 flex-row gap-4">
-            {[
-              {
-                id: "save",
-                label: "Save",
-                icon: Download,
-                onPress: canExport4k ? handleDownloadUltra : handleDownloadStandard,
-                loading: canExport4k ? isDownloadingUltra : isDownloadingStandard,
-                disabled: !editorImageUrl || isEditorProcessing || isEditorFailed,
-              },
-              {
-                id: "share",
-                label: "Share",
-                icon: Send,
-                onPress: handleShare,
-                loading: isSharingResult,
-                disabled: !editorImageUrl || isEditorProcessing || isEditorFailed,
-              },
-            ].map((action) => {
-              const Icon = action.icon;
-              return (
-                <LuxPressable key={action.id} onPress={action.onPress} disabled={action.loading || action.disabled} className="cursor-pointer flex-1">
-                  <View
-                    className="flex-row items-center justify-center gap-3 rounded-[22px] border border-white/10 bg-zinc-950 px-5 py-4"
-                    style={{ borderWidth: 0.5, opacity: action.loading || action.disabled ? 0.52 : 1 }}
-                  >
-                    {action.loading ? <ActivityIndicator color="#ffffff" /> : <Icon color="#ffffff" size={20} strokeWidth={2.1} />}
-                    <Text className="text-base font-semibold text-white" style={fonts.semibold}>{action.label}</Text>
-                  </View>
-                </LuxPressable>
-              );
-            })}
-          </View>
+            <View style={{ marginTop: spacing.lg, gap: 12 }}>
+              <LuxPressable
+                onPress={canExport4k ? handleDownloadUltra : handleDownloadStandard}
+                disabled={!editorImageUrl || isEditorProcessing || isEditorFailed || isDownloadingUltra || isDownloadingStandard}
+                className="cursor-pointer"
+              >
+                <View
+                  style={{
+                    marginHorizontal: 20,
+                    height: 56,
+                    borderRadius: 16,
+                    backgroundColor: "#E53935",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: !editorImageUrl || isEditorProcessing || isEditorFailed || isDownloadingUltra || isDownloadingStandard ? 0.6 : 1,
+                  }}
+                >
+                  {isDownloadingUltra || isDownloadingStandard ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={{ color: "#FFFFFF", fontSize: 16, lineHeight: 20, ...fonts.semibold }}>Save to Gallery</Text>
+                  )}
+                </View>
+              </LuxPressable>
+
+              <LuxPressable
+                onPress={handleShare}
+                disabled={!editorImageUrl || isEditorProcessing || isEditorFailed || isSharingResult}
+                className="cursor-pointer"
+              >
+                <View
+                  style={{
+                    marginHorizontal: 20,
+                    height: 56,
+                    borderRadius: 16,
+                    backgroundColor: "#0A0A0A",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: !editorImageUrl || isEditorProcessing || isEditorFailed || isSharingResult ? 0.6 : 1,
+                  }}
+                >
+                  {isSharingResult ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={{ color: "#FFFFFF", fontSize: 16, lineHeight: 20, ...fonts.semibold }}>Share</Text>
+                  )}
+                </View>
+              </LuxPressable>
+
+              <LuxPressable onPress={handleResetWizard} className="cursor-pointer">
+                <View
+                  style={{
+                    marginHorizontal: 20,
+                    height: 56,
+                    borderRadius: 16,
+                    backgroundColor: "#F0F0F0",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ color: "#0A0A0A", fontSize: 16, lineHeight: 20, ...fonts.semibold }}>Try Again</Text>
+                </View>
+              </LuxPressable>
+            </View>
         </ScrollView>
       </View>
     );

@@ -1,4 +1,6 @@
-export type BoardItemStatus = "processing" | "ready" | "failed";
+import { hasGenerationImage, resolveGenerationStatus, type GenerationResultStatus } from "./generation-status";
+
+export type BoardItemStatus = GenerationResultStatus;
 
 export type BoardItem = {
   id: string;
@@ -33,7 +35,7 @@ export function mapArchiveToBoardItems(items: GenerationArchiveItem[]) {
   return items
     .filter((item) => {
       const previewImage = item.imageUrl ?? item.sourceImageUrl ?? null;
-      return typeof previewImage === "string" && previewImage.length > 0;
+      return hasGenerationImage(previewImage);
     })
     .map<BoardItem>((item) => ({
       id: item._id,
@@ -42,7 +44,7 @@ export function mapArchiveToBoardItems(items: GenerationArchiveItem[]) {
       styleName: normalizeText(item.style, "Custom"),
       roomType: normalizeText(item.roomType, "Room"),
       createdAt: item.createdAt ?? item._creationTime ?? Date.now(),
-      status: item.status ?? ((item.imageUrl ?? "").length > 0 ? "ready" : "processing"),
+      status: resolveGenerationStatus(item.status, item.imageUrl),
       errorMessage: item.errorMessage ?? null,
     }))
     .sort((left, right) => right.createdAt - left.createdAt);

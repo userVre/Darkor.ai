@@ -17,6 +17,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppErrorBoundary } from "../components/app-error-boundary";
 import { GenerationAccessCacheGate } from "../components/generation-access-cache-gate";
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
+import { ViewerCreditsProvider } from "../components/viewer-credits-context";
 import { ViewerSessionProvider } from "../components/viewer-session-context";
 import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
@@ -337,7 +338,15 @@ function AppShell() {
     >
       <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
+      <Stack.Screen
+        name="paywall"
+        options={{
+          presentation: "transparentModal",
+          animation: "none",
+          contentStyle: { backgroundColor: "transparent" },
+          gestureEnabled: false,
+        }}
+      />
       <Stack.Screen name="settings" />
       <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
       <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
@@ -390,14 +399,16 @@ export default function RootLayout() {
             <AuthGate>
               <Providers>
                 <ViewerSessionProvider>
-                  <WorkspaceDraftProvider>
-                    <BottomSheetModalProvider>
-                      <GenerationAccessCacheGate />
-                      <CreateAccessGate>
-                        <AppShell />
-                      </CreateAccessGate>
-                    </BottomSheetModalProvider>
-                  </WorkspaceDraftProvider>
+                  <ViewerCreditsProvider>
+                    <WorkspaceDraftProvider>
+                      <BottomSheetModalProvider>
+                        <GenerationAccessCacheGate />
+                        <CreateAccessGate>
+                          <AppShell />
+                        </CreateAccessGate>
+                      </BottomSheetModalProvider>
+                    </WorkspaceDraftProvider>
+                  </ViewerCreditsProvider>
                 </ViewerSessionProvider>
               </Providers>
             </AuthGate>

@@ -15,6 +15,7 @@ import {
   getUserByClerkId,
   resolveViewer,
 } from "./viewer";
+import { resolveGenerationStatus } from "../lib/generation-status";
 
 type GenerationStatus = "processing" | "ready" | "failed";
 
@@ -203,10 +204,7 @@ function trimOptional(value?: string | null) {
 }
 
 function resolveRowStatus(row: { status?: string; imageUrl?: string | null }, imageUrl: string): GenerationStatus {
-  if (row.status === "processing" || row.status === "ready" || row.status === "failed") {
-    return row.status;
-  }
-  return imageUrl.length > 0 ? "ready" : "processing";
+  return resolveGenerationStatus(row.status, imageUrl);
 }
 
 export const getUserArchive = queryGeneric({

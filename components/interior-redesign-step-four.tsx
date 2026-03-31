@@ -1,11 +1,12 @@
 import { StatusBar } from "expo-status-bar";
 import { Gem, PaintRoller, Wand2 } from "lucide-react-native";
 import { useMemo } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
+import { InteriorRedesignStepProgress } from "./interior-redesign-step-progress";
 
 type InteriorRedesignStepFourMode = {
   id: string;
@@ -65,6 +66,85 @@ function ModePreviewGraphic({ active, variant }: { active: boolean; variant: "pr
   );
 }
 
+function ModeSelectionCard({
+  active,
+  description,
+  height,
+  iconSize,
+  layoutScale,
+  onPress,
+  style,
+  title,
+  variant,
+  width,
+}: {
+  active: boolean;
+  description: string;
+  height: number;
+  iconSize: number;
+  layoutScale: number;
+  onPress: () => void;
+  style?: StyleProp<ViewStyle>;
+  title: string;
+  variant: "preserve" | "renovate";
+  width: number;
+}) {
+  const horizontalPadding = scaleValue(16, layoutScale);
+  const topPadding = scaleValue(12, layoutScale);
+  const contentGap = scaleValue(12, layoutScale);
+  const textGap = scaleValue(8, layoutScale);
+  const previewBottom = scaleValue(14, layoutScale);
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      hitSlop={12}
+      onPress={onPress}
+      style={[
+        styles.modeCard,
+        {
+          width,
+          height,
+          borderColor: active ? ACTIVE_CONTINUE_COLOR : "#E5E5E5",
+        },
+        style,
+      ]}
+    >
+      <View style={[styles.modeCardContent, { paddingTop: topPadding, paddingHorizontal: horizontalPadding, gap: contentGap }]}>
+        <View
+          style={[
+            styles.modeIconWrap,
+            {
+              borderColor: active ? "#FFC1B8" : "#ECECEC",
+              backgroundColor: active ? "#FFF1EE" : "#F8F8F8",
+            },
+          ]}
+        >
+          {variant === "renovate" ? (
+            <Wand2 color={active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A"} size={iconSize} strokeWidth={2.1} />
+          ) : (
+            <PaintRoller color={active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A"} size={iconSize} strokeWidth={2.1} />
+          )}
+        </View>
+
+        <View style={{ gap: textGap }}>
+          <Text style={[styles.modeTitle, { color: active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A" }]} numberOfLines={2}>
+            {title}
+          </Text>
+          <Text style={styles.modeDescription} numberOfLines={2}>
+            {description}
+          </Text>
+        </View>
+      </View>
+
+      <View style={[styles.modePreviewSlot, { left: horizontalPadding, right: horizontalPadding, bottom: previewBottom }]}>
+        <ModePreviewGraphic active={active} variant={variant} />
+      </View>
+    </Pressable>
+  );
+}
+
 export function InteriorRedesignStepFour({
   creditCount,
   modes,
@@ -93,7 +173,6 @@ export function InteriorRedesignStepFour({
   const modeCardWidth = scaleValue(196, layoutScale);
   const modeCardHeight = scaleValue(192, layoutScale);
   const modeCardGap = scaleValue(16, layoutScale);
-  const modeIconTop = scaleValue(12, layoutScale);
   const modeIconSize = scaleValue(28, layoutScale);
   const modeSectionToPaletteGap = scaleValue(48, layoutScale);
   const paletteTitleTopGap = scaleValue(20, layoutScale);
@@ -165,21 +244,12 @@ export function InteriorRedesignStepFour({
         <Text style={styles.closeText}>{"\u00D7"}</Text>
       </Pressable>
 
-      <View style={[styles.progressRow, { top: progressTop, width: mainWidth, right: sideInset }]}>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <View
-            key={`interior-final-progress-${index}`}
-            style={[
-              styles.progressSegment,
-              {
-                width: progressSegmentWidth,
-                marginRight: index === 3 ? 0 : progressGap,
-                backgroundColor: "#0A0A0A",
-              },
-            ]}
-          />
-        ))}
-      </View>
+      <InteriorRedesignStepProgress
+        currentStep={4}
+        segmentWidth={progressSegmentWidth}
+        gap={progressGap}
+        style={{ top: progressTop, width: mainWidth, right: sideInset, zIndex: 2 }}
+      />
 
       <ScrollView
         style={styles.content}
@@ -196,52 +266,21 @@ export function InteriorRedesignStepFour({
           <View style={{ flexDirection: "row" }}>
             {modes.map((mode, index) => {
               const active = selectedModeId === mode.id;
-              const ModeIcon = mode.id === "renovate" ? Wand2 : PaintRoller;
 
               return (
-                <Pressable
+                <ModeSelectionCard
                   key={mode.id}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                  hitSlop={12}
                   onPress={() => handleModePress(mode.id)}
-                  style={[
-                    styles.modeCard,
-                    {
-                      width: modeCardWidth,
-                      height: modeCardHeight,
-                      marginRight: index === modes.length - 1 ? 0 : modeCardGap,
-                      borderColor: active ? ACTIVE_CONTINUE_COLOR : "#E5E5E5",
-                    },
-                  ]}
-                >
-                  <View style={{ marginTop: modeIconTop, paddingHorizontal: scaleValue(16, layoutScale), gap: scaleValue(12, layoutScale) }}>
-                    <View
-                      style={[
-                        styles.modeIconWrap,
-                        {
-                          borderColor: active ? "#FFC1B8" : "#ECECEC",
-                          backgroundColor: active ? "#FFF1EE" : "#F8F8F8",
-                        },
-                      ]}
-                    >
-                      <ModeIcon color={active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A"} size={modeIconSize} strokeWidth={2.1} />
-                    </View>
-
-                    <View style={{ gap: scaleValue(8, layoutScale) }}>
-                      <Text style={[styles.modeTitle, { color: active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A" }]} numberOfLines={2}>
-                        {mode.title}
-                      </Text>
-                      <Text style={styles.modeDescription} numberOfLines={2}>
-                        {mode.description}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={{ position: "absolute", left: scaleValue(16, layoutScale), right: scaleValue(16, layoutScale), bottom: scaleValue(14, layoutScale) }}>
-                    <ModePreviewGraphic active={active} variant={mode.id === "renovate" ? "renovate" : "preserve"} />
-                  </View>
-                </Pressable>
+                  active={active}
+                  description={mode.description}
+                  height={modeCardHeight}
+                  iconSize={modeIconSize}
+                  layoutScale={layoutScale}
+                  style={index === modes.length - 1 ? undefined : { marginRight: modeCardGap }}
+                  title={mode.title}
+                  variant={mode.id === "renovate" ? "renovate" : "preserve"}
+                  width={modeCardWidth}
+                />
               );
             })}
           </View>
@@ -368,8 +407,8 @@ const styles = StyleSheet.create({
   closeButton: {
     position: "absolute",
     zIndex: 3,
-    width: 20,
-    height: 20,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -378,16 +417,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 18,
     ...fonts.bold,
-  },
-  progressRow: {
-    position: "absolute",
-    zIndex: 2,
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  progressSegment: {
-    height: 4,
-    borderRadius: 2,
   },
   content: {
     flex: 1,
@@ -403,6 +432,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1.5,
     backgroundColor: "#FFFFFF",
+  },
+  modeCardContent: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+  },
+  modePreviewSlot: {
+    position: "absolute",
   },
   modeIconWrap: {
     width: 52,

@@ -3,11 +3,13 @@ import { spacing } from "../styles/spacing";
 import { useAuth } from "@clerk/expo";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
+import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
+import * as MediaLibrary from "expo-media-library";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Image as NativeImage, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Alert, Image as NativeImage, Linking, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path as SvgPath, Rect } from "react-native-svg";
@@ -20,6 +22,7 @@ import { triggerHaptic } from "../lib/haptics";
 import { uploadLocalFileToCloud } from "../lib/native-upload";
 import { FLOOR_MATERIAL_OPTIONS } from "../lib/data";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
+import { hasGenerationImage, resolveGenerationStatus } from "../lib/generation-status";
 import {
   GUEST_TESTING_STARTER_CREDITS,
   isGuestWizardTestingSession,
@@ -30,7 +33,7 @@ import { FLOOR_WIZARD_EXAMPLE_PHOTOS } from "../lib/wizard-example-photos";
 import { FloorIntroScreen, type FloorIntroExamplePhoto } from "./floor-intro-screen";
 import { LuxPressable } from "./lux-pressable";
 import { ServiceContinueButton } from "./service-continue-button";
-import { ServiceProcessingScreen } from "./service-processing-screen";
+import { GENERATION_STATUS_MESSAGES, ServiceProcessingScreen } from "./service-processing-screen";
 import { ServiceWizardHeader } from "./service-wizard-header";
 import {
   ServiceSelectionCard,
@@ -40,6 +43,7 @@ import {
 import { useProSuccess } from "./pro-success-context";
 import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerSession } from "./viewer-session-context";
+import { fonts } from "../styles/typography";
 
 type WizardStep = "intake" | "mask" | "materials" | "processing" | "result";
 type SelectedImage = { uri: string; photoUri?: string | null; width: number; height: number };
@@ -147,6 +151,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [processingComplete, setProcessingComplete] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
   const [comparisonPosition, setComparisonPosition] = useState(0.52);
   const [isAutoDetecting, setIsAutoDetecting] = useState(false);
@@ -250,21 +255,27 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     if (!generationId || !generationArchive) return;
     const generation = generationArchive.find((item) => item._id === generationId);
     if (!generation) return;
-    if (generation.status === "ready" && generation.imageUrl) {
+    const resultImageUrl = generation.imageUrl ?? null;
+    const generationStatus = resolveGenerationStatus(generation.status, resultImageUrl);
+    const hasResultImage = hasGenerationImage(resultImageUrl);
+    if (generationStatus === "ready" && hasResultImage) {
       setGenerationId(null);
-      setGeneratedImageUrl(generation.imageUrl);
+      setGeneratedImageUrl(resultImageUrl);
       setIsGenerating(false);
       setIsCancellingGeneration(false);
       setComparisonPosition(0.52);
-      triggerHaptic();
-      if (effectiveSignedIn) {
-        router.replace({ pathname: "/workspace", params: { boardView: "board" } });
-        return;
-      }
-      setStep("result");
-      return;
+      setProcessingComplete(true);
+      const revealTimer = setTimeout(() => {
+        triggerHaptic();
+        if (effectiveSignedIn) {
+          router.replace({ pathname: "/workspace", params: { boardView: "board" } });
+          return;
+        }
+        setStep("result");
+      }, 180);
+      return () => clearTimeout(revealTimer);
     }
-    if (generation.status === "failed") {
+    if (generationStatus === "failed" && !hasResultImage) {
       setGenerationId(null);
       setIsGenerating(false);
       setIsCancellingGeneration(false);
@@ -305,7 +316,89 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       return;
     }
     setSelectedMaterialId(null);
-  }, [clearContinueTimer, clearDetectTimer, presetStyle, resetMaskDrawing]);
+    }, [clearContinueTimer, clearDetectTimer, presetStyle, resetMaskDrawing]);
+
+  const promptOpenSettings = useCallback((title: string, message: string) => {
+    Alert.alert(title, message, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Open Settings",
+        onPress: () => {
+          void Linking.openSettings();
+        },
+      },
+    ]);
+  }, []);
+
+  const prepareGeneratedImageFile = useCallback(async () => {
+    if (!generatedImageUrl) {
+      throw new Error("Generate an image first.");
+    }
+
+    if (generatedImageUrl.startsWith("file://")) {
+      return { uri: generatedImageUrl, temporary: false };
+    }
+
+    const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}darkor-floor-result-${Date.now()}.jpg`;
+    const download = await FileSystem.downloadAsync(generatedImageUrl, targetUri);
+    return { uri: download.uri, temporary: true };
+  }, [generatedImageUrl]);
+
+  const cleanupTempFile = useCallback(async (uri: string | null | undefined, temporary: boolean) => {
+    if (!uri || !temporary) {
+      return;
+    }
+
+    try {
+      await FileSystem.deleteAsync(uri, { idempotent: true });
+    } catch {
+      // ignore cleanup errors
+    }
+  }, []);
+
+  const handleSaveResult = useCallback(async () => {
+    triggerHaptic();
+
+    let tempUri: string | null = null;
+    let temporary = false;
+    try {
+      const permission = await MediaLibrary.requestPermissionsAsync();
+      if (!permission.granted) {
+        promptOpenSettings("Photo Access Needed", "Please allow photo library access to save your result to the device gallery.");
+        return;
+      }
+
+      const prepared = await prepareGeneratedImageFile();
+      tempUri = prepared.uri;
+      temporary = prepared.temporary;
+      await MediaLibrary.saveToLibraryAsync(prepared.uri);
+      showToast("Saved to your gallery");
+    } catch (error) {
+      Alert.alert("Save failed", error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      await cleanupTempFile(tempUri, temporary);
+    }
+  }, [cleanupTempFile, prepareGeneratedImageFile, promptOpenSettings, showToast]);
+
+  const handleShareResult = useCallback(async () => {
+    triggerHaptic();
+
+    let tempUri: string | null = null;
+    let temporary = false;
+    try {
+      const prepared = await prepareGeneratedImageFile();
+      tempUri = prepared.uri;
+      temporary = prepared.temporary;
+      await Share.share({
+        message: "Designed with Darkor.ai",
+        url: prepared.uri,
+      });
+    } catch (error) {
+      Alert.alert("Share failed", error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      await cleanupTempFile(tempUri, temporary);
+    }
+  }, [cleanupTempFile, prepareGeneratedImageFile]);
 
   const handleClose = useCallback(() => {
     triggerHaptic();
@@ -616,6 +709,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     }
     try {
       setIsGenerating(true);
+      setProcessingComplete(false);
       setStep("processing");
       const result = (await runWithFriendlyRetry(
         async () => {
@@ -1061,15 +1155,12 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       {step === "processing" ? (
         <ServiceProcessingScreen
           imageUri={selectedImage?.uri ?? null}
-          subtitlePhrases={[
-            "Analyzing your room geometry...",
-            `Applying ${selectedMaterial?.title ?? "your selected material"}...`,
-            "Rendering final lighting...",
-          ]}
+          subtitlePhrases={GENERATION_STATUS_MESSAGES}
           onCancel={() => {
             void handleCancelGeneration();
           }}
           cancelDisabled={!generationId || isCancellingGeneration}
+          complete={processingComplete}
         />
       ) : null}
 
@@ -1093,8 +1184,23 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
             ) : <View style={styles.resultFallback}><ActivityIndicator color="#ffffff" /></View>}
           </View>
           <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Material Applied</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? "Material"}</Text><Text style={styles.summaryText}>Your floor has been restyled while preserving room geometry, furniture alignment, and natural light behavior.</Text></View>
-          <View style={styles.resultRow}><LuxPressable onPress={() => setStep("mask")} className={pointerClassName} style={{ flex: 1 }} glowColor="rgba(255,255,255,0.04)" scale={0.99}><View style={styles.secondaryAction}><Text style={styles.secondaryActionText}>Refine Mask</Text></View></LuxPressable><LuxPressable onPress={() => setStep("materials")} className={pointerClassName} style={{ flex: 1 }} glowColor="rgba(255,255,255,0.04)" scale={0.99}><View style={styles.secondaryAction}><Text style={styles.secondaryActionText}>Change Material</Text></View></LuxPressable></View>
-          <LuxPressable onPress={resetProject} className={pointerClassName} style={{ width: "100%" }} glowColor="rgba(255,255,255,0.04)" scale={0.99}><View style={styles.restartButton}><ChevronLeft color="#ffffff" size={16} /><Text style={styles.restartText}>Start New Floor</Text></View></LuxPressable>
+            <View style={styles.resultActions}>
+              <LuxPressable onPress={handleSaveResult} className={pointerClassName} style={{ width: "100%" }} scale={0.99}>
+                <View style={[styles.resultActionButton, styles.resultActionSave]}>
+                  <Text style={styles.resultActionSaveText}>Save to Gallery</Text>
+                </View>
+              </LuxPressable>
+              <LuxPressable onPress={handleShareResult} className={pointerClassName} style={{ width: "100%" }} scale={0.99}>
+                <View style={[styles.resultActionButton, styles.resultActionShare]}>
+                  <Text style={styles.resultActionShareText}>Share</Text>
+                </View>
+              </LuxPressable>
+              <LuxPressable onPress={resetProject} className={pointerClassName} style={{ width: "100%" }} scale={0.99}>
+                <View style={[styles.resultActionButton, styles.resultActionRetry]}>
+                  <Text style={styles.resultActionRetryText}>Try Again</Text>
+                </View>
+              </LuxPressable>
+            </View>
         </ScrollView>
       ) : null}
     </View>
@@ -1106,7 +1212,7 @@ const styles = StyleSheet.create({
   captureStage: { position: "absolute", left: -10000, top: 0, opacity: 0.01 },
   maskScreen: { flex: 1, backgroundColor: "#FFFFFF" },
   maskScreenTitle: { position: "absolute", left: 0, right: 0, textAlign: "center", color: "#0A0A0A", fontSize: 20, lineHeight: 24, fontWeight: "700", zIndex: 2 },
-  maskNavButton: { position: "absolute", zIndex: 2, width: 24, height: 24, alignItems: "center", justifyContent: "center" },
+  maskNavButton: { position: "absolute", zIndex: 2, width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   maskPreviewFrame: { position: "absolute", borderRadius: 28, overflow: "hidden", backgroundColor: "#0F0F10" },
   maskDetectOverlay: { ...absoluteFill, alignItems: "center", justifyContent: "center", gap: spacing.sm, backgroundColor: "rgba(8,8,8,0.28)" },
   maskDetectTitle: { color: "#FFFFFF", fontSize: 16, lineHeight: 20, fontWeight: "600" },
@@ -1117,7 +1223,7 @@ const styles = StyleSheet.create({
   maskContinueText: { fontSize: 16, lineHeight: 20, fontWeight: "700" },
   promptModalScreen: { ...StyleSheet.absoluteFillObject, backgroundColor: "#FFFFFF", zIndex: 10 },
   promptModalTitle: { position: "absolute", color: "#0A0A0A", fontSize: 24, lineHeight: 28, fontWeight: "700" },
-  promptModalCloseButton: { position: "absolute", width: 28, height: 28, alignItems: "center", justifyContent: "center" },
+  promptModalCloseButton: { position: "absolute", width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   promptModalInputWrap: { position: "absolute", borderRadius: 24, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#F8F8F8" },
   promptModalInputLabel: { position: "absolute", top: 28, left: 20, color: "#0A0A0A", fontSize: 16, lineHeight: 20, fontWeight: "600" },
   promptModalTextField: { position: "absolute", top: 72, left: 20, right: 20, bottom: 20 },
@@ -1224,6 +1330,35 @@ const styles = StyleSheet.create({
   badgeText: { color: "#ffffff", fontSize: 12, fontWeight: "700" },
   resultFallback: { height: 320, alignItems: "center", justifyContent: "center" },
   resultRow: { flexDirection: "row", gap: spacing.sm },
+  resultActions: { gap: 12 },
+  resultActionButton: {
+    marginHorizontal: 20,
+    height: 56,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resultActionSave: { backgroundColor: "#E53935" },
+  resultActionShare: { backgroundColor: "#0A0A0A" },
+  resultActionRetry: { backgroundColor: "#F0F0F0" },
+  resultActionSaveText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.semibold,
+  },
+  resultActionShareText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.semibold,
+  },
+  resultActionRetryText: {
+    color: "#0A0A0A",
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.semibold,
+  },
   secondaryAction: { minHeight: 56, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)" },
   secondaryActionText: { color: "#ffffff", fontSize: 14, fontWeight: "700" },
   restartButton: { minHeight: 56, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)", flexDirection: "row", gap: spacing.sm },

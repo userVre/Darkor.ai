@@ -12,6 +12,7 @@ import { BoardPreviewModal } from "../../components/board-preview-modal";
 import { useProSuccess } from "../../components/pro-success-context";
 import { useViewerSession } from "../../components/viewer-session-context";
 import { mapArchiveToBoardItems, splitBoardColumns, type BoardItem, type BoardItemStatus } from "../../lib/board";
+import { hasGenerationImage, resolveGenerationStatus } from "../../lib/generation-status";
 import { fonts } from "../../styles/typography";
 
 type ArchiveGeneration = {
@@ -113,12 +114,14 @@ export default function ProfileScreen() {
   const gridWidth = columnWidth * 2 + GRID_COLUMN_GAP;
 
   const handleImagePress = (item: BoardItem) => {
-    if (item.status === "processing") {
+    const itemStatus = resolveGenerationStatus(item.status, item.imageUri);
+
+    if (itemStatus === "processing") {
       showToast("Work in progress");
       return;
     }
 
-    if (item.status === "failed" || !item.imageUri) {
+    if (!hasGenerationImage(item.imageUri)) {
       Alert.alert("Generation failed", item.errorMessage ?? "This redesign did not finish. Please try again.");
       return;
     }
@@ -127,12 +130,14 @@ export default function ProfileScreen() {
   };
 
   const handleImageLongPress = (item: BoardItem) => {
-    if (item.status === "processing") {
+    const itemStatus = resolveGenerationStatus(item.status, item.imageUri);
+
+    if (itemStatus === "processing") {
       showToast("Work in progress");
       return;
     }
 
-    if (item.status === "failed" || !item.imageUri) {
+    if (!hasGenerationImage(item.imageUri)) {
       Alert.alert("Generation failed", item.errorMessage ?? "This redesign did not finish. Please try again.");
       return;
     }

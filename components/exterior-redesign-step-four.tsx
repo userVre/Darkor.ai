@@ -270,8 +270,8 @@ const styles = StyleSheet.create({
   closeButton: {
     position: "absolute",
     zIndex: 3,
-    width: 20,
-    height: 20,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },

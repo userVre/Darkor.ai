@@ -98,6 +98,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 48,
     right: 24,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },

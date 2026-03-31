@@ -1,39 +1,54 @@
 import { Image } from "expo-image";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, useEffect, useMemo, useState } from "react";
-import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Image as NativeImage, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fonts } from "../styles/typography";
 import { spacing } from "../styles/spacing";
 import { type Theme, useTheme } from "@/styles/theme";
 
 import { LuxPressable } from "./lux-pressable";
+import { useWorkspaceDraft } from "./workspace-context";
 
 const pointerClassName = "cursor-pointer";
 const PROGRESS_DURATION_MS = 15_000;
-const PROGRESS_MAX = 0.95;
-const SUBTITLE_ROTATION_MS = 3_000;
+const PROGRESS_MAX = 0.9;
+const STATUS_ROTATION_MS = 3_000;
 const SHIMMER_DURATION_MS = 2_000;
+const GENERATION_PROGRESS_COLOR = "#E53935";
+
+export const GENERATION_STATUS_MESSAGES = [
+  "Analyzing your room geometry...",
+  "Identifying walls and surfaces...",
+  "Applying your selected style...",
+  "Rendering materials and lighting...",
+  "Adding final details...",
+  "Almost ready...",
+] as const;
 
 type ServiceProcessingScreenProps = {
   imageUri?: string | null;
-  subtitlePhrases: string[];
+  subtitlePhrases?: readonly string[];
   onCancel: () => void;
   cancelDisabled?: boolean;
+  complete?: boolean;
 };
 
 export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   imageUri,
-  subtitlePhrases,
+  subtitlePhrases = GENERATION_STATUS_MESSAGES,
   onCancel,
   cancelDisabled = false,
+  complete = false,
 }: ServiceProcessingScreenProps) {
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+  const { draft } = useWorkspaceDraft();
   const [subtitleIndex, setSubtitleIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+  const previewImageUri = draft.image?.uri ?? imageUri ?? null;
 
   const subtitleSignature = subtitlePhrases.join("|");
   const activeSubtitle = useMemo(
@@ -44,8 +59,8 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   useEffect(() => {
     setSubtitleIndex(0);
     const interval = setInterval(() => {
-      setSubtitleIndex((current) => (current + 1) % Math.max(subtitlePhrases.length, 1));
-    }, SUBTITLE_ROTATION_MS);
+      setSubtitleIndex((current) => Math.min(current + 1, Math.max(subtitlePhrases.length - 1, 0)));
+    }, STATUS_ROTATION_MS);
 
     return () => clearInterval(interval);
   }, [subtitleSignature]);
@@ -63,10 +78,19 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (!complete) {
+      return;
+    }
+
+    setSubtitleIndex(Math.max(subtitlePhrases.length - 1, 0));
+    setProgress(1);
+  }, [complete, subtitlePhrases.length]);
+
   return (
     <View style={styles.screen}>
-      {imageUri ? (
-        <Image source={{ uri: imageUri }} style={styles.photoImage} contentFit="cover" transition={180} />
+      {previewImageUri ? (
+        <NativeImage source={{ uri: previewImageUri }} style={[styles.photoImage, { width, height }]} resizeMode="cover" />
       ) : (
         <View style={styles.photoFallback} />
       )}
@@ -164,14 +188,14 @@ function createStyles(colors: Theme) {
     progressTrack: {
       height: 3,
       width: "100%",
-      borderRadius: 999,
+      borderRadius: 2,
       backgroundColor: colors.borderLight,
       overflow: "hidden",
     },
     progressFill: {
       height: "100%",
-      borderRadius: 999,
-      backgroundColor: colors.brand,
+      borderRadius: 2,
+      backgroundColor: GENERATION_PROGRESS_COLOR,
     },
     copyBlock: {
       gap: spacing.sm,

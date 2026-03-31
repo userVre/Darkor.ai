@@ -302,9 +302,9 @@ export default function SettingsScreen() {
       >
         <View style={styles.headerBlock}>
           <Text style={styles.headerTitle}>Settings</Text>
-          <Text accessibilityRole="button" onPress={handleBack} style={styles.backArrow}>
-            {"<"}
-          </Text>
+          <Pressable accessibilityRole="button" onPress={handleBack} style={styles.backArrow}>
+            <Text style={styles.backArrowText}>{"<"}</Text>
+          </Pressable>
         </View>
 
         <View style={styles.heroSection}>
@@ -328,10 +328,10 @@ export default function SettingsScreen() {
             </View>
 
             <Pressable accessibilityRole="button" onPress={handleUpgrade} style={styles.upgradeButton}>
-              <View style={styles.upgradeButtonInner}>
+              <View style={styles.upgradeButtonContent}>
                 <Gem color="#0A0A0A" size={16} strokeWidth={2.2} />
+                <Text style={styles.upgradeButtonText}>Upgrade PRO</Text>
               </View>
-              <Text style={styles.upgradeButtonText}>Upgrade PRO</Text>
             </Pressable>
           </View>
         </View>
@@ -417,6 +417,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 16,
     top: 56,
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backArrowText: {
     color: "#FFFFFF",
     fontSize: 20,
     lineHeight: 20,
@@ -467,16 +473,15 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     borderRadius: 24,
     backgroundColor: "#FFFFFF",
-    flexDirection: "row",
-    alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  upgradeButtonInner: {
-    marginRight: 6,
+  upgradeButtonContent: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 6,
   },
   upgradeButtonText: {
     color: "#0A0A0A",

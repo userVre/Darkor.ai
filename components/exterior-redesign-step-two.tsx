@@ -246,8 +246,8 @@ const styles = StyleSheet.create({
   navButton: {
     position: "absolute",
     zIndex: 4,
-    width: 20,
-    height: 20,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },

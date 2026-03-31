@@ -15,6 +15,7 @@ import Animated, {
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
+import { InteriorRedesignStepProgress } from "./interior-redesign-step-progress";
 import { HomeToolsBottomNav } from "./home-tools-bottom-nav";
 
 export type InteriorRedesignStepOneExamplePhoto = {
@@ -230,21 +231,12 @@ export function InteriorRedesignStepOne({
         <Text style={styles.closeText}>{"\u00D7"}</Text>
       </Pressable>
 
-      <View style={[styles.progressRow, { top: progressTop, width: mainWidth, right: sideInset }]}>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <View
-            key={`interior-progress-${index}`}
-            style={[
-              styles.progressSegment,
-              {
-                width: progressSegmentWidth,
-                marginRight: index === 3 ? 0 : progressGap,
-                backgroundColor: index === 0 ? "#0A0A0A" : "#E0E0E0",
-              },
-            ]}
-          />
-        ))}
-      </View>
+      <InteriorRedesignStepProgress
+        currentStep={1}
+        segmentWidth={progressSegmentWidth}
+        gap={progressGap}
+        style={{ top: progressTop, width: mainWidth, right: sideInset }}
+      />
 
       <View style={[styles.content, { paddingTop: contentTop }]}>
         <Text style={[styles.header, { marginLeft: sideInset }]}>Add a Photo</Text>
@@ -462,8 +454,8 @@ const styles = StyleSheet.create({
   closeButton: {
     position: "absolute",
     zIndex: 4,
-    width: 20,
-    height: 20,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -472,16 +464,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 18,
     ...fonts.bold,
-  },
-  progressRow: {
-    position: "absolute",
-    zIndex: 3,
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  progressSegment: {
-    height: 4,
-    borderRadius: 2,
   },
   content: {
     flex: 1,
@@ -634,9 +616,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 52,
     right: 20,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#E8E8E8",

@@ -5,6 +5,7 @@ import { MotiView } from "moti";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { BoardItem } from "../lib/board";
+import { resolveGenerationStatus } from "../lib/generation-status";
 import { fonts } from "../styles/typography";
 
 type BoardImageCardProps = {
@@ -16,9 +17,10 @@ type BoardImageCardProps = {
 
 export function BoardImageCard({ item, width, onPress, onLongPress }: BoardImageCardProps) {
   const previewImage = item.imageUri ?? item.originalImageUri ?? null;
-  const isProcessing = item.status === "processing";
-  const isFailed = item.status === "failed";
-  const showNewBadge = item.isNew && item.status === "ready";
+  const resolvedStatus = resolveGenerationStatus(item.status, item.imageUri);
+  const isProcessing = resolvedStatus === "processing";
+  const isFailed = resolvedStatus === "failed";
+  const showNewBadge = item.isNew && resolvedStatus === "ready";
   const subtitle = isProcessing ? "AI is Designing..." : isFailed ? "Generation failed" : item.roomType;
 
   return (

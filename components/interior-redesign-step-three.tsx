@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
+import { InteriorRedesignStepProgress } from "./interior-redesign-step-progress";
 
 type InteriorRedesignStepThreeStyleCard = {
   id: string;
@@ -122,21 +123,12 @@ export function InteriorRedesignStepThree({
         <Text style={stylesSheet.closeText}>{"\u00D7"}</Text>
       </Pressable>
 
-      <View style={[stylesSheet.progressRow, { top: progressTop, width: mainWidth, right: sideInset }]}>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <View
-            key={`interior-style-progress-${index}`}
-            style={[
-              stylesSheet.progressSegment,
-              {
-                width: progressSegmentWidth,
-                marginRight: index === 3 ? 0 : progressGap,
-                backgroundColor: index < 3 ? "#0A0A0A" : "#E0E0E0",
-              },
-            ]}
-          />
-        ))}
-      </View>
+      <InteriorRedesignStepProgress
+        currentStep={3}
+        segmentWidth={progressSegmentWidth}
+        gap={progressGap}
+        style={{ top: progressTop, width: mainWidth, right: sideInset, zIndex: 2 }}
+      />
 
       <ScrollView
         style={stylesSheet.content}
@@ -273,8 +265,8 @@ const stylesSheet = StyleSheet.create({
   closeButton: {
     position: "absolute",
     zIndex: 3,
-    width: 20,
-    height: 20,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -283,16 +275,6 @@ const stylesSheet = StyleSheet.create({
     fontSize: 18,
     lineHeight: 18,
     ...fonts.bold,
-  },
-  progressRow: {
-    position: "absolute",
-    zIndex: 2,
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  progressSegment: {
-    height: 4,
-    borderRadius: 2,
   },
   content: {
     flex: 1,
