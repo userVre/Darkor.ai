@@ -33,10 +33,8 @@ import {
   configureRevenueCat,
   getRevenueCatClient,
   hasActiveSubscription,
-  inferBillingDurationFromCustomerInfo,
-  inferPlanFromCustomerInfo,
-  inferPurchaseDateFromCustomerInfo,
-  inferSubscriptionEndFromCustomerInfo,
+  resolveRevenueCatSubscription,
+  type RevenueCatEntitlement,
 } from "../lib/revenuecat";
 import { requestStoreReview } from "../lib/store-review";
 import { fonts } from "../styles/typography";
@@ -166,14 +164,16 @@ export default function SettingsScreen() {
   };
 
   const persistPurchasedPlan = async (
-    plan: "pro" | "trial",
+    plan: "pro",
     subscriptionType: "weekly" | "yearly",
+    subscriptionEntitlement: RevenueCatEntitlement,
     purchasedAt?: number | null,
     subscriptionEnd?: number | null,
   ) => {
     await setPlan({
       plan,
       subscriptionType,
+      subscriptionEntitlement,
       purchasedAt: typeof purchasedAt === "number" ? purchasedAt : undefined,
       subscriptionEnd: typeof subscriptionEnd === "number" ? subscriptionEnd : undefined,
     });
@@ -199,20 +199,19 @@ export default function SettingsScreen() {
         return;
       }
 
-      const inferredPlan = inferPlanFromCustomerInfo(info);
-      const inferredDuration = inferBillingDurationFromCustomerInfo(info);
-      const purchasedAt = inferPurchaseDateFromCustomerInfo(info);
-      const subscriptionEnd = inferSubscriptionEndFromCustomerInfo(info);
+      const subscriptionState = resolveRevenueCatSubscription(info);
 
-      if (isSignedIn && inferredPlan && inferredDuration) {
-        await persistPurchasedPlan(inferredPlan, inferredDuration, purchasedAt, subscriptionEnd);
+      if (isSignedIn && subscriptionState.plan === "pro" && subscriptionState.subscriptionType !== "free") {
+        await persistPurchasedPlan(
+          subscriptionState.plan,
+          subscriptionState.subscriptionType,
+          subscriptionState.entitlement,
+          subscriptionState.purchasedAt,
+          subscriptionState.subscriptionEnd,
+        );
       }
 
-      if (inferredPlan === "trial") {
-        showToast("Your Darkor AI Pro trial has been restored.");
-      } else {
-        showSuccess();
-      }
+      showSuccess();
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Restore failed. Please try again.");
     } finally {

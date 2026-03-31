@@ -3,9 +3,17 @@ import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 
-const GEMINI_MODEL = "gemini-3.1-flash-image-preview";
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GOOGLE_GENERATIVE_LANGUAGE_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL ?? "gemini-2.5-flash";
+const GEMINI_DETECTION_MODEL = process.env.GEMINI_DETECTION_MODEL ?? GEMINI_TEXT_MODEL;
+const NANO_BANANA_MODEL = process.env.NANO_BANANA_MODEL ?? "gemini-2.5-flash-image";
+const NANO_BANANA_ENDPOINT =
+  process.env.NANO_BANANA_ENDPOINT?.trim() ||
+  `${GOOGLE_GENERATIVE_LANGUAGE_BASE}/${NANO_BANANA_MODEL}:generateContent`;
+const GEMINI_TEXT_ENDPOINT = `${GOOGLE_GENERATIVE_LANGUAGE_BASE}/${GEMINI_TEXT_MODEL}:generateContent`;
+const GEMINI_DETECTION_ENDPOINT = `${GOOGLE_GENERATIVE_LANGUAGE_BASE}/${GEMINI_DETECTION_MODEL}:generateContent`;
 const PRO_MIN_DELAY_MS = 4_000;
+const MODEL_REQUEST_TIMEOUT_MS = 45_000;
 const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
 
 type ServiceType = "paint" | "floor" | "redesign";
@@ -172,6 +180,8 @@ function normalizeGenerationError(message?: string | null) {
 
   if (
     normalized.includes("missing gemini_api_key") ||
+    normalized.includes("missing gemini_text_api_key") ||
+    normalized.includes("missing nano_banana_api_key") ||
     normalized.includes("api key not valid") ||
     normalized.includes("invalid api key") ||
     normalized.includes("permission denied")
@@ -192,27 +202,59 @@ function normalizeGenerationError(message?: string | null) {
     return "This request could not be processed safely. Try a different photo or prompt.";
   }
 
+  if (normalized.includes("timed out")) {
+    return "Darkor AI took too long to reach the image service. Please try again.";
+  }
+
   return raw;
 }
 
-async function requestGeminiWithRetry(body: string, apiKey: string) {
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("The AI request timed out.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function requestModelWithRetry(args: {
+  apiKey: string;
+  body: string;
+  endpoint: string;
+  providerLabel: string;
+}) {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      const response = await fetch(GEMINI_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
+      const response = await fetchWithTimeout(
+        args.endpoint,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": args.apiKey,
+          },
+          body: args.body,
         },
-        body,
-      });
+        MODEL_REQUEST_TIMEOUT_MS,
+      );
 
       if (!response.ok) {
         const errorMessage = normalizeGenerationError(await parseGeminiError(response));
         if (attempt === 0 && shouldRetryGeminiStatus(response.status)) {
-          console.log("[AI] Gemini transient failure, retrying", {
+          console.log(`[AI] ${args.providerLabel} transient failure, retrying`, {
             attempt: attempt + 1,
             status: response.status,
           });
@@ -222,7 +264,7 @@ async function requestGeminiWithRetry(body: string, apiKey: string) {
         if (shouldRetryGeminiStatus(response.status)) {
           throw new ConvexError(AI_PROVIDER_DOWN);
         }
-        throw new ConvexError(errorMessage || `Gemini request failed with status ${response.status}.`);
+        throw new ConvexError(errorMessage || `${args.providerLabel} request failed with status ${response.status}.`);
       }
 
       return response;
@@ -230,7 +272,7 @@ async function requestGeminiWithRetry(body: string, apiKey: string) {
       const message = error instanceof Error ? error.message : "Gemini request failed.";
       lastError = error instanceof Error ? error : new Error(message);
       if (attempt === 0 && shouldRetryGeminiErrorMessage(message)) {
-        console.log("[AI] Gemini network error, retrying", {
+        console.log(`[AI] ${args.providerLabel} network error, retrying`, {
           attempt: attempt + 1,
           message,
         });
@@ -244,7 +286,7 @@ async function requestGeminiWithRetry(body: string, apiKey: string) {
     }
   }
 
-  throw lastError ?? new ConvexError("Gemini request failed.");
+  throw lastError ?? new ConvexError(`${args.providerLabel} request failed.`);
 }
 
 function extractGeneratedImage(response: GeminiResponse) {
@@ -359,6 +401,56 @@ function buildDetectionPrompt(target: "paint" | "floor") {
   ].join(" ");
 }
 
+function buildPromptOptimizationInstruction(args: {
+  serviceType: ServiceType;
+  roomType: string;
+  style: string;
+  colorPalette: string;
+  customPrompt?: string;
+  aspectRatio?: string;
+  regenerate?: boolean;
+}) {
+  const basePrompt = buildDesignPrompt(args);
+
+  return [
+    "You are an architectural prompt optimizer for premium AI image generation.",
+    `Service type: ${args.serviceType}.`,
+    `Room type: ${args.roomType}.`,
+    `Style direction: ${args.style}.`,
+    `Palette direction: ${args.colorPalette}.`,
+    args.customPrompt ? `User notes: ${args.customPrompt}.` : "User notes: none.",
+    `Aspect ratio: ${normalizeAspectRatio(args.aspectRatio)}.`,
+    args.regenerate ? "This is a regeneration request. Preserve the concept while varying the styling details." : undefined,
+    "Refine the following draft into a single vivid, high-conversion architectural image prompt.",
+    "Keep it photorealistic, composition-aware, and specific about materials, lighting, styling, and preservation constraints.",
+    "Do not mention camera UI, markdown, JSON, bullet points, or safety policies.",
+    "Return only the final optimized prompt as plain text.",
+    `Draft prompt: ${basePrompt}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function sanitizeOptimizedPrompt(raw: string) {
+  const withoutFences = raw.replace(/```[\s\S]*?```/g, " ").replace(/\s+/g, " ").trim();
+  if (!withoutFences) {
+    throw new ConvexError("Gemini returned an empty optimized prompt.");
+  }
+  return withoutFences;
+}
+
+function resolveServiceApiKey(primary?: string | null, fallback?: string | null) {
+  const direct = primary?.trim();
+  if (direct) {
+    return direct;
+  }
+  const backup = fallback?.trim();
+  if (backup) {
+    return backup;
+  }
+  return null;
+}
+
 function resolveImageSize(speedTier?: SpeedTier) {
   return speedTier === "ultra" ? "4K" : "2K";
 }
@@ -402,6 +494,25 @@ export const saveGeneration = internalMutationGeneric({
   },
 });
 
+export const saveOptimizedPrompt = internalMutationGeneric({
+  args: {
+    generationId: v.id("generations"),
+    prompt: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const generation = await ctx.db.get(args.generationId);
+    if (!generation) {
+      throw new ConvexError("Generation not found.");
+    }
+
+    await ctx.db.patch(args.generationId, {
+      prompt: args.prompt,
+    });
+
+    return { ok: true };
+  },
+});
+
 export const generateDesign: any = internalActionGeneric({
   args: {
     generationId: v.id("generations"),
@@ -421,9 +532,20 @@ export const generateDesign: any = internalActionGeneric({
     ctx,
     args,
   ): Promise<{ ok: true; storageId: string; imageUrl: string | null }> => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      const message = normalizeGenerationError("Missing GEMINI_API_KEY in Convex environment variables.");
+    const geminiTextApiKey = resolveServiceApiKey(process.env.GEMINI_TEXT_API_KEY, process.env.GEMINI_API_KEY);
+    if (!geminiTextApiKey) {
+      const message = normalizeGenerationError("Missing GEMINI_TEXT_API_KEY in Convex environment variables.");
+      await ctx.runMutation((internal as any).generations.markGenerationFailed, {
+        generationId: args.generationId,
+        ownerId: args.ownerId,
+        errorMessage: message,
+      });
+      throw new ConvexError(message);
+    }
+
+    const nanoBananaApiKey = resolveServiceApiKey(process.env.NANO_BANANA_API_KEY, process.env.GEMINI_API_KEY);
+    if (!nanoBananaApiKey) {
+      const message = normalizeGenerationError("Missing NANO_BANANA_API_KEY in Convex environment variables.");
       await ctx.runMutation((internal as any).generations.markGenerationFailed, {
         generationId: args.generationId,
         ownerId: args.ownerId,
@@ -464,7 +586,7 @@ export const generateDesign: any = internalActionGeneric({
         });
       }
 
-      const prompt = buildDesignPrompt({
+      const promptOptimizationInstruction = buildPromptOptimizationInstruction({
         serviceType: args.serviceType,
         roomType: args.roomType,
         style: args.style,
@@ -474,8 +596,40 @@ export const generateDesign: any = internalActionGeneric({
         regenerate: args.regenerate,
       });
 
+      console.log("[AI] Gemini prompt optimization started", {
+        generationId: args.generationId,
+        model: GEMINI_TEXT_MODEL,
+        endpoint: GEMINI_TEXT_ENDPOINT,
+      });
+      const promptResponse = await requestModelWithRetry({
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: promptOptimizationInstruction }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024,
+          },
+        }),
+        apiKey: geminiTextApiKey,
+        endpoint: GEMINI_TEXT_ENDPOINT,
+        providerLabel: "Gemini prompt optimizer",
+      });
+      const promptPayload = (await promptResponse.json()) as GeminiResponse;
+      const optimizedPrompt = sanitizeOptimizedPrompt(extractTextResponse(promptPayload));
+      await ctx.runMutation((internal as any).ai.saveOptimizedPrompt, {
+        generationId: args.generationId,
+        prompt: optimizedPrompt,
+      });
+      console.log("[AI] Gemini prompt optimization completed", {
+        generationId: args.generationId,
+        promptLength: optimizedPrompt.length,
+      });
+
       const parts: GeminiInlinePart[] = [
-        { text: prompt },
+        { text: optimizedPrompt },
         {
           inlineData: {
             mimeType: sourceBlob.type || "image/jpeg",
@@ -499,12 +653,13 @@ export const generateDesign: any = internalActionGeneric({
         });
       }
 
-      console.log("Gemini API call started...", {
+      console.log("[AI] Nano Banana generation started", {
         generationId: args.generationId,
-        endpoint: GEMINI_ENDPOINT,
+        model: NANO_BANANA_MODEL,
+        endpoint: NANO_BANANA_ENDPOINT,
       });
-      const response = await requestGeminiWithRetry(
-        JSON.stringify({
+      const response = await requestModelWithRetry({
+        body: JSON.stringify({
           contents: [
             {
               parts,
@@ -518,12 +673,14 @@ export const generateDesign: any = internalActionGeneric({
             },
           },
         }),
-        apiKey,
-      );
+        apiKey: nanoBananaApiKey,
+        endpoint: NANO_BANANA_ENDPOINT,
+        providerLabel: "Nano Banana image generator",
+      });
 
       const payload = (await response.json()) as GeminiResponse;
       const generated = extractGeneratedImage(payload);
-      console.log("[AI] Gemini API call completed", {
+      console.log("[AI] Nano Banana generation completed", {
         generationId: args.generationId,
         mimeType: generated.mimeType ?? "image/png",
         base64Length: generated.data.length,
@@ -590,8 +747,8 @@ export const detectEditMask: any = actionGeneric({
       throw new ConvexError("The source image could not be loaded from storage.");
     }
 
-    const response = await requestGeminiWithRetry(
-      JSON.stringify({
+    const response = await requestModelWithRetry({
+      body: JSON.stringify({
         contents: [
           {
             parts: [
@@ -611,7 +768,9 @@ export const detectEditMask: any = actionGeneric({
         },
       }),
       apiKey,
-    );
+      endpoint: GEMINI_DETECTION_ENDPOINT,
+      providerLabel: "Gemini mask detector",
+    });
 
     const payload = (await response.json()) as GeminiResponse;
     const rawText = extractTextResponse(payload);

@@ -2,6 +2,7 @@ import { useAuth } from "@clerk/expo";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery } from "convex/react";
 import { Asset } from "expo-asset";
+import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
@@ -28,13 +29,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from "react-native-reanimated";
+import { useSharedValue, withSpring } from "react-native-reanimated";
 import {
   BadgeCheck,
   X as Close,
@@ -85,6 +80,7 @@ import { LuxPressable } from "../../components/lux-pressable";
 import { PaintWizard } from "../../components/paint-wizard";
 import { ServiceContinueButton } from "../../components/service-continue-button";
 import { ServiceWizardHeader } from "../../components/service-wizard-header";
+import { BeforeAfterSlider } from "../../components/before-after-slider";
 import { useWorkspaceDraft } from "../../components/workspace-context";
 import { useViewerSession } from "../../components/viewer-session-context";
 import { useProSuccess } from "../../components/pro-success-context";
@@ -93,6 +89,7 @@ import { captureRef } from "react-native-view-shot";
 import { DS, HAIRLINE, glowShadow } from "../../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../../lib/service-wizard-theme";
 import { FLOOR_WIZARD_EXAMPLE_PHOTOS, PAINT_WIZARD_EXAMPLE_PHOTOS } from "../../lib/wizard-example-photos";
+import { canUserGenerate as canUserGenerateNow } from "../../lib/generation-access";
 import {
   GUEST_TESTING_STARTER_CREDITS,
   isGuestWizardTestingSession,
@@ -104,16 +101,20 @@ type MeResponse = {
   plan: "free" | "trial" | "pro";
   credits: number;
   subscriptionType?: "free" | "weekly" | "yearly";
+  subscriptionEntitlement?: "free" | "weekly_pro" | "annual_pro";
+  subscriptionStartedAt?: number;
   subscriptionEnd?: number;
   imageLimit?: number;
   imageGenerationCount?: number;
   lastResetDate?: number;
+  generationResetAt?: number;
   imageGenerationLimit?: number;
   imagesRemaining?: number;
   subscriptionActive?: boolean;
   generationLimitReached?: boolean;
   generationStatusLabel?: string;
   generationStatusMessage?: string;
+  canGenerateNow?: boolean;
   hasPaidAccess?: boolean;
   canExport4k?: boolean;
   canRemoveWatermark?: boolean;
@@ -205,6 +206,7 @@ type BoardRenderItem = {
   status: GenerationStatus;
   errorMessage?: string | null;
   createdAt: number;
+  isNew?: boolean;
 };
 
 type ModeOption = {
@@ -299,6 +301,7 @@ const BoardGridCard = memo(function BoardGridCard({
   const previewImage = item.imageUrl ?? item.originalImageUrl ?? null;
   const isProcessing = item.status === "processing";
   const isFailed = item.status === "failed";
+  const showNewBadge = item.isNew && item.status === "ready";
   const itemServiceType = item.serviceType ?? inferBoardServiceType(item.styleLabel, item.roomLabel);
   const processingLabel = getProcessingLabel();
   const statusCopy = isProcessing
@@ -322,6 +325,24 @@ const BoardGridCard = memo(function BoardGridCard({
           </View>
         )}
 
+        {isProcessing && previewImage ? <BlurView intensity={56} tint="dark" style={{ position: "absolute", inset: 0 }} /> : null}
+        {showNewBadge ? (
+          <MotiView
+            animate={{ opacity: [0.16, 0.34, 0.16], scale: [0.96, 1.02, 0.96] }}
+            transition={{ duration: 1900, loop: true }}
+            style={{
+              position: "absolute",
+              top: 16,
+              right: 16,
+              width: 72,
+              height: 72,
+              borderRadius: 999,
+              backgroundColor: "rgba(255,92,92,0.22)",
+            }}
+            pointerEvents="none"
+          />
+        ) : null}
+
         <View
           style={{
             position: "absolute",
@@ -329,6 +350,24 @@ const BoardGridCard = memo(function BoardGridCard({
             backgroundColor: isFailed ? "rgba(20,0,8,0.58)" : isProcessing ? "rgba(0,0,0,0.42)" : "rgba(0,0,0,0.14)",
           }}
         />
+
+        {showNewBadge ? (
+          <View
+            style={{
+              position: "absolute",
+              top: 12,
+              right: 12,
+              borderRadius: 999,
+              backgroundColor: "rgba(255,255,255,0.96)",
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+            }}
+          >
+            <Text style={{ color: "#A4161A", fontSize: 10, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase" }}>
+              New
+            </Text>
+          </View>
+        ) : null}
 
         {isProcessing ? (
           <View className="absolute inset-0 items-center justify-center gap-3">
@@ -1754,7 +1793,17 @@ export default function WorkspaceScreen() {
   const effectiveSignedIn = isSignedIn || guestWizardTestingSession;
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { draft, setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle } =
+  const {
+    draft,
+    setDraftAspectRatio,
+    setDraftFinish,
+    setDraftImage,
+    setDraftMode,
+    setDraftPalette,
+    setDraftPrompt,
+    setDraftRoom,
+    setDraftStyle,
+  } =
     useWorkspaceDraft();
   const { showToast } = useProSuccess();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
@@ -1769,6 +1818,7 @@ export default function WorkspaceScreen() {
   ) as ArchiveGeneration[] | undefined;
   const createSourceUploadUrl = useMutation("generations:createSourceUploadUrl" as any);
   const startGeneration = useMutation("generations:startGeneration" as any);
+  const [optimisticCreditBalance, setOptimisticCreditBalance] = useState<number | null>(null);
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
@@ -1786,6 +1836,7 @@ export default function WorkspaceScreen() {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [pendingBoardItems, setPendingBoardItems] = useState<BoardRenderItem[]>([]);
+  const [newlyReadyBoardIds, setNewlyReadyBoardIds] = useState<string[]>([]);
   const [activeBoardItemId, setActiveBoardItemId] = useState<string | null>(null);
   const [, setShowBeforeOnly] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -1823,13 +1874,14 @@ export default function WorkspaceScreen() {
   const imageContainerRef = useRef<View>(null);
   const hasAppliedStartStepRef = useRef(false);
   const handledBoardRouteRef = useRef<string | null>(null);
+  const previousBoardStatusesRef = useRef<Record<string, GenerationStatus>>({});
+  const boardHighlightTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const reviewHandledRef = useRef(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const generationAlertedFailureRef = useRef<string | null>(null);
   const paintCurrentStrokeRef = useRef<PaintStroke | null>(null);
   const sliderX = useSharedValue(0);
   const sliderWidth = useSharedValue(0);
-  const sliderStart = useSharedValue(0);
 
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = getServiceType(serviceKey);
@@ -1890,6 +1942,18 @@ export default function WorkspaceScreen() {
   }, [draft.paletteId, selectedPaletteId]);
 
   useEffect(() => {
+    if (draft.modeId && !selectedModeId) {
+      setSelectedModeId(draft.modeId as ModeOption["id"]);
+    }
+  }, [draft.modeId, selectedModeId]);
+
+  useEffect(() => {
+    if (draft.finishId && !selectedFinishId) {
+      setSelectedFinishId(draft.finishId as FinishOption["id"]);
+    }
+  }, [draft.finishId, selectedFinishId]);
+
+  useEffect(() => {
     if (draft.prompt && customPrompt.length === 0) {
       setCustomPrompt(draft.prompt);
       setCustomPromptDraft(draft.prompt);
@@ -1921,6 +1985,14 @@ export default function WorkspaceScreen() {
   useEffect(() => {
     setDraftPalette(selectedPaletteId ?? null);
   }, [selectedPaletteId, setDraftPalette]);
+
+  useEffect(() => {
+    setDraftMode(selectedModeId ?? null);
+  }, [selectedModeId, setDraftMode]);
+
+  useEffect(() => {
+    setDraftFinish(selectedFinishId ?? null);
+  }, [selectedFinishId, setDraftFinish]);
 
   useEffect(() => {
     const nextPrompt = customPrompt.trim();
@@ -2046,17 +2118,24 @@ export default function WorkspaceScreen() {
   }, [generationArchive, serviceLabel]);
 
   const boardItems = useMemo<BoardRenderItem[]>(() => {
+    const newBoardIdSet = new Set(newlyReadyBoardIds);
     const merged = new Map<string, BoardRenderItem>();
     for (const item of archivedBoardItems) {
-      merged.set(item.id, item);
+      merged.set(item.id, {
+        ...item,
+        isNew: newBoardIdSet.has(item.id),
+      });
     }
     for (const item of pendingBoardItems) {
       if (!merged.has(item.id)) {
-        merged.set(item.id, item);
+        merged.set(item.id, {
+          ...item,
+          isNew: newBoardIdSet.has(item.id),
+        });
       }
     }
     return Array.from(merged.values()).sort((left, right) => right.createdAt - left.createdAt);
-  }, [archivedBoardItems, pendingBoardItems]);
+  }, [archivedBoardItems, newlyReadyBoardIds, pendingBoardItems]);
 
   const activeBoardItem = useMemo(
     () => boardItems.find((item) => item.id === activeBoardItemId) ?? null,
@@ -2447,18 +2526,36 @@ export default function WorkspaceScreen() {
     }
     return "standard";
   }, [hasPaidAccess, me?.subscriptionType]);
-  const creditBalance = diagnostic
+  const serverCreditBalance = diagnostic
     ? 999
     : viewerReady
       ? me?.credits ?? GUEST_TESTING_STARTER_CREDITS
       : GUEST_TESTING_STARTER_CREDITS;
-  const hasGenerationCredits = creditBalance > 0;
+  const creditBalance = optimisticCreditBalance ?? serverCreditBalance;
+  const generationAccess = diagnostic
+    ? { allowed: true, reason: "ok" as const, remaining: creditBalance, hasPaidAccess: true, message: "" }
+    : canUserGenerateNow(me);
+  const hasGenerationCredits = generationAccess.allowed;
   const remainingCreditsAfterGenerate = Math.max(creditBalance - 1, 0);
-  const generationCreditLabel = `Uses 1 credit \u00b7 ${remainingCreditsAfterGenerate} remaining`;
+  const generationCreditLabel = hasPaidAccess
+    ? me?.subscriptionType === "yearly"
+      ? `1 generation \u00b7 ${remainingCreditsAfterGenerate} left this month`
+      : `1 generation \u00b7 ${remainingCreditsAfterGenerate} left this week`
+    : `Uses 1 Diamond \u00b7 ${remainingCreditsAfterGenerate} remaining`;
+  const usageBadgeLabel = hasPaidAccess
+    ? me?.subscriptionType === "yearly"
+      ? "Yearly Pro"
+      : "Weekly Pro"
+    : `Diamonds ${creditBalance}`;
+  const usageBadgeDetail = hasPaidAccess ? `${creditBalance} left` : null;
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const showStyleScrollCue = !isPaintService && !isFloorService && displayedStyleCards.length > 6;
   const isDownloadingStandard = isDownloading === "standard";
   const isDownloadingUltra = isDownloading === "ultra";
+
+  useEffect(() => {
+    setOptimisticCreditBalance(null);
+  }, [diagnostic, me?.credits, viewerId]);
 
   useEffect(() => {
     if (!(workflowStep === 3 && !isPaintService && !isFloorService && !isLeanGenerationService)) {
@@ -2567,6 +2664,52 @@ export default function WorkspaceScreen() {
   }, [archivedBoardItems, pendingBoardItems.length]);
 
   useEffect(() => {
+    const nextStatuses: Record<string, GenerationStatus> = {};
+    const idsToHighlight: string[] = [];
+
+    for (const item of boardItems) {
+      nextStatuses[item.id] = item.status;
+      if (previousBoardStatusesRef.current[item.id] === "processing" && item.status === "ready") {
+        idsToHighlight.push(item.id);
+      }
+      if (item.status !== "ready" && boardHighlightTimeoutsRef.current[item.id]) {
+        clearTimeout(boardHighlightTimeoutsRef.current[item.id]);
+        delete boardHighlightTimeoutsRef.current[item.id];
+      }
+    }
+
+    if (idsToHighlight.length > 0) {
+      setNewlyReadyBoardIds((current) => {
+        const merged = new Set(current);
+        for (const id of idsToHighlight) {
+          merged.add(id);
+        }
+        return Array.from(merged);
+      });
+
+      for (const id of idsToHighlight) {
+        if (boardHighlightTimeoutsRef.current[id]) {
+          clearTimeout(boardHighlightTimeoutsRef.current[id]);
+        }
+        boardHighlightTimeoutsRef.current[id] = setTimeout(() => {
+          setNewlyReadyBoardIds((current) => current.filter((itemId) => itemId !== id));
+          delete boardHighlightTimeoutsRef.current[id];
+        }, 6500);
+      }
+    }
+
+    previousBoardStatusesRef.current = nextStatuses;
+  }, [boardItems]);
+
+  useEffect(() => {
+    return () => {
+      for (const timeout of Object.values(boardHighlightTimeoutsRef.current)) {
+        clearTimeout(timeout);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (!generationId) {
       return;
     }
@@ -2606,39 +2749,6 @@ export default function WorkspaceScreen() {
       showToast(GENERATION_FAILED_TOAST);
     }
   }, [boardItems, effectiveSignedIn, generatedImageUrl, generationId, isGenerating, pendingReviewState, router, showToast]);
-
-  const handleSliderLayout = useCallback(
-    (event: { nativeEvent: { layout: { width: number } } }) => {
-      const width = event.nativeEvent.layout.width;
-      if (!width || width === sliderWidth.value) return;
-      sliderWidth.value = width;
-      sliderX.value = withSpring(width / 2, sliderSpring);
-    },
-    [sliderSpring, sliderWidth, sliderX],
-  );
-
-  const sliderGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .onBegin(() => {
-          sliderStart.value = sliderX.value;
-          runOnJS(setShowBeforeOnly)(false);
-        })
-        .onUpdate((event) => {
-          const next = sliderStart.value + event.translationX;
-          const max = sliderWidth.value || 1;
-          sliderX.value = Math.max(0, Math.min(next, max));
-        }),
-    [sliderStart, sliderWidth, sliderX],
-  );
-
-  const afterImageStyle = useAnimatedStyle(() => ({
-    width: sliderX.value,
-  }));
-
-  const sliderBarStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: sliderX.value - 1 }],
-  }));
 
   const canContinue = useMemo(() => {
     if (workflowStep === 0) return Boolean(selectedImage);
@@ -3185,6 +3295,15 @@ export default function WorkspaceScreen() {
     router.push("/paywall");
   }, [router]);
 
+  const openGenerationPaywall = useCallback(() => {
+    router.push({
+      pathname: "/paywall",
+      params: {
+        source: "generate",
+      },
+    } as any);
+  }, [router]);
+
   const handleDownloadStandard = useCallback(async () => {
     triggerHaptic();
     if (!activeEditorImageUrl) {
@@ -3277,13 +3396,18 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    if (!diagnostic && !hasGenerationCredits) {
-      if (!effectiveSignedIn) {
+    if (!diagnostic && !generationAccess.allowed) {
+      if (generationAccess.reason === "paywall" && !effectiveSignedIn) {
         openAuthWall("/workspace", true);
         return;
       }
 
-      router.push("/paywall");
+      if (generationAccess.reason === "paywall") {
+        router.push("/paywall");
+        return;
+      }
+
+      showToast(generationAccess.message || "Limit Reached");
       return;
     }
 
@@ -3337,7 +3461,6 @@ export default function WorkspaceScreen() {
       setIsGenerating(true);
       setActiveBoardItemId(temporaryBoardId);
       setPendingBoardItems((current) => [processingBoardItem, ...current.filter((item) => item.id !== temporaryBoardId)]);
-      setWorkflowStep(5);
 
       const imageStorageId = await uploadSelectedImageToStorage(activeSelectedImage);
       const startResult = (await startGeneration({
@@ -3354,7 +3477,12 @@ export default function WorkspaceScreen() {
       })) as {
         generationId: string;
         reviewState?: { count: number; shouldPrompt: boolean };
+        creditsRemaining?: number;
       };
+
+      if (!diagnostic && typeof startResult.creditsRemaining === "number") {
+        setOptimisticCreditBalance(startResult.creditsRemaining);
+      }
 
       setPendingBoardItems((current) =>
         current.map((item) =>
@@ -3370,6 +3498,7 @@ export default function WorkspaceScreen() {
       setActiveBoardItemId((current) => (current === temporaryBoardId ? startResult.generationId : current));
       setGenerationId(startResult.generationId);
       setPendingReviewState(startResult.reviewState ?? null);
+      setWorkflowStep(5);
       if (startResult.reviewState) {
         setLastGenerationCount(startResult.reviewState.count);
       }
@@ -3377,13 +3506,19 @@ export default function WorkspaceScreen() {
       setIsGenerating(false);
       const rawMessage = error instanceof Error ? error.message : "Please try again.";
       const isPaymentRequired = rawMessage === "Payment Required";
-      if (!diagnostic && !hasGenerationCredits) {
+      const isLimitReached = rawMessage.toLowerCase().includes("limit reached");
+      if (!diagnostic && generationAccess.reason === "paywall") {
         setPendingBoardItems((current) => current.filter((item) => item.id !== temporaryBoardId));
         if (!effectiveSignedIn) {
           openAuthWall("/workspace", true);
           return;
         }
-        router.push("/paywall");
+        openGenerationPaywall();
+        return;
+      }
+      if (isLimitReached) {
+        setPendingBoardItems((current) => current.filter((item) => item.id !== temporaryBoardId));
+        showToast(rawMessage);
         return;
       }
       setPendingBoardItems((current) =>
@@ -3403,7 +3538,7 @@ export default function WorkspaceScreen() {
           openAuthWall("/workspace", true);
           return;
         }
-        router.push("/paywall");
+        openGenerationPaywall();
         return;
       }
       showToast(GENERATION_FAILED_TOAST);
@@ -3416,10 +3551,14 @@ export default function WorkspaceScreen() {
     effectiveSignedIn,
     isFloorService,
     generationSpeedTier,
+    generationAccess.allowed,
+    generationAccess.message,
+    generationAccess.reason,
     hasGenerationCredits,
     ignoreReviewCooldown,
     isPaintService,
     openAuthWall,
+    openGenerationPaywall,
     ratioSpec.ratioLabel,
     router,
     ensureWorkspaceSelectionsComplete,
@@ -3460,12 +3599,16 @@ export default function WorkspaceScreen() {
     }
 
     if (workflowStep === 3) {
-      if (!diagnostic && !hasGenerationCredits) {
-        if (!effectiveSignedIn) {
+      if (!diagnostic && !generationAccess.allowed) {
+        if (generationAccess.reason === "paywall" && !effectiveSignedIn) {
           openAuthWall("/workspace", true);
           return;
         }
-        router.push("/paywall");
+        if (generationAccess.reason === "paywall") {
+          openGenerationPaywall();
+          return;
+        }
+        showToast(generationAccess.message || "Limit Reached");
         return;
       }
       void handleGenerate();
@@ -3476,7 +3619,7 @@ export default function WorkspaceScreen() {
     startTransition(() => {
       setWorkflowStep((prev) => Math.min(prev + 1, 3));
     });
-  }, [canContinue, diagnostic, effectiveSignedIn, handleGenerate, hasGenerationCredits, openAuthWall, router, workflowStep]);
+  }, [canContinue, diagnostic, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, handleGenerate, openAuthWall, openGenerationPaywall, showToast, workflowStep]);
 
   const handleContinueFromGardenPhotoStep = useCallback(() => {
     if (!selectedImage) {
@@ -3705,7 +3848,7 @@ export default function WorkspaceScreen() {
     }
 
     if (item.status === "processing") {
-      showToast("Your redesign is still processing.");
+      showToast("Work in progress");
       return;
     }
 
@@ -3715,7 +3858,7 @@ export default function WorkspaceScreen() {
     }
 
     if (!canEditDesigns) {
-      router.push("/paywall");
+      openGenerationPaywall();
       return;
     }
 
@@ -3939,11 +4082,7 @@ export default function WorkspaceScreen() {
     const isGenerationReviewStep = isFinalWizardStep;
     const isPhotoStep = workflowStep === 0;
     const isSpaceStep = workflowStep === 1;
-    const isPaintSelectionStep = isPaintService && workflowStep === 2;
-    const isFloorSelectionStep = isFloorService && workflowStep === 2;
     const isStyleStep = workflowStep === 2;
-    const isServiceFinishStep = (isPaintService || isFloorService) && workflowStep === 3;
-    const isLeanGenerateStep = isLeanGenerationService && workflowStep === 3;
     const isTabbedWorkspaceRoute = pathname === "/workspace";
   const displayedSelectedImage = selectedImage;
   const hasVisiblePhoto = Boolean(displayedSelectedImage);
@@ -4072,17 +4211,6 @@ export default function WorkspaceScreen() {
     };
     const showContinueBar = !isCustomPromptViewOpen;
     const continueButtonVisible = true;
-    const continueLabel = isGenerating
-      ? "Generating Design..."
-      : isPhotoStep
-        ? "Continue \u2192"
-        : isSpaceStep && selectedRoom
-          ? `Continue with ${selectedRoom} \u2192`
-          : isStyleStep && selectedStyleDisplayName
-            ? `Continue with ${selectedStyleDisplayName} \u2192`
-            : isGenerationReviewStep && !hasGenerationCredits
-              ? "Get More Credits \u2192"
-              : "Generate My Design \u2192";
     const stepButtonLabel = isPhotoStep
       ? selectedImage
         ? "Continue \u2192"
@@ -6064,7 +6192,8 @@ export default function WorkspaceScreen() {
             <View style={{ minHeight: 44, alignItems: "center", justifyContent: "center" }}>
               <View style={{ position: "absolute", left: 0, top: 0, bottom: 0, justifyContent: "center" }}>
                 <View className="rounded-full border border-white/10 bg-zinc-950/90 px-4 py-2" style={{ borderWidth: 0.5 }}>
-                  <Text className="text-sm font-semibold text-white" style={fonts.semibold}>{"Diamonds " + creditBalance}</Text>
+                  <Text className="text-sm font-semibold text-white" style={fonts.semibold}>{usageBadgeLabel}</Text>
+                  {usageBadgeDetail ? <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{usageBadgeDetail}</Text> : null}
                 </View>
               </View>
               <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.3, textAlign: "left" }}>
@@ -6259,7 +6388,8 @@ export default function WorkspaceScreen() {
         <View className="px-5" style={{ paddingTop: Math.max(insets.top + 10, 20) }}>
           <View className="flex-row items-center justify-between">
             <View className="rounded-full border border-white/10 bg-zinc-950 px-4 py-2" style={{ borderWidth: 0.5 }}>
-              <Text className="text-sm font-semibold text-white" style={fonts.semibold}>{"Diamonds " + creditBalance}</Text>
+                <Text className="text-sm font-semibold text-white" style={fonts.semibold}>{usageBadgeLabel}</Text>
+                {usageBadgeDetail ? <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{usageBadgeDetail}</Text> : null}
             </View>
             <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Your Design</Text>
             <LuxPressable
@@ -6284,7 +6414,7 @@ export default function WorkspaceScreen() {
         >
           <MotiView from={{ opacity: 0, scale: 0.96, translateY: 18 }} animate={{ opacity: 1, scale: 1, translateY: 0 }} transition={LUX_SPRING}>
             <View className="overflow-hidden rounded-[34px] border border-white/10 bg-zinc-950" style={{ borderWidth: 0.5 }}>
-              <View ref={imageContainerRef} collapsable={false} onLayout={handleSliderLayout} className="relative h-[460px] w-full">
+              <View className="relative h-[460px] w-full">
                 {showSliderComparison && beforeImageSource && editorImageSource ? (
                   <MotiView
                     key={editorImageUrl}
@@ -6293,49 +6423,28 @@ export default function WorkspaceScreen() {
                     transition={LUX_SPRING}
                     className="h-full w-full"
                   >
-                    <Image source={beforeImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
-                    <Animated.View
-                      style={[
-                        {
-                          position: "absolute",
-                          top: 0,
-                          bottom: 0,
-                          left: 0,
-                          overflow: "hidden",
-                        },
-                        afterImageStyle,
-                      ]}
+                    <BeforeAfterSlider
+                      afterSource={editorImageSource}
+                      beforeSource={beforeImageSource}
+                      containerRef={imageContainerRef}
+                      onInteractionStart={() => setShowBeforeOnly(false)}
+                      sliderWidth={sliderWidth}
+                      sliderX={sliderX}
+                      style={{ width: "100%", height: "100%" }}
                     >
-                      <Image source={editorImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
-                    </Animated.View>
-                    <GestureDetector gesture={sliderGesture}>
-                      <Animated.View
-                        style={[
-                          {
-                            position: "absolute",
-                            top: 0,
-                            bottom: 0,
-                            width: 52,
-                            alignItems: "center",
-                            justifyContent: "center",
-                          },
-                          sliderBarStyle,
-                        ]}
-                      >
-                        <View
-                          style={{
-                            position: "absolute",
-                            top: 0,
-                            bottom: 0,
-                            width: 2,
-                            backgroundColor: "rgba(255,255,255,0.88)",
-                          }}
-                        />
-                        <View className="h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/60">
-                          <MoveHorizontal color="#ffffff" size={18} strokeWidth={2.2} />
+                      <View className="absolute inset-0 bg-black/10" />
+
+                      <View className="absolute left-4 right-4 top-4 flex-row items-center justify-between">
+                        <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
+                          <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>{editorStyleLabel}</Text>
                         </View>
-                      </Animated.View>
-                    </GestureDetector>
+                        <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
+                          <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>
+                            Drag to Compare
+                          </Text>
+                        </View>
+                      </View>
+                    </BeforeAfterSlider>
                   </MotiView>
                 ) : beforeImageSource ? (
                   <Image source={beforeImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
@@ -6346,18 +6455,21 @@ export default function WorkspaceScreen() {
                     <Sparkles color="#71717a" size={28} />
                   </View>
                 )}
-                <View className="absolute inset-0 bg-black/10" />
 
-                <View className="absolute left-4 right-4 top-4 flex-row items-center justify-between">
-                  <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
-                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>Before</Text>
+                {!showSliderComparison ? <View className="absolute inset-0 bg-black/10" /> : null}
+
+                {!showSliderComparison ? (
+                  <View className="absolute left-4 right-4 top-4 flex-row items-center justify-between">
+                    <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
+                      <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>Before</Text>
+                    </View>
+                    <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
+                      <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>
+                        {isEditorProcessing ? "Rendering" : "Preview"}
+                      </Text>
+                    </View>
                   </View>
-                  <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
-                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>
-                      {showSliderComparison ? "After" : isEditorProcessing ? "Rendering" : "Preview"}
-                    </Text>
-                  </View>
-                </View>
+                ) : null}
 
                 {isEditorProcessing ? (
                   <View

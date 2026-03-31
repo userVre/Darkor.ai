@@ -37,6 +37,8 @@ export function buildDefaultUserFields(args: {
     referralCount: 0,
     referredBy: undefined,
     subscriptionType: "free" as const,
+    subscriptionEntitlement: "free" as const,
+    subscriptionStartedAt: 0,
     subscriptionEnd: 0,
     imageLimit: FREE_IMAGE_LIMIT,
     imageGenerationCount: 0,

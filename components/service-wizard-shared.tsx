@@ -7,7 +7,7 @@ import { fonts } from "../styles/typography";
 import { spacing } from "../styles/spacing";
 import { dark as colors } from "@/styles/theme";
 
-import { DS, HAIRLINE, glowShadow } from "../lib/design-system";
+import { HAIRLINE, glowShadow } from "../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { LuxPressable } from "./lux-pressable";
 
@@ -25,7 +25,6 @@ type ServiceIntakeStepProps = {
   selectedImageUri?: string | null;
   onClearSelection?: () => void;
   onUploadPress: () => void;
-  onCameraPress?: () => void;
   onExamplePress: (example: ServiceExamplePhoto) => void;
 };
 
@@ -192,12 +191,7 @@ export function ServiceSelectionCard({
             </View>
           ) : null}
           <View style={[styles.selectionCopy, fullWidth ? styles.selectionCopyCentered : null]}>
-            <Text
-              style={[styles.selectionTitle, fullWidth ? styles.selectionTitleCentered : null]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.82}
-            >
+            <Text style={styles.selectionTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82}>
               {title}
             </Text>
           </View>
@@ -418,27 +412,6 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     maxWidth: 210,
   },
-  cameraButtonWrap: {
-    alignSelf: "center",
-  },
-  cameraButton: {
-    minHeight: 52,
-    paddingHorizontal: spacing.md,
-    borderRadius: DS.radius.pill,
-    borderWidth: HAIRLINE,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceHigh,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-  },
-  cameraText: {
-    color: colors.textPrimary,
-    fontSize: 15,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "700",
-  },
   examplesSection: {
     gap: spacing.md,
   },
@@ -545,7 +518,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
-  selectionTitleCentered: {},
   selectionGrid: {
     gap: spacing.md,
   },

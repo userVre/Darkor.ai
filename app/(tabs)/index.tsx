@@ -1,13 +1,18 @@
 import { useAuth } from "@clerk/expo";
+import { useQuery } from "convex/react";
+import { Asset } from "expo-asset";
 import { Gem, Settings } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { CreditLimitModal } from "../../components/credit-limit-modal";
 import { HomeToolsBottomNav } from "../../components/home-tools-bottom-nav";
 import { HomeToolCard, type HomeToolCardItem } from "../../components/home-tool-card";
+import { useWorkspaceDraft } from "../../components/workspace-context";
+import { FEATURED_TRY_IT_BY_ID } from "../../lib/featured-try-it";
+import { useViewerSession } from "../../components/viewer-session-context";
 import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
 import { fonts } from "../../styles/typography";
@@ -58,16 +63,97 @@ const TOOL_CARDS: HomeToolCardItem[] = [
 export default function HomeScreen() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
+  const {
+    setDraftAspectRatio,
+    setDraftFinish,
+    setDraftImage,
+    setDraftMode,
+    setDraftPalette,
+    setDraftPrompt,
+    setDraftRoom,
+    setDraftStyle,
+  } = useWorkspaceDraft();
+  const { anonymousId, isReady: viewerReady } = useViewerSession();
   const [isCreditModalVisible, setIsCreditModalVisible] = useState(false);
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
+  const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
+  const me = useQuery(
+    "users:me" as any,
+    viewerReady ? viewerArgs : "skip",
+  ) as {
+    credits?: number;
+    hasPaidAccess?: boolean;
+    subscriptionType?: "free" | "weekly" | "yearly";
+  } | null | undefined;
+  const creditBalance = viewerReady ? me?.credits ?? 3 : 3;
+  const hasPaidAccess = Boolean(me?.hasPaidAccess);
+  const usageBadgeLabel = hasPaidAccess
+    ? me?.subscriptionType === "yearly"
+      ? "Yearly Pro"
+      : "Weekly Pro"
+    : String(creditBalance);
 
-  const handleToolPress = (serviceParam: HomeToolCardItem["serviceParam"]) => {
-    if (!canCreateAsGuest) {
-      router.push({ pathname: "/sign-in", params: { returnTo: `/workspace?service=${serviceParam}` } });
-      return;
+  const openDesignFlowPaywall = (redirectTo: string) => {
+    router.push({
+      pathname: "/paywall",
+      params: {
+        source: "design-flow",
+        redirectTo,
+      },
+    } as any);
+  };
+
+  const prepareTryItDraft = useCallback(async (item: HomeToolCardItem) => {
+    const featuredExample = FEATURED_TRY_IT_BY_ID.get(item.id);
+    if (!featuredExample) {
+      return null;
     }
 
-    router.push({ pathname: "/workspace", params: { service: serviceParam } });
+    const asset = Asset.fromModule(featuredExample.imageSource);
+    await asset.downloadAsync();
+    const uri = asset.localUri ?? asset.uri;
+    if (!uri) {
+      throw new Error("The featured example image is unavailable right now.");
+    }
+
+    setDraftImage({ uri, label: featuredExample.room });
+    setDraftRoom(featuredExample.room);
+    setDraftStyle(featuredExample.style);
+    setDraftPalette(featuredExample.paletteId ?? null);
+    setDraftMode(featuredExample.modeId ?? null);
+    setDraftFinish(featuredExample.finishId ?? null);
+    setDraftPrompt(featuredExample.prompt);
+    setDraftAspectRatio(featuredExample.aspectRatioId);
+
+    return featuredExample;
+  }, [
+    setDraftAspectRatio,
+    setDraftFinish,
+    setDraftImage,
+    setDraftMode,
+    setDraftPalette,
+    setDraftPrompt,
+    setDraftRoom,
+    setDraftStyle,
+  ]);
+
+  const handleToolPress = async (item: HomeToolCardItem) => {
+    try {
+      triggerHaptic();
+      const featuredExample = await prepareTryItDraft(item);
+      const redirectTo = featuredExample
+        ? `/workspace?service=${item.serviceParam}&startStep=3&presetStyle=${encodeURIComponent(featuredExample.style)}&presetRoom=${encodeURIComponent(featuredExample.room)}`
+        : `/workspace?service=${item.serviceParam}`;
+
+      if (!canCreateAsGuest) {
+        router.push({ pathname: "/sign-in", params: { returnTo: redirectTo } });
+        return;
+      }
+
+      openDesignFlowPaywall(redirectTo);
+    } catch (error) {
+      Alert.alert("Try It unavailable", error instanceof Error ? error.message : "Please try again.");
+    }
   };
 
   const handleCreatePress = () => {
@@ -78,7 +164,7 @@ export default function HomeScreen() {
       return;
     }
 
-    router.navigate("/workspace");
+    openDesignFlowPaywall("/workspace");
   };
 
   const handleDiscoverPress = () => {
@@ -121,7 +207,7 @@ export default function HomeScreen() {
       <View pointerEvents="box-none" style={styles.headerOverlay}>
         <Pressable accessibilityRole="button" onPress={handleCreditsPress} style={styles.creditsBadge}>
           <Gem color="#FFFFFF" size={13} strokeWidth={2.2} />
-          <Text style={styles.creditsText}>3</Text>
+          <Text style={styles.creditsText}>{usageBadgeLabel}</Text>
         </Pressable>
 
         <Text style={styles.title}>Darkor AI</Text>

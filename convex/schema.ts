@@ -19,6 +19,8 @@ export default defineSchema({
     referralCount: optionalNumberLike,
     referredBy: v.optional(v.string()),
     subscriptionType: v.optional(v.union(v.literal("weekly"), v.literal("yearly"), v.literal("free"))),
+    subscriptionEntitlement: v.optional(v.union(v.literal("weekly_pro"), v.literal("annual_pro"), v.literal("free"))),
+    subscriptionStartedAt: optionalNumberLike,
     subscriptionEnd: optionalNumberLike,
     imageLimit: optionalNumberLike,
     imageGenerationCount: optionalNumberLike,

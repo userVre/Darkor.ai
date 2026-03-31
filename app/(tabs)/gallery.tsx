@@ -249,14 +249,14 @@ export default function GalleryScreen() {
         startStep: item.startStep,
         entrySource: "discover",
       } as const;
+      const search = new URLSearchParams();
+      for (const [key, value] of Object.entries(params)) {
+        if (typeof value === "string" && value.length > 0) {
+          search.set(key, value);
+        }
+      }
 
       if (!canCreateAsGuest) {
-        const search = new URLSearchParams();
-        for (const [key, value] of Object.entries(params)) {
-          if (typeof value === "string" && value.length > 0) {
-            search.set(key, value);
-          }
-        }
         router.push({ pathname: "/sign-in", params: { returnTo: `/wizard?${search.toString()}` } });
         return;
       }
@@ -264,9 +264,12 @@ export default function GalleryScreen() {
       setDraftRoom(item.spaceType);
       setDraftStyle(item.style);
       router.push({
-        pathname: "/wizard",
-        params,
-      });
+        pathname: "/paywall",
+        params: {
+          source: "design-flow",
+          redirectTo: `/wizard?${search.toString()}`,
+        },
+      } as any);
     },
     [canCreateAsGuest, router, setDraftRoom, setDraftStyle],
   );

@@ -1,7 +1,16 @@
 import { mutationGeneric, queryGeneric } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
-import { BillingPlan, buildSubscriptionPatch, deriveSubscriptionState, FREE_IMAGE_LIMIT, SubscriptionType, toFiniteNumber } from "./subscriptions";
+import {
+  BillingPlan,
+  buildSubscriptionPatch,
+  canUserGenerateState,
+  deriveSubscriptionState,
+  FREE_IMAGE_LIMIT,
+  SubscriptionEntitlement,
+  SubscriptionType,
+  toFiniteNumber,
+} from "./subscriptions";
 import {
   buildDefaultUserFields,
   ensureGuestUser,
@@ -57,14 +66,18 @@ function buildViewerResponse(user: any) {
     credits: state.remaining,
     plan: state.plan,
     subscriptionType: state.subscriptionType,
+    subscriptionEntitlement: state.subscriptionEntitlement,
+    subscriptionStartedAt: state.subscriptionStartedAt,
     subscriptionEnd: state.subscriptionEnd,
     imageLimit: state.limit,
     imageGenerationCount: state.imageGenerationCount,
     lastResetDate: state.lastResetDate,
+    generationResetAt: state.nextResetDate,
     imageGenerationLimit: state.limit,
     imagesRemaining: state.remaining,
     subscriptionActive: state.active,
     generationLimitReached: state.reachedLimit,
+    canGenerateNow: !state.blocked,
     generationStatusLabel: state.statusLabel,
     generationStatusMessage: state.statusMessage,
     hasPaidAccess: state.hasPaidAccess,
@@ -220,42 +233,79 @@ export const getByClerkIdInternal = queryGeneric({
   },
 });
 
+async function persistRevenueCatPlanForUser(
+  ctx: any,
+  user: any,
+  args: {
+    plan: string;
+    subscriptionType?: SubscriptionType;
+    subscriptionEntitlement?: SubscriptionEntitlement;
+    purchasedAt?: number;
+    subscriptionEnd?: number;
+  },
+) {
+  if (!user) {
+    throw new Error("No billing profile found.");
+  }
+
+  const now = Date.now();
+  const purchasedAt = toFiniteNumber(args.purchasedAt, now);
+  const nextPlan = args.plan === "trial" || args.plan === "pro" ? (args.plan as BillingPlan) : "free";
+  const nextSubscriptionType = (args.subscriptionType ?? (nextPlan === "free" ? "free" : user.subscriptionType ?? "free")) as SubscriptionType;
+  const subscriptionPatch = buildSubscriptionPatch({
+    plan: nextPlan,
+    subscriptionType: nextSubscriptionType,
+    subscriptionEntitlement: args.subscriptionEntitlement,
+    purchasedAt,
+    subscriptionEnd: args.subscriptionEnd,
+    previousSubscriptionType: user.subscriptionType,
+    previousSubscriptionEntitlement: user.subscriptionEntitlement,
+    previousSubscriptionStart: user.subscriptionStartedAt,
+  });
+
+  await ctx.db.patch(user._id, omitUndefined({
+    plan: subscriptionPatch.plan,
+    subscriptionType: subscriptionPatch.subscriptionType,
+    subscriptionEntitlement: subscriptionPatch.subscriptionEntitlement,
+    subscriptionStartedAt: subscriptionPatch.subscriptionStartedAt,
+    subscriptionEnd: subscriptionPatch.subscriptionEnd,
+    imageLimit: subscriptionPatch.imageLimit,
+    imageGenerationCount: subscriptionPatch.imageGenerationCount,
+    lastResetDate: subscriptionPatch.lastResetDate,
+  }));
+
+  return subscriptionPatch;
+}
+
 export const setPlanFromRevenueCat = mutationGeneric({
   args: {
     plan: v.string(),
     subscriptionType: v.optional(v.union(v.literal("weekly"), v.literal("yearly"), v.literal("free"))),
+    subscriptionEntitlement: v.optional(v.union(v.literal("weekly_pro"), v.literal("annual_pro"), v.literal("free"))),
     purchasedAt: v.optional(v.number()),
     subscriptionEnd: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { identity, user } = await getCurrentUser(ctx);
-    if (!user) {
-      throw new Error("No billing profile found.");
-    }
-
-    const now = Date.now();
-    const purchasedAt = toFiniteNumber(args.purchasedAt, now);
-    const nextPlan = args.plan === "trial" || args.plan === "pro" ? (args.plan as BillingPlan) : "free";
-    const nextSubscriptionType = (args.subscriptionType ?? (nextPlan === "free" ? "free" : user.subscriptionType ?? "free")) as SubscriptionType;
-    const subscriptionPatch = buildSubscriptionPatch({
-      plan: nextPlan,
-      subscriptionType: nextSubscriptionType,
-      purchasedAt,
-      subscriptionEnd: args.subscriptionEnd,
-      previousSubscriptionType: user.subscriptionType,
-      previousSubscriptionEnd: user.subscriptionEnd,
-    });
-
-    await ctx.db.patch(user._id, omitUndefined({
-      plan: subscriptionPatch.plan,
-      subscriptionType: subscriptionPatch.subscriptionType,
-      subscriptionEnd: subscriptionPatch.subscriptionEnd,
-      imageLimit: subscriptionPatch.imageLimit,
-      imageGenerationCount: subscriptionPatch.imageGenerationCount,
-      lastResetDate: subscriptionPatch.lastResetDate,
-    }));
+    await persistRevenueCatPlanForUser(ctx, user, args);
 
     return { ok: true, clerkId: identity.subject };
+  },
+});
+
+export const setViewerPlanFromRevenueCat = mutationGeneric({
+  args: {
+    anonymousId: v.optional(v.string()),
+    plan: v.string(),
+    subscriptionType: v.optional(v.union(v.literal("weekly"), v.literal("yearly"), v.literal("free"))),
+    subscriptionEntitlement: v.optional(v.union(v.literal("weekly_pro"), v.literal("annual_pro"), v.literal("free"))),
+    purchasedAt: v.optional(v.number()),
+    subscriptionEnd: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await ensureViewerUser(ctx, args.anonymousId);
+    await persistRevenueCatPlanForUser(ctx, viewer.user, args);
+    return { ok: true, viewerKind: viewer.kind };
   },
 });
 
@@ -264,6 +314,7 @@ export const syncRevenueCatSubscriptionInternal = mutationGeneric({
     clerkId: v.string(),
     plan: v.union(v.literal("free"), v.literal("trial"), v.literal("pro")),
     subscriptionType: v.union(v.literal("weekly"), v.literal("yearly"), v.literal("free")),
+    subscriptionEntitlement: v.optional(v.union(v.literal("weekly_pro"), v.literal("annual_pro"), v.literal("free"))),
     purchasedAt: v.optional(v.number()),
     subscriptionEnd: v.optional(v.number()),
     internalToken: v.optional(v.string()),
@@ -282,6 +333,7 @@ export const syncRevenueCatSubscriptionInternal = mutationGeneric({
       const initialSubscription = buildSubscriptionPatch({
         plan: args.plan,
         subscriptionType: args.subscriptionType,
+        subscriptionEntitlement: args.subscriptionEntitlement,
         purchasedAt,
         subscriptionEnd: args.subscriptionEnd,
       });
@@ -293,6 +345,8 @@ export const syncRevenueCatSubscriptionInternal = mutationGeneric({
         }),
         plan: initialSubscription.plan,
         subscriptionType: initialSubscription.subscriptionType,
+        subscriptionEntitlement: initialSubscription.subscriptionEntitlement,
+        subscriptionStartedAt: initialSubscription.subscriptionStartedAt,
         subscriptionEnd: initialSubscription.subscriptionEnd,
         imageLimit: initialSubscription.imageLimit,
         imageGenerationCount: initialSubscription.imageGenerationCount ?? 0,
@@ -304,10 +358,12 @@ export const syncRevenueCatSubscriptionInternal = mutationGeneric({
     const subscriptionPatch = buildSubscriptionPatch({
       plan: args.plan,
       subscriptionType: args.subscriptionType,
+      subscriptionEntitlement: args.subscriptionEntitlement,
       purchasedAt,
       subscriptionEnd: args.subscriptionEnd,
       previousSubscriptionType: existing.subscriptionType,
-      previousSubscriptionEnd: existing.subscriptionEnd,
+      previousSubscriptionEntitlement: existing.subscriptionEntitlement,
+      previousSubscriptionStart: existing.subscriptionStartedAt,
     });
 
     await ctx.db.patch(existing._id, omitUndefined(subscriptionPatch));
@@ -326,6 +382,31 @@ export const getGenerationStatus = queryGeneric({
       requireViewer: false,
     });
     return buildViewerResponse(viewer?.user ?? null);
+  },
+});
+
+export const canUserGenerate = queryGeneric({
+  args: {
+    anonymousId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await resolveViewer(ctx, {
+      anonymousId: args.anonymousId,
+      createGuest: false,
+      requireViewer: false,
+    });
+    if (!viewer?.user) {
+      return {
+        allowed: false,
+        reason: "paywall" as const,
+        shouldTriggerPaywall: true,
+        shouldShowLimitReached: false,
+        message: "Free limit reached. Upgrade to continue.",
+      };
+    }
+
+    const state = deriveSubscriptionState(viewer.user, Date.now());
+    return canUserGenerateState(state);
   },
 });
 
@@ -353,6 +434,8 @@ async function consumeAllowance(ctx: any, anonymousId?: string, ignoreCooldown?:
     lastResetDate: state.subscriptionType === "free" ? 0 : state.lastResetDate,
     ...(state.patch.plan ? { plan: state.patch.plan } : {}),
     ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
+    ...(state.patch.subscriptionEntitlement ? { subscriptionEntitlement: state.patch.subscriptionEntitlement } : {}),
+    ...(typeof state.patch.subscriptionStartedAt === "number" ? { subscriptionStartedAt: state.patch.subscriptionStartedAt } : {}),
     ...(typeof state.patch.subscriptionEnd === "number" ? { subscriptionEnd: state.patch.subscriptionEnd } : {}),
     ...(typeof state.patch.imageLimit === "number" ? { imageLimit: state.patch.imageLimit } : {}),
     ...(typeof state.patch.lastResetDate === "number" ? { lastResetDate: state.patch.lastResetDate } : {}),
@@ -404,12 +487,19 @@ export const releaseGenerationAllowance = mutationGeneric({
     const currentCount = toFiniteNumber(user.generationCount);
     const nextGenerationCount = Math.max(currentCount - 1, 0);
 
-    await ctx.db.patch(user._id, {
-      credits: state.subscriptionType === "free" ? Math.min(state.credits + 1, FREE_IMAGE_LIMIT) : state.credits,
-      imageLimit: state.limit,
-      imageGenerationCount: nextImageGenerationCount,
-      generationCount: nextGenerationCount,
-    });
+  await ctx.db.patch(user._id, {
+    credits: state.subscriptionType === "free" ? Math.min(state.credits + 1, FREE_IMAGE_LIMIT) : state.credits,
+    imageLimit: state.limit,
+    imageGenerationCount: nextImageGenerationCount,
+    generationCount: nextGenerationCount,
+    ...(state.patch.plan ? { plan: state.patch.plan } : {}),
+    ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
+    ...(state.patch.subscriptionEntitlement ? { subscriptionEntitlement: state.patch.subscriptionEntitlement } : {}),
+    ...(typeof state.patch.subscriptionStartedAt === "number" ? { subscriptionStartedAt: state.patch.subscriptionStartedAt } : {}),
+    ...(typeof state.patch.subscriptionEnd === "number" ? { subscriptionEnd: state.patch.subscriptionEnd } : {}),
+    ...(typeof state.patch.imageLimit === "number" ? { imageLimit: state.patch.imageLimit } : {}),
+    ...(typeof state.patch.lastResetDate === "number" ? { lastResetDate: state.patch.lastResetDate } : {}),
+  });
 
     const remaining =
       state.subscriptionType === "free" ? Math.min(state.credits + 1, FREE_IMAGE_LIMIT) : Math.max(state.limit - nextImageGenerationCount, 0);

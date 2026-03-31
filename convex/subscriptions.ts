@@ -3,20 +3,28 @@ export const WEEK_MS = 7 * DAY_MS;
 export const YEAR_MS = 365 * DAY_MS;
 export const MONTHLY_RESET_MS = 30 * DAY_MS;
 export const FREE_IMAGE_LIMIT = 3;
-export const WEEKLY_IMAGE_LIMIT = 15;
-export const YEARLY_MONTHLY_IMAGE_LIMIT = 60;
+export const WEEKLY_IMAGE_LIMIT = 20;
+export const YEARLY_MONTHLY_IMAGE_LIMIT = 80;
 
 export type SubscriptionType = "weekly" | "yearly" | "free";
+export type SubscriptionEntitlement = "weekly_pro" | "annual_pro" | "free";
 export type BillingPlan = "free" | "trial" | "pro";
 
 type SubscriptionLikeUser = {
   plan?: string;
   subscriptionType?: string;
+  subscriptionEntitlement?: string;
+  subscriptionStartedAt?: number | bigint;
   subscriptionEnd?: number | bigint;
   credits?: number | bigint;
   imageLimit?: number | bigint;
   imageGenerationCount?: number | bigint;
   lastResetDate?: number | bigint;
+};
+
+type PeriodWindow = {
+  start: number;
+  end: number;
 };
 
 export function toFiniteNumber(value: number | bigint | null | undefined, fallback = 0) {
@@ -37,11 +45,99 @@ function normalizeSubscriptionType(input?: string | null): SubscriptionType {
   return "free";
 }
 
+function normalizeSubscriptionEntitlement(input?: string | null): SubscriptionEntitlement {
+  if (input === "weekly_pro" || input === "annual_pro") {
+    return input;
+  }
+  return "free";
+}
+
 function normalizePlan(input?: string | null): BillingPlan {
   if (input === "trial" || input === "pro") {
     return input;
   }
   return "free";
+}
+
+function getDaysInUtcMonth(year: number, monthIndex: number) {
+  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+}
+
+function buildMonthlyAnniversary(anchor: number, monthOffset: number) {
+  const anchorDate = new Date(anchor);
+  const anchorYear = anchorDate.getUTCFullYear();
+  const anchorMonth = anchorDate.getUTCMonth();
+  const absoluteMonth = anchorMonth + monthOffset;
+  const targetYear = anchorYear + Math.floor(absoluteMonth / 12);
+  const targetMonth = ((absoluteMonth % 12) + 12) % 12;
+  const targetDay = Math.min(anchorDate.getUTCDate(), getDaysInUtcMonth(targetYear, targetMonth));
+
+  return Date.UTC(
+    targetYear,
+    targetMonth,
+    targetDay,
+    anchorDate.getUTCHours(),
+    anchorDate.getUTCMinutes(),
+    anchorDate.getUTCSeconds(),
+    anchorDate.getUTCMilliseconds(),
+  );
+}
+
+function resolveWeeklyWindow(anchor: number, now: number): PeriodWindow {
+  if (now <= anchor) {
+    return {
+      start: anchor,
+      end: anchor + WEEK_MS,
+    };
+  }
+
+  const cycleIndex = Math.floor((now - anchor) / WEEK_MS);
+  const start = anchor + cycleIndex * WEEK_MS;
+  return {
+    start,
+    end: start + WEEK_MS,
+  };
+}
+
+function resolveMonthlyWindow(anchor: number, now: number): PeriodWindow {
+  let monthOffset = 0;
+  let start = anchor;
+  let end = buildMonthlyAnniversary(anchor, 1);
+
+  while (end <= now && monthOffset < 36) {
+    monthOffset += 1;
+    start = end;
+    end = buildMonthlyAnniversary(anchor, monthOffset + 1);
+  }
+
+  return {
+    start,
+    end,
+  };
+}
+
+function resolveSubscriptionWindow(subscriptionType: SubscriptionType, anchor: number, now: number) {
+  if (subscriptionType === "weekly") {
+    return resolveWeeklyWindow(anchor, now);
+  }
+  if (subscriptionType === "yearly") {
+    return resolveMonthlyWindow(anchor, now);
+  }
+  return null;
+}
+
+function getSubscriptionAnchor(user: SubscriptionLikeUser, now: number) {
+  const startedAt = toFiniteNumber(user.subscriptionStartedAt);
+  if (startedAt > 0) {
+    return startedAt;
+  }
+
+  const lastResetDate = toFiniteNumber(user.lastResetDate);
+  if (lastResetDate > 0) {
+    return lastResetDate;
+  }
+
+  return now;
 }
 
 export function getGenerationLimit(subscriptionType: SubscriptionType) {
@@ -57,9 +153,49 @@ export function getSubscriptionEndForType(subscriptionType: SubscriptionType, pu
   return 0;
 }
 
+export function canUserGenerateState(state: {
+  active: boolean;
+  blocked: boolean;
+  hasPaidAccess: boolean;
+  reachedLimit: boolean;
+  remaining: number;
+  statusMessage: string;
+  subscriptionType: SubscriptionType;
+}) {
+  if (!state.blocked) {
+    return {
+      allowed: true,
+      reason: "ok" as const,
+      shouldTriggerPaywall: false,
+      shouldShowLimitReached: false,
+      message: state.statusMessage,
+    };
+  }
+
+  if (!state.hasPaidAccess) {
+    return {
+      allowed: false,
+      reason: "paywall" as const,
+      shouldTriggerPaywall: true,
+      shouldShowLimitReached: false,
+      message: state.remaining <= 0 ? "Free limit reached. Upgrade to continue." : state.statusMessage,
+    };
+  }
+
+  return {
+    allowed: false,
+    reason: state.reachedLimit ? ("limit_reached" as const) : ("inactive" as const),
+    shouldTriggerPaywall: false,
+    shouldShowLimitReached: true,
+    message: state.statusMessage,
+  };
+}
+
 export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number) {
   let plan = normalizePlan(user.plan);
   let subscriptionType = normalizeSubscriptionType(user.subscriptionType);
+  let subscriptionEntitlement = normalizeSubscriptionEntitlement(user.subscriptionEntitlement);
+  let subscriptionStartedAt = getSubscriptionAnchor(user, now);
   let subscriptionEnd = toFiniteNumber(user.subscriptionEnd);
   let credits = Math.max(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), 0);
   let imageLimit = toFiniteNumber(user.imageLimit, getGenerationLimit(subscriptionType));
@@ -70,6 +206,12 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
 
   if (user.subscriptionType !== subscriptionType) {
     patch.subscriptionType = subscriptionType;
+  }
+  if (user.subscriptionEntitlement !== subscriptionEntitlement) {
+    patch.subscriptionEntitlement = subscriptionEntitlement;
+  }
+  if (typeof user.subscriptionStartedAt !== "number") {
+    patch.subscriptionStartedAt = subscriptionStartedAt;
   }
   if (typeof user.subscriptionEnd !== "number") {
     patch.subscriptionEnd = subscriptionEnd;
@@ -90,45 +232,102 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
   const expired = subscriptionType !== "free" && subscriptionEnd > 0 && now >= subscriptionEnd;
   if (expired) {
     subscriptionType = "free";
+    subscriptionEntitlement = "free";
+    subscriptionStartedAt = 0;
     subscriptionEnd = 0;
     imageLimit = FREE_IMAGE_LIMIT;
     imageGenerationCount = 0;
     lastResetDate = 0;
     plan = "free";
     patch.subscriptionType = "free";
+    patch.subscriptionEntitlement = "free";
+    patch.subscriptionStartedAt = 0;
     patch.subscriptionEnd = 0;
     patch.imageLimit = FREE_IMAGE_LIMIT;
     patch.imageGenerationCount = 0;
     patch.lastResetDate = 0;
     patch.plan = "free";
-  } else if (subscriptionType === "yearly") {
-    imageLimit = YEARLY_MONTHLY_IMAGE_LIMIT;
+  } else if (subscriptionType === "weekly" || subscriptionType === "yearly") {
+    const expectedEntitlement = subscriptionType === "weekly" ? "weekly_pro" : "annual_pro";
+    imageLimit = getGenerationLimit(subscriptionType);
+    subscriptionStartedAt = getSubscriptionAnchor(user, now);
+    if (subscriptionEntitlement !== expectedEntitlement) {
+      subscriptionEntitlement = expectedEntitlement;
+      patch.subscriptionEntitlement = expectedEntitlement;
+    }
+    if (toFiniteNumber(user.subscriptionStartedAt) !== subscriptionStartedAt) {
+      patch.subscriptionStartedAt = subscriptionStartedAt;
+    }
     if (user.imageLimit !== imageLimit) {
       patch.imageLimit = imageLimit;
     }
-    if (lastResetDate <= 0) {
-      lastResetDate = now;
-      patch.lastResetDate = now;
-    }
-    if (now - lastResetDate >= MONTHLY_RESET_MS) {
-      imageGenerationCount = 0;
-      lastResetDate = now;
-      patch.imageGenerationCount = 0;
-      patch.lastResetDate = now;
-    }
-  } else if (subscriptionType === "weekly") {
-    imageLimit = WEEKLY_IMAGE_LIMIT;
-    if (user.imageLimit !== imageLimit) {
-      patch.imageLimit = imageLimit;
-    }
-    if (lastResetDate <= 0) {
-      lastResetDate = now;
-      patch.lastResetDate = now;
+
+    const window = resolveSubscriptionWindow(subscriptionType, subscriptionStartedAt, now);
+    const nextResetDate = window ? Math.min(window.end, subscriptionEnd || window.end) : 0;
+    if (window) {
+      const shouldResetCounter = window.start > 0 && Math.abs(lastResetDate - window.start) > 1000;
+      lastResetDate = window.start;
+      if (shouldResetCounter) {
+        imageGenerationCount = 0;
+        patch.imageGenerationCount = 0;
+      }
+      if (toFiniteNumber(user.lastResetDate) !== lastResetDate) {
+        patch.lastResetDate = lastResetDate;
+      }
+
+      const active = subscriptionEnd > now;
+      const remaining = active ? Math.max(imageLimit - imageGenerationCount, 0) : 0;
+      const reachedLimit = active && imageGenerationCount >= imageLimit;
+      const statusLabel =
+        subscriptionType === "weekly"
+          ? `${remaining} / ${imageLimit} generations left this week`
+          : `${remaining} / ${imageLimit} generations left this month`;
+      const statusMessage = !active
+        ? "Plan expired. Upgrade or renew to continue."
+        : reachedLimit
+          ? `Limit Reached - ${statusLabel}`
+          : statusLabel;
+      const hasPaidAccess = active;
+
+      return {
+        plan,
+        credits,
+        subscriptionType,
+        subscriptionEntitlement,
+        subscriptionStartedAt,
+        subscriptionEnd,
+        imageLimit,
+        imageGenerationCount,
+        lastResetDate,
+        nextResetDate,
+        limit: imageLimit,
+        remaining,
+        active,
+        expired,
+        reachedLimit,
+        blocked: !active || reachedLimit,
+        statusLabel,
+        statusMessage,
+        hasPaidAccess,
+        canExport4k: hasPaidAccess,
+        canRemoveWatermark: hasPaidAccess,
+        canVirtualStage: hasPaidAccess,
+        canEditDesigns: hasPaidAccess,
+        patch,
+      };
     }
   } else {
+    subscriptionEntitlement = "free";
+    subscriptionStartedAt = 0;
     imageLimit = FREE_IMAGE_LIMIT;
     if (user.imageLimit !== imageLimit) {
       patch.imageLimit = imageLimit;
+    }
+    if (user.subscriptionEntitlement !== "free") {
+      patch.subscriptionEntitlement = "free";
+    }
+    if (toFiniteNumber(user.subscriptionStartedAt) !== 0) {
+      patch.subscriptionStartedAt = 0;
     }
     if (credits > FREE_IMAGE_LIMIT) {
       credits = FREE_IMAGE_LIMIT;
@@ -136,54 +335,35 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
     }
   }
 
-  const active = subscriptionType !== "free" && subscriptionEnd > now;
-  const limit = imageLimit;
-  const remaining = subscriptionType === "free"
-    ? Math.max(credits, 0)
-    : active
-      ? Math.max(limit - imageGenerationCount, 0)
-      : 0;
-  const reachedLimit = subscriptionType === "free"
-    ? remaining <= 0
-    : active && limit > 0 && imageGenerationCount >= limit;
-  const blocked = subscriptionType === "free" ? reachedLimit : !active || reachedLimit;
-  const statusLabel = subscriptionType === "weekly"
-    ? `${remaining} / ${limit} images left`
-    : subscriptionType === "yearly"
-      ? `${remaining} / ${limit} this month`
-      : `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`;
-  const statusMessage = subscriptionType === "free"
-    ? reachedLimit
-      ? "Free limit reached. Upgrade to continue."
-      : statusLabel
-    : !active
-      ? "Plan expired. Upgrade or renew to continue."
-      : reachedLimit
-        ? `Limit Reached - ${statusLabel}`
-        : statusLabel;
-  const hasPaidAccess = active && subscriptionType !== "free";
+  const remaining = Math.max(credits, 0);
+  const reachedLimit = remaining <= 0;
+  const statusLabel = `${remaining} / ${FREE_IMAGE_LIMIT} Diamonds left`;
+  const statusMessage = reachedLimit ? "Free limit reached. Upgrade to continue." : statusLabel;
 
   return {
     plan,
     credits,
-    subscriptionType,
-    subscriptionEnd,
+    subscriptionType: "free" as const,
+    subscriptionEntitlement: "free" as const,
+    subscriptionStartedAt: 0,
+    subscriptionEnd: 0,
     imageLimit,
     imageGenerationCount,
-    lastResetDate,
-    limit,
+    lastResetDate: 0,
+    nextResetDate: 0,
+    limit: imageLimit,
     remaining,
-    active,
+    active: false,
     expired,
     reachedLimit,
-    blocked,
+    blocked: reachedLimit,
     statusLabel,
     statusMessage,
-    hasPaidAccess,
-    canExport4k: hasPaidAccess,
-    canRemoveWatermark: hasPaidAccess,
-    canVirtualStage: hasPaidAccess,
-    canEditDesigns: hasPaidAccess,
+    hasPaidAccess: false,
+    canExport4k: false,
+    canRemoveWatermark: false,
+    canVirtualStage: false,
+    canEditDesigns: false,
     patch,
   };
 }
@@ -191,24 +371,40 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
 export function buildSubscriptionPatch(args: {
   plan: BillingPlan;
   subscriptionType: SubscriptionType;
+  subscriptionEntitlement?: SubscriptionEntitlement;
   purchasedAt: number;
   subscriptionEnd?: number | bigint;
   previousSubscriptionType?: string;
-  previousSubscriptionEnd?: number | bigint;
+  previousSubscriptionEntitlement?: string;
+  previousSubscriptionStart?: number | bigint;
 }) {
-  const nextEnd = args.subscriptionType === "free"
-    ? 0
-    : args.subscriptionEnd !== undefined && args.subscriptionEnd !== null
-      ? toFiniteNumber(args.subscriptionEnd)
-      : getSubscriptionEndForType(args.subscriptionType, args.purchasedAt);
+  const nextEntitlement =
+    args.subscriptionType === "weekly"
+      ? "weekly_pro"
+      : args.subscriptionType === "yearly"
+        ? "annual_pro"
+        : "free";
+  const nextEnd =
+    args.subscriptionType === "free"
+      ? 0
+      : args.subscriptionEnd !== undefined && args.subscriptionEnd !== null
+        ? toFiniteNumber(args.subscriptionEnd)
+        : getSubscriptionEndForType(args.subscriptionType, args.purchasedAt);
   const previousType = normalizeSubscriptionType(args.previousSubscriptionType);
-  const previousEnd = toFiniteNumber(args.previousSubscriptionEnd);
-  const sameWindow = previousType === args.subscriptionType && previousEnd > 0 && nextEnd > 0 && Math.abs(previousEnd - nextEnd) < DAY_MS;
+  const previousEntitlement = normalizeSubscriptionEntitlement(args.previousSubscriptionEntitlement);
+  const previousStart = toFiniteNumber(args.previousSubscriptionStart);
+  const sameWindow =
+    previousType === args.subscriptionType
+    && previousEntitlement === nextEntitlement
+    && previousStart > 0
+    && Math.abs(previousStart - args.purchasedAt) < 60 * 60 * 1000;
 
   if (args.subscriptionType === "free") {
     return {
       plan: "free" as const,
       subscriptionType: "free" as const,
+      subscriptionEntitlement: "free" as const,
+      subscriptionStartedAt: 0,
       subscriptionEnd: 0,
       imageLimit: FREE_IMAGE_LIMIT,
       imageGenerationCount: 0,
@@ -219,6 +415,8 @@ export function buildSubscriptionPatch(args: {
   return {
     plan: args.plan,
     subscriptionType: args.subscriptionType,
+    subscriptionEntitlement: args.subscriptionEntitlement ?? nextEntitlement,
+    subscriptionStartedAt: args.purchasedAt,
     subscriptionEnd: nextEnd,
     imageLimit: getGenerationLimit(args.subscriptionType),
     imageGenerationCount: sameWindow ? undefined : 0,

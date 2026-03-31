@@ -4,6 +4,7 @@ import { X } from "lucide-react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 
+import { BeforeAfterSlider } from "./before-after-slider";
 import type { BoardItem } from "../lib/board";
 import { fonts } from "../styles/typography";
 
@@ -15,12 +16,20 @@ type BoardPreviewModalProps = {
 
 export function BoardPreviewModal({ item, visible, onClose }: BoardPreviewModalProps) {
   const translateY = useSharedValue(0);
+  const sliderX = useSharedValue(0);
+  const sliderWidth = useSharedValue(0);
+  const afterImageUri = item?.imageUri ?? undefined;
+  const beforeImageUri = item?.originalImageUri ?? undefined;
+  const previewImageUri = afterImageUri ?? beforeImageUri;
+  const hasComparison = Boolean(beforeImageUri && afterImageUri);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
 
   const panGesture = Gesture.Pan()
+    .activeOffsetY([12, 12])
+    .failOffsetX([-12, 12])
     .onUpdate((event) => {
       if (event.translationY > 0) {
         translateY.value = event.translationY;
@@ -45,7 +54,16 @@ export function BoardPreviewModal({ item, visible, onClose }: BoardPreviewModalP
       <View style={styles.overlay}>
         <GestureDetector gesture={panGesture}>
           <Animated.View style={[styles.content, animatedStyle]}>
-            <Image source={{ uri: item.imageUri }} style={styles.image} contentFit="contain" transition={120} />
+            {hasComparison && item.originalImageUri ? (
+              <BeforeAfterSlider
+                afterSource={{ uri: afterImageUri }}
+                beforeSource={{ uri: beforeImageUri }}
+                contentFit="contain"
+                sliderWidth={sliderWidth}
+                sliderX={sliderX}
+                style={styles.image}
+              />
+            ) : previewImageUri ? <Image source={{ uri: previewImageUri }} style={styles.image} contentFit="contain" transition={120} /> : <View style={styles.image} />}
           </Animated.View>
         </GestureDetector>
 
@@ -56,6 +74,7 @@ export function BoardPreviewModal({ item, visible, onClose }: BoardPreviewModalP
         <View style={styles.bottomBar}>
           <Text style={styles.styleName}>{item.styleName}</Text>
           <Text style={styles.roomType}>{item.roomType}</Text>
+          {hasComparison ? <Text style={styles.hint}>Drag to compare. Double-tap to reset.</Text> : null}
         </View>
       </View>
     </Modal>
@@ -104,5 +123,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 16,
     ...fonts.regular,
+  },
+  hint: {
+    marginTop: 8,
+    color: "rgba(255,255,255,0.68)",
+    fontSize: 12,
+    lineHeight: 16,
+    ...fonts.medium,
   },
 });

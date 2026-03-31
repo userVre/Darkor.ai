@@ -1,6 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Text, View } from "react-native";
-import { fonts } from "../styles/typography";
 import { spacing } from "../styles/spacing";
 
 import { LuxPressable } from "./lux-pressable";
@@ -51,5 +50,4 @@ export class AppErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
-
 

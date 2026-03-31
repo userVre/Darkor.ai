@@ -13,13 +13,13 @@ export type HomeToolCardItem = {
 
 type HomeToolCardProps = {
   item: HomeToolCardItem;
-  onPress: (serviceParam: HomeToolCardItem["serviceParam"]) => void;
+  onPress: (item: HomeToolCardItem) => void;
   style?: StyleProp<ViewStyle>;
 };
 
 export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
   const handlePress = () => {
-    onPress(item.serviceParam);
+    onPress(item);
   };
 
   return (

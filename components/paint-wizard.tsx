@@ -30,6 +30,7 @@ import { triggerHaptic } from "../lib/haptics";
 import { uploadLocalFileToCloud } from "../lib/native-upload";
 import { WALL_COLOR_OPTIONS } from "../lib/data";
 import { GENERATION_FAILED_TOAST } from "../lib/generation-errors";
+import { canUserGenerate as canUserGenerateNow } from "../lib/generation-access";
 import { runWithFriendlyRetry } from "../lib/generation-retry";
 import {
   GUEST_TESTING_STARTER_CREDITS,
@@ -60,6 +61,11 @@ type SelectedImage = {
 
 type MeResponse = {
   credits: number;
+  imagesRemaining?: number;
+  hasPaidAccess?: boolean;
+  subscriptionType?: "free" | "weekly" | "yearly";
+  generationStatusMessage?: string;
+  canGenerateNow?: boolean;
 };
 
 type ArchiveGeneration = {
@@ -182,6 +188,7 @@ function resolveContrastTextColor(hexColor: string) {
 }
 
 function clamp(value: number, min: number, max: number) {
+  "worklet";
   return Math.min(Math.max(value, min), max);
 }
 
@@ -310,21 +317,6 @@ function logAutoDetectFailure(error: unknown) {
   const message = error instanceof Error ? error.message : "Unknown auto-detect failure";
   console.log("[PaintWizard] Auto-detect failed", { message });
 }
-
-const BrushPreview = memo(function BrushPreview({ width }: { width: number }) {
-  return (
-    <View
-      style={{
-        width: Math.max(width, 16),
-        height: Math.max(width, 16),
-        borderRadius: 999,
-        backgroundColor: MASK_ACCENT,
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.18)",
-      }}
-    />
-  );
-});
 
 const FinishPreview = memo(function FinishPreview({ finishId }: { finishId: FinishOption["id"] }) {
   if (finishId === "matte") {
@@ -496,6 +488,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     selectedColorOption?.description ??
     (selectedColorValue ? "Custom wall tone selected from the precision color picker." : "Choose a wall color before continuing.");
   const availableCredits = viewerReady ? me?.credits ?? GUEST_TESTING_STARTER_CREDITS : GUEST_TESTING_STARTER_CREDITS;
+  const generationAccess = canUserGenerateNow(me);
   const canGenerate = Boolean(selectedImage && hasMask && selectedColorValue && !isGenerating);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
@@ -526,6 +519,8 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const intakeSubtext = selectedImage
     ? "Your photo is locked in. Next, brush the wall surfaces so the recolor stays precise around trim, furniture, and decor."
     : "Upload a room photo for precise wall recoloring.";
+  void intakeHeading;
+  void intakeSubtext;
   const canContinueFromSelection = Boolean(selectedColorValue && isColorConfirmed && isSurfaceConfirmed);
   const canContinueFromMask = hasMask && !isDetecting && !isAutoDetecting;
   const activeMaskTool = maskTool === "surface" ? "brush" : maskTool;
@@ -567,6 +562,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     if (!generation) return;
 
     if (generation.status === "ready" && generation.imageUrl) {
+      setGenerationId(null);
       setGeneratedImageUrl(generation.imageUrl);
       setIsGenerating(false);
       setIsCancellingGeneration(false);
@@ -580,6 +576,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     }
 
     if (generation.status === "failed") {
+      setGenerationId(null);
       setIsGenerating(false);
       setIsCancellingGeneration(false);
       if (generation.errorMessage === CANCELLED_GENERATION_MESSAGE) {
@@ -598,7 +595,25 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     }, DETECT_DURATION_MS);
   }, []);
 
+  const clearDetectTimer = useCallback(() => {
+    if (detectTimerRef.current) {
+      clearTimeout(detectTimerRef.current);
+      detectTimerRef.current = null;
+    }
+    setIsDetecting(false);
+  }, []);
+
+  const clearContinueTimer = useCallback(() => {
+    if (continueTimerRef.current) {
+      clearTimeout(continueTimerRef.current);
+      continueTimerRef.current = null;
+    }
+    setLoadingContinueStep(null);
+  }, []);
+
   const resetProject = useCallback(() => {
+    clearDetectTimer();
+    clearContinueTimer();
     setStep("intake");
     setMaskTool("brush");
     setSelectedImage(null);
@@ -623,7 +638,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       setIsColorConfirmed(false);
     }
     setSelectedFinishId(FINISH_OPTIONS[0].id);
-  }, [presetStyle, resetMaskDrawing]);
+  }, [clearContinueTimer, clearDetectTimer, presetStyle, resetMaskDrawing]);
 
   const handleClose = useCallback(() => {
     triggerHaptic();
@@ -666,6 +681,8 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
   const applySelectedImage = useCallback(
     (nextImage: SelectedImage) => {
+      clearDetectTimer();
+      clearContinueTimer();
       setMaskTool("brush");
       setSelectedImage(nextImage);
       setSelectedSurface("Auto");
@@ -680,21 +697,13 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       resetMaskDrawing({ resetBrush: true });
       setSelectedFinishId(FINISH_OPTIONS[0].id);
     },
-    [resetMaskDrawing],
+    [clearContinueTimer, clearDetectTimer, resetMaskDrawing],
   );
 
   const advanceToMaskStep = useCallback(() => {
     triggerHaptic();
     setStep("mask");
   }, []);
-
-  const handleContinueFromIntake = useCallback(() => {
-    if (!selectedImage) {
-      return;
-    }
-    triggerHaptic();
-    setStep("mask");
-  }, [selectedImage]);
 
   const runDeferredContinue = useCallback(
     (key: "intake" | "mask" | "colors", action: () => void) => {
@@ -710,32 +719,6 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     },
     [loadingContinueStep],
   );
-
-  const handleClearSelectedImage = useCallback(() => {
-    triggerHaptic();
-    setMaskTool("brush");
-    setSelectedImage(null);
-    setSelectedSurface("Auto");
-    setIsSurfaceConfirmed(false);
-    setGeneratedImageUrl(null);
-    setGenerationId(null);
-    setIsGenerating(false);
-    setIsAutoDetecting(false);
-    setDetectedSourceStorageId(null);
-    setIsCancellingGeneration(false);
-    setIsColorPickerOpen(false);
-    setIsSurfacePickerOpen(false);
-    resetMaskDrawing({ resetBrush: true });
-    if (typeof presetStyle === "string") {
-      const normalized = presetStyle.trim().toLowerCase();
-      const matched = WALL_COLOR_OPTIONS.find((option) => option.title.toLowerCase() === normalized);
-      setSelectedColorValue(matched?.value ?? null);
-      setIsColorConfirmed(Boolean(matched));
-    } else {
-      setSelectedColorValue(null);
-      setIsColorConfirmed(false);
-    }
-  }, [presetStyle, resetMaskDrawing]);
 
   const syncColorPickerDraft = useCallback((hue: number, saturation: number, value: number) => {
     const rgb = hsvToRgb(hue, saturation, value);
@@ -994,14 +977,19 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       return;
     }
 
-    if (availableCredits <= 0) {
-      if (!effectiveSignedIn) {
+    if (!generationAccess.allowed) {
+      if (generationAccess.reason === "paywall" && !effectiveSignedIn) {
         setAwaitingAuth(true);
         router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=paint" } });
         return;
       }
 
-      router.push("/paywall");
+      if (generationAccess.reason === "paywall") {
+        router.push("/paywall");
+        return;
+      }
+
+      showToast(generationAccess.message || "Limit Reached");
       return;
     }
 
@@ -1047,6 +1035,10 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       setIsGenerating(false);
       setStep("finish");
       const rawMessage = error instanceof Error ? error.message : "Please try again.";
+      if (rawMessage.toLowerCase().includes("limit reached")) {
+        showToast(rawMessage);
+        return;
+      }
       if (rawMessage === "Payment Required") {
         if (!effectiveSignedIn) {
           setAwaitingAuth(true);
@@ -1059,10 +1051,10 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       showToast(GENERATION_FAILED_TOAST);
     }
   }, [
-    anonymousId,
-    availableCredits,
     hasMask,
-    isSignedIn,
+    generationAccess.allowed,
+    generationAccess.message,
+    generationAccess.reason,
     router,
     selectedFinish.label,
     selectedImage,
@@ -1127,13 +1119,15 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
   const handleBack = useCallback(() => {
     triggerHaptic();
+    clearDetectTimer();
+    clearContinueTimer();
     if (step === "intake") return;
     if (step === "mask") return setStep("intake");
     if (step === "colors") return setStep("mask");
     if (step === "finish") return setStep("colors");
     if (step === "processing") return setStep("finish");
     if (step === "result") return setStep("finish");
-  }, [step]);
+  }, [clearContinueTimer, clearDetectTimer, step]);
 
   const colorPickerSquareGesture = useMemo(
     () =>
@@ -1925,7 +1919,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
           <View style={styles.resultRow}>
             <LuxPressable
-              onPress={() => setStep("mask")}
+              onPress={() => setStep("colors")}
               className={pointerClassName}
               style={{ flex: 1 }}
               glowColor="rgba(255,255,255,0.04)"
@@ -1938,7 +1932,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
             <LuxPressable
               onPress={() => {
                 resetDetection();
-                setStep("colors");
+                setStep("mask");
               }}
               className={pointerClassName}
               style={{ flex: 1 }}

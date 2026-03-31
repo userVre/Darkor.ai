@@ -1,12 +1,19 @@
 import { NativeModules, Platform } from "react-native";
 
 export const REVENUECAT_ENTITLEMENT = "pro";
+export const REVENUECAT_WEEKLY_PRO_ENTITLEMENT = "weekly_pro";
+export const REVENUECAT_ANNUAL_PRO_ENTITLEMENT = "annual_pro";
+export const REVENUECAT_ENTITLEMENTS = [
+  REVENUECAT_ANNUAL_PRO_ENTITLEMENT,
+  REVENUECAT_WEEKLY_PRO_ENTITLEMENT,
+] as const;
 
 export type RevenueCatCustomerInfo = import("react-native-purchases").CustomerInfo;
 export type RevenueCatPackage = import("react-native-purchases").PurchasesPackage;
 export type RevenueCatPurchases = (typeof import("react-native-purchases"))["default"];
 export type BillingPlan = "pro" | "trial";
 export type BillingDuration = "weekly" | "yearly";
+export type RevenueCatEntitlement = (typeof REVENUECAT_ENTITLEMENTS)[number] | "free";
 
 let purchasesClient: RevenueCatPurchases | null = null;
 let purchasesModulePromise: Promise<typeof import("react-native-purchases")> | null = null;
@@ -39,6 +46,10 @@ function normalizeHaystack(values: Array<string | null | undefined>) {
     .toLowerCase();
 }
 
+function normalizeToken(value?: string | null) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
 function getPackageHaystack(pkg?: RevenueCatPackage | null) {
   if (!pkg) return "";
   return normalizeHaystack([
@@ -61,8 +72,93 @@ function inferDurationFromHaystack(haystack: string): BillingDuration {
   return "weekly";
 }
 
-function getActiveEntitlement(info?: RevenueCatCustomerInfo | null) {
-  return Object.values((info?.entitlements?.active ?? {}) as Record<string, any>)[0] as any;
+function getDarkorEntitlementRecord(info?: RevenueCatCustomerInfo | null) {
+  const active = (info?.entitlements?.active ?? {}) as Record<string, any>;
+  const activeEntries = Object.entries(active);
+  if (activeEntries.length === 0) {
+    return null;
+  }
+
+  for (const entitlement of REVENUECAT_ENTITLEMENTS) {
+    const exact = active[entitlement];
+    if (exact) {
+      return {
+        entitlement,
+        record: exact,
+      } as const;
+    }
+  }
+
+  for (const [key, value] of activeEntries) {
+    const normalizedKey = normalizeToken(key);
+    if (normalizedKey === REVENUECAT_ANNUAL_PRO_ENTITLEMENT || normalizedKey === REVENUECAT_WEEKLY_PRO_ENTITLEMENT) {
+      return {
+        entitlement: normalizedKey as Exclude<RevenueCatEntitlement, "free">,
+        record: value,
+      } as const;
+    }
+  }
+
+  return null;
+}
+
+function parseRevenueCatDate(raw: unknown) {
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return raw;
+  }
+  if (typeof raw === "string") {
+    const asNumber = Number(raw);
+    if (Number.isFinite(asNumber)) {
+      return asNumber;
+    }
+    const parsed = Date.parse(raw);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+export function inferRevenueCatEntitlementFromCustomerInfo(info?: RevenueCatCustomerInfo | null): RevenueCatEntitlement {
+  return getDarkorEntitlementRecord(info)?.entitlement ?? "free";
+}
+
+export function resolveRevenueCatSubscription(info?: RevenueCatCustomerInfo | null): {
+  hasSubscription: boolean;
+  entitlement: RevenueCatEntitlement;
+  plan: "pro" | "free";
+  subscriptionType: BillingDuration | "free";
+  purchasedAt: number | null;
+  subscriptionEnd: number | null;
+} {
+  const active = getDarkorEntitlementRecord(info);
+  const entitlement: RevenueCatEntitlement = active?.entitlement ?? "free";
+  const hasSubscription = Boolean(active);
+  const purchasedAt = active
+    ? parseRevenueCatDate(
+        active.record?.latestPurchaseDateMillis
+        ?? active.record?.originalPurchaseDateMillis
+        ?? active.record?.latestPurchaseDate
+        ?? active.record?.originalPurchaseDate,
+      )
+    : null;
+  const subscriptionEnd = active
+    ? parseRevenueCatDate(active.record?.expirationDateMillis ?? active.record?.expirationDate)
+    : null;
+
+  return {
+    hasSubscription,
+    entitlement,
+    plan: hasSubscription ? ("pro" as const) : ("free" as const),
+    subscriptionType:
+      entitlement === REVENUECAT_ANNUAL_PRO_ENTITLEMENT
+        ? ("yearly" as const)
+        : entitlement === REVENUECAT_WEEKLY_PRO_ENTITLEMENT
+          ? ("weekly" as const)
+          : ("free" as const),
+    purchasedAt,
+    subscriptionEnd,
+  };
 }
 
 export function getRevenueCatApiKey() {
@@ -102,9 +198,7 @@ export function getRevenueCatClient() {
 }
 
 export function hasActiveSubscription(info?: RevenueCatCustomerInfo | null) {
-  if (!info) return false;
-  if ((info.activeSubscriptions?.length ?? 0) > 0) return true;
-  return Object.keys(info.entitlements?.active ?? {}).length > 0;
+  return resolveRevenueCatSubscription(info).hasSubscription;
 }
 
 export function inferPlanFromRevenueCat(input?: {
@@ -132,14 +226,7 @@ export function inferPlanFromRevenueCat(input?: {
 }
 
 export function inferPlanFromCustomerInfo(info?: RevenueCatCustomerInfo | null) {
-  if (!info) return "pro" as const;
-
-  const activeEntitlement = getActiveEntitlement(info);
-  return inferPlanFromRevenueCat({
-    activeSubscriptions: Array.isArray(info.activeSubscriptions) ? info.activeSubscriptions : [],
-    productIdentifier: activeEntitlement?.productIdentifier,
-    entitlementPeriodType: activeEntitlement?.periodType,
-  });
+  return resolveRevenueCatSubscription(info).plan;
 }
 
 export function inferBillingDurationFromPackage(pkg?: RevenueCatPackage | null) {
@@ -147,53 +234,15 @@ export function inferBillingDurationFromPackage(pkg?: RevenueCatPackage | null) 
 }
 
 export function inferBillingDurationFromCustomerInfo(info?: RevenueCatCustomerInfo | null) {
-  const activeEntitlement = getActiveEntitlement(info);
-  const haystack = normalizeHaystack([
-    activeEntitlement?.productIdentifier,
-    ...(Array.isArray(info?.activeSubscriptions) ? info?.activeSubscriptions : []),
-  ]);
-  return inferDurationFromHaystack(haystack);
+  return resolveRevenueCatSubscription(info).subscriptionType;
 }
 
 export function inferSubscriptionEndFromCustomerInfo(info?: RevenueCatCustomerInfo | null) {
-  const activeEntitlement = getActiveEntitlement(info);
-  const raw = activeEntitlement?.expirationDateMillis ?? activeEntitlement?.expirationDate;
-  if (typeof raw === "number") {
-    return raw;
-  }
-  if (typeof raw === "string") {
-    const asNumber = Number(raw);
-    if (Number.isFinite(asNumber)) {
-      return asNumber;
-    }
-    const parsed = Date.parse(raw);
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
-  }
-  return null;
+  return resolveRevenueCatSubscription(info).subscriptionEnd;
 }
 
 export function inferPurchaseDateFromCustomerInfo(info?: RevenueCatCustomerInfo | null) {
-  const activeEntitlement = getActiveEntitlement(info);
-  const raw = activeEntitlement?.latestPurchaseDateMillis
-    ?? activeEntitlement?.originalPurchaseDateMillis
-    ?? activeEntitlement?.latestPurchaseDate
-    ?? activeEntitlement?.originalPurchaseDate;
-  if (typeof raw === "number") {
-    return raw;
-  }
-  if (typeof raw === "string") {
-    const asNumber = Number(raw);
-    if (Number.isFinite(asNumber)) {
-      return asNumber;
-    }
-    const parsed = Date.parse(raw);
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
-  }
-  return null;
+  return resolveRevenueCatSubscription(info).purchasedAt;
 }
 
 export function findRevenueCatPackage(packages: RevenueCatPackage[], duration: BillingDuration) {

@@ -1,5 +1,4 @@
 import {
-  internalActionGeneric,
   internalMutationGeneric,
   mutationGeneric,
   queryGeneric,
@@ -8,7 +7,7 @@ import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { buildDesignPrompt as buildAIDesignPrompt, normalizeAspectRatio as normalizeAIAspectRatio } from "./ai";
-import { deriveSubscriptionState, FREE_IMAGE_LIMIT, toFiniteNumber } from "./subscriptions";
+import { canUserGenerateState, deriveSubscriptionState, FREE_IMAGE_LIMIT, toFiniteNumber } from "./subscriptions";
 import {
   buildDefaultUserFields,
   ensureGuestUser,
@@ -17,12 +16,7 @@ import {
   resolveViewer,
 } from "./viewer";
 
-const GEMINI_MODEL = "gemini-3.1-flash-image-preview";
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-const PRO_MIN_DELAY_MS = 4_000;
-
 type GenerationStatus = "processing" | "ready" | "failed";
-type SpeedTier = "standard" | "pro" | "ultra";
 
 type GenerationUser = {
   _id: string;
@@ -39,29 +33,12 @@ type GenerationUser = {
   referredBy?: string;
   plan?: string;
   subscriptionType?: string;
+  subscriptionEntitlement?: string;
+  subscriptionStartedAt?: number;
   subscriptionEnd?: number;
   imageLimit?: number;
   imageGenerationCount?: number;
   lastResetDate?: number;
-};
-
-type GeminiInlinePart = {
-  inlineData?: {
-    data?: string;
-    mimeType?: string;
-  };
-  text?: string;
-};
-
-type GeminiResponse = {
-  candidates?: Array<{
-    content?: {
-      parts?: GeminiInlinePart[];
-    };
-  }>;
-  promptFeedback?: {
-    blockReason?: string;
-  };
 };
 
 async function getUserByOwnerId(ctx: any, ownerId: string) {
@@ -125,7 +102,11 @@ async function syncDerivedSubscriptionState(ctx: any, user: GenerationUser, now:
 }
 
 function getLimitExceededMessage(state: ReturnType<typeof deriveSubscriptionState>) {
-  return state.blocked ? "Payment Required" : state.statusMessage;
+  const access = canUserGenerateState(state);
+  if (access.allowed) {
+    return state.statusMessage;
+  }
+  return access.shouldTriggerPaywall ? "Payment Required" : access.message;
 }
 
 function computeReviewPrompt(nextCount: number, lastPromptAt: number, ignoreCooldown?: boolean) {
@@ -158,6 +139,11 @@ async function reserveGenerationAllowance(ctx: any, ownerId: string, ignoreCoold
     imageLimit: state.limit,
     imageGenerationCount: nextImageGenerationCount,
     lastResetDate: state.subscriptionType === "free" ? 0 : state.lastResetDate,
+    ...(state.patch.plan ? { plan: state.patch.plan } : {}),
+    ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
+    ...(state.patch.subscriptionEntitlement ? { subscriptionEntitlement: state.patch.subscriptionEntitlement } : {}),
+    ...(typeof state.patch.subscriptionStartedAt === "number" ? { subscriptionStartedAt: state.patch.subscriptionStartedAt } : {}),
+    ...(typeof state.patch.subscriptionEnd === "number" ? { subscriptionEnd: state.patch.subscriptionEnd } : {}),
     ...(typeof state.patch.imageLimit === "number" ? { imageLimit: state.patch.imageLimit } : {}),
     ...(typeof state.patch.lastResetDate === "number" ? { lastResetDate: state.patch.lastResetDate } : {}),
   });
@@ -193,6 +179,13 @@ async function releaseGenerationAllowance(ctx: any, ownerId: string) {
     imageLimit: state.limit,
     imageGenerationCount: nextImageGenerationCount,
     generationCount: nextGenerationCount,
+    ...(state.patch.plan ? { plan: state.patch.plan } : {}),
+    ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
+    ...(state.patch.subscriptionEntitlement ? { subscriptionEntitlement: state.patch.subscriptionEntitlement } : {}),
+    ...(typeof state.patch.subscriptionStartedAt === "number" ? { subscriptionStartedAt: state.patch.subscriptionStartedAt } : {}),
+    ...(typeof state.patch.subscriptionEnd === "number" ? { subscriptionEnd: state.patch.subscriptionEnd } : {}),
+    ...(typeof state.patch.imageLimit === "number" ? { imageLimit: state.patch.imageLimit } : {}),
+    ...(typeof state.patch.lastResetDate === "number" ? { lastResetDate: state.patch.lastResetDate } : {}),
   });
 
   return {
@@ -207,188 +200,6 @@ async function releaseGenerationAllowance(ctx: any, ownerId: string) {
 function trimOptional(value?: string | null) {
   const trimmed = value?.trim();
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
-}
-
-function normalizeAspectRatio(aspectRatio?: string | null) {
-  const trimmed = aspectRatio?.trim();
-  if (!trimmed) return "1:1";
-  return /^\d+:\d+$/.test(trimmed) ? trimmed : "1:1";
-}
-
-function buildGenerationPrompt(args: {
-  roomType: string;
-  style: string;
-  customPrompt?: string;
-  aspectRatio: string;
-  colorPalette: string;
-  modeLabel: string;
-  modePromptHint?: string;
-  regenerate?: boolean;
-}) {
-  const customPrompt = trimOptional(args.customPrompt);
-  const modeHint = trimOptional(args.modePromptHint);
-  const variationInstruction = args.regenerate
-    ? "Create a fresh alternate variation while preserving the same room type, camera framing, and overall architectural shell."
-    : undefined;
-
-  if (args.modeLabel === "Masked Paint Edit" || args.modeLabel === "Smart Wall Paint") {
-    return [
-      customPrompt ?? `Inpaint this image. Change the color of the masked area to ${args.colorPalette} on a ${args.roomType.toLowerCase()} texture. Maintain realism and lighting.`,
-      modeHint ?? "Only repaint the masked region. Preserve all unmasked objects, geometry, furniture, shadows, and lighting exactly as they appear in the source image.",
-      `Return a photorealistic edited image in a ${args.aspectRatio} frame.`,
-      args.regenerate ? "Create a fresh alternate recolor while preserving the same masked region and composition." : undefined,
-    ]
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  if (args.modeLabel === "Masked Floor Edit" || args.modeLabel === "Floor Restyle") {
-    return [
-      customPrompt ?? `Inpaint this image. Replace the masked floor area with ${args.colorPalette}. Keep the room realistic and perspective-correct.`,
-      modeHint ?? "Only edit the masked floor region. Preserve all unmasked walls, furniture, decor, shadows, reflections, and architecture exactly as shown.",
-      "Respect the original floor perspective, plank or tile scale, and room lighting so the new flooring looks physically installed in the scene.",
-      `Return a photorealistic edited image in a ${args.aspectRatio} frame.`,
-      args.regenerate ? "Create a fresh alternate floor material mapping while preserving the same masked region and composition." : undefined,
-    ]
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  return [
-    `Transform this ${args.roomType} into a ${args.style} design.`,
-    `Mode: ${args.modeLabel}.`,
-    modeHint ?? "Preserve the original structure while elevating the space with a professionally designed redesign.",
-    customPrompt ? `User instructions: ${customPrompt}.` : "User instructions: Keep the result elegant, premium, and practical.",
-    `Use a ${args.colorPalette} palette direction and atmosphere.`,
-    `Preserve the original floorplan, walls, doors, windows, ceiling height, architectural proportions, and camera angle from the source image.`,
-    "Do not invent impossible geometry, do not warp the room, and do not remove key structural elements.",
-    `Output a photorealistic 8k architectural visualization with realistic materials, natural lighting, premium staging, and editorial-quality detail in a ${args.aspectRatio} frame.`,
-    variationInstruction,
-  ].filter(Boolean).join(" ");
-}
-
-function decodeBase64ToBytes(base64: string) {
-  const cleaned = base64.replace(/^data:[^;]+;base64,/, "");
-  const binary = atob(cleaned);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
-
-async function blobToBase64(blob: Blob) {
-  const bytes = new Uint8Array(await blob.arrayBuffer());
-  const chunkSize = 0x8000;
-  let binary = "";
-
-  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
-    const chunk = bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length));
-    binary += String.fromCharCode(...chunk);
-  }
-
-  return btoa(binary);
-}
-
-async function parseGeminiError(response: Response) {
-  const raw = await response.text();
-  try {
-    const json = JSON.parse(raw) as { error?: { message?: string } };
-    return json.error?.message ?? raw;
-  } catch {
-    return raw;
-  }
-}
-
-function shouldRetryGeminiStatus(status: number) {
-  return status === 408 || status === 429 || status >= 500;
-}
-
-function shouldRetryGeminiErrorMessage(message: string) {
-  const normalized = message.toLowerCase();
-  return (
-    normalized.includes("network request failed") ||
-    normalized.includes("failed to fetch") ||
-    normalized.includes("fetch failed") ||
-    normalized.includes("network error") ||
-    normalized.includes("timed out")
-  );
-}
-
-async function requestGeminiWithRetry(
-  body: string,
-  apiKey: string,
-) {
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const response = await fetch(GEMINI_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body,
-      });
-
-      if (!response.ok) {
-        const errorMessage = await parseGeminiError(response);
-        if (attempt === 0 && shouldRetryGeminiStatus(response.status)) {
-          await new Promise((resolve) => setTimeout(resolve, 1200));
-          continue;
-        }
-        throw new ConvexError(errorMessage || `Gemini request failed with status ${response.status}.`);
-      }
-
-      return response;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Gemini request failed.";
-      lastError = error instanceof Error ? error : new Error(message);
-      if (attempt === 0 && shouldRetryGeminiErrorMessage(message)) {
-        await new Promise((resolve) => setTimeout(resolve, 1200));
-        continue;
-      }
-      throw error;
-    }
-  }
-
-  throw lastError ?? new ConvexError("Gemini request failed.");
-}
-
-function extractGeneratedImage(response: GeminiResponse) {
-  const candidates = Array.isArray(response.candidates) ? response.candidates : [];
-  for (const candidate of candidates) {
-    const parts = candidate.content?.parts ?? [];
-    for (const part of parts) {
-      const data = part.inlineData?.data;
-      if (data) {
-        return {
-          data,
-          mimeType: part.inlineData?.mimeType ?? "image/png",
-        };
-      }
-    }
-  }
-
-  const blockReason = response.promptFeedback?.blockReason;
-  if (blockReason) {
-    throw new ConvexError(`Gemini blocked the request (${blockReason}).`);
-  }
-
-  throw new ConvexError("Gemini did not return an image.");
-}
-
-async function waitForMinimumDuration(startedAt: number, speedTier?: SpeedTier) {
-  if (speedTier !== "pro") {
-    return;
-  }
-
-  const elapsed = Date.now() - startedAt;
-  const remaining = PRO_MIN_DELAY_MS - elapsed;
-  if (remaining > 0) {
-    await new Promise((resolve) => setTimeout(resolve, remaining));
-  }
 }
 
 function resolveRowStatus(row: { status?: string; imageUrl?: string | null }, imageUrl: string): GenerationStatus {
@@ -554,32 +365,6 @@ export const startGeneration = mutationGeneric({
   },
 });
 
-export const markGenerationReady = internalMutationGeneric({
-  args: {
-    generationId: v.id("generations"),
-    storageId: v.id("_storage"),
-  },
-  handler: async (ctx, args) => {
-    const generation = await ctx.db.get(args.generationId);
-    if (!generation) {
-      throw new ConvexError("Generation not found");
-    }
-    if (generation.status !== "processing") {
-      return { ok: false, status: generation.status ?? "failed" };
-    }
-    await ctx.db.patch(args.generationId, {
-      storageId: args.storageId,
-      imageUrl: undefined,
-      status: "ready",
-      errorMessage: undefined,
-      completedAt: Date.now(),
-    });
-
-    const imageUrl = await ctx.storage.getUrl(args.storageId);
-    return { ok: true, imageUrl, status: "ready" as const };
-  },
-});
-
 export const markGenerationFailed = internalMutationGeneric({
   args: {
     generationId: v.id("generations"),
@@ -632,117 +417,6 @@ export const cancelGeneration = mutationGeneric({
     });
     await releaseGenerationAllowance(ctx, viewer.userId);
     return { ok: true, cancelled: true };
-  },
-});
-
-export const runGenerationJob = internalActionGeneric({
-  args: {
-    generationId: v.id("generations"),
-    ownerId: v.string(),
-    sourceStorageId: v.id("_storage"),
-    maskStorageId: v.optional(v.id("_storage")),
-    prompt: v.string(),
-    aspectRatio: v.string(),
-    speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
-  },
-  handler: async (ctx, args) => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      await ctx.runMutation((internal as any).generations.markGenerationFailed, {
-        generationId: args.generationId,
-        ownerId: args.ownerId,
-        errorMessage: "Missing GEMINI_API_KEY in Convex environment variables.",
-      });
-      throw new ConvexError("Missing GEMINI_API_KEY in Convex environment variables.");
-    }
-
-    const startedAt = Date.now();
-    let generatedStorageId: string | null = null;
-
-    try {
-      const sourceBlob = await ctx.storage.get(args.sourceStorageId);
-      if (!sourceBlob) {
-        throw new ConvexError("The source image could not be loaded from storage.");
-      }
-      const maskBlob = args.maskStorageId ? await ctx.storage.get(args.maskStorageId) : null;
-      if (args.maskStorageId && !maskBlob) {
-        throw new ConvexError("The painted wall mask could not be loaded from storage.");
-      }
-
-      const sourceBase64 = await blobToBase64(sourceBlob);
-      const maskBase64 = maskBlob ? await blobToBase64(maskBlob) : null;
-      const parts: GeminiInlinePart[] = [
-        { text: args.prompt },
-        {
-          inlineData: {
-            mimeType: sourceBlob.type || "image/jpeg",
-            data: sourceBase64,
-          },
-        },
-      ];
-
-      if (maskBlob && maskBase64) {
-        parts.push({
-          text: "The second image is a wall-selection mask. White shows where paint should be applied. Black must remain untouched.",
-        });
-        parts.push({
-          inlineData: {
-            mimeType: maskBlob.type || "image/png",
-            data: maskBase64,
-          },
-        });
-      }
-
-      const response = await requestGeminiWithRetry(
-        JSON.stringify({
-          contents: [
-            {
-              parts,
-            },
-          ],
-          generationConfig: {
-            responseModalities: ["TEXT", "IMAGE"],
-            imageConfig: {
-              aspectRatio: normalizeAspectRatio(args.aspectRatio),
-            },
-          },
-        }),
-        apiKey,
-      );
-
-      const gemini = (await response.json()) as GeminiResponse;
-      const generated = extractGeneratedImage(gemini);
-      const bytes = decodeBase64ToBytes(generated.data);
-      const imageBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
-      const blob = new Blob([imageBuffer], { type: generated.mimeType ?? "image/png" });
-
-      await waitForMinimumDuration(startedAt, (args.speedTier as SpeedTier | undefined) ?? "standard");
-      generatedStorageId = (await ctx.storage.store(blob)) as string;
-
-      const readyState = (await ctx.runMutation((internal as any).generations.markGenerationReady, {
-        generationId: args.generationId,
-        storageId: generatedStorageId,
-      })) as { ok: boolean; status?: string };
-
-      if (!readyState.ok) {
-        await ctx.storage.delete(generatedStorageId as any);
-        return { ok: false, storageId: generatedStorageId, status: readyState.status ?? "failed" };
-      }
-
-      return { ok: true, storageId: generatedStorageId };
-    } catch (error) {
-      if (generatedStorageId) {
-        await ctx.storage.delete(generatedStorageId as any);
-      }
-
-      const message = error instanceof Error ? error.message : "Generation failed";
-      await ctx.runMutation((internal as any).generations.markGenerationFailed, {
-        generationId: args.generationId,
-        ownerId: args.ownerId,
-        errorMessage: message,
-      });
-      throw error;
-    }
   },
 });
 

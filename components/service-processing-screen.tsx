@@ -7,7 +7,6 @@ import { fonts } from "../styles/typography";
 import { spacing } from "../styles/spacing";
 import { type Theme, useTheme } from "@/styles/theme";
 
-import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { LuxPressable } from "./lux-pressable";
 
 const pointerClassName = "cursor-pointer";

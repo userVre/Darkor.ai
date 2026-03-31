@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "convex/react";
 import { StatusBar } from "expo-status-bar";
 import * as MediaLibrary from "expo-media-library";
 import { Image as ImageIcon } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
 
@@ -11,14 +11,17 @@ import { BoardImageCard } from "../../components/board-image-card";
 import { BoardPreviewModal } from "../../components/board-preview-modal";
 import { useProSuccess } from "../../components/pro-success-context";
 import { useViewerSession } from "../../components/viewer-session-context";
-import { mapArchiveToBoardItems, splitBoardColumns, type BoardItem } from "../../lib/board";
+import { mapArchiveToBoardItems, splitBoardColumns, type BoardItem, type BoardItemStatus } from "../../lib/board";
 import { fonts } from "../../styles/typography";
 
 type ArchiveGeneration = {
   _id: string;
   imageUrl?: string | null;
+  sourceImageUrl?: string | null;
   style?: string | null;
   roomType?: string | null;
+  status?: BoardItemStatus;
+  errorMessage?: string | null;
   createdAt?: number;
   _creationTime?: number;
 };
@@ -26,7 +29,6 @@ type ArchiveGeneration = {
 const GRID_HORIZONTAL_PADDING = 16;
 const GRID_COLUMN_GAP = 56;
 const GRID_MAX_CARD_WIDTH = 190;
-const GRID_CARD_HEIGHT = 200;
 const GRID_VERTICAL_GAP = 28;
 
 export default function ProfileScreen() {
@@ -41,9 +43,67 @@ export default function ProfileScreen() {
 
   const [previewItem, setPreviewItem] = useState<BoardItem | null>(null);
   const [actionItem, setActionItem] = useState<BoardItem | null>(null);
+  const [newBoardItemIds, setNewBoardItemIds] = useState<string[]>([]);
+  const previousStatusesRef = useRef<Record<string, BoardItemStatus>>({});
+  const newBadgeTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const boardItems = useMemo(() => mapArchiveToBoardItems(generationArchive ?? []), [generationArchive]);
+  const archiveBoardItems = useMemo(() => mapArchiveToBoardItems(generationArchive ?? []), [generationArchive]);
+  const newBoardItemIdSet = useMemo(() => new Set(newBoardItemIds), [newBoardItemIds]);
+  const boardItems = useMemo(
+    () =>
+      archiveBoardItems.map((item) => ({
+        ...item,
+        isNew: newBoardItemIdSet.has(item.id),
+      })),
+    [archiveBoardItems, newBoardItemIdSet],
+  );
   const { leftColumnImages, rightColumnImages } = useMemo(() => splitBoardColumns(boardItems), [boardItems]);
+
+  useEffect(() => {
+    const nextStatuses: Record<string, BoardItemStatus> = {};
+    const idsToHighlight: string[] = [];
+
+    for (const item of archiveBoardItems) {
+      nextStatuses[item.id] = item.status;
+      if (previousStatusesRef.current[item.id] === "processing" && item.status === "ready") {
+        idsToHighlight.push(item.id);
+      }
+      if (item.status !== "ready" && newBadgeTimeoutsRef.current[item.id]) {
+        clearTimeout(newBadgeTimeoutsRef.current[item.id]);
+        delete newBadgeTimeoutsRef.current[item.id];
+      }
+    }
+
+    if (idsToHighlight.length > 0) {
+      setNewBoardItemIds((current) => {
+        const merged = new Set(current);
+        for (const id of idsToHighlight) {
+          merged.add(id);
+        }
+        return Array.from(merged);
+      });
+
+      for (const id of idsToHighlight) {
+        if (newBadgeTimeoutsRef.current[id]) {
+          clearTimeout(newBadgeTimeoutsRef.current[id]);
+        }
+        newBadgeTimeoutsRef.current[id] = setTimeout(() => {
+          setNewBoardItemIds((current) => current.filter((itemId) => itemId !== id));
+          delete newBadgeTimeoutsRef.current[id];
+        }, 6500);
+      }
+    }
+
+    previousStatusesRef.current = nextStatuses;
+  }, [archiveBoardItems]);
+
+  useEffect(() => {
+    return () => {
+      for (const timeout of Object.values(newBadgeTimeoutsRef.current)) {
+        clearTimeout(timeout);
+      }
+    };
+  }, []);
 
   const columnWidth = useMemo(() => {
     const availableWidth = Math.max(width - GRID_HORIZONTAL_PADDING * 2 - GRID_COLUMN_GAP, 0);
@@ -53,10 +113,30 @@ export default function ProfileScreen() {
   const gridWidth = columnWidth * 2 + GRID_COLUMN_GAP;
 
   const handleImagePress = (item: BoardItem) => {
+    if (item.status === "processing") {
+      showToast("Work in progress");
+      return;
+    }
+
+    if (item.status === "failed" || !item.imageUri) {
+      Alert.alert("Generation failed", item.errorMessage ?? "This redesign did not finish. Please try again.");
+      return;
+    }
+
     setPreviewItem(item);
   };
 
   const handleImageLongPress = (item: BoardItem) => {
+    if (item.status === "processing") {
+      showToast("Work in progress");
+      return;
+    }
+
+    if (item.status === "failed" || !item.imageUri) {
+      Alert.alert("Generation failed", item.errorMessage ?? "This redesign did not finish. Please try again.");
+      return;
+    }
+
     setActionItem(item);
   };
 

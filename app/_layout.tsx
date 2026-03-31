@@ -15,6 +15,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AppErrorBoundary } from "../components/app-error-boundary";
+import { GenerationAccessCacheGate } from "../components/generation-access-cache-gate";
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
 import { ViewerSessionProvider } from "../components/viewer-session-context";
 import { WorkspaceDraftProvider } from "../components/workspace-context";
@@ -27,10 +28,7 @@ import { consumeReferralCode, setReferralCode } from "../lib/referral";
 import {
   configureRevenueCat,
   hasActiveSubscription,
-  inferBillingDurationFromCustomerInfo,
-  inferPlanFromCustomerInfo,
-  inferPurchaseDateFromCustomerInfo,
-  inferSubscriptionEndFromCustomerInfo,
+  resolveRevenueCatSubscription,
   type RevenueCatCustomerInfo,
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
@@ -126,29 +124,23 @@ function RevenueCatGate() {
       if (!revenueCatReady || !configuredRef.current || !isLoaded || !purchases) return;
       try {
         const customerInfo = info ?? (await purchases.getCustomerInfo());
+        const subscriptionState = resolveRevenueCatSubscription(customerInfo);
         const hasSubscription = hasActiveSubscription(customerInfo);
-        const inferredPlan = hasSubscription ? inferPlanFromCustomerInfo(customerInfo) : null;
-        const inferredDuration = hasSubscription ? inferBillingDurationFromCustomerInfo(customerInfo) : undefined;
-        const purchasedAt = hasSubscription ? inferPurchaseDateFromCustomerInfo(customerInfo) : undefined;
-        const subscriptionEnd = hasSubscription ? inferSubscriptionEndFromCustomerInfo(customerInfo) : undefined;
 
-        if (inferredPlan && isSignedIn && inferredDuration) {
+        if (isSignedIn) {
           await setPlan({
-            plan: inferredPlan,
-            subscriptionType: inferredDuration,
-            purchasedAt: purchasedAt ?? undefined,
-            subscriptionEnd: subscriptionEnd ?? undefined,
+            plan: subscriptionState.plan,
+            subscriptionType: subscriptionState.subscriptionType,
+            subscriptionEntitlement: subscriptionState.entitlement,
+            purchasedAt: subscriptionState.purchasedAt ?? undefined,
+            subscriptionEnd: hasSubscription ? subscriptionState.subscriptionEnd ?? undefined : 0,
           });
         }
 
         if (hasSubscriptionRef.current === null) {
           hasSubscriptionRef.current = hasSubscription;
         } else if (hasSubscription && !hasSubscriptionRef.current) {
-          if (inferredPlan === "trial") {
-            showToast("Your 3-day Pro Studio trial is active.");
-          } else {
-            showSuccess();
-          }
+          showSuccess();
           hasSubscriptionRef.current = true;
         } else {
           hasSubscriptionRef.current = hasSubscription;
@@ -400,6 +392,7 @@ export default function RootLayout() {
                 <ViewerSessionProvider>
                   <WorkspaceDraftProvider>
                     <BottomSheetModalProvider>
+                      <GenerationAccessCacheGate />
                       <CreateAccessGate>
                         <AppShell />
                       </CreateAccessGate>

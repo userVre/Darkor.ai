@@ -4,7 +4,6 @@ import { useAuth } from "@clerk/expo";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AnimatePresence, MotiView } from "moti";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -16,6 +15,7 @@ import { captureRef } from "react-native-view-shot";
 import { ChevronLeft, MoveHorizontal, X } from "lucide-react-native";
 
 import { GENERATION_FAILED_TOAST } from "../lib/generation-errors";
+import { canUserGenerate as canUserGenerateNow } from "../lib/generation-access";
 import { triggerHaptic } from "../lib/haptics";
 import { uploadLocalFileToCloud } from "../lib/native-upload";
 import { FLOOR_MATERIAL_OPTIONS } from "../lib/data";
@@ -43,7 +43,14 @@ import { useViewerSession } from "./viewer-session-context";
 
 type WizardStep = "intake" | "mask" | "materials" | "processing" | "result";
 type SelectedImage = { uri: string; photoUri?: string | null; width: number; height: number };
-type MeResponse = { credits: number };
+type MeResponse = {
+  credits: number;
+  imagesRemaining?: number;
+  hasPaidAccess?: boolean;
+  subscriptionType?: "free" | "weekly" | "yearly";
+  generationStatusMessage?: string;
+  canGenerateNow?: boolean;
+};
 type ArchiveGeneration = { _id: string; imageUrl?: string | null; status?: "processing" | "ready" | "failed"; errorMessage?: string | null };
 
 type FloorWizardProps = {
@@ -51,7 +58,6 @@ type FloorWizardProps = {
 };
 
 const pointerClassName = "cursor-pointer";
-const MASK_COLOR = "#7C3AED80";
 const MASK_ACCENT = "#7C3AED";
 const MIN_BRUSH = 10;
 const MAX_BRUSH = 54;
@@ -177,6 +183,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     [selectedMaterialId],
   );
   const availableCredits = viewerReady ? me?.credits ?? GUEST_TESTING_STARTER_CREDITS : GUEST_TESTING_STARTER_CREDITS;
+  const generationAccess = canUserGenerateNow(me);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "materials" ? 3 : 4;
   const canContinueFromMask = customPrompt.trim().length > 0;
@@ -207,6 +214,22 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     if (continueTimerRef.current) clearTimeout(continueTimerRef.current);
   }, []);
 
+  const clearDetectTimer = useCallback(() => {
+    if (detectTimerRef.current) {
+      clearTimeout(detectTimerRef.current);
+      detectTimerRef.current = null;
+    }
+    setIsDetecting(false);
+  }, []);
+
+  const clearContinueTimer = useCallback(() => {
+    if (continueTimerRef.current) {
+      clearTimeout(continueTimerRef.current);
+      continueTimerRef.current = null;
+    }
+    setLoadingContinueStep(null);
+  }, []);
+
   useEffect(() => {
     if (initialSelectionAppliedRef.current) {
       return;
@@ -228,6 +251,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     const generation = generationArchive.find((item) => item._id === generationId);
     if (!generation) return;
     if (generation.status === "ready" && generation.imageUrl) {
+      setGenerationId(null);
       setGeneratedImageUrl(generation.imageUrl);
       setIsGenerating(false);
       setIsCancellingGeneration(false);
@@ -241,6 +265,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       return;
     }
     if (generation.status === "failed") {
+      setGenerationId(null);
       setIsGenerating(false);
       setIsCancellingGeneration(false);
       if (generation.errorMessage === CANCELLED_GENERATION_MESSAGE) {
@@ -258,6 +283,8 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   }, []);
 
   const resetProject = useCallback(() => {
+    clearDetectTimer();
+    clearContinueTimer();
     setStep("intake");
     setSelectedImage(null);
     setGeneratedImageUrl(null);
@@ -278,7 +305,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       return;
     }
     setSelectedMaterialId(null);
-  }, [presetStyle, resetMaskDrawing]);
+  }, [clearContinueTimer, clearDetectTimer, presetStyle, resetMaskDrawing]);
 
   const handleClose = useCallback(() => {
     triggerHaptic();
@@ -318,6 +345,8 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   }, [detectedSourceStorageId, selectedImage, uploadBlobToStorage]);
 
   const applySelectedImage = useCallback((nextImage: SelectedImage) => {
+    clearDetectTimer();
+    clearContinueTimer();
     setSelectedImage(nextImage);
     setGeneratedImageUrl(null);
     setGenerationId(null);
@@ -329,7 +358,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     setIsCustomPromptOpen(false);
     autoMaskAttemptKeyRef.current = null;
     resetMaskDrawing({ resetBrush: true });
-  }, [resetMaskDrawing]);
+  }, [clearContinueTimer, clearDetectTimer, resetMaskDrawing]);
 
   const advanceToMaskStep = useCallback(() => {
     triggerHaptic();
@@ -570,14 +599,19 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       Alert.alert("Pick a material", "Choose a flooring material before continuing.");
       return;
     }
-    if (availableCredits <= 0) {
-      if (!effectiveSignedIn) {
+    if (!generationAccess.allowed) {
+      if (generationAccess.reason === "paywall" && !effectiveSignedIn) {
         setAwaitingAuth(true);
         router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=floor" } });
         return;
       }
 
-      router.push("/paywall");
+      if (generationAccess.reason === "paywall") {
+        router.push("/paywall");
+        return;
+      }
+
+      showToast(generationAccess.message || "Limit Reached");
       return;
     }
     try {
@@ -612,6 +646,10 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       setIsGenerating(false);
       setStep("materials");
       const rawMessage = error instanceof Error ? error.message : "Please try again.";
+      if (rawMessage.toLowerCase().includes("limit reached")) {
+        showToast(rawMessage);
+        return;
+      }
       if (rawMessage === "Payment Required") {
         if (!effectiveSignedIn) {
           setAwaitingAuth(true);
@@ -623,7 +661,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       }
       showToast(GENERATION_FAILED_TOAST);
     }
-  }, [availableCredits, customPrompt, effectiveSignedIn, hasMask, router, selectedImage, selectedMaterial, showToast, startGeneration, uploadBlobToStorage, viewerId, viewerReady]);
+  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, router, selectedImage, selectedMaterial, showToast, startGeneration, uploadBlobToStorage, viewerId, viewerReady]);
 
   const handleCancelGeneration = useCallback(async () => {
     if (!generationId || isCancellingGeneration) {
@@ -677,12 +715,14 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
 
   const handleBack = useCallback(() => {
     triggerHaptic();
+    clearDetectTimer();
+    clearContinueTimer();
     if (step === "intake") return;
     if (step === "mask") return setStep("intake");
     if (step === "materials") return setStep("mask");
     if (step === "processing") return setStep("materials");
     if (step === "result") return setStep("materials");
-  }, [step]);
+  }, [clearContinueTimer, clearDetectTimer, step]);
 
   return (
     <View style={styles.screen}>

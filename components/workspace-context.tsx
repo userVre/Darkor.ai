@@ -12,6 +12,8 @@ type WorkspaceDraft = {
   room?: string | null;
   style?: string | null;
   paletteId?: string | null;
+  modeId?: string | null;
+  finishId?: string | null;
   prompt?: string | null;
   aspectRatio?: string | null;
 };
@@ -22,6 +24,8 @@ type WorkspaceDraftContextValue = {
   setDraftRoom: (room: string | null) => void;
   setDraftStyle: (style: string | null) => void;
   setDraftPalette: (paletteId: string | null) => void;
+  setDraftMode: (modeId: string | null) => void;
+  setDraftFinish: (finishId: string | null) => void;
   setDraftPrompt: (prompt: string | null) => void;
   setDraftAspectRatio: (aspectRatio: string | null) => void;
   clearDraft: () => void;
@@ -51,6 +55,8 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
             room: parsed.room ?? null,
             style: parsed.style ?? null,
             paletteId: parsed.paletteId ?? null,
+            modeId: parsed.modeId ?? null,
+            finishId: parsed.finishId ?? null,
             prompt: parsed.prompt ?? null,
             aspectRatio: parsed.aspectRatio ?? null,
           });
@@ -74,6 +80,8 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
             room: draft.room ?? null,
             style: draft.style ?? null,
             paletteId: draft.paletteId ?? null,
+            modeId: draft.modeId ?? null,
+            finishId: draft.finishId ?? null,
             prompt: draft.prompt ?? null,
             aspectRatio: draft.aspectRatio ?? null,
           };
@@ -109,6 +117,14 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
     setDraft((prev) => (prev.paletteId === paletteId ? prev : { ...prev, paletteId }));
   }, []);
 
+  const setDraftMode = useCallback((modeId: string | null) => {
+    setDraft((prev) => (prev.modeId === modeId ? prev : { ...prev, modeId }));
+  }, []);
+
+  const setDraftFinish = useCallback((finishId: string | null) => {
+    setDraft((prev) => (prev.finishId === finishId ? prev : { ...prev, finishId }));
+  }, []);
+
   const setDraftPrompt = useCallback((prompt: string | null) => {
     setDraft((prev) => (prev.prompt === prompt ? prev : { ...prev, prompt }));
   }, []);
@@ -129,11 +145,24 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
       setDraftRoom,
       setDraftStyle,
       setDraftPalette,
+      setDraftMode,
+      setDraftFinish,
       setDraftPrompt,
       setDraftAspectRatio,
       clearDraft,
     }),
-    [clearDraft, draft, setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle],
+    [
+      clearDraft,
+      draft,
+      setDraftAspectRatio,
+      setDraftFinish,
+      setDraftImage,
+      setDraftMode,
+      setDraftPalette,
+      setDraftPrompt,
+      setDraftRoom,
+      setDraftStyle,
+    ],
   );
 
   return <WorkspaceDraftContext.Provider value={value}>{children}</WorkspaceDraftContext.Provider>;
