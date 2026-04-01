@@ -365,7 +365,7 @@ const WALL_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/wall-scenes/sage-green-suite.jpg"),
     startStep: "3",
     presetStyle: "Sage Green",
-    presetRoom: "Wall",
+    presetRoom: "Living Room",
   },
   {
     id: "wall-midnight-navy-bedroom",
@@ -377,7 +377,7 @@ const WALL_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/wall-scenes/midnight-navy-bedroom.jpg"),
     startStep: "3",
     presetStyle: "Midnight Navy",
-    presetRoom: "Wall",
+    presetRoom: "Bedroom",
   },
   {
     id: "wall-terracotta-dining",
@@ -389,7 +389,7 @@ const WALL_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/wall-scenes/terracotta-dining.jpg"),
     startStep: "3",
     presetStyle: "Terracotta Glow",
-    presetRoom: "Wall",
+    presetRoom: "Dining Room",
   },
   {
     id: "wall-dusty-rose-retreat",
@@ -401,7 +401,7 @@ const WALL_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/wall-scenes/dusty-rose-retreat.jpg"),
     startStep: "3",
     presetStyle: "Dusty Rose",
-    presetRoom: "Wall",
+    presetRoom: "Bedroom",
   },
   {
     id: "wall-gallery-charcoal-lounge",
@@ -413,7 +413,7 @@ const WALL_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/wall-scenes/gallery-charcoal-lounge.jpg"),
     startStep: "3",
     presetStyle: "Gallery Charcoal",
-    presetRoom: "Wall",
+    presetRoom: "Living Room",
   },
   {
     id: "wall-soft-ivory-kitchen",
@@ -425,7 +425,7 @@ const WALL_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/wall-scenes/soft-ivory-kitchen.jpg"),
     startStep: "3",
     presetStyle: "Soft Ivory",
-    presetRoom: "Wall",
+    presetRoom: "Kitchen",
   },
   {
     id: "wall-deep-olive-study",
@@ -437,7 +437,7 @@ const WALL_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/wall-scenes/deep-olive-study.jpg"),
     startStep: "3",
     presetStyle: "Olive Grove",
-    presetRoom: "Wall",
+    presetRoom: "Study",
   },
   {
     id: "wall-lavender-mist-bath",
@@ -449,7 +449,7 @@ const WALL_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/wall-scenes/lavender-mist-bath.jpg"),
     startStep: "3",
     presetStyle: "Lavender Mist",
-    presetRoom: "Wall",
+    presetRoom: "Bathroom",
   },
   {
     id: "wall-pearl-gray-salon",
@@ -461,7 +461,7 @@ const WALL_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/wall-scenes/pearl-gray-salon.jpg"),
     startStep: "3",
     presetStyle: "Pearl Gray",
-    presetRoom: "Wall",
+    presetRoom: "Living Room",
   },
 ];
 
@@ -476,7 +476,7 @@ const FLOOR_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/floor-scenes/natural-oak-parquet.jpg"),
     startStep: "3",
     presetStyle: "Natural Oak",
-    presetRoom: "Floor",
+    presetRoom: "Living Room",
   },
   {
     id: "floor-heritage-walnut-plank",
@@ -488,7 +488,7 @@ const FLOOR_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/floor-scenes/heritage-walnut-plank.jpg"),
     startStep: "3",
     presetStyle: "Walnut Wood",
-    presetRoom: "Floor",
+    presetRoom: "Dining Room",
   },
   {
     id: "floor-polished-carrara-marble",
@@ -500,7 +500,7 @@ const FLOOR_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/floor-scenes/polished-carrara-marble.jpg"),
     startStep: "3",
     presetStyle: "Carrara Marble",
-    presetRoom: "Floor",
+    presetRoom: "Bathroom",
   },
   {
     id: "floor-industrial-gray-concrete",
@@ -512,7 +512,7 @@ const FLOOR_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/floor-scenes/industrial-gray-concrete.jpg"),
     startStep: "3",
     presetStyle: "Polished Concrete",
-    presetRoom: "Floor",
+    presetRoom: "Kitchen",
   },
   {
     id: "floor-walnut-chevron",
@@ -524,7 +524,7 @@ const FLOOR_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/floor-scenes/walnut-chevron.jpg"),
     startStep: "3",
     presetStyle: "Herringbone Oak",
-    presetRoom: "Floor",
+    presetRoom: "Living Room",
   },
   {
     id: "floor-terracotta-atelier-tile",
@@ -536,7 +536,7 @@ const FLOOR_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/floor-scenes/terracotta-atelier-tile.jpg"),
     startStep: "3",
     presetStyle: "Terracotta Tile",
-    presetRoom: "Floor",
+    presetRoom: "Kitchen",
   },
   {
     id: "floor-modern-slate-tile",
@@ -548,7 +548,7 @@ const FLOOR_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/floor-scenes/modern-slate-tile.jpg"),
     startStep: "3",
     presetStyle: "Slate Tile",
-    presetRoom: "Floor",
+    presetRoom: "Bathroom",
   },
   {
     id: "floor-plush-ivory-carpet",
@@ -560,7 +560,7 @@ const FLOOR_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/floor-scenes/plush-ivory-carpet.jpg"),
     startStep: "3",
     presetStyle: "Plush Carpet",
-    presetRoom: "Floor",
+    presetRoom: "Bedroom",
   },
   {
     id: "floor-weathered-oak-studio",
@@ -572,7 +572,7 @@ const FLOOR_ITEMS: DiscoverTile[] = [
     image: require("../assets/media/discover/floor-scenes/weathered-oak-studio.jpg"),
     startStep: "3",
     presetStyle: "Weathered Oak",
-    presetRoom: "Floor",
+    presetRoom: "Home Office",
   },
 ];
 
@@ -756,9 +756,21 @@ const EXTERIOR_ITEMS: DiscoverTile[] = [
 export const DISCOVER_SECTIONS: DiscoverSection[] = [
   {
     id: "home",
-    title: "Home",
+    title: "Interior",
     description: "Designer-led rooms across living, sleep, dining, work, and entertainment.",
     items: HOME_ITEMS,
+  },
+  {
+    id: "exterior",
+    title: "Exterior",
+    description: "Facade inspiration from modern villas, urban blocks, offices, and retail shells.",
+    items: EXTERIOR_ITEMS,
+  },
+  {
+    id: "garden",
+    title: "Garden",
+    description: "Outdoor lounges, terraces, pools, decks, and resort-minded garden scenes.",
+    items: GARDEN_ITEMS,
   },
   {
     id: "wall",
@@ -771,17 +783,5 @@ export const DISCOVER_SECTIONS: DiscoverSection[] = [
     title: "Floor Styles",
     description: "Premium flooring references curated from real interiors and mapped directly into the Floor Restyle workflow.",
     items: FLOOR_ITEMS,
-  },
-  {
-    id: "garden",
-    title: "Garden",
-    description: "Outdoor lounges, terraces, pools, decks, and resort-minded garden scenes.",
-    items: GARDEN_ITEMS,
-  },
-  {
-    id: "exterior",
-    title: "Exterior",
-    description: "Facade inspiration from modern villas, urban blocks, offices, and retail shells.",
-    items: EXTERIOR_ITEMS,
   },
 ];

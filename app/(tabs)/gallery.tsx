@@ -46,24 +46,25 @@ const MUTED_TEXT = "#A1A1AA";
 const TAB_INACTIVE = "#CFCFD4";
 const CARD_BORDER = "#ECECEC";
 const CARD_SHADOW = "rgba(15,23,42,0.08)";
-const SCREEN_SIDE_MARGIN = 20;
+const SCREEN_SIDE_MARGIN = 24;
 const TAB_LEFT_MARGIN = 24;
 const SECTION_GAP = 32;
 const HEADER_TO_CONTENT_GAP = 20;
 const GRID_GAP = 12;
-const HOME_CARD_RADIUS = 20;
-const RAIL_CARD_RADIUS = 18;
+const GRID_CARD_RADIUS = 20;
 
 type DiscoverTabConfig = {
-  id: "home" | "garden" | "exterior";
+  id: "interior" | "exterior" | "garden" | "wall" | "floor";
   label: string;
   sectionIds: DiscoverSectionId[];
 };
 
 const CATEGORY_TABS: DiscoverTabConfig[] = [
-  { id: "home", label: "Home", sectionIds: ["home", "wall", "floor"] },
+  { id: "interior", label: "Interior", sectionIds: ["home"] },
+  { id: "exterior", label: "Exterior", sectionIds: ["exterior"] },
   { id: "garden", label: "Garden", sectionIds: ["garden"] },
-  { id: "exterior", label: "Exterior Design", sectionIds: ["exterior"] },
+  { id: "wall", label: "Wall", sectionIds: ["wall"] },
+  { id: "floor", label: "Floor", sectionIds: ["floor"] },
 ] as const;
 
 type DiscoverTabId = DiscoverTabConfig["id"];
@@ -151,19 +152,17 @@ const DiscoverCategoryTabs = memo(function DiscoverCategoryTabs({
 const DiscoverMagazineCard = memo(function DiscoverMagazineCard({
   item,
   width,
-  compact = false,
   onPress,
 }: {
   item: DiscoverTile;
   width: number;
-  compact?: boolean;
   onPress: (item: DiscoverTile) => void;
 }) {
   const title = getCardTitle(item);
   const styleName = getCardStyle(item);
   const categoryName = getCardCategory(item);
   const CategoryIcon = getCategoryIcon(item);
-  const imageHeight = compact ? Math.round(width * 0.88) : Math.round(width * 0.98);
+  const imageHeight = Math.round(width * 1.02);
 
   const handlePress = useCallback(() => {
     triggerHaptic();
@@ -177,10 +176,9 @@ const DiscoverMagazineCard = memo(function DiscoverMagazineCard({
       className="cursor-pointer"
       style={[
         styles.card,
-        compact ? styles.compactCard : styles.homeCard,
         {
           width,
-          borderRadius: compact ? RAIL_CARD_RADIUS : HOME_CARD_RADIUS,
+          borderRadius: GRID_CARD_RADIUS,
         },
       ]}
       glowColor="rgba(15,23,42,0.08)"
@@ -194,14 +192,15 @@ const DiscoverMagazineCard = memo(function DiscoverMagazineCard({
             <CategoryIcon color={PRIMARY_TEXT} size={14} strokeWidth={2.2} />
           </View>
           <Text style={styles.cardCategory}>{categoryName}</Text>
+          <View style={styles.cardStyleChip}>
+            <Text style={styles.cardStyleChipText}>{styleName}</Text>
+          </View>
         </View>
 
-        <Text style={styles.cardTitle} numberOfLines={2}>
-          {title}
-        </Text>
-
-        <View style={styles.cardMetaRow}>
-          <Text style={styles.cardStyle}>{styleName}</Text>
+        <View style={styles.cardActionRow}>
+          <Text style={styles.cardTitle} numberOfLines={2}>
+            {title}
+          </Text>
           <View style={styles.tryItPill}>
             <Text style={styles.tryItPillText}>Try It!</Text>
           </View>
@@ -216,61 +215,49 @@ const DiscoverSectionBlock = memo(function DiscoverSectionBlock({
   expanded,
   onToggleExpanded,
   onCardPress,
-  homeCardWidth,
-  railCardWidth,
+  gridCardWidth,
 }: {
   section: DiscoverSection;
   expanded: boolean;
   onToggleExpanded: () => void;
   onCardPress: (item: DiscoverTile) => void;
-  homeCardWidth: number;
-  railCardWidth: number;
+  gridCardWidth: number;
 }) {
-  const isRailSection = section.id === "wall" || section.id === "floor";
-  const isHomeGridSection = section.id === "home" || section.id === "garden" || section.id === "exterior";
+  const visibleItems = expanded ? section.items : section.items.slice(0, 4);
+  const canExpand = section.items.length > 4;
 
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{section.title}</Text>
-        <LuxPressable
-          onPress={onToggleExpanded}
-          pressableClassName="cursor-pointer"
-          className="cursor-pointer"
-          style={styles.sectionAction}
-          glowColor="rgba(10,10,10,0.06)"
-          scale={0.98}
-        >
-          <Text style={styles.sectionActionText}>{expanded ? "Show Less" : "See All"}</Text>
-        </LuxPressable>
+        <View style={styles.sectionHeadingCopy}>
+          <Text style={styles.sectionTitle}>{section.title}</Text>
+          <Text style={styles.sectionDescription}>{section.description}</Text>
+        </View>
+        {canExpand ? (
+          <LuxPressable
+            onPress={onToggleExpanded}
+            pressableClassName="cursor-pointer"
+            className="cursor-pointer"
+            style={styles.sectionAction}
+            glowColor="rgba(10,10,10,0.06)"
+            scale={0.98}
+          >
+            <Text style={styles.sectionActionText}>{expanded ? "Show Less" : "See All"}</Text>
+          </LuxPressable>
+        ) : null}
       </View>
 
       <View style={{ marginTop: HEADER_TO_CONTENT_GAP }}>
-        {isRailSection && !expanded ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.railContent}
-          >
-            {section.items.map((item, index) => (
-              <View key={item.id} style={{ marginRight: index === section.items.length - 1 ? 0 : GRID_GAP }}>
-                <DiscoverMagazineCard item={item} width={railCardWidth} compact onPress={onCardPress} />
-              </View>
-            ))}
-          </ScrollView>
-        ) : (
-          <View style={styles.gridWrap}>
-            {section.items.map((item) => (
-              <DiscoverMagazineCard
-                key={item.id}
-                item={item}
-                width={isHomeGridSection ? homeCardWidth : railCardWidth}
-                compact={!isHomeGridSection}
-                onPress={onCardPress}
-              />
-            ))}
-          </View>
-        )}
+        <View style={styles.gridWrap}>
+          {visibleItems.map((item) => (
+            <DiscoverMagazineCard
+              key={item.id}
+              item={item}
+              width={gridCardWidth}
+              onPress={onCardPress}
+            />
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -285,15 +272,14 @@ export default function GalleryScreen() {
     clearDraft,
   } = useWorkspaceDraft();
   const { credits: creditBalance, hasPaidAccess } = useViewerCredits();
-  const [activeTab, setActiveTab] = useState<DiscoverTabId>("home");
+  const [activeTab, setActiveTab] = useState<DiscoverTabId>("interior");
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
 
-  const homeCardWidth = useMemo(
+  const gridCardWidth = useMemo(
     () => Math.floor((width - SCREEN_SIDE_MARGIN * 2 - GRID_GAP) / 2),
     [width],
   );
-  const railCardWidth = useMemo(() => Math.min(248, Math.max(width * 0.56, 214)), [width]);
 
   const sectionsForActiveTab = useMemo(() => {
     const activeSectionIds = CATEGORY_TABS.find((tab) => tab.id === activeTab)?.sectionIds ?? ["home"];
@@ -334,8 +320,20 @@ export default function GalleryScreen() {
               ? "floor"
               : "interior";
 
+    const params = new URLSearchParams({ service: serviceParam });
+
+    if (item.startStep) {
+      params.set("startStep", item.startStep);
+    }
+    if (item.presetStyle) {
+      params.set("presetStyle", item.presetStyle);
+    }
+    if (item.presetRoom) {
+      params.set("presetRoom", item.presetRoom);
+    }
+
     clearDraft();
-    return withWorkspaceFlowId(`/workspace?service=${serviceParam}`);
+    return withWorkspaceFlowId(`/workspace?${params.toString()}`);
   }, [clearDraft]);
 
   const handleCardPress = useCallback(
@@ -379,7 +377,7 @@ export default function GalleryScreen() {
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>Discover</Text>
           <Text style={styles.heroSubtitle}>
-            Curated interiors, wall palettes, garden scenes, and exterior concepts designed to launch you straight into a polished redesign flow.
+            Curated interiors, exterior facades, garden scenes, wall palettes, and floor styles designed to launch you straight into the right redesign flow.
           </Text>
         </View>
 
@@ -393,8 +391,7 @@ export default function GalleryScreen() {
               expanded={Boolean(expandedSections[section.id])}
               onToggleExpanded={() => handleToggleSection(section.id)}
               onCardPress={handleCardPress}
-              homeCardWidth={homeCardWidth}
-              railCardWidth={railCardWidth}
+              gridCardWidth={gridCardWidth}
             />
           ))}
         </View>
@@ -435,7 +432,6 @@ const styles = StyleSheet.create({
   },
   tabsContent: {
     paddingRight: 24,
-    alignItems: "flex-end",
   },
   tabButton: {
     marginRight: 24,
@@ -475,20 +471,30 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     gap: spacing.md,
   },
-  sectionTitle: {
+  sectionHeadingCopy: {
     flex: 1,
+    gap: 6,
+  },
+  sectionTitle: {
     color: PRIMARY_TEXT,
     fontSize: 24,
     lineHeight: 29,
     ...fonts.bold,
   },
+  sectionDescription: {
+    color: SECONDARY_TEXT,
+    fontSize: 14,
+    lineHeight: 21,
+    ...fonts.regular,
+  },
   sectionAction: {
     paddingHorizontal: 2,
     paddingVertical: 4,
+    marginTop: 2,
   },
   sectionActionText: {
     color: MUTED_TEXT,
@@ -497,9 +503,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     textTransform: "uppercase",
     ...fonts.semibold,
-  },
-  railContent: {
-    paddingRight: 4,
   },
   gridWrap: {
     flexDirection: "row",
@@ -517,28 +520,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     elevation: 5,
   },
-  homeCard: {
-    flexGrow: 0,
-  },
-  compactCard: {
-    flexGrow: 0,
-  },
   cardFooter: {
     paddingHorizontal: 14,
     paddingTop: 12,
     paddingBottom: 14,
-    gap: 8,
+    gap: 12,
     backgroundColor: "#FFFFFF",
   },
   cardLabelBar: {
-    alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    borderRadius: 999,
-    backgroundColor: "#F5F5F5",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    flexWrap: "wrap",
   },
   cardIconWrap: {
     width: 18,
@@ -554,24 +547,30 @@ const styles = StyleSheet.create({
     lineHeight: 15,
     ...fonts.semibold,
   },
+  cardStyleChip: {
+    borderRadius: 999,
+    backgroundColor: "#F5F5F5",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  cardStyleChipText: {
+    color: SECONDARY_TEXT,
+    fontSize: 12,
+    lineHeight: 15,
+    ...fonts.semibold,
+  },
   cardTitle: {
+    flex: 1,
     color: PRIMARY_TEXT,
-    fontSize: 18,
+    fontSize: 17,
     lineHeight: 22,
     ...fonts.bold,
   },
-  cardMetaRow: {
+  cardActionRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     justifyContent: "space-between",
     gap: 12,
-  },
-  cardStyle: {
-    flex: 1,
-    color: SECONDARY_TEXT,
-    fontSize: 14,
-    lineHeight: 18,
-    ...fonts.medium,
   },
   tryItPill: {
     borderRadius: 999,
