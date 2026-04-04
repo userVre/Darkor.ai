@@ -8,6 +8,8 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 import {
   ActivityIndicator,
   Alert,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,7 +19,18 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import Svg, { Circle as SvgCircle } from "react-native-svg";
+import Animated, {
+  Easing,
+  Extrapolation,
+  interpolate,
+  type SharedValue,
+  useAnimatedProps,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, Shield, X } from "lucide-react-native";
 
@@ -54,22 +67,34 @@ const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 3000;
 const CLOSE_DELAY_MS = 5000;
 const CLOSE_VISUAL_SIZE = 40;
+const CLOSE_RING_RADIUS = 15;
+const CLOSE_RING_STROKE_WIDTH = 2.5;
+const CLOSE_RING_CIRCUMFERENCE = 2 * Math.PI * CLOSE_RING_RADIUS;
 const SIDE_IMAGE_WIDTH = 130;
 const SIDE_IMAGE_HEIGHT = 160;
 const CENTER_IMAGE_SIZE = 188;
-const HERO_IMAGE_GAP = 12;
-const HERO_ROW_WIDTH = SIDE_IMAGE_WIDTH * 2 + CENTER_IMAGE_SIZE + HERO_IMAGE_GAP * 2;
+const HERO_SIDE_SCALE_X = SIDE_IMAGE_WIDTH / CENTER_IMAGE_SIZE;
+const HERO_SIDE_SCALE_Y = SIDE_IMAGE_HEIGHT / CENTER_IMAGE_SIZE;
+const HERO_SIDE_TRANSLATE_Y = 18;
+const HERO_SNAP_INTERVAL = 140;
+const HERO_CAROUSEL_REPEAT_MULTIPLIER = 5;
 const HERO_ROW_HEIGHT = 252;
 const HERO_IMAGES = [
   require("../assets/media/paywall/paywall-soft-lounge.png"),
   require("../assets/media/paywall/paywall-luxury-lounge.png"),
   require("../assets/media/paywall/paywall-marble-kitchen.png"),
 ] as const;
+const HERO_CAROUSEL_DATA = Array.from({ length: HERO_IMAGES.length * HERO_CAROUSEL_REPEAT_MULTIPLIER }, (_, index) => ({
+  id: `hero-${index}`,
+  image: HERO_IMAGES[index % HERO_IMAGES.length],
+}));
+const HERO_CAROUSEL_INITIAL_INDEX = HERO_IMAGES.length * 2;
 const FEATURE_ITEMS = [
   "Faster Rendering",
   "Ad-free Experience",
   "Unlimited Design Renders",
 ] as const;
+const AnimatedSvgCircle = Animated.createAnimatedComponent(SvgCircle);
 
 function FadeSwap({
   children,
@@ -119,18 +144,43 @@ function ToggleSwitch({ value }: { value: boolean }) {
   );
 }
 
-function HeroCarousel({ index, width }: { index: number; width: number }) {
-  const leftImage = HERO_IMAGES[(index + HERO_IMAGES.length - 1) % HERO_IMAGES.length];
-  const centerImage = HERO_IMAGES[index % HERO_IMAGES.length];
-  const rightImage = HERO_IMAGES[(index + 1) % HERO_IMAGES.length];
+function HeroCarouselItem({
+  image,
+  index,
+  scrollX,
+}: {
+  image: (typeof HERO_IMAGES)[number];
+  index: number;
+  scrollX: SharedValue<number>;
+}) {
+  const animatedStyle = useAnimatedStyle(() => {
+    const inputRange = [
+      (index - 1) * HERO_SNAP_INTERVAL,
+      index * HERO_SNAP_INTERVAL,
+      (index + 1) * HERO_SNAP_INTERVAL,
+    ];
+
+    return {
+      opacity: interpolate(scrollX.value, inputRange, [0.72, 1, 0.72], Extrapolation.CLAMP),
+      transform: [
+        {
+          scaleX: interpolate(scrollX.value, inputRange, [HERO_SIDE_SCALE_X, 1, HERO_SIDE_SCALE_X], Extrapolation.CLAMP),
+        },
+        {
+          scaleY: interpolate(scrollX.value, inputRange, [HERO_SIDE_SCALE_Y, 1, HERO_SIDE_SCALE_Y], Extrapolation.CLAMP),
+        },
+        {
+          translateY: interpolate(scrollX.value, inputRange, [HERO_SIDE_TRANSLATE_Y, 0, HERO_SIDE_TRANSLATE_Y], Extrapolation.CLAMP),
+        },
+      ],
+    };
+  });
 
   return (
-    <View style={styles.heroClip}>
-      <FadeSwap swapKey={`hero-${index}`} style={[styles.heroRow, { marginLeft: (width - HERO_ROW_WIDTH) / 2 }]}>
-        <Image contentFit="cover" source={leftImage} style={styles.heroSideImage} transition={0} />
-        <Image contentFit="cover" source={centerImage} style={styles.heroCenterImage} transition={0} />
-        <Image contentFit="cover" source={rightImage} style={styles.heroSideImage} transition={0} />
-      </FadeSwap>
+    <View style={styles.heroItemSlot}>
+      <Animated.View style={[styles.heroImageWrap, animatedStyle]}>
+        <Image contentFit="cover" source={image} style={styles.heroImage} transition={0} />
+      </Animated.View>
     </View>
   );
 }
@@ -225,17 +275,23 @@ function WeeklyPlanCard({
 function CountdownCloseButton({
   isTimerFinished,
   onPress,
+  progress,
   secondsLeft,
 }: {
   isTimerFinished: boolean;
   onPress: () => void;
+  progress: SharedValue<number>;
   secondsLeft: number;
 }) {
+  const animatedRingProps = useAnimatedProps(() => ({
+    strokeDashoffset: CLOSE_RING_CIRCUMFERENCE * progress.value,
+  }));
+
   return (
     <View pointerEvents="box-none" style={styles.closeSlot}>
       <AnimatePresence exitBeforeEnter>
         <MotiView
-          key={isTimerFinished ? "close-ready" : `close-${secondsLeft}`}
+          key={isTimerFinished ? "close-ready" : "close-countdown"}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           from={{ opacity: 0 }}
@@ -243,11 +299,35 @@ function CountdownCloseButton({
           transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
         >
           {isTimerFinished ? (
-            <Pressable accessibilityLabel="Close paywall" accessibilityRole="button" onPress={onPress} style={styles.closeButtonInner}>
-              <X color="#0A0A0A" size={16} strokeWidth={2.4} />
+            <Pressable accessibilityLabel="Close paywall" accessibilityRole="button" hitSlop={10} onPress={onPress} style={styles.closeButtonInner}>
+              <X color="#FFFFFF" size={20} strokeWidth={2.4} />
             </Pressable>
           ) : (
             <View pointerEvents="none" style={styles.countdownWrap}>
+              <Svg height={CLOSE_VISUAL_SIZE} style={styles.countdownRing} width={CLOSE_VISUAL_SIZE}>
+                <SvgCircle
+                  cx={CLOSE_VISUAL_SIZE / 2}
+                  cy={CLOSE_VISUAL_SIZE / 2}
+                  fill="none"
+                  r={CLOSE_RING_RADIUS}
+                  stroke="rgba(255,255,255,0.18)"
+                  strokeWidth={CLOSE_RING_STROKE_WIDTH}
+                />
+                <AnimatedSvgCircle
+                  animatedProps={animatedRingProps}
+                  cx={CLOSE_VISUAL_SIZE / 2}
+                  cy={CLOSE_VISUAL_SIZE / 2}
+                  fill="none"
+                  r={CLOSE_RING_RADIUS}
+                  rotation="-90"
+                  originX={CLOSE_VISUAL_SIZE / 2}
+                  originY={CLOSE_VISUAL_SIZE / 2}
+                  stroke="#FFFFFF"
+                  strokeDasharray={CLOSE_RING_CIRCUMFERENCE}
+                  strokeLinecap="round"
+                  strokeWidth={CLOSE_RING_STROKE_WIDTH}
+                />
+              </Svg>
               <Text style={styles.countdownText}>{Math.max(secondsLeft, 1)}</Text>
             </View>
           )}
@@ -255,6 +335,11 @@ function CountdownCloseButton({
       </AnimatePresence>
     </View>
   );
+}
+
+function normalizeCarouselIndex(index: number) {
+  const cycleIndex = ((index % HERO_IMAGES.length) + HERO_IMAGES.length) % HERO_IMAGES.length;
+  return HERO_CAROUSEL_INITIAL_INDEX + cycleIndex;
 }
 
 export default function PaywallScreen() {
@@ -272,7 +357,12 @@ export default function PaywallScreen() {
   const setPlan = useMutation("users:setViewerPlanFromRevenueCat" as any);
   const { showSuccess } = useProSuccess();
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
+  const carouselRef = useRef<Animated.ScrollView | null>(null);
+  const carouselIndexRef = useRef(HERO_CAROUSEL_INITIAL_INDEX);
+  const isCarouselDraggingRef = useRef(false);
   const entranceProgress = useSharedValue(0);
+  const carouselScrollX = useSharedValue(HERO_CAROUSEL_INITIAL_INDEX * HERO_SNAP_INTERVAL);
+  const closeCountdownProgress = useSharedValue(0);
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [isTimerFinished, setIsTimerFinished] = useState(false);
@@ -281,7 +371,6 @@ export default function PaywallScreen() {
   const [packages, setPackages] = useState<RevenueCatPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [carouselIndex, setCarouselIndex] = useState(1);
   const [secondsLeft, setSecondsLeft] = useState(5);
 
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly"), [packages]);
@@ -310,6 +399,11 @@ export default function PaywallScreen() {
   useEffect(() => {
     setIsTimerFinished(false);
     setSecondsLeft(5);
+    closeCountdownProgress.value = 0;
+    closeCountdownProgress.value = withTiming(1, {
+      duration: CLOSE_DELAY_MS,
+      easing: Easing.linear,
+    });
 
     countdownIntervalRef.current = setInterval(() => {
       setSecondsLeft((current) => {
@@ -332,11 +426,29 @@ export default function PaywallScreen() {
         countdownIntervalRef.current = null;
       }
     };
-  }, []);
+  }, [closeCountdownProgress]);
+
+  useEffect(() => {
+    const initialOffset = HERO_CAROUSEL_INITIAL_INDEX * HERO_SNAP_INTERVAL;
+    carouselIndexRef.current = HERO_CAROUSEL_INITIAL_INDEX;
+    carouselScrollX.value = initialOffset;
+
+    const frame = requestAnimationFrame(() => {
+      carouselRef.current?.scrollTo({ x: initialOffset, animated: false });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [carouselScrollX, width]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCarouselIndex((current) => (current + 1) % HERO_IMAGES.length);
+      if (isCarouselDraggingRef.current) {
+        return;
+      }
+
+      const nextIndex = carouselIndexRef.current + 1;
+      carouselIndexRef.current = nextIndex;
+      carouselRef.current?.scrollTo({ x: nextIndex * HERO_SNAP_INTERVAL, animated: true });
     }, CAROUSEL_INTERVAL_MS);
 
     return () => clearInterval(interval);
@@ -401,7 +513,7 @@ export default function PaywallScreen() {
     if (source === "launch") {
       dismissLaunchPaywall();
     }
-    router.replace("/(tabs)");
+    router.replace("/");
   }, [router, source]);
 
   const completePaywall = useCallback(() => {
@@ -573,6 +685,23 @@ export default function PaywallScreen() {
     ],
   }));
 
+  const handleCarouselMomentumEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    isCarouselDraggingRef.current = false;
+    const snappedIndex = Math.round(event.nativeEvent.contentOffset.x / HERO_SNAP_INTERVAL);
+    const normalizedIndex = normalizeCarouselIndex(snappedIndex);
+    carouselIndexRef.current = normalizedIndex;
+
+    if (normalizedIndex !== snappedIndex) {
+      carouselRef.current?.scrollTo({ x: normalizedIndex * HERO_SNAP_INTERVAL, animated: false });
+    }
+  }, []);
+
+  const handleCarouselScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      carouselScrollX.value = event.contentOffset.x;
+    },
+  });
+
   return (
     <View style={styles.screen}>
       <Stack.Screen
@@ -591,14 +720,42 @@ export default function PaywallScreen() {
           <Text style={styles.restoreText}>Restore</Text>
         </Pressable>
 
-        <CountdownCloseButton isTimerFinished={isTimerFinished} onPress={handleClose} secondsLeft={secondsLeft} />
+        <CountdownCloseButton
+          isTimerFinished={isTimerFinished}
+          onPress={handleClose}
+          progress={closeCountdownProgress}
+          secondsLeft={secondsLeft}
+        />
 
         <ScrollView
           contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 24, 24) }]}
           contentInsetAdjustmentBehavior="never"
           showsVerticalScrollIndicator={false}
         >
-          <HeroCarousel index={carouselIndex} width={width} />
+          <View style={styles.heroClip}>
+            <Animated.ScrollView
+              ref={carouselRef}
+              contentContainerStyle={[
+                styles.heroTrack,
+                { paddingHorizontal: Math.max((width - HERO_SNAP_INTERVAL) / 2, 0) },
+              ]}
+              decelerationRate="fast"
+              horizontal
+              onScrollBeginDrag={() => {
+                isCarouselDraggingRef.current = true;
+              }}
+              onMomentumScrollEnd={handleCarouselMomentumEnd}
+              onScroll={handleCarouselScroll}
+              scrollEventThrottle={16}
+              showsHorizontalScrollIndicator={false}
+              snapToAlignment="start"
+              snapToInterval={HERO_SNAP_INTERVAL}
+            >
+              {HERO_CAROUSEL_DATA.map((item, index) => (
+                <HeroCarouselItem key={item.id} image={item.image} index={index} scrollX={carouselScrollX} />
+              ))}
+            </Animated.ScrollView>
+          </View>
 
           <View style={styles.featuresSection}>
             {FEATURE_ITEMS.map((feature, index) => (
@@ -690,10 +847,8 @@ const styles = StyleSheet.create({
   closeBubble: {
     width: CLOSE_VISUAL_SIZE,
     height: CLOSE_VISUAL_SIZE,
-    borderRadius: CLOSE_VISUAL_SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
   },
   closeButtonInner: {
     width: CLOSE_VISUAL_SIZE,
@@ -701,18 +856,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: CLOSE_VISUAL_SIZE / 2,
-    backgroundColor: "#FFFFFF",
   },
   countdownWrap: {
     width: CLOSE_VISUAL_SIZE,
     height: CLOSE_VISUAL_SIZE,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: CLOSE_VISUAL_SIZE / 2,
-    backgroundColor: "#FFFFFF",
+  },
+  countdownRing: {
+    position: "absolute",
   },
   countdownText: {
-    color: "#0A0A0A",
+    color: "#FFFFFF",
     fontSize: 11,
     lineHeight: 11,
     ...fonts.bold,
@@ -722,32 +877,30 @@ const styles = StyleSheet.create({
   },
   heroClip: {
     width: "100%",
-    height: HERO_ROW_HEIGHT + 36,
+    height: HERO_ROW_HEIGHT,
     overflow: "hidden",
     backgroundColor: SCREEN_BG,
   },
-  heroRow: {
-    width: HERO_ROW_WIDTH,
-    height: HERO_ROW_HEIGHT,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 36,
+  heroTrack: {
+    alignItems: "center",
+    paddingVertical: 28,
   },
-  heroSideImage: {
-    width: SIDE_IMAGE_WIDTH,
-    height: SIDE_IMAGE_HEIGHT,
-    marginTop: 92,
-    borderRadius: 16,
-    backgroundColor: PANEL_BG,
+  heroItemSlot: {
+    width: HERO_SNAP_INTERVAL,
+    height: CENTER_IMAGE_SIZE + HERO_SIDE_TRANSLATE_Y,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  heroCenterImage: {
+  heroImageWrap: {
     width: CENTER_IMAGE_SIZE,
     height: CENTER_IMAGE_SIZE,
-    marginTop: 64,
-    marginBottom: 36,
-    marginHorizontal: HERO_IMAGE_GAP,
     borderRadius: 20,
+    overflow: "hidden",
     backgroundColor: PANEL_BG,
+  },
+  heroImage: {
+    width: "100%",
+    height: "100%",
   },
   featuresSection: {
     marginHorizontal: 82,

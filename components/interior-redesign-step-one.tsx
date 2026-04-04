@@ -1,9 +1,9 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Camera, Gem, Image as GalleryIcon, Plus } from "lucide-react-native";
+import { Camera, Image as GalleryIcon, Plus } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
@@ -15,6 +15,7 @@ import Animated, {
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
+import { DesignStepHeader } from "./design-step-header";
 import { InteriorRedesignStepProgress } from "./interior-redesign-step-progress";
 import { HomeToolsBottomNav } from "./home-tools-bottom-nav";
 
@@ -68,9 +69,9 @@ export function InteriorRedesignStepOne({
   const { width, height } = useWindowDimensions();
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
+  const contentInset = 24;
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const topBadgeTop = scaleValue(36, layoutScale);
-  const topTitleTop = scaleValue(52, layoutScale);
+  const headerTop = scaleValue(36, layoutScale);
   const progressTop = scaleValue(74, layoutScale);
   const contentTop = scaleValue(82, layoutScale);
   const uploadTopSpacing = scaleValue(16, layoutScale);
@@ -178,20 +179,6 @@ export function InteriorRedesignStepOne({
     [finishClose, overlayOpacity, sheetTranslateY],
   );
 
-  const handleExitPress = () => {
-    triggerHaptic();
-    Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "CANCEL", style: "cancel" },
-      {
-        text: "EXIT",
-        style: "destructive",
-        onPress: () => {
-          onExit();
-        },
-      },
-    ]);
-  };
-
   const handleToolsPress = () => {
     triggerHaptic();
     router.navigate("/");
@@ -216,20 +203,15 @@ export function InteriorRedesignStepOne({
     <View style={styles.screen}>
       <StatusBar style="dark" />
 
-      <View style={[styles.creditBadge, { top: topBadgeTop, left: sideInset }]}>
-        <Gem color="#FFFFFF" size={13} strokeWidth={2.1} />
-        <Text style={styles.creditText}>{creditCount}</Text>
-      </View>
-
-      <Text style={[styles.stepText, { top: topTitleTop }]}>Step 1 / 4</Text>
-
-      <Pressable
-        accessibilityRole="button"
-        onPress={handleExitPress}
-        style={[styles.closeButton, { top: topTitleTop, right: scaleValue(36, layoutScale) }]}
-      >
-        <Text style={styles.closeText}>{"\u00D7"}</Text>
-      </Pressable>
+      <DesignStepHeader
+        closeAccessibilityLabel="Close redesign flow"
+        creditCount={creditCount}
+        horizontalInset={sideInset}
+        onClose={onExit}
+        step={1}
+        top={headerTop}
+        totalSteps={4}
+      />
 
       <InteriorRedesignStepProgress
         currentStep={1}
@@ -239,7 +221,7 @@ export function InteriorRedesignStepOne({
       />
 
       <View style={[styles.content, { paddingTop: contentTop }]}>
-        <Text style={[styles.header, { marginLeft: sideInset }]}>Add a Photo</Text>
+        <Text style={[styles.header, { marginLeft: contentInset }]}>Add a Photo</Text>
 
         <View
           style={[
@@ -309,7 +291,7 @@ export function InteriorRedesignStepOne({
           )}
         </View>
 
-        <Text style={[styles.examplesLabel, { marginTop: scaleValue(24, layoutScale), marginLeft: sideInset }]}>
+        <Text style={[styles.examplesLabel, { marginTop: scaleValue(24, layoutScale), marginLeft: contentInset }]}>
           Example Photos
         </Text>
 
@@ -472,6 +454,7 @@ const styles = StyleSheet.create({
     color: "#0A0A0A",
     fontSize: 24,
     lineHeight: 29,
+    textAlign: "left",
     ...fonts.bold,
   },
   uploadContainer: {
@@ -563,8 +546,6 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     position: "absolute",
-    left: 0,
-    right: 0,
     alignSelf: "center",
     height: 60,
     borderRadius: 30,

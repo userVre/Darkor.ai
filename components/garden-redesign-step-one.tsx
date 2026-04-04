@@ -1,8 +1,8 @@
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
-import { Camera, Diamond, Image as GalleryIcon, Plus } from "lucide-react-native";
+import { Camera, Image as GalleryIcon, Plus } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
@@ -15,6 +15,7 @@ import Animated, {
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
+import { DesignStepHeader } from "./design-step-header";
 
 type GardenRedesignStepOneExamplePhoto = {
   id: string;
@@ -64,9 +65,9 @@ export function GardenRedesignStepOne({
   const insets = useSafeAreaInsets();
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
+  const contentInset = 24;
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const topBadgeTop = scaleValue(36, layoutScale);
-  const topTitleTop = scaleValue(52, layoutScale);
+  const headerTop = scaleValue(36, layoutScale);
   const progressTop = scaleValue(74, layoutScale);
   const contentTop = scaleValue(82, layoutScale);
   const uploadTopSpacing = scaleValue(16, layoutScale);
@@ -176,20 +177,6 @@ export function GardenRedesignStepOne({
     [finishClose, overlayOpacity, sheetTranslateY],
   );
 
-  const handleExitPress = () => {
-    triggerHaptic();
-    Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Exit",
-        style: "destructive",
-        onPress: () => {
-          onExit();
-        },
-      },
-    ]);
-  };
-
   const handleContinuePress = () => {
     if (!canContinue) {
       return;
@@ -202,21 +189,15 @@ export function GardenRedesignStepOne({
     <View style={styles.screen}>
       <StatusBar style="dark" />
 
-      <View style={[styles.creditBadge, { top: topBadgeTop, left: sideInset }]}>
-        <Diamond color="#FFFFFF" size={13} strokeWidth={2.1} />
-        <Text style={styles.creditText}>{creditCount}</Text>
-      </View>
-
-      <Text style={[styles.stepText, { top: topTitleTop }]}>Step 1 / 3</Text>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Close garden upload"
-        onPress={handleExitPress}
-        style={[styles.closeButton, { top: topTitleTop, right: scaleValue(36, layoutScale) }]}
-      >
-        <Text style={styles.closeText}>{"\u00D7"}</Text>
-      </Pressable>
+      <DesignStepHeader
+        closeAccessibilityLabel="Close redesign flow"
+        creditCount={creditCount}
+        horizontalInset={sideInset}
+        onClose={onExit}
+        step={1}
+        top={headerTop}
+        totalSteps={3}
+      />
 
       <View style={[styles.progressRow, { top: progressTop, width: mainWidth, right: sideInset }]}>
         {Array.from({ length: 3 }).map((_, index) => (
@@ -243,7 +224,7 @@ export function GardenRedesignStepOne({
           paddingBottom: bottomContainerHeight + insets.bottom + scaleValue(36, layoutScale),
         }}
       >
-        <Text style={[styles.header, { marginLeft: sideInset }]}>Add a Photo</Text>
+        <Text style={[styles.header, { marginLeft: contentInset }]}>Add a Photo</Text>
 
         <View
           style={[
@@ -302,9 +283,9 @@ export function GardenRedesignStepOne({
           )}
         </View>
 
-        <Text style={[styles.examplesLabel, { marginTop: scaleValue(24, layoutScale), marginLeft: sideInset }]}>
-          Example Photos
-        </Text>
+          <Text style={[styles.examplesLabel, { marginTop: scaleValue(24, layoutScale), marginLeft: contentInset }]}>
+            Example Photos
+          </Text>
 
         <ScrollView
           horizontal
@@ -476,6 +457,7 @@ const styles = StyleSheet.create({
     color: "#0A0A0A",
     fontSize: 24,
     lineHeight: 29,
+    textAlign: "left",
     ...fonts.bold,
   },
   uploadContainer: {
@@ -574,6 +556,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   continueButton: {
+    alignSelf: "center",
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",

@@ -404,6 +404,10 @@ const BoardGridCard = memo(function BoardGridCard({
 
 const WORKSPACE_GENERATION_PROGRESS_MS = 15_000;
 const WORKSPACE_GENERATION_PROGRESS_MAX = 0.9;
+const ROOM_CARD_MEDIA_HEIGHT = 154;
+const STYLE_CARD_MEDIA_HEIGHT = 136;
+const ROOM_CARD_MEDIA_BOTTOM_CROP = 24;
+const STYLE_CARD_MEDIA_BOTTOM_CROP = 20;
 
 const INTERIOR_EXAMPLE_PHOTOS: ExamplePhoto[] = [
   {
@@ -3320,7 +3324,7 @@ export default function WorkspaceScreen() {
   const handleCloseWizard = useCallback(() => {
     if (workflowStep === 0) {
       handleResetWizard();
-      router.replace("/(tabs)");
+      router.replace("/");
       return;
     }
     handleResetWizard();
@@ -4105,6 +4109,7 @@ export default function WorkspaceScreen() {
     return (
       <ExteriorRedesignStepThree
         creditCount={creditBalance}
+        onBack={handleBack}
         styles={exteriorStyleGalleryCards}
         selectedStyle={selectedExteriorStyle}
         onSelectStyle={handleSetSelectedExteriorStyle}
@@ -4131,6 +4136,7 @@ export default function WorkspaceScreen() {
     return (
       <ExteriorRedesignStepFour
         creditCount={creditBalance}
+        onBack={handleBack}
         palettes={exteriorPaletteCards}
         selectedPaletteId={selectedPaletteId}
         onSelectPalette={handleSetSelectedPaletteId}
@@ -4143,6 +4149,7 @@ export default function WorkspaceScreen() {
   if (isGardenService && workflowStep === 3) {
     return (
       <GardenRedesignStepThree
+        onBack={handleBack}
         palettes={gardenPaletteCards}
         selectedPaletteId={selectedPaletteId}
         onSelectPalette={handleSetSelectedPaletteId}
@@ -4159,6 +4166,7 @@ export default function WorkspaceScreen() {
         roomOptions={[...SPACE_OPTIONS.interior]}
         selectedRoom={selectedRoom}
         onSelectRoom={handleSetSelectedRoom}
+        onBack={handleBack}
         onContinue={handleContinueFromInteriorRoomStep}
         onExit={handleCloseWizard}
       />
@@ -4172,6 +4180,7 @@ export default function WorkspaceScreen() {
         styles={interiorStyleGalleryCards}
         selectedStyle={selectedInteriorStyle}
         onSelectStyle={handleSetSelectedStyle}
+        onBack={handleBack}
         onContinue={handleContinueFromInteriorStyleStep}
         onExit={handleCloseWizard}
       />
@@ -4188,6 +4197,7 @@ export default function WorkspaceScreen() {
         selectedPaletteId={selectedPaletteId}
         onSelectMode={handleSetSelectedModeId}
         onSelectPalette={handleSetSelectedPaletteId}
+        onBack={handleBack}
         onContinue={handleContinueFromInteriorFinalStep}
         onExit={handleCloseWizard}
       />
@@ -4785,8 +4795,14 @@ export default function WorkspaceScreen() {
                                 }}
                               >
                                 <View style={{ flex: 1 }}>
-                                  <View style={{ height: 154, backgroundColor: "#0f0f10" }}>
-                                    <Image source={item.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
+                                  <View style={{ height: ROOM_CARD_MEDIA_HEIGHT, overflow: "hidden", backgroundColor: "#0f0f10" }}>
+                                    <Image
+                                      source={item.image}
+                                      style={{ width: "100%", height: ROOM_CARD_MEDIA_HEIGHT + ROOM_CARD_MEDIA_BOTTOM_CROP }}
+                                      contentFit="cover"
+                                      transition={160}
+                                      cachePolicy="memory-disk"
+                                    />
                                     <LinearGradient
                                       colors={["rgba(9,9,11,0.04)", "rgba(9,9,11,0.16)", "rgba(9,9,11,0.82)"]}
                                       locations={[0, 0.45, 1]}
@@ -5008,8 +5024,14 @@ export default function WorkspaceScreen() {
                                 }}
                               >
                                 {style.image ? (
-                                  <View style={{ height: 136, backgroundColor: "#0f0f10" }}>
-                                    <Image source={style.image} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={160} cachePolicy="memory-disk" />
+                                  <View style={{ height: STYLE_CARD_MEDIA_HEIGHT, overflow: "hidden", backgroundColor: "#0f0f10" }}>
+                                    <Image
+                                      source={style.image}
+                                      style={{ width: "100%", height: STYLE_CARD_MEDIA_HEIGHT + STYLE_CARD_MEDIA_BOTTOM_CROP }}
+                                      contentFit="cover"
+                                      transition={160}
+                                      cachePolicy="memory-disk"
+                                    />
                                     <LinearGradient
                                       colors={["rgba(8,8,10,0.04)", "rgba(8,8,10,0.14)", "rgba(8,8,10,0.78)"]}
                                       locations={[0, 0.46, 1]}

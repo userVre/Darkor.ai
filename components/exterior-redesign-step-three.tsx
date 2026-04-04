@@ -1,12 +1,12 @@
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
-import { Gem } from "lucide-react-native";
 import { useMemo } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
+import { DesignStepHeader } from "./design-step-header";
 
 type ExteriorRedesignStepThreeStyleCard = {
   id: string;
@@ -19,6 +19,7 @@ type ExteriorRedesignStepThreeProps = {
   styles: ExteriorRedesignStepThreeStyleCard[];
   selectedStyle: string | null;
   onSelectStyle: (style: string | null) => void;
+  onBack: () => void;
   onContinue: () => void;
   onExit: () => void;
 };
@@ -44,6 +45,7 @@ export function ExteriorRedesignStepThree({
   styles,
   selectedStyle,
   onSelectStyle,
+  onBack,
   onContinue,
   onExit,
 }: ExteriorRedesignStepThreeProps) {
@@ -51,12 +53,11 @@ export function ExteriorRedesignStepThree({
   const insets = useSafeAreaInsets();
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
-  const headerInset = scaleValue(68, layoutScale);
+  const headerInset = 24;
   const gridGap = scaleValue(24, layoutScale);
   const gridVerticalGap = scaleValue(12, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const topBadgeTop = scaleValue(36, layoutScale);
-  const topTitleTop = scaleValue(52, layoutScale);
+  const headerTop = scaleValue(36, layoutScale);
   const progressTop = scaleValue(74, layoutScale);
   const progressSegmentWidth = scaleValue(92, layoutScale);
   const progressGap = scaleValue(16, layoutScale);
@@ -75,20 +76,6 @@ export function ExteriorRedesignStepThree({
   const rows = useMemo(() => chunkIntoRows(styles, 3), [styles]);
   const canContinue = Boolean(selectedStyle);
 
-  const handleExitPress = () => {
-    triggerHaptic();
-    Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "CANCEL", style: "cancel" },
-      {
-        text: "EXIT",
-        style: "destructive",
-        onPress: () => {
-          onExit();
-        },
-      },
-    ]);
-  };
-
   const handleStylePress = (styleTitle: string) => {
     triggerHaptic();
     onSelectStyle(selectedStyle === styleTitle ? null : styleTitle);
@@ -106,21 +93,16 @@ export function ExteriorRedesignStepThree({
     <View style={stylesSheet.screen}>
       <StatusBar style="dark" />
 
-      <View style={[stylesSheet.creditBadge, { top: topBadgeTop, left: sideInset }]}>
-        <Gem color="#FFFFFF" size={13} strokeWidth={2.1} />
-        <Text style={stylesSheet.creditText}>{creditCount}</Text>
-      </View>
-
-      <Text style={[stylesSheet.stepText, { top: topTitleTop }]}>Step 3 / 4</Text>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Close exterior style selection"
-        onPress={handleExitPress}
-        style={[stylesSheet.closeButton, { top: topTitleTop, right: scaleValue(36, layoutScale) }]}
-      >
-        <Text style={stylesSheet.closeText}>{"\u00D7"}</Text>
-      </Pressable>
+      <DesignStepHeader
+        backAccessibilityLabel="Go to the previous step"
+        closeAccessibilityLabel="Go back to step 1"
+        horizontalInset={sideInset}
+        onBack={onBack}
+        onClose={onExit}
+        step={3}
+        top={headerTop}
+        totalSteps={4}
+      />
 
       <View style={[stylesSheet.progressRow, { top: progressTop, width: mainWidth, right: sideInset }]}>
         {Array.from({ length: 4 }).map((_, index) => (
@@ -300,6 +282,7 @@ const stylesSheet = StyleSheet.create({
     color: "#0A0A0A",
     fontSize: 24,
     lineHeight: 29,
+    textAlign: "left",
     ...fonts.bold,
   },
   subtitle: {
@@ -339,6 +322,7 @@ const stylesSheet = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   continueButton: {
+    alignSelf: "center",
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",

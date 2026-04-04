@@ -1,11 +1,12 @@
 import { StatusBar } from "expo-status-bar";
-import { Gem, PaintRoller, Wand2 } from "lucide-react-native";
+import { PaintRoller, Wand2 } from "lucide-react-native";
 import { useMemo } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
+import { DesignStepHeader } from "./design-step-header";
 import { InteriorRedesignStepProgress } from "./interior-redesign-step-progress";
 
 type InteriorRedesignStepFourMode = {
@@ -28,6 +29,7 @@ type InteriorRedesignStepFourProps = {
   selectedPaletteId: string | null;
   onSelectMode: (modeId: string | null) => void;
   onSelectPalette: (paletteId: string | null) => void;
+  onBack: () => void;
   onContinue: () => void;
   onExit: () => void;
 };
@@ -153,6 +155,7 @@ export function InteriorRedesignStepFour({
   selectedPaletteId,
   onSelectMode,
   onSelectPalette,
+  onBack,
   onContinue,
   onExit,
 }: InteriorRedesignStepFourProps) {
@@ -162,12 +165,11 @@ export function InteriorRedesignStepFour({
   const paletteScale = Math.min(width / PALETTE_REFERENCE_WIDTH, 1);
   const sideInset = scaleValue(20, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const topBadgeTop = scaleValue(36, layoutScale);
-  const topTitleTop = scaleValue(52, layoutScale);
+  const headerTop = scaleValue(36, layoutScale);
   const progressTop = scaleValue(74, layoutScale);
   const progressSegmentWidth = scaleValue(92, layoutScale);
   const progressGap = scaleValue(16, layoutScale);
-  const sectionTitleLeft = scaleValue(20, layoutScale);
+  const sectionTitleLeft = 24;
   const modeTitleTop = progressTop + scaleValue(36, layoutScale);
   const modeCardsTopGap = scaleValue(16, layoutScale);
   const modeCardWidth = scaleValue(196, layoutScale);
@@ -192,20 +194,6 @@ export function InteriorRedesignStepFour({
   const canContinue = Boolean(selectedModeId && selectedPaletteId);
   const paletteGridWidth = paletteCardWidth * 3 + paletteHorizontalGap * 2;
 
-  const handleExitPress = () => {
-    triggerHaptic();
-    Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "CANCEL", style: "cancel" },
-      {
-        text: "EXIT",
-        style: "destructive",
-        onPress: () => {
-          onExit();
-        },
-      },
-    ]);
-  };
-
   const handleModePress = (modeId: string) => {
     triggerHaptic();
     onSelectMode(selectedModeId === modeId ? null : modeId);
@@ -228,21 +216,16 @@ export function InteriorRedesignStepFour({
     <View style={styles.screen}>
       <StatusBar style="dark" />
 
-      <View style={[styles.creditBadge, { top: topBadgeTop, left: sideInset }]}>
-        <Gem color="#FFFFFF" size={13} strokeWidth={2.1} />
-        <Text style={styles.creditText}>{creditCount}</Text>
-      </View>
-
-      <Text style={[styles.stepText, { top: topTitleTop }]}>Step 4 / 4</Text>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Close mode and palette selection"
-        onPress={handleExitPress}
-        style={[styles.closeButton, { top: topTitleTop, right: scaleValue(36, layoutScale) }]}
-      >
-        <Text style={styles.closeText}>{"\u00D7"}</Text>
-      </Pressable>
+      <DesignStepHeader
+        backAccessibilityLabel="Go to the previous step"
+        closeAccessibilityLabel="Go back to step 1"
+        horizontalInset={sideInset}
+        onBack={onBack}
+        onClose={onExit}
+        step={4}
+        top={headerTop}
+        totalSteps={4}
+      />
 
       <InteriorRedesignStepProgress
         currentStep={4}
@@ -425,6 +408,7 @@ const styles = StyleSheet.create({
     color: "#0A0A0A",
     fontSize: 24,
     lineHeight: 29,
+    textAlign: "left",
     ...fonts.bold,
   },
   modeCard: {
@@ -540,6 +524,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   continueButton: {
+    alignSelf: "center",
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",

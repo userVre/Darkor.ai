@@ -1,9 +1,10 @@
 import { StatusBar } from "expo-status-bar";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
+import { DesignStepHeader } from "./design-step-header";
 
 type GardenRedesignStepThreePalette = {
   id: string;
@@ -15,6 +16,7 @@ type GardenRedesignStepThreeProps = {
   palettes: GardenRedesignStepThreePalette[];
   selectedPaletteId: string | null;
   onSelectPalette: (paletteId: string | null) => void;
+  onBack: () => void;
   onContinue: () => void;
   onExit: () => void;
 };
@@ -40,6 +42,7 @@ export function GardenRedesignStepThree({
   palettes,
   selectedPaletteId,
   onSelectPalette,
+  onBack,
   onContinue,
   onExit,
 }: GardenRedesignStepThreeProps) {
@@ -49,12 +52,12 @@ export function GardenRedesignStepThree({
   const paletteScale = Math.min(width / PALETTE_REFERENCE_WIDTH, 1);
   const sideInset = scaleValue(20, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const topTitleTop = scaleValue(52, layoutScale);
+  const headerTop = scaleValue(36, layoutScale);
   const progressTop = scaleValue(74, layoutScale);
   const progressGap = scaleValue(16, layoutScale);
   const progressSegmentWidth = (mainWidth - progressGap * 2) / 3;
   const titleTop = progressTop + scaleValue(36, layoutScale);
-  const titleLeft = scaleValue(20, layoutScale);
+  const titleLeft = 24;
   const paletteTitleTopGap = scaleValue(20, paletteScale);
   const paletteMargin = scaleValue(24, paletteScale);
   const paletteCardWidth = scaleValue(124, paletteScale);
@@ -71,20 +74,6 @@ export function GardenRedesignStepThree({
   const paletteRows = chunkIntoRows(palettes, 3);
   const paletteGridWidth = paletteCardWidth * 3 + paletteHorizontalGap * 2;
   const canContinue = Boolean(selectedPaletteId);
-
-  const handleExitPress = () => {
-    triggerHaptic();
-    Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Exit",
-        style: "destructive",
-        onPress: () => {
-          onExit();
-        },
-      },
-    ]);
-  };
 
   const handlePalettePress = (paletteId: string) => {
     triggerHaptic();
@@ -103,16 +92,16 @@ export function GardenRedesignStepThree({
     <View style={styles.screen}>
       <StatusBar style="dark" />
 
-      <Text style={[styles.stepText, { top: topTitleTop }]}>Step 3 / 3</Text>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Close garden palette selection"
-        onPress={handleExitPress}
-        style={[styles.closeButton, { top: topTitleTop, right: scaleValue(36, layoutScale) }]}
-      >
-        <Text style={styles.closeText}>{"\u00D7"}</Text>
-      </Pressable>
+      <DesignStepHeader
+        backAccessibilityLabel="Go to the previous step"
+        closeAccessibilityLabel="Go back to step 1"
+        horizontalInset={sideInset}
+        onBack={onBack}
+        onClose={onExit}
+        step={3}
+        top={headerTop}
+        totalSteps={3}
+      />
 
       <View style={[styles.progressRow, { top: progressTop, width: mainWidth, right: sideInset }]}>
         {Array.from({ length: 3 }).map((_, index) => (
@@ -272,6 +261,7 @@ const styles = StyleSheet.create({
     color: "#0A0A0A",
     fontSize: 24,
     lineHeight: 29,
+    textAlign: "left",
     ...fonts.bold,
   },
   paletteCard: {
@@ -305,6 +295,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   continueButton: {
+    alignSelf: "center",
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",

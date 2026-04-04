@@ -1,11 +1,11 @@
 import { StatusBar } from "expo-status-bar";
-import { Gem } from "lucide-react-native";
 import { useMemo } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
+import { DesignStepHeader } from "./design-step-header";
 
 type ExteriorRedesignStepFourPalette = {
   id: string;
@@ -18,6 +18,7 @@ type ExteriorRedesignStepFourProps = {
   palettes: ExteriorRedesignStepFourPalette[];
   selectedPaletteId: string | null;
   onSelectPalette: (paletteId: string | null) => void;
+  onBack: () => void;
   onContinue: () => void;
   onExit: () => void;
 };
@@ -44,6 +45,7 @@ export function ExteriorRedesignStepFour({
   palettes,
   selectedPaletteId,
   onSelectPalette,
+  onBack,
   onContinue,
   onExit,
 }: ExteriorRedesignStepFourProps) {
@@ -53,13 +55,12 @@ export function ExteriorRedesignStepFour({
   const paletteScale = Math.min(width / PALETTE_REFERENCE_WIDTH, 1);
   const sideInset = scaleValue(20, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const topBadgeTop = scaleValue(36, layoutScale);
-  const topTitleTop = scaleValue(52, layoutScale);
+  const headerTop = scaleValue(36, layoutScale);
   const progressTop = scaleValue(74, layoutScale);
   const progressSegmentWidth = scaleValue(92, layoutScale);
   const progressGap = scaleValue(16, layoutScale);
   const titleTop = progressTop + scaleValue(36, layoutScale);
-  const titleLeft = scaleValue(20, layoutScale);
+  const titleLeft = 24;
   const paletteTitleTopGap = scaleValue(20, layoutScale);
   const paletteMargin = scaleValue(24, paletteScale);
   const paletteCardWidth = scaleValue(124, paletteScale);
@@ -76,20 +77,6 @@ export function ExteriorRedesignStepFour({
   const paletteRows = useMemo(() => chunkIntoRows(palettes, 3), [palettes]);
   const paletteGridWidth = paletteCardWidth * 3 + paletteHorizontalGap * 2;
   const canContinue = Boolean(selectedPaletteId);
-
-  const handleExitPress = () => {
-    triggerHaptic();
-    Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "CANCEL", style: "cancel" },
-      {
-        text: "EXIT",
-        style: "destructive",
-        onPress: () => {
-          onExit();
-        },
-      },
-    ]);
-  };
 
   const handlePalettePress = (paletteId: string) => {
     triggerHaptic();
@@ -108,21 +95,16 @@ export function ExteriorRedesignStepFour({
     <View style={styles.screen}>
       <StatusBar style="dark" />
 
-      <View style={[styles.creditBadge, { top: topBadgeTop, left: sideInset }]}>
-        <Gem color="#FFFFFF" size={13} strokeWidth={2.1} />
-        <Text style={styles.creditText}>{creditCount}</Text>
-      </View>
-
-      <Text style={[styles.stepText, { top: topTitleTop }]}>Step 4 / 4</Text>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Close exterior palette selection"
-        onPress={handleExitPress}
-        style={[styles.closeButton, { top: topTitleTop, right: scaleValue(36, layoutScale) }]}
-      >
-        <Text style={styles.closeText}>{"\u00D7"}</Text>
-      </Pressable>
+      <DesignStepHeader
+        backAccessibilityLabel="Go to the previous step"
+        closeAccessibilityLabel="Go back to step 1"
+        horizontalInset={sideInset}
+        onBack={onBack}
+        onClose={onExit}
+        step={4}
+        top={headerTop}
+        totalSteps={4}
+      />
 
       <View style={[styles.progressRow, { top: progressTop, width: mainWidth, right: sideInset }]}>
         {Array.from({ length: 4 }).map((_, index) => (
@@ -298,6 +280,7 @@ const styles = StyleSheet.create({
     color: "#0A0A0A",
     fontSize: 24,
     lineHeight: 29,
+    textAlign: "left",
     ...fonts.bold,
   },
   paletteCard: {
@@ -331,6 +314,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   continueButton: {
+    alignSelf: "center",
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",

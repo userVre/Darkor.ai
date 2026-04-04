@@ -1,12 +1,12 @@
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
-import { ArrowLeft } from "lucide-react-native";
 import { useMemo } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
+import { DesignStepHeader } from "./design-step-header";
 
 type ExteriorRedesignStepTwoCard = {
   id: string;
@@ -52,11 +52,11 @@ export function ExteriorRedesignStepTwo({
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(420, layoutScale));
-  const topTitleTop = scaleValue(52, layoutScale);
+  const headerTop = scaleValue(36, layoutScale);
   const progressTop = scaleValue(74, layoutScale);
   const progressSegmentWidth = scaleValue(92, layoutScale);
   const progressGap = scaleValue(16, layoutScale);
-  const titleLeft = scaleValue(48, layoutScale);
+  const titleLeft = 24;
   const titleTop = progressTop + scaleValue(24, layoutScale);
   const subtitleTopGap = scaleValue(12, layoutScale);
   const gridTopGap = scaleValue(24, layoutScale);
@@ -75,34 +75,6 @@ export function ExteriorRedesignStepTwo({
   const rows = useMemo(() => chunkIntoRows(cards, 2), [cards]);
   const canContinue = Boolean(selectedBuildingType);
 
-  const handleExitPress = () => {
-    triggerHaptic();
-    Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "CANCEL", style: "cancel" },
-      {
-        text: "EXIT",
-        style: "destructive",
-        onPress: () => {
-          onExit();
-        },
-      },
-    ]);
-  };
-
-  const handleBackPress = () => {
-    triggerHaptic();
-    Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "CANCEL", style: "cancel" },
-      {
-        text: "EXIT",
-        style: "destructive",
-        onPress: () => {
-          onExit();
-        },
-      },
-    ]);
-  };
-
   const handleCardPress = (title: string) => {
     triggerHaptic();
     onSelectBuildingType(selectedBuildingType === title ? null : title);
@@ -120,25 +92,16 @@ export function ExteriorRedesignStepTwo({
     <View style={styles.screen}>
       <StatusBar style="dark" />
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Go back"
-        onPress={handleBackPress}
-        style={[styles.navButton, { top: topTitleTop, left: scaleValue(20, layoutScale) }]}
-      >
-        <ArrowLeft color="#0A0A0A" size={18} strokeWidth={2.4} />
-      </Pressable>
-
-      <Text style={[styles.stepText, { top: topTitleTop }]}>Step 2 / 4</Text>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Close building type selection"
-        onPress={handleExitPress}
-        style={[styles.navButton, { top: topTitleTop, right: scaleValue(36, layoutScale) }]}
-      >
-        <Text style={styles.closeText}>{"\u00D7"}</Text>
-      </Pressable>
+      <DesignStepHeader
+        backAccessibilityLabel="Go to the previous step"
+        closeAccessibilityLabel="Go back to step 1"
+        horizontalInset={sideInset}
+        onBack={onBack}
+        onClose={onExit}
+        step={2}
+        top={headerTop}
+        totalSteps={4}
+      />
 
       <View style={[styles.progressRow, { top: progressTop, width: mainWidth, right: sideInset }]}>
         {Array.from({ length: 4 }).map((_, index) => (
@@ -294,6 +257,7 @@ const styles = StyleSheet.create({
     color: "#0A0A0A",
     fontSize: 24,
     lineHeight: 29,
+    textAlign: "left",
     ...fonts.bold,
   },
   subtitle: {
@@ -332,6 +296,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   continueButton: {
+    alignSelf: "center",
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
