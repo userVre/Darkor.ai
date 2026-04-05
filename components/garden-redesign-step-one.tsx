@@ -296,7 +296,7 @@ export function GardenRedesignStepOne({
             paddingRight: sideInset,
           }}
         >
-          {examplePhotos.slice(0, 3).map((example, index) => (
+          {examplePhotos.map((example, index) => (
             <Pressable
               key={example.id}
               accessibilityRole="button"
@@ -304,7 +304,7 @@ export function GardenRedesignStepOne({
               style={{
                 width: thumbnailSize,
                 height: thumbnailSize,
-                marginRight: index === examplePhotos.slice(0, 3).length - 1 ? 0 : scaleValue(8, layoutScale),
+                marginRight: index === examplePhotos.length - 1 ? 0 : scaleValue(8, layoutScale),
               }}
             >
               <View style={styles.thumbnailFrame}>

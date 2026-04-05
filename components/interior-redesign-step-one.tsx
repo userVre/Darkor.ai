@@ -304,7 +304,7 @@ export function InteriorRedesignStepOne({
             paddingRight: sideInset,
           }}
         >
-          {examplePhotos.slice(0, 3).map((example, index) => (
+          {examplePhotos.map((example, index) => (
             <Pressable
               key={example.id}
               accessibilityRole="button"
@@ -312,7 +312,7 @@ export function InteriorRedesignStepOne({
               style={{
                 width: thumbnailSize,
                 height: thumbnailSize,
-                marginRight: index === examplePhotos.slice(0, 3).length - 1 ? 0 : scaleValue(8, layoutScale),
+                marginRight: index === examplePhotos.length - 1 ? 0 : scaleValue(8, layoutScale),
               }}
             >
               <View style={styles.thumbnailFrame}>

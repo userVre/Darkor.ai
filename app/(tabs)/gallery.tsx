@@ -1,34 +1,18 @@
 import { useAuth } from "@clerk/expo";
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
+import { MotiView } from "moti";
 import { memo, useCallback, useMemo, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  Bath,
-  BedDouble,
-  BookOpen,
-  Building2,
-  CookingPot,
-  Home,
-  Monitor,
-  PaintRoller,
-  Projector,
-  Sofa,
-  Sparkles,
-  Store,
-  Trees,
-  Warehouse,
-  type LucideIcon,
-} from "lucide-react-native";
+import { Diamond, X } from "lucide-react-native";
 
 import { LuxPressable } from "../../components/lux-pressable";
 import { useViewerCredits } from "../../components/viewer-credits-context";
 import { useWorkspaceDraft } from "../../components/workspace-context";
 import {
   DISCOVER_SECTIONS,
-  type DiscoverSection,
   type DiscoverSectionId,
   type DiscoverTile,
 } from "../../lib/data";
@@ -36,22 +20,17 @@ import { HAIRLINE } from "../../lib/design-system";
 import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
 import { withWorkspaceFlowId } from "../../lib/try-it-flow";
-import { spacing } from "../../styles/spacing";
 import { fonts } from "../../styles/typography";
 
 const SCREEN_BG = "#FFFFFF";
 const PRIMARY_TEXT = "#0A0A0A";
-const SECONDARY_TEXT = "#575757";
-const MUTED_TEXT = "#A1A1AA";
-const TAB_INACTIVE = "#CFCFD4";
-const CARD_BORDER = "#ECECEC";
-const CARD_SHADOW = "rgba(15,23,42,0.08)";
+const SECONDARY_TEXT = "#5F5F67";
+const TAB_INACTIVE = "#8D8D96";
 const SCREEN_SIDE_MARGIN = 24;
-const TAB_LEFT_MARGIN = 24;
-const SECTION_GAP = 32;
-const HEADER_TO_CONTENT_GAP = 20;
-const GRID_GAP = 12;
-const GRID_CARD_RADIUS = 20;
+const SECTION_GAP = 28;
+const CATEGORY_BAR_PADDING = 6;
+const CATEGORY_BAR_GAP = 6;
+const CAROUSEL_CARD_GAP = 14;
 
 type DiscoverTabConfig = {
   id: "interior" | "exterior" | "garden" | "wall" | "floor";
@@ -59,15 +38,38 @@ type DiscoverTabConfig = {
   sectionIds: DiscoverSectionId[];
 };
 
+type DiscoverTabId = DiscoverTabConfig["id"];
+
+type DiscoverItemGroup = {
+  id: string;
+  title: string;
+  items: DiscoverTile[];
+  sortIndex: number;
+};
+
 const CATEGORY_TABS: DiscoverTabConfig[] = [
-  { id: "interior", label: "Interior", sectionIds: ["home"] },
-  { id: "exterior", label: "Exterior", sectionIds: ["exterior"] },
+  { id: "interior", label: "Home (Interior)", sectionIds: ["home"] },
   { id: "garden", label: "Garden", sectionIds: ["garden"] },
+  { id: "exterior", label: "Exterior Design", sectionIds: ["exterior"] },
   { id: "wall", label: "Wall", sectionIds: ["wall"] },
   { id: "floor", label: "Floor", sectionIds: ["floor"] },
 ] as const;
 
-type DiscoverTabId = DiscoverTabConfig["id"];
+const INTERIOR_GROUP_ORDER = [
+  "Kitchen",
+  "Living Room",
+  "Gaming Room",
+  "Bedroom",
+  "Bathroom",
+  "Dining Room",
+  "Home Office",
+  "Home Theater",
+  "Library",
+  "Hall",
+  "Laundry",
+  "Nursery",
+  "Study",
+] as const;
 
 function getCardTitle(item: DiscoverTile) {
   const title = item.title.trim();
@@ -81,33 +83,44 @@ function getCardStyle(item: DiscoverTile) {
   return "Featured";
 }
 
-function getCardCategory(item: DiscoverTile) {
-  const category = item.spaceType.trim();
-  if (category.length > 0) {
-    return category;
-  }
-  return "Space";
-}
+function buildItemGroups(
+  tabId: DiscoverTabId,
+  sectionId: DiscoverSectionId,
+  items: DiscoverTile[],
+): DiscoverItemGroup[] {
+  const groups = new Map<string, DiscoverItemGroup>();
+  const preferredOrder = new Map(
+    (tabId === "interior" ? INTERIOR_GROUP_ORDER : []).map((title, index) => [title.toLowerCase(), index]),
+  );
 
-function getCategoryIcon(item: DiscoverTile): LucideIcon {
-  const key = `${item.service}:${item.spaceType}`.toLowerCase();
+  items.forEach((item, index) => {
+    const title = item.spaceType.trim().length > 0 ? item.spaceType.trim() : "Featured";
+    const key = title.toLowerCase();
+    const existing = groups.get(key);
 
-  if (item.service === "paint") return PaintRoller;
-  if (item.service === "floor") return Sparkles;
-  if (item.service === "garden") return Trees;
+    if (existing) {
+      existing.items.push(item);
+      return;
+    }
 
-  if (key.includes("living")) return Sofa;
-  if (key.includes("bed")) return BedDouble;
-  if (key.includes("kitchen")) return CookingPot;
-  if (key.includes("bath")) return Bath;
-  if (key.includes("office")) return Monitor;
-  if (key.includes("theater")) return Projector;
-  if (key.includes("library")) return BookOpen;
-  if (key.includes("retail")) return Store;
-  if (key.includes("garage")) return Warehouse;
-  if (item.service === "exterior") return Building2;
+    groups.set(key, {
+      id: `${sectionId}-${key.replace(/\s+/g, "-")}`,
+      title,
+      items: [item],
+      sortIndex: index,
+    });
+  });
 
-  return Home;
+  return Array.from(groups.values()).sort((left, right) => {
+    const leftPreferred = preferredOrder.get(left.title.toLowerCase());
+    const rightPreferred = preferredOrder.get(right.title.toLowerCase());
+
+    if (typeof leftPreferred === "number" || typeof rightPreferred === "number") {
+      return (leftPreferred ?? Number.MAX_SAFE_INTEGER) - (rightPreferred ?? Number.MAX_SAFE_INTEGER);
+    }
+
+    return left.sortIndex - right.sortIndex;
+  });
 }
 
 const DiscoverCategoryTabs = memo(function DiscoverCategoryTabs({
@@ -117,167 +130,245 @@ const DiscoverCategoryTabs = memo(function DiscoverCategoryTabs({
   activeTab: DiscoverTabId;
   onSelectTab: (tabId: DiscoverTabId) => void;
 }) {
+  const [tabLayouts, setTabLayouts] = useState<Partial<Record<DiscoverTabId, { x: number; width: number }>>>({});
+  const activeLayout = tabLayouts[activeTab];
+
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.tabsContent}
-      style={styles.tabsRail}
-    >
-      {CATEGORY_TABS.map((tab, index) => {
-        const active = tab.id === activeTab;
-        return (
-          <LuxPressable
-            key={tab.id}
-            onPress={() => onSelectTab(tab.id)}
-            pressableClassName="cursor-pointer"
-            className="cursor-pointer"
-            style={[
-              styles.tabButton,
-              index === 0 ? { marginLeft: TAB_LEFT_MARGIN } : null,
-              active ? styles.tabButtonActive : null,
-            ]}
-            glowColor="rgba(10,10,10,0.08)"
-            scale={0.98}
-          >
-            <Text style={[styles.tabLabel, active ? styles.tabLabelActive : null]}>{tab.label}</Text>
-            <View style={[styles.tabUnderline, active ? styles.tabUnderlineActive : null]} />
-          </LuxPressable>
-        );
-      })}
-    </ScrollView>
+    <View style={styles.tabsRailShell}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tabsRailContent}
+        style={styles.tabsRail}
+      >
+        <View style={styles.tabsTrack}>
+          {activeLayout ? (
+            <MotiView
+              animate={{ translateX: activeLayout.x, width: activeLayout.width }}
+              transition={{ type: "timing", duration: 220 }}
+              style={styles.tabActivePill}
+            />
+          ) : null}
+
+          {CATEGORY_TABS.map((tab, index) => {
+            const active = tab.id === activeTab;
+            return (
+              <LuxPressable
+                key={tab.id}
+                onPress={() => {
+                  triggerHaptic();
+                  onSelectTab(tab.id);
+                }}
+                className="cursor-pointer"
+                pressableClassName="cursor-pointer"
+                style={[
+                  styles.tabButton,
+                  index < CATEGORY_TABS.length - 1 ? styles.tabButtonGap : null,
+                ]}
+                glowColor="rgba(255,255,255,0.35)"
+                scale={0.99}
+              >
+                <View
+                  onLayout={(event) => {
+                    const { x, width } = event.nativeEvent.layout;
+                    setTabLayouts((current) => {
+                      const previous = current[tab.id];
+                      if (previous?.x === x && previous?.width === width) {
+                        return current;
+                      }
+
+                      return {
+                        ...current,
+                        [tab.id]: { x, width },
+                      };
+                    });
+                  }}
+                  style={styles.tabButtonInner}
+                >
+                  <Text
+                    adjustsFontSizeToFit
+                    numberOfLines={1}
+                    style={[styles.tabLabel, active ? styles.tabLabelActive : null]}
+                  >
+                    {tab.label}
+                  </Text>
+                </View>
+              </LuxPressable>
+            );
+          })}
+        </View>
+      </ScrollView>
+    </View>
   );
 });
 
-const DiscoverMagazineCard = memo(function DiscoverMagazineCard({
+const DiscoverCarouselCard = memo(function DiscoverCarouselCard({
   item,
   width,
-  onPress,
+  onPreview,
 }: {
   item: DiscoverTile;
   width: number;
-  onPress: (item: DiscoverTile) => void;
+  onPreview: (item: DiscoverTile) => void;
 }) {
   const title = getCardTitle(item);
   const styleName = getCardStyle(item);
-  const categoryName = getCardCategory(item);
-  const CategoryIcon = getCategoryIcon(item);
-  const imageHeight = Math.round(width * 1.02);
-
-  const handlePress = useCallback(() => {
-    triggerHaptic();
-    void onPress(item);
-  }, [item, onPress]);
+  const imageHeight = Math.round(width * 1.22);
 
   return (
     <LuxPressable
-      onPress={handlePress}
-      pressableClassName="cursor-pointer"
+      onPress={() => {
+        triggerHaptic();
+        onPreview(item);
+      }}
       className="cursor-pointer"
+      pressableClassName="cursor-pointer"
       style={[
-        styles.card,
+        styles.carouselCard,
         {
           width,
-          borderRadius: GRID_CARD_RADIUS,
+          height: imageHeight,
         },
       ]}
       glowColor="rgba(15,23,42,0.08)"
       scale={0.985}
     >
-      <Image source={item.image} style={{ width: "100%", height: imageHeight }} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+      <Image
+        source={item.image}
+        style={styles.carouselImage}
+        contentFit="cover"
+        transition={120}
+        cachePolicy="memory-disk"
+      />
 
-      <View style={styles.cardFooter}>
-        <View style={styles.cardLabelBar}>
-          <View style={styles.cardIconWrap}>
-            <CategoryIcon color={PRIMARY_TEXT} size={14} strokeWidth={2.2} />
-          </View>
-          <Text style={styles.cardCategory}>{categoryName}</Text>
-          <View style={styles.cardStyleChip}>
-            <Text style={styles.cardStyleChipText}>{styleName}</Text>
-          </View>
-        </View>
-
-        <View style={styles.cardActionRow}>
-          <Text style={styles.cardTitle} numberOfLines={2}>
-            {title}
-          </Text>
-          <View style={styles.tryItPill}>
-            <Text style={styles.tryItPillText}>Try It!</Text>
-          </View>
-        </View>
+      <View style={styles.carouselOverlay}>
+        <Text style={styles.carouselStyle}>{styleName}</Text>
+        <Text numberOfLines={2} style={styles.carouselTitle}>
+          {title}
+        </Text>
       </View>
     </LuxPressable>
   );
 });
 
-const DiscoverSectionBlock = memo(function DiscoverSectionBlock({
-  section,
-  expanded,
-  onToggleExpanded,
-  onCardPress,
-  gridCardWidth,
+const DiscoverCarouselGroup = memo(function DiscoverCarouselGroup({
+  group,
+  cardWidth,
+  onPreview,
 }: {
-  section: DiscoverSection;
-  expanded: boolean;
-  onToggleExpanded: () => void;
-  onCardPress: (item: DiscoverTile) => void;
-  gridCardWidth: number;
+  group: DiscoverItemGroup;
+  cardWidth: number;
+  onPreview: (item: DiscoverTile) => void;
 }) {
-  const visibleItems = expanded ? section.items : section.items.slice(0, 4);
-  const canExpand = section.items.length > 4;
-
   return (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionHeadingCopy}>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
-          <Text style={styles.sectionDescription}>{section.description}</Text>
-        </View>
-        {canExpand ? (
-          <LuxPressable
-            onPress={onToggleExpanded}
-            pressableClassName="cursor-pointer"
-            className="cursor-pointer"
-            style={styles.sectionAction}
-            glowColor="rgba(10,10,10,0.06)"
-            scale={0.98}
-          >
-            <Text style={styles.sectionActionText}>{expanded ? "Show Less" : "See All"}</Text>
-          </LuxPressable>
-        ) : null}
-      </View>
+    <View style={styles.groupSection}>
+      <Text style={styles.groupTitle}>{group.title}</Text>
 
-      <View style={{ marginTop: HEADER_TO_CONTENT_GAP }}>
-        <View style={styles.gridWrap}>
-          {visibleItems.map((item) => (
-            <DiscoverMagazineCard
-              key={item.id}
-              item={item}
-              width={gridCardWidth}
-              onPress={onCardPress}
-            />
-          ))}
-        </View>
-      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.groupScrollerContent}
+      >
+        {group.items.map((item, index) => (
+          <View
+            key={item.id}
+            style={index < group.items.length - 1 ? styles.carouselCardGap : null}
+          >
+            <DiscoverCarouselCard item={item} width={cardWidth} onPreview={onPreview} />
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 });
+
+function DiscoverPreviewModal({
+  item,
+  visible,
+  topInset,
+  bottomInset,
+  onClose,
+  onTryIt,
+}: {
+  item: DiscoverTile | null;
+  visible: boolean;
+  topInset: number;
+  bottomInset: number;
+  onClose: () => void;
+  onTryIt: (item: DiscoverTile) => void;
+}) {
+  if (!item) {
+    return null;
+  }
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      presentationStyle="overFullScreen"
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
+      <View style={styles.previewOverlay}>
+        <Pressable onPress={onClose} style={StyleSheet.absoluteFill} />
+
+        <View style={[styles.previewTopBar, { top: Math.max(topInset + 10, 22) }]}>
+          <Pressable accessibilityRole="button" hitSlop={10} onPress={onClose} style={styles.previewCloseButton}>
+            <X color="#FFFFFF" size={22} strokeWidth={2.3} />
+          </Pressable>
+        </View>
+
+        <View style={styles.previewImageFrame}>
+          <Image
+            source={item.image}
+            style={styles.previewImage}
+            contentFit="contain"
+            transition={120}
+            cachePolicy="memory-disk"
+          />
+        </View>
+
+        <View
+          style={[
+            styles.previewBottomBar,
+            { paddingBottom: Math.max(bottomInset + 18, 28) },
+          ]}
+        >
+          <View style={styles.previewCopy}>
+            <Text style={styles.previewTitle}>{getCardTitle(item)}</Text>
+            <Text style={styles.previewMeta}>{`${item.spaceType} / ${getCardStyle(item)}`}</Text>
+          </View>
+
+          <LuxPressable
+            onPress={() => onTryIt(item)}
+            className="cursor-pointer"
+            pressableClassName="cursor-pointer"
+            style={styles.previewActionButton}
+            glowColor="rgba(255,255,255,0.24)"
+            scale={0.97}
+          >
+            <Text style={styles.previewActionText}>Try It!</Text>
+          </LuxPressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
 
 export default function GalleryScreen() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const {
-    clearDraft,
-  } = useWorkspaceDraft();
+  const { clearDraft } = useWorkspaceDraft();
   const { credits: creditBalance, hasPaidAccess } = useViewerCredits();
   const [activeTab, setActiveTab] = useState<DiscoverTabId>("interior");
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
 
-  const gridCardWidth = useMemo(
-    () => Math.floor((width - SCREEN_SIDE_MARGIN * 2 - GRID_GAP) / 2),
+  const carouselCardWidth = useMemo(
+    () => Math.min(Math.max(width * 0.68, 220), 278),
     [width],
   );
 
@@ -285,6 +376,11 @@ export default function GalleryScreen() {
     const activeSectionIds = CATEGORY_TABS.find((tab) => tab.id === activeTab)?.sectionIds ?? ["home"];
     return DISCOVER_SECTIONS.filter((section) => activeSectionIds.includes(section.id));
   }, [activeTab]);
+
+  const itemGroups = useMemo(
+    () => sectionsForActiveTab.flatMap((section) => buildItemGroups(activeTab, section.id, section.items)),
+    [activeTab, sectionsForActiveTab],
+  );
 
   const openDesignFlowPaywall = useCallback((redirectTo: string) => {
     router.push({
@@ -354,12 +450,18 @@ export default function GalleryScreen() {
     [canCreateAsGuest, handleTryIt, routeToToolFlow, router],
   );
 
-  const handleToggleSection = useCallback((sectionId: string) => {
-    setExpandedSections((current) => ({
-      ...current,
-      [sectionId]: !current[sectionId],
-    }));
+  const handlePreviewOpen = useCallback((item: DiscoverTile) => {
+    setPreviewItem(item);
   }, []);
+
+  const handlePreviewClose = useCallback(() => {
+    setPreviewItem(null);
+  }, []);
+
+  const handlePreviewTryIt = useCallback((item: DiscoverTile) => {
+    setPreviewItem(null);
+    void handleCardPress(item);
+  }, [handleCardPress]);
 
   return (
     <View style={styles.screen}>
@@ -375,27 +477,44 @@ export default function GalleryScreen() {
         contentInsetAdjustmentBehavior="never"
       >
         <View style={styles.hero}>
-          <Text style={styles.heroTitle}>Discover</Text>
-          <Text style={styles.heroSubtitle}>
-            Curated interiors, exterior facades, garden scenes, wall palettes, and floor styles designed to launch you straight into the right redesign flow.
-          </Text>
+          <View style={styles.headerRow}>
+            <View style={[styles.headerSide, styles.headerSideStart]}>
+              <View style={styles.creditBadge}>
+                <Diamond color="#FFFFFF" size={13} strokeWidth={2.1} />
+                <Text style={styles.creditText}>{creditBalance}</Text>
+              </View>
+            </View>
+
+            <View style={styles.headerCenter}>
+              <Text style={styles.heroTitle}>Discover</Text>
+            </View>
+
+            <View style={[styles.headerSide, styles.headerSideEnd]} />
+          </View>
         </View>
 
         <DiscoverCategoryTabs activeTab={activeTab} onSelectTab={setActiveTab} />
 
         <View style={styles.sectionsWrap}>
-          {sectionsForActiveTab.map((section) => (
-            <DiscoverSectionBlock
-              key={section.id}
-              section={section}
-              expanded={Boolean(expandedSections[section.id])}
-              onToggleExpanded={() => handleToggleSection(section.id)}
-              onCardPress={handleCardPress}
-              gridCardWidth={gridCardWidth}
+          {itemGroups.map((group) => (
+            <DiscoverCarouselGroup
+              key={group.id}
+              group={group}
+              cardWidth={carouselCardWidth}
+              onPreview={handlePreviewOpen}
             />
           ))}
         </View>
       </ScrollView>
+
+      <DiscoverPreviewModal
+        item={previewItem}
+        visible={Boolean(previewItem)}
+        topInset={insets.top}
+        bottomInset={insets.bottom}
+        onClose={handlePreviewClose}
+        onTryIt={handlePreviewTryIt}
+      />
     </View>
   );
 }
@@ -411,178 +530,243 @@ const styles = StyleSheet.create({
   },
   hero: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    gap: 8,
+  },
+  headerRow: {
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerSide: {
+    width: 92,
+    minHeight: 44,
+    justifyContent: "center",
+  },
+  headerSideStart: {
+    alignItems: "flex-start",
+  },
+  headerSideEnd: {
+    alignItems: "flex-end",
+  },
+  headerCenter: {
+    flex: 1,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  creditBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 20,
+    backgroundColor: "#0A0A0A",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: HAIRLINE,
+    borderColor: "rgba(10,10,10,0.08)",
+    shadowColor: "#0A0A0A",
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  creditText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    lineHeight: 13,
+    ...fonts.bold,
   },
   heroTitle: {
     color: PRIMARY_TEXT,
-    fontSize: 34,
-    lineHeight: 40,
-    letterSpacing: -0.9,
+    fontSize: 24,
+    lineHeight: 28,
+    letterSpacing: -0.5,
     ...fonts.bold,
   },
-  heroSubtitle: {
-    color: SECONDARY_TEXT,
-    fontSize: 15,
-    lineHeight: 24,
-    maxWidth: 720,
-    ...fonts.regular,
+  tabsRailShell: {
+    marginTop: 24,
+    marginHorizontal: SCREEN_SIDE_MARGIN,
   },
   tabsRail: {
-    marginTop: 28,
+    borderRadius: 999,
+    borderWidth: HAIRLINE,
+    borderColor: "#EBEBF0",
+    backgroundColor: "#F3F3F6",
+    minHeight: 60,
+    shadowColor: "#0A0A0A",
+    shadowOpacity: 0.04,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
   },
-  tabsContent: {
-    paddingRight: 24,
+  tabsRailContent: {
+    padding: CATEGORY_BAR_PADDING,
+  },
+  tabsTrack: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 60,
+    position: "relative",
+  },
+  tabActivePill: {
+    position: "absolute",
+    top: CATEGORY_BAR_PADDING,
+    bottom: CATEGORY_BAR_PADDING,
+    left: 0,
+    borderRadius: 999,
+    backgroundColor: "#FFFFFF",
+    borderWidth: HAIRLINE,
+    borderColor: "#ECECF1",
+    shadowColor: "#0A0A0A",
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
   },
   tabButton: {
-    marginRight: 24,
-    paddingHorizontal: 4,
-    paddingBottom: 14,
-    minWidth: 88,
+    minHeight: 48,
+    borderRadius: 999,
   },
-  tabButtonActive: {
-    minWidth: 108,
+  tabButtonInner: {
+    minHeight: 48,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+  },
+  tabButtonGap: {
+    marginRight: CATEGORY_BAR_GAP,
   },
   tabLabel: {
     color: TAB_INACTIVE,
-    fontSize: 19,
-    lineHeight: 24,
+    fontSize: 13,
+    lineHeight: 16,
+    letterSpacing: -0.15,
     ...fonts.semibold,
   },
   tabLabelActive: {
     color: PRIMARY_TEXT,
     ...fonts.bold,
   },
-  tabUnderline: {
-    marginTop: 10,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: "transparent",
-  },
-  tabUnderlineActive: {
-    backgroundColor: PRIMARY_TEXT,
-  },
   sectionsWrap: {
-    marginTop: 28,
-    paddingHorizontal: SCREEN_SIDE_MARGIN,
+    marginTop: 30,
     gap: SECTION_GAP,
   },
-  section: {
-    gap: 0,
+  groupSection: {
+    gap: 14,
   },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: spacing.md,
-  },
-  sectionHeadingCopy: {
-    flex: 1,
-    gap: 6,
-  },
-  sectionTitle: {
+  groupTitle: {
     color: PRIMARY_TEXT,
-    fontSize: 24,
-    lineHeight: 29,
+    fontSize: 23,
+    lineHeight: 28,
+    paddingHorizontal: SCREEN_SIDE_MARGIN,
     ...fonts.bold,
   },
-  sectionDescription: {
-    color: SECONDARY_TEXT,
-    fontSize: 14,
-    lineHeight: 21,
-    ...fonts.regular,
+  groupScrollerContent: {
+    paddingLeft: SCREEN_SIDE_MARGIN,
+    paddingRight: SCREEN_SIDE_MARGIN,
   },
-  sectionAction: {
-    paddingHorizontal: 2,
-    paddingVertical: 4,
-    marginTop: 2,
+  carouselCardGap: {
+    marginRight: CAROUSEL_CARD_GAP,
   },
-  sectionActionText: {
-    color: MUTED_TEXT,
-    fontSize: 11,
-    lineHeight: 14,
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    ...fonts.semibold,
-  },
-  gridWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: GRID_GAP,
-  },
-  card: {
+  carouselCard: {
     overflow: "hidden",
-    backgroundColor: "#FFFFFF",
+    borderRadius: 26,
+    backgroundColor: "#F2F2F4",
     borderWidth: HAIRLINE,
-    borderColor: CARD_BORDER,
-    shadowColor: CARD_SHADOW,
+    borderColor: "#ECECF1",
+    shadowColor: "rgba(15,23,42,0.08)",
     shadowOpacity: 1,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 12 },
     elevation: 5,
   },
-  cardFooter: {
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 14,
-    gap: 12,
-    backgroundColor: "#FFFFFF",
+  carouselImage: {
+    width: "100%",
+    height: "100%",
   },
-  cardLabelBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
+  carouselOverlay: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    bottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderRadius: 18,
+    backgroundColor: "rgba(10,10,10,0.55)",
+    gap: 4,
   },
-  cardIconWrap: {
-    width: 18,
-    height: 18,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#ECECEC",
-  },
-  cardCategory: {
-    color: PRIMARY_TEXT,
-    fontSize: 12,
-    lineHeight: 15,
+  carouselStyle: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 11,
+    lineHeight: 14,
+    textTransform: "uppercase",
+    letterSpacing: 1,
     ...fonts.semibold,
   },
-  cardStyleChip: {
-    borderRadius: 999,
-    backgroundColor: "#F5F5F5",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  cardStyleChipText: {
-    color: SECONDARY_TEXT,
-    fontSize: 12,
-    lineHeight: 15,
-    ...fonts.semibold,
-  },
-  cardTitle: {
-    flex: 1,
-    color: PRIMARY_TEXT,
+  carouselTitle: {
+    color: "#FFFFFF",
     fontSize: 17,
-    lineHeight: 22,
+    lineHeight: 21,
     ...fonts.bold,
   },
-  cardActionRow: {
+  previewOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(10,10,10,0.96)",
+  },
+  previewTopBar: {
+    position: "absolute",
+    left: 24,
+    right: 24,
+    zIndex: 2,
     flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: 12,
+    justifyContent: "flex-end",
   },
-  tryItPill: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    backgroundColor: "#0A0A0A",
+  previewCloseButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.08)",
   },
-  tryItPillText: {
+  previewImageFrame: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  previewImage: {
+    width: "100%",
+    height: "100%",
+  },
+  previewBottomBar: {
+    paddingHorizontal: 24,
+    paddingTop: 18,
+    gap: 18,
+    backgroundColor: "rgba(10,10,10,0.76)",
+  },
+  previewCopy: {
+    gap: 6,
+  },
+  previewTitle: {
     color: "#FFFFFF",
-    fontSize: 11,
-    lineHeight: 13,
-    letterSpacing: 0.6,
+    fontSize: 22,
+    lineHeight: 27,
+    ...fonts.bold,
+  },
+  previewMeta: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 14,
+    lineHeight: 19,
+    ...fonts.regular,
+  },
+  previewActionButton: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    backgroundColor: "#FFFFFF",
+  },
+  previewActionText: {
+    color: PRIMARY_TEXT,
+    fontSize: 13,
+    lineHeight: 16,
+    letterSpacing: 0.3,
     textTransform: "uppercase",
     ...fonts.bold,
   },

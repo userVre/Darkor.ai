@@ -411,70 +411,100 @@ const STYLE_CARD_MEDIA_BOTTOM_CROP = 20;
 
 const INTERIOR_EXAMPLE_PHOTOS: ExamplePhoto[] = [
   {
-    id: "living-room",
-    label: "Living Room",
-    source: require("../../assets/media/discover/home/home-living-room.jpg"),
+    id: "interior-before-empty-room",
+    label: "Empty Room",
+    source: require("../../assets/media/examples/interior/interior-before-empty-room.jpg"),
   },
   {
-    id: "bedroom",
-    label: "Bedroom",
-    source: require("../../assets/media/discover/home/home-master-suite.jpg"),
+    id: "interior-before-messy-lounge",
+    label: "Messy Lounge",
+    source: require("../../assets/media/examples/interior/interior-before-messy-lounge.jpg"),
   },
   {
-    id: "kitchen",
-    label: "Kitchen",
-    source: require("../../assets/media/discover/home/home-kitchen.jpg"),
+    id: "interior-before-worn-reading-room",
+    label: "Worn Room",
+    source: require("../../assets/media/examples/interior/interior-before-worn-reading-room.jpg"),
   },
   {
-    id: "bathroom",
-    label: "Bathroom",
-    source: require("../../assets/media/discover/home/home-bathroom.jpg"),
+    id: "interior-before-empty-kitchen",
+    label: "Empty Kitchen",
+    source: require("../../assets/media/examples/interior/interior-before-empty-kitchen.jpg"),
+  },
+  {
+    id: "interior-before-damaged-room",
+    label: "Damaged Room",
+    source: require("../../assets/media/examples/interior/interior-before-damaged-room.jpg"),
+  },
+  {
+    id: "interior-before-outdated-kitchen",
+    label: "Outdated Kitchen",
+    source: require("../../assets/media/examples/interior/interior-before-outdated-kitchen.jpg"),
   },
 ];
 
 const EXTERIOR_EXAMPLE_PHOTOS: ExamplePhoto[] = [
   {
-    id: "modern-house",
-    label: "Modern House",
-    source: require("../../assets/media/discover/exterior/exterior-modern-villa.jpg"),
+    id: "exterior-before-scaffold-house",
+    label: "Scaffold House",
+    source: require("../../assets/media/examples/exterior/exterior-before-scaffold-house.jpg"),
   },
   {
-    id: "villa",
-    label: "Villa",
-    source: require("../../assets/media/discover/exterior/exterior-pool-house.jpg"),
+    id: "exterior-before-weathered-house",
+    label: "Weathered House",
+    source: require("../../assets/media/examples/exterior/exterior-before-weathered-house.jpg"),
   },
   {
-    id: "apartment",
-    label: "Apartment",
-    source: require("../../assets/media/discover/exterior/exterior-apartment-block.jpg"),
+    id: "exterior-before-brick-shell",
+    label: "Brick Shell",
+    source: require("../../assets/media/examples/exterior/exterior-before-brick-shell.jpg"),
   },
   {
-    id: "office",
-    label: "Office",
-    source: require("../../assets/media/discover/exterior/exterior-glass-office.jpg"),
+    id: "exterior-before-overgrown-cottage",
+    label: "Overgrown Cottage",
+    source: require("../../assets/media/examples/exterior/exterior-before-overgrown-cottage.jpg"),
+  },
+  {
+    id: "exterior-before-abandoned-home",
+    label: "Abandoned Home",
+    source: require("../../assets/media/examples/exterior/exterior-before-abandoned-home.jpg"),
+  },
+  {
+    id: "exterior-before-concrete-frame",
+    label: "Concrete Frame",
+    source: require("../../assets/media/examples/exterior/exterior-before-concrete-frame.jpg"),
   },
 ];
 
 const GARDEN_EXAMPLE_PHOTOS: ExamplePhoto[] = [
   {
-    id: "backyard",
-    label: "Backyard",
-    source: require("../../assets/media/discover/garden/garden-backyard.jpg"),
+    id: "garden-before-muddy-yard",
+    label: "Muddy Yard",
+    source: require("../../assets/media/examples/garden/garden-before-muddy-yard.jpg"),
   },
   {
-    id: "front-yard",
-    label: "Front yard",
-    source: require("../../assets/media/discover/garden/garden-front-yard.jpg"),
+    id: "garden-before-weedy-yard",
+    label: "Weedy Yard",
+    source: require("../../assets/media/examples/garden/garden-before-weedy-yard.jpg"),
   },
   {
-    id: "patio",
-    label: "Patio",
-    source: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
+    id: "garden-before-rubble-yard",
+    label: "Rubble Yard",
+    source: require("../../assets/media/examples/garden/garden-before-rubble-yard.jpg"),
   },
   {
-    id: "pool",
-    label: "Pool",
-    source: require("../../assets/media/discover/garden/garden-swimming-pool.jpg"),
+    id: "garden-before-overgrown-corner",
+    label: "Overgrown Corner",
+    source: require("../../assets/media/examples/garden/garden-before-overgrown-corner.jpg"),
+  },
+  {
+    id: "garden-before-abandoned-backyard",
+    label: "Abandoned Yard",
+    source: require("../../assets/media/examples/garden/garden-before-abandoned-backyard.jpg"),
+  },
+  {
+    id: "garden-before-cracked-patio",
+    label: "Cracked Patio",
+    source: require("../../assets/media/examples/garden/garden-before-cracked-patio.jpg"),
   },
 ];
 
@@ -4039,7 +4069,7 @@ export default function WorkspaceScreen() {
       <InteriorRedesignStepOne
         creditCount={creditBalance}
         photoUri={selectedImage?.uri ?? null}
-        examplePhotos={[INTERIOR_EXAMPLE_PHOTOS[0], INTERIOR_EXAMPLE_PHOTOS[3], INTERIOR_EXAMPLE_PHOTOS[1]]}
+        examplePhotos={INTERIOR_EXAMPLE_PHOTOS}
         loadingExampleId={isLoadingExample}
         onTakePhoto={handleInteriorTakePhoto}
         onChooseFromGallery={handleInteriorChooseFromGallery}
@@ -4058,7 +4088,7 @@ export default function WorkspaceScreen() {
       <InteriorRedesignStepOne
         creditCount={creditBalance}
         photoUri={selectedImage?.uri ?? null}
-        examplePhotos={[EXTERIOR_EXAMPLE_PHOTOS[0], EXTERIOR_EXAMPLE_PHOTOS[1], EXTERIOR_EXAMPLE_PHOTOS[2]]}
+        examplePhotos={EXTERIOR_EXAMPLE_PHOTOS}
         emptyStateSubtitle="Redesign and beautify your home"
         loadingExampleId={isLoadingExample}
         onTakePhoto={handleInteriorTakePhoto}
@@ -4078,7 +4108,7 @@ export default function WorkspaceScreen() {
       <GardenRedesignStepOne
         creditCount={creditBalance}
         photoUri={selectedImage?.uri ?? null}
-        examplePhotos={[GARDEN_EXAMPLE_PHOTOS[0], GARDEN_EXAMPLE_PHOTOS[2], GARDEN_EXAMPLE_PHOTOS[1]]}
+        examplePhotos={GARDEN_EXAMPLE_PHOTOS}
         loadingExampleId={isLoadingExample}
         onTakePhoto={handleInteriorTakePhoto}
         onChooseFromGallery={handleInteriorChooseFromGallery}
