@@ -1,5 +1,6 @@
-import { Image, Modal, Pressable, StyleSheet, View } from "react-native";
+import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { X } from "lucide-react-native";
+import { Image } from "expo-image";
 
 import type { DiscoverTile } from "../lib/discover-catalog";
 
@@ -41,8 +42,9 @@ export function DiscoverPreviewModal({
         <View style={styles.imageWrap}>
           <Image
             source={item.image}
+            transition={150}
             style={styles.image}
-            resizeMode="contain"
+            contentFit="contain"
           />
         </View>
       </View>
@@ -67,6 +69,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
+    borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#FFFFFF",

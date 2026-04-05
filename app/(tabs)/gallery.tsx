@@ -1,10 +1,10 @@
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
   FlatList,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -15,7 +15,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DiscoverImageCard } from "../../components/discover-image-card";
 import { DiscoverPreviewModal } from "../../components/discover-preview-modal";
-import { useViewerCredits } from "../../components/viewer-credits-context";
 import {
   DISCOVER_TABS,
   getDiscoverGroups,
@@ -26,56 +25,82 @@ import {
 import { triggerHaptic } from "../../lib/haptics";
 import { fonts } from "../../styles/typography";
 
-const SCREEN_SIDE_MARGIN = 18;
-const TAB_GAP = 8;
-const CARD_GAP = 10;
+const SCREEN_SIDE_MARGIN = 24;
+const TAB_RAIL_MAX_WIDTH = 392;
+const TAB_RAIL_PADDING = 6;
+const CARD_GAP = 12;
 
-const ThreeDiamondBadge = memo(function ThreeDiamondBadge({ value }: { value: number }) {
+const ThreeDiamondMark = memo(function ThreeDiamondMark() {
   return (
-    <View style={styles.creditBadge}>
-      <Diamond color="#FFFFFF" size={13} strokeWidth={2.2} />
-      <Text style={styles.creditValue}>{value}</Text>
+    <View style={styles.diamondMark} pointerEvents="none">
+      <Diamond color="#0A0A0A" size={11} strokeWidth={2.2} style={styles.diamondLeft} />
+      <Diamond color="#0A0A0A" size={13} strokeWidth={2.2} style={styles.diamondCenter} />
+      <Diamond color="#0A0A0A" size={11} strokeWidth={2.2} style={styles.diamondRight} />
     </View>
   );
 });
 
 const DiscoverTabs = memo(function DiscoverTabs({
   activeTab,
+  railWidth,
   onSelect,
 }: {
   activeTab: DiscoverTabId;
+  railWidth: number;
   onSelect: (tabId: DiscoverTabId) => void;
 }) {
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.tabsContent}
-    >
-      <View style={styles.tabsRail}>
-        {DISCOVER_TABS.map((tab, index) => {
-          const isActive = tab.id === activeTab;
+  const activeIndex = DISCOVER_TABS.findIndex((tab) => tab.id === activeTab);
+  const trackWidth = railWidth - TAB_RAIL_PADDING * 2;
+  const pillWidth = trackWidth / DISCOVER_TABS.length;
+  const pillTranslateX = useRef(new Animated.Value(activeIndex * pillWidth)).current;
 
-          return (
-            <Pressable
-              key={tab.id}
-              accessibilityRole="button"
-              onPress={() => {
-                triggerHaptic();
-                onSelect(tab.id);
-              }}
-              style={[
-                styles.tabButton,
-                isActive ? styles.tabButtonActive : null,
-                index < DISCOVER_TABS.length - 1 ? styles.tabButtonGap : null,
-              ]}
-            >
-              <Text style={[styles.tabLabel, isActive ? styles.tabLabelActive : null]}>{tab.label}</Text>
-            </Pressable>
-          );
-        })}
+  useEffect(() => {
+    Animated.spring(pillTranslateX, {
+      toValue: activeIndex * pillWidth,
+      damping: 18,
+      stiffness: 220,
+      mass: 0.9,
+      useNativeDriver: true,
+    }).start();
+  }, [activeIndex, pillTranslateX, pillWidth]);
+
+  return (
+    <View style={styles.tabsOuter}>
+      <View style={[styles.tabsRail, { width: railWidth }]}>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.tabIndicator,
+            {
+              width: pillWidth,
+              transform: [{ translateX: pillTranslateX }],
+            },
+          ]}
+        />
+
+        <View style={styles.tabsRow}>
+          {DISCOVER_TABS.map((tab) => {
+            const isActive = tab.id === activeTab;
+
+            return (
+              <Pressable
+                key={tab.id}
+                accessibilityRole="button"
+                onPress={() => {
+                  triggerHaptic();
+                  onSelect(tab.id);
+                }}
+                style={styles.tabButton}
+              >
+                <Text numberOfLines={1} style={[styles.tabLabel, isActive ? styles.tabLabelActive : null]}>
+                  {tab.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
-    </ScrollView>
+    </View>
   );
 });
 
@@ -127,13 +152,13 @@ export default function GalleryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { credits } = useViewerCredits();
   const [activeTab, setActiveTab] = useState<DiscoverTabId>("home");
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
 
   const groups = useMemo(() => getDiscoverGroups(activeTab), [activeTab]);
-  const cardWidth = useMemo(() => Math.min(Math.max((width - 46) / 2, 150), 168), [width]);
-  const cardHeight = useMemo(() => Math.round(cardWidth * 1.42), [cardWidth]);
+  const tabRailWidth = useMemo(() => Math.min(width - SCREEN_SIDE_MARGIN * 2, TAB_RAIL_MAX_WIDTH), [width]);
+  const cardWidth = useMemo(() => Math.min(Math.max(width * 0.48, 184), 208), [width]);
+  const cardHeight = useMemo(() => Math.round(cardWidth * 1.18), [cardWidth]);
 
   const handlePreviewOpen = useCallback((item: DiscoverTile) => {
     triggerHaptic();
@@ -174,19 +199,21 @@ export default function GalleryScreen() {
         )}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: Math.max(insets.bottom + 30, 44),
+          paddingBottom: Math.max(insets.bottom + 34, 44),
         }}
         ListHeaderComponent={
-          <View style={[styles.headerWrap, { paddingTop: insets.top + 6 }]}>
+          <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
             <View style={styles.headerRow}>
               <View style={styles.headerSide}>
-                <ThreeDiamondBadge value={credits} />
+                <ThreeDiamondMark />
               </View>
+
               <Text style={styles.headerTitle}>Discover</Text>
+
               <View style={styles.headerSide} />
             </View>
 
-            <DiscoverTabs activeTab={activeTab} onSelect={setActiveTab} />
+            <DiscoverTabs activeTab={activeTab} railWidth={tabRailWidth} onSelect={setActiveTab} />
           </View>
         }
       />
@@ -207,99 +234,115 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   headerWrap: {
-    paddingBottom: 12,
+    paddingBottom: 18,
   },
   headerRow: {
-    minHeight: 48,
+    minHeight: 52,
     paddingHorizontal: SCREEN_SIDE_MARGIN,
     flexDirection: "row",
     alignItems: "center",
   },
   headerSide: {
-    width: 80,
-    justifyContent: "center",
+    width: 52,
     alignItems: "flex-start",
+    justifyContent: "center",
+  },
+  diamondMark: {
+    width: 30,
+    height: 18,
+    position: "relative",
+  },
+  diamondLeft: {
+    position: "absolute",
+    left: 0,
+    top: 4,
+    opacity: 0.92,
+  },
+  diamondCenter: {
+    position: "absolute",
+    left: 9,
+    top: 0,
+  },
+  diamondRight: {
+    position: "absolute",
+    right: 0,
+    top: 4,
+    opacity: 0.92,
   },
   headerTitle: {
     flex: 1,
     color: "#0A0A0A",
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 20,
+    lineHeight: 24,
     textAlign: "center",
     ...fonts.bold,
   },
-  creditBadge: {
-    minHeight: 34,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    backgroundColor: "#0A0A0A",
-    flexDirection: "row",
+  tabsOuter: {
     alignItems: "center",
-    gap: 6,
-  },
-  creditValue: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    lineHeight: 16,
-    ...fonts.bold,
-  },
-  tabsContent: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
+    marginTop: 16,
   },
   tabsRail: {
+    padding: TAB_RAIL_PADDING,
+    borderRadius: 999,
+    borderCurve: "continuous",
+    backgroundColor: "#F1F3F5",
+    position: "relative",
+  },
+  tabsRow: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  tabIndicator: {
+    position: "absolute",
+    top: TAB_RAIL_PADDING,
+    left: TAB_RAIL_PADDING,
+    bottom: TAB_RAIL_PADDING,
     borderRadius: 999,
-    backgroundColor: "#F7F7F7",
-    padding: 4,
+    borderCurve: "continuous",
+    backgroundColor: "#FFFFFF",
+    boxShadow: "0 10px 24px rgba(15, 23, 42, 0.08)",
   },
   tabButton: {
-    minHeight: 34,
-    paddingHorizontal: 16,
-    borderRadius: 999,
+    flex: 1,
+    minHeight: 46,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "transparent",
-  },
-  tabButtonActive: {
-    backgroundColor: "#FFFFFF",
-  },
-  tabButtonGap: {
-    marginRight: TAB_GAP,
+    paddingHorizontal: 14,
   },
   tabLabel: {
-    color: "#52525B",
-    fontSize: 13,
-    lineHeight: 16,
+    color: "#8D95A1",
+    fontSize: 14,
+    lineHeight: 18,
     ...fonts.medium,
   },
   tabLabelActive: {
     color: "#0A0A0A",
-    ...fonts.semibold,
+    ...fonts.bold,
   },
   section: {
-    marginBottom: 18,
+    marginBottom: 24,
   },
   sectionHeader: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    marginBottom: 10,
+    marginBottom: 12,
     flexDirection: "row",
     alignItems: "center",
   },
   sectionTitle: {
     flex: 1,
     color: "#0A0A0A",
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 18,
+    lineHeight: 22,
     ...fonts.bold,
   },
   seeAllButton: {
     paddingVertical: 2,
   },
   seeAllText: {
-    color: "#6B7280",
-    fontSize: 13,
-    lineHeight: 16,
+    color: "#8D95A1",
+    fontSize: 14,
+    lineHeight: 18,
     ...fonts.medium,
   },
   sectionContent: {

@@ -1,6 +1,7 @@
 import { memo } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
-import { Image, Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
+import { Image } from "expo-image";
 
 import type { DiscoverTile } from "../lib/discover-catalog";
 
@@ -36,8 +37,9 @@ export const DiscoverImageCard = memo(function DiscoverImageCard({
     >
       <Image
         source={item.image}
+        transition={120}
         style={styles.image}
-        resizeMode="cover"
+        contentFit="cover"
       />
     </Pressable>
   );
@@ -47,6 +49,7 @@ const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
     borderRadius: 20,
+    borderCurve: "continuous",
     backgroundColor: "#F4F4F4",
   },
   image: {
