@@ -7,6 +7,7 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated as NativeAnimated,
   Alert,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -22,11 +23,8 @@ import {
 import Svg, { Circle as SvgCircle } from "react-native-svg";
 import Animated, {
   Easing,
-  Extrapolation,
-  interpolate,
   type SharedValue,
   useAnimatedProps,
-  useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -64,21 +62,17 @@ const TEXT_PRIMARY = "#FFFFFF";
 const TEXT_MUTED = "#A0A0A0";
 const TEXT_RESTORE = "#B3B3B3";
 const TRANSITION_DURATION_MS = 200;
-const CAROUSEL_INTERVAL_MS = 3000;
+const CAROUSEL_INTERVAL_MS = 2500;
 const CLOSE_DELAY_MS = 5000;
 const CLOSE_VISUAL_SIZE = 40;
 const CLOSE_RING_RADIUS = 15;
 const CLOSE_RING_STROKE_WIDTH = 2.5;
 const CLOSE_RING_CIRCUMFERENCE = 2 * Math.PI * CLOSE_RING_RADIUS;
-const SIDE_IMAGE_WIDTH = 130;
-const SIDE_IMAGE_HEIGHT = 160;
-const CENTER_IMAGE_SIZE = 188;
-const HERO_SIDE_SCALE_X = SIDE_IMAGE_WIDTH / CENTER_IMAGE_SIZE;
-const HERO_SIDE_SCALE_Y = SIDE_IMAGE_HEIGHT / CENTER_IMAGE_SIZE;
+const HERO_CENTER_SIZE_MAX = 200;
+const HERO_CENTER_SIZE_MIN = 180;
+const HERO_SIDE_SCALE = 0.76;
 const HERO_SIDE_TRANSLATE_Y = 18;
-const HERO_SNAP_INTERVAL = 140;
-const HERO_CAROUSEL_REPEAT_MULTIPLIER = 5;
-const HERO_ROW_HEIGHT = 252;
+const HERO_CAROUSEL_REPEAT_MULTIPLIER = 7;
 const HERO_IMAGES = [
   require("../assets/media/paywall/paywall-soft-lounge.png"),
   require("../assets/media/paywall/paywall-luxury-lounge.png"),
@@ -88,7 +82,7 @@ const HERO_CAROUSEL_DATA = Array.from({ length: HERO_IMAGES.length * HERO_CAROUS
   id: `hero-${index}`,
   image: HERO_IMAGES[index % HERO_IMAGES.length],
 }));
-const HERO_CAROUSEL_INITIAL_INDEX = HERO_IMAGES.length * 2;
+const HERO_CAROUSEL_INITIAL_INDEX = HERO_IMAGES.length * Math.floor(HERO_CAROUSEL_REPEAT_MULTIPLIER / 2);
 const FEATURE_ITEMS = [
   "Faster Rendering",
   "Ad-free Experience",
@@ -144,43 +138,74 @@ function ToggleSwitch({ value }: { value: boolean }) {
   );
 }
 
+function LegalLink({
+  label,
+  onPress,
+}: {
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      hitSlop={10}
+      onPress={onPress}
+      style={styles.legalLinkButton}
+    >
+      <Text style={styles.legalLinkText}>{label}</Text>
+    </Pressable>
+  );
+}
+
 function HeroCarouselItem({
   image,
   index,
   scrollX,
+  centerSize,
+  sideScale,
+  snapInterval,
 }: {
   image: (typeof HERO_IMAGES)[number];
   index: number;
-  scrollX: SharedValue<number>;
+  scrollX: NativeAnimated.Value;
+  centerSize: number;
+  sideScale: number;
+  snapInterval: number;
 }) {
-  const animatedStyle = useAnimatedStyle(() => {
-    const inputRange = [
-      (index - 1) * HERO_SNAP_INTERVAL,
-      index * HERO_SNAP_INTERVAL,
-      (index + 1) * HERO_SNAP_INTERVAL,
-    ];
-
-    return {
-      opacity: interpolate(scrollX.value, inputRange, [0.72, 1, 0.72], Extrapolation.CLAMP),
-      transform: [
-        {
-          scaleX: interpolate(scrollX.value, inputRange, [HERO_SIDE_SCALE_X, 1, HERO_SIDE_SCALE_X], Extrapolation.CLAMP),
-        },
-        {
-          scaleY: interpolate(scrollX.value, inputRange, [HERO_SIDE_SCALE_Y, 1, HERO_SIDE_SCALE_Y], Extrapolation.CLAMP),
-        },
-        {
-          translateY: interpolate(scrollX.value, inputRange, [HERO_SIDE_TRANSLATE_Y, 0, HERO_SIDE_TRANSLATE_Y], Extrapolation.CLAMP),
-        },
-      ],
-    };
-  });
+  const inputRange = [
+    (index - 1) * snapInterval,
+    index * snapInterval,
+    (index + 1) * snapInterval,
+  ];
+  const animatedStyle = {
+    opacity: scrollX.interpolate({
+      inputRange,
+      outputRange: [0.52, 1, 0.52],
+      extrapolate: "clamp",
+    }),
+    transform: [
+      {
+        translateY: scrollX.interpolate({
+          inputRange,
+          outputRange: [HERO_SIDE_TRANSLATE_Y, 0, HERO_SIDE_TRANSLATE_Y],
+          extrapolate: "clamp",
+        }),
+      },
+      {
+        scale: scrollX.interpolate({
+          inputRange,
+          outputRange: [sideScale, 1, sideScale],
+          extrapolate: "clamp",
+        }),
+      },
+    ],
+  };
 
   return (
-    <View style={styles.heroItemSlot}>
-      <Animated.View style={[styles.heroImageWrap, animatedStyle]}>
+    <View style={[styles.heroItemSlot, { width: snapInterval, height: centerSize + HERO_SIDE_TRANSLATE_Y }]}>
+      <NativeAnimated.View style={[styles.heroImageWrap, { width: centerSize, height: centerSize }, animatedStyle]}>
         <Image contentFit="cover" source={image} style={styles.heroImage} transition={0} />
-      </Animated.View>
+      </NativeAnimated.View>
     </View>
   );
 }
@@ -273,12 +298,12 @@ function WeeklyPlanCard({
 }
 
 function CountdownCloseButton({
-  isTimerFinished,
+  canClose,
   onPress,
   progress,
   secondsLeft,
 }: {
-  isTimerFinished: boolean;
+  canClose: boolean;
   onPress: () => void;
   progress: SharedValue<number>;
   secondsLeft: number;
@@ -291,14 +316,14 @@ function CountdownCloseButton({
     <View pointerEvents="box-none" style={styles.closeSlot}>
       <AnimatePresence exitBeforeEnter>
         <MotiView
-          key={isTimerFinished ? "close-ready" : "close-countdown"}
+          key={canClose ? "close-ready" : "close-countdown"}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           from={{ opacity: 0 }}
           style={styles.closeBubble}
           transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
         >
-          {isTimerFinished ? (
+          {canClose ? (
             <Pressable accessibilityLabel="Close paywall" accessibilityRole="button" hitSlop={10} onPress={onPress} style={styles.closeButtonInner}>
               <X color="#FFFFFF" size={20} strokeWidth={2.4} />
             </Pressable>
@@ -357,21 +382,25 @@ export default function PaywallScreen() {
   const setPlan = useMutation("users:setViewerPlanFromRevenueCat" as any);
   const { showSuccess } = useProSuccess();
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
-  const carouselRef = useRef<Animated.ScrollView | null>(null);
+  const carouselRef = useRef<ScrollView | null>(null);
   const carouselIndexRef = useRef(HERO_CAROUSEL_INITIAL_INDEX);
   const isCarouselDraggingRef = useRef(false);
   const entranceProgress = useSharedValue(0);
-  const carouselScrollX = useSharedValue(HERO_CAROUSEL_INITIAL_INDEX * HERO_SNAP_INTERVAL);
+  const carouselScrollX = useRef(new NativeAnimated.Value(0)).current;
   const closeCountdownProgress = useSharedValue(0);
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [isTimerFinished, setIsTimerFinished] = useState(false);
+  const [canClose, setCanClose] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("yearly");
   const [freeTrialEnabled, setFreeTrialEnabled] = useState(true);
   const [packages, setPackages] = useState<RevenueCatPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(5);
+  const heroCenterSize = Math.min(HERO_CENTER_SIZE_MAX, Math.max(HERO_CENTER_SIZE_MIN, width * 0.5));
+  const heroSnapInterval = width / 2;
+  const heroTrackPadding = Math.max((width - heroSnapInterval) / 2, 0);
+  const heroRowHeight = heroCenterSize + HERO_SIDE_TRANSLATE_Y + 56;
 
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly"), [packages]);
   const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly"), [packages]);
@@ -397,7 +426,7 @@ export default function PaywallScreen() {
   }, [entranceProgress]);
 
   useEffect(() => {
-    setIsTimerFinished(false);
+    setCanClose(false);
     setSecondsLeft(5);
     closeCountdownProgress.value = 0;
     closeCountdownProgress.value = withTiming(1, {
@@ -412,7 +441,7 @@ export default function PaywallScreen() {
             clearInterval(countdownIntervalRef.current);
             countdownIntervalRef.current = null;
           }
-          setIsTimerFinished(true);
+          setCanClose(true);
           return 0;
         }
 
@@ -426,19 +455,19 @@ export default function PaywallScreen() {
         countdownIntervalRef.current = null;
       }
     };
-  }, [closeCountdownProgress]);
+  }, []);
 
   useEffect(() => {
-    const initialOffset = HERO_CAROUSEL_INITIAL_INDEX * HERO_SNAP_INTERVAL;
+    const initialOffset = HERO_CAROUSEL_INITIAL_INDEX * heroSnapInterval;
     carouselIndexRef.current = HERO_CAROUSEL_INITIAL_INDEX;
-    carouselScrollX.value = initialOffset;
+    carouselScrollX.setValue(initialOffset);
 
     const frame = requestAnimationFrame(() => {
       carouselRef.current?.scrollTo({ x: initialOffset, animated: false });
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [carouselScrollX, width]);
+  }, [carouselScrollX, heroSnapInterval]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -446,13 +475,13 @@ export default function PaywallScreen() {
         return;
       }
 
-      const nextIndex = carouselIndexRef.current + 1;
+      const nextIndex = carouselIndexRef.current - 1;
       carouselIndexRef.current = nextIndex;
-      carouselRef.current?.scrollTo({ x: nextIndex * HERO_SNAP_INTERVAL, animated: true });
+      carouselRef.current?.scrollTo({ x: nextIndex * heroSnapInterval, animated: true });
     }, CAROUSEL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [heroSnapInterval]);
 
   useEffect(() => {
     let active = true;
@@ -513,7 +542,7 @@ export default function PaywallScreen() {
     if (source === "launch") {
       dismissLaunchPaywall();
     }
-    router.replace("/");
+    router.replace("/(tabs)");
   }, [router, source]);
 
   const completePaywall = useCallback(() => {
@@ -535,13 +564,13 @@ export default function PaywallScreen() {
   }, [redirectTo, router, source]);
 
   const handleClose = useCallback(() => {
-    if (isLoading) {
+    if (!canClose || isLoading) {
       return;
     }
 
     triggerHaptic();
     closePaywall();
-  }, [closePaywall, isLoading]);
+  }, [canClose, closePaywall, isLoading]);
 
   const handleRestore = useCallback(async () => {
     triggerHaptic();
@@ -672,6 +701,16 @@ export default function PaywallScreen() {
     setSelectedDuration("weekly");
   }, [isLoading]);
 
+  const handleOpenTerms = useCallback(() => {
+    triggerHaptic();
+    router.push("/terms-of-service");
+  }, [router]);
+
+  const handleOpenPrivacy = useCallback(() => {
+    triggerHaptic();
+    router.push("/privacy-policy");
+  }, [router]);
+
   const overlayAnimatedStyle = useAnimatedStyle(() => ({
     opacity: entranceProgress.value,
   }));
@@ -687,20 +726,24 @@ export default function PaywallScreen() {
 
   const handleCarouselMomentumEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     isCarouselDraggingRef.current = false;
-    const snappedIndex = Math.round(event.nativeEvent.contentOffset.x / HERO_SNAP_INTERVAL);
+    const snappedIndex = Math.round(event.nativeEvent.contentOffset.x / heroSnapInterval);
     const normalizedIndex = normalizeCarouselIndex(snappedIndex);
     carouselIndexRef.current = normalizedIndex;
 
     if (normalizedIndex !== snappedIndex) {
-      carouselRef.current?.scrollTo({ x: normalizedIndex * HERO_SNAP_INTERVAL, animated: false });
+      carouselRef.current?.scrollTo({ x: normalizedIndex * heroSnapInterval, animated: false });
+      carouselScrollX.setValue(normalizedIndex * heroSnapInterval);
     }
-  }, []);
+  }, [carouselScrollX, heroSnapInterval]);
 
-  const handleCarouselScroll = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      carouselScrollX.value = event.contentOffset.x;
-    },
-  });
+  const handleCarouselScroll = useMemo(
+    () =>
+      NativeAnimated.event(
+        [{ nativeEvent: { contentOffset: { x: carouselScrollX } } }],
+        { useNativeDriver: true },
+      ),
+    [carouselScrollX],
+  );
 
   return (
     <View style={styles.screen}>
@@ -721,7 +764,7 @@ export default function PaywallScreen() {
         </Pressable>
 
         <CountdownCloseButton
-          isTimerFinished={isTimerFinished}
+          canClose={canClose}
           onPress={handleClose}
           progress={closeCountdownProgress}
           secondsLeft={secondsLeft}
@@ -732,29 +775,43 @@ export default function PaywallScreen() {
           contentInsetAdjustmentBehavior="never"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.heroClip}>
-            <Animated.ScrollView
+          <View style={[styles.heroClip, { height: heroRowHeight }]}>
+            <NativeAnimated.ScrollView
               ref={carouselRef}
               contentContainerStyle={[
                 styles.heroTrack,
-                { paddingHorizontal: Math.max((width - HERO_SNAP_INTERVAL) / 2, 0) },
+                { paddingHorizontal: heroTrackPadding },
               ]}
+              contentOffset={{ x: HERO_CAROUSEL_INITIAL_INDEX * heroSnapInterval, y: 0 }}
               decelerationRate="fast"
               horizontal
               onScrollBeginDrag={() => {
                 isCarouselDraggingRef.current = true;
+              }}
+              onScrollEndDrag={(event) => {
+                if (!event.nativeEvent.velocity?.x) {
+                  isCarouselDraggingRef.current = false;
+                }
               }}
               onMomentumScrollEnd={handleCarouselMomentumEnd}
               onScroll={handleCarouselScroll}
               scrollEventThrottle={16}
               showsHorizontalScrollIndicator={false}
               snapToAlignment="start"
-              snapToInterval={HERO_SNAP_INTERVAL}
+              snapToInterval={heroSnapInterval}
             >
               {HERO_CAROUSEL_DATA.map((item, index) => (
-                <HeroCarouselItem key={item.id} image={item.image} index={index} scrollX={carouselScrollX} />
+                <HeroCarouselItem
+                  key={item.id}
+                  centerSize={heroCenterSize}
+                  image={item.image}
+                  index={index}
+                  scrollX={carouselScrollX}
+                  sideScale={HERO_SIDE_SCALE}
+                  snapInterval={heroSnapInterval}
+                />
               ))}
-            </Animated.ScrollView>
+            </NativeAnimated.ScrollView>
           </View>
 
           <View style={styles.featuresSection}>
@@ -797,6 +854,16 @@ export default function PaywallScreen() {
               </FadeSwap>
             )}
           </Pressable>
+
+          <View style={[styles.legalFooter, { paddingBottom: Math.max(insets.bottom + 12, 12) }]}>
+            <View style={styles.legalLinksRow}>
+              <LegalLink label="Terms" onPress={handleOpenTerms} />
+              <Text style={styles.legalDivider}>•</Text>
+              <LegalLink label="Privacy" onPress={handleOpenPrivacy} />
+            </View>
+
+            <Text style={styles.legalSupportText}>Cancel anytime</Text>
+          </View>
         </ScrollView>
       </Animated.View>
     </View>
@@ -877,7 +944,7 @@ const styles = StyleSheet.create({
   },
   heroClip: {
     width: "100%",
-    height: HERO_ROW_HEIGHT,
+    height: 256,
     overflow: "hidden",
     backgroundColor: SCREEN_BG,
   },
@@ -886,14 +953,10 @@ const styles = StyleSheet.create({
     paddingVertical: 28,
   },
   heroItemSlot: {
-    width: HERO_SNAP_INTERVAL,
-    height: CENTER_IMAGE_SIZE + HERO_SIDE_TRANSLATE_Y,
     alignItems: "center",
     justifyContent: "center",
   },
   heroImageWrap: {
-    width: CENTER_IMAGE_SIZE,
-    height: CENTER_IMAGE_SIZE,
     borderRadius: 20,
     overflow: "hidden",
     backgroundColor: PANEL_BG,
@@ -1133,5 +1196,40 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 22,
     ...fonts.bold,
+  },
+  legalFooter: {
+    marginHorizontal: 20,
+    paddingTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  legalLinksRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  legalLinkButton: {
+    minWidth: 40,
+    minHeight: 24,
+    justifyContent: "center",
+  },
+  legalLinkText: {
+    color: "#999999",
+    fontSize: 11,
+    lineHeight: 14,
+    ...fonts.regular,
+  },
+  legalDivider: {
+    marginHorizontal: 6,
+    color: "#999999",
+    fontSize: 11,
+    lineHeight: 14,
+    ...fonts.regular,
+  },
+  legalSupportText: {
+    color: "#999999",
+    fontSize: 11,
+    lineHeight: 14,
+    ...fonts.regular,
   },
 });
