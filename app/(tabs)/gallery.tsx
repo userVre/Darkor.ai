@@ -1,14 +1,21 @@
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import { MotiView } from "moti";
 import { memo, useCallback, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import {
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { Diamond } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DiscoverImageCard } from "../../components/discover-image-card";
 import { DiscoverPreviewModal } from "../../components/discover-preview-modal";
-import { HAIRLINE } from "../../lib/design-system";
+import { useViewerCredits } from "../../components/viewer-credits-context";
 import {
   DISCOVER_TABS,
   getDiscoverGroups,
@@ -19,37 +26,33 @@ import {
 import { triggerHaptic } from "../../lib/haptics";
 import { fonts } from "../../styles/typography";
 
-const SCREEN_SIDE_MARGIN = 20;
-const SECTION_GAP = 22;
-const ROW_GAP = 12;
-const CARD_GAP = 12;
+const SCREEN_SIDE_MARGIN = 18;
+const TAB_GAP = 8;
+const CARD_GAP = 10;
 
-const DiscoverCategoryTabs = memo(function DiscoverCategoryTabs({
+const ThreeDiamondBadge = memo(function ThreeDiamondBadge({ value }: { value: number }) {
+  return (
+    <View style={styles.creditBadge}>
+      <Diamond color="#FFFFFF" size={13} strokeWidth={2.2} />
+      <Text style={styles.creditValue}>{value}</Text>
+    </View>
+  );
+});
+
+const DiscoverTabs = memo(function DiscoverTabs({
   activeTab,
-  onSelectTab,
+  onSelect,
 }: {
   activeTab: DiscoverTabId;
-  onSelectTab: (tabId: DiscoverTabId) => void;
+  onSelect: (tabId: DiscoverTabId) => void;
 }) {
-  const [tabLayouts, setTabLayouts] = useState<Partial<Record<DiscoverTabId, { x: number; width: number }>>>({});
-  const activeLayout = tabLayouts[activeTab];
-
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.tabsContent}
-      style={styles.tabsScroll}
     >
-      <View style={styles.tabsTrack}>
-        {activeLayout ? (
-          <MotiView
-            animate={{ translateX: activeLayout.x, width: activeLayout.width }}
-            transition={{ type: "timing", duration: 220 }}
-            style={styles.activeTabPill}
-          />
-        ) : null}
-
+      <View style={styles.tabsRail}>
         {DISCOVER_TABS.map((tab, index) => {
           const isActive = tab.id === activeTab;
 
@@ -59,33 +62,15 @@ const DiscoverCategoryTabs = memo(function DiscoverCategoryTabs({
               accessibilityRole="button"
               onPress={() => {
                 triggerHaptic();
-                onSelectTab(tab.id);
+                onSelect(tab.id);
               }}
               style={[
                 styles.tabButton,
+                isActive ? styles.tabButtonActive : null,
                 index < DISCOVER_TABS.length - 1 ? styles.tabButtonGap : null,
               ]}
             >
-              <View
-                onLayout={(event) => {
-                  const { x, width } = event.nativeEvent.layout;
-
-                  setTabLayouts((current) => {
-                    const previous = current[tab.id];
-                    if (previous?.x === x && previous?.width === width) {
-                      return current;
-                    }
-
-                    return {
-                      ...current,
-                      [tab.id]: { x, width },
-                    };
-                  });
-                }}
-                style={styles.tabButtonInner}
-              >
-                <Text style={[styles.tabLabel, isActive ? styles.tabLabelActive : null]}>{tab.label}</Text>
-              </View>
+              <Text style={[styles.tabLabel, isActive ? styles.tabLabelActive : null]}>{tab.label}</Text>
             </Pressable>
           );
         })}
@@ -94,22 +79,7 @@ const DiscoverCategoryTabs = memo(function DiscoverCategoryTabs({
   );
 });
 
-const ThreeDiamondsMark = memo(function ThreeDiamondsMark() {
-  return (
-    <View style={styles.diamondsWrap}>
-      {[0, 1, 2].map((index) => (
-        <View
-          key={index}
-          style={index < 2 ? styles.diamondOverlap : null}
-        >
-          <Diamond color="#0A0A0A" size={14} strokeWidth={2.1} />
-        </View>
-      ))}
-    </View>
-  );
-});
-
-const DiscoverRow = memo(function DiscoverRow({
+const DiscoverSection = memo(function DiscoverSection({
   tabId,
   group,
   cardWidth,
@@ -125,35 +95,30 @@ const DiscoverRow = memo(function DiscoverRow({
   onSeeAll: (tabId: DiscoverTabId, group: DiscoverGroup) => void;
 }) {
   return (
-    <View style={styles.groupSection}>
-      <View style={styles.groupHeader}>
-        <Text style={styles.groupTitle}>{group.title}</Text>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => onSeeAll(tabId, group)}
-          style={({ pressed }) => [styles.seeAllButton, pressed ? styles.seeAllButtonPressed : null]}
-        >
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{group.title}</Text>
+        <Pressable accessibilityRole="button" onPress={() => onSeeAll(tabId, group)} style={styles.seeAllButton}>
           <Text style={styles.seeAllText}>See All</Text>
         </Pressable>
       </View>
 
-      <ScrollView
+      <FlatList
         horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.rowContent}
-      >
-        {group.items.map((item, index) => (
+        data={group.items}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => (
           <DiscoverImageCard
-            key={item.id}
             item={item}
             width={cardWidth}
             height={cardHeight}
             onPress={onPreview}
             style={index < group.items.length - 1 ? styles.cardGap : undefined}
           />
-        ))}
-      </ScrollView>
+        )}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.sectionContent}
+      />
     </View>
   );
 });
@@ -162,12 +127,13 @@ export default function GalleryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const { credits } = useViewerCredits();
   const [activeTab, setActiveTab] = useState<DiscoverTabId>("home");
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
 
   const groups = useMemo(() => getDiscoverGroups(activeTab), [activeTab]);
-  const cardWidth = useMemo(() => Math.min(Math.max(width * 0.41, 156), 178), [width]);
-  const cardHeight = useMemo(() => Math.round(cardWidth * 1.38), [cardWidth]);
+  const cardWidth = useMemo(() => Math.min(Math.max((width - 46) / 2, 150), 168), [width]);
+  const cardHeight = useMemo(() => Math.round(cardWidth * 1.42), [cardWidth]);
 
   const handlePreviewOpen = useCallback((item: DiscoverTile) => {
     triggerHaptic();
@@ -193,45 +159,37 @@ export default function GalleryScreen() {
     <View style={styles.screen}>
       <StatusBar style="dark" />
 
-      <ScrollView
-        style={styles.scroll}
-        contentInsetAdjustmentBehavior="never"
+      <FlatList
+        data={groups}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <DiscoverSection
+            tabId={activeTab}
+            group={item}
+            cardWidth={cardWidth}
+            cardHeight={cardHeight}
+            onPreview={handlePreviewOpen}
+            onSeeAll={handleSeeAll}
+          />
+        )}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingTop: insets.top + 8,
-          paddingBottom: Math.max(insets.bottom + 28, 40),
+          paddingBottom: Math.max(insets.bottom + 30, 44),
         }}
-      >
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <View style={[styles.headerSide, styles.headerStart]}>
-              <ThreeDiamondsMark />
-            </View>
-
-            <View style={styles.headerCenter}>
+        ListHeaderComponent={
+          <View style={[styles.headerWrap, { paddingTop: insets.top + 6 }]}>
+            <View style={styles.headerRow}>
+              <View style={styles.headerSide}>
+                <ThreeDiamondBadge value={credits} />
+              </View>
               <Text style={styles.headerTitle}>Discover</Text>
+              <View style={styles.headerSide} />
             </View>
 
-            <View style={styles.headerSide} />
+            <DiscoverTabs activeTab={activeTab} onSelect={setActiveTab} />
           </View>
-        </View>
-
-        <DiscoverCategoryTabs activeTab={activeTab} onSelectTab={setActiveTab} />
-
-        <View style={styles.sections}>
-          {groups.map((group) => (
-            <DiscoverRow
-              key={group.id}
-              tabId={activeTab}
-              group={group}
-              cardWidth={cardWidth}
-              cardHeight={cardHeight}
-              onPreview={handlePreviewOpen}
-              onSeeAll={handleSeeAll}
-            />
-          ))}
-        </View>
-      </ScrollView>
+        }
+      />
 
       <DiscoverPreviewModal
         item={previewItem}
@@ -248,109 +206,87 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
-  scroll: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  header: {
-    paddingHorizontal: SCREEN_SIDE_MARGIN,
+  headerWrap: {
+    paddingBottom: 12,
   },
   headerRow: {
     minHeight: 48,
+    paddingHorizontal: SCREEN_SIDE_MARGIN,
     flexDirection: "row",
     alignItems: "center",
   },
   headerSide: {
-    width: 72,
-    minHeight: 44,
+    width: 80,
     justifyContent: "center",
-  },
-  headerStart: {
     alignItems: "flex-start",
   },
-  headerCenter: {
-    flex: 1,
-    minHeight: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   headerTitle: {
+    flex: 1,
     color: "#0A0A0A",
     fontSize: 18,
     lineHeight: 22,
-    letterSpacing: -0.3,
+    textAlign: "center",
     ...fonts.bold,
   },
-  diamondsWrap: {
+  creditBadge: {
+    minHeight: 34,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    backgroundColor: "#0A0A0A",
     flexDirection: "row",
     alignItems: "center",
+    gap: 6,
   },
-  diamondOverlap: {
-    marginRight: -2,
-  },
-  tabsScroll: {
-    marginTop: 16,
+  creditValue: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    lineHeight: 16,
+    ...fonts.bold,
   },
   tabsContent: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
   },
-  tabsTrack: {
+  tabsRail: {
     flexDirection: "row",
     alignItems: "center",
-    minHeight: 42,
-    padding: 3,
     borderRadius: 999,
-    backgroundColor: "#FFFFFF",
-    borderWidth: HAIRLINE,
-    borderColor: "#E7E7E7",
-    position: "relative",
-  },
-  activeTabPill: {
-    position: "absolute",
-    top: 3,
-    bottom: 3,
-    left: 3,
-    borderRadius: 999,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#F7F7F7",
+    padding: 4,
   },
   tabButton: {
+    minHeight: 34,
+    paddingHorizontal: 16,
     borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "transparent",
+  },
+  tabButtonActive: {
+    backgroundColor: "#FFFFFF",
   },
   tabButtonGap: {
-    marginRight: 2,
-  },
-  tabButtonInner: {
-    minHeight: 36,
-    borderRadius: 999,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 16,
+    marginRight: TAB_GAP,
   },
   tabLabel: {
-    color: "#6B6B72",
+    color: "#52525B",
     fontSize: 13,
     lineHeight: 16,
-    ...fonts.semibold,
+    ...fonts.medium,
   },
   tabLabelActive: {
-    color: "#FFFFFF",
-    ...fonts.bold,
+    color: "#0A0A0A",
+    ...fonts.semibold,
   },
-  sections: {
-    marginTop: 18,
-    gap: SECTION_GAP,
+  section: {
+    marginBottom: 18,
   },
-  groupSection: {
-    gap: ROW_GAP,
-  },
-  groupHeader: {
+  sectionHeader: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
+    marginBottom: 10,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 16,
   },
-  groupTitle: {
+  sectionTitle: {
     flex: 1,
     color: "#0A0A0A",
     fontSize: 16,
@@ -360,18 +296,14 @@ const styles = StyleSheet.create({
   seeAllButton: {
     paddingVertical: 2,
   },
-  seeAllButtonPressed: {
-    opacity: 0.56,
-  },
   seeAllText: {
-    color: "#6B6B72",
+    color: "#6B7280",
     fontSize: 13,
     lineHeight: 16,
-    ...fonts.semibold,
+    ...fonts.medium,
   },
-  rowContent: {
-    paddingLeft: SCREEN_SIDE_MARGIN,
-    paddingRight: SCREEN_SIDE_MARGIN,
+  sectionContent: {
+    paddingHorizontal: SCREEN_SIDE_MARGIN,
   },
   cardGap: {
     marginRight: CARD_GAP,

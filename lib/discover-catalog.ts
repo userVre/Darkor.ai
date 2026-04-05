@@ -20,8 +20,6 @@ export const DISCOVER_TABS = [
   { id: "home", label: "Home" },
   { id: "garden", label: "Garden" },
   { id: "exterior", label: "Exterior Design" },
-  { id: "wall", label: "Wall" },
-  { id: "floor", label: "Floor" },
 ] as const satisfies ReadonlyArray<{ id: DiscoverTabId; label: string }>;
 
 const images = {
@@ -206,43 +204,43 @@ const HOME_GROUPS: DiscoverGroup[] = [
 
 const EXTERIOR_GROUPS: DiscoverGroup[] = [
   {
-    id: "modern-villa",
-    title: "Modern Villa",
+    id: "apartment",
+    title: "Apartment",
     items: [
-      makeTile("modern-villa-1", "Modern Villa After", images.exteriorScene1, "exterior"),
-      makeTile("modern-villa-2", "Modern Villa", images.exteriorModernVilla, "exterior"),
+      makeTile("apartment-1", "Apartment After", images.exteriorScene5, "exterior"),
+      makeTile("apartment-2", "Apartment Block", images.exteriorApartmentBlock, "exterior"),
     ],
   },
   {
-    id: "luxury-house",
-    title: "Luxury House",
+    id: "house",
+    title: "House",
     items: [
-      makeTile("luxury-house-1", "Luxury House After", images.exteriorScene2, "exterior"),
-      makeTile("luxury-house-2", "Luxury House Night", images.exteriorModernVilla, "exterior"),
+      makeTile("house-1", "House After", images.exteriorScene3, "exterior"),
+      makeTile("house-2", "Stone Manor", images.exteriorStoneManor, "exterior"),
     ],
   },
   {
-    id: "farmhouse",
-    title: "Farmhouse",
+    id: "office-building",
+    title: "Office Building",
     items: [
-      makeTile("farmhouse-1", "Farmhouse After", images.exteriorScene3, "exterior"),
-      makeTile("farmhouse-2", "Stone Manor", images.exteriorStoneManor, "exterior"),
+      makeTile("office-building-1", "Office Building After", images.exteriorScene4, "exterior"),
+      makeTile("office-building-2", "Office Building", images.exteriorScene2, "exterior"),
     ],
   },
   {
-    id: "retail-building",
-    title: "Retail Building",
+    id: "residential",
+    title: "Residential",
     items: [
-      makeTile("retail-building-1", "Retail Building After", images.exteriorScene4, "exterior"),
-      makeTile("retail-building-2", "Retail Storefront", images.exteriorRetailStorefront, "exterior"),
+      makeTile("residential-1", "Residential After", images.exteriorScene1, "exterior"),
+      makeTile("residential-2", "Modern Villa", images.exteriorModernVilla, "exterior"),
     ],
   },
   {
-    id: "apartment-block",
-    title: "Apartment Block",
+    id: "retail",
+    title: "Retail",
     items: [
-      makeTile("apartment-block-1", "Apartment Block After", images.exteriorScene5, "exterior"),
-      makeTile("apartment-block-2", "Apartment Block", images.exteriorApartmentBlock, "exterior"),
+      makeTile("retail-1", "Retail After", images.exteriorScene4, "exterior"),
+      makeTile("retail-2", "Retail Storefront", images.exteriorRetailStorefront, "exterior"),
     ],
   },
 ];

@@ -1,5 +1,4 @@
-import { Modal, Pressable, StyleSheet, View } from "react-native";
-import { Image } from "expo-image";
+import { Image, Modal, Pressable, StyleSheet, View } from "react-native";
 import { X } from "lucide-react-native";
 
 import type { DiscoverTile } from "../lib/discover-catalog";
@@ -43,9 +42,7 @@ export function DiscoverPreviewModal({
           <Image
             source={item.image}
             style={styles.image}
-            contentFit="contain"
-            transition={120}
-            cachePolicy="memory-disk"
+            resizeMode="contain"
           />
         </View>
       </View>
