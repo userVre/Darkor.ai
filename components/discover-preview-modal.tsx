@@ -35,7 +35,7 @@ export function DiscoverPreviewModal({
 
         <View style={[styles.topBar, { top: Math.max(topInset + 8, 20) }]}>
           <Pressable accessibilityRole="button" hitSlop={10} onPress={onClose} style={styles.closeButton}>
-            <X color="#FFFFFF" size={22} strokeWidth={2.2} />
+            <X color="#0A0A0A" size={22} strokeWidth={2.2} />
           </Pressable>
         </View>
 
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "#FFFFFF",
   },
   imageWrap: {
     flex: 1,

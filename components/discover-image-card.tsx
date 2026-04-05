@@ -49,7 +49,7 @@ export const DiscoverImageCard = memo(function DiscoverImageCard({
 const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
-    borderRadius: 22,
+    borderRadius: 20,
     backgroundColor: "#F4F4F4",
   },
   image: {

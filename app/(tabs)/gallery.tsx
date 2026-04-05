@@ -19,10 +19,10 @@ import {
 import { triggerHaptic } from "../../lib/haptics";
 import { fonts } from "../../styles/typography";
 
-const SCREEN_SIDE_MARGIN = 24;
-const SECTION_GAP = 30;
-const ROW_GAP = 14;
-const CARD_GAP = 14;
+const SCREEN_SIDE_MARGIN = 20;
+const SECTION_GAP = 22;
+const ROW_GAP = 12;
+const CARD_GAP = 12;
 
 const DiscoverCategoryTabs = memo(function DiscoverCategoryTabs({
   activeTab,
@@ -166,8 +166,8 @@ export default function GalleryScreen() {
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
 
   const groups = useMemo(() => getDiscoverGroups(activeTab), [activeTab]);
-  const cardWidth = useMemo(() => Math.min(Math.max(width * 0.58, 220), 264), [width]);
-  const cardHeight = useMemo(() => Math.round(cardWidth * 1.24), [cardWidth]);
+  const cardWidth = useMemo(() => Math.min(Math.max(width * 0.41, 156), 178), [width]);
+  const cardHeight = useMemo(() => Math.round(cardWidth * 1.38), [cardWidth]);
 
   const handlePreviewOpen = useCallback((item: DiscoverTile) => {
     triggerHaptic();
@@ -276,9 +276,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: "#0A0A0A",
-    fontSize: 24,
-    lineHeight: 28,
-    letterSpacing: -0.55,
+    fontSize: 18,
+    lineHeight: 22,
+    letterSpacing: -0.3,
     ...fonts.bold,
   },
   diamondsWrap: {
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     marginRight: -2,
   },
   tabsScroll: {
-    marginTop: 24,
+    marginTop: 16,
   },
   tabsContent: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
@@ -297,19 +297,19 @@ const styles = StyleSheet.create({
   tabsTrack: {
     flexDirection: "row",
     alignItems: "center",
-    minHeight: 52,
-    padding: 4,
+    minHeight: 42,
+    padding: 3,
     borderRadius: 999,
-    backgroundColor: "#F4F4F4",
+    backgroundColor: "#FFFFFF",
     borderWidth: HAIRLINE,
-    borderColor: "#ECECEC",
+    borderColor: "#E7E7E7",
     position: "relative",
   },
   activeTabPill: {
     position: "absolute",
-    top: 4,
-    bottom: 4,
-    left: 4,
+    top: 3,
+    bottom: 3,
+    left: 3,
     borderRadius: 999,
     backgroundColor: "#0A0A0A",
   },
@@ -317,20 +317,19 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   tabButtonGap: {
-    marginRight: 4,
+    marginRight: 2,
   },
   tabButtonInner: {
-    minHeight: 44,
+    minHeight: 36,
     borderRadius: 999,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
   },
   tabLabel: {
     color: "#6B6B72",
     fontSize: 13,
     lineHeight: 16,
-    letterSpacing: -0.1,
     ...fonts.semibold,
   },
   tabLabelActive: {
@@ -338,7 +337,7 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   sections: {
-    marginTop: 30,
+    marginTop: 18,
     gap: SECTION_GAP,
   },
   groupSection: {
@@ -354,21 +353,20 @@ const styles = StyleSheet.create({
   groupTitle: {
     flex: 1,
     color: "#0A0A0A",
-    fontSize: 24,
-    lineHeight: 28,
-    letterSpacing: -0.45,
+    fontSize: 16,
+    lineHeight: 20,
     ...fonts.bold,
   },
   seeAllButton: {
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   seeAllButtonPressed: {
     opacity: 0.56,
   },
   seeAllText: {
-    color: "#0A0A0A",
-    fontSize: 14,
-    lineHeight: 18,
+    color: "#6B6B72",
+    fontSize: 13,
+    lineHeight: 16,
     ...fonts.semibold,
   },
   rowContent: {

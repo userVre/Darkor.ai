@@ -16,8 +16,8 @@ import {
 import { triggerHaptic } from "../../../lib/haptics";
 import { fonts } from "../../../styles/typography";
 
-const SCREEN_SIDE_MARGIN = 24;
-const GRID_GAP = 14;
+const SCREEN_SIDE_MARGIN = 20;
+const GRID_GAP = 12;
 
 function readRouteParam(value: string | string[] | undefined) {
   if (Array.isArray(value)) {
@@ -48,7 +48,7 @@ export default function DiscoverSeeAllScreen() {
     const availableWidth = width - SCREEN_SIDE_MARGIN * 2 - GRID_GAP;
     return Math.floor(availableWidth / 2);
   }, [width]);
-  const cardHeight = useMemo(() => Math.round(cardWidth * 1.24), [cardWidth]);
+  const cardHeight = useMemo(() => Math.round(cardWidth * 1.38), [cardWidth]);
 
   const handlePreviewOpen = useCallback((item: DiscoverTile) => {
     triggerHaptic();
@@ -141,9 +141,8 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     color: "#0A0A0A",
-    fontSize: 24,
-    lineHeight: 28,
-    letterSpacing: -0.45,
+    fontSize: 18,
+    lineHeight: 22,
     textAlign: "center",
     ...fonts.bold,
   },
