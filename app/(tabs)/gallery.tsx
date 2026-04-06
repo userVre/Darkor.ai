@@ -10,7 +10,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { Diamond } from "lucide-react-native";
+import { Diamond } from "@/components/material-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DiscoverImageCard } from "../../components/discover-image-card";
@@ -352,3 +352,4 @@ const styles = StyleSheet.create({
     marginRight: CARD_GAP,
   },
 });
+

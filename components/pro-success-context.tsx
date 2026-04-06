@@ -14,7 +14,7 @@ import {
 import { Platform, Text, ToastAndroid, View, useWindowDimensions } from "react-native";
 import { Easing } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, Sparkles } from "lucide-react-native";
+import { Check, Sparkles } from "@/components/material-icons";
 
 import { LUX_SPRING } from "../lib/motion";
 import { fonts } from "../styles/typography";
@@ -268,3 +268,4 @@ export function useProSuccess() {
   }
   return context;
 }
+

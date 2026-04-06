@@ -25,7 +25,7 @@ import {
   Star,
   Trash2,
   UserRound,
-} from "lucide-react-native";
+} from "@/components/material-icons";
 
 import { SettingsRow } from "../components/settings-row";
 import { useProSuccess } from "../components/pro-success-context";
@@ -528,3 +528,4 @@ const styles = StyleSheet.create({
     ...fonts.regular,
   },
 });
+

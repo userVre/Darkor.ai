@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight } from "@/components/material-icons";
 import type { ComponentType, ReactNode } from "react";
 
 import { fonts } from "../styles/typography";
@@ -88,3 +88,4 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 });
+

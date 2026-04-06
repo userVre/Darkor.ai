@@ -1,4 +1,4 @@
-import { ArrowLeft, Diamond, X } from "lucide-react-native";
+import { ArrowLeft, Diamond, X } from "@/components/material-icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -208,3 +208,4 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
 });
+

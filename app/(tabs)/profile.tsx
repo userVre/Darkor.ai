@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { StatusBar } from "expo-status-bar";
 import * as MediaLibrary from "expo-media-library";
-import { Image as ImageIcon } from "lucide-react-native";
+import { Image as ImageIcon } from "@/components/material-icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
@@ -374,3 +374,4 @@ const styles = StyleSheet.create({
     marginLeft: GRID_COLUMN_GAP,
   },
 });
+

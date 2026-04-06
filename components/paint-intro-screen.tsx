@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
-import { Camera, Diamond, Image as GalleryIcon } from "lucide-react-native";
+import { Camera, Diamond, Image as GalleryIcon } from "@/components/material-icons";
 import { useCallback, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageSourcePropType } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -504,3 +504,4 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
 });
+

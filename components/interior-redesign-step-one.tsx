@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Camera, Image as GalleryIcon, Plus } from "lucide-react-native";
+import { Camera, Image as GalleryIcon, Plus } from "@/components/material-icons";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -16,10 +16,8 @@ import Animated, {
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
-import { DesignStepHeader } from "./design-step-header";
-import { InteriorRedesignStepProgress } from "./interior-redesign-step-progress";
+import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-header";
 import { HomeToolsBottomNav } from "./home-tools-bottom-nav";
-import { getStickyStepHeaderMetrics } from "./sticky-step-header";
 
 export type InteriorRedesignStepOneExamplePhoto = {
   id: string;
@@ -70,7 +68,7 @@ export function InteriorRedesignStepOne({
   const router = useRouter();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const headerMetrics = getStickyStepHeaderMetrics(insets.top);
+  const headerMetrics = getDesignStepHeaderMetrics(insets.top);
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
   const contentInset = 24;
@@ -554,6 +552,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    backgroundColor: "#FFFFFF",
   },
   sheetOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -636,3 +635,4 @@ const styles = StyleSheet.create({
     ...fonts.medium,
   },
 });
+

@@ -14,7 +14,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path as SvgPath, Rect } from "react-native-svg";
 import { captureRef } from "react-native-view-shot";
-import { ChevronLeft, MoveHorizontal, X } from "lucide-react-native";
+import { ChevronLeft, MoveHorizontal, X } from "@/components/material-icons";
 
 import { GENERATION_FAILED_TOAST, getFriendlyGenerationError } from "../lib/generation-errors";
 import { canUserGenerate as canUserGenerateNow } from "../lib/generation-access";
@@ -1351,3 +1351,4 @@ const styles = StyleSheet.create({
   restartButton: { minHeight: 56, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)", flexDirection: "row", gap: spacing.sm },
   restartText: { color: "#ffffff", fontSize: 14, fontWeight: "700" },
 });
+

@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ChevronLeft, CircleHelp } from "lucide-react-native";
+import { ChevronLeft, CircleHelp } from "@/components/material-icons";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -163,3 +163,4 @@ const styles = StyleSheet.create({
     ...DS.typography.body,
   },
 });
+

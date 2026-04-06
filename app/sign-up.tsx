@@ -4,7 +4,7 @@ import { Link, type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft } from "@/components/material-icons";
 import { fonts } from "../styles/typography";
 import { buttonStyles } from "../styles/buttons";
 
@@ -241,5 +241,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 });
+
 
 

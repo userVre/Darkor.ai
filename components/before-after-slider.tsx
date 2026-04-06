@@ -1,5 +1,5 @@
 import { Image, type ImageSource } from "expo-image";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { ChevronLeft, ChevronRight } from "@/components/material-icons";
 import { memo, type ReactNode, type Ref, useCallback } from "react";
 import {
   type ImageStyle,
@@ -274,3 +274,4 @@ const styles = StyleSheet.create({
     boxShadow: "0px 14px 32px rgba(0, 0, 0, 0.28)",
   },
 });
+

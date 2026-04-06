@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft } from "@/components/material-icons";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -176,3 +176,4 @@ const styles = StyleSheet.create({
     ...DS.typography.body,
   },
 });
+

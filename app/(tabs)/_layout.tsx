@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { Pressable, type PressableProps } from "react-native";
 import { Tabs, useRouter } from "expo-router";
-import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "lucide-react-native";
+import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "@/components/material-icons";
 import { useAuth } from "@clerk/expo";
 import { fonts } from "../../styles/typography";
 import { spacing } from "../../styles/spacing";
@@ -170,3 +170,4 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+

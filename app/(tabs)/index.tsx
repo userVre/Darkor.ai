@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/expo";
-import { Gem, Settings } from "lucide-react-native";
+import { Gem, Settings } from "@/components/material-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
@@ -290,3 +290,4 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
 });
+

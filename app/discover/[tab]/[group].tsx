@@ -3,7 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft } from "@/components/material-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DiscoverImageCard } from "../../../components/discover-image-card";
@@ -176,3 +176,4 @@ const styles = StyleSheet.create({
     ...fonts.regular,
   },
 });
+

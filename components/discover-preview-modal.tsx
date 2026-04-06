@@ -1,5 +1,5 @@
 import { Modal, Pressable, StyleSheet, View } from "react-native";
-import { X } from "lucide-react-native";
+import { X } from "@/components/material-icons";
 import { Image } from "expo-image";
 
 import type { DiscoverTile } from "../lib/discover-catalog";
@@ -84,3 +84,4 @@ const styles = StyleSheet.create({
     height: "100%",
   },
 });
+

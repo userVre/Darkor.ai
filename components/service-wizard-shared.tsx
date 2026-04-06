@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { MotiView } from "moti";
-import { Check, ImagePlus, X } from "lucide-react-native";
+import { Check, ImagePlus, X } from "@/components/material-icons";
 import { Children, cloneElement, isValidElement, useState, type ComponentProps, type ReactElement, type ReactNode } from "react";
 import { ScrollView, Text, View, StyleSheet, useWindowDimensions, type ImageSourcePropType } from "react-native";
 import { fonts } from "../styles/typography";
@@ -555,3 +555,4 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
 });
+

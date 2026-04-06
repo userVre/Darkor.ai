@@ -5,8 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
-import { DesignStepHeader } from "./design-step-header";
-import { getStickyStepHeaderMetrics } from "./sticky-step-header";
+import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-header";
 
 type ExteriorRedesignStepFourPalette = {
   id: string;
@@ -52,7 +51,7 @@ export function ExteriorRedesignStepFour({
 }: ExteriorRedesignStepFourProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const headerMetrics = getStickyStepHeaderMetrics(insets.top);
+  const headerMetrics = getDesignStepHeaderMetrics(insets.top);
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const paletteScale = Math.min(width / PALETTE_REFERENCE_WIDTH, 1);
   const sideInset = scaleValue(20, layoutScale);

@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { X } from "lucide-react-native";
+import { X } from "@/components/material-icons";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 
@@ -134,3 +134,4 @@ const styles = StyleSheet.create({
     ...fonts.medium,
   },
 });
+

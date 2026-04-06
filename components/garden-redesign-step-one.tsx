@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
-import { Camera, Image as GalleryIcon, Plus } from "lucide-react-native";
+import { Camera, Image as GalleryIcon, Plus } from "@/components/material-icons";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -15,8 +15,7 @@ import Animated, {
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
-import { DesignStepHeader } from "./design-step-header";
-import { getStickyStepHeaderMetrics } from "./sticky-step-header";
+import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-header";
 
 type GardenRedesignStepOneExamplePhoto = {
   id: string;
@@ -64,7 +63,7 @@ export function GardenRedesignStepOne({
 }: GardenRedesignStepOneProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const headerMetrics = getStickyStepHeaderMetrics(insets.top);
+  const headerMetrics = getDesignStepHeaderMetrics(insets.top);
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
   const contentInset = 24;
@@ -628,3 +627,4 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
 });
+

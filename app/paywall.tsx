@@ -30,7 +30,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, Shield, X } from "lucide-react-native";
+import { Check, Shield, X } from "@/components/material-icons";
 
 import { useProSuccess } from "../components/pro-success-context";
 import { useViewerCredits } from "../components/viewer-credits-context";
@@ -1233,3 +1233,4 @@ const styles = StyleSheet.create({
     ...fonts.regular,
   },
 });
+

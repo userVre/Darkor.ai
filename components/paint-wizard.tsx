@@ -30,7 +30,7 @@ import {
   Undo2,
   Wallpaper,
   X,
-} from "lucide-react-native";
+} from "@/components/material-icons";
 import { fonts } from "../styles/typography";
 
 import { triggerHaptic } from "../lib/haptics";
@@ -3621,3 +3621,4 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 });
+

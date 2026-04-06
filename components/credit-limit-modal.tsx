@@ -1,4 +1,4 @@
-import { X } from "lucide-react-native";
+import { X } from "@/components/material-icons";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { fonts } from "../styles/typography";
@@ -110,3 +110,4 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
 });
+

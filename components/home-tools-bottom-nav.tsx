@@ -1,4 +1,4 @@
-import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "lucide-react-native";
+import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "@/components/material-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { fonts } from "../styles/typography";
@@ -69,3 +69,4 @@ const styles = StyleSheet.create({
     ...fonts.medium,
   },
 });
+

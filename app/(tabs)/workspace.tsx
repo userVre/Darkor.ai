@@ -59,7 +59,7 @@ import {
   UtensilsCrossed,
   MoveHorizontal,
   Wand2,
-} from "lucide-react-native";
+} from "@/components/material-icons";
 import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
 import { GENERATION_FAILED_TOAST, getFriendlyGenerationError } from "../../lib/generation-errors";
 import { triggerHaptic } from "../../lib/haptics";
@@ -6819,5 +6819,6 @@ export default function WorkspaceScreen() {
   }
 
 }
+
 
 

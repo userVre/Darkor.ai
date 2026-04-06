@@ -5,8 +5,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
-import { DesignStepHeader } from "./design-step-header";
-import { getStickyStepHeaderMetrics } from "./sticky-step-header";
+import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-header";
+import { MaterialIcon, type MaterialIconName } from "./material-icons";
 
 type InteriorRedesignStepTwoProps = {
   creditCount: number;
@@ -25,9 +25,24 @@ const INACTIVE_CARD_BG = "#F5F5F5";
 const INACTIVE_CARD_BORDER = "#E3E3E3";
 const ACTIVE_CARD_BG = "#FFF2F0";
 const ACTIVE_CARD_BORDER = "#FF3B30";
-const CARD_WIDTH = 192;
 const CARD_HEIGHT = 72;
 const GRID_GAP = 16;
+const ROOM_ICON_SIZE = 24;
+
+const ROOM_ICON_BY_NAME: Record<string, MaterialIconName> = {
+  Bathroom: "bathtub",
+  Bedroom: "bed",
+  "Dining Room": "dinner-dining",
+  Hall: "meeting-room",
+  "Gaming Room": "sports-esports",
+  Kitchen: "kitchen",
+  Laundry: "local-laundry-service",
+  Library: "local-library",
+  "Living Room": "weekend",
+  Nursery: "child-care",
+  "Home Office": "work",
+  "Home Theater": "tv",
+};
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -52,7 +67,7 @@ export function InteriorRedesignStepTwo({
 }: InteriorRedesignStepTwoProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const headerMetrics = getStickyStepHeaderMetrics(insets.top);
+  const headerMetrics = getDesignStepHeaderMetrics(insets.top);
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
   const titleInset = 24;
@@ -64,6 +79,8 @@ export function InteriorRedesignStepTwo({
   const buttonWidth = mainWidth;
   const buttonHeight = scaleValue(60, layoutScale);
   const buttonTop = scaleValue(52, layoutScale);
+  const cardWidth = (mainWidth - GRID_GAP) / 2;
+  const cardHeight = scaleValue(CARD_HEIGHT, layoutScale);
   const roomRows = useMemo(() => chunkIntoRows(roomOptions, 2), [roomOptions]);
   const canContinue = Boolean(selectedRoom);
 
@@ -115,6 +132,8 @@ export function InteriorRedesignStepTwo({
               <View key={`interior-room-row-${rowIndex}`} style={styles.gridRow}>
                 {row.map((room, columnIndex) => {
                   const active = selectedRoom === room;
+                  const iconName = ROOM_ICON_BY_NAME[room] ?? "house";
+                  const iconColor = active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A";
 
                   return (
                     <Pressable
@@ -126,22 +145,25 @@ export function InteriorRedesignStepTwo({
                       style={[
                         styles.roomCard,
                         {
-                          width: CARD_WIDTH,
-                          height: CARD_HEIGHT,
+                          width: cardWidth,
+                          minHeight: cardHeight,
                           marginRight: columnIndex === 0 && row.length > 1 ? GRID_GAP : 0,
                           backgroundColor: active ? ACTIVE_CARD_BG : INACTIVE_CARD_BG,
                           borderColor: active ? ACTIVE_CARD_BORDER : INACTIVE_CARD_BORDER,
                         },
                       ]}
                     >
-                      <Text style={[styles.roomCardTitle, active ? styles.roomCardTitleActive : null]} numberOfLines={2}>
-                        {room}
-                      </Text>
+                      <View style={styles.roomCardContent}>
+                        <MaterialIcon color={iconColor} name={iconName} size={ROOM_ICON_SIZE} />
+                        <Text style={[styles.roomCardTitle, active ? styles.roomCardTitleActive : null]} numberOfLines={2}>
+                          {room}
+                        </Text>
+                      </View>
                     </Pressable>
                   );
                 })}
 
-                {row.length === 1 ? <View style={{ width: CARD_WIDTH }} /> : null}
+                {row.length === 1 ? <View style={{ width: cardWidth }} /> : null}
               </View>
             ))}
           </View>
@@ -204,15 +226,20 @@ const styles = StyleSheet.create({
   roomCard: {
     borderRadius: 20,
     borderWidth: 1.5,
-    paddingHorizontal: 12,
-    alignItems: "center",
+    paddingHorizontal: 16,
     justifyContent: "center",
+  },
+  roomCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
   roomCardTitle: {
     color: "#0A0A0A",
     fontSize: 16,
     lineHeight: 20,
-    textAlign: "center",
+    textAlign: "left",
+    flexShrink: 1,
     ...fonts.semibold,
   },
   roomCardTitleActive: {
