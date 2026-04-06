@@ -35,6 +35,7 @@ import { LuxPressable } from "./lux-pressable";
 import { ServiceContinueButton } from "./service-continue-button";
 import { GENERATION_STATUS_MESSAGES, ServiceProcessingScreen } from "./service-processing-screen";
 import { ServiceWizardHeader } from "./service-wizard-header";
+import { getStickyStepHeaderMetrics } from "./sticky-step-header";
 import {
   ServiceSelectionCard,
   ServiceSelectionGrid,
@@ -192,6 +193,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const generationAccess = canUserGenerateNow(me);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "materials" ? 3 : 4;
+  const stickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);
   const canContinueFromMask = customPrompt.trim().length > 0;
   const aspectRatio = useMemo(() => {
     if (!selectedImage) return 1.15;
@@ -202,7 +204,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const resultFrameWidth = Math.max(width - 32, 320);
   const canContinueFromMaterials = Boolean(selectedImage && hasMask && selectedMaterial && !isGenerating);
   const maskLayoutScale = Math.min(width / MASK_SCREEN_REFERENCE_WIDTH, height / MASK_SCREEN_REFERENCE_HEIGHT, 1);
-  const maskTitleTop = Math.max(insets.top + scaleMaskValue(16, maskLayoutScale), scaleMaskValue(72, maskLayoutScale));
+  const maskTitleTop = stickyHeaderMetrics.contentOffset;
   const maskImageTop = maskTitleTop + scaleMaskValue(60, maskLayoutScale);
   const maskPreviewHeight = scaleMaskValue(412, maskLayoutScale);
   const promptCardTop = maskImageTop + maskPreviewHeight + scaleMaskValue(132, maskLayoutScale);
@@ -857,10 +859,11 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
         </View>
       ) : null}
 
-      {step !== "processing" && step !== "intake" && step !== "mask" ? (
+      {step !== "processing" && step !== "result" && step !== "intake" ? (
         <ServiceWizardHeader
           title="Floor Restyle"
           step={currentStepNumber}
+          creditCount={availableCredits}
           canGoBack={currentStepNumber > 1}
           onBack={handleBack}
           onClose={handleClose}
@@ -881,24 +884,6 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       {step === "mask" ? (
         <View style={styles.maskScreen}>
           <Text style={[styles.maskScreenTitle, { top: maskTitleTop }]}>Floor Restyle</Text>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Back to floor upload"
-            onPress={confirmExitDesignFlow}
-            style={[styles.maskNavButton, { top: maskTitleTop - scaleMaskValue(2, maskLayoutScale), left: scaleMaskValue(24, maskLayoutScale) }]}
-          >
-            <ChevronLeft color="#0A0A0A" size={22} strokeWidth={2.4} />
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Close floor restyle flow"
-            onPress={confirmExitDesignFlow}
-            style={[styles.maskNavButton, { top: maskTitleTop - scaleMaskValue(2, maskLayoutScale), right: scaleMaskValue(40, maskLayoutScale) }]}
-          >
-            <X color="#0A0A0A" size={20} strokeWidth={2.4} />
-          </Pressable>
 
           <View
             onLayout={handleCanvasLayout}
@@ -1108,7 +1093,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       {step === "materials" ? (
         <ServiceWizardStepScreen
           footerOffset={FIXED_FOOTER_OFFSET}
-          contentContainerStyle={{ paddingHorizontal: spacing.md, paddingTop: spacing.sm, gap: spacing.md }}
+          contentContainerStyle={{ paddingHorizontal: spacing.md, paddingTop: stickyHeaderMetrics.contentOffset, gap: spacing.md }}
           footer={
             <ServiceContinueButton
               active={canContinueFromMaterials}

@@ -263,7 +263,7 @@ export function ServiceWizardStepScreen({
       <ScrollView
         style={styles.stepScroll}
         scrollEnabled={scrollEnabled}
-        contentInsetAdjustmentBehavior="automatic"
+        contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         contentContainerStyle={[contentContainerStyle, footer ? { paddingBottom: resolvedPaddingBottom } : null]}
       >

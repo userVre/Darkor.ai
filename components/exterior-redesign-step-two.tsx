@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
 import { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
@@ -7,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 import { DesignStepHeader } from "./design-step-header";
+import { getStickyStepHeaderMetrics } from "./sticky-step-header";
 
 type ExteriorRedesignStepTwoCard = {
   id: string;
@@ -26,6 +26,9 @@ type ExteriorRedesignStepTwoProps = {
 const REFERENCE_WIDTH = 460;
 const REFERENCE_HEIGHT = 932;
 const ACTIVE_CONTINUE_COLOR = "#FF3B30";
+const CARD_WIDTH = 192;
+const CARD_HEIGHT = 72;
+const GRID_GAP = 16;
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -49,26 +52,14 @@ export function ExteriorRedesignStepTwo({
 }: ExteriorRedesignStepTwoProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const headerMetrics = getStickyStepHeaderMetrics(insets.top);
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(420, layoutScale));
-  const headerTop = scaleValue(36, layoutScale);
-  const progressTop = scaleValue(74, layoutScale);
-  const progressSegmentWidth = scaleValue(92, layoutScale);
-  const progressGap = scaleValue(16, layoutScale);
   const titleLeft = 24;
-  const titleTop = progressTop + scaleValue(24, layoutScale);
+  const titleTop = headerMetrics.contentOffset;
   const subtitleTopGap = scaleValue(12, layoutScale);
   const gridTopGap = scaleValue(24, layoutScale);
-  const gridWidth = scaleValue(460, layoutScale);
-  const gridLeftInset = scaleValue(16, layoutScale);
-  const gridRightInset = scaleValue(12, layoutScale);
-  const cardWidth = scaleValue(204, layoutScale);
-  const cardHeight = scaleValue(240, layoutScale);
-  const cardGap = scaleValue(24, layoutScale);
-  const rowGap = scaleValue(8, layoutScale);
-  const labelBarHeight = scaleValue(44, layoutScale);
-  const labelLeft = scaleValue(56, layoutScale);
   const bottomContainerHeight = scaleValue(132, layoutScale);
   const buttonHeight = scaleValue(60, layoutScale);
   const buttonTop = scaleValue(52, layoutScale);
@@ -99,25 +90,8 @@ export function ExteriorRedesignStepTwo({
         onBack={onBack}
         onClose={onExit}
         step={2}
-        top={headerTop}
         totalSteps={4}
       />
-
-      <View style={[styles.progressRow, { top: progressTop, width: mainWidth, right: sideInset }]}>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <View
-            key={`exterior-building-progress-${index}`}
-            style={[
-              styles.progressSegment,
-              {
-                width: progressSegmentWidth,
-                marginRight: index === 3 ? 0 : progressGap,
-                backgroundColor: index < 2 ? "#0A0A0A" : "#E0E0E0",
-              },
-            ]}
-          />
-        ))}
-      </View>
 
       <ScrollView
         style={styles.content}
@@ -133,15 +107,14 @@ export function ExteriorRedesignStepTwo({
           Select the building type to redesign and see it in your chosen style
         </Text>
 
-        <View style={{ marginTop: gridTopGap, width: gridWidth, alignSelf: "center" }}>
+        <View style={styles.grid}>
           {rows.map((row, rowIndex) => (
             <View
               key={`exterior-building-row-${rowIndex}`}
               style={{
                 flexDirection: "row",
-                paddingLeft: gridLeftInset,
-                paddingRight: gridRightInset,
-                marginBottom: rowIndex === rows.length - 1 ? 0 : rowGap,
+                justifyContent: "center",
+                marginTop: rowIndex === 0 ? gridTopGap : 8,
               }}
             >
               {row.map((card, columnIndex) => {
@@ -153,33 +126,24 @@ export function ExteriorRedesignStepTwo({
                     accessibilityState={{ selected: active }}
                     hitSlop={12}
                     onPress={() => handleCardPress(card.title)}
-                    style={[
-                      styles.card,
-                      {
-                        width: cardWidth,
-                        height: cardHeight,
-                        marginRight: columnIndex === row.length - 1 ? 0 : cardGap,
-                        borderColor: active ? ACTIVE_CONTINUE_COLOR : "#E5E5E5",
-                      },
-                    ]}
-                  >
-                    <Image
-                      source={card.image}
-                      style={{ width: "100%", height: cardHeight - labelBarHeight }}
-                      contentFit="cover"
-                      transition={120}
-                      cachePolicy="memory-disk"
-                    />
-                    <View style={[styles.labelBar, { height: labelBarHeight }]}>
-                      <View style={{ flex: 1, justifyContent: "center", paddingLeft: labelLeft, paddingRight: scaleValue(10, layoutScale) }}>
-                        <Text numberOfLines={1} style={[styles.labelText, { color: active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A" }]}>
-                          {card.title}
-                        </Text>
-                      </View>
-                    </View>
+                      style={[
+                        styles.card,
+                        {
+                          width: CARD_WIDTH,
+                          height: CARD_HEIGHT,
+                          marginRight: columnIndex === row.length - 1 ? 0 : GRID_GAP,
+                          borderColor: active ? ACTIVE_CONTINUE_COLOR : "#E5E5E5",
+                          backgroundColor: active ? "#FFF2F0" : "#F5F5F5",
+                        },
+                      ]}
+                    >
+                      <Text numberOfLines={2} style={[styles.labelText, { color: active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A" }]}>
+                        {card.title}
+                      </Text>
                   </Pressable>
                 );
               })}
+              {row.length === 1 ? <View style={{ width: CARD_WIDTH }} /> : null}
             </View>
           ))}
         </View>
@@ -215,41 +179,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
-  navButton: {
-    position: "absolute",
-    zIndex: 4,
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepText: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    zIndex: 4,
-    textAlign: "center",
-    color: "#0A0A0A",
-    fontSize: 14,
-    lineHeight: 18,
-    ...fonts.semibold,
-  },
-  closeText: {
-    color: "#0A0A0A",
-    fontSize: 18,
-    lineHeight: 18,
-    ...fonts.bold,
-  },
-  progressRow: {
-    position: "absolute",
-    zIndex: 3,
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  progressSegment: {
-    height: 4,
-    borderRadius: 2,
-  },
   content: {
     flex: 1,
   },
@@ -266,20 +195,20 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     ...fonts.regular,
   },
-  card: {
-    overflow: "hidden",
-    borderRadius: 18,
-    borderWidth: 1.5,
-    backgroundColor: "#FFFFFF",
+  grid: {
+    gap: 8,
   },
-  labelBar: {
-    backgroundColor: "#FFFFFF",
-    borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
+  card: {
+    borderRadius: 20,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
   },
   labelText: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
+    textAlign: "center",
     ...fonts.semibold,
   },
   bottomContainer: {

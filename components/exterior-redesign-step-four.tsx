@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 import { DesignStepHeader } from "./design-step-header";
+import { getStickyStepHeaderMetrics } from "./sticky-step-header";
 
 type ExteriorRedesignStepFourPalette = {
   id: string;
@@ -51,15 +52,12 @@ export function ExteriorRedesignStepFour({
 }: ExteriorRedesignStepFourProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const headerMetrics = getStickyStepHeaderMetrics(insets.top);
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const paletteScale = Math.min(width / PALETTE_REFERENCE_WIDTH, 1);
   const sideInset = scaleValue(20, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const headerTop = scaleValue(36, layoutScale);
-  const progressTop = scaleValue(74, layoutScale);
-  const progressSegmentWidth = scaleValue(92, layoutScale);
-  const progressGap = scaleValue(16, layoutScale);
-  const titleTop = progressTop + scaleValue(36, layoutScale);
+  const titleTop = headerMetrics.contentOffset;
   const titleLeft = 24;
   const paletteTitleTopGap = scaleValue(20, layoutScale);
   const paletteMargin = scaleValue(24, paletteScale);
@@ -98,29 +96,13 @@ export function ExteriorRedesignStepFour({
       <DesignStepHeader
         backAccessibilityLabel="Go to the previous step"
         closeAccessibilityLabel="Go back to step 1"
+        creditCount={creditCount}
         horizontalInset={sideInset}
         onBack={onBack}
         onClose={onExit}
         step={4}
-        top={headerTop}
         totalSteps={4}
       />
-
-      <View style={[styles.progressRow, { top: progressTop, width: mainWidth, right: sideInset }]}>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <View
-            key={`exterior-palette-progress-${index}`}
-            style={[
-              styles.progressSegment,
-              {
-                width: progressSegmentWidth,
-                marginRight: index === 3 ? 0 : progressGap,
-                backgroundColor: "#0A0A0A",
-              },
-            ]}
-          />
-        ))}
-      </View>
 
       <ScrollView
         style={styles.content}

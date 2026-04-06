@@ -53,6 +53,7 @@ import { ServiceContinueButton } from "./service-continue-button";
 import { GENERATION_STATUS_MESSAGES, ServiceProcessingScreen } from "./service-processing-screen";
 import { ServiceWizardHeader } from "./service-wizard-header";
 import { ServiceWizardStepScreen } from "./service-wizard-shared";
+import { getStickyStepHeaderMetrics } from "./sticky-step-header";
 import { LuxPressable } from "./lux-pressable";
 import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerCredits } from "./viewer-credits-context";
@@ -572,8 +573,9 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const canGenerate = Boolean(selectedImage && hasMask && selectedColorValue && !isGenerating);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
+  const stickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);
   const selectionLayoutScale = Math.min(width / SELECTION_REFERENCE_WIDTH, height / SELECTION_REFERENCE_HEIGHT, 1);
-  const selectionHeaderTop = Math.max(insets.top + scaleSelectionValue(16, selectionLayoutScale), scaleSelectionValue(72, selectionLayoutScale));
+  const selectionTitleTop = stickyHeaderMetrics.contentOffset;
   const selectionPreviewWidth = Math.min(width - scaleSelectionValue(48, selectionLayoutScale), scaleSelectionValue(408, selectionLayoutScale));
   const selectionPreviewHeight = scaleSelectionValue(416, selectionLayoutScale);
   const selectionCardGap = scaleSelectionValue(12, selectionLayoutScale);
@@ -1411,10 +1413,11 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
         </View>
       ) : null}
 
-      {step !== "processing" && step !== "intake" && step !== "mask" && step !== "colors" ? (
+      {step !== "processing" && step !== "result" && step !== "intake" ? (
         <ServiceWizardHeader
           title="Paint"
           step={currentStepNumber}
+          creditCount={availableCredits}
           canGoBack={currentStepNumber > 1}
           onBack={handleBack}
           onClose={handleClose}
@@ -1435,42 +1438,13 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       {step === "colors" ? (
         <View style={styles.selectionStepScreen}>
           <StatusBar style="dark" />
-
-          <Pressable
-            accessibilityRole="button"
-            onPress={confirmExitDesignFlow}
-            style={[
-              styles.selectionHeaderButton,
-              {
-                top: selectionHeaderTop - scaleSelectionValue(2, selectionLayoutScale),
-                left: scaleSelectionValue(24, selectionLayoutScale),
-              },
-            ]}
-          >
-            <ChevronLeft color="#0A0A0A" size={22} strokeWidth={2.4} />
-          </Pressable>
-
-          <Text style={[styles.selectionHeaderTitle, { top: selectionHeaderTop }]}>Color & Surface</Text>
-
-          <Pressable
-            accessibilityRole="button"
-            onPress={confirmExitDesignFlow}
-            style={[
-              styles.selectionHeaderButton,
-              {
-                top: selectionHeaderTop - scaleSelectionValue(2, selectionLayoutScale),
-                right: scaleSelectionValue(24, selectionLayoutScale),
-              },
-            ]}
-          >
-            <X color="#0A0A0A" size={20} strokeWidth={2.4} />
-          </Pressable>
+          <Text style={[styles.selectionHeaderTitle, { top: selectionTitleTop }]}>Color & Surface</Text>
 
           <View
             style={[
               styles.selectionStepContent,
               {
-                paddingTop: selectionHeaderTop + scaleSelectionValue(88, selectionLayoutScale),
+                paddingTop: selectionTitleTop + scaleSelectionValue(56, selectionLayoutScale),
                 paddingBottom: selectionFooterHeight + scaleSelectionValue(24, selectionLayoutScale),
               },
             ]}
@@ -1763,18 +1737,9 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       {step === "mask" ? (
         <View style={styles.maskScreen}>
           <StatusBar style="dark" />
+          <Text style={[styles.maskHeaderTitle, { top: stickyHeaderMetrics.contentOffset }]}>Select Area to Paint</Text>
 
-          <Pressable accessibilityRole="button" onPress={confirmExitDesignFlow} style={[styles.maskBackButton, { top: Math.max(insets.top + 18, 70) }]}>
-            <ChevronLeft color="#0A0A0A" size={22} strokeWidth={2.4} />
-          </Pressable>
-
-          <Text style={[styles.maskHeaderTitle, { top: Math.max(insets.top + 20, 72) }]}>Select Area to Paint</Text>
-
-          <Pressable accessibilityRole="button" onPress={confirmExitDesignFlow} style={[styles.maskCloseButton, { top: Math.max(insets.top + 18, 70) }]}>
-            <X color="#0A0A0A" size={20} strokeWidth={2.4} />
-          </Pressable>
-
-          <View style={[styles.maskCanvasWrap, { marginTop: Math.max(insets.top + 104, 156) }]}>
+          <View style={[styles.maskCanvasWrap, { marginTop: stickyHeaderMetrics.contentOffset + scaleSelectionValue(52, selectionLayoutScale) }]}>
             <View onLayout={handleCanvasLayout} style={[styles.maskCanvasFrame, { width: maskCanvasWidth, height: maskCanvasHeight }]}>
               {selectedImage ? (
                 <>
@@ -2012,7 +1977,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
           footerOffset={FIXED_FOOTER_OFFSET}
           contentContainerStyle={{
             paddingHorizontal: spacing.md,
-            paddingTop: spacing.sm,
+            paddingTop: stickyHeaderMetrics.contentOffset,
             gap: spacing.md,
           }}
           footer={

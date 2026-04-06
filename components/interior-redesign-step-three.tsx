@@ -8,6 +8,7 @@ import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 import { DesignStepHeader } from "./design-step-header";
 import { InteriorRedesignStepProgress } from "./interior-redesign-step-progress";
+import { getStickyStepHeaderMetrics } from "./sticky-step-header";
 
 type InteriorRedesignStepThreeStyleCard = {
   id: string;
@@ -52,17 +53,14 @@ export function InteriorRedesignStepThree({
 }: InteriorRedesignStepThreeProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const headerMetrics = getStickyStepHeaderMetrics(insets.top);
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
   const headerInset = 24;
   const gridGap = scaleValue(24, layoutScale);
   const gridVerticalGap = scaleValue(12, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const headerTop = scaleValue(36, layoutScale);
-  const progressTop = scaleValue(74, layoutScale);
-  const progressSegmentWidth = scaleValue(92, layoutScale);
-  const progressGap = scaleValue(16, layoutScale);
-  const titleTop = progressTop + scaleValue(28, layoutScale);
+  const titleTop = headerMetrics.contentOffset;
   const subtitleTopGap = scaleValue(12, layoutScale);
   const gridTopGap = scaleValue(24, layoutScale);
   const cardWidth = scaleValue(120, layoutScale);
@@ -97,19 +95,12 @@ export function InteriorRedesignStepThree({
       <DesignStepHeader
         backAccessibilityLabel="Go to the previous step"
         closeAccessibilityLabel="Go back to step 1"
+        creditCount={creditCount}
         horizontalInset={sideInset}
         onBack={onBack}
         onClose={onExit}
         step={3}
-        top={headerTop}
         totalSteps={4}
-      />
-
-      <InteriorRedesignStepProgress
-        currentStep={3}
-        segmentWidth={progressSegmentWidth}
-        gap={progressGap}
-        style={{ top: progressTop, width: mainWidth, right: sideInset, zIndex: 2 }}
       />
 
       <ScrollView
@@ -276,7 +267,7 @@ const stylesSheet = StyleSheet.create({
   },
   styleCard: {
     overflow: "hidden",
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1.5,
     backgroundColor: "#FFFFFF",
   },

@@ -5,6 +5,7 @@ import { Camera, Image as GalleryIcon, Plus } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -18,6 +19,7 @@ import { fonts } from "../styles/typography";
 import { DesignStepHeader } from "./design-step-header";
 import { InteriorRedesignStepProgress } from "./interior-redesign-step-progress";
 import { HomeToolsBottomNav } from "./home-tools-bottom-nav";
+import { getStickyStepHeaderMetrics } from "./sticky-step-header";
 
 export type InteriorRedesignStepOneExamplePhoto = {
   id: string;
@@ -67,21 +69,19 @@ export function InteriorRedesignStepOne({
 }: InteriorRedesignStepOneProps) {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const headerMetrics = getStickyStepHeaderMetrics(insets.top);
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
   const contentInset = 24;
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const headerTop = scaleValue(36, layoutScale);
-  const progressTop = scaleValue(74, layoutScale);
-  const contentTop = scaleValue(82, layoutScale);
+  const contentTop = headerMetrics.contentOffset;
   const uploadTopSpacing = scaleValue(16, layoutScale);
   const containerSize = mainWidth;
   const innerScale = containerSize / 416;
   const thumbnailSize = scaleValue(124, layoutScale);
   const continueBottom = 64 + scaleValue(24, layoutScale);
   const canContinue = Boolean(photoUri);
-  const progressSegmentWidth = scaleValue(92, layoutScale);
-  const progressGap = scaleValue(16, layoutScale);
   const removeOffset = 20;
 
   const [isSheetMounted, setIsSheetMounted] = useState(false);
@@ -209,15 +209,7 @@ export function InteriorRedesignStepOne({
         horizontalInset={sideInset}
         onClose={onExit}
         step={1}
-        top={headerTop}
         totalSteps={4}
-      />
-
-      <InteriorRedesignStepProgress
-        currentStep={1}
-        segmentWidth={progressSegmentWidth}
-        gap={progressGap}
-        style={{ top: progressTop, width: mainWidth, right: sideInset }}
       />
 
       <View style={[styles.content, { paddingTop: contentTop }]}>

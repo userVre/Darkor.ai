@@ -16,6 +16,7 @@ import Animated, {
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 import { DesignStepHeader } from "./design-step-header";
+import { getStickyStepHeaderMetrics } from "./sticky-step-header";
 
 type GardenRedesignStepOneExamplePhoto = {
   id: string;
@@ -63,19 +64,16 @@ export function GardenRedesignStepOne({
 }: GardenRedesignStepOneProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const headerMetrics = getStickyStepHeaderMetrics(insets.top);
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
   const contentInset = 24;
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const headerTop = scaleValue(36, layoutScale);
-  const progressTop = scaleValue(74, layoutScale);
-  const contentTop = scaleValue(82, layoutScale);
+  const contentTop = headerMetrics.contentOffset;
   const uploadTopSpacing = scaleValue(16, layoutScale);
   const containerSize = mainWidth;
   const innerScale = containerSize / 416;
   const thumbnailSize = scaleValue(124, layoutScale);
-  const progressGap = scaleValue(16, layoutScale);
-  const progressSegmentWidth = (mainWidth - progressGap * 2) / 3;
   const bottomContainerHeight = scaleValue(132, layoutScale);
   const buttonHeight = scaleValue(60, layoutScale);
   const buttonTop = scaleValue(52, layoutScale);
@@ -195,25 +193,8 @@ export function GardenRedesignStepOne({
         horizontalInset={sideInset}
         onClose={onExit}
         step={1}
-        top={headerTop}
         totalSteps={3}
       />
-
-      <View style={[styles.progressRow, { top: progressTop, width: mainWidth, right: sideInset }]}>
-        {Array.from({ length: 3 }).map((_, index) => (
-          <View
-            key={`garden-progress-${index}`}
-            style={[
-              styles.progressSegment,
-              {
-                width: progressSegmentWidth,
-                marginRight: index === 2 ? 0 : progressGap,
-                backgroundColor: index === 0 ? "#0A0A0A" : "#E0E0E0",
-              },
-            ]}
-          />
-        ))}
-      </View>
 
       <ScrollView
         style={styles.content}

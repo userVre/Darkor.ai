@@ -15,6 +15,7 @@ import Animated, {
 
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
+import { StickyStepHeader, getStickyStepHeaderMetrics } from "./sticky-step-header";
 
 export type FloorIntroExamplePhoto = {
   id: string;
@@ -54,12 +55,11 @@ export function FloorIntroScreen({
 }: FloorIntroScreenProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const headerMetrics = getStickyStepHeaderMetrics(insets.top);
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const topBadgeTop = scaleValue(36, layoutScale);
-  const topTitleTop = scaleValue(52, layoutScale);
-  const heroTop = scaleValue(96, layoutScale);
+  const heroTop = headerMetrics.contentOffset;
   const heroHeight = scaleValue(584, layoutScale);
   const heroTextTop = scaleValue(424, layoutScale);
   const heroTextLeft = scaleValue(48, layoutScale);
@@ -187,23 +187,16 @@ export function FloorIntroScreen({
 
   return (
     <View style={styles.screen}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
 
-      <View style={[styles.creditBadge, { top: topBadgeTop, left: sideInset }]}>
-        <Diamond color="#FFFFFF" size={13} strokeWidth={2.1} />
-        <Text style={styles.creditText}>{creditCount}</Text>
-      </View>
-
-      <Text style={[styles.headerTitle, { top: topTitleTop }]}>Floor Restyle</Text>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Close floor restyle flow"
-        onPress={handleExitPress}
-        style={[styles.closeButton, { top: topTitleTop, right: scaleValue(36, layoutScale) }]}
-      >
-        <Text style={styles.closeText}>{"\u00D7"}</Text>
-      </Pressable>
+      <StickyStepHeader
+        closeAccessibilityLabel="Close floor restyle flow"
+        creditCount={creditCount}
+        horizontalInset={sideInset}
+        onClose={handleExitPress}
+        step={1}
+        totalSteps={4}
+      />
 
       <ScrollView
         style={styles.content}

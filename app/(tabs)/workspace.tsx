@@ -46,7 +46,6 @@ import {
   DoorOpen,
   Fence,
   Flower2,
-  Gem,
   House,
   Monitor,
   PaintRoller,
@@ -83,6 +82,7 @@ import { PaintWizard } from "../../components/paint-wizard";
 import { ServiceContinueButton } from "../../components/service-continue-button";
 import { GENERATION_STATUS_MESSAGES } from "../../components/service-processing-screen";
 import { ServiceWizardHeader } from "../../components/service-wizard-header";
+import { getStickyStepHeaderMetrics } from "../../components/sticky-step-header";
 import { BeforeAfterSlider } from "../../components/before-after-slider";
 import { useFlowUI } from "../../components/flow-ui-context";
 import { useViewerCredits } from "../../components/viewer-credits-context";
@@ -778,6 +778,33 @@ const STYLE_LIBRARY: StyleLibraryItem[] = [
 ];
 
 const STYLE_OPTIONS = STYLE_LIBRARY.map((style) => style.title);
+
+const INTERIOR_STEP3_THUMBNAIL_MAP: Record<string, number> = {
+  modern: require("../../assets/media/step3-thumbnails/interior/modern.jpg"),
+  luxury: require("../../assets/media/step3-thumbnails/interior/luxury.jpg"),
+  japandi: require("../../assets/media/step3-thumbnails/interior/japandi.jpg"),
+  cyberpunk: require("../../assets/media/step3-thumbnails/interior/cyberpunk.jpg"),
+  tropical: require("../../assets/media/step3-thumbnails/interior/tropical.jpg"),
+  minimalist: require("../../assets/media/step3-thumbnails/interior/minimalist.jpg"),
+  scandinavian: require("../../assets/media/step3-thumbnails/interior/scandinavian.jpg"),
+  bohemian: require("../../assets/media/step3-thumbnails/interior/bohemian.jpg"),
+  midcentury: require("../../assets/media/step3-thumbnails/interior/midcentury.jpg"),
+  "art-deco": require("../../assets/media/step3-thumbnails/interior/art-deco.jpg"),
+  coastal: require("../../assets/media/step3-thumbnails/interior/coastal.jpg"),
+  rustic: require("../../assets/media/step3-thumbnails/interior/rustic.jpg"),
+  vintage: require("../../assets/media/step3-thumbnails/interior/vintage.jpg"),
+  mediterranean: require("../../assets/media/step3-thumbnails/interior/mediterranean.jpg"),
+  glam: require("../../assets/media/step3-thumbnails/interior/glam.jpg"),
+  "coastal-retreat": require("../../assets/media/step3-thumbnails/interior/coastal-retreat.jpg"),
+  "rustic-manor": require("../../assets/media/step3-thumbnails/interior/rustic-manor.jpg"),
+  "hollywood-regency": require("../../assets/media/step3-thumbnails/interior/hollywood-regency.jpg"),
+  "neo-classic": require("../../assets/media/step3-thumbnails/interior/neo-classic.jpg"),
+  "shabby-chic": require("../../assets/media/step3-thumbnails/interior/shabby-chic.jpg"),
+  "french-country": require("../../assets/media/step3-thumbnails/interior/french-country.jpg"),
+  brutalist: require("../../assets/media/step3-thumbnails/interior/brutalist.jpg"),
+  "hollywood-regency-noir": require("../../assets/media/step3-thumbnails/interior/hollywood-regency-noir.jpg"),
+  "art-nouveau": require("../../assets/media/step3-thumbnails/interior/art-nouveau.jpg"),
+};
 
 const EXTERIOR_STYLE_LIBRARY: ExteriorStyleItem[] = [
   {
@@ -2390,7 +2417,7 @@ export default function WorkspaceScreen() {
       STYLE_LIBRARY.map((style) => ({
         id: style.id,
         title: style.title,
-        image: style.image,
+        image: INTERIOR_STEP3_THUMBNAIL_MAP[style.id] ?? style.image,
       })),
     [],
   );
@@ -2466,47 +2493,47 @@ export default function WorkspaceScreen() {
       {
         id: "custom",
         title: "Custom",
-        image: require("../../assets/media/styles/style-luxury.jpg"),
+        image: require("../../assets/media/step3-thumbnails/exterior/custom.jpg"),
       },
       {
         id: "art-deco",
         title: "Art Deco",
-        image: require("../../assets/media/styles/style-art-deco.jpg"),
+        image: require("../../assets/media/step3-thumbnails/exterior/art-deco.jpg"),
       },
       {
         id: "brutalist",
         title: "Brutalist",
-        image: require("../../assets/media/styles/style-exterior-brutalist.jpg"),
+        image: require("../../assets/media/step3-thumbnails/exterior/brutalist.jpg"),
       },
       {
         id: "chinese",
         title: "Chinese",
-        image: require("../../assets/media/styles/style-art-nouveau.jpg"),
+        image: require("../../assets/media/step3-thumbnails/exterior/chinese.jpg"),
       },
       {
         id: "cottage",
         title: "Cottage",
-        image: require("../../assets/media/styles/style-rustic-alt.jpg"),
+        image: require("../../assets/media/step3-thumbnails/exterior/cottage.jpg"),
       },
       {
         id: "farm-house",
         title: "Farm House",
-        image: require("../../assets/media/styles/style-rustic.jpg"),
+        image: require("../../assets/media/step3-thumbnails/exterior/farm-house.jpg"),
       },
       {
         id: "french",
         title: "French",
-        image: require("../../assets/media/styles/style-french-country.jpg"),
+        image: require("../../assets/media/step3-thumbnails/exterior/french.jpg"),
       },
       {
         id: "gothic",
         title: "Gothic",
-        image: require("../../assets/media/styles/style-exterior-gothic.jpg"),
+        image: require("../../assets/media/step3-thumbnails/exterior/gothic.jpg"),
       },
       {
         id: "italianate",
         title: "Italianate",
-        image: require("../../assets/media/styles/style-neo-classic-alt.jpg"),
+        image: require("../../assets/media/step3-thumbnails/exterior/italianate.jpg"),
       },
     ],
     [],
@@ -2543,47 +2570,47 @@ export default function WorkspaceScreen() {
       {
         id: "custom",
         title: "Custom",
-        image: require("../../assets/media/discover/garden/garden-backyard.jpg"),
+        image: require("../../assets/media/step3-thumbnails/garden/custom.jpg"),
       },
       {
         id: "christmas",
         title: "Christmas",
-        image: require("../../assets/media/discover/garden/garden-villa-entry.jpg"),
+        image: require("../../assets/media/step3-thumbnails/garden/christmas.jpg"),
       },
       {
         id: "modern",
         title: "Modern",
-        image: require("../../assets/media/discover/garden/garden-terrace.jpg"),
+        image: require("../../assets/media/step3-thumbnails/garden/modern.jpg"),
       },
       {
         id: "tropical",
         title: "Tropical",
-        image: require("../../assets/media/discover/garden/garden-swimming-pool.jpg"),
+        image: require("../../assets/media/step3-thumbnails/garden/tropical.jpg"),
       },
       {
         id: "minimalistic",
         title: "Minimalistic",
-        image: require("../../assets/media/discover/garden/garden-deck.jpg"),
+        image: require("../../assets/media/step3-thumbnails/garden/minimalistic.jpg"),
       },
       {
         id: "bohemian",
         title: "Bohemian",
-        image: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
+        image: require("../../assets/media/step3-thumbnails/garden/bohemian.jpg"),
       },
       {
         id: "rustic",
         title: "Rustic",
-        image: require("../../assets/media/discover/garden/garden-patio.jpg"),
+        image: require("../../assets/media/step3-thumbnails/garden/rustic.jpg"),
       },
       {
         id: "vintage",
         title: "Vintage",
-        image: require("../../assets/media/discover/garden/garden-front-yard.jpg"),
+        image: require("../../assets/media/step3-thumbnails/garden/vintage.jpg"),
       },
       {
         id: "baroque",
         title: "Baroque",
-        image: require("../../assets/media/discover/garden/garden-pool-courtyard.jpg"),
+        image: require("../../assets/media/step3-thumbnails/garden/baroque.jpg"),
       },
     ],
     [],
@@ -4266,6 +4293,7 @@ export default function WorkspaceScreen() {
     const bottomBarOffset = isTabbedWorkspaceRoute ? 96 : 0;
     const continueBarOffset = bottomBarOffset + (isGenerationReviewStep ? 8 : 0);
     const topSafeAreaInset = process.env.EXPO_OS === "android" ? Math.max(insets.top, 44) : Math.max(insets.top, 20);
+    const wizardStickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);
     const isRefineDirectionStep = workflowStep === 3 && !isPaintService && !isFloorService && !isLeanGenerationService;
     const stepContentMinHeight = Math.max(
       height -
@@ -4277,35 +4305,6 @@ export default function WorkspaceScreen() {
       isPhotoStep ? 520 : 460,
     );
     const uploadTileHeight = Math.max(uploadTileSize, Math.min(stepContentMinHeight - 216, 468));
-    const photoStepHeaderAccessory = isPhotoStep ? (
-      <View
-        style={{
-          minHeight: 44,
-          paddingHorizontal: 12,
-          borderRadius: DS.radius.pill,
-          borderWidth: HAIRLINE,
-          borderColor: SERVICE_WIZARD_THEME.colors.border,
-          backgroundColor: wizardSurfaceColor,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 6,
-          ...glowShadow(DS.colors.border, 16),
-        }}
-      >
-        <Gem color={SERVICE_WIZARD_THEME.colors.textPrimary} size={14} strokeWidth={2.1} />
-        <Text
-          style={{
-            color: SERVICE_WIZARD_THEME.colors.textPrimary,
-            fontSize: 13,
-            lineHeight: 14,
-            ...fonts.semibold,
-          }}
-        >
-          {creditBalance}
-        </Text>
-      </View>
-    ) : undefined;
     const showGenerateConfirmation = isGenerationReviewStep && !isPaintService && !isFloorService && !isLeanGenerationService && Boolean(selectedMode && selectedPalette);
     const isContinueDisabled = !canContinue || (isFinalWizardStep && isGenerating) || (isGenerationReviewStep && hasBrokenGenerateSummary);
     const isContinueActive = canContinue && !isContinueDisabled;
@@ -4438,7 +4437,7 @@ export default function WorkspaceScreen() {
             exit={{ opacity: 0, translateY: -12 }}
             transition={LUX_SPRING}
             className="absolute left-5 right-5 z-20"
-            style={{ top: topSafeAreaInset + 8 }}
+            style={{ top: wizardStickyHeaderMetrics.height + 8 }}
             pointerEvents="none"
           >
             <View
@@ -4466,7 +4465,7 @@ export default function WorkspaceScreen() {
               transition={{ type: "timing", duration: 220 }}
               style={{
                 position: "absolute",
-                top: topSafeAreaInset + 12,
+                top: wizardStickyHeaderMetrics.height + 12,
                 left: 20,
                 right: 20,
                 zIndex: 30,
@@ -4492,6 +4491,16 @@ export default function WorkspaceScreen() {
           ) : null}
         </AnimatePresence>
 
+        <ServiceWizardHeader
+          title={serviceLabel}
+          step={currentStepNumber}
+          totalSteps={totalWizardSteps}
+          creditCount={creditBalance}
+          canGoBack={workflowStep > 0}
+          onBack={handleBack}
+          onClose={handleCloseWizard}
+        />
+
         <ScrollView
           className="flex-1"
           style={{ backgroundColor: wizardBackgroundColor }}
@@ -4501,7 +4510,7 @@ export default function WorkspaceScreen() {
           contentContainerStyle={{
             flexGrow: 1,
             paddingHorizontal: isPhotoStep ? DS.spacing[3] : DS.spacing[2.5],
-            paddingTop: isPhotoStep ? 14 : 10,
+            paddingTop: wizardStickyHeaderMetrics.contentOffset,
             paddingBottom: Math.max(
               insets.bottom + continueBarOffset + (isPhotoStep ? 148 : isGenerationReviewStep ? 160 : isRefineDirectionStep ? 194 : 124),
               continueBarOffset + (isPhotoStep ? 176 : isGenerationReviewStep ? 184 : isRefineDirectionStep ? 214 : 144),
@@ -4512,18 +4521,6 @@ export default function WorkspaceScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={{ flex: 1, gap: spacing.lg }}>
-            <View style={{ gap: isPhotoStep ? 18 : 14 }}>
-              <ServiceWizardHeader
-                title={serviceLabel}
-                step={currentStepNumber}
-                totalSteps={totalWizardSteps}
-                canGoBack={workflowStep > 0}
-                leftAccessory={photoStepHeaderAccessory}
-                onBack={handleBack}
-                onClose={handleCloseWizard}
-              />
-            </View>
-
             <AnimatePresence exitBeforeEnter>
               <MotiView
                 key={`wizard-step-${workflowStep}`}
@@ -4534,7 +4531,7 @@ export default function WorkspaceScreen() {
                 style={isPhotoStep ? { flex: 1, minHeight: stepContentMinHeight, gap: spacing.lg } : { gap: spacing.lg }}
               >
                 {workflowStep === 0 ? (
-                  <View style={{ flex: 1, gap: spacing.lg, paddingTop: spacing.xs }}>
+                  <View style={{ flex: 1, gap: spacing.lg }}>
                     <View style={{ gap: spacing.sm, alignItems: "center" }}>
                       <Text
                         style={[

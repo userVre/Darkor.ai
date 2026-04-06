@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 import { DesignStepHeader } from "./design-step-header";
+import { getStickyStepHeaderMetrics } from "./sticky-step-header";
 
 type GardenRedesignStepThreePalette = {
   id: string;
@@ -48,15 +49,12 @@ export function GardenRedesignStepThree({
 }: GardenRedesignStepThreeProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const headerMetrics = getStickyStepHeaderMetrics(insets.top);
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const paletteScale = Math.min(width / PALETTE_REFERENCE_WIDTH, 1);
   const sideInset = scaleValue(20, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const headerTop = scaleValue(36, layoutScale);
-  const progressTop = scaleValue(74, layoutScale);
-  const progressGap = scaleValue(16, layoutScale);
-  const progressSegmentWidth = (mainWidth - progressGap * 2) / 3;
-  const titleTop = progressTop + scaleValue(36, layoutScale);
+  const titleTop = headerMetrics.contentOffset;
   const titleLeft = 24;
   const paletteTitleTopGap = scaleValue(20, paletteScale);
   const paletteMargin = scaleValue(24, paletteScale);
@@ -99,25 +97,8 @@ export function GardenRedesignStepThree({
         onBack={onBack}
         onClose={onExit}
         step={3}
-        top={headerTop}
         totalSteps={3}
       />
-
-      <View style={[styles.progressRow, { top: progressTop, width: mainWidth, right: sideInset }]}>
-        {Array.from({ length: 3 }).map((_, index) => (
-          <View
-            key={`garden-palette-progress-${index}`}
-            style={[
-              styles.progressSegment,
-              {
-                width: progressSegmentWidth,
-                marginRight: index === 2 ? 0 : progressGap,
-                backgroundColor: "#0A0A0A",
-              },
-            ]}
-          />
-        ))}
-      </View>
 
       <ScrollView
         style={styles.content}

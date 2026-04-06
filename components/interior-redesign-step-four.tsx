@@ -8,6 +8,7 @@ import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 import { DesignStepHeader } from "./design-step-header";
 import { InteriorRedesignStepProgress } from "./interior-redesign-step-progress";
+import { getStickyStepHeaderMetrics } from "./sticky-step-header";
 
 type InteriorRedesignStepFourMode = {
   id: string;
@@ -161,16 +162,13 @@ export function InteriorRedesignStepFour({
 }: InteriorRedesignStepFourProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const headerMetrics = getStickyStepHeaderMetrics(insets.top);
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const paletteScale = Math.min(width / PALETTE_REFERENCE_WIDTH, 1);
   const sideInset = scaleValue(20, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const headerTop = scaleValue(36, layoutScale);
-  const progressTop = scaleValue(74, layoutScale);
-  const progressSegmentWidth = scaleValue(92, layoutScale);
-  const progressGap = scaleValue(16, layoutScale);
   const sectionTitleLeft = 24;
-  const modeTitleTop = progressTop + scaleValue(36, layoutScale);
+  const modeTitleTop = headerMetrics.contentOffset;
   const modeCardsTopGap = scaleValue(16, layoutScale);
   const modeCardWidth = scaleValue(196, layoutScale);
   const modeCardHeight = scaleValue(192, layoutScale);
@@ -219,19 +217,12 @@ export function InteriorRedesignStepFour({
       <DesignStepHeader
         backAccessibilityLabel="Go to the previous step"
         closeAccessibilityLabel="Go back to step 1"
+        creditCount={creditCount}
         horizontalInset={sideInset}
         onBack={onBack}
         onClose={onExit}
         step={4}
-        top={headerTop}
         totalSteps={4}
-      />
-
-      <InteriorRedesignStepProgress
-        currentStep={4}
-        segmentWidth={progressSegmentWidth}
-        gap={progressGap}
-        style={{ top: progressTop, width: mainWidth, right: sideInset, zIndex: 2 }}
       />
 
       <ScrollView
