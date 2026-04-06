@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { ArrowLeft } from "@/components/material-icons";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { LuxPressable } from "../components/lux-pressable";
@@ -51,6 +52,7 @@ const PRIVACY_SECTIONS = [
 
 export default function PrivacyPolicyScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   return (
@@ -80,17 +82,15 @@ export default function PrivacyPolicyScreen() {
           </LuxPressable>
 
           <View style={styles.heroCard}>
-            <Text style={styles.eyebrow}>Policy</Text>
-            <Text style={styles.title}>Privacy Policy</Text>
-            <Text style={styles.description}>
-              The information we collect, how it is used, and the controls you have inside Darkor.ai.
-            </Text>
+            <Text style={styles.eyebrow}>{t("privacy.eyebrow")}</Text>
+            <Text style={styles.title}>{t("privacy.title")}</Text>
+            <Text style={styles.description}>{t("privacy.description")}</Text>
           </View>
         </View>
 
         <View style={styles.metaCard}>
-          <Text style={styles.metaLabel}>Last updated</Text>
-          <Text style={styles.metaValue}>March 14, 2026</Text>
+          <Text style={styles.metaLabel}>{t("common.labels.lastUpdated")}</Text>
+          <Text style={styles.metaValue}>{t("privacy.date")}</Text>
         </View>
 
         <View style={styles.sectionStack}>

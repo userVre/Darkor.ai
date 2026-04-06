@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Image as NativeImage, Linking, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import Svg, { Path as SvgPath, Rect } from "react-native-svg";
 import { captureRef } from "react-native-view-shot";
 import { ChevronLeft, MoveHorizontal, X } from "@/components/material-icons";
@@ -29,11 +30,11 @@ import {
   resolveGuestWizardViewerId,
 } from "../lib/guest-testing";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
-import { FLOOR_WIZARD_EXAMPLE_PHOTOS } from "../lib/wizard-example-photos";
+import { getFloorWizardExamplePhotos } from "../lib/wizard-example-photos";
 import { FloorIntroScreen, type FloorIntroExamplePhoto } from "./floor-intro-screen";
 import { LuxPressable } from "./lux-pressable";
 import { ServiceContinueButton } from "./service-continue-button";
-import { GENERATION_STATUS_MESSAGES, ServiceProcessingScreen } from "./service-processing-screen";
+import { ServiceProcessingScreen, useGenerationStatusMessages } from "./service-processing-screen";
 import { ServiceWizardHeader } from "./service-wizard-header";
 import { getStickyStepHeaderMetrics } from "./sticky-step-header";
 import {
@@ -124,6 +125,7 @@ function scaleMaskValue(value: number, scale: number) {
 }
 
 export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { presetStyle, startStep } = useLocalSearchParams<{ presetStyle?: string; startStep?: string }>();
   const insets = useSafeAreaInsets();
@@ -193,6 +195,8 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const generationAccess = canUserGenerateNow(me);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "materials" ? 3 : 4;
+  const floorWizardExamplePhotos = useMemo(() => getFloorWizardExamplePhotos(t), [i18n.language, t]);
+  const generationStatusMessages = useGenerationStatusMessages();
   const stickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);
   const canContinueFromMask = customPrompt.trim().length > 0;
   const aspectRatio = useMemo(() => {
@@ -873,7 +877,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       {step === "intake" ? (
         <FloorIntroScreen
           creditCount={availableCredits}
-          examples={FLOOR_WIZARD_EXAMPLE_PHOTOS}
+          examples={floorWizardExamplePhotos}
           onTakePhoto={() => handleSelectMedia("camera")}
           onChooseFromGallery={() => handleSelectMedia("library")}
           onExamplePress={handleSelectExample}
@@ -1138,7 +1142,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       {step === "processing" ? (
         <ServiceProcessingScreen
           imageUri={selectedImage?.uri ?? null}
-          subtitlePhrases={GENERATION_STATUS_MESSAGES}
+          subtitlePhrases={generationStatusMessages}
           onCancel={() => {
             void handleCancelGeneration();
           }}

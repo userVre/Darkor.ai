@@ -1,0 +1,93 @@
+{
+  "app": {
+    "name": "Darkor AI"
+  },
+  "common": {
+    "actions": {
+      "continue": "Weiter",
+      "cancel": "Abbrechen",
+      "close": "Schließen",
+      "delete": "Löschen",
+      "restore": "Wiederherstellen",
+      "upgrade": "Upgrade",
+      "openSettings": "Einstellungen öffnen",
+      "notNow": "Jetzt nicht",
+      "takePhoto": "Foto aufnehmen",
+      "chooseFromGallery": "Aus Galerie wählen",
+      "addPhoto": "Foto hinzufügen",
+      "chooseMediaSource": "Medienquelle auswählen",
+      "examplePhotos": "Beispielfotos",
+      "seeAll": "Alle ansehen",
+      "uploadPlus": "Hochladen +"
+    },
+    "labels": {
+      "email": "E-Mail",
+      "password": "Passwort",
+      "lastUpdated": "Zuletzt aktualisiert",
+      "step": "Schritt {{current}} / {{total}}"
+    },
+    "alerts": {
+      "exitTitle": "Beenden?",
+      "progressLost": "Dein Fortschritt geht verloren."
+    }
+  },
+  "boot": {
+    "loadingApp": "Darkor.ai wird geladen",
+    "loadingAccount": "Dein Konto wird geladen...",
+    "checkingPlan": "Dein Tarif wird geprüft...",
+    "secureAccount": "Sichere dein Konto, um mit dem Erstellen zu beginnen..."
+  },
+  "tabs": {
+    "tools": "Tools",
+    "create": "Erstellen",
+    "discover": "Entdecken",
+    "profile": "Mein Profil"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "heroTitle": "Dein Konto ist KOSTENLOS"
+  },
+  "profile": {
+    "title": "Dein Board",
+    "emptyTitle": "Noch keine Designs",
+    "emptySubtitle": "Deine generierten Designs erscheinen hier"
+  },
+  "discover": {
+    "title": "Entdecken",
+    "tabs": {
+      "home": "Zuhause",
+      "garden": "Garten",
+      "exterior": "Außenbereich"
+    }
+  },
+  "auth": {
+    "accountEyebrow": "Darkor.ai Konto",
+    "emailPlaceholder": "du@firma.com",
+    "signIn": {
+      "title": "Anmelden",
+      "cta": "Weiter",
+      "loading": "Anmeldung läuft...",
+      "appleCta": "Mit Apple fortfahren"
+    },
+    "signUp": {
+      "title": "Konto erstellen",
+      "cta": "Konto erstellen",
+      "loading": "Wird erstellt...",
+      "appleCta": "Mit Apple fortfahren"
+    }
+  },
+  "faq": {
+    "eyebrow": "Support",
+    "title": "FAQ"
+  },
+  "privacy": {
+    "eyebrow": "Richtlinie",
+    "title": "Datenschutzerklärung",
+    "date": "14. März 2026"
+  },
+  "terms": {
+    "eyebrow": "Richtlinie",
+    "title": "Nutzungsbedingungen",
+    "date": "14. März 2026"
+  }
+}

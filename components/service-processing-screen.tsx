@@ -3,6 +3,7 @@ import { AnimatePresence, MotiView } from "moti";
 import { memo, useEffect, useMemo, useState } from "react";
 import { Image as NativeImage, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { fonts } from "../styles/typography";
 import { spacing } from "../styles/spacing";
 import { type Theme, useTheme } from "@/styles/theme";
@@ -17,15 +18,6 @@ const STATUS_ROTATION_MS = 3_000;
 const SHIMMER_DURATION_MS = 2_000;
 const GENERATION_PROGRESS_COLOR = "#E53935";
 
-export const GENERATION_STATUS_MESSAGES = [
-  "Analyzing your room geometry...",
-  "Identifying walls and surfaces...",
-  "Applying your selected style...",
-  "Rendering materials and lighting...",
-  "Adding final details...",
-  "Almost ready...",
-] as const;
-
 type ServiceProcessingScreenProps = {
   imageUri?: string | null;
   subtitlePhrases?: readonly string[];
@@ -36,34 +28,47 @@ type ServiceProcessingScreenProps = {
 
 export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   imageUri,
-  subtitlePhrases = GENERATION_STATUS_MESSAGES,
+  subtitlePhrases,
   onCancel,
   cancelDisabled = false,
   complete = false,
 }: ServiceProcessingScreenProps) {
+  const { t, i18n } = useTranslation();
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const { draft } = useWorkspaceDraft();
+  const defaultSubtitlePhrases = useMemo(
+    () => [
+      t("processing.status.analyzingGeometry"),
+      t("processing.status.identifyingSurfaces"),
+      t("processing.status.applyingStyle"),
+      t("processing.status.renderingMaterials"),
+      t("processing.status.addingDetails"),
+      t("processing.status.almostReady"),
+    ],
+    [i18n.language, t],
+  );
   const [subtitleIndex, setSubtitleIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const previewImageUri = draft.image?.uri ?? imageUri ?? null;
+  const activeSubtitlePhrases = subtitlePhrases ?? defaultSubtitlePhrases;
 
-  const subtitleSignature = subtitlePhrases.join("|");
+  const subtitleSignature = activeSubtitlePhrases.join("|");
   const activeSubtitle = useMemo(
-    () => subtitlePhrases[subtitleIndex % Math.max(subtitlePhrases.length, 1)] ?? "Rendering final lighting...",
-    [subtitleIndex, subtitlePhrases],
+    () => activeSubtitlePhrases[subtitleIndex % Math.max(activeSubtitlePhrases.length, 1)] ?? t("processing.status.renderingFinalLighting"),
+    [activeSubtitlePhrases, subtitleIndex, t],
   );
 
   useEffect(() => {
     setSubtitleIndex(0);
     const interval = setInterval(() => {
-      setSubtitleIndex((current) => Math.min(current + 1, Math.max(subtitlePhrases.length - 1, 0)));
+      setSubtitleIndex((current) => Math.min(current + 1, Math.max(activeSubtitlePhrases.length - 1, 0)));
     }, STATUS_ROTATION_MS);
 
     return () => clearInterval(interval);
-  }, [subtitleSignature]);
+  }, [activeSubtitlePhrases.length, subtitleSignature]);
 
   useEffect(() => {
     const startedAt = Date.now();
@@ -83,9 +88,9 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
       return;
     }
 
-    setSubtitleIndex(Math.max(subtitlePhrases.length - 1, 0));
+    setSubtitleIndex(Math.max(activeSubtitlePhrases.length - 1, 0));
     setProgress(1);
-  }, [complete, subtitlePhrases.length]);
+  }, [activeSubtitlePhrases.length, complete]);
 
   return (
     <View style={styles.screen}>
@@ -113,7 +118,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
           </View>
 
           <View style={styles.copyBlock}>
-            <Text style={styles.title}>AI is crafting your masterpiece...</Text>
+            <Text style={styles.title}>{t("processing.title")}</Text>
             <View style={styles.subtitleWrap}>
               <AnimatePresence>
                 <MotiView
@@ -127,7 +132,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
                 </MotiView>
               </AnimatePresence>
             </View>
-            <Text style={styles.eta}>Usually ready in ~15 seconds</Text>
+            <Text style={styles.eta}>{t("processing.eta")}</Text>
           </View>
         </View>
 
@@ -141,13 +146,29 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
           scale={0.98}
         >
           <Text style={[styles.cancelText, cancelDisabled ? styles.cancelTextDisabled : null]}>
-            Cancel and keep my credit
+            {t("processing.cancelKeepCredit")}
           </Text>
         </LuxPressable>
       </View>
     </View>
   );
 });
+
+export function useGenerationStatusMessages() {
+  const { t, i18n } = useTranslation();
+
+  return useMemo(
+    () => [
+      t("processing.status.analyzingGeometry"),
+      t("processing.status.identifyingSurfaces"),
+      t("processing.status.applyingStyle"),
+      t("processing.status.renderingMaterials"),
+      t("processing.status.addingDetails"),
+      t("processing.status.almostReady"),
+    ],
+    [i18n.language, t],
+  );
+}
 
 function createStyles(colors: Theme) {
   return StyleSheet.create({

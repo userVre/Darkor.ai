@@ -31,6 +31,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, Shield, X } from "@/components/material-icons";
+import { useTranslation } from "react-i18next";
 
 import { useProSuccess } from "../components/pro-success-context";
 import { useViewerCredits } from "../components/viewer-credits-context";
@@ -217,21 +218,22 @@ function YearlyPlanCard({
   selected: boolean;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, selected ? styles.planCardSelected : styles.planCardIdle, styles.yearlyCard]}>
       <View style={styles.bestOfferBadge}>
-        <Text style={styles.bestOfferText}>BEST OFFER</Text>
+        <Text style={styles.bestOfferText}>{t("paywall.bestOffer").toUpperCase()}</Text>
       </View>
 
       <View style={styles.planRow}>
         <View style={styles.planCopy}>
-          <Text style={styles.planLabel}>YEARLY ACCESS</Text>
-          <Text style={styles.planSubtext}>Just MAD 484.99 per year</Text>
+          <Text style={styles.planLabel}>{t("paywall.yearlyAccess").toUpperCase()}</Text>
+          <Text style={styles.planSubtext}>{t("paywall.justPerYear")}</Text>
         </View>
 
         <View style={styles.planPriceColumn}>
           <Text style={styles.yearlyPrice}>MAD9.33</Text>
-          <Text style={styles.planSubtext}>per week</Text>
+          <Text style={styles.planSubtext}>{t("paywall.perWeek")}</Text>
         </View>
       </View>
     </Pressable>
@@ -247,6 +249,7 @@ function WeeklyPlanCard({
   selected: boolean;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   if (freeTrialEnabled) {
     return (
       <FadeSwap swapKey="weekly-trial-on">
@@ -254,19 +257,19 @@ function WeeklyPlanCard({
           <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, styles.planCardSelected, styles.weeklyCard]}>
             <View style={styles.planRow}>
               <View style={styles.planCopy}>
-                <Text style={styles.planLabel}>3-DAYS FREE TRIAL</Text>
+                <Text style={styles.planLabel}>{t("paywall.freeTrial").toUpperCase()}</Text>
               </View>
 
               <View style={styles.planPriceColumn}>
-                <Text style={styles.weeklyTrialPrice}>then MAD 119.99</Text>
-                <Text style={styles.planSubtext}>per week</Text>
+                <Text style={styles.weeklyTrialPrice}>{t("paywall.thenWeekly")}</Text>
+                <Text style={styles.planSubtext}>{t("paywall.perWeek")}</Text>
               </View>
             </View>
           </Pressable>
 
           <View style={styles.noPaymentRow}>
             <Shield color={TEXT_MUTED} size={14} strokeWidth={2.1} />
-            <Text style={styles.noticeText}>No Payment Now</Text>
+            <Text style={styles.noticeText}>{t("paywall.noPaymentNow")}</Text>
           </View>
         </View>
       </FadeSwap>
@@ -279,7 +282,7 @@ function WeeklyPlanCard({
         <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, selected ? styles.planCardSelected : styles.planCardIdle, styles.weeklyCard]}>
           <View style={styles.planRow}>
             <View style={styles.planCopy}>
-              <Text style={styles.planLabel}>WEEKLY ACCESS</Text>
+              <Text style={styles.planLabel}>{t("paywall.weeklyAccess").toUpperCase()}</Text>
             </View>
 
             <View style={styles.planPriceColumn}>
@@ -290,7 +293,7 @@ function WeeklyPlanCard({
 
         <View style={styles.cancelAnytimeRow}>
           <Shield color={TEXT_MUTED} size={14} strokeWidth={2.1} />
-          <Text style={styles.noticeText}>Cancel Anytime</Text>
+          <Text style={styles.noticeText}>{t("paywall.cancelAnytime")}</Text>
         </View>
       </View>
     </FadeSwap>
@@ -308,6 +311,7 @@ function CountdownCloseButton({
   progress: SharedValue<number>;
   secondsLeft: number;
 }) {
+  const { t } = useTranslation();
   const animatedRingProps = useAnimatedProps(() => ({
     strokeDashoffset: CLOSE_RING_CIRCUMFERENCE * progress.value,
   }));
@@ -324,7 +328,7 @@ function CountdownCloseButton({
           transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
         >
           {canClose ? (
-            <Pressable accessibilityLabel="Close paywall" accessibilityRole="button" hitSlop={10} onPress={onPress} style={styles.closeButtonInner}>
+            <Pressable accessibilityLabel={t("paywall.closeA11y")} accessibilityRole="button" hitSlop={10} onPress={onPress} style={styles.closeButtonInner}>
               <X color="#FFFFFF" size={20} strokeWidth={2.4} />
             </Pressable>
           ) : (
@@ -369,6 +373,7 @@ function normalizeCarouselIndex(index: number) {
 
 export default function PaywallScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { source, redirectTo } = useLocalSearchParams<{
@@ -493,7 +498,7 @@ export default function PaywallScreen() {
 
         if (!active || !purchasesRef.current) {
           if (active) {
-            setErrorMessage("Subscriptions are temporarily unavailable.");
+            setErrorMessage(t("paywall.subscriptionsUnavailable"));
           }
           return;
         }
@@ -506,7 +511,7 @@ export default function PaywallScreen() {
         setPackages(offerings.current?.availablePackages ?? []);
       } catch {
         if (active) {
-          setErrorMessage("Subscriptions are temporarily unavailable.");
+          setErrorMessage(t("paywall.subscriptionsUnavailable"));
         }
       }
     };
@@ -578,21 +583,21 @@ export default function PaywallScreen() {
 
     try {
       if (!purchasesRef.current) {
-        Alert.alert("Restore failed", "Subscriptions are unavailable right now.");
+        Alert.alert(t("paywall.restoreFailed"), t("settings.messages.subscriptionsUnavailable"));
         return;
       }
 
       setIsLoading(true);
       const info = await purchasesRef.current.restorePurchases();
       if (!hasActiveSubscription(info)) {
-        Alert.alert("Restored", "No active subscriptions were found.");
+        Alert.alert(t("paywall.restored"), t("paywall.noActiveSubscriptions"));
         return;
       }
 
       const subscriptionState = resolveRevenueCatSubscription(info);
 
       if (subscriptionState.plan !== "pro" || subscriptionState.subscriptionType === "free") {
-        Alert.alert("Restored", "No active subscriptions were found.");
+        Alert.alert(t("paywall.restored"), t("paywall.noActiveSubscriptions"));
         return;
       }
 
@@ -611,7 +616,7 @@ export default function PaywallScreen() {
       showSuccess();
       completePaywall();
     } catch (error) {
-      Alert.alert("Restore failed", error instanceof Error ? error.message : "Please try again.");
+      Alert.alert(t("paywall.restoreFailed"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       setIsLoading(false);
     }
@@ -622,15 +627,15 @@ export default function PaywallScreen() {
     setErrorMessage(null);
 
     if (!selectedPackage) {
-      const message = "The selected plan is unavailable right now.";
+      const message = t("paywall.planUnavailable");
       setErrorMessage(message);
-      Alert.alert("Purchase Error", message);
+      Alert.alert(t("paywall.purchaseError"), message);
       return;
     }
 
     try {
       if (!purchasesRef.current) {
-        Alert.alert("Purchase Error", "Subscriptions are unavailable right now.");
+        Alert.alert(t("paywall.purchaseError"), t("settings.messages.subscriptionsUnavailable"));
         return;
       }
 
@@ -660,9 +665,9 @@ export default function PaywallScreen() {
       showSuccess();
       completePaywall();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Purchase cancelled.";
+      const message = error instanceof Error ? error.message : t("paywall.purchaseCancelled");
       setErrorMessage(message);
-      Alert.alert("Purchase Error", message);
+      Alert.alert(t("paywall.purchaseError"), message);
     } finally {
       setIsLoading(false);
     }
@@ -760,7 +765,7 @@ export default function PaywallScreen() {
 
       <Animated.View style={[styles.sheet, { minHeight: sheetHeight }, sheetAnimatedStyle]}>
         <Pressable accessibilityRole="button" disabled={isLoading} onPress={() => void handleRestore()} style={styles.restoreButton}>
-          <Text style={styles.restoreText}>Restore</Text>
+          <Text style={styles.restoreText}>{t("paywall.restore")}</Text>
         </Pressable>
 
         <CountdownCloseButton
@@ -815,7 +820,7 @@ export default function PaywallScreen() {
           </View>
 
           <View style={styles.featuresSection}>
-            {FEATURE_ITEMS.map((feature, index) => (
+            {[t("paywall.features.fasterRendering"), t("paywall.features.adFree"), t("paywall.features.unlimitedRenders")].map((feature, index) => (
               <FeatureRow
                 key={feature}
                 isLast={index === FEATURE_ITEMS.length - 1}
@@ -825,7 +830,7 @@ export default function PaywallScreen() {
           </View>
 
           <Pressable accessibilityRole="switch" accessibilityState={{ checked: freeTrialEnabled }} onPress={handleToggleTrial} style={styles.trialBar}>
-            <Text style={styles.trialLabel}>{freeTrialEnabled ? "Free trial enabled" : "Enable free trial"}</Text>
+            <Text style={styles.trialLabel}>{freeTrialEnabled ? t("paywall.trialEnabled") : t("paywall.enableTrial")}</Text>
             <ToggleSwitch value={freeTrialEnabled} />
           </Pressable>
 
@@ -843,12 +848,12 @@ export default function PaywallScreen() {
             {isLoading ? (
               <View style={styles.ctaLoadingRow}>
                 <ActivityIndicator color={TEXT_PRIMARY} />
-                <Text style={styles.ctaText}>Processing...</Text>
+                <Text style={styles.ctaText}>{t("paywall.processing")}</Text>
               </View>
             ) : (
               <FadeSwap swapKey={freeTrialEnabled ? "cta-trial" : "cta-continue"} style={styles.ctaContent}>
                 <View style={styles.ctaLabelRow}>
-                  <Text style={styles.ctaText}>{freeTrialEnabled ? "Try for Free" : "Continue"}</Text>
+                  <Text style={styles.ctaText}>{freeTrialEnabled ? t("paywall.tryForFree") : t("paywall.continue")}</Text>
                   <Text style={styles.ctaArrow}>→</Text>
                 </View>
               </FadeSwap>
@@ -857,12 +862,12 @@ export default function PaywallScreen() {
 
           <View style={[styles.legalFooter, { paddingBottom: Math.max(insets.bottom + 12, 12) }]}>
             <View style={styles.legalLinksRow}>
-              <LegalLink label="Terms" onPress={handleOpenTerms} />
+              <LegalLink label={t("paywall.terms")} onPress={handleOpenTerms} />
               <Text style={styles.legalDivider}>•</Text>
-              <LegalLink label="Privacy" onPress={handleOpenPrivacy} />
+              <LegalLink label={t("paywall.privacy")} onPress={handleOpenPrivacy} />
             </View>
 
-            <Text style={styles.legalSupportText}>Cancel anytime</Text>
+            <Text style={styles.legalSupportText}>{t("paywall.cancelAnytime")}</Text>
           </View>
         </ScrollView>
       </Animated.View>

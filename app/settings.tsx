@@ -10,6 +10,7 @@ import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
 import { Alert, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import * as SecureStore from "expo-secure-store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -45,12 +46,6 @@ const APP_URL = Constants.expoConfig?.extra?.publicEnv?.EXPO_PUBLIC_APP_URL ?? "
 const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
 const ANDROID_PACKAGE = Constants.expoConfig?.android?.package ?? "com.darkor.ai";
 
-const FEATURE_ITEMS = [
-  "Advanced AI Model",
-  "Fast Processing",
-  "Remove All Ads",
-] as const;
-
 function truncateUserId(value: string) {
   if (value.length <= 18) {
     return value;
@@ -67,6 +62,7 @@ function joinAppUrl(path: string) {
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
@@ -79,7 +75,7 @@ export default function SettingsScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fullUserId = user?.id ?? "";
-  const truncatedUserId = fullUserId ? truncateUserId(fullUserId) : "Not signed in";
+  const truncatedUserId = fullUserId ? truncateUserId(fullUserId) : t("settings.states.notSignedIn");
   const shouldShowCopy = Boolean(fullUserId);
   const heroTopInset = Math.max(insets.top + 8, 48);
 
@@ -95,7 +91,7 @@ export default function SettingsScreen() {
   const openExternalUrl = async (url: string) => {
     const canOpen = await Linking.canOpenURL(url);
     if (!canOpen) {
-      throw new Error("This destination is unavailable right now.");
+      throw new Error(t("settings.messages.destinationUnavailable"));
     }
 
     await Linking.openURL(url);
@@ -122,7 +118,7 @@ export default function SettingsScreen() {
     try {
       await openExternalUrl(`mailto:${SUPPORT_EMAIL}?subject=Darkor%20AI%20Feedback`);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Unable to open your email client.");
+      showToast(error instanceof Error ? error.message : t("settings.messages.emailClientUnavailable"));
     }
   };
 
@@ -142,19 +138,19 @@ export default function SettingsScreen() {
         return;
       }
 
-      showToast("Review requests are unavailable right now.");
+      showToast(t("settings.messages.reviewUnavailable"));
     } catch {
-      showToast("Review requests are unavailable right now.");
+      showToast(t("settings.messages.reviewUnavailable"));
     }
   };
 
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Design your space with Darkor AI: ${APP_URL}`,
+        message: t("settings.shareMessage", { url: APP_URL }),
       });
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Unable to open the share sheet.");
+      showToast(error instanceof Error ? error.message : t("settings.messages.shareUnavailable"));
     }
   };
 
@@ -192,13 +188,13 @@ export default function SettingsScreen() {
 
       const purchases = getRevenueCatClient() ?? (await configureRevenueCat(user?.id ?? null));
       if (!purchases) {
-        showToast("Subscriptions are unavailable right now.");
+        showToast(t("settings.messages.subscriptionsUnavailable"));
         return;
       }
 
       const info = await purchases.restorePurchases();
       if (!hasActiveSubscription(info)) {
-        showToast("No active subscriptions were found.");
+        showToast(t("settings.messages.noActiveSubscriptions"));
         return;
       }
 
@@ -216,7 +212,7 @@ export default function SettingsScreen() {
 
       showSuccess();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Restore failed. Please try again.");
+      showToast(error instanceof Error ? error.message : t("settings.messages.restoreFailed"));
     } finally {
       setIsRestoring(false);
     }
@@ -224,12 +220,12 @@ export default function SettingsScreen() {
 
   const handleCopyUserId = async () => {
     if (!fullUserId) {
-      showToast("No authenticated user ID is available.");
+      showToast(t("settings.messages.noUserId"));
       return;
     }
 
     await Clipboard.setStringAsync(fullUserId);
-    showToast("User ID copied");
+    showToast(t("settings.messages.userIdCopied"));
   };
 
   const clearLocalAppState = async () => {
@@ -261,7 +257,7 @@ export default function SettingsScreen() {
       await clearLocalAppState();
       router.replace("/sign-in");
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Unable to delete your account right now.");
+      showToast(error instanceof Error ? error.message : t("settings.messages.deleteFailed"));
     } finally {
       setIsDeleting(false);
     }
@@ -269,12 +265,12 @@ export default function SettingsScreen() {
 
   const handleDeleteInformation = () => {
     Alert.alert(
-      "Delete Account?",
-      "This will permanently delete your account and all your data. This action cannot be undone.",
+      t("settings.deleteAccount.title"),
+      t("settings.deleteAccount.body"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.actions.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("common.actions.delete"),
           style: "destructive",
           onPress: () => {
             void executeDeleteAccount();
@@ -285,12 +281,17 @@ export default function SettingsScreen() {
   };
 
   const firstGroupRows = [
-    { id: "feedback", label: "Feedback", icon: Mail, onPress: handleFeedback },
-    { id: "faq", label: "FAQ", icon: FileQuestion, onPress: handleFaq },
-    { id: "rate-us", label: "Rate Us", icon: Star, onPress: handleRateUs },
-    { id: "share", label: "Share with Friends", icon: Share2, onPress: handleShare },
-    { id: "terms", label: "Terms of Use", icon: FileText, onPress: handleTerms },
-    { id: "privacy", label: "Privacy Policy", icon: Shield, onPress: handlePrivacy },
+    { id: "feedback", label: t("settings.rows.feedback"), icon: Mail, onPress: handleFeedback },
+    { id: "faq", label: t("settings.rows.faq"), icon: FileQuestion, onPress: handleFaq },
+    { id: "rate-us", label: t("settings.rows.rateUs"), icon: Star, onPress: handleRateUs },
+    { id: "share", label: t("settings.rows.shareWithFriends"), icon: Share2, onPress: handleShare },
+    { id: "terms", label: t("settings.rows.termsOfUse"), icon: FileText, onPress: handleTerms },
+    { id: "privacy", label: t("settings.rows.privacyPolicy"), icon: Shield, onPress: handlePrivacy },
+  ];
+  const featureItems = [
+    t("settings.featureItems.advancedAi"),
+    t("settings.featureItems.fastProcessing"),
+    t("settings.featureItems.removeAds"),
   ];
 
   return (
@@ -316,11 +317,11 @@ export default function SettingsScreen() {
           </Pressable>
 
           <View style={[styles.heroContent, { paddingTop: heroTopInset + 48 }]}>
-            <Text style={styles.headerTitle}>Settings</Text>
-            <Text style={styles.heroTitle}>Your Account is FREE</Text>
+            <Text style={styles.headerTitle}>{t("settings.title")}</Text>
+            <Text style={styles.heroTitle}>{t("settings.heroTitle")}</Text>
 
             <View style={styles.featureList}>
-              {FEATURE_ITEMS.map((item) => (
+              {featureItems.map((item) => (
                 <View key={item} style={styles.featureRow}>
                   <View style={styles.featureIconBox}>
                     <ChevronRight color="#0A0A0A" size={14} strokeWidth={2.4} />
@@ -333,7 +334,7 @@ export default function SettingsScreen() {
             <Pressable accessibilityRole="button" onPress={handleUpgrade} style={styles.upgradeButton}>
               <View style={styles.upgradeButtonContent}>
                 <Diamond color="#0A0A0A" size={16} strokeWidth={2.2} />
-                <Text style={styles.upgradeButtonText}>Upgrade PRO</Text>
+                <Text style={styles.upgradeButtonText}>{t("settings.upgradePro")}</Text>
               </View>
             </Pressable>
           </View>
@@ -345,7 +346,7 @@ export default function SettingsScreen() {
           ))}
 
           <SettingsRow
-            label="Restore Purchase"
+            label={t("settings.rows.restorePurchase")}
             icon={RotateCcw}
             onPress={handleRestorePurchase}
             showChevron={false}
@@ -354,7 +355,7 @@ export default function SettingsScreen() {
           />
 
           <SettingsRow
-            label="User ID"
+            label={t("settings.rows.userId")}
             icon={UserRound}
             showChevron={false}
             disabled
@@ -373,7 +374,7 @@ export default function SettingsScreen() {
           />
 
           <SettingsRow
-            label="Delete Information"
+            label={t("settings.rows.deleteInformation")}
             icon={Trash2}
             iconColor="#EF4444"
             textColor="#EF4444"
@@ -384,7 +385,7 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <Text style={styles.versionLabel}>{`Version ${APP_VERSION}`}</Text>
+        <Text style={styles.versionLabel}>{t("common.labels.version", { version: APP_VERSION })}</Text>
       </ScrollView>
     </View>
   );

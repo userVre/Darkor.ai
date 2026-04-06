@@ -1,5 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
@@ -46,6 +47,7 @@ export function GardenRedesignStepThree({
   onContinue,
   onExit,
 }: GardenRedesignStepThreeProps) {
+  const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const headerMetrics = getDesignStepHeaderMetrics(insets.top);
@@ -90,8 +92,8 @@ export function GardenRedesignStepThree({
       <StatusBar style="dark" />
 
       <DesignStepHeader
-        backAccessibilityLabel="Go to the previous step"
-        closeAccessibilityLabel="Go back to step 1"
+        backAccessibilityLabel={t("wizard.headers.previousStep")}
+        closeAccessibilityLabel={t("wizard.headers.close")}
         horizontalInset={sideInset}
         onBack={onBack}
         onClose={onExit}
@@ -108,7 +110,7 @@ export function GardenRedesignStepThree({
           paddingBottom: bottomContainerHeight + insets.bottom + scaleValue(36, layoutScale),
         }}
       >
-        <Text style={[styles.title, { marginLeft: titleLeft }]}>Select Palette</Text>
+        <Text style={[styles.title, { marginLeft: titleLeft }]}>{t("wizard.garden.stepThreeTitle")}</Text>
 
         <View style={{ marginTop: paletteTitleTopGap, paddingHorizontal: paletteMargin }}>
           <View style={{ width: paletteGridWidth, alignSelf: "center" }}>
@@ -186,7 +188,7 @@ export function GardenRedesignStepThree({
               },
             ]}
           >
-            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>Continue</Text>
+            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>{t("common.actions.continue")}</Text>
           </Pressable>
         </View>
       </View>

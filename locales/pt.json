@@ -1,0 +1,87 @@
+{
+  "app": {
+    "name": "Darkor AI"
+  },
+  "common": {
+    "actions": {
+      "continue": "Continuar",
+      "cancel": "Cancelar",
+      "close": "Fechar",
+      "delete": "Excluir",
+      "restore": "Restaurar",
+      "upgrade": "Fazer upgrade",
+      "openSettings": "Abrir ajustes",
+      "notNow": "Agora não",
+      "takePhoto": "Tirar foto",
+      "chooseFromGallery": "Escolher da galeria",
+      "addPhoto": "Adicionar foto",
+      "chooseMediaSource": "Selecionar origem da mídia",
+      "examplePhotos": "Fotos de exemplo",
+      "seeAll": "Ver tudo",
+      "uploadPlus": "Enviar +"
+    },
+    "labels": {
+      "email": "E-mail",
+      "password": "Senha",
+      "lastUpdated": "Última atualização",
+      "step": "Etapa {{current}} / {{total}}"
+    },
+    "alerts": {
+      "exitTitle": "Sair?",
+      "progressLost": "Seu progresso será perdido."
+    }
+  },
+  "tabs": {
+    "tools": "Ferramentas",
+    "create": "Criar",
+    "discover": "Descobrir",
+    "profile": "Meu perfil"
+  },
+  "settings": {
+    "title": "Configurações",
+    "heroTitle": "Sua conta é GRÁTIS"
+  },
+  "profile": {
+    "title": "Seu painel",
+    "emptyTitle": "Ainda não há designs",
+    "emptySubtitle": "Seus designs gerados aparecerão aqui"
+  },
+  "discover": {
+    "title": "Descobrir",
+    "tabs": {
+      "home": "Casa",
+      "garden": "Jardim",
+      "exterior": "Exterior"
+    }
+  },
+  "auth": {
+    "accountEyebrow": "Conta Darkor.ai",
+    "emailPlaceholder": "voce@empresa.com",
+    "signIn": {
+      "title": "Entrar",
+      "cta": "Continuar",
+      "loading": "Entrando...",
+      "appleCta": "Continuar com Apple"
+    },
+    "signUp": {
+      "title": "Criar conta",
+      "cta": "Criar conta",
+      "loading": "Criando...",
+      "appleCta": "Continuar com Apple"
+    }
+  },
+  "faq": {
+    "eyebrow": "Suporte",
+    "title": "FAQ"
+  },
+  "privacy": {
+    "eyebrow": "Política",
+    "title": "Política de privacidade",
+    "date": "14 de março de 2026"
+  },
+  "terms": {
+    "eyebrow": "Política",
+    "title": "Termos de serviço",
+    "date": "14 de março de 2026"
+  }
+}

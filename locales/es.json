@@ -1,0 +1,97 @@
+{
+  "app": {
+    "name": "Darkor AI"
+  },
+  "common": {
+    "actions": {
+      "continue": "Continuar",
+      "cancel": "Cancelar",
+      "close": "Cerrar",
+      "delete": "Eliminar",
+      "restore": "Restaurar",
+      "upgrade": "Mejorar",
+      "openSettings": "Abrir ajustes",
+      "notNow": "Ahora no",
+      "takePhoto": "Tomar foto",
+      "chooseFromGallery": "Elegir de la galería",
+      "addPhoto": "Agregar una foto",
+      "chooseMediaSource": "Seleccionar origen multimedia",
+      "examplePhotos": "Fotos de ejemplo",
+      "seeAll": "Ver todo",
+      "uploadPlus": "Subir +"
+    },
+    "labels": {
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "lastUpdated": "Última actualización",
+      "step": "Paso {{current}} / {{total}}"
+    },
+    "alerts": {
+      "exitTitle": "¿Salir?",
+      "progressLost": "Se perderá tu progreso."
+    }
+  },
+  "boot": {
+    "loadingApp": "Cargando Darkor.ai",
+    "loadingAccount": "Cargando tu cuenta...",
+    "checkingPlan": "Comprobando tu plan...",
+    "secureAccount": "Protege tu cuenta para empezar a crear..."
+  },
+  "tabs": {
+    "tools": "Herramientas",
+    "create": "Crear",
+    "discover": "Descubrir",
+    "profile": "Mi perfil"
+  },
+  "settings": {
+    "title": "Configuración",
+    "heroTitle": "Tu cuenta es GRATIS"
+  },
+  "profile": {
+    "title": "Tu tablero",
+    "emptyTitle": "Aún no hay diseños",
+    "emptySubtitle": "Tus diseños generados aparecerán aquí"
+  },
+  "discover": {
+    "title": "Descubrir",
+    "tabs": {
+      "home": "Hogar",
+      "garden": "Jardín",
+      "exterior": "Exterior"
+    }
+  },
+  "auth": {
+    "accountEyebrow": "Cuenta de Darkor.ai",
+    "emailPlaceholder": "tu@empresa.com",
+    "signIn": {
+      "title": "Iniciar sesión",
+      "cta": "Continuar",
+      "loading": "Iniciando sesión...",
+      "appleCta": "Continuar con Apple",
+      "noAccount": "¿No tienes cuenta?",
+      "createOne": "Crear una"
+    },
+    "signUp": {
+      "title": "Crear cuenta",
+      "cta": "Crear cuenta",
+      "loading": "Creando...",
+      "appleCta": "Continuar con Apple",
+      "haveAccount": "¿Ya tienes una cuenta?",
+      "signInLink": "Inicia sesión"
+    }
+  },
+  "faq": {
+    "eyebrow": "Soporte",
+    "title": "Preguntas frecuentes"
+  },
+  "privacy": {
+    "eyebrow": "Política",
+    "title": "Política de privacidad",
+    "date": "14 de marzo de 2026"
+  },
+  "terms": {
+    "eyebrow": "Política",
+    "title": "Términos del servicio",
+    "date": "14 de marzo de 2026"
+  }
+}

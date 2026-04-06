@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { ArrowLeft } from "@/components/material-icons";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { LuxPressable } from "../components/lux-pressable";
@@ -56,6 +57,7 @@ const TERMS_SECTIONS = [
 
 export default function TermsOfServiceScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   return (
@@ -85,15 +87,15 @@ export default function TermsOfServiceScreen() {
           </LuxPressable>
 
           <View style={styles.heroCard}>
-            <Text style={styles.eyebrow}>Policy</Text>
-            <Text style={styles.title}>Terms of Service</Text>
-            <Text style={styles.description}>The rules, expectations, and service boundaries for using Darkor.ai.</Text>
+            <Text style={styles.eyebrow}>{t("terms.eyebrow")}</Text>
+            <Text style={styles.title}>{t("terms.title")}</Text>
+            <Text style={styles.description}>{t("terms.description")}</Text>
           </View>
         </View>
 
         <View style={styles.metaCard}>
-          <Text style={styles.metaLabel}>Last updated</Text>
-          <Text style={styles.metaValue}>March 14, 2026</Text>
+          <Text style={styles.metaLabel}>{t("common.labels.lastUpdated")}</Text>
+          <Text style={styles.metaValue}>{t("terms.date")}</Text>
         </View>
 
         <View style={styles.sectionStack}>

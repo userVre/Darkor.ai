@@ -1,6 +1,7 @@
 import { AnimatePresence, MotiView } from "moti";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { fonts } from "../styles/typography";
 import { spacing } from "../styles/spacing";
 import { createButtonStyles } from "@/styles/buttons";
@@ -28,7 +29,7 @@ type ServiceContinueButtonProps = {
 
 export function ServiceContinueButton({
   active = true,
-  label = "Continue \u2192",
+  label,
   loading = false,
   onPress,
   pulse = false,
@@ -38,15 +39,17 @@ export function ServiceContinueButton({
   attention = false,
   visible = true,
 }: ServiceContinueButtonProps) {
+  const { t } = useTranslation();
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const isBlocked = loading || !active;
+  const resolvedLabel = label ?? `${t("common.actions.continue")} \u2192`;
 
   return (
     <AnimatePresence>
       {visible ? (
         <MotiView
-          key={`service-continue-${label}-${active ? "active" : "idle"}-${pulse ? "pulse" : "static"}`}
+          key={`service-continue-${resolvedLabel}-${active ? "active" : "idle"}-${pulse ? "pulse" : "static"}`}
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
           exit={{ opacity: 0, translateY: 12 }}
@@ -93,10 +96,10 @@ export function ServiceContinueButton({
                 {loading ? (
                   <View style={styles.loadingRow}>
                     <ActivityIndicator size="small" color={colors.textPrimary} />
-                    <Text style={styles.buttonText}>Loading...</Text>
+                    <Text style={styles.buttonText}>{t("common.states.loading")}</Text>
                   </View>
                 ) : (
-                  <Text style={[styles.buttonText, active ? null : styles.buttonTextInactive]}>{label}</Text>
+                  <Text style={[styles.buttonText, active ? null : styles.buttonTextInactive]}>{resolvedLabel}</Text>
                 )}
               </View>
             </LuxPressable>

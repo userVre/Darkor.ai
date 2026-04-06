@@ -1,5 +1,6 @@
 import { ArrowLeft, Diamond, X } from "@/components/material-icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { fonts } from "../styles/typography";
@@ -50,6 +51,7 @@ export function DesignStepHeader({
   backAccessibilityLabel = "Go back",
   closeAccessibilityLabel = "Close",
 }: DesignStepHeaderProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const metrics = getDesignStepHeaderMetrics(insets.top);
   const isFirstStep = !onBack;
@@ -111,7 +113,7 @@ export function DesignStepHeader({
         </View>
 
         <View style={styles.centerSlot}>
-          <Text style={styles.stepText}>{`Step ${safeStep} / ${totalSteps}`}</Text>
+          <Text style={styles.stepText}>{t("common.labels.step", { current: safeStep, total: totalSteps })}</Text>
         </View>
 
         <View style={[styles.sideSlot, styles.rightSlot]}>

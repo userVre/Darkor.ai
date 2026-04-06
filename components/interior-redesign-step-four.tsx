@@ -2,6 +2,7 @@ import { StatusBar } from "expo-status-bar";
 import { PaintRoller, Wand2 } from "@/components/material-icons";
 import { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
@@ -159,6 +160,7 @@ export function InteriorRedesignStepFour({
   onContinue,
   onExit,
 }: InteriorRedesignStepFourProps) {
+  const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const headerMetrics = getDesignStepHeaderMetrics(insets.top);
@@ -214,8 +216,8 @@ export function InteriorRedesignStepFour({
       <StatusBar style="dark" />
 
       <DesignStepHeader
-        backAccessibilityLabel="Go to the previous step"
-        closeAccessibilityLabel="Go back to step 1"
+        backAccessibilityLabel={t("wizard.headers.previousStep")}
+        closeAccessibilityLabel={t("wizard.headers.close")}
         creditCount={creditCount}
         horizontalInset={sideInset}
         onBack={onBack}
@@ -233,7 +235,7 @@ export function InteriorRedesignStepFour({
           paddingBottom: bottomContainerHeight + insets.bottom + scaleValue(36, layoutScale),
         }}
       >
-        <Text style={[styles.sectionTitle, { marginLeft: sectionTitleLeft }]}>Mode</Text>
+        <Text style={[styles.sectionTitle, { marginLeft: sectionTitleLeft }]}>{t("wizard.interior.stepFourMode")}</Text>
 
         <View style={{ marginTop: modeCardsTopGap, width: modeCardWidth * 2 + modeCardGap, alignSelf: "center" }}>
           <View style={{ flexDirection: "row" }}>
@@ -259,7 +261,7 @@ export function InteriorRedesignStepFour({
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { marginLeft: sectionTitleLeft, marginTop: modeSectionToPaletteGap }]}>Select Palette</Text>
+        <Text style={[styles.sectionTitle, { marginLeft: sectionTitleLeft, marginTop: modeSectionToPaletteGap }]}>{t("wizard.interior.stepFourPalette")}</Text>
 
         <View style={{ marginTop: paletteTitleTopGap, paddingHorizontal: paletteMargin }}>
           <View style={{ width: paletteGridWidth, alignSelf: "center" }}>
@@ -336,7 +338,7 @@ export function InteriorRedesignStepFour({
               },
             ]}
           >
-            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>Continue</Text>
+            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>{t("common.actions.continue")}</Text>
           </Pressable>
         </View>
       </View>

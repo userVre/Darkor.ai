@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { Camera, Diamond, Image as GalleryIcon } from "@/components/material-icons";
 import { useCallback, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageSourcePropType } from "react-native";
+import { useTranslation } from "react-i18next";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
@@ -53,6 +54,7 @@ export function FloorIntroScreen({
   onExamplePress,
   onExit,
 }: FloorIntroScreenProps) {
+  const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const headerMetrics = getStickyStepHeaderMetrics(insets.top);
@@ -173,10 +175,10 @@ export function FloorIntroScreen({
 
   const handleExitPress = () => {
     triggerHaptic();
-    Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "CANCEL", style: "cancel" },
+    Alert.alert(t("common.alerts.exitTitle"), t("common.alerts.progressLost"), [
+      { text: t("common.actions.cancel"), style: "cancel" },
       {
-        text: "EXIT",
+        text: t("common.actions.exit"),
         style: "destructive",
         onPress: () => {
           onExit();
@@ -220,7 +222,7 @@ export function FloorIntroScreen({
           <View style={styles.heroOverlay} />
 
           <Text style={[styles.heroText, { top: heroTextTop, left: heroTextLeft, right: scaleValue(32, layoutScale) }]}>
-            Mark, recolor, and transform your space effortlessly.
+            {t("wizard.floorIntro.hero")}
           </Text>
 
           <Pressable
@@ -237,12 +239,12 @@ export function FloorIntroScreen({
               },
             ]}
           >
-            <Text style={styles.uploadButtonText}>Upload +</Text>
+            <Text style={styles.uploadButtonText}>{t("common.actions.uploadPlus")}</Text>
           </Pressable>
         </View>
 
         <View style={{ marginTop: sectionTopGap }}>
-          <Text style={[styles.examplesTitle, { marginLeft: examplesTitleLeft }]}>Example Photos</Text>
+          <Text style={[styles.examplesTitle, { marginLeft: examplesTitleLeft }]}>{t("common.actions.examplePhotos")}</Text>
 
           <ScrollView
             horizontal
@@ -292,7 +294,7 @@ export function FloorIntroScreen({
                 <Text style={styles.sheetCloseText}>{"\u00D7"}</Text>
               </Pressable>
 
-              <Text style={styles.sheetTitle}>Select Media Source</Text>
+              <Text style={styles.sheetTitle}>{t("common.actions.chooseMediaSource")}</Text>
 
               <Pressable
                 accessibilityRole="button"
@@ -303,7 +305,7 @@ export function FloorIntroScreen({
                 style={styles.mediaActionButton}
               >
                 <Camera color="#0A0A0A" size={24} strokeWidth={2.2} style={styles.mediaActionIcon} />
-                <Text style={styles.mediaActionText}>Take photo from camera</Text>
+                <Text style={styles.mediaActionText}>{t("common.actions.takePhoto")}</Text>
               </Pressable>
 
               <Pressable
@@ -315,7 +317,7 @@ export function FloorIntroScreen({
                 style={[styles.mediaActionButton, styles.galleryButton]}
               >
                 <GalleryIcon color="#0A0A0A" size={24} strokeWidth={2.2} style={styles.mediaActionIcon} />
-                <Text style={styles.mediaActionText}>Choose from gallery</Text>
+                <Text style={styles.mediaActionText}>{t("common.actions.chooseFromGallery")}</Text>
               </Pressable>
             </Animated.View>
           </GestureDetector>

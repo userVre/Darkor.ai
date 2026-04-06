@@ -1,0 +1,87 @@
+{
+  "app": {
+    "name": "Darkor AI"
+  },
+  "common": {
+    "actions": {
+      "continue": "Continua",
+      "cancel": "Annulla",
+      "close": "Chiudi",
+      "delete": "Elimina",
+      "restore": "Ripristina",
+      "upgrade": "Passa a Pro",
+      "openSettings": "Apri impostazioni",
+      "notNow": "Non ora",
+      "takePhoto": "Scatta foto",
+      "chooseFromGallery": "Scegli dalla galleria",
+      "addPhoto": "Aggiungi una foto",
+      "chooseMediaSource": "Seleziona sorgente media",
+      "examplePhotos": "Foto di esempio",
+      "seeAll": "Vedi tutto",
+      "uploadPlus": "Carica +"
+    },
+    "labels": {
+      "email": "E-mail",
+      "password": "Password",
+      "lastUpdated": "Ultimo aggiornamento",
+      "step": "Passaggio {{current}} / {{total}}"
+    },
+    "alerts": {
+      "exitTitle": "Uscire?",
+      "progressLost": "I tuoi progressi andranno persi."
+    }
+  },
+  "tabs": {
+    "tools": "Strumenti",
+    "create": "Crea",
+    "discover": "Scopri",
+    "profile": "Il mio profilo"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "heroTitle": "Il tuo account è GRATUITO"
+  },
+  "profile": {
+    "title": "La tua bacheca",
+    "emptyTitle": "Nessun design ancora",
+    "emptySubtitle": "I tuoi design generati appariranno qui"
+  },
+  "discover": {
+    "title": "Scopri",
+    "tabs": {
+      "home": "Casa",
+      "garden": "Giardino",
+      "exterior": "Esterno"
+    }
+  },
+  "auth": {
+    "accountEyebrow": "Account Darkor.ai",
+    "emailPlaceholder": "tu@azienda.com",
+    "signIn": {
+      "title": "Accedi",
+      "cta": "Continua",
+      "loading": "Accesso in corso...",
+      "appleCta": "Continua con Apple"
+    },
+    "signUp": {
+      "title": "Crea account",
+      "cta": "Crea account",
+      "loading": "Creazione...",
+      "appleCta": "Continua con Apple"
+    }
+  },
+  "faq": {
+    "eyebrow": "Supporto",
+    "title": "FAQ"
+  },
+  "privacy": {
+    "eyebrow": "Politica",
+    "title": "Informativa sulla privacy",
+    "date": "14 marzo 2026"
+  },
+  "terms": {
+    "eyebrow": "Politica",
+    "title": "Termini di servizio",
+    "date": "14 marzo 2026"
+  }
+}

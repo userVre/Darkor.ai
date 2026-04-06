@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CreditLimitModal } from "../../components/credit-limit-modal";
@@ -19,48 +20,9 @@ import { fonts } from "../../styles/typography";
 const STICKY_HEADER_HEIGHT = 48;
 const FIRST_CARD_TOP_GAP = 16;
 
-const TOOL_CARDS: HomeToolCardItem[] = [
-  {
-    id: "interior-design",
-    image: require("../../assets/media/discover/home/home-dining-room.jpg"),
-    title: "Interior Design",
-    description: "Upload a pic, choose a style, let AI design the room!",
-    serviceParam: "interior",
-  },
-  {
-    id: "exterior-design",
-    image: require("../../assets/media/discover/exterior/exterior-modern-villa.jpg"),
-    title: "Exterior Design",
-    description: "Snap your home, pick a vibe, let AI craft the facade!",
-    descriptionPaddingRight: 80,
-    serviceParam: "facade",
-  },
-  {
-    id: "garden-design",
-    image: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
-    title: "Garden Design",
-    description: "Choose a style you adore and give your garden a whole new vibe with just a simple touch!",
-    serviceParam: "garden",
-  },
-  {
-    id: "paint",
-    image: require("../../assets/media/discover/wall-scenes/sage-green-suite.jpg"),
-    title: "Paint",
-    description: "Pick any color you love and transform your space with just a touch!",
-    serviceParam: "paint",
-  },
-  {
-    id: "floor-restyle",
-    image: require("../../assets/media/discover/floor-scenes/polished-carrara-marble.jpg"),
-    title: "Floor Restyle",
-    description: "Edit floor plans with AI \u2014 rearrange rooms in one tap!",
-    descriptionPaddingRight: 80,
-    serviceParam: "floor",
-  },
-];
-
 export default function HomeScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isSignedIn } = useAuth();
   const {
@@ -71,6 +33,45 @@ export default function HomeScreen() {
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const usageBadgeLabel = String(creditBalance);
   const stickyHeaderOffset = insets.top + STICKY_HEADER_HEIGHT;
+  const toolCards: HomeToolCardItem[] = [
+    {
+      id: "interior-design",
+      image: require("../../assets/media/discover/home/home-dining-room.jpg"),
+      title: t("home.tools.interior.title"),
+      description: t("home.tools.interior.description"),
+      serviceParam: "interior",
+    },
+    {
+      id: "exterior-design",
+      image: require("../../assets/media/discover/exterior/exterior-modern-villa.jpg"),
+      title: t("home.tools.exterior.title"),
+      description: t("home.tools.exterior.description"),
+      descriptionPaddingRight: 80,
+      serviceParam: "facade",
+    },
+    {
+      id: "garden-design",
+      image: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
+      title: t("home.tools.garden.title"),
+      description: t("home.tools.garden.description"),
+      serviceParam: "garden",
+    },
+    {
+      id: "paint",
+      image: require("../../assets/media/discover/wall-scenes/sage-green-suite.jpg"),
+      title: t("home.tools.paint.title"),
+      description: t("home.tools.paint.description"),
+      serviceParam: "paint",
+    },
+    {
+      id: "floor-restyle",
+      image: require("../../assets/media/discover/floor-scenes/polished-carrara-marble.jpg"),
+      title: t("home.tools.floor.title"),
+      description: t("home.tools.floor.description"),
+      descriptionPaddingRight: 80,
+      serviceParam: "floor",
+    },
+  ];
 
   const openDesignFlowPaywall = useCallback((redirectTo: string) => {
     router.push({
@@ -111,7 +112,7 @@ export default function HomeScreen() {
 
       routeToToolFlow(redirectTo);
     } catch (error) {
-      Alert.alert("Try It unavailable", error instanceof Error ? error.message : "Please try again.");
+      Alert.alert(t("home.errors.tryItUnavailableTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     }
   };
 
@@ -175,7 +176,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          <Text numberOfLines={1} style={styles.title}>Darkor AI</Text>
+          <Text numberOfLines={1} style={styles.title}>{t("home.title")}</Text>
 
           <View style={[styles.headerSide, styles.headerSideEnd]}>
             <Pressable accessibilityRole="button" onPress={handleSettingsPress} style={styles.settingsButton}>
@@ -192,12 +193,12 @@ export default function HomeScreen() {
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingTop: stickyHeaderOffset + FIRST_CARD_TOP_GAP }]}
       >
-        {TOOL_CARDS.map((card, index) => (
+        {toolCards.map((card, index) => (
           <HomeToolCard
             key={card.id}
             item={card}
             onPress={handleToolPress}
-            style={index === TOOL_CARDS.length - 1 ? styles.lastCard : styles.cardSpacing}
+            style={index === toolCards.length - 1 ? styles.lastCard : styles.cardSpacing}
           />
         ))}
       </ScrollView>

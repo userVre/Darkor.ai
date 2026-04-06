@@ -2,38 +2,23 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ChevronLeft, CircleHelp } from "@/components/material-icons";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { LuxPressable } from "../components/lux-pressable";
 import { DS, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
 import { triggerHaptic } from "../lib/haptics";
 
-const FAQ_ITEMS = [
-  {
-    question: "How do credits work in Darkor.ai?",
-    answer:
-      "Each redesign uses credits based on the workflow and export quality you choose. Your remaining balance updates automatically after every generation.",
-  },
-  {
-    question: "What do I unlock with PRO?",
-    answer:
-      "PRO unlocks premium generation tools, faster processing, and higher-end output quality through the paywall flow in the app.",
-  },
-  {
-    question: "Why is my result taking longer than expected?",
-    answer:
-      "Generation times depend on queue load, source image quality, and the workflow you selected. Keeping the app open on a stable connection helps avoid interruptions.",
-  },
-  {
-    question: "How do I delete my account?",
-    answer:
-      "Open Settings and choose Delete Information. This removes your account data and signs you out after confirmation.",
-  },
-];
-
 export default function FaqScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const faqItems = [
+    { question: t("faq.items.credits.question"), answer: t("faq.items.credits.answer") },
+    { question: t("faq.items.pro.question"), answer: t("faq.items.pro.answer") },
+    { question: t("faq.items.slowResult.question"), answer: t("faq.items.slowResult.answer") },
+    { question: t("faq.items.deleteAccount.question"), answer: t("faq.items.deleteAccount.answer") },
+  ];
 
   return (
     <SafeAreaView edges={["top"]} style={styles.screen}>
@@ -63,14 +48,14 @@ export default function FaqScreen() {
           </LuxPressable>
 
           <View style={styles.heroCard}>
-            <Text style={styles.eyebrow}>Support</Text>
-            <Text style={styles.title}>FAQ</Text>
-            <Text style={styles.description}>Quick answers to the most common Darkor.ai questions.</Text>
+            <Text style={styles.eyebrow}>{t("faq.eyebrow")}</Text>
+            <Text style={styles.title}>{t("faq.title")}</Text>
+            <Text style={styles.description}>{t("faq.description")}</Text>
           </View>
         </View>
 
         <View style={styles.stack}>
-          {FAQ_ITEMS.map((item) => (
+          {faqItems.map((item) => (
             <View key={item.question} style={styles.itemCard}>
               <View style={styles.itemRow}>
                 <View style={styles.iconShell}>

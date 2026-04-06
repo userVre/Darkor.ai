@@ -1,10 +1,6 @@
-export const fonts = {
-  regular:  { fontFamily: 'Inter', fontWeight: '400' as const },
-  medium:   { fontFamily: 'Inter', fontWeight: '500' as const },
-  semibold: { fontFamily: 'Inter', fontWeight: '600' as const },
-  bold:     { fontFamily: 'Inter', fontWeight: '700' as const },
-  italic:   { fontFamily: 'Inter-Italic', fontWeight: '400' as const },
-}
+import { getLocalizedFonts, getInitialSupportedLanguage } from "../lib/i18n/language";
+
+export const fonts = getLocalizedFonts(getInitialSupportedLanguage());
 
 export const textStyles = {
   h1:      { ...fonts.bold,    fontSize: 32, lineHeight: 40 },

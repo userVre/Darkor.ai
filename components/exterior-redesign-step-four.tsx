@@ -1,6 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
@@ -49,6 +50,7 @@ export function ExteriorRedesignStepFour({
   onContinue,
   onExit,
 }: ExteriorRedesignStepFourProps) {
+  const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const headerMetrics = getDesignStepHeaderMetrics(insets.top);
@@ -93,8 +95,8 @@ export function ExteriorRedesignStepFour({
       <StatusBar style="dark" />
 
       <DesignStepHeader
-        backAccessibilityLabel="Go to the previous step"
-        closeAccessibilityLabel="Go back to step 1"
+        backAccessibilityLabel={t("wizard.headers.previousStep")}
+        closeAccessibilityLabel={t("wizard.headers.close")}
         creditCount={creditCount}
         horizontalInset={sideInset}
         onBack={onBack}
@@ -112,7 +114,7 @@ export function ExteriorRedesignStepFour({
           paddingBottom: bottomContainerHeight + insets.bottom + scaleValue(36, layoutScale),
         }}
       >
-        <Text style={[styles.title, { marginLeft: titleLeft }]}>Select Palette</Text>
+        <Text style={[styles.title, { marginLeft: titleLeft }]}>{t("wizard.exterior.stepFourTitle")}</Text>
 
         <View style={{ marginTop: paletteTitleTopGap, paddingHorizontal: paletteMargin }}>
           <View style={{ width: paletteGridWidth, alignSelf: "center" }}>
@@ -189,7 +191,7 @@ export function ExteriorRedesignStepFour({
               },
             ]}
           >
-            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>Continue</Text>
+            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>{t("common.actions.continue")}</Text>
           </Pressable>
         </View>
       </View>

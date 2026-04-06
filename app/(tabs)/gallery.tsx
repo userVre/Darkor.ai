@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Diamond } from "@/components/material-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 import { DiscoverImageCard } from "../../components/discover-image-card";
 import { DiscoverPreviewModal } from "../../components/discover-preview-modal";
@@ -49,6 +50,7 @@ const DiscoverTabs = memo(function DiscoverTabs({
   railWidth: number;
   onSelect: (tabId: DiscoverTabId) => void;
 }) {
+  const { t } = useTranslation();
   const activeIndex = DISCOVER_TABS.findIndex((tab) => tab.id === activeTab);
   const trackWidth = railWidth - TAB_RAIL_PADDING * 2;
   const pillWidth = trackWidth / DISCOVER_TABS.length;
@@ -93,7 +95,7 @@ const DiscoverTabs = memo(function DiscoverTabs({
                 style={styles.tabButton}
               >
                 <Text numberOfLines={1} style={[styles.tabLabel, isActive ? styles.tabLabelActive : null]}>
-                  {tab.label}
+                  {t(`discover.tabs.${tab.id}`)}
                 </Text>
               </Pressable>
             );
@@ -119,12 +121,13 @@ const DiscoverSection = memo(function DiscoverSection({
   onPreview: (item: DiscoverTile) => void;
   onSeeAll: (tabId: DiscoverTabId, group: DiscoverGroup) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{group.title}</Text>
         <Pressable accessibilityRole="button" onPress={() => onSeeAll(tabId, group)} style={styles.seeAllButton}>
-          <Text style={styles.seeAllText}>See All</Text>
+          <Text style={styles.seeAllText}>{t("common.actions.seeAll")}</Text>
         </Pressable>
       </View>
 
@@ -150,6 +153,7 @@ const DiscoverSection = memo(function DiscoverSection({
 
 export default function GalleryScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [activeTab, setActiveTab] = useState<DiscoverTabId>("home");
@@ -208,7 +212,7 @@ export default function GalleryScreen() {
                 <ThreeDiamondMark />
               </View>
 
-              <Text style={styles.headerTitle}>Discover</Text>
+              <Text style={styles.headerTitle}>{t("discover.title")}</Text>
 
               <View style={styles.headerSide} />
             </View>

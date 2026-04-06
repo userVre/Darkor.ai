@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { Camera, Image as GalleryIcon, Plus } from "@/components/material-icons";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useTranslation } from "react-i18next";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
@@ -66,6 +67,7 @@ export function InteriorRedesignStepOne({
   onExit,
 }: InteriorRedesignStepOneProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const headerMetrics = getDesignStepHeaderMetrics(insets.top);
@@ -202,7 +204,7 @@ export function InteriorRedesignStepOne({
       <StatusBar style="dark" />
 
       <DesignStepHeader
-        closeAccessibilityLabel="Close redesign flow"
+        closeAccessibilityLabel={t("wizard.headers.close")}
         creditCount={creditCount}
         horizontalInset={sideInset}
         onClose={onExit}
@@ -211,7 +213,7 @@ export function InteriorRedesignStepOne({
       />
 
       <View style={[styles.content, { paddingTop: contentTop }]}>
-        <Text style={[styles.header, { marginLeft: contentInset }]}>Add a Photo</Text>
+        <Text style={[styles.header, { marginLeft: contentInset }]}>{t("wizard.stepOne.title")}</Text>
 
         <View
           style={[
@@ -245,9 +247,9 @@ export function InteriorRedesignStepOne({
             </>
           ) : (
             <>
-              <Text style={[styles.emptyTitle, { marginTop: scaleValue(148, innerScale) }]}>Start Redesigning</Text>
+              <Text style={[styles.emptyTitle, { marginTop: scaleValue(148, innerScale) }]}>{t("wizard.stepOne.emptyTitle")}</Text>
               <Text style={[styles.emptySubtitle, { marginTop: scaleValue(24, innerScale) }]}>
-                {emptyStateSubtitle}
+                {emptyStateSubtitle === "Redesign and beautify your room" ? t("wizard.stepOne.emptySubtitle") : emptyStateSubtitle}
               </Text>
               <Pressable
                 accessibilityRole="button"
@@ -275,14 +277,14 @@ export function InteriorRedesignStepOne({
                 >
                   <Plus color="#0A0A0A" size={12} strokeWidth={2.6} />
                 </View>
-                <Text style={styles.addPhotoButtonText}>Add a Photo</Text>
+                <Text style={styles.addPhotoButtonText}>{t("common.actions.addPhoto")}</Text>
               </Pressable>
             </>
           )}
         </View>
 
         <Text style={[styles.examplesLabel, { marginTop: scaleValue(24, layoutScale), marginLeft: contentInset }]}>
-          Example Photos
+          {t("common.actions.examplePhotos")}
         </Text>
 
         <ScrollView
@@ -328,7 +330,7 @@ export function InteriorRedesignStepOne({
           },
         ]}
       >
-        <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>Continue</Text>
+        <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>{t("common.actions.continue")}</Text>
       </Pressable>
 
       <View style={styles.bottomNavWrap}>
@@ -357,7 +359,7 @@ export function InteriorRedesignStepOne({
                 <Text style={styles.sheetCloseText}>{"\u00D7"}</Text>
               </Pressable>
 
-              <Text style={styles.sheetTitle}>Select Media Source</Text>
+              <Text style={styles.sheetTitle}>{t("common.actions.chooseMediaSource")}</Text>
 
               <Pressable
                 accessibilityRole="button"
@@ -368,7 +370,7 @@ export function InteriorRedesignStepOne({
                 style={styles.mediaActionButton}
               >
                 <Camera color="#0A0A0A" size={24} strokeWidth={2.2} style={styles.mediaActionIcon} />
-                <Text style={styles.mediaActionText}>Take photo from camera</Text>
+                <Text style={styles.mediaActionText}>{t("common.actions.takePhoto")}</Text>
               </Pressable>
 
               <Pressable
@@ -380,7 +382,7 @@ export function InteriorRedesignStepOne({
                 style={[styles.mediaActionButton, styles.galleryButton]}
               >
                 <GalleryIcon color="#0A0A0A" size={24} strokeWidth={2.2} style={styles.mediaActionIcon} />
-                <Text style={styles.mediaActionText}>Choose from gallery</Text>
+                <Text style={styles.mediaActionText}>{t("common.actions.chooseFromGallery")}</Text>
               </Pressable>
             </Animated.View>
           </GestureDetector>

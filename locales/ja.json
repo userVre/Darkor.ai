@@ -1,0 +1,87 @@
+{
+  "app": {
+    "name": "Darkor AI"
+  },
+  "common": {
+    "actions": {
+      "continue": "続ける",
+      "cancel": "キャンセル",
+      "close": "閉じる",
+      "delete": "削除",
+      "restore": "復元",
+      "upgrade": "アップグレード",
+      "openSettings": "設定を開く",
+      "notNow": "今はしない",
+      "takePhoto": "写真を撮る",
+      "chooseFromGallery": "ギャラリーから選ぶ",
+      "addPhoto": "写真を追加",
+      "chooseMediaSource": "メディアソースを選択",
+      "examplePhotos": "サンプル写真",
+      "seeAll": "すべて見る",
+      "uploadPlus": "アップロード +"
+    },
+    "labels": {
+      "email": "メールアドレス",
+      "password": "パスワード",
+      "lastUpdated": "最終更新",
+      "step": "ステップ {{current}} / {{total}}"
+    },
+    "alerts": {
+      "exitTitle": "終了しますか？",
+      "progressLost": "進行状況は失われます。"
+    }
+  },
+  "tabs": {
+    "tools": "ツール",
+    "create": "作成",
+    "discover": "発見",
+    "profile": "プロフィール"
+  },
+  "settings": {
+    "title": "設定",
+    "heroTitle": "あなたのアカウントは無料です"
+  },
+  "profile": {
+    "title": "あなたのボード",
+    "emptyTitle": "まだデザインはありません",
+    "emptySubtitle": "生成したデザインがここに表示されます"
+  },
+  "discover": {
+    "title": "発見",
+    "tabs": {
+      "home": "ホーム",
+      "garden": "ガーデン",
+      "exterior": "外観"
+    }
+  },
+  "auth": {
+    "accountEyebrow": "Darkor.ai アカウント",
+    "emailPlaceholder": "you@company.com",
+    "signIn": {
+      "title": "サインイン",
+      "cta": "続ける",
+      "loading": "サインイン中...",
+      "appleCta": "Appleで続ける"
+    },
+    "signUp": {
+      "title": "アカウント作成",
+      "cta": "アカウント作成",
+      "loading": "作成中...",
+      "appleCta": "Appleで続ける"
+    }
+  },
+  "faq": {
+    "eyebrow": "サポート",
+    "title": "FAQ"
+  },
+  "privacy": {
+    "eyebrow": "ポリシー",
+    "title": "プライバシーポリシー",
+    "date": "2026年3月14日"
+  },
+  "terms": {
+    "eyebrow": "ポリシー",
+    "title": "利用規約",
+    "date": "2026年3月14日"
+  }
+}

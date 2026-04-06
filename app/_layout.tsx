@@ -34,6 +34,7 @@ import {
   type RevenueCatCustomerInfo,
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
+import i18n, { initializeI18n } from "../lib/i18n";
 import { fonts } from "../styles/typography";
 import { tokenCache } from "../lib/token-cache";
 
@@ -233,8 +234,8 @@ function MissingEnv({ missing }: { missing: string[] }) {
   return (
     <View style={bootStyles.screen}>
       <View style={bootStyles.card}>
-        <Text style={bootStyles.title}>Missing Environment Variables</Text>
-        <Text style={bootStyles.body}>The following values are required before the app can start:</Text>
+        <Text style={bootStyles.title}>{i18n.t("boot.missingEnvTitle")}</Text>
+        <Text style={bootStyles.body}>{i18n.t("boot.missingEnvBody")}</Text>
         <View style={bootStyles.list}>
         {missing.map((item) => (
             <Text key={item} style={bootStyles.listItem}>
@@ -266,7 +267,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   }, [isLoaded]);
 
   if (!isLoaded && !allowGuestShell) {
-    return <BootScreen message="Loading your account..." />;
+    return <BootScreen message={i18n.t("boot.loadingAccount")} />;
   }
 
   return <>{children}</>;
@@ -320,7 +321,7 @@ function CreateAccessGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!isSignedIn && (pathname === "/workspace" || pathname === "/wizard")) {
-    return <BootScreen message="Secure your account to start creating..." />;
+    return <BootScreen message={i18n.t("boot.secureAccount")} />;
   }
 
   return <>{children}</>;
@@ -362,6 +363,7 @@ export default function RootLayout() {
     Inter: require("../assets/Fonts/InterVariable.ttf"),
     "Inter-Italic": require("../assets/Fonts/InterVariable-Italic.ttf"),
   });
+  const [i18nReady, setI18nReady] = useState(i18n.isInitialized);
   const envReport = useMemo(() => getEnvReport(), []);
   const clerkKey = envReport.values.clerkPublishableKey;
 
@@ -374,7 +376,21 @@ export default function RootLayout() {
   }, [envReport]);
 
   useEffect(() => {
-    if (!fontsLoaded) {
+    let mounted = true;
+
+    void initializeI18n().then(() => {
+      if (mounted) {
+        setI18nReady(true);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!fontsLoaded || !i18nReady) {
       return;
     }
 
@@ -382,9 +398,9 @@ export default function RootLayout() {
       SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
     });
     return () => cancelAnimationFrame(frame);
-  }, [fontsLoaded]);
+  }, [fontsLoaded, i18nReady]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !i18nReady) {
     return null;
   }
 

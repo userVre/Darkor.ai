@@ -4,6 +4,7 @@ import * as MediaLibrary from "expo-media-library";
 import { Image as ImageIcon } from "@/components/material-icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useTranslation } from "react-i18next";
 import * as FileSystem from "expo-file-system/legacy";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -35,6 +36,7 @@ const GRID_MAX_CARD_WIDTH = 190;
 const GRID_VERTICAL_GAP = 28;
 
 export default function ProfileScreen() {
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
@@ -168,12 +170,12 @@ export default function ProfileScreen() {
     const itemStatus = resolveGenerationStatus(item.status, item.imageUri);
 
     if (itemStatus === "processing") {
-      showToast("Work in progress");
+      showToast(t("common.states.workInProgress"));
       return;
     }
 
     if (!hasGenerationImage(item.imageUri)) {
-      Alert.alert("Generation failed", item.errorMessage ?? "This redesign did not finish. Please try again.");
+      Alert.alert(t("common.states.generationFailed"), item.errorMessage ?? t("profile.generationFailedBody"));
       return;
     }
 
@@ -184,12 +186,12 @@ export default function ProfileScreen() {
     const itemStatus = resolveGenerationStatus(item.status, item.imageUri);
 
     if (itemStatus === "processing") {
-      showToast("Work in progress");
+      showToast(t("common.states.workInProgress"));
       return;
     }
 
     if (!hasGenerationImage(item.imageUri)) {
-      Alert.alert("Generation failed", item.errorMessage ?? "This redesign did not finish. Please try again.");
+      Alert.alert(t("common.states.generationFailed"), item.errorMessage ?? t("profile.generationFailedBody"));
       return;
     }
 
@@ -213,7 +215,7 @@ export default function ProfileScreen() {
     try {
       const permission = await MediaLibrary.requestPermissionsAsync();
       if (!permission.granted) {
-        showToast("Photo library permission is required.");
+        showToast(t("common.states.photoPermissionNeeded"));
         return;
       }
 
@@ -221,9 +223,9 @@ export default function ProfileScreen() {
       const download = await FileSystem.downloadAsync(actionItem.imageUri, targetUri);
       await MediaLibrary.saveToLibraryAsync(download.uri);
       await FileSystem.deleteAsync(download.uri, { idempotent: true });
-      showToast("Saved to Gallery");
+      showToast(t("profile.savedToGallery"));
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Unable to save this design.");
+      showToast(error instanceof Error ? error.message : t("profile.unableSave"));
     } finally {
       closeActions();
     }
@@ -237,18 +239,18 @@ export default function ProfileScreen() {
       return;
     }
 
-    Alert.alert("Delete from Board?", "This design will be removed from your board.", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("profile.deleteFromBoardTitle"), t("profile.deleteFromBoardBody"), [
+      { text: t("common.actions.cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("common.actions.delete"),
         style: "destructive",
         onPress: async () => {
           try {
             await deleteGeneration({ anonymousId: anonymousId ?? undefined, id: currentItem.id });
             setCachedBoardItems((current) => current.filter((item) => item.id !== currentItem.id));
-            showToast("Deleted from Board");
+            showToast(t("profile.deletedFromBoard"));
           } catch (error) {
-            showToast(error instanceof Error ? error.message : "Unable to delete this design.");
+            showToast(error instanceof Error ? error.message : t("profile.unableDelete"));
           }
         },
       },
@@ -270,13 +272,13 @@ export default function ProfileScreen() {
           boardItems.length === 0 ? styles.emptyScrollContent : null,
         ]}
       >
-        <Text style={styles.title}>Your Board</Text>
+        <Text style={styles.title}>{t("profile.title")}</Text>
 
         {boardItems.length === 0 ? (
           <View style={[styles.emptyState, { paddingBottom: bottomContentInset }]}>
             <ImageIcon color="#D0D0D0" size={48} strokeWidth={1.9} />
-            <Text style={styles.emptyTitle}>No designs yet</Text>
-            <Text style={styles.emptySubtitle}>Your generated designs will appear here</Text>
+            <Text style={styles.emptyTitle}>{t("profile.emptyTitle")}</Text>
+            <Text style={styles.emptySubtitle}>{t("profile.emptySubtitle")}</Text>
           </View>
         ) : (
           <View style={[styles.grid, { width: gridWidth }]}>

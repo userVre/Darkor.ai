@@ -1,0 +1,106 @@
+{
+  "app": {
+    "name": "Darkor AI"
+  },
+  "common": {
+    "actions": {
+      "continue": "Continuer",
+      "cancel": "Annuler",
+      "close": "Fermer",
+      "delete": "Supprimer",
+      "restore": "Restaurer",
+      "upgrade": "Passer à Pro",
+      "openSettings": "Ouvrir les réglages",
+      "notNow": "Pas maintenant",
+      "takePhoto": "Prendre une photo",
+      "chooseFromGallery": "Choisir depuis la galerie",
+      "addPhoto": "Ajouter une photo",
+      "chooseMediaSource": "Sélectionner la source du média",
+      "examplePhotos": "Photos d'exemple",
+      "seeAll": "Voir tout",
+      "uploadPlus": "Importer +"
+    },
+    "labels": {
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "lastUpdated": "Dernière mise à jour",
+      "step": "Étape {{current}} / {{total}}"
+    },
+    "alerts": {
+      "exitTitle": "Quitter ?",
+      "progressLost": "Votre progression sera perdue."
+    },
+    "states": {
+      "workInProgress": "Création en cours",
+      "generationFailed": "Génération échouée"
+    }
+  },
+  "boot": {
+    "loadingApp": "Chargement de Darkor.ai",
+    "loadingAccount": "Chargement de votre compte...",
+    "checkingPlan": "Vérification de votre formule...",
+    "secureAccount": "Sécurisez votre compte pour commencer à créer...",
+    "missingEnvTitle": "Variables d'environnement manquantes",
+    "missingEnvBody": "Les valeurs suivantes sont requises avant le démarrage de l'application :"
+  },
+  "tabs": {
+    "tools": "Outils",
+    "create": "Créer",
+    "discover": "Découvrir",
+    "profile": "Mon profil"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "heroTitle": "Votre compte est GRATUIT"
+  },
+  "profile": {
+    "title": "Votre tableau",
+    "emptyTitle": "Aucun design pour le moment",
+    "emptySubtitle": "Vos designs générés apparaîtront ici"
+  },
+  "discover": {
+    "title": "Découvrir",
+    "tabs": {
+      "home": "Maison",
+      "garden": "Jardin",
+      "exterior": "Extérieur"
+    }
+  },
+  "auth": {
+    "accountEyebrow": "Compte Darkor.ai",
+    "emailPlaceholder": "vous@entreprise.com",
+    "signIn": {
+      "title": "Se connecter",
+      "cta": "Continuer",
+      "loading": "Connexion...",
+      "appleCta": "Continuer avec Apple",
+      "noAccount": "Pas de compte ?",
+      "createOne": "En créer un"
+    },
+    "signUp": {
+      "title": "Créer un compte",
+      "cta": "Créer un compte",
+      "loading": "Création...",
+      "appleCta": "Continuer avec Apple",
+      "haveAccount": "Vous avez déjà un compte ?",
+      "signInLink": "Se connecter"
+    }
+  },
+  "faq": {
+    "eyebrow": "Support",
+    "title": "FAQ",
+    "description": "Réponses rapides aux questions les plus courantes sur Darkor.ai."
+  },
+  "privacy": {
+    "eyebrow": "Politique",
+    "title": "Politique de confidentialité",
+    "description": "Les informations que nous collectons, la manière dont elles sont utilisées et les contrôles dont vous disposez dans Darkor.ai.",
+    "date": "14 mars 2026"
+  },
+  "terms": {
+    "eyebrow": "Politique",
+    "title": "Conditions d'utilisation",
+    "description": "Les règles, attentes et limites du service pour utiliser Darkor.ai.",
+    "date": "14 mars 2026"
+  }
+}

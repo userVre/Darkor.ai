@@ -1,5 +1,6 @@
 import { X } from "@/components/material-icons";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { fonts } from "../styles/typography";
 
@@ -10,6 +11,7 @@ type CreditLimitModalProps = {
 };
 
 export function CreditLimitModal({ visible, onClose, onUpgrade }: CreditLimitModalProps) {
+  const { t } = useTranslation();
   return (
     <Modal
       visible={visible}
@@ -27,15 +29,14 @@ export function CreditLimitModal({ visible, onClose, onUpgrade }: CreditLimitMod
             </View>
           </Pressable>
 
-          <Text style={styles.title}>Daily Credit Limit</Text>
+          <Text style={styles.title}>{t("creditLimit.title")}</Text>
 
           <Text style={styles.body}>
-            Every account receives a set amount of daily credits. When credits run out, users can wait for the daily
-            reset or choose to upgrade to a PRO plan instead anytime now!
+            {t("creditLimit.body")}
           </Text>
 
           <Pressable accessibilityRole="button" onPress={onUpgrade} style={styles.upgradeButton}>
-            <Text style={styles.upgradeText}>Upgrade</Text>
+            <Text style={styles.upgradeText}>{t("common.actions.upgrade")}</Text>
           </Pressable>
         </View>
       </View>

@@ -12,6 +12,7 @@ import { useLocalSearchParams, useNavigation, usePathname, useRouter } from "exp
 import { FlashList } from "@shopify/flash-list";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { spacing } from "../../styles/spacing";
 import {
   ActivityIndicator,
@@ -80,7 +81,7 @@ import { ExteriorRedesignStepFour } from "../../components/exterior-redesign-ste
 import { LuxPressable } from "../../components/lux-pressable";
 import { PaintWizard } from "../../components/paint-wizard";
 import { ServiceContinueButton } from "../../components/service-continue-button";
-import { GENERATION_STATUS_MESSAGES } from "../../components/service-processing-screen";
+import { useGenerationStatusMessages } from "../../components/service-processing-screen";
 import { ServiceWizardHeader } from "../../components/service-wizard-header";
 import { getStickyStepHeaderMetrics } from "../../components/sticky-step-header";
 import { BeforeAfterSlider } from "../../components/before-after-slider";
@@ -93,7 +94,7 @@ import Logo from "../../components/logo";
 import { captureRef } from "react-native-view-shot";
 import { DS, HAIRLINE, glowShadow } from "../../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../../lib/service-wizard-theme";
-import { FLOOR_WIZARD_EXAMPLE_PHOTOS, PAINT_WIZARD_EXAMPLE_PHOTOS } from "../../lib/wizard-example-photos";
+import { getFloorWizardExamplePhotos, getPaintWizardExamplePhotos } from "../../lib/wizard-example-photos";
 import { canUserGenerate as canUserGenerateNow } from "../../lib/generation-access";
 import { hasGenerationImage, isGenerationFailure, resolveGenerationStatus } from "../../lib/generation-status";
 import {
@@ -304,18 +305,19 @@ const BoardGridCard = memo(function BoardGridCard({
   index: number;
   onPress: (item: BoardRenderItem) => void;
 }) {
+  const { t } = useTranslation();
   const previewImage = item.imageUrl ?? item.originalImageUrl ?? null;
   const resolvedStatus = resolveGenerationStatus(item.status, item.imageUrl);
   const isProcessing = resolvedStatus === "processing";
   const isFailed = resolvedStatus === "failed";
   const showNewBadge = item.isNew && resolvedStatus === "ready";
   const itemServiceType = item.serviceType ?? inferBoardServiceType(item.styleLabel, item.roomLabel);
-  const processingLabel = getProcessingLabel();
+  const processingLabel = getProcessingLabel(t);
   const statusCopy = isProcessing
-    ? getProcessingStatusCopy(itemServiceType)
+    ? getProcessingStatusCopy(t, itemServiceType)
     : isFailed
-      ? "Generation failed. Tap for details."
-      : "Tap to open your design editor";
+      ? t("workspace.board.generationFailedTap")
+      : t("workspace.board.openEditor");
 
   return (
     <View style={{ width, marginBottom: spacing.sm, marginRight: index % 2 === 0 ? 12 : 0 }}>
@@ -371,7 +373,7 @@ const BoardGridCard = memo(function BoardGridCard({
             }}
           >
             <Text style={{ color: "#A4161A", fontSize: 10, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase" }}>
-              New
+              {t("workspace.board.new")}
             </Text>
           </View>
         ) : null}
@@ -507,10 +509,6 @@ const GARDEN_EXAMPLE_PHOTOS: ExamplePhoto[] = [
     source: require("../../assets/media/examples/garden/garden-before-cracked-patio.jpg"),
   },
 ];
-
-const FLOOR_EXAMPLE_PHOTOS: ExamplePhoto[] = FLOOR_WIZARD_EXAMPLE_PHOTOS;
-
-const PAINT_EXAMPLE_PHOTOS: ExamplePhoto[] = PAINT_WIZARD_EXAMPLE_PHOTOS;
 
 const PAINT_SURFACE_OPTIONS: PaintSurfaceOption[] = [
   { value: "Auto", label: "Auto" },
@@ -1592,13 +1590,17 @@ function ModeDifferencePreview({ mode, active }: { mode: ModeOption; active: boo
   );
 }
 
-const SERVICE_LABELS: Record<string, string> = {
-  interior: "Interior Redesign",
-  exterior: "Exterior Redesign",
-  garden: "Garden Redesign",
-  floor: "Floor Restyle",
-  paint: "Smart Wall Paint",
-};
+function getServiceLabel(t: ReturnType<typeof useTranslation>["t"], serviceType: string) {
+  const keyMap: Record<string, string> = {
+    interior: "workspace.services.interior",
+    exterior: "workspace.services.exterior",
+    garden: "workspace.services.garden",
+    floor: "workspace.services.floor",
+    paint: "workspace.services.paint",
+  };
+
+  return t(keyMap[serviceType] ?? "workspace.services.interior");
+}
 
 function inferBoardServiceType(styleLabel?: string | null, roomLabel?: string | null) {
   const combined = `${styleLabel ?? ""} ${roomLabel ?? ""}`.toLowerCase();
@@ -1607,18 +1609,18 @@ function inferBoardServiceType(styleLabel?: string | null, roomLabel?: string | 
   return null;
 }
 
-function getProcessingLabel() {
-  return "AI is crafting your masterpiece...";
+function getProcessingLabel(t: ReturnType<typeof useTranslation>["t"]) {
+  return t("processing.title");
 }
 
-function getProcessingStatusCopy(serviceType?: string | null) {
+function getProcessingStatusCopy(t: ReturnType<typeof useTranslation>["t"], serviceType?: string | null) {
   if (serviceType === "paint") {
-    return "Darkor.ai is isolating the wall planes and layering your selected finish with gallery-grade realism.";
+    return t("workspace.processing.paint");
   }
   if (serviceType === "floor") {
-    return "Darkor.ai is reading perspective, locking the floor plane, and composing the new material with premium detail.";
+    return t("workspace.processing.floor");
   }
-  return "Darkor.ai is preserving the architecture while composing a refined redesign.";
+  return t("workspace.processing.default");
 }
 
 const FloorMaterialPreview = memo(function FloorMaterialPreview({
@@ -1834,12 +1836,13 @@ function hasDraftFlowData(draft: {
   );
 }
 
-const PHOTO_PERMISSION_ALERT_TITLE = "Permission Required";
-const PHOTO_PERMISSION_ALERT_MESSAGE =
-  "Please enable camera/photo access in your system settings to continue.";
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 
 export default function WorkspaceScreen() {
+  const { t, i18n } = useTranslation();
+  const generationStatusMessages = useGenerationStatusMessages();
+  const floorExamplePhotos = useMemo(() => getFloorWizardExamplePhotos(t), [i18n.language, t]);
+  const paintExamplePhotos = useMemo(() => getPaintWizardExamplePhotos(t), [i18n.language, t]);
   const router = useRouter();
   const navigation = useNavigation();
   const pathname = usePathname();
@@ -1958,7 +1961,7 @@ export default function WorkspaceScreen() {
 
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = getServiceType(serviceKey);
-  const serviceLabel = SERVICE_LABELS[serviceType] ?? "Interior Redesign";
+  const serviceLabel = getServiceLabel(t, serviceType);
   const isInteriorService = serviceType === "interior";
   const isExteriorService = serviceType === "exterior";
   const isGardenService = serviceType === "garden";
@@ -2266,7 +2269,7 @@ export default function WorkspaceScreen() {
     setProcessingStatusIndex(0);
     setProcessingProgress(0);
     const statusInterval = setInterval(() => {
-      setProcessingStatusIndex((current) => Math.min(current + 1, GENERATION_STATUS_MESSAGES.length - 1));
+          setProcessingStatusIndex((current) => Math.min(current + 1, generationStatusMessages.length - 1));
     }, 3_000);
     const progressStartedAt = Date.now();
     const progressInterval = setInterval(() => {
@@ -2279,7 +2282,7 @@ export default function WorkspaceScreen() {
       clearInterval(statusInterval);
       clearInterval(progressInterval);
     };
-  }, [activeBoardItem?.id, activeBoardItem?.status, workflowStep]);
+  }, [activeBoardItem?.id, activeBoardItem?.status, generationStatusMessages.length, workflowStep]);
 
   const ratioSpec = useMemo(() => resolveAspectRatio(selectedAspectRatio), [selectedAspectRatio]);
   const wizardColumnGap = 16;
@@ -2337,10 +2340,10 @@ export default function WorkspaceScreen() {
   const examplePhotos = useMemo(() => {
     if (serviceType === "exterior") return EXTERIOR_EXAMPLE_PHOTOS;
     if (serviceType === "garden") return GARDEN_EXAMPLE_PHOTOS;
-    if (serviceType === "floor") return FLOOR_EXAMPLE_PHOTOS;
-    if (serviceType === "paint") return PAINT_EXAMPLE_PHOTOS;
+    if (serviceType === "floor") return floorExamplePhotos;
+    if (serviceType === "paint") return paintExamplePhotos;
     return INTERIOR_EXAMPLE_PHOTOS;
-  }, [serviceType]);
+  }, [floorExamplePhotos, paintExamplePhotos, serviceType]);
   const styleCatalogItems = useMemo(() => {
     if (isExteriorService) {
       return EXTERIOR_STYLE_LIBRARY;
@@ -2974,11 +2977,11 @@ export default function WorkspaceScreen() {
   }, []);
 
   const showPermissionAlert = useCallback(() => {
-    Alert.alert(PHOTO_PERMISSION_ALERT_TITLE, PHOTO_PERMISSION_ALERT_MESSAGE, [
-      { text: "Not now", style: "cancel" },
-      { text: "Open Settings", onPress: openSystemSettings },
+    Alert.alert(t("workspace.permissions.requiredTitle"), t("workspace.permissions.requiredBody"), [
+      { text: t("common.actions.notNow"), style: "cancel" },
+      { text: t("common.actions.openSettings"), onPress: openSystemSettings },
     ]);
-  }, [openSystemSettings]);
+  }, [openSystemSettings, t]);
 
   const ensureMediaLibraryPermission = useCallback(async () => {
     const current = await ImagePicker.getMediaLibraryPermissionsAsync();
@@ -3025,11 +3028,11 @@ export default function WorkspaceScreen() {
   const showSettingsPermissionAlert = useCallback(
     (title: string, message: string) => {
       Alert.alert(title, message, [
-        { text: "Cancel", style: "cancel" },
-        { text: "Open Settings", onPress: openSystemSettings },
+        { text: t("common.actions.cancel"), style: "cancel" },
+        { text: t("common.actions.openSettings"), onPress: openSystemSettings },
       ]);
     },
-    [openSystemSettings],
+    [openSystemSettings, t],
   );
 
   const handleInteriorTakePhoto = useCallback(async () => {
@@ -3044,8 +3047,8 @@ export default function WorkspaceScreen() {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== "granted") {
         showSettingsPermissionAlert(
-          "Camera Access Needed",
-          "Please allow camera access in Settings to take a photo",
+          t("workspace.permissions.cameraAccessTitle"),
+          t("workspace.permissions.cameraAccessBody"),
         );
         return false;
       }
@@ -3061,18 +3064,18 @@ export default function WorkspaceScreen() {
         return false;
       }
 
-      applyPickedAsset(result.assets[0], "Captured Photo");
+      applyPickedAsset(result.assets[0], t("workspace.media.capturedPhoto"));
       return true;
     } catch (error) {
       Alert.alert(
-        "Camera Unavailable",
-        error instanceof Error ? error.message : "We couldn't open the camera. Please try again.",
+        t("workspace.media.cameraUnavailableTitle"),
+        error instanceof Error ? error.message : t("workspace.media.cameraUnavailableBody"),
       );
       return false;
     } finally {
       setIsSelectingPhoto(false);
     }
-  }, [applyPickedAsset, isSelectingPhoto, showSettingsPermissionAlert]);
+  }, [applyPickedAsset, isSelectingPhoto, showSettingsPermissionAlert, t]);
 
   const handleInteriorChooseFromGallery = useCallback(async () => {
     if (isSelectingPhoto) {
@@ -3086,8 +3089,8 @@ export default function WorkspaceScreen() {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         showSettingsPermissionAlert(
-          "Photo Library Access Needed",
-          "Please allow photo library access in Settings",
+          t("workspace.permissions.photoLibraryAccessTitle"),
+          t("workspace.permissions.photoLibraryAccessBody"),
         );
         return false;
       }
@@ -3103,18 +3106,18 @@ export default function WorkspaceScreen() {
         return false;
       }
 
-      applyPickedAsset(result.assets[0], "Uploaded Photo");
+      applyPickedAsset(result.assets[0], t("workspace.media.uploadedPhoto"));
       return true;
     } catch (error) {
       Alert.alert(
-        "Photo Library Unavailable",
-        error instanceof Error ? error.message : "We couldn't open the photo library. Please try again.",
+        t("workspace.media.photoLibraryUnavailableTitle"),
+        error instanceof Error ? error.message : t("workspace.media.photoLibraryUnavailableBody"),
       );
       return false;
     } finally {
       setIsSelectingPhoto(false);
     }
-  }, [applyPickedAsset, isSelectingPhoto, showSettingsPermissionAlert]);
+  }, [applyPickedAsset, isSelectingPhoto, showSettingsPermissionAlert, t]);
 
   const launchPhotoSource = useCallback(
     async (source: PhotoSource) => {
@@ -3149,17 +3152,17 @@ export default function WorkspaceScreen() {
         }
 
         const asset = result.assets[0];
-        applyPickedAsset(asset, source === "camera" ? "Captured Photo" : "Uploaded Photo");
+        applyPickedAsset(asset, source === "camera" ? t("workspace.media.capturedPhoto") : t("workspace.media.uploadedPhoto"));
       } catch (error) {
         Alert.alert(
-          "Photo Intake Unavailable",
-          error instanceof Error ? error.message : "We couldn't open your camera or photo library. Please try again.",
+          t("workspace.media.photoIntakeUnavailableTitle"),
+          error instanceof Error ? error.message : t("workspace.media.photoIntakeUnavailableBody"),
         );
       } finally {
         setIsSelectingPhoto(false);
       }
     },
-    [applyPickedAsset, ensureCameraPermission, ensureMediaLibraryPermission],
+    [applyPickedAsset, ensureCameraPermission, ensureMediaLibraryPermission, t],
   );
 
   const presentPhotoSourceMenu = useCallback(() => {
@@ -3173,9 +3176,9 @@ export default function WorkspaceScreen() {
     if (process.env.EXPO_OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          title: "Add a Photo",
-          message: "Choose how you'd like to add your image.",
-          options: ["Cancel", "Take Photo", "Choose from Gallery"],
+          title: t("common.actions.addPhoto"),
+          message: t("workspace.media.choosePhotoSource"),
+          options: [t("common.actions.cancel"), t("common.actions.takePhoto"), t("common.actions.chooseFromGallery")],
           cancelButtonIndex: 0,
           userInterfaceStyle: "light",
         },
@@ -3193,12 +3196,12 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    Alert.alert("Add a Photo", "Choose how you'd like to add your image.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Take Photo", onPress: () => openSource("camera") },
-      { text: "Choose from Gallery", onPress: () => openSource("library") },
+    Alert.alert(t("common.actions.addPhoto"), t("workspace.media.choosePhotoSource"), [
+      { text: t("common.actions.cancel"), style: "cancel" },
+      { text: t("common.actions.takePhoto"), onPress: () => openSource("camera") },
+      { text: t("common.actions.chooseFromGallery"), onPress: () => openSource("library") },
     ]);
-  }, [isSelectingPhoto, launchPhotoSource]);
+  }, [isSelectingPhoto, launchPhotoSource, t]);
 
   const handlePickPhoto = useCallback(() => {
     if (isSelectingPhoto) {
@@ -3227,15 +3230,15 @@ export default function WorkspaceScreen() {
       await asset.downloadAsync();
       const uri = asset.localUri ?? asset.uri;
       if (!uri) {
-        throw new Error("Example image unavailable.");
+        throw new Error(t("workspace.media.exampleImageUnavailable"));
       }
       commitSelectedImage({ uri, label: example.label });
     } catch (error) {
-      Alert.alert("Example unavailable", error instanceof Error ? error.message : "Please try another image.");
+      Alert.alert(t("workspace.media.exampleUnavailableTitle"), error instanceof Error ? error.message : t("workspace.media.tryAnotherImage"));
     } finally {
       setIsLoadingExample(null);
     }
-  }, [commitSelectedImage]);
+  }, [commitSelectedImage, t]);
 
   const handleClosePaintColorPicker = useCallback(() => {
     triggerHaptic();
@@ -3251,7 +3254,7 @@ export default function WorkspaceScreen() {
   const handleApplyPaintColor = useCallback(() => {
     const normalized = normalizeHexColor(paintColorDraft);
     if (!normalized) {
-      Alert.alert("Invalid color", "Enter a valid 6-digit hex color like #D946EF.");
+      Alert.alert(t("common.alerts.invalidHexTitle"), t("common.alerts.invalidHexBody"));
       return;
     }
     triggerHaptic();
@@ -3425,7 +3428,7 @@ export default function WorkspaceScreen() {
   const handleShare = useCallback(async () => {
     triggerHaptic();
     if (!activeEditorImageUrl) {
-      Alert.alert("Nothing to share", "Generate an image first.");
+      Alert.alert(t("workspace.share.nothingTitle"), t("workspace.share.generateFirst"));
       return;
     }
 
@@ -3433,14 +3436,14 @@ export default function WorkspaceScreen() {
       try {
         setIsSharingResult(true);
         tempUri = await exportCurrentRender();
-        await Share.share({ message: "Designed with Darkor.ai", url: tempUri });
+        await Share.share({ message: t("workspace.share.message"), url: tempUri });
       } catch (error) {
-        Alert.alert("Share failed", error instanceof Error ? error.message : "Please try again.");
+        Alert.alert(t("workspace.share.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
       } finally {
         await cleanupTempFile(tempUri);
         setIsSharingResult(false);
     }
-  }, [activeEditorImageUrl, cleanupTempFile, exportCurrentRender]);
+  }, [activeEditorImageUrl, cleanupTempFile, exportCurrentRender, t]);
 
 
   const handleUpgrade = useCallback(() => {
@@ -3460,7 +3463,7 @@ export default function WorkspaceScreen() {
   const handleDownloadStandard = useCallback(async () => {
     triggerHaptic();
     if (!activeEditorImageUrl) {
-      Alert.alert("Nothing to download", "Generate an image first.");
+      Alert.alert(t("workspace.download.nothingTitle"), t("workspace.download.generateFirst"));
       return;
     }
 
@@ -3474,19 +3477,19 @@ export default function WorkspaceScreen() {
 
         tempUri = await exportCurrentRender();
         await MediaLibrary.saveToLibraryAsync(tempUri);
-        showToast("Saved to your gallery");
+        showToast(t("common.states.savedToGallery"));
     } catch (error) {
-      Alert.alert("Download failed", error instanceof Error ? error.message : "Please try again.");
+      Alert.alert(t("workspace.download.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri);
       setIsDownloading(null);
     }
-  }, [activeEditorImageUrl, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, showToast]);
+  }, [activeEditorImageUrl, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, showToast, t]);
 
   const handleDownloadUltra = useCallback(async () => {
     triggerHaptic();
     if (!activeEditorImageUrl) {
-      Alert.alert("Nothing to download", "Generate an image first.");
+      Alert.alert(t("workspace.download.nothingTitle"), t("workspace.download.generateFirst"));
       return;
     }
 
@@ -3505,14 +3508,14 @@ export default function WorkspaceScreen() {
 
         tempUri = await exportCurrentRender();
         await MediaLibrary.saveToLibraryAsync(tempUri);
-        showToast("Saved to your gallery");
+        showToast(t("common.states.savedToGallery"));
     } catch (error) {
-      Alert.alert("Download failed", error instanceof Error ? error.message : "Please try again.");
+      Alert.alert(t("workspace.download.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri);
       setIsDownloading(null);
     }
-  }, [activeEditorImageUrl, canExport4k, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, handleUpgrade, showToast]);
+  }, [activeEditorImageUrl, canExport4k, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, handleUpgrade, showToast, t]);
 
 
 
@@ -3530,7 +3533,7 @@ export default function WorkspaceScreen() {
     }
 
     if (!diagnostic && !viewerReady) {
-      Alert.alert("Preparing your session", "Your guest profile is still loading. Please try again in a moment.");
+      Alert.alert(t("workspace.generation.preparingSessionTitle"), t("workspace.generation.preparingSessionBody"));
       return;
     }
 
@@ -3540,16 +3543,16 @@ export default function WorkspaceScreen() {
 
     if (isFloorService) {
       if (!selectedImage || !selectedRoom || !selectedStyle || !selectedFinishOption || !selectedFloorMaterialOption) {
-        Alert.alert("Complete the steps", "Add a room photo, select your space type, curate a material, and choose a finish before continuing.");
+        Alert.alert(t("workspace.generation.completeStepsTitle"), t("workspace.generation.completeFloorBody"));
         return;
       }
     } else if (isPaintService) {
       if (!selectedImage || !selectedRoom || !selectedStyle || !selectedFinishOption || !selectedWallColorOption) {
-        Alert.alert("Complete the steps", "Add a room photo, select your space type, curate a wall color, and choose a finish before continuing.");
+        Alert.alert(t("workspace.generation.completeStepsTitle"), t("workspace.generation.completePaintBody"));
         return;
       }
     } else if (!selectedImage || !selectedRoom || !selectedStyle || !selectedPaletteOrDefault || !selectedModeOrDefault) {
-      Alert.alert("Complete the steps", "Please finish the previous steps first.");
+      Alert.alert(t("workspace.generation.completeStepsTitle"), t("workspace.generation.completePreviousSteps"));
       return;
     }
 
@@ -3564,7 +3567,7 @@ export default function WorkspaceScreen() {
         return;
       }
 
-      showToast(generationAccess.message || "Limit Reached");
+      showToast(generationAccess.message || t("workspace.generation.limitReached"));
       return;
     }
 
@@ -3752,7 +3755,7 @@ export default function WorkspaceScreen() {
   const handleContinue = useCallback(() => {
     triggerHaptic();
     if (!canContinue) {
-      Alert.alert("Complete this step", "Please make a selection to continue.");
+      Alert.alert(t("common.alerts.completeStepTitle"), t("common.alerts.makeSelection"));
       return;
     }
 
@@ -3766,7 +3769,7 @@ export default function WorkspaceScreen() {
           openGenerationPaywall();
           return;
         }
-        showToast(generationAccess.message || "Limit Reached");
+        showToast(generationAccess.message || t("workspace.generation.limitReached"));
         return;
       }
       void handleGenerate();
@@ -3777,11 +3780,11 @@ export default function WorkspaceScreen() {
     startTransition(() => {
       setWorkflowStep((prev) => Math.min(prev + 1, 3));
     });
-  }, [canContinue, diagnostic, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, handleGenerate, openAuthWall, openGenerationPaywall, showToast, workflowStep]);
+  }, [canContinue, diagnostic, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, handleGenerate, openAuthWall, openGenerationPaywall, showToast, workflowStep, t]);
 
   const handleContinueFromGardenPhotoStep = useCallback(() => {
     if (!selectedImage) {
-      Alert.alert("Complete this step", "Please add a photo to continue.");
+      Alert.alert(t("common.alerts.completeStepTitle"), t("common.alerts.addPhotoToContinue"));
       return;
     }
 
@@ -3795,7 +3798,7 @@ export default function WorkspaceScreen() {
     startTransition(() => {
       setWorkflowStep(2);
     });
-  }, [selectedImage, setDraftRoom]);
+  }, [selectedImage, setDraftRoom, t]);
 
   const handleSelectRoom = useCallback(
     (value: string) => {
@@ -4009,12 +4012,12 @@ export default function WorkspaceScreen() {
     const resultImageUrl = item.imageUrl ?? null;
 
     if (itemStatus === "processing") {
-      showToast("Work in progress");
+      showToast(t("common.states.workInProgress"));
       return;
     }
 
     if (!hasGenerationImage(resultImageUrl)) {
-      Alert.alert("Generation failed", item.errorMessage ?? "This redesign did not finish. Please try generating again.");
+      Alert.alert(t("workspace.board.generationFailedTitle"), item.errorMessage ?? t("workspace.board.generationFailedBody"));
       return;
     }
 
@@ -4292,8 +4295,8 @@ export default function WorkspaceScreen() {
     const expectationPreviewCopy = isLeanGenerationService
       ? "A polished exterior concept with premium detailing, realistic materials, and architectural coherence."
       : "A polished, photoreal interior concept with elevated materials, refined lighting, and editorial-level realism.";
-    const stepOneTitle = isFloorService ? "Floor Restyle" : isPaintService ? "Add a Photo" : isGardenService ? "Add a Garden Photo" : isExteriorService ? "Add an Exterior Photo" : "Add a Photo";
-    const emptyUploadTitle = isFloorService ? "Add Floor Photo" : isPaintService ? "Add a Photo" : isGardenService ? "Start Your Garden Redesign" : isExteriorService ? "Start Exterior Redesign" : "Start Redesigning";
+    const stepOneTitle = isFloorService ? getServiceLabel(t, "floor") : isPaintService ? t("common.actions.addPhoto") : isGardenService ? t("workspace.stepOne.gardenPhotoTitle") : isExteriorService ? t("workspace.stepOne.exteriorPhotoTitle") : t("common.actions.addPhoto");
+    const emptyUploadTitle = isFloorService ? t("workspace.stepOne.floorPhotoTitle") : isPaintService ? t("common.actions.addPhoto") : isGardenService ? t("workspace.stepOne.gardenEmptyTitle") : isExteriorService ? t("workspace.stepOne.exteriorEmptyTitle") : t("wizard.stepOne.emptyTitle");
     const stepOneDescription = isGardenService
       ? "Upload an outdoor scene so Darkor.ai can elevate the landscape with a composed, architectural point of view."
       : isFloorService
@@ -4652,7 +4655,7 @@ export default function WorkspaceScreen() {
                                     maxWidth: 232,
                                   }}
                                 >
-                                  Tap to add a photo from your camera or library
+                                  {t("workspace.stepOne.tapToAddPhoto")}
                                 </Text>
                               </View>
                             </View>
@@ -5987,12 +5990,12 @@ export default function WorkspaceScreen() {
                   }
 
                   if (isStyleStep && !selectedStyle) {
-                    showToast("Tap a card to select your style.");
+                    showToast(t("workspace.style.tapToSelect"));
                     return;
                   }
 
                   if (isGenerationReviewStep && !isContinueActive) {
-                    showToast(continueHint ?? "Complete this step to continue.");
+                    showToast(continueHint ?? t("workspace.generation.completeStepToContinue"));
                     return;
                   }
 
@@ -6252,21 +6255,21 @@ export default function WorkspaceScreen() {
     const showSliderComparison = Boolean(editorImageUrl && beforeImageUrl);
     const isEditorProcessing = activeBoardItem?.status === "processing";
     const isEditorFailed = isGenerationFailure(activeBoardItem?.status, activeBoardItem?.imageUrl);
-    const editorTitle = editorServiceType === "floor" ? "Floor Restyle" : editorServiceType === "paint" ? "Smart Wall Paint" : editorStyleLabel + " " + editorRoomLabel;
+    const editorTitle = editorServiceType === "floor" ? getServiceLabel(t, "floor") : editorServiceType === "paint" ? getServiceLabel(t, "paint") : editorStyleLabel + " " + editorRoomLabel;
     const editorSubtitle = editorServiceType === "floor"
       ? isEditorProcessing
-        ? getProcessingLabel()
-        : "Material-led floor transformation with a live before and after slider."
+        ? getProcessingLabel(t)
+        : t("workspace.editor.floorReady")
       : editorServiceType === "paint"
         ? isEditorProcessing
-          ? getProcessingLabel()
-          : "Wall recoloring tuned to your selected finish and room lighting."
+          ? getProcessingLabel(t)
+          : t("workspace.editor.paintReady")
       : isEditorProcessing
-        ? getProcessingLabel()
-        : "Curated inside your premium Darkor board.";
+        ? getProcessingLabel(t)
+        : t("workspace.editor.defaultReady");
     const editorImageSource = editorImageUrl ? { uri: editorImageUrl } : null;
     const beforeImageSource = beforeImageUrl ? { uri: beforeImageUrl } : null;
-    const processingStatuses = GENERATION_STATUS_MESSAGES;
+  const processingStatuses = generationStatusMessages;
 
     if (!activeBoardItem) {
       return (
@@ -6684,10 +6687,10 @@ export default function WorkspaceScreen() {
                     >
                       <ActivityIndicator size="small" color="#ffffff" />
                       <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", textAlign: "left" }}>
-                        {getProcessingLabel()}
+                        {getProcessingLabel(t)}
                       </Text>
                       <Text style={{ color: "#d4d4d8", fontSize: 13, lineHeight: 20, textAlign: "left" }}>
-                        {getProcessingStatusCopy(editorServiceType)}
+                        {getProcessingStatusCopy(t, editorServiceType)}
                       </Text>
                     </View>
                   </View>
@@ -6708,9 +6711,9 @@ export default function WorkspaceScreen() {
                       paddingVertical: spacing.md,
                     }}
                   >
-                    <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>Generation failed</Text>
+                    <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>{t("workspace.board.generationFailedTitle")}</Text>
                     <Text style={{ color: "#a1a1aa", fontSize: 13, lineHeight: 20, marginTop: spacing.xs }}>
-                      {activeBoardItem?.errorMessage ?? "Please go back and try another prompt."}
+                      {activeBoardItem?.errorMessage ?? t("workspace.board.tryAnotherPrompt")}
                     </Text>
                   </View>
                 ) : null}

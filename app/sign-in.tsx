@@ -3,6 +3,7 @@ import { useSignIn } from "@clerk/expo/legacy";
 import { Link, type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft } from "@/components/material-icons";
 import { fonts } from "../styles/typography";
@@ -14,6 +15,7 @@ import { triggerHaptic } from "../lib/haptics";
 
 export default function SignInScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -30,14 +32,14 @@ export default function SignInScreen() {
     try {
       const completeSignIn = await signIn.create({ identifier: email.trim(), password });
       if (completeSignIn.status !== "complete") {
-        Alert.alert("Sign in", "Additional verification is required for this account.");
+        Alert.alert(t("auth.signIn.additionalVerificationTitle"), t("auth.signIn.additionalVerificationBody"));
         return;
       }
       await setActive({ session: completeSignIn.createdSessionId });
       router.replace(nextRoute as Href);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Sign in failed";
-      Alert.alert("Sign in failed", message);
+      const message = error instanceof Error ? error.message : t("auth.signIn.errorFallback");
+      Alert.alert(t("auth.signIn.errorTitle"), message);
     } finally {
       setLoading(false);
     }
@@ -52,8 +54,8 @@ export default function SignInScreen() {
         router.replace(nextRoute as Href);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Apple sign-in failed";
-      Alert.alert("Apple sign-in failed", message);
+      const message = error instanceof Error ? error.message : t("auth.signIn.appleErrorFallback");
+      Alert.alert(t("auth.signIn.errorTitle"), message);
     } finally {
       setAppleLoading(false);
     }
@@ -85,19 +87,17 @@ export default function SignInScreen() {
         </LuxPressable>
 
         <View style={styles.hero}>
-          <Text style={styles.eyebrow}>Darkor.ai Account</Text>
-          <Text style={styles.title}>Sign in</Text>
-          <Text style={styles.subtitle}>
-            Access your saved boards, credits, purchases, and redesign history with the same calm, high-contrast workspace.
-          </Text>
+          <Text style={styles.eyebrow}>{t("auth.accountEyebrow")}</Text>
+          <Text style={styles.title}>{t("auth.signIn.title")}</Text>
+          <Text style={styles.subtitle}>{t("auth.signIn.subtitle")}</Text>
         </View>
 
         <View style={styles.card}>
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>{t("common.labels.email")}</Text>
             <TextInput
               style={styles.input}
-              placeholder="you@company.com"
+              placeholder={t("auth.emailPlaceholder")}
               placeholderTextColor={DS.colors.textTertiary}
               autoCapitalize="none"
               keyboardType="email-address"
@@ -107,10 +107,10 @@ export default function SignInScreen() {
           </View>
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>{t("common.labels.password")}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your password"
+              placeholder={t("auth.signIn.passwordPlaceholder")}
               placeholderTextColor={DS.colors.textTertiary}
               secureTextEntry
               value={password}
@@ -120,22 +120,22 @@ export default function SignInScreen() {
 
           <LuxPressable onPress={() => void handleSignIn()} style={styles.fullWidth} disabled={loading} glowColor={DS.colors.accentGlowStrong}>
             <View style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>{loading ? "Signing in..." : "Continue"}</Text>
+              <Text style={styles.primaryButtonText}>{loading ? t("auth.signIn.loading") : t("auth.signIn.cta")}</Text>
             </View>
           </LuxPressable>
 
           <LuxPressable onPress={() => void handleAppleSignIn()} style={styles.fullWidth} disabled={appleLoading}>
             <View style={styles.secondaryButton}>
               <Text style={styles.appleIcon}>{"\uF8FF"}</Text>
-              <Text style={styles.secondaryButtonText}>{appleLoading ? "Connecting..." : "Continue with Apple"}</Text>
+              <Text style={styles.secondaryButtonText}>{appleLoading ? t("common.actions.connect") : t("auth.signIn.appleCta")}</Text>
             </View>
           </LuxPressable>
         </View>
 
         <Text style={styles.footerText}>
-          No account?{" "}
+          {t("auth.signIn.noAccount")}{" "}
           <Link href={{ pathname: "/sign-up", params: { returnTo: nextRoute } }} style={styles.footerLink}>
-            Create one
+            {t("auth.signIn.createOne")}
           </Link>
         </Text>
       </ScrollView>

@@ -1,6 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
@@ -65,6 +66,7 @@ export function InteriorRedesignStepTwo({
   onContinue,
   onExit,
 }: InteriorRedesignStepTwoProps) {
+  const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const headerMetrics = getDesignStepHeaderMetrics(insets.top);
@@ -102,8 +104,8 @@ export function InteriorRedesignStepTwo({
       <StatusBar style="dark" />
 
       <DesignStepHeader
-        backAccessibilityLabel="Go to the previous step"
-        closeAccessibilityLabel="Go back to step 1"
+        backAccessibilityLabel={t("wizard.headers.previousStep")}
+        closeAccessibilityLabel={t("wizard.headers.close")}
         creditCount={creditCount}
         horizontalInset={sideInset}
         onBack={onBack}
@@ -121,9 +123,9 @@ export function InteriorRedesignStepTwo({
           paddingBottom: bottomContainerHeight + insets.bottom + scaleValue(36, layoutScale),
         }}
       >
-        <Text style={[styles.title, { marginLeft: titleInset }]}>Choose Room</Text>
+        <Text style={[styles.title, { marginLeft: titleInset }]}>{t("wizard.interior.stepTwoTitle")}</Text>
         <Text style={[styles.subtitle, { marginLeft: titleInset, marginTop: subtitleTopGap, marginRight: titleInset }]}>
-          Select a room to design and see it transformed in your chosen style.
+          {t("wizard.interior.stepTwoSubtitle")}
         </Text>
 
         <View style={{ marginTop: gridTopGap }}>
@@ -187,7 +189,7 @@ export function InteriorRedesignStepTwo({
               },
             ]}
           >
-            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>Continue</Text>
+            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>{t("common.actions.continue")}</Text>
           </Pressable>
         </View>
       </View>

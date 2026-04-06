@@ -11,6 +11,7 @@ import { AnimatePresence, MotiView } from "moti";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Image as NativeImage, Linking, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { useTranslation } from "react-i18next";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle as SvgCircle, Defs, G, Mask as SvgMask, Path as SvgPath, Rect } from "react-native-svg";
@@ -46,11 +47,11 @@ import {
   resolveGuestWizardViewerId,
 } from "../lib/guest-testing";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
-import { PAINT_WIZARD_EXAMPLE_PHOTOS } from "../lib/wizard-example-photos";
+import { getPaintWizardExamplePhotos } from "../lib/wizard-example-photos";
 import { PaintIntroScreen, type PaintIntroExamplePhoto } from "./paint-intro-screen";
 import { useProSuccess } from "./pro-success-context";
 import { ServiceContinueButton } from "./service-continue-button";
-import { GENERATION_STATUS_MESSAGES, ServiceProcessingScreen } from "./service-processing-screen";
+import { ServiceProcessingScreen, useGenerationStatusMessages } from "./service-processing-screen";
 import { ServiceWizardHeader } from "./service-wizard-header";
 import { ServiceWizardStepScreen } from "./service-wizard-shared";
 import { getStickyStepHeaderMetrics } from "./sticky-step-header";
@@ -456,6 +457,7 @@ const FinishCard = memo(function FinishCard({
 });
 
 export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { presetStyle, startStep } = useLocalSearchParams<{ presetStyle?: string; startStep?: string }>();
   const insets = useSafeAreaInsets();
@@ -573,6 +575,8 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const canGenerate = Boolean(selectedImage && hasMask && selectedColorValue && !isGenerating);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
+  const paintWizardExamplePhotos = useMemo(() => getPaintWizardExamplePhotos(t), [i18n.language, t]);
+  const generationStatusMessages = useGenerationStatusMessages();
   const stickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);
   const selectionLayoutScale = Math.min(width / SELECTION_REFERENCE_WIDTH, height / SELECTION_REFERENCE_HEIGHT, 1);
   const selectionTitleTop = stickyHeaderMetrics.contentOffset;
@@ -1427,7 +1431,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       {step === "intake" ? (
         <PaintIntroScreen
           creditCount={availableCredits}
-          examples={PAINT_WIZARD_EXAMPLE_PHOTOS}
+          examples={paintWizardExamplePhotos}
           onTakePhoto={() => handleSelectMedia("camera")}
           onChooseFromGallery={() => handleSelectMedia("library")}
           onExamplePress={handleSelectExample}
@@ -2040,7 +2044,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       {step === "processing" ? (
         <ServiceProcessingScreen
           imageUri={selectedImage?.uri ?? null}
-          subtitlePhrases={GENERATION_STATUS_MESSAGES}
+          subtitlePhrases={generationStatusMessages}
           onCancel={() => {
             void handleCancelGeneration();
           }}

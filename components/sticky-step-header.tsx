@@ -1,5 +1,6 @@
 import { ArrowLeft, Diamond, X } from "@/components/material-icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { fonts } from "../styles/typography";
@@ -51,6 +52,7 @@ export function StickyStepHeader({
   backAccessibilityLabel = "Go back",
   closeAccessibilityLabel = "Close",
 }: StickyStepHeaderProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const metrics = getStickyStepHeaderMetrics(insets.top);
   const safeStep = Math.max(1, Math.min(step, totalSteps));
@@ -88,7 +90,7 @@ export function StickyStepHeader({
           </View>
 
           <View pointerEvents="none" style={styles.stepOverlay}>
-            <Text style={styles.stepText}>{`Step ${safeStep}/${totalSteps}`}</Text>
+            <Text style={styles.stepText}>{t("common.labels.step", { current: safeStep, total: totalSteps })}</Text>
           </View>
 
           <View style={styles.rightGroup}>

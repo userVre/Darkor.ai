@@ -4,6 +4,7 @@ import { Pressable, type PressableProps } from "react-native";
 import { Tabs, useRouter } from "expo-router";
 import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "@/components/material-icons";
 import { useAuth } from "@clerk/expo";
+import { useTranslation } from "react-i18next";
 import { fonts } from "../../styles/typography";
 import { spacing } from "../../styles/spacing";
 import { useTheme } from "@/styles/theme";
@@ -71,6 +72,7 @@ function TabIcon({
 export default function TabsLayout() {
   const colors = useTheme();
   const router = useRouter();
+  const { t } = useTranslation();
   const { isFlowActive } = useFlowUI();
   const { isSignedIn } = useAuth();
   const canOpenCreateTab = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
@@ -127,14 +129,14 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Tools",
+          title: t("tabs.tools"),
           tabBarIcon: ({ color, focused }) => <TabIcon Icon={LayoutGrid} color={color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="workspace"
         options={{
-          title: "Create",
+          title: t("tabs.create"),
           tabBarIcon: ({ color, focused }) => <TabIcon Icon={Sparkles} color={color} size={24} focused={focused} />,
           tabBarButton: (props) => (
             <TabBarButton
@@ -156,14 +158,14 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="gallery"
         options={{
-          title: "Discover",
+          title: t("tabs.discover"),
           tabBarIcon: ({ color, focused }) => <TabIcon Icon={Compass} color={color} size={24} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: "My Profile",
+          title: t("tabs.profile"),
           tabBarIcon: ({ color, focused }) => <TabIcon Icon={UserCircle2} color={color} size={24} focused={focused} />,
         }}
       />

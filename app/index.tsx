@@ -2,6 +2,7 @@ import { useQuery } from "convex/react";
 import { Redirect } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { spacing } from "../styles/spacing";
 
 import { useViewerSession } from "../components/viewer-session-context";
@@ -31,6 +32,7 @@ function LaunchScreen({ message }: { message: string }) {
 }
 
 export default function Index() {
+  const { t } = useTranslation();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
   const [gateTimedOut, setGateTimedOut] = useState(false);
@@ -60,7 +62,7 @@ export default function Index() {
   }
 
   if (!viewerReady || me === undefined) {
-    return <LaunchScreen message="Checking your plan..." />;
+    return <LaunchScreen message={t("boot.checkingPlan")} />;
   }
 
   if ((me?.plan ?? "free") === "free" && !launchPaywallDismissed) {

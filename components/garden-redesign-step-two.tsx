@@ -1,6 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { triggerHaptic } from "../lib/haptics";
@@ -49,6 +50,7 @@ export function GardenRedesignStepTwo({
   onContinue,
   onExit,
 }: GardenRedesignStepTwoProps) {
+  const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const headerMetrics = getDesignStepHeaderMetrics(insets.top);
@@ -83,8 +85,8 @@ export function GardenRedesignStepTwo({
       <StatusBar style="dark" />
 
       <DesignStepHeader
-        backAccessibilityLabel="Go to the previous step"
-        closeAccessibilityLabel="Go back to step 1"
+        backAccessibilityLabel={t("wizard.headers.previousStep")}
+        closeAccessibilityLabel={t("wizard.headers.close")}
         horizontalInset={sideInset}
         onBack={onBack}
         onClose={onExit}
@@ -101,9 +103,9 @@ export function GardenRedesignStepTwo({
           paddingBottom: bottomContainerHeight + insets.bottom + scaleValue(36, layoutScale),
         }}
       >
-        <Text style={[stylesSheet.title, { marginLeft: headerInset }]}>Select Style</Text>
+        <Text style={[stylesSheet.title, { marginLeft: headerInset }]}>{t("wizard.garden.stepTwoTitle")}</Text>
         <Text style={[stylesSheet.subtitle, { marginLeft: headerInset, marginTop: subtitleTopGap, marginRight: headerInset }]}>
-          Select your desired design style to start creating your ideal garden
+          {t("wizard.garden.stepTwoSubtitle")}
         </Text>
 
         <View style={stylesSheet.grid}>
@@ -174,7 +176,7 @@ export function GardenRedesignStepTwo({
               },
             ]}
           >
-            <Text style={[stylesSheet.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>Continue</Text>
+            <Text style={[stylesSheet.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>{t("common.actions.continue")}</Text>
           </Pressable>
         </View>
       </View>

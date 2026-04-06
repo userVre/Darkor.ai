@@ -1,5 +1,6 @@
 import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "@/components/material-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { fonts } from "../styles/typography";
 
@@ -38,12 +39,13 @@ export function HomeToolsBottomNav({
   onDiscoverPress,
   onProfilePress,
 }: HomeToolsBottomNavProps) {
+  const { t } = useTranslation();
   return (
     <View style={styles.bar}>
-      <NavItem icon={LayoutGrid} label="Tools" active={activeTab === "tools"} left={44} onPress={onToolsPress} />
-      <NavItem icon={Sparkles} label="Create" active={activeTab === "create"} left={132} onPress={onCreatePress} />
-      <NavItem icon={Compass} label="Discover" active={activeTab === "discover"} left={224} onPress={onDiscoverPress} />
-      <NavItem icon={UserCircle2} label="My Profile" active={activeTab === "profile"} right={48} onPress={onProfilePress} />
+      <NavItem icon={LayoutGrid} label={t("tabs.tools")} active={activeTab === "tools"} left={44} onPress={onToolsPress} />
+      <NavItem icon={Sparkles} label={t("tabs.create")} active={activeTab === "create"} left={132} onPress={onCreatePress} />
+      <NavItem icon={Compass} label={t("tabs.discover")} active={activeTab === "discover"} left={224} onPress={onDiscoverPress} />
+      <NavItem icon={UserCircle2} label={t("tabs.profile")} active={activeTab === "profile"} right={48} onPress={onProfilePress} />
     </View>
   );
 }

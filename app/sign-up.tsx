@@ -3,6 +3,7 @@ import { useSignUp } from "@clerk/expo/legacy";
 import { Link, type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft } from "@/components/material-icons";
 import { fonts } from "../styles/typography";
@@ -14,6 +15,7 @@ import { triggerHaptic } from "../lib/haptics";
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const { signUp, isLoaded } = useSignUp();
@@ -30,11 +32,11 @@ export default function SignUpScreen() {
     try {
       await signUp.create({ emailAddress: email.trim(), password });
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-      Alert.alert("Verify email", "Check your inbox for the verification code, then sign in.");
+      Alert.alert(t("auth.signUp.verifyTitle"), t("auth.signUp.verifyBody"));
       router.replace({ pathname: "/sign-in", params: { returnTo: nextRoute } });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Sign up failed";
-      Alert.alert("Sign up failed", message);
+      const message = error instanceof Error ? error.message : t("auth.signUp.errorFallback");
+      Alert.alert(t("auth.signUp.errorTitle"), message);
     } finally {
       setLoading(false);
     }
@@ -49,8 +51,8 @@ export default function SignUpScreen() {
         router.replace(nextRoute as Href);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Apple sign-up failed";
-      Alert.alert("Apple sign-up failed", message);
+      const message = error instanceof Error ? error.message : t("auth.signUp.appleErrorFallback");
+      Alert.alert(t("auth.signUp.errorTitle"), message);
     } finally {
       setAppleLoading(false);
     }
@@ -82,19 +84,17 @@ export default function SignUpScreen() {
         </LuxPressable>
 
         <View style={styles.hero}>
-          <Text style={styles.eyebrow}>Darkor.ai Account</Text>
-          <Text style={styles.title}>Create account</Text>
-          <Text style={styles.subtitle}>
-            Start with a cleaner premium shell, then carry your redesigns, subscriptions, and saved boards across devices.
-          </Text>
+          <Text style={styles.eyebrow}>{t("auth.accountEyebrow")}</Text>
+          <Text style={styles.title}>{t("auth.signUp.title")}</Text>
+          <Text style={styles.subtitle}>{t("auth.signUp.subtitle")}</Text>
         </View>
 
         <View style={styles.card}>
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>{t("common.labels.email")}</Text>
             <TextInput
               style={styles.input}
-              placeholder="you@company.com"
+              placeholder={t("auth.emailPlaceholder")}
               placeholderTextColor={DS.colors.textTertiary}
               autoCapitalize="none"
               keyboardType="email-address"
@@ -104,10 +104,10 @@ export default function SignUpScreen() {
           </View>
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>{t("common.labels.password")}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Create a secure password"
+              placeholder={t("auth.signUp.passwordPlaceholder")}
               placeholderTextColor={DS.colors.textTertiary}
               secureTextEntry
               value={password}
@@ -117,22 +117,22 @@ export default function SignUpScreen() {
 
           <LuxPressable onPress={() => void handleSignUp()} style={styles.fullWidth} disabled={loading} glowColor={DS.colors.accentGlowStrong}>
             <View style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>{loading ? "Creating..." : "Create account"}</Text>
+              <Text style={styles.primaryButtonText}>{loading ? t("auth.signUp.loading") : t("auth.signUp.cta")}</Text>
             </View>
           </LuxPressable>
 
           <LuxPressable onPress={() => void handleAppleSignUp()} style={styles.fullWidth} disabled={appleLoading}>
             <View style={styles.secondaryButton}>
               <Text style={styles.appleIcon}>{"\uF8FF"}</Text>
-              <Text style={styles.secondaryButtonText}>{appleLoading ? "Connecting..." : "Continue with Apple"}</Text>
+              <Text style={styles.secondaryButtonText}>{appleLoading ? t("common.actions.connect") : t("auth.signUp.appleCta")}</Text>
             </View>
           </LuxPressable>
         </View>
 
         <Text style={styles.footerText}>
-          Already have an account?{" "}
+          {t("auth.signUp.haveAccount")}{" "}
           <Link href={{ pathname: "/sign-in", params: { returnTo: nextRoute } }} style={styles.footerLink}>
-            Sign in
+            {t("auth.signUp.signInLink")}
           </Link>
         </Text>
       </ScrollView>
