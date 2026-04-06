@@ -779,33 +779,6 @@ const STYLE_LIBRARY: StyleLibraryItem[] = [
 
 const STYLE_OPTIONS = STYLE_LIBRARY.map((style) => style.title);
 
-const INTERIOR_STEP3_THUMBNAIL_MAP: Record<string, number> = {
-  modern: require("../../assets/media/step3-thumbnails/interior/modern.jpg"),
-  luxury: require("../../assets/media/step3-thumbnails/interior/luxury.jpg"),
-  japandi: require("../../assets/media/step3-thumbnails/interior/japandi.jpg"),
-  cyberpunk: require("../../assets/media/step3-thumbnails/interior/cyberpunk.jpg"),
-  tropical: require("../../assets/media/step3-thumbnails/interior/tropical.jpg"),
-  minimalist: require("../../assets/media/step3-thumbnails/interior/minimalist.jpg"),
-  scandinavian: require("../../assets/media/step3-thumbnails/interior/scandinavian.jpg"),
-  bohemian: require("../../assets/media/step3-thumbnails/interior/bohemian.jpg"),
-  midcentury: require("../../assets/media/step3-thumbnails/interior/midcentury.jpg"),
-  "art-deco": require("../../assets/media/step3-thumbnails/interior/art-deco.jpg"),
-  coastal: require("../../assets/media/step3-thumbnails/interior/coastal.jpg"),
-  rustic: require("../../assets/media/step3-thumbnails/interior/rustic.jpg"),
-  vintage: require("../../assets/media/step3-thumbnails/interior/vintage.jpg"),
-  mediterranean: require("../../assets/media/step3-thumbnails/interior/mediterranean.jpg"),
-  glam: require("../../assets/media/step3-thumbnails/interior/glam.jpg"),
-  "coastal-retreat": require("../../assets/media/step3-thumbnails/interior/coastal-retreat.jpg"),
-  "rustic-manor": require("../../assets/media/step3-thumbnails/interior/rustic-manor.jpg"),
-  "hollywood-regency": require("../../assets/media/step3-thumbnails/interior/hollywood-regency.jpg"),
-  "neo-classic": require("../../assets/media/step3-thumbnails/interior/neo-classic.jpg"),
-  "shabby-chic": require("../../assets/media/step3-thumbnails/interior/shabby-chic.jpg"),
-  "french-country": require("../../assets/media/step3-thumbnails/interior/french-country.jpg"),
-  brutalist: require("../../assets/media/step3-thumbnails/interior/brutalist.jpg"),
-  "hollywood-regency-noir": require("../../assets/media/step3-thumbnails/interior/hollywood-regency-noir.jpg"),
-  "art-nouveau": require("../../assets/media/step3-thumbnails/interior/art-nouveau.jpg"),
-};
-
 const EXTERIOR_STYLE_LIBRARY: ExteriorStyleItem[] = [
   {
     id: "modern",
@@ -2417,7 +2390,7 @@ export default function WorkspaceScreen() {
       STYLE_LIBRARY.map((style) => ({
         id: style.id,
         title: style.title,
-        image: INTERIOR_STEP3_THUMBNAIL_MAP[style.id] ?? style.image,
+        image: style.image,
       })),
     [],
   );
@@ -2493,47 +2466,47 @@ export default function WorkspaceScreen() {
       {
         id: "custom",
         title: "Custom",
-        image: require("../../assets/media/step3-thumbnails/exterior/custom.jpg"),
+        image: require("../../assets/media/styles/style-luxury.jpg"),
       },
       {
         id: "art-deco",
         title: "Art Deco",
-        image: require("../../assets/media/step3-thumbnails/exterior/art-deco.jpg"),
+        image: require("../../assets/media/styles/style-art-deco.jpg"),
       },
       {
         id: "brutalist",
         title: "Brutalist",
-        image: require("../../assets/media/step3-thumbnails/exterior/brutalist.jpg"),
+        image: require("../../assets/media/styles/style-exterior-brutalist.jpg"),
       },
       {
         id: "chinese",
         title: "Chinese",
-        image: require("../../assets/media/step3-thumbnails/exterior/chinese.jpg"),
+        image: require("../../assets/media/styles/style-art-nouveau.jpg"),
       },
       {
         id: "cottage",
         title: "Cottage",
-        image: require("../../assets/media/step3-thumbnails/exterior/cottage.jpg"),
+        image: require("../../assets/media/styles/style-rustic-alt.jpg"),
       },
       {
         id: "farm-house",
         title: "Farm House",
-        image: require("../../assets/media/step3-thumbnails/exterior/farm-house.jpg"),
+        image: require("../../assets/media/styles/style-rustic.jpg"),
       },
       {
         id: "french",
         title: "French",
-        image: require("../../assets/media/step3-thumbnails/exterior/french.jpg"),
+        image: require("../../assets/media/styles/style-french-country.jpg"),
       },
       {
         id: "gothic",
         title: "Gothic",
-        image: require("../../assets/media/step3-thumbnails/exterior/gothic.jpg"),
+        image: require("../../assets/media/styles/style-exterior-gothic.jpg"),
       },
       {
         id: "italianate",
         title: "Italianate",
-        image: require("../../assets/media/step3-thumbnails/exterior/italianate.jpg"),
+        image: require("../../assets/media/styles/style-neo-classic-alt.jpg"),
       },
     ],
     [],
@@ -2570,47 +2543,47 @@ export default function WorkspaceScreen() {
       {
         id: "custom",
         title: "Custom",
-        image: require("../../assets/media/step3-thumbnails/garden/custom.jpg"),
+        image: require("../../assets/media/discover/garden/garden-backyard.jpg"),
       },
       {
         id: "christmas",
         title: "Christmas",
-        image: require("../../assets/media/step3-thumbnails/garden/christmas.jpg"),
+        image: require("../../assets/media/discover/garden/garden-villa-entry.jpg"),
       },
       {
         id: "modern",
         title: "Modern",
-        image: require("../../assets/media/step3-thumbnails/garden/modern.jpg"),
+        image: require("../../assets/media/discover/garden/garden-terrace.jpg"),
       },
       {
         id: "tropical",
         title: "Tropical",
-        image: require("../../assets/media/step3-thumbnails/garden/tropical.jpg"),
+        image: require("../../assets/media/discover/garden/garden-swimming-pool.jpg"),
       },
       {
         id: "minimalistic",
         title: "Minimalistic",
-        image: require("../../assets/media/step3-thumbnails/garden/minimalistic.jpg"),
+        image: require("../../assets/media/discover/garden/garden-deck.jpg"),
       },
       {
         id: "bohemian",
         title: "Bohemian",
-        image: require("../../assets/media/step3-thumbnails/garden/bohemian.jpg"),
+        image: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
       },
       {
         id: "rustic",
         title: "Rustic",
-        image: require("../../assets/media/step3-thumbnails/garden/rustic.jpg"),
+        image: require("../../assets/media/discover/garden/garden-patio.jpg"),
       },
       {
         id: "vintage",
         title: "Vintage",
-        image: require("../../assets/media/step3-thumbnails/garden/vintage.jpg"),
+        image: require("../../assets/media/discover/garden/garden-front-yard.jpg"),
       },
       {
         id: "baroque",
         title: "Baroque",
-        image: require("../../assets/media/step3-thumbnails/garden/baroque.jpg"),
+        image: require("../../assets/media/discover/garden/garden-pool-courtyard.jpg"),
       },
     ],
     [],

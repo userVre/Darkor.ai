@@ -28,6 +28,8 @@ type ExteriorRedesignStepThreeProps = {
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
 const ACTIVE_CONTINUE_COLOR = "#FF3B30";
+const THUMBNAIL_CROP_OVERFLOW = 24;
+const THUMBNAIL_CROP_SHIFT = -6;
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -145,13 +147,19 @@ export function ExteriorRedesignStepThree({
                       },
                     ]}
                   >
-                    <Image
-                      source={styleCard.image}
-                      style={{ width: "100%", height: cardImageHeight }}
-                      contentFit="cover"
-                      transition={120}
-                      cachePolicy="memory-disk"
-                    />
+                    <View style={{ width: "100%", height: cardImageHeight, overflow: "hidden" }}>
+                      <Image
+                        source={styleCard.image}
+                        style={{
+                          width: "100%",
+                          height: cardImageHeight + THUMBNAIL_CROP_OVERFLOW,
+                          transform: [{ translateY: THUMBNAIL_CROP_SHIFT }],
+                        }}
+                        contentFit="cover"
+                        transition={120}
+                        cachePolicy="memory-disk"
+                      />
+                    </View>
                     <View style={[stylesSheet.labelBar, { height: cardLabelHeight }]}>
                       <Text
                         numberOfLines={2}

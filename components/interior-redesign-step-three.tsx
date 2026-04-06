@@ -29,6 +29,8 @@ type InteriorRedesignStepThreeProps = {
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
 const ACTIVE_CONTINUE_COLOR = "#FF3B30";
+const THUMBNAIL_CROP_OVERFLOW = 30;
+const THUMBNAIL_CROP_SHIFT = -8;
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -146,13 +148,19 @@ export function InteriorRedesignStepThree({
                       },
                     ]}
                   >
-                    <Image
-                      source={styleCard.image}
-                      style={{ width: "100%", height: cardImageHeight }}
-                      contentFit="cover"
-                      transition={120}
-                      cachePolicy="memory-disk"
-                    />
+                    <View style={{ width: "100%", height: cardImageHeight, overflow: "hidden" }}>
+                      <Image
+                        source={styleCard.image}
+                        style={{
+                          width: "100%",
+                          height: cardImageHeight + THUMBNAIL_CROP_OVERFLOW,
+                          transform: [{ translateY: THUMBNAIL_CROP_SHIFT }],
+                        }}
+                        contentFit="cover"
+                        transition={120}
+                        cachePolicy="memory-disk"
+                      />
+                    </View>
                     <View style={[stylesSheet.labelBar, { height: cardLabelHeight }]}>
                       <Text
                         numberOfLines={2}
