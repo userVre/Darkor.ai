@@ -1,5 +1,7 @@
 import { NativeModules, Platform } from "react-native";
 
+import type { PricingTierId } from "./dynamic-pricing";
+
 export const REVENUECAT_ENTITLEMENT = "pro";
 export const REVENUECAT_WEEKLY_PRO_ENTITLEMENT = "weekly_pro";
 export const REVENUECAT_ANNUAL_PRO_ENTITLEMENT = "annual_pro";
@@ -7,6 +9,7 @@ export const REVENUECAT_ENTITLEMENTS = [
   REVENUECAT_ANNUAL_PRO_ENTITLEMENT,
   REVENUECAT_WEEKLY_PRO_ENTITLEMENT,
 ] as const;
+export const REVENUECAT_PAYWALL_PLACEMENT = "paywall";
 
 export type RevenueCatCustomerInfo = import("react-native-purchases").CustomerInfo;
 export type RevenueCatPackage = import("react-native-purchases").PurchasesPackage;
@@ -14,6 +17,13 @@ export type RevenueCatPurchases = (typeof import("react-native-purchases"))["def
 export type BillingPlan = "pro" | "trial";
 export type BillingDuration = "weekly" | "yearly";
 export type RevenueCatEntitlement = (typeof REVENUECAT_ENTITLEMENTS)[number] | "free";
+export type RevenueCatTierContext = {
+  tierId: PricingTierId;
+  countryCode: string;
+  currencyCode: string;
+  offeringHint?: string | null;
+  attributePayload?: Record<string, string>;
+};
 
 let purchasesClient: RevenueCatPurchases | null = null;
 let purchasesModulePromise: Promise<typeof import("react-native-purchases")> | null = null;
@@ -63,6 +73,35 @@ function getPackageHaystack(pkg?: RevenueCatPackage | null) {
 
 function matchesAny(haystack: string, needles: string[]) {
   return needles.some((needle) => haystack.includes(needle));
+}
+
+function getOfferingAliases(tierContext?: RevenueCatTierContext | null) {
+  const normalizedTierId = normalizeToken(tierContext?.tierId);
+  const normalizedHint = normalizeToken(tierContext?.offeringHint);
+
+  return [
+    normalizedHint,
+    normalizedTierId,
+    normalizedTierId ? `paywall_${normalizedTierId}` : "",
+    normalizedTierId ? `${normalizedTierId}_paywall` : "",
+    normalizedTierId ? `${normalizedTierId}_offering` : "",
+  ].filter((value, index, values) => value.length > 0 && values.indexOf(value) === index);
+}
+
+function resolveOfferingFromHints(
+  offerings: Awaited<ReturnType<RevenueCatPurchases["getOfferings"]>>,
+  tierContext?: RevenueCatTierContext | null,
+) {
+  const aliases = getOfferingAliases(tierContext);
+  for (const alias of aliases) {
+    for (const [key, offering] of Object.entries(offerings.all ?? {})) {
+      if (normalizeToken(key) === alias) {
+        return offering;
+      }
+    }
+  }
+
+  return offerings.current ?? null;
 }
 
 function inferDurationFromHaystack(haystack: string): BillingDuration {
@@ -191,6 +230,42 @@ export async function configureRevenueCat(appUserId?: string | null) {
 
   purchasesClient = Purchases;
   return Purchases;
+}
+
+export async function syncRevenueCatPricingAttributes(
+  purchases: RevenueCatPurchases,
+  tierContext: RevenueCatTierContext,
+) {
+  await purchases.setAttributes({
+    darkor_pricing_tier: tierContext.tierId,
+    darkor_country_code: tierContext.countryCode,
+    darkor_currency_code: tierContext.currencyCode,
+    ...(tierContext.attributePayload ?? {}),
+  });
+}
+
+export async function fetchTieredPackage(
+  purchases: RevenueCatPurchases,
+  tierContext: RevenueCatTierContext,
+) {
+  await syncRevenueCatPricingAttributes(purchases, tierContext).catch((error) => {
+    console.warn("[RevenueCat] Failed to sync pricing attributes", error);
+  });
+
+  const offerings = await purchases
+    .syncAttributesAndOfferingsIfNeeded()
+    .catch(() => purchases.getOfferings());
+
+  const placementOffering = await purchases
+    .getCurrentOfferingForPlacement(REVENUECAT_PAYWALL_PLACEMENT)
+    .catch(() => null);
+
+  const offering = placementOffering ?? resolveOfferingFromHints(offerings, tierContext);
+
+  return {
+    offering,
+    packages: offering?.availablePackages ?? offerings.current?.availablePackages ?? [],
+  };
 }
 
 export function getRevenueCatClient() {

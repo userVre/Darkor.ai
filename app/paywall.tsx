@@ -1,6 +1,7 @@
 import { useAuth, useUser } from "@clerk/expo";
 import { useMutation } from "convex/react";
 import { Image } from "expo-image";
+import { usePricingContext, createLocalizedPrice, type LocalizedPrice } from "../lib/dynamic-pricing";
 import { StatusBar } from "expo-status-bar";
 import { AnimatePresence, MotiView } from "moti";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -41,6 +42,7 @@ import { triggerHaptic } from "../lib/haptics";
 import { dismissLaunchPaywall } from "../lib/launch-paywall";
 import {
   configureRevenueCat,
+  fetchTieredPackage,
   findRevenueCatPackage,
   getRevenueCatClient,
   hasActiveSubscription,
@@ -212,9 +214,13 @@ function HeroCarouselItem({
 }
 
 function YearlyPlanCard({
+  pricePerYearText,
+  pricePerWeekText,
   selected,
   onPress,
 }: {
+  pricePerYearText: string;
+  pricePerWeekText: string;
   selected: boolean;
   onPress: () => void;
 }) {
@@ -228,11 +234,11 @@ function YearlyPlanCard({
       <View style={styles.planRow}>
         <View style={styles.planCopy}>
           <Text style={styles.planLabel}>{t("paywall.yearlyAccess").toUpperCase()}</Text>
-          <Text style={styles.planSubtext}>{t("paywall.justPerYear")}</Text>
+          <Text style={styles.planSubtext}>{pricePerYearText}</Text>
         </View>
 
         <View style={styles.planPriceColumn}>
-          <Text style={styles.yearlyPrice}>MAD9.33</Text>
+          <Text style={styles.yearlyPrice}>{pricePerWeekText}</Text>
           <Text style={styles.planSubtext}>{t("paywall.perWeek")}</Text>
         </View>
       </View>
@@ -242,10 +248,14 @@ function YearlyPlanCard({
 
 function WeeklyPlanCard({
   freeTrialEnabled,
+  pricePerWeekText,
+  trialThenPriceText,
   selected,
   onPress,
 }: {
   freeTrialEnabled: boolean;
+  pricePerWeekText: string;
+  trialThenPriceText: string;
   selected: boolean;
   onPress: () => void;
 }) {
@@ -261,8 +271,7 @@ function WeeklyPlanCard({
               </View>
 
               <View style={styles.planPriceColumn}>
-                <Text style={styles.weeklyTrialPrice}>{t("paywall.thenWeekly")}</Text>
-                <Text style={styles.planSubtext}>{t("paywall.perWeek")}</Text>
+                <Text style={styles.weeklyTrialPrice}>{trialThenPriceText}</Text>
               </View>
             </View>
           </Pressable>
@@ -286,7 +295,7 @@ function WeeklyPlanCard({
             </View>
 
             <View style={styles.planPriceColumn}>
-              <Text style={styles.weeklyPrice}>MAD 119.99 / per week</Text>
+              <Text style={styles.weeklyPrice}>{pricePerWeekText}</Text>
             </View>
           </View>
         </Pressable>
@@ -371,9 +380,56 @@ function normalizeCarouselIndex(index: number) {
   return HERO_CAROUSEL_INITIAL_INDEX + cycleIndex;
 }
 
+function getDisplayedPrice(
+  fallbackPrice: LocalizedPrice,
+  locale: string,
+  pkg?: RevenueCatPackage | null,
+) {
+  const productPrice = pkg?.product?.price;
+  const productCurrencyCode = pkg?.product?.currencyCode;
+
+  if (typeof productPrice !== "number" || !Number.isFinite(productPrice) || !productCurrencyCode) {
+    return fallbackPrice;
+  }
+
+  return createLocalizedPrice({
+    amount: productPrice,
+    currencyCode: productCurrencyCode,
+    locale,
+    source: "store",
+  });
+}
+
+function getDisplayedYearlyPerWeekPrice(
+  fallbackPrice: LocalizedPrice,
+  locale: string,
+  yearlyPrice: LocalizedPrice,
+  pkg?: RevenueCatPackage | null,
+) {
+  const productPricePerWeek = pkg?.product?.pricePerWeek;
+  const productCurrencyCode = pkg?.product?.currencyCode ?? yearlyPrice.currencyCode;
+
+  if (typeof productPricePerWeek === "number" && Number.isFinite(productPricePerWeek) && productCurrencyCode) {
+    return createLocalizedPrice({
+      amount: productPricePerWeek,
+      currencyCode: productCurrencyCode,
+      locale,
+      source: "store",
+    });
+  }
+
+  return createLocalizedPrice({
+    amount: yearlyPrice.amount / 52,
+    currencyCode: yearlyPrice.currencyCode,
+    locale,
+    source: yearlyPrice.source,
+  });
+}
+
 export default function PaywallScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const pricingContext = usePricingContext();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { source, redirectTo } = useLocalSearchParams<{
@@ -409,6 +465,36 @@ export default function PaywallScreen() {
 
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly"), [packages]);
   const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly"), [packages]);
+  const displayedYearlyPrice = useMemo(
+    () => getDisplayedPrice(pricingContext.prices.yearly, pricingContext.locale, yearlyPackage),
+    [pricingContext.locale, pricingContext.prices.yearly, yearlyPackage],
+  );
+  const displayedWeeklyPrice = useMemo(
+    () => getDisplayedPrice(pricingContext.prices.weekly, pricingContext.locale, weeklyPackage),
+    [pricingContext.locale, pricingContext.prices.weekly, weeklyPackage],
+  );
+  const displayedYearlyPerWeekPrice = useMemo(
+    () =>
+      getDisplayedYearlyPerWeekPrice(
+        pricingContext.derived.yearlyPerWeek,
+        pricingContext.locale,
+        displayedYearlyPrice,
+        yearlyPackage,
+      ),
+    [displayedYearlyPrice, pricingContext.derived.yearlyPerWeek, pricingContext.locale, yearlyPackage],
+  );
+  const yearlyPriceText = useMemo(
+    () => t("paywall.pricePerYear", { price: displayedYearlyPrice.formatted }),
+    [displayedYearlyPrice.formatted, t],
+  );
+  const weeklyPriceText = useMemo(
+    () => t("paywall.pricePerWeek", { price: displayedWeeklyPrice.formatted }),
+    [displayedWeeklyPrice.formatted, t],
+  );
+  const thenWeeklyPriceText = useMemo(
+    () => t("paywall.thenPricePerWeek", { price: displayedWeeklyPrice.formatted }),
+    [displayedWeeklyPrice.formatted, t],
+  );
   const selectedPackage = useMemo(() => {
     if (freeTrialEnabled) {
       return weeklyPackage ?? yearlyPackage ?? packages[0] ?? null;
@@ -503,12 +589,13 @@ export default function PaywallScreen() {
           return;
         }
 
-        const offerings = await purchasesRef.current.getOfferings();
+        const offeringResult = await fetchTieredPackage(purchasesRef.current, pricingContext.revenueCat);
         if (!active) {
           return;
         }
 
-        setPackages(offerings.current?.availablePackages ?? []);
+        setPackages(offeringResult.packages);
+        setErrorMessage(null);
       } catch {
         if (active) {
           setErrorMessage(t("paywall.subscriptionsUnavailable"));
@@ -521,7 +608,14 @@ export default function PaywallScreen() {
     return () => {
       active = false;
     };
-  }, [isSignedIn, user?.id]);
+  }, [
+    isSignedIn,
+    pricingContext.revenueCat.countryCode,
+    pricingContext.revenueCat.currencyCode,
+    pricingContext.revenueCat.tierId,
+    t,
+    user?.id,
+  ]);
 
   const persistPurchasedPlan = useCallback(
     async (
@@ -835,11 +929,22 @@ export default function PaywallScreen() {
           </Pressable>
 
           <View style={styles.yearlyWrapper}>
-            <YearlyPlanCard onPress={handleSelectYearly} selected={isYearlySelected} />
+            <YearlyPlanCard
+              onPress={handleSelectYearly}
+              pricePerWeekText={displayedYearlyPerWeekPrice.formatted}
+              pricePerYearText={yearlyPriceText}
+              selected={isYearlySelected}
+            />
           </View>
 
           <View style={styles.weeklyWrapper}>
-            <WeeklyPlanCard freeTrialEnabled={freeTrialEnabled} onPress={handleSelectWeekly} selected={isWeeklySelected} />
+            <WeeklyPlanCard
+              freeTrialEnabled={freeTrialEnabled}
+              onPress={handleSelectWeekly}
+              pricePerWeekText={weeklyPriceText}
+              selected={isWeeklySelected}
+              trialThenPriceText={thenWeeklyPriceText}
+            />
           </View>
 
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}

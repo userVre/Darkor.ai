@@ -24,6 +24,7 @@ import { WorkspaceDraftProvider } from "../components/workspace-context";
 import { convex } from "../lib/convex";
 import { DS, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
 import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
+import { usePricingContext } from "../lib/dynamic-pricing";
 import { getEnvReport, logEnvDiagnostics } from "../lib/env";
 import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../lib/guest-testing";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
@@ -31,6 +32,7 @@ import {
   configureRevenueCat,
   hasActiveSubscription,
   resolveRevenueCatSubscription,
+  syncRevenueCatPricingAttributes,
   type RevenueCatCustomerInfo,
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
@@ -68,6 +70,7 @@ function RevenueCatGate() {
   const { user } = useUser();
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
   const { showSuccess, showToast } = useProSuccess();
+  const pricingContext = usePricingContext();
 
   const configuredRef = useRef(false);
   const listenerAddedRef = useRef(false);
@@ -120,6 +123,21 @@ function RevenueCatGate() {
 
     void run();
   }, [isLoaded, isSignedIn, revenueCatReady, user?.id]);
+
+  useEffect(() => {
+    const purchases = purchasesRef.current;
+    if (!revenueCatReady || !configuredRef.current || !isLoaded || !purchases) return;
+
+    void syncRevenueCatPricingAttributes(purchases, pricingContext.revenueCat).catch((error) => {
+      console.warn("[Boot] RevenueCat pricing sync failed", error);
+    });
+  }, [
+    isLoaded,
+    pricingContext.revenueCat.countryCode,
+    pricingContext.revenueCat.currencyCode,
+    pricingContext.revenueCat.tierId,
+    revenueCatReady,
+  ]);
 
   useEffect(() => {
     syncRef.current = async (info?: RevenueCatCustomerInfo) => {
