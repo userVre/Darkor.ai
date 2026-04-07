@@ -1,8 +1,9 @@
-import { ArrowLeft, Diamond, X } from "@/components/material-icons";
+import { ArrowLeft, X } from "@/components/material-icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { DiamondCreditPill } from "./diamond-credit-pill";
 import { fonts } from "../styles/typography";
 
 type DesignStepHeaderProps = {
@@ -16,28 +17,28 @@ type DesignStepHeaderProps = {
   closeAccessibilityLabel?: string;
 };
 
-const DESIGN_HEADER_TOP_PADDING = 12;
+const DESIGN_HEADER_TOP_PADDING = 6;
+const DESIGN_HEADER_BOTTOM_PADDING = 12;
 const DESIGN_HEADER_ROW_HEIGHT = 44;
 const DESIGN_HEADER_PROGRESS_HEIGHT = 4;
 const DESIGN_HEADER_PROGRESS_SEGMENT_GAP = 10;
-const DESIGN_HEADER_ROW_TO_TITLE_GAP = 20;
-const DESIGN_HEADER_PROGRESS_TO_TITLE_GAP = 32;
-const DESIGN_HEADER_PROGRESS_BOTTOM_OFFSET =
-  DESIGN_HEADER_PROGRESS_TO_TITLE_GAP - DESIGN_HEADER_ROW_TO_TITLE_GAP;
+const DESIGN_HEADER_PROGRESS_GAP = 26;
+const DESIGN_HEADER_CONTENT_GAP = 32;
 
 export function getDesignStepHeaderMetrics(topInset: number) {
   const safeTop = Platform.OS === "android" ? Math.max(topInset, 44) : Math.max(topInset, 20);
   const rowTop = safeTop + DESIGN_HEADER_TOP_PADDING;
   const rowBottom = rowTop + DESIGN_HEADER_ROW_HEIGHT;
-  const progressTop =
-    rowBottom - DESIGN_HEADER_PROGRESS_BOTTOM_OFFSET - DESIGN_HEADER_PROGRESS_HEIGHT;
+  const progressTop = rowBottom + DESIGN_HEADER_PROGRESS_GAP;
+  const progressBottom = progressTop + DESIGN_HEADER_PROGRESS_HEIGHT;
+  const height = progressBottom + DESIGN_HEADER_BOTTOM_PADDING;
 
   return {
-    height: rowBottom,
+    height,
     progressTop,
     rowTop,
     safeTop,
-    contentOffset: rowBottom + DESIGN_HEADER_ROW_TO_TITLE_GAP,
+    contentOffset: height + DESIGN_HEADER_CONTENT_GAP,
   };
 }
 
@@ -54,8 +55,9 @@ export function DesignStepHeader({
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const metrics = getDesignStepHeaderMetrics(insets.top);
-  const isFirstStep = !onBack;
   const safeStep = Math.max(1, Math.min(step, totalSteps));
+  const showCredits = safeStep === 1;
+  const showBack = safeStep > 1 && Boolean(onBack);
 
   return (
     <View pointerEvents="box-none" style={[styles.shell, { height: metrics.height }]}>
@@ -68,7 +70,7 @@ export function DesignStepHeader({
             right: horizontalInset,
           },
         ]}
-      >
+        >
         {Array.from({ length: totalSteps }).map((_, index) => (
           <View
             key={`design-step-progress-${index}`}
@@ -94,12 +96,9 @@ export function DesignStepHeader({
         ]}
       >
         <View style={[styles.sideSlot, styles.leftSlot]}>
-          {isFirstStep ? (
-            <View style={styles.creditBadge}>
-              <Diamond color="#FFFFFF" size={13} strokeWidth={2.1} />
-              <Text style={styles.creditText}>{creditCount ?? 0}</Text>
-            </View>
-          ) : (
+          {showCredits ? (
+            <DiamondCreditPill count={creditCount ?? 0} variant="dark" />
+          ) : showBack ? (
             <Pressable
               accessibilityLabel={backAccessibilityLabel}
               accessibilityRole="button"
@@ -109,7 +108,7 @@ export function DesignStepHeader({
             >
               <ArrowLeft color="#0A0A0A" size={18} strokeWidth={2.4} />
             </Pressable>
-          )}
+          ) : null}
         </View>
 
         <View style={styles.centerSlot}>
@@ -140,6 +139,13 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 40,
     backgroundColor: "#FFFFFF",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#E5E7EB",
+    shadowColor: "#000000",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
   headerRow: {
     position: "absolute",
@@ -149,7 +155,7 @@ const styles = StyleSheet.create({
     minHeight: DESIGN_HEADER_ROW_HEIGHT,
   },
   sideSlot: {
-    width: 88,
+    width: 92,
     minHeight: DESIGN_HEADER_ROW_HEIGHT,
     justifyContent: "center",
   },
@@ -164,21 +170,6 @@ const styles = StyleSheet.create({
     minHeight: DESIGN_HEADER_ROW_HEIGHT,
     alignItems: "center",
     justifyContent: "center",
-  },
-  creditBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderRadius: 999,
-    backgroundColor: "#0A0A0A",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  creditText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    lineHeight: 13,
-    ...fonts.bold,
   },
   stepText: {
     color: "#0A0A0A",

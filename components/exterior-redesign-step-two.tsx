@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
 import { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
@@ -26,9 +27,9 @@ type ExteriorRedesignStepTwoProps = {
 const REFERENCE_WIDTH = 460;
 const REFERENCE_HEIGHT = 932;
 const ACTIVE_CONTINUE_COLOR = "#FF3B30";
-const CARD_WIDTH = 192;
-const CARD_HEIGHT = 72;
 const GRID_GAP = 16;
+const THUMBNAIL_CROP_OVERFLOW = 28;
+const THUMBNAIL_CROP_SHIFT = -8;
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -64,6 +65,10 @@ export function ExteriorRedesignStepTwo({
   const bottomContainerHeight = scaleValue(132, layoutScale);
   const buttonHeight = scaleValue(60, layoutScale);
   const buttonTop = scaleValue(52, layoutScale);
+  const cardWidth = (mainWidth - GRID_GAP) / 2;
+  const cardHeight = scaleValue(188, layoutScale);
+  const cardImageHeight = scaleValue(132, layoutScale);
+  const cardLabelHeight = cardHeight - cardImageHeight;
   const rows = useMemo(() => chunkIntoRows(cards, 2), [cards]);
   const canContinue = Boolean(selectedBuildingType);
 
@@ -130,21 +135,44 @@ export function ExteriorRedesignStepTwo({
                       style={[
                         styles.card,
                         {
-                          width: CARD_WIDTH,
-                          height: CARD_HEIGHT,
+                          width: cardWidth,
+                          height: cardHeight,
                           marginRight: columnIndex === row.length - 1 ? 0 : GRID_GAP,
                           borderColor: active ? ACTIVE_CONTINUE_COLOR : "#E5E5E5",
-                          backgroundColor: active ? "#FFF2F0" : "#F5F5F5",
                         },
                       ]}
                     >
-                      <Text numberOfLines={2} style={[styles.labelText, { color: active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A" }]}>
-                        {card.title}
-                      </Text>
+                      <View style={[styles.cardImageWrap, { height: cardImageHeight }]}>
+                        <Image
+                          source={card.image}
+                          style={{
+                            width: "100%",
+                            height: cardImageHeight + THUMBNAIL_CROP_OVERFLOW,
+                            transform: [{ translateY: THUMBNAIL_CROP_SHIFT }],
+                          }}
+                          contentFit="cover"
+                          transition={120}
+                          cachePolicy="memory-disk"
+                        />
+                      </View>
+
+                      <View
+                        style={[
+                          styles.labelBar,
+                          {
+                            height: cardLabelHeight,
+                            backgroundColor: active ? "#FFF2F0" : "#FFFFFF",
+                          },
+                        ]}
+                      >
+                        <Text numberOfLines={2} style={[styles.labelText, { color: active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A" }]}>
+                          {card.title}
+                        </Text>
+                      </View>
                   </Pressable>
                 );
               })}
-              {row.length === 1 ? <View style={{ width: CARD_WIDTH }} /> : null}
+              {row.length === 1 ? <View style={{ width: cardWidth }} /> : null}
             </View>
           ))}
         </View>
@@ -200,15 +228,25 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   card: {
+    overflow: "hidden",
     borderRadius: 20,
     borderWidth: 1.5,
+    backgroundColor: "#FFFFFF",
+  },
+  cardImageWrap: {
+    width: "100%",
+    overflow: "hidden",
+    backgroundColor: "#EFEFEF",
+  },
+  labelBar: {
+    width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
   },
   labelText: {
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 19,
     textAlign: "center",
     ...fonts.semibold,
   },

@@ -1,16 +1,17 @@
-import { ArrowLeft, Diamond, X } from "@/components/material-icons";
+import { ArrowLeft, X } from "@/components/material-icons";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { DiamondCreditPill } from "./diamond-credit-pill";
 import { fonts } from "../styles/typography";
 
 export const STICKY_STEP_HEADER_CONTENT_GAP = 32;
 
-const HEADER_TOP_PADDING = 12;
-const HEADER_BOTTOM_PADDING = 16;
+const HEADER_TOP_PADDING = 6;
+const HEADER_BOTTOM_PADDING = 12;
 const HEADER_ROW_HEIGHT = 44;
-const HEADER_PROGRESS_GAP = 14;
+const HEADER_PROGRESS_GAP = 26;
 const HEADER_PROGRESS_HEIGHT = 4;
 const HEADER_PROGRESS_SEGMENT_GAP = 10;
 
@@ -56,6 +57,8 @@ export function StickyStepHeader({
   const insets = useSafeAreaInsets();
   const metrics = getStickyStepHeaderMetrics(insets.top);
   const safeStep = Math.max(1, Math.min(step, totalSteps));
+  const showCredits = safeStep === 1;
+  const showBack = safeStep > 1 && Boolean(onBack);
 
   return (
     <View
@@ -71,7 +74,7 @@ export function StickyStepHeader({
       <View style={[styles.inner, { paddingHorizontal: horizontalInset }]}>
         <View style={styles.row}>
           <View style={styles.leftGroup}>
-            {onBack ? (
+            {showBack ? (
               <Pressable
                 accessibilityLabel={backAccessibilityLabel}
                 accessibilityRole="button"
@@ -83,10 +86,7 @@ export function StickyStepHeader({
               </Pressable>
             ) : null}
 
-            <View style={styles.creditBadge}>
-              <Diamond color="#0A0A0A" size={13} strokeWidth={2.1} />
-              <Text style={styles.creditText}>{creditCount}</Text>
-            </View>
+            {showCredits ? <DiamondCreditPill count={creditCount} variant="light" /> : null}
           </View>
 
           <View pointerEvents="none" style={styles.stepOverlay}>
@@ -172,24 +172,6 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
-  },
-  creditBadge: {
-    minHeight: 36,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  creditText: {
-    color: "#0A0A0A",
-    fontSize: 13,
-    lineHeight: 13,
-    ...fonts.bold,
   },
   stepText: {
     color: "#0A0A0A",
