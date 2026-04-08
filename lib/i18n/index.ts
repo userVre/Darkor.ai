@@ -2,19 +2,26 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import i18n, { type Resource } from "i18next";
 import { initReactI18next } from "react-i18next";
 
-import { DEFAULT_LANGUAGE, getDeviceSupportedLanguage, resolveSupportedLanguage, type AppLanguage } from "./language";
+import {
+  DEFAULT_LANGUAGE,
+  SUPPORTED_LANGUAGES,
+  getDeviceSupportedLanguage,
+  resolveSupportedLanguage,
+  type AppLanguage,
+} from "./language";
 
 const LANGUAGE_STORAGE_KEY = "darkor.ai.language";
 
 const resources: Resource = {
-  en: { translation: require("../../locales/en.json") },
+  "en-US": { translation: require("../../locales/en.json") },
   fr: { translation: require("../../locales/fr.json") },
-  es: { translation: require("../../locales/es.json") },
-  de: { translation: require("../../locales/de.json") },
-  pt: { translation: require("../../locales/pt.json") },
-  it: { translation: require("../../locales/it.json") },
-  ja: { translation: require("../../locales/ja.json") },
+  "es-MX": { translation: require("../../locales/es-MX.json") },
+  "pt-BR": { translation: require("../../locales/pt-BR.json") },
+  ru: { translation: require("../../locales/ru.json") },
   ko: { translation: require("../../locales/ko.json") },
+  vi: { translation: require("../../locales/vi.json") },
+  "zh-Hans": { translation: require("../../locales/zh-Hans.json") },
+  "zh-Hant": { translation: require("../../locales/zh-Hant.json") },
 };
 
 let initPromise: Promise<typeof i18n> | null = null;
@@ -53,7 +60,9 @@ export async function initializeI18n() {
       await i18n.use(initReactI18next).init({
         compatibilityJSON: "v4",
         fallbackLng: DEFAULT_LANGUAGE,
+        supportedLngs: [...SUPPORTED_LANGUAGES],
         lng: language,
+        load: "currentOnly",
         resources,
         interpolation: {
           escapeValue: false,

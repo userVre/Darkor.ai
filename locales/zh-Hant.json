@@ -1,0 +1,11 @@
+{
+  "common": { "actions": { "continue": "繼續", "cancel": "取消", "save": "儲存", "share": "分享", "openSettings": "開啟設定", "addPhoto": "新增照片", "exit": "離開" }, "alerts": { "exitTitle": "要離開嗎？", "progressLost": "你的進度將會遺失。" }, "states": { "savedToGallery": "已儲存到相簿" } },
+  "boot": { "loadingApp": "正在載入 Darkor.ai", "loadingAccount": "正在載入你的帳戶...", "checkingPlan": "正在檢查你的方案...", "secureAccount": "保護你的帳戶後開始創作..." },
+  "tabs": { "tools": "工具", "create": "建立", "discover": "探索", "profile": "個人檔案" },
+  "home": { "title": "Darkor AI" },
+  "paywall": { "restore": "恢復購買", "bestOffer": "最佳優惠", "yearlyAccess": "年度存取", "weeklyAccess": "每週存取", "freeTrial": "3 天免費試用", "pricePerYear": "每年只要 {{price}}", "pricePerWeek": "每週 {{price}}", "perWeek": "每週", "thenPricePerWeek": "之後每週 {{price}}", "noPaymentNow": "現在不用付款", "cancelAnytime": "隨時取消", "processing": "處理中...", "tryForFree": "免費試用", "continue": "繼續", "terms": "條款", "privacy": "隱私" },
+  "settings": { "title": "設定", "heroTitle": "你的帳戶目前為免費版", "upgradePro": "升級到 PRO" },
+  "wizard": { "headers": { "close": "關閉", "previousStep": "返回上一步" }, "stepOne": { "title": "新增照片" }, "floorFlow": { "title": "地板重塑", "promptLabel": "輸入提示詞", "generateCta": "生成我的設計 →" }, "paintFlow": { "title": "塗裝", "selectionTitle": "顏色與表面", "maskTitle": "選擇要塗裝的區域", "colorLabel": "顏色", "surfaceLabel": "表面", "choose": "選擇", "apply": "套用", "colorPickerTitle": "選擇牆面顏色", "surfacePickerTitle": "選擇表面類型", "detectTitle": "正在偵測可塗裝表面...", "preparingMaskTitle": "正在準備遮罩表面...", "brushWidth": "筆刷寬度", "eraserWidth": "橡皮擦寬度", "generateCta": "為我的牆面上色 →", "finishTitle": "表面效果", "selectedColor": "已選顏色" } },
+  "workspace": { "generation": { "preparingSessionTitle": "正在準備工作階段", "preparingSessionBody": "訪客資料仍在載入中，請稍後再試。", "limitReached": "已達上限" }, "share": { "message": "使用 Darkor.ai 設計", "failedTitle": "分享失敗" }, "download": { "failedTitle": "儲存失敗" }, "media": { "exampleUnavailableTitle": "範例無法使用" }, "flow": { "customPromptTitle": "新增自訂提示詞", "customPromptBody": "套用前請描述你想要的具體設計方向。", "selectSpaceType": "點選卡片以選擇空間類型。" } },
+  "proSuccess": { "title": "歡迎使用 Darkor Pro！", "subtitle": "現在所有內容都已解鎖。你將獲得：", "cta": "開始設計", "toast": "帳戶已成功升級為 Pro。" }
+}

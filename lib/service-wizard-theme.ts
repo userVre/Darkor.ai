@@ -1,5 +1,5 @@
 import type { TextStyle } from "react-native";
-import { dark } from "@/styles/theme";
+import { light } from "@/styles/theme";
 import { fonts } from "../styles/typography";
 import { DS } from "./design-system";
 
@@ -46,9 +46,9 @@ const compactBodyText: TextStyle = {
 export const SERVICE_WIZARD_THEME = {
   colors: {
     background: DS.colors.background,
-    surface: dark.surface,
+    surface: "#FFFFFF",
     surfaceRaised: DS.colors.surfaceRaised,
-    surfaceSoft: DS.colors.surface,
+    surfaceSoft: light.surface,
     surfaceOverlay: DS.colors.backgroundAlt,
     border: DS.colors.borderSubtle,
     borderStrong: DS.colors.borderStrong,
@@ -58,22 +58,22 @@ export const SERVICE_WIZARD_THEME = {
     accent: DS.colors.accent,
     accentStrong: DS.colors.accentStrong,
     accentSecondary: DS.colors.accentSecondary,
-    accentSurface: dark.surfaceHigh,
-    accentSurfaceStrong: dark.surfaceHigh,
-    accentBorder: dark.borderLight,
-    accentBorderStrong: dark.brand,
+    accentSurface: light.brandSurface,
+    accentSurfaceStrong: light.brandSurfaceHigh,
+    accentBorder: light.brandBorder,
+    accentBorderStrong: light.brandDark,
     accentGlow: DS.colors.accentGlowStrong,
     accentGlowSoft: DS.colors.accentGlow,
-    accentText: dark.textPrimary,
-    progressTrack: dark.border,
-    disabledSurface: dark.surfaceHigh,
+    accentText: light.textPrimary,
+    progressTrack: light.border,
+    disabledSurface: light.surfaceHigh,
   },
   surfaces: {
-    accent: dark.brand,
-    accentButton: dark.brand,
-    maskAction: dark.brand,
-    hero: dark.surface,
-    accentWash: dark.surfaceHigh,
+    accent: light.brand,
+    accentButton: light.brand,
+    maskAction: light.brand,
+    hero: "#FFFFFF",
+    accentWash: light.brandSurface,
   },
   typography: {
     heroTitle,

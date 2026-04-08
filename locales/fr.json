@@ -1,29 +1,22 @@
 {
-  "app": {
-    "name": "Darkor AI"
-  },
   "common": {
     "actions": {
       "continue": "Continuer",
       "cancel": "Annuler",
-      "close": "Fermer",
-      "delete": "Supprimer",
-      "restore": "Restaurer",
-      "upgrade": "Passer à Pro",
+      "save": "Enregistrer",
+      "share": "Partager",
+      "tryAgain": "Veuillez réessayer.",
       "openSettings": "Ouvrir les réglages",
-      "notNow": "Pas maintenant",
       "takePhoto": "Prendre une photo",
       "chooseFromGallery": "Choisir depuis la galerie",
       "addPhoto": "Ajouter une photo",
       "chooseMediaSource": "Sélectionner la source du média",
       "examplePhotos": "Photos d'exemple",
-      "seeAll": "Voir tout",
-      "uploadPlus": "Importer +"
+      "uploadPlus": "Importer +",
+      "exit": "Quitter"
     },
     "labels": {
-      "email": "E-mail",
-      "password": "Mot de passe",
-      "lastUpdated": "Dernière mise à jour",
+      "version": "Version {{version}}",
       "step": "Étape {{current}} / {{total}}"
     },
     "alerts": {
@@ -31,76 +24,82 @@
       "progressLost": "Votre progression sera perdue."
     },
     "states": {
-      "workInProgress": "Création en cours",
-      "generationFailed": "Génération échouée"
+      "savedToGallery": "Enregistré dans votre galerie"
     }
   },
   "boot": {
     "loadingApp": "Chargement de Darkor.ai",
     "loadingAccount": "Chargement de votre compte...",
-    "checkingPlan": "Vérification de votre formule...",
-    "secureAccount": "Sécurisez votre compte pour commencer à créer...",
-    "missingEnvTitle": "Variables d'environnement manquantes",
-    "missingEnvBody": "Les valeurs suivantes sont requises avant le démarrage de l'application :"
+    "checkingPlan": "Vérification de votre abonnement...",
+    "secureAccount": "Sécurisez votre compte pour commencer à créer..."
   },
   "tabs": {
     "tools": "Outils",
     "create": "Créer",
     "discover": "Découvrir",
-    "profile": "Mon profil"
+    "profile": "Profil"
+  },
+  "home": {
+    "title": "Darkor AI",
+    "errors": { "tryItUnavailableTitle": "Essai indisponible" },
+    "tools": {
+      "interior": { "title": "Design d'intérieur", "description": "Importez une photo, choisissez un style et laissez l'IA repenser la pièce." },
+      "exterior": { "title": "Design extérieur", "description": "Photographiez votre maison, choisissez une ambiance et laissez l'IA imaginer la façade." },
+      "garden": { "title": "Design de jardin", "description": "Choisissez un style et donnez à votre jardin une nouvelle atmosphère en un instant." },
+      "paint": { "title": "Peinture", "description": "Choisissez une couleur et transformez votre espace en un geste." },
+      "floor": { "title": "Relooking du sol", "description": "Remaniez vos sols avec l'IA et réinventez la pièce en un tap." }
+    }
+  },
+  "paywall": {
+    "features": {
+      "fasterRendering": "Rendu plus rapide",
+      "adFree": "Sans publicité",
+      "unlimitedRenders": "Rendus illimités"
+    },
+    "restore": "Restaurer",
+    "bestOffer": "Meilleure offre",
+    "yearlyAccess": "Accès annuel",
+    "weeklyAccess": "Accès hebdomadaire",
+    "freeTrial": "3 jours d'essai gratuit",
+    "pricePerYear": "Seulement {{price}} par an",
+    "pricePerWeek": "{{price}} par semaine",
+    "perWeek": "par semaine",
+    "thenPricePerWeek": "Puis {{price}} par semaine",
+    "noPaymentNow": "Aucun paiement maintenant",
+    "cancelAnytime": "Résiliable à tout moment",
+    "trialEnabled": "Essai gratuit activé",
+    "enableTrial": "Activer l'essai gratuit",
+    "processing": "Traitement...",
+    "tryForFree": "Essayer gratuitement",
+    "continue": "Continuer",
+    "terms": "Conditions",
+    "privacy": "Confidentialité",
+    "closeA11y": "Fermer le paywall"
   },
   "settings": {
-    "title": "Paramètres",
-    "heroTitle": "Votre compte est GRATUIT"
+    "title": "Réglages",
+    "heroTitle": "Votre compte est GRATUIT",
+    "upgradePro": "Passer à PRO"
   },
-  "profile": {
-    "title": "Votre tableau",
-    "emptyTitle": "Aucun design pour le moment",
-    "emptySubtitle": "Vos designs générés apparaîtront ici"
+  "wizard": {
+    "headers": { "close": "Fermer", "previousStep": "Revenir à l'étape précédente" },
+    "stepOne": { "title": "Ajouter une photo", "emptyTitle": "Commencer la rénovation", "emptySubtitle": "Repensez et sublimez votre pièce" },
+    "floorIntro": { "hero": "Marquez, recolorez et transformez votre espace sans effort." },
+    "paintIntro": { "hero": "Marquez, recolorez et transformez votre espace sans effort." },
+    "floorFlow": { "title": "Relooking du sol", "masking": "Masquage du sol...", "promptLabel": "Saisir un prompt", "generateCta": "Générer mon design →", "selectMaterialTitle": "Choisir le matériau" },
+    "paintFlow": { "title": "Peinture", "selectionTitle": "Couleur et surface", "maskTitle": "Sélectionner la zone à peindre", "colorLabel": "Couleur", "surfaceLabel": "Surface", "choose": "Choisir", "apply": "Appliquer", "colorPickerTitle": "Choisissez une couleur pour votre mur", "surfacePickerTitle": "Sélectionner le type de surface", "detectTitle": "Détection des surfaces à peindre...", "preparingMaskTitle": "Préparation de la surface de masquage...", "brushWidth": "Largeur du pinceau", "eraserWidth": "Largeur de la gomme", "generateCta": "Peindre mes murs →", "finishTitle": "Type de finition", "selectedColor": "Couleur sélectionnée" }
   },
-  "discover": {
-    "title": "Découvrir",
-    "tabs": {
-      "home": "Maison",
-      "garden": "Jardin",
-      "exterior": "Extérieur"
-    }
+  "workspace": {
+    "generation": { "preparingSessionTitle": "Préparation de votre session", "preparingSessionBody": "Votre profil invité est encore en cours de chargement. Réessayez dans un instant.", "limitReached": "Limite atteinte" },
+    "share": { "message": "Conçu avec Darkor.ai", "failedTitle": "Échec du partage" },
+    "download": { "failedTitle": "Échec de l'enregistrement" },
+    "media": { "exampleUnavailableTitle": "Exemple indisponible" },
+    "flow": { "customPromptTitle": "Ajouter un prompt personnalisé", "customPromptBody": "Décrivez la direction de design exacte avant de l'appliquer.", "selectSpaceType": "Touchez une carte pour sélectionner votre type d'espace." }
   },
-  "auth": {
-    "accountEyebrow": "Compte Darkor.ai",
-    "emailPlaceholder": "vous@entreprise.com",
-    "signIn": {
-      "title": "Se connecter",
-      "cta": "Continuer",
-      "loading": "Connexion...",
-      "appleCta": "Continuer avec Apple",
-      "noAccount": "Pas de compte ?",
-      "createOne": "En créer un"
-    },
-    "signUp": {
-      "title": "Créer un compte",
-      "cta": "Créer un compte",
-      "loading": "Création...",
-      "appleCta": "Continuer avec Apple",
-      "haveAccount": "Vous avez déjà un compte ?",
-      "signInLink": "Se connecter"
-    }
-  },
-  "faq": {
-    "eyebrow": "Support",
-    "title": "FAQ",
-    "description": "Réponses rapides aux questions les plus courantes sur Darkor.ai."
-  },
-  "privacy": {
-    "eyebrow": "Politique",
-    "title": "Politique de confidentialité",
-    "description": "Les informations que nous collectons, la manière dont elles sont utilisées et les contrôles dont vous disposez dans Darkor.ai.",
-    "date": "14 mars 2026"
-  },
-  "terms": {
-    "eyebrow": "Politique",
-    "title": "Conditions d'utilisation",
-    "description": "Les règles, attentes et limites du service pour utiliser Darkor.ai.",
-    "date": "14 mars 2026"
+  "proSuccess": {
+    "title": "Bienvenue dans Darkor Pro !",
+    "subtitle": "Tout est maintenant débloqué. Voici ce que vous obtenez :",
+    "cta": "Commencer à créer",
+    "toast": "Compte mis à niveau vers Pro avec succès."
   }
 }

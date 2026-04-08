@@ -1,6 +1,6 @@
-# Darkor.ai Mobile (Expo)
+# HomeDecor AI Mobile (Expo)
 
-This repo contains the Expo React Native app for Darkor.ai.
+This repo contains the Expo React Native app for HomeDecor AI.
 
 ## Setup
 1. `npm install`

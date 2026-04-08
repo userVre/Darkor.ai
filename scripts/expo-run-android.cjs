@@ -154,7 +154,7 @@ async function main() {
     "-a",
     "android.intent.action.VIEW",
     "-d",
-    `exp+darkor-ai://expo-development-client/?url=${encodeURIComponent(serverUrl)}`,
+    `exp+home-decor-ai://expo-development-client/?url=${encodeURIComponent(serverUrl)}`,
   ], {
     cwd: projectRoot,
     env: process.env,

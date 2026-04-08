@@ -73,17 +73,10 @@ const FIXED_FOOTER_OFFSET = 96;
 const MASK_SCREEN_REFERENCE_WIDTH = 456;
 const MASK_SCREEN_REFERENCE_HEIGHT = 932;
 const absoluteFill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
-const AUTO_DETECT_SUCCESS_MESSAGE = "Floor masked and ready.";
-const AUTO_DETECT_FAILURE_MESSAGE = "Auto-detect couldn't run — please brush manually.";
+const AUTO_DETECT_SUCCESS_MESSAGE = "wizard.floorFlow.autoMaskSuccess";
+const AUTO_DETECT_FAILURE_MESSAGE = "wizard.floorFlow.autoMaskFailure";
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
-const CANCEL_SUCCESS_TOAST = "Generation canceled. Your credit was kept.";
-const FLOOR_PROMPT_EXAMPLES = [
-  "Lay warm natural oak planks with a matte finish while preserving the room layout and lighting.",
-  "Restyle the floor in polished Carrara marble with crisp veining and premium editorial contrast.",
-  "Apply a soft concrete floor with subtle texture and realistic reflections for a modern gallery feel.",
-  "Introduce light travertine flooring with soft natural variation and warm afternoon light response.",
-  "Design a refined herringbone walnut floor that feels luxurious, grounded, and photorealistic.",
-] as const;
+const CANCEL_SUCCESS_TOAST = "wizard.floorFlow.cancelSuccess";
 
 function simplifyRatio(width: number, height: number) {
   const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
@@ -196,6 +189,16 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "materials" ? 3 : 4;
   const floorWizardExamplePhotos = useMemo(() => getFloorWizardExamplePhotos(t), [i18n.language, t]);
+  const floorPromptExamples = useMemo(
+    () => [
+      t("wizard.floorFlow.promptExamples.oak"),
+      t("wizard.floorFlow.promptExamples.marble"),
+      t("wizard.floorFlow.promptExamples.concrete"),
+      t("wizard.floorFlow.promptExamples.travertine"),
+      t("wizard.floorFlow.promptExamples.walnut"),
+    ],
+    [i18n.language, t],
+  );
   const generationStatusMessages = useGenerationStatusMessages();
   const stickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);
   const canContinueFromMask = customPrompt.trim().length > 0;
@@ -217,6 +220,9 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const promptModalTitleTop = Math.max(insets.top + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(92, maskLayoutScale));
   const promptModalSaveBottom = Math.max(insets.bottom + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(12, maskLayoutScale));
   const canSaveCustomPrompt = customPromptDraft.trim().length > 0;
+  const creditsRemainingLabel = t("wizard.floorFlow.creditsRemaining", {
+    count: Math.max(availableCredits - 1, 0),
+  });
 
   useEffect(() => () => {
     if (detectTimerRef.current) clearTimeout(detectTimerRef.current);
@@ -324,15 +330,15 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
 
   const promptOpenSettings = useCallback((title: string, message: string) => {
     Alert.alert(title, message, [
-      { text: "Cancel", style: "cancel" },
+      { text: t("common.actions.cancel"), style: "cancel" },
       {
-        text: "Open Settings",
+        text: t("common.actions.openSettings"),
         onPress: () => {
           void Linking.openSettings();
         },
       },
     ]);
-  }, []);
+  }, [t]);
 
   const prepareGeneratedImageFile = useCallback(async () => {
     if (!generatedImageUrl) {
@@ -368,7 +374,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     try {
       const permission = await MediaLibrary.requestPermissionsAsync();
       if (!permission.granted) {
-        promptOpenSettings("Photo Access Needed", "Please allow photo library access to save your result to the device gallery.");
+        promptOpenSettings(t("wizard.floorFlow.savePermissionTitle"), t("wizard.floorFlow.savePermissionBody"));
         return;
       }
 
@@ -376,13 +382,13 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       tempUri = prepared.uri;
       temporary = prepared.temporary;
       await MediaLibrary.saveToLibraryAsync(prepared.uri);
-      showToast("Saved to your gallery");
+      showToast(t("common.states.savedToGallery"));
     } catch (error) {
-      Alert.alert("Save failed", error instanceof Error ? error.message : "Please try again.");
+      Alert.alert(t("workspace.download.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, prepareGeneratedImageFile, promptOpenSettings, showToast]);
+  }, [cleanupTempFile, prepareGeneratedImageFile, promptOpenSettings, showToast, t]);
 
   const handleShareResult = useCallback(async () => {
     triggerHaptic();
@@ -394,15 +400,15 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       tempUri = prepared.uri;
       temporary = prepared.temporary;
       await Share.share({
-        message: "Designed with Darkor.ai",
+        message: t("workspace.share.message"),
         url: prepared.uri,
       });
     } catch (error) {
-      Alert.alert("Share failed", error instanceof Error ? error.message : "Please try again.");
+      Alert.alert(t("workspace.share.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, prepareGeneratedImageFile]);
+  }, [cleanupTempFile, prepareGeneratedImageFile, t]);
 
   const handleClose = useCallback(() => {
     triggerHaptic();
@@ -412,15 +418,15 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
 
   const confirmExitDesignFlow = useCallback(() => {
     triggerHaptic();
-    Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "CANCEL", style: "cancel" },
+    Alert.alert(t("common.alerts.exitTitle"), t("common.alerts.progressLost"), [
+      { text: t("common.actions.cancel"), style: "cancel" },
       {
-        text: "EXIT",
+        text: t("common.actions.exit"),
         style: "destructive",
         onPress: handleClose,
       },
     ]);
-  }, [handleClose]);
+  }, [handleClose, t]);
 
   const uploadBlobToStorage = useCallback(async (uri: string) => {
     const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
@@ -536,7 +542,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const handleApplyCustomPrompt = useCallback(() => {
     const trimmed = customPromptDraft.trim();
     if (!trimmed) {
-      Alert.alert("Add a prompt", "Describe the exact floor transformation you want before continuing.");
+      Alert.alert(t("wizard.floorFlow.addPromptTitle"), t("wizard.floorFlow.addPromptBody"));
       return;
     }
 
@@ -544,12 +550,12 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     setCustomPrompt(trimmed);
     setCustomPromptDraft(trimmed);
     setIsCustomPromptOpen(false);
-  }, [customPromptDraft]);
+  }, [customPromptDraft, t]);
 
   const handleAutoDetectMask = useCallback(async () => {
     try {
       if (!viewerReady) {
-        showToast("Preparing your session. Please try again in a moment.");
+        showToast(t("workspace.generation.preparingSessionBody"));
         return;
       }
 
@@ -571,7 +577,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       const confidence = typeof detection.confidence === "number" ? detection.confidence : 0;
 
       if (confidence < 70 || polygons.length === 0) {
-        showToast(AUTO_DETECT_FAILURE_MESSAGE);
+        showToast(t(AUTO_DETECT_FAILURE_MESSAGE));
         return;
       }
 
@@ -584,16 +590,16 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
         .filter((polygon) => polygon.length >= 3);
 
       if (!mappedRegions.length) {
-        showToast(AUTO_DETECT_FAILURE_MESSAGE);
+        showToast(t(AUTO_DETECT_FAILURE_MESSAGE));
         return;
       }
 
       replaceMaskWithRegions(mappedRegions);
       triggerHaptic();
-      showToast(AUTO_DETECT_SUCCESS_MESSAGE);
+      showToast(t(AUTO_DETECT_SUCCESS_MESSAGE));
     } catch (error) {
       logAutoDetectFailure(error);
-      showToast(AUTO_DETECT_FAILURE_MESSAGE);
+      showToast(t(AUTO_DETECT_FAILURE_MESSAGE));
     } finally {
       setIsAutoDetecting(false);
     }
@@ -606,6 +612,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     replaceMaskWithRegions,
     selectedImage,
     showToast,
+    t,
     viewerReady,
   ]);
 
@@ -632,10 +639,10 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
             : await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
           Alert.alert(
-            source === "camera" ? "Camera access needed" : "Photo access needed",
+            source === "camera" ? t("wizard.floorFlow.cameraAccessTitle") : t("wizard.floorFlow.photoAccessTitle"),
             source === "camera"
-              ? "Please enable camera access to capture a floor photo."
-              : "Please enable photo library access to upload a floor photo.",
+              ? t("wizard.floorFlow.cameraAccessBody")
+              : t("wizard.floorFlow.photoAccessBody"),
           );
           return false;
         }
@@ -649,17 +656,17 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
         advanceToMaskStep();
         return true;
       } catch (error) {
-        Alert.alert("Unable to open media", error instanceof Error ? error.message : "Please try again.");
+        Alert.alert(t("wizard.floorFlow.mediaUnavailableTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
         return false;
       }
     },
-    [advanceToMaskStep, applySelectedImage],
+    [advanceToMaskStep, applySelectedImage, t],
   );
 
   const handleSelectExample = useCallback((example: FloorIntroExamplePhoto) => {
     const resolved = NativeImage.resolveAssetSource(example.source);
     if (!resolved?.uri) {
-      Alert.alert("Example unavailable", "This example photo could not be opened.");
+      Alert.alert(t("workspace.media.exampleUnavailableTitle"), t("wizard.floorFlow.exampleUnavailableBody"));
       return;
     }
 
@@ -670,7 +677,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       height: resolved.height ?? 1440,
     });
     advanceToMaskStep();
-  }, [advanceToMaskStep, applySelectedImage]);
+  }, [advanceToMaskStep, applySelectedImage, t]);
 
   const updateComparisonSlider = useCallback((x: number) => {
     const ratio = Math.max(0.05, Math.min(x / resultFrameWidth, 0.95));
@@ -692,20 +699,20 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     }
 
     if (!viewerReady) {
-      Alert.alert("Preparing your session", "Your guest profile is still loading. Please try again in a moment.");
+      Alert.alert(t("workspace.generation.preparingSessionTitle"), t("workspace.generation.preparingSessionBody"));
       return;
     }
 
     if (!selectedImage || !hasMask || !sourceCaptureRef.current || !maskCaptureRef.current) {
-      Alert.alert("Mark the floor first", "Brush over the floor area you want to restyle before continuing.");
+      Alert.alert(t("wizard.floorFlow.markFloorTitle"), t("wizard.floorFlow.markFloorBody"));
       return;
     }
     if (!customPrompt.trim()) {
-      Alert.alert("Add a prompt", "Choose a custom floor prompt before generating.");
+      Alert.alert(t("wizard.floorFlow.addPromptTitle"), t("wizard.floorFlow.generatePromptBody"));
       return;
     }
     if (!selectedMaterial) {
-      Alert.alert("Pick a material", "Choose a flooring material before continuing.");
+      Alert.alert(t("wizard.floorFlow.pickMaterialTitle"), t("wizard.floorFlow.pickMaterialBody"));
       return;
     }
     if (!generationAccess.allowed) {
@@ -720,7 +727,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
         return;
       }
 
-      showToast(generationAccess.message || "Limit Reached");
+      showToast(generationAccess.message || t("workspace.generation.limitReached"));
       return;
     }
     try {
@@ -758,7 +765,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     } catch (error) {
       setIsGenerating(false);
       setStep("materials");
-      const rawMessage = error instanceof Error ? error.message : "Please try again.";
+      const rawMessage = error instanceof Error ? error.message : t("common.actions.tryAgain");
       if (rawMessage.toLowerCase().includes("limit reached")) {
         showToast(rawMessage);
         return;
@@ -774,7 +781,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       }
       showToast(getFriendlyGenerationError(rawMessage));
     }
-  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isGenerating, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, uploadBlobToStorage, viewerId, viewerReady]);
+  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isGenerating, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, t, uploadBlobToStorage, viewerId, viewerReady]);
 
   const handleCancelGeneration = useCallback(async () => {
     if (!generationId || isCancellingGeneration) {
@@ -789,7 +796,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       })) as { cancelled?: boolean };
 
       if (!result.cancelled) {
-        showToast("This render is already finishing up.");
+        showToast(t("wizard.floorFlow.renderFinishing"));
         return;
       }
 
@@ -798,13 +805,13 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       setGenerationId(null);
       setGeneratedImageUrl(null);
       setStep("materials");
-      showToast(CANCEL_SUCCESS_TOAST);
+      showToast(t(CANCEL_SUCCESS_TOAST));
     } catch (error) {
-      showToast(getFriendlyGenerationError(error instanceof Error ? error.message : "Unable to cancel right now."));
+      showToast(getFriendlyGenerationError(error instanceof Error ? error.message : t("wizard.floorFlow.cancelUnavailable")));
     } finally {
       setIsCancellingGeneration(false);
     }
-  }, [cancelGeneration, generationId, isCancellingGeneration, showToast, viewerId]);
+  }, [cancelGeneration, generationId, isCancellingGeneration, showToast, t, viewerId]);
 
   useEffect(() => {
     if (!awaitingAuth || !effectiveSignedIn || !viewerReady || !selectedImage || !hasMask) {
@@ -865,7 +872,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
 
       {step !== "processing" && step !== "result" && step !== "intake" ? (
         <ServiceWizardHeader
-          title="Floor Restyle"
+          title={t("wizard.floorFlow.title")}
           step={currentStepNumber}
           creditCount={availableCredits}
           canGoBack={currentStepNumber > 1}
@@ -887,7 +894,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
 
       {step === "mask" ? (
         <View style={styles.maskScreen}>
-          <Text style={[styles.maskScreenTitle, { top: maskTitleTop }]}>Floor Restyle</Text>
+          <Text style={[styles.maskScreenTitle, { top: maskTitleTop }]}>{t("wizard.floorFlow.title")}</Text>
 
           <View
             onLayout={handleCanvasLayout}
@@ -923,7 +930,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
                   {isDetecting || isAutoDetecting ? (
                     <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.maskDetectOverlay}>
                       <ActivityIndicator color="#FFFFFF" />
-                      <Text style={styles.maskDetectTitle}>Masking your floor...</Text>
+                      <Text style={styles.maskDetectTitle}>{t("wizard.floorFlow.masking")}</Text>
                     </MotiView>
                   ) : null}
                 </AnimatePresence>
@@ -931,7 +938,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
             ) : null}
           </View>
 
-          <Text style={[styles.maskPromptLabel, { top: promptLabelTop, left: scaleMaskValue(24, maskLayoutScale) }]}>Enter Prompt</Text>
+          <Text style={[styles.maskPromptLabel, { top: promptLabelTop, left: scaleMaskValue(24, maskLayoutScale) }]}>{t("wizard.floorFlow.promptLabel")}</Text>
 
           <Pressable
             accessibilityRole="button"
@@ -959,7 +966,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
               }
 
               if (!hasMask || isAutoDetecting || isDetecting) {
-                showToast("Preparing the automatic floor mask. Please wait a moment.");
+                showToast(t("wizard.floorFlow.autoMaskPreparing"));
                 return;
               }
 
@@ -979,7 +986,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
               },
             ]}
           >
-            <Text style={[styles.maskContinueText, { color: canContinueFromMask ? "#FFFFFF" : "#9CA3AF" }]}>Continue</Text>
+            <Text style={[styles.maskContinueText, { color: canContinueFromMask ? "#FFFFFF" : "#9CA3AF" }]}>{t("common.actions.continue")}</Text>
           </Pressable>
 
           <AnimatePresence>
@@ -1000,7 +1007,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
                     },
                   ]}
                 >
-                  <Text style={styles.promptModalTitle}>Enter Prompt</Text>
+                  <Text style={styles.promptModalTitle}>{t("wizard.floorFlow.promptLabel")}</Text>
 
                   <Pressable accessibilityRole="button" onPress={handleCloseCustomPrompt} style={styles.promptModalCloseButton}>
                     <X color="#0A0A0A" size={18} strokeWidth={2.3} />
@@ -1027,13 +1034,13 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
                       },
                     ]}
                   >
-                    <Text style={styles.promptModalInputLabel}>Enter Prompt</Text>
+                    <Text style={styles.promptModalInputLabel}>{t("wizard.floorFlow.promptLabel")}</Text>
                     <View style={styles.promptModalTextField}>
                       <TextInput
                         value={customPromptDraft}
                         onChangeText={handleChangeCustomPrompt}
                         multiline
-                        placeholder="Type here a detailed description of what you want to see in your home design"
+                        placeholder={t("wizard.floorFlow.promptPlaceholder")}
                         placeholderTextColor="#9CA3AF"
                         textAlignVertical="top"
                         style={styles.promptModalInput}
@@ -1046,10 +1053,10 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
                     </View>
                   </View>
 
-                  <Text style={[styles.promptExampleTitle, { marginTop: scaleMaskValue(32, maskLayoutScale) }]}>Example prompts</Text>
+                  <Text style={[styles.promptExampleTitle, { marginTop: scaleMaskValue(32, maskLayoutScale) }]}>{t("wizard.floorFlow.promptExamplesTitle")}</Text>
 
                   <View style={[styles.promptExampleList, { marginTop: scaleMaskValue(16, maskLayoutScale) }]}>
-                    {FLOOR_PROMPT_EXAMPLES.map((prompt) => {
+                    {floorPromptExamples.map((prompt) => {
                       const isActive = customPromptDraft.trim() === prompt.trim();
 
                       return (
@@ -1086,7 +1093,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
                     },
                   ]}
                 >
-                  <Text style={[styles.promptModalSaveText, { color: canSaveCustomPrompt ? "#FFFFFF" : "#9CA3AF" }]}>Save</Text>
+                  <Text style={[styles.promptModalSaveText, { color: canSaveCustomPrompt ? "#FFFFFF" : "#9CA3AF" }]}>{t("common.actions.save")}</Text>
                 </Pressable>
               </MotiView>
             ) : null}
@@ -1101,7 +1108,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
           footer={
             <ServiceContinueButton
               active={canContinueFromMaterials}
-              label={selectedMaterial ? "Generate My Design \u2192" : "Select a Material"}
+              label={selectedMaterial ? t("wizard.floorFlow.generateCta") : t("wizard.floorFlow.selectMaterialCta")}
               loading={loadingContinueStep === "materials"}
               onPress={async () => {
                 if (!canContinueFromMaterials) {
@@ -1111,13 +1118,13 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
                 await runAsyncContinue("materials", handleGenerate);
               }}
               pulse={canContinueFromMaterials}
-              supportingText={`Uses 1 credit \u00b7 ${Math.max(availableCredits - 1, 0)} remaining`}
+              supportingText={t("wizard.floorFlow.supportingText", { creditsRemaining: creditsRemainingLabel })}
             />
           }
         >
           <View>
-            <Text style={styles.stepTitle}>Select Material</Text>
-            <Text style={styles.stepText}>Select a premium material curated to read as photoreal, perspective-aware, and listing-ready.</Text>
+            <Text style={styles.stepTitle}>{t("wizard.floorFlow.selectMaterialTitle")}</Text>
+            <Text style={styles.stepText}>{t("wizard.floorFlow.selectMaterialBody")}</Text>
             <ServiceSelectionGrid>
               {FLOOR_MATERIAL_OPTIONS.map((option) => (
                 <ServiceSelectionCard
@@ -1134,7 +1141,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
                 />
               ))}
             </ServiceSelectionGrid>
-            <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Selected Material</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? "No material selected"}</Text><Text style={styles.summaryText}>{selectedMaterial?.description ?? "Select a flooring material to unlock the AI restyle."}</Text></View>
+            <View style={styles.summaryCard}><Text style={styles.summaryLabel}>{t("wizard.floorFlow.selectedMaterial")}</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? t("wizard.floorFlow.noMaterialSelected")}</Text><Text style={styles.summaryText}>{selectedMaterial?.description ?? t("wizard.floorFlow.unlockMaterialBody")}</Text></View>
           </View>
         </ServiceWizardStepScreen>
       ) : null}

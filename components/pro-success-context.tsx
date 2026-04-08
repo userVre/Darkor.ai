@@ -13,6 +13,7 @@ import {
 } from "react";
 import { Platform, Text, ToastAndroid, View, useWindowDimensions } from "react-native";
 import { Easing } from "react-native-reanimated";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, Sparkles } from "@/components/material-icons";
 
@@ -34,6 +35,7 @@ function ProSuccessOverlay({
   visible: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   if (!visible) return null;
 
   return (
@@ -65,15 +67,15 @@ function ProSuccessOverlay({
             <View className="rounded-[30px] border border-white/10 bg-black px-6 py-8" style={{ borderWidth: 0.5 }}>
               <View className="flex-row items-center gap-2">
                 <Sparkles color="#f5f3ff" size={20} />
-                <Text className="text-xl font-medium text-white" style={fonts.medium}>Welcome to Darkor Pro! {"\u2728"}</Text>
+                <Text className="text-xl font-medium text-white" style={fonts.medium}>{t("proSuccess.title")} {"\u2728"}</Text>
               </View>
-              <Text className="mt-3 text-sm text-zinc-400">You're fully powered up. Here's what's unlocked:</Text>
+              <Text className="mt-3 text-sm text-zinc-400">{t("proSuccess.subtitle")}</Text>
 
               <View className="mt-5 gap-3">
                 {[
-                  "8K Hyper-Realism Enabled",
-                  "Virtual Staging Unlocked",
-                  "Infinite Credits Active",
+                  t("proSuccess.features.hyperRealism"),
+                  t("proSuccess.features.virtualStaging"),
+                  t("proSuccess.features.infiniteCredits"),
                 ].map((item) => (
                   <View key={item} className="flex-row items-center gap-3">
                     <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
@@ -91,7 +93,7 @@ function ProSuccessOverlay({
                   end={{ x: 1, y: 1 }}
                   style={{ paddingVertical: spacing.md, alignItems: "center", borderRadius: 18 }}
                 >
-                  <Text className="text-sm font-semibold text-white" style={fonts.semibold}>Start Designing</Text>
+                  <Text className="text-sm font-semibold text-white" style={fonts.semibold}>{t("proSuccess.cta")}</Text>
                 </LinearGradient>
               </LuxPressable>
             </View>
@@ -207,6 +209,7 @@ function ProToast({
 }
 
 export function ProSuccessProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const [showOverlay, setShowOverlay] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [showSparkles, setShowSparkles] = useState(false);
@@ -223,11 +226,11 @@ export function ProSuccessProvider({ children }: { children: React.ReactNode }) 
   const showSuccess = useCallback(() => {
     setShowOverlay(true);
     setShowSparkles(true);
-    showToast("Account Upgraded to Pro successfully.");
+    showToast(t("proSuccess.toast"));
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     }
-  }, [showToast]);
+  }, [showToast, t]);
 
   useEffect(() => {
     if (!showSparkles) return;

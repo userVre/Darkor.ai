@@ -1,5 +1,5 @@
 import { StyleSheet, type TextStyle, type ViewStyle } from "react-native";
-import { dark } from "@/styles/theme";
+import { light } from "@/styles/theme";
 import { spacing } from "../styles/spacing";
 import { fonts } from "../styles/typography";
 
@@ -7,27 +7,27 @@ const SPACING_UNIT = spacing.sm;
 
 export const DS = {
   colors: {
-    background: dark.bg,
-    backgroundAlt: dark.surface,
-    surface: dark.surface,
-    surfaceRaised: dark.surfaceHigh,
-    surfaceMuted: dark.surface,
-    surfaceOverlay: dark.surface,
-    borderSubtle: dark.border,
-    border: dark.border,
-    borderStrong: dark.borderLight,
-    textPrimary: dark.textPrimary,
-    textSecondary: dark.textSecondary,
-    textTertiary: dark.textMuted,
-    textMuted: dark.textMuted,
-    accent: dark.brand,
-    accentStrong: dark.brand,
-    accentSecondary: dark.brand,
-    accentGlow: dark.brand,
-    accentGlowStrong: dark.brand,
-    accentSurface: dark.surfaceHigh,
-    positive: dark.success,
-    danger: dark.error,
+    background: light.bg,
+    backgroundAlt: light.surface,
+    surface: light.surface,
+    surfaceRaised: "#FFFFFF",
+    surfaceMuted: light.surfaceMuted,
+    surfaceOverlay: "#FFFFFF",
+    borderSubtle: light.border,
+    border: light.border,
+    borderStrong: light.borderLight,
+    textPrimary: light.textPrimary,
+    textSecondary: light.textSecondary,
+    textTertiary: light.textMuted,
+    textMuted: light.textMuted,
+    accent: light.brand,
+    accentStrong: light.brandDark,
+    accentSecondary: light.brand,
+    accentGlow: light.brandSoft,
+    accentGlowStrong: light.brand,
+    accentSurface: light.brandSurface,
+    positive: light.success,
+    danger: light.error,
   },
   spacing: {
     0: 0,
@@ -123,11 +123,11 @@ export function surfaceCard(backgroundColor: string = DS.colors.surfaceRaised): 
 
 export function cardShadow(): ViewStyle {
   return {
-    shadowColor: dark.bg,
+    shadowColor: light.shadow,
     shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    elevation: 10,
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 2,
   };
 }
 
@@ -135,8 +135,8 @@ export function glowShadow(color: string = DS.colors.accentGlow, blur = 28): Vie
   return {
     shadowColor: color,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.22,
-    shadowRadius: Math.max(blur / 2, 8),
-    elevation: 6,
+    shadowOpacity: 0.08,
+    shadowRadius: Math.max(blur / 3, 6),
+    elevation: 1,
   };
 }

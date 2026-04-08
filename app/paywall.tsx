@@ -1076,7 +1076,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   featuresSection: {
-    marginHorizontal: 82,
+    marginHorizontal: 32,
     marginBottom: 36,
   },
   featureRow: {
@@ -1103,16 +1103,19 @@ const styles = StyleSheet.create({
     ...fonts.medium,
   },
   trialBar: {
-    height: 56,
+    minHeight: 56,
     marginHorizontal: 16,
     paddingHorizontal: 16,
+    paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: PANEL_BG,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 16,
   },
   trialLabel: {
+    flex: 1,
     color: TEXT_PRIMARY,
     fontSize: 15,
     lineHeight: 20,
@@ -1146,17 +1149,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   planCard: {
-    minHeight: 72,
+    minHeight: 78,
     borderRadius: 14,
     backgroundColor: PANEL_BG,
     paddingHorizontal: 16,
+    paddingVertical: 14,
     borderWidth: 1,
     borderColor: PANEL_BORDER,
     justifyContent: "center",
   },
-  yearlyCard: {
-    height: 72,
-  },
+  yearlyCard: {},
   weeklyCard: {
     minHeight: 72,
   },
@@ -1186,14 +1188,16 @@ const styles = StyleSheet.create({
   },
   planRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
+    gap: 12,
   },
   planCopy: {
     flex: 1,
     justifyContent: "center",
   },
   planPriceColumn: {
+    flexShrink: 0,
     alignItems: "flex-end",
     justifyContent: "center",
     marginLeft: 12,
@@ -1232,12 +1236,12 @@ const styles = StyleSheet.create({
   },
   noPaymentRow: {
     marginTop: 16,
-    marginLeft: 136,
-    marginRight: 132,
     marginBottom: 42,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 16,
+    flexWrap: "wrap",
     gap: 6,
   },
   cancelAnytimeRow: {
@@ -1246,6 +1250,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 16,
+    flexWrap: "wrap",
     gap: 6,
   },
   noticeText: {
@@ -1265,11 +1271,13 @@ const styles = StyleSheet.create({
     ...fonts.medium,
   },
   ctaButton: {
-    height: 58,
+    minHeight: 58,
     marginHorizontal: 16,
     borderRadius: 16,
     backgroundColor: BRAND_RED,
     justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     shadowColor: BRAND_RED,
     shadowOpacity: 0.4,
     shadowRadius: 8,
@@ -1310,13 +1318,13 @@ const styles = StyleSheet.create({
   legalFooter: {
     marginHorizontal: 20,
     paddingTop: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 8,
   },
   legalLinksRow: {
     flexDirection: "row",
     alignItems: "center",
+    flexWrap: "wrap",
   },
   legalLinkButton: {
     minWidth: 40,
@@ -1340,6 +1348,7 @@ const styles = StyleSheet.create({
     color: "#999999",
     fontSize: 11,
     lineHeight: 14,
+    textAlign: "left",
     ...fonts.regular,
   },
 });

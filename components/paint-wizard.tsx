@@ -124,10 +124,10 @@ const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
 const DETECT_DURATION_MS = 1700;
 const FIXED_FOOTER_OFFSET = 96;
-const AUTO_DETECT_SUCCESS_MESSAGE = "Walls detected - brush to refine if needed";
+const AUTO_DETECT_SUCCESS_MESSAGE = "wizard.paintFlow.autoDetectSuccess";
 const AUTO_DETECT_FAILURE_MESSAGE = "Auto-detect couldn't run � please brush manually.";
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
-const CANCEL_SUCCESS_TOAST = "Generation canceled. Your credit was kept.";
+const CANCEL_SUCCESS_TOAST = "wizard.paintFlow.cancelSuccess";
 const SELECTION_REFERENCE_WIDTH = 456;
 const SELECTION_REFERENCE_HEIGHT = 932;
 const COLOR_PICKER_DEFAULT_HEX = "#FF69B4";
@@ -256,7 +256,10 @@ function hexToRgb(hexColor: string): RgbColor | null {
   };
 }
 
-function resolveColorCategoryLabel(hexColor: string) {
+function resolveColorCategoryLabel(
+  hexColor: string,
+  labels: Record<(typeof COLOR_PICKER_PRESET_SWATCHES)[number]["id"], string>,
+) {
   const targetRgb = hexToRgb(hexColor);
   if (!targetRgb) {
     return null;
@@ -282,7 +285,7 @@ function resolveColorCategoryLabel(hexColor: string) {
     }
   }
 
-  return bestMatch ? COLOR_PICKER_CATEGORY_LABELS[bestMatch] : null;
+  return bestMatch ? labels[bestMatch] : null;
 }
 
 function hsvToRgb(hue: number, saturation: number, value: number): RgbColor {
@@ -470,6 +473,48 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const { showToast } = useProSuccess();
   const { credits: sharedCredits, setOptimisticCredits } = useViewerCredits();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
+  const localizedFinishOptions = useMemo<FinishOption[]>(
+    () => [
+      {
+        id: "matte",
+        label: t("wizard.paintFlow.finishes.matte.label"),
+        description: t("wizard.paintFlow.finishes.matte.description"),
+      },
+      {
+        id: "satin",
+        label: t("wizard.paintFlow.finishes.satin.label"),
+        description: t("wizard.paintFlow.finishes.satin.description"),
+      },
+      {
+        id: "glossy",
+        label: t("wizard.paintFlow.finishes.glossy.label"),
+        description: t("wizard.paintFlow.finishes.glossy.description"),
+      },
+    ],
+    [i18n.language, t],
+  );
+  const localizedSurfaceOptions = useMemo<PaintSurfaceOption[]>(
+    () => [
+      { value: "Auto", label: t("wizard.paintFlow.surfaces.auto") },
+      { value: "Brick", label: t("wizard.paintFlow.surfaces.brick") },
+      { value: "Cabinet", label: t("wizard.paintFlow.surfaces.cabinet") },
+      { value: "Door", label: t("wizard.paintFlow.surfaces.door") },
+      { value: "Wall", label: t("wizard.paintFlow.surfaces.wall") },
+      { value: "Outside Wall", label: t("wizard.paintFlow.surfaces.outsideWall") },
+    ],
+    [i18n.language, t],
+  );
+  const localizedColorLabels = useMemo(
+    () => ({
+      pink: t("wizard.paintFlow.colorFamilies.pink"),
+      blue: t("wizard.paintFlow.colorFamilies.blue"),
+      green: t("wizard.paintFlow.colorFamilies.green"),
+      yellow: t("wizard.paintFlow.colorFamilies.yellow"),
+      gray: t("wizard.paintFlow.colorFamilies.gray"),
+      red: t("wizard.paintFlow.colorFamilies.red"),
+    }),
+    [i18n.language, t],
+  );
 
   const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as MeResponse | null | undefined;
   const generationArchive = useQuery("generations:getUserArchive" as any, viewerReady ? viewerArgs : "skip") as
@@ -550,8 +595,8 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     [selectedColorValue],
   );
   const selectedFinish = useMemo(
-    () => FINISH_OPTIONS.find((option) => option.id === selectedFinishId) ?? FINISH_OPTIONS[0],
-    [selectedFinishId],
+    () => localizedFinishOptions.find((option) => option.id === selectedFinishId) ?? localizedFinishOptions[0],
+    [localizedFinishOptions, selectedFinishId],
   );
   const selectedColorRgb = useMemo(() => (selectedColorValue ? hexToRgb(selectedColorValue) : null), [selectedColorValue]);
   const selectedColorRgbLabel = useMemo(
@@ -559,17 +604,17 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     [selectedColorRgb],
   );
   const selectedColorCategory = useMemo(
-    () => (selectedColorValue ? resolveColorCategoryLabel(selectedColorValue) : null),
-    [selectedColorValue],
+    () => (selectedColorValue ? resolveColorCategoryLabel(selectedColorValue, localizedColorLabels) : null),
+    [localizedColorLabels, selectedColorValue],
   );
   const selectedSurfaceOption = useMemo(
-    () => PAINT_SURFACE_OPTIONS.find((option) => option.value === selectedSurface) ?? PAINT_SURFACE_OPTIONS[0],
-    [selectedSurface],
+    () => localizedSurfaceOptions.find((option) => option.value === selectedSurface) ?? localizedSurfaceOptions[0],
+    [localizedSurfaceOptions, selectedSurface],
   );
-  const selectedColorTitle = selectedColorOption?.title ?? (selectedColorValue ? selectedColorRgbLabel : "No color selected");
+  const selectedColorTitle = selectedColorOption?.title ?? (selectedColorValue ? selectedColorRgbLabel : t("wizard.paintFlow.noColorSelected"));
   const selectedColorDescription =
     selectedColorOption?.description ??
-    (selectedColorValue ? "Custom wall tone selected from the precision color picker." : "Choose a wall color before continuing.");
+    (selectedColorValue ? t("wizard.paintFlow.customColorDescription") : t("wizard.paintFlow.chooseColorBody"));
   const availableCredits = sharedCredits;
   const generationAccess = canUserGenerateNow(me);
   const canGenerate = Boolean(selectedImage && hasMask && selectedColorValue && !isGenerating);
@@ -610,14 +655,16 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const canContinueFromSelection = Boolean(selectedColorValue && isColorConfirmed && isSurfaceConfirmed);
   const canContinueFromMask = hasMask && !isDetecting && !isAutoDetecting;
   const activeMaskTool = maskTool === "surface" ? "brush" : maskTool;
-  const maskWidthLabel = activeMaskTool === "eraser" ? "Eraser Width" : "Brush Width";
+  const maskWidthLabel =
+    activeMaskTool === "eraser" ? t("wizard.paintFlow.eraserWidth") : t("wizard.paintFlow.brushWidth");
   const maskCanvasWidth = Math.min(width - 48, 412);
   const maskCanvasHeight = Math.min(Math.max(height * 0.45, 352), 416);
-  const selectedColorButtonText = isColorConfirmed && selectedColorValue ? (selectedColorCategory ?? "Choose") : "Choose";
+  const selectedColorButtonText =
+    isColorConfirmed && selectedColorValue ? (selectedColorCategory ?? t("wizard.paintFlow.choose")) : t("wizard.paintFlow.choose");
   const selectedColorButtonBackground = isColorConfirmed && selectedColorValue ? selectedColorValue : "#0A0A0A";
   const selectedColorButtonTextColor =
     isColorConfirmed && selectedColorValue ? resolveContrastTextColor(selectedColorValue) : "#FFFFFF";
-  const selectedSurfaceButtonText = isSurfaceConfirmed ? selectedSurfaceOption.label : "Choose";
+  const selectedSurfaceButtonText = isSurfaceConfirmed ? selectedSurfaceOption.label : t("wizard.paintFlow.choose");
   const selectedSurfaceIconColor = isSurfaceConfirmed ? "#FFFFFF" : "#0A0A0A";
 
   useEffect(() => {
@@ -737,15 +784,15 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
   const promptOpenSettings = useCallback((title: string, message: string) => {
     Alert.alert(title, message, [
-      { text: "Cancel", style: "cancel" },
+      { text: t("common.actions.cancel"), style: "cancel" },
       {
-        text: "Open Settings",
+        text: t("common.actions.openSettings"),
         onPress: () => {
           void Linking.openSettings();
         },
       },
     ]);
-  }, []);
+  }, [t]);
 
   const prepareGeneratedImageFile = useCallback(async () => {
     if (!generatedImageUrl) {
@@ -781,7 +828,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     try {
       const permission = await MediaLibrary.requestPermissionsAsync();
       if (!permission.granted) {
-        promptOpenSettings("Photo Access Needed", "Please allow photo library access to save your result to the device gallery.");
+        promptOpenSettings(t("wizard.paintFlow.savePermissionTitle"), t("wizard.paintFlow.savePermissionBody"));
         return;
       }
 
@@ -789,13 +836,13 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       tempUri = prepared.uri;
       temporary = prepared.temporary;
       await MediaLibrary.saveToLibraryAsync(prepared.uri);
-      showToast("Saved to your gallery");
+      showToast(t("common.states.savedToGallery"));
     } catch (error) {
-      Alert.alert("Save failed", error instanceof Error ? error.message : "Please try again.");
+      Alert.alert(t("workspace.download.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, prepareGeneratedImageFile, promptOpenSettings, showToast]);
+  }, [cleanupTempFile, prepareGeneratedImageFile, promptOpenSettings, showToast, t]);
 
   const handleShareResult = useCallback(async () => {
     triggerHaptic();
@@ -807,15 +854,15 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       tempUri = prepared.uri;
       temporary = prepared.temporary;
       await Share.share({
-        message: "Designed with Darkor.ai",
+        message: t("workspace.share.message"),
         url: prepared.uri,
       });
     } catch (error) {
-      Alert.alert("Share failed", error instanceof Error ? error.message : "Please try again.");
+      Alert.alert(t("workspace.share.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, prepareGeneratedImageFile]);
+  }, [cleanupTempFile, prepareGeneratedImageFile, t]);
 
   const handleClose = useCallback(() => {
     triggerHaptic();
@@ -825,15 +872,15 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
   const confirmExitDesignFlow = useCallback(() => {
     triggerHaptic();
-    Alert.alert("Exit?", "Your progress will be lost.", [
-      { text: "CANCEL", style: "cancel" },
+    Alert.alert(t("common.alerts.exitTitle"), t("common.alerts.progressLost"), [
+      { text: t("common.actions.cancel"), style: "cancel" },
       {
-        text: "EXIT",
+        text: t("common.actions.exit"),
         style: "destructive",
         onPress: handleClose,
       },
     ]);
-  }, [handleClose]);
+  }, [handleClose, t]);
 
   const uploadBlobToStorage = useCallback(
     async (uri: string) => {
@@ -1005,10 +1052,10 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
   const handleAutoDetectMask = useCallback(async () => {
     try {
-      if (!viewerReady) {
-        showToast("Preparing your session. Please try again in a moment.");
-        return;
-      }
+    if (!viewerReady) {
+      showToast(t("workspace.generation.preparingSessionBody"));
+      return;
+    }
 
       if (!selectedImage || canvasSize.width <= 0 || canvasSize.height <= 0 || isAutoDetecting || isDetecting) {
         return;
@@ -1028,7 +1075,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       const confidence = typeof detection.confidence === "number" ? detection.confidence : 0;
 
       if (confidence < 70 || polygons.length === 0) {
-        showToast(AUTO_DETECT_FAILURE_MESSAGE);
+        showToast(t("wizard.paintFlow.autoDetectFailure"));
         return;
       }
 
@@ -1041,16 +1088,16 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
         .filter((polygon) => polygon.length >= 3);
 
       if (!mappedRegions.length) {
-        showToast(AUTO_DETECT_FAILURE_MESSAGE);
+        showToast(t("wizard.paintFlow.autoDetectFailure"));
         return;
       }
 
       replaceMaskWithRegions(mappedRegions);
       triggerHaptic();
-      showToast(AUTO_DETECT_SUCCESS_MESSAGE);
+      showToast(t("wizard.paintFlow.autoDetectSuccess"));
     } catch (error) {
       logAutoDetectFailure(error);
-      showToast(AUTO_DETECT_FAILURE_MESSAGE);
+      showToast(t("wizard.paintFlow.autoDetectFailure"));
     } finally {
       setIsAutoDetecting(false);
     }
@@ -1064,8 +1111,9 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     replaceMaskWithRegions,
     selectedImage,
     showToast,
+    t,
     viewerReady,
-    ]);
+  ]);
 
   const handleSelectMaskTool = useCallback(
     (tool: MaskTool) => {
@@ -1089,10 +1137,10 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
         if (!permission.granted) {
           Alert.alert(
-            source === "camera" ? "Camera access needed" : "Photo access needed",
+            source === "camera" ? t("wizard.paintFlow.cameraAccessTitle") : t("wizard.paintFlow.photoAccessTitle"),
             source === "camera"
-              ? "Please enable camera access to capture a room photo."
-              : "Please enable photo library access to upload a room photo.",
+              ? t("wizard.paintFlow.cameraAccessBody")
+              : t("wizard.paintFlow.photoAccessBody"),
           );
           return false;
         }
@@ -1120,18 +1168,18 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
         advanceToMaskStep();
         return true;
       } catch (error) {
-        Alert.alert("Unable to open media", error instanceof Error ? error.message : "Please try again.");
+        Alert.alert(t("wizard.paintFlow.mediaUnavailableTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
         return false;
       }
     },
-    [advanceToMaskStep, applySelectedImage],
+    [advanceToMaskStep, applySelectedImage, t],
   );
 
   const handleSelectExample = useCallback(
     (example: PaintIntroExamplePhoto) => {
       const resolved = NativeImage.resolveAssetSource(example.source);
       if (!resolved?.uri) {
-        Alert.alert("Example unavailable", "This example photo could not be opened.");
+        Alert.alert(t("workspace.media.exampleUnavailableTitle"), t("wizard.paintFlow.exampleUnavailableBody"));
         return;
       }
 
@@ -1143,7 +1191,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       });
       advanceToMaskStep();
     },
-    [advanceToMaskStep, applySelectedImage],
+    [advanceToMaskStep, applySelectedImage, t],
   );
 
   const handleGenerate = useCallback(async () => {
@@ -1152,17 +1200,17 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     }
 
     if (!viewerReady) {
-      Alert.alert("Preparing your session", "Your guest profile is still loading. Please try again in a moment.");
+      Alert.alert(t("workspace.generation.preparingSessionTitle"), t("workspace.generation.preparingSessionBody"));
       return;
     }
 
     if (!selectedImage || !hasMask || !sourceCaptureRef.current || !maskCaptureRef.current) {
-      Alert.alert("Mark the walls first", "Brush over the wall surfaces you want to repaint before generating.");
+      Alert.alert(t("wizard.paintFlow.markWallsTitle"), t("wizard.paintFlow.markWallsBody"));
       return;
     }
 
     if (!selectedColorValue) {
-      Alert.alert("Pick a color", "Choose a wall color before continuing.");
+      Alert.alert(t("wizard.paintFlow.pickColorTitle"), t("wizard.paintFlow.pickColorBody"));
       return;
     }
 
@@ -1178,7 +1226,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
         return;
       }
 
-      showToast(generationAccess.message || "Limit Reached");
+      showToast(generationAccess.message || t("workspace.generation.limitReached"));
       return;
     }
 
@@ -1231,7 +1279,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     } catch (error) {
       setIsGenerating(false);
       setStep("finish");
-      const rawMessage = error instanceof Error ? error.message : "Please try again.";
+      const rawMessage = error instanceof Error ? error.message : t("common.actions.tryAgain");
       if (rawMessage.toLowerCase().includes("limit reached")) {
         showToast(rawMessage);
         return;
@@ -1265,6 +1313,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     setOptimisticCredits,
     showToast,
     startGeneration,
+    t,
     uploadBlobToStorage,
     viewerId,
     viewerReady,
@@ -1283,7 +1332,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       })) as { cancelled?: boolean };
 
       if (!result.cancelled) {
-        showToast("This render is already finishing up.");
+        showToast(t("wizard.paintFlow.renderFinishing"));
         return;
       }
 
@@ -1292,13 +1341,13 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       setGenerationId(null);
       setGeneratedImageUrl(null);
       setStep("finish");
-      showToast(CANCEL_SUCCESS_TOAST);
+      showToast(t(CANCEL_SUCCESS_TOAST));
     } catch (error) {
-      showToast(getFriendlyGenerationError(error instanceof Error ? error.message : "Unable to cancel right now."));
+      showToast(getFriendlyGenerationError(error instanceof Error ? error.message : t("wizard.paintFlow.cancelUnavailable")));
     } finally {
       setIsCancellingGeneration(false);
     }
-  }, [cancelGeneration, generationId, isCancellingGeneration, showToast, viewerId]);
+  }, [cancelGeneration, generationId, isCancellingGeneration, showToast, t, viewerId]);
 
   useEffect(() => {
     if (!awaitingAuth || !effectiveSignedIn || !viewerReady || !canGenerate) {
@@ -1419,7 +1468,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
 
       {step !== "processing" && step !== "result" && step !== "intake" ? (
         <ServiceWizardHeader
-          title="Paint"
+          title={t("wizard.paintFlow.title")}
           step={currentStepNumber}
           creditCount={availableCredits}
           canGoBack={currentStepNumber > 1}
@@ -1442,7 +1491,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       {step === "colors" ? (
         <View style={styles.selectionStepScreen}>
           <StatusBar style="dark" />
-          <Text style={[styles.selectionHeaderTitle, { top: selectionTitleTop }]}>Color & Surface</Text>
+          <Text style={[styles.selectionHeaderTitle, { top: selectionTitleTop }]}>{t("wizard.paintFlow.selectionTitle")}</Text>
 
           <View
             style={[
@@ -1464,7 +1513,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                 <View style={styles.selectionCardIconWrap}>
                   <BrushCleaning color="#0A0A0A" size={18} strokeWidth={2.1} />
                 </View>
-                <Text style={styles.selectionCardLabel}>Color</Text>
+                <Text style={styles.selectionCardLabel}>{t("wizard.paintFlow.colorLabel")}</Text>
                 <Pressable
                   accessibilityRole="button"
                   onPress={handleOpenColorPicker}
@@ -1494,7 +1543,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                 <View style={styles.selectionCardIconWrap}>
                   <PaintSurfaceIcon surface={selectedSurface} color="#0A0A0A" size={18} />
                 </View>
-                <Text style={styles.selectionCardLabel}>Surface</Text>
+                <Text style={styles.selectionCardLabel}>{t("wizard.paintFlow.surfaceLabel")}</Text>
                 <Pressable
                   accessibilityRole="button"
                   onPress={handleOpenSurfacePicker}
@@ -1554,7 +1603,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                     canContinueFromSelection ? styles.selectionContinueButtonTextActive : styles.selectionContinueButtonTextDisabled,
                   ]}
                 >
-                  Continue
+                  {t("common.actions.continue")}
                 </Text>
               )}
             </Pressable>
@@ -1564,7 +1613,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
             <View style={styles.colorPickerOverlay}>
               <Pressable accessibilityRole="button" onPress={handleCloseColorPicker} style={StyleSheet.absoluteFillObject} />
               <View style={[styles.colorPickerSheet, { height: colorPickerSheetHeight, paddingBottom: Math.max(insets.bottom + scaleSelectionValue(24, selectionLayoutScale), scaleSelectionValue(24, selectionLayoutScale)) }]}>
-                <Text style={[styles.colorPickerTitle, { marginTop: scaleSelectionValue(32, selectionLayoutScale) }]}>Choose a color for your wall</Text>
+                <Text style={[styles.colorPickerTitle, { marginTop: scaleSelectionValue(32, selectionLayoutScale) }]}>{t("wizard.paintFlow.colorPickerTitle")}</Text>
 
                 <View style={{ marginTop: scaleSelectionValue(52, selectionLayoutScale), alignItems: "center" }}>
                   <GestureDetector gesture={colorPickerSquareGesture}>
@@ -1633,7 +1682,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                     onPress={handleApplyColorPicker}
                     style={[styles.colorPickerApplyButton, { width: colorPickerSquareSize, marginTop: scaleSelectionValue(44, selectionLayoutScale) }]}
                   >
-                    <Text style={styles.colorPickerApplyText}>Apply</Text>
+                    <Text style={styles.colorPickerApplyText}>{t("wizard.paintFlow.apply")}</Text>
                   </Pressable>
                 </View>
               </View>
@@ -1671,7 +1720,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                     },
                   ]}
                 >
-                  Select Surface Type
+                  {t("wizard.paintFlow.surfacePickerTitle")}
                 </Text>
 
                 <View style={styles.surfacePickerSheetBody}>
@@ -1686,7 +1735,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                       },
                     ]}
                   >
-                    {PAINT_SURFACE_OPTIONS.map((option, index) => {
+                    {localizedSurfaceOptions.map((option, index) => {
                       const active = option.value === surfacePickerDraft;
                       const isAuto = index === 0;
 
@@ -1729,7 +1778,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                     },
                   ]}
                 >
-                    <Text style={styles.surfacePickerApplyText}>Apply</Text>
+                    <Text style={styles.surfacePickerApplyText}>{t("wizard.paintFlow.apply")}</Text>
                   </Pressable>
                 </View>
               </View>
@@ -1741,7 +1790,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       {step === "mask" ? (
         <View style={styles.maskScreen}>
           <StatusBar style="dark" />
-          <Text style={[styles.maskHeaderTitle, { top: stickyHeaderMetrics.contentOffset }]}>Select Area to Paint</Text>
+          <Text style={[styles.maskHeaderTitle, { top: stickyHeaderMetrics.contentOffset }]}>{t("wizard.paintFlow.maskTitle")}</Text>
 
           <View style={[styles.maskCanvasWrap, { marginTop: stickyHeaderMetrics.contentOffset + scaleSelectionValue(52, selectionLayoutScale) }]}>
             <View onLayout={handleCanvasLayout} style={[styles.maskCanvasFrame, { width: maskCanvasWidth, height: maskCanvasHeight }]}>
@@ -1848,12 +1897,12 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                         <View style={styles.detectCopy}>
                           <ActivityIndicator color="#ffffff" />
                           <Text style={styles.detectTitle}>
-                            {isAutoDetecting ? "Detecting paintable surfaces..." : "Preparing your masking surface..."}
+                            {isAutoDetecting ? t("wizard.paintFlow.detectTitle") : t("wizard.paintFlow.preparingMaskTitle")}
                           </Text>
                           <Text style={styles.detectText}>
                             {isAutoDetecting
-                              ? "Darkor.ai is tracing repaintable wall surfaces while leaving windows, furniture, trim, and flooring untouched."
-                              : "Darkor.ai is refining the canvas so you can paint crisp edges around built-ins, windows, and furniture."}
+                              ? t("wizard.paintFlow.detectBody")
+                              : t("wizard.paintFlow.preparingMaskBody")}
                           </Text>
                         </View>
                       </MotiView>
@@ -1970,9 +2019,9 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
              {loadingContinueStep === "mask" ? (
                <ActivityIndicator color="#FFFFFF" />
              ) : (
-              <Text style={[styles.maskContinueText, { color: canContinueFromMask ? "#FFFFFF" : "#A0A0A0" }]}>Continue</Text>
-            )}
-          </Pressable>
+               <Text style={[styles.maskContinueText, { color: canContinueFromMask ? "#FFFFFF" : "#A0A0A0" }]}>{t("common.actions.continue")}</Text>
+             )}
+           </Pressable>
         </View>
       ) : null}
 
@@ -1987,7 +2036,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
           footer={
             <ServiceContinueButton
               active={canGenerate}
-              label="Paint My Walls ?"
+              label={t("wizard.paintFlow.generateCta")}
               loading={isGenerating}
               onPress={() => {
                 if (!canGenerate) {
@@ -1997,14 +2046,16 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                 void handleGenerate();
               }}
               pulse={canGenerate}
-              supportingText={`Uses 1 credit \u00b7 ${Math.max(availableCredits - 1, 0)} remaining`}
+              supportingText={t("wizard.paintFlow.supportingText", {
+                creditsRemaining: t("wizard.paintFlow.creditsRemaining", { count: Math.max(availableCredits - 1, 0) }),
+              })}
             />
           }
         >
           <View>
-            <Text style={styles.stepTitle}>Finish Type</Text>
+            <Text style={styles.stepTitle}>{t("wizard.paintFlow.finishTitle")}</Text>
             <Text style={styles.stepText}>
-              Choose how the paint should catch light so the walls read correctly in a polished, designer-grade render.
+              {t("wizard.paintFlow.finishBody")}
             </Text>
 
             <View style={[styles.summaryCard, styles.finishSummaryCard]}>
@@ -2014,18 +2065,18 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                 <View style={[styles.summarySwatch, { backgroundColor: selectedColorValue ?? "#ffffff" }]} />
               )}
               <View style={styles.summaryCopy}>
-                <Text style={styles.summaryLabel}>Selected Color</Text>
+                <Text style={styles.summaryLabel}>{t("wizard.paintFlow.selectedColor")}</Text>
                 <Text style={styles.summaryTitle}>{selectedColorTitle}</Text>
                 <Text style={styles.summaryText}>
                   {selectedColorValue
-                    ? `${selectedColorDescription} Surface: ${selectedSurface}.`
-                    : "Wall color is locked. Now choose the final sheen profile for the render."}
+                    ? `${selectedColorDescription} ${t("wizard.paintFlow.selectedSurfaceSentence", { surface: selectedSurfaceOption.label })}`
+                    : t("wizard.paintFlow.colorLockedBody")}
                 </Text>
               </View>
             </View>
 
             <View style={styles.finishList}>
-              {FINISH_OPTIONS.map((option) => (
+              {localizedFinishOptions.map((option) => (
                 <FinishCard
                   key={option.id}
                   option={option}

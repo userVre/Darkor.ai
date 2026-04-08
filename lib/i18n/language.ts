@@ -1,28 +1,84 @@
 import { getLocales } from "expo-localization";
 import { Platform } from "react-native";
 
-export const SUPPORTED_LANGUAGES = ["en", "fr", "es", "de", "pt", "it", "ja", "ko"] as const;
+export const SUPPORTED_LANGUAGES = [
+  "en-US",
+  "fr",
+  "es-MX",
+  "pt-BR",
+  "ru",
+  "ko",
+  "vi",
+  "zh-Hans",
+  "zh-Hant",
+] as const;
 
 export type AppLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
-export const DEFAULT_LANGUAGE: AppLanguage = "en";
+export const DEFAULT_LANGUAGE: AppLanguage = "en-US";
 
-const CJK_LANGUAGES = new Set<AppLanguage>(["ja", "ko"]);
+const CJK_LANGUAGES = new Set<AppLanguage>(["ko", "zh-Hans", "zh-Hant"]);
+
+function normalizeLanguageInput(input?: string | null) {
+  return String(input ?? "").trim().replace(/_/g, "-").toLowerCase();
+}
 
 export function resolveSupportedLanguage(input?: string | null): AppLanguage {
-  if (!input) {
+  const normalized = normalizeLanguageInput(input);
+
+  if (!normalized) {
     return DEFAULT_LANGUAGE;
   }
 
-  const normalized = input.toLowerCase().replace("_", "-");
-  const directMatch = SUPPORTED_LANGUAGES.find((language) => language === normalized);
-  if (directMatch) {
-    return directMatch;
+  if (normalized === "en" || normalized.startsWith("en-")) {
+    return "en-US";
   }
 
-  const baseLanguage = normalized.split("-")[0] ?? "";
-  const baseMatch = SUPPORTED_LANGUAGES.find((language) => language === baseLanguage);
-  return baseMatch ?? DEFAULT_LANGUAGE;
+  if (normalized === "fr" || normalized.startsWith("fr-")) {
+    return "fr";
+  }
+
+  if (normalized === "es" || normalized.startsWith("es-")) {
+    return "es-MX";
+  }
+
+  if (normalized === "pt" || normalized.startsWith("pt-")) {
+    return "pt-BR";
+  }
+
+  if (normalized === "ru" || normalized.startsWith("ru-")) {
+    return "ru";
+  }
+
+  if (normalized === "ko" || normalized.startsWith("ko-")) {
+    return "ko";
+  }
+
+  if (normalized === "vi" || normalized.startsWith("vi-")) {
+    return "vi";
+  }
+
+  if (normalized === "zh-hant" || normalized.includes("hant")) {
+    return "zh-Hant";
+  }
+
+  if (normalized === "zh-hans" || normalized.includes("hans")) {
+    return "zh-Hans";
+  }
+
+  if (normalized.startsWith("zh-")) {
+    if (
+      normalized.includes("-tw")
+      || normalized.includes("-hk")
+      || normalized.includes("-mo")
+    ) {
+      return "zh-Hant";
+    }
+
+    return "zh-Hans";
+  }
+
+  return DEFAULT_LANGUAGE;
 }
 
 export function getDeviceSupportedLanguage(): AppLanguage {
@@ -30,8 +86,11 @@ export function getDeviceSupportedLanguage(): AppLanguage {
 
   for (const locale of locales) {
     const candidate = resolveSupportedLanguage(
-      locale.languageTag ?? locale.languageCode ?? locale.regionCode ?? null,
+      locale.languageTag
+        ?? locale.languageCode
+        ?? null,
     );
+
     if (SUPPORTED_LANGUAGES.includes(candidate)) {
       return candidate;
     }
@@ -48,10 +107,16 @@ export function isCjkLanguage(language?: string | null) {
   return CJK_LANGUAGES.has(resolveSupportedLanguage(language));
 }
 
-function getSystemFontFamily(language: AppLanguage, weight: "regular" | "medium" | "semibold" | "bold") {
-  if (language === "ja") {
-    if (Platform.OS === "ios") return "Hiragino Sans";
-    if (Platform.OS === "android") return "Noto Sans CJK JP";
+function getSystemFontFamily(language: AppLanguage) {
+  if (language === "zh-Hans") {
+    if (Platform.OS === "ios") return "PingFang SC";
+    if (Platform.OS === "android") return "Noto Sans CJK SC";
+    return "sans-serif";
+  }
+
+  if (language === "zh-Hant") {
+    if (Platform.OS === "ios") return "PingFang TC";
+    if (Platform.OS === "android") return "Noto Sans CJK TC";
     return "sans-serif";
   }
 
@@ -74,26 +139,27 @@ function getFontWeight(weight: "regular" | "medium" | "semibold" | "bold") {
 export function getLocalizedFonts(language?: string | null) {
   const resolvedLanguage = resolveSupportedLanguage(language);
   const useSystemFamily = isCjkLanguage(resolvedLanguage);
+  const fontFamily = getSystemFontFamily(resolvedLanguage);
 
   return {
     regular: {
-      fontFamily: getSystemFontFamily(resolvedLanguage, "regular"),
+      fontFamily,
       fontWeight: getFontWeight("regular"),
     },
     medium: {
-      fontFamily: getSystemFontFamily(resolvedLanguage, "medium"),
+      fontFamily,
       fontWeight: getFontWeight("medium"),
     },
     semibold: {
-      fontFamily: getSystemFontFamily(resolvedLanguage, "semibold"),
+      fontFamily,
       fontWeight: getFontWeight("semibold"),
     },
     bold: {
-      fontFamily: getSystemFontFamily(resolvedLanguage, "bold"),
+      fontFamily,
       fontWeight: getFontWeight("bold"),
     },
     italic: {
-      fontFamily: useSystemFamily ? getSystemFontFamily(resolvedLanguage, "regular") : "Inter-Italic",
+      fontFamily: useSystemFamily ? fontFamily : "Inter-Italic",
       fontWeight: getFontWeight("regular"),
       fontStyle: useSystemFamily ? ("italic" as const) : ("normal" as const),
     },

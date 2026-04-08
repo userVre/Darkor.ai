@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Darkor.ai",
-    "slug": "darkor-ai",
-    "scheme": "darkorai",
+    "name": "HomeDecor AI",
+    "slug": "home-decor-ai",
+    "scheme": "homedecorai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
@@ -25,11 +25,11 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.darkor.ai",
+      "bundleIdentifier": "com.homedecor.ai",
       "icon": "./assets/logo.png"
     },
     "android": {
-      "package": "com.darkor.ai",
+      "package": "com.homedecor.ai",
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#000000"
@@ -59,21 +59,21 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Darkor.ai to access your camera to take room photos?",
+          "cameraPermission": "Allow HomeDecor AI to access your camera to take room photos?",
           "microphonePermission": false
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Darkor.ai to access your photos to upload room images?",
-          "cameraPermission": "Allow Darkor.ai to access your camera to take room photos?"
+          "photosPermission": "Allow HomeDecor AI to access your photos to upload room images?",
+          "cameraPermission": "Allow HomeDecor AI to access your camera to take room photos?"
         }
       ],
       [
         "expo-media-library",
         {
-          "photosPermission": "Darkor.ai needs access to save your redesigned images."
+          "photosPermission": "HomeDecor AI needs access to save your redesigned images."
         }
       ],
       [
@@ -98,6 +98,6 @@
         "projectId": "9470d384-ff08-4425-bd05-fe33e0c631b6"
       }
     },
-    "userInterfaceStyle": "dark"
+    "userInterfaceStyle": "light"
   }
 }

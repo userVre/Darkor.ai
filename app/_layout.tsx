@@ -241,7 +241,7 @@ function BootScreen({ message }: { message: string }) {
     <View style={bootStyles.screen}>
       <View style={bootStyles.card}>
         <ActivityIndicator color={DS.colors.textPrimary} />
-        <Text style={bootStyles.title}>Loading Darkor.ai</Text>
+        <Text style={bootStyles.title}>{i18n.t("boot.loadingApp")}</Text>
         <Text style={bootStyles.body}>{message}</Text>
       </View>
     </View>
@@ -351,7 +351,7 @@ function AppShell() {
       initialRouteName="index"
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: "#000000" },
+        contentStyle: { backgroundColor: "#FFFFFF" },
         animation: "slide_from_right",
         animationDuration: 260,
       }}
@@ -361,9 +361,9 @@ function AppShell() {
       <Stack.Screen
         name="paywall"
         options={{
-          presentation: "transparentModal",
-          animation: "none",
-          contentStyle: { backgroundColor: "transparent" },
+          presentation: "fullScreenModal",
+          animation: "fade_from_bottom",
+          contentStyle: { backgroundColor: "#000000" },
           gestureEnabled: false,
         }}
       />

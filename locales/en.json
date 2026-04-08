@@ -315,6 +315,129 @@
     "paintIntro": {
       "hero": "Mark, recolor, and transform your space effortlessly."
     },
+    "floorFlow": {
+      "title": "Floor Restyle",
+      "masking": "Masking your floor...",
+      "promptLabel": "Enter Prompt",
+      "promptPlaceholder": "Type a detailed description of the floor transformation you want to see.",
+      "promptExamplesTitle": "Example prompts",
+      "generateCta": "Generate My Design →",
+      "selectMaterialCta": "Select a Material",
+      "selectMaterialTitle": "Select Material",
+      "selectMaterialBody": "Select a premium material curated to read as photoreal, perspective-aware, and listing-ready.",
+      "selectedMaterial": "Selected Material",
+      "noMaterialSelected": "No material selected",
+      "unlockMaterialBody": "Select a flooring material to unlock the AI restyle.",
+      "addPromptTitle": "Add a prompt",
+      "addPromptBody": "Describe the exact floor transformation you want before continuing.",
+      "generatePromptBody": "Choose a custom floor prompt before generating.",
+      "autoMaskPreparing": "Preparing the automatic floor mask. Please wait a moment.",
+      "autoMaskSuccess": "Floor masked and ready.",
+      "autoMaskFailure": "Auto-detect couldn't run. Please brush manually.",
+      "savePermissionTitle": "Photo Access Needed",
+      "savePermissionBody": "Please allow photo library access to save your result to the device gallery.",
+      "cameraAccessTitle": "Camera access needed",
+      "cameraAccessBody": "Please enable camera access to capture a floor photo.",
+      "photoAccessTitle": "Photo access needed",
+      "photoAccessBody": "Please enable photo library access to upload a floor photo.",
+      "mediaUnavailableTitle": "Unable to open media",
+      "exampleUnavailableBody": "This example photo could not be opened.",
+      "markFloorTitle": "Mark the floor first",
+      "markFloorBody": "Brush over the floor area you want to restyle before continuing.",
+      "pickMaterialTitle": "Pick a material",
+      "pickMaterialBody": "Choose a flooring material before continuing.",
+      "renderFinishing": "This render is already finishing up.",
+      "cancelSuccess": "Generation canceled. Your credit was kept.",
+      "cancelUnavailable": "Unable to cancel right now.",
+      "supportingText": "Uses 1 credit · {{creditsRemaining}}",
+      "creditsRemaining": "{{count}} remaining",
+      "promptExamples": {
+        "oak": "Lay warm natural oak planks with a matte finish while preserving the room layout and lighting.",
+        "marble": "Restyle the floor in polished Carrara marble with crisp veining and premium editorial contrast.",
+        "concrete": "Apply a soft concrete floor with subtle texture and realistic reflections for a modern gallery feel.",
+        "travertine": "Introduce light travertine flooring with soft natural variation and warm afternoon light response.",
+        "walnut": "Design a refined herringbone walnut floor that feels luxurious, grounded, and photorealistic."
+      }
+    },
+    "paintFlow": {
+      "title": "Paint",
+      "selectionTitle": "Color & Surface",
+      "maskTitle": "Select Area to Paint",
+      "colorLabel": "Color",
+      "surfaceLabel": "Surface",
+      "choose": "Choose",
+      "apply": "Apply",
+      "colorPickerTitle": "Choose a color for your wall",
+      "surfacePickerTitle": "Select Surface Type",
+      "detectTitle": "Detecting paintable surfaces...",
+      "detectBody": "Darkor.ai is tracing repaintable wall surfaces while leaving windows, furniture, trim, and flooring untouched.",
+      "preparingMaskTitle": "Preparing your masking surface...",
+      "preparingMaskBody": "Darkor.ai is refining the canvas so you can paint crisp edges around built-ins, windows, and furniture.",
+      "brushWidth": "Brush Width",
+      "eraserWidth": "Eraser Width",
+      "generateCta": "Paint My Walls →",
+      "finishTitle": "Finish Type",
+      "finishBody": "Choose how the paint should catch light so the walls read correctly in a polished, designer-grade render.",
+      "selectedColor": "Selected Color",
+      "selectedSurfaceSentence": "Surface: {{surface}}.",
+      "colorLockedBody": "Wall color is locked. Now choose the final sheen profile for the render.",
+      "customColorDescription": "Custom wall tone selected from the precision color picker.",
+      "noColorSelected": "No color selected",
+      "chooseColorBody": "Choose a wall color before continuing.",
+      "savePermissionTitle": "Photo Access Needed",
+      "savePermissionBody": "Please allow photo library access to save your result to the device gallery.",
+      "cameraAccessTitle": "Camera access needed",
+      "cameraAccessBody": "Please enable camera access to capture a room photo.",
+      "photoAccessTitle": "Photo access needed",
+      "photoAccessBody": "Please enable photo library access to upload a room photo.",
+      "mediaUnavailableTitle": "Unable to open media",
+      "exampleUnavailableBody": "This example photo could not be opened.",
+      "markWallsTitle": "Mark the walls first",
+      "markWallsBody": "Brush over the wall surfaces you want to repaint before generating.",
+      "pickColorTitle": "Pick a color",
+      "pickColorBody": "Choose a wall color before continuing.",
+      "autoDetectSuccess": "Walls detected. Brush to refine if needed.",
+      "autoDetectFailure": "Auto-detect couldn't run. Please brush manually.",
+      "renderFinishing": "This render is already finishing up.",
+      "cancelSuccess": "Generation canceled. Your credit was kept.",
+      "cancelUnavailable": "Unable to cancel right now.",
+      "supportingText": "Uses 1 credit · {{creditsRemaining}}",
+      "creditsRemaining": "{{count}} remaining",
+      "intakeTitle": "Add a Photo of your Room",
+      "intakeBody": "Upload a room photo for precise wall recoloring.",
+      "intakeReadyTitle": "Photo added. Mark the wall area next.",
+      "intakeReadyBody": "Your photo is locked in. Next, brush the wall surfaces so the recolor stays precise around trim, furniture, and decor.",
+      "surfaces": {
+        "auto": "Auto",
+        "brick": "Brick",
+        "cabinet": "Cabinet",
+        "door": "Door",
+        "wall": "Wall",
+        "outsideWall": "Outside Wall"
+      },
+      "colorFamilies": {
+        "pink": "Pink",
+        "blue": "Blue",
+        "green": "Green",
+        "yellow": "Yellow",
+        "gray": "Gray",
+        "red": "Red"
+      },
+      "finishes": {
+        "matte": {
+          "label": "Matte",
+          "description": "Soft, gallery-grade color payoff with the least surface glare."
+        },
+        "satin": {
+          "label": "Satin",
+          "description": "Balanced sheen for modern interiors with a subtle designer glow."
+        },
+        "glossy": {
+          "label": "Glossy",
+          "description": "A polished reflective finish for bold, high-contrast statement walls."
+        }
+      }
+    },
     "examples": {
       "floor": {
         "crackedConcrete": "Cracked Concrete",
@@ -402,6 +525,11 @@
       "limitReached": "Limit Reached",
       "completeStepToContinue": "Complete this step to continue."
     },
+    "flow": {
+      "customPromptTitle": "Add a custom prompt",
+      "customPromptBody": "Describe the exact design direction you want before applying it.",
+      "selectSpaceType": "Tap a card to select your space type."
+    },
     "stepOne": {
       "gardenPhotoTitle": "Add a Garden Photo",
       "exteriorPhotoTitle": "Add an Exterior Photo",
@@ -413,5 +541,16 @@
     "style": {
       "tapToSelect": "Tap a card to select your style."
     }
+  },
+  "proSuccess": {
+    "title": "Welcome to Darkor Pro!",
+    "subtitle": "You're fully powered up. Here's what's unlocked:",
+    "features": {
+      "hyperRealism": "8K Hyper-Realism Enabled",
+      "virtualStaging": "Virtual Staging Unlocked",
+      "infiniteCredits": "Infinite Credits Active"
+    },
+    "cta": "Start Designing",
+    "toast": "Account upgraded to Pro successfully."
   }
 }

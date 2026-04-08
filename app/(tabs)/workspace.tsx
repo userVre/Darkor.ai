@@ -3952,7 +3952,7 @@ export default function WorkspaceScreen() {
   const handleApplyCustomPrompt = useCallback(() => {
     const trimmed = customPromptDraft.trim();
     if (!trimmed) {
-      Alert.alert("Add a custom prompt", "Describe the exact design direction you want before applying it.");
+      Alert.alert(t("workspace.flow.customPromptTitle"), t("workspace.flow.customPromptBody"));
       return;
     }
 
@@ -5985,7 +5985,7 @@ export default function WorkspaceScreen() {
                   }
 
                   if (isSpaceStep && !selectedRoom) {
-                    showToast("Tap a card to select your space type.");
+                    showToast(t("workspace.flow.selectSpaceType"));
                     return;
                   }
 
