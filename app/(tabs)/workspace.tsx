@@ -2,7 +2,6 @@ import { useAuth } from "@clerk/expo";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery } from "convex/react";
 import { Asset } from "expo-asset";
-import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
@@ -90,7 +89,6 @@ import { useViewerCredits } from "../../components/viewer-credits-context";
 import { useWorkspaceDraft } from "../../components/workspace-context";
 import { useViewerSession } from "../../components/viewer-session-context";
 import { useProSuccess } from "../../components/pro-success-context";
-import Logo from "../../components/logo";
 import { captureRef } from "react-native-view-shot";
 import { DS, HAIRLINE, glowShadow } from "../../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../../lib/service-wizard-theme";
@@ -334,7 +332,7 @@ const BoardGridCard = memo(function BoardGridCard({
           </View>
         )}
 
-        {isProcessing && previewImage ? <BlurView intensity={56} tint="dark" style={{ position: "absolute", inset: 0 }} /> : null}
+        {isProcessing && previewImage ? <View style={{ position: "absolute", inset: 0, backgroundColor: "#111111" }} /> : null}
         {showNewBadge ? (
           <MotiView
             animate={{ opacity: [0.16, 0.34, 0.16], scale: [0.96, 1.02, 0.96] }}
@@ -346,7 +344,7 @@ const BoardGridCard = memo(function BoardGridCard({
               width: 72,
               height: 72,
               borderRadius: 999,
-              backgroundColor: "rgba(255,92,92,0.22)",
+              backgroundColor: "#fca5a5",
             }}
             pointerEvents="none"
           />
@@ -356,7 +354,7 @@ const BoardGridCard = memo(function BoardGridCard({
           style={{
             position: "absolute",
             inset: 0,
-            backgroundColor: isFailed ? "rgba(20,0,8,0.58)" : isProcessing ? "rgba(0,0,0,0.42)" : "rgba(0,0,0,0.14)",
+            backgroundColor: isFailed ? "#3f0d12" : isProcessing ? "#111111" : "#1f2937",
           }}
         />
 
@@ -367,7 +365,7 @@ const BoardGridCard = memo(function BoardGridCard({
               top: 12,
               right: 12,
               borderRadius: 999,
-              backgroundColor: "rgba(255,255,255,0.96)",
+              backgroundColor: "#ffffff",
               paddingHorizontal: 10,
               paddingVertical: 5,
             }}
@@ -381,7 +379,7 @@ const BoardGridCard = memo(function BoardGridCard({
         {isProcessing ? (
           <View className="absolute inset-0 items-center justify-center gap-3">
             <MotiView animate={{ opacity: [0.52, 1, 0.52], scale: [0.96, 1.03, 0.96] }} transition={{ ...LUX_SPRING, loop: true }}>
-              <View className="h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/35">
+              <View className="h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black">
                 <ActivityIndicator size="small" color="#ffffff" />
               </View>
             </MotiView>
@@ -389,13 +387,18 @@ const BoardGridCard = memo(function BoardGridCard({
           </View>
         ) : null}
 
-        <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.84)"]}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 108 }}
-        />
-        <View style={{ position: "absolute", left: 14, right: 14, bottom: 14 }}>
+        <View
+          style={{
+            position: "absolute",
+            left: 14,
+            right: 14,
+            bottom: 14,
+            borderRadius: 20,
+            backgroundColor: "#111111",
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+          }}
+        >
           <Text className="text-base font-semibold text-white" style={fonts.semibold}>{item.styleLabel + " " + item.roomLabel}</Text>
           <Text className="mt-1 text-xs text-zinc-300">{statusCopy}</Text>
         </View>
@@ -1406,7 +1409,7 @@ const MODE_OPTIONS: ModeOption[] = [
   {
     id: "renovate",
     title: "Full Transformation",
-    description: "Give Darkor.ai more freedom to reshape focal points, materials, and the overall visual impact.",
+    description: "Give HomeDecor AI more freedom to reshape focal points, materials, and the overall visual impact.",
     promptHint:
       "Allow a more transformative renovation approach with stronger upgrades to built-ins, focal elements, and materials while keeping the result realistic and coherent.",
     icon: Wand2,
@@ -1946,6 +1949,7 @@ export default function WorkspaceScreen() {
 
   const reviewSheetRef = useRef<BottomSheetModal>(null);
   const imageContainerRef = useRef<View>(null);
+  const exportCaptureRef = useRef<View>(null);
   const hasAppliedStartStepRef = useRef(false);
   const handledBoardRouteRef = useRef<string | null>(null);
   const previousBoardStatusesRef = useRef<Record<string, GenerationStatus>>({});
@@ -3401,12 +3405,12 @@ export default function WorkspaceScreen() {
       if (!activeEditorImageUrl) {
         throw new Error("Render unavailable. Please try again.");
       }
-      const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}darkor-share-${Date.now()}.jpg`;
+      const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}homedecor-share-${Date.now()}.jpg`;
       const download = await FileSystem.downloadAsync(activeEditorImageUrl, targetUri);
       return download.uri;
     }
 
-    if (!imageContainerRef.current) {
+    if (!exportCaptureRef.current) {
       throw new Error("Preview not ready. Please try again.");
     }
 
@@ -3416,14 +3420,21 @@ export default function WorkspaceScreen() {
     }
     await new Promise((resolve) => setTimeout(resolve, 80));
     try {
-      const fileUri = await captureRef(imageContainerRef, { format: "png", quality: 1, result: "tmpfile" });
+      const previewWidth = Math.max(width - 32, 320);
+      const fileUri = await captureRef(exportCaptureRef, {
+        format: "png",
+        quality: 1,
+        result: "tmpfile",
+        width: 1080,
+        height: Math.round((460 / previewWidth) * 1080),
+      });
       return fileUri;
     } finally {
       if (sliderWidth.value > 0) {
         sliderX.value = previousSlider;
       }
     }
-  }, [activeEditorImageUrl, canRemoveWatermark, imageContainerRef, sliderWidth, sliderX]);
+  }, [activeEditorImageUrl, canRemoveWatermark, exportCaptureRef, sliderWidth, sliderX, width]);
 
   const handleShare = useCallback(async () => {
     triggerHaptic();
@@ -3634,6 +3645,7 @@ export default function WorkspaceScreen() {
         aspectRatio: ratioSpec.ratioLabel,
         regenerate: options?.regenerate ?? false,
         ignoreReviewCooldown,
+        speedTier: generationSpeedTier,
       })) as {
         generationId: string;
         reviewState?: { count: number; shouldPrompt: boolean };
@@ -4298,40 +4310,40 @@ export default function WorkspaceScreen() {
     const stepOneTitle = isFloorService ? getServiceLabel(t, "floor") : isPaintService ? t("common.actions.addPhoto") : isGardenService ? t("workspace.stepOne.gardenPhotoTitle") : isExteriorService ? t("workspace.stepOne.exteriorPhotoTitle") : t("common.actions.addPhoto");
     const emptyUploadTitle = isFloorService ? t("workspace.stepOne.floorPhotoTitle") : isPaintService ? t("common.actions.addPhoto") : isGardenService ? t("workspace.stepOne.gardenEmptyTitle") : isExteriorService ? t("workspace.stepOne.exteriorEmptyTitle") : t("wizard.stepOne.emptyTitle");
     const stepOneDescription = isGardenService
-      ? "Upload an outdoor scene so Darkor.ai can elevate the landscape with a composed, architectural point of view."
+      ? "Upload an outdoor scene so HomeDecor AI can elevate the landscape with a composed, architectural point of view."
       : isFloorService
-        ? "Upload a room image so Darkor.ai can read the floor plane and stage a premium material transformation."
+        ? "Upload a room image so HomeDecor AI can read the floor plane and stage a premium material transformation."
       : isPaintService
-        ? "Upload a room photo and Darkor.ai will prepare it for a precise, designer-led wall recoloring."
+        ? "Upload a room photo and HomeDecor AI will prepare it for a precise, designer-led wall recoloring."
       : isExteriorService
-        ? "Upload a building photo so Darkor.ai can reimagine the facade with a polished architectural language."
-        : "Upload a room photo so Darkor.ai can compose a coherent, elevated redesign.";
+        ? "Upload a building photo so HomeDecor AI can reimagine the facade with a polished architectural language."
+        : "Upload a room photo so HomeDecor AI can compose a coherent, elevated redesign.";
     const stepTwoTitle = "Select your space type";
     const stepTwoDescription = isExteriorService
       ? "Choose the architectural envelope that best matches the facade you want to reimagine."
       : isGardenService
-        ? "Choose the outdoor zone you want Darkor.ai to elevate first."
-        : "Tell Darkor.ai which room typology it should redesign so the proposal stays architecturally grounded.";
+      ? "Choose the outdoor zone you want HomeDecor AI to elevate first."
+        : "Tell HomeDecor AI which room typology it should redesign so the proposal stays architecturally grounded.";
     const stepThreeTitle = isPaintService
       ? "Curate the wall color"
       : isFloorService
         ? "Curate the floor material"
         : "Curate the style direction";
     const stepThreeDescription = isPaintService
-      ? "Select the wall tone Darkor.ai should introduce once the masked surfaces are refined."
+      ? "Select the wall tone HomeDecor AI should introduce once the masked surfaces are refined."
       : isFloorService
-        ? "Select the flooring material Darkor.ai should compose into the visible floor plane."
+        ? "Select the flooring material HomeDecor AI should compose into the visible floor plane."
         : isExteriorService
       ? "Choose the architectural language that should guide the exterior transformation."
       : isGardenService
-        ? "Choose the landscape expression Darkor.ai should use for the garden redesign."
+        ? "Choose the landscape expression HomeDecor AI should use for the garden redesign."
         : "Choose a curated design direction, or write a custom architectural brief.";
     const stepFourTitle = isPaintService ? "Refine the finish" : isFloorService ? "Refine the finish" : "Refine Direction";
     const stepFourDescription = isPaintService
       ? "Choose how the selected wall color should catch light so the render feels tailored, realistic, and high-end."
       : isFloorService
-        ? "Choose how the selected flooring material should read under light once Darkor.ai maps it into the space."
-        : "Choose how bold the redesign should feel, then pick the palette family Darkor.ai should weave through the space.";
+        ? "Choose how the selected flooring material should read under light once HomeDecor AI maps it into the space."
+        : "Choose how bold the redesign should feel, then pick the palette family HomeDecor AI should weave through the space.";
     const stepOneHeading = hasVisiblePhoto
       ? isPaintService
         ? "Photo added — mark the wall area next."
@@ -4344,7 +4356,7 @@ export default function WorkspaceScreen() {
         ? "Your photo is locked in. Next, brush the wall surfaces so the recolor stays crisp around trim, furniture, and decor."
         : isFloorService
           ? "Your photo is locked in. Next, brush the floor plane so the material restyle lands cleanly around furniture and walls."
-          : "Your photo is locked in. Next, choose the space type so Darkor.ai can keep the redesign architecturally grounded."
+          : "Your photo is locked in. Next, choose the space type so HomeDecor AI can keep the redesign architecturally grounded."
       : stepOneDescription;
     const wizardSectionHeaderStyle = { gap: DS.spacing[1.5], alignItems: "center" as const };
     const wizardSectionBodyStyle = {
@@ -5611,7 +5623,7 @@ export default function WorkspaceScreen() {
                                   Ready for the payoff
                                 </Text>
                                 <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
-                                  Darkor.ai will combine your selected room, style, mode, and palette into one polished high-end redesign.
+                                  HomeDecor AI will combine your selected room, style, mode, and palette into one polished high-end redesign.
                                 </Text>
                               </View>
 
@@ -6581,7 +6593,7 @@ export default function WorkspaceScreen() {
         >
           <MotiView from={{ opacity: 0, scale: 0.96, translateY: 18 }} animate={{ opacity: 1, scale: 1, translateY: 0 }} transition={LUX_SPRING}>
             <View className="overflow-hidden rounded-[34px] border border-white/10 bg-zinc-950" style={{ borderWidth: 0.5 }}>
-              <View className="relative h-[460px] w-full">
+              <View ref={exportCaptureRef} className="relative h-[460px] w-full">
                 {showSliderComparison && beforeImageSource && editorImageSource ? (
                   <MotiView
                     key={editorImageUrl}
@@ -6739,8 +6751,8 @@ export default function WorkspaceScreen() {
                 ) : null}
 
                 {!canRemoveWatermark && editorImageUrl ? (
-                  <View className="absolute bottom-24 right-4">
-                    <Logo size={44} style={{ opacity: 0.6 }} />
+                  <View className="absolute bottom-24 right-4 rounded-full bg-black px-4 py-2">
+                    <Text style={{ color: "#FFFFFF", fontSize: 12, lineHeight: 14, ...fonts.semibold }}>HomeDecor.ai</Text>
                   </View>
                 ) : null}
               </View>

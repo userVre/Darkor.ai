@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     color: "#0A0A0A",
     fontSize: 20,
     lineHeight: 24,
-    textAlign: "center",
+    textAlign: "left",
     ...fonts.bold,
   },
   headerSpacer: {
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   emptyState: {
     flex: 1,
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
     gap: 8,
   },
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     color: "#6B6B72",
     fontSize: 15,
     lineHeight: 22,
-    textAlign: "center",
+    textAlign: "left",
     ...fonts.regular,
   },
 });

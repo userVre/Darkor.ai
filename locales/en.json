@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Darkor AI"
+    "name": "HomeDecor AI"
   },
   "common": {
     "actions": {
@@ -50,7 +50,7 @@
     }
   },
   "boot": {
-    "loadingApp": "Loading Darkor.ai",
+    "loadingApp": "Loading HomeDecor AI",
     "loadingAccount": "Loading your account...",
     "checkingPlan": "Checking your plan...",
     "secureAccount": "Secure your account to start creating...",
@@ -64,7 +64,7 @@
     "profile": "My Profile"
   },
   "home": {
-    "title": "Darkor AI",
+    "title": "HomeDecor AI",
     "errors": {
       "tryItUnavailableTitle": "Try It unavailable"
     },
@@ -165,7 +165,7 @@
       "userIdCopied": "User ID copied",
       "deleteFailed": "Unable to delete your account right now."
     },
-    "shareMessage": "Design your space with Darkor AI: {{url}}",
+    "shareMessage": "Design your space with HomeDecor AI: {{url}}",
     "deleteAccount": {
       "title": "Delete Account?",
       "body": "This will permanently delete your account and all your data. This action cannot be undone."
@@ -193,7 +193,7 @@
     }
   },
   "auth": {
-    "accountEyebrow": "Darkor.ai Account",
+    "accountEyebrow": "HomeDecor AI Account",
     "emailPlaceholder": "you@company.com",
     "signIn": {
       "title": "Sign in",
@@ -229,10 +229,10 @@
   "faq": {
     "eyebrow": "Support",
     "title": "FAQ",
-    "description": "Quick answers to the most common Darkor.ai questions.",
+    "description": "Quick answers to the most common HomeDecor AI questions.",
     "items": {
       "credits": {
-        "question": "How do credits work in Darkor.ai?",
+        "question": "How do credits work in HomeDecor AI?",
         "answer": "Each redesign uses credits based on the workflow and export quality you choose. Your remaining balance updates automatically after every generation."
       },
       "pro": {
@@ -252,13 +252,13 @@
   "privacy": {
     "eyebrow": "Policy",
     "title": "Privacy Policy",
-    "description": "The information we collect, how it is used, and the controls you have inside Darkor.ai.",
+    "description": "The information we collect, how it is used, and the controls you have inside HomeDecor AI.",
     "date": "March 14, 2026"
   },
   "terms": {
     "eyebrow": "Policy",
     "title": "Terms of Service",
-    "description": "The rules, expectations, and service boundaries for using Darkor.ai.",
+    "description": "The rules, expectations, and service boundaries for using HomeDecor AI.",
     "date": "March 14, 2026"
   },
   "processing": {
@@ -370,9 +370,9 @@
       "colorPickerTitle": "Choose a color for your wall",
       "surfacePickerTitle": "Select Surface Type",
       "detectTitle": "Detecting paintable surfaces...",
-      "detectBody": "Darkor.ai is tracing repaintable wall surfaces while leaving windows, furniture, trim, and flooring untouched.",
+      "detectBody": "HomeDecor AI is tracing repaintable wall surfaces while leaving windows, furniture, trim, and flooring untouched.",
       "preparingMaskTitle": "Preparing your masking surface...",
-      "preparingMaskBody": "Darkor.ai is refining the canvas so you can paint crisp edges around built-ins, windows, and furniture.",
+      "preparingMaskBody": "HomeDecor AI is refining the canvas so you can paint crisp edges around built-ins, windows, and furniture.",
       "brushWidth": "Brush Width",
       "eraserWidth": "Eraser Width",
       "generateCta": "Paint My Walls →",
@@ -466,9 +466,9 @@
       "tryAnotherPrompt": "Please go back and try another prompt."
     },
     "processing": {
-      "default": "Darkor.ai is preserving the architecture while composing a refined redesign.",
-      "floor": "Darkor.ai is reading perspective, locking the floor plane, and composing the new material with premium detail.",
-      "paint": "Darkor.ai is isolating the wall planes and layering your selected finish with gallery-grade realism."
+      "default": "HomeDecor AI is preserving the architecture while composing a refined redesign.",
+      "floor": "HomeDecor AI is reading perspective, locking the floor plane, and composing the new material with premium detail.",
+      "paint": "HomeDecor AI is isolating the wall planes and layering your selected finish with gallery-grade realism."
     },
     "services": {
       "interior": "Interior Redesign",
@@ -480,7 +480,7 @@
     "editor": {
       "floorReady": "Material-led floor transformation with a live before and after slider.",
       "paintReady": "Wall recoloring tuned to your selected finish and room lighting.",
-      "defaultReady": "Curated inside your premium Darkor board."
+      "defaultReady": "Curated inside your premium HomeDecor board."
     },
     "permissions": {
       "requiredTitle": "Permission Required",
@@ -508,7 +508,7 @@
       "nothingTitle": "Nothing to share",
       "generateFirst": "Generate an image first.",
       "failedTitle": "Share failed",
-      "message": "Designed with Darkor.ai"
+      "message": "Designed with HomeDecor.ai"
     },
     "download": {
       "nothingTitle": "Nothing to download",
@@ -543,7 +543,7 @@
     }
   },
   "proSuccess": {
-    "title": "Welcome to Darkor Pro!",
+    "title": "Welcome to HomeDecor Pro!",
     "subtitle": "You're fully powered up. Here's what's unlocked:",
     "features": {
       "hyperRealism": "8K Hyper-Realism Enabled",

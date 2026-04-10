@@ -616,6 +616,15 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
     selectedColorOption?.description ??
     (selectedColorValue ? t("wizard.paintFlow.customColorDescription") : t("wizard.paintFlow.chooseColorBody"));
   const availableCredits = sharedCredits;
+  const generationSpeedTier = useMemo<"standard" | "pro" | "ultra">(() => {
+    if (me?.subscriptionType === "yearly") {
+      return "ultra";
+    }
+    if (me?.hasPaidAccess) {
+      return "pro";
+    }
+    return "standard";
+  }, [me?.hasPaidAccess, me?.subscriptionType]);
   const generationAccess = canUserGenerateNow(me);
   const canGenerate = Boolean(selectedImage && hasMask && selectedColorValue && !isGenerating);
   const currentStepNumber =
@@ -803,7 +812,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       return { uri: generatedImageUrl, temporary: false };
     }
 
-    const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}darkor-paint-result-${Date.now()}.jpg`;
+    const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}homedecor-paint-result-${Date.now()}.jpg`;
     const download = await FileSystem.downloadAsync(generatedImageUrl, targetUri);
     return { uri: download.uri, temporary: true };
   }, [generatedImageUrl]);
@@ -1267,6 +1276,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
             targetColorCategory: selectedColorCategory ?? selectedColorTitle,
             targetSurface: selectedSurface,
             aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
+            speedTier: generationSpeedTier,
           })) as { generationId: string; creditsRemaining?: number };
         },
         showToast,

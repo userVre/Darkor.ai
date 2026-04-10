@@ -12,7 +12,7 @@ const PRIVACY_SECTIONS = [
   {
     title: "Overview",
     body:
-      'Darkor.ai ("Darkor", "we", "our", "us") provides AI-powered interior and exterior redesign services. This Privacy Policy explains what data we collect, how we use it, and the choices you have.',
+      'HomeDecor AI ("HomeDecor", "we", "our", "us") provides AI-powered interior and exterior redesign services. This Privacy Policy explains what data we collect, how we use it, and the choices you have.',
   },
   {
     title: "Information We Collect",
@@ -32,7 +32,7 @@ const PRIVACY_SECTIONS = [
   {
     title: "Sharing and Disclosure",
     body:
-      "We share data only with providers required to operate Darkor.ai, such as authentication, analytics, and payment processing partners, or when disclosure is required by law.",
+      "We share data only with providers required to operate HomeDecor AI, such as authentication, analytics, and payment processing partners, or when disclosure is required by law.",
   },
   {
     title: "Data Security",
@@ -46,7 +46,7 @@ const PRIVACY_SECTIONS = [
   },
   {
     title: "Contact Us",
-    body: "For privacy questions or requests, contact us at support@darkor.ai.",
+    body: "For privacy questions or requests, contact us at support@homedecor.ai.",
   },
 ];
 

@@ -367,6 +367,12 @@ export function getPricingContext(inputLocales?: readonly Locale[]): PricingCont
       currencyCode: yearly.currencyCode,
       offeringHint: tier.id,
       attributePayload: {
+        homedecor_country_code: countryCode,
+        homedecor_currency_code: yearly.currencyCode,
+        homedecor_detected_region_code: detectedRegionCode,
+        homedecor_locale: localeTag,
+        homedecor_pricing_tier: tier.id,
+        homedecor_pricing_fallback: usedFallbackTier ? "true" : "false",
         darkor_country_code: countryCode,
         darkor_currency_code: yearly.currencyCode,
         darkor_detected_region_code: detectedRegionCode,

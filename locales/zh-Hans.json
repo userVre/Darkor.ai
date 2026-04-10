@@ -1,11 +1,11 @@
 {
   "common": { "actions": { "continue": "继续", "cancel": "取消", "save": "保存", "share": "分享", "openSettings": "打开设置", "addPhoto": "添加照片", "exit": "退出" }, "alerts": { "exitTitle": "要退出吗？", "progressLost": "你的进度将会丢失。" }, "states": { "savedToGallery": "已保存到相册" } },
-  "boot": { "loadingApp": "正在加载 Darkor.ai", "loadingAccount": "正在加载你的账户...", "checkingPlan": "正在检查你的套餐...", "secureAccount": "保护你的账户后开始创作..." },
+  "boot": { "loadingApp": "正在加载 HomeDecor AI", "loadingAccount": "正在加载你的账户...", "checkingPlan": "正在检查你的套餐...", "secureAccount": "保护你的账户后开始创作..." },
   "tabs": { "tools": "工具", "create": "创作", "discover": "发现", "profile": "个人资料" },
-  "home": { "title": "Darkor AI" },
+  "home": { "title": "HomeDecor AI" },
   "paywall": { "restore": "恢复购买", "bestOffer": "最佳优惠", "yearlyAccess": "年度访问", "weeklyAccess": "每周访问", "freeTrial": "3 天免费试用", "pricePerYear": "仅需 {{price}} / 年", "pricePerWeek": "{{price}} / 周", "perWeek": "每周", "thenPricePerWeek": "之后 {{price}} / 周", "noPaymentNow": "现在无需付款", "cancelAnytime": "随时取消", "processing": "处理中...", "tryForFree": "免费试用", "continue": "继续", "terms": "条款", "privacy": "隐私" },
   "settings": { "title": "设置", "heroTitle": "你的账户当前为免费版", "upgradePro": "升级到 PRO" },
   "wizard": { "headers": { "close": "关闭", "previousStep": "返回上一步" }, "stepOne": { "title": "添加照片" }, "floorFlow": { "title": "地面重塑", "promptLabel": "输入提示词", "generateCta": "生成我的设计 →" }, "paintFlow": { "title": "涂装", "selectionTitle": "颜色与表面", "maskTitle": "选择要涂装的区域", "colorLabel": "颜色", "surfaceLabel": "表面", "choose": "选择", "apply": "应用", "colorPickerTitle": "选择墙面颜色", "surfacePickerTitle": "选择表面类型", "detectTitle": "正在检测可涂装表面...", "preparingMaskTitle": "正在准备遮罩表面...", "brushWidth": "画笔宽度", "eraserWidth": "橡皮宽度", "generateCta": "为我的墙面上色 →", "finishTitle": "饰面类型", "selectedColor": "已选颜色" } },
-  "workspace": { "generation": { "preparingSessionTitle": "正在准备会话", "preparingSessionBody": "访客资料仍在加载中，请稍后重试。", "limitReached": "已达到上限" }, "share": { "message": "使用 Darkor.ai 设计", "failedTitle": "分享失败" }, "download": { "failedTitle": "保存失败" }, "media": { "exampleUnavailableTitle": "示例不可用" }, "flow": { "customPromptTitle": "添加自定义提示词", "customPromptBody": "应用前请描述你想要的具体设计方向。", "selectSpaceType": "点击卡片以选择空间类型。" } },
-  "proSuccess": { "title": "欢迎使用 Darkor Pro！", "subtitle": "现在所有内容都已解锁。你将获得：", "cta": "开始设计", "toast": "账户已成功升级为 Pro。" }
+  "workspace": { "generation": { "preparingSessionTitle": "正在准备会话", "preparingSessionBody": "访客资料仍在加载中，请稍后重试。", "limitReached": "已达到上限" }, "share": { "message": "使用 HomeDecor.ai 设计", "failedTitle": "分享失败" }, "download": { "failedTitle": "保存失败" }, "media": { "exampleUnavailableTitle": "示例不可用" }, "flow": { "customPromptTitle": "添加自定义提示词", "customPromptBody": "应用前请描述你想要的具体设计方向。", "selectSpaceType": "点击卡片以选择空间类型。" } },
+  "proSuccess": { "title": "欢迎使用 HomeDecor Pro！", "subtitle": "现在所有内容都已解锁。你将获得：", "cta": "开始设计", "toast": "账户已成功升级为 Pro。" }
 }

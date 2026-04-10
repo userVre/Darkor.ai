@@ -4,12 +4,10 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 
 const GOOGLE_GENERATIVE_LANGUAGE_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL ?? "gemini-2.5-flash";
-const GEMINI_DETECTION_MODEL = process.env.GEMINI_DETECTION_MODEL ?? GEMINI_TEXT_MODEL;
+const GEMINI_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL ?? "gemini-3.1-pro-preview";
+const GEMINI_DETECTION_MODEL = process.env.GEMINI_DETECTION_MODEL ?? "gemini-2.5-flash";
 const NANO_BANANA_MODEL = process.env.NANO_BANANA_MODEL ?? "gemini-2.5-flash-image";
-const NANO_BANANA_ENDPOINT =
-  process.env.NANO_BANANA_ENDPOINT?.trim() ||
-  `${GOOGLE_GENERATIVE_LANGUAGE_BASE}/${NANO_BANANA_MODEL}:generateContent`;
+const NANO_BANANA_PRO_MODEL = process.env.NANO_BANANA_PRO_MODEL ?? "nano-banana-pro-preview";
 const GEMINI_TEXT_ENDPOINT = `${GOOGLE_GENERATIVE_LANGUAGE_BASE}/${GEMINI_TEXT_MODEL}:generateContent`;
 const GEMINI_DETECTION_ENDPOINT = `${GOOGLE_GENERATIVE_LANGUAGE_BASE}/${GEMINI_DETECTION_MODEL}:generateContent`;
 const PRO_MIN_DELAY_MS = 4_000;
@@ -210,7 +208,7 @@ function normalizeGenerationError(message?: string | null) {
     normalized.includes("resource_exhausted") ||
     normalized.includes("rate limit")
   ) {
-    return "Darkor AI is temporarily at capacity. Please try again in a few minutes.";
+    return "HomeDecor AI is temporarily at capacity. Please try again in a few minutes.";
   }
 
   if (
@@ -542,7 +540,21 @@ function resolveServiceApiKey(primary?: string | null, fallback?: string | null)
 }
 
 function resolveImageSize(speedTier?: SpeedTier) {
-  return speedTier === "ultra" ? "4K" : "2K";
+  if (speedTier === "ultra") {
+    return "4K";
+  }
+  if (speedTier === "pro") {
+    return "2K";
+  }
+  return "1K";
+}
+
+function buildModelEndpoint(modelName: string) {
+  return `${GOOGLE_GENERATIVE_LANGUAGE_BASE}/${modelName}:generateContent`;
+}
+
+function resolveImageGenerationModel(speedTier?: SpeedTier) {
+  return speedTier === "standard" ? NANO_BANANA_MODEL : NANO_BANANA_PRO_MODEL;
 }
 
 async function waitForMinimumDuration(startedAt: number, speedTier?: SpeedTier) {
@@ -761,6 +773,7 @@ export const generateDesign: any = internalActionGeneric({
         });
       }
 
+      const imageGenerationModel = resolveImageGenerationModel((args.speedTier as SpeedTier | undefined) ?? "standard");
       const response = await requestModelWithRetry({
         body: JSON.stringify({
           contents: [
@@ -777,7 +790,7 @@ export const generateDesign: any = internalActionGeneric({
           },
         }),
         apiKey: nanoBananaApiKey,
-        endpoint: NANO_BANANA_ENDPOINT,
+        endpoint: process.env.NANO_BANANA_ENDPOINT?.trim() || buildModelEndpoint(imageGenerationModel),
         providerLabel: "Nano Banana image generator",
       });
 

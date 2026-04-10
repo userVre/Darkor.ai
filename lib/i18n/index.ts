@@ -10,7 +10,8 @@ import {
   type AppLanguage,
 } from "./language";
 
-const LANGUAGE_STORAGE_KEY = "darkor.ai.language";
+const LANGUAGE_STORAGE_KEY = "homedecor.ai.language";
+const LEGACY_LANGUAGE_STORAGE_KEY = "darkor.ai.language";
 
 const resources: Resource = {
   "en-US": { translation: require("../../locales/en.json") },
@@ -28,7 +29,9 @@ let initPromise: Promise<typeof i18n> | null = null;
 
 async function getStoredLanguagePreference(): Promise<AppLanguage | null> {
   try {
-    const storedValue = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+    const storedValue =
+      (await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY))
+      ?? (await AsyncStorage.getItem(LEGACY_LANGUAGE_STORAGE_KEY));
     return storedValue ? resolveSupportedLanguage(storedValue) : null;
   } catch {
     return null;

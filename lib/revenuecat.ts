@@ -111,7 +111,7 @@ function inferDurationFromHaystack(haystack: string): BillingDuration {
   return "weekly";
 }
 
-function getDarkorEntitlementRecord(info?: RevenueCatCustomerInfo | null) {
+function getHomeDecorEntitlementRecord(info?: RevenueCatCustomerInfo | null) {
   const active = (info?.entitlements?.active ?? {}) as Record<string, any>;
   const activeEntries = Object.entries(active);
   if (activeEntries.length === 0) {
@@ -159,7 +159,7 @@ function parseRevenueCatDate(raw: unknown) {
 }
 
 export function inferRevenueCatEntitlementFromCustomerInfo(info?: RevenueCatCustomerInfo | null): RevenueCatEntitlement {
-  return getDarkorEntitlementRecord(info)?.entitlement ?? "free";
+  return getHomeDecorEntitlementRecord(info)?.entitlement ?? "free";
 }
 
 export function resolveRevenueCatSubscription(info?: RevenueCatCustomerInfo | null): {
@@ -170,7 +170,7 @@ export function resolveRevenueCatSubscription(info?: RevenueCatCustomerInfo | nu
   purchasedAt: number | null;
   subscriptionEnd: number | null;
 } {
-  const active = getDarkorEntitlementRecord(info);
+  const active = getHomeDecorEntitlementRecord(info);
   const entitlement: RevenueCatEntitlement = active?.entitlement ?? "free";
   const hasSubscription = Boolean(active);
   const purchasedAt = active
@@ -237,6 +237,9 @@ export async function syncRevenueCatPricingAttributes(
   tierContext: RevenueCatTierContext,
 ) {
   await purchases.setAttributes({
+    homedecor_pricing_tier: tierContext.tierId,
+    homedecor_country_code: tierContext.countryCode,
+    homedecor_currency_code: tierContext.currencyCode,
     darkor_pricing_tier: tierContext.tierId,
     darkor_country_code: tierContext.countryCode,
     darkor_currency_code: tierContext.currencyCode,

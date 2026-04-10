@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Darkor AI"
+    "name": "HomeDecor AI"
   },
   "common": {
     "actions": {
@@ -55,7 +55,7 @@
     }
   },
   "auth": {
-    "accountEyebrow": "Account Darkor.ai",
+    "accountEyebrow": "Account HomeDecor AI",
     "emailPlaceholder": "tu@azienda.com",
     "signIn": {
       "title": "Accedi",

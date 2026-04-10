@@ -135,6 +135,9 @@ const DiscoverSection = memo(function DiscoverSection({
         horizontal
         data={group.items}
         keyExtractor={(item) => item.id}
+        initialNumToRender={4}
+        maxToRenderPerBatch={6}
+        removeClippedSubviews
         renderItem={({ item, index }) => (
           <DiscoverImageCard
             item={item}
@@ -191,6 +194,9 @@ export default function GalleryScreen() {
       <FlatList
         data={groups}
         keyExtractor={(item) => item.id}
+        initialNumToRender={3}
+        maxToRenderPerBatch={4}
+        removeClippedSubviews
         renderItem={({ item }) => (
           <DiscoverSection
             tabId={activeTab}
@@ -238,7 +244,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   headerWrap: {
-    paddingBottom: 18,
+    paddingBottom: 32,
   },
   headerRow: {
     minHeight: 52,
@@ -278,13 +284,13 @@ const styles = StyleSheet.create({
     color: "#0A0A0A",
     fontSize: 20,
     lineHeight: 24,
-    textAlign: "center",
+    textAlign: "left",
     ...fonts.bold,
   },
   tabsOuter: {
     alignItems: "center",
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    marginTop: 16,
+    marginTop: 32,
   },
   tabsRail: {
     padding: TAB_RAIL_PADDING,
@@ -329,7 +335,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    marginBottom: 12,
+    marginBottom: 16,
     flexDirection: "row",
     alignItems: "center",
   },

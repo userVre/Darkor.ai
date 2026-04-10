@@ -15,17 +15,15 @@ type HomeToolsBottomNavProps = {
 type NavItemProps = {
   label: string;
   active: boolean;
-  left?: number;
-  right?: number;
   onPress: () => void;
   icon: typeof LayoutGrid;
 };
 
-function NavItem({ icon: Icon, label, active, left, right, onPress }: NavItemProps) {
+function NavItem({ icon: Icon, label, active, onPress }: NavItemProps) {
   const color = active ? "#0A0A0A" : "#B0B0B0";
 
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={[styles.item, left !== undefined ? { left } : { right }]}>
+    <Pressable accessibilityRole="button" onPress={onPress} style={styles.item}>
       <Icon color={color} size={24} strokeWidth={2.15} />
       <Text style={[styles.label, { color }]}>{label}</Text>
     </Pressable>
@@ -42,25 +40,27 @@ export function HomeToolsBottomNav({
   const { t } = useTranslation();
   return (
     <View style={styles.bar}>
-      <NavItem icon={LayoutGrid} label={t("tabs.tools")} active={activeTab === "tools"} left={44} onPress={onToolsPress} />
-      <NavItem icon={Sparkles} label={t("tabs.create")} active={activeTab === "create"} left={132} onPress={onCreatePress} />
-      <NavItem icon={Compass} label={t("tabs.discover")} active={activeTab === "discover"} left={224} onPress={onDiscoverPress} />
-      <NavItem icon={UserCircle2} label={t("tabs.profile")} active={activeTab === "profile"} right={48} onPress={onProfilePress} />
+      <NavItem icon={LayoutGrid} label={t("tabs.tools")} active={activeTab === "tools"} onPress={onToolsPress} />
+      <NavItem icon={Sparkles} label={t("tabs.create")} active={activeTab === "create"} onPress={onCreatePress} />
+      <NavItem icon={Compass} label={t("tabs.discover")} active={activeTab === "discover"} onPress={onDiscoverPress} />
+      <NavItem icon={UserCircle2} label={t("tabs.profile")} active={activeTab === "profile"} onPress={onProfilePress} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   bar: {
-    position: "relative",
     height: 64,
     borderTopWidth: 1,
     borderTopColor: "#E8E8E8",
     backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    paddingHorizontal: 12,
   },
   item: {
-    position: "absolute",
-    top: 12,
+    minWidth: 64,
     alignItems: "center",
     justifyContent: "center",
     gap: 4,

@@ -56,7 +56,6 @@ import {
 import { fonts } from "../styles/typography";
 
 const SCREEN_BG = "#0D0D0D";
-const SHEET_OVERLAY = "rgba(0,0,0,0.52)";
 const PANEL_BG = "#1C1C1C";
 const PANEL_BORDER = "#2A2A2A";
 const BRAND_RED = "#E53935";
@@ -641,8 +640,19 @@ export default function PaywallScreen() {
     if (source === "launch") {
       dismissLaunchPaywall();
     }
+
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    if (typeof redirectTo === "string" && redirectTo.length > 0) {
+      router.replace(redirectTo as any);
+      return;
+    }
+
     router.replace("/(tabs)");
-  }, [router, source]);
+  }, [redirectTo, router, source]);
 
   const completePaywall = useCallback(() => {
     if (source === "launch") {
@@ -848,9 +858,9 @@ export default function PaywallScreen() {
     <View style={styles.screen}>
       <Stack.Screen
         options={{
-          presentation: "transparentModal",
-          animation: "none",
-          contentStyle: { backgroundColor: "transparent" },
+          presentation: "fullScreenModal",
+          animation: "fade_from_bottom",
+          contentStyle: { backgroundColor: SCREEN_BG },
           gestureEnabled: false,
         }}
       />
@@ -959,7 +969,7 @@ export default function PaywallScreen() {
               <FadeSwap swapKey={freeTrialEnabled ? "cta-trial" : "cta-continue"} style={styles.ctaContent}>
                 <View style={styles.ctaLabelRow}>
                   <Text style={styles.ctaText}>{freeTrialEnabled ? t("paywall.tryForFree") : t("paywall.continue")}</Text>
-                  <Text style={styles.ctaArrow}>→</Text>
+                  <Text style={styles.ctaArrow}>{">"}</Text>
                 </View>
               </FadeSwap>
             )}
@@ -968,7 +978,7 @@ export default function PaywallScreen() {
           <View style={[styles.legalFooter, { paddingBottom: Math.max(insets.bottom + 12, 12) }]}>
             <View style={styles.legalLinksRow}>
               <LegalLink label={t("paywall.terms")} onPress={handleOpenTerms} />
-              <Text style={styles.legalDivider}>•</Text>
+              <Text style={styles.legalDivider}>|</Text>
               <LegalLink label={t("paywall.privacy")} onPress={handleOpenPrivacy} />
             </View>
 
@@ -983,20 +993,15 @@ export default function PaywallScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "transparent",
-    justifyContent: "flex-end",
+    backgroundColor: SCREEN_BG,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: SHEET_OVERLAY,
+    backgroundColor: SCREEN_BG,
   },
   sheet: {
     flex: 1,
-    marginTop: 12,
     position: "relative",
-    overflow: "hidden",
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
     backgroundColor: SCREEN_BG,
   },
   restoreButton: {
@@ -1278,11 +1283,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 20,
     paddingVertical: 14,
-    shadowColor: BRAND_RED,
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
   },
   ctaButtonDisabled: {
     opacity: 0.7,

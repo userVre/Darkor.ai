@@ -267,9 +267,11 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   title: {
+    flex: 1,
     color: "#0A0A0A",
     fontSize: 22,
     lineHeight: 22,
+    textAlign: "left",
     ...fonts.bold,
   },
   settingsButton: {
@@ -282,7 +284,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 8,
+    paddingBottom: 32,
   },
   cardSpacing: {
     marginBottom: 12,

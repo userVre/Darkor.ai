@@ -41,10 +41,10 @@ import {
 import { requestStoreReview } from "../lib/store-review";
 import { fonts } from "../styles/typography";
 
-const SUPPORT_EMAIL = "support@darkor.ai";
-const APP_URL = Constants.expoConfig?.extra?.publicEnv?.EXPO_PUBLIC_APP_URL ?? "https://darkor.ai";
+const SUPPORT_EMAIL = "support@homedecor.ai";
+const APP_URL = Constants.expoConfig?.extra?.publicEnv?.EXPO_PUBLIC_APP_URL ?? "https://homedecor.ai";
 const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
-const ANDROID_PACKAGE = Constants.expoConfig?.android?.package ?? "com.darkor.ai";
+const ANDROID_PACKAGE = Constants.expoConfig?.android?.package ?? "com.homedecor.ai";
 
 function truncateUserId(value: string) {
   if (value.length <= 18) {
@@ -116,7 +116,7 @@ export default function SettingsScreen() {
 
   const handleFeedback = async () => {
     try {
-      await openExternalUrl(`mailto:${SUPPORT_EMAIL}?subject=Darkor%20AI%20Feedback`);
+      await openExternalUrl(`mailto:${SUPPORT_EMAIL}?subject=HomeDecor%20AI%20Feedback`);
     } catch (error) {
       showToast(error instanceof Error ? error.message : t("settings.messages.emailClientUnavailable"));
     }

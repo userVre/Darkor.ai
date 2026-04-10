@@ -34,7 +34,7 @@ export class AppErrorBoundary extends Component<Props, State> {
           <View style={{ borderRadius: 28, borderWidth: 0.5, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "#09090b", padding: spacing.lg }}>
             <Text style={{ color: "#ffffff", fontSize: 24, fontWeight: "600" }}>We hit a render issue.</Text>
             <Text style={{ color: "#a1a1aa", fontSize: 14, marginTop: spacing.sm, lineHeight: 22 }}>
-              Darkor.ai caught the error before it turned into a blank screen. Retry the interface and keep going.
+              HomeDecor AI caught the error before it turned into a blank screen. Retry the interface and keep going.
             </Text>
             <Text style={{ color: "#71717a", fontSize: 12, marginTop: spacing.md }}>{this.state.error.message}</Text>
             <LuxPressable onPress={this.handleRetry} className="mt-6 overflow-hidden rounded-2xl">
@@ -50,4 +50,3 @@ export class AppErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
-

@@ -28,7 +28,7 @@
     }
   },
   "boot": {
-    "loadingApp": "Chargement de Darkor.ai",
+    "loadingApp": "Chargement de HomeDecor AI",
     "loadingAccount": "Chargement de votre compte...",
     "checkingPlan": "Vérification de votre abonnement...",
     "secureAccount": "Sécurisez votre compte pour commencer à créer..."
@@ -40,7 +40,7 @@
     "profile": "Profil"
   },
   "home": {
-    "title": "Darkor AI",
+    "title": "HomeDecor AI",
     "errors": { "tryItUnavailableTitle": "Essai indisponible" },
     "tools": {
       "interior": { "title": "Design d'intérieur", "description": "Importez une photo, choisissez un style et laissez l'IA repenser la pièce." },
@@ -91,13 +91,13 @@
   },
   "workspace": {
     "generation": { "preparingSessionTitle": "Préparation de votre session", "preparingSessionBody": "Votre profil invité est encore en cours de chargement. Réessayez dans un instant.", "limitReached": "Limite atteinte" },
-    "share": { "message": "Conçu avec Darkor.ai", "failedTitle": "Échec du partage" },
+    "share": { "message": "Conçu avec HomeDecor.ai", "failedTitle": "Échec du partage" },
     "download": { "failedTitle": "Échec de l'enregistrement" },
     "media": { "exampleUnavailableTitle": "Exemple indisponible" },
     "flow": { "customPromptTitle": "Ajouter un prompt personnalisé", "customPromptBody": "Décrivez la direction de design exacte avant de l'appliquer.", "selectSpaceType": "Touchez une carte pour sélectionner votre type d'espace." }
   },
   "proSuccess": {
-    "title": "Bienvenue dans Darkor Pro !",
+    "title": "Bienvenue dans HomeDecor Pro !",
     "subtitle": "Tout est maintenant débloqué. Voici ce que vous obtenez :",
     "cta": "Commencer à créer",
     "toast": "Compte mis à niveau vers Pro avec succès."

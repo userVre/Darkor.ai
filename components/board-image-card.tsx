@@ -1,7 +1,4 @@
-import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
-import { MotiView } from "moti";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { BoardItem } from "../lib/board";
@@ -36,25 +33,6 @@ export function BoardImageCard({ item, width, onPress, onLongPress }: BoardImage
       ) : (
         <View style={styles.fallback} />
       )}
-
-      {isProcessing && previewImage ? <BlurView intensity={54} tint="dark" style={StyleSheet.absoluteFillObject} /> : null}
-      {showNewBadge ? (
-        <MotiView
-          animate={{ opacity: [0.2, 0.52, 0.2], scale: [0.96, 1.02, 0.96] }}
-          transition={{ duration: 1800, loop: true }}
-          pointerEvents="none"
-          style={styles.newGlow}
-        />
-      ) : null}
-
-      <View
-        pointerEvents="none"
-        style={[
-          styles.scrim,
-          isProcessing ? styles.processingScrim : isFailed ? styles.failedScrim : styles.readyScrim,
-        ]}
-      />
-      <LinearGradient colors={["transparent", "rgba(0,0,0,0.6)"]} style={styles.gradient} />
 
       {showNewBadge ? (
         <View pointerEvents="none" style={styles.badge}>
@@ -98,40 +76,12 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "#141414",
   },
-  scrim: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  readyScrim: {
-    backgroundColor: "rgba(0,0,0,0.08)",
-  },
-  processingScrim: {
-    backgroundColor: "rgba(0,0,0,0.32)",
-  },
-  failedScrim: {
-    backgroundColor: "rgba(18,0,8,0.44)",
-  },
-  gradient: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 80,
-  },
-  newGlow: {
-    position: "absolute",
-    top: 18,
-    right: 18,
-    width: 72,
-    height: 72,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,79,79,0.2)",
-  },
   badge: {
     position: "absolute",
     top: 12,
     right: 12,
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.96)",
+    backgroundColor: "#FFFFFF",
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
@@ -158,8 +108,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.14)",
-    backgroundColor: "rgba(0,0,0,0.3)",
+    borderColor: "#3A3A3A",
+    backgroundColor: "#1C1C1C",
   },
   processingText: {
     color: "#FFFFFF",
@@ -172,7 +122,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 12,
     right: 12,
-    bottom: 10,
+    bottom: 12,
+    borderRadius: 14,
+    backgroundColor: "#111111",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   styleName: {
     color: "#FFFFFF",

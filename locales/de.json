@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Darkor AI"
+    "name": "HomeDecor AI"
   },
   "common": {
     "actions": {
@@ -32,7 +32,7 @@
     }
   },
   "boot": {
-    "loadingApp": "Darkor.ai wird geladen",
+    "loadingApp": "HomeDecor AI wird geladen",
     "loadingAccount": "Dein Konto wird geladen...",
     "checkingPlan": "Dein Tarif wird geprüft...",
     "secureAccount": "Sichere dein Konto, um mit dem Erstellen zu beginnen..."
@@ -61,7 +61,7 @@
     }
   },
   "auth": {
-    "accountEyebrow": "Darkor.ai Konto",
+    "accountEyebrow": "HomeDecor AI Konto",
     "emailPlaceholder": "du@firma.com",
     "signIn": {
       "title": "Anmelden",

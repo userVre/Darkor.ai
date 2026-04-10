@@ -12,22 +12,22 @@ const TERMS_SECTIONS = [
   {
     title: "Acceptance of Terms",
     body:
-      "By accessing or using Darkor.ai, you agree to these Terms of Service. If you do not agree, do not use the app.",
+      "By accessing or using HomeDecor AI, you agree to these Terms of Service. If you do not agree, do not use the app.",
   },
   {
     title: "Service Description",
     body:
-      "Darkor.ai provides AI-generated redesigns for interior and exterior spaces. Outputs are visual concepts and may not account for structural, engineering, or code constraints.",
+      "HomeDecor AI provides AI-generated redesigns for interior and exterior spaces. Outputs are visual concepts and may not account for structural, engineering, or code constraints.",
   },
   {
     title: "Account and Eligibility",
     body:
-      "You must be at least 13 years old to use Darkor.ai. You are responsible for maintaining account security and for activity that happens under your credentials.",
+      "You must be at least 13 years old to use HomeDecor AI. You are responsible for maintaining account security and for activity that happens under your credentials.",
   },
   {
     title: "User Content",
     body:
-      "You retain ownership of images you upload. By using the service, you grant Darkor.ai a limited license to process and store them so we can generate and return your results.",
+      "You retain ownership of images you upload. By using the service, you grant HomeDecor AI a limited license to process and store them so we can generate and return your results.",
   },
   {
     title: "Subscriptions and Credits",
@@ -47,11 +47,11 @@ const TERMS_SECTIONS = [
   {
     title: "Limitation of Liability",
     body:
-      "To the maximum extent permitted by law, Darkor.ai is not liable for indirect or consequential damages arising from your use of the service.",
+      "To the maximum extent permitted by law, HomeDecor AI is not liable for indirect or consequential damages arising from your use of the service.",
   },
   {
     title: "Contact",
-    body: "Questions about these terms can be sent to support@darkor.ai.",
+    body: "Questions about these terms can be sent to support@homedecor.ai.",
   },
 ];
 

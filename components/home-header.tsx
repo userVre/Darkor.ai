@@ -35,7 +35,7 @@ export const HomeHeader = memo(function HomeHeader({
             <Logo size={32} />
           </View>
           <View style={styles.brandCopy}>
-            <Text style={styles.eyebrow}>Darkor.ai</Text>
+            <Text style={styles.eyebrow}>HomeDecor AI</Text>
             <Text style={styles.brandLabel}>Design Studio</Text>
           </View>
         </View>

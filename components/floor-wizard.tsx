@@ -185,6 +185,15 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     [selectedMaterialId],
   );
   const availableCredits = sharedCredits;
+  const generationSpeedTier = useMemo<"standard" | "pro" | "ultra">(() => {
+    if (me?.subscriptionType === "yearly") {
+      return "ultra";
+    }
+    if (me?.hasPaidAccess) {
+      return "pro";
+    }
+    return "standard";
+  }, [me?.hasPaidAccess, me?.subscriptionType]);
   const generationAccess = canUserGenerateNow(me);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "materials" ? 3 : 4;
@@ -349,7 +358,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
       return { uri: generatedImageUrl, temporary: false };
     }
 
-    const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}darkor-floor-result-${Date.now()}.jpg`;
+    const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}homedecor-floor-result-${Date.now()}.jpg`;
     const download = await FileSystem.downloadAsync(generatedImageUrl, targetUri);
     return { uri: download.uri, temporary: true };
   }, [generatedImageUrl]);
@@ -754,6 +763,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
             displayStyle: `${selectedMaterial.title} Floor`,
             customPrompt: `${customPrompt.trim()}\n\nPreserve perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`,
             aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
+            speedTier: generationSpeedTier,
           })) as { generationId: string; creditsRemaining?: number };
         },
         showToast,

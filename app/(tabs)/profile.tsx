@@ -331,14 +331,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   scrollContent: {
-    paddingTop: 28,
+    paddingTop: 32,
+    paddingHorizontal: GRID_HORIZONTAL_PADDING,
   },
   emptyScrollContent: {
     flexGrow: 1,
   },
   title: {
     color: "#0A0A0A",
-    textAlign: "center",
+    textAlign: "left",
     fontSize: 20,
     lineHeight: 24,
     ...fonts.bold,
@@ -364,10 +365,10 @@ const styles = StyleSheet.create({
     ...fonts.regular,
   },
   grid: {
-    alignSelf: "center",
+    alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "flex-start",
-    marginTop: 62,
+    marginTop: 32,
   },
   column: {
     gap: GRID_VERTICAL_GAP,
