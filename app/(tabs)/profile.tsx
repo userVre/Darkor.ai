@@ -37,7 +37,7 @@ const GRID_VERTICAL_GAP = 28;
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const { showToast } = useProSuccess();
@@ -164,7 +164,9 @@ export default function ProfileScreen() {
   }, [width]);
 
   const gridWidth = columnWidth * 2 + GRID_COLUMN_GAP;
+  const topContentInset = Math.max(insets.top + 16, 32);
   const bottomContentInset = Math.max(insets.bottom + 112, 128);
+  const boardBodyMinHeight = Math.max(height - topContentInset - bottomContentInset - 64, 240);
 
   const handleImagePress = (item: BoardItem) => {
     const itemStatus = resolveGenerationStatus(item.status, item.imageUri);
@@ -268,45 +270,47 @@ export default function ProfileScreen() {
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={[
           styles.scrollContent,
+          { paddingTop: topContentInset },
           { paddingBottom: bottomContentInset },
-          boardItems.length === 0 ? styles.emptyScrollContent : null,
         ]}
       >
         <Text style={styles.title}>{t("profile.title")}</Text>
 
-        {boardItems.length === 0 ? (
-          <View style={[styles.emptyState, { paddingBottom: bottomContentInset }]}>
-            <ImageIcon color="#D0D0D0" size={48} strokeWidth={1.9} />
-            <Text style={styles.emptyTitle}>{t("profile.emptyTitle")}</Text>
-            <Text style={styles.emptySubtitle}>{t("profile.emptySubtitle")}</Text>
-          </View>
-        ) : (
-          <View style={[styles.grid, { width: gridWidth }]}>
-            <View style={[styles.column, { width: columnWidth }]}>
-              {leftColumnImages.map((item) => (
-                <BoardImageCard
-                  key={item.id}
-                  item={item}
-                  width={columnWidth}
-                  onPress={handleImagePress}
-                  onLongPress={handleImageLongPress}
-                />
-              ))}
+        <View style={[styles.boardBody, { minHeight: boardBodyMinHeight }]}>
+          {boardItems.length === 0 ? (
+            <View style={styles.emptyState}>
+              <ImageIcon color="#D0D0D0" size={48} strokeWidth={1.9} />
+              <Text style={styles.emptyTitle}>{t("profile.emptyTitle")}</Text>
+              <Text style={styles.emptySubtitle}>{t("profile.emptySubtitle")}</Text>
             </View>
+          ) : (
+            <View style={[styles.grid, { width: gridWidth }]}>
+              <View style={[styles.column, { width: columnWidth }]}>
+                {leftColumnImages.map((item) => (
+                  <BoardImageCard
+                    key={item.id}
+                    item={item}
+                    width={columnWidth}
+                    onPress={handleImagePress}
+                    onLongPress={handleImageLongPress}
+                  />
+                ))}
+              </View>
 
-            <View style={[styles.column, styles.rightColumn, { width: columnWidth }]}>
-              {rightColumnImages.map((item) => (
-                <BoardImageCard
-                  key={item.id}
-                  item={item}
-                  width={columnWidth}
-                  onPress={handleImagePress}
-                  onLongPress={handleImageLongPress}
-                />
-              ))}
+              <View style={[styles.column, styles.rightColumn, { width: columnWidth }]}>
+                {rightColumnImages.map((item) => (
+                  <BoardImageCard
+                    key={item.id}
+                    item={item}
+                    width={columnWidth}
+                    onPress={handleImagePress}
+                    onLongPress={handleImageLongPress}
+                  />
+                ))}
+              </View>
             </View>
-          </View>
-        )}
+          )}
+        </View>
       </ScrollView>
 
       <BoardPreviewModal item={previewItem} visible={previewItem !== null} onClose={closePreview} />
@@ -331,21 +335,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   scrollContent: {
-    paddingTop: 32,
+    flexGrow: 1,
     paddingHorizontal: GRID_HORIZONTAL_PADDING,
   },
-  emptyScrollContent: {
+  boardBody: {
     flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     color: "#0A0A0A",
     textAlign: "left",
     fontSize: 20,
     lineHeight: 24,
+    marginBottom: 24,
     ...fonts.bold,
   },
   emptyState: {
-    flex: 1,
+    width: "100%",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 32,
@@ -365,10 +372,9 @@ const styles = StyleSheet.create({
     ...fonts.regular,
   },
   grid: {
-    alignSelf: "flex-start",
+    alignSelf: "center",
     flexDirection: "row",
     alignItems: "flex-start",
-    marginTop: 32,
   },
   column: {
     gap: GRID_VERTICAL_GAP,

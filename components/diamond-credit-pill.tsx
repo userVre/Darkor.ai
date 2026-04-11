@@ -1,5 +1,5 @@
 import { Diamond } from "@/components/material-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 
 import { fonts } from "../styles/typography";
 
@@ -23,13 +23,15 @@ const VARIANT_STYLES = {
   },
 } as const;
 
-function ThreeDiamondMark({
+export function ThreeDiamondMark({
   color,
+  style,
 }: {
   color: string;
+  style?: StyleProp<ViewStyle>;
 }) {
   return (
-    <View style={styles.diamondMark} pointerEvents="none">
+    <View style={[styles.diamondMark, style]} pointerEvents="none">
       <Diamond color={color} size={11} strokeWidth={2.2} style={styles.diamondLeft} />
       <Diamond color={color} size={13} strokeWidth={2.2} style={styles.diamondCenter} />
       <Diamond color={color} size={11} strokeWidth={2.2} style={styles.diamondRight} />

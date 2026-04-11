@@ -63,8 +63,9 @@ export function FloorIntroScreen({
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
   const heroTop = headerMetrics.contentOffset;
   const heroHeight = scaleValue(584, layoutScale);
-  const heroTextTop = scaleValue(424, layoutScale);
-  const heroTextLeft = scaleValue(48, layoutScale);
+  const heroCopyTop = scaleValue(332, layoutScale);
+  const heroCopyRight = scaleValue(28, layoutScale);
+  const heroCopyWidth = Math.min(scaleValue(194, layoutScale), Math.max(mainWidth - scaleValue(214, layoutScale), scaleValue(168, layoutScale)));
   const heroButtonTop = scaleValue(504, layoutScale);
   const heroButtonLeft = scaleValue(126, layoutScale);
   const heroButtonHeight = scaleValue(48, layoutScale);
@@ -221,7 +222,7 @@ export function FloorIntroScreen({
           <Image source={HERO_IMAGE} style={styles.heroImage} contentFit="cover" transition={120} cachePolicy="memory-disk" />
           <View style={styles.heroOverlay} />
 
-          <Text style={[styles.heroText, { top: heroTextTop, left: heroTextLeft, right: scaleValue(32, layoutScale) }]}>
+          <Text style={[styles.heroText, { top: heroCopyTop, right: heroCopyRight, width: heroCopyWidth }]}>
             {t("wizard.floorIntro.hero")}
           </Text>
 
@@ -393,9 +394,10 @@ const styles = StyleSheet.create({
   heroText: {
     position: "absolute",
     color: "#FFFFFF",
-    fontSize: 24,
-    lineHeight: 28,
-    ...fonts.bold,
+    fontSize: 18,
+    lineHeight: 24,
+    textAlign: "right",
+    ...fonts.semibold,
   },
   uploadButton: {
     position: "absolute",

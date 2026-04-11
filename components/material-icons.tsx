@@ -58,6 +58,7 @@ export const CookingPot = createIcon("soup-kitchen");
 export const Diamond = createIcon("diamond");
 export const DoorOpen = createIcon("door-front");
 export const Download = createIcon("download");
+export const Draw = createIcon("draw");
 export const Eraser = createIcon("cleaning-services");
 export const Fence = createIcon("fence");
 export const FileQuestion = createIcon("quiz");

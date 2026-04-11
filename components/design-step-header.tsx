@@ -3,7 +3,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { DiamondCreditPill } from "./diamond-credit-pill";
+import { DiamondCreditPill, ThreeDiamondMark } from "./diamond-credit-pill";
 import { fonts } from "../styles/typography";
 
 type DesignStepHeaderProps = {
@@ -17,16 +17,16 @@ type DesignStepHeaderProps = {
   closeAccessibilityLabel?: string;
 };
 
-const DESIGN_HEADER_TOP_PADDING = 6;
-const DESIGN_HEADER_BOTTOM_PADDING = 12;
+const DESIGN_HEADER_TOP_PADDING = 2;
+const DESIGN_HEADER_BOTTOM_PADDING = 10;
 const DESIGN_HEADER_ROW_HEIGHT = 44;
 const DESIGN_HEADER_PROGRESS_HEIGHT = 4;
 const DESIGN_HEADER_PROGRESS_SEGMENT_GAP = 10;
-const DESIGN_HEADER_PROGRESS_GAP = 26;
-const DESIGN_HEADER_CONTENT_GAP = 32;
+const DESIGN_HEADER_PROGRESS_GAP = 12;
+const DESIGN_HEADER_CONTENT_GAP = 28;
 
 export function getDesignStepHeaderMetrics(topInset: number) {
-  const safeTop = Platform.OS === "android" ? Math.max(topInset, 44) : Math.max(topInset, 20);
+  const safeTop = Platform.OS === "android" ? Math.max(topInset, 12) : Math.max(topInset, 16);
   const rowTop = safeTop + DESIGN_HEADER_TOP_PADDING;
   const rowBottom = rowTop + DESIGN_HEADER_ROW_HEIGHT;
   const progressTop = rowBottom + DESIGN_HEADER_PROGRESS_GAP;
@@ -96,6 +96,10 @@ export function DesignStepHeader({
         ]}
       >
         <View style={[styles.sideSlot, styles.leftSlot]}>
+          <View style={styles.brandMarkWrap}>
+            <ThreeDiamondMark color="#0A0A0A" />
+          </View>
+
           {showCredits ? (
             <DiamondCreditPill count={creditCount ?? 0} variant="dark" />
           ) : showBack ? (
@@ -155,8 +159,11 @@ const styles = StyleSheet.create({
     minHeight: DESIGN_HEADER_ROW_HEIGHT,
   },
   sideSlot: {
-    width: 92,
+    width: 116,
     minHeight: DESIGN_HEADER_ROW_HEIGHT,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
     justifyContent: "center",
   },
   leftSlot: {
@@ -177,6 +184,12 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     textAlign: "center",
     ...fonts.semibold,
+  },
+  brandMarkWrap: {
+    width: 30,
+    height: DESIGN_HEADER_ROW_HEIGHT,
+    alignItems: "flex-start",
+    justifyContent: "center",
   },
   iconButton: {
     width: 44,

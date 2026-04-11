@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { PaintRoller, Wand2 } from "@/components/material-icons";
+import { Draw, Wand2 } from "@/components/material-icons";
 import { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -127,7 +127,7 @@ function ModeSelectionCard({
           {variant === "renovate" ? (
             <Wand2 color={active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A"} size={iconSize} strokeWidth={2.1} />
           ) : (
-            <PaintRoller color={active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A"} size={iconSize} strokeWidth={2.1} />
+            <Draw color={active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A"} size={iconSize} strokeWidth={2.1} />
           )}
         </View>
 
