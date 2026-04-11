@@ -154,6 +154,7 @@ export function getSubscriptionEndForType(subscriptionType: SubscriptionType, pu
 }
 
 export function canUserGenerateState(state: {
+  plan: BillingPlan;
   active: boolean;
   blocked: boolean;
   hasPaidAccess: boolean;
@@ -172,7 +173,7 @@ export function canUserGenerateState(state: {
     };
   }
 
-  if (!state.hasPaidAccess) {
+  if (state.subscriptionType === "free" && state.plan === "free") {
     return {
       allowed: false,
       reason: "paywall" as const,
@@ -287,7 +288,7 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
         : reachedLimit
           ? `Limit Reached - ${statusLabel}`
           : statusLabel;
-      const hasPaidAccess = active;
+      const hasPaidAccess = active && plan === "pro";
 
       return {
         plan,

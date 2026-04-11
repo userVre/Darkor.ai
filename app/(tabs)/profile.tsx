@@ -24,6 +24,12 @@ type ArchiveGeneration = {
   sourceImageUrl?: string | null;
   style?: string | null;
   roomType?: string | null;
+  serviceType?: string | null;
+  watermarkRequired?: boolean | null;
+  modeId?: string | null;
+  paletteId?: string | null;
+  finishId?: string | null;
+  aspectRatio?: string | null;
   status?: BoardItemStatus;
   errorMessage?: string | null;
   createdAt?: number;
@@ -89,6 +95,13 @@ export default function ProfileScreen() {
           originalImageUri: item.originalImageUrl ?? null,
           styleName: item.styleLabel,
           roomType: item.roomLabel,
+          serviceType: item.serviceType ?? null,
+          generationId: item.generationId ?? null,
+          watermarkRequired: item.watermarkRequired ?? false,
+          modeId: item.modeId ?? null,
+          paletteId: item.paletteId ?? null,
+          finishId: item.finishId ?? null,
+          aspectRatio: item.aspectRatio ?? null,
           createdAt: item.createdAt,
           status: item.status,
           errorMessage: item.errorMessage ?? null,
@@ -104,6 +117,13 @@ export default function ProfileScreen() {
       originalImageUrl: item.originalImageUri ?? null,
       styleLabel: item.styleName,
       roomLabel: item.roomType,
+      serviceType: item.serviceType ?? null,
+      generationId: item.generationId ?? null,
+      watermarkRequired: item.watermarkRequired ?? false,
+      modeId: item.modeId ?? null,
+      paletteId: item.paletteId ?? null,
+      finishId: item.finishId ?? null,
+      aspectRatio: item.aspectRatio ?? null,
       status: item.status,
       errorMessage: item.errorMessage ?? null,
       createdAt: item.createdAt,

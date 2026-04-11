@@ -10,7 +10,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useNavigation, usePathname, useRouter } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
 import { AnimatePresence, MotiView } from "moti";
-import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, startTransition, type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { spacing } from "../../styles/spacing";
 import {
@@ -50,15 +50,19 @@ import {
   Monitor,
   PaintRoller,
   Projector,
-  Send,
   Sofa,
   Sparkles,
   Store,
   SunMedium,
+  ThumbDown,
+  ThumbUp,
   Trees,
+  Trash2,
   UtensilsCrossed,
   MoveHorizontal,
   Wand2,
+  Redo2,
+  Share2,
 } from "@/components/material-icons";
 import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
 import { GENERATION_FAILED_TOAST, getFriendlyGenerationError } from "../../lib/generation-errors";
@@ -84,6 +88,7 @@ import { useGenerationStatusMessages } from "../../components/service-processing
 import { ServiceWizardHeader } from "../../components/service-wizard-header";
 import { getStickyStepHeaderMetrics } from "../../components/sticky-step-header";
 import { BeforeAfterSlider } from "../../components/before-after-slider";
+import { ThreeDiamondMark } from "../../components/diamond-credit-pill";
 import { useFlowUI } from "../../components/flow-ui-context";
 import { useViewerCredits } from "../../components/viewer-credits-context";
 import { useWorkspaceDraft } from "../../components/workspace-context";
@@ -195,6 +200,14 @@ type ArchiveGeneration = {
   sourceImageUrl?: string | null;
   style?: string | null;
   roomType?: string | null;
+  serviceType?: "paint" | "floor" | "redesign" | null;
+  watermarkRequired?: boolean | null;
+  modeId?: string | null;
+  paletteId?: string | null;
+  finishId?: string | null;
+  aspectRatio?: string | null;
+  customPrompt?: string | null;
+  feedback?: FeedbackSentiment | null;
   status?: GenerationStatus;
   errorMessage?: string | null;
   createdAt?: number;
@@ -208,10 +221,31 @@ type BoardRenderItem = {
   roomLabel: string;
   serviceType?: string | null;
   generationId?: string | null;
+  watermarkRequired?: boolean | null;
+  modeId?: string | null;
+  paletteId?: string | null;
+  finishId?: string | null;
+  aspectRatio?: string | null;
+  customPrompt?: string | null;
+  feedback?: "liked" | "disliked" | null;
   status: GenerationStatus;
   errorMessage?: string | null;
   createdAt: number;
   isNew?: boolean;
+};
+
+type FeedbackSentiment = "liked" | "disliked";
+
+type GenerateRequestOverrides = {
+  regenerate?: boolean;
+  sourceImage?: SelectedImage | null;
+  roomLabel?: string | null;
+  styleLabel?: string | null;
+  finishId?: FinishOption["id"] | null;
+  modeId?: ModeOption["id"] | null;
+  paletteId?: string | null;
+  aspectRatio?: string | null;
+  customPrompt?: string | null;
 };
 
 type ModeOption = {
@@ -297,11 +331,13 @@ const BoardGridCard = memo(function BoardGridCard({
   width,
   index,
   onPress,
+  showWatermark,
 }: {
   item: BoardRenderItem;
   width: number;
   index: number;
   onPress: (item: BoardRenderItem) => void;
+  showWatermark: boolean;
 }) {
   const { t } = useTranslation();
   const previewImage = item.imageUrl ?? item.originalImageUrl ?? null;
@@ -387,6 +423,15 @@ const BoardGridCard = memo(function BoardGridCard({
           </View>
         ) : null}
 
+        {showWatermark && previewImage ? (
+          <View
+            className="absolute rounded-full bg-black px-3 py-1.5"
+            style={{ right: 14, bottom: 58 }}
+          >
+            <Text style={{ color: "#FFFFFF", fontSize: 11, lineHeight: 13, ...fonts.semibold }}>HomeDecor.ai</Text>
+          </View>
+        ) : null}
+
         <View
           style={{
             position: "absolute",
@@ -404,6 +449,67 @@ const BoardGridCard = memo(function BoardGridCard({
         </View>
       </LuxPressable>
     </View>
+  );
+});
+
+function resolveBoardStyleSelection(styleLabel: string | null | undefined, serviceType: string | null | undefined, customPrompt?: string | null) {
+  const normalizedStyle = normalizeStyleDisplayName(styleLabel) ?? "Custom";
+
+  if (customPrompt?.trim()) {
+    return "Custom";
+  }
+
+  if (serviceType === "floor" && normalizedStyle.endsWith(" Flooring")) {
+    return normalizedStyle.slice(0, -" Flooring".length).trim();
+  }
+
+  if (serviceType === "paint" && normalizedStyle.endsWith(" Paint")) {
+    return normalizedStyle.slice(0, -" Paint".length).trim();
+  }
+
+  return normalizedStyle;
+}
+
+const EditorActionButton = memo(function EditorActionButton({
+  icon: Icon,
+  label,
+  onPress,
+  disabled,
+  loading = false,
+  tone = "dark",
+}: {
+  icon: ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  tone?: "dark" | "light" | "accent";
+}) {
+  const backgroundColor = tone === "accent" ? "#E53935" : tone === "light" ? "#F3F4F6" : "#0A0A0A";
+  const borderColor = tone === "accent" ? "rgba(229,57,53,0.4)" : tone === "light" ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.12)";
+  const iconColor = tone === "light" ? "#0A0A0A" : "#FFFFFF";
+  const textColor = tone === "light" ? "#0A0A0A" : "#FFFFFF";
+
+  return (
+    <LuxPressable onPress={onPress} disabled={disabled || loading} className="cursor-pointer" style={{ flex: 1 }}>
+      <View
+        style={{
+          minHeight: 84,
+          borderRadius: 22,
+          borderWidth: 0.5,
+          borderColor,
+          backgroundColor,
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          paddingHorizontal: 12,
+          paddingVertical: 14,
+        }}
+      >
+        {loading ? <ActivityIndicator color={iconColor} /> : <Icon color={iconColor} size={20} strokeWidth={2.2} />}
+        <Text style={{ color: textColor, fontSize: 13, lineHeight: 16, textAlign: "center", ...fonts.semibold }}>{label}</Text>
+      </View>
+    </LuxPressable>
   );
 });
 
@@ -1893,7 +1999,10 @@ export default function WorkspaceScreen() {
     diagnostic ? "skip" : viewerReady ? viewerArgs : "skip",
   ) as ArchiveGeneration[] | undefined;
   const createSourceUploadUrl = useMutation("generations:createSourceUploadUrl" as any);
+  const deleteGeneration = useMutation("generations:deleteGeneration" as any);
   const startGeneration = useMutation("generations:startGeneration" as any);
+  const submitGenerationFeedback = useMutation("generations:submitFeedback" as any);
+  const submitFeedbackSignal = useMutation("feedback:submit" as any);
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
@@ -1914,7 +2023,7 @@ export default function WorkspaceScreen() {
   const [cachedBoardItems, setCachedBoardItems] = useState<BoardRenderItem[]>([]);
   const [newlyReadyBoardIds, setNewlyReadyBoardIds] = useState<string[]>([]);
   const [activeBoardItemId, setActiveBoardItemId] = useState<string | null>(null);
-  const [, setShowBeforeOnly] = useState(false);
+  const [showComparisonSlider, setShowComparisonSlider] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSharingResult, setIsSharingResult] = useState(false);
   const [isDownloading, setIsDownloading] = useState<"standard" | "ultra" | null>(null);
@@ -1924,8 +2033,9 @@ export default function WorkspaceScreen() {
   const [, setRatePromptOpen] = useState(false);
   const [, setFeedbackOpen] = useState(false);
   const [, setFeedbackMessage] = useState("");
-  const [, setFeedbackState] = useState<"liked" | "disliked" | null>(null);
+  const [feedbackState, setFeedbackState] = useState<FeedbackSentiment | null>(null);
   const [, setFeedbackSubmitted] = useState(false);
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState<FeedbackSentiment | null>(null);
   const [, setLastGenerationCount] = useState<number | null>(null);
   const [showResumeToast, setShowResumeToast] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
@@ -2076,7 +2186,7 @@ export default function WorkspaceScreen() {
       setActiveBoardItemId(null);
       setIsGenerating(false);
       setPendingReviewState(null);
-      setShowBeforeOnly(false);
+      setShowComparisonSlider(false);
       setShowResumeToast(false);
       setAwaitingAuth(false);
       setIsServiceProcessing(false);
@@ -2198,8 +2308,15 @@ export default function WorkspaceScreen() {
       originalImageUrl: generation.sourceImageUrl ?? null,
       styleLabel: normalizeStyleDisplayName(generation.style) ?? "Custom",
       roomLabel: generation.roomType ?? serviceLabel,
-      serviceType: inferBoardServiceType(generation.style, generation.roomType),
+      serviceType: generation.serviceType ?? inferBoardServiceType(generation.style, generation.roomType),
       generationId: generation._id,
+      watermarkRequired: generation.watermarkRequired ?? false,
+      modeId: generation.modeId ?? null,
+      paletteId: generation.paletteId ?? null,
+      finishId: generation.finishId ?? null,
+      aspectRatio: generation.aspectRatio ?? null,
+      customPrompt: generation.customPrompt ?? null,
+      feedback: generation.feedback ?? null,
       status: resolveGenerationStatus(generation.status, generation.imageUrl),
       errorMessage: generation.errorMessage ?? null,
       createdAt: generation.createdAt ?? generation._creationTime,
@@ -2255,6 +2372,11 @@ export default function WorkspaceScreen() {
       roomLabel: item.roomLabel,
       serviceType: item.serviceType ?? null,
       generationId: item.generationId ?? null,
+      watermarkRequired: item.watermarkRequired ?? false,
+      modeId: item.modeId ?? null,
+      paletteId: item.paletteId ?? null,
+      finishId: item.finishId ?? null,
+      aspectRatio: item.aspectRatio ?? null,
       status: item.status,
       errorMessage: item.errorMessage ?? null,
       createdAt: item.createdAt,
@@ -2604,6 +2726,14 @@ export default function WorkspaceScreen() {
     () => selectedMode ?? (isLeanGenerationService ? MODE_OPTIONS[0] : null),
     [isLeanGenerationService, selectedMode],
   );
+  const activeBoardPalette = useMemo(
+    () => PALETTE_OPTIONS.find((option) => option.id === activeBoardItem?.paletteId) ?? null,
+    [activeBoardItem?.paletteId],
+  );
+  const activeBoardMode = useMemo(
+    () => MODE_OPTIONS.find((option) => option.id === activeBoardItem?.modeId) ?? null,
+    [activeBoardItem?.modeId],
+  );
   const finalPreviewImage = useMemo(() => {
     const selectedSpaceCard = spaceCatalogItems.find((card) => card.title === selectedRoom);
     const fallbackImage = selectedSpaceCard?.image ?? DEFAULT_SPACE_IMAGE;
@@ -2645,7 +2775,6 @@ export default function WorkspaceScreen() {
   const hasPaidAccess = diagnostic ? true : me?.hasPaidAccess ?? false;
   const canExport4k = diagnostic ? true : me?.canExport4k ?? false;
   const canRemoveWatermark = diagnostic ? true : me?.canRemoveWatermark ?? false;
-  const canEditDesigns = diagnostic ? true : me?.canEditDesigns ?? false;
   const generationSpeedTier = useMemo<GenerationSpeedTier>(() => {
     if (me?.subscriptionType === "yearly") {
       return "ultra";
@@ -2739,6 +2868,11 @@ export default function WorkspaceScreen() {
     [selectedStyle],
   );
   const activeEditorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
+  const activeGenerationRecordId = activeBoardItem?.generationId ?? activeBoardItem?.id ?? generationId ?? null;
+  const editorFeedbackState = feedbackState ?? activeBoardItem?.feedback ?? null;
+  const currentImageHasWatermark = Boolean(
+    (activeBoardItem?.watermarkRequired ?? (diagnostic ? false : !hasPaidAccess)) && !canRemoveWatermark,
+  );
   const sliderSpring = useMemo(() => ({ damping: 15, stiffness: 100 }), []);
 
   useEffect(() => {
@@ -2766,7 +2900,7 @@ export default function WorkspaceScreen() {
       handledBoardRouteRef.current = routeSignature;
       setWorkflowStep(4);
       setActiveBoardItemId(null);
-      setShowBeforeOnly(false);
+      setShowComparisonSlider(false);
       return;
     }
 
@@ -2784,13 +2918,13 @@ export default function WorkspaceScreen() {
     setActiveBoardItemId(targetItem.id);
     setGeneratedImageUrl(targetItem.imageUrl ?? null);
     setGenerationId(targetItem.generationId ?? null);
-    setShowBeforeOnly(false);
+    setShowComparisonSlider(false);
     setFeedbackState(null);
     setFeedbackSubmitted(false);
     if (sliderWidth.value > 0) {
       sliderX.value = withSpring(sliderWidth.value / 2, sliderSpring);
     }
-  }, [boardItemId, boardItems, boardView, effectiveSignedIn, entrySource, openAuthWall, router, sliderSpring, sliderWidth, sliderX, viewerReady]);
+  }, [boardItemId, boardItems, boardView, effectiveSignedIn, entrySource, router, sliderSpring, sliderWidth, sliderX, viewerReady]);
 
   useEffect(() => {
     if (pendingBoardItems.length === 0 || archivedBoardItems.length === 0) {
@@ -3329,7 +3463,7 @@ export default function WorkspaceScreen() {
       generationAlertedFailureRef.current = null;
       setPendingReviewState(null);
       setActiveBoardItemId(null);
-      setShowBeforeOnly(false);
+      setShowComparisonSlider(false);
       setFeedbackMessage("");
       setFeedbackState(null);
       setFeedbackSubmitted(false);
@@ -3401,7 +3535,7 @@ export default function WorkspaceScreen() {
   }, [promptOpenSettings]);
 
   const exportCurrentRender = useCallback(async () => {
-    if (canRemoveWatermark) {
+    if (!currentImageHasWatermark) {
       if (!activeEditorImageUrl) {
         throw new Error("Render unavailable. Please try again.");
       }
@@ -3416,7 +3550,7 @@ export default function WorkspaceScreen() {
 
     const previousSlider = sliderX.value;
     if (sliderWidth.value > 0) {
-      sliderX.value = sliderWidth.value;
+      sliderX.value = 0;
     }
     await new Promise((resolve) => setTimeout(resolve, 80));
     try {
@@ -3434,7 +3568,7 @@ export default function WorkspaceScreen() {
         sliderX.value = previousSlider;
       }
     }
-  }, [activeEditorImageUrl, canRemoveWatermark, exportCaptureRef, sliderWidth, sliderX, width]);
+  }, [activeEditorImageUrl, currentImageHasWatermark, exportCaptureRef, sliderWidth, sliderX, width]);
 
   const handleShare = useCallback(async () => {
     triggerHaptic();
@@ -3528,6 +3662,15 @@ export default function WorkspaceScreen() {
     }
   }, [activeEditorImageUrl, canExport4k, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, handleUpgrade, showToast, t]);
 
+  const handleSaveToGallery = useCallback(() => {
+    if (canExport4k) {
+      void handleDownloadUltra();
+      return;
+    }
+
+    void handleDownloadStandard();
+  }, [canExport4k, handleDownloadStandard, handleDownloadUltra]);
+
 
 
   const uploadSelectedImageToStorage = useCallback(async (image: SelectedImage) => {
@@ -3538,7 +3681,7 @@ export default function WorkspaceScreen() {
     });
   }, [createSourceUploadUrl, viewerArgs]);
 
-  const handleGenerate = useCallback(async (options?: { regenerate?: boolean; customPromptOverride?: string }) => {
+  const handleGenerate = useCallback(async (options?: GenerateRequestOverrides) => {
     if (isGenerating) {
       return;
     }
@@ -3548,21 +3691,37 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    if (!isPaintService && !isFloorService && !ensureWorkspaceSelectionsComplete()) {
+    const activeSelectedImage = options?.sourceImage ?? selectedImage;
+    const activeRoomLabel = options?.roomLabel ?? selectedRoom;
+    const activeStyleLabel = options?.styleLabel ?? selectedStyle;
+    const activeFinishOption =
+      FINISH_OPTIONS.find((option) => option.id === (options?.finishId ?? null)) ??
+      selectedFinishOption;
+    const activeModeOption =
+      MODE_OPTIONS.find((option) => option.id === (options?.modeId ?? null)) ??
+      selectedModeOrDefault;
+    const activePaletteOption =
+      (isGardenService ? GARDEN_PALETTE_OPTIONS : PALETTE_OPTIONS).find((option) => option.id === (options?.paletteId ?? null)) ??
+      selectedPaletteOrDefault;
+    const activeWallColorOption = WALL_COLOR_OPTIONS.find((option) => option.title === activeStyleLabel) ?? null;
+    const activeFloorMaterialOption = FLOOR_MATERIAL_OPTIONS.find((option) => option.title === activeStyleLabel) ?? null;
+    const activeAspectRatioLabel = options?.aspectRatio ?? ratioSpec.ratioLabel;
+
+    if (!isPaintService && !isFloorService && !options && !ensureWorkspaceSelectionsComplete()) {
       return;
     }
 
     if (isFloorService) {
-      if (!selectedImage || !selectedRoom || !selectedStyle || !selectedFinishOption || !selectedFloorMaterialOption) {
+      if (!activeSelectedImage || !activeRoomLabel || !activeStyleLabel || !activeFinishOption || !activeFloorMaterialOption) {
         Alert.alert(t("workspace.generation.completeStepsTitle"), t("workspace.generation.completeFloorBody"));
         return;
       }
     } else if (isPaintService) {
-      if (!selectedImage || !selectedRoom || !selectedStyle || !selectedFinishOption || !selectedWallColorOption) {
+      if (!activeSelectedImage || !activeRoomLabel || !activeStyleLabel || !activeFinishOption || !activeWallColorOption) {
         Alert.alert(t("workspace.generation.completeStepsTitle"), t("workspace.generation.completePaintBody"));
         return;
       }
-    } else if (!selectedImage || !selectedRoom || !selectedStyle || !selectedPaletteOrDefault || !selectedModeOrDefault) {
+    } else if (!activeSelectedImage || !activeRoomLabel || !activeStyleLabel || !activePaletteOption || !activeModeOption) {
       Alert.alert(t("workspace.generation.completeStepsTitle"), t("workspace.generation.completePreviousSteps"));
       return;
     }
@@ -3583,32 +3742,34 @@ export default function WorkspaceScreen() {
     }
 
     const requestStartedAt = Date.now();
-    const activeSelectedImage = selectedImage;
     if (!activeSelectedImage) {
       return;
     }
     const temporaryBoardId = `pending-${requestStartedAt}`;
-    const selectedSpaceLabel = selectedRoom ?? serviceLabel;
-    const finishLabel = selectedFinishOption?.title ?? "Matte";
-    const paintColorLabel = selectedWallColorOption?.title ?? selectedStyleDisplayName ?? "Sage Green";
-    const paintColorValue = selectedWallColorOption?.value ?? "#7C9174";
+    const selectedSpaceLabel = activeRoomLabel ?? serviceLabel;
+    const finishLabel = activeFinishOption?.title ?? "Matte";
+    const paintColorLabel = activeWallColorOption?.title ?? normalizeStyleDisplayName(activeStyleLabel) ?? "Sage Green";
+    const paintColorValue = activeWallColorOption?.value ?? "#7C9174";
     const paintStyleLabel = `${paintColorLabel} Paint`;
-    const floorMaterialLabel = selectedFloorMaterialOption?.title ?? selectedStyleDisplayName ?? "Hardwood";
+    const floorMaterialLabel = activeFloorMaterialOption?.title ?? normalizeStyleDisplayName(activeStyleLabel) ?? "Hardwood";
     const floorStyleLabel = `${floorMaterialLabel} Flooring`;
     const generationSelection = isFloorService
-      ? `${selectedFloorMaterialOption?.promptLabel ?? floorMaterialLabel} with a ${finishLabel.toLowerCase()} finish`
+      ? `${activeFloorMaterialOption?.promptLabel ?? floorMaterialLabel} with a ${finishLabel.toLowerCase()} finish`
       : isPaintService
         ? `${paintColorLabel} (${paintColorValue}) with a ${finishLabel.toLowerCase()} finish`
-        : selectedStyle!;
-    const generationDisplayStyle = isFloorService ? floorStyleLabel : isPaintService ? paintStyleLabel : selectedStyle!;
+        : activeStyleLabel!;
+    const generationDisplayStyle = isFloorService ? floorStyleLabel : isPaintService ? paintStyleLabel : activeStyleLabel!;
     const generationCustomPrompt = isFloorService
       ? `Preserve the walls, furniture, decor, cabinetry, windows, doors, ceiling, lighting, shadows, and camera framing exactly while applying a ${finishLabel.toLowerCase()} surface read.`
       : isPaintService
         ? "Preserve the flooring, furniture, decor, windows, doors, ceiling, lighting, shadows, and camera framing exactly while keeping the repaint photorealistic."
-        : selectedStyle === "Custom" && customPrompt.trim().length > 0
-          ? customPrompt.trim()
-          : undefined;
+        : options?.customPrompt?.trim()
+          ? options.customPrompt.trim()
+          : activeStyleLabel === "Custom" && customPrompt.trim().length > 0
+            ? customPrompt.trim()
+            : undefined;
     const backendServiceType = isFloorService || isPaintService ? serviceType : "redesign";
+    const watermarkRequired = diagnostic ? false : !hasPaidAccess;
     const processingBoardItem: BoardRenderItem = {
       id: temporaryBoardId,
       imageUrl: null,
@@ -3617,6 +3778,13 @@ export default function WorkspaceScreen() {
       roomLabel: selectedSpaceLabel,
       serviceType,
       generationId: null,
+      watermarkRequired,
+      modeId: activeModeOption?.id ?? null,
+      paletteId: activePaletteOption?.id ?? null,
+      finishId: activeFinishOption?.id ?? null,
+      aspectRatio: activeAspectRatioLabel,
+      customPrompt: generationCustomPrompt ?? null,
+      feedback: null,
       status: "processing",
       errorMessage: null,
       createdAt: requestStartedAt,
@@ -3642,7 +3810,10 @@ export default function WorkspaceScreen() {
         roomType: selectedSpaceLabel,
         displayStyle: generationDisplayStyle,
         customPrompt: generationCustomPrompt,
-        aspectRatio: ratioSpec.ratioLabel,
+        aspectRatio: activeAspectRatioLabel,
+        modeId: activeModeOption?.id,
+        paletteId: activePaletteOption?.id,
+        finishId: activeFinishOption?.id,
         regenerate: options?.regenerate ?? false,
         ignoreReviewCooldown,
         speedTier: generationSpeedTier,
@@ -3722,6 +3893,7 @@ export default function WorkspaceScreen() {
     anonymousId,
     effectiveSignedIn,
     isFloorService,
+    isGardenService,
     generationSpeedTier,
     generationAccess.allowed,
     generationAccess.message,
@@ -3732,10 +3904,10 @@ export default function WorkspaceScreen() {
     openAuthWall,
     openGenerationPaywall,
     ratioSpec.ratioLabel,
-    router,
     ensureWorkspaceSelectionsComplete,
     selectedFinishOption,
     selectedFloorMaterialOption,
+    hasPaidAccess,
     selectedImage,
     selectedModeOrDefault,
     selectedPaletteOrDefault,
@@ -3749,6 +3921,150 @@ export default function WorkspaceScreen() {
     setOptimisticCredits,
     uploadSelectedImageToStorage,
     viewerReady,
+  ]);
+
+  const prepareRegenerateSourceImage = useCallback(async () => {
+    const sourceUri = draft.image?.uri ?? selectedImage?.uri ?? activeBoardItem?.originalImageUrl ?? null;
+    if (!sourceUri) {
+      throw new Error("Original photo unavailable. Please start from the source image again.");
+    }
+
+    if (!/^https?:\/\//i.test(sourceUri)) {
+      return {
+        image: { uri: sourceUri } as SelectedImage,
+        cleanupUri: null as string | null,
+      };
+    }
+
+    const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}homedecor-regenerate-${Date.now()}.jpg`;
+    const download = await FileSystem.downloadAsync(sourceUri, targetUri);
+
+    return {
+      image: { uri: download.uri } as SelectedImage,
+      cleanupUri: download.uri,
+    };
+  }, [activeBoardItem?.originalImageUrl, draft.image?.uri, selectedImage?.uri]);
+
+  const handleRegenerate = useCallback(async () => {
+    if (!activeBoardItem) {
+      showToast(t("workspace.download.generateFirst"));
+      return;
+    }
+
+    if (!diagnostic && !generationAccess.allowed) {
+      if (generationAccess.reason === "paywall" && !effectiveSignedIn) {
+        openAuthWall("/workspace", true);
+        return;
+      }
+
+      if (generationAccess.reason === "paywall") {
+        openGenerationPaywall();
+        return;
+      }
+
+      showToast(generationAccess.message || t("workspace.generation.limitReached"));
+      return;
+    }
+
+    triggerHaptic();
+
+    let cleanupUri: string | null = null;
+    try {
+      const prepared = await prepareRegenerateSourceImage();
+      cleanupUri = prepared.cleanupUri;
+
+      await handleGenerate({
+        regenerate: true,
+        sourceImage: prepared.image,
+        roomLabel: activeBoardItem.roomLabel ?? selectedRoom,
+        styleLabel: resolveBoardStyleSelection(
+          activeBoardItem.styleLabel ?? selectedStyle,
+          activeBoardItem.serviceType ?? serviceType,
+          activeBoardItem.customPrompt,
+        ),
+        finishId: (activeBoardItem.finishId as FinishOption["id"] | null) ?? selectedFinishId,
+        modeId: (activeBoardItem.modeId as ModeOption["id"] | null) ?? selectedModeId,
+        paletteId: activeBoardItem.paletteId ?? selectedPaletteId,
+        aspectRatio: activeBoardItem.aspectRatio ?? ratioSpec.ratioLabel,
+        customPrompt: activeBoardItem.customPrompt ?? undefined,
+      });
+    } catch (error) {
+      Alert.alert("Regeneration unavailable", error instanceof Error ? error.message : t("common.actions.tryAgain"));
+    } finally {
+      await cleanupTempFile(cleanupUri);
+    }
+  }, [
+    activeBoardItem,
+    cleanupTempFile,
+    diagnostic,
+    effectiveSignedIn,
+    generationAccess.allowed,
+    generationAccess.message,
+    generationAccess.reason,
+    handleGenerate,
+    openAuthWall,
+    openGenerationPaywall,
+    prepareRegenerateSourceImage,
+    ratioSpec.ratioLabel,
+    selectedModeId,
+    selectedPaletteId,
+    selectedRoom,
+    selectedStyle,
+    selectedFinishId,
+    serviceType,
+    showToast,
+    t,
+  ]);
+
+  const handleSubmitEditorFeedback = useCallback(async (sentiment: FeedbackSentiment) => {
+    if (!activeGenerationRecordId) {
+      showToast("Feedback is unavailable for this image.");
+      return;
+    }
+
+    triggerHaptic();
+    setIsSubmittingFeedback(sentiment);
+    try {
+      await submitGenerationFeedback({
+        anonymousId: viewerId ?? undefined,
+        id: activeGenerationRecordId as any,
+        sentiment,
+      });
+
+      await submitFeedbackSignal({
+        anonymousId: viewerId ?? undefined,
+        message: JSON.stringify({
+          type: "generation_feedback",
+          source: "workspace_editor",
+          generationId: activeGenerationRecordId,
+          sentiment,
+          serviceType: activeBoardItem?.serviceType ?? serviceType,
+          roomLabel: activeBoardItem?.roomLabel ?? selectedRoom ?? null,
+          styleLabel: activeBoardItem?.styleLabel ?? selectedStyle ?? null,
+          createdAt: new Date().toISOString(),
+        }),
+      });
+
+      setFeedbackState(sentiment);
+      setFeedbackSubmitted(true);
+      showToast(sentiment === "liked" ? "Thanks for the feedback." : "Feedback sent to the design team.");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Unable to send feedback right now.");
+    } finally {
+      setIsSubmittingFeedback(null);
+    }
+  }, [
+    activeBoardItem?.roomLabel,
+    activeBoardItem?.serviceType,
+    activeBoardItem?.styleLabel,
+    activeGenerationRecordId,
+    selectedRoom,
+    selectedStyle,
+    serviceType,
+    showToast,
+    submitFeedbackSignal,
+    submitGenerationFeedback,
+    viewerId,
   ]);
 
   useEffect(() => {
@@ -4033,24 +4349,33 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    if (!canEditDesigns) {
-      openGenerationPaywall();
-      return;
-    }
-
     triggerHaptic();
     setWizardNavDirection(1);
     setWorkflowStep(5);
     setActiveBoardItemId(item.id);
     setGeneratedImageUrl(resultImageUrl);
     setGenerationId(item.generationId ?? null);
-    setShowBeforeOnly(false);
+    setShowComparisonSlider(false);
     setFeedbackState(null);
     setFeedbackSubmitted(false);
     if (sliderWidth.value > 0) {
       sliderX.value = withSpring(sliderWidth.value / 2, sliderSpring);
     }
-  }, [canEditDesigns, effectiveSignedIn, openAuthWall, router, showToast, sliderSpring, sliderWidth, sliderX]);
+  }, [effectiveSignedIn, openAuthWall, showToast, sliderSpring, sliderWidth, sliderX]);
+
+  const handleToggleComparisonSlider = useCallback(() => {
+    if (!activeBoardItem?.imageUrl) {
+      return;
+    }
+
+    const nextVisible = !showComparisonSlider;
+    triggerHaptic();
+    setShowComparisonSlider(nextVisible);
+
+    if (nextVisible && sliderWidth.value > 0) {
+      sliderX.value = withSpring(sliderWidth.value / 2, sliderSpring);
+    }
+  }, [activeBoardItem?.imageUrl, showComparisonSlider, sliderSpring, sliderWidth, sliderX]);
 
   const handleCloseBoardEditor = useCallback(() => {
     triggerHaptic();
@@ -4065,8 +4390,41 @@ export default function WorkspaceScreen() {
     setWizardNavDirection(-1);
     setWorkflowStep(effectiveSignedIn ? (isFloorService ? 2 : 4) : 3);
     setActiveBoardItemId(null);
-    setShowBeforeOnly(false);
+    setShowComparisonSlider(false);
   }, [effectiveSignedIn, entrySource, isFloorService, router]);
+
+  const handleDeleteBoardItem = useCallback(() => {
+    const currentItem = activeBoardItem;
+    const generationRecordId = currentItem?.generationId ?? currentItem?.id;
+
+    if (!currentItem || !generationRecordId) {
+      return;
+    }
+
+    Alert.alert(
+      t("profile.deleteFromBoardTitle"),
+      "This image will be permanently deleted from Your Board. This action cannot be undone.",
+      [
+        { text: t("common.actions.cancel"), style: "cancel" },
+        {
+          text: t("common.actions.delete"),
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteGeneration({ anonymousId: anonymousId ?? undefined, id: generationRecordId as any });
+              setCachedBoardItems((current) => current.filter((item) => item.id !== currentItem.id));
+              setPendingBoardItems((current) => current.filter((item) => item.id !== currentItem.id));
+              setNewlyReadyBoardIds((current) => current.filter((itemId) => itemId !== currentItem.id));
+              showToast(t("profile.deletedFromBoard"));
+              handleCloseBoardEditor();
+            } catch (error) {
+              showToast(error instanceof Error ? error.message : t("profile.unableDelete"));
+            }
+          },
+        },
+      ],
+    );
+  }, [activeBoardItem, anonymousId, deleteGeneration, handleCloseBoardEditor, showToast, t]);
 
   const stepTransition = LUX_SPRING;
   const isPhotoPreviewBusy = isSelectingPhoto || isLoadingExample !== null;
@@ -6214,7 +6572,13 @@ export default function WorkspaceScreen() {
           data={boardItems}
           keyExtractor={(item) => item.id}
           renderItem={({ item, index }) => (
-            <BoardGridCard item={item} width={boardCardWidth} index={index} onPress={handleOpenBoardItem} />
+            <BoardGridCard
+              item={item}
+              width={boardCardWidth}
+              index={index}
+              onPress={handleOpenBoardItem}
+              showWatermark={Boolean(item.watermarkRequired) && !canRemoveWatermark}
+            />
           )}
           numColumns={2}
           showsVerticalScrollIndicator={false}
@@ -6264,9 +6628,13 @@ export default function WorkspaceScreen() {
     const editorStyleLabel = normalizeStyleDisplayName(activeBoardItem?.styleLabel ?? selectedStyle) ?? "Custom";
     const editorRoomLabel = activeBoardItem?.roomLabel ?? selectedRoom ?? serviceLabel;
     const editorServiceType = activeBoardItem?.serviceType ?? inferBoardServiceType(editorStyleLabel, editorRoomLabel) ?? serviceType;
-    const showSliderComparison = Boolean(editorImageUrl && beforeImageUrl);
+    const hasComparisonImages = Boolean(editorImageUrl && beforeImageUrl);
+    const showSliderComparison = hasComparisonImages && showComparisonSlider;
     const isEditorProcessing = activeBoardItem?.status === "processing";
     const isEditorFailed = isGenerationFailure(activeBoardItem?.status, activeBoardItem?.imageUrl);
+    const isEditorActionDisabled = !editorImageUrl || isEditorProcessing || isEditorFailed;
+    const isSaveBusy = isDownloadingUltra || isDownloadingStandard;
+    const isFeedbackBusy = isSubmittingFeedback !== null;
     const editorTitle = editorServiceType === "floor" ? getServiceLabel(t, "floor") : editorServiceType === "paint" ? getServiceLabel(t, "paint") : editorStyleLabel + " " + editorRoomLabel;
     const editorSubtitle = editorServiceType === "floor"
       ? isEditorProcessing
@@ -6290,7 +6658,13 @@ export default function WorkspaceScreen() {
             data={boardItems}
             keyExtractor={(item) => item.id}
             renderItem={({ item, index }) => (
-              <BoardGridCard item={item} width={boardCardWidth} index={index} onPress={handleOpenBoardItem} />
+              <BoardGridCard
+                item={item}
+                width={boardCardWidth}
+                index={index}
+                onPress={handleOpenBoardItem}
+                showWatermark={Boolean(item.watermarkRequired) && !canRemoveWatermark}
+              />
             )}
             numColumns={2}
             showsVerticalScrollIndicator={false}
@@ -6494,7 +6868,7 @@ export default function WorkspaceScreen() {
                   </View>
 
                   <View style={{ position: "absolute", left: 16, right: 16, bottom: 16, flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
-                    {[editorRoomLabel, selectedModeOrDefault?.title, selectedPaletteOrDefault?.label]
+                    {[editorRoomLabel, activeBoardMode?.title ?? selectedModeOrDefault?.title, activeBoardPalette?.label ?? selectedPaletteOrDefault?.label]
                       .filter((item): item is string => Boolean(item))
                       .map((item) => (
                       <View
@@ -6565,19 +6939,57 @@ export default function WorkspaceScreen() {
     return (
       <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
         <View className="px-5" style={{ paddingTop: Math.max(insets.top + 10, 20) }}>
-          <View className="flex-row items-center justify-between">
-            <View className="rounded-full border border-white/10 bg-zinc-950 px-4 py-2" style={{ borderWidth: 0.5 }}>
-                <Text className="text-sm font-semibold text-white" style={fonts.semibold}>{usageBadgeLabel}</Text>
-                {usageBadgeDetail ? <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{usageBadgeDetail}</Text> : null}
-            </View>
-            <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Your Design</Text>
-            <LuxPressable
-              onPress={handleCloseBoardEditor}
-              className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
-              style={{ borderWidth: 0.5 }}
+          <View style={{ minHeight: 52, justifyContent: "center" }}>
+            <Text
+              style={{
+                position: "absolute",
+                left: 88,
+                right: 88,
+                color: "#ffffff",
+                fontSize: 22,
+                lineHeight: 28,
+                letterSpacing: -0.4,
+                textAlign: "center",
+                ...fonts.bold,
+              }}
             >
-              <Close color="#ffffff" size={18} strokeWidth={2.2} />
-            </LuxPressable>
+              Your Design
+            </Text>
+
+            <View className="flex-row items-center justify-between">
+              <View style={{ minWidth: 88 }}>
+                <View
+                  style={{
+                    alignSelf: "flex-start",
+                    minHeight: 42,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 10,
+                    borderRadius: 999,
+                    borderWidth: 0.5,
+                    borderColor: "rgba(255,255,255,0.12)",
+                    backgroundColor: "#050505",
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                  }}
+                >
+                  <ThreeDiamondMark color="#FFFFFF" />
+                  <Text style={{ color: "#ffffff", fontSize: 14, lineHeight: 16, ...fonts.bold }}>{creditBalance}</Text>
+                </View>
+              </View>
+
+              <View style={{ width: 88, alignItems: "flex-end" }}>
+                <LuxPressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Delete this design from Your Board"
+                  onPress={handleDeleteBoardItem}
+                  className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
+                  style={{ borderWidth: 0.5 }}
+                >
+                  <Trash2 color="#ffffff" size={18} strokeWidth={2.2} />
+                </LuxPressable>
+              </View>
+            </View>
           </View>
         </View>
 
@@ -6606,29 +7018,17 @@ export default function WorkspaceScreen() {
                       afterSource={editorImageSource}
                       beforeSource={beforeImageSource}
                       containerRef={imageContainerRef}
-                      onInteractionStart={() => setShowBeforeOnly(false)}
                       sliderWidth={sliderWidth}
                       sliderX={sliderX}
                       style={{ width: "100%", height: "100%" }}
                     >
                       <View className="absolute inset-0 bg-black/10" />
-
-                      <View className="absolute left-4 right-4 top-4 flex-row items-center justify-between">
-                        <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
-                          <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>{editorStyleLabel}</Text>
-                        </View>
-                        <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
-                          <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>
-                            Drag to Compare
-                          </Text>
-                        </View>
-                      </View>
                     </BeforeAfterSlider>
                   </MotiView>
-                ) : beforeImageSource ? (
-                  <Image source={beforeImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
                 ) : editorImageSource ? (
                   <Image source={editorImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+                ) : beforeImageSource ? (
+                  <Image source={beforeImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
                 ) : (
                   <View className="h-full w-full items-center justify-center bg-zinc-900">
                     <Sparkles color="#71717a" size={28} />
@@ -6637,18 +7037,37 @@ export default function WorkspaceScreen() {
 
                 {!showSliderComparison ? <View className="absolute inset-0 bg-black/10" /> : null}
 
-                {!showSliderComparison ? (
-                  <View className="absolute left-4 right-4 top-4 flex-row items-center justify-between">
-                    <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
-                      <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>Before</Text>
+                <View className="absolute left-4 right-4 top-4 flex-row items-center justify-between">
+                  <LuxPressable
+                    accessibilityRole="button"
+                    accessibilityLabel={showSliderComparison ? "Hide before and after comparison" : "Show before and after comparison"}
+                    onPress={handleToggleComparisonSlider}
+                    disabled={!hasComparisonImages}
+                    className="cursor-pointer"
+                  >
+                    <View
+                      style={{
+                        height: 44,
+                        width: 44,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: 999,
+                        borderWidth: 0.5,
+                        borderColor: showSliderComparison ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.12)",
+                        backgroundColor: showSliderComparison ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.4)",
+                        opacity: hasComparisonImages ? 1 : 0.45,
+                      }}
+                    >
+                      <MoveHorizontal color="#FFFFFF" size={18} strokeWidth={2.2} />
                     </View>
-                    <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
-                      <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>
-                        {isEditorProcessing ? "Rendering" : "Preview"}
-                      </Text>
-                    </View>
+                  </LuxPressable>
+
+                  <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
+                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>
+                      {showSliderComparison ? "Comparison" : editorStyleLabel}
+                    </Text>
                   </View>
-                ) : null}
+                </View>
 
                 {isEditorProcessing ? (
                   <View
@@ -6698,10 +7117,10 @@ export default function WorkspaceScreen() {
                       }}
                     >
                       <ActivityIndicator size="small" color="#ffffff" />
-                      <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", textAlign: "left" }}>
+                      <Text style={{ color: "#ffffff", fontSize: 18, lineHeight: 22, textAlign: "left", ...fonts.bold }}>
                         {getProcessingLabel(t)}
                       </Text>
-                      <Text style={{ color: "#d4d4d8", fontSize: 13, lineHeight: 20, textAlign: "left" }}>
+                      <Text style={{ color: "#d4d4d8", fontSize: 13, lineHeight: 20, textAlign: "left", ...fonts.regular }}>
                         {getProcessingStatusCopy(t, editorServiceType)}
                       </Text>
                     </View>
@@ -6723,34 +7142,87 @@ export default function WorkspaceScreen() {
                       paddingVertical: spacing.md,
                     }}
                   >
-                    <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>{t("workspace.board.generationFailedTitle")}</Text>
-                    <Text style={{ color: "#a1a1aa", fontSize: 13, lineHeight: 20, marginTop: spacing.xs }}>
+                    <Text style={{ color: "#ffffff", fontSize: 14, lineHeight: 18, textAlign: "left", ...fonts.bold }}>
+                      {t("workspace.board.generationFailedTitle")}
+                    </Text>
+                    <Text style={{ color: "#a1a1aa", fontSize: 13, lineHeight: 20, marginTop: spacing.xs, textAlign: "left", ...fonts.regular }}>
                       {activeBoardItem?.errorMessage ?? t("workspace.board.tryAnotherPrompt")}
                     </Text>
                   </View>
                 ) : null}
 
-                {!canRemoveWatermark ? (
-                  <View className="absolute bottom-5 right-4">
-                    <MotiView animate={{ scale: [1, 1.03, 1], opacity: [1, 0.94, 1] }} transition={{ duration: 2200, loop: true }}>
-                      <LuxPressable onPress={handleUpgrade} className="cursor-pointer">
-                        <LinearGradient
-                          colors={["#d946ef", "#6366f1"]}
-                          start={{ x: 0, y: 0.5 }}
-                          end={{ x: 1, y: 0.5 }}
-                          style={{ borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}
-                        >
-                          <View className="flex-row items-center gap-2">
-                            <Sparkles color="#ffffff" size={15} />
-                            <Text className="text-sm font-semibold text-white" style={fonts.semibold}>Remove Watermark</Text>
-                          </View>
-                        </LinearGradient>
-                      </LuxPressable>
-                    </MotiView>
+                {!isEditorProcessing && !isEditorFailed ? (
+                  <View
+                    style={{
+                      position: "absolute",
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                      flexDirection: "row",
+                      alignItems: "flex-end",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <View style={{ flexDirection: "row", gap: 10 }}>
+                      {([
+                        { key: "liked", icon: ThumbUp, label: "Like" },
+                        { key: "disliked", icon: ThumbDown, label: "Dislike" },
+                      ] as const).map((item) => {
+                        const active = editorFeedbackState === item.key;
+                        const busy = isSubmittingFeedback === item.key;
+                        return (
+                          <LuxPressable
+                            key={item.key}
+                            onPress={() => {
+                              void handleSubmitEditorFeedback(item.key);
+                            }}
+                            disabled={isEditorActionDisabled || busy || isFeedbackBusy}
+                            className="cursor-pointer"
+                          >
+                            <View
+                              style={{
+                                height: 46,
+                                width: 46,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                borderRadius: 999,
+                                borderWidth: 0.5,
+                                borderColor: active ? "rgba(255,255,255,0.32)" : "rgba(255,255,255,0.12)",
+                                backgroundColor: active ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.42)",
+                              }}
+                            >
+                              {busy ? (
+                                <ActivityIndicator color="#FFFFFF" size="small" />
+                              ) : (
+                                <item.icon color="#FFFFFF" size={18} strokeWidth={2.2} />
+                              )}
+                            </View>
+                          </LuxPressable>
+                        );
+                      })}
+                    </View>
+
+                    {currentImageHasWatermark ? (
+                      <MotiView animate={{ scale: [1, 1.03, 1], opacity: [1, 0.94, 1] }} transition={{ duration: 2200, loop: true }}>
+                        <LuxPressable onPress={handleUpgrade} className="cursor-pointer">
+                          <LinearGradient
+                            colors={["#d946ef", "#6366f1"]}
+                            start={{ x: 0, y: 0.5 }}
+                            end={{ x: 1, y: 0.5 }}
+                            style={{ borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}
+                          >
+                            <View className="flex-row items-center gap-2">
+                              <Sparkles color="#ffffff" size={15} />
+                              <Text className="text-sm font-semibold text-white" style={fonts.semibold}>Remove Watermark</Text>
+                            </View>
+                          </LinearGradient>
+                        </LuxPressable>
+                      </MotiView>
+                    ) : null}
                   </View>
                 ) : null}
 
-                {!canRemoveWatermark && editorImageUrl ? (
+                {!isEditorProcessing && !isEditorFailed && currentImageHasWatermark && editorImageUrl ? (
                   <View className="absolute bottom-24 right-4 rounded-full bg-black px-4 py-2">
                     <Text style={{ color: "#FFFFFF", fontSize: 12, lineHeight: 14, ...fonts.semibold }}>HomeDecor.ai</Text>
                   </View>
@@ -6761,73 +7233,39 @@ export default function WorkspaceScreen() {
 
           <View className="mt-5">
             <Text className="text-lg font-semibold text-white" style={fonts.semibold}>{editorTitle}</Text>
-            <Text className="mt-1 text-sm text-zinc-400">{editorSubtitle}</Text>
+            <Text className="mt-1 text-sm text-zinc-400" style={{ textAlign: "left", ...fonts.regular }}>{editorSubtitle}</Text>
           </View>
 
-            <View style={{ marginTop: spacing.lg, gap: 12 }}>
-              <LuxPressable
-                onPress={canExport4k ? handleDownloadUltra : handleDownloadStandard}
-                disabled={!editorImageUrl || isEditorProcessing || isEditorFailed || isDownloadingUltra || isDownloadingStandard}
-                className="cursor-pointer"
-              >
-                <View
-                  style={{
-                    marginHorizontal: 20,
-                    height: 56,
-                    borderRadius: 16,
-                    backgroundColor: "#E53935",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    opacity: !editorImageUrl || isEditorProcessing || isEditorFailed || isDownloadingUltra || isDownloadingStandard ? 0.6 : 1,
-                  }}
-                >
-                  {isDownloadingUltra || isDownloadingStandard ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <Text style={{ color: "#FFFFFF", fontSize: 16, lineHeight: 20, ...fonts.semibold }}>Save to Gallery</Text>
-                  )}
-                </View>
-              </LuxPressable>
-
-              <LuxPressable
-                onPress={handleShare}
-                disabled={!editorImageUrl || isEditorProcessing || isEditorFailed || isSharingResult}
-                className="cursor-pointer"
-              >
-                <View
-                  style={{
-                    marginHorizontal: 20,
-                    height: 56,
-                    borderRadius: 16,
-                    backgroundColor: "#0A0A0A",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    opacity: !editorImageUrl || isEditorProcessing || isEditorFailed || isSharingResult ? 0.6 : 1,
-                  }}
-                >
-                  {isSharingResult ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <Text style={{ color: "#FFFFFF", fontSize: 16, lineHeight: 20, ...fonts.semibold }}>Share</Text>
-                  )}
-                </View>
-              </LuxPressable>
-
-              <LuxPressable onPress={handleResetWizard} className="cursor-pointer">
-                <View
-                  style={{
-                    marginHorizontal: 20,
-                    height: 56,
-                    borderRadius: 16,
-                    backgroundColor: "#F0F0F0",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text style={{ color: "#0A0A0A", fontSize: 16, lineHeight: 20, ...fonts.semibold }}>Try Again</Text>
-                </View>
-              </LuxPressable>
-            </View>
+          <View style={{ marginTop: spacing.lg, flexDirection: "row", gap: 12, alignItems: "stretch", justifyContent: "center" }}>
+            <EditorActionButton
+              icon={Redo2}
+              label={isGenerating ? "Working..." : "Regenerate"}
+              onPress={() => {
+                void handleRegenerate();
+              }}
+              disabled={isEditorActionDisabled || isGenerating}
+              loading={isGenerating}
+              tone="light"
+            />
+            <EditorActionButton
+              icon={Download}
+              label={isSaveBusy ? "Saving..." : "Save"}
+              onPress={handleSaveToGallery}
+              disabled={isEditorActionDisabled || isSaveBusy}
+              loading={isSaveBusy}
+              tone="accent"
+            />
+            <EditorActionButton
+              icon={Share2}
+              label={isSharingResult ? "Sharing..." : "Share"}
+              onPress={() => {
+                void handleShare();
+              }}
+              disabled={isEditorActionDisabled || isSharingResult}
+              loading={isSharingResult}
+              tone="dark"
+            />
+          </View>
         </ScrollView>
       </View>
     );

@@ -97,7 +97,7 @@
     "features": {
       "fasterRendering": "Faster Results, Every Time",
       "adFree": "Ultra-HD Quality Renders",
-      "unlimitedRenders": "Unlimited Designs, Always"
+      "unlimitedRenders": "20 weekly or 80 monthly renders"
     },
     "restore": "Restore",
     "bestOffer": "Best Offer",
@@ -127,7 +127,7 @@
     "planUnavailable": "The selected plan is unavailable right now.",
     "purchaseCancelled": "Purchase cancelled.",
     "closeA11y": "Close paywall",
-    "title": "Design Like a Pro. No Limits.",
+    "title": "Design Like a Pro. Fixed Quotas.",
     "beginTrial": "Begin Your Pro Trial"
   },
   "creditLimit": {
@@ -554,7 +554,7 @@
     "features": {
       "hyperRealism": "8K Hyper-Realism Enabled",
       "virtualStaging": "Virtual Staging Unlocked",
-      "infiniteCredits": "Infinite Credits Active"
+      "infiniteCredits": "Weekly or Monthly Credits Active"
     },
     "cta": "Start Designing",
     "toast": "Account upgraded to Pro successfully."

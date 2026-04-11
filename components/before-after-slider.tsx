@@ -24,7 +24,10 @@ import Animated, {
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 
-const HANDLE_TOUCH_WIDTH = 56;
+const HANDLE_TOUCH_WIDTH = 64;
+const HANDLE_SIZE = 52;
+const LABEL_EDGE_INSET = 18;
+const LABEL_FADE_DISTANCE = 96;
 const SLIDER_SPRING = {
   damping: 18,
   stiffness: 180,
@@ -120,8 +123,12 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
 
   const gesture = Gesture.Simultaneous(panGesture, doubleTapGesture);
 
+  const afterViewportStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: sliderX.value }],
+  }));
+
   const afterImageStyle = useAnimatedStyle(() => ({
-    width: sliderX.value,
+    transform: [{ translateX: -sliderX.value }],
   }));
 
   const handleStyle = useAnimatedStyle(() => ({
@@ -129,12 +136,12 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
   }));
 
   const beforeLabelStyle = useAnimatedStyle(() => {
-    const width = sliderWidth.value || 1;
+    const proximity = interpolate(sliderX.value, [0, LABEL_FADE_DISTANCE], [0, 1], Extrapolation.CLAMP);
     return {
-      opacity: interpolate(sliderX.value, [0, width * 0.12, width * 0.22], [0, 0.3, 1], Extrapolation.CLAMP),
+      opacity: proximity,
       transform: [
         {
-          translateX: interpolate(sliderX.value, [0, width * 0.2], [-10, 0], Extrapolation.CLAMP),
+          translateY: interpolate(proximity, [0, 1], [8, 0], Extrapolation.CLAMP),
         },
       ],
     };
@@ -142,21 +149,13 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
 
   const afterLabelStyle = useAnimatedStyle(() => {
     const width = sliderWidth.value || 1;
+    const distanceFromRight = width - sliderX.value;
+    const proximity = interpolate(distanceFromRight, [0, LABEL_FADE_DISTANCE], [0, 1], Extrapolation.CLAMP);
     return {
-      opacity: interpolate(
-        sliderX.value,
-        [width * 0.78, width * 0.88, width],
-        [1, 0.3, 0],
-        Extrapolation.CLAMP,
-      ),
+      opacity: proximity,
       transform: [
         {
-          translateX: interpolate(
-            sliderX.value,
-            [width * 0.8, width],
-            [0, 10],
-            Extrapolation.CLAMP,
-          ),
+          translateY: interpolate(proximity, [0, 1], [8, 0], Extrapolation.CLAMP),
         },
       ],
     };
@@ -173,12 +172,12 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
           transition={120}
         />
 
-        <Animated.View style={[styles.afterClip, afterImageStyle]}>
+        <Animated.View style={[styles.afterViewport, afterViewportStyle]}>
           <Image
             cachePolicy="memory-disk"
             contentFit={contentFit}
             source={afterSource}
-            style={[styles.image, imageStyle]}
+            style={[styles.image, styles.afterImage, imageStyle, afterImageStyle]}
             transition={120}
           />
         </Animated.View>
@@ -213,34 +212,43 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  afterClip: {
+  afterViewport: {
     position: "absolute",
     top: 0,
+    right: 0,
     bottom: 0,
     left: 0,
     overflow: "hidden",
   },
+  afterImage: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
   labelPill: {
     position: "absolute",
-    bottom: 16,
+    top: 18,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(0,0,0,0.52)",
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    borderWidth: 0.5,
+    borderColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(12,12,14,0.48)",
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    boxShadow: "0px 10px 24px rgba(0, 0, 0, 0.18)",
   },
   beforeLabel: {
-    left: 16,
+    left: LABEL_EDGE_INSET,
   },
   afterLabel: {
-    right: 16,
+    right: LABEL_EDGE_INSET,
   },
   labelText: {
     color: "#FFFFFF",
-    fontSize: 11,
-    lineHeight: 14,
-    letterSpacing: 0.9,
+    fontSize: 10,
+    lineHeight: 12,
+    letterSpacing: 1.2,
     textTransform: "uppercase",
     fontFamily: fonts.semibold.fontFamily,
     fontWeight: fonts.semibold.fontWeight,
@@ -258,20 +266,20 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 2,
-    backgroundColor: "rgba(255,255,255,0.96)",
+    backgroundColor: "rgba(255,255,255,0.98)",
   },
   handleCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: HANDLE_SIZE,
+    height: HANDLE_SIZE,
+    borderRadius: HANDLE_SIZE / 2,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-    backgroundColor: "rgba(9,9,11,0.72)",
+    borderColor: "rgba(255,255,255,0.28)",
+    backgroundColor: "rgba(10,10,12,0.74)",
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
-    gap: 1,
-    boxShadow: "0px 14px 32px rgba(0, 0, 0, 0.28)",
+    gap: 2,
+    boxShadow: "0px 18px 38px rgba(0, 0, 0, 0.3)",
   },
 });
 

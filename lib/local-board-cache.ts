@@ -8,6 +8,11 @@ export type LocalBoardItem = {
   roomLabel: string;
   serviceType?: string | null;
   generationId?: string | null;
+  watermarkRequired?: boolean | null;
+  modeId?: string | null;
+  paletteId?: string | null;
+  finishId?: string | null;
+  aspectRatio?: string | null;
   status: "processing" | "ready" | "failed";
   errorMessage?: string | null;
   createdAt: number;

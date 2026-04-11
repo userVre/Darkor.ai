@@ -31,11 +31,12 @@ function toSafeNumber(value: unknown) {
 
 export function canUserGenerate(state?: GenerationAccessState | null): GenerationAccessDecision {
   const hasPaidAccess = Boolean(state?.hasPaidAccess);
+  const hasSubscriptionQuota = state?.subscriptionType === "weekly" || state?.subscriptionType === "yearly";
   const remaining =
     typeof state?.imagesRemaining === "number"
       ? Math.max(state.imagesRemaining, 0)
       : Math.max(toSafeNumber(state?.credits), 0);
-  const fallbackMessage = hasPaidAccess ? "Limit Reached" : "Free limit reached. Upgrade to continue.";
+  const fallbackMessage = hasPaidAccess || hasSubscriptionQuota ? "Limit Reached" : "Free limit reached. Upgrade to continue.";
   const message = String(state?.generationStatusMessage ?? fallbackMessage).trim() || fallbackMessage;
 
   if (remaining > 0 && state?.canGenerateNow !== false) {
@@ -50,7 +51,7 @@ export function canUserGenerate(state?: GenerationAccessState | null): Generatio
 
   return {
     allowed: false,
-    reason: hasPaidAccess ? "limit_reached" : "paywall",
+    reason: hasPaidAccess || hasSubscriptionQuota ? "limit_reached" : "paywall",
     remaining,
     hasPaidAccess,
     message,

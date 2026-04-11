@@ -165,7 +165,7 @@ export function inferRevenueCatEntitlementFromCustomerInfo(info?: RevenueCatCust
 export function resolveRevenueCatSubscription(info?: RevenueCatCustomerInfo | null): {
   hasSubscription: boolean;
   entitlement: RevenueCatEntitlement;
-  plan: "pro" | "free";
+  plan: "pro" | "trial" | "free";
   subscriptionType: BillingDuration | "free";
   purchasedAt: number | null;
   subscriptionEnd: number | null;
@@ -173,6 +173,7 @@ export function resolveRevenueCatSubscription(info?: RevenueCatCustomerInfo | nu
   const active = getHomeDecorEntitlementRecord(info);
   const entitlement: RevenueCatEntitlement = active?.entitlement ?? "free";
   const hasSubscription = Boolean(active);
+  const normalizedPeriodType = normalizeToken(active?.record?.periodType);
   const purchasedAt = active
     ? parseRevenueCatDate(
         active.record?.latestPurchaseDateMillis
@@ -188,7 +189,12 @@ export function resolveRevenueCatSubscription(info?: RevenueCatCustomerInfo | nu
   return {
     hasSubscription,
     entitlement,
-    plan: hasSubscription ? ("pro" as const) : ("free" as const),
+    plan:
+      !hasSubscription
+        ? ("free" as const)
+        : normalizedPeriodType === "trial" || normalizedPeriodType === "intro"
+          ? ("trial" as const)
+          : ("pro" as const),
     subscriptionType:
       entitlement === REVENUECAT_ANNUAL_PRO_ENTITLEMENT
         ? ("yearly" as const)

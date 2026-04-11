@@ -162,7 +162,7 @@ export default function SettingsScreen() {
   };
 
   const persistPurchasedPlan = async (
-    plan: "pro",
+    plan: "pro" | "trial",
     subscriptionType: "weekly" | "yearly",
     subscriptionEntitlement: RevenueCatEntitlement,
     purchasedAt?: number | null,
@@ -199,7 +199,7 @@ export default function SettingsScreen() {
 
       const subscriptionState = resolveRevenueCatSubscription(info);
 
-      if (isSignedIn && subscriptionState.plan === "pro" && subscriptionState.subscriptionType !== "free") {
+      if (isSignedIn && subscriptionState.plan !== "free" && subscriptionState.subscriptionType !== "free") {
         await persistPurchasedPlan(
           subscriptionState.plan,
           subscriptionState.subscriptionType,

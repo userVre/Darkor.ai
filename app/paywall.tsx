@@ -701,7 +701,7 @@ export default function PaywallScreen() {
 
       const subscriptionState = resolveRevenueCatSubscription(info);
 
-      if (subscriptionState.plan !== "pro" || subscriptionState.subscriptionType === "free") {
+      if (subscriptionState.plan === "free" || subscriptionState.subscriptionType === "free") {
         Alert.alert(t("paywall.restored"), t("paywall.noActiveSubscriptions"));
         return;
       }
@@ -715,7 +715,7 @@ export default function PaywallScreen() {
       );
       setOptimisticAccess({
         credits: getGenerationLimit(subscriptionState.subscriptionType),
-        hasPaidAccess: true,
+        hasPaidAccess: subscriptionState.plan === "pro",
         subscriptionType: subscriptionState.subscriptionType,
       });
       showSuccess();
@@ -751,7 +751,7 @@ export default function PaywallScreen() {
       }
 
       const subscriptionState = resolveRevenueCatSubscription(result.customerInfo);
-      if (subscriptionState.plan !== "pro" || subscriptionState.subscriptionType === "free") {
+      if (subscriptionState.plan === "free" || subscriptionState.subscriptionType === "free") {
         throw new Error("We could not confirm your subscription. Please try again.");
       }
 
@@ -764,7 +764,7 @@ export default function PaywallScreen() {
       );
       setOptimisticAccess({
         credits: getGenerationLimit(subscriptionState.subscriptionType),
-        hasPaidAccess: true,
+        hasPaidAccess: subscriptionState.plan === "pro",
         subscriptionType: subscriptionState.subscriptionType,
       });
       showSuccess();

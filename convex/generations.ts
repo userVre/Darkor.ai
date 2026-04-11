@@ -236,6 +236,11 @@ export const getUserArchive = queryGeneric({
           ...row,
           imageUrl,
           sourceImageUrl,
+          watermarkRequired: row.watermarkRequired ?? false,
+          serviceType: row.serviceType ?? undefined,
+          modeId: row.modeId ?? undefined,
+          paletteId: row.paletteId ?? undefined,
+          finishId: row.finishId ?? undefined,
           status: resolveRowStatus(row, imageUrl),
           isFavorite: row.isFavorite ?? false,
           errorMessage: row.errorMessage ?? null,
@@ -270,6 +275,9 @@ export const startGeneration = mutationGeneric({
     targetColorCategory: v.optional(v.string()),
     targetSurface: v.optional(v.string()),
     aspectRatio: v.string(),
+    modeId: v.optional(v.string()),
+    paletteId: v.optional(v.string()),
+    finishId: v.optional(v.string()),
     regenerate: v.optional(v.boolean()),
     ignoreReviewCooldown: v.optional(v.boolean()),
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
@@ -289,6 +297,7 @@ export const startGeneration = mutationGeneric({
     }
 
     const allowance = await reserveGenerationAllowance(ctx, viewer.userId, args.ignoreReviewCooldown);
+    const watermarkRequired = allowance.planUsed !== "pro";
     const normalizedSelection = trimOptional(args.selection) ?? "Premium";
     const normalizedAspectRatio = normalizeAIAspectRatio(args.aspectRatio);
     const resolvedStyle =
@@ -314,12 +323,17 @@ export const startGeneration = mutationGeneric({
       maskImageStorageId: args.maskStorageId,
       storageId: undefined,
       imageUrl: undefined,
+      watermarkRequired,
       prompt,
       style: resolvedStyle,
       roomType: args.roomType,
       customPrompt: trimOptional(args.customPrompt),
       colorPalette: normalizedSelection,
       aspectRatio: normalizedAspectRatio,
+      serviceType: args.serviceType,
+      modeId: trimOptional(args.modeId),
+      paletteId: trimOptional(args.paletteId),
+      finishId: trimOptional(args.finishId),
       mode:
         args.serviceType === "paint"
           ? "Smart Wall Paint"

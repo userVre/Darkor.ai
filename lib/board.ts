@@ -8,6 +8,13 @@ export type BoardItem = {
   originalImageUri?: string | null;
   styleName: string;
   roomType: string;
+  serviceType?: string | null;
+  generationId?: string | null;
+  watermarkRequired?: boolean | null;
+  modeId?: string | null;
+  paletteId?: string | null;
+  finishId?: string | null;
+  aspectRatio?: string | null;
   createdAt: number;
   status: BoardItemStatus;
   errorMessage?: string | null;
@@ -20,6 +27,12 @@ type GenerationArchiveItem = {
   sourceImageUrl?: string | null;
   style?: string | null;
   roomType?: string | null;
+  serviceType?: string | null;
+  watermarkRequired?: boolean | null;
+  modeId?: string | null;
+  paletteId?: string | null;
+  finishId?: string | null;
+  aspectRatio?: string | null;
   createdAt?: number;
   _creationTime?: number;
   status?: BoardItemStatus;
@@ -43,6 +56,13 @@ export function mapArchiveToBoardItems(items: GenerationArchiveItem[]) {
       originalImageUri: item.sourceImageUrl ?? null,
       styleName: normalizeText(item.style, "Custom"),
       roomType: normalizeText(item.roomType, "Room"),
+      serviceType: item.serviceType ?? null,
+      generationId: item._id,
+      watermarkRequired: item.watermarkRequired ?? false,
+      modeId: item.modeId ?? null,
+      paletteId: item.paletteId ?? null,
+      finishId: item.finishId ?? null,
+      aspectRatio: item.aspectRatio ?? null,
       createdAt: item.createdAt ?? item._creationTime ?? Date.now(),
       status: resolveGenerationStatus(item.status, item.imageUrl),
       errorMessage: item.errorMessage ?? null,
