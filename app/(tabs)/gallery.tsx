@@ -331,11 +331,11 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   sectionHeader: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    marginBottom: 16,
+    marginBottom: 32,
     flexDirection: "row",
     alignItems: "center",
   },

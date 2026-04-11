@@ -17,8 +17,9 @@
       "addPhoto": "写真を追加",
       "chooseMediaSource": "メディアソースを選択",
       "examplePhotos": "サンプル写真",
-      "seeAll": "すべて見る",
-      "uploadPlus": "アップロード +"
+      "seeAll": "Explore All",
+      "uploadPlus": "アップロード +",
+      "tryThis": "Try This"
     },
     "labels": {
       "email": "メールアドレス",
@@ -39,20 +40,21 @@
   },
   "settings": {
     "title": "設定",
-    "heroTitle": "あなたのアカウントは無料です"
+    "heroTitle": "Free Plan"
   },
   "profile": {
-    "title": "あなたのボード",
-    "emptyTitle": "まだデザインはありません",
-    "emptySubtitle": "生成したデザインがここに表示されます"
+    "title": "My Design Portfolio",
+    "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
+    "emptySubtitle": ""
   },
   "discover": {
     "title": "発見",
     "tabs": {
-      "home": "ホーム",
-      "garden": "ガーデン",
-      "exterior": "外観"
-    }
+      "home": "Interior",
+      "garden": "Garden",
+      "exterior": "Exterior "
+    },
+    "tryThisStyle": "Try This Style"
   },
   "auth": {
     "accountEyebrow": "HomeDecor AI アカウント",
@@ -83,5 +85,84 @@
     "eyebrow": "ポリシー",
     "title": "利用規約",
     "date": "2026年3月14日"
+  },
+  "home": {
+    "title": "HomeDecor AI",
+    "tools": {
+      "interior": {
+        "title": "Interior Design",
+        "description": "Transform any room with AI-powered interior design."
+      },
+      "exterior": {
+        "title": "Exterior Design",
+        "description": "Reimagine your home's exterior with world-class facade styling."
+      },
+      "garden": {
+        "title": "Garden Design",
+        "description": "Design stunning gardens and outdoor spaces effortlessly."
+      },
+      "paint": {
+        "title": "Paint (Wall)",
+        "description": "Refine your walls with bespoke color palettes and designer textures."
+      },
+      "floor": {
+        "title": "Floor Restyle",
+        "description": "Elevate your room's foundation with premium materials and finishes."
+      },
+      "cta": "Try This"
+    }
+  },
+  "wizard": {
+    "headers": {},
+    "stepOne": {
+      "title": "Upload Your Vision",
+      "emptyTitle": "Upload Your Vision",
+      "cta": "Begin Your Transformation"
+    },
+    "interior": {
+      "stepTwoTitle": "Choose Your Space",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepFourMode": "Design Mode",
+      "stepFourPalette": "Color Harmony"
+    },
+    "exterior": {
+      "stepTwoTitle": "Select Building Type",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepFourTitle": "Color Harmony"
+    },
+    "garden": {
+      "stepOneEmptyTitle": "Upload Your Vision",
+      "stepTwoTitle": "Curate Your Aesthetic",
+      "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
+      "stepThreeTitle": "Color Harmony"
+    },
+    "floorFlow": {
+      "promptLabel": "Describe Your Vision",
+      "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials."
+    },
+    "paintFlow": {
+      "selectionTitle": "Select Surfaces to Transform",
+      "maskTitle": "Select Surfaces to Transform",
+      "intakeTitle": "Upload Your Vision",
+      "intakeReadyTitle": "Photo added. Mark the wall area next."
+    }
+  },
+  "paywall": {
+    "title": "Design Like a Pro. No Limits.",
+    "features": {
+      "fasterRendering": "Faster Results, Every Time",
+      "adFree": "Ultra-HD Quality Renders",
+      "unlimitedRenders": "Unlimited Designs, Always"
+    },
+    "tryForFree": "Begin Your Pro Trial",
+    "continue": "Begin Your Pro Trial",
+    "beginTrial": "Begin Your Pro Trial"
+  },
+  "workspace": {
+    "flow": {
+      "customPromptTitle": "Describe Your Vision"
+    }
   }
 }

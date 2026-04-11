@@ -102,7 +102,7 @@ export const DS = {
 } as const;
 
 export const HAIRLINE = Math.max(StyleSheet.hairlineWidth, 1);
-export const SCREEN_SIDE_PADDING = spacing.md;
+export const SCREEN_SIDE_PADDING = spacing.lg;
 export const SCREEN_SECTION_GAP = spacing.xl;
 
 export function subtleBorder(color: string = DS.colors.borderSubtle): ViewStyle {

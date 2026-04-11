@@ -27,7 +27,7 @@ type ExteriorRedesignStepFourProps = {
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
 const PALETTE_REFERENCE_WIDTH = 500;
-const ACTIVE_CONTINUE_COLOR = "#FF3B30";
+const ACTIVE_CONTINUE_COLOR = "#0A0A0A";
 
 function scaleValue(value: number, scale: number) {
   return value * scale;

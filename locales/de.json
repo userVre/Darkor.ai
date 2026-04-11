@@ -17,8 +17,9 @@
       "addPhoto": "Foto hinzufügen",
       "chooseMediaSource": "Medienquelle auswählen",
       "examplePhotos": "Beispielfotos",
-      "seeAll": "Alle ansehen",
-      "uploadPlus": "Hochladen +"
+      "seeAll": "Explore All",
+      "uploadPlus": "Hochladen +",
+      "tryThis": "Try This"
     },
     "labels": {
       "email": "E-Mail",
@@ -45,20 +46,21 @@
   },
   "settings": {
     "title": "Einstellungen",
-    "heroTitle": "Dein Konto ist KOSTENLOS"
+    "heroTitle": "Free Plan"
   },
   "profile": {
-    "title": "Dein Board",
-    "emptyTitle": "Noch keine Designs",
-    "emptySubtitle": "Deine generierten Designs erscheinen hier"
+    "title": "My Design Portfolio",
+    "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
+    "emptySubtitle": ""
   },
   "discover": {
     "title": "Entdecken",
     "tabs": {
-      "home": "Zuhause",
-      "garden": "Garten",
-      "exterior": "Außenbereich"
-    }
+      "home": "Interior",
+      "garden": "Garden",
+      "exterior": "Exterior "
+    },
+    "tryThisStyle": "Try This Style"
   },
   "auth": {
     "accountEyebrow": "HomeDecor AI Konto",
@@ -89,5 +91,84 @@
     "eyebrow": "Richtlinie",
     "title": "Nutzungsbedingungen",
     "date": "14. März 2026"
+  },
+  "home": {
+    "title": "HomeDecor AI",
+    "tools": {
+      "interior": {
+        "title": "Interior Design",
+        "description": "Transform any room with AI-powered interior design."
+      },
+      "exterior": {
+        "title": "Exterior Design",
+        "description": "Reimagine your home's exterior with world-class facade styling."
+      },
+      "garden": {
+        "title": "Garden Design",
+        "description": "Design stunning gardens and outdoor spaces effortlessly."
+      },
+      "paint": {
+        "title": "Paint (Wall)",
+        "description": "Refine your walls with bespoke color palettes and designer textures."
+      },
+      "floor": {
+        "title": "Floor Restyle",
+        "description": "Elevate your room's foundation with premium materials and finishes."
+      },
+      "cta": "Try This"
+    }
+  },
+  "wizard": {
+    "headers": {},
+    "stepOne": {
+      "title": "Upload Your Vision",
+      "emptyTitle": "Upload Your Vision",
+      "cta": "Begin Your Transformation"
+    },
+    "interior": {
+      "stepTwoTitle": "Choose Your Space",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepFourMode": "Design Mode",
+      "stepFourPalette": "Color Harmony"
+    },
+    "exterior": {
+      "stepTwoTitle": "Select Building Type",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepFourTitle": "Color Harmony"
+    },
+    "garden": {
+      "stepOneEmptyTitle": "Upload Your Vision",
+      "stepTwoTitle": "Curate Your Aesthetic",
+      "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
+      "stepThreeTitle": "Color Harmony"
+    },
+    "floorFlow": {
+      "promptLabel": "Describe Your Vision",
+      "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials."
+    },
+    "paintFlow": {
+      "selectionTitle": "Select Surfaces to Transform",
+      "maskTitle": "Select Surfaces to Transform",
+      "intakeTitle": "Upload Your Vision",
+      "intakeReadyTitle": "Photo added. Mark the wall area next."
+    }
+  },
+  "paywall": {
+    "title": "Design Like a Pro. No Limits.",
+    "features": {
+      "fasterRendering": "Faster Results, Every Time",
+      "adFree": "Ultra-HD Quality Renders",
+      "unlimitedRenders": "Unlimited Designs, Always"
+    },
+    "tryForFree": "Begin Your Pro Trial",
+    "continue": "Begin Your Pro Trial",
+    "beginTrial": "Begin Your Pro Trial"
+  },
+  "workspace": {
+    "flow": {
+      "customPromptTitle": "Describe Your Vision"
+    }
   }
 }

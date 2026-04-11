@@ -3,7 +3,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation } from "convex/react";
 import Constants from "expo-constants";
 import * as Clipboard from "expo-clipboard";
-import { Image } from "expo-image";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -305,13 +304,6 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.heroSection}>
-          <Image
-            source={require("../assets/media/paywall/paywall-luxury-lounge.png")}
-            style={StyleSheet.absoluteFillObject}
-            contentFit="cover"
-          />
-          <View pointerEvents="none" style={styles.heroOverlay} />
-
           <Pressable accessibilityRole="button" onPress={handleBack} style={[styles.backArrow, { top: heroTopInset }]}>
             <Text style={styles.backArrowText}>{"\u2039"}</Text>
           </Pressable>
@@ -333,7 +325,7 @@ export default function SettingsScreen() {
 
             <Pressable accessibilityRole="button" onPress={handleUpgrade} style={styles.upgradeButton}>
               <View style={styles.upgradeButtonContent}>
-                <Diamond color="#0A0A0A" size={16} strokeWidth={2.2} />
+                <Diamond color="#FFFFFF" size={16} strokeWidth={2.2} />
                 <Text style={styles.upgradeButtonText}>{t("settings.upgradePro")}</Text>
               </View>
             </Pressable>
@@ -421,29 +413,25 @@ const styles = StyleSheet.create({
   heroSection: {
     position: "relative",
     width: "100%",
-    minHeight: 404,
-    overflow: "hidden",
-  },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.42)",
+    minHeight: 312,
+    backgroundColor: "#F5F5F5",
   },
   heroContent: {
     flex: 1,
     paddingLeft: 24,
     paddingRight: 24,
-    paddingBottom: 12,
+    paddingBottom: 24,
     justifyContent: "flex-end",
   },
   headerTitle: {
     marginBottom: 12,
-    color: "#FFFFFF",
+    color: "#6B6B6B",
     fontSize: 16,
     lineHeight: 18,
     ...fonts.semibold,
   },
   heroTitle: {
-    color: "#FFFFFF",
+    color: "#0A0A0A",
     fontSize: 28,
     lineHeight: 32,
     ...fonts.bold,
@@ -467,7 +455,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   featureText: {
-    color: "#FFFFFF",
+    color: "#0A0A0A",
     fontSize: 15,
     lineHeight: 18,
     ...fonts.medium,
@@ -476,7 +464,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     minHeight: 48,
     borderRadius: 999,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#0A0A0A",
     justifyContent: "center",
     paddingHorizontal: 18,
     paddingVertical: 12,
@@ -488,7 +476,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   upgradeButtonText: {
-    color: "#0A0A0A",
+    color: "#FFFFFF",
     fontSize: 15,
     lineHeight: 18,
     ...fonts.semibold,
@@ -523,7 +511,8 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 32,
     color: "#A0A0A0",
-    textAlign: "center",
+    textAlign: "left",
+    marginLeft: 24,
     fontSize: 12,
     lineHeight: 16,
     ...fonts.regular,

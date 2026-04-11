@@ -1,11 +1,190 @@
 {
-  "common": { "actions": { "continue": "계속", "cancel": "취소", "save": "저장", "share": "공유", "openSettings": "설정 열기", "addPhoto": "사진 추가", "exit": "나가기" }, "alerts": { "exitTitle": "나가시겠습니까?", "progressLost": "진행 상황이 사라집니다." }, "states": { "savedToGallery": "갤러리에 저장됨" } },
-  "boot": { "loadingApp": "HomeDecor AI 불러오는 중", "loadingAccount": "계정을 불러오는 중...", "checkingPlan": "요금제를 확인하는 중...", "secureAccount": "계정을 보호하고 제작을 시작하세요..." },
-  "tabs": { "tools": "도구", "create": "만들기", "discover": "탐색", "profile": "프로필" },
-  "home": { "title": "HomeDecor AI" },
-  "paywall": { "restore": "복원", "bestOffer": "최고 혜택", "yearlyAccess": "연간 이용", "weeklyAccess": "주간 이용", "freeTrial": "3일 무료 체험", "pricePerYear": "연간 {{price}}", "pricePerWeek": "주간 {{price}}", "perWeek": "매주", "thenPricePerWeek": "이후 주당 {{price}}", "noPaymentNow": "지금 결제 없음", "cancelAnytime": "언제든 취소 가능", "processing": "처리 중...", "tryForFree": "무료로 시작", "continue": "계속", "terms": "약관", "privacy": "개인정보" },
-  "settings": { "title": "설정", "heroTitle": "현재 계정은 무료입니다", "upgradePro": "PRO 업그레이드" },
-  "wizard": { "headers": { "close": "닫기", "previousStep": "이전 단계로 이동" }, "stepOne": { "title": "사진 추가" }, "floorFlow": { "title": "바닥 리스타일", "promptLabel": "프롬프트 입력", "generateCta": "내 디자인 생성 →" }, "paintFlow": { "title": "페인트", "selectionTitle": "색상 및 표면", "maskTitle": "칠할 영역 선택", "colorLabel": "색상", "surfaceLabel": "표면", "choose": "선택", "apply": "적용", "colorPickerTitle": "벽 색상을 선택하세요", "surfacePickerTitle": "표면 유형 선택", "detectTitle": "칠할 수 있는 표면을 감지하는 중...", "preparingMaskTitle": "마스킹 표면을 준비하는 중...", "brushWidth": "브러시 너비", "eraserWidth": "지우개 너비", "generateCta": "벽 페인트하기 →", "finishTitle": "마감 유형", "selectedColor": "선택한 색상" } },
-  "workspace": { "generation": { "preparingSessionTitle": "세션 준비 중", "preparingSessionBody": "게스트 프로필을 아직 불러오는 중입니다. 잠시 후 다시 시도해 주세요.", "limitReached": "한도 도달" }, "share": { "message": "HomeDecor.ai로 디자인함", "failedTitle": "공유 실패" }, "download": { "failedTitle": "저장 실패" }, "media": { "exampleUnavailableTitle": "예시를 열 수 없음" }, "flow": { "customPromptTitle": "맞춤 프롬프트 추가", "customPromptBody": "적용하기 전에 원하는 디자인 방향을 자세히 설명해 주세요.", "selectSpaceType": "카드를 눌러 공간 유형을 선택하세요." } },
-  "proSuccess": { "title": "HomeDecor Pro에 오신 것을 환영합니다!", "subtitle": "이제 모든 기능이 열렸습니다. 다음이 활성화되었습니다:", "cta": "디자인 시작", "toast": "계정이 Pro로 업그레이드되었습니다." }
+  "common": {
+    "actions": {
+      "continue": "계속",
+      "cancel": "취소",
+      "save": "저장",
+      "share": "공유",
+      "openSettings": "설정 열기",
+      "addPhoto": "사진 추가",
+      "exit": "나가기",
+      "seeAll": "Explore All",
+      "tryThis": "Try This"
+    },
+    "alerts": {
+      "exitTitle": "나가시겠습니까?",
+      "progressLost": "진행 상황이 사라집니다."
+    },
+    "states": {
+      "savedToGallery": "갤러리에 저장됨"
+    }
+  },
+  "boot": {
+    "loadingApp": "HomeDecor AI 불러오는 중",
+    "loadingAccount": "계정을 불러오는 중...",
+    "checkingPlan": "요금제를 확인하는 중...",
+    "secureAccount": "계정을 보호하고 제작을 시작하세요..."
+  },
+  "tabs": {
+    "tools": "도구",
+    "create": "만들기",
+    "discover": "탐색",
+    "profile": "프로필"
+  },
+  "home": {
+    "title": "HomeDecor AI",
+    "tools": {
+      "interior": {
+        "title": "Interior Design",
+        "description": "Transform any room with AI-powered interior design."
+      },
+      "exterior": {
+        "title": "Exterior Design",
+        "description": "Reimagine your home's exterior with world-class facade styling."
+      },
+      "garden": {
+        "title": "Garden Design",
+        "description": "Design stunning gardens and outdoor spaces effortlessly."
+      },
+      "paint": {
+        "title": "Paint (Wall)",
+        "description": "Refine your walls with bespoke color palettes and designer textures."
+      },
+      "floor": {
+        "title": "Floor Restyle",
+        "description": "Elevate your room's foundation with premium materials and finishes."
+      },
+      "cta": "Try This"
+    }
+  },
+  "paywall": {
+    "restore": "복원",
+    "bestOffer": "최고 혜택",
+    "yearlyAccess": "연간 이용",
+    "weeklyAccess": "주간 이용",
+    "freeTrial": "3일 무료 체험",
+    "pricePerYear": "연간 {{price}}",
+    "pricePerWeek": "주간 {{price}}",
+    "perWeek": "매주",
+    "thenPricePerWeek": "이후 주당 {{price}}",
+    "noPaymentNow": "지금 결제 없음",
+    "cancelAnytime": "언제든 취소 가능",
+    "processing": "처리 중...",
+    "tryForFree": "Begin Your Pro Trial",
+    "continue": "Begin Your Pro Trial",
+    "terms": "약관",
+    "privacy": "개인정보",
+    "title": "Design Like a Pro. No Limits.",
+    "features": {
+      "fasterRendering": "Faster Results, Every Time",
+      "adFree": "Ultra-HD Quality Renders",
+      "unlimitedRenders": "Unlimited Designs, Always"
+    },
+    "beginTrial": "Begin Your Pro Trial"
+  },
+  "settings": {
+    "title": "설정",
+    "heroTitle": "Free Plan",
+    "upgradePro": "PRO 업그레이드"
+  },
+  "wizard": {
+    "headers": {
+      "close": "닫기",
+      "previousStep": "이전 단계로 이동"
+    },
+    "stepOne": {
+      "title": "Upload Your Vision",
+      "emptyTitle": "Upload Your Vision",
+      "cta": "Begin Your Transformation"
+    },
+    "floorFlow": {
+      "title": "바닥 리스타일",
+      "promptLabel": "Describe Your Vision",
+      "generateCta": "내 디자인 생성 →",
+      "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials."
+    },
+    "paintFlow": {
+      "title": "페인트",
+      "selectionTitle": "Select Surfaces to Transform",
+      "maskTitle": "Select Surfaces to Transform",
+      "colorLabel": "색상",
+      "surfaceLabel": "표면",
+      "choose": "선택",
+      "apply": "적용",
+      "colorPickerTitle": "벽 색상을 선택하세요",
+      "surfacePickerTitle": "표면 유형 선택",
+      "detectTitle": "칠할 수 있는 표면을 감지하는 중...",
+      "preparingMaskTitle": "마스킹 표면을 준비하는 중...",
+      "brushWidth": "브러시 너비",
+      "eraserWidth": "지우개 너비",
+      "generateCta": "벽 페인트하기 →",
+      "finishTitle": "마감 유형",
+      "selectedColor": "선택한 색상",
+      "intakeTitle": "Upload Your Vision",
+      "intakeReadyTitle": "Photo added. Mark the wall area next."
+    },
+    "interior": {
+      "stepTwoTitle": "Choose Your Space",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepFourMode": "Design Mode",
+      "stepFourPalette": "Color Harmony"
+    },
+    "exterior": {
+      "stepTwoTitle": "Select Building Type",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepFourTitle": "Color Harmony"
+    },
+    "garden": {
+      "stepOneEmptyTitle": "Upload Your Vision",
+      "stepTwoTitle": "Curate Your Aesthetic",
+      "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
+      "stepThreeTitle": "Color Harmony"
+    }
+  },
+  "workspace": {
+    "generation": {
+      "preparingSessionTitle": "세션 준비 중",
+      "preparingSessionBody": "게스트 프로필을 아직 불러오는 중입니다. 잠시 후 다시 시도해 주세요.",
+      "limitReached": "한도 도달"
+    },
+    "share": {
+      "message": "HomeDecor.ai로 디자인함",
+      "failedTitle": "공유 실패"
+    },
+    "download": {
+      "failedTitle": "저장 실패"
+    },
+    "media": {
+      "exampleUnavailableTitle": "예시를 열 수 없음"
+    },
+    "flow": {
+      "customPromptTitle": "Describe Your Vision",
+      "customPromptBody": "적용하기 전에 원하는 디자인 방향을 자세히 설명해 주세요.",
+      "selectSpaceType": "카드를 눌러 공간 유형을 선택하세요."
+    }
+  },
+  "proSuccess": {
+    "title": "HomeDecor Pro에 오신 것을 환영합니다!",
+    "subtitle": "이제 모든 기능이 열렸습니다. 다음이 활성화되었습니다:",
+    "cta": "디자인 시작",
+    "toast": "계정이 Pro로 업그레이드되었습니다."
+  },
+  "app": {
+    "name": "HomeDecor AI"
+  },
+  "discover": {
+    "tabs": {
+      "home": "Interior",
+      "exterior": "Exterior ",
+      "garden": "Garden"
+    },
+    "tryThisStyle": "Try This Style"
+  },
+  "profile": {
+    "title": "My Design Portfolio",
+    "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
+    "emptySubtitle": ""
+  }
 }

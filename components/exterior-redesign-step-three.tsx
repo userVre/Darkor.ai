@@ -27,7 +27,7 @@ type ExteriorRedesignStepThreeProps = {
 
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
-const ACTIVE_CONTINUE_COLOR = "#FF3B30";
+const ACTIVE_CONTINUE_COLOR = "#0A0A0A";
 const THUMBNAIL_CROP_OVERFLOW = 24;
 const THUMBNAIL_CROP_SHIFT = -6;
 

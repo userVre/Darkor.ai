@@ -58,11 +58,12 @@ import { fonts } from "../styles/typography";
 const SCREEN_BG = "#0D0D0D";
 const PANEL_BG = "#1C1C1C";
 const PANEL_BORDER = "#2A2A2A";
-const BRAND_RED = "#E53935";
+const ACCENT = "#FFFFFF";
 const TOGGLE_OFF = "#3A3A3A";
 const TEXT_PRIMARY = "#FFFFFF";
 const TEXT_MUTED = "#A0A0A0";
 const TEXT_RESTORE = "#B3B3B3";
+const TEXT_ACCENT = "#0A0A0A";
 const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 2500;
 const CLOSE_DELAY_MS = 5000;
@@ -923,6 +924,10 @@ export default function PaywallScreen() {
             </NativeAnimated.ScrollView>
           </View>
 
+          <View style={styles.titleSection}>
+            <Text style={styles.titleText}>{t("paywall.title")}</Text>
+          </View>
+
           <View style={styles.featuresSection}>
             {[t("paywall.features.fasterRendering"), t("paywall.features.adFree"), t("paywall.features.unlimitedRenders")].map((feature, index) => (
               <FeatureRow
@@ -962,7 +967,7 @@ export default function PaywallScreen() {
           <Pressable accessibilityRole="button" disabled={ctaDisabled} onPress={() => void handlePurchase()} style={[styles.ctaButton, ctaDisabled ? styles.ctaButtonDisabled : null]}>
             {isLoading ? (
               <View style={styles.ctaLoadingRow}>
-                <ActivityIndicator color={TEXT_PRIMARY} />
+                <ActivityIndicator color={TEXT_ACCENT} />
                 <Text style={styles.ctaText}>{t("paywall.processing")}</Text>
               </View>
             ) : (
@@ -1081,8 +1086,19 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   featuresSection: {
-    marginHorizontal: 32,
+    marginHorizontal: 24,
     marginBottom: 36,
+  },
+  titleSection: {
+    marginHorizontal: 24,
+    marginBottom: 32,
+  },
+  titleText: {
+    color: TEXT_PRIMARY,
+    fontSize: 30,
+    lineHeight: 36,
+    textAlign: "left",
+    ...fonts.bold,
   },
   featureRow: {
     flexDirection: "row",
@@ -1109,8 +1125,8 @@ const styles = StyleSheet.create({
   },
   trialBar: {
     minHeight: 56,
-    marginHorizontal: 16,
-    paddingHorizontal: 16,
+    marginHorizontal: 24,
+    paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: PANEL_BG,
@@ -1134,7 +1150,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   toggleTrackOn: {
-    backgroundColor: BRAND_RED,
+    backgroundColor: ACCENT,
   },
   toggleTrackOff: {
     backgroundColor: TOGGLE_OFF,
@@ -1143,15 +1159,15 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: TEXT_PRIMARY,
+    backgroundColor: TEXT_ACCENT,
   },
   yearlyWrapper: {
     marginTop: 20,
-    marginHorizontal: 16,
+    marginHorizontal: 24,
   },
   weeklyWrapper: {
     marginTop: 12,
-    marginHorizontal: 16,
+    marginHorizontal: 24,
   },
   planCard: {
     minHeight: 78,
@@ -1173,19 +1189,19 @@ const styles = StyleSheet.create({
   },
   planCardSelected: {
     borderWidth: 2,
-    borderColor: BRAND_RED,
+    borderColor: ACCENT,
   },
   bestOfferBadge: {
     position: "absolute",
     top: -10,
     right: 12,
     borderRadius: 20,
-    backgroundColor: BRAND_RED,
+    backgroundColor: ACCENT,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   bestOfferText: {
-    color: TEXT_PRIMARY,
+    color: TEXT_ACCENT,
     fontSize: 11,
     lineHeight: 13,
     textTransform: "uppercase",
@@ -1244,8 +1260,8 @@ const styles = StyleSheet.create({
     marginBottom: 42,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
+    justifyContent: "flex-start",
+    paddingHorizontal: 24,
     flexWrap: "wrap",
     gap: 6,
   },
@@ -1254,8 +1270,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
+    justifyContent: "flex-start",
+    paddingHorizontal: 24,
     flexWrap: "wrap",
     gap: 6,
   },
@@ -1267,9 +1283,9 @@ const styles = StyleSheet.create({
   },
   errorText: {
     marginTop: 4,
-    marginHorizontal: 16,
+    marginHorizontal: 24,
     marginBottom: 12,
-    textAlign: "center",
+    textAlign: "left",
     color: "#FFB4B2",
     fontSize: 12,
     lineHeight: 16,
@@ -1277,9 +1293,9 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     minHeight: 58,
-    marginHorizontal: 16,
+    marginHorizontal: 24,
     borderRadius: 16,
-    backgroundColor: BRAND_RED,
+    backgroundColor: ACCENT,
     justifyContent: "center",
     paddingHorizontal: 20,
     paddingVertical: 14,
@@ -1303,20 +1319,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   ctaText: {
-    color: TEXT_PRIMARY,
+    color: TEXT_ACCENT,
     fontSize: 17,
     lineHeight: 22,
     ...fonts.bold,
   },
   ctaArrow: {
     marginLeft: 8,
-    color: TEXT_PRIMARY,
+    color: TEXT_ACCENT,
     fontSize: 20,
     lineHeight: 22,
     ...fonts.bold,
   },
   legalFooter: {
-    marginHorizontal: 20,
+    marginHorizontal: 24,
     paddingTop: 12,
     alignItems: "flex-start",
     gap: 8,

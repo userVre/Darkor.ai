@@ -1,8 +1,11 @@
-import { Modal, Pressable, StyleSheet, View } from "react-native";
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { X } from "@/components/material-icons";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 
 import type { DiscoverTile } from "../lib/discover-catalog";
+import { fonts } from "../styles/typography";
 
 type DiscoverPreviewModalProps = {
   item: DiscoverTile | null;
@@ -17,9 +20,18 @@ export function DiscoverPreviewModal({
   topInset,
   onClose,
 }: DiscoverPreviewModalProps) {
+  const router = useRouter();
+  const { t } = useTranslation();
+
   if (!item) {
     return null;
   }
+
+  const handleTryThisStyle = () => {
+    const service = item.service === "exterior" ? "facade" : item.service;
+    onClose();
+    router.push(`/workspace?service=${service}` as never);
+  };
 
   return (
     <Modal
@@ -46,6 +58,12 @@ export function DiscoverPreviewModal({
             style={styles.image}
             contentFit="contain"
           />
+        </View>
+
+        <View style={styles.footer}>
+          <Pressable accessibilityRole="button" onPress={handleTryThisStyle} style={styles.ctaButton}>
+            <Text style={styles.ctaText}>{t("discover.tryThisStyle")}</Text>
+          </Pressable>
         </View>
       </View>
     </Modal>
@@ -78,6 +96,23 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+  },
+  ctaButton: {
+    minHeight: 56,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  ctaText: {
+    color: "#0A0A0A",
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.semibold,
   },
   image: {
     width: "100%",

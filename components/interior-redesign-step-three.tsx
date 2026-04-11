@@ -28,7 +28,7 @@ type InteriorRedesignStepThreeProps = {
 
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
-const ACTIVE_CONTINUE_COLOR = "#FF3B30";
+const ACTIVE_CONTINUE_COLOR = "#0A0A0A";
 const THUMBNAIL_CROP_OVERFLOW = 30;
 const THUMBNAIL_CROP_SHIFT = -8;
 

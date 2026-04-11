@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { fonts } from "../styles/typography";
 
@@ -19,6 +20,7 @@ type HomeToolCardProps = {
 };
 
 export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
+  const { t } = useTranslation();
   const handlePress = () => {
     onPress(item);
   };
@@ -36,7 +38,7 @@ export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
         </Text>
 
         <Pressable accessibilityRole="button" onPress={handlePress} style={styles.button}>
-          <Text style={styles.buttonText}>Try It!</Text>
+          <Text style={styles.buttonText}>{t("common.actions.tryThis")}</Text>
         </Pressable>
       </View>
     </View>
@@ -60,7 +62,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginTop: 12,
-    marginHorizontal: 20,
+    marginHorizontal: 24,
     backgroundColor: "#E0E0E0",
   },
   content: {
@@ -70,7 +72,7 @@ const styles = StyleSheet.create({
   },
   title: {
     marginTop: 14,
-    marginLeft: 20,
+    marginLeft: 24,
     color: "#0A0A0A",
     fontSize: 20,
     lineHeight: 24,
@@ -78,17 +80,18 @@ const styles = StyleSheet.create({
   },
   description: {
     marginTop: 4,
-    marginLeft: 20,
-    marginRight: 20,
+    marginLeft: 24,
+    marginRight: 24,
     maxWidth: "60%",
     color: "#808080",
     fontSize: 14,
     lineHeight: 20,
+    textAlign: "left",
     ...fonts.regular,
   },
   button: {
     position: "absolute",
-    right: 20,
+    right: 24,
     bottom: 20,
     borderRadius: 24,
     backgroundColor: "#0A0A0A",

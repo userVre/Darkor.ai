@@ -13,7 +13,9 @@
       "chooseMediaSource": "Sélectionner la source du média",
       "examplePhotos": "Photos d'exemple",
       "uploadPlus": "Importer +",
-      "exit": "Quitter"
+      "exit": "Quitter",
+      "seeAll": "Explore All",
+      "tryThis": "Try This"
     },
     "labels": {
       "version": "Version {{version}}",
@@ -41,20 +43,38 @@
   },
   "home": {
     "title": "HomeDecor AI",
-    "errors": { "tryItUnavailableTitle": "Essai indisponible" },
+    "errors": {
+      "tryItUnavailableTitle": "Essai indisponible"
+    },
     "tools": {
-      "interior": { "title": "Design d'intérieur", "description": "Importez une photo, choisissez un style et laissez l'IA repenser la pièce." },
-      "exterior": { "title": "Design extérieur", "description": "Photographiez votre maison, choisissez une ambiance et laissez l'IA imaginer la façade." },
-      "garden": { "title": "Design de jardin", "description": "Choisissez un style et donnez à votre jardin une nouvelle atmosphère en un instant." },
-      "paint": { "title": "Peinture", "description": "Choisissez une couleur et transformez votre espace en un geste." },
-      "floor": { "title": "Relooking du sol", "description": "Remaniez vos sols avec l'IA et réinventez la pièce en un tap." }
+      "interior": {
+        "title": "Interior Design",
+        "description": "Transform any room with AI-powered interior design."
+      },
+      "exterior": {
+        "title": "Exterior Design",
+        "description": "Reimagine your home's exterior with world-class facade styling."
+      },
+      "garden": {
+        "title": "Garden Design",
+        "description": "Design stunning gardens and outdoor spaces effortlessly."
+      },
+      "paint": {
+        "title": "Paint (Wall)",
+        "description": "Refine your walls with bespoke color palettes and designer textures."
+      },
+      "floor": {
+        "title": "Floor Restyle",
+        "description": "Elevate your room's foundation with premium materials and finishes."
+      },
+      "cta": "Try This"
     }
   },
   "paywall": {
     "features": {
-      "fasterRendering": "Rendu plus rapide",
-      "adFree": "Sans publicité",
-      "unlimitedRenders": "Rendus illimités"
+      "fasterRendering": "Faster Results, Every Time",
+      "adFree": "Ultra-HD Quality Renders",
+      "unlimitedRenders": "Unlimited Designs, Always"
     },
     "restore": "Restaurer",
     "bestOffer": "Meilleure offre",
@@ -70,36 +90,126 @@
     "trialEnabled": "Essai gratuit activé",
     "enableTrial": "Activer l'essai gratuit",
     "processing": "Traitement...",
-    "tryForFree": "Essayer gratuitement",
-    "continue": "Continuer",
+    "tryForFree": "Begin Your Pro Trial",
+    "continue": "Begin Your Pro Trial",
     "terms": "Conditions",
     "privacy": "Confidentialité",
-    "closeA11y": "Fermer le paywall"
+    "closeA11y": "Fermer le paywall",
+    "title": "Design Like a Pro. No Limits.",
+    "beginTrial": "Begin Your Pro Trial"
   },
   "settings": {
     "title": "Réglages",
-    "heroTitle": "Votre compte est GRATUIT",
+    "heroTitle": "Free Plan",
     "upgradePro": "Passer à PRO"
   },
   "wizard": {
-    "headers": { "close": "Fermer", "previousStep": "Revenir à l'étape précédente" },
-    "stepOne": { "title": "Ajouter une photo", "emptyTitle": "Commencer la rénovation", "emptySubtitle": "Repensez et sublimez votre pièce" },
-    "floorIntro": { "hero": "Marquez, recolorez et transformez votre espace sans effort." },
-    "paintIntro": { "hero": "Marquez, recolorez et transformez votre espace sans effort." },
-    "floorFlow": { "title": "Relooking du sol", "masking": "Masquage du sol...", "promptLabel": "Saisir un prompt", "generateCta": "Générer mon design →", "selectMaterialTitle": "Choisir le matériau" },
-    "paintFlow": { "title": "Peinture", "selectionTitle": "Couleur et surface", "maskTitle": "Sélectionner la zone à peindre", "colorLabel": "Couleur", "surfaceLabel": "Surface", "choose": "Choisir", "apply": "Appliquer", "colorPickerTitle": "Choisissez une couleur pour votre mur", "surfacePickerTitle": "Sélectionner le type de surface", "detectTitle": "Détection des surfaces à peindre...", "preparingMaskTitle": "Préparation de la surface de masquage...", "brushWidth": "Largeur du pinceau", "eraserWidth": "Largeur de la gomme", "generateCta": "Peindre mes murs →", "finishTitle": "Type de finition", "selectedColor": "Couleur sélectionnée" }
+    "headers": {
+      "close": "Fermer",
+      "previousStep": "Revenir à l'étape précédente"
+    },
+    "stepOne": {
+      "title": "Upload Your Vision",
+      "emptyTitle": "Upload Your Vision",
+      "emptySubtitle": "Repensez et sublimez votre pièce",
+      "cta": "Begin Your Transformation"
+    },
+    "floorIntro": {
+      "hero": "Marquez, recolorez et transformez votre espace sans effort."
+    },
+    "paintIntro": {
+      "hero": "Marquez, recolorez et transformez votre espace sans effort."
+    },
+    "floorFlow": {
+      "title": "Relooking du sol",
+      "masking": "Masquage du sol...",
+      "promptLabel": "Describe Your Vision",
+      "generateCta": "Générer mon design →",
+      "selectMaterialTitle": "Choisir le matériau",
+      "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials."
+    },
+    "paintFlow": {
+      "title": "Peinture",
+      "selectionTitle": "Select Surfaces to Transform",
+      "maskTitle": "Select Surfaces to Transform",
+      "colorLabel": "Couleur",
+      "surfaceLabel": "Surface",
+      "choose": "Choisir",
+      "apply": "Appliquer",
+      "colorPickerTitle": "Choisissez une couleur pour votre mur",
+      "surfacePickerTitle": "Sélectionner le type de surface",
+      "detectTitle": "Détection des surfaces à peindre...",
+      "preparingMaskTitle": "Préparation de la surface de masquage...",
+      "brushWidth": "Largeur du pinceau",
+      "eraserWidth": "Largeur de la gomme",
+      "generateCta": "Peindre mes murs →",
+      "finishTitle": "Type de finition",
+      "selectedColor": "Couleur sélectionnée",
+      "intakeTitle": "Upload Your Vision",
+      "intakeReadyTitle": "Photo added. Mark the wall area next."
+    },
+    "interior": {
+      "stepTwoTitle": "Choose Your Space",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepFourMode": "Design Mode",
+      "stepFourPalette": "Color Harmony"
+    },
+    "exterior": {
+      "stepTwoTitle": "Select Building Type",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepFourTitle": "Color Harmony"
+    },
+    "garden": {
+      "stepOneEmptyTitle": "Upload Your Vision",
+      "stepTwoTitle": "Curate Your Aesthetic",
+      "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
+      "stepThreeTitle": "Color Harmony"
+    }
   },
   "workspace": {
-    "generation": { "preparingSessionTitle": "Préparation de votre session", "preparingSessionBody": "Votre profil invité est encore en cours de chargement. Réessayez dans un instant.", "limitReached": "Limite atteinte" },
-    "share": { "message": "Conçu avec HomeDecor.ai", "failedTitle": "Échec du partage" },
-    "download": { "failedTitle": "Échec de l'enregistrement" },
-    "media": { "exampleUnavailableTitle": "Exemple indisponible" },
-    "flow": { "customPromptTitle": "Ajouter un prompt personnalisé", "customPromptBody": "Décrivez la direction de design exacte avant de l'appliquer.", "selectSpaceType": "Touchez une carte pour sélectionner votre type d'espace." }
+    "generation": {
+      "preparingSessionTitle": "Préparation de votre session",
+      "preparingSessionBody": "Votre profil invité est encore en cours de chargement. Réessayez dans un instant.",
+      "limitReached": "Limite atteinte"
+    },
+    "share": {
+      "message": "Conçu avec HomeDecor.ai",
+      "failedTitle": "Échec du partage"
+    },
+    "download": {
+      "failedTitle": "Échec de l'enregistrement"
+    },
+    "media": {
+      "exampleUnavailableTitle": "Exemple indisponible"
+    },
+    "flow": {
+      "customPromptTitle": "Describe Your Vision",
+      "customPromptBody": "Décrivez la direction de design exacte avant de l'appliquer.",
+      "selectSpaceType": "Touchez une carte pour sélectionner votre type d'espace."
+    }
   },
   "proSuccess": {
     "title": "Bienvenue dans HomeDecor Pro !",
     "subtitle": "Tout est maintenant débloqué. Voici ce que vous obtenez :",
     "cta": "Commencer à créer",
     "toast": "Compte mis à niveau vers Pro avec succès."
+  },
+  "app": {
+    "name": "HomeDecor AI"
+  },
+  "discover": {
+    "tabs": {
+      "home": "Interior",
+      "exterior": "Exterior ",
+      "garden": "Garden"
+    },
+    "tryThisStyle": "Try This Style"
+  },
+  "profile": {
+    "title": "My Design Portfolio",
+    "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
+    "emptySubtitle": ""
   }
 }

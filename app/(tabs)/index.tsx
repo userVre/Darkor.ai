@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     height: STICKY_HEADER_HEIGHT,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",

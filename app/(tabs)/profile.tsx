@@ -30,7 +30,7 @@ type ArchiveGeneration = {
   _creationTime?: number;
 };
 
-const GRID_HORIZONTAL_PADDING = 16;
+const GRID_HORIZONTAL_PADDING = 24;
 const GRID_COLUMN_GAP = 56;
 const GRID_MAX_CARD_WIDTH = 190;
 const GRID_VERTICAL_GAP = 28;
@@ -281,7 +281,7 @@ export default function ProfileScreen() {
             <View style={styles.emptyState}>
               <ImageIcon color="#D0D0D0" size={48} strokeWidth={1.9} />
               <Text style={styles.emptyTitle}>{t("profile.emptyTitle")}</Text>
-              <Text style={styles.emptySubtitle}>{t("profile.emptySubtitle")}</Text>
+              {t("profile.emptySubtitle") ? <Text style={styles.emptySubtitle}>{t("profile.emptySubtitle")}</Text> : null}
             </View>
           ) : (
             <View style={[styles.grid, { width: gridWidth }]}>
@@ -348,20 +348,21 @@ const styles = StyleSheet.create({
     textAlign: "left",
     fontSize: 20,
     lineHeight: 24,
-    marginBottom: 24,
+    marginBottom: 32,
     ...fonts.bold,
   },
   emptyState: {
     width: "100%",
     justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 32,
+    alignItems: "flex-start",
+    paddingHorizontal: 0,
   },
   emptyTitle: {
     marginTop: 16,
     color: "#A0A0A0",
     fontSize: 16,
-    lineHeight: 20,
+    lineHeight: 24,
+    textAlign: "left",
     ...fonts.medium,
   },
   emptySubtitle: {
@@ -369,6 +370,7 @@ const styles = StyleSheet.create({
     color: "#C0C0C0",
     fontSize: 13,
     lineHeight: 16,
+    textAlign: "left",
     ...fonts.regular,
   },
   grid: {

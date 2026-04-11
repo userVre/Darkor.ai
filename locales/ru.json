@@ -1,11 +1,190 @@
 {
-  "common": { "actions": { "continue": "Продолжить", "cancel": "Отмена", "save": "Сохранить", "share": "Поделиться", "openSettings": "Открыть настройки", "addPhoto": "Добавить фото", "exit": "Выйти" }, "alerts": { "exitTitle": "Выйти?", "progressLost": "Ваш прогресс будет потерян." }, "states": { "savedToGallery": "Сохранено в галерею" } },
-  "boot": { "loadingApp": "Загрузка HomeDecor AI", "loadingAccount": "Загрузка аккаунта...", "checkingPlan": "Проверка тарифа...", "secureAccount": "Защитите аккаунт, чтобы начать создавать..." },
-  "tabs": { "tools": "Инструменты", "create": "Создать", "discover": "Открыть", "profile": "Профиль" },
-  "home": { "title": "HomeDecor AI" },
-  "paywall": { "restore": "Восстановить", "bestOffer": "Лучшее предложение", "yearlyAccess": "Годовой доступ", "weeklyAccess": "Недельный доступ", "freeTrial": "3 дня бесплатно", "pricePerYear": "Всего {{price}} в год", "pricePerWeek": "{{price}} в неделю", "perWeek": "в неделю", "thenPricePerWeek": "Затем {{price}} в неделю", "noPaymentNow": "Без оплаты сейчас", "cancelAnytime": "Отмена в любой момент", "processing": "Обработка...", "tryForFree": "Попробовать бесплатно", "continue": "Продолжить", "terms": "Условия", "privacy": "Конфиденциальность" },
-  "settings": { "title": "Настройки", "heroTitle": "Ваш аккаунт БЕСПЛАТНЫЙ", "upgradePro": "Перейти на PRO" },
-  "wizard": { "headers": { "close": "Закрыть", "previousStep": "Вернуться к предыдущему шагу" }, "stepOne": { "title": "Добавить фото" }, "floorFlow": { "title": "Обновление пола", "promptLabel": "Введите промпт", "generateCta": "Создать мой дизайн →" }, "paintFlow": { "title": "Покраска", "selectionTitle": "Цвет и поверхность", "maskTitle": "Выберите область для покраски", "colorLabel": "Цвет", "surfaceLabel": "Поверхность", "choose": "Выбрать", "apply": "Применить", "colorPickerTitle": "Выберите цвет стены", "surfacePickerTitle": "Выберите тип поверхности", "detectTitle": "Определяем окрашиваемые поверхности...", "preparingMaskTitle": "Подготавливаем маску...", "brushWidth": "Ширина кисти", "eraserWidth": "Ширина ластика", "generateCta": "Покрасить стены →", "finishTitle": "Тип финиша", "selectedColor": "Выбранный цвет" } },
-  "workspace": { "generation": { "preparingSessionTitle": "Подготовка сессии", "preparingSessionBody": "Профиль гостя ещё загружается. Попробуйте снова через мгновение.", "limitReached": "Лимит достигнут" }, "share": { "message": "Создано в HomeDecor.ai", "failedTitle": "Не удалось поделиться" }, "download": { "failedTitle": "Не удалось сохранить" }, "media": { "exampleUnavailableTitle": "Пример недоступен" }, "flow": { "customPromptTitle": "Добавить свой промпт", "customPromptBody": "Опишите точное дизайнерское направление перед применением.", "selectSpaceType": "Нажмите на карточку, чтобы выбрать тип пространства." } },
-  "proSuccess": { "title": "Добро пожаловать в HomeDecor Pro!", "subtitle": "Теперь всё разблокировано. Вот что доступно:", "cta": "Начать дизайн", "toast": "Аккаунт успешно обновлён до Pro." }
+  "common": {
+    "actions": {
+      "continue": "Продолжить",
+      "cancel": "Отмена",
+      "save": "Сохранить",
+      "share": "Поделиться",
+      "openSettings": "Открыть настройки",
+      "addPhoto": "Добавить фото",
+      "exit": "Выйти",
+      "seeAll": "Explore All",
+      "tryThis": "Try This"
+    },
+    "alerts": {
+      "exitTitle": "Выйти?",
+      "progressLost": "Ваш прогресс будет потерян."
+    },
+    "states": {
+      "savedToGallery": "Сохранено в галерею"
+    }
+  },
+  "boot": {
+    "loadingApp": "Загрузка HomeDecor AI",
+    "loadingAccount": "Загрузка аккаунта...",
+    "checkingPlan": "Проверка тарифа...",
+    "secureAccount": "Защитите аккаунт, чтобы начать создавать..."
+  },
+  "tabs": {
+    "tools": "Инструменты",
+    "create": "Создать",
+    "discover": "Открыть",
+    "profile": "Профиль"
+  },
+  "home": {
+    "title": "HomeDecor AI",
+    "tools": {
+      "interior": {
+        "title": "Interior Design",
+        "description": "Transform any room with AI-powered interior design."
+      },
+      "exterior": {
+        "title": "Exterior Design",
+        "description": "Reimagine your home's exterior with world-class facade styling."
+      },
+      "garden": {
+        "title": "Garden Design",
+        "description": "Design stunning gardens and outdoor spaces effortlessly."
+      },
+      "paint": {
+        "title": "Paint (Wall)",
+        "description": "Refine your walls with bespoke color palettes and designer textures."
+      },
+      "floor": {
+        "title": "Floor Restyle",
+        "description": "Elevate your room's foundation with premium materials and finishes."
+      },
+      "cta": "Try This"
+    }
+  },
+  "paywall": {
+    "restore": "Восстановить",
+    "bestOffer": "Лучшее предложение",
+    "yearlyAccess": "Годовой доступ",
+    "weeklyAccess": "Недельный доступ",
+    "freeTrial": "3 дня бесплатно",
+    "pricePerYear": "Всего {{price}} в год",
+    "pricePerWeek": "{{price}} в неделю",
+    "perWeek": "в неделю",
+    "thenPricePerWeek": "Затем {{price}} в неделю",
+    "noPaymentNow": "Без оплаты сейчас",
+    "cancelAnytime": "Отмена в любой момент",
+    "processing": "Обработка...",
+    "tryForFree": "Begin Your Pro Trial",
+    "continue": "Begin Your Pro Trial",
+    "terms": "Условия",
+    "privacy": "Конфиденциальность",
+    "title": "Design Like a Pro. No Limits.",
+    "features": {
+      "fasterRendering": "Faster Results, Every Time",
+      "adFree": "Ultra-HD Quality Renders",
+      "unlimitedRenders": "Unlimited Designs, Always"
+    },
+    "beginTrial": "Begin Your Pro Trial"
+  },
+  "settings": {
+    "title": "Настройки",
+    "heroTitle": "Free Plan",
+    "upgradePro": "Перейти на PRO"
+  },
+  "wizard": {
+    "headers": {
+      "close": "Закрыть",
+      "previousStep": "Вернуться к предыдущему шагу"
+    },
+    "stepOne": {
+      "title": "Upload Your Vision",
+      "emptyTitle": "Upload Your Vision",
+      "cta": "Begin Your Transformation"
+    },
+    "floorFlow": {
+      "title": "Обновление пола",
+      "promptLabel": "Describe Your Vision",
+      "generateCta": "Создать мой дизайн →",
+      "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials."
+    },
+    "paintFlow": {
+      "title": "Покраска",
+      "selectionTitle": "Select Surfaces to Transform",
+      "maskTitle": "Select Surfaces to Transform",
+      "colorLabel": "Цвет",
+      "surfaceLabel": "Поверхность",
+      "choose": "Выбрать",
+      "apply": "Применить",
+      "colorPickerTitle": "Выберите цвет стены",
+      "surfacePickerTitle": "Выберите тип поверхности",
+      "detectTitle": "Определяем окрашиваемые поверхности...",
+      "preparingMaskTitle": "Подготавливаем маску...",
+      "brushWidth": "Ширина кисти",
+      "eraserWidth": "Ширина ластика",
+      "generateCta": "Покрасить стены →",
+      "finishTitle": "Тип финиша",
+      "selectedColor": "Выбранный цвет",
+      "intakeTitle": "Upload Your Vision",
+      "intakeReadyTitle": "Photo added. Mark the wall area next."
+    },
+    "interior": {
+      "stepTwoTitle": "Choose Your Space",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepFourMode": "Design Mode",
+      "stepFourPalette": "Color Harmony"
+    },
+    "exterior": {
+      "stepTwoTitle": "Select Building Type",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepFourTitle": "Color Harmony"
+    },
+    "garden": {
+      "stepOneEmptyTitle": "Upload Your Vision",
+      "stepTwoTitle": "Curate Your Aesthetic",
+      "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
+      "stepThreeTitle": "Color Harmony"
+    }
+  },
+  "workspace": {
+    "generation": {
+      "preparingSessionTitle": "Подготовка сессии",
+      "preparingSessionBody": "Профиль гостя ещё загружается. Попробуйте снова через мгновение.",
+      "limitReached": "Лимит достигнут"
+    },
+    "share": {
+      "message": "Создано в HomeDecor.ai",
+      "failedTitle": "Не удалось поделиться"
+    },
+    "download": {
+      "failedTitle": "Не удалось сохранить"
+    },
+    "media": {
+      "exampleUnavailableTitle": "Пример недоступен"
+    },
+    "flow": {
+      "customPromptTitle": "Describe Your Vision",
+      "customPromptBody": "Опишите точное дизайнерское направление перед применением.",
+      "selectSpaceType": "Нажмите на карточку, чтобы выбрать тип пространства."
+    }
+  },
+  "proSuccess": {
+    "title": "Добро пожаловать в HomeDecor Pro!",
+    "subtitle": "Теперь всё разблокировано. Вот что доступно:",
+    "cta": "Начать дизайн",
+    "toast": "Аккаунт успешно обновлён до Pro."
+  },
+  "app": {
+    "name": "HomeDecor AI"
+  },
+  "discover": {
+    "tabs": {
+      "home": "Interior",
+      "exterior": "Exterior ",
+      "garden": "Garden"
+    },
+    "tryThisStyle": "Try This Style"
+  },
+  "profile": {
+    "title": "My Design Portfolio",
+    "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
+    "emptySubtitle": ""
+  }
 }

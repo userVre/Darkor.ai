@@ -38,7 +38,7 @@ type InteriorRedesignStepFourProps = {
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
 const PALETTE_REFERENCE_WIDTH = 500;
-const ACTIVE_CONTINUE_COLOR = "#FF3B30";
+const ACTIVE_CONTINUE_COLOR = "#0A0A0A";
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -135,7 +135,7 @@ function ModeSelectionCard({
           <Text style={[styles.modeTitle, { color: active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A" }]} numberOfLines={2}>
             {title}
           </Text>
-          <Text style={styles.modeDescription} numberOfLines={2}>
+          <Text style={styles.modeDescription}>
             {description}
           </Text>
         </View>
@@ -170,13 +170,13 @@ export function InteriorRedesignStepFour({
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
   const sectionTitleLeft = 24;
   const modeTitleTop = headerMetrics.contentOffset;
-  const modeCardsTopGap = scaleValue(16, layoutScale);
+  const modeCardsTopGap = scaleValue(32, layoutScale);
   const modeCardWidth = scaleValue(196, layoutScale);
-  const modeCardHeight = scaleValue(192, layoutScale);
+  const modeCardHeight = scaleValue(224, layoutScale);
   const modeCardGap = scaleValue(16, layoutScale);
   const modeIconSize = scaleValue(28, layoutScale);
-  const modeSectionToPaletteGap = scaleValue(48, layoutScale);
-  const paletteTitleTopGap = scaleValue(20, layoutScale);
+  const modeSectionToPaletteGap = scaleValue(32, layoutScale);
+  const paletteTitleTopGap = scaleValue(32, layoutScale);
   const paletteMargin = scaleValue(24, paletteScale);
   const paletteCardWidth = scaleValue(124, paletteScale);
   const paletteCardHeight = scaleValue(164, paletteScale);
@@ -434,7 +434,8 @@ const styles = StyleSheet.create({
   modeDescription: {
     color: "#757575",
     fontSize: 11,
-    lineHeight: 15,
+    lineHeight: 16,
+    textAlign: "left",
     ...fonts.regular,
   },
   modePreviewFrame: {

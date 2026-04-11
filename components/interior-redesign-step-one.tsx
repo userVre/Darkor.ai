@@ -47,7 +47,7 @@ const REFERENCE_HEIGHT = 932;
 const SHEET_HEIGHT = 336;
 const SWIPE_DISMISS_DISTANCE = 84;
 const SWIPE_DISMISS_VELOCITY = 900;
-const ACTIVE_CONTINUE_COLOR = "#FF3B30";
+const ACTIVE_CONTINUE_COLOR = "#0A0A0A";
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -277,7 +277,7 @@ export function InteriorRedesignStepOne({
                 >
                   <Plus color="#0A0A0A" size={12} strokeWidth={2.6} />
                 </View>
-                <Text style={styles.addPhotoButtonText}>{t("common.actions.addPhoto")}</Text>
+                <Text style={styles.addPhotoButtonText}>{t("wizard.stepOne.cta")}</Text>
               </Pressable>
             </>
           )}

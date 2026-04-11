@@ -54,12 +54,12 @@ function applyGlobalTypographyDefaults() {
 
   TextWithDefaults.defaultProps = {
     ...TextWithDefaults.defaultProps,
-    style: [fonts.regular, TextWithDefaults.defaultProps?.style],
+    style: [fonts.regular, { textAlign: "left" }, TextWithDefaults.defaultProps?.style],
   };
 
   TextInputWithDefaults.defaultProps = {
     ...TextInputWithDefaults.defaultProps,
-    style: [fonts.regular, TextInputWithDefaults.defaultProps?.style],
+    style: [fonts.regular, { textAlign: "left" }, TextInputWithDefaults.defaultProps?.style],
   };
 
   typographyDefaultsApplied = true;

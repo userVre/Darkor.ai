@@ -655,7 +655,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
   const colorPickerHueSliderHeight = scaleSelectionValue(32, selectionLayoutScale);
   const colorPickerHandleSize = scaleSelectionValue(24, selectionLayoutScale);
   const colorPickerSwatchSize = scaleSelectionValue(24, selectionLayoutScale);
-  const intakeHeading = selectedImage ? "Photo added � mark the wall area next." : "Add a Photo of your Room";
+  const intakeHeading = selectedImage ? "Photo added. Mark the wall area next." : "Upload Your Vision";
   const intakeSubtext = selectedImage
     ? "Your photo is locked in. Next, brush the wall surfaces so the recolor stays precise around trim, furniture, and decor."
     : "Upload a room photo for precise wall recoloring.";

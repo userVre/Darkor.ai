@@ -1398,23 +1398,23 @@ const ROOM_CARD_META: Record<string, RoomCardMeta> = {
 const MODE_OPTIONS: ModeOption[] = [
   {
     id: "preserve",
-    title: "Subtle Refresh",
-    description: "Keep the room structure familiar while elevating styling, finishes, and atmosphere.",
+    title: "Preserve Layout",
+    description: "Keep your room's structure, refresh the look.",
     promptHint:
       "Preserve the original architecture, room structure, camera angle, and layout as closely as possible while upgrading furniture, finishes, and mood.",
     icon: PaintRoller,
-    previewLabel: "Subtle after",
-    previewCaption: "Same layout, lighter styling upgrades.",
+    previewLabel: "Preserved layout",
+    previewCaption: "Keep the structure, refine the result.",
   },
   {
     id: "renovate",
-    title: "Full Transformation",
-    description: "Give HomeDecor AI more freedom to reshape focal points, materials, and the overall visual impact.",
+    title: "Creative Remodel",
+    description: "Total freedom to redefine furniture and space.",
     promptHint:
       "Allow a more transformative renovation approach with stronger upgrades to built-ins, focal elements, and materials while keeping the result realistic and coherent.",
     icon: Wand2,
-    previewLabel: "Bold after",
-    previewCaption: "More freedom for dramatic change.",
+    previewLabel: "Creative remodel",
+    previewCaption: "Open the space to a broader redesign.",
   },
 ];
 
@@ -5348,11 +5348,11 @@ export default function WorkspaceScreen() {
                         <Text style={wizardSectionBodyStyle}>
                           {isGardenService
                             ? effectiveSignedIn
-                              ? "Review your garden selections, then generate a polished concept and send it to Your Board."
-                              : "Review your garden selections, then generate instantly. Sign in later to preserve it in Your Board."
+      ? "Review your garden selections, then generate a polished concept and save it to My Design Portfolio."
+      : "Review your garden selections, then generate instantly. Sign in later to preserve it in My Design Portfolio."
                             : effectiveSignedIn
-                              ? "Review your exterior selections, then generate a polished concept and send it to Your Board."
-                              : "Review your exterior selections, then generate instantly. Sign in later to preserve it in Your Board."}
+      ? "Review your exterior selections, then generate a polished concept and save it to My Design Portfolio."
+      : "Review your exterior selections, then generate instantly. Sign in later to preserve it in My Design Portfolio."}
                         </Text>
                       </View>
 
@@ -5482,9 +5482,9 @@ export default function WorkspaceScreen() {
                       </View>
 
                       <View style={{ gap: spacing.sm, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
-                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Choose Redesign Mode</Text>
+                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>{t("wizard.interior.stepFourMode")}</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
-                          Pick a softer lift to keep the layout recognizable, or choose a full transformation for a more dramatic redesign.
+                          {t("wizard.interior.stepThreeSubtitle")}
                         </Text>
                         <View style={wizardModeGridStyle}>
                           {MODE_OPTIONS.map((mode, index) => {
@@ -5530,7 +5530,7 @@ export default function WorkspaceScreen() {
                         }}
                         style={{ gap: spacing.sm, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}
                       >
-                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Select Palette</Text>
+                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>{t("wizard.interior.stepFourPalette")}</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
                           {selectedPalette ? `Selected Palette: ${selectedPalette.label}` : "Applied to: walls, furniture, and accent pieces"}
                         </Text>
@@ -6057,7 +6057,7 @@ export default function WorkspaceScreen() {
                   contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: spacing.xxl, gap: spacing.lg }}
                 >
                   <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md }}>
-                    <Text style={[SERVICE_WIZARD_THEME.typography.heroTitle, { color: wizardPrimaryTextColor }]}>Custom Prompt</Text>
+                    <Text style={[SERVICE_WIZARD_THEME.typography.heroTitle, { color: wizardPrimaryTextColor }]}>{t("workspace.flow.customPromptTitle")}</Text>
                     <LuxPressable
                       onPress={handleCloseCustomStyle}
                       pressableClassName="cursor-pointer"
@@ -6084,7 +6084,7 @@ export default function WorkspaceScreen() {
                   </View>
 
                   <View style={{ gap: spacing.sm }}>
-                    <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700" }}>Enter Prompt</Text>
+                    <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700" }}>{t("wizard.floorFlow.promptLabel")}</Text>
                     <View
                       style={{
                         minHeight: 230,
@@ -6101,7 +6101,7 @@ export default function WorkspaceScreen() {
                         value={customPromptDraft}
                         onChangeText={handleChangeCustomPrompt}
                         multiline
-                        placeholder="Design a cinematic minimalist living room with sculptural furniture, warm indirect lighting, walnut panels, and a soft limestone palette."
+                        placeholder={t("wizard.floorFlow.promptPlaceholder")}
                         placeholderTextColor="#71717a"
                         textAlignVertical="top"
                         style={{
@@ -6226,7 +6226,7 @@ export default function WorkspaceScreen() {
           ListHeaderComponent={
             <View style={{ marginBottom: spacing.lg }} className="flex-row items-center justify-between">
               <View style={{ width: 42 }} />
-              <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>Your Board</Text>
+                  <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>My Design Portfolio</Text>
               <LuxPressable
                 onPress={handleResetWizard}
                 className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
@@ -6302,7 +6302,7 @@ export default function WorkspaceScreen() {
             ListHeaderComponent={
               <View style={{ marginBottom: spacing.lg }} className="flex-row items-center justify-between">
                 <View style={{ width: 42 }} />
-                <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>Your Board</Text>
+                  <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>My Design Portfolio</Text>
                 <LuxPressable
                   onPress={handleResetWizard}
                   className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
