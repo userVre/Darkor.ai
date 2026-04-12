@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { StatusBar } from "expo-status-bar";
 import * as MediaLibrary from "expo-media-library";
-import { Image as ImageIcon } from "@/components/material-icons";
+import { LayoutPanelTop } from "@/components/material-icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -294,13 +294,13 @@ export default function ProfileScreen() {
           { paddingBottom: bottomContentInset },
         ]}
       >
-        <Text style={styles.title}>{t("profile.title")}</Text>
+        <Text style={styles.title}>My Design Portfolio</Text>
 
         <View style={[styles.boardBody, { minHeight: boardBodyMinHeight }]}>
           {boardItems.length === 0 ? (
             <View style={styles.emptyState}>
-              <ImageIcon color="#D0D0D0" size={48} strokeWidth={1.9} />
-              <Text style={styles.emptyTitle}>{t("profile.emptyTitle")}</Text>
+              <LayoutPanelTop color="#D0D0D0" size={56} strokeWidth={1.9} />
+              <Text style={styles.emptyTitle}>Your Portfolio is Empty</Text>
               {t("profile.emptySubtitle") ? <Text style={styles.emptySubtitle}>{t("profile.emptySubtitle")}</Text> : null}
             </View>
           ) : (
@@ -365,7 +365,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#0A0A0A",
-    textAlign: "left",
+    textAlign: "center",
+    alignSelf: "center",
     fontSize: 20,
     lineHeight: 24,
     marginBottom: 32,
@@ -374,7 +375,7 @@ const styles = StyleSheet.create({
   emptyState: {
     width: "100%",
     justifyContent: "center",
-    alignItems: "flex-start",
+    alignItems: "center",
     paddingHorizontal: 0,
   },
   emptyTitle: {
@@ -382,7 +383,7 @@ const styles = StyleSheet.create({
     color: "#A0A0A0",
     fontSize: 16,
     lineHeight: 24,
-    textAlign: "left",
+    textAlign: "center",
     ...fonts.medium,
   },
   emptySubtitle: {
@@ -390,7 +391,7 @@ const styles = StyleSheet.create({
     color: "#C0C0C0",
     fontSize: 13,
     lineHeight: 16,
-    textAlign: "left",
+    textAlign: "center",
     ...fonts.regular,
   },
   grid: {

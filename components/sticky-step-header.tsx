@@ -3,10 +3,10 @@ import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { DiamondCreditPill, ThreeDiamondMark } from "./diamond-credit-pill";
+import { DiamondCreditPill } from "./diamond-credit-pill";
 import { fonts } from "../styles/typography";
 
-export const STICKY_STEP_HEADER_CONTENT_GAP = 28;
+export const STICKY_STEP_HEADER_CONTENT_GAP = 0;
 
 const HEADER_TOP_PADDING = 2;
 const HEADER_BOTTOM_PADDING = 10;
@@ -74,23 +74,26 @@ export function StickyStepHeader({
       <View style={[styles.inner, { paddingHorizontal: horizontalInset }]}>
         <View style={styles.row}>
           <View style={styles.leftGroup}>
-            <View style={styles.brandMarkWrap}>
-              <ThreeDiamondMark color="#0A0A0A" />
-            </View>
-
-            {showBack ? (
-              <Pressable
-                accessibilityLabel={backAccessibilityLabel}
-                accessibilityRole="button"
-                hitSlop={10}
-                onPress={onBack}
-                style={styles.iconButton}
-              >
-                <ArrowLeft color="#0A0A0A" size={18} strokeWidth={2.3} />
-              </Pressable>
+            {showCredits ? (
+              <DiamondCreditPill
+                accessibilityLabel="Return to Tools"
+                count={creditCount}
+                onPress={onClose}
+                variant="dark"
+              />
             ) : null}
 
-            {showCredits ? <DiamondCreditPill count={creditCount} variant="light" /> : null}
+            {showBack ? (
+            <Pressable
+              accessibilityLabel={backAccessibilityLabel}
+              accessibilityRole="button"
+              hitSlop={10}
+              onPress={onBack}
+              style={styles.iconButton}
+            >
+              <ArrowLeft color="#0A0A0A" size={18} strokeWidth={2.3} style={styles.backIcon} />
+            </Pressable>
+            ) : null}
           </View>
 
           <View pointerEvents="none" style={styles.stepOverlay}>
@@ -136,13 +139,6 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 40,
     backgroundColor: "#FFFFFF",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#E5E7EB",
-    shadowColor: "#000000",
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
   },
   inner: {
     gap: HEADER_PROGRESS_GAP,
@@ -157,20 +153,14 @@ const styles = StyleSheet.create({
     minHeight: HEADER_ROW_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    minWidth: 116,
-  },
-  brandMarkWrap: {
-    width: 30,
-    height: HEADER_ROW_HEIGHT,
-    alignItems: "flex-start",
-    justifyContent: "center",
+    minWidth: 112,
   },
   rightGroup: {
     minHeight: HEADER_ROW_HEIGHT,
+    flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "center",
-    minWidth: 44,
+    minWidth: 112,
   },
   stepOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -182,6 +172,9 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
+  },
+  backIcon: {
+    transform: [{ translateX: 1.5 }],
   },
   stepText: {
     color: "#0A0A0A",

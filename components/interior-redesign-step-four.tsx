@@ -1,10 +1,10 @@
 import { StatusBar } from "expo-status-bar";
-import { Draw, Wand2 } from "@/components/material-icons";
 import { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { RenovationSparkIcon, StructuralDraftIcon } from "./architectural-mode-icons";
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-header";
@@ -38,7 +38,7 @@ type InteriorRedesignStepFourProps = {
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
 const PALETTE_REFERENCE_WIDTH = 500;
-const ACTIVE_CONTINUE_COLOR = "#0A0A0A";
+const ACTIVE_CONTINUE_COLOR = "#E53935";
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -59,7 +59,7 @@ function ModePreviewGraphic({ active, variant }: { active: boolean; variant: "pr
   const featureColor = variant === "preserve" ? "#B68C6A" : "#CE6D55";
 
   return (
-    <View style={[styles.modePreviewFrame, { borderColor: active ? "#F4C4BD" : "#E9E9E9" }]}>
+    <View style={[styles.modePreviewFrame, { borderColor: active ? "#F3B3B1" : "#E9E9E9" }]}>
       <View style={[styles.modePreviewWall, { backgroundColor: wallColor }]} />
       <View style={[styles.modePreviewFloor, { backgroundColor: floorColor }]} />
       <View style={[styles.modePreviewSofa, { backgroundColor: featureColor }]} />
@@ -125,9 +125,9 @@ function ModeSelectionCard({
           ]}
         >
           {variant === "renovate" ? (
-            <Wand2 color={active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A"} size={iconSize} strokeWidth={2.1} />
+            <RenovationSparkIcon color={active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A"} size={iconSize} strokeWidth={2.1} />
           ) : (
-            <Draw color={active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A"} size={iconSize} strokeWidth={2.1} />
+            <StructuralDraftIcon color={active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A"} size={iconSize} strokeWidth={2.1} />
           )}
         </View>
 

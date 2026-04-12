@@ -26,7 +26,7 @@ type ExteriorRedesignStepTwoProps = {
 
 const REFERENCE_WIDTH = 460;
 const REFERENCE_HEIGHT = 932;
-const ACTIVE_CONTINUE_COLOR = "#0A0A0A";
+const ACTIVE_CONTINUE_COLOR = "#E53935";
 const GRID_GAP = 16;
 const THUMBNAIL_CROP_OVERFLOW = 28;
 const THUMBNAIL_CROP_SHIFT = -8;

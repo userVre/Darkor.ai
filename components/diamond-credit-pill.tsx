@@ -1,11 +1,23 @@
 import { Diamond } from "@/components/material-icons";
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type AccessibilityRole,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 
 import { fonts } from "../styles/typography";
 
 type DiamondCreditPillProps = {
   count: number;
   variant?: "dark" | "light";
+  accessibilityLabel?: string;
+  accessibilityRole?: AccessibilityRole;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
 };
 
 const VARIANT_STYLES = {
@@ -42,21 +54,52 @@ export function ThreeDiamondMark({
 export function DiamondCreditPill({
   count,
   variant = "dark",
+  accessibilityLabel = "Credits",
+  accessibilityRole = "button",
+  onPress,
+  style,
 }: DiamondCreditPillProps) {
   const palette = VARIANT_STYLES[variant];
+  const content = (
+    <>
+      <ThreeDiamondMark color={palette.iconColor} />
+      <Text style={[styles.countText, { color: palette.textColor }]}>{count}</Text>
+    </>
+  );
+
+  if (onPress) {
+    return (
+      <Pressable
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole={accessibilityRole}
+        hitSlop={10}
+        onPress={onPress}
+        style={[
+          styles.pill,
+          style,
+          {
+            backgroundColor: palette.backgroundColor,
+            borderColor: palette.borderColor,
+          },
+        ]}
+      >
+        {content}
+      </Pressable>
+    );
+  }
 
   return (
     <View
       style={[
         styles.pill,
+        style,
         {
           backgroundColor: palette.backgroundColor,
           borderColor: palette.borderColor,
         },
       ]}
     >
-      <ThreeDiamondMark color={palette.iconColor} />
-      <Text style={[styles.countText, { color: palette.textColor }]}>{count}</Text>
+      {content}
     </View>
   );
 }

@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Camera, Image as GalleryIcon, Plus } from "@/components/material-icons";
+import { Camera, Image as GalleryIcon } from "@/components/material-icons";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -47,7 +47,7 @@ const REFERENCE_HEIGHT = 932;
 const SHEET_HEIGHT = 336;
 const SWIPE_DISMISS_DISTANCE = 84;
 const SWIPE_DISMISS_VELOCITY = 900;
-const ACTIVE_CONTINUE_COLOR = "#0A0A0A";
+const ACTIVE_CONTINUE_COLOR = "#E53935";
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -265,18 +265,6 @@ export function InteriorRedesignStepOne({
                   },
                 ]}
               >
-                <View
-                  style={[
-                    styles.addPhotoIconCircle,
-                    {
-                      width: scaleValue(16, innerScale),
-                      height: scaleValue(16, innerScale),
-                      borderRadius: scaleValue(8, innerScale),
-                    },
-                  ]}
-                >
-                  <Plus color="#0A0A0A" size={12} strokeWidth={2.6} />
-                </View>
                 <Text style={styles.addPhotoButtonText}>{t("wizard.stepOne.cta")}</Text>
               </Pressable>
             </>
@@ -504,11 +492,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     backgroundColor: "#0A0A0A",
-  },
-  addPhotoIconCircle: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFFFFF",
   },
   addPhotoButtonText: {
     color: "#FFFFFF",

@@ -224,7 +224,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const maskImageTop = maskTitleTop + scaleMaskValue(60, maskLayoutScale);
   const maskPreviewHeight = scaleMaskValue(412, maskLayoutScale);
   const promptCardTop = maskImageTop + maskPreviewHeight + scaleMaskValue(132, maskLayoutScale);
-  const promptLabelTop = promptCardTop - scaleMaskValue(28, maskLayoutScale);
+  const promptLabelTop = promptCardTop - scaleMaskValue(18, maskLayoutScale);
   const maskButtonBottom = Math.max(insets.bottom + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(44, maskLayoutScale));
   const promptModalTitleTop = Math.max(insets.top + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(92, maskLayoutScale));
   const promptModalSaveBottom = Math.max(insets.bottom + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(12, maskLayoutScale));

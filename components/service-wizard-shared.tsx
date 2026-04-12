@@ -448,8 +448,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   selectionCardActive: {
-    borderColor: SERVICE_WIZARD_THEME.colors.accent,
-    backgroundColor: colors.brandSurface,
+    borderColor: "#E53935",
+    backgroundColor: "rgba(229,57,53,0.08)",
   },
   selectionImageWrap: {
     flex: 1,
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: SERVICE_WIZARD_THEME.colors.accent,
+    backgroundColor: "#E53935",
     borderWidth: HAIRLINE,
     borderColor: colors.borderLight,
   },

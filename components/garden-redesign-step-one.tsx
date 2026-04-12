@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
-import { Camera, Image as GalleryIcon, Plus } from "@/components/material-icons";
+import { Camera, Image as GalleryIcon } from "@/components/material-icons";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -44,7 +44,7 @@ const REFERENCE_HEIGHT = 932;
 const SHEET_HEIGHT = 336;
 const SWIPE_DISMISS_DISTANCE = 84;
 const SWIPE_DISMISS_VELOCITY = 900;
-const ACTIVE_CONTINUE_COLOR = "#0A0A0A";
+const ACTIVE_CONTINUE_COLOR = "#E53935";
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -258,7 +258,6 @@ export function GardenRedesignStepOne({
                   },
                 ]}
               >
-                <Plus color="#FFFFFF" size={14} strokeWidth={2.6} />
                 <Text style={styles.addPhotoButtonText}>{t("wizard.stepOne.cta")}</Text>
               </Pressable>
             </>

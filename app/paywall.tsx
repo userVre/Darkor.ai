@@ -59,11 +59,13 @@ const SCREEN_BG = "#0D0D0D";
 const PANEL_BG = "#1C1C1C";
 const PANEL_BORDER = "#2A2A2A";
 const ACCENT = "#FFFFFF";
+const BRAND_RED = "#E53935";
 const TOGGLE_OFF = "#3A3A3A";
 const TEXT_PRIMARY = "#FFFFFF";
 const TEXT_MUTED = "#A0A0A0";
 const TEXT_RESTORE = "#B3B3B3";
 const TEXT_ACCENT = "#0A0A0A";
+const CTA_TEXT = "#FFFFFF";
 const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 2500;
 const CLOSE_DELAY_MS = 5000;
@@ -91,6 +93,8 @@ const FEATURE_ITEMS = [
   "Ad-free Experience",
   "Unlimited Design Renders",
 ] as const;
+const PAYWALL_EYEBROW = "Experience Professional Grade Design";
+const PAYWALL_TITLE = "Design Like a Pro. No Limits.";
 const AnimatedSvgCircle = Animated.createAnimatedComponent(SvgCircle);
 
 function FadeSwap({
@@ -267,7 +271,12 @@ function WeeklyPlanCard({
           <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, styles.planCardSelected, styles.weeklyCard]}>
             <View style={styles.planRow}>
               <View style={styles.planCopy}>
-                <Text style={styles.planLabel}>{t("paywall.freeTrial").toUpperCase()}</Text>
+                <View style={styles.trialBadge}>
+                  <View style={[styles.trialBadgeCircle, styles.trialBadgeCircleOne]} />
+                  <View style={[styles.trialBadgeCircle, styles.trialBadgeCircleTwo]} />
+                  <View style={[styles.trialBadgeCircle, styles.trialBadgeCircleThree]} />
+                  <Text style={styles.trialBadgeText}>{t("paywall.freeTrial").toUpperCase()}</Text>
+                </View>
               </View>
 
               <View style={styles.planPriceColumn}>
@@ -813,12 +822,12 @@ export default function PaywallScreen() {
 
   const handleOpenTerms = useCallback(() => {
     triggerHaptic();
-    router.push("/terms-of-service");
+    router.push({ pathname: "/legal-viewer", params: { document: "terms" } } as never);
   }, [router]);
 
   const handleOpenPrivacy = useCallback(() => {
     triggerHaptic();
-    router.push("/privacy-policy");
+    router.push({ pathname: "/legal-viewer", params: { document: "privacy" } } as never);
   }, [router]);
 
   const overlayAnimatedStyle = useAnimatedStyle(() => ({
@@ -925,7 +934,8 @@ export default function PaywallScreen() {
           </View>
 
           <View style={styles.titleSection}>
-            <Text style={styles.titleText}>{t("paywall.title")}</Text>
+            <Text style={styles.eyebrowText}>{PAYWALL_EYEBROW}</Text>
+            <Text style={styles.titleText}>{PAYWALL_TITLE}</Text>
           </View>
 
           <View style={styles.featuresSection}>
@@ -967,7 +977,7 @@ export default function PaywallScreen() {
           <Pressable accessibilityRole="button" disabled={ctaDisabled} onPress={() => void handlePurchase()} style={[styles.ctaButton, ctaDisabled ? styles.ctaButtonDisabled : null]}>
             {isLoading ? (
               <View style={styles.ctaLoadingRow}>
-                <ActivityIndicator color={TEXT_ACCENT} />
+                <ActivityIndicator color={CTA_TEXT} />
                 <Text style={styles.ctaText}>{t("paywall.processing")}</Text>
               </View>
             ) : (
@@ -982,12 +992,10 @@ export default function PaywallScreen() {
 
           <View style={[styles.legalFooter, { paddingBottom: Math.max(insets.bottom + 12, 12) }]}>
             <View style={styles.legalLinksRow}>
-              <LegalLink label={t("paywall.terms")} onPress={handleOpenTerms} />
-              <Text style={styles.legalDivider}>|</Text>
-              <LegalLink label={t("paywall.privacy")} onPress={handleOpenPrivacy} />
+              <LegalLink label="Terms of Service" onPress={handleOpenTerms} />
+              <Text style={styles.legalDivider}>•</Text>
+              <LegalLink label="Privacy Policy" onPress={handleOpenPrivacy} />
             </View>
-
-            <Text style={styles.legalSupportText}>{t("paywall.cancelAnytime")}</Text>
           </View>
         </ScrollView>
       </Animated.View>
@@ -1091,13 +1099,23 @@ const styles = StyleSheet.create({
   },
   titleSection: {
     marginHorizontal: 24,
+    alignItems: "center",
     marginBottom: 32,
+    gap: 10,
+  },
+  eyebrowText: {
+    color: "#D6D6D6",
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
+    letterSpacing: 0.3,
+    ...fonts.medium,
   },
   titleText: {
     color: TEXT_PRIMARY,
     fontSize: 30,
     lineHeight: 36,
-    textAlign: "left",
+    textAlign: "center",
     ...fonts.bold,
   },
   featureRow: {
@@ -1255,6 +1273,45 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     ...fonts.bold,
   },
+  trialBadge: {
+    minHeight: 34,
+    alignSelf: "flex-start",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    position: "relative",
+  },
+  trialBadgeCircle: {
+    position: "absolute",
+    borderRadius: 999,
+    backgroundColor: "rgba(229, 57, 53, 0.24)",
+  },
+  trialBadgeCircleOne: {
+    width: 34,
+    height: 34,
+    left: 0,
+    top: 0,
+  },
+  trialBadgeCircleTwo: {
+    width: 28,
+    height: 28,
+    left: 22,
+    top: 3,
+    backgroundColor: "rgba(229, 57, 53, 0.18)",
+  },
+  trialBadgeCircleThree: {
+    width: 24,
+    height: 24,
+    right: 8,
+    top: 5,
+    backgroundColor: "rgba(229, 57, 53, 0.16)",
+  },
+  trialBadgeText: {
+    color: TEXT_PRIMARY,
+    fontSize: 12,
+    lineHeight: 14,
+    textTransform: "uppercase",
+    ...fonts.bold,
+  },
   noPaymentRow: {
     marginTop: 16,
     marginBottom: 42,
@@ -1295,7 +1352,7 @@ const styles = StyleSheet.create({
     minHeight: 58,
     marginHorizontal: 24,
     borderRadius: 16,
-    backgroundColor: ACCENT,
+    backgroundColor: BRAND_RED,
     justifyContent: "center",
     paddingHorizontal: 20,
     paddingVertical: 14,
@@ -1319,28 +1376,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   ctaText: {
-    color: TEXT_ACCENT,
+    color: CTA_TEXT,
     fontSize: 17,
     lineHeight: 22,
     ...fonts.bold,
   },
   ctaArrow: {
     marginLeft: 8,
-    color: TEXT_ACCENT,
+    color: CTA_TEXT,
     fontSize: 20,
     lineHeight: 22,
     ...fonts.bold,
   },
   legalFooter: {
     marginHorizontal: 24,
-    paddingTop: 12,
-    alignItems: "flex-start",
-    gap: 8,
+    paddingTop: 16,
+    alignItems: "center",
   },
   legalLinksRow: {
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
+    justifyContent: "center",
   },
   legalLinkButton: {
     minWidth: 40,
@@ -1356,15 +1413,8 @@ const styles = StyleSheet.create({
   legalDivider: {
     marginHorizontal: 6,
     color: "#999999",
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 14,
-    ...fonts.regular,
-  },
-  legalSupportText: {
-    color: "#999999",
-    fontSize: 11,
-    lineHeight: 14,
-    textAlign: "left",
     ...fonts.regular,
   },
 });

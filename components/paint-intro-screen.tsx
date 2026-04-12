@@ -63,10 +63,13 @@ export function PaintIntroScreen({
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
   const heroTop = headerMetrics.contentOffset;
   const heroHeight = scaleValue(584, layoutScale);
-  const heroCopyTop = scaleValue(332, layoutScale);
-  const heroCopyRight = scaleValue(28, layoutScale);
-  const heroCopyWidth = Math.min(scaleValue(194, layoutScale), Math.max(mainWidth - scaleValue(214, layoutScale), scaleValue(168, layoutScale)));
-  const heroButtonTop = scaleValue(504, layoutScale);
+  const heroCopyTop = scaleValue(296, layoutScale);
+  const heroCopyLeft = scaleValue(188, layoutScale);
+  const heroCopyWidth = Math.min(
+    scaleValue(176, layoutScale),
+    Math.max(mainWidth - heroCopyLeft - scaleValue(26, layoutScale), scaleValue(154, layoutScale)),
+  );
+  const heroButtonTop = scaleValue(522, layoutScale);
   const heroButtonLeft = scaleValue(126, layoutScale);
   const heroButtonHeight = scaleValue(48, layoutScale);
   const heroButtonRadius = scaleValue(24, layoutScale);
@@ -221,7 +224,7 @@ export function PaintIntroScreen({
         >
           <Image source={HERO_IMAGE} style={styles.heroImage} contentFit="cover" transition={120} cachePolicy="memory-disk" />
 
-          <Text style={[styles.heroText, { top: heroCopyTop, right: heroCopyRight, width: heroCopyWidth }]}>
+          <Text style={[styles.heroText, { top: heroCopyTop, left: heroCopyLeft, width: heroCopyWidth }]}>
             {t("wizard.paintIntro.hero")}
           </Text>
 
@@ -235,7 +238,8 @@ export function PaintIntroScreen({
                 left: heroButtonLeft,
                 height: heroButtonHeight,
                 borderRadius: heroButtonRadius,
-                paddingHorizontal: scaleValue(48, layoutScale),
+                minWidth: scaleValue(164, layoutScale),
+                paddingHorizontal: scaleValue(40, layoutScale),
               },
             ]}
           >

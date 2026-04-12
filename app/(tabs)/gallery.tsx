@@ -11,12 +11,14 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { Diamond } from "@/components/material-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
+import { CreditLimitModal } from "../../components/credit-limit-modal";
+import { DiamondCreditPill } from "../../components/diamond-credit-pill";
 import { DiscoverImageCard } from "../../components/discover-image-card";
 import { DiscoverPreviewModal } from "../../components/discover-preview-modal";
+import { useViewerCredits } from "../../components/viewer-credits-context";
 import {
   DISCOVER_TABS,
   getDiscoverGroups,
@@ -33,16 +35,6 @@ const TAB_RAIL_PADDING = 6;
 const CARD_GAP = 12;
 const OUTER_WINDOW_SIZE = 5;
 
-const ThreeDiamondMark = memo(function ThreeDiamondMark() {
-  return (
-    <View style={styles.diamondMark} pointerEvents="none">
-      <Diamond color="#0A0A0A" size={11} strokeWidth={2.2} style={styles.diamondLeft} />
-      <Diamond color="#0A0A0A" size={13} strokeWidth={2.2} style={styles.diamondCenter} />
-      <Diamond color="#0A0A0A" size={11} strokeWidth={2.2} style={styles.diamondRight} />
-    </View>
-  );
-});
-
 const DiscoverTabs = memo(function DiscoverTabs({
   activeTab,
   railWidth,
@@ -52,7 +44,6 @@ const DiscoverTabs = memo(function DiscoverTabs({
   railWidth: number;
   onSelect: (tabId: DiscoverTabId) => void;
 }) {
-  const { t } = useTranslation();
   const activeIndex = DISCOVER_TABS.findIndex((tab) => tab.id === activeTab);
   const trackWidth = railWidth - TAB_RAIL_PADDING * 2;
   const pillWidth = trackWidth / DISCOVER_TABS.length;
@@ -97,7 +88,7 @@ const DiscoverTabs = memo(function DiscoverTabs({
                 style={styles.tabButton}
               >
                 <Text numberOfLines={1} style={[styles.tabLabel, isActive ? styles.tabLabelActive : null]}>
-                  {t(`discover.tabs.${tab.id}`)}
+                  {tab.label}
                 </Text>
               </Pressable>
             );
@@ -160,8 +151,10 @@ export default function GalleryScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const { credits: creditBalance } = useViewerCredits();
   const [activeTab, setActiveTab] = useState<DiscoverTabId>("home");
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
+  const [isCreditModalVisible, setIsCreditModalVisible] = useState(false);
 
   const groups = useMemo(() => getDiscoverGroups(activeTab), [activeTab]);
   const tabRailWidth = useMemo(() => Math.min(width - SCREEN_SIDE_MARGIN * 2, TAB_RAIL_MAX_WIDTH), [width]);
@@ -186,6 +179,20 @@ export default function GalleryScreen() {
         group: group.id,
       },
     } as never);
+  }, [router]);
+
+  const handleCreditsPress = useCallback(() => {
+    triggerHaptic();
+    setIsCreditModalVisible(true);
+  }, []);
+
+  const handleCreditModalClose = useCallback(() => {
+    setIsCreditModalVisible(false);
+  }, []);
+
+  const handleCreditModalUpgrade = useCallback(() => {
+    setIsCreditModalVisible(false);
+    router.push("/paywall");
   }, [router]);
 
   return (
@@ -219,10 +226,17 @@ export default function GalleryScreen() {
           <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
             <View style={styles.headerRow}>
               <View style={styles.headerSide}>
-                <ThreeDiamondMark />
+                <DiamondCreditPill
+                  accessibilityLabel="Open credits"
+                  count={creditBalance}
+                  onPress={handleCreditsPress}
+                  variant="dark"
+                />
               </View>
 
-              <Text style={styles.headerTitle}>{t("discover.title")}</Text>
+              <View pointerEvents="none" style={styles.headerTitleWrap}>
+                <Text style={styles.headerTitle}>{t("discover.title")}</Text>
+              </View>
 
               <View style={styles.headerSide} />
             </View>
@@ -237,6 +251,12 @@ export default function GalleryScreen() {
         visible={Boolean(previewItem)}
         topInset={insets.top}
         onClose={handlePreviewClose}
+      />
+
+      <CreditLimitModal
+        visible={isCreditModalVisible}
+        onClose={handleCreditModalClose}
+        onUpgrade={handleCreditModalUpgrade}
       />
     </View>
   );
@@ -255,36 +275,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: SCREEN_SIDE_MARGIN,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
   headerSide: {
-    width: 52,
+    width: 112,
     alignItems: "flex-start",
     justifyContent: "center",
   },
-  diamondMark: {
-    width: 30,
-    height: 18,
-    position: "relative",
-  },
-  diamondLeft: {
-    position: "absolute",
-    left: 0,
-    top: 4,
-    opacity: 0.92,
-  },
-  diamondCenter: {
-    position: "absolute",
-    left: 9,
-    top: 0,
-  },
-  diamondRight: {
-    position: "absolute",
-    right: 0,
-    top: 4,
-    opacity: 0.92,
+  headerTitleWrap: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
   },
   headerTitle: {
-    flex: 1,
     color: "#0A0A0A",
     fontSize: 20,
     lineHeight: 24,
@@ -342,6 +345,8 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
   },
   sectionTitle: {
     flex: 1,
@@ -352,6 +357,7 @@ const styles = StyleSheet.create({
   },
   seeAllButton: {
     paddingVertical: 2,
+    alignItems: "flex-end",
   },
   seeAllText: {
     color: "#8D95A1",

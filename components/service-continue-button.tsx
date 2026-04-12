@@ -10,7 +10,7 @@ import { type Theme, useTheme } from "@/styles/theme";
 import { LuxPressable } from "./lux-pressable";
 
 const pointerClassName = "cursor-pointer";
-const ACTIVE_BUTTON_COLOR = "#0A0A0A";
+const ACTIVE_BUTTON_COLOR = "#E53935";
 const INACTIVE_BUTTON_COLOR = "#4A4A4A";
 const INACTIVE_TEXT_COLOR = "#CFCFCF";
 
@@ -43,7 +43,7 @@ export function ServiceContinueButton({
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const isBlocked = loading || !active;
-  const resolvedLabel = label ?? `${t("common.actions.continue")} \u2192`;
+  const resolvedLabel = label ?? t("common.actions.continue");
 
   return (
     <AnimatePresence>

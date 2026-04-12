@@ -3,7 +3,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { DiamondCreditPill, ThreeDiamondMark } from "./diamond-credit-pill";
+import { DiamondCreditPill } from "./diamond-credit-pill";
 import { fonts } from "../styles/typography";
 
 type DesignStepHeaderProps = {
@@ -23,7 +23,7 @@ const DESIGN_HEADER_ROW_HEIGHT = 44;
 const DESIGN_HEADER_PROGRESS_HEIGHT = 4;
 const DESIGN_HEADER_PROGRESS_SEGMENT_GAP = 10;
 const DESIGN_HEADER_PROGRESS_GAP = 12;
-const DESIGN_HEADER_CONTENT_GAP = 28;
+const DESIGN_HEADER_CONTENT_GAP = 0;
 
 export function getDesignStepHeaderMetrics(topInset: number) {
   const safeTop = Platform.OS === "android" ? Math.max(topInset, 12) : Math.max(topInset, 16);
@@ -95,13 +95,14 @@ export function DesignStepHeader({
           },
         ]}
       >
-        <View style={[styles.sideSlot, styles.leftSlot]}>
-          <View style={styles.brandMarkWrap}>
-            <ThreeDiamondMark color="#0A0A0A" />
-          </View>
-
+        <View style={styles.leftSlot}>
           {showCredits ? (
-            <DiamondCreditPill count={creditCount ?? 0} variant="dark" />
+            <DiamondCreditPill
+              accessibilityLabel="Return to Tools"
+              count={creditCount ?? 0}
+              onPress={onClose}
+              variant="dark"
+            />
           ) : showBack ? (
             <Pressable
               accessibilityLabel={backAccessibilityLabel}
@@ -110,16 +111,16 @@ export function DesignStepHeader({
               onPress={onBack}
               style={styles.iconButton}
             >
-              <ArrowLeft color="#0A0A0A" size={18} strokeWidth={2.4} />
+              <ArrowLeft color="#0A0A0A" size={18} strokeWidth={2.4} style={styles.backIcon} />
             </Pressable>
           ) : null}
         </View>
 
-        <View style={styles.centerSlot}>
+        <View pointerEvents="none" style={styles.centerSlot}>
           <Text style={styles.stepText}>{t("common.labels.step", { current: safeStep, total: totalSteps })}</Text>
         </View>
 
-        <View style={[styles.sideSlot, styles.rightSlot]}>
+        <View style={styles.rightSlot}>
           <Pressable
             accessibilityLabel={closeAccessibilityLabel}
             accessibilityRole="button"
@@ -143,13 +144,6 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 40,
     backgroundColor: "#FFFFFF",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#E5E7EB",
-    shadowColor: "#000000",
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
   },
   headerRow: {
     position: "absolute",
@@ -157,24 +151,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     minHeight: DESIGN_HEADER_ROW_HEIGHT,
+    justifyContent: "space-between",
   },
-  sideSlot: {
-    width: 116,
+  leftSlot: {
+    minWidth: 112,
     minHeight: DESIGN_HEADER_ROW_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    justifyContent: "center",
-  },
-  leftSlot: {
-    alignItems: "flex-start",
+    justifyContent: "flex-start",
   },
   rightSlot: {
-    alignItems: "flex-end",
+    minWidth: 112,
+    minHeight: DESIGN_HEADER_ROW_HEIGHT,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
   },
   centerSlot: {
-    flex: 1,
-    minHeight: DESIGN_HEADER_ROW_HEIGHT,
+    ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -185,17 +179,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
     ...fonts.semibold,
   },
-  brandMarkWrap: {
-    width: 30,
-    height: DESIGN_HEADER_ROW_HEIGHT,
-    alignItems: "flex-start",
-    justifyContent: "center",
-  },
   iconButton: {
     width: 44,
     height: 44,
     alignItems: "center",
     justifyContent: "center",
+  },
+  backIcon: {
+    transform: [{ translateX: 1.5 }],
   },
   progressRow: {
     position: "absolute",

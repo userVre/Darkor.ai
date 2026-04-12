@@ -370,6 +370,7 @@ function AppShell() {
       <Stack.Screen name="settings" />
       <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
       <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
+      <Stack.Screen name="legal-viewer" options={{ presentation: "modal" }} />
       <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
       <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
     </Stack>

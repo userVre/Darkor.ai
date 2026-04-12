@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/expo";
-import { Gem, Settings } from "@/components/material-icons";
+import { Settings } from "@/components/material-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CreditLimitModal } from "../../components/credit-limit-modal";
+import { DiamondCreditPill } from "../../components/diamond-credit-pill";
 import { HomeToolsBottomNav } from "../../components/home-tools-bottom-nav";
 import { HomeToolCard, type HomeToolCardItem } from "../../components/home-tool-card";
 import { useWorkspaceDraft } from "../../components/workspace-context";
@@ -31,7 +32,6 @@ export default function HomeScreen() {
   const { credits: creditBalance, hasPaidAccess } = useViewerCredits();
   const [isCreditModalVisible, setIsCreditModalVisible] = useState(false);
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
-  const usageBadgeLabel = String(creditBalance);
   const stickyHeaderOffset = insets.top + STICKY_HEADER_HEIGHT;
   const toolCards: HomeToolCardItem[] = [
     {
@@ -170,10 +170,12 @@ export default function HomeScreen() {
       <View style={[styles.stickyHeader, { paddingTop: insets.top }]}>
         <View style={styles.headerRow}>
           <View style={[styles.headerSide, styles.headerSideStart]}>
-            <Pressable accessibilityRole="button" onPress={handleCreditsPress} style={styles.creditsBadge}>
-              <Gem color="#FFFFFF" size={13} strokeWidth={2.2} />
-              <Text style={styles.creditsText}>{usageBadgeLabel}</Text>
-            </Pressable>
+            <DiamondCreditPill
+              accessibilityLabel="Open credits"
+              count={creditBalance}
+              onPress={handleCreditsPress}
+              variant="dark"
+            />
           </View>
 
           <Text numberOfLines={1} style={styles.title}>{t("home.title")}</Text>
@@ -241,7 +243,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   headerSide: {
-    width: 72,
+    width: 112,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -250,21 +252,6 @@ const styles = StyleSheet.create({
   },
   headerSideEnd: {
     justifyContent: "flex-end",
-  },
-  creditsBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderRadius: 20,
-    backgroundColor: "#0A0A0A",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  creditsText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    lineHeight: 13,
-    ...fonts.bold,
   },
   title: {
     flex: 1,

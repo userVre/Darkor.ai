@@ -48,7 +48,6 @@ import {
   Flower2,
   House,
   Monitor,
-  PaintRoller,
   Projector,
   Sofa,
   Sparkles,
@@ -60,7 +59,6 @@ import {
   Trash2,
   UtensilsCrossed,
   MoveHorizontal,
-  Wand2,
   Redo2,
   Share2,
 } from "@/components/material-icons";
@@ -88,6 +86,7 @@ import { useGenerationStatusMessages } from "../../components/service-processing
 import { ServiceWizardHeader } from "../../components/service-wizard-header";
 import { getStickyStepHeaderMetrics } from "../../components/sticky-step-header";
 import { BeforeAfterSlider } from "../../components/before-after-slider";
+import { RenovationSparkIcon, StructuralDraftIcon } from "../../components/architectural-mode-icons";
 import { ThreeDiamondMark } from "../../components/diamond-credit-pill";
 import { useFlowUI } from "../../components/flow-ui-context";
 import { useViewerCredits } from "../../components/viewer-credits-context";
@@ -1508,7 +1507,7 @@ const MODE_OPTIONS: ModeOption[] = [
     description: "Keep your room's structure, refresh the look.",
     promptHint:
       "Preserve the original architecture, room structure, camera angle, and layout as closely as possible while upgrading furniture, finishes, and mood.",
-    icon: PaintRoller,
+    icon: StructuralDraftIcon,
     previewLabel: "Preserved layout",
     previewCaption: "Keep the structure, refine the result.",
   },
@@ -1518,7 +1517,7 @@ const MODE_OPTIONS: ModeOption[] = [
     description: "Total freedom to redefine furniture and space.",
     promptHint:
       "Allow a more transformative renovation approach with stronger upgrades to built-ins, focal elements, and materials while keeping the result realistic and coherent.",
-    icon: Wand2,
+    icon: RenovationSparkIcon,
     previewLabel: "Creative remodel",
     previewCaption: "Open the space to a broader redesign.",
   },
@@ -4754,10 +4753,10 @@ export default function WorkspaceScreen() {
     const showContinueBar = !isCustomPromptViewOpen;
     const continueButtonVisible = true;
     const stepButtonLabel = !isGenerationReviewStep
-      ? "Continue \u2192"
+      ? "Continue"
       : !hasGenerationCredits
-        ? "Get More Credits \u2192"
-        : "Generate My Design \u2192";
+        ? "Get More Credits"
+        : "Generate My Design";
     const stepButtonActive = isPhotoStep
       ? Boolean(selectedImage)
       : isSpaceStep

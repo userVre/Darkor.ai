@@ -1553,7 +1553,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                 <View style={styles.selectionCardIconWrap}>
                   <PaintSurfaceIcon surface={selectedSurface} color="#0A0A0A" size={18} />
                 </View>
-                <Text style={styles.selectionCardLabel}>{t("wizard.paintFlow.surfaceLabel")}</Text>
+                <Text style={[styles.selectionCardLabel, styles.selectionSurfaceCardLabel]}>{t("wizard.paintFlow.surfaceLabel")}</Text>
                 <Pressable
                   accessibilityRole="button"
                   onPress={handleOpenSurfacePicker}
@@ -2254,6 +2254,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
     ...fonts.bold,
+  },
+  selectionSurfaceCardLabel: {
+    marginTop: -38,
+    marginLeft: 50,
   },
   selectionColorButton: {
     marginTop: 24,

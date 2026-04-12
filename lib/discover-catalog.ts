@@ -18,9 +18,9 @@ export type DiscoverGroup = {
 };
 
 export const DISCOVER_TABS = [
-  { id: "home", label: "Interior" },
-  { id: "garden", label: "Garden" },
-  { id: "exterior", label: "Exterior" },
+  { id: "home", label: "Interiors" },
+  { id: "exterior", label: "Architecture" },
+  { id: "garden", label: "Landscapes" },
 ] as const satisfies ReadonlyArray<{ id: DiscoverTabId; label: string }>;
 
 const DISCOVER_IMAGES = {
@@ -301,6 +301,10 @@ const HOME_GROUPS: DiscoverGroup[] = [
   ]),
 ];
 
+const HOME_ACTIVE_GROUPS = HOME_GROUPS.filter((group) =>
+  group.id === "kitchen" || group.id === "living-room" || group.id === "dining-room",
+);
+
 const GARDEN_GROUPS: DiscoverGroup[] = [
   makeGroup("garden", "Garden", "garden", [
     "gardenAfterInfinityPool",
@@ -371,7 +375,7 @@ const EXTERIOR_GROUPS: DiscoverGroup[] = [
 ];
 
 const DISCOVER_CATALOG: Record<DiscoverTabId, DiscoverGroup[]> = {
-  home: HOME_GROUPS,
+  home: HOME_ACTIVE_GROUPS,
   garden: GARDEN_GROUPS,
   exterior: EXTERIOR_GROUPS,
 };
