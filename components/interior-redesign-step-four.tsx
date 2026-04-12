@@ -4,11 +4,10 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, typ
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { RenovationSparkIcon, StructuralDraftIcon } from "./architectural-mode-icons";
+import { BadgeCheck, PaintRoller, Wand2 } from "@/components/material-icons";
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-header";
-import { InteriorRedesignStepProgress } from "./interior-redesign-step-progress";
 
 type InteriorRedesignStepFourMode = {
   id: string;
@@ -52,28 +51,10 @@ function chunkIntoRows<T>(items: T[], size: number) {
   return rows;
 }
 
-function ModePreviewGraphic({ active, variant }: { active: boolean; variant: "preserve" | "renovate" }) {
-  const accentColor = active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A";
-  const wallColor = variant === "preserve" ? "#E9E4DD" : "#F5DAD6";
-  const floorColor = variant === "preserve" ? "#D5C4B2" : "#D9B09A";
-  const featureColor = variant === "preserve" ? "#B68C6A" : "#CE6D55";
-
-  return (
-    <View style={[styles.modePreviewFrame, { borderColor: active ? "#F3B3B1" : "#E9E9E9" }]}>
-      <View style={[styles.modePreviewWall, { backgroundColor: wallColor }]} />
-      <View style={[styles.modePreviewFloor, { backgroundColor: floorColor }]} />
-      <View style={[styles.modePreviewSofa, { backgroundColor: featureColor }]} />
-      <View style={[styles.modePreviewPillar, { backgroundColor: accentColor, opacity: variant === "renovate" ? 0.72 : 0.4 }]} />
-      <View style={[styles.modePreviewAccent, { backgroundColor: accentColor }]} />
-    </View>
-  );
-}
-
 function ModeSelectionCard({
   active,
   description,
   height,
-  iconSize,
   layoutScale,
   onPress,
   style,
@@ -84,7 +65,6 @@ function ModeSelectionCard({
   active: boolean;
   description: string;
   height: number;
-  iconSize: number;
   layoutScale: number;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
@@ -92,11 +72,12 @@ function ModeSelectionCard({
   variant: "preserve" | "renovate";
   width: number;
 }) {
-  const horizontalPadding = scaleValue(16, layoutScale);
-  const topPadding = scaleValue(12, layoutScale);
-  const contentGap = scaleValue(12, layoutScale);
-  const textGap = scaleValue(8, layoutScale);
-  const previewBottom = scaleValue(14, layoutScale);
+  const horizontalPadding = scaleValue(18, layoutScale);
+  const verticalPadding = scaleValue(18, layoutScale);
+  const titleTopGap = scaleValue(18, layoutScale);
+  const descriptionTopGap = scaleValue(12, layoutScale);
+  const iconSize = scaleValue(30, layoutScale);
+  const ModeIcon = variant === "renovate" ? Wand2 : PaintRoller;
 
   return (
     <Pressable
@@ -110,39 +91,42 @@ function ModeSelectionCard({
           width,
           height,
           borderColor: active ? ACTIVE_CONTINUE_COLOR : "#E5E5E5",
+          backgroundColor: active ? "#FFF7F6" : "#FFFFFF",
         },
         style,
       ]}
     >
-      <View style={[styles.modeCardContent, { paddingTop: topPadding, paddingHorizontal: horizontalPadding, gap: contentGap }]}>
-        <View
-          style={[
-            styles.modeIconWrap,
-            {
-              borderColor: active ? "#FFC1B8" : "#ECECEC",
-              backgroundColor: active ? "#FFF1EE" : "#F8F8F8",
-            },
-          ]}
-        >
-          {variant === "renovate" ? (
-            <RenovationSparkIcon color={active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A"} size={iconSize} strokeWidth={2.1} />
-          ) : (
-            <StructuralDraftIcon color={active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A"} size={iconSize} strokeWidth={2.1} />
-          )}
+      <View style={[styles.modeCardContent, { paddingHorizontal: horizontalPadding, paddingVertical: verticalPadding }]}>
+        <View style={styles.modeCardTopRow}>
+          <View
+            style={[
+              styles.modeIconWrap,
+              {
+                borderColor: active ? "#F6B6B1" : "#E9E9E9",
+                backgroundColor: active ? "#FFF0EE" : "#F7F7F7",
+              },
+            ]}
+          >
+            <ModeIcon color={active ? ACTIVE_CONTINUE_COLOR : "#111111"} size={iconSize} strokeWidth={2.2} />
+          </View>
+          {active ? (
+            <View style={styles.modeSelectedBadge}>
+              <BadgeCheck color={ACTIVE_CONTINUE_COLOR} size={18} strokeWidth={2.1} />
+            </View>
+          ) : null}
         </View>
 
-        <View style={{ gap: textGap }}>
-          <Text style={[styles.modeTitle, { color: active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A" }]} numberOfLines={2}>
+        <View style={{ marginTop: titleTopGap }}>
+          <Text style={styles.modeTitle} numberOfLines={2}>
             {title}
           </Text>
+        </View>
+
+        <View style={[styles.modeDescriptionBlock, { marginTop: descriptionTopGap }]}>
           <Text style={styles.modeDescription}>
             {description}
           </Text>
         </View>
-      </View>
-
-      <View style={[styles.modePreviewSlot, { left: horizontalPadding, right: horizontalPadding, bottom: previewBottom }]}>
-        <ModePreviewGraphic active={active} variant={variant} />
       </View>
     </Pressable>
   );
@@ -172,9 +156,8 @@ export function InteriorRedesignStepFour({
   const modeTitleTop = headerMetrics.contentOffset;
   const modeCardsTopGap = scaleValue(32, layoutScale);
   const modeCardWidth = scaleValue(196, layoutScale);
-  const modeCardHeight = scaleValue(224, layoutScale);
+  const modeCardHeight = scaleValue(252, layoutScale);
   const modeCardGap = scaleValue(16, layoutScale);
-  const modeIconSize = scaleValue(28, layoutScale);
   const modeSectionToPaletteGap = scaleValue(32, layoutScale);
   const paletteTitleTopGap = scaleValue(32, layoutScale);
   const paletteMargin = scaleValue(24, paletteScale);
@@ -249,7 +232,6 @@ export function InteriorRedesignStepFour({
                   active={active}
                   description={mode.description}
                   height={modeCardHeight}
-                  iconSize={modeIconSize}
                   layoutScale={layoutScale}
                   style={index === modes.length - 1 ? undefined : { marginRight: modeCardGap }}
                   title={mode.title}
@@ -404,87 +386,51 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   modeCard: {
-    overflow: "hidden",
     borderRadius: 20,
     borderWidth: 1.5,
     backgroundColor: "#FFFFFF",
   },
   modeCardContent: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
+    flex: 1,
+    justifyContent: "space-between",
   },
-  modePreviewSlot: {
-    position: "absolute",
+  modeCardTopRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
   },
   modeIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
+    width: 64,
+    height: 64,
+    borderRadius: 20,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
+  modeSelectedBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF0EE",
+  },
   modeTitle: {
-    fontSize: 16,
-    lineHeight: 20,
+    color: "#0A0A0A",
+    fontSize: 18,
+    lineHeight: 23,
     ...fonts.bold,
   },
+  modeDescriptionBlock: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
   modeDescription: {
-    color: "#757575",
-    fontSize: 11,
-    lineHeight: 16,
+    color: "#8A8A8A",
+    fontSize: 13,
+    lineHeight: 19,
     textAlign: "left",
     ...fonts.regular,
-  },
-  modePreviewFrame: {
-    height: 68,
-    overflow: "hidden",
-    borderRadius: 16,
-    borderWidth: 1,
-    backgroundColor: "#FBFBFB",
-  },
-  modePreviewWall: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 38,
-  },
-  modePreviewFloor: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 24,
-  },
-  modePreviewSofa: {
-    position: "absolute",
-    left: 18,
-    bottom: 18,
-    width: 54,
-    height: 18,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    borderBottomLeftRadius: 6,
-    borderBottomRightRadius: 6,
-  },
-  modePreviewPillar: {
-    position: "absolute",
-    left: 78,
-    top: 16,
-    width: 8,
-    height: 34,
-    borderRadius: 6,
-  },
-  modePreviewAccent: {
-    position: "absolute",
-    right: 18,
-    bottom: 22,
-    width: 26,
-    height: 14,
-    borderRadius: 7,
   },
   paletteCard: {
     overflow: "hidden",

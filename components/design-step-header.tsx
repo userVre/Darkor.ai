@@ -24,6 +24,8 @@ const DESIGN_HEADER_PROGRESS_HEIGHT = 4;
 const DESIGN_HEADER_PROGRESS_SEGMENT_GAP = 10;
 const DESIGN_HEADER_PROGRESS_GAP = 12;
 const DESIGN_HEADER_CONTENT_GAP = 0;
+const DESIGN_HEADER_SIDE_SLOT_WIDTH = 120;
+const DESIGN_HEADER_ACTION_SIZE = 44;
 
 export function getDesignStepHeaderMetrics(topInset: number) {
   const safeTop = Platform.OS === "android" ? Math.max(topInset, 12) : Math.max(topInset, 16);
@@ -154,15 +156,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   leftSlot: {
-    minWidth: 112,
-    minHeight: DESIGN_HEADER_ROW_HEIGHT,
+    width: DESIGN_HEADER_SIDE_SLOT_WIDTH,
+    height: DESIGN_HEADER_ROW_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
   },
   rightSlot: {
-    minWidth: 112,
-    minHeight: DESIGN_HEADER_ROW_HEIGHT,
+    width: DESIGN_HEADER_SIDE_SLOT_WIDTH,
+    height: DESIGN_HEADER_ROW_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
@@ -180,8 +182,8 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
   iconButton: {
-    width: 44,
-    height: 44,
+    width: DESIGN_HEADER_ACTION_SIZE,
+    height: DESIGN_HEADER_ACTION_SIZE,
     alignItems: "center",
     justifyContent: "center",
   },

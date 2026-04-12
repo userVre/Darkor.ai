@@ -93,8 +93,8 @@ const FEATURE_ITEMS = [
   "Ad-free Experience",
   "Unlimited Design Renders",
 ] as const;
-const PAYWALL_EYEBROW = "Experience Professional Grade Design";
-const PAYWALL_TITLE = "Design Like a Pro. No Limits.";
+const PAYWALL_SUBTITLE = "Experience Professional Grade Design";
+const PAYWALL_TITLE = "Unlock HomeDecor AI Premium";
 const AnimatedSvgCircle = Animated.createAnimatedComponent(SvgCircle);
 
 function FadeSwap({
@@ -126,7 +126,7 @@ function FeatureRow({ label, isLast }: { label: string; isLast: boolean }) {
   return (
     <View style={[styles.featureRow, !isLast ? styles.featureRowGap : null]}>
       <View style={styles.featureIcon}>
-        <Check color={SCREEN_BG} size={12} strokeWidth={3} />
+        <Check color={TEXT_PRIMARY} size={12} strokeWidth={3} />
       </View>
       <Text style={styles.featureText}>{label}</Text>
     </View>
@@ -934,8 +934,8 @@ export default function PaywallScreen() {
           </View>
 
           <View style={styles.titleSection}>
-            <Text style={styles.eyebrowText}>{PAYWALL_EYEBROW}</Text>
             <Text style={styles.titleText}>{PAYWALL_TITLE}</Text>
+            <Text style={styles.subtitleText}>{PAYWALL_SUBTITLE}</Text>
           </View>
 
           <View style={styles.featuresSection}>
@@ -1103,7 +1103,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     gap: 10,
   },
-  eyebrowText: {
+  subtitleText: {
     color: "#D6D6D6",
     fontSize: 13,
     lineHeight: 18,
@@ -1129,7 +1129,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 6,
-    backgroundColor: TEXT_PRIMARY,
+    backgroundColor: BRAND_RED,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -1168,7 +1168,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   toggleTrackOn: {
-    backgroundColor: ACCENT,
+    backgroundColor: BRAND_RED,
   },
   toggleTrackOff: {
     backgroundColor: TOGGLE_OFF,
@@ -1207,7 +1207,7 @@ const styles = StyleSheet.create({
   },
   planCardSelected: {
     borderWidth: 2,
-    borderColor: ACCENT,
+    borderColor: BRAND_RED,
   },
   bestOfferBadge: {
     position: "absolute",

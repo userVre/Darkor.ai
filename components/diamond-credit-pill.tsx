@@ -1,4 +1,3 @@
-import { Diamond } from "@/components/material-icons";
 import {
   Pressable,
   StyleSheet,
@@ -8,6 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
+import Svg, { Path } from "react-native-svg";
 
 import { fonts } from "../styles/typography";
 
@@ -35,19 +35,22 @@ const VARIANT_STYLES = {
   },
 } as const;
 
-export function ThreeDiamondMark({
+export function DiamondCreditIcon({
   color,
-  style,
+  size = 16,
 }: {
   color: string;
-  style?: StyleProp<ViewStyle>;
+  size?: number;
 }) {
   return (
-    <View style={[styles.diamondMark, style]} pointerEvents="none">
-      <Diamond color={color} size={11} strokeWidth={2.2} style={styles.diamondLeft} />
-      <Diamond color={color} size={13} strokeWidth={2.2} style={styles.diamondCenter} />
-      <Diamond color={color} size={11} strokeWidth={2.2} style={styles.diamondRight} />
-    </View>
+    <Svg accessibilityElementsHidden height={size} pointerEvents="none" viewBox="0 0 24 24" width={size}>
+      <Path d="M12 2.75 5.6 9.25l6.4 12 6.4-12Z" fill={color} opacity={0.95} />
+      <Path d="M8.45 9.25 12 2.75l3.55 6.5Z" fill={color} opacity={0.45} />
+      <Path d="M8.45 9.25h7.1L12 20.2Z" fill={color} opacity={0.2} />
+      <Path d="M8.45 9.25 12 20.2l3.55-10.95" fill="none" opacity={0.75} stroke={color} strokeLinejoin="round" strokeWidth={1.1} />
+      <Path d="M5.6 9.25h12.8" fill="none" opacity={0.55} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.1} />
+      <Path d="M12 2.75v17.45" fill="none" opacity={0.34} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.1} />
+    </Svg>
   );
 }
 
@@ -62,7 +65,7 @@ export function DiamondCreditPill({
   const palette = VARIANT_STYLES[variant];
   const content = (
     <>
-      <ThreeDiamondMark color={palette.iconColor} />
+      <DiamondCreditIcon color={palette.iconColor} size={16} />
       <Text style={[styles.countText, { color: palette.textColor }]}>{count}</Text>
     </>
   );
@@ -76,11 +79,11 @@ export function DiamondCreditPill({
         onPress={onPress}
         style={[
           styles.pill,
-          style,
           {
             backgroundColor: palette.backgroundColor,
             borderColor: palette.borderColor,
           },
+          style,
         ]}
       >
         {content}
@@ -92,11 +95,11 @@ export function DiamondCreditPill({
     <View
       style={[
         styles.pill,
-        style,
         {
           backgroundColor: palette.backgroundColor,
           borderColor: palette.borderColor,
         },
+        style,
       ]}
     >
       {content}
@@ -106,40 +109,18 @@ export function DiamondCreditPill({
 
 const styles = StyleSheet.create({
   pill: {
-    minHeight: 36,
+    minHeight: 38,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     borderRadius: 999,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  diamondMark: {
-    width: 30,
-    height: 18,
-    position: "relative",
-  },
-  diamondLeft: {
-    position: "absolute",
-    left: 0,
-    top: 4,
-    opacity: 0.92,
-  },
-  diamondCenter: {
-    position: "absolute",
-    left: 9,
-    top: 0,
-  },
-  diamondRight: {
-    position: "absolute",
-    right: 0,
-    top: 4,
-    opacity: 0.92,
+    paddingVertical: 9,
   },
   countText: {
-    fontSize: 13,
-    lineHeight: 13,
+    fontSize: 14,
+    lineHeight: 16,
     ...fonts.bold,
   },
 });

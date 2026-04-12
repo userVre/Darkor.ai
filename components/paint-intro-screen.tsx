@@ -64,10 +64,10 @@ export function PaintIntroScreen({
   const heroTop = headerMetrics.contentOffset;
   const heroHeight = scaleValue(584, layoutScale);
   const heroCopyTop = scaleValue(296, layoutScale);
-  const heroCopyLeft = scaleValue(188, layoutScale);
+  const heroCopyLeft = scaleValue(28, layoutScale);
   const heroCopyWidth = Math.min(
-    scaleValue(176, layoutScale),
-    Math.max(mainWidth - heroCopyLeft - scaleValue(26, layoutScale), scaleValue(154, layoutScale)),
+    scaleValue(232, layoutScale),
+    Math.max(mainWidth - heroCopyLeft - scaleValue(104, layoutScale), scaleValue(196, layoutScale)),
   );
   const heroButtonTop = scaleValue(522, layoutScale);
   const heroButtonLeft = scaleValue(126, layoutScale);
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     lineHeight: 24,
-    textAlign: "right",
+    textAlign: "left",
     ...fonts.semibold,
   },
   uploadButton: {

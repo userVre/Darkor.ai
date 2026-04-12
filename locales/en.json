@@ -291,7 +291,7 @@
       "emptyTitle": "Upload Your Vision",
       "emptySubtitle": "Redesign and beautify your room",
       "removePhoto": "Remove selected photo",
-      "cta": "Begin Your Transformation"
+      "cta": "Upload"
     },
     "interior": {
       "stepTwoTitle": "Choose Your Space",
@@ -358,11 +358,11 @@
       "supportingText": "Uses 1 credit · {{creditsRemaining}}",
       "creditsRemaining": "{{count}} remaining",
       "promptExamples": {
-        "oak": "Lay warm natural oak planks with a matte finish while preserving the room layout and lighting.",
-        "marble": "Restyle the floor in polished Carrara marble with crisp veining and premium editorial contrast.",
-        "concrete": "Apply a soft concrete floor with subtle texture and realistic reflections for a modern gallery feel.",
-        "travertine": "Introduce light travertine flooring with soft natural variation and warm afternoon light response.",
-        "walnut": "Design a refined herringbone walnut floor that feels luxurious, grounded, and photorealistic."
+        "frenchOak": "Luxurious wide-plank French Oak in a warm natural finish.",
+        "carraraMarble": "Polished Italian Carrara Marble with deep gray veining.",
+        "microcement": "Contemporary seamless Micro-cement for an industrial chic foundation.",
+        "herringboneWalnut": "Elegant Dark Walnut in a classic Herringbone pattern.",
+        "walnut": "Modern large-format Slate Stone tiles in charcoal gray."
       }
     },
     "paintFlow": {

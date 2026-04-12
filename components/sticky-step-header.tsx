@@ -14,6 +14,8 @@ const HEADER_ROW_HEIGHT = 44;
 const HEADER_PROGRESS_GAP = 12;
 const HEADER_PROGRESS_HEIGHT = 4;
 const HEADER_PROGRESS_SEGMENT_GAP = 10;
+const HEADER_SIDE_SLOT_WIDTH = 120;
+const HEADER_ACTION_SIZE = 44;
 
 type StickyStepHeaderProps = {
   creditCount?: number;
@@ -150,17 +152,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   leftGroup: {
-    minHeight: HEADER_ROW_HEIGHT,
+    width: HEADER_SIDE_SLOT_WIDTH,
+    height: HEADER_ROW_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
-    minWidth: 112,
+    justifyContent: "flex-start",
   },
   rightGroup: {
-    minHeight: HEADER_ROW_HEIGHT,
+    width: HEADER_SIDE_SLOT_WIDTH,
+    height: HEADER_ROW_HEIGHT,
     flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "center",
-    minWidth: 112,
+    alignItems: "center",
+    justifyContent: "flex-end",
   },
   stepOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -168,8 +171,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   iconButton: {
-    width: 44,
-    height: 44,
+    width: HEADER_ACTION_SIZE,
+    height: HEADER_ACTION_SIZE,
     alignItems: "center",
     justifyContent: "center",
   },

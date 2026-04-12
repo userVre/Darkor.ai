@@ -87,7 +87,7 @@ import { ServiceWizardHeader } from "../../components/service-wizard-header";
 import { getStickyStepHeaderMetrics } from "../../components/sticky-step-header";
 import { BeforeAfterSlider } from "../../components/before-after-slider";
 import { RenovationSparkIcon, StructuralDraftIcon } from "../../components/architectural-mode-icons";
-import { ThreeDiamondMark } from "../../components/diamond-credit-pill";
+import { DiamondCreditPill } from "../../components/diamond-credit-pill";
 import { useFlowUI } from "../../components/flow-ui-context";
 import { useViewerCredits } from "../../components/viewer-credits-context";
 import { useWorkspaceDraft } from "../../components/workspace-context";
@@ -2531,12 +2531,12 @@ export default function WorkspaceScreen() {
       {
         id: "preserve",
         title: "Structural Preservation",
-        description: "Keep the original structure recognizable while refining the styling.",
+        description: "Preserve your room's architectural DNA while flawlessly refreshing its aesthetic.",
       },
       {
         id: "renovate",
         title: "Renovation Design",
-        description: "Allow a bolder redesign with stronger visual transformation.",
+        description: "Total creative liberty to redefine furniture layouts and structural boundaries for a complete remodel.",
       },
     ],
     [],
@@ -6956,26 +6956,20 @@ export default function WorkspaceScreen() {
             </Text>
 
             <View className="flex-row items-center justify-between">
-              <View style={{ minWidth: 88 }}>
-                <View
-                  style={{
-                    alignSelf: "flex-start",
-                    minHeight: 42,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 10,
-                    borderRadius: 999,
-                    borderWidth: 0.5,
-                    borderColor: "rgba(255,255,255,0.12)",
-                    backgroundColor: "#050505",
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                  }}
-                >
-                  <ThreeDiamondMark color="#FFFFFF" />
-                  <Text style={{ color: "#ffffff", fontSize: 14, lineHeight: 16, ...fonts.bold }}>{creditBalance}</Text>
+                <View style={{ minWidth: 88 }}>
+                  <DiamondCreditPill
+                    count={creditBalance}
+                    style={{
+                      alignSelf: "flex-start",
+                      minHeight: 42,
+                      borderColor: "rgba(255,255,255,0.12)",
+                      backgroundColor: "#050505",
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                    }}
+                    variant="dark"
+                  />
                 </View>
-              </View>
 
               <View style={{ width: 88, alignItems: "flex-end" }}>
                 <LuxPressable

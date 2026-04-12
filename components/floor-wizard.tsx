@@ -200,10 +200,10 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
   const floorWizardExamplePhotos = useMemo(() => getFloorWizardExamplePhotos(t), [i18n.language, t]);
   const floorPromptExamples = useMemo(
     () => [
-      t("wizard.floorFlow.promptExamples.oak"),
-      t("wizard.floorFlow.promptExamples.marble"),
-      t("wizard.floorFlow.promptExamples.concrete"),
-      t("wizard.floorFlow.promptExamples.travertine"),
+      t("wizard.floorFlow.promptExamples.frenchOak"),
+      t("wizard.floorFlow.promptExamples.carraraMarble"),
+      t("wizard.floorFlow.promptExamples.microcement"),
+      t("wizard.floorFlow.promptExamples.herringboneWalnut"),
       t("wizard.floorFlow.promptExamples.walnut"),
     ],
     [i18n.language, t],

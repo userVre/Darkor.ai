@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Camera, Image as GalleryIcon } from "@/components/material-icons";
+import { Camera, Image as GalleryIcon, Plus } from "@/components/material-icons";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -265,6 +265,9 @@ export function InteriorRedesignStepOne({
                   },
                 ]}
               >
+                <View style={styles.addPhotoButtonIconWrap}>
+                  <Plus color="#FFFFFF" size={20} strokeWidth={3} />
+                </View>
                 <Text style={styles.addPhotoButtonText}>{t("wizard.stepOne.cta")}</Text>
               </Pressable>
             </>
@@ -490,8 +493,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 10,
     backgroundColor: "#0A0A0A",
+  },
+  addPhotoButtonIconWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.12)",
   },
   addPhotoButtonText: {
     color: "#FFFFFF",
