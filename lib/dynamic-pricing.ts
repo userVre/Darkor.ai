@@ -1,6 +1,9 @@
 import { getLocales, useLocales, type Locale } from "expo-localization";
 import { useMemo } from "react";
 
+import { getLanguageLocaleTag, type AppLanguage } from "./i18n/language";
+import { useAppLanguagePreference } from "./i18n";
+
 export type PricingDuration = "weekly" | "yearly";
 export type PricingTierId = "tier_1" | "tier_2" | "tier_3" | "tier_4" | "tier_5";
 
@@ -44,7 +47,7 @@ export type PricingContext = {
     tierId: PricingTierId;
     countryCode: string;
     currencyCode: string;
-    offeringHint: PricingTierId;
+    offeringHint: string;
     attributePayload: Record<string, string>;
   };
 };
@@ -59,7 +62,7 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
   {
     id: "tier_2",
     label: "core",
-    countries: ["US", "GB", "DE", "CA"],
+    countries: ["US", "GB", "DE", "CA", "FR", "SE", "JP", "KR", "PT", "ES"],
     usdPrices: { weekly: 6.99, yearly: 39.99 },
   },
   {
@@ -71,7 +74,7 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
   {
     id: "tier_4",
     label: "middle",
-    countries: ["MA", "BR", "MX", "VN"],
+    countries: ["MA", "DZ", "BR", "MX", "VN", "CN", "RU"],
     usdPrices: { weekly: 2.99, yearly: 19.99 },
   },
   {
@@ -96,6 +99,7 @@ const COUNTRY_TO_CURRENCY: Record<string, string> = {
   CN: "CNY",
   CY: "EUR",
   DE: "EUR",
+  DZ: "DZD",
   EE: "EUR",
   EG: "EGP",
   ES: "EUR",
@@ -108,6 +112,7 @@ const COUNTRY_TO_CURRENCY: Record<string, string> = {
   IE: "EUR",
   IN: "INR",
   IT: "EUR",
+  JP: "JPY",
   KR: "KRW",
   LT: "EUR",
   LU: "EUR",
@@ -122,6 +127,7 @@ const COUNTRY_TO_CURRENCY: Record<string, string> = {
   QA: "QAR",
   RU: "RUB",
   SA: "SAR",
+  SE: "SEK",
   SG: "SGD",
   SI: "EUR",
   SK: "EUR",
@@ -137,11 +143,13 @@ const FX_SNAPSHOT_USD_TO_LOCAL: Record<string, FxSnapshot> = {
   CAD: { rate: 1.390889, source: "ECB 2026-04-02 cross rate" },
   CHF: { rate: 0.799393, source: "ECB 2026-04-02 cross rate" },
   CNY: { rate: 7.24, source: "April 2026 seeded fallback" },
+  DZD: { rate: 133.12, source: "April 2026 seeded fallback" },
   EGP: { rate: 50.65, source: "April 2026 seeded fallback" },
   EUR: { rate: 0.867679, source: "ECB 2026-04-02 cross rate" },
   GBP: { rate: 0.757076, source: "ECB 2026-04-02 cross rate" },
   HKD: { rate: 7.8, source: "Linked exchange rate" },
   INR: { rate: 93.101952, source: "ECB 2026-04-02 cross rate" },
+  JPY: { rate: 151.42, source: "April 2026 seeded fallback" },
   KRW: { rate: 1460, source: "April 2026 seeded fallback" },
   MAD: { rate: 9.084, source: "Bank Al-Maghrib 2026-01-30" },
   MOP: { rate: 8.04, source: "April 2026 seeded fallback" },
@@ -150,6 +158,7 @@ const FX_SNAPSHOT_USD_TO_LOCAL: Record<string, FxSnapshot> = {
   QAR: { rate: 3.64, source: "USD peg" },
   RUB: { rate: 84.75, source: "April 2026 seeded fallback" },
   SAR: { rate: 3.75, source: "USD peg" },
+  SEK: { rate: 9.53, source: "April 2026 seeded fallback" },
   SGD: { rate: 1.34, source: "April 2026 seeded fallback" },
   TRY: { rate: 44.494143, source: "ECB 2026-04-02 cross rate" },
   TWD: { rate: 32.4, source: "April 2026 seeded fallback" },
@@ -187,16 +196,6 @@ function resolveRegionFromLocale(locale?: Locale | null) {
   }
 
   return DEFAULT_PRICING_COUNTRY_CODE;
-}
-
-function resolveLocaleTag(locale?: Locale | null, regionCode?: string) {
-  const languageTag = String(locale?.languageTag ?? "").trim();
-  if (languageTag.length > 0) {
-    return languageTag;
-  }
-
-  const languageCode = String(locale?.languageCode ?? "en").trim() || "en";
-  return `${languageCode}-${regionCode ?? DEFAULT_PRICING_COUNTRY_CODE}`;
 }
 
 function resolveTierByCountry(countryCode: string) {
@@ -317,13 +316,16 @@ function getPrimaryLocale(inputLocales?: readonly Locale[]) {
   return inputLocales?.[0] ?? getLocales()[0];
 }
 
-export function getPricingContext(inputLocales?: readonly Locale[]): PricingContext {
+export function getPricingContext(
+  inputLocales?: readonly Locale[],
+  appLanguage: AppLanguage = "en-US",
+): PricingContext {
   const locale = getPrimaryLocale(inputLocales);
   const detectedRegionCode = resolveRegionFromLocale(locale);
   const { tier, usedFallbackTier } = resolveTierByCountry(detectedRegionCode);
   const countryCode = detectedRegionCode || DEFAULT_PRICING_COUNTRY_CODE;
   const currencyCode = resolveCurrencyCode(countryCode);
-  const localeTag = resolveLocaleTag(locale, countryCode);
+  const localeTag = getLanguageLocaleTag(appLanguage, countryCode);
 
   const weekly = createFxLocalizedPrice({
     usdAmount: tier.usdPrices.weekly,
@@ -365,7 +367,7 @@ export function getPricingContext(inputLocales?: readonly Locale[]): PricingCont
       tierId: tier.id,
       countryCode,
       currencyCode: yearly.currencyCode,
-      offeringHint: tier.id,
+      offeringHint: countryCode.toLowerCase(),
       attributePayload: {
         homedecor_country_code: countryCode,
         homedecor_currency_code: yearly.currencyCode,
@@ -386,5 +388,9 @@ export function getPricingContext(inputLocales?: readonly Locale[]): PricingCont
 
 export function usePricingContext() {
   const locales = useLocales();
-  return useMemo(() => getPricingContext(locales), [locales]);
+  const languagePreference = useAppLanguagePreference();
+  return useMemo(
+    () => getPricingContext(locales, languagePreference.resolvedLanguage),
+    [languagePreference.resolvedLanguage, locales],
+  );
 }

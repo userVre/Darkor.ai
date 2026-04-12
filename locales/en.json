@@ -117,6 +117,7 @@
     "processing": "Processing...",
     "tryForFree": "Begin Your Pro Trial",
     "continue": "Begin Your Pro Trial",
+    "subtitle": "Experience Professional Grade Design",
     "terms": "Terms",
     "privacy": "Privacy",
     "subscriptionsUnavailable": "Subscriptions are temporarily unavailable.",
@@ -144,6 +145,7 @@
     },
     "upgradePro": "Upgrade PRO",
     "rows": {
+      "language": "Language",
       "feedback": "Feedback",
       "faq": "FAQ",
       "rateUs": "Rate Us",
@@ -156,6 +158,13 @@
     },
     "states": {
       "notSignedIn": "Not signed in"
+    },
+    "language": {
+      "title": "Language",
+      "description": "Choose whether HomeDecor AI follows your device language or uses a specific app language.",
+      "auto": "Auto (System Default)",
+      "autoShort": "Auto",
+      "usingSystem": "Currently following {{language}} from your device"
     },
     "messages": {
       "destinationUnavailable": "This destination is unavailable right now.",
@@ -258,13 +267,85 @@
     "eyebrow": "Policy",
     "title": "Privacy Policy",
     "description": "The information we collect, how it is used, and the controls you have inside HomeDecor AI.",
-    "date": "March 14, 2026"
+    "date": "March 14, 2026",
+    "sections": {
+      "overview": {
+        "title": "Overview",
+        "body": "HomeDecor AI (\"HomeDecor\", \"we\", \"our\", \"us\") provides AI-powered interior and exterior redesign services. This Privacy Policy explains what data we collect, how we use it, and the choices you have."
+      },
+      "informationWeCollect": {
+        "title": "Information We Collect",
+        "body": "We collect information you provide, such as account details and uploaded images, usage data such as feature interactions and device information, and payment status data from RevenueCat to manage subscriptions."
+      },
+      "howWeUseYourData": {
+        "title": "How We Use Your Data",
+        "body": "We use your data to deliver redesigns, personalize your experience, manage credits and billing, improve model quality, and secure the app. We do not sell your personal data."
+      },
+      "imageProcessing": {
+        "title": "Image Processing",
+        "body": "Images you upload are processed to generate redesigns. We store generated images and related metadata so you can revisit your results, and you can remove your data by deleting your account."
+      },
+      "sharingAndDisclosure": {
+        "title": "Sharing and Disclosure",
+        "body": "We share data only with providers required to operate HomeDecor AI, such as authentication, analytics, and payment processing partners, or when disclosure is required by law."
+      },
+      "dataSecurity": {
+        "title": "Data Security",
+        "body": "We use encryption and access controls to protect your data. No system is perfectly secure, so we also recommend strong passwords and a protected device."
+      },
+      "yourRights": {
+        "title": "Your Rights",
+        "body": "You can access, update, or delete your account data at any time. Account deletion removes your stored generations and profile information from our systems."
+      },
+      "contactUs": {
+        "title": "Contact Us",
+        "body": "For privacy questions or requests, contact us at support@homedecor.ai."
+      }
+    }
   },
   "terms": {
     "eyebrow": "Policy",
     "title": "Terms of Service",
     "description": "The rules, expectations, and service boundaries for using HomeDecor AI.",
-    "date": "March 14, 2026"
+    "date": "March 14, 2026",
+    "sections": {
+      "acceptanceOfTerms": {
+        "title": "Acceptance of Terms",
+        "body": "By accessing or using HomeDecor AI, you agree to these Terms of Service. If you do not agree, do not use the app."
+      },
+      "serviceDescription": {
+        "title": "Service Description",
+        "body": "HomeDecor AI provides AI-generated redesigns for interior and exterior spaces. Outputs are visual concepts and may not account for structural, engineering, or code constraints."
+      },
+      "accountAndEligibility": {
+        "title": "Account and Eligibility",
+        "body": "You must be at least 13 years old to use HomeDecor AI. You are responsible for maintaining account security and for activity that happens under your credentials."
+      },
+      "userContent": {
+        "title": "User Content",
+        "body": "You retain ownership of images you upload. By using the service, you grant HomeDecor AI a limited license to process and store them so we can generate and return your results."
+      },
+      "subscriptionsAndCredits": {
+        "title": "Subscriptions and Credits",
+        "body": "Paid plans unlock enhanced features and higher-quality exports. Credits are consumed per generation, and subscription billing and renewals are handled by your app store and RevenueCat."
+      },
+      "prohibitedUse": {
+        "title": "Prohibited Use",
+        "body": "You agree not to misuse the service, reverse engineer the app, or upload unlawful, harmful, or infringing content."
+      },
+      "disclaimer": {
+        "title": "Disclaimer",
+        "body": "The service is provided \"as is\" without warranties of any kind. We do not guarantee specific design results or the accuracy of AI-generated outputs."
+      },
+      "limitationOfLiability": {
+        "title": "Limitation of Liability",
+        "body": "To the maximum extent permitted by law, HomeDecor AI is not liable for indirect or consequential damages arising from your use of the service."
+      },
+      "contact": {
+        "title": "Contact",
+        "body": "Questions about these terms can be sent to support@homedecor.ai."
+      }
+    }
   },
   "processing": {
     "title": "AI is crafting your masterpiece...",
@@ -558,5 +639,492 @@
     },
     "cta": "Start Designing",
     "toast": "Account upgraded to Pro successfully."
+  },
+  "legalViewer": {
+    "eyebrow": "Legal Viewer",
+    "switches": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy"
+    }
+  },
+  "storeReview": {
+    "title": "Rate HomeDecor AI",
+    "unavailableBody": "Review requests are not available on this device.",
+    "errorBody": "Unable to open the store review dialog right now."
+  },
+  "gallery": {
+    "tabs": {
+      "home": "Interiors",
+      "exterior": "Exteriors",
+      "garden": "Garden"
+    },
+    "groups": {
+      "kitchen": "Kitchen",
+      "livingRoom": "Living Room",
+      "diningRoom": "Dining Room",
+      "bedroom": "Bedroom",
+      "bathroom": "Bathroom",
+      "gamingRoom": "Gaming Room",
+      "homeOffice": "Home Office",
+      "coffeeShop": "Coffee Shop",
+      "studyRoom": "Study Room",
+      "restaurant": "Restaurant",
+      "attic": "Attic",
+      "toilet": "Toilet",
+      "balcony": "Balcony",
+      "hall": "Hall",
+      "deck": "Deck",
+      "landscapeDesigns": "Landscape Designs",
+      "villa": "Villa",
+      "apartment": "Apartment",
+      "house": "House",
+      "officeBuilding": "Office Building",
+      "retail": "Retail",
+      "residential": "Residential"
+    },
+    "imageTitleTemplate": "{{title}} Image {{index}}",
+    "emptyState": {
+      "title": "Category unavailable",
+      "body": "The requested image group could not be found."
+    }
+  },
+  "discoverCatalog": {
+    "sections": {
+      "home": {
+        "title": "Interior",
+        "description": "Designer-led rooms across living, sleep, dining, work, and entertainment.",
+        "items": {
+          "sereneLounge": {
+            "title": "Serene Lounge",
+            "subtitle": "Living Room / Soft Minimal",
+            "spaceType": "Living Room",
+            "style": "Soft Minimal"
+          },
+          "moodyClubRoom": {
+            "title": "Moody Club Room",
+            "subtitle": "Living Room / Moody Luxe",
+            "spaceType": "Living Room",
+            "style": "Moody Luxe"
+          },
+          "organicLiving": {
+            "title": "Organic Living",
+            "subtitle": "Living Room / Warm Organic",
+            "spaceType": "Living Room",
+            "style": "Warm Organic"
+          },
+          "grandSalon": {
+            "title": "Grand Salon",
+            "subtitle": "Living Room / Luxe Marble",
+            "spaceType": "Living Room",
+            "style": "Luxe Marble"
+          },
+          "editorialLounge": {
+            "title": "Editorial Lounge",
+            "subtitle": "Gaming Room / Cyberpunk",
+            "spaceType": "Gaming Room",
+            "style": "Cyberpunk"
+          }
+        }
+      },
+      "exterior": {
+        "title": "Exterior",
+        "description": "Facade inspiration from modern villas, urban blocks, offices, and retail shells.",
+        "items": {
+          "modernHouse": {
+            "title": "Modern House",
+            "subtitle": "Modern House / Daylight Minimal",
+            "spaceType": "Modern House",
+            "style": "Daylight Minimal"
+          },
+          "modernHouseNight": {
+            "title": "Modern House Night",
+            "subtitle": "Modern House / Evening Luxe",
+            "spaceType": "Modern House",
+            "style": "Evening Luxe"
+          },
+          "stoneVilla": {
+            "title": "Stone Villa",
+            "subtitle": "Villa / Mediterranean",
+            "spaceType": "Villa",
+            "style": "Mediterranean"
+          },
+          "glassOffice": {
+            "title": "Glass Office",
+            "subtitle": "Office Building / Minimalist",
+            "spaceType": "Office Building",
+            "style": "Minimalist"
+          },
+          "ecoApartments": {
+            "title": "Eco Apartments",
+            "subtitle": "Apartment Block / Eco Futurist",
+            "spaceType": "Apartment Block",
+            "style": "Eco Futurist"
+          }
+        }
+      },
+      "garden": {
+        "title": "Garden",
+        "description": "Outdoor lounges, terraces, pools, decks, and resort-minded garden scenes.",
+        "items": {
+          "infinityPool": {
+            "title": "Infinity Pool",
+            "subtitle": "Infinity Pool / Coastal Luxe",
+            "spaceType": "Infinity Pool",
+            "style": "Coastal Luxe"
+          },
+          "waterfallCourt": {
+            "title": "Waterfall Court",
+            "subtitle": "Waterfall Garden / Zen Luxury",
+            "spaceType": "Waterfall Garden",
+            "style": "Zen Luxury"
+          },
+          "sunsetFirePit": {
+            "title": "Sunset Fire Pit",
+            "subtitle": "Fire Pit Lounge / Resort Sunset",
+            "spaceType": "Fire Pit Lounge",
+            "style": "Resort Sunset"
+          },
+          "tropicalPoolLounge": {
+            "title": "Tropical Pool Lounge",
+            "subtitle": "Pool Lounge / Tropical Escape",
+            "spaceType": "Pool Lounge",
+            "style": "Tropical Escape"
+          },
+          "luminousGardenWalk": {
+            "title": "Luminous Garden Walk",
+            "subtitle": "Garden Walk / Evening Glow",
+            "spaceType": "Garden Walk",
+            "style": "Evening Glow"
+          }
+        }
+      },
+      "wall": {
+        "title": "Wall Inspiration",
+        "description": "Real-room paint references that open directly into Smart Wall Paint with the finish already preselected.",
+        "items": {
+          "sagePlasterWall": {
+            "title": "Sage Plaster Wall",
+            "subtitle": "Textured Wall / Sage Green",
+            "spaceType": "Textured Wall",
+            "style": "Sage Green"
+          },
+          "linearSlatFeature": {
+            "title": "Linear Slat Feature",
+            "subtitle": "Slatted Wall / Charcoal",
+            "spaceType": "Slatted Wall",
+            "style": "Charcoal"
+          },
+          "veinedMarbleWall": {
+            "title": "Veined Marble Wall",
+            "subtitle": "Marble Wall / Soft Ivory",
+            "spaceType": "Marble Wall",
+            "style": "Soft Ivory"
+          },
+          "minimalConcreteWall": {
+            "title": "Minimal Concrete Wall",
+            "subtitle": "Concrete Wall / Charcoal",
+            "spaceType": "Concrete Wall",
+            "style": "Charcoal"
+          },
+          "botanicalMuralWall": {
+            "title": "Botanical Mural Wall",
+            "subtitle": "Mural Wall / Olive Moss",
+            "spaceType": "Mural Wall",
+            "style": "Olive Moss"
+          }
+        }
+      },
+      "floor": {
+        "title": "Floor Styles",
+        "description": "Premium flooring references curated from real interiors and mapped directly into the Floor Restyle workflow.",
+        "items": {
+          "heritageHerringbone": {
+            "title": "Heritage Herringbone",
+            "subtitle": "Wood Floor / Walnut Wood",
+            "spaceType": "Wood Floor",
+            "style": "Walnut Wood"
+          },
+          "carraraMarbleFlow": {
+            "title": "Carrara Marble Flow",
+            "subtitle": "Marble Floor / Carrara Marble",
+            "spaceType": "Marble Floor",
+            "style": "Carrara Marble"
+          },
+          "satinConcrete": {
+            "title": "Satin Concrete",
+            "subtitle": "Concrete Floor / Polished Concrete",
+            "spaceType": "Concrete Floor",
+            "style": "Polished Concrete"
+          },
+          "walnutGloss": {
+            "title": "Walnut Gloss",
+            "subtitle": "Gloss Wood / Walnut Wood",
+            "spaceType": "Gloss Wood",
+            "style": "Walnut Wood"
+          },
+          "softLimestone": {
+            "title": "Soft Limestone",
+            "subtitle": "Stone Floor / Polished Concrete",
+            "spaceType": "Stone Floor",
+            "style": "Polished Concrete"
+          }
+        }
+      }
+    },
+    "wallColors": {
+      "sageGreen": {
+        "title": "Sage Green",
+        "description": "Soft green calm for bright, polished living spaces.",
+        "discoverSubtitle": "Wall / Botanical Calm"
+      },
+      "midnightNavy": {
+        "title": "Midnight Navy",
+        "description": "Tailored navy depth with crisp architectural contrast.",
+        "discoverSubtitle": "Wall / Tailored Contrast"
+      },
+      "terracottaGlow": {
+        "title": "Terracotta Glow",
+        "description": "Warm clay color with grounded, editorial energy.",
+        "discoverSubtitle": "Wall / Warm Clay"
+      },
+      "dustyRose": {
+        "title": "Dusty Rose",
+        "description": "Muted blush warmth with soft boutique appeal.",
+        "discoverSubtitle": "Wall / Boutique Blush"
+      },
+      "galleryCharcoal": {
+        "title": "Gallery Charcoal",
+        "description": "Refined charcoal for moody, art-forward rooms.",
+        "discoverSubtitle": "Wall / Moody Gallery"
+      },
+      "softIvory": {
+        "title": "Soft Ivory",
+        "description": "Luminous neutral that keeps rooms light, never flat.",
+        "discoverSubtitle": "Wall / Quiet Neutral"
+      },
+      "oliveGrove": {
+        "title": "Olive Grove",
+        "description": "Earthy olive depth with a grounded designer mood.",
+        "discoverSubtitle": "Wall / Earthy Depth"
+      },
+      "lavenderMist": {
+        "title": "Lavender Mist",
+        "description": "Soft violet haze for elevated pastel rooms.",
+        "discoverSubtitle": "Wall / Soft Pastel"
+      },
+      "pearlGray": {
+        "title": "Pearl Gray",
+        "description": "Light tonal gray with polished everyday flexibility.",
+        "discoverSubtitle": "Wall / Modern Neutral"
+      }
+    },
+    "wallColorCategories": {
+      "calmNeutrals": {
+        "title": "Calm Neutrals",
+        "colors": {
+          "softIvory": "Soft Ivory",
+          "pearlGray": "Pearl Gray",
+          "sageGreen": "Sage Green"
+        }
+      },
+      "boutiquePastels": {
+        "title": "Boutique Pastels",
+        "colors": {
+          "dustyRose": "Dusty Rose",
+          "lavenderMist": "Lavender Mist",
+          "terracottaGlow": "Terracotta Glow"
+        }
+      },
+      "architecturalDepth": {
+        "title": "Architectural Depth",
+        "colors": {
+          "midnightNavy": "Midnight Navy",
+          "galleryCharcoal": "Gallery Charcoal",
+          "oliveGrove": "Olive Grove"
+        }
+      }
+    },
+    "floorMaterials": {
+      "naturalOak": {
+        "title": "Natural Oak",
+        "description": "Airy oak planks with soft natural grain.",
+        "promptLabel": "light natural oak flooring with wide-plank grain detail",
+        "discoverSubtitle": "Floor / Light Wood"
+      },
+      "walnutWood": {
+        "title": "Walnut Wood",
+        "description": "Deep walnut planks with rich tailored contrast.",
+        "promptLabel": "luxury walnut wood flooring with rich deep grain",
+        "discoverSubtitle": "Floor / Dark Wood"
+      },
+      "carraraMarble": {
+        "title": "Carrara Marble",
+        "description": "Bright stone veining with a calm luxe finish.",
+        "promptLabel": "carrara marble flooring with elegant soft veining",
+        "discoverSubtitle": "Floor / Polished Stone"
+      },
+      "polishedConcrete": {
+        "title": "Polished Concrete",
+        "description": "Smooth concrete sheen with urban gallery calm.",
+        "promptLabel": "polished concrete flooring with premium smooth texture",
+        "discoverSubtitle": "Floor / Industrial Minimal"
+      },
+      "herringboneOak": {
+        "title": "Herringbone Oak",
+        "description": "Classic oak pattern with warm directional movement.",
+        "promptLabel": "herringbone oak parquet flooring with premium pattern definition",
+        "discoverSubtitle": "Floor / Patterned Wood"
+      },
+      "terracottaTile": {
+        "title": "Terracotta Tile",
+        "description": "Earthy clay warmth with handcrafted character.",
+        "promptLabel": "terracotta tile flooring with warm clay color variation",
+        "discoverSubtitle": "Floor / Mediterranean Clay"
+      },
+      "slateTile": {
+        "title": "Slate Tile",
+        "description": "Dark slate with a crisp large-format finish.",
+        "promptLabel": "dark slate tile flooring with large format stone slabs",
+        "discoverSubtitle": "Floor / Dark Stone"
+      },
+      "plushCarpet": {
+        "title": "Plush Carpet",
+        "description": "Soft cream carpet with a quiet, cozy feel.",
+        "promptLabel": "luxury plush carpet flooring in a soft cream tone",
+        "discoverSubtitle": "Floor / Soft Texture"
+      },
+      "weatheredOak": {
+        "title": "Weathered Oak",
+        "description": "Mid-tone oak with a gently aged finish.",
+        "promptLabel": "weathered oak flooring with subtle aged grain",
+        "discoverSubtitle": "Floor / Rustic Warmth"
+      }
+    },
+    "injectedGallery": {
+      "floorAfterScenes": {
+        "heritageHerringbone": "Heritage Herringbone",
+        "carraraMarble": "Carrara Marble",
+        "satinConcrete": "Satin Concrete",
+        "walnutGloss": "Walnut Gloss",
+        "limestoneSlab": "Limestone Slab"
+      },
+      "wallAfterScenes": {
+        "sagePlaster": "Sage Plaster",
+        "linearSlats": "Linear Slats",
+        "veinedMarble": "Veined Marble",
+        "minimalConcrete": "Minimal Concrete",
+        "botanicalMural": "Botanical Mural"
+      },
+      "interiorExamples": {
+        "kitchen": "Kitchen",
+        "livingRoom": "Living Room",
+        "bedroom": "Bedroom",
+        "bathroom": "Bathroom",
+        "gamingRoom": "Gaming Room",
+        "homeOffice": "Home Office"
+      },
+      "exteriorExamples": {
+        "apartment": "Apartment",
+        "house": "House",
+        "office": "Office",
+        "villa": "Villa",
+        "residential": "Residential",
+        "retail": "Retail"
+      },
+      "gardenExamples": {
+        "infinityPool": "Infinity Pool",
+        "waterfallCourt": "Waterfall Court",
+        "firePit": "Fire Pit",
+        "tropicalLounge": "Tropical Lounge",
+        "resortDeck": "Resort Deck",
+        "lagoonFalls": "Lagoon Falls"
+      },
+      "homeCoreScenes": {
+        "kitchen": "Kitchen",
+        "livingRoom": "Living Room",
+        "bedroom": "Bedroom",
+        "bathroom": "Bathroom",
+        "diningRoom": "Dining Room",
+        "gamingRoom": "Gaming Room",
+        "homeOffice": "Home Office"
+      },
+      "homeFlexScenes": {
+        "coffeeShop": "Coffee Shop",
+        "gamingStudio": "Gaming Studio",
+        "atticLounge": "Attic Lounge",
+        "studyRoom": "Study Room",
+        "serviceRoom": "Service Room",
+        "laundryRoom": "Laundry Room"
+      },
+      "livingRoomScenes": {
+        "sereneLounge": "Serene Lounge",
+        "moodyLounge": "Moody Lounge",
+        "organicLiving": "Organic Living",
+        "grandSalon": "Grand Salon",
+        "playfulLounge": "Playful Lounge"
+      },
+      "homeLuxeScenes": {
+        "restaurant": "Restaurant",
+        "studyLibrary": "Study Library",
+        "atticRetreat": "Attic Retreat",
+        "toiletSuite": "Toilet Suite",
+        "balcony": "Balcony",
+        "hall": "Hall",
+        "deckDay": "Deck Day",
+        "deckNight": "Deck Night"
+      },
+      "exteriorPrimaryScenes": {
+        "house": "House",
+        "residential": "Residential",
+        "villa": "Villa",
+        "glassCorner": "Glass Corner",
+        "apartment": "Apartment"
+      },
+      "exteriorSecondaryScenes": {
+        "apartmentTower": "Apartment Tower",
+        "retailPavilion": "Retail Pavilion",
+        "officeBuilding": "Office Building",
+        "modernVilla": "Modern Villa",
+        "residentialTower": "Residential Tower"
+      },
+      "gardenPrimaryScenes": {
+        "infinityPool": "Infinity Pool",
+        "waterfallCourt": "Waterfall Court",
+        "sunsetFirePit": "Sunset Fire Pit",
+        "tropicalLounge": "Tropical Lounge",
+        "livingWall": "Living Wall",
+        "lightCourt": "Light Court"
+      },
+      "gardenSecondaryScenes": {
+        "sunsetPool": "Sunset Pool",
+        "fireCove": "Fire Cove",
+        "poolCourt": "Pool Court",
+        "waterfallLounge": "Waterfall Lounge",
+        "resortDeck": "Resort Deck",
+        "lagoonFalls": "Lagoon Falls"
+      },
+      "exteriorBuildingTypes": {
+        "apartment": "Apartment",
+        "house": "House",
+        "officeBuilding": "Office Building",
+        "villa": "Villa",
+        "residential": "Residential",
+        "retail": "Retail"
+      }
+    }
+  },
+  "legacyUnlocalized": {
+    "paintWizard": {
+      "autoDetectFailureMessage": "Auto-detect couldn't run. Please brush manually.",
+      "cancelledGenerationMessage": "Cancelled by user.",
+      "result": {
+        "heading": "Behold your new interior",
+        "subheading": "A polished wall concept, composed to preserve the room's structure, furnishing layout, and natural light.",
+        "appliedFinish": "Applied Finish",
+        "saveToGallery": "Save to Gallery",
+        "share": "Share",
+        "tryAgain": "Try Again"
+      }
+    }
   }
 }

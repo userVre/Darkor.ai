@@ -1,26 +1,112 @@
-import { getLocales } from "expo-localization";
+import { getLocales, type Locale } from "expo-localization";
 import { Platform } from "react-native";
 
 export const SUPPORTED_LANGUAGES = [
   "en-US",
   "fr",
-  "es-MX",
-  "pt-BR",
+  "es",
+  "de",
+  "pt",
   "ru",
+  "sv",
+  "ja",
   "ko",
-  "vi",
   "zh-Hans",
-  "zh-Hant",
 ] as const;
 
 export type AppLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
+export type SupportedLanguageOption = {
+  code: AppLanguage;
+  englishLabel: string;
+  nativeLabel: string;
+  localeBase: string;
+  defaultRegion: string;
+};
+
+export const SUPPORTED_LANGUAGE_OPTIONS: readonly SupportedLanguageOption[] = [
+  {
+    code: "en-US",
+    englishLabel: "English (US)",
+    nativeLabel: "English (US)",
+    localeBase: "en",
+    defaultRegion: "US",
+  },
+  {
+    code: "fr",
+    englishLabel: "French",
+    nativeLabel: "Français",
+    localeBase: "fr",
+    defaultRegion: "FR",
+  },
+  {
+    code: "es",
+    englishLabel: "Spanish",
+    nativeLabel: "Español",
+    localeBase: "es",
+    defaultRegion: "ES",
+  },
+  {
+    code: "de",
+    englishLabel: "German",
+    nativeLabel: "Deutsch",
+    localeBase: "de",
+    defaultRegion: "DE",
+  },
+  {
+    code: "pt",
+    englishLabel: "Portuguese",
+    nativeLabel: "Português",
+    localeBase: "pt",
+    defaultRegion: "PT",
+  },
+  {
+    code: "ru",
+    englishLabel: "Russian",
+    nativeLabel: "Русский",
+    localeBase: "ru",
+    defaultRegion: "RU",
+  },
+  {
+    code: "sv",
+    englishLabel: "Swedish",
+    nativeLabel: "Svenska",
+    localeBase: "sv",
+    defaultRegion: "SE",
+  },
+  {
+    code: "ja",
+    englishLabel: "Japanese",
+    nativeLabel: "日本語",
+    localeBase: "ja",
+    defaultRegion: "JP",
+  },
+  {
+    code: "ko",
+    englishLabel: "Korean",
+    nativeLabel: "한국어",
+    localeBase: "ko",
+    defaultRegion: "KR",
+  },
+  {
+    code: "zh-Hans",
+    englishLabel: "Chinese (Simplified)",
+    nativeLabel: "简体中文",
+    localeBase: "zh-Hans",
+    defaultRegion: "CN",
+  },
+] as const;
+
 export const DEFAULT_LANGUAGE: AppLanguage = "en-US";
 
-const CJK_LANGUAGES = new Set<AppLanguage>(["ko", "zh-Hans", "zh-Hant"]);
+const CJK_LANGUAGES = new Set<AppLanguage>(["ja", "ko", "zh-Hans"]);
 
 function normalizeLanguageInput(input?: string | null) {
   return String(input ?? "").trim().replace(/_/g, "-").toLowerCase();
+}
+
+function normalizeCountryCode(input?: string | null) {
+  return String(input ?? "").trim().toUpperCase();
 }
 
 export function resolveSupportedLanguage(input?: string | null): AppLanguage {
@@ -38,53 +124,52 @@ export function resolveSupportedLanguage(input?: string | null): AppLanguage {
     return "fr";
   }
 
-  if (normalized === "es" || normalized.startsWith("es-")) {
-    return "es-MX";
+  if (normalized === "es" || normalized === "es-mx" || normalized.startsWith("es-")) {
+    return "es";
   }
 
-  if (normalized === "pt" || normalized.startsWith("pt-")) {
-    return "pt-BR";
+  if (normalized === "de" || normalized.startsWith("de-")) {
+    return "de";
+  }
+
+  if (normalized === "pt" || normalized === "pt-br" || normalized.startsWith("pt-")) {
+    return "pt";
   }
 
   if (normalized === "ru" || normalized.startsWith("ru-")) {
     return "ru";
   }
 
+  if (normalized === "sv" || normalized.startsWith("sv-")) {
+    return "sv";
+  }
+
+  if (normalized === "ja" || normalized.startsWith("ja-")) {
+    return "ja";
+  }
+
   if (normalized === "ko" || normalized.startsWith("ko-")) {
     return "ko";
   }
 
-  if (normalized === "vi" || normalized.startsWith("vi-")) {
-    return "vi";
-  }
-
-  if (normalized === "zh-hant" || normalized.includes("hant")) {
-    return "zh-Hant";
-  }
-
-  if (normalized === "zh-hans" || normalized.includes("hans")) {
+  if (
+    normalized === "zh-hans"
+    || normalized.includes("hans")
+    || normalized === "zh-hant"
+    || normalized.includes("hant")
+  ) {
     return "zh-Hans";
   }
 
   if (normalized.startsWith("zh-")) {
-    if (
-      normalized.includes("-tw")
-      || normalized.includes("-hk")
-      || normalized.includes("-mo")
-    ) {
-      return "zh-Hant";
-    }
-
     return "zh-Hans";
   }
 
   return DEFAULT_LANGUAGE;
 }
 
-export function getDeviceSupportedLanguage(): AppLanguage {
-  const locales = getLocales();
-
-  for (const locale of locales) {
+export function resolveSupportedLanguageFromLocales(locales?: readonly Locale[]) {
+  for (const locale of locales ?? []) {
     const candidate = resolveSupportedLanguage(
       locale.languageTag
         ?? locale.languageCode
@@ -99,8 +184,34 @@ export function getDeviceSupportedLanguage(): AppLanguage {
   return DEFAULT_LANGUAGE;
 }
 
+export function getDeviceSupportedLanguage(): AppLanguage {
+  return resolveSupportedLanguageFromLocales(getLocales());
+}
+
 export function getInitialSupportedLanguage(): AppLanguage {
   return getDeviceSupportedLanguage();
+}
+
+export function getSupportedLanguageOption(language?: string | null) {
+  const resolvedLanguage = resolveSupportedLanguage(language);
+  return (
+    SUPPORTED_LANGUAGE_OPTIONS.find((option) => option.code === resolvedLanguage)
+    ?? SUPPORTED_LANGUAGE_OPTIONS[0]
+  );
+}
+
+export function getLanguageNativeLabel(language?: string | null) {
+  return getSupportedLanguageOption(language).nativeLabel;
+}
+
+export function getLanguageEnglishLabel(language?: string | null) {
+  return getSupportedLanguageOption(language).englishLabel;
+}
+
+export function getLanguageLocaleTag(language?: string | null, regionCode?: string | null) {
+  const option = getSupportedLanguageOption(language);
+  const normalizedRegionCode = normalizeCountryCode(regionCode) || option.defaultRegion;
+  return `${option.localeBase}-${normalizedRegionCode}`;
 }
 
 export function isCjkLanguage(language?: string | null) {
@@ -108,15 +219,15 @@ export function isCjkLanguage(language?: string | null) {
 }
 
 function getSystemFontFamily(language: AppLanguage) {
-  if (language === "zh-Hans") {
-    if (Platform.OS === "ios") return "PingFang SC";
-    if (Platform.OS === "android") return "Noto Sans CJK SC";
+  if (language === "ja") {
+    if (Platform.OS === "ios") return "Hiragino Sans";
+    if (Platform.OS === "android") return "Noto Sans CJK JP";
     return "sans-serif";
   }
 
-  if (language === "zh-Hant") {
-    if (Platform.OS === "ios") return "PingFang TC";
-    if (Platform.OS === "android") return "Noto Sans CJK TC";
+  if (language === "zh-Hans") {
+    if (Platform.OS === "ios") return "PingFang SC";
+    if (Platform.OS === "android") return "Noto Sans CJK SC";
     return "sans-serif";
   }
 

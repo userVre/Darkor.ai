@@ -6,6 +6,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useMutation } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { useFonts } from "expo-font";
+import { useLocales } from "expo-localization";
 import * as Linking from "expo-linking";
 import { Stack, useGlobalSearchParams, usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -36,8 +37,11 @@ import {
   type RevenueCatCustomerInfo,
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
-import i18n, { initializeI18n } from "../lib/i18n";
-import { fonts } from "../styles/typography";
+import i18n, {
+  initializeI18n,
+  syncAppLanguageWithSystem,
+  useLocalizedAppFonts,
+} from "../lib/i18n";
 import { tokenCache } from "../lib/token-cache";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -45,24 +49,30 @@ void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 const TextWithDefaults = Text as typeof Text & { defaultProps?: TextProps };
 const TextInputWithDefaults = TextInput as typeof TextInput & { defaultProps?: TextInputProps };
 
-let typographyDefaultsApplied = false;
+let lastAppliedTypographyKey = "";
 
-function applyGlobalTypographyDefaults() {
-  if (typographyDefaultsApplied) {
+function applyGlobalTypographyDefaults(localizedFonts: ReturnType<typeof useLocalizedAppFonts>) {
+  const nextTypographyKey = [
+    localizedFonts.regular.fontFamily,
+    localizedFonts.medium.fontFamily,
+    localizedFonts.bold.fontFamily,
+  ].join(":");
+
+  if (lastAppliedTypographyKey === nextTypographyKey) {
     return;
   }
 
   TextWithDefaults.defaultProps = {
     ...TextWithDefaults.defaultProps,
-    style: [fonts.regular, { textAlign: "left" }, TextWithDefaults.defaultProps?.style],
+    style: [localizedFonts.regular, { textAlign: "left" }],
   };
 
   TextInputWithDefaults.defaultProps = {
     ...TextInputWithDefaults.defaultProps,
-    style: [fonts.regular, { textAlign: "left" }, TextInputWithDefaults.defaultProps?.style],
+    style: [localizedFonts.regular, { textAlign: "left" }],
   };
 
-  typographyDefaultsApplied = true;
+  lastAppliedTypographyKey = nextTypographyKey;
 }
 
 function RevenueCatGate() {
@@ -248,6 +258,16 @@ function BootScreen({ message }: { message: string }) {
   );
 }
 
+function LocalizationSyncGate() {
+  const locales = useLocales();
+
+  useEffect(() => {
+    void syncAppLanguageWithSystem();
+  }, [locales]);
+
+  return null;
+}
+
 function MissingEnv({ missing }: { missing: string[] }) {
   return (
     <View style={bootStyles.screen}>
@@ -368,6 +388,7 @@ function AppShell() {
         }}
       />
       <Stack.Screen name="settings" />
+      <Stack.Screen name="language-settings" options={{ presentation: "modal" }} />
       <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
       <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
       <Stack.Screen name="legal-viewer" options={{ presentation: "modal" }} />
@@ -378,6 +399,7 @@ function AppShell() {
 }
 
 export default function RootLayout() {
+  const localizedFonts = useLocalizedAppFonts();
   const [fontsLoaded] = useFonts({
     Inter: require("../assets/Fonts/InterVariable.ttf"),
     "Inter-Italic": require("../assets/Fonts/InterVariable-Italic.ttf"),
@@ -387,7 +409,7 @@ export default function RootLayout() {
   const clerkKey = envReport.values.clerkPublishableKey;
 
   if (fontsLoaded) {
-    applyGlobalTypographyDefaults();
+    applyGlobalTypographyDefaults(localizedFonts);
   }
 
   useEffect(() => {
@@ -439,6 +461,7 @@ export default function RootLayout() {
                     <FlowUIProvider>
                       <WorkspaceDraftProvider>
                         <BottomSheetModalProvider>
+                          <LocalizationSyncGate />
                           <GenerationAccessCacheGate />
                           <CreateAccessGate>
                             <AppShell />

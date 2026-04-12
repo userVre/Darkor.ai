@@ -78,13 +78,24 @@ function matchesAny(haystack: string, needles: string[]) {
 function getOfferingAliases(tierContext?: RevenueCatTierContext | null) {
   const normalizedTierId = normalizeToken(tierContext?.tierId);
   const normalizedHint = normalizeToken(tierContext?.offeringHint);
+  const normalizedCountryCode = normalizeToken(tierContext?.countryCode);
+  const normalizedCurrencyCode = normalizeToken(tierContext?.currencyCode);
 
   return [
     normalizedHint,
+    normalizedCountryCode,
+    normalizedCountryCode ? `paywall_${normalizedCountryCode}` : "",
+    normalizedCountryCode ? `${normalizedCountryCode}_paywall` : "",
+    normalizedCountryCode ? `country_${normalizedCountryCode}` : "",
+    normalizedCountryCode ? `region_${normalizedCountryCode}` : "",
     normalizedTierId,
     normalizedTierId ? `paywall_${normalizedTierId}` : "",
     normalizedTierId ? `${normalizedTierId}_paywall` : "",
     normalizedTierId ? `${normalizedTierId}_offering` : "",
+    normalizedCountryCode && normalizedTierId ? `${normalizedCountryCode}_${normalizedTierId}` : "",
+    normalizedCountryCode && normalizedTierId ? `${normalizedTierId}_${normalizedCountryCode}` : "",
+    normalizedCurrencyCode && normalizedTierId ? `${normalizedCurrencyCode}_${normalizedTierId}` : "",
+    normalizedCurrencyCode && normalizedTierId ? `${normalizedTierId}_${normalizedCurrencyCode}` : "",
   ].filter((value, index, values) => value.length > 0 && values.indexOf(value) === index);
 }
 

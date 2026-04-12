@@ -2,6 +2,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, t
 import { ChevronRight } from "@/components/material-icons";
 import type { ComponentType, ReactNode } from "react";
 
+import { useLocalizedAppFonts } from "../lib/i18n";
 import { fonts } from "../styles/typography";
 
 type SettingsRowProps = {
@@ -31,6 +32,7 @@ export function SettingsRow({
   disabled = false,
   style,
 }: SettingsRowProps) {
+  const localizedFonts = useLocalizedAppFonts();
   const isInteractive = Boolean(onPress) && !disabled;
 
   return (
@@ -44,7 +46,9 @@ export function SettingsRow({
     >
       <View style={styles.leftSide}>
         <Icon color={iconColor} size={20} strokeWidth={2.1} />
-        <Text style={[styles.label, { color: textColor }]}>{label}</Text>
+        <Text numberOfLines={2} style={[styles.label, localizedFonts.medium, { color: textColor }]}>
+          {label}
+        </Text>
       </View>
 
       <View style={styles.rightSide}>
@@ -73,11 +77,14 @@ const styles = StyleSheet.create({
   },
   leftSide: {
     flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
   },
   label: {
+    flex: 1,
+    flexShrink: 1,
     fontSize: 15,
     lineHeight: 18,
     ...fonts.medium,
@@ -86,6 +93,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    flexShrink: 1,
+    minWidth: 0,
   },
 });
 

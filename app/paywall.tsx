@@ -39,6 +39,7 @@ import { useViewerCredits } from "../components/viewer-credits-context";
 import { useViewerSession } from "../components/viewer-session-context";
 import { getGenerationLimit } from "../convex/subscriptions";
 import { triggerHaptic } from "../lib/haptics";
+import { useLocalizedAppFonts } from "../lib/i18n";
 import { dismissLaunchPaywall } from "../lib/launch-paywall";
 import {
   configureRevenueCat,
@@ -93,8 +94,6 @@ const FEATURE_ITEMS = [
   "Ad-free Experience",
   "Unlimited Design Renders",
 ] as const;
-const PAYWALL_SUBTITLE = "Experience Professional Grade Design";
-const PAYWALL_TITLE = "Unlock HomeDecor AI Premium";
 const AnimatedSvgCircle = Animated.createAnimatedComponent(SvgCircle);
 
 function FadeSwap({
@@ -123,12 +122,13 @@ function FadeSwap({
 }
 
 function FeatureRow({ label, isLast }: { label: string; isLast: boolean }) {
+  const localizedFonts = useLocalizedAppFonts();
   return (
     <View style={[styles.featureRow, !isLast ? styles.featureRowGap : null]}>
       <View style={styles.featureIcon}>
         <Check color={TEXT_PRIMARY} size={12} strokeWidth={3} />
       </View>
-      <Text style={styles.featureText}>{label}</Text>
+      <Text style={[styles.featureText, localizedFonts.medium]}>{label}</Text>
     </View>
   );
 }
@@ -152,6 +152,7 @@ function LegalLink({
   label: string;
   onPress: () => void;
 }) {
+  const localizedFonts = useLocalizedAppFonts();
   return (
     <Pressable
       accessibilityRole="button"
@@ -159,7 +160,7 @@ function LegalLink({
       onPress={onPress}
       style={styles.legalLinkButton}
     >
-      <Text style={styles.legalLinkText}>{label}</Text>
+      <Text style={[styles.legalLinkText, localizedFonts.regular]}>{label}</Text>
     </Pressable>
   );
 }
@@ -229,21 +230,24 @@ function YearlyPlanCard({
   onPress: () => void;
 }) {
   const { t } = useTranslation();
+  const localizedFonts = useLocalizedAppFonts();
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, selected ? styles.planCardSelected : styles.planCardIdle, styles.yearlyCard]}>
       <View style={styles.bestOfferBadge}>
-        <Text style={styles.bestOfferText}>{t("paywall.bestOffer").toUpperCase()}</Text>
+        <Text style={[styles.bestOfferText, localizedFonts.bold]}>{t("paywall.bestOffer").toUpperCase()}</Text>
       </View>
 
       <View style={styles.planRow}>
         <View style={styles.planCopy}>
-          <Text style={styles.planLabel}>{t("paywall.yearlyAccess").toUpperCase()}</Text>
-          <Text style={styles.planSubtext}>{pricePerYearText}</Text>
+          <Text style={[styles.planLabel, localizedFonts.bold]}>{t("paywall.yearlyAccess").toUpperCase()}</Text>
+          <Text style={[styles.planSubtext, localizedFonts.regular]}>{pricePerYearText}</Text>
         </View>
 
         <View style={styles.planPriceColumn}>
-          <Text style={styles.yearlyPrice}>{pricePerWeekText}</Text>
-          <Text style={styles.planSubtext}>{t("paywall.perWeek")}</Text>
+          <Text adjustsFontSizeToFit minimumFontScale={0.85} numberOfLines={1} style={[styles.yearlyPrice, localizedFonts.bold]}>
+            {pricePerWeekText}
+          </Text>
+          <Text style={[styles.planSubtext, localizedFonts.regular]}>{t("paywall.perWeek")}</Text>
         </View>
       </View>
     </Pressable>
@@ -264,6 +268,7 @@ function WeeklyPlanCard({
   onPress: () => void;
 }) {
   const { t } = useTranslation();
+  const localizedFonts = useLocalizedAppFonts();
   if (freeTrialEnabled) {
     return (
       <FadeSwap swapKey="weekly-trial-on">
@@ -275,19 +280,19 @@ function WeeklyPlanCard({
                   <View style={[styles.trialBadgeCircle, styles.trialBadgeCircleOne]} />
                   <View style={[styles.trialBadgeCircle, styles.trialBadgeCircleTwo]} />
                   <View style={[styles.trialBadgeCircle, styles.trialBadgeCircleThree]} />
-                  <Text style={styles.trialBadgeText}>{t("paywall.freeTrial").toUpperCase()}</Text>
+                  <Text style={[styles.trialBadgeText, localizedFonts.bold]}>{t("paywall.freeTrial").toUpperCase()}</Text>
                 </View>
               </View>
 
               <View style={styles.planPriceColumn}>
-                <Text style={styles.weeklyTrialPrice}>{trialThenPriceText}</Text>
+                <Text style={[styles.weeklyTrialPrice, localizedFonts.bold]}>{trialThenPriceText}</Text>
               </View>
             </View>
           </Pressable>
 
           <View style={styles.noPaymentRow}>
             <Shield color={TEXT_MUTED} size={14} strokeWidth={2.1} />
-            <Text style={styles.noticeText}>{t("paywall.noPaymentNow")}</Text>
+            <Text style={[styles.noticeText, localizedFonts.medium]}>{t("paywall.noPaymentNow")}</Text>
           </View>
         </View>
       </FadeSwap>
@@ -300,18 +305,18 @@ function WeeklyPlanCard({
         <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, selected ? styles.planCardSelected : styles.planCardIdle, styles.weeklyCard]}>
           <View style={styles.planRow}>
             <View style={styles.planCopy}>
-              <Text style={styles.planLabel}>{t("paywall.weeklyAccess").toUpperCase()}</Text>
+              <Text style={[styles.planLabel, localizedFonts.bold]}>{t("paywall.weeklyAccess").toUpperCase()}</Text>
             </View>
 
             <View style={styles.planPriceColumn}>
-              <Text style={styles.weeklyPrice}>{pricePerWeekText}</Text>
+              <Text style={[styles.weeklyPrice, localizedFonts.bold]}>{pricePerWeekText}</Text>
             </View>
           </View>
         </Pressable>
 
         <View style={styles.cancelAnytimeRow}>
           <Shield color={TEXT_MUTED} size={14} strokeWidth={2.1} />
-          <Text style={styles.noticeText}>{t("paywall.cancelAnytime")}</Text>
+          <Text style={[styles.noticeText, localizedFonts.medium]}>{t("paywall.cancelAnytime")}</Text>
         </View>
       </View>
     </FadeSwap>
@@ -330,6 +335,7 @@ function CountdownCloseButton({
   secondsLeft: number;
 }) {
   const { t } = useTranslation();
+  const localizedFonts = useLocalizedAppFonts();
   const animatedRingProps = useAnimatedProps(() => ({
     strokeDashoffset: CLOSE_RING_CIRCUMFERENCE * progress.value,
   }));
@@ -375,7 +381,7 @@ function CountdownCloseButton({
                   strokeWidth={CLOSE_RING_STROKE_WIDTH}
                 />
               </Svg>
-              <Text style={styles.countdownText}>{Math.max(secondsLeft, 1)}</Text>
+              <Text style={[styles.countdownText, localizedFonts.bold]}>{Math.max(secondsLeft, 1)}</Text>
             </View>
           )}
         </MotiView>
@@ -438,6 +444,7 @@ function getDisplayedYearlyPerWeekPrice(
 export default function PaywallScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const localizedFonts = useLocalizedAppFonts();
   const pricingContext = usePricingContext();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -879,7 +886,7 @@ export default function PaywallScreen() {
 
       <Animated.View style={[styles.sheet, { minHeight: sheetHeight }, sheetAnimatedStyle]}>
         <Pressable accessibilityRole="button" disabled={isLoading} onPress={() => void handleRestore()} style={styles.restoreButton}>
-          <Text style={styles.restoreText}>{t("paywall.restore")}</Text>
+          <Text style={[styles.restoreText, localizedFonts.medium]}>{t("paywall.restore")}</Text>
         </Pressable>
 
         <CountdownCloseButton
@@ -934,8 +941,8 @@ export default function PaywallScreen() {
           </View>
 
           <View style={styles.titleSection}>
-            <Text style={styles.titleText}>{PAYWALL_TITLE}</Text>
-            <Text style={styles.subtitleText}>{PAYWALL_SUBTITLE}</Text>
+            <Text style={[styles.titleText, localizedFonts.bold]}>{t("paywall.title")}</Text>
+            <Text style={[styles.subtitleText, localizedFonts.medium]}>{t("paywall.subtitle")}</Text>
           </View>
 
           <View style={styles.featuresSection}>
@@ -949,7 +956,7 @@ export default function PaywallScreen() {
           </View>
 
           <Pressable accessibilityRole="switch" accessibilityState={{ checked: freeTrialEnabled }} onPress={handleToggleTrial} style={styles.trialBar}>
-            <Text style={styles.trialLabel}>{freeTrialEnabled ? t("paywall.trialEnabled") : t("paywall.enableTrial")}</Text>
+            <Text style={[styles.trialLabel, localizedFonts.medium]}>{freeTrialEnabled ? t("paywall.trialEnabled") : t("paywall.enableTrial")}</Text>
             <ToggleSwitch value={freeTrialEnabled} />
           </Pressable>
 
@@ -972,19 +979,19 @@ export default function PaywallScreen() {
             />
           </View>
 
-          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+          {errorMessage ? <Text style={[styles.errorText, localizedFonts.medium]}>{errorMessage}</Text> : null}
 
           <Pressable accessibilityRole="button" disabled={ctaDisabled} onPress={() => void handlePurchase()} style={[styles.ctaButton, ctaDisabled ? styles.ctaButtonDisabled : null]}>
             {isLoading ? (
               <View style={styles.ctaLoadingRow}>
                 <ActivityIndicator color={CTA_TEXT} />
-                <Text style={styles.ctaText}>{t("paywall.processing")}</Text>
+                <Text style={[styles.ctaText, localizedFonts.bold]}>{t("paywall.processing")}</Text>
               </View>
             ) : (
               <FadeSwap swapKey={freeTrialEnabled ? "cta-trial" : "cta-continue"} style={styles.ctaContent}>
                 <View style={styles.ctaLabelRow}>
-                  <Text style={styles.ctaText}>{freeTrialEnabled ? t("paywall.tryForFree") : t("paywall.continue")}</Text>
-                  <Text style={styles.ctaArrow}>{">"}</Text>
+                  <Text style={[styles.ctaText, localizedFonts.bold]}>{freeTrialEnabled ? t("paywall.tryForFree") : t("paywall.continue")}</Text>
+                  <Text style={[styles.ctaArrow, localizedFonts.bold]}>{">"}</Text>
                 </View>
               </FadeSwap>
             )}
@@ -992,9 +999,9 @@ export default function PaywallScreen() {
 
           <View style={[styles.legalFooter, { paddingBottom: Math.max(insets.bottom + 12, 12) }]}>
             <View style={styles.legalLinksRow}>
-              <LegalLink label="Terms of Service" onPress={handleOpenTerms} />
-              <Text style={styles.legalDivider}>•</Text>
-              <LegalLink label="Privacy Policy" onPress={handleOpenPrivacy} />
+              <LegalLink label={t("paywall.terms")} onPress={handleOpenTerms} />
+              <Text style={[styles.legalDivider, localizedFonts.regular]}>|</Text>
+              <LegalLink label={t("paywall.privacy")} onPress={handleOpenPrivacy} />
             </View>
           </View>
         </ScrollView>
@@ -1104,6 +1111,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   subtitleText: {
+    maxWidth: 320,
     color: "#D6D6D6",
     fontSize: 13,
     lineHeight: 18,
@@ -1116,6 +1124,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
     lineHeight: 36,
     textAlign: "center",
+    flexShrink: 1,
     ...fonts.bold,
   },
   featureRow: {
@@ -1233,10 +1242,12 @@ const styles = StyleSheet.create({
   },
   planCopy: {
     flex: 1,
+    minWidth: 0,
     justifyContent: "center",
   },
   planPriceColumn: {
-    flexShrink: 0,
+    flexShrink: 1,
+    minWidth: 0,
     alignItems: "flex-end",
     justifyContent: "center",
     marginLeft: 12,
@@ -1418,4 +1429,5 @@ const styles = StyleSheet.create({
     ...fonts.regular,
   },
 });
+
 

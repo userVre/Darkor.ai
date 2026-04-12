@@ -26,10 +26,13 @@ import {
   Trash2,
   UserRound,
 } from "@/components/material-icons";
+import { MaterialIcon } from "@/components/material-icons";
 
 import { SettingsRow } from "../components/settings-row";
 import { useProSuccess } from "../components/pro-success-context";
 import { useWorkspaceDraft } from "../components/workspace-context";
+import { useAppLanguagePreference, useLocalizedAppFonts } from "../lib/i18n";
+import { getLanguageNativeLabel } from "../lib/i18n/language";
 import {
   configureRevenueCat,
   getRevenueCatClient,
@@ -62,6 +65,8 @@ function joinAppUrl(path: string) {
 export default function SettingsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const localizedFonts = useLocalizedAppFonts();
+  const languagePreference = useAppLanguagePreference();
   const insets = useSafeAreaInsets();
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
@@ -77,6 +82,10 @@ export default function SettingsScreen() {
   const truncatedUserId = fullUserId ? truncateUserId(fullUserId) : t("settings.states.notSignedIn");
   const shouldShowCopy = Boolean(fullUserId);
   const heroTopInset = Math.max(insets.top + 8, 48);
+  const currentLanguageLabel =
+    languagePreference.mode === "auto"
+      ? `${t("settings.language.autoShort")} - ${getLanguageNativeLabel(languagePreference.resolvedLanguage)}`
+      : getLanguageNativeLabel(languagePreference.resolvedLanguage);
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -159,6 +168,10 @@ export default function SettingsScreen() {
 
   const handlePrivacy = async () => {
     await openBrowserOrRoute("/privacy-policy", "/privacy-policy");
+  };
+
+  const handleLanguageSettings = () => {
+    router.push("/language-settings" as any);
   };
 
   const persistPurchasedPlan = async (
@@ -280,6 +293,13 @@ export default function SettingsScreen() {
   };
 
   const firstGroupRows = [
+    {
+      id: "language",
+      label: t("settings.rows.language"),
+      icon: ((props: any) => <MaterialIcon name="language" {...props} />) as any,
+      onPress: handleLanguageSettings,
+      rightAccessory: <Text numberOfLines={1} style={[styles.languageValue, localizedFonts.regular]}>{currentLanguageLabel}</Text>,
+    },
     { id: "feedback", label: t("settings.rows.feedback"), icon: Mail, onPress: handleFeedback },
     { id: "faq", label: t("settings.rows.faq"), icon: FileQuestion, onPress: handleFaq },
     { id: "rate-us", label: t("settings.rows.rateUs"), icon: Star, onPress: handleRateUs },
@@ -309,8 +329,8 @@ export default function SettingsScreen() {
           </Pressable>
 
           <View style={[styles.heroContent, { paddingTop: heroTopInset + 48 }]}>
-            <Text style={styles.headerTitle}>{t("settings.title")}</Text>
-            <Text style={styles.heroTitle}>{t("settings.heroTitle")}</Text>
+            <Text style={[styles.headerTitle, localizedFonts.semibold]}>{t("settings.title")}</Text>
+            <Text style={[styles.heroTitle, localizedFonts.bold]}>{t("settings.heroTitle")}</Text>
 
             <View style={styles.featureList}>
               {featureItems.map((item) => (
@@ -318,7 +338,7 @@ export default function SettingsScreen() {
                   <View style={styles.featureIconBox}>
                     <ChevronRight color="#0A0A0A" size={14} strokeWidth={2.4} />
                   </View>
-                  <Text style={styles.featureText}>{item}</Text>
+                  <Text style={[styles.featureText, localizedFonts.medium]}>{item}</Text>
                 </View>
               ))}
             </View>
@@ -326,7 +346,7 @@ export default function SettingsScreen() {
             <Pressable accessibilityRole="button" onPress={handleUpgrade} style={styles.upgradeButton}>
               <View style={styles.upgradeButtonContent}>
                 <Diamond color="#FFFFFF" size={16} strokeWidth={2.2} />
-                <Text style={styles.upgradeButtonText}>{t("settings.upgradePro")}</Text>
+                <Text style={[styles.upgradeButtonText, localizedFonts.semibold]}>{t("settings.upgradePro")}</Text>
               </View>
             </Pressable>
           </View>
@@ -334,7 +354,13 @@ export default function SettingsScreen() {
 
         <View style={styles.rowsSection}>
           {firstGroupRows.map((row) => (
-            <SettingsRow key={row.id} label={row.label} icon={row.icon} onPress={row.onPress} />
+            <SettingsRow
+              key={row.id}
+              label={row.label}
+              icon={row.icon}
+              onPress={row.onPress}
+              rightAccessory={row.rightAccessory}
+            />
           ))}
 
           <SettingsRow
@@ -353,7 +379,7 @@ export default function SettingsScreen() {
             disabled
             rightAccessory={
               <View style={styles.userIdAccessory}>
-                <Text numberOfLines={1} selectable style={styles.userIdText}>
+                <Text numberOfLines={1} selectable style={[styles.userIdText, localizedFonts.regular]}>
                   {truncatedUserId}
                 </Text>
                 {shouldShowCopy ? (
@@ -377,7 +403,7 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <Text style={styles.versionLabel}>{t("common.labels.version", { version: APP_VERSION })}</Text>
+        <Text style={[styles.versionLabel, localizedFonts.regular]}>{t("common.labels.version", { version: APP_VERSION })}</Text>
       </ScrollView>
     </View>
   );
@@ -455,6 +481,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   featureText: {
+    flex: 1,
+    flexShrink: 1,
     color: "#0A0A0A",
     fontSize: 15,
     lineHeight: 18,
@@ -494,9 +522,18 @@ const styles = StyleSheet.create({
     maxWidth: 190,
   },
   userIdText: {
+    flexShrink: 1,
     color: "#A0A0A0",
     fontSize: 12,
     lineHeight: 14,
+    ...fonts.regular,
+  },
+  languageValue: {
+    maxWidth: 150,
+    color: "#6B6B6B",
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: "right",
     ...fonts.regular,
   },
   copyButton: {
@@ -518,4 +555,5 @@ const styles = StyleSheet.create({
     ...fonts.regular,
   },
 });
+
 
