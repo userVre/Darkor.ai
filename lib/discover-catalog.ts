@@ -6,6 +6,7 @@ export type DiscoverService = "interior" | "garden" | "exterior" | "floor" | "pa
 export type DiscoverTile = {
   id: string;
   title: string;
+  previewTitle: string;
   image: ImageSourcePropType;
   service: DiscoverService;
 };
@@ -17,12 +18,12 @@ export type DiscoverGroup = {
 };
 
 export const DISCOVER_TABS = [
-  { id: "home", label: "Home" },
+  { id: "home", label: "Interior" },
   { id: "garden", label: "Garden" },
   { id: "exterior", label: "Exterior" },
 ] as const satisfies ReadonlyArray<{ id: DiscoverTabId; label: string }>;
 
-const images = {
+const DISCOVER_IMAGES = {
   homeKitchenAfter: require("../assets/media/discover/injected/home/kitchen.png"),
   homeLivingRoomAfter: require("../assets/media/discover/injected/home/living-room.png"),
   homeDiningRoomAfter: require("../assets/media/discover/injected/home/dining-room.png"),
@@ -38,38 +39,6 @@ const images = {
   homeBalconyAfter: require("../assets/media/discover/injected/home/balcony.png"),
   homeHallAfter: require("../assets/media/discover/injected/home/hall.png"),
   homeDeckAfter: require("../assets/media/discover/injected/home/deck.png"),
-  interiorScene1: require("../assets/media/discover/injected/interior/scene-1.png"),
-  interiorScene2: require("../assets/media/discover/injected/interior/scene-2.png"),
-  interiorScene3: require("../assets/media/discover/injected/interior/scene-3.png"),
-  interiorScene4: require("../assets/media/discover/injected/interior/scene-4.png"),
-  interiorScene5: require("../assets/media/discover/injected/interior/scene-5.png"),
-  exteriorAfterApartment: require("../assets/media/discover/exterior/exterior-after-eco-apartments.jpg"),
-  exteriorAfterHouse: require("../assets/media/discover/exterior/exterior-after-modern-house-day.jpg"),
-  exteriorAfterOffice: require("../assets/media/discover/exterior/exterior-after-glass-office.jpg"),
-  exteriorAfterVilla: require("../assets/media/discover/exterior/exterior-after-stone-villa.jpg"),
-  exteriorAfterResidential: require("../assets/media/discover/exterior/exterior-after-modern-house-night.jpg"),
-  exteriorApartmentBlock: require("../assets/media/discover/exterior/exterior-apartment-block.jpg"),
-  exteriorModernVilla: require("../assets/media/discover/exterior/exterior-modern-villa.jpg"),
-  exteriorGlassOffice: require("../assets/media/discover/exterior/exterior-glass-office.jpg"),
-  exteriorRetailStore: require("../assets/media/discover/exterior/exterior-retail-store.jpg"),
-  exteriorRetailStorefront: require("../assets/media/discover/exterior/exterior-retail-storefront.jpg"),
-  exteriorStoneManor: require("../assets/media/discover/exterior/exterior-stone-manor.jpg"),
-  exteriorPoolHouse: require("../assets/media/discover/exterior/exterior-pool-house.jpg"),
-  gardenScene1: require("../assets/media/discover/injected/garden/scene-1.png"),
-  gardenScene2: require("../assets/media/discover/injected/garden/scene-2.png"),
-  gardenScene3: require("../assets/media/discover/injected/garden/scene-3.png"),
-  gardenScene4: require("../assets/media/discover/injected/garden/scene-4.png"),
-  gardenScene5: require("../assets/media/discover/injected/garden/scene-5.png"),
-  floorScene1: require("../assets/media/discover/injected/floor/scene-1.png"),
-  floorScene2: require("../assets/media/discover/injected/floor/scene-2.png"),
-  floorScene3: require("../assets/media/discover/injected/floor/scene-3.png"),
-  floorScene4: require("../assets/media/discover/injected/floor/scene-4.png"),
-  floorScene5: require("../assets/media/discover/injected/floor/scene-5.png"),
-  wallScene1: require("../assets/media/discover/injected/wall/scene-1.png"),
-  wallScene2: require("../assets/media/discover/injected/wall/scene-2.png"),
-  wallScene3: require("../assets/media/discover/injected/wall/scene-3.png"),
-  wallScene4: require("../assets/media/discover/injected/wall/scene-4.png"),
-  wallScene5: require("../assets/media/discover/injected/wall/scene-5.png"),
   homeKitchen: require("../assets/media/discover/home/home-kitchen.jpg"),
   homeLivingRoom: require("../assets/media/discover/home/home-living-room.jpg"),
   homeDiningRoom: require("../assets/media/discover/home/home-dining-room.jpg"),
@@ -79,227 +48,326 @@ const images = {
   homeOffice: require("../assets/media/discover/home/home-home-office.jpg"),
   homeStudy: require("../assets/media/discover/home/home-study.jpg"),
   homeHall: require("../assets/media/discover/home/home-hall.jpg"),
-  gardenTerrace: require("../assets/media/discover/garden/garden-terrace.jpg"),
+  homeHomeTheater: require("../assets/media/discover/home/home-home-theater.jpg"),
+  homeLibrary: require("../assets/media/discover/home/home-library.jpg"),
+  homeLaundry: require("../assets/media/discover/home/home-laundry.jpg"),
+  homeNursery: require("../assets/media/discover/home/home-nursery.jpg"),
+  livingEditorial: require("../assets/media/discover/home/interior-after-editorial-lounge.jpg"),
+  livingGrand: require("../assets/media/discover/home/interior-after-grand-salon.jpg"),
+  livingMoody: require("../assets/media/discover/home/interior-after-moody-club.jpg"),
+  livingOrganic: require("../assets/media/discover/home/interior-after-organic-living.jpg"),
+  livingSerene: require("../assets/media/discover/home/interior-after-serene-lounge.jpg"),
+  roomBathroom: require("../assets/media/rooms/room-bathroom.jpg"),
+  roomDiningRoom: require("../assets/media/rooms/room-dining-room.jpg"),
+  roomHall: require("../assets/media/rooms/room-hall.jpg"),
+  roomHomeOffice: require("../assets/media/rooms/room-home-office.jpg"),
+  roomHomeTheater: require("../assets/media/rooms/room-home-theater.jpg"),
+  roomKitchen: require("../assets/media/rooms/room-kitchen.jpg"),
+  roomLivingRoom: require("../assets/media/rooms/room-living-room.jpg"),
+  roomMasterSuite: require("../assets/media/rooms/room-master-suite.jpg"),
+  roomNursery: require("../assets/media/rooms/room-nursery.jpg"),
+  paywallBohoBedroom: require("../assets/media/paywall/paywall-boho-bedroom.png"),
+  paywallDiningRoom: require("../assets/media/paywall/paywall-dining-room.png"),
+  paywallGamingRoom: require("../assets/media/paywall/paywall-gaming-room.png"),
+  paywallGardenPool: require("../assets/media/paywall/paywall-garden-pool.png"),
+  paywallLuxuryLounge: require("../assets/media/paywall/paywall-luxury-lounge.png"),
+  paywallMarbleKitchen: require("../assets/media/paywall/paywall-marble-kitchen.png"),
+  paywallSoftLounge: require("../assets/media/paywall/paywall-soft-lounge.png"),
+  exampleDamagedRoom: require("../assets/media/examples/interior/interior-before-damaged-room.jpg"),
+  exampleEmptyKitchen: require("../assets/media/examples/interior/interior-before-empty-kitchen.jpg"),
+  exampleEmptyRoom: require("../assets/media/examples/interior/interior-before-empty-room.jpg"),
+  exampleMessyLounge: require("../assets/media/examples/interior/interior-before-messy-lounge.jpg"),
+  exampleOutdatedKitchen: require("../assets/media/examples/interior/interior-before-outdated-kitchen.jpg"),
+  exampleWornReadingRoom: require("../assets/media/examples/interior/interior-before-worn-reading-room.jpg"),
+  wallDeepOliveStudy: require("../assets/media/discover/wall-scenes/deep-olive-study.jpg"),
+  wallLavenderMistBath: require("../assets/media/discover/wall-scenes/lavender-mist-bath.jpg"),
+  wallMidnightNavyBedroom: require("../assets/media/discover/wall-scenes/midnight-navy-bedroom.jpg"),
+  wallSoftIvoryKitchen: require("../assets/media/discover/wall-scenes/soft-ivory-kitchen.jpg"),
+  wallTerracottaDining: require("../assets/media/discover/wall-scenes/terracotta-dining.jpg"),
+  wallSagePlaster: require("../assets/media/discover/wall-scenes/wall-after-sage-plaster.jpg"),
+  wallVeinedMarble: require("../assets/media/discover/wall-scenes/wall-after-veined-marble.jpg"),
+  gardenAfterInfinityPool: require("../assets/media/discover/garden/garden-after-infinity-pool.jpg"),
+  gardenAfterGardenWalk: require("../assets/media/discover/garden/garden-after-luminous-garden-walk.jpg"),
+  gardenAfterFirePit: require("../assets/media/discover/garden/garden-after-sunset-fire-pit.jpg"),
+  gardenAfterTropicalPool: require("../assets/media/discover/garden/garden-after-tropical-pool-lounge.jpg"),
+  gardenAfterWaterfallCourt: require("../assets/media/discover/garden/garden-after-waterfall-court.jpg"),
+  gardenBackyard: require("../assets/media/discover/garden/garden-backyard.jpg"),
   gardenDeck: require("../assets/media/discover/garden/garden-deck.jpg"),
+  gardenFiresidePatio: require("../assets/media/discover/garden/garden-fireside-patio.jpg"),
+  gardenFrontYard: require("../assets/media/discover/garden/garden-front-yard.jpg"),
+  gardenInfinityPool: require("../assets/media/discover/garden/garden-infinity-pool.jpg"),
+  gardenPatio: require("../assets/media/discover/garden/garden-patio.jpg"),
+  gardenPoolCourtyard: require("../assets/media/discover/garden/garden-pool-courtyard.jpg"),
+  gardenSpaDeck: require("../assets/media/discover/garden/garden-spa-deck.jpg"),
+  gardenSunsetLounge: require("../assets/media/discover/garden/garden-sunset-lounge.jpg"),
+  gardenSwimmingPool: require("../assets/media/discover/garden/garden-swimming-pool.jpg"),
+  gardenTerrace: require("../assets/media/discover/garden/garden-terrace.jpg"),
+  gardenVillaEntry: require("../assets/media/discover/garden/garden-villa-entry.jpg"),
+  exteriorAfterApartment: require("../assets/media/discover/exterior/exterior-after-eco-apartments.jpg"),
+  exteriorAfterHouseDay: require("../assets/media/discover/exterior/exterior-after-modern-house-day.jpg"),
+  exteriorAfterHouseNight: require("../assets/media/discover/exterior/exterior-after-modern-house-night.jpg"),
+  exteriorAfterOffice: require("../assets/media/discover/exterior/exterior-after-glass-office.jpg"),
+  exteriorAfterVilla: require("../assets/media/discover/exterior/exterior-after-stone-villa.jpg"),
+  exteriorApartmentBlock: require("../assets/media/discover/exterior/exterior-apartment-block.jpg"),
+  exteriorGarageSuite: require("../assets/media/discover/exterior/exterior-garage-suite.jpg"),
+  exteriorGlassOffice: require("../assets/media/discover/exterior/exterior-glass-office.jpg"),
+  exteriorModernVilla: require("../assets/media/discover/exterior/exterior-modern-villa.jpg"),
+  exteriorPoolHouse: require("../assets/media/discover/exterior/exterior-pool-house.jpg"),
+  exteriorPremiumGarage: require("../assets/media/discover/exterior/exterior-premium-garage.jpg"),
+  exteriorRetailStore: require("../assets/media/discover/exterior/exterior-retail-store.jpg"),
+  exteriorRetailStorefront: require("../assets/media/discover/exterior/exterior-retail-storefront.jpg"),
+  exteriorStoneManor: require("../assets/media/discover/exterior/exterior-stone-manor.jpg"),
+  exampleExteriorAbandoned: require("../assets/media/examples/exterior/exterior-before-abandoned-home.jpg"),
+  exampleExteriorBrickShell: require("../assets/media/examples/exterior/exterior-before-brick-shell.jpg"),
+  exampleExteriorConcreteFrame: require("../assets/media/examples/exterior/exterior-before-concrete-frame.jpg"),
+  exampleExteriorOvergrown: require("../assets/media/examples/exterior/exterior-before-overgrown-cottage.jpg"),
+  exampleExteriorScaffold: require("../assets/media/examples/exterior/exterior-before-scaffold-house.jpg"),
+  exampleExteriorWeathered: require("../assets/media/examples/exterior/exterior-before-weathered-house.jpg"),
 } as const;
+
+type DiscoverImageKey = keyof typeof DISCOVER_IMAGES;
 
 function makeTile(
   id: string,
   title: string,
+  previewTitle: string,
   image: ImageSourcePropType,
   service: DiscoverService,
 ): DiscoverTile {
-  return { id, title, image, service };
+  return { id, title, previewTitle, image, service };
+}
+
+function makeImageId(groupTitle: string, index: number) {
+  const normalizedTitle = groupTitle.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  return `${normalizedTitle}_Image_${index + 1}`;
+}
+
+function makeGroup(
+  id: string,
+  title: string,
+  service: DiscoverService,
+  imageKeys: readonly DiscoverImageKey[],
+): DiscoverGroup {
+  return {
+    id,
+    title,
+    items: imageKeys.map((imageKey, index) =>
+      makeTile(
+        makeImageId(title, index),
+        `${title} Image ${index + 1}`,
+        title,
+        DISCOVER_IMAGES[imageKey],
+        service,
+      ),
+    ),
+  };
 }
 
 const HOME_GROUPS: DiscoverGroup[] = [
-  {
-    id: "kitchen",
-    title: "Kitchen",
-    items: [
-      makeTile("kitchen-after", "Kitchen After", images.homeKitchenAfter, "interior"),
-      makeTile("kitchen-reference", "Kitchen Reference", images.homeKitchen, "interior"),
-    ],
-  },
-  {
-    id: "living-room",
-    title: "Living Room",
-    items: [
-      makeTile("living-room-after", "Living Room After", images.homeLivingRoomAfter, "interior"),
-      makeTile("living-room-reference", "Living Room Reference", images.homeLivingRoom, "interior"),
-    ],
-  },
-  {
-    id: "dining-room",
-    title: "Dining Room",
-    items: [
-      makeTile("dining-room-after", "Dining Room After", images.homeDiningRoomAfter, "interior"),
-      makeTile("dining-room-reference", "Dining Room Reference", images.homeDiningRoom, "interior"),
-    ],
-  },
-  {
-    id: "bedroom",
-    title: "Bedroom",
-    items: [
-      makeTile("bedroom-after", "Bedroom After", images.homeBedroomAfter, "interior"),
-      makeTile("bedroom-reference", "Bedroom Reference", images.homeBedroom, "interior"),
-    ],
-  },
-  {
-    id: "bathroom",
-    title: "Bathroom",
-    items: [
-      makeTile("bathroom-after", "Bathroom After", images.homeBathroomAfter, "interior"),
-      makeTile("bathroom-reference", "Bathroom Reference", images.homeBathroom, "interior"),
-    ],
-  },
-  {
-    id: "gaming-room",
-    title: "Gaming Room",
-    items: [
-      makeTile("gaming-room-after", "Gaming Room After", images.homeGamingRoomAfter, "interior"),
-      makeTile("gaming-room-reference", "Gaming Room Reference", images.homeGamingRoom, "interior"),
-    ],
-  },
-  {
-    id: "home-office",
-    title: "Home Office",
-    items: [
-      makeTile("home-office-after", "Home Office After", images.homeOfficeAfter, "interior"),
-      makeTile("home-office-reference", "Home Office Reference", images.homeOffice, "interior"),
-    ],
-  },
-  {
-    id: "coffee-shop",
-    title: "Coffee Shop",
-    items: [
-      makeTile("coffee-shop-after", "Coffee Shop After", images.homeCoffeeShopAfter, "interior"),
-      makeTile("coffee-shop-reference", "Coffee Shop Reference", images.interiorScene1, "interior"),
-    ],
-  },
-  {
-    id: "study-room",
-    title: "Study Room",
-    items: [
-      makeTile("study-room-after", "Study Room After", images.homeStudyRoomAfter, "interior"),
-      makeTile("study-room-reference", "Study Room Reference", images.homeStudy, "interior"),
-    ],
-  },
-  {
-    id: "restaurant",
-    title: "Restaurant",
-    items: [
-      makeTile("restaurant-after", "Restaurant After", images.homeRestaurantAfter, "interior"),
-      makeTile("restaurant-reference", "Restaurant Reference", images.homeDiningRoom, "interior"),
-    ],
-  },
-  {
-    id: "attic",
-    title: "Attic",
-    items: [
-      makeTile("attic-after", "Attic After", images.homeAtticAfter, "interior"),
-      makeTile("attic-reference", "Attic Reference", images.interiorScene3, "interior"),
-    ],
-  },
-  {
-    id: "toilet",
-    title: "Toilet",
-    items: [
-      makeTile("toilet-after", "Toilet After", images.homeToiletAfter, "interior"),
-      makeTile("toilet-reference", "Toilet Reference", images.homeBathroom, "interior"),
-    ],
-  },
-  {
-    id: "balcony",
-    title: "Balcony",
-    items: [
-      makeTile("balcony-after", "Balcony After", images.homeBalconyAfter, "interior"),
-      makeTile("balcony-reference", "Balcony Reference", images.gardenTerrace, "interior"),
-    ],
-  },
-  {
-    id: "hall",
-    title: "Hall",
-    items: [
-      makeTile("hall-after", "Hall After", images.homeHallAfter, "interior"),
-      makeTile("hall-reference", "Hall Reference", images.homeHall, "interior"),
-    ],
-  },
-  {
-    id: "deck",
-    title: "Deck",
-    items: [
-      makeTile("deck-after", "Deck After", images.homeDeckAfter, "interior"),
-      makeTile("deck-reference", "Deck Reference", images.gardenDeck, "interior"),
-    ],
-  },
+  makeGroup("kitchen", "Kitchen", "interior", [
+    "homeKitchenAfter",
+    "homeKitchen",
+    "roomKitchen",
+    "paywallMarbleKitchen",
+    "exampleEmptyKitchen",
+    "exampleOutdatedKitchen",
+    "wallSoftIvoryKitchen",
+  ]),
+  makeGroup("living-room", "Living Room", "interior", [
+    "homeLivingRoomAfter",
+    "homeLivingRoom",
+    "roomLivingRoom",
+    "paywallSoftLounge",
+    "livingSerene",
+    "livingOrganic",
+    "livingMoody",
+  ]),
+  makeGroup("dining-room", "Dining Room", "interior", [
+    "homeDiningRoomAfter",
+    "homeDiningRoom",
+    "roomDiningRoom",
+    "paywallDiningRoom",
+    "wallTerracottaDining",
+    "paywallLuxuryLounge",
+    "livingGrand",
+  ]),
+  makeGroup("bedroom", "Bedroom", "interior", [
+    "homeBedroomAfter",
+    "homeBedroom",
+    "roomMasterSuite",
+    "paywallBohoBedroom",
+    "wallMidnightNavyBedroom",
+    "homeNursery",
+    "livingSerene",
+  ]),
+  makeGroup("bathroom", "Bathroom", "interior", [
+    "homeBathroomAfter",
+    "homeBathroom",
+    "roomBathroom",
+    "wallLavenderMistBath",
+    "homeToiletAfter",
+    "wallVeinedMarble",
+    "wallSagePlaster",
+  ]),
+  makeGroup("gaming-room", "Gaming Room", "interior", [
+    "homeGamingRoomAfter",
+    "homeGamingRoom",
+    "paywallGamingRoom",
+    "homeHomeTheater",
+    "roomHomeTheater",
+    "paywallSoftLounge",
+    "livingMoody",
+  ]),
+  makeGroup("home-office", "Home Office", "interior", [
+    "homeOfficeAfter",
+    "homeOffice",
+    "roomHomeOffice",
+    "homeStudy",
+    "homeLibrary",
+    "wallDeepOliveStudy",
+    "paywallLuxuryLounge",
+  ]),
+  makeGroup("coffee-shop", "Coffee Shop", "interior", [
+    "homeCoffeeShopAfter",
+    "paywallDiningRoom",
+    "homeDiningRoom",
+    "roomDiningRoom",
+    "paywallSoftLounge",
+    "livingEditorial",
+    "homeKitchen",
+  ]),
+  makeGroup("study-room", "Study Room", "interior", [
+    "homeStudyRoomAfter",
+    "homeStudy",
+    "homeLibrary",
+    "homeOffice",
+    "roomHomeOffice",
+    "wallDeepOliveStudy",
+    "exampleWornReadingRoom",
+  ]),
+  makeGroup("restaurant", "Restaurant", "interior", [
+    "homeRestaurantAfter",
+    "homeDiningRoom",
+    "roomDiningRoom",
+    "paywallDiningRoom",
+    "homeKitchen",
+    "paywallMarbleKitchen",
+    "paywallLuxuryLounge",
+  ]),
+  makeGroup("attic", "Attic", "interior", [
+    "homeAtticAfter",
+    "homeLibrary",
+    "homeStudy",
+    "homeHomeTheater",
+    "roomHomeTheater",
+    "livingGrand",
+    "livingEditorial",
+  ]),
+  makeGroup("toilet", "Toilet", "interior", [
+    "homeToiletAfter",
+    "homeBathroomAfter",
+    "homeBathroom",
+    "roomBathroom",
+    "wallLavenderMistBath",
+    "wallVeinedMarble",
+    "wallSagePlaster",
+  ]),
+  makeGroup("balcony", "Balcony", "interior", [
+    "homeBalconyAfter",
+    "gardenTerrace",
+    "gardenDeck",
+    "gardenVillaEntry",
+    "gardenSunsetLounge",
+    "gardenFrontYard",
+    "gardenSpaDeck",
+  ]),
+  makeGroup("hall", "Hall", "interior", [
+    "homeHallAfter",
+    "homeHall",
+    "roomHall",
+    "homeLibrary",
+    "livingGrand",
+    "paywallLuxuryLounge",
+    "roomDiningRoom",
+  ]),
+  makeGroup("deck", "Deck", "interior", [
+    "homeDeckAfter",
+    "gardenDeck",
+    "gardenSpaDeck",
+    "gardenTerrace",
+    "gardenFiresidePatio",
+    "gardenPoolCourtyard",
+    "gardenSunsetLounge",
+  ]),
 ];
 
 const GARDEN_GROUPS: DiscoverGroup[] = [
-  {
-    id: "garden",
-    title: "Garden",
-    items: [
-      makeTile("garden-1", "Garden Scene 1", images.gardenScene1, "garden"),
-      makeTile("garden-2", "Garden Scene 2", images.gardenScene2, "garden"),
-      makeTile("garden-3", "Garden Scene 3", images.gardenScene3, "garden"),
-      makeTile("garden-4", "Garden Scene 4", images.gardenScene4, "garden"),
-      makeTile("garden-5", "Garden Scene 5", images.gardenScene5, "garden"),
-    ],
-  },
-  {
-    id: "wall",
-    title: "Wall",
-    items: [
-      makeTile("wall-1", "Wall Scene 1", images.wallScene1, "paint"),
-      makeTile("wall-2", "Wall Scene 2", images.wallScene2, "paint"),
-      makeTile("wall-3", "Wall Scene 3", images.wallScene3, "paint"),
-      makeTile("wall-4", "Wall Scene 4", images.wallScene4, "paint"),
-      makeTile("wall-5", "Wall Scene 5", images.wallScene5, "paint"),
-    ],
-  },
-  {
-    id: "floor",
-    title: "Floor",
-    items: [
-      makeTile("floor-1", "Floor Scene 1", images.floorScene1, "floor"),
-      makeTile("floor-2", "Floor Scene 2", images.floorScene2, "floor"),
-      makeTile("floor-3", "Floor Scene 3", images.floorScene3, "floor"),
-      makeTile("floor-4", "Floor Scene 4", images.floorScene4, "floor"),
-      makeTile("floor-5", "Floor Scene 5", images.floorScene5, "floor"),
-    ],
-  },
+  makeGroup("garden", "Garden", "garden", [
+    "gardenAfterInfinityPool",
+    "gardenAfterWaterfallCourt",
+    "gardenAfterFirePit",
+    "gardenAfterTropicalPool",
+    "gardenAfterGardenWalk",
+    "gardenSunsetLounge",
+    "paywallGardenPool",
+  ]),
 ];
 
 const EXTERIOR_GROUPS: DiscoverGroup[] = [
-  {
-    id: "apartment",
-    title: "Apartment",
-    items: [
-      makeTile("apartment-after", "Apartment After", images.exteriorAfterApartment, "exterior"),
-      makeTile("apartment-reference", "Apartment Reference", images.exteriorApartmentBlock, "exterior"),
-    ],
-  },
-  {
-    id: "house",
-    title: "House",
-    items: [
-      makeTile("house-after", "House After", images.exteriorAfterHouse, "exterior"),
-      makeTile("house-reference", "House Reference", images.exteriorStoneManor, "exterior"),
-    ],
-  },
-  {
-    id: "office-building",
-    title: "Office Building",
-    items: [
-      makeTile("office-building-after", "Office Building After", images.exteriorAfterOffice, "exterior"),
-      makeTile("office-building-reference", "Office Building Reference", images.exteriorGlassOffice, "exterior"),
-    ],
-  },
-  {
-    id: "villa",
-    title: "Villa",
-    items: [
-      makeTile("villa-after", "Villa After", images.exteriorAfterVilla, "exterior"),
-      makeTile("villa-reference", "Villa Reference", images.exteriorModernVilla, "exterior"),
-    ],
-  },
-  {
-    id: "residential",
-    title: "Residential",
-    items: [
-      makeTile("residential-after", "Residential After", images.exteriorAfterResidential, "exterior"),
-      makeTile("residential-reference", "Residential Reference", images.exteriorPoolHouse, "exterior"),
-    ],
-  },
-  {
-    id: "retail",
-    title: "Retail",
-    items: [
-      makeTile("retail-reference-1", "Retail Reference 1", images.exteriorRetailStorefront, "exterior"),
-      makeTile("retail-reference-2", "Retail Reference 2", images.exteriorRetailStore, "exterior"),
-    ],
-  },
+  makeGroup("villa", "Villa", "exterior", [
+    "exteriorAfterVilla",
+    "exteriorModernVilla",
+    "exteriorStoneManor",
+    "exteriorPoolHouse",
+    "exampleExteriorOvergrown",
+    "exampleExteriorWeathered",
+    "exampleExteriorScaffold",
+  ]),
+  makeGroup("apartment", "Apartment", "exterior", [
+    "exteriorAfterApartment",
+    "exteriorApartmentBlock",
+    "exampleExteriorBrickShell",
+    "exampleExteriorConcreteFrame",
+    "exampleExteriorAbandoned",
+    "exampleExteriorScaffold",
+    "exteriorPremiumGarage",
+  ]),
+  makeGroup("house", "House", "exterior", [
+    "exteriorAfterHouseDay",
+    "exteriorAfterHouseNight",
+    "exteriorStoneManor",
+    "exampleExteriorWeathered",
+    "exampleExteriorOvergrown",
+    "exteriorGarageSuite",
+    "exteriorPremiumGarage",
+  ]),
+  makeGroup("office-building", "Office Building", "exterior", [
+    "exteriorAfterOffice",
+    "exteriorGlassOffice",
+    "exampleExteriorConcreteFrame",
+    "exteriorRetailStorefront",
+    "exteriorRetailStore",
+    "exteriorPremiumGarage",
+    "exampleExteriorBrickShell",
+  ]),
+  makeGroup("retail", "Retail", "exterior", [
+    "exteriorRetailStorefront",
+    "exteriorRetailStore",
+    "exteriorAfterOffice",
+    "exteriorGlassOffice",
+    "exampleExteriorAbandoned",
+    "exteriorPremiumGarage",
+    "exampleExteriorBrickShell",
+  ]),
+  makeGroup("residential", "Residential", "exterior", [
+    "exteriorAfterHouseNight",
+    "exteriorPoolHouse",
+    "exteriorAfterApartment",
+    "exteriorApartmentBlock",
+    "exampleExteriorWeathered",
+    "exampleExteriorScaffold",
+    "exteriorGarageSuite",
+  ]),
 ];
 
 const DISCOVER_CATALOG: Record<DiscoverTabId, DiscoverGroup[]> = {

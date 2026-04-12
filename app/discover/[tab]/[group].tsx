@@ -1,8 +1,7 @@
-import { FlashList } from "@shopify/flash-list";
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { ArrowLeft } from "@/components/material-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -81,11 +80,17 @@ export default function DiscoverSeeAllScreen() {
       </View>
 
       {group ? (
-        <FlashList
+        <FlatList
           data={group.items}
           keyExtractor={(item) => item.id}
           numColumns={2}
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          updateCellsBatchingPeriod={36}
+          removeClippedSubviews
           showsVerticalScrollIndicator={false}
+          contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{
             paddingHorizontal: SCREEN_SIDE_MARGIN,
             paddingTop: 18,
@@ -143,7 +148,7 @@ const styles = StyleSheet.create({
     color: "#0A0A0A",
     fontSize: 20,
     lineHeight: 24,
-    textAlign: "left",
+    textAlign: "center",
     ...fonts.bold,
   },
   headerSpacer: {

@@ -30,6 +30,8 @@ const SCREEN_SIDE_MARGIN = 24;
 const TAB_RAIL_MAX_WIDTH = 392;
 const TAB_RAIL_PADDING = 6;
 const CARD_GAP = 12;
+const OUTER_WINDOW_SIZE = 5;
+const INNER_WINDOW_SIZE = 3;
 
 const ThreeDiamondMark = memo(function ThreeDiamondMark() {
   return (
@@ -137,6 +139,8 @@ const DiscoverSection = memo(function DiscoverSection({
         keyExtractor={(item) => item.id}
         initialNumToRender={4}
         maxToRenderPerBatch={6}
+        windowSize={INNER_WINDOW_SIZE}
+        updateCellsBatchingPeriod={32}
         removeClippedSubviews
         renderItem={({ item, index }) => (
           <DiscoverImageCard
@@ -148,6 +152,7 @@ const DiscoverSection = memo(function DiscoverSection({
           />
         )}
         showsHorizontalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={styles.sectionContent}
       />
     </View>
@@ -196,6 +201,8 @@ export default function GalleryScreen() {
         keyExtractor={(item) => item.id}
         initialNumToRender={3}
         maxToRenderPerBatch={4}
+        windowSize={OUTER_WINDOW_SIZE}
+        updateCellsBatchingPeriod={40}
         removeClippedSubviews
         renderItem={({ item }) => (
           <DiscoverSection
@@ -208,6 +215,7 @@ export default function GalleryScreen() {
           />
         )}
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           paddingBottom: Math.max(insets.bottom + 34, 44),
         }}
@@ -284,7 +292,7 @@ const styles = StyleSheet.create({
     color: "#0A0A0A",
     fontSize: 20,
     lineHeight: 24,
-    textAlign: "left",
+    textAlign: "center",
     ...fonts.bold,
   },
   tabsOuter: {
@@ -335,7 +343,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    marginBottom: 32,
+    marginBottom: 18,
     flexDirection: "row",
     alignItems: "center",
   },
