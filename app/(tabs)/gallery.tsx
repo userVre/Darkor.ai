@@ -5,6 +5,7 @@ import {
   Animated,
   FlatList,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -31,7 +32,6 @@ const TAB_RAIL_MAX_WIDTH = 392;
 const TAB_RAIL_PADDING = 6;
 const CARD_GAP = 12;
 const OUTER_WINDOW_SIZE = 5;
-const INNER_WINDOW_SIZE = 3;
 
 const ThreeDiamondMark = memo(function ThreeDiamondMark() {
   return (
@@ -133,28 +133,24 @@ const DiscoverSection = memo(function DiscoverSection({
         </Pressable>
       </View>
 
-      <FlatList
+      <ScrollView
         horizontal
-        data={group.items}
-        keyExtractor={(item) => item.id}
-        initialNumToRender={4}
-        maxToRenderPerBatch={6}
-        windowSize={INNER_WINDOW_SIZE}
-        updateCellsBatchingPeriod={32}
-        removeClippedSubviews
-        renderItem={({ item, index }) => (
+        style={{ height: cardHeight }}
+        showsHorizontalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={styles.sectionContent}
+      >
+        {group.items.map((item, index) => (
           <DiscoverImageCard
+            key={item.id}
             item={item}
             width={cardWidth}
             height={cardHeight}
             onPress={onPreview}
             style={index < group.items.length - 1 ? styles.cardGap : undefined}
           />
-        )}
-        showsHorizontalScrollIndicator={false}
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.sectionContent}
-      />
+        ))}
+      </ScrollView>
     </View>
   );
 });
