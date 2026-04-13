@@ -160,6 +160,12 @@ export default function GalleryScreen() {
   const tabRailWidth = useMemo(() => Math.min(width - SCREEN_SIDE_MARGIN * 2, TAB_RAIL_MAX_WIDTH), [width]);
   const cardWidth = useMemo(() => Math.min(Math.max(width * 0.48, 184), 208), [width]);
   const cardHeight = useMemo(() => Math.round(cardWidth * 1.18), [cardWidth]);
+  const contentContainerStyle = useMemo(
+    () => ({
+      paddingBottom: Math.max(insets.bottom + 34, 44),
+    }),
+    [insets.bottom],
+  );
 
   const handlePreviewOpen = useCallback((item: DiscoverTile) => {
     triggerHaptic();
@@ -195,55 +201,69 @@ export default function GalleryScreen() {
     router.push("/paywall");
   }, [router]);
 
+  const handleTabSelect = useCallback((tabId: DiscoverTabId) => {
+    setActiveTab((currentTab) => (currentTab === tabId ? currentTab : tabId));
+  }, []);
+
+  const keyExtractor = useCallback((item: DiscoverGroup) => item.id, []);
+
+  const renderSection = useCallback(
+    ({ item }: { item: DiscoverGroup }) => (
+      <DiscoverSection
+        tabId={activeTab}
+        group={item}
+        cardWidth={cardWidth}
+        cardHeight={cardHeight}
+        onPreview={handlePreviewOpen}
+        onSeeAll={handleSeeAll}
+      />
+    ),
+    [activeTab, cardHeight, cardWidth, handlePreviewOpen, handleSeeAll],
+  );
+
+  const listHeader = useMemo(
+    () => (
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+        <View style={styles.headerRow}>
+          <View style={styles.headerSide}>
+            <DiamondCreditPill
+              accessibilityLabel="Open credits"
+              count={creditBalance}
+              onPress={handleCreditsPress}
+              variant="dark"
+            />
+          </View>
+
+          <View pointerEvents="none" style={styles.headerTitleWrap}>
+            <Text style={styles.headerTitle}>{t("discover.title")}</Text>
+          </View>
+
+          <View style={styles.headerSide} />
+        </View>
+
+        <DiscoverTabs activeTab={activeTab} railWidth={tabRailWidth} onSelect={handleTabSelect} />
+      </View>
+    ),
+    [activeTab, creditBalance, handleCreditsPress, handleTabSelect, insets.top, t, tabRailWidth],
+  );
+
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
 
       <FlatList
         data={groups}
-        keyExtractor={(item) => item.id}
+        keyExtractor={keyExtractor}
         initialNumToRender={3}
         maxToRenderPerBatch={4}
         windowSize={OUTER_WINDOW_SIZE}
         updateCellsBatchingPeriod={40}
         removeClippedSubviews
-        renderItem={({ item }) => (
-          <DiscoverSection
-            tabId={activeTab}
-            group={item}
-            cardWidth={cardWidth}
-            cardHeight={cardHeight}
-            onPreview={handlePreviewOpen}
-            onSeeAll={handleSeeAll}
-          />
-        )}
+        renderItem={renderSection}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{
-          paddingBottom: Math.max(insets.bottom + 34, 44),
-        }}
-        ListHeaderComponent={
-          <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
-            <View style={styles.headerRow}>
-              <View style={styles.headerSide}>
-                <DiamondCreditPill
-                  accessibilityLabel="Open credits"
-                  count={creditBalance}
-                  onPress={handleCreditsPress}
-                  variant="dark"
-                />
-              </View>
-
-              <View pointerEvents="none" style={styles.headerTitleWrap}>
-                <Text style={styles.headerTitle}>{t("discover.title")}</Text>
-              </View>
-
-              <View style={styles.headerSide} />
-            </View>
-
-            <DiscoverTabs activeTab={activeTab} railWidth={tabRailWidth} onSelect={setActiveTab} />
-          </View>
-        }
+        contentContainerStyle={contentContainerStyle}
+        ListHeaderComponent={listHeader}
       />
 
       <DiscoverPreviewModal

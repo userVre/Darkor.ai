@@ -57,6 +57,25 @@ function emitPreferenceChange() {
   listeners.forEach((listener) => listener());
 }
 
+function arePreferencesEqual(
+  left: StoredLanguagePreference,
+  right: StoredLanguagePreference,
+) {
+  if (left.mode !== right.mode) {
+    return false;
+  }
+
+  if (left.mode === "manual" && right.mode === "manual") {
+    return left.language === right.language;
+  }
+
+  return true;
+}
+
+function getResolvedI18nLanguage() {
+  return resolveSupportedLanguage(i18n.resolvedLanguage ?? i18n.language);
+}
+
 function resolveLanguageFromPreference(preference: StoredLanguagePreference) {
   if (preference.mode === "manual") {
     return resolveSupportedLanguage(preference.language);
@@ -119,8 +138,13 @@ async function persistLanguagePreference(preference: StoredLanguagePreference) {
 }
 
 function setCurrentPreference(preference: StoredLanguagePreference) {
+  if (arePreferencesEqual(currentPreference, preference)) {
+    return false;
+  }
+
   currentPreference = preference;
   emitPreferenceChange();
+  return true;
 }
 
 function getSnapshot(): AppLanguagePreferenceSnapshot {
@@ -184,7 +208,7 @@ async function applyLanguagePreference(preference: StoredLanguagePreference) {
 
   const resolvedLanguage = resolveLanguageFromPreference(preference);
 
-  if (resolveSupportedLanguage(i18n.resolvedLanguage ?? i18n.language) !== resolvedLanguage) {
+  if (getResolvedI18nLanguage() !== resolvedLanguage) {
     await i18n.changeLanguage(resolvedLanguage);
   }
 
@@ -214,10 +238,11 @@ export async function syncAppLanguageWithSystem() {
 
   const resolvedLanguage = resolveLanguageFromPreference(currentPreference);
 
-  if (resolveSupportedLanguage(i18n.resolvedLanguage ?? i18n.language) !== resolvedLanguage) {
-    await i18n.changeLanguage(resolvedLanguage);
+  if (getResolvedI18nLanguage() === resolvedLanguage) {
+    return resolvedLanguage;
   }
 
+  await i18n.changeLanguage(resolvedLanguage);
   emitPreferenceChange();
   return resolvedLanguage;
 }

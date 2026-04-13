@@ -261,10 +261,13 @@ function BootScreen({ message }: { message: string }) {
 
 function LocalizationSyncGate() {
   const locales = useLocales();
+  const localeSignature = locales
+    .map((locale) => locale.languageTag ?? locale.languageCode ?? "")
+    .join("|");
 
   useEffect(() => {
     void syncAppLanguageWithSystem();
-  }, [locales]);
+  }, [localeSignature]);
 
   return null;
 }
