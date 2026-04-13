@@ -20,7 +20,7 @@ import { fonts } from "../../styles/typography";
 
 const STICKY_HEADER_HEIGHT = 56;
 const FIRST_CARD_TOP_GAP = 16;
-const TOOL_GRID_GAP = 16;
+const TOOL_GRID_GAP = 20;
 
 export default function HomeScreen() {
   const router = useRouter();

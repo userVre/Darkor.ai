@@ -7,7 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import Svg, { Path } from "react-native-svg";
+import { Hexagon } from "lucide-react-native";
 
 import { fonts } from "../styles/typography";
 
@@ -43,14 +43,15 @@ export function DiamondCreditIcon({
   size?: number;
 }) {
   return (
-    <Svg accessibilityElementsHidden height={size} pointerEvents="none" viewBox="0 0 24 24" width={size}>
-      <Path d="M12 2.75 5.6 9.25l6.4 12 6.4-12Z" fill={color} opacity={0.95} />
-      <Path d="M8.45 9.25 12 2.75l3.55 6.5Z" fill={color} opacity={0.45} />
-      <Path d="M8.45 9.25h7.1L12 20.2Z" fill={color} opacity={0.2} />
-      <Path d="M8.45 9.25 12 20.2l3.55-10.95" fill="none" opacity={0.75} stroke={color} strokeLinejoin="round" strokeWidth={1.1} />
-      <Path d="M5.6 9.25h12.8" fill="none" opacity={0.55} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.1} />
-      <Path d="M12 2.75v17.45" fill="none" opacity={0.34} stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.1} />
-    </Svg>
+    <View
+      accessibilityElementsHidden
+      pointerEvents="none"
+      style={[styles.creditIconWrap, { width: size + 6, height: size + 6 }]}
+    >
+      <Hexagon color={color} size={size + 6} strokeWidth={1.8} />
+      <View style={[styles.creditIconCore, { backgroundColor: color }]} />
+      <View style={[styles.creditIconGlow, { backgroundColor: color }]} />
+    </View>
   );
 }
 
@@ -122,5 +123,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 16,
     ...fonts.bold,
+  },
+  creditIconWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  creditIconCore: {
+    position: "absolute",
+    width: 5,
+    height: 5,
+    borderRadius: 999,
+  },
+  creditIconGlow: {
+    position: "absolute",
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    opacity: 0.18,
   },
 });

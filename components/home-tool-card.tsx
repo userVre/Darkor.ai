@@ -84,8 +84,10 @@ export function HomeToolCard({ item, index, onPress, variant = "compact", style 
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 26,
-    borderCurve: "continuous",
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
+    borderBottomLeftRadius: 12,
     padding: 10,
     backgroundColor: "#F6F1EA",
     borderWidth: StyleSheet.hairlineWidth,
@@ -99,8 +101,10 @@ const styles = StyleSheet.create({
   },
   imageFrame: {
     aspectRatio: 16 / 9,
-    borderRadius: 18,
-    borderCurve: "continuous",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
+    borderBottomLeftRadius: 12,
     overflow: "hidden",
     backgroundColor: "#D8D3CC",
   },

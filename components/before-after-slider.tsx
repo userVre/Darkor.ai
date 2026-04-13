@@ -1,5 +1,5 @@
 import { Image, type ImageSource } from "expo-image";
-import { ChevronLeft, ChevronRight } from "@/components/material-icons";
+import * as Haptics from "expo-haptics";
 import { memo, type ReactNode, type Ref, useCallback } from "react";
 import {
   type ImageStyle,
@@ -24,10 +24,12 @@ import Animated, {
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 
-const HANDLE_TOUCH_WIDTH = 64;
-const HANDLE_SIZE = 52;
+const HANDLE_TOUCH_WIDTH = 72;
+const HANDLE_PILL_WIDTH = 28;
+const HANDLE_PILL_HEIGHT = 104;
 const LABEL_EDGE_INSET = 18;
 const LABEL_FADE_DISTANCE = 96;
+const CENTER_HIT_THRESHOLD = 10;
 const SLIDER_SPRING = {
   damping: 18,
   stiffness: 180,
@@ -64,10 +66,15 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
   style,
 }: BeforeAfterSliderProps) {
   const sliderStart = useSharedValue(0);
+  const hasEnteredCenterZone = useSharedValue(false);
 
   const notifyInteractionStart = useCallback(() => {
     onInteractionStart?.();
   }, [onInteractionStart]);
+
+  const notifyCenterHit = useCallback(() => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+  }, []);
 
   const handleLayout = useCallback(
     (event: LayoutChangeEvent) => {
@@ -81,9 +88,10 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
 
       if (!previousWidth || Math.abs(previousWidth - width) > 1 || sliderX.value > width) {
         sliderX.value = withSpring(width / 2, SLIDER_SPRING);
+        hasEnteredCenterZone.value = true;
       }
     },
-    [sliderWidth, sliderX],
+    [hasEnteredCenterZone, sliderWidth, sliderX],
   );
 
   const panGesture = Gesture.Pan()
@@ -91,6 +99,8 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
     .failOffsetY([-12, 12])
     .onBegin(() => {
       sliderStart.value = sliderX.value;
+      const width = sliderWidth.value || 1;
+      hasEnteredCenterZone.value = Math.abs(sliderX.value - width / 2) <= CENTER_HIT_THRESHOLD;
       if (onInteractionStart) {
         runOnJS(notifyInteractionStart)();
       }
@@ -98,7 +108,17 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
     .onUpdate((event) => {
       const max = sliderWidth.value || 1;
       const next = sliderStart.value + event.translationX;
-      sliderX.value = Math.max(0, Math.min(next, max));
+      const clamped = Math.max(0, Math.min(next, max));
+      const isNearCenter = Math.abs(clamped - max / 2) <= CENTER_HIT_THRESHOLD;
+
+      if (isNearCenter && !hasEnteredCenterZone.value) {
+        hasEnteredCenterZone.value = true;
+        runOnJS(notifyCenterHit)();
+      } else if (!isNearCenter && hasEnteredCenterZone.value) {
+        hasEnteredCenterZone.value = false;
+      }
+
+      sliderX.value = clamped;
     });
 
   const doubleTapGesture = Gesture.Tap()
@@ -115,7 +135,8 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
       }
 
       sliderX.value = withSpring(width / 2, SLIDER_SPRING);
-      runOnJS(triggerHaptic)();
+      hasEnteredCenterZone.value = true;
+      runOnJS(notifyCenterHit)();
       if (onInteractionStart) {
         runOnJS(notifyInteractionStart)();
       }
@@ -193,10 +214,13 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
         </Animated.View>
 
         <Animated.View pointerEvents="none" style={[styles.handleWrap, handleStyle]}>
-          <View style={styles.handleLine} />
-          <View style={styles.handleCircle}>
-            <ChevronLeft color="#FFFFFF" size={16} strokeWidth={2.8} />
-            <ChevronRight color="#FFFFFF" size={16} strokeWidth={2.8} />
+          <View style={styles.handleDividerCluster}>
+            <View style={styles.handleDivider} />
+            <View style={styles.handleDivider} />
+          </View>
+          <View style={styles.handlePill}>
+            <View style={styles.handleGrip} />
+            <View style={styles.handleGrip} />
           </View>
         </Animated.View>
       </View>
@@ -261,25 +285,37 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  handleLine: {
+  handleDividerCluster: {
     position: "absolute",
     top: 0,
     bottom: 0,
-    width: 2,
-    backgroundColor: "rgba(255,255,255,0.98)",
+    flexDirection: "row",
+    alignItems: "stretch",
+    justifyContent: "center",
+    gap: 6,
   },
-  handleCircle: {
-    width: HANDLE_SIZE,
-    height: HANDLE_SIZE,
-    borderRadius: HANDLE_SIZE / 2,
+  handleDivider: {
+    width: 2,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.94)",
+  },
+  handlePill: {
+    width: HANDLE_PILL_WIDTH,
+    height: HANDLE_PILL_HEIGHT,
+    borderRadius: 999,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.28)",
-    backgroundColor: "rgba(10,10,12,0.74)",
+    backgroundColor: "rgba(18,18,18,0.64)",
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "row",
-    gap: 2,
+    gap: 7,
     boxShadow: "0px 18px 38px rgba(0, 0, 0, 0.3)",
+  },
+  handleGrip: {
+    width: 3,
+    height: 22,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.74)",
   },
 });
 

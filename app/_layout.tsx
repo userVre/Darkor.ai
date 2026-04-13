@@ -16,6 +16,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AppErrorBoundary } from "../components/app-error-boundary";
+import { BrandLaunchScreen } from "../components/brand-launch-screen";
 import { GenerationAccessCacheGate } from "../components/generation-access-cache-gate";
 import { FlowUIProvider } from "../components/flow-ui-context";
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
@@ -405,6 +406,7 @@ export default function RootLayout() {
     "Inter-Italic": require("../assets/Fonts/InterVariable-Italic.ttf"),
   });
   const [i18nReady, setI18nReady] = useState(i18n.isInitialized);
+  const [showBrandLaunch, setShowBrandLaunch] = useState(true);
   const envReport = useMemo(() => getEnvReport(), []);
   const clerkKey = envReport.values.clerkPublishableKey;
 
@@ -441,8 +443,24 @@ export default function RootLayout() {
     return () => cancelAnimationFrame(frame);
   }, [fontsLoaded, i18nReady]);
 
+  useEffect(() => {
+    if (!fontsLoaded || !i18nReady) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setShowBrandLaunch(false);
+    }, 1700);
+
+    return () => clearTimeout(timer);
+  }, [fontsLoaded, i18nReady]);
+
   if (!fontsLoaded || !i18nReady) {
     return null;
+  }
+
+  if (showBrandLaunch) {
+    return <BrandLaunchScreen onFinish={() => setShowBrandLaunch(false)} />;
   }
 
   if (!DIAGNOSTIC_BYPASS && !envReport.ok) {

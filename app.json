@@ -9,14 +9,14 @@
     "splash": {
       "image": "./assets/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#121212"
     },
     "androidStatusBar": {
-      "backgroundColor": "#000000",
+      "backgroundColor": "#121212",
       "barStyle": "light-content"
     },
     "androidNavigationBar": {
-      "backgroundColor": "#000000",
+      "backgroundColor": "#121212",
       "barStyle": "light-content"
     },
     "platforms": [
@@ -32,7 +32,7 @@
       "package": "com.homedecor.ai",
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#121212"
       },
       "permissions": [
         "android.permission.RECORD_AUDIO",

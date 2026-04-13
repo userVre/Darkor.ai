@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Pressable, View, type PressableProps } from "react-native";
 import { Tabs, useRouter } from "expo-router";
-import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "@/components/material-icons";
 import { useAuth } from "@clerk/expo";
+import { Compass, House, Sparkles, UserRound, type LucideIcon } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { fonts } from "../../styles/typography";
 import { spacing } from "../../styles/spacing";
@@ -60,7 +60,7 @@ function TabIcon({
   size,
   focused,
 }: {
-  Icon: typeof LayoutGrid;
+  Icon: LucideIcon;
   color: string;
   size: number;
   focused: boolean;
@@ -93,7 +93,7 @@ function TabIcon({
           backgroundColor: focused ? "#FFF1F1" : "transparent",
         }}
       >
-        <Icon color={color} size={size} strokeWidth={focused ? 2.25 : 2.05} />
+        <Icon color={color} size={size} strokeWidth={focused ? 1.7 : 1.5} />
       </View>
     </View>
   );
@@ -135,14 +135,14 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: t("tabs.tools"),
-          tabBarIcon: ({ color, focused }) => <TabIcon Icon={LayoutGrid} color={color} size={22} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <TabIcon Icon={House} color={color} size={21} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="workspace"
         options={{
           title: t("tabs.create"),
-          tabBarIcon: ({ color, focused }) => <TabIcon Icon={Sparkles} color={color} size={22} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <TabIcon Icon={Sparkles} color={color} size={21} focused={focused} />,
           tabBarButton: (props) => (
             <TabBarButton
               {...props}
@@ -164,14 +164,14 @@ export default function TabsLayout() {
         name="gallery"
         options={{
           title: t("tabs.discover"),
-          tabBarIcon: ({ color, focused }) => <TabIcon Icon={Compass} color={color} size={22} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <TabIcon Icon={Compass} color={color} size={21} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: t("tabs.profile"),
-          tabBarIcon: ({ color, focused }) => <TabIcon Icon={UserCircle2} color={color} size={22} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <TabIcon Icon={UserRound} color={color} size={21} focused={focused} />,
         }}
       />
     </Tabs>

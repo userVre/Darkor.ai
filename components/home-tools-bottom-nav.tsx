@@ -1,4 +1,4 @@
-import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "@/components/material-icons";
+import { Compass, House, Sparkles, UserRound, type LucideIcon } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
@@ -16,7 +16,7 @@ type NavItemProps = {
   label: string;
   active: boolean;
   onPress: () => void;
-  icon: typeof LayoutGrid;
+  icon: LucideIcon;
 };
 
 function NavItem({ icon: Icon, label, active, onPress }: NavItemProps) {
@@ -27,7 +27,7 @@ function NavItem({ icon: Icon, label, active, onPress }: NavItemProps) {
       <View style={styles.iconFrame}>
         {active ? <View pointerEvents="none" style={styles.iconGlow} /> : null}
         <View style={[styles.iconPill, active ? styles.iconPillActive : styles.iconPillIdle]}>
-          <Icon color={color} size={22} strokeWidth={active ? 2.25 : 2.05} />
+          <Icon color={color} size={21} strokeWidth={active ? 1.7 : 1.5} />
         </View>
       </View>
       <Text style={[styles.label, active ? styles.labelActive : styles.labelInactive]}>{label}</Text>
@@ -45,10 +45,10 @@ export function HomeToolsBottomNav({
   const { t } = useTranslation();
   return (
     <View style={styles.bar}>
-      <NavItem icon={LayoutGrid} label={t("tabs.tools")} active={activeTab === "tools"} onPress={onToolsPress} />
+      <NavItem icon={House} label={t("tabs.tools")} active={activeTab === "tools"} onPress={onToolsPress} />
       <NavItem icon={Sparkles} label={t("tabs.create")} active={activeTab === "create"} onPress={onCreatePress} />
       <NavItem icon={Compass} label={t("tabs.discover")} active={activeTab === "discover"} onPress={onDiscoverPress} />
-      <NavItem icon={UserCircle2} label={t("tabs.profile")} active={activeTab === "profile"} onPress={onProfilePress} />
+      <NavItem icon={UserRound} label={t("tabs.profile")} active={activeTab === "profile"} onPress={onProfilePress} />
     </View>
   );
 }

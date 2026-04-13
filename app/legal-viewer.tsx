@@ -75,14 +75,19 @@ const TERMS_SECTIONS = [
       "Paid plans unlock enhanced features and higher-quality exports. Credits are consumed per generation, and subscription billing and renewals are handled by your app store and RevenueCat.",
   },
   {
+    title: "Refund Policy",
+    body:
+      "Refund eligibility is determined by the Apple App Store or Google Play policy tied to your purchase. Except where required by law, used credits and completed generations are not refundable.",
+  },
+  {
     title: "Prohibited Use",
     body:
       "You agree not to misuse the service, reverse engineer the app, or upload unlawful, harmful, or infringing content.",
   },
   {
-    title: "Disclaimer",
+    title: "AI Disclaimer",
     body:
-      'The service is provided "as is" without warranties of any kind. We do not guarantee specific design results or the accuracy of AI-generated outputs.',
+      'The service is provided "as is" without warranties of any kind. AI-generated redesigns are concept art, not professional construction guidance, and we do not guarantee code compliance or specific real-world results.',
   },
   {
     title: "Limitation of Liability",
@@ -111,6 +116,19 @@ const LEGAL_DOCUMENTS = {
     sections: TERMS_SECTIONS,
   },
 } as const;
+
+const LEGAL_PRIORITY_NOTICES = [
+  {
+    title: "Refund Policy",
+    body:
+      "Subscriptions and credit purchases are billed through Apple or Google. Refund requests follow the applicable store policy, and unused credits are non-refundable except where required by law.",
+  },
+  {
+    title: "AI Disclaimer",
+    body:
+      "HomeDecor AI creates visual concepts with AI. Outputs are not architectural, structural, engineering, safety, or code-compliance advice and should be reviewed by a qualified professional before real-world changes.",
+  },
+] as const;
 
 type LegalDocumentKey = keyof typeof LEGAL_DOCUMENTS;
 
@@ -160,6 +178,15 @@ export default function LegalViewerScreen() {
             <Text style={styles.title}>{document.title}</Text>
             <Text style={styles.description}>{document.description}</Text>
           </View>
+        </View>
+
+        <View style={styles.priorityStack}>
+          {LEGAL_PRIORITY_NOTICES.map((notice) => (
+            <View key={notice.title} style={styles.priorityCard}>
+              <Text style={styles.priorityTitle}>{notice.title}</Text>
+              <Text style={styles.priorityBody}>{notice.body}</Text>
+            </View>
+          ))}
         </View>
 
         <View style={styles.metaCard}>
@@ -266,6 +293,23 @@ const styles = StyleSheet.create({
     ...DS.typography.label,
   },
   metaValue: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.body,
+  },
+  priorityStack: {
+    gap: DS.spacing[1.5],
+  },
+  priorityCard: {
+    ...surfaceCard(DS.colors.accentSurface),
+    borderColor: DS.colors.accentStrong,
+    padding: DS.spacing[3],
+    gap: DS.spacing[1],
+  },
+  priorityTitle: {
+    color: DS.colors.accentStrong,
+    ...DS.typography.label,
+  },
+  priorityBody: {
     color: DS.colors.textPrimary,
     ...DS.typography.body,
   },
