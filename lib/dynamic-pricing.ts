@@ -389,8 +389,15 @@ export function getPricingContext(
 export function usePricingContext() {
   const locales = useLocales();
   const languagePreference = useAppLanguagePreference();
+  const localeSignature = locales
+    .map((locale) => [
+      locale.languageTag ?? locale.languageCode ?? "",
+      locale.regionCode ?? locale.languageRegionCode ?? "",
+    ].join(":"))
+    .join("|");
+
   return useMemo(
     () => getPricingContext(locales, languagePreference.resolvedLanguage),
-    [languagePreference.resolvedLanguage, locales],
+    [languagePreference.resolvedLanguage, localeSignature],
   );
 }

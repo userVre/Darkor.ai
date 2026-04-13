@@ -51,6 +51,7 @@ const resources: Resource = {
 
 let initPromise: Promise<typeof i18n> | null = null;
 let currentPreference: StoredLanguagePreference = DEFAULT_LANGUAGE_PREFERENCE;
+let cachedSnapshot: AppLanguagePreferenceSnapshot | null = null;
 const listeners = new Set<() => void>();
 
 function emitPreferenceChange() {
@@ -153,11 +154,23 @@ function getSnapshot(): AppLanguagePreferenceSnapshot {
       ? resolveSupportedLanguage(i18n.resolvedLanguage ?? i18n.language)
       : resolveLanguageFromPreference(currentPreference);
 
-  return {
+  const nextSnapshot: AppLanguagePreferenceSnapshot = {
     mode: currentPreference.mode,
     manualLanguage: currentPreference.mode === "manual" ? currentPreference.language : null,
     resolvedLanguage,
   };
+
+  if (
+    cachedSnapshot
+    && cachedSnapshot.mode === nextSnapshot.mode
+    && cachedSnapshot.manualLanguage === nextSnapshot.manualLanguage
+    && cachedSnapshot.resolvedLanguage === nextSnapshot.resolvedLanguage
+  ) {
+    return cachedSnapshot;
+  }
+
+  cachedSnapshot = nextSnapshot;
+  return nextSnapshot;
 }
 
 function subscribe(listener: () => void) {
