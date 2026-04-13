@@ -4,9 +4,11 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DiamondCreditPill } from "./diamond-credit-pill";
+import { StepProgressLine } from "./step-progress-line";
 import { fonts } from "../styles/typography";
 
 type DesignStepHeaderProps = {
+  title?: string;
   creditCount?: number;
   step: number;
   totalSteps: number;
@@ -17,15 +19,13 @@ type DesignStepHeaderProps = {
   closeAccessibilityLabel?: string;
 };
 
-const DESIGN_HEADER_TOP_PADDING = 2;
-const DESIGN_HEADER_BOTTOM_PADDING = 10;
-const DESIGN_HEADER_ROW_HEIGHT = 44;
-const DESIGN_HEADER_PROGRESS_HEIGHT = 4;
-const DESIGN_HEADER_PROGRESS_SEGMENT_GAP = 10;
-const DESIGN_HEADER_PROGRESS_GAP = 12;
+const DESIGN_HEADER_TOP_PADDING = 4;
+const DESIGN_HEADER_BOTTOM_PADDING = 14;
+const DESIGN_HEADER_ROW_HEIGHT = 52;
+const DESIGN_HEADER_PROGRESS_HEIGHT = 2;
+const DESIGN_HEADER_PROGRESS_GAP = 10;
 const DESIGN_HEADER_CONTENT_GAP = 0;
-const DESIGN_HEADER_SIDE_SLOT_WIDTH = 120;
-const DESIGN_HEADER_ACTION_SIZE = 44;
+const DESIGN_HEADER_ACTION_SIZE = 40;
 
 export function getDesignStepHeaderMetrics(topInset: number) {
   const safeTop = Platform.OS === "android" ? Math.max(topInset, 12) : Math.max(topInset, 16);
@@ -45,6 +45,7 @@ export function getDesignStepHeaderMetrics(topInset: number) {
 }
 
 export function DesignStepHeader({
+  title,
   creditCount,
   step,
   totalSteps,
@@ -60,52 +61,24 @@ export function DesignStepHeader({
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
+  const headerTitle = title ?? t("common.labels.step", { current: safeStep, total: totalSteps });
+  const stepLabel = t("common.labels.step", { current: safeStep, total: totalSteps });
 
   return (
-    <View pointerEvents="box-none" style={[styles.shell, { height: metrics.height }]}>
-      <View
-        style={[
-          styles.progressRow,
-          {
-            top: metrics.progressTop,
-            left: horizontalInset,
-            right: horizontalInset,
-          },
-        ]}
-        >
-        {Array.from({ length: totalSteps }).map((_, index) => (
-          <View
-            key={`design-step-progress-${index}`}
-            style={[
-              styles.progressSegment,
-              {
-                backgroundColor: index < safeStep ? "#0A0A0A" : "#E0E0E0",
-              },
-            ]}
-          />
-        ))}
-      </View>
-
-      <View
-        pointerEvents="box-none"
-        style={[
-          styles.headerRow,
-          {
-            top: metrics.rowTop,
-            left: horizontalInset,
-            right: horizontalInset,
-          },
-        ]}
-      >
-        <View style={styles.leftSlot}>
-          {showCredits ? (
-            <DiamondCreditPill
-              accessibilityLabel="Return to Tools"
-              count={creditCount ?? 0}
-              onPress={onClose}
-              variant="dark"
-            />
-          ) : showBack ? (
+    <View
+      pointerEvents="box-none"
+      style={[
+        styles.shell,
+        {
+          height: metrics.height,
+          paddingTop: metrics.safeTop + DESIGN_HEADER_TOP_PADDING,
+          paddingHorizontal: horizontalInset,
+        },
+      ]}
+    >
+      <View style={styles.headerRow}>
+        <View style={styles.titleCluster}>
+          {showBack ? (
             <Pressable
               accessibilityLabel={backAccessibilityLabel}
               accessibilityRole="button"
@@ -116,13 +89,30 @@ export function DesignStepHeader({
               <ArrowLeft color="#0A0A0A" size={18} strokeWidth={2.4} style={styles.backIcon} />
             </Pressable>
           ) : null}
-        </View>
 
-        <View pointerEvents="none" style={styles.centerSlot}>
-          <Text style={styles.stepText}>{t("common.labels.step", { current: safeStep, total: totalSteps })}</Text>
+          <View style={styles.titleStack}>
+            <Text numberOfLines={1} style={styles.titleText}>
+              {headerTitle}
+            </Text>
+            {title ? (
+              <Text numberOfLines={1} style={styles.stepText}>
+                {stepLabel}
+              </Text>
+            ) : null}
+          </View>
         </View>
 
         <View style={styles.rightSlot}>
+          {showCredits ? (
+            <DiamondCreditPill
+              accessibilityLabel="Return to Tools"
+              count={creditCount ?? 0}
+              onPress={onClose}
+              style={styles.creditPill}
+              variant="dark"
+            />
+          ) : null}
+
           <Pressable
             accessibilityLabel={closeAccessibilityLabel}
             accessibilityRole="button"
@@ -134,6 +124,13 @@ export function DesignStepHeader({
           </Pressable>
         </View>
       </View>
+
+      <StepProgressLine
+        fillColor="#0A0A0A"
+        progress={safeStep / totalSteps}
+        style={styles.progressLine}
+        trackColor="#E7EBEF"
+      />
     </View>
   );
 }
@@ -148,59 +145,62 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   headerRow: {
-    position: "absolute",
-    zIndex: 2,
     flexDirection: "row",
     alignItems: "center",
     minHeight: DESIGN_HEADER_ROW_HEIGHT,
     justifyContent: "space-between",
   },
-  leftSlot: {
-    width: DESIGN_HEADER_SIDE_SLOT_WIDTH,
-    height: DESIGN_HEADER_ROW_HEIGHT,
+  titleCluster: {
+    flex: 1,
+    minHeight: DESIGN_HEADER_ROW_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
+    gap: 8,
   },
   rightSlot: {
-    width: DESIGN_HEADER_SIDE_SLOT_WIDTH,
-    height: DESIGN_HEADER_ROW_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
     justifyContent: "flex-end",
   },
-  centerSlot: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
+  titleStack: {
+    flex: 1,
     justifyContent: "center",
   },
-  stepText: {
+  titleText: {
     color: "#0A0A0A",
-    fontSize: 13,
-    lineHeight: 16,
-    textAlign: "center",
+    fontSize: 18,
+    lineHeight: 22,
+    ...fonts.bold,
+  },
+  stepText: {
+    color: "#6D7682",
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 0.4,
     ...fonts.semibold,
   },
   iconButton: {
     width: DESIGN_HEADER_ACTION_SIZE,
     height: DESIGN_HEADER_ACTION_SIZE,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#E5E8EC",
+    backgroundColor: "#F7F8FA",
   },
   backIcon: {
     transform: [{ translateX: 1.5 }],
   },
-  progressRow: {
-    position: "absolute",
-    zIndex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: DESIGN_HEADER_PROGRESS_SEGMENT_GAP,
+  creditPill: {
+    minHeight: 36,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
   },
-  progressSegment: {
-    flex: 1,
+  progressLine: {
+    marginTop: DESIGN_HEADER_PROGRESS_GAP,
     height: DESIGN_HEADER_PROGRESS_HEIGHT,
-    borderRadius: 999,
   },
 });
 

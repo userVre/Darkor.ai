@@ -56,16 +56,16 @@ import {
 } from "../lib/revenuecat";
 import { fonts } from "../styles/typography";
 
-const SCREEN_BG = "#0D0D0D";
-const PANEL_BG = "#1C1C1C";
-const PANEL_BORDER = "#2A2A2A";
+const SCREEN_BG = "#05070A";
+const PANEL_BG = "#111823";
+const PANEL_BORDER = "#243140";
 const ACCENT = "#FFFFFF";
-const BRAND_RED = "#E53935";
+const BRAND_RED = "#CC3333";
 const TOGGLE_OFF = "#3A3A3A";
 const TEXT_PRIMARY = "#FFFFFF";
 const TEXT_MUTED = "#A0A0A0";
 const TEXT_RESTORE = "#B3B3B3";
-const TEXT_ACCENT = "#0A0A0A";
+const TEXT_ACCENT = "#05070A";
 const CTA_TEXT = "#FFFFFF";
 const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 2500;
@@ -1092,7 +1092,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   heroImageWrap: {
-    borderRadius: 20,
+    borderRadius: 12,
     overflow: "hidden",
     backgroundColor: PANEL_BG,
   },
@@ -1101,13 +1101,13 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   featuresSection: {
-    marginHorizontal: 24,
+    marginHorizontal: 20,
     marginBottom: 36,
   },
   titleSection: {
-    marginHorizontal: 24,
+    marginHorizontal: 20,
     alignItems: "center",
-    marginBottom: 32,
+    marginBottom: 40,
     gap: 10,
   },
   subtitleText: {
@@ -1152,7 +1152,7 @@ const styles = StyleSheet.create({
   },
   trialBar: {
     minHeight: 56,
-    marginHorizontal: 24,
+    marginHorizontal: 20,
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 14,
@@ -1190,11 +1190,11 @@ const styles = StyleSheet.create({
   },
   yearlyWrapper: {
     marginTop: 20,
-    marginHorizontal: 24,
+    marginHorizontal: 20,
   },
   weeklyWrapper: {
     marginTop: 12,
-    marginHorizontal: 24,
+    marginHorizontal: 20,
   },
   planCard: {
     minHeight: 78,
@@ -1222,7 +1222,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -10,
     right: 12,
-    borderRadius: 20,
+    borderRadius: 14,
     backgroundColor: ACCENT,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -1329,7 +1329,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     flexWrap: "wrap",
     gap: 6,
   },
@@ -1339,7 +1339,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     flexWrap: "wrap",
     gap: 6,
   },
@@ -1351,7 +1351,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     marginTop: 4,
-    marginHorizontal: 24,
+    marginHorizontal: 20,
     marginBottom: 12,
     textAlign: "left",
     color: "#FFB4B2",
@@ -1361,8 +1361,8 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     minHeight: 58,
-    marginHorizontal: 24,
-    borderRadius: 16,
+    marginHorizontal: 20,
+    borderRadius: 14,
     backgroundColor: BRAND_RED,
     justifyContent: "center",
     paddingHorizontal: 20,
@@ -1400,7 +1400,7 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   legalFooter: {
-    marginHorizontal: 24,
+    marginHorizontal: 20,
     paddingTop: 16,
     alignItems: "center",
   },

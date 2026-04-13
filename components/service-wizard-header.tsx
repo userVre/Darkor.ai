@@ -45,6 +45,7 @@ export function ServiceWizardHeader({
       onClose={handleExitPress}
       step={safeStep}
       totalSteps={totalSteps}
+      title={_title}
     />
   );
 }

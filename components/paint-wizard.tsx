@@ -118,7 +118,7 @@ const OLED_BLACK = "#000000";
 const CARD_BLACK = SERVICE_WIZARD_THEME.colors.surfaceRaised;
 const CARD_BLACK_SOFT = SERVICE_WIZARD_THEME.colors.surfaceSoft;
 const MASK_COLOR = "rgba(255,59,48,0.42)";
-const MASK_ACCENT = "#FF3B30";
+const MASK_ACCENT = "#CC3333";
 const MASK_CAPTURE_COLOR = "#FFFFFF";
 const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
@@ -165,7 +165,7 @@ const COLOR_PICKER_PRESET_SWATCHES = [
   { id: "green", value: "#34C759" },
   { id: "yellow", value: "#FACC15" },
   { id: "gray", value: "#9CA3AF" },
-  { id: "red", value: "#FF3B30" },
+  { id: "red", value: "#CC3333" },
 ] as const;
 const COLOR_PICKER_CATEGORY_LABELS: Record<(typeof COLOR_PICKER_PRESET_SWATCHES)[number]["id"], string> = {
   pink: "Pink",
@@ -1648,7 +1648,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                   <GestureDetector gesture={colorPickerHueGesture}>
                     <View style={[styles.colorPickerHueSlider, { width: colorPickerSquareSize, height: colorPickerHueSliderHeight, marginTop: scaleSelectionValue(20, selectionLayoutScale) }]}>
                       <LinearGradient
-                        colors={["#FF9500", "#FFD60A", "#34C759", "#32D7FF", "#0A84FF", "#BF5AF2", "#FF3B30"]}
+          colors={["#FF9500", "#FFD60A", "#34C759", "#32D7FF", "#0A84FF", "#BF5AF2", "#CC3333"]}
                         locations={[0, 0.16, 0.33, 0.5, 0.66, 0.82, 1]}
                         start={{ x: 0, y: 0.5 }}
                         end={{ x: 1, y: 0.5 }}
@@ -2321,7 +2321,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   selectionContinueButtonActive: {
-    backgroundColor: "#FF3B30",
+                backgroundColor: "#CC3333",
   },
   selectionContinueButtonDisabled: {
     backgroundColor: "#E8E8E8",
@@ -2475,7 +2475,7 @@ const styles = StyleSheet.create({
     borderColor: "#E5E7EB",
   },
   surfacePickerRowActive: {
-    borderColor: "#FF3B30",
+      borderColor: "#CC3333",
     backgroundColor: "#FFF3F2",
   },
   surfacePickerRowLeading: {
@@ -2509,15 +2509,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   surfacePickerCheckCircleActive: {
-    borderColor: "#FF3B30",
-    backgroundColor: "#FF3B30",
+      borderColor: "#CC3333",
+      backgroundColor: "#CC3333",
   },
   surfacePickerApplyButton: {
     height: 56,
     borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FF3B30",
+      backgroundColor: "#CC3333",
   },
   surfacePickerApplyText: {
     color: "#FFFFFF",
@@ -2604,7 +2604,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   selectionSwatchCardActive: {
-    borderColor: "#FF3B30",
+      borderColor: "#CC3333",
     backgroundColor: "#FFF3F2",
   },
   selectionSwatchDot: {
@@ -2645,7 +2645,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   selectionSurfaceRowActive: {
-    borderColor: "#FF3B30",
+      borderColor: "#CC3333",
     backgroundColor: "#FFF3F2",
   },
   selectionSurfaceRowText: {
@@ -2898,13 +2898,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   maskCanvasFrame: {
-    borderRadius: 28,
+    borderRadius: 12,
     overflow: "hidden",
     backgroundColor: "#050505",
   },
   maskCursor: {
     position: "absolute",
-    borderRadius: 999,
+    borderRadius: 14,
     borderWidth: 1.5,
   },
   maskToolBar: {
@@ -2916,7 +2916,7 @@ const styles = StyleSheet.create({
     top: 0,
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -2935,7 +2935,7 @@ const styles = StyleSheet.create({
     top: 4,
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 14,
   },
   maskSliderSection: {
     marginTop: 36,
@@ -2959,7 +2959,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   maskSliderPreview: {
-    borderRadius: 999,
+    borderRadius: 14,
     borderWidth: 1.5,
   },
   maskSliderValue: {
@@ -2974,20 +2974,20 @@ const styles = StyleSheet.create({
   },
   maskSliderTrack: {
     height: 6,
-    borderRadius: 999,
+    borderRadius: 14,
     backgroundColor: "#E5E5E5",
   },
   maskSliderFill: {
     position: "absolute",
     left: 0,
     height: 6,
-    borderRadius: 999,
+    borderRadius: 14,
   },
   maskSliderThumb: {
     position: "absolute",
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 14,
     backgroundColor: MASK_ACCENT,
     alignItems: "center",
     justifyContent: "center",
@@ -2995,7 +2995,7 @@ const styles = StyleSheet.create({
   maskSliderThumbDot: {
     width: 12,
     height: 12,
-    borderRadius: 999,
+    borderRadius: 12,
     backgroundColor: "#FFFFFF",
   },
   maskContinueButton: {
@@ -3003,7 +3003,7 @@ const styles = StyleSheet.create({
     left: 24,
     right: 24,
     height: 60,
-    borderRadius: 30,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -3013,7 +3013,7 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
   canvasFrame: {
-    borderRadius: 30,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: "#020203",
@@ -3032,7 +3032,7 @@ const styles = StyleSheet.create({
     minHeight: 40,
     flex: 1,
     paddingHorizontal: spacing.md,
-    borderRadius: 999,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
     backgroundColor: "rgba(10,10,12,0.82)",
@@ -3056,7 +3056,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: 116,
     height: 116,
-    borderRadius: 999,
+    borderRadius: 14,
     padding: spacing.xs,
     backgroundColor: "rgba(255,255,255,0.08)",
     borderWidth: 1,
@@ -3068,7 +3068,7 @@ const styles = StyleSheet.create({
   },
   loupeInner: {
     flex: 1,
-    borderRadius: 999,
+    borderRadius: 12,
     overflow: "hidden",
     backgroundColor: "#060607",
   },
@@ -3079,7 +3079,7 @@ const styles = StyleSheet.create({
     bottom: 14,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: 999,
+    borderRadius: 14,
     backgroundColor: "rgba(0,0,0,0.62)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
@@ -3101,8 +3101,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: 230,
     height: 230,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,59,48,0.18)",
+    borderRadius: 14,
+    backgroundColor: "rgba(204,51,51,0.18)",
   },
   detectCopy: {
     alignItems: "center",
@@ -3124,7 +3124,7 @@ const styles = StyleSheet.create({
     maxWidth: 280,
   },
   maskControlCard: {
-    borderRadius: 22,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: CARD_BLACK_SOFT,
@@ -3160,20 +3160,20 @@ const styles = StyleSheet.create({
   },
   sliderTrack: {
     height: 5,
-    borderRadius: 999,
+    borderRadius: 14,
     backgroundColor: "rgba(255,255,255,0.12)",
   },
   sliderFill: {
     position: "absolute",
     left: 0,
     height: 5,
-    borderRadius: 999,
+    borderRadius: 14,
   },
   sliderThumb: {
     position: "absolute",
     width: 28,
     height: 28,
-    borderRadius: 999,
+    borderRadius: 14,
     backgroundColor: MASK_ACCENT,
     alignItems: "center",
     justifyContent: "center",
@@ -3181,18 +3181,18 @@ const styles = StyleSheet.create({
   sliderThumbDot: {
     width: 12,
     height: 12,
-    borderRadius: 999,
+    borderRadius: 12,
     backgroundColor: "rgba(255,255,255,0.92)",
   },
   primaryButton: {
     minHeight: 58,
-    borderRadius: 24,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
   primaryButtonLarge: {
     minHeight: 58,
-    borderRadius: 24,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
@@ -3200,7 +3200,7 @@ const styles = StyleSheet.create({
   },
   disabledButtonLarge: {
     minHeight: 58,
-    borderRadius: 24,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: SERVICE_WIZARD_THEME.colors.disabledSurface,
@@ -3224,7 +3224,7 @@ const styles = StyleSheet.create({
   },
   roomReferenceFrame: {
     height: 120,
-    borderRadius: 24,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: "#020203",
@@ -3237,7 +3237,7 @@ const styles = StyleSheet.create({
     minHeight: 28,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: 999,
+    borderRadius: 14,
     backgroundColor: "rgba(0,0,0,0.72)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
@@ -3256,7 +3256,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   selectionCard: {
-    borderRadius: 30,
+    borderRadius: 12,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
@@ -3302,7 +3302,7 @@ const styles = StyleSheet.create({
     color: SERVICE_WIZARD_THEME.colors.accentText,
   },
   paletteCard: {
-    borderRadius: 28,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: CARD_BLACK_SOFT,
@@ -3329,7 +3329,7 @@ const styles = StyleSheet.create({
   swatchOuter: {
     width: 84,
     height: 84,
-    borderRadius: 999,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
@@ -3347,7 +3347,7 @@ const styles = StyleSheet.create({
   swatchInner: {
     width: 64,
     height: 64,
-    borderRadius: 999,
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.82)",
   },
@@ -3367,7 +3367,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   summaryCard: {
-    borderRadius: 28,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: CARD_BLACK_SOFT,
@@ -3377,14 +3377,14 @@ const styles = StyleSheet.create({
   summarySwatch: {
     width: 54,
     height: 54,
-    borderRadius: 999,
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.7)",
   },
   finishSelectionThumb: {
     width: 72,
     height: 72,
-    borderRadius: 22,
+    borderRadius: 12,
   },
   summaryCopy: {
     flex: 1,
@@ -3412,7 +3412,7 @@ const styles = StyleSheet.create({
   },
   finishCard: {
     minHeight: 94,
-    borderRadius: 26,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: CARD_BLACK_SOFT,
@@ -3488,7 +3488,7 @@ const styles = StyleSheet.create({
   finishCheck: {
     width: 32,
     height: 32,
-    borderRadius: 999,
+    borderRadius: 14,
     borderWidth: 2,
     borderColor: MASK_ACCENT,
     backgroundColor: "transparent",
@@ -3519,7 +3519,7 @@ const styles = StyleSheet.create({
   processingFrame: {
     width: 220,
     height: 260,
-    borderRadius: 32,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
     backgroundColor: "rgba(255,255,255,0.03)",
@@ -3543,15 +3543,15 @@ const styles = StyleSheet.create({
     left: 10,
     right: 10,
     height: 72,
-    borderRadius: 20,
-    backgroundColor: "rgba(217,70,239,0.12)",
+    borderRadius: 12,
+    backgroundColor: "rgba(204,51,51,0.12)",
     borderWidth: 1,
     borderColor: "rgba(217,70,239,0.24)",
   },
   processingChip: {
     height: 40,
     paddingHorizontal: spacing.md,
-    borderRadius: 999,
+    borderRadius: 14,
     backgroundColor: "rgba(0,0,0,0.58)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
@@ -3562,7 +3562,7 @@ const styles = StyleSheet.create({
   processingChipSwatch: {
     width: 16,
     height: 16,
-    borderRadius: 999,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.7)",
   },
@@ -3631,10 +3631,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   resultActionSave: {
-    backgroundColor: "#E53935",
+    backgroundColor: "#CC3333",
   },
   resultActionShare: {
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#05070A",
   },
   resultActionRetry: {
     backgroundColor: "#F0F0F0",
@@ -3659,7 +3659,7 @@ const styles = StyleSheet.create({
   },
   secondaryAction: {
     minHeight: 56,
-    borderRadius: 22,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
     backgroundColor: "rgba(255,255,255,0.03)",
@@ -3674,7 +3674,7 @@ const styles = StyleSheet.create({
   },
   restartButton: {
     minHeight: 56,
-    borderRadius: 22,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
     backgroundColor: "rgba(255,255,255,0.03)",

@@ -29,10 +29,10 @@ import {
 import { triggerHaptic } from "../../lib/haptics";
 import { fonts } from "../../styles/typography";
 
-const SCREEN_SIDE_MARGIN = 24;
+const SCREEN_SIDE_MARGIN = 20;
 const TAB_RAIL_MAX_WIDTH = 392;
 const TAB_RAIL_PADDING = 6;
-const CARD_GAP = 12;
+const CARD_GAP = 18;
 const OUTER_WINDOW_SIZE = 5;
 
 const DiscoverTabs = memo(function DiscoverTabs({
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   headerWrap: {
-    paddingBottom: 32,
+    paddingBottom: 40,
   },
   headerRow: {
     minHeight: 52,
@@ -297,11 +297,11 @@ const styles = StyleSheet.create({
   tabsOuter: {
     alignItems: "center",
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    marginTop: 32,
+    marginTop: 40,
   },
   tabsRail: {
     padding: TAB_RAIL_PADDING,
-    borderRadius: 999,
+    borderRadius: 14,
     borderCurve: "continuous",
     backgroundColor: "#F1F3F5",
     position: "relative",
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     top: TAB_RAIL_PADDING,
     left: TAB_RAIL_PADDING,
     bottom: TAB_RAIL_PADDING,
-    borderRadius: 999,
+    borderRadius: 14,
     borderCurve: "continuous",
     backgroundColor: "#FFFFFF",
     boxShadow: "0 10px 24px rgba(15, 23, 42, 0.08)",
@@ -338,11 +338,11 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 40,
   },
   sectionHeader: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    marginBottom: 18,
+    marginBottom: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -351,8 +351,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     flex: 1,
     color: "#0A0A0A",
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 15,
+    lineHeight: 18,
+    textTransform: "uppercase",
+    letterSpacing: 2.4,
     ...fonts.bold,
   },
   seeAllButton: {

@@ -1,5 +1,5 @@
 import type { TextStyle } from "react-native";
-import { light } from "@/styles/theme";
+import { dark } from "@/styles/theme";
 import { fonts } from "../styles/typography";
 import { DS } from "./design-system";
 
@@ -45,35 +45,35 @@ const compactBodyText: TextStyle = {
 
 export const SERVICE_WIZARD_THEME = {
   colors: {
-    background: DS.colors.background,
-    surface: "#FFFFFF",
-    surfaceRaised: DS.colors.surfaceRaised,
-    surfaceSoft: light.surface,
-    surfaceOverlay: DS.colors.backgroundAlt,
-    border: DS.colors.borderSubtle,
-    borderStrong: DS.colors.borderStrong,
-    textPrimary: DS.colors.textPrimary,
-    textMuted: DS.colors.textMuted,
-    textSoft: DS.colors.textSecondary,
+    background: dark.bg,
+    surface: dark.surface,
+    surfaceRaised: dark.surfaceHigh,
+    surfaceSoft: dark.surfaceMuted,
+    surfaceOverlay: dark.surfaceCard,
+    border: dark.border,
+    borderStrong: dark.borderLight,
+    textPrimary: dark.textPrimary,
+    textMuted: dark.textSecondary,
+    textSoft: dark.textMuted,
     accent: DS.colors.accent,
     accentStrong: DS.colors.accentStrong,
     accentSecondary: DS.colors.accentSecondary,
-    accentSurface: light.brandSurface,
-    accentSurfaceStrong: light.brandSurfaceHigh,
-    accentBorder: light.brandBorder,
-    accentBorderStrong: light.brandDark,
+    accentSurface: dark.brandSurface,
+    accentSurfaceStrong: dark.brandSurfaceHigh,
+    accentBorder: dark.brandBorder,
+    accentBorderStrong: dark.brandBorderStrong,
     accentGlow: DS.colors.accentGlowStrong,
     accentGlowSoft: DS.colors.accentGlow,
-    accentText: light.textPrimary,
-    progressTrack: light.border,
-    disabledSurface: light.surfaceHigh,
+    accentText: dark.textPrimary,
+    progressTrack: dark.border,
+    disabledSurface: dark.surfaceDisabled,
   },
   surfaces: {
-    accent: light.brand,
-    accentButton: light.brand,
-    maskAction: light.brand,
-    hero: "#FFFFFF",
-    accentWash: light.brandSurface,
+    accent: dark.brand,
+    accentButton: dark.brand,
+    maskAction: dark.brand,
+    hero: dark.surfaceCardHigh,
+    accentWash: dark.brandSurface,
   },
   typography: {
     heroTitle,

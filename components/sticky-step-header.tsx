@@ -4,20 +4,20 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DiamondCreditPill } from "./diamond-credit-pill";
+import { StepProgressLine } from "./step-progress-line";
 import { fonts } from "../styles/typography";
 
 export const STICKY_STEP_HEADER_CONTENT_GAP = 0;
 
-const HEADER_TOP_PADDING = 2;
-const HEADER_BOTTOM_PADDING = 10;
-const HEADER_ROW_HEIGHT = 44;
-const HEADER_PROGRESS_GAP = 12;
-const HEADER_PROGRESS_HEIGHT = 4;
-const HEADER_PROGRESS_SEGMENT_GAP = 10;
-const HEADER_SIDE_SLOT_WIDTH = 120;
-const HEADER_ACTION_SIZE = 44;
+const HEADER_TOP_PADDING = 4;
+const HEADER_BOTTOM_PADDING = 14;
+const HEADER_ROW_HEIGHT = 52;
+const HEADER_PROGRESS_GAP = 10;
+const HEADER_PROGRESS_HEIGHT = 2;
+const HEADER_ACTION_SIZE = 40;
 
 type StickyStepHeaderProps = {
+  title?: string;
   creditCount?: number;
   step: number;
   totalSteps: number;
@@ -46,6 +46,7 @@ export function getStickyStepHeaderMetrics(topInset: number) {
 }
 
 export function StickyStepHeader({
+  title,
   creditCount = 0,
   step,
   totalSteps,
@@ -61,6 +62,8 @@ export function StickyStepHeader({
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
+  const headerTitle = title ?? t("common.labels.step", { current: safeStep, total: totalSteps });
+  const stepLabel = t("common.labels.step", { current: safeStep, total: totalSteps });
 
   return (
     <View
@@ -75,34 +78,42 @@ export function StickyStepHeader({
     >
       <View style={[styles.inner, { paddingHorizontal: horizontalInset }]}>
         <View style={styles.row}>
-          <View style={styles.leftGroup}>
+          <View style={styles.titleCluster}>
+            {showBack ? (
+              <Pressable
+                accessibilityLabel={backAccessibilityLabel}
+                accessibilityRole="button"
+                hitSlop={10}
+                onPress={onBack}
+                style={styles.iconButton}
+              >
+                <ArrowLeft color="#0A0A0A" size={18} strokeWidth={2.3} style={styles.backIcon} />
+              </Pressable>
+            ) : null}
+
+            <View style={styles.titleStack}>
+              <Text numberOfLines={1} style={styles.titleText}>
+                {headerTitle}
+              </Text>
+              {title ? (
+                <Text numberOfLines={1} style={styles.stepText}>
+                  {stepLabel}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+
+          <View style={styles.rightGroup}>
             {showCredits ? (
               <DiamondCreditPill
                 accessibilityLabel="Return to Tools"
                 count={creditCount}
                 onPress={onClose}
+                style={styles.creditPill}
                 variant="dark"
               />
             ) : null}
 
-            {showBack ? (
-            <Pressable
-              accessibilityLabel={backAccessibilityLabel}
-              accessibilityRole="button"
-              hitSlop={10}
-              onPress={onBack}
-              style={styles.iconButton}
-            >
-              <ArrowLeft color="#0A0A0A" size={18} strokeWidth={2.3} style={styles.backIcon} />
-            </Pressable>
-            ) : null}
-          </View>
-
-          <View pointerEvents="none" style={styles.stepOverlay}>
-            <Text style={styles.stepText}>{t("common.labels.step", { current: safeStep, total: totalSteps })}</Text>
-          </View>
-
-          <View style={styles.rightGroup}>
             <Pressable
               accessibilityLabel={closeAccessibilityLabel}
               accessibilityRole="button"
@@ -115,19 +126,12 @@ export function StickyStepHeader({
           </View>
         </View>
 
-        <View style={styles.progressRow}>
-          {Array.from({ length: totalSteps }).map((_, index) => (
-            <View
-              key={`sticky-step-progress-${index}`}
-              style={[
-                styles.progressSegment,
-                {
-                  backgroundColor: index < safeStep ? "#0A0A0A" : "#E0E0E0",
-                },
-              ]}
-            />
-          ))}
-        </View>
+        <StepProgressLine
+          fillColor="#0A0A0A"
+          progress={safeStep / totalSteps}
+          style={styles.progressLine}
+          trackColor="#E7EBEF"
+        />
       </View>
     </View>
   );
@@ -151,51 +155,56 @@ const styles = StyleSheet.create({
     minHeight: HEADER_ROW_HEIGHT,
     justifyContent: "space-between",
   },
-  leftGroup: {
-    width: HEADER_SIDE_SLOT_WIDTH,
-    height: HEADER_ROW_HEIGHT,
+  titleCluster: {
+    flex: 1,
+    minHeight: HEADER_ROW_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
+    gap: 8,
   },
   rightGroup: {
-    width: HEADER_SIDE_SLOT_WIDTH,
-    height: HEADER_ROW_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
     justifyContent: "flex-end",
   },
-  stepOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
+  titleStack: {
+    flex: 1,
     justifyContent: "center",
   },
   iconButton: {
     width: HEADER_ACTION_SIZE,
     height: HEADER_ACTION_SIZE,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#E5E8EC",
+    backgroundColor: "#F7F8FA",
   },
   backIcon: {
     transform: [{ translateX: 1.5 }],
   },
-  stepText: {
+  titleText: {
     color: "#0A0A0A",
-    fontSize: 14,
-    lineHeight: 18,
-    textAlign: "center",
+    fontSize: 18,
+    lineHeight: 22,
+    ...fonts.bold,
+  },
+  stepText: {
+    color: "#6D7682",
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 0.4,
     ...fonts.semibold,
   },
-  progressRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: HEADER_PROGRESS_SEGMENT_GAP,
-    minHeight: HEADER_PROGRESS_HEIGHT,
+  creditPill: {
+    minHeight: 36,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
   },
-  progressSegment: {
-    flex: 1,
+  progressLine: {
     height: HEADER_PROGRESS_HEIGHT,
-    borderRadius: 999,
   },
 });
 

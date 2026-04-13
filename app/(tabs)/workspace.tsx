@@ -484,17 +484,17 @@ const EditorActionButton = memo(function EditorActionButton({
   loading?: boolean;
   tone?: "dark" | "light" | "accent";
 }) {
-  const backgroundColor = tone === "accent" ? "#E53935" : tone === "light" ? "#F3F4F6" : "#0A0A0A";
-  const borderColor = tone === "accent" ? "rgba(229,57,53,0.4)" : tone === "light" ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.12)";
-  const iconColor = tone === "light" ? "#0A0A0A" : "#FFFFFF";
-  const textColor = tone === "light" ? "#0A0A0A" : "#FFFFFF";
+  const backgroundColor = tone === "accent" ? "#CC3333" : tone === "light" ? "#F3F4F6" : "#05070A";
+  const borderColor = tone === "accent" ? "rgba(204,51,51,0.4)" : tone === "light" ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.12)";
+  const iconColor = tone === "light" ? "#05070A" : "#FFFFFF";
+  const textColor = tone === "light" ? "#05070A" : "#FFFFFF";
 
   return (
     <LuxPressable onPress={onPress} disabled={disabled || loading} className="cursor-pointer" style={{ flex: 1 }}>
       <View
         style={{
           minHeight: 84,
-          borderRadius: 22,
+          borderRadius: 14,
           borderWidth: 0.5,
           borderColor,
           backgroundColor,
@@ -6902,7 +6902,7 @@ export default function WorkspaceScreen() {
                         height: "100%",
                         width: `${Math.max(processingProgress * 100, 2)}%`,
                         borderRadius: 2,
-                        backgroundColor: "#E53935",
+                      backgroundColor: "#CC3333",
                       }}
                     />
                   </View>

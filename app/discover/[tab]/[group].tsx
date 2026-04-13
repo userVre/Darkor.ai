@@ -16,7 +16,7 @@ import { triggerHaptic } from "../../../lib/haptics";
 import { fonts } from "../../../styles/typography";
 
 const SCREEN_SIDE_MARGIN = 24;
-const GRID_GAP = 12;
+const GRID_GAP = 18;
 
 function readRouteParam(value: string | string[] | undefined) {
   if (Array.isArray(value)) {
@@ -146,9 +146,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     color: "#0A0A0A",
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 16,
+    lineHeight: 18,
     textAlign: "center",
+    textTransform: "uppercase",
+    letterSpacing: 2.4,
     ...fonts.bold,
   },
   headerSpacer: {

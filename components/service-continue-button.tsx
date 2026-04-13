@@ -10,8 +10,8 @@ import { type Theme, useTheme } from "@/styles/theme";
 import { LuxPressable } from "./lux-pressable";
 
 const pointerClassName = "cursor-pointer";
-const ACTIVE_BUTTON_COLOR = "#E53935";
-const INACTIVE_BUTTON_COLOR = "#4A4A4A";
+const ACTIVE_BUTTON_COLOR = "#CC3333";
+const INACTIVE_BUTTON_COLOR = "#131B26";
 const INACTIVE_TEXT_COLOR = "#CFCFCF";
 
 type ServiceContinueButtonProps = {

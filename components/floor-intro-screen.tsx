@@ -199,6 +199,7 @@ export function FloorIntroScreen({
         onClose={handleExitPress}
         step={1}
         totalSteps={4}
+        title={t("wizard.floorFlow.title")}
       />
 
       <ScrollView

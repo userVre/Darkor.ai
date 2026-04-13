@@ -20,12 +20,17 @@ type NavItemProps = {
 };
 
 function NavItem({ icon: Icon, label, active, onPress }: NavItemProps) {
-  const color = active ? "#0A0A0A" : "#B0B0B0";
+  const color = active ? "#A62828" : "#77808B";
 
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.item}>
-      <Icon color={color} size={24} strokeWidth={2.15} />
-      <Text style={[styles.label, { color }]}>{label}</Text>
+      <View style={styles.iconFrame}>
+        {active ? <View pointerEvents="none" style={styles.iconGlow} /> : null}
+        <View style={[styles.iconPill, active ? styles.iconPillActive : styles.iconPillIdle]}>
+          <Icon color={color} size={22} strokeWidth={active ? 2.25 : 2.05} />
+        </View>
+      </View>
+      <Text style={[styles.label, active ? styles.labelActive : styles.labelInactive]}>{label}</Text>
     </Pressable>
   );
 }
@@ -50,25 +55,63 @@ export function HomeToolsBottomNav({
 
 const styles = StyleSheet.create({
   bar: {
-    height: 64,
-    borderTopWidth: 1,
-    borderTopColor: "#E8E8E8",
+    height: 72,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#E7E3DE",
     backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-around",
-    paddingHorizontal: 12,
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingTop: 8,
+    paddingBottom: 10,
   },
   item: {
-    minWidth: 64,
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
+    gap: 5,
+  },
+  iconFrame: {
+    width: 48,
+    height: 38,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconGlow: {
+    position: "absolute",
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(231,162,162,0.32)",
+  },
+  iconPill: {
+    minWidth: 42,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  iconPillActive: {
+    borderColor: "#F1CACA",
+    backgroundColor: "#FFF1F1",
+  },
+  iconPillIdle: {
+    borderColor: "transparent",
+    backgroundColor: "transparent",
   },
   label: {
     fontSize: 10,
     lineHeight: 10,
     ...fonts.medium,
+  },
+  labelActive: {
+    color: "#0A0A0A",
+  },
+  labelInactive: {
+    color: "#7D848E",
   },
 });
 

@@ -16,7 +16,7 @@ const PROGRESS_DURATION_MS = 15_000;
 const PROGRESS_MAX = 0.9;
 const STATUS_ROTATION_MS = 3_000;
 const SHIMMER_DURATION_MS = 2_000;
-const GENERATION_PROGRESS_COLOR = "#E53935";
+const GENERATION_PROGRESS_COLOR = "#CC3333";
 
 type ServiceProcessingScreenProps = {
   imageUri?: string | null;

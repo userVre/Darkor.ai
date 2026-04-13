@@ -202,6 +202,7 @@ export function PaintIntroScreen({
         onClose={handleExitPress}
         step={1}
         totalSteps={4}
+        title={t("wizard.paintFlow.title")}
       />
 
       <ScrollView

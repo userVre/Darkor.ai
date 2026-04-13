@@ -22,8 +22,8 @@ type DiamondCreditPillProps = {
 
 const VARIANT_STYLES = {
   dark: {
-    backgroundColor: "#0A0A0A",
-    borderColor: "transparent",
+    backgroundColor: "#05070A",
+    borderColor: "#243140",
     iconColor: "#FFFFFF",
     textColor: "#FFFFFF",
   },
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    borderRadius: 999,
+    borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 12,
     paddingVertical: 9,

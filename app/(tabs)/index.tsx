@@ -2,8 +2,8 @@ import { useAuth } from "@clerk/expo";
 import { Settings } from "@/components/material-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -18,13 +18,15 @@ import { triggerHaptic } from "../../lib/haptics";
 import { withWorkspaceFlowId } from "../../lib/try-it-flow";
 import { fonts } from "../../styles/typography";
 
-const STICKY_HEADER_HEIGHT = 48;
+const STICKY_HEADER_HEIGHT = 56;
 const FIRST_CARD_TOP_GAP = 16;
+const TOOL_GRID_GAP = 16;
 
 export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { isSignedIn } = useAuth();
   const {
     clearDraft,
@@ -33,6 +35,8 @@ export default function HomeScreen() {
   const [isCreditModalVisible, setIsCreditModalVisible] = useState(false);
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const stickyHeaderOffset = insets.top + STICKY_HEADER_HEIGHT;
+  const gridWidth = width - 40;
+  const compactCardWidth = useMemo(() => Math.floor((gridWidth - TOOL_GRID_GAP) / 2), [gridWidth]);
   const toolCards: HomeToolCardItem[] = [
     {
       id: "interior-design",
@@ -169,18 +173,16 @@ export default function HomeScreen() {
 
       <View style={[styles.stickyHeader, { paddingTop: insets.top }]}>
         <View style={styles.headerRow}>
-          <View style={[styles.headerSide, styles.headerSideStart]}>
+          <Text numberOfLines={1} style={styles.title}>{t("home.title")}</Text>
+
+          <View style={styles.headerActions}>
             <DiamondCreditPill
               accessibilityLabel="Open credits"
               count={creditBalance}
               onPress={handleCreditsPress}
+              style={styles.creditPill}
               variant="dark"
             />
-          </View>
-
-          <Text numberOfLines={1} style={styles.title}>{t("home.title")}</Text>
-
-          <View style={[styles.headerSide, styles.headerSideEnd]}>
             <Pressable accessibilityRole="button" onPress={handleSettingsPress} style={styles.settingsButton}>
               <Settings color="#0A0A0A" size={20} strokeWidth={2.2} />
             </Pressable>
@@ -195,14 +197,22 @@ export default function HomeScreen() {
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingTop: stickyHeaderOffset + FIRST_CARD_TOP_GAP }]}
       >
-        {toolCards.map((card, index) => (
-          <HomeToolCard
-            key={card.id}
-            item={card}
-            onPress={handleToolPress}
-            style={index === toolCards.length - 1 ? styles.lastCard : styles.cardSpacing}
-          />
-        ))}
+        <View style={styles.toolGrid}>
+          {toolCards.map((card, index) => {
+            const isFeature = index === 0;
+
+            return (
+              <HomeToolCard
+                key={card.id}
+                index={index}
+                item={card}
+                onPress={handleToolPress}
+                variant={isFeature ? "feature" : "compact"}
+                style={isFeature ? styles.featureCard : [styles.compactCard, { width: compactCardWidth }]}
+              />
+            );
+          })}
+        </View>
       </ScrollView>
 
       <HomeToolsBottomNav
@@ -234,24 +244,20 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 3,
     backgroundColor: "#FFFFFF",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#ECE7E1",
   },
   headerRow: {
     height: STICKY_HEADER_HEIGHT,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  headerSide: {
-    width: 112,
+  headerActions: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  headerSideStart: {
-    justifyContent: "flex-start",
-  },
-  headerSideEnd: {
-    justifyContent: "flex-end",
+    gap: 8,
   },
   title: {
     flex: 1,
@@ -261,23 +267,40 @@ const styles = StyleSheet.create({
     textAlign: "left",
     ...fonts.bold,
   },
+  creditPill: {
+    minHeight: 36,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+  },
   settingsButton: {
     width: 40,
     height: 40,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#E5E8EC",
+    backgroundColor: "#F7F8FA",
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 32,
+    paddingHorizontal: 20,
+    paddingBottom: 112,
   },
-  cardSpacing: {
-    marginBottom: 12,
+  toolGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: TOOL_GRID_GAP,
   },
-  lastCard: {
-    marginBottom: 32,
+  featureCard: {
+    width: "100%",
+  },
+  compactCard: {
+    maxWidth: "48%",
   },
 });
 

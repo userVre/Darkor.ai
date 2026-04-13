@@ -43,12 +43,12 @@ export const DS = {
     8: SPACING_UNIT * 8,
   },
   radius: {
-    sm: 16,
-    md: 20,
-    lg: 24,
-    xl: 28,
-    xxl: 32,
-    pill: 999,
+    sm: 10,
+    md: 12,
+    lg: 12,
+    xl: 12,
+    xxl: 14,
+    pill: 14,
   },
   typography: {
     display: {

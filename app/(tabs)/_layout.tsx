@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
-import { useMemo } from "react";
-import { Pressable, type PressableProps } from "react-native";
+import { Pressable, View, type PressableProps } from "react-native";
 import { Tabs, useRouter } from "expo-router";
 import { Compass, LayoutGrid, Sparkles, UserCircle2 } from "@/components/material-icons";
 import { useAuth } from "@clerk/expo";
@@ -19,16 +18,16 @@ export const DEFAULT_TAB_BAR_STYLE = {
   left: 16,
   right: 16,
   bottom: 14,
-  backgroundColor: "#FFFFFF",
-  borderTopColor: "#E8E8E8",
-  borderTopWidth: HAIRLINE,
+  backgroundColor: "#FFFDFC",
+  borderTopColor: "#E7E3DE",
+  borderTopWidth: 1,
   borderWidth: HAIRLINE,
-  borderColor: "#E8E8E8",
-  height: 74,
-  paddingTop: 10,
-  paddingBottom: 10,
+  borderColor: "#ECE6DF",
+  height: 82,
+  paddingTop: 12,
+  paddingBottom: 12,
   paddingHorizontal: spacing.sm,
-  borderRadius: 26,
+  borderRadius: 28,
   elevation: 0,
   shadowOpacity: 0,
 };
@@ -66,37 +65,46 @@ function TabIcon({
   size: number;
   focused: boolean;
 }) {
-  return <Icon color={color} size={size} strokeWidth={focused ? 2.2 : 2.05} />;
+  return (
+    <View style={{ width: 50, height: 38, alignItems: "center", justifyContent: "center" }}>
+      {focused ? (
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            width: 42,
+            height: 42,
+            borderRadius: 21,
+            backgroundColor: "rgba(231,162,162,0.32)",
+          }}
+        />
+      ) : null}
+
+      <View
+        style={{
+          minWidth: 42,
+          height: 32,
+          borderRadius: 16,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 10,
+          borderWidth: HAIRLINE,
+          borderColor: focused ? "#F1CACA" : "transparent",
+          backgroundColor: focused ? "#FFF1F1" : "transparent",
+        }}
+      >
+        <Icon color={color} size={size} strokeWidth={focused ? 2.25 : 2.05} />
+      </View>
+    </View>
+  );
 }
 
 export default function TabsLayout() {
-  const colors = useTheme();
   const router = useRouter();
   const { t } = useTranslation();
   const { isFlowActive } = useFlowUI();
   const { isSignedIn } = useAuth();
   const canOpenCreateTab = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
-  const defaultTabBarStyle = useMemo(
-    () => ({
-      position: "absolute" as const,
-      left: 16,
-      right: 16,
-      bottom: 14,
-      backgroundColor: "#FFFFFF",
-      borderTopColor: "#E8E8E8",
-      borderTopWidth: HAIRLINE,
-      borderWidth: HAIRLINE,
-      borderColor: "#E8E8E8",
-      height: 74,
-      paddingTop: 10,
-      paddingBottom: 10,
-      paddingHorizontal: spacing.sm,
-      borderRadius: 26,
-      elevation: 0,
-      shadowOpacity: 0,
-    }),
-    [],
-  );
 
   return (
     <Tabs
@@ -104,23 +112,20 @@ export default function TabsLayout() {
         headerShown: false,
         lazy: true,
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: "#0A0A0A",
-        tabBarInactiveTintColor: "#B0B0B0",
+        tabBarActiveTintColor: "#A62828",
+        tabBarInactiveTintColor: "#7D848E",
         tabBarButton: (props) => <TabBarButton {...props} />,
         tabBarItemStyle: {
           alignItems: "center",
           justifyContent: "center",
-          paddingVertical: 8,
-        },
-        tabBarIconStyle: {
-          marginBottom: 4,
+          paddingVertical: 6,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
-          lineHeight: 10,
+          fontSize: 11,
+          lineHeight: 12,
           ...fonts.medium,
         },
-        tabBarStyle: isFlowActive ? { display: "none" } : defaultTabBarStyle,
+        tabBarStyle: isFlowActive ? { display: "none" } : DEFAULT_TAB_BAR_STYLE,
         sceneStyle: {
           backgroundColor: "#FFFFFF",
         },
@@ -130,14 +135,14 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: t("tabs.tools"),
-          tabBarIcon: ({ color, focused }) => <TabIcon Icon={LayoutGrid} color={color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <TabIcon Icon={LayoutGrid} color={color} size={22} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="workspace"
         options={{
           title: t("tabs.create"),
-          tabBarIcon: ({ color, focused }) => <TabIcon Icon={Sparkles} color={color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <TabIcon Icon={Sparkles} color={color} size={22} focused={focused} />,
           tabBarButton: (props) => (
             <TabBarButton
               {...props}
@@ -159,14 +164,14 @@ export default function TabsLayout() {
         name="gallery"
         options={{
           title: t("tabs.discover"),
-          tabBarIcon: ({ color, focused }) => <TabIcon Icon={Compass} color={color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <TabIcon Icon={Compass} color={color} size={22} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: t("tabs.profile"),
-          tabBarIcon: ({ color, focused }) => <TabIcon Icon={UserCircle2} color={color} size={24} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <TabIcon Icon={UserCircle2} color={color} size={22} focused={focused} />,
         }}
       />
     </Tabs>
