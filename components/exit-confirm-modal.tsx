@@ -23,7 +23,7 @@ export function ExitConfirmModal({ visible, onCancel, onExit }: ExitConfirmModal
 
         <View style={styles.card}>
           <Text style={styles.title}>Abandon Design?</Text>
-          <Text style={styles.body}>Your current progress will be lost.</Text>
+          <Text style={styles.body}>Progress will be lost.</Text>
 
           <View style={styles.actions}>
             <Pressable accessibilityRole="button" onPress={onCancel} style={styles.secondaryButton}>

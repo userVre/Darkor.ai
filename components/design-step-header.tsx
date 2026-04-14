@@ -1,9 +1,9 @@
 import { ArrowLeft, X } from "@/components/material-icons";
 import { useState } from "react";
-import { Platform, Pressable, StyleSheet, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { DS, ambientShadow, floatingButton } from "../lib/design-system";
+import { DS, floatingButton } from "../lib/design-system";
 import { DiamondCreditPill } from "./diamond-credit-pill";
 import { ExitConfirmModal } from "./exit-confirm-modal";
 import { StepProgressSegments } from "./step-progress-segments";
@@ -22,14 +22,22 @@ type DesignStepHeaderProps = {
 
 const DESIGN_HEADER_TOP_PADDING = 8;
 const DESIGN_HEADER_BOTTOM_PADDING = 12;
-const DESIGN_HEADER_ROW_HEIGHT = 52;
+const DESIGN_HEADER_ROW_HEIGHT = 44;
 const DESIGN_HEADER_ACTION_SIZE = 44;
 const DESIGN_HEADER_CONTENT_GAP = 32;
+const DESIGN_HEADER_PROGRESS_GAP = 12;
+const DESIGN_HEADER_PROGRESS_HEIGHT = 12;
 const DESIGN_HEADER_SIDE_WIDTH = 116;
 
 export function getDesignStepHeaderMetrics(topInset: number) {
   const safeTop = Platform.OS === "android" ? Math.max(topInset, 12) : Math.max(topInset, 16);
-  const height = safeTop + DESIGN_HEADER_TOP_PADDING + DESIGN_HEADER_ROW_HEIGHT + DESIGN_HEADER_BOTTOM_PADDING;
+  const height =
+    safeTop +
+    DESIGN_HEADER_TOP_PADDING +
+    DESIGN_HEADER_ROW_HEIGHT +
+    DESIGN_HEADER_PROGRESS_GAP +
+    DESIGN_HEADER_PROGRESS_HEIGHT +
+    DESIGN_HEADER_BOTTOM_PADDING;
 
   return {
     height,
@@ -54,6 +62,7 @@ export function DesignStepHeader({
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
+  const stepLabel = `Step ${safeStep}/${totalSteps}`;
 
   return (
     <>
@@ -68,46 +77,52 @@ export function DesignStepHeader({
         ]}
       >
         <View style={[styles.inner, { marginHorizontal: horizontalInset }]}>
-          <View style={styles.sideSlot}>
-            {showBack ? (
+          <View style={styles.topRow}>
+            <View style={styles.sideSlot}>
+              {showBack ? (
+                <Pressable
+                  accessibilityLabel={backAccessibilityLabel}
+                  accessibilityRole="button"
+                  hitSlop={10}
+                  onPress={onBack}
+                  style={styles.iconButton}
+                >
+                  <ArrowLeft color={DS.colors.textPrimary} size={18} strokeWidth={1.9} style={styles.backIcon} />
+                </Pressable>
+              ) : showCredits ? (
+                <DiamondCreditPill
+                  accessibilityLabel="Credits remaining"
+                  accessibilityRole="text"
+                  count={creditCount ?? 0}
+                  style={styles.creditPill}
+                  variant="dark"
+                />
+              ) : null}
+            </View>
+
+            <View style={styles.stepLabelWrap}>
+              <View style={styles.stepLabelChip}>
+                <Text style={styles.stepLabelText}>{stepLabel}</Text>
+              </View>
+            </View>
+
+            <View style={[styles.sideSlot, styles.sideSlotRight]}>
               <Pressable
-                accessibilityLabel={backAccessibilityLabel}
+                accessibilityLabel={closeAccessibilityLabel}
                 accessibilityRole="button"
                 hitSlop={10}
-                onPress={onBack}
-                style={styles.iconButton}
-              >
-                <ArrowLeft color={DS.colors.textPrimary} size={18} strokeWidth={1.9} style={styles.backIcon} />
-              </Pressable>
-            ) : showCredits ? (
-              <DiamondCreditPill
-                accessibilityLabel="Return to Tools"
-                count={creditCount ?? 0}
                 onPress={() => {
                   setIsExitModalVisible(true);
                 }}
-                style={styles.creditPill}
-                variant="dark"
-              />
-            ) : null}
+                style={styles.iconButton}
+              >
+                <X color={DS.colors.textPrimary} size={18} strokeWidth={2} />
+              </Pressable>
+            </View>
           </View>
 
           <View style={styles.progressWrap}>
             <StepProgressSegments step={safeStep} totalSteps={totalSteps} style={styles.progressRail} />
-          </View>
-
-          <View style={[styles.sideSlot, styles.sideSlotRight]}>
-            <Pressable
-              accessibilityLabel={closeAccessibilityLabel}
-              accessibilityRole="button"
-              hitSlop={10}
-              onPress={() => {
-                setIsExitModalVisible(true);
-              }}
-              style={styles.iconButton}
-            >
-              <X color={DS.colors.textPrimary} size={18} strokeWidth={2} />
-            </Pressable>
           </View>
         </View>
       </View>
@@ -133,20 +148,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 40,
-    backgroundColor: "transparent",
+    backgroundColor: "#FFFFFF",
   },
   inner: {
+    gap: DESIGN_HEADER_PROGRESS_GAP,
+    paddingBottom: DESIGN_HEADER_BOTTOM_PADDING,
+  },
+  topRow: {
     minHeight: DESIGN_HEADER_ROW_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 4,
-    paddingVertical: 6,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    borderCurve: "continuous",
-    ...ambientShadow(0.05, 18, 10),
   },
   sideSlot: {
     width: DESIGN_HEADER_SIDE_WIDTH,
@@ -158,14 +170,13 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   progressWrap: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 12,
   },
   progressRail: {
     width: "100%",
-    maxWidth: 176,
+    maxWidth: 168,
   },
   iconButton: {
     width: DESIGN_HEADER_ACTION_SIZE,
@@ -184,5 +195,28 @@ const styles = StyleSheet.create({
     minHeight: 38,
     paddingHorizontal: 12,
     paddingVertical: 8,
+  },
+  stepLabelWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  stepLabelChip: {
+    minHeight: 36,
+    minWidth: 108,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 999,
+    borderCurve: "continuous",
+    backgroundColor: "#F5F6F8",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  stepLabelText: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.label,
+    fontSize: 12,
+    letterSpacing: 1.2,
   },
 });

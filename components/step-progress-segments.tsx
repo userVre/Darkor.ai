@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   },
   segment: {
     flex: 1,
-    height: 6,
+    height: 3,
     borderRadius: 999,
   },
   segmentActive: {
