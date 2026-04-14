@@ -39,6 +39,19 @@ function startMetroInBackground({ projectRoot, env, hostMode, portString }) {
   child.unref();
 }
 
+function resolveAndroidDevClientScheme(projectRoot) {
+  const manifestPath = resolve(projectRoot, "android", "app", "src", "main", "AndroidManifest.xml");
+  if (fs.existsSync(manifestPath)) {
+    const manifest = fs.readFileSync(manifestPath, "utf8");
+    const match = manifest.match(/android:scheme="(exp\+[^"]+)"/);
+    if (match?.[1]) {
+      return match[1];
+    }
+  }
+
+  return "exp+darkor-ai";
+}
+
 async function main() {
   const projectRoot = fs.realpathSync(resolve(__dirname, ".."));
   const metroConfig = pathToFileURL(resolve(projectRoot, "metro.config.js")).href;
@@ -131,7 +144,8 @@ async function main() {
     props = patchProp(props, "org.gradle.workers.max", "1");
     props = patchProp(props, "org.gradle.parallel", "false");
     props = patchProp(props, "org.gradle.daemon", "false");
-    props = patchProp(props, "reactNativeArchitectures", "x86_64");    props = patchProp(props, "EX_DEV_CLIENT_NETWORK_INSPECTOR", "false");
+    props = patchProp(props, "reactNativeArchitectures", "x86_64");
+    props = patchProp(props, "EX_DEV_CLIENT_NETWORK_INSPECTOR", "false");
     fs.writeFileSync(gradlePropsPath, props);
   }
 
@@ -146,6 +160,7 @@ async function main() {
     console.warn(`[dev] Android bundle prewarm timed out on port ${portString}; launching anyway.`);
   }
 
+  const devClientScheme = resolveAndroidDevClientScheme(projectRoot);
   run("adb", [
     "shell",
     "am",
@@ -154,7 +169,7 @@ async function main() {
     "-a",
     "android.intent.action.VIEW",
     "-d",
-    `exp+home-decor-ai://expo-development-client/?url=${encodeURIComponent(serverUrl)}`,
+    `${devClientScheme}://expo-development-client/?url=${encodeURIComponent(serverUrl)}`,
   ], {
     cwd: projectRoot,
     env: process.env,
