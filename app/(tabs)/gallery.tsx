@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
 import { CreditLimitModal } from "../../components/credit-limit-modal";
+import { spacedCapsLabel } from "../../components/design-wizard-primitives";
 import { DiamondCreditPill } from "../../components/diamond-credit-pill";
 import { DiscoverImageCard } from "../../components/discover-image-card";
 import { DiscoverPreviewModal } from "../../components/discover-preview-modal";
@@ -122,7 +123,7 @@ const DiscoverSection = memo(function DiscoverSection({
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{group.title}</Text>
+        <Text style={styles.sectionTitle}>{spacedCapsLabel(group.title)}</Text>
         <Pressable accessibilityRole="button" onPress={() => onSeeAll(tabId, group)} style={styles.seeAllButton}>
           <Text style={styles.seeAllText}>{t("common.actions.seeAll")}</Text>
         </Pressable>
@@ -240,9 +241,9 @@ export default function GalleryScreen() {
           </View>
 
           <View pointerEvents="none" style={styles.headerTitleWrap}>
-            <Text style={styles.headerEyebrow}>Mood Boards</Text>
+            <Text style={styles.headerEyebrow}>{spacedCapsLabel("Mood Boards")}</Text>
             <Text style={styles.headerTitle}>{t("discover.title")}</Text>
-            <Text style={styles.headerSubtitle}>Curated references with gallery-grade composition.</Text>
+            <Text style={styles.headerSubtitle}>{spacedCapsLabel("Curated references")}</Text>
           </View>
 
           <View style={styles.headerSide} />
@@ -315,6 +316,7 @@ const styles = StyleSheet.create({
   headerEyebrow: {
     color: DS.colors.textSecondary,
     ...DS.typography.label,
+    letterSpacing: 3.2,
   },
   headerTitle: {
     color: DS.colors.textPrimary,
@@ -323,8 +325,9 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     color: DS.colors.textSecondary,
-    ...DS.typography.bodySm,
+    ...DS.typography.label,
     textAlign: "center",
+    letterSpacing: 2.8,
   },
   tabsOuter: {
     alignItems: "center",
@@ -381,8 +384,7 @@ const styles = StyleSheet.create({
     color: DS.colors.textPrimary,
     fontSize: 12,
     lineHeight: 16,
-    textTransform: "uppercase",
-    letterSpacing: 2,
+    letterSpacing: 3.2,
     fontFamily: "Inter",
     fontWeight: "600",
   },

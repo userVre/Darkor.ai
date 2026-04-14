@@ -35,6 +35,7 @@ import {
 import { fonts } from "../styles/typography";
 
 import { triggerHaptic } from "../lib/haptics";
+import { LUX_SPRING } from "../lib/motion";
 import { uploadLocalFileToCloud } from "../lib/native-upload";
 import { WALL_COLOR_OPTIONS } from "../lib/data";
 import { GENERATION_FAILED_TOAST, getFriendlyGenerationError } from "../lib/generation-errors";
@@ -55,6 +56,7 @@ import { ServiceProcessingScreen, useGenerationStatusMessages } from "./service-
 import { ServiceWizardHeader } from "./service-wizard-header";
 import { ServiceWizardStepScreen } from "./service-wizard-shared";
 import { getStickyStepHeaderMetrics } from "./sticky-step-header";
+import { getWizardFloatingButtonStyle } from "./design-wizard-primitives";
 import { LuxPressable } from "./lux-pressable";
 import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerCredits } from "./viewer-credits-context";
@@ -1619,10 +1621,23 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
             </Pressable>
           </View>
 
-          {isColorPickerOpen ? (
-            <View style={styles.colorPickerOverlay}>
+          <AnimatePresence>
+            {isColorPickerOpen ? (
+              <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.colorPickerOverlay}>
               <Pressable accessibilityRole="button" onPress={handleCloseColorPicker} style={StyleSheet.absoluteFillObject} />
-              <View style={[styles.colorPickerSheet, { height: colorPickerSheetHeight, paddingBottom: Math.max(insets.bottom + scaleSelectionValue(24, selectionLayoutScale), scaleSelectionValue(24, selectionLayoutScale)) }]}>
+                <MotiView
+                  from={{ opacity: 0.96, translateY: 48, scale: 0.985 }}
+                  animate={{ opacity: 1, translateY: 0, scale: 1 }}
+                  exit={{ opacity: 0.94, translateY: 36, scale: 0.985 }}
+                  transition={LUX_SPRING}
+                  style={[
+                    styles.colorPickerSheet,
+                    {
+                      height: colorPickerSheetHeight,
+                      paddingBottom: Math.max(insets.bottom + scaleSelectionValue(124, selectionLayoutScale), scaleSelectionValue(124, selectionLayoutScale)),
+                    },
+                  ]}
+                >
                 <Text style={[styles.colorPickerTitle, { marginTop: scaleSelectionValue(32, selectionLayoutScale) }]}>{t("wizard.paintFlow.colorPickerTitle")}</Text>
 
                 <View style={{ marginTop: scaleSelectionValue(52, selectionLayoutScale), alignItems: "center" }}>
@@ -1686,31 +1701,43 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                   <Text style={[styles.colorPickerRgbText, { width: colorPickerSquareSize, marginTop: scaleSelectionValue(24, selectionLayoutScale) }]}>
                     {colorPickerDraft.rgbLabel}
                   </Text>
-
+                </View>
                   <Pressable
                     accessibilityRole="button"
                     onPress={handleApplyColorPicker}
-                    style={[styles.colorPickerApplyButton, { width: colorPickerSquareSize, marginTop: scaleSelectionValue(44, selectionLayoutScale) }]}
+                    style={[
+                      styles.colorPickerApplyButton,
+                      {
+                        left: scaleSelectionValue(24, selectionLayoutScale),
+                        right: scaleSelectionValue(24, selectionLayoutScale),
+                        bottom: Math.max(insets.bottom + scaleSelectionValue(24, selectionLayoutScale), scaleSelectionValue(24, selectionLayoutScale)),
+                      },
+                    ]}
                   >
                     <Text style={styles.colorPickerApplyText}>{t("wizard.paintFlow.apply")}</Text>
                   </Pressable>
-                </View>
-              </View>
-            </View>
-          ) : null}
+                </MotiView>
+              </MotiView>
+            ) : null}
+          </AnimatePresence>
 
-          {isSurfacePickerOpen ? (
-            <View style={styles.colorPickerOverlay}>
+          <AnimatePresence>
+            {isSurfacePickerOpen ? (
+              <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.colorPickerOverlay}>
               <Pressable accessibilityRole="button" onPress={handleCloseSurfacePicker} style={StyleSheet.absoluteFillObject} />
-              <View
-                style={[
-                  styles.surfacePickerSheet,
-                  {
-                    height: surfacePickerSheetHeight,
-                    paddingBottom: Math.max(insets.bottom + scaleSelectionValue(24, selectionLayoutScale), scaleSelectionValue(24, selectionLayoutScale)),
-                  },
-                ]}
-              >
+                <MotiView
+                  from={{ opacity: 0.96, translateY: 48, scale: 0.985 }}
+                  animate={{ opacity: 1, translateY: 0, scale: 1 }}
+                  exit={{ opacity: 0.94, translateY: 36, scale: 0.985 }}
+                  transition={LUX_SPRING}
+                  style={[
+                    styles.surfacePickerSheet,
+                    {
+                      height: surfacePickerSheetHeight,
+                      paddingBottom: Math.max(insets.bottom + scaleSelectionValue(124, selectionLayoutScale), scaleSelectionValue(124, selectionLayoutScale)),
+                    },
+                  ]}
+                >
                 <View style={[styles.surfacePickerHandle, { marginTop: scaleSelectionValue(12, selectionLayoutScale) }]} />
 
                 <Pressable
@@ -1741,7 +1768,7 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                       {
                         marginTop: scaleSelectionValue(28, selectionLayoutScale),
                         marginHorizontal: scaleSelectionValue(24, selectionLayoutScale),
-                        paddingBottom: Math.max(insets.bottom + 20, 20),
+                        paddingBottom: Math.max(insets.bottom + 124, 124),
                       },
                     ]}
                   >
@@ -1781,19 +1808,20 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
                     onPress={handleApplySurfacePicker}
                     style={[
                       styles.surfacePickerApplyButton,
-                    {
-                      marginTop: 24,
-                      marginHorizontal: scaleSelectionValue(24, selectionLayoutScale),
-                      marginBottom: Math.max(insets.bottom + 44, 44),
-                    },
-                  ]}
-                >
+                      {
+                        left: scaleSelectionValue(24, selectionLayoutScale),
+                        right: scaleSelectionValue(24, selectionLayoutScale),
+                        bottom: Math.max(insets.bottom + scaleSelectionValue(24, selectionLayoutScale), scaleSelectionValue(24, selectionLayoutScale)),
+                      },
+                    ]}
+                  >
                     <Text style={styles.surfacePickerApplyText}>{t("wizard.paintFlow.apply")}</Text>
                   </Pressable>
                 </View>
-              </View>
-            </View>
-          ) : null}
+                </MotiView>
+              </MotiView>
+            ) : null}
+          </AnimatePresence>
         </View>
       ) : null}
 
@@ -2341,7 +2369,7 @@ const styles = StyleSheet.create({
     ...absoluteFill,
     zIndex: 14,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.7)",
+    backgroundColor: "rgba(0,0,0,0.64)",
   },
   colorPickerSheet: {
     width: "100%",
@@ -2349,6 +2377,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     overflow: "hidden",
+    boxShadow: "0px -18px 48px rgba(15,23,42,0.22)",
   },
   colorPickerTitle: {
     marginHorizontal: 24,
@@ -2411,11 +2440,12 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
   colorPickerApplyButton: {
+    position: "absolute",
     height: 56,
-    borderRadius: 28,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0A0A0A",
+    ...getWizardFloatingButtonStyle(true),
   },
   colorPickerApplyText: {
     color: "#FFFFFF",
@@ -2429,6 +2459,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     overflow: "hidden",
+    boxShadow: "0px -18px 48px rgba(15,23,42,0.22)",
   },
   surfacePickerHandle: {
     alignSelf: "center",
@@ -2513,11 +2544,12 @@ const styles = StyleSheet.create({
       backgroundColor: "#CC3333",
   },
   surfacePickerApplyButton: {
+    position: "absolute",
     height: 56,
-    borderRadius: 28,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-      backgroundColor: "#CC3333",
+    ...getWizardFloatingButtonStyle(true),
   },
   surfacePickerApplyText: {
     color: "#FFFFFF",

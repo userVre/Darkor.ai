@@ -4,6 +4,12 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } fr
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import {
+  DESIGN_WIZARD_SURFACE,
+  DESIGN_WIZARD_TEXT,
+  getWizardFloatingButtonStyle,
+  getWizardSelectionCardStyle,
+} from "./design-wizard-primitives";
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-header";
@@ -27,7 +33,6 @@ type ExteriorRedesignStepFourProps = {
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
 const PALETTE_REFERENCE_WIDTH = 500;
-const ACTIVE_CONTINUE_COLOR = "#E53935";
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -70,9 +75,9 @@ export function ExteriorRedesignStepFour({
   const paletteVerticalGap = scaleValue(8, paletteScale);
   const paletteLabelTop = scaleValue(28, paletteScale);
   const paletteLabelLeft = scaleValue(16, paletteScale);
-  const bottomContainerHeight = scaleValue(132, layoutScale);
+  const bottomContainerHeight = scaleValue(116, layoutScale);
   const buttonHeight = scaleValue(60, layoutScale);
-  const buttonTop = scaleValue(52, layoutScale);
+  const buttonTop = scaleValue(24, layoutScale);
   const paletteRows = useMemo(() => chunkIntoRows(palettes, 3), [palettes]);
   const paletteGridWidth = paletteCardWidth * 3 + paletteHorizontalGap * 2;
   const canContinue = Boolean(selectedPaletteId);
@@ -141,8 +146,8 @@ export function ExteriorRedesignStepFour({
                           width: paletteCardWidth,
                           height: paletteCardHeight,
                           marginRight: columnIndex === row.length - 1 ? 0 : paletteHorizontalGap,
-                          borderColor: active ? ACTIVE_CONTINUE_COLOR : "#E5E5E5",
                         },
+                        getWizardSelectionCardStyle(active, DESIGN_WIZARD_SURFACE),
                       ]}
                     >
                       <View style={{ height: paletteCardTopHeight, flexDirection: "row" }}>
@@ -150,7 +155,15 @@ export function ExteriorRedesignStepFour({
                           <View key={`${palette.id}-${color}`} style={{ flex: 1, backgroundColor: color }} />
                         ))}
                       </View>
-                      <View style={[styles.paletteLabelBar, { height: paletteLabelHeight }]}>
+                      <View
+                        style={[
+                          styles.paletteLabelBar,
+                          {
+                            height: paletteLabelHeight,
+                            backgroundColor: active ? "#000000" : "#EFEFEF",
+                          },
+                        ]}
+                      >
                         <Text
                           numberOfLines={2}
                           style={[
@@ -158,7 +171,7 @@ export function ExteriorRedesignStepFour({
                             {
                               top: paletteLabelTop,
                               left: paletteLabelLeft,
-                              color: active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A",
+                              color: active ? "#FFFFFF" : DESIGN_WIZARD_TEXT,
                             },
                           ]}
                         >
@@ -187,11 +200,11 @@ export function ExteriorRedesignStepFour({
                 width: mainWidth,
                 height: buttonHeight,
                 marginTop: buttonTop,
-                backgroundColor: canContinue ? ACTIVE_CONTINUE_COLOR : "#E8E8E8",
               },
+              getWizardFloatingButtonStyle(canContinue),
             ]}
           >
-            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>{t("common.actions.continue")}</Text>
+            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#7E7E7E" }]}>{t("common.actions.continue")}</Text>
           </Pressable>
         </View>
       </View>
@@ -260,7 +273,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: "#0A0A0A",
+    color: DESIGN_WIZARD_TEXT,
     fontSize: 24,
     lineHeight: 29,
     textAlign: "left",
@@ -268,9 +281,6 @@ const styles = StyleSheet.create({
   },
   paletteCard: {
     overflow: "hidden",
-    borderRadius: 16,
-    borderWidth: 1.5,
-    backgroundColor: "#FFFFFF",
   },
   paletteLabelBar: {
     position: "relative",
@@ -288,17 +298,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "transparent",
   },
   bottomContainerInner: {
     alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: "#F1F1F1",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "transparent",
   },
   continueButton: {
     alignSelf: "center",
-    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
   },

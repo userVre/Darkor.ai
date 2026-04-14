@@ -5,6 +5,15 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BadgeCheck, PaintRoller, Wand2 } from "@/components/material-icons";
+import {
+  DESIGN_WIZARD_ACCENT,
+  DESIGN_WIZARD_ACCENT_STRONG,
+  DESIGN_WIZARD_SURFACE,
+  DESIGN_WIZARD_TEXT,
+  DESIGN_WIZARD_TEXT_MUTED,
+  getWizardFloatingButtonStyle,
+  getWizardSelectionCardStyle,
+} from "./design-wizard-primitives";
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-header";
@@ -37,7 +46,6 @@ type InteriorRedesignStepFourProps = {
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
 const PALETTE_REFERENCE_WIDTH = 500;
-const ACTIVE_CONTINUE_COLOR = "#E53935";
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -90,9 +98,8 @@ function ModeSelectionCard({
         {
           width,
           height,
-          borderColor: active ? ACTIVE_CONTINUE_COLOR : "#E5E5E5",
-          backgroundColor: active ? "#FFF7F6" : "#FFFFFF",
         },
+        getWizardSelectionCardStyle(active, DESIGN_WIZARD_SURFACE),
         style,
       ]}
     >
@@ -102,28 +109,28 @@ function ModeSelectionCard({
             style={[
               styles.modeIconWrap,
               {
-                borderColor: active ? "#F6B6B1" : "#E9E9E9",
-                backgroundColor: active ? "#FFF0EE" : "#F7F7F7",
+                borderColor: active ? "rgba(204,51,51,0.38)" : "#E9E9E9",
+                backgroundColor: active ? "rgba(204,51,51,0.12)" : "#F7F7F7",
               },
             ]}
           >
-            <ModeIcon color={active ? ACTIVE_CONTINUE_COLOR : "#111111"} size={iconSize} strokeWidth={2.2} />
+            <ModeIcon color={active ? DESIGN_WIZARD_ACCENT_STRONG : "#111111"} size={iconSize} strokeWidth={2.2} />
           </View>
           {active ? (
             <View style={styles.modeSelectedBadge}>
-              <BadgeCheck color={ACTIVE_CONTINUE_COLOR} size={18} strokeWidth={2.1} />
+              <BadgeCheck color={DESIGN_WIZARD_ACCENT_STRONG} size={18} strokeWidth={2.1} />
             </View>
           ) : null}
         </View>
 
         <View style={{ marginTop: titleTopGap }}>
-          <Text style={styles.modeTitle} numberOfLines={2}>
+          <Text style={[styles.modeTitle, active ? styles.modeTitleActive : null]} numberOfLines={2}>
             {title}
           </Text>
         </View>
 
         <View style={[styles.modeDescriptionBlock, { marginTop: descriptionTopGap }]}>
-          <Text style={styles.modeDescription}>
+          <Text style={[styles.modeDescription, active ? styles.modeDescriptionActive : null]}>
             {description}
           </Text>
         </View>
@@ -169,9 +176,9 @@ export function InteriorRedesignStepFour({
   const paletteVerticalGap = scaleValue(8, paletteScale);
   const paletteLabelTop = scaleValue(28, paletteScale);
   const paletteLabelLeft = scaleValue(16, paletteScale);
-  const bottomContainerHeight = scaleValue(132, layoutScale);
+  const bottomContainerHeight = scaleValue(116, layoutScale);
   const buttonHeight = scaleValue(60, layoutScale);
-  const buttonTop = scaleValue(52, layoutScale);
+  const buttonTop = scaleValue(24, layoutScale);
   const paletteRows = useMemo(() => chunkIntoRows(palettes, 3), [palettes]);
   const canContinue = Boolean(selectedModeId && selectedPaletteId);
   const paletteGridWidth = paletteCardWidth * 3 + paletteHorizontalGap * 2;
@@ -270,8 +277,8 @@ export function InteriorRedesignStepFour({
                           width: paletteCardWidth,
                           height: paletteCardHeight,
                           marginRight: columnIndex === row.length - 1 ? 0 : paletteHorizontalGap,
-                          borderColor: active ? ACTIVE_CONTINUE_COLOR : "#E5E5E5",
                         },
+                        getWizardSelectionCardStyle(active, DESIGN_WIZARD_SURFACE),
                       ]}
                     >
                       <View style={{ height: paletteCardTopHeight, flexDirection: "row" }}>
@@ -279,7 +286,15 @@ export function InteriorRedesignStepFour({
                           <View key={`${palette.id}-${color}`} style={{ flex: 1, backgroundColor: color }} />
                         ))}
                       </View>
-                      <View style={[styles.paletteLabelBar, { height: paletteLabelHeight }]}>
+                      <View
+                        style={[
+                          styles.paletteLabelBar,
+                          {
+                            height: paletteLabelHeight,
+                            backgroundColor: active ? "#000000" : "#EFEFEF",
+                          },
+                        ]}
+                      >
                         <Text
                           numberOfLines={2}
                           style={[
@@ -287,7 +302,7 @@ export function InteriorRedesignStepFour({
                             {
                               top: paletteLabelTop,
                               left: paletteLabelLeft,
-                              color: active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A",
+                              color: active ? "#FFFFFF" : DESIGN_WIZARD_TEXT,
                             },
                           ]}
                         >
@@ -316,11 +331,11 @@ export function InteriorRedesignStepFour({
                 width: mainWidth,
                 height: buttonHeight,
                 marginTop: buttonTop,
-                backgroundColor: canContinue ? ACTIVE_CONTINUE_COLOR : "#E8E8E8",
               },
+              getWizardFloatingButtonStyle(canContinue),
             ]}
           >
-            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>{t("common.actions.continue")}</Text>
+            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#7E7E7E" }]}>{t("common.actions.continue")}</Text>
           </Pressable>
         </View>
       </View>
@@ -379,16 +394,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionTitle: {
-    color: "#0A0A0A",
+    color: DESIGN_WIZARD_TEXT,
     fontSize: 24,
     lineHeight: 29,
     textAlign: "left",
     ...fonts.bold,
   },
   modeCard: {
-    borderRadius: 20,
-    borderWidth: 1.5,
-    backgroundColor: "#FFFFFF",
   },
   modeCardContent: {
     flex: 1,
@@ -413,30 +425,33 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFF0EE",
+    backgroundColor: "rgba(255,255,255,0.08)",
   },
   modeTitle: {
-    color: "#0A0A0A",
+    color: DESIGN_WIZARD_TEXT,
     fontSize: 18,
     lineHeight: 23,
     ...fonts.bold,
+  },
+  modeTitleActive: {
+    color: "#FFFFFF",
   },
   modeDescriptionBlock: {
     flex: 1,
     justifyContent: "flex-end",
   },
   modeDescription: {
-    color: "#8A8A8A",
+    color: DESIGN_WIZARD_TEXT_MUTED,
     fontSize: 13,
     lineHeight: 19,
     textAlign: "left",
     ...fonts.regular,
   },
+  modeDescriptionActive: {
+    color: "rgba(255,255,255,0.72)",
+  },
   paletteCard: {
     overflow: "hidden",
-    borderRadius: 16,
-    borderWidth: 1.5,
-    backgroundColor: "#FFFFFF",
   },
   paletteLabelBar: {
     position: "relative",
@@ -454,17 +469,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "transparent",
   },
   bottomContainerInner: {
     alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: "#F1F1F1",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "transparent",
   },
   continueButton: {
     alignSelf: "center",
-    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
   },

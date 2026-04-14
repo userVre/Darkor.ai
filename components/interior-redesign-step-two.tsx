@@ -4,10 +4,19 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } fr
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import {
+  DESIGN_WIZARD_ACCENT_STRONG,
+  DESIGN_WIZARD_SURFACE_MUTED,
+  DESIGN_WIZARD_TEXT,
+  DESIGN_WIZARD_TEXT_MUTED,
+  getArchitecturalIconProps,
+  getArchitecturalRoomIcon,
+  getWizardFloatingButtonStyle,
+  getWizardSelectionCardStyle,
+} from "./design-wizard-primitives";
 import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-header";
-import { MaterialIcon, type MaterialIconName } from "./material-icons";
 
 type InteriorRedesignStepTwoProps = {
   creditCount: number;
@@ -21,29 +30,9 @@ type InteriorRedesignStepTwoProps = {
 
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
-const ACTIVE_CONTINUE_COLOR = "#E53935";
-const INACTIVE_CARD_BG = "#F5F5F5";
-const INACTIVE_CARD_BORDER = "#E3E3E3";
-const ACTIVE_CARD_BG = "#FFF2F0";
-const ACTIVE_CARD_BORDER = "#E53935";
 const CARD_HEIGHT = 72;
 const GRID_GAP = 16;
 const ROOM_ICON_SIZE = 24;
-
-const ROOM_ICON_BY_NAME: Record<string, MaterialIconName> = {
-  Bathroom: "bathtub",
-  Bedroom: "bed",
-  "Dining Room": "dinner-dining",
-  Hall: "meeting-room",
-  "Gaming Room": "sports-esports",
-  Kitchen: "kitchen",
-  Laundry: "local-laundry-service",
-  Library: "local-library",
-  "Living Room": "weekend",
-  Nursery: "child-care",
-  "Home Office": "work",
-  "Home Theater": "tv",
-};
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -77,10 +66,10 @@ export function InteriorRedesignStepTwo({
   const titleTop = headerMetrics.contentOffset;
   const subtitleTopGap = scaleValue(12, layoutScale);
   const gridTopGap = scaleValue(28, layoutScale);
-  const bottomContainerHeight = scaleValue(132, layoutScale);
+  const bottomContainerHeight = scaleValue(116, layoutScale);
   const buttonWidth = mainWidth;
   const buttonHeight = scaleValue(60, layoutScale);
-  const buttonTop = scaleValue(52, layoutScale);
+  const buttonTop = scaleValue(24, layoutScale);
   const cardWidth = (mainWidth - GRID_GAP) / 2;
   const cardHeight = scaleValue(CARD_HEIGHT, layoutScale);
   const roomRows = useMemo(() => chunkIntoRows(roomOptions, 2), [roomOptions]);
@@ -134,8 +123,8 @@ export function InteriorRedesignStepTwo({
               <View key={`interior-room-row-${rowIndex}`} style={styles.gridRow}>
                 {row.map((room, columnIndex) => {
                   const active = selectedRoom === room;
-                  const iconName = ROOM_ICON_BY_NAME[room] ?? "house";
-                  const iconColor = active ? ACTIVE_CONTINUE_COLOR : "#0A0A0A";
+                  const RoomIcon = getArchitecturalRoomIcon(room);
+                  const iconColor = active ? DESIGN_WIZARD_ACCENT_STRONG : DESIGN_WIZARD_TEXT;
 
                   return (
                     <Pressable
@@ -150,13 +139,12 @@ export function InteriorRedesignStepTwo({
                           width: cardWidth,
                           minHeight: cardHeight,
                           marginRight: columnIndex === 0 && row.length > 1 ? GRID_GAP : 0,
-                          backgroundColor: active ? ACTIVE_CARD_BG : INACTIVE_CARD_BG,
-                          borderColor: active ? ACTIVE_CARD_BORDER : INACTIVE_CARD_BORDER,
                         },
+                        getWizardSelectionCardStyle(active, DESIGN_WIZARD_SURFACE_MUTED),
                       ]}
                     >
                       <View style={styles.roomCardContent}>
-                        <MaterialIcon color={iconColor} name={iconName} size={ROOM_ICON_SIZE} />
+                        <RoomIcon {...getArchitecturalIconProps(iconColor, ROOM_ICON_SIZE)} />
                         <Text style={[styles.roomCardTitle, active ? styles.roomCardTitleActive : null]} numberOfLines={2}>
                           {room}
                         </Text>
@@ -185,11 +173,11 @@ export function InteriorRedesignStepTwo({
                 width: buttonWidth,
                 height: buttonHeight,
                 marginTop: buttonTop,
-                backgroundColor: canContinue ? ACTIVE_CONTINUE_COLOR : "#E8E8E8",
               },
+              getWizardFloatingButtonStyle(canContinue),
             ]}
           >
-            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>{t("common.actions.continue")}</Text>
+            <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#7E7E7E" }]}>{t("common.actions.continue")}</Text>
           </Pressable>
         </View>
       </View>
@@ -206,14 +194,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: "#0A0A0A",
+    color: DESIGN_WIZARD_TEXT,
     fontSize: 24,
     lineHeight: 29,
     textAlign: "left",
     ...fonts.bold,
   },
   subtitle: {
-    color: "#6F6F6F",
+    color: DESIGN_WIZARD_TEXT_MUTED,
     fontSize: 15,
     lineHeight: 22,
     ...fonts.regular,
@@ -226,8 +214,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   roomCard: {
-    borderRadius: 20,
-    borderWidth: 1.5,
     paddingHorizontal: 16,
     justifyContent: "center",
   },
@@ -237,7 +223,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   roomCardTitle: {
-    color: "#0A0A0A",
+    color: DESIGN_WIZARD_TEXT,
     fontSize: 16,
     lineHeight: 20,
     textAlign: "left",
@@ -245,24 +231,21 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
   roomCardTitleActive: {
-    color: ACTIVE_CONTINUE_COLOR,
+    color: "#FFFFFF",
   },
   bottomContainer: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "transparent",
   },
   bottomContainerInner: {
     alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: "#F1F1F1",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "transparent",
   },
   continueButton: {
     alignSelf: "center",
-    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
   },

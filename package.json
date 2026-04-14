@@ -47,6 +47,7 @@
     "lucide-react-native": "^0.577.0",
     "moti": "^0.30.0",
     "nativewind": "^4.1.23",
+    "phosphor-react-native": "^3.0.4",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-i18next": "^17.0.2",

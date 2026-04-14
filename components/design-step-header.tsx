@@ -23,22 +23,29 @@ type DesignStepHeaderProps = {
 const DESIGN_HEADER_TOP_PADDING = 4;
 const DESIGN_HEADER_BOTTOM_PADDING = 14;
 const DESIGN_HEADER_ROW_HEIGHT = 52;
-const DESIGN_HEADER_PROGRESS_HEIGHT = 4;
+const DESIGN_HEADER_PROGRESS_HEIGHT = 2;
 const DESIGN_HEADER_PROGRESS_GAP = 12;
 const DESIGN_HEADER_ACTION_SIZE = 40;
+const DESIGN_HEADER_CARD_TOP_GAP = 12;
+const DESIGN_HEADER_TITLE_HEIGHT = 44;
+const DESIGN_HEADER_CARD_PADDING = 14;
 
 export function getDesignStepHeaderMetrics(topInset: number) {
   const safeTop = Platform.OS === "android" ? Math.max(topInset, 12) : Math.max(topInset, 16);
-  const rowTop = safeTop + DESIGN_HEADER_TOP_PADDING;
-  const rowBottom = rowTop + DESIGN_HEADER_ROW_HEIGHT;
-  const progressTop = rowBottom + DESIGN_HEADER_PROGRESS_GAP;
-  const progressBottom = progressTop + DESIGN_HEADER_PROGRESS_HEIGHT;
-  const height = progressBottom + DESIGN_HEADER_BOTTOM_PADDING;
+  const progressTop = safeTop + DESIGN_HEADER_TOP_PADDING;
+  const cardTop = progressTop + DESIGN_HEADER_PROGRESS_HEIGHT + DESIGN_HEADER_CARD_TOP_GAP;
+  const cardHeight =
+    DESIGN_HEADER_CARD_PADDING * 2 +
+    DESIGN_HEADER_ROW_HEIGHT +
+    14 +
+    DESIGN_HEADER_TITLE_HEIGHT +
+    DESIGN_HEADER_BOTTOM_PADDING;
+  const height = cardTop + cardHeight;
 
   return {
     height,
+    cardTop,
     progressTop,
-    rowTop,
     safeTop,
     contentOffset: height + GLASS_HEADER_CONTENT_GAP,
   };
@@ -71,11 +78,29 @@ export function DesignStepHeader({
         styles.shell,
         {
           height: metrics.height,
-          paddingTop: metrics.safeTop + DESIGN_HEADER_TOP_PADDING,
         },
       ]}
     >
-      <BlurView intensity={72} tint="light" style={[styles.glassCard, { marginHorizontal: horizontalInset }]}>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.progressRailWrap,
+          {
+            top: metrics.progressTop,
+            left: horizontalInset,
+            right: horizontalInset,
+          },
+        ]}
+      >
+        <StepProgressLine
+          fillColor={DS.colors.accent}
+          progress={safeStep / totalSteps}
+          style={styles.progressLine}
+          trackColor="rgba(17, 19, 24, 0.1)"
+        />
+      </View>
+
+      <BlurView intensity={72} tint="light" style={[styles.glassCard, { marginHorizontal: horizontalInset, marginTop: metrics.cardTop }]}>
         <View style={styles.headerRow}>
           <Pressable
             accessibilityLabel={closeAccessibilityLabel}
@@ -91,12 +116,6 @@ export function DesignStepHeader({
             <Text numberOfLines={1} style={styles.stepText}>
               {stepLabel}
             </Text>
-            <StepProgressLine
-              fillColor={DS.colors.accent}
-              progress={safeStep / totalSteps}
-              style={styles.progressLine}
-              trackColor="rgba(17, 19, 24, 0.09)"
-            />
           </View>
 
           <View style={styles.rightSlot}>
@@ -147,9 +166,14 @@ const styles = StyleSheet.create({
     ...organicRadii(),
     overflow: "hidden",
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingTop: 14,
+    paddingBottom: 16,
     backgroundColor: "rgba(255,255,255,0.72)",
     ...ambientShadow(),
+  },
+  progressRailWrap: {
+    position: "absolute",
+    zIndex: 50,
   },
   headerRow: {
     flexDirection: "row",
@@ -161,7 +185,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: 0,
   },
   rightSlot: {
     minWidth: 88,
@@ -172,7 +196,8 @@ const styles = StyleSheet.create({
   },
   titleStack: {
     marginTop: 14,
-    gap: 4,
+    minHeight: DESIGN_HEADER_TITLE_HEIGHT,
+    justifyContent: "center",
   },
   titleText: {
     color: DS.colors.textPrimary,
@@ -205,7 +230,7 @@ const styles = StyleSheet.create({
   },
   progressLine: {
     width: "100%",
-    maxWidth: 164,
+    maxWidth: 999,
     height: DESIGN_HEADER_PROGRESS_HEIGHT,
   },
 });

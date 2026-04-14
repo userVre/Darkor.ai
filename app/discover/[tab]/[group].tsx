@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } fr
 import { ArrowLeft } from "@/components/material-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { spacedCapsLabel } from "../../../components/design-wizard-primitives";
 import { DiscoverImageCard } from "../../../components/discover-image-card";
 import { DiscoverPreviewModal } from "../../../components/discover-preview-modal";
 import { DS, ambientShadow, floatingButton, organicRadii } from "../../../lib/design-system";
@@ -57,7 +58,7 @@ export default function DiscoverSeeAllScreen() {
     let rightHeight = 0;
 
     group.items.forEach((item, index) => {
-      const ratios = [1.34, 0.98, 1.48, 1.14];
+      const ratios = [1.58, 1.04, 1.36, 1.72, 1.12, 1.44];
       const height = Math.round(cardWidth * ratios[index % ratios.length]);
       if (leftHeight <= rightHeight) {
         columns.left.push({ item, height });
@@ -95,7 +96,7 @@ export default function DiscoverSeeAllScreen() {
         </Pressable>
 
         <Text numberOfLines={1} style={styles.headerTitle}>
-          {group?.title ?? "Discover"}
+          {spacedCapsLabel(group?.title ?? "Discover")}
         </Text>
 
         <View style={styles.headerSpacer} />
@@ -117,7 +118,7 @@ export default function DiscoverSeeAllScreen() {
                 <DiscoverImageCard key={item.id} item={item} width={cardWidth} height={height} onPress={handlePreviewOpen} style={styles.gridCard} />
               ))}
             </View>
-            <View style={styles.column}>
+            <View style={[styles.column, styles.offsetColumn]}>
               {masonryItems.right.map(({ item, height }) => (
                 <DiscoverImageCard key={item.id} item={item} width={cardWidth} height={height} onPress={handlePreviewOpen} style={styles.gridCard} />
               ))}
@@ -167,8 +168,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     textAlign: "center",
-    textTransform: "uppercase",
-    letterSpacing: 2,
+    letterSpacing: 3.2,
     fontFamily: "Inter",
     fontWeight: "600",
   },
@@ -183,6 +183,9 @@ const styles = StyleSheet.create({
   column: {
     flex: 1,
     gap: GRID_GAP,
+  },
+  offsetColumn: {
+    marginTop: 28,
   },
   gridCard: {
     marginBottom: 0,

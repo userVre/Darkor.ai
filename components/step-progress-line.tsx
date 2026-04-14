@@ -1,12 +1,6 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Animated,
-  StyleSheet,
-  View,
-  type LayoutChangeEvent,
-  type StyleProp,
-  type ViewStyle,
-} from "react-native";
+import { Animated, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from "react-native";
 
 type StepProgressLineProps = {
   progress: number;
@@ -15,8 +9,7 @@ type StepProgressLineProps = {
   fillColor?: string;
 };
 
-const MIN_VISIBLE_FILL = 12;
-const SHIMMER_WIDTH = 64;
+const MIN_VISIBLE_FILL = 14;
 
 export function StepProgressLine({
   progress,
@@ -26,7 +19,6 @@ export function StepProgressLine({
 }: StepProgressLineProps) {
   const clampedProgress = Math.max(0, Math.min(progress, 1));
   const progressValue = useRef(new Animated.Value(clampedProgress)).current;
-  const shimmerValue = useRef(new Animated.Value(0)).current;
   const [trackWidth, setTrackWidth] = useState(0);
 
   useEffect(() => {
@@ -36,27 +28,6 @@ export function StepProgressLine({
       useNativeDriver: false,
     }).start();
   }, [clampedProgress, progressValue]);
-
-  useEffect(() => {
-    if (!trackWidth) {
-      return;
-    }
-
-    shimmerValue.setValue(0);
-    const shimmerLoop = Animated.loop(
-      Animated.timing(shimmerValue, {
-        toValue: 1,
-        duration: 1500,
-        useNativeDriver: true,
-      }),
-    );
-
-    shimmerLoop.start();
-
-    return () => {
-      shimmerLoop.stop();
-    };
-  }, [shimmerValue, trackWidth]);
 
   const minimumFill = clampedProgress > 0 ? Math.min(MIN_VISIBLE_FILL, trackWidth) : 0;
   const fillWidth = useMemo(
@@ -70,17 +41,6 @@ export function StepProgressLine({
     [minimumFill, progressValue, trackWidth],
   );
 
-  const shimmerTranslateX = useMemo(
-    () =>
-      trackWidth
-        ? shimmerValue.interpolate({
-            inputRange: [0, 1],
-            outputRange: [-SHIMMER_WIDTH, trackWidth],
-          })
-        : 0,
-    [shimmerValue, trackWidth],
-  );
-
   const handleLayout = (event: LayoutChangeEvent) => {
     setTrackWidth(event.nativeEvent.layout.width);
   };
@@ -91,25 +51,27 @@ export function StepProgressLine({
       style={[styles.track, { backgroundColor: trackColor }, style]}
     >
       <Animated.View
+        pointerEvents="none"
         style={[
-          styles.fill,
+          styles.glow,
           {
-            backgroundColor: fillColor,
             width: fillWidth,
           },
         ]}
+      />
+      <Animated.View
+        style={[
+          styles.fill,
+          { width: fillWidth },
+        ]}
       >
-        {trackWidth ? (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.shimmer,
-              {
-                transform: [{ translateX: shimmerTranslateX }],
-              },
-            ]}
-          />
-        ) : null}
+        <LinearGradient
+          colors={["#FF776D", fillColor, "#FFB0AA"]}
+          locations={[0, 0.62, 1]}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={styles.gradient}
+        />
       </Animated.View>
     </View>
   );
@@ -117,21 +79,24 @@ export function StepProgressLine({
 
 const styles = StyleSheet.create({
   track: {
-    height: 4,
+    height: 2,
     borderRadius: 999,
     overflow: "hidden",
+  },
+  glow: {
+    position: "absolute",
+    top: -3,
+    bottom: -3,
+    left: 0,
+    borderRadius: 999,
+    backgroundColor: "rgba(204,51,51,0.18)",
   },
   fill: {
     height: "100%",
     borderRadius: 999,
     overflow: "hidden",
   },
-  shimmer: {
-    position: "absolute",
-    top: -2,
-    bottom: -2,
-    width: SHIMMER_WIDTH,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.34)",
+  gradient: {
+    ...StyleSheet.absoluteFillObject,
   },
 });

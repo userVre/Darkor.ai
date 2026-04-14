@@ -6,6 +6,8 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { DS, ambientShadow, organicRadii } from "../lib/design-system";
 import type { DiscoverTile } from "../lib/discover-catalog";
+import { spacedCapsLabel } from "./design-wizard-primitives";
+import Logo from "./logo";
 import { LuxPressable } from "./lux-pressable";
 
 type DiscoverImageCardProps = {
@@ -42,17 +44,21 @@ export const DiscoverImageCard = memo(function DiscoverImageCard({
         />
 
         <LinearGradient
-          colors={["rgba(17, 19, 24, 0.02)", "rgba(17, 19, 24, 0.08)", "rgba(17, 19, 24, 0.42)"]}
-          locations={[0, 0.56, 1]}
+          colors={["rgba(17, 19, 24, 0.02)", "rgba(17, 19, 24, 0.12)", "rgba(17, 19, 24, 0.5)"]}
+          locations={[0, 0.5, 1]}
           style={styles.overlay}
         />
 
+        <View style={styles.watermarkShell}>
+          <Logo size={16} style={styles.watermarkLogo} />
+        </View>
+
         <View style={styles.captionWrap}>
           <Text numberOfLines={1} style={styles.caption}>
-            {item.previewTitle.toUpperCase()}
+            {spacedCapsLabel(item.previewTitle)}
           </Text>
           <Text numberOfLines={1} style={styles.subcaption}>
-            Editorial preview
+            HomeDecor AI
           </Text>
         </View>
       </View>
@@ -64,13 +70,13 @@ const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
     backgroundColor: DS.colors.surfaceRaised,
-    ...organicRadii(),
-    ...ambientShadow(),
+    ...organicRadii(34, 18),
+    ...ambientShadow(0.07, 18, 14),
   },
   innerFrame: {
     flex: 1,
     overflow: "hidden",
-    ...organicRadii(),
+    ...organicRadii(34, 18),
     backgroundColor: DS.colors.surfaceMuted,
   },
   image: {
@@ -79,6 +85,21 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
+  },
+  watermarkShell: {
+    position: "absolute",
+    top: DS.spacing[2],
+    right: DS.spacing[2],
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  watermarkLogo: {
+    width: 18,
+    height: 18,
+    opacity: 0.3,
+    tintColor: "#FFFFFF",
   },
   captionWrap: {
     position: "absolute",
@@ -90,12 +111,15 @@ const styles = StyleSheet.create({
   caption: {
     color: "#FFFFFF",
     ...DS.typography.label,
+    letterSpacing: 2.6,
   },
   subcaption: {
     color: "rgba(255,255,255,0.86)",
     fontFamily: "Inter",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "500",
     lineHeight: 16,
+    textTransform: "uppercase",
+    letterSpacing: 1.4,
   },
 });
