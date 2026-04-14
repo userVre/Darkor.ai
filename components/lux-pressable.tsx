@@ -20,7 +20,7 @@ export function LuxPressable({
   pressableClassName,
   style,
   glowColor,
-  scale = 0.96,
+  scale = 0.95,
   disabled,
   ...props
 }: LuxPressableProps) {

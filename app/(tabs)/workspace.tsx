@@ -94,7 +94,7 @@ import { useWorkspaceDraft } from "../../components/workspace-context";
 import { useViewerSession } from "../../components/viewer-session-context";
 import { useProSuccess } from "../../components/pro-success-context";
 import { captureRef } from "react-native-view-shot";
-import { DS, HAIRLINE, glowShadow } from "../../lib/design-system";
+import { DS, HAIRLINE, ambientShadow, floatingButton, glowShadow, organicRadii } from "../../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../../lib/service-wizard-theme";
 import { getFloorWizardExamplePhotos, getPaintWizardExamplePhotos } from "../../lib/wizard-example-photos";
 import { canUserGenerate as canUserGenerateNow } from "../../lib/generation-access";
@@ -356,8 +356,13 @@ const BoardGridCard = memo(function BoardGridCard({
     <View style={{ width, marginBottom: spacing.sm, marginRight: index % 2 === 0 ? 12 : 0 }}>
       <LuxPressable
         onPress={() => onPress(item)}
-        className="cursor-pointer overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950"
-        style={{ height: 236, borderWidth: 0.5, opacity: isFailed ? 0.92 : 1 }}
+        className="cursor-pointer overflow-hidden bg-zinc-950"
+        style={{
+          height: 236,
+          opacity: isFailed ? 0.92 : 1,
+          ...organicRadii(),
+          ...ambientShadow(0.16, 16, 16),
+        }}
       >
         {previewImage ? (
           <Image source={{ uri: previewImage }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={120} cachePolicy="memory-disk" />
@@ -424,8 +429,8 @@ const BoardGridCard = memo(function BoardGridCard({
 
         {showWatermark && previewImage ? (
           <View
-            className="absolute rounded-full bg-black px-3 py-1.5"
-            style={{ right: 14, bottom: 58 }}
+            className="absolute bg-black px-3 py-1.5"
+            style={{ right: 14, bottom: 58, ...organicRadii(16, 12) }}
           >
             <Text style={{ color: "#FFFFFF", fontSize: 11, lineHeight: 13, ...fonts.semibold }}>HomeDecor.ai</Text>
           </View>
@@ -437,7 +442,7 @@ const BoardGridCard = memo(function BoardGridCard({
             left: 14,
             right: 14,
             bottom: 14,
-            borderRadius: 20,
+            ...organicRadii(18, 14),
             backgroundColor: "#111111",
             paddingHorizontal: 14,
             paddingVertical: 12,
@@ -6592,8 +6597,8 @@ export default function WorkspaceScreen() {
                   <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>My Design Portfolio</Text>
               <LuxPressable
                 onPress={handleResetWizard}
-                className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
-                style={{ borderWidth: 0.5 }}
+                className="cursor-pointer h-11 w-11 items-center justify-center"
+                style={{ ...floatingButton(false), paddingHorizontal: 0, paddingVertical: 0 }}
               >
                 <Close color="#ffffff" size={18} strokeWidth={2.2} />
               </LuxPressable>
@@ -6601,8 +6606,8 @@ export default function WorkspaceScreen() {
           }
           ListEmptyComponent={
             <View
-              className="items-center justify-center rounded-[28px] border border-white/10 bg-zinc-950"
-              style={{ width: boardCardWidth, height: 236, borderWidth: 0.5 }}
+              className="items-center justify-center bg-zinc-950"
+              style={{ width: boardCardWidth, height: 236, ...organicRadii(), ...ambientShadow(0.16, 16, 16) }}
             >
               <Sparkles color="#71717a" size={28} />
               <Text className="mt-4 text-base font-semibold text-white" style={fonts.semibold}>Your first board appears here</Text>
@@ -6678,8 +6683,8 @@ export default function WorkspaceScreen() {
                   <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>My Design Portfolio</Text>
                 <LuxPressable
                   onPress={handleResetWizard}
-                  className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
-                  style={{ borderWidth: 0.5 }}
+                  className="cursor-pointer h-11 w-11 items-center justify-center"
+                  style={{ ...floatingButton(false), paddingHorizontal: 0, paddingVertical: 0 }}
                 >
                   <Close color="#ffffff" size={18} strokeWidth={2.2} />
                 </LuxPressable>
@@ -6687,8 +6692,8 @@ export default function WorkspaceScreen() {
             }
             ListEmptyComponent={
               <View
-                className="items-center justify-center rounded-[28px] border border-white/10 bg-zinc-950"
-                style={{ width: boardCardWidth, height: 236, borderWidth: 0.5 }}
+                className="items-center justify-center bg-zinc-950"
+                style={{ width: boardCardWidth, height: 236, ...organicRadii(), ...ambientShadow(0.16, 16, 16) }}
               >
                 <Sparkles color="#71717a" size={28} />
                 <Text className="mt-4 text-base font-semibold text-white" style={fonts.semibold}>Your first board appears here</Text>
@@ -6750,7 +6755,7 @@ export default function WorkspaceScreen() {
                 </View>
               </View>
               <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.3, textAlign: "left" }}>
-                Generating Your Design
+                AI is crafting your architectural masterpiece...
               </Text>
               <View style={{ position: "absolute", right: 0, top: 0, bottom: 0, justifyContent: "center" }}>
                 <LuxPressable
@@ -6952,7 +6957,7 @@ export default function WorkspaceScreen() {
                 ...fonts.bold,
               }}
             >
-              Your Design
+              Your Professional Concept
             </Text>
 
             <View className="flex-row items-center justify-between">
@@ -6971,17 +6976,17 @@ export default function WorkspaceScreen() {
                   />
                 </View>
 
-              <View style={{ width: 88, alignItems: "flex-end" }}>
-                <LuxPressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Delete this design from Your Board"
-                  onPress={handleDeleteBoardItem}
-                  className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
-                  style={{ borderWidth: 0.5 }}
-                >
-                  <Trash2 color="#ffffff" size={18} strokeWidth={2.2} />
-                </LuxPressable>
-              </View>
+                <View style={{ width: 88, alignItems: "flex-end" }}>
+                  <LuxPressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Delete this design from Your Board"
+                    onPress={handleDeleteBoardItem}
+                    className="cursor-pointer h-11 w-11 items-center justify-center"
+                    style={{ ...floatingButton(false), paddingHorizontal: 0, paddingVertical: 0 }}
+                  >
+                    <Trash2 color="#ffffff" size={18} strokeWidth={2.2} />
+                  </LuxPressable>
+                </View>
             </View>
           </View>
         </View>
@@ -6997,7 +7002,7 @@ export default function WorkspaceScreen() {
           contentInsetAdjustmentBehavior="never"
         >
           <MotiView from={{ opacity: 0, scale: 0.96, translateY: 18 }} animate={{ opacity: 1, scale: 1, translateY: 0 }} transition={LUX_SPRING}>
-            <View className="overflow-hidden rounded-[34px] border border-white/10 bg-zinc-950" style={{ borderWidth: 0.5 }}>
+            <View className="overflow-hidden bg-zinc-950" style={{ ...organicRadii(), ...ambientShadow(0.18, 18, 18) }}>
               <View ref={exportCaptureRef} className="relative h-[460px] w-full">
                 {showSliderComparison && beforeImageSource && editorImageSource ? (
                   <MotiView
@@ -7044,10 +7049,10 @@ export default function WorkspaceScreen() {
                         width: 44,
                         alignItems: "center",
                         justifyContent: "center",
-                        borderRadius: 999,
-                        borderWidth: 0.5,
-                        borderColor: showSliderComparison ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.12)",
-                        backgroundColor: showSliderComparison ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.4)",
+                        ...organicRadii(16, 14),
+                        ...floatingButton(false),
+                        borderColor: showSliderComparison ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.12)",
+                        backgroundColor: showSliderComparison ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.44)",
                         opacity: hasComparisonImages ? 1 : 0.45,
                       }}
                     >
@@ -7055,7 +7060,7 @@ export default function WorkspaceScreen() {
                     </View>
                   </LuxPressable>
 
-                  <View className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5" style={{ borderWidth: 0.5 }}>
+                  <View className="bg-black/40 px-3 py-1.5" style={{ ...organicRadii(16, 12), ...ambientShadow(0.14, 12, 10) }}>
                     <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>
                       {showSliderComparison ? "Comparison" : editorStyleLabel}
                     </Text>
@@ -7199,13 +7204,13 @@ export default function WorkspaceScreen() {
                       <MotiView animate={{ scale: [1, 1.03, 1], opacity: [1, 0.94, 1] }} transition={{ duration: 2200, loop: true }}>
                         <LuxPressable onPress={handleUpgrade} className="cursor-pointer">
                           <LinearGradient
-                            colors={["#d946ef", "#6366f1"]}
+                            colors={["#1A2B3D", "#3A536A"]}
                             start={{ x: 0, y: 0.5 }}
                             end={{ x: 1, y: 0.5 }}
-                            style={{ borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}
+                            style={{ ...organicRadii(18, 14), paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}
                           >
                             <View className="flex-row items-center gap-2">
-                              <Sparkles color="#ffffff" size={15} />
+                              <Sparkles color="#ffffff" size={15} strokeWidth={1.8} />
                               <Text className="text-sm font-semibold text-white" style={fonts.semibold}>Remove Watermark</Text>
                             </View>
                           </LinearGradient>
@@ -7216,7 +7221,7 @@ export default function WorkspaceScreen() {
                 ) : null}
 
                 {!isEditorProcessing && !isEditorFailed && currentImageHasWatermark && editorImageUrl ? (
-                  <View className="absolute bottom-24 right-4 rounded-full bg-black px-4 py-2">
+                  <View className="absolute bottom-24 right-4 bg-black px-4 py-2" style={{ ...organicRadii(16, 12) }}>
                     <Text style={{ color: "#FFFFFF", fontSize: 12, lineHeight: 14, ...fonts.semibold }}>HomeDecor.ai</Text>
                   </View>
                 ) : null}

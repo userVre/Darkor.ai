@@ -154,14 +154,10 @@ function createStyles(colors: Theme) {
     },
     buttonActive: {
       backgroundColor: ACTIVE_BUTTON_COLOR,
-      shadowColor: ACTIVE_BUTTON_COLOR,
-      shadowOpacity: 0.3,
     },
     buttonInactive: {
       backgroundColor: INACTIVE_BUTTON_COLOR,
-      shadowColor: INACTIVE_BUTTON_COLOR,
-      shadowOpacity: 0.12,
-      elevation: 2,
+      boxShadow: "0px 10px 24px rgba(17, 19, 24, 0.05)",
     },
     buttonText: {
       color: colors.textPrimary,

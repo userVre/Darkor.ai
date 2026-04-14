@@ -12,7 +12,7 @@ export const DS = {
     surface: light.surface,
     surfaceRaised: "#FFFFFF",
     surfaceMuted: light.surfaceMuted,
-    surfaceOverlay: "#FFFFFF",
+    surfaceOverlay: light.surfaceOverlay,
     borderSubtle: light.border,
     border: light.border,
     borderStrong: light.borderLight,
@@ -43,60 +43,60 @@ export const DS = {
     8: SPACING_UNIT * 8,
   },
   radius: {
-    sm: 10,
-    md: 12,
-    lg: 12,
-    xl: 12,
-    xxl: 14,
-    pill: 14,
+    sm: 14,
+    md: 14,
+    lg: 16,
+    xl: 16,
+    xxl: 40,
+    pill: 999,
   },
   typography: {
     display: {
       ...fonts.bold,
-      fontSize: 40,
-      lineHeight: 46,
-      letterSpacing: -1.2,
+      fontSize: 44,
+      lineHeight: 50,
+      letterSpacing: -0.5,
     } as TextStyle,
     title: {
       ...fonts.bold,
       fontSize: 32,
       lineHeight: 38,
-      letterSpacing: -0.9,
+      letterSpacing: -0.5,
     } as TextStyle,
     sectionTitle: {
       ...fonts.bold,
-      fontSize: 26,
-      lineHeight: 32,
-      letterSpacing: -0.6,
+      fontSize: 28,
+      lineHeight: 34,
+      letterSpacing: -0.5,
     } as TextStyle,
     cardTitle: {
       ...fonts.bold,
-      fontSize: 20,
-      lineHeight: 24,
-      letterSpacing: -0.35,
+      fontSize: 22,
+      lineHeight: 28,
+      letterSpacing: -0.5,
     } as TextStyle,
     body: {
       ...fonts.regular,
-      fontSize: 15,
-      lineHeight: 22,
+      fontSize: 16,
+      lineHeight: 24,
     } as TextStyle,
     bodySm: {
       ...fonts.regular,
-      fontSize: 13,
-      lineHeight: 19,
+      fontSize: 14,
+      lineHeight: 20,
     } as TextStyle,
     label: {
       ...fonts.semibold,
-      fontSize: 12,
+      fontSize: 11,
       lineHeight: 16,
-      letterSpacing: 1.4,
+      letterSpacing: 1.8,
       textTransform: "uppercase",
     } as TextStyle,
     button: {
       ...fonts.semibold,
-      fontSize: 14,
-      lineHeight: 18,
-      letterSpacing: 0.1,
+      fontSize: 15,
+      lineHeight: 20,
+      letterSpacing: -0.1,
     } as TextStyle,
   },
 } as const;
@@ -104,39 +104,56 @@ export const DS = {
 export const HAIRLINE = Math.max(StyleSheet.hairlineWidth, 1);
 export const SCREEN_SIDE_PADDING = spacing.lg;
 export const SCREEN_SECTION_GAP = spacing.xl;
+export const BREATHABLE_SECTION_GAP = DS.spacing[4];
+export const GLASS_HEADER_CONTENT_GAP = DS.spacing[4];
 
 export function subtleBorder(color: string = DS.colors.borderSubtle): ViewStyle {
   return {
-    borderWidth: HAIRLINE,
-    borderColor: color,
+    boxShadow: `inset 0px 0px 0px 1px ${color}`,
+  };
+}
+
+export function ambientShadow(opacity = 0.04, radius = 15, y = 10): ViewStyle {
+  return {
+    boxShadow: `0px ${y}px ${radius * 3}px rgba(17, 19, 24, ${opacity})`,
+  };
+}
+
+export function organicRadii(topLeft = 40, other = 16): ViewStyle {
+  return {
+    borderTopLeftRadius: topLeft,
+    borderTopRightRadius: other,
+    borderBottomRightRadius: other,
+    borderBottomLeftRadius: other,
+    borderCurve: "continuous",
+  };
+}
+
+export function floatingButton(active = true): ViewStyle {
+  return {
+    borderRadius: DS.radius.md,
+    borderCurve: "continuous",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    backgroundColor: active ? DS.colors.accent : "rgba(255,255,255,0.78)",
+    ...(active ? ambientShadow(0.07, 15, 12) : subtleBorder("rgba(17, 19, 24, 0.08)")),
   };
 }
 
 export function surfaceCard(backgroundColor: string = DS.colors.surfaceRaised): ViewStyle {
   return {
     backgroundColor,
-    borderRadius: DS.radius.xl,
-    borderWidth: HAIRLINE,
-    borderColor: DS.colors.borderSubtle,
+    ...organicRadii(),
+    ...ambientShadow(),
   };
 }
 
 export function cardShadow(): ViewStyle {
-  return {
-    shadowColor: light.shadow,
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 2,
-  };
+  return ambientShadow();
 }
 
 export function glowShadow(color: string = DS.colors.accentGlow, blur = 28): ViewStyle {
   return {
-    shadowColor: color,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: Math.max(blur / 3, 6),
-    elevation: 1,
+    boxShadow: `0px 14px ${Math.max(blur, 18)}px ${color}`,
   };
 }

@@ -1,11 +1,12 @@
 import { memo } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
+import { StyleSheet, Text, View } from "react-native";
 
+import { DS, ambientShadow, organicRadii } from "../lib/design-system";
 import type { DiscoverTile } from "../lib/discover-catalog";
-import { fonts } from "../styles/typography";
+import { LuxPressable } from "./lux-pressable";
 
 type DiscoverImageCardProps = {
   item: DiscoverTile;
@@ -23,19 +24,12 @@ export const DiscoverImageCard = memo(function DiscoverImageCard({
   style,
 }: DiscoverImageCardProps) {
   return (
-    <Pressable
+    <LuxPressable
       accessibilityLabel={item.title}
       accessibilityRole="imagebutton"
       onPress={() => onPress(item)}
-      style={({ pressed }) => [
-        styles.card,
-        {
-          width,
-          height,
-          opacity: pressed ? 0.9 : 1,
-        },
-        style,
-      ]}
+      style={[styles.card, { width, height }, style]}
+      scale={0.95}
     >
       <View style={styles.innerFrame}>
         <Image
@@ -48,8 +42,8 @@ export const DiscoverImageCard = memo(function DiscoverImageCard({
         />
 
         <LinearGradient
-          colors={["rgba(5, 7, 10, 0.02)", "rgba(5, 7, 10, 0.18)", "rgba(5, 7, 10, 0.78)"]}
-          locations={[0, 0.52, 1]}
+          colors={["rgba(17, 19, 24, 0.02)", "rgba(17, 19, 24, 0.08)", "rgba(17, 19, 24, 0.42)"]}
+          locations={[0, 0.56, 1]}
           style={styles.overlay}
         />
 
@@ -57,27 +51,27 @@ export const DiscoverImageCard = memo(function DiscoverImageCard({
           <Text numberOfLines={1} style={styles.caption}>
             {item.previewTitle.toUpperCase()}
           </Text>
+          <Text numberOfLines={1} style={styles.subcaption}>
+            Editorial preview
+          </Text>
         </View>
       </View>
-    </Pressable>
+    </LuxPressable>
   );
 });
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 24,
-    borderCurve: "continuous",
-    padding: 8,
-    backgroundColor: "#F6F1EA",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#E8DED1",
+    overflow: "hidden",
+    backgroundColor: DS.colors.surfaceRaised,
+    ...organicRadii(),
+    ...ambientShadow(),
   },
   innerFrame: {
     flex: 1,
     overflow: "hidden",
-    borderRadius: 18,
-    borderCurve: "continuous",
-    backgroundColor: "#E5E0D8",
+    ...organicRadii(),
+    backgroundColor: DS.colors.surfaceMuted,
   },
   image: {
     width: "100%",
@@ -88,15 +82,20 @@ const styles = StyleSheet.create({
   },
   captionWrap: {
     position: "absolute",
-    left: 14,
-    right: 14,
-    bottom: 14,
+    left: DS.spacing[2],
+    right: DS.spacing[2],
+    bottom: DS.spacing[2],
+    gap: 2,
   },
   caption: {
     color: "#FFFFFF",
-    fontSize: 11,
-    lineHeight: 12,
-    letterSpacing: 1.8,
-    ...fonts.bold,
+    ...DS.typography.label,
+  },
+  subcaption: {
+    color: "rgba(255,255,255,0.86)",
+    fontFamily: "Inter",
+    fontSize: 12,
+    fontWeight: "500",
+    lineHeight: 16,
   },
 });

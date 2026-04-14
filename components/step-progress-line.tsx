@@ -15,8 +15,8 @@ type StepProgressLineProps = {
   fillColor?: string;
 };
 
-const MIN_VISIBLE_FILL = 18;
-const SHIMMER_WIDTH = 72;
+const MIN_VISIBLE_FILL = 12;
+const SHIMMER_WIDTH = 64;
 
 export function StepProgressLine({
   progress,
@@ -32,7 +32,7 @@ export function StepProgressLine({
   useEffect(() => {
     Animated.timing(progressValue, {
       toValue: clampedProgress,
-      duration: 360,
+      duration: 420,
       useNativeDriver: false,
     }).start();
   }, [clampedProgress, progressValue]);
@@ -46,7 +46,7 @@ export function StepProgressLine({
     const shimmerLoop = Animated.loop(
       Animated.timing(shimmerValue, {
         toValue: 1,
-        duration: 1800,
+        duration: 1500,
         useNativeDriver: true,
       }),
     );
@@ -117,7 +117,7 @@ export function StepProgressLine({
 
 const styles = StyleSheet.create({
   track: {
-    height: 2,
+    height: 4,
     borderRadius: 999,
     overflow: "hidden",
   },
@@ -128,10 +128,10 @@ const styles = StyleSheet.create({
   },
   shimmer: {
     position: "absolute",
-    top: -3,
-    bottom: -3,
+    top: -2,
+    bottom: -2,
     width: SHIMMER_WIDTH,
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.42)",
+    backgroundColor: "rgba(255,255,255,0.34)",
   },
 });

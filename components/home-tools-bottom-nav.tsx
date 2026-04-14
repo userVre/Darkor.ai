@@ -2,6 +2,7 @@ import { Compass, House, Sparkles, UserRound, type LucideIcon } from "lucide-rea
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { DS } from "../lib/design-system";
 import { fonts } from "../styles/typography";
 
 type HomeToolsBottomNavProps = {
@@ -20,7 +21,7 @@ type NavItemProps = {
 };
 
 function NavItem({ icon: Icon, label, active, onPress }: NavItemProps) {
-  const color = active ? "#A62828" : "#77808B";
+  const color = active ? DS.colors.accent : DS.colors.textSecondary;
 
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.item}>
@@ -55,16 +56,15 @@ export function HomeToolsBottomNav({
 
 const styles = StyleSheet.create({
   bar: {
-    height: 72,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#E7E3DE",
-    backgroundColor: "#FFFFFF",
+    height: 86,
+    backgroundColor: "rgba(255,255,255,0.88)",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 14,
-    paddingTop: 8,
-    paddingBottom: 10,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 14,
+    boxShadow: "0px 10px 30px rgba(17, 19, 24, 0.05)",
   },
   item: {
     flex: 1,
@@ -80,26 +80,23 @@ const styles = StyleSheet.create({
   },
   iconGlow: {
     position: "absolute",
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "rgba(231,162,162,0.32)",
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: DS.colors.accentSurface,
   },
   iconPill: {
-    minWidth: 42,
-    height: 32,
-    borderRadius: 16,
+    minWidth: 46,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 10,
-    borderWidth: StyleSheet.hairlineWidth,
   },
   iconPillActive: {
-    borderColor: "#F1CACA",
-    backgroundColor: "#FFF1F1",
+    backgroundColor: DS.colors.accentSurface,
   },
   iconPillIdle: {
-    borderColor: "transparent",
     backgroundColor: "transparent",
   },
   label: {
@@ -108,10 +105,10 @@ const styles = StyleSheet.create({
     ...fonts.medium,
   },
   labelActive: {
-    color: "#0A0A0A",
+    color: DS.colors.textPrimary,
   },
   labelInactive: {
-    color: "#7D848E",
+    color: DS.colors.textSecondary,
   },
 });
 

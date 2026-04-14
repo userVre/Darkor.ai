@@ -2,25 +2,20 @@ import { useAuth } from "@clerk/expo";
 import { Settings } from "@/components/material-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutRectangle } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CreditLimitModal } from "../../components/credit-limit-modal";
 import { DiamondCreditPill } from "../../components/diamond-credit-pill";
-import { HomeToolsBottomNav } from "../../components/home-tools-bottom-nav";
 import { HomeToolCard, type HomeToolCardItem } from "../../components/home-tool-card";
 import { useWorkspaceDraft } from "../../components/workspace-context";
 import { useViewerCredits } from "../../components/viewer-credits-context";
+import { DS, ambientShadow, floatingButton, organicRadii } from "../../lib/design-system";
 import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
 import { withWorkspaceFlowId } from "../../lib/try-it-flow";
-import { fonts } from "../../styles/typography";
-
-const STICKY_HEADER_HEIGHT = 56;
-const FIRST_CARD_TOP_GAP = 16;
-const TOOL_GRID_GAP = 20;
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -28,54 +23,58 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { isSignedIn } = useAuth();
-  const {
-    clearDraft,
-  } = useWorkspaceDraft();
+  const { clearDraft } = useWorkspaceDraft();
   const { credits: creditBalance, hasPaidAccess } = useViewerCredits();
   const [isCreditModalVisible, setIsCreditModalVisible] = useState(false);
+  const [focusedCardId, setFocusedCardId] = useState<string | null>(null);
+  const cardLayoutsRef = useRef<Record<string, LayoutRectangle>>({});
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
-  const stickyHeaderOffset = insets.top + STICKY_HEADER_HEIGHT;
-  const gridWidth = width - 40;
-  const compactCardWidth = useMemo(() => Math.floor((gridWidth - TOOL_GRID_GAP) / 2), [gridWidth]);
-  const toolCards: HomeToolCardItem[] = [
-    {
-      id: "interior-design",
-      image: require("../../assets/media/discover/home/home-dining-room.jpg"),
-      title: t("home.tools.interior.title"),
-      description: t("home.tools.interior.description"),
-      serviceParam: "interior",
-    },
-    {
-      id: "exterior-design",
-      image: require("../../assets/media/discover/exterior/exterior-modern-villa.jpg"),
-      title: t("home.tools.exterior.title"),
-      description: t("home.tools.exterior.description"),
-      descriptionPaddingRight: 80,
-      serviceParam: "facade",
-    },
-    {
-      id: "garden-design",
-      image: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
-      title: t("home.tools.garden.title"),
-      description: t("home.tools.garden.description"),
-      serviceParam: "garden",
-    },
-    {
-      id: "paint",
-      image: require("../../assets/media/discover/wall-scenes/sage-green-suite.jpg"),
-      title: t("home.tools.paint.title"),
-      description: t("home.tools.paint.description"),
-      serviceParam: "paint",
-    },
-    {
-      id: "floor-restyle",
-      image: require("../../assets/media/discover/floor-scenes/polished-carrara-marble.jpg"),
-      title: t("home.tools.floor.title"),
-      description: t("home.tools.floor.description"),
-      descriptionPaddingRight: 80,
-      serviceParam: "floor",
-    },
-  ];
+  const sidePadding = DS.spacing[3];
+  const toolGap = DS.spacing[2];
+  const compactCardWidth = useMemo(
+    () => Math.floor((width - sidePadding * 2 - toolGap) / 2),
+    [sidePadding, toolGap, width],
+  );
+  const toolCards = useMemo<HomeToolCardItem[]>(
+    () => [
+      {
+        id: "interior-design",
+        image: require("../../assets/media/discover/home/home-dining-room.jpg"),
+        title: t("home.tools.interior.title"),
+        description: t("home.tools.interior.description"),
+        serviceParam: "interior",
+      },
+      {
+        id: "exterior-design",
+        image: require("../../assets/media/discover/exterior/exterior-modern-villa.jpg"),
+        title: t("home.tools.exterior.title"),
+        description: t("home.tools.exterior.description"),
+        serviceParam: "facade",
+      },
+      {
+        id: "garden-design",
+        image: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
+        title: t("home.tools.garden.title"),
+        description: t("home.tools.garden.description"),
+        serviceParam: "garden",
+      },
+      {
+        id: "paint",
+        image: require("../../assets/media/discover/wall-scenes/sage-green-suite.jpg"),
+        title: t("home.tools.paint.title"),
+        description: t("home.tools.paint.description"),
+        serviceParam: "paint",
+      },
+      {
+        id: "floor-restyle",
+        image: require("../../assets/media/discover/floor-scenes/polished-carrara-marble.jpg"),
+        title: t("home.tools.floor.title"),
+        description: t("home.tools.floor.description"),
+        serviceParam: "floor",
+      },
+    ],
+    [t],
+  );
 
   const openDesignFlowPaywall = useCallback((redirectTo: string) => {
     router.push({
@@ -134,21 +133,6 @@ export default function HomeScreen() {
     routeToToolFlow(nextWorkspaceRoute);
   };
 
-  const handleDiscoverPress = () => {
-    triggerHaptic();
-    router.navigate("/gallery");
-  };
-
-  const handleProfilePress = () => {
-    triggerHaptic();
-    router.push("/profile");
-  };
-
-  const handleToolsPress = () => {
-    triggerHaptic();
-    router.navigate("/");
-  };
-
   const handleSettingsPress = () => {
     triggerHaptic();
     router.push("/settings" as any);
@@ -167,13 +151,58 @@ export default function HomeScreen() {
     router.push("/paywall");
   };
 
+  const resolveFocusedCard = useCallback(
+    (scrollY: number) => {
+      const viewportAnchor = scrollY + 260;
+      const layouts = Object.entries(cardLayoutsRef.current);
+      if (!layouts.length) {
+        return;
+      }
+
+      let nextFocusedId = layouts[0][0];
+      let smallestDistance = Number.POSITIVE_INFINITY;
+
+      for (const [id, layout] of layouts) {
+        const cardCenter = layout.y + layout.height / 2;
+        const distance = Math.abs(cardCenter - viewportAnchor);
+        if (distance < smallestDistance) {
+          smallestDistance = distance;
+          nextFocusedId = id;
+        }
+      }
+
+      setFocusedCardId((current) => (current === nextFocusedId ? current : nextFocusedId));
+    },
+    [],
+  );
+
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
 
-      <View style={[styles.stickyHeader, { paddingTop: insets.top }]}>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top + DS.spacing[4],
+            paddingHorizontal: sidePadding,
+            paddingBottom: Math.max(insets.bottom + 120, 148),
+          },
+        ]}
+        scrollEventThrottle={16}
+        onScroll={(event) => {
+          resolveFocusedCard(event.nativeEvent.contentOffset.y);
+        }}
+      >
         <View style={styles.headerRow}>
-          <Text numberOfLines={1} style={styles.title}>{t("home.title")}</Text>
+          <View style={styles.heroCopy}>
+            <Text style={styles.eyebrow}>Creative Suite</Text>
+            <Text style={styles.title}>{t("home.title")}</Text>
+            <Text style={styles.subtitle}>{t("home.tools.interior.description")}</Text>
+          </View>
 
           <View style={styles.headerActions}>
             <DiamondCreditPill
@@ -184,44 +213,48 @@ export default function HomeScreen() {
               variant="dark"
             />
             <Pressable accessibilityRole="button" onPress={handleSettingsPress} style={styles.settingsButton}>
-              <Settings color="#0A0A0A" size={20} strokeWidth={2.2} />
+              <Settings color={DS.colors.textPrimary} size={20} strokeWidth={2.2} />
             </Pressable>
           </View>
         </View>
-      </View>
 
-      <ScrollView
-        contentInsetAdjustmentBehavior="never"
-        showsVerticalScrollIndicator={false}
-        horizontal={false}
-        style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: stickyHeaderOffset + FIRST_CARD_TOP_GAP }]}
-      >
+        <View style={styles.createBanner}>
+          <View style={styles.createBannerCopy}>
+            <Text style={styles.createBannerLabel}>Fast Start</Text>
+            <Text style={styles.createBannerTitle}>Launch a guided concept in one tap.</Text>
+          </View>
+          <Pressable accessibilityRole="button" onPress={handleCreatePress} style={styles.createBannerButton}>
+            <Text style={styles.createBannerButtonText}>Start New</Text>
+          </Pressable>
+        </View>
+
         <View style={styles.toolGrid}>
           {toolCards.map((card, index) => {
             const isFeature = index === 0;
 
             return (
-              <HomeToolCard
+              <View
                 key={card.id}
-                index={index}
-                item={card}
-                onPress={handleToolPress}
-                variant={isFeature ? "feature" : "compact"}
+                onLayout={(event) => {
+                  cardLayoutsRef.current[card.id] = event.nativeEvent.layout;
+                  if (!focusedCardId && index === 0) {
+                    setFocusedCardId(card.id);
+                  }
+                }}
                 style={isFeature ? styles.featureCard : [styles.compactCard, { width: compactCardWidth }]}
-              />
+              >
+                <HomeToolCard
+                  focused={focusedCardId === card.id}
+                  index={index}
+                  item={card}
+                  onPress={handleToolPress}
+                  variant={isFeature ? "feature" : "compact"}
+                />
+              </View>
             );
           })}
         </View>
       </ScrollView>
-
-      <HomeToolsBottomNav
-        activeTab="tools"
-        onToolsPress={handleToolsPress}
-        onCreatePress={handleCreatePress}
-        onDiscoverPress={handleDiscoverPress}
-        onProfilePress={handleProfilePress}
-      />
 
       <CreditLimitModal
         visible={isCreditModalVisible}
@@ -235,72 +268,94 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  stickyHeader: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 3,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#ECE7E1",
+    backgroundColor: DS.colors.background,
   },
   headerRow: {
-    height: STICKY_HEADER_HEIGHT,
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    alignItems: "center",
+    gap: DS.spacing[4],
     justifyContent: "space-between",
   },
+  heroCopy: {
+    flex: 1,
+    gap: DS.spacing[1],
+  },
+  eyebrow: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.label,
+  },
   headerActions: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: DS.spacing[1],
   },
   title: {
-    flex: 1,
-    color: "#0A0A0A",
-    fontSize: 22,
-    lineHeight: 22,
-    textAlign: "left",
-    ...fonts.bold,
+    color: DS.colors.textPrimary,
+    ...DS.typography.title,
+  },
+  subtitle: {
+    maxWidth: 340,
+    color: DS.colors.textSecondary,
+    ...DS.typography.body,
   },
   creditPill: {
-    minHeight: 36,
-    paddingHorizontal: 11,
-    paddingVertical: 8,
+    minHeight: 42,
   },
   settingsButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    ...floatingButton(false),
+    paddingHorizontal: 0,
+    paddingVertical: 0,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#E5E8EC",
-    backgroundColor: "#F7F8FA",
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
+    gap: DS.spacing[4],
+  },
+  createBanner: {
+    ...organicRadii(),
+    backgroundColor: "rgba(255,255,255,0.78)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: DS.spacing[2],
+    padding: DS.spacing[3],
+    ...ambientShadow(),
+  },
+  createBannerCopy: {
+    flex: 1,
+    gap: DS.spacing[1],
+  },
+  createBannerLabel: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.label,
+  },
+  createBannerTitle: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.cardTitle,
+  },
+  createBannerButton: {
+    ...floatingButton(true),
     paddingHorizontal: 20,
-    paddingBottom: 112,
+    paddingVertical: 14,
+  },
+  createBannerButtonText: {
+    color: "#FFFFFF",
+    ...DS.typography.button,
   },
   toolGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: TOOL_GRID_GAP,
+    gap: DS.spacing[2],
   },
   featureCard: {
     width: "100%",
   },
   compactCard: {
-    maxWidth: "48%",
+    maxWidth: "48.5%",
   },
 });
 

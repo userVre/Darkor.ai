@@ -25,8 +25,6 @@ import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 
 const HANDLE_TOUCH_WIDTH = 72;
-const HANDLE_PILL_WIDTH = 28;
-const HANDLE_PILL_HEIGHT = 104;
 const LABEL_EDGE_INSET = 18;
 const LABEL_FADE_DISTANCE = 96;
 const CENTER_HIT_THRESHOLD = 10;
@@ -218,10 +216,6 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
             <View style={styles.handleDivider} />
             <View style={styles.handleDivider} />
           </View>
-          <View style={styles.handlePill}>
-            <View style={styles.handleGrip} />
-            <View style={styles.handleGrip} />
-          </View>
         </Animated.View>
       </View>
     </GestureDetector>
@@ -286,9 +280,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   handleDividerCluster: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
+    height: "62%",
     flexDirection: "row",
     alignItems: "stretch",
     justifyContent: "center",
@@ -298,24 +290,6 @@ const styles = StyleSheet.create({
     width: 2,
     borderRadius: 999,
     backgroundColor: "rgba(255,255,255,0.94)",
-  },
-  handlePill: {
-    width: HANDLE_PILL_WIDTH,
-    height: HANDLE_PILL_HEIGHT,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.28)",
-    backgroundColor: "rgba(18,18,18,0.64)",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
-    boxShadow: "0px 18px 38px rgba(0, 0, 0, 0.3)",
-  },
-  handleGrip: {
-    width: 3,
-    height: 22,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.74)",
   },
 });
 

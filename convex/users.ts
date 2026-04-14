@@ -55,6 +55,8 @@ function computeReviewPrompt(nextCount: number, lastPromptAt: number, ignoreCool
   return ignoreCooldown ? nextCount >= 2 : !cooldownActive && (nextCount === 2 || nextCount === 3);
 }
 
+const THREE_DAY_REWARD_MS = 72 * 60 * 60 * 1000;
+
 function buildViewerResponse(user: any) {
   if (!user) {
     return null;
@@ -594,21 +596,42 @@ export const claimThreeDayReward = mutationGeneric({
   handler: async (ctx, args) => {
     const viewer = await ensureViewerUser(ctx, args.anonymousId);
     const user = viewer.user;
+    const now = Date.now();
+    const lastRewardDate = toFiniteNumber(user.lastRewardDate);
+    const nextEligibleAt = lastRewardDate > 0 ? lastRewardDate + THREE_DAY_REWARD_MS : now;
 
     if (user.plan !== "free") {
       return {
         granted: false,
         creditsAdded: 0,
         credits: 0,
-      nextEligibleAt: toFiniteNumber(user.lastRewardDate),
+        nextEligibleAt,
       };
     }
 
+    if (nextEligibleAt > now) {
+      return {
+        granted: false,
+        creditsAdded: 0,
+        credits: Math.min(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), FREE_IMAGE_LIMIT),
+        nextEligibleAt,
+      };
+    }
+
+    const currentCredits = Math.min(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), FREE_IMAGE_LIMIT);
+    const nextCredits = Math.min(currentCredits + 1, FREE_IMAGE_LIMIT);
+    const creditsAdded = Math.max(nextCredits - currentCredits, 0);
+
+    await ctx.db.patch(user._id, {
+      credits: nextCredits,
+      lastRewardDate: now,
+    });
+
     return {
-      granted: false,
-      creditsAdded: 0,
-      credits: Math.min(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), FREE_IMAGE_LIMIT),
-      nextEligibleAt: toFiniteNumber(user.lastRewardDate),
+      granted: creditsAdded > 0,
+      creditsAdded,
+      credits: nextCredits,
+      nextEligibleAt: now + THREE_DAY_REWARD_MS,
     };
   },
 });

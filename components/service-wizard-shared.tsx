@@ -5,9 +5,9 @@ import { Children, cloneElement, isValidElement, useState, type ComponentProps, 
 import { ScrollView, Text, View, StyleSheet, useWindowDimensions, type ImageSourcePropType } from "react-native";
 import { fonts } from "../styles/typography";
 import { spacing } from "../styles/spacing";
-import { dark as colors } from "@/styles/theme";
+import { light as colors } from "@/styles/theme";
 
-import { HAIRLINE, glowShadow } from "../lib/design-system";
+import { DS, ambientShadow, glowShadow } from "../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { LuxPressable } from "./lux-pressable";
 
@@ -320,22 +320,20 @@ const styles = StyleSheet.create({
   uploadSquare: {
     width: "100%",
     aspectRatio: 1,
-    borderRadius: 12,
-    borderWidth: HAIRLINE,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderRadius: DS.radius.lg,
+    backgroundColor: colors.surfaceHigh,
     alignItems: "center",
     justifyContent: "center",
-    ...glowShadow(colors.border, 16),
+    ...ambientShadow(),
   },
   dashedUploadFrame: {
     width: "87%",
     height: "87%",
-    borderRadius: 12,
+    borderRadius: DS.radius.lg,
     borderWidth: 1.5,
     borderStyle: "dashed",
-    borderColor: colors.brand,
-    backgroundColor: colors.brandSurface,
+    borderColor: SERVICE_WIZARD_THEME.colors.accent,
+    backgroundColor: SERVICE_WIZARD_THEME.colors.accentSurface,
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.md,
@@ -351,14 +349,13 @@ const styles = StyleSheet.create({
     right: 16,
     minHeight: 34,
     paddingHorizontal: spacing.sm,
-    borderRadius: 12,
+    borderRadius: DS.radius.md,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.xs,
-    borderWidth: HAIRLINE,
-    borderColor: colors.success,
-    backgroundColor: colors.successSurfaceHigh,
+    backgroundColor: "#EFF8F2",
+    ...ambientShadow(0.04, 8, 8),
   },
   selectedImageBadgeLabel: {
     color: colors.textSuccess,
@@ -373,12 +370,10 @@ const styles = StyleSheet.create({
     left: 16,
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: DS.radius.md,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: HAIRLINE,
-    borderColor: colors.borderLight,
-    backgroundColor: colors.surfaceOverlay,
+    backgroundColor: "rgba(255,255,255,0.82)",
   },
   uploadIconWrap: {
     alignItems: "center",
@@ -387,13 +382,11 @@ const styles = StyleSheet.create({
   uploadIconBadge: {
     width: 92,
     height: 92,
-    borderRadius: 12,
-    borderWidth: HAIRLINE,
-    borderColor: colors.brandBorder,
-    backgroundColor: colors.surfaceHigh,
+    borderRadius: DS.radius.lg,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
-    ...glowShadow(colors.brand, 18),
+    ...ambientShadow(),
   },
   uploadEmptyCopy: {
     gap: spacing.xs,
@@ -428,11 +421,10 @@ const styles = StyleSheet.create({
   },
   exampleCard: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: DS.radius.lg,
     overflow: "hidden",
-    borderWidth: HAIRLINE,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceHigh,
+    ...ambientShadow(),
   },
   exampleImage: {
     width: "100%",
@@ -441,15 +433,13 @@ const styles = StyleSheet.create({
   selectionCard: {
     width: "100%",
     minHeight: 252,
-    borderRadius: 12,
+    borderRadius: DS.radius.lg,
     overflow: "hidden",
-    borderWidth: HAIRLINE,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceHigh,
+    ...ambientShadow(),
   },
   selectionCardActive: {
-    borderColor: "#CC3333",
-    backgroundColor: "rgba(204,51,51,0.1)",
+    backgroundColor: SERVICE_WIZARD_THEME.colors.accentSurface,
   },
   selectionImageWrap: {
     flex: 1,
@@ -471,9 +461,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#CC3333",
-    borderWidth: HAIRLINE,
-    borderColor: colors.borderLight,
+    backgroundColor: DS.colors.accent,
   },
   selectionBadgeOffset: {
     right: 120,
@@ -484,12 +472,10 @@ const styles = StyleSheet.create({
     right: 14,
     minHeight: 28,
     paddingHorizontal: spacing.sm,
-    borderRadius: 12,
+    borderRadius: DS.radius.md,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.surfaceOverlay,
-    borderWidth: HAIRLINE,
-    borderColor: colors.borderLight,
+    backgroundColor: "rgba(255,255,255,0.84)",
   },
   selectionRecommendedText: {
     color: colors.textPrimary,
@@ -547,9 +533,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingTop: spacing.sm,
     paddingHorizontal: spacing.md,
-    borderTopWidth: HAIRLINE,
-    borderTopColor: colors.border,
-    backgroundColor: SERVICE_WIZARD_THEME.colors.background,
+    backgroundColor: "rgba(245, 241, 234, 0.94)",
   },
   fixedFooterContent: {
     gap: spacing.sm,

@@ -3,12 +3,12 @@ import { getLocalizedFonts, getInitialSupportedLanguage } from "../lib/i18n/lang
 export const fonts = getLocalizedFonts(getInitialSupportedLanguage());
 
 export const textStyles = {
-  h1:      { ...fonts.bold,    fontSize: 32, lineHeight: 40 },
-  h2:      { ...fonts.bold,    fontSize: 24, lineHeight: 32 },
-  h3:      { ...fonts.semibold,fontSize: 20, lineHeight: 28 },
-  body:    { ...fonts.regular, fontSize: 15, lineHeight: 22 },
-  bodyMd:  { ...fonts.medium,  fontSize: 15, lineHeight: 22 },
+  h1: { ...fonts.bold, fontSize: 40, lineHeight: 48, letterSpacing: -1.2 },
+  h2: { ...fonts.bold, fontSize: 32, lineHeight: 38, letterSpacing: -0.9 },
+  h3: { ...fonts.bold, fontSize: 22, lineHeight: 28, letterSpacing: -0.45 },
+  body: { ...fonts.regular, fontSize: 16, lineHeight: 24 },
+  bodyMd: { ...fonts.medium, fontSize: 16, lineHeight: 24 },
   caption: { ...fonts.regular, fontSize: 12, lineHeight: 18 },
-  label:   { ...fonts.semibold,fontSize: 13, lineHeight: 18 },
-  button:  { ...fonts.semibold,fontSize: 16, lineHeight: 24 },
-}
+  label: { ...fonts.semibold, fontSize: 11, lineHeight: 16, letterSpacing: 1.6, textTransform: "uppercase" as const },
+  button: { ...fonts.semibold, fontSize: 15, lineHeight: 20, letterSpacing: -0.1 },
+};

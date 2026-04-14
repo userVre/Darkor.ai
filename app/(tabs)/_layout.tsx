@@ -8,28 +8,23 @@ import { fonts } from "../../styles/typography";
 import { spacing } from "../../styles/spacing";
 import { useTheme } from "@/styles/theme";
 
-import { DS, HAIRLINE } from "../../lib/design-system";
+import { DS } from "../../lib/design-system";
 import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
 import { useFlowUI } from "../../components/flow-ui-context";
 
 export const DEFAULT_TAB_BAR_STYLE = {
   position: "absolute" as const,
-  left: 16,
-  right: 16,
-  bottom: 14,
-  backgroundColor: "#FFFDFC",
-  borderTopColor: "#E7E3DE",
-  borderTopWidth: 1,
-  borderWidth: HAIRLINE,
-  borderColor: "#ECE6DF",
-  height: 82,
+  left: 20,
+  right: 20,
+  bottom: 18,
+  backgroundColor: "rgba(255,255,255,0.86)",
+  height: 86,
   paddingTop: 12,
   paddingBottom: 12,
   paddingHorizontal: spacing.sm,
-  borderRadius: 28,
-  elevation: 0,
-  shadowOpacity: 0,
+  borderRadius: 32,
+  boxShadow: "0px 10px 30px rgba(17, 19, 24, 0.05)",
 };
 
 type TabButtonProps = PressableProps & {
@@ -72,25 +67,23 @@ function TabIcon({
           pointerEvents="none"
           style={{
             position: "absolute",
-            width: 42,
-            height: 42,
-            borderRadius: 21,
-            backgroundColor: "rgba(231,162,162,0.32)",
+            width: 46,
+            height: 46,
+            borderRadius: 23,
+            backgroundColor: DS.colors.accentSurface,
           }}
         />
       ) : null}
 
       <View
         style={{
-          minWidth: 42,
-          height: 32,
-          borderRadius: 16,
+          minWidth: 46,
+          height: 36,
+          borderRadius: 18,
           alignItems: "center",
           justifyContent: "center",
           paddingHorizontal: 10,
-          borderWidth: HAIRLINE,
-          borderColor: focused ? "#F1CACA" : "transparent",
-          backgroundColor: focused ? "#FFF1F1" : "transparent",
+          backgroundColor: focused ? DS.colors.accentSurface : "transparent",
         }}
       >
         <Icon color={color} size={size} strokeWidth={focused ? 1.7 : 1.5} />
@@ -112,8 +105,8 @@ export default function TabsLayout() {
         headerShown: false,
         lazy: true,
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: "#A62828",
-        tabBarInactiveTintColor: "#7D848E",
+        tabBarActiveTintColor: DS.colors.accent,
+        tabBarInactiveTintColor: DS.colors.textSecondary,
         tabBarButton: (props) => <TabBarButton {...props} />,
         tabBarItemStyle: {
           alignItems: "center",
@@ -122,12 +115,12 @@ export default function TabsLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          lineHeight: 12,
+          lineHeight: 14,
           ...fonts.medium,
         },
         tabBarStyle: isFlowActive ? { display: "none" } : DEFAULT_TAB_BAR_STYLE,
         sceneStyle: {
-          backgroundColor: "#FFFFFF",
+          backgroundColor: DS.colors.background,
         },
       }}
     >

@@ -1,100 +1,239 @@
-import { MaterialIcons as ExpoMaterialIcons } from "@expo/vector-icons";
+import {
+  ArrowLeft,
+  ArrowLeftRight,
+  Bath,
+  Baby,
+  BadgeCheck,
+  BedDouble,
+  BookOpen,
+  Box,
+  BrickWall,
+  BrushCleaning,
+  Building2,
+  Camera,
+  CarFront,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  CircleHelp,
+  Compass,
+  Copy,
+  CookingPot,
+  DoorOpen,
+  Download,
+  Eraser,
+  Fence,
+  FileQuestionMark,
+  FileText,
+  Flower2,
+  Gem as GemBase,
+  House,
+  Image,
+  ImagePlus,
+  LayoutGrid,
+  LayoutPanelTop,
+  Mail,
+  Monitor,
+  MoveHorizontal,
+  PaintRoller,
+  Plus,
+  Projector,
+  Redo2,
+  RotateCcw,
+  Send,
+  Settings2,
+  Share2,
+  Shield,
+  Sofa as SofaBase,
+  Sparkles,
+  Star,
+  Store,
+  SunMedium,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2,
+  Trees,
+  Undo2,
+  UserRound,
+  UtensilsCrossed,
+  Wallpaper,
+  WandSparkles as WandSparklesBase,
+  X,
+  type LucideIcon,
+  type LucideProps,
+} from "lucide-react-native";
 import type { ComponentProps } from "react";
 
-type BaseIconProps = Omit<ComponentProps<typeof ExpoMaterialIcons>, "name"> & {
+type IconProps = LucideProps & {
   absoluteStrokeWidth?: boolean;
-  strokeWidth?: number;
 };
 
-export type MaterialIconName = ComponentProps<typeof ExpoMaterialIcons>["name"];
-export type MaterialIconProps = BaseIconProps & {
+const DEFAULT_STROKE_WIDTH = 1.72;
+
+const ICON_MAP = {
+  add: Plus,
+  apartment: Building2,
+  "arrow-back": ArrowLeft,
+  "auto-awesome": Sparkles,
+  "auto-fix-high": WandSparklesBase,
+  bathtub: Bath,
+  bed: BedDouble,
+  "child-care": Baby,
+  "cleaning-services": BrushCleaning,
+  close: X,
+  "compare-arrows": ArrowLeftRight,
+  computer: Monitor,
+  "content-copy": Copy,
+  dashboard: LayoutPanelTop,
+  delete: Trash2,
+  description: FileText,
+  diamond: GemBase,
+  "directions-car": CarFront,
+  "dinner-dining": UtensilsCrossed,
+  "door-front": DoorOpen,
+  download: Download,
+  draw: BrushCleaning,
+  explore: Compass,
+  fence: Fence,
+  "format-paint": PaintRoller,
+  "grid-view": BrickWall,
+  "help-outline": CircleHelp,
+  house: House,
+  image: Image,
+  kitchen: CookingPot,
+  language: LanguagesFallback,
+  "local-florist": Flower2,
+  "local-laundry-service": WashingLinesFallback,
+  "local-library": BookOpen,
+  mail: Mail,
+  "meeting-room": DoorOpen,
+  "menu-book": BookOpen,
+  park: Trees,
+  "photo-camera": Camera,
+  "present-to-all": Projector,
+  quiz: FileQuestionMark,
+  redo: Redo2,
+  restaurant: UtensilsCrossed,
+  "restart-alt": RotateCcw,
+  send: Send,
+  settings: Settings2,
+  share: Share2,
+  shield: Shield,
+  "soup-kitchen": CookingPot,
+  "sports-esports": Sparkles,
+  star: Star,
+  storefront: Store,
+  tv: Monitor,
+  verified: BadgeCheck,
+  wallpaper: Wallpaper,
+  "wb-sunny": SunMedium,
+  weekend: SofaBase,
+  work: BriefcaseFallback,
+} as const;
+
+type MaterialIconName = keyof typeof ICON_MAP;
+type MaterialIconComponent = LucideIcon | typeof LanguagesFallback | typeof WashingLinesFallback | typeof BriefcaseFallback;
+
+function LanguagesFallback(props: IconProps) {
+  return <CircleHelp {...props} />;
+}
+
+function WashingLinesFallback(props: IconProps) {
+  return <Sparkles {...props} />;
+}
+
+function BriefcaseFallback(props: IconProps) {
+  return <Box {...props} />;
+}
+
+export type { MaterialIconName };
+export type MaterialIconProps = Omit<ComponentProps<typeof ArrowLeft>, "ref"> & {
   name: MaterialIconName;
 };
 
-export function MaterialIcon({
-  name,
-  size = 24,
-  strokeWidth: _strokeWidth,
-  absoluteStrokeWidth: _absoluteStrokeWidth,
-  ...props
-}: MaterialIconProps) {
-  return <ExpoMaterialIcons name={name} size={size} {...props} />;
+function renderIcon(Icon: MaterialIconComponent, props: IconProps) {
+  return <Icon strokeWidth={props.strokeWidth ?? DEFAULT_STROKE_WIDTH} {...props} />;
 }
 
-function createIcon(name: MaterialIconName) {
-  function Icon({
-    size = 24,
-    strokeWidth: _strokeWidth,
-    absoluteStrokeWidth: _absoluteStrokeWidth,
-    ...props
-  }: BaseIconProps) {
-    return <ExpoMaterialIcons name={name} size={size} {...props} />;
+export function MaterialIcon({ name, ...props }: MaterialIconProps) {
+  const Icon = ICON_MAP[name];
+  return renderIcon(Icon, props);
+}
+
+function createIcon(Icon: MaterialIconComponent, displayName: string) {
+  function WrappedIcon(props: IconProps) {
+    return renderIcon(Icon, props);
   }
 
-  Icon.displayName = `MaterialIcon(${name})`;
-
-  return Icon;
+  WrappedIcon.displayName = displayName;
+  return WrappedIcon;
 }
 
-export const ArrowLeft = createIcon("arrow-back");
-export const BadgeCheck = createIcon("verified");
-export const Bath = createIcon("bathtub");
-export const Baby = createIcon("child-care");
-export const BedDouble = createIcon("bed");
-export const BookOpen = createIcon("menu-book");
-export const Box = createIcon("inventory-2");
-export const BrickWall = createIcon("grid-view");
-export const BrushCleaning = createIcon("cleaning-services");
-export const Building2 = createIcon("apartment");
-export const Camera = createIcon("photo-camera");
-export const CarFront = createIcon("directions-car");
-export const Check = createIcon("check");
-export const ChevronLeft = createIcon("chevron-left");
-export const ChevronRight = createIcon("chevron-right");
-export const CircleHelp = createIcon("help-outline");
-export const Compass = createIcon("explore");
-export const Copy = createIcon("content-copy");
-export const CookingPot = createIcon("soup-kitchen");
-export const Diamond = createIcon("diamond");
-export const DoorOpen = createIcon("door-front");
-export const Download = createIcon("download");
-export const Draw = createIcon("draw");
-export const Eraser = createIcon("cleaning-services");
-export const Fence = createIcon("fence");
-export const FileQuestion = createIcon("quiz");
-export const FileText = createIcon("description");
-export const Flower2 = createIcon("local-florist");
-export const Gem = createIcon("diamond");
-export const House = createIcon("house");
-export const Image = createIcon("image");
-export const ImagePlus = createIcon("add-photo-alternate");
-export const LayoutGrid = createIcon("apps");
-export const LayoutPanelTop = createIcon("dashboard");
-export const Mail = createIcon("mail");
-export const Monitor = createIcon("computer");
-export const MoveHorizontal = createIcon("compare-arrows");
-export const PaintRoller = createIcon("format-paint");
-export const Plus = createIcon("add");
-export const Projector = createIcon("present-to-all");
-export const Redo2 = createIcon("redo");
-export const RotateCcw = createIcon("restart-alt");
-export const Send = createIcon("send");
-export const Settings = createIcon("settings");
-export const Share2 = createIcon("share");
-export const Shield = createIcon("shield");
-export const Sofa = createIcon("weekend");
-export const Sparkles = createIcon("auto-awesome");
-export const Star = createIcon("star");
-export const Store = createIcon("storefront");
-export const SunMedium = createIcon("wb-sunny");
-export const ThumbDown = createIcon("thumb-down-alt");
-export const ThumbUp = createIcon("thumb-up-alt");
-export const Trash2 = createIcon("delete");
-export const Trees = createIcon("park");
-export const Undo2 = createIcon("undo");
-export const UserCircle2 = createIcon("account-circle");
-export const UserRound = createIcon("account-circle");
-export const UtensilsCrossed = createIcon("restaurant");
-export const Wallpaper = createIcon("wallpaper");
-export const Wand2 = createIcon("auto-fix-high");
-export const X = createIcon("close");
+export {
+  ArrowLeft,
+  BadgeCheck,
+  Bath,
+  Baby,
+  BedDouble,
+  BookOpen,
+  Box,
+  BrickWall,
+  BrushCleaning,
+  Building2,
+  Camera,
+  CarFront,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  CircleHelp,
+  Compass,
+  Copy,
+  CookingPot,
+  DoorOpen,
+  Download,
+  Eraser,
+  Fence,
+  FileQuestionMark as FileQuestion,
+  FileText,
+  Flower2,
+  GemBase as Gem,
+  House,
+  Image,
+  ImagePlus,
+  LayoutGrid,
+  LayoutPanelTop,
+  Mail,
+  Monitor,
+  MoveHorizontal,
+  PaintRoller,
+  Plus,
+  Projector,
+  Redo2,
+  RotateCcw,
+  Send,
+  Share2,
+  Shield,
+  Sparkles,
+  Star,
+  Store,
+  SunMedium,
+  Trash2,
+  Trees,
+  Undo2,
+  UserRound,
+  UtensilsCrossed,
+  Wallpaper,
+  X,
+};
+
+export const Diamond = createIcon(GemBase, "MaterialIcon(Diamond)");
+export const Draw = createIcon(BrushCleaning, "MaterialIcon(Draw)");
+export const GemIcon = createIcon(GemBase, "MaterialIcon(Gem)");
+export const Settings = createIcon(Settings2, "MaterialIcon(Settings)");
+export const SofaIcon = createIcon(SofaBase, "MaterialIcon(Sofa)");
+export const ThumbDown = createIcon(ThumbsDown, "MaterialIcon(ThumbDown)");
+export const ThumbUp = createIcon(ThumbsUp, "MaterialIcon(ThumbUp)");
+export const UserCircle2 = createIcon(UserRound, "MaterialIcon(UserCircle2)");
+export const Wand2 = createIcon(WandSparklesBase, "MaterialIcon(Wand2)");
+export const DiamondIcon = Diamond;
+export const Sofa = createIcon(SofaBase, "MaterialIcon(Sofa)");

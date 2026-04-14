@@ -1,11 +1,12 @@
 import { ArrowLeft, X } from "@/components/material-icons";
+import { BlurView } from "expo-blur";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { DS, GLASS_HEADER_CONTENT_GAP, ambientShadow, floatingButton, organicRadii } from "../lib/design-system";
 import { DiamondCreditPill } from "./diamond-credit-pill";
 import { StepProgressLine } from "./step-progress-line";
-import { fonts } from "../styles/typography";
 
 type DesignStepHeaderProps = {
   title?: string;
@@ -22,9 +23,8 @@ type DesignStepHeaderProps = {
 const DESIGN_HEADER_TOP_PADDING = 4;
 const DESIGN_HEADER_BOTTOM_PADDING = 14;
 const DESIGN_HEADER_ROW_HEIGHT = 52;
-const DESIGN_HEADER_PROGRESS_HEIGHT = 2;
-const DESIGN_HEADER_PROGRESS_GAP = 10;
-const DESIGN_HEADER_CONTENT_GAP = 0;
+const DESIGN_HEADER_PROGRESS_HEIGHT = 4;
+const DESIGN_HEADER_PROGRESS_GAP = 12;
 const DESIGN_HEADER_ACTION_SIZE = 40;
 
 export function getDesignStepHeaderMetrics(topInset: number) {
@@ -40,7 +40,7 @@ export function getDesignStepHeaderMetrics(topInset: number) {
     progressTop,
     rowTop,
     safeTop,
-    contentOffset: height + DESIGN_HEADER_CONTENT_GAP,
+    contentOffset: height + GLASS_HEADER_CONTENT_GAP,
   };
 }
 
@@ -72,47 +72,11 @@ export function DesignStepHeader({
         {
           height: metrics.height,
           paddingTop: metrics.safeTop + DESIGN_HEADER_TOP_PADDING,
-          paddingHorizontal: horizontalInset,
         },
       ]}
     >
-      <View style={styles.headerRow}>
-        <View style={styles.titleCluster}>
-          {showBack ? (
-            <Pressable
-              accessibilityLabel={backAccessibilityLabel}
-              accessibilityRole="button"
-              hitSlop={10}
-              onPress={onBack}
-              style={styles.iconButton}
-            >
-              <ArrowLeft color="#0A0A0A" size={18} strokeWidth={2.4} style={styles.backIcon} />
-            </Pressable>
-          ) : null}
-
-          <View style={styles.titleStack}>
-            <Text numberOfLines={1} style={styles.titleText}>
-              {headerTitle}
-            </Text>
-            {title ? (
-              <Text numberOfLines={1} style={styles.stepText}>
-                {stepLabel}
-              </Text>
-            ) : null}
-          </View>
-        </View>
-
-        <View style={styles.rightSlot}>
-          {showCredits ? (
-            <DiamondCreditPill
-              accessibilityLabel="Return to Tools"
-              count={creditCount ?? 0}
-              onPress={onClose}
-              style={styles.creditPill}
-              variant="dark"
-            />
-          ) : null}
-
+      <BlurView intensity={72} tint="light" style={[styles.glassCard, { marginHorizontal: horizontalInset }]}>
+        <View style={styles.headerRow}>
           <Pressable
             accessibilityLabel={closeAccessibilityLabel}
             accessibilityRole="button"
@@ -120,17 +84,52 @@ export function DesignStepHeader({
             onPress={onClose}
             style={styles.iconButton}
           >
-            <X color="#0A0A0A" size={20} strokeWidth={2.3} />
+            <X color={DS.colors.textPrimary} size={18} strokeWidth={2} />
           </Pressable>
-        </View>
-      </View>
 
-      <StepProgressLine
-        fillColor="#0A0A0A"
-        progress={safeStep / totalSteps}
-        style={styles.progressLine}
-        trackColor="#E7EBEF"
-      />
+          <View style={styles.progressCluster}>
+            <Text numberOfLines={1} style={styles.stepText}>
+              {stepLabel}
+            </Text>
+            <StepProgressLine
+              fillColor={DS.colors.accent}
+              progress={safeStep / totalSteps}
+              style={styles.progressLine}
+              trackColor="rgba(17, 19, 24, 0.09)"
+            />
+          </View>
+
+          <View style={styles.rightSlot}>
+            {showBack ? (
+              <Pressable
+                accessibilityLabel={backAccessibilityLabel}
+                accessibilityRole="button"
+                hitSlop={10}
+                onPress={onBack}
+                style={styles.iconButton}
+              >
+                <ArrowLeft color={DS.colors.textPrimary} size={18} strokeWidth={1.9} style={styles.backIcon} />
+              </Pressable>
+            ) : null}
+
+            {showCredits ? (
+              <DiamondCreditPill
+                accessibilityLabel="Return to Tools"
+                count={creditCount ?? 0}
+                onPress={onClose}
+                style={styles.creditPill}
+                variant="dark"
+              />
+            ) : null}
+          </View>
+        </View>
+
+        <View style={styles.titleStack}>
+          <Text numberOfLines={1} style={styles.titleText}>
+            {headerTitle}
+          </Text>
+        </View>
+      </BlurView>
     </View>
   );
 }
@@ -142,56 +141,62 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 40,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "transparent",
+  },
+  glassCard: {
+    ...organicRadii(),
+    overflow: "hidden",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: "rgba(255,255,255,0.72)",
+    ...ambientShadow(),
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     minHeight: DESIGN_HEADER_ROW_HEIGHT,
-    justifyContent: "space-between",
+    gap: 12,
   },
-  titleCluster: {
+  progressCluster: {
     flex: 1,
-    minHeight: DESIGN_HEADER_ROW_HEIGHT,
-    flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    justifyContent: "center",
+    gap: 10,
   },
   rightSlot: {
+    minWidth: 88,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     justifyContent: "flex-end",
   },
   titleStack: {
-    flex: 1,
-    justifyContent: "center",
+    marginTop: 14,
+    gap: 4,
   },
   titleText: {
-    color: "#0A0A0A",
-    fontSize: 18,
-    lineHeight: 22,
-    ...fonts.bold,
+    color: DS.colors.textPrimary,
+    ...DS.typography.cardTitle,
+    fontSize: 24,
+    lineHeight: 30,
   },
   stepText: {
-    color: "#6D7682",
-    fontSize: 11,
+    color: DS.colors.textSecondary,
+    ...DS.typography.label,
+    fontSize: 10,
     lineHeight: 14,
-    letterSpacing: 0.4,
-    ...fonts.semibold,
   },
   iconButton: {
     width: DESIGN_HEADER_ACTION_SIZE,
     height: DESIGN_HEADER_ACTION_SIZE,
-    borderRadius: 16,
+    ...floatingButton(false),
+    paddingHorizontal: 0,
+    paddingVertical: 0,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#E5E8EC",
-    backgroundColor: "#F7F8FA",
   },
   backIcon: {
-    transform: [{ translateX: 1.5 }],
+    transform: [{ translateX: -1 }],
   },
   creditPill: {
     minHeight: 36,
@@ -199,8 +204,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   progressLine: {
-    marginTop: DESIGN_HEADER_PROGRESS_GAP,
+    width: "100%",
+    maxWidth: 164,
     height: DESIGN_HEADER_PROGRESS_HEIGHT,
   },
 });
-

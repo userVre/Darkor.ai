@@ -1,22 +1,22 @@
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { ArrowLeft } from "@/components/material-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DiscoverImageCard } from "../../../components/discover-image-card";
 import { DiscoverPreviewModal } from "../../../components/discover-preview-modal";
+import { DS, ambientShadow, floatingButton, organicRadii } from "../../../lib/design-system";
 import {
   getDiscoverGroup,
   type DiscoverTabId,
   type DiscoverTile,
 } from "../../../lib/discover-catalog";
 import { triggerHaptic } from "../../../lib/haptics";
-import { fonts } from "../../../styles/typography";
 
 const SCREEN_SIDE_MARGIN = 24;
-const GRID_GAP = 18;
+const GRID_GAP = 16;
 
 function readRouteParam(value: string | string[] | undefined) {
   if (Array.isArray(value)) {
@@ -47,7 +47,29 @@ export default function DiscoverSeeAllScreen() {
     const availableWidth = width - SCREEN_SIDE_MARGIN * 2 - GRID_GAP;
     return Math.floor(availableWidth / 2);
   }, [width]);
-  const cardHeight = useMemo(() => Math.round(cardWidth * 1.18), [cardWidth]);
+  const masonryItems = useMemo(() => {
+    if (!group) {
+      return { left: [] as Array<{ item: DiscoverTile; height: number }>, right: [] as Array<{ item: DiscoverTile; height: number }> };
+    }
+
+    const columns = { left: [] as Array<{ item: DiscoverTile; height: number }>, right: [] as Array<{ item: DiscoverTile; height: number }> };
+    let leftHeight = 0;
+    let rightHeight = 0;
+
+    group.items.forEach((item, index) => {
+      const ratios = [1.34, 0.98, 1.48, 1.14];
+      const height = Math.round(cardWidth * ratios[index % ratios.length]);
+      if (leftHeight <= rightHeight) {
+        columns.left.push({ item, height });
+        leftHeight += height + GRID_GAP;
+      } else {
+        columns.right.push({ item, height });
+        rightHeight += height + GRID_GAP;
+      }
+    });
+
+    return columns;
+  }, [cardWidth, group]);
 
   const handlePreviewOpen = useCallback((item: DiscoverTile) => {
     triggerHaptic();
@@ -69,7 +91,7 @@ export default function DiscoverSeeAllScreen() {
 
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable accessibilityRole="button" hitSlop={10} onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft color="#0A0A0A" size={22} strokeWidth={2.25} />
+          <ArrowLeft color={DS.colors.textPrimary} size={22} strokeWidth={2.25} />
         </Pressable>
 
         <Text numberOfLines={1} style={styles.headerTitle}>
@@ -80,35 +102,28 @@ export default function DiscoverSeeAllScreen() {
       </View>
 
       {group ? (
-        <FlatList
-          data={group.items}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          initialNumToRender={6}
-          maxToRenderPerBatch={8}
-          windowSize={5}
-          updateCellsBatchingPeriod={36}
-          removeClippedSubviews
+        <ScrollView
           showsVerticalScrollIndicator={false}
           contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{
             paddingHorizontal: SCREEN_SIDE_MARGIN,
-            paddingTop: 18,
-            paddingBottom: Math.max(insets.bottom + 28, 40),
+            paddingTop: 24,
+            paddingBottom: Math.max(insets.bottom + 120, 132),
           }}
-          renderItem={({ item, index }) => (
-            <DiscoverImageCard
-              item={item}
-              width={cardWidth}
-              height={cardHeight}
-              onPress={handlePreviewOpen}
-              style={[
-                styles.gridCard,
-                index % 2 === 0 ? styles.gridCardRightGap : null,
-              ]}
-            />
-          )}
-        />
+        >
+          <View style={styles.masonry}>
+            <View style={styles.column}>
+              {masonryItems.left.map(({ item, height }) => (
+                <DiscoverImageCard key={item.id} item={item} width={cardWidth} height={height} onPress={handlePreviewOpen} style={styles.gridCard} />
+              ))}
+            </View>
+            <View style={styles.column}>
+              {masonryItems.right.map(({ item, height }) => (
+                <DiscoverImageCard key={item.id} item={item} width={cardWidth} height={height} onPress={handlePreviewOpen} style={styles.gridCard} />
+              ))}
+            </View>
+          </View>
+        </ScrollView>
       ) : (
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>Category unavailable</Text>
@@ -129,38 +144,48 @@ export default function DiscoverSeeAllScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: DS.colors.background,
   },
   header: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    minHeight: 58,
+    minHeight: 72,
     flexDirection: "row",
     alignItems: "center",
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
+    ...floatingButton(false),
+    paddingHorizontal: 0,
+    paddingVertical: 0,
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
     flex: 1,
-    color: "#0A0A0A",
-    fontSize: 16,
-    lineHeight: 18,
+    color: DS.colors.textPrimary,
+    fontSize: 12,
+    lineHeight: 16,
     textAlign: "center",
     textTransform: "uppercase",
-    letterSpacing: 2.4,
-    ...fonts.bold,
+    letterSpacing: 2,
+    fontFamily: "Inter",
+    fontWeight: "600",
   },
   headerSpacer: {
-    width: 40,
+    width: 48,
+  },
+  masonry: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: GRID_GAP,
+  },
+  column: {
+    flex: 1,
+    gap: GRID_GAP,
   },
   gridCard: {
-    marginBottom: GRID_GAP,
-  },
-  gridCardRightGap: {
-    marginRight: GRID_GAP,
+    marginBottom: 0,
   },
   emptyState: {
     flex: 1,
@@ -170,17 +195,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   emptyTitle: {
-    color: "#0A0A0A",
-    fontSize: 22,
-    lineHeight: 26,
-    ...fonts.bold,
+    color: DS.colors.textPrimary,
+    ...DS.typography.cardTitle,
   },
   emptyBody: {
-    color: "#6B6B72",
-    fontSize: 15,
-    lineHeight: 22,
+    color: DS.colors.textSecondary,
+    ...DS.typography.body,
     textAlign: "left",
-    ...fonts.regular,
   },
 });
-

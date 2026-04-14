@@ -695,8 +695,10 @@ export const generateDesign: any = internalActionGeneric({
             },
           ],
           generationConfig: {
-            temperature: 0.7,
             maxOutputTokens: 1024,
+            thinkingConfig: {
+              thinkingLevel: "high",
+            },
           },
         }),
         apiKey: geminiTextApiKey,

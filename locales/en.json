@@ -72,7 +72,7 @@
     "tools": {
       "interior": {
         "title": "Interior Design",
-        "description": "Transform any room with AI-powered interior design."
+        "description": "Reimagine your space with AI precision."
       },
       "exterior": {
         "title": "Exterior Design",
@@ -348,7 +348,7 @@
     }
   },
   "processing": {
-    "title": "AI is crafting your masterpiece...",
+    "title": "AI is crafting your architectural masterpiece...",
     "eta": "Usually ready in ~15 seconds",
     "cancelKeepCredit": "Cancel and keep my credit",
     "status": {

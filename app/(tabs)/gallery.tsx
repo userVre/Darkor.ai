@@ -1,16 +1,8 @@
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
+import { FlashList } from "@shopify/flash-list";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Animated,
-  FlatList,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
@@ -19,6 +11,7 @@ import { DiamondCreditPill } from "../../components/diamond-credit-pill";
 import { DiscoverImageCard } from "../../components/discover-image-card";
 import { DiscoverPreviewModal } from "../../components/discover-preview-modal";
 import { useViewerCredits } from "../../components/viewer-credits-context";
+import { DS, ambientShadow, floatingButton, organicRadii } from "../../lib/design-system";
 import {
   DISCOVER_TABS,
   getDiscoverGroups,
@@ -27,13 +20,19 @@ import {
   type DiscoverTile,
 } from "../../lib/discover-catalog";
 import { triggerHaptic } from "../../lib/haptics";
-import { fonts } from "../../styles/typography";
 
-const SCREEN_SIDE_MARGIN = 20;
+const SCREEN_SIDE_MARGIN = 24;
 const TAB_RAIL_MAX_WIDTH = 392;
 const TAB_RAIL_PADDING = 6;
-const CARD_GAP = 18;
-const OUTER_WINDOW_SIZE = 5;
+const CARD_GAP = 16;
+const SECTION_ESTIMATED_HEIGHT = 420;
+
+const CARD_VARIANTS = [
+  { width: 252, height: 336 },
+  { width: 220, height: 284 },
+  { width: 284, height: 360 },
+  { width: 236, height: 310 },
+] as const;
 
 const DiscoverTabs = memo(function DiscoverTabs({
   activeTab,
@@ -102,19 +101,24 @@ const DiscoverTabs = memo(function DiscoverTabs({
 const DiscoverSection = memo(function DiscoverSection({
   tabId,
   group,
-  cardWidth,
-  cardHeight,
   onPreview,
   onSeeAll,
 }: {
   tabId: DiscoverTabId;
   group: DiscoverGroup;
-  cardWidth: number;
-  cardHeight: number;
   onPreview: (item: DiscoverTile) => void;
   onSeeAll: (tabId: DiscoverTabId, group: DiscoverGroup) => void;
 }) {
   const { t } = useTranslation();
+  const snapOffsets = useMemo(() => {
+    let offset = 0;
+    return group.items.map((_, index) => {
+      const nextOffset = offset;
+      offset += CARD_VARIANTS[index % CARD_VARIANTS.length].width + CARD_GAP;
+      return nextOffset;
+    });
+  }, [group.items]);
+
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -124,24 +128,29 @@ const DiscoverSection = memo(function DiscoverSection({
         </Pressable>
       </View>
 
-      <ScrollView
+      <FlashList
         horizontal
-        style={{ height: cardHeight }}
+        data={group.items}
+        keyExtractor={(item) => item.id}
+        decelerationRate="fast"
         showsHorizontalScrollIndicator={false}
-        contentInsetAdjustmentBehavior="automatic"
+        snapToAlignment="start"
+        snapToOffsets={snapOffsets}
         contentContainerStyle={styles.sectionContent}
-      >
-        {group.items.map((item, index) => (
-          <DiscoverImageCard
-            key={item.id}
-            item={item}
-            width={cardWidth}
-            height={cardHeight}
-            onPress={onPreview}
-            style={index < group.items.length - 1 ? styles.cardGap : undefined}
-          />
-        ))}
-      </ScrollView>
+        renderItem={({ item, index }) => {
+          const metrics = CARD_VARIANTS[index % CARD_VARIANTS.length];
+
+          return (
+            <DiscoverImageCard
+              item={item}
+              width={metrics.width}
+              height={metrics.height}
+              onPress={onPreview}
+              style={index < group.items.length - 1 ? styles.cardGap : undefined}
+            />
+          );
+        }}
+      />
     </View>
   );
 });
@@ -158,11 +167,9 @@ export default function GalleryScreen() {
 
   const groups = useMemo(() => getDiscoverGroups(activeTab), [activeTab]);
   const tabRailWidth = useMemo(() => Math.min(width - SCREEN_SIDE_MARGIN * 2, TAB_RAIL_MAX_WIDTH), [width]);
-  const cardWidth = useMemo(() => Math.min(Math.max(width * 0.48, 184), 208), [width]);
-  const cardHeight = useMemo(() => Math.round(cardWidth * 1.18), [cardWidth]);
   const contentContainerStyle = useMemo(
     () => ({
-      paddingBottom: Math.max(insets.bottom + 34, 44),
+      paddingBottom: Math.max(insets.bottom + 120, 132),
     }),
     [insets.bottom],
   );
@@ -212,18 +219,16 @@ export default function GalleryScreen() {
       <DiscoverSection
         tabId={activeTab}
         group={item}
-        cardWidth={cardWidth}
-        cardHeight={cardHeight}
         onPreview={handlePreviewOpen}
         onSeeAll={handleSeeAll}
       />
     ),
-    [activeTab, cardHeight, cardWidth, handlePreviewOpen, handleSeeAll],
+    [activeTab, handlePreviewOpen, handleSeeAll],
   );
 
   const listHeader = useMemo(
     () => (
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 16 }]}>
         <View style={styles.headerRow}>
           <View style={styles.headerSide}>
             <DiamondCreditPill
@@ -235,7 +240,9 @@ export default function GalleryScreen() {
           </View>
 
           <View pointerEvents="none" style={styles.headerTitleWrap}>
+            <Text style={styles.headerEyebrow}>Mood Boards</Text>
             <Text style={styles.headerTitle}>{t("discover.title")}</Text>
+            <Text style={styles.headerSubtitle}>Curated references with gallery-grade composition.</Text>
           </View>
 
           <View style={styles.headerSide} />
@@ -251,14 +258,9 @@ export default function GalleryScreen() {
     <View style={styles.screen}>
       <StatusBar style="dark" />
 
-      <FlatList
+      <FlashList
         data={groups}
         keyExtractor={keyExtractor}
-        initialNumToRender={3}
-        maxToRenderPerBatch={4}
-        windowSize={OUTER_WINDOW_SIZE}
-        updateCellsBatchingPeriod={40}
-        removeClippedSubviews
         renderItem={renderSection}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="automatic"
@@ -285,46 +287,56 @@ export default function GalleryScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: DS.colors.background,
   },
   headerWrap: {
-    paddingBottom: 40,
+    paddingBottom: 32,
   },
   headerRow: {
-    minHeight: 52,
+    minHeight: 110,
     paddingHorizontal: SCREEN_SIDE_MARGIN,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
   },
   headerSide: {
     width: 112,
     alignItems: "flex-start",
-    justifyContent: "center",
+    justifyContent: "flex-start",
   },
   headerTitleWrap: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
+    paddingTop: 4,
+    paddingHorizontal: SCREEN_SIDE_MARGIN + 24,
+    gap: 8,
+  },
+  headerEyebrow: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.label,
   },
   headerTitle: {
-    color: "#0A0A0A",
-    fontSize: 20,
-    lineHeight: 24,
+    color: DS.colors.textPrimary,
+    ...DS.typography.title,
     textAlign: "center",
-    ...fonts.bold,
+  },
+  headerSubtitle: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.bodySm,
+    textAlign: "center",
   },
   tabsOuter: {
     alignItems: "center",
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    marginTop: 40,
+    marginTop: 32,
   },
   tabsRail: {
     padding: TAB_RAIL_PADDING,
-    borderRadius: 14,
-    borderCurve: "continuous",
-    backgroundColor: "#F1F3F5",
+    ...organicRadii(26, 16),
+    backgroundColor: "rgba(255,255,255,0.84)",
     position: "relative",
+    ...ambientShadow(),
   },
   tabsRow: {
     flexDirection: "row",
@@ -335,10 +347,8 @@ const styles = StyleSheet.create({
     top: TAB_RAIL_PADDING,
     left: TAB_RAIL_PADDING,
     bottom: TAB_RAIL_PADDING,
-    borderRadius: 14,
-    borderCurve: "continuous",
-    backgroundColor: "#FFFFFF",
-    boxShadow: "0 10px 24px rgba(15, 23, 42, 0.08)",
+    ...organicRadii(20, 14),
+    backgroundColor: DS.colors.accentSurface,
   },
   tabButton: {
     flex: 1,
@@ -348,21 +358,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   tabLabel: {
-    color: "#8D95A1",
-    fontSize: 14,
-    lineHeight: 18,
-    ...fonts.medium,
+    color: DS.colors.textSecondary,
+    ...DS.typography.bodySm,
   },
   tabLabelActive: {
-    color: "#0A0A0A",
-    ...fonts.bold,
+    color: DS.colors.accent,
+    fontWeight: "700",
   },
   section: {
-    marginBottom: 40,
+    marginBottom: 32,
   },
   sectionHeader: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    marginBottom: 20,
+    marginBottom: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -370,22 +378,23 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     flex: 1,
-    color: "#0A0A0A",
-    fontSize: 15,
-    lineHeight: 18,
+    color: DS.colors.textPrimary,
+    fontSize: 12,
+    lineHeight: 16,
     textTransform: "uppercase",
-    letterSpacing: 2.4,
-    ...fonts.bold,
+    letterSpacing: 2,
+    fontFamily: "Inter",
+    fontWeight: "600",
   },
   seeAllButton: {
-    paddingVertical: 2,
+    ...floatingButton(false),
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     alignItems: "flex-end",
   },
   seeAllText: {
-    color: "#8D95A1",
-    fontSize: 14,
-    lineHeight: 18,
-    ...fonts.medium,
+    color: DS.colors.textSecondary,
+    ...DS.typography.bodySm,
   },
   sectionContent: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
@@ -394,4 +403,3 @@ const styles = StyleSheet.create({
     marginRight: CARD_GAP,
   },
 });
-

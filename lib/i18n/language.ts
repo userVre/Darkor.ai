@@ -1,5 +1,4 @@
 import { getLocales, type Locale } from "expo-localization";
-import { Platform } from "react-native";
 
 export const SUPPORTED_LANGUAGES = [
   "en-US",
@@ -98,8 +97,6 @@ export const SUPPORTED_LANGUAGE_OPTIONS: readonly SupportedLanguageOption[] = [
 ] as const;
 
 export const DEFAULT_LANGUAGE: AppLanguage = "en-US";
-
-const CJK_LANGUAGES = new Set<AppLanguage>(["ja", "ko", "zh-Hans"]);
 
 function normalizeLanguageInput(input?: string | null) {
   return String(input ?? "").trim().replace(/_/g, "-").toLowerCase();
@@ -215,29 +212,7 @@ export function getLanguageLocaleTag(language?: string | null, regionCode?: stri
 }
 
 export function isCjkLanguage(language?: string | null) {
-  return CJK_LANGUAGES.has(resolveSupportedLanguage(language));
-}
-
-function getSystemFontFamily(language: AppLanguage) {
-  if (language === "ja") {
-    if (Platform.OS === "ios") return "Hiragino Sans";
-    if (Platform.OS === "android") return "Noto Sans CJK JP";
-    return "sans-serif";
-  }
-
-  if (language === "zh-Hans") {
-    if (Platform.OS === "ios") return "PingFang SC";
-    if (Platform.OS === "android") return "Noto Sans CJK SC";
-    return "sans-serif";
-  }
-
-  if (language === "ko") {
-    if (Platform.OS === "ios") return "Apple SD Gothic Neo";
-    if (Platform.OS === "android") return "Noto Sans CJK KR";
-    return "sans-serif";
-  }
-
-  return "Inter";
+  return ["ja", "ko", "zh-Hans"].includes(resolveSupportedLanguage(language));
 }
 
 function getFontWeight(weight: "regular" | "medium" | "semibold" | "bold") {
@@ -248,9 +223,8 @@ function getFontWeight(weight: "regular" | "medium" | "semibold" | "bold") {
 }
 
 export function getLocalizedFonts(language?: string | null) {
-  const resolvedLanguage = resolveSupportedLanguage(language);
-  const useSystemFamily = isCjkLanguage(resolvedLanguage);
-  const fontFamily = getSystemFontFamily(resolvedLanguage);
+  void language;
+  const fontFamily = "Inter";
 
   return {
     regular: {
@@ -270,9 +244,9 @@ export function getLocalizedFonts(language?: string | null) {
       fontWeight: getFontWeight("bold"),
     },
     italic: {
-      fontFamily: useSystemFamily ? fontFamily : "Inter-Italic",
+      fontFamily: "Inter-Italic",
       fontWeight: getFontWeight("regular"),
-      fontStyle: useSystemFamily ? ("italic" as const) : ("normal" as const),
+      fontStyle: "normal" as const,
     },
   };
 }
