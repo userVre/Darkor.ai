@@ -6,7 +6,6 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { DS, ambientShadow, organicRadii } from "../lib/design-system";
 import type { DiscoverTile } from "../lib/discover-catalog";
-import { spacedCapsLabel } from "./design-wizard-primitives";
 import Logo from "./logo";
 import { LuxPressable } from "./lux-pressable";
 
@@ -55,7 +54,7 @@ export const DiscoverImageCard = memo(function DiscoverImageCard({
 
         <View style={styles.captionWrap}>
           <Text numberOfLines={1} style={styles.caption}>
-            {spacedCapsLabel(item.previewTitle)}
+            {item.previewTitle}
           </Text>
           <Text numberOfLines={1} style={styles.subcaption}>
             HomeDecor AI
@@ -70,13 +69,13 @@ const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
     backgroundColor: DS.colors.surfaceRaised,
-    ...organicRadii(34, 18),
-    ...ambientShadow(0.07, 18, 14),
+    ...organicRadii(20, 20),
+    ...ambientShadow(0.06, 16, 12),
   },
   innerFrame: {
     flex: 1,
     overflow: "hidden",
-    ...organicRadii(34, 18),
+    ...organicRadii(20, 20),
     backgroundColor: DS.colors.surfaceMuted,
   },
   image: {
@@ -110,8 +109,8 @@ const styles = StyleSheet.create({
   },
   caption: {
     color: "#FFFFFF",
-    ...DS.typography.label,
-    letterSpacing: 2.6,
+    ...DS.typography.bodySm,
+    fontWeight: "700",
   },
   subcaption: {
     color: "rgba(255,255,255,0.86)",

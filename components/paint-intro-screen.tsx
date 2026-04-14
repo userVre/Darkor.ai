@@ -1,8 +1,8 @@
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
-import { Camera, Diamond, Image as GalleryIcon } from "@/components/material-icons";
+import { Camera, Image as GalleryIcon } from "@/components/material-icons";
 import { useCallback, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageSourcePropType } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageSourcePropType } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -177,20 +177,6 @@ export function PaintIntroScreen({
     [finishClose, overlayOpacity, sheetTranslateY],
   );
 
-  const handleExitPress = () => {
-    triggerHaptic();
-    Alert.alert(t("common.alerts.exitTitle"), t("common.alerts.progressLost"), [
-      { text: t("common.actions.cancel"), style: "cancel" },
-      {
-        text: t("common.actions.exit"),
-        style: "destructive",
-        onPress: () => {
-          onExit();
-        },
-      },
-    ]);
-  };
-
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
@@ -199,7 +185,7 @@ export function PaintIntroScreen({
         closeAccessibilityLabel="Close paint flow"
         creditCount={creditCount}
         horizontalInset={sideInset}
-        onClose={handleExitPress}
+        onClose={onExit}
         step={1}
         totalSteps={4}
         title={t("wizard.paintFlow.title")}

@@ -1,9 +1,10 @@
+import { Asset } from "expo-asset";
 import { useAuth } from "@clerk/expo";
 import { Settings } from "@/components/material-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutRectangle } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -21,20 +22,12 @@ export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const { isSignedIn } = useAuth();
   const { clearDraft } = useWorkspaceDraft();
   const { credits: creditBalance, hasPaidAccess } = useViewerCredits();
   const [isCreditModalVisible, setIsCreditModalVisible] = useState(false);
-  const [focusedCardId, setFocusedCardId] = useState<string | null>(null);
-  const cardLayoutsRef = useRef<Record<string, LayoutRectangle>>({});
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
-  const sidePadding = DS.spacing[3];
-  const toolGap = DS.spacing[2];
-  const compactCardWidth = useMemo(
-    () => Math.floor((width - sidePadding * 2 - toolGap) / 2),
-    [sidePadding, toolGap, width],
-  );
+  const sidePadding = 20;
   const toolCards = useMemo<HomeToolCardItem[]>(
     () => [
       {
@@ -75,6 +68,10 @@ export default function HomeScreen() {
     ],
     [t],
   );
+
+  useEffect(() => {
+    void Asset.loadAsync(toolCards.map((card) => card.image as number));
+  }, [toolCards]);
 
   const openDesignFlowPaywall = useCallback((redirectTo: string) => {
     router.push({
@@ -151,31 +148,6 @@ export default function HomeScreen() {
     router.push("/paywall");
   };
 
-  const resolveFocusedCard = useCallback(
-    (scrollY: number) => {
-      const viewportAnchor = scrollY + 260;
-      const layouts = Object.entries(cardLayoutsRef.current);
-      if (!layouts.length) {
-        return;
-      }
-
-      let nextFocusedId = layouts[0][0];
-      let smallestDistance = Number.POSITIVE_INFINITY;
-
-      for (const [id, layout] of layouts) {
-        const cardCenter = layout.y + layout.height / 2;
-        const distance = Math.abs(cardCenter - viewportAnchor);
-        if (distance < smallestDistance) {
-          smallestDistance = distance;
-          nextFocusedId = id;
-        }
-      }
-
-      setFocusedCardId((current) => (current === nextFocusedId ? current : nextFocusedId));
-    },
-    [],
-  );
-
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
@@ -187,21 +159,17 @@ export default function HomeScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + DS.spacing[4],
+            paddingTop: insets.top + 20,
             paddingHorizontal: sidePadding,
             paddingBottom: Math.max(insets.bottom + 120, 148),
           },
         ]}
-        scrollEventThrottle={16}
-        onScroll={(event) => {
-          resolveFocusedCard(event.nativeEvent.contentOffset.y);
-        }}
       >
         <View style={styles.headerRow}>
           <View style={styles.heroCopy}>
-            <Text style={styles.eyebrow}>Creative Suite</Text>
+            <Text style={styles.eyebrow}>Tools</Text>
             <Text style={styles.title}>{t("home.title")}</Text>
-            <Text style={styles.subtitle}>{t("home.tools.interior.description")}</Text>
+            <Text style={styles.subtitle}>Choose a design tool and jump straight into a polished guided flow.</Text>
           </View>
 
           <View style={styles.headerActions}>
@@ -218,41 +186,20 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={styles.createBanner}>
+        <Pressable accessibilityRole="button" onPress={handleCreatePress} style={styles.createBanner}>
           <View style={styles.createBannerCopy}>
-            <Text style={styles.createBannerLabel}>Fast Start</Text>
-            <Text style={styles.createBannerTitle}>Launch a guided concept in one tap.</Text>
+            <Text style={styles.createBannerLabel}>Quick Start</Text>
+            <Text style={styles.createBannerTitle}>Start a custom workspace from scratch.</Text>
           </View>
-          <Pressable accessibilityRole="button" onPress={handleCreatePress} style={styles.createBannerButton}>
+          <View style={styles.createBannerButton}>
             <Text style={styles.createBannerButtonText}>Start New</Text>
-          </Pressable>
-        </View>
+          </View>
+        </Pressable>
 
-        <View style={styles.toolGrid}>
-          {toolCards.map((card, index) => {
-            const isFeature = index === 0;
-
-            return (
-              <View
-                key={card.id}
-                onLayout={(event) => {
-                  cardLayoutsRef.current[card.id] = event.nativeEvent.layout;
-                  if (!focusedCardId && index === 0) {
-                    setFocusedCardId(card.id);
-                  }
-                }}
-                style={isFeature ? styles.featureCard : [styles.compactCard, { width: compactCardWidth }]}
-              >
-                <HomeToolCard
-                  focused={focusedCardId === card.id}
-                  index={index}
-                  item={card}
-                  onPress={handleToolPress}
-                  variant={isFeature ? "feature" : "compact"}
-                />
-              </View>
-            );
-          })}
+        <View style={styles.toolList}>
+          {toolCards.map((card) => (
+            <HomeToolCard key={card.id} item={card} onPress={handleToolPress} />
+          ))}
         </View>
       </ScrollView>
 
@@ -271,8 +218,10 @@ const styles = StyleSheet.create({
     backgroundColor: DS.colors.background,
   },
   headerRow: {
-    gap: DS.spacing[4],
+    flexDirection: "row",
+    alignItems: "flex-start",
     justifyContent: "space-between",
+    gap: DS.spacing[3],
   },
   heroCopy: {
     flex: 1,
@@ -281,6 +230,7 @@ const styles = StyleSheet.create({
   eyebrow: {
     color: DS.colors.textSecondary,
     ...DS.typography.label,
+    letterSpacing: 2.2,
   },
   headerActions: {
     alignItems: "center",
@@ -289,9 +239,11 @@ const styles = StyleSheet.create({
   title: {
     color: DS.colors.textPrimary,
     ...DS.typography.title,
+    fontSize: 34,
+    lineHeight: 40,
   },
   subtitle: {
-    maxWidth: 340,
+    maxWidth: 280,
     color: DS.colors.textSecondary,
     ...DS.typography.body,
   },
@@ -314,14 +266,14 @@ const styles = StyleSheet.create({
     gap: DS.spacing[4],
   },
   createBanner: {
-    ...organicRadii(),
-    backgroundColor: "rgba(255,255,255,0.78)",
+    ...organicRadii(24, 24),
+    backgroundColor: "#F7F8FA",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: DS.spacing[2],
-    padding: DS.spacing[3],
-    ...ambientShadow(),
+    paddingHorizontal: 18,
+    paddingVertical: 16,
   },
   createBannerCopy: {
     flex: 1,
@@ -333,29 +285,23 @@ const styles = StyleSheet.create({
   },
   createBannerTitle: {
     color: DS.colors.textPrimary,
-    ...DS.typography.cardTitle,
+    ...DS.typography.body,
   },
   createBannerButton: {
-    ...floatingButton(true),
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderCurve: "continuous",
+    backgroundColor: "#FFFFFF",
+    overflow: "hidden",
+    ...ambientShadow(0.03, 12, 8),
   },
   createBannerButtonText: {
-    color: "#FFFFFF",
+    color: "#111111",
     ...DS.typography.button,
   },
-  toolGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: DS.spacing[2],
-  },
-  featureCard: {
-    width: "100%",
-  },
-  compactCard: {
-    maxWidth: "48.5%",
+  toolList: {
+    gap: 18,
   },
 });
 

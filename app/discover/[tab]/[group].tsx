@@ -5,10 +5,9 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } fr
 import { ArrowLeft } from "@/components/material-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { spacedCapsLabel } from "../../../components/design-wizard-primitives";
 import { DiscoverImageCard } from "../../../components/discover-image-card";
 import { DiscoverPreviewModal } from "../../../components/discover-preview-modal";
-import { DS, ambientShadow, floatingButton, organicRadii } from "../../../lib/design-system";
+import { DS, floatingButton } from "../../../lib/design-system";
 import {
   getDiscoverGroup,
   type DiscoverTabId,
@@ -17,7 +16,7 @@ import {
 import { triggerHaptic } from "../../../lib/haptics";
 
 const SCREEN_SIDE_MARGIN = 24;
-const GRID_GAP = 16;
+const GRID_GAP = 12;
 
 function readRouteParam(value: string | string[] | undefined) {
   if (Array.isArray(value)) {
@@ -48,29 +47,7 @@ export default function DiscoverSeeAllScreen() {
     const availableWidth = width - SCREEN_SIDE_MARGIN * 2 - GRID_GAP;
     return Math.floor(availableWidth / 2);
   }, [width]);
-  const masonryItems = useMemo(() => {
-    if (!group) {
-      return { left: [] as Array<{ item: DiscoverTile; height: number }>, right: [] as Array<{ item: DiscoverTile; height: number }> };
-    }
-
-    const columns = { left: [] as Array<{ item: DiscoverTile; height: number }>, right: [] as Array<{ item: DiscoverTile; height: number }> };
-    let leftHeight = 0;
-    let rightHeight = 0;
-
-    group.items.forEach((item, index) => {
-      const ratios = [1.58, 1.04, 1.36, 1.72, 1.12, 1.44];
-      const height = Math.round(cardWidth * ratios[index % ratios.length]);
-      if (leftHeight <= rightHeight) {
-        columns.left.push({ item, height });
-        leftHeight += height + GRID_GAP;
-      } else {
-        columns.right.push({ item, height });
-        rightHeight += height + GRID_GAP;
-      }
-    });
-
-    return columns;
-  }, [cardWidth, group]);
+  const cardHeight = useMemo(() => Math.round(cardWidth * 1.28), [cardWidth]);
 
   const handlePreviewOpen = useCallback((item: DiscoverTile) => {
     triggerHaptic();
@@ -96,7 +73,7 @@ export default function DiscoverSeeAllScreen() {
         </Pressable>
 
         <Text numberOfLines={1} style={styles.headerTitle}>
-          {spacedCapsLabel(group?.title ?? "Discover")}
+          {group?.title ?? "Discover"}
         </Text>
 
         <View style={styles.headerSpacer} />
@@ -113,16 +90,16 @@ export default function DiscoverSeeAllScreen() {
           }}
         >
           <View style={styles.masonry}>
-            <View style={styles.column}>
-              {masonryItems.left.map(({ item, height }) => (
-                <DiscoverImageCard key={item.id} item={item} width={cardWidth} height={height} onPress={handlePreviewOpen} style={styles.gridCard} />
-              ))}
-            </View>
-            <View style={[styles.column, styles.offsetColumn]}>
-              {masonryItems.right.map(({ item, height }) => (
-                <DiscoverImageCard key={item.id} item={item} width={cardWidth} height={height} onPress={handlePreviewOpen} style={styles.gridCard} />
-              ))}
-            </View>
+            {group.items.map((item, index) => (
+              <DiscoverImageCard
+                key={item.id}
+                item={item}
+                width={cardWidth}
+                height={cardHeight}
+                onPress={handlePreviewOpen}
+                style={index % 2 === 0 ? styles.gridCardLeft : styles.gridCardRight}
+              />
+            ))}
           </View>
         </ScrollView>
       ) : (
@@ -164,31 +141,26 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    color: DS.colors.textPrimary,
-    fontSize: 12,
-    lineHeight: 16,
+    color: "#111111",
+    fontSize: 18,
+    lineHeight: 24,
     textAlign: "center",
-    letterSpacing: 3.2,
-    fontFamily: "Inter",
-    fontWeight: "600",
+    fontWeight: "700",
   },
   headerSpacer: {
     width: 48,
   },
   masonry: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     gap: GRID_GAP,
   },
-  column: {
-    flex: 1,
-    gap: GRID_GAP,
+  gridCardLeft: {
+    marginBottom: GRID_GAP,
   },
-  offsetColumn: {
-    marginTop: 28,
-  },
-  gridCard: {
-    marginBottom: 0,
+  gridCardRight: {
+    marginBottom: GRID_GAP,
   },
   emptyState: {
     flex: 1,

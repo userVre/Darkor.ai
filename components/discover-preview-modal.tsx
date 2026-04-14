@@ -70,6 +70,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
     flexDirection: "row",
     alignItems: "center",
+    minHeight: 64,
   },
   backButton: {
     width: 44,
@@ -83,10 +84,10 @@ const styles = StyleSheet.create({
   previewTitle: {
     flex: 1,
     color: "#FFFFFF",
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 18,
+    lineHeight: 24,
     textAlign: "center",
-    letterSpacing: 1.2,
+    letterSpacing: 0.4,
     ...fonts.bold,
   },
   topBarSpacer: {

@@ -1,6 +1,4 @@
-import { type ReactNode, useCallback } from "react";
-import { Alert } from "react-native";
-import { useTranslation } from "react-i18next";
+import { type ReactNode } from "react";
 
 import { StickyStepHeader } from "./sticky-step-header";
 
@@ -27,22 +25,15 @@ export function ServiceWizardHeader({
   onBack,
   onClose,
 }: ServiceWizardHeaderProps) {
-  const { t } = useTranslation();
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showBack = safeStep > 1 && canGoBack && Boolean(onBack);
-  const handleExitPress = useCallback(() => {
-    Alert.alert(t("common.alerts.exitTitle"), t("common.alerts.progressLost"), [
-      { text: t("common.actions.cancel"), style: "cancel" },
-      { text: t("common.actions.exit"), style: "destructive", onPress: onClose },
-    ]);
-  }, [onClose, t]);
 
   return (
     <StickyStepHeader
       creditCount={creditCount}
       horizontalInset={horizontalInset}
       onBack={showBack ? onBack : undefined}
-      onClose={handleExitPress}
+      onClose={onClose}
       step={safeStep}
       totalSteps={totalSteps}
       title={_title}
