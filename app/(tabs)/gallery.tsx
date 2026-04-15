@@ -1,8 +1,8 @@
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { memo, useCallback, useMemo, useState } from "react";
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
@@ -13,96 +13,37 @@ import { DiscoverPreviewModal } from "../../components/discover-preview-modal";
 import { useViewerCredits } from "../../components/viewer-credits-context";
 import { DS } from "../../lib/design-system";
 import {
-  DISCOVER_TABS,
-  getDiscoverGroups,
+  DISCOVER_FEED_ROWS,
+  type DiscoverFeedRow,
   type DiscoverGroup,
-  type DiscoverTabId,
   type DiscoverTile,
 } from "../../lib/discover-catalog";
 import { triggerHaptic } from "../../lib/haptics";
+import { fonts } from "../../styles/typography";
 
 const SCREEN_SIDE_MARGIN = 24;
 const CARD_GAP = 12;
-const TAB_RAIL_PADDING = 6;
 
-const DiscoverTabs = memo(function DiscoverTabs({
-  activeTab,
-  railWidth,
-  onSelect,
-}: {
-  activeTab: DiscoverTabId;
-  railWidth: number;
-  onSelect: (tabId: DiscoverTabId) => void;
-}) {
-  const activeIndex = DISCOVER_TABS.findIndex((tab) => tab.id === activeTab);
-  const trackWidth = railWidth - TAB_RAIL_PADDING * 2;
-  const pillWidth = trackWidth / DISCOVER_TABS.length;
-  const pillTranslateX = useRef(new Animated.Value(activeIndex * pillWidth)).current;
-
-  useEffect(() => {
-    Animated.spring(pillTranslateX, {
-      toValue: activeIndex * pillWidth,
-      damping: 18,
-      stiffness: 220,
-      mass: 0.9,
-      useNativeDriver: true,
-    }).start();
-  }, [activeIndex, pillTranslateX, pillWidth]);
-
+const DiscoverClusterHeader = memo(function DiscoverClusterHeader({ title }: { title: string }) {
   return (
-    <View style={styles.tabsOuter}>
-      <View style={[styles.tabsRail, { width: railWidth }]}>
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.tabIndicator,
-            {
-              width: pillWidth,
-              transform: [{ translateX: pillTranslateX }],
-            },
-          ]}
-        />
-
-        <View style={styles.tabsRow}>
-          {DISCOVER_TABS.map((tab) => {
-            const isActive = tab.id === activeTab;
-
-            return (
-              <Pressable
-                key={tab.id}
-                accessibilityRole="button"
-                onPress={() => {
-                  triggerHaptic();
-                  onSelect(tab.id);
-                }}
-                style={styles.tabButton}
-              >
-                <Text numberOfLines={1} style={[styles.tabLabel, isActive ? styles.tabLabelActive : null]}>
-                  {tab.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
+    <View style={styles.clusterHeader}>
+      <Text style={styles.clusterTitle}>{title}</Text>
     </View>
   );
 });
 
 const DiscoverSection = memo(function DiscoverSection({
-  tabId,
   group,
   cardWidth,
   cardHeight,
   onPreview,
   onSeeAll,
 }: {
-  tabId: DiscoverTabId;
   group: DiscoverGroup;
   cardWidth: number;
   cardHeight: number;
   onPreview: (item: DiscoverTile) => void;
-  onSeeAll: (tabId: DiscoverTabId, group: DiscoverGroup) => void;
+  onSeeAll: (group: DiscoverGroup) => void;
 }) {
   const snapOffsets = useMemo(
     () => group.items.map((_, index) => index * (cardWidth + CARD_GAP)),
@@ -113,7 +54,7 @@ const DiscoverSection = memo(function DiscoverSection({
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{group.title}</Text>
-        <Pressable accessibilityRole="button" onPress={() => onSeeAll(tabId, group)} style={styles.seeAllButton}>
+        <Pressable accessibilityRole="button" onPress={() => onSeeAll(group)} style={styles.seeAllButton}>
           <Text style={styles.seeAllText}>Explore All</Text>
         </Pressable>
       </View>
@@ -147,12 +88,10 @@ export default function GalleryScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { credits: creditBalance } = useViewerCredits();
-  const [activeTab, setActiveTab] = useState<DiscoverTabId>("home");
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
   const [isCreditModalVisible, setIsCreditModalVisible] = useState(false);
 
-  const groups = useMemo(() => getDiscoverGroups(activeTab), [activeTab]);
-  const tabRailWidth = useMemo(() => Math.min(width * 0.9, 420), [width]);
+  const rows = useMemo(() => DISCOVER_FEED_ROWS, []);
   const cardWidth = useMemo(() => Math.min(Math.round(width * 0.46), 224), [width]);
   const cardHeight = useMemo(() => Math.round(cardWidth * 1.28), [cardWidth]);
   const contentContainerStyle = useMemo(
@@ -171,12 +110,12 @@ export default function GalleryScreen() {
     setPreviewItem(null);
   }, []);
 
-  const handleSeeAll = useCallback((tabId: DiscoverTabId, group: DiscoverGroup) => {
+  const handleSeeAll = useCallback((group: DiscoverGroup) => {
     triggerHaptic();
     router.push({
       pathname: "/discover/[tab]/[group]",
       params: {
-        tab: tabId,
+        tab: "discover",
         group: group.id,
       },
     } as never);
@@ -196,24 +135,25 @@ export default function GalleryScreen() {
     router.push("/paywall");
   }, [router]);
 
-  const handleTabSelect = useCallback((tabId: DiscoverTabId) => {
-    setActiveTab((currentTab) => (currentTab === tabId ? currentTab : tabId));
-  }, []);
-
-  const keyExtractor = useCallback((item: DiscoverGroup) => item.id, []);
+  const keyExtractor = useCallback((item: DiscoverFeedRow) => item.id, []);
 
   const renderSection = useCallback(
-    ({ item }: { item: DiscoverGroup }) => (
-      <DiscoverSection
-        tabId={activeTab}
-        group={item}
-        cardWidth={cardWidth}
-        cardHeight={cardHeight}
-        onPreview={handlePreviewOpen}
-        onSeeAll={handleSeeAll}
-      />
-    ),
-    [activeTab, cardHeight, cardWidth, handlePreviewOpen, handleSeeAll],
+    ({ item }: { item: DiscoverFeedRow }) => {
+      if (item.type === "cluster") {
+        return <DiscoverClusterHeader title={item.cluster.title} />;
+      }
+
+      return (
+        <DiscoverSection
+          group={item.group}
+          cardWidth={cardWidth}
+          cardHeight={cardHeight}
+          onPreview={handlePreviewOpen}
+          onSeeAll={handleSeeAll}
+        />
+      );
+    },
+    [cardHeight, cardWidth, handlePreviewOpen, handleSeeAll],
   );
 
   const listHeader = useMemo(
@@ -230,13 +170,13 @@ export default function GalleryScreen() {
 
         <View style={styles.headerCopy}>
           <Text style={styles.headerTitle}>{t("discover.title")}</Text>
-          <Text style={styles.headerSubtitle}>Curated spaces, finishes, and references sized consistently across every row.</Text>
+          <Text style={styles.headerSubtitle}>
+            Curated interiors, architecture, and foundation references organized into fast-scrolling collections.
+          </Text>
         </View>
-
-        <DiscoverTabs activeTab={activeTab} railWidth={tabRailWidth} onSelect={handleTabSelect} />
       </View>
     ),
-    [activeTab, creditBalance, handleCreditsPress, handleTabSelect, insets.top, t, tabRailWidth],
+    [creditBalance, handleCreditsPress, insets.top, t],
   );
 
   return (
@@ -244,7 +184,7 @@ export default function GalleryScreen() {
       <StatusBar style="dark" />
 
       <FlashList
-        data={groups}
+        data={rows}
         keyExtractor={keyExtractor}
         renderItem={renderSection}
         showsVerticalScrollIndicator={false}
@@ -293,50 +233,20 @@ const styles = StyleSheet.create({
     ...DS.typography.title,
   },
   headerSubtitle: {
-    maxWidth: 320,
+    maxWidth: 360,
     color: DS.colors.textSecondary,
     ...DS.typography.bodySm,
   },
-  tabsOuter: {
-    alignItems: "center",
+  clusterHeader: {
+    paddingHorizontal: SCREEN_SIDE_MARGIN,
+    marginBottom: 14,
   },
-  tabsRail: {
-    padding: TAB_RAIL_PADDING,
-    borderRadius: 999,
-    borderCurve: "continuous",
-    backgroundColor: "#EEF0F4",
-    position: "relative",
-  },
-  tabsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  tabIndicator: {
-    position: "absolute",
-    top: TAB_RAIL_PADDING,
-    left: TAB_RAIL_PADDING,
-    bottom: TAB_RAIL_PADDING,
-    borderRadius: 999,
-    borderCurve: "continuous",
-    backgroundColor: "#111111",
-  },
-  tabButton: {
-    flex: 1,
-    minHeight: 46,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 12,
-  },
-  tabLabel: {
+  clusterTitle: {
     color: DS.colors.textSecondary,
-    ...DS.typography.bodySm,
-    fontWeight: "600",
-  },
-  tabLabelActive: {
-    color: "#FFFFFF",
+    ...DS.typography.label,
   },
   section: {
-    marginBottom: 30,
+    marginBottom: 32,
   },
   sectionHeader: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
@@ -351,7 +261,7 @@ const styles = StyleSheet.create({
     color: "#111111",
     fontSize: 18,
     lineHeight: 24,
-    fontWeight: "700",
+    ...fonts.bold,
   },
   seeAllButton: {
     alignItems: "flex-end",

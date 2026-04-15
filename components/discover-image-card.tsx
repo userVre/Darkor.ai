@@ -1,12 +1,10 @@
 import { memo } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
-import { DS, ambientShadow, organicRadii } from "../lib/design-system";
+import { DS, ambientShadow } from "../lib/design-system";
 import type { DiscoverTile } from "../lib/discover-catalog";
-import Logo from "./logo";
 import { LuxPressable } from "./lux-pressable";
 
 type DiscoverImageCardProps = {
@@ -41,25 +39,6 @@ export const DiscoverImageCard = memo(function DiscoverImageCard({
           style={styles.image}
           contentFit="cover"
         />
-
-        <LinearGradient
-          colors={["rgba(17, 19, 24, 0.02)", "rgba(17, 19, 24, 0.12)", "rgba(17, 19, 24, 0.5)"]}
-          locations={[0, 0.5, 1]}
-          style={styles.overlay}
-        />
-
-        <View style={styles.watermarkShell}>
-          <Logo size={16} style={styles.watermarkLogo} />
-        </View>
-
-        <View style={styles.captionWrap}>
-          <Text numberOfLines={1} style={styles.caption}>
-            {item.previewTitle ?? item.title}
-          </Text>
-          <Text numberOfLines={1} style={styles.subcaption}>
-            HomeDecor AI
-          </Text>
-        </View>
       </View>
     </LuxPressable>
   );
@@ -69,56 +48,19 @@ const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
     backgroundColor: DS.colors.surfaceRaised,
-    ...organicRadii(20, 20),
+    borderRadius: 20,
+    borderCurve: "continuous",
     ...ambientShadow(0.06, 16, 12),
   },
   innerFrame: {
     flex: 1,
     overflow: "hidden",
-    ...organicRadii(20, 20),
+    borderRadius: 20,
+    borderCurve: "continuous",
     backgroundColor: DS.colors.surfaceMuted,
   },
   image: {
     width: "100%",
     height: "100%",
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  watermarkShell: {
-    position: "absolute",
-    top: DS.spacing[2],
-    right: DS.spacing[2],
-    width: 28,
-    height: 28,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  watermarkLogo: {
-    width: 18,
-    height: 18,
-    opacity: 0.3,
-    tintColor: "#FFFFFF",
-  },
-  captionWrap: {
-    position: "absolute",
-    left: DS.spacing[2],
-    right: DS.spacing[2],
-    bottom: DS.spacing[2],
-    gap: 2,
-  },
-  caption: {
-    color: "#FFFFFF",
-    ...DS.typography.bodySm,
-    fontWeight: "700",
-  },
-  subcaption: {
-    color: "rgba(255,255,255,0.86)",
-    fontFamily: "Inter",
-    fontSize: 11,
-    fontWeight: "500",
-    lineHeight: 16,
-    textTransform: "uppercase",
-    letterSpacing: 1.4,
   },
 });

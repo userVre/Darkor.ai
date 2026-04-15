@@ -7,10 +7,8 @@ from PIL import Image, ImageStat
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DOWNLOADS = Path.home() / "Downloads"
 SOURCE_ROOT = ROOT / "assets" / "media" / "discover" / "collages" / "source"
 OUTPUT_ROOT = ROOT / "assets" / "media" / "discover" / "generated"
-MANIFEST_PATH = ROOT / "lib" / "generated-discover-assets.ts"
 TARGET_COUNT = 7
 
 
@@ -20,32 +18,32 @@ class DiscoverCategory:
     title: str
     service: str
     source_name: str
+    output_dir_name: str
 
 
 CATEGORIES = (
-    DiscoverCategory("garden", "Garden", "garden", "Jardins du monde en harmonie.png"),
-    DiscoverCategory("apartment", "Apartment", "exterior", "Collage d'architectures modernes et vari\u00e9es.png"),
-    DiscoverCategory("retail", "Retail", "exterior", "Magasins diversifi\u00e9s et modernes.png"),
-    DiscoverCategory("office-building", "Office Building", "exterior", "B\u00e2timents de bureaux innovants et modernes.png"),
-    DiscoverCategory("house", "House", "exterior", "Maisons aux styles vari\u00e9s et uniques.png"),
-    DiscoverCategory("modern-facade", "Modern Facade", "exterior", "Collage d'architectures modernes et vari\u00e9es.png"),
-    DiscoverCategory("residential", "Residential", "exterior", "Diff\u00e9rents types de complexes r\u00e9sidentiels.png"),
-    DiscoverCategory("villa", "Villa", "exterior", "Sept villas de luxe et styles uniques.png"),
-    DiscoverCategory("deck", "Deck", "garden", "Terrasses de luxe au bord de l'eau.png"),
-    DiscoverCategory("hall", "Hall", "interior", "Entr\u00e9es majestueuses et vari\u00e9es.png"),
-    DiscoverCategory("balcony", "Balcony", "garden", "Balcons divers _ styles et ambiances.png"),
-    DiscoverCategory("toilet", "Toilet", "interior", "Sept styles de salle de bain modernes.png"),
-    DiscoverCategory("attic", "Attic", "interior", "Conversions d'attiques _ id\u00e9es cr\u00e9atives.png"),
-    DiscoverCategory("restaurant", "Restaurant", "interior", "Interiors de restaurants vari\u00e9s et \u00e9l\u00e9gants.png"),
-    DiscoverCategory("study-room", "Study Room", "interior", "Des chambres d'\u00e9tude vari\u00e9es et styl\u00e9es.png"),
-    DiscoverCategory("coffee-shop", "Coffee Shop", "interior", "ChatGPT Image 11 avr. 2026, 08_44_28.png"),
-    DiscoverCategory("home-office", "Home Office", "interior", "Configurations de bureaux \u00e0 domicile.png"),
-    DiscoverCategory("gaming-room", "Gaming Room", "interior", "ChatGPT Image 11 avr. 2026, 08_44_15.png"),
-    DiscoverCategory("bathroom", "Bathroom", "interior", "ChatGPT Image 11 avr. 2026, 08_38_08.png"),
-    DiscoverCategory("bedroom", "Bedroom", "interior", "Styles vari\u00e9es pour chambres modernes.png"),
-    DiscoverCategory("dining-room", "Dining Room", "interior", "Sept styles de salles \u00e0 manger.png"),
-    DiscoverCategory("living-room", "Living Room", "interior", "S\u00e9lection de salons aux styles vari\u00e9s.png"),
-    DiscoverCategory("kitchen", "Kitchen", "interior", "Sept cuisines aux styles distincts.png"),
+    DiscoverCategory("kitchen", "Kitchen", "interior", "kitchen.png", "kitchen"),
+    DiscoverCategory("living-room", "Living Room", "interior", "living-room.png", "living-room"),
+    DiscoverCategory("dining-room", "Dining Room", "interior", "dining-room.png", "dining-room"),
+    DiscoverCategory("bedroom", "Bedroom", "interior", "bedroom.png", "bedroom"),
+    DiscoverCategory("bathroom", "Bathroom", "interior", "master-suite.png", "master-suite"),
+    DiscoverCategory("gaming-room", "Gaming Room", "interior", "gaming-room.png", "gaming-room"),
+    DiscoverCategory("home-office", "Home Office", "interior", "home-office.png", "home-office"),
+    DiscoverCategory("coffee-shop", "Coffee Shop", "interior", "coffee-shop.png", "coffee-shop"),
+    DiscoverCategory("study-room", "Study Room", "interior", "study-room.png", "study-room"),
+    DiscoverCategory("restaurant", "Restaurant", "interior", "restaurant.png", "restaurant"),
+    DiscoverCategory("attic", "Attic", "interior", "attic.png", "attic"),
+    DiscoverCategory("toilet", "Toilet", "interior", "bathroom.png", "bathroom"),
+    DiscoverCategory("balcony", "Balcony", "interior", "balcony.png", "balcony"),
+    DiscoverCategory("hall", "Hall", "interior", "entryway.png", "entryway"),
+    DiscoverCategory("deck", "Deck", "interior", "terrace.png", "terrace"),
+    DiscoverCategory("villa", "Villa", "exterior", "villa.png", "villa"),
+    DiscoverCategory("apartment", "Apartment", "exterior", "apartment.png", "apartment"),
+    DiscoverCategory("house", "House", "exterior", "house.png", "house"),
+    DiscoverCategory("office-building", "Office Building", "exterior", "office-building.png", "office-building"),
+    DiscoverCategory("retail", "Retail", "exterior", "retail.png", "retail"),
+    DiscoverCategory("residential", "Residential", "exterior", "exterior.png", "exterior"),
+    DiscoverCategory("garden", "Garden", "garden", "garden.png", "garden"),
 )
 
 
@@ -194,62 +192,31 @@ def ensure_target_count(image: Image.Image, boxes: list[tuple[int, int, int, int
 
 
 def export_category(category: DiscoverCategory) -> None:
-    source_path = DOWNLOADS / category.source_name
+    source_path = SOURCE_ROOT / category.source_name
     if not source_path.exists():
         raise FileNotFoundError(f"Missing source collage: {source_path}")
-
-    SOURCE_ROOT.mkdir(parents=True, exist_ok=True)
-    copied_source_path = SOURCE_ROOT / f"{category.id}.png"
-    copied_source_path.write_bytes(source_path.read_bytes())
 
     image = Image.open(source_path).convert("RGB")
     candidate_boxes = dedupe_boxes(build_candidate_boxes(image))
     meaningful_boxes = [box for box in candidate_boxes if is_meaningful_crop(image, box)]
     selected_boxes = ensure_target_count(image, meaningful_boxes)
 
-    output_dir = OUTPUT_ROOT / category.id
+    output_dir = OUTPUT_ROOT / category.output_dir_name
     output_dir.mkdir(parents=True, exist_ok=True)
     for existing in output_dir.glob("*.jpg"):
         existing.unlink()
 
     for index, box in enumerate(selected_boxes, start=1):
         crop = image.crop(box)
-        output_path = output_dir / f"{category.id}-{index}.jpg"
+        output_path = output_dir / f"{category.output_dir_name}-{index}.jpg"
         crop.save(output_path, format="JPEG", quality=94, optimize=True, progressive=True)
 
-    print(f"{category.id}: exported {len(selected_boxes)} crops from {source_path.name}")
-
-
-def write_manifest(categories: tuple[DiscoverCategory, ...]) -> None:
-    lines = [
-        "/* This file is auto-generated by scripts/build_discover_catalog_assets.py. */",
-        "",
-        "export const GENERATED_DISCOVER_ASSETS = {",
-    ]
-
-    for category in categories:
-        lines.append(f'  "{category.id}": [')
-        for index in range(1, TARGET_COUNT + 1):
-            require_path = f"../assets/media/discover/generated/{category.id}/{category.id}-{index}.jpg"
-            lines.append(f'    require("{require_path}"),')
-        lines.append("  ],")
-
-    lines.extend(
-        [
-            "} as const;",
-            "",
-            "export type GeneratedDiscoverAssetId = keyof typeof GENERATED_DISCOVER_ASSETS;",
-            "",
-        ]
-    )
-
-    MANIFEST_PATH.write_text("\n".join(lines), encoding="utf-8")
+    print(f"{category.id}: exported {len(selected_boxes)} crops from {source_path.name} -> {output_dir.name}")
 
 
 def main() -> None:
     for category in CATEGORIES:
         export_category(category)
-    write_manifest(CATEGORIES)
 
 
 if __name__ == "__main__":
