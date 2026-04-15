@@ -1,0 +1,5 @@
+Always refer to ARCHITECTURE.md before starting any task.
+This is HomeDecor AI project.
+Design Rules: Use Inter font, Left-aligned text, Neutral palette, 24px/32px spacing, No gradients.
+Logic Rules: PRO users (4K, No Watermark), FREE users (1080p, Watermark, 3 Diamonds/72h).
+Project context is always available via @Codebase.
