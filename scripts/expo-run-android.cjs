@@ -53,7 +53,7 @@ function resolveAndroidDevClientScheme(projectRoot) {
 }
 
 async function main() {
-  const projectRoot = fs.realpathSync(resolve(__dirname, ".."));
+  const projectRoot = resolve(__dirname, "..");
   const metroConfig = pathToFileURL(resolve(projectRoot, "metro.config.js")).href;
   process.env.EXPO_OVERRIDE_METRO_CONFIG = metroConfig;
   process.env.EXPO_DEV_PORT = process.env.EXPO_DEV_PORT || "8081";

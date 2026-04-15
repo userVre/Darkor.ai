@@ -54,7 +54,7 @@ export const DiscoverImageCard = memo(function DiscoverImageCard({
 
         <View style={styles.captionWrap}>
           <Text numberOfLines={1} style={styles.caption}>
-            {item.previewTitle}
+            {item.previewTitle ?? item.title}
           </Text>
           <Text numberOfLines={1} style={styles.subcaption}>
             HomeDecor AI

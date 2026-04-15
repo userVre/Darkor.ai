@@ -7,6 +7,7 @@ export type DiscoverService = "interior" | "garden" | "exterior" | "floor" | "pa
 export type DiscoverTile = {
   id: string;
   title: string;
+  previewTitle?: string;
   subtitle: string;
   spaceType: string;
   style: string;

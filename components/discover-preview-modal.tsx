@@ -37,7 +37,7 @@ export function DiscoverPreviewModal({
           </Pressable>
 
           <Text numberOfLines={1} style={styles.previewTitle}>
-            {item.previewTitle.toUpperCase()}
+            {(item.previewTitle ?? item.title).toUpperCase()}
           </Text>
 
           <View style={styles.topBarSpacer} />
