@@ -1,6 +1,7 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from "react-native";
+
+import { DS } from "../lib/design-system";
 
 type StepProgressLineProps = {
   progress: number;
@@ -14,8 +15,8 @@ const MIN_VISIBLE_FILL = 14;
 export function StepProgressLine({
   progress,
   style,
-  trackColor = "#E8EBEF",
-  fillColor = "#0A0A0A",
+  trackColor = DS.colors.border,
+  fillColor = DS.colors.accent,
 }: StepProgressLineProps) {
   const clampedProgress = Math.max(0, Math.min(progress, 1));
   const progressValue = useRef(new Animated.Value(clampedProgress)).current;
@@ -46,33 +47,8 @@ export function StepProgressLine({
   };
 
   return (
-    <View
-      onLayout={handleLayout}
-      style={[styles.track, { backgroundColor: trackColor }, style]}
-    >
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.glow,
-          {
-            width: fillWidth,
-          },
-        ]}
-      />
-      <Animated.View
-        style={[
-          styles.fill,
-          { width: fillWidth },
-        ]}
-      >
-        <LinearGradient
-          colors={["#FF776D", fillColor, "#FFB0AA"]}
-          locations={[0, 0.62, 1]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={styles.gradient}
-        />
-      </Animated.View>
+    <View onLayout={handleLayout} style={[styles.track, { backgroundColor: trackColor }, style]}>
+      <Animated.View pointerEvents="none" style={[styles.fill, { width: fillWidth, backgroundColor: fillColor }]} />
     </View>
   );
 }
@@ -83,20 +59,8 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     overflow: "hidden",
   },
-  glow: {
-    position: "absolute",
-    top: -3,
-    bottom: -3,
-    left: 0,
-    borderRadius: 999,
-    backgroundColor: "rgba(204,51,51,0.18)",
-  },
   fill: {
     height: "100%",
     borderRadius: 999,
-    overflow: "hidden",
-  },
-  gradient: {
-    ...StyleSheet.absoluteFillObject,
   },
 });

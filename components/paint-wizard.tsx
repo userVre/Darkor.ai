@@ -95,6 +95,7 @@ type FinishOption = {
 };
 
 type PaintWizardProps = {
+  onFlowActiveChange?: (isFlowActive: boolean) => void;
   onProcessingStateChange?: (isProcessing: boolean) => void;
 };
 
@@ -120,7 +121,7 @@ const OLED_BLACK = "#000000";
 const CARD_BLACK = SERVICE_WIZARD_THEME.colors.surfaceRaised;
 const CARD_BLACK_SOFT = SERVICE_WIZARD_THEME.colors.surfaceSoft;
 const MASK_COLOR = "rgba(255,59,48,0.42)";
-const MASK_ACCENT = "#CC3333";
+const MASK_ACCENT = "#121212";
 const MASK_CAPTURE_COLOR = "#FFFFFF";
 const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
@@ -461,7 +462,7 @@ const FinishCard = memo(function FinishCard({
   );
 });
 
-export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
+export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: PaintWizardProps) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { presetStyle, startStep } = useLocalSearchParams<{ presetStyle?: string; startStep?: string }>();
@@ -1380,6 +1381,14 @@ export function PaintWizard({ onProcessingStateChange }: PaintWizardProps) {
       onProcessingStateChange?.(false);
     };
   }, [onProcessingStateChange, step]);
+
+  useEffect(() => {
+    onFlowActiveChange?.(step !== "processing" && step !== "result");
+
+    return () => {
+      onFlowActiveChange?.(false);
+    };
+  }, [onFlowActiveChange, step]);
 
   const handleBack = useCallback(() => {
     triggerHaptic();
@@ -2344,12 +2353,12 @@ const styles = StyleSheet.create({
   },
   selectionContinueButton: {
     height: 56,
-    borderRadius: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
   selectionContinueButtonActive: {
-                backgroundColor: "#CC3333",
+    backgroundColor: "#121212",
   },
   selectionContinueButtonDisabled: {
     backgroundColor: "#E8E8E8",

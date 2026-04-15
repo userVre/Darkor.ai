@@ -61,6 +61,7 @@ type MeResponse = {
 type ArchiveGeneration = { _id: string; imageUrl?: string | null; status?: "processing" | "ready" | "failed"; errorMessage?: string | null };
 
 type FloorWizardProps = {
+  onFlowActiveChange?: (isFlowActive: boolean) => void;
   onProcessingStateChange?: (isProcessing: boolean) => void;
 };
 
@@ -117,7 +118,7 @@ function scaleMaskValue(value: number, scale: number) {
   return value * scale;
 }
 
-export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
+export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: FloorWizardProps) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { presetStyle, startStep } = useLocalSearchParams<{ presetStyle?: string; startStep?: string }>();
@@ -843,6 +844,14 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
     };
   }, [onProcessingStateChange, step]);
 
+  useEffect(() => {
+    onFlowActiveChange?.(step !== "processing" && step !== "result");
+
+    return () => {
+      onFlowActiveChange?.(false);
+    };
+  }, [onFlowActiveChange, step]);
+
   const handleBack = useCallback(() => {
     triggerHaptic();
     clearDetectTimer();
@@ -992,7 +1001,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
                 right: scaleMaskValue(24, maskLayoutScale),
                 bottom: maskButtonBottom,
                 height: scaleMaskValue(60, maskLayoutScale),
-            backgroundColor: canContinueFromMask ? "#CC3333" : "#E7E7E7",
+                backgroundColor: canContinueFromMask ? "#121212" : "#E7E7E7",
               },
             ]}
           >
@@ -1099,7 +1108,7 @@ export function FloorWizard({ onProcessingStateChange }: FloorWizardProps) {
                       right: scaleMaskValue(20, maskLayoutScale),
                       bottom: promptModalSaveBottom,
                       height: scaleMaskValue(60, maskLayoutScale),
-            backgroundColor: canSaveCustomPrompt ? "#CC3333" : "#E7E7E7",
+                      backgroundColor: canSaveCustomPrompt ? "#121212" : "#E7E7E7",
                     },
                   ]}
                 >
@@ -1342,11 +1351,11 @@ const styles = StyleSheet.create({
   resultActionButton: {
     marginHorizontal: 20,
     height: 56,
-    borderRadius: 16,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
-  resultActionSave: { backgroundColor: "#CC3333" },
+  resultActionSave: { backgroundColor: "#121212" },
   resultActionShare: { backgroundColor: "#05070A" },
   resultActionRetry: { backgroundColor: "#F0F0F0" },
   resultActionSaveText: {

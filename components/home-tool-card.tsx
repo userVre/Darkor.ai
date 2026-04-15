@@ -55,10 +55,12 @@ export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
 const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: DS.colors.surfaceRaised,
     borderRadius: 24,
     borderCurve: "continuous",
     ...ambientShadow(0.06, 18, 12),
+    borderWidth: 1,
+    borderColor: DS.colors.border,
   },
   imageWrap: {
     height: 312,
@@ -88,13 +90,13 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
   },
   title: {
-    color: "#000000",
+    color: DS.colors.textPrimary,
     ...DS.typography.cardTitle,
     fontSize: 24,
     lineHeight: 30,
   },
   description: {
-    color: "#6B7280",
+    color: DS.colors.textSecondary,
     ...DS.typography.bodySm,
   },
   buttonWrap: {
@@ -107,10 +109,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 18,
     paddingVertical: 11,
-    backgroundColor: "#111111",
+    backgroundColor: DS.colors.accent,
   },
   buttonText: {
-    color: "#FFFFFF",
+    color: DS.colors.textInverse,
     ...DS.typography.button,
   },
 });

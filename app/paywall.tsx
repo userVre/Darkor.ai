@@ -54,19 +54,23 @@ import {
   type RevenueCatPackage,
   type RevenueCatPurchases,
 } from "../lib/revenuecat";
+import { radix } from "../styles/theme";
 import { fonts } from "../styles/typography";
 
-const SCREEN_BG = "#05070A";
-const PANEL_BG = "#111823";
-const PANEL_BORDER = "#243140";
-const ACCENT = "#FFFFFF";
-const BRAND_RED = "#CC3333";
-const TOGGLE_OFF = "#3A3A3A";
-const TEXT_PRIMARY = "#FFFFFF";
-const TEXT_MUTED = "#A0A0A0";
-const TEXT_RESTORE = "#B3B3B3";
-const TEXT_ACCENT = "#05070A";
-const CTA_TEXT = "#FFFFFF";
+const SCREEN_BG = radix.dark.slate.slate12;
+const PANEL_BG = radix.dark.slate.slate3;
+const PANEL_BORDER = radix.dark.slate.slate7;
+const ACCENT = radix.dark.slate.slate1;
+const BRAND_RED = radix.dark.ruby.ruby9;
+const BRAND_RED_ACTIVE = radix.dark.ruby.ruby10;
+const TOGGLE_OFF = radix.dark.slate.slate8;
+const TEXT_PRIMARY = radix.dark.slate.slate12;
+const TEXT_MUTED = radix.dark.slate.slate11;
+const TEXT_RESTORE = radix.dark.slate.slate11;
+const TEXT_ACCENT = radix.dark.slate.slate1;
+const CTA_TEXT = radix.dark.slate.slate1;
+const ERROR_TEXT = radix.dark.ruby.ruby11;
+const INDIGO_BADGE = radix.dark.indigo.indigo9;
 const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 2500;
 const CLOSE_DELAY_MS = 5000;
@@ -353,7 +357,7 @@ function CountdownCloseButton({
         >
           {canClose ? (
             <Pressable accessibilityLabel={t("paywall.closeA11y")} accessibilityRole="button" hitSlop={10} onPress={onPress} style={styles.closeButtonInner}>
-              <X color="#FFFFFF" size={20} strokeWidth={2.4} />
+              <X color={TEXT_PRIMARY} size={20} strokeWidth={2.4} />
             </Pressable>
           ) : (
             <View pointerEvents="none" style={styles.countdownWrap}>
@@ -363,7 +367,7 @@ function CountdownCloseButton({
                   cy={CLOSE_VISUAL_SIZE / 2}
                   fill="none"
                   r={CLOSE_RING_RADIUS}
-                  stroke="rgba(255,255,255,0.18)"
+                  stroke={PANEL_BORDER}
                   strokeWidth={CLOSE_RING_STROKE_WIDTH}
                 />
                 <AnimatedSvgCircle
@@ -375,7 +379,7 @@ function CountdownCloseButton({
                   rotation="-90"
                   originX={CLOSE_VISUAL_SIZE / 2}
                   originY={CLOSE_VISUAL_SIZE / 2}
-                  stroke="#FFFFFF"
+                  stroke={TEXT_PRIMARY}
                   strokeDasharray={CLOSE_RING_CIRCUMFERENCE}
                   strokeLinecap="round"
                   strokeWidth={CLOSE_RING_STROKE_WIDTH}
@@ -1069,7 +1073,7 @@ const styles = StyleSheet.create({
     position: "absolute",
   },
   countdownText: {
-    color: "#FFFFFF",
+    color: TEXT_PRIMARY,
     fontSize: 11,
     lineHeight: 11,
     ...fonts.bold,
@@ -1112,7 +1116,7 @@ const styles = StyleSheet.create({
   },
   subtitleText: {
     maxWidth: 320,
-    color: "#D6D6D6",
+    color: TEXT_MUTED,
     fontSize: 13,
     lineHeight: 18,
     textAlign: "center",
@@ -1223,12 +1227,12 @@ const styles = StyleSheet.create({
     top: -10,
     right: 12,
     borderRadius: 14,
-    backgroundColor: ACCENT,
+    backgroundColor: INDIGO_BADGE,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   bestOfferText: {
-    color: TEXT_ACCENT,
+    color: TEXT_PRIMARY,
     fontSize: 11,
     lineHeight: 13,
     textTransform: "uppercase",
@@ -1294,7 +1298,7 @@ const styles = StyleSheet.create({
   trialBadgeCircle: {
     position: "absolute",
     borderRadius: 999,
-    backgroundColor: "rgba(229, 57, 53, 0.24)",
+    backgroundColor: BRAND_RED,
   },
   trialBadgeCircleOne: {
     width: 34,
@@ -1307,14 +1311,14 @@ const styles = StyleSheet.create({
     height: 28,
     left: 22,
     top: 3,
-    backgroundColor: "rgba(229, 57, 53, 0.18)",
+    backgroundColor: BRAND_RED_ACTIVE,
   },
   trialBadgeCircleThree: {
     width: 24,
     height: 24,
     right: 8,
     top: 5,
-    backgroundColor: "rgba(229, 57, 53, 0.16)",
+    backgroundColor: BRAND_RED_ACTIVE,
   },
   trialBadgeText: {
     color: TEXT_PRIMARY,
@@ -1354,7 +1358,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 12,
     textAlign: "left",
-    color: "#FFB4B2",
+    color: ERROR_TEXT,
     fontSize: 12,
     lineHeight: 16,
     ...fonts.medium,
@@ -1416,14 +1420,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   legalLinkText: {
-    color: "#999999",
+    color: TEXT_MUTED,
     fontSize: 11,
     lineHeight: 14,
     ...fonts.regular,
   },
   legalDivider: {
     marginHorizontal: 6,
-    color: "#999999",
+    color: TEXT_MUTED,
     fontSize: 12,
     lineHeight: 14,
     ...fonts.regular,

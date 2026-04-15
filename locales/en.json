@@ -18,7 +18,7 @@
       "takePhoto": "Take Photo",
       "chooseFromGallery": "Choose from Gallery",
       "addPhoto": "Add a Photo",
-      "chooseMediaSource": "Select Media Source",
+      "chooseMediaSource": "Choose an image source",
       "examplePhotos": "Example Photos",
       "seeAll": "Explore All",
       "uploadPlus": "Upload +",
@@ -34,29 +34,29 @@
       "step": "Step {{current}} / {{total}}"
     },
     "alerts": {
-      "exitTitle": "Exit?",
-      "progressLost": "Your progress will be lost.",
+      "exitTitle": "Leave this design?",
+      "progressLost": "Your current design progress will be lost.",
       "completeStepTitle": "Complete this step",
-      "makeSelection": "Please make a selection to continue.",
-      "addPhotoToContinue": "Please add a photo to continue.",
+      "makeSelection": "Make a selection to continue.",
+      "addPhotoToContinue": "Add a photo to continue.",
       "invalidHexTitle": "Invalid color",
-      "invalidHexBody": "Enter a valid 6-digit hex color like #D946EF."
+      "invalidHexBody": "Enter a valid 6-digit hex code such as #D946EF."
     },
     "states": {
       "workInProgress": "Work in progress",
-      "generationFailed": "Generation failed",
-      "savedToGallery": "Saved to your gallery",
-      "photoPermissionNeeded": "Photo library permission is required.",
+      "generationFailed": "Render encountered an issue. Please try again.",
+      "savedToGallery": "Saved to your photo library",
+      "photoPermissionNeeded": "Photo library access is required.",
       "loading": "Loading..."
     }
   },
   "boot": {
     "loadingApp": "Loading HomeDecor AI",
     "loadingAccount": "Loading your account...",
-    "checkingPlan": "Checking your plan...",
-    "secureAccount": "Secure your account to start creating...",
+    "checkingPlan": "Reviewing your plan...",
+    "secureAccount": "Secure your account to begin designing...",
     "missingEnvTitle": "Missing Environment Variables",
-    "missingEnvBody": "The following values are required before the app can start:"
+    "missingEnvBody": "The following values are required before HomeDecor AI can launch:"
   },
   "tabs": {
     "tools": "Tools",
@@ -67,12 +67,12 @@
   "home": {
     "title": "HomeDecor AI",
     "errors": {
-      "tryItUnavailableTitle": "Try It unavailable"
+      "tryItUnavailableTitle": "Preview unavailable"
     },
     "tools": {
       "interior": {
         "title": "Interior Design",
-        "description": "Reimagine your space with AI precision."
+        "description": "Transform any room with AI-powered interior design."
       },
       "exterior": {
         "title": "Exterior Design",
@@ -95,9 +95,9 @@
   },
   "paywall": {
     "features": {
-      "fasterRendering": "Faster Results, Every Time",
-      "adFree": "Ultra-HD Quality Renders",
-      "unlimitedRenders": "20 weekly or 80 monthly renders"
+      "fasterRendering": "Priority AI Processing",
+      "adFree": "Ultra-HD (4K) Quality Renders",
+      "unlimitedRenders": "Fixed Quotas: 20 weekly or 80 monthly renders"
     },
     "restore": "Restore",
     "bestOffer": "Best Offer",
@@ -117,7 +117,7 @@
     "processing": "Processing...",
     "tryForFree": "Begin Your Pro Trial",
     "continue": "Begin Your Pro Trial",
-    "subtitle": "Experience Professional Grade Design",
+    "subtitle": "Unlock ultra-HD rendering and exclusive designer styles.",
     "terms": "Terms",
     "privacy": "Privacy",
     "subscriptionsUnavailable": "Subscriptions are temporarily unavailable.",
@@ -128,12 +128,12 @@
     "planUnavailable": "The selected plan is unavailable right now.",
     "purchaseCancelled": "Purchase cancelled.",
     "closeA11y": "Close paywall",
-    "title": "Design Like a Pro. Fixed Quotas.",
+    "title": "Design Like a Pro. No Limits.",
     "beginTrial": "Begin Your Pro Trial"
   },
   "creditLimit": {
-    "title": "Upgrade to keep creating",
-    "body": "You have reached the current generation limit for this account. Upgrade to unlock more redesigns and premium output options."
+    "title": "Upgrade to continue designing",
+    "body": "You have reached the available render limit for this account. Upgrade to unlock more design iterations and premium output quality."
   },
   "settings": {
     "title": "Settings",
@@ -161,14 +161,14 @@
     },
     "language": {
       "title": "Language",
-      "description": "Choose whether HomeDecor AI follows your device language or uses a specific app language.",
+      "description": "Choose whether HomeDecor AI follows your device language or uses a selected in-app language.",
       "auto": "Auto (System Default)",
       "autoShort": "Auto",
       "usingSystem": "Currently following {{language}} from your device"
     },
     "messages": {
       "destinationUnavailable": "This destination is unavailable right now.",
-      "emailClientUnavailable": "Unable to open your email client.",
+      "emailClientUnavailable": "Unable to open your email app.",
       "reviewUnavailable": "Review requests are unavailable right now.",
       "shareUnavailable": "Unable to open the share sheet.",
       "subscriptionsUnavailable": "Subscriptions are unavailable right now.",
@@ -178,31 +178,31 @@
       "userIdCopied": "User ID copied",
       "deleteFailed": "Unable to delete your account right now."
     },
-    "shareMessage": "Design your space with HomeDecor AI: {{url}}",
+    "shareMessage": "Explore designs created with HomeDecor AI: {{url}}",
     "deleteAccount": {
-      "title": "Delete Account?",
-      "body": "This will permanently delete your account and all your data. This action cannot be undone."
+      "title": "Delete account?",
+      "body": "This will permanently delete your account and all associated data. This action cannot be undone."
     }
   },
   "profile": {
     "title": "My Design Portfolio",
     "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
     "emptySubtitle": "",
-    "deleteFromBoardTitle": "Delete from Board?",
-    "deleteFromBoardBody": "This design will be removed from your board.",
-    "deletedFromBoard": "Deleted from Board",
-    "unableDelete": "Unable to delete this design.",
-    "generationFailedBody": "This redesign did not finish. Please try again.",
-    "saveToGallery": "Save to Gallery",
-    "savedToGallery": "Saved to Gallery",
+    "deleteFromBoardTitle": "Remove from portfolio?",
+    "deleteFromBoardBody": "This design will be removed from your portfolio.",
+    "deletedFromBoard": "Removed from portfolio",
+    "unableDelete": "Unable to remove this design.",
+    "generationFailedBody": "This render did not complete successfully. Please try again.",
+    "saveToGallery": "Save to Photo Library",
+    "savedToGallery": "Saved to Photo Library",
     "unableSave": "Unable to save this design."
   },
   "discover": {
     "title": "Discover",
     "tabs": {
-      "home": "Interior",
-      "garden": "Garden",
-      "exterior": "Exterior "
+      "home": "Interiors",
+      "garden": "Landscapes",
+      "exterior": "Architecture"
     },
     "tryThisStyle": "Try This Style"
   },
@@ -211,31 +211,31 @@
     "emailPlaceholder": "you@company.com",
     "signIn": {
       "title": "Sign in",
-      "subtitle": "Access your saved boards, credits, purchases, and redesign history with the same calm, high-contrast workspace.",
+      "subtitle": "Access your saved designs, credits, purchases, and project history in one refined workspace.",
       "passwordPlaceholder": "Enter your password",
       "cta": "Continue",
       "loading": "Signing in...",
       "appleCta": "Continue with Apple",
       "additionalVerificationTitle": "Sign in",
       "additionalVerificationBody": "Additional verification is required for this account.",
-      "errorTitle": "Sign in failed",
-      "errorFallback": "Sign in failed",
-      "appleErrorFallback": "Apple sign-in failed",
+      "errorTitle": "Sign-in failed",
+      "errorFallback": "Unable to sign you in.",
+      "appleErrorFallback": "Apple sign-in failed.",
       "noAccount": "No account?",
       "createOne": "Create one"
     },
     "signUp": {
       "title": "Create account",
-      "subtitle": "Start with a cleaner premium shell, then carry your redesigns, subscriptions, and saved boards across devices.",
+      "subtitle": "Create your account to carry your designs, subscriptions, and saved projects across devices.",
       "passwordPlaceholder": "Create a secure password",
       "cta": "Create account",
       "loading": "Creating...",
       "appleCta": "Continue with Apple",
       "verifyTitle": "Verify email",
       "verifyBody": "Check your inbox for the verification code, then sign in.",
-      "errorTitle": "Sign up failed",
-      "errorFallback": "Sign up failed",
-      "appleErrorFallback": "Apple sign-up failed",
+      "errorTitle": "Sign-up failed",
+      "errorFallback": "Unable to create your account.",
+      "appleErrorFallback": "Apple sign-up failed.",
       "haveAccount": "Already have an account?",
       "signInLink": "Sign in"
     }
@@ -243,23 +243,23 @@
   "faq": {
     "eyebrow": "Support",
     "title": "FAQ",
-    "description": "Quick answers to the most common HomeDecor AI questions.",
+    "description": "Clear answers to the most common HomeDecor AI questions.",
     "items": {
       "credits": {
         "question": "How do credits work in HomeDecor AI?",
-        "answer": "Each redesign uses credits based on the workflow and export quality you choose. Your remaining balance updates automatically after every generation."
+        "answer": "Each render uses credits based on the workflow and output tier you choose. Your remaining balance updates automatically after every generation."
       },
       "pro": {
         "question": "What do I unlock with PRO?",
-        "answer": "PRO unlocks premium generation tools, faster processing, and higher-end output quality through the paywall flow in the app."
+        "answer": "PRO unlocks premium rendering tools, faster processing, and higher-end output quality through the in-app upgrade flow."
       },
       "slowResult": {
         "question": "Why is my result taking longer than expected?",
-        "answer": "Generation times depend on queue load, source image quality, and the workflow you selected. Keeping the app open on a stable connection helps avoid interruptions."
+        "answer": "Render times depend on queue demand, source image quality, and the workflow you selected. Keeping the app open on a stable connection helps avoid interruptions."
       },
       "deleteAccount": {
         "question": "How do I delete my account?",
-        "answer": "Open Settings and choose Delete Information. This removes your account data and signs you out after confirmation."
+        "answer": "Open Settings and choose Delete Information. This permanently removes your account data and signs you out after confirmation."
       }
     }
   },
@@ -349,16 +349,16 @@
   },
   "processing": {
     "title": "AI is crafting your architectural masterpiece...",
-    "eta": "Usually ready in ~15 seconds",
+    "eta": "Your vision will be ready in ~15 seconds.",
     "cancelKeepCredit": "Cancel and keep my credit",
     "status": {
-      "analyzingGeometry": "Analyzing your room geometry...",
-      "identifyingSurfaces": "Identifying walls and surfaces...",
-      "applyingStyle": "Applying your selected style...",
+      "analyzingGeometry": "Analyzing architectural geometry...",
+      "identifyingSurfaces": "Identifying surfaces and structural lines...",
+      "applyingStyle": "Applying your selected design direction...",
       "renderingMaterials": "Rendering materials and lighting...",
-      "addingDetails": "Adding final details...",
-      "almostReady": "Almost ready...",
-      "renderingFinalLighting": "Rendering final lighting..."
+      "addingDetails": "Refining the final details...",
+      "almostReady": "Finalizing your render...",
+      "renderingFinalLighting": "Composing the final lighting pass..."
     }
   },
   "wizard": {
@@ -370,29 +370,29 @@
     "stepOne": {
       "title": "Upload Your Vision",
       "emptyTitle": "Upload Your Vision",
-      "emptySubtitle": "Redesign and beautify your room",
+      "emptySubtitle": "Start your transformation with a single photo.",
       "removePhoto": "Remove selected photo",
-      "cta": "Upload"
+      "cta": "Begin Now"
     },
     "interior": {
-      "stepTwoTitle": "Choose Your Space",
-      "stepTwoSubtitle": "Select a room to design and see it transformed in your chosen style.",
-      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepTwoTitle": "Identify Your Space",
+      "stepTwoSubtitle": "Select the room type so the redesign stays architecturally grounded.",
+      "stepThreeTitle": "Define Your Aesthetic",
       "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
-      "stepFourMode": "Design Mode",
+      "stepFourMode": "Design Integrity",
       "stepFourPalette": "Color Harmony"
     },
     "exterior": {
-      "stepTwoTitle": "Select Building Type",
-      "stepTwoSubtitle": "Select the building type to redesign and see it in your chosen style",
-      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepTwoTitle": "Identify the Building Type",
+      "stepTwoSubtitle": "Select the architectural form you want to redesign.",
+      "stepThreeTitle": "Define Your Aesthetic",
       "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
       "stepFourTitle": "Color Harmony"
     },
     "garden": {
       "stepOneEmptyTitle": "Upload Your Vision",
-      "stepOneEmptySubtitle": "Redesign and beautify your garden",
-      "stepTwoTitle": "Curate Your Aesthetic",
+      "stepOneEmptySubtitle": "Start your outdoor transformation with a single photo.",
+      "stepTwoTitle": "Define Your Aesthetic",
       "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
       "stepThreeTitle": "Color Harmony"
     },
@@ -404,11 +404,11 @@
     },
     "floorFlow": {
       "title": "Floor Restyle",
-      "masking": "Masking your floor...",
+      "masking": "Mapping your floor plane...",
       "promptLabel": "Describe Your Vision",
-      "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials.",
-      "promptExamplesTitle": "Example prompts",
-      "generateCta": "Generate My Design →",
+      "promptPlaceholder": "Describe the flooring transformation you want, from material direction to mood and finish.",
+      "promptExamplesTitle": "Prompt examples",
+      "generateCta": "Generate My Design",
       "selectMaterialCta": "Select a Material",
       "selectMaterialTitle": "Select Material",
       "selectMaterialBody": "Select a premium material curated to read as photoreal, perspective-aware, and listing-ready.",
@@ -419,14 +419,14 @@
       "addPromptBody": "Describe the exact floor transformation you want before continuing.",
       "generatePromptBody": "Choose a custom floor prompt before generating.",
       "autoMaskPreparing": "Preparing the automatic floor mask. Please wait a moment.",
-      "autoMaskSuccess": "Floor masked and ready.",
-      "autoMaskFailure": "Auto-detect couldn't run. Please brush manually.",
-      "savePermissionTitle": "Photo Access Needed",
-      "savePermissionBody": "Please allow photo library access to save your result to the device gallery.",
+      "autoMaskSuccess": "Floor mask ready.",
+      "autoMaskFailure": "Automatic detection could not complete. Please brush the floor manually.",
+      "savePermissionTitle": "Photo access needed",
+      "savePermissionBody": "Allow photo library access to save your render to the device.",
       "cameraAccessTitle": "Camera access needed",
-      "cameraAccessBody": "Please enable camera access to capture a floor photo.",
+      "cameraAccessBody": "Enable camera access to capture a floor photo.",
       "photoAccessTitle": "Photo access needed",
-      "photoAccessBody": "Please enable photo library access to upload a floor photo.",
+      "photoAccessBody": "Enable photo library access to upload a floor photo.",
       "mediaUnavailableTitle": "Unable to open media",
       "exampleUnavailableBody": "This example photo could not be opened.",
       "markFloorTitle": "Mark the floor first",
@@ -471,12 +471,12 @@
       "customColorDescription": "Custom wall tone selected from the precision color picker.",
       "noColorSelected": "No color selected",
       "chooseColorBody": "Choose a wall color before continuing.",
-      "savePermissionTitle": "Photo Access Needed",
-      "savePermissionBody": "Please allow photo library access to save your result to the device gallery.",
+      "savePermissionTitle": "Photo access needed",
+      "savePermissionBody": "Allow photo library access to save your render to the device.",
       "cameraAccessTitle": "Camera access needed",
-      "cameraAccessBody": "Please enable camera access to capture a room photo.",
+      "cameraAccessBody": "Enable camera access to capture a room photo.",
       "photoAccessTitle": "Photo access needed",
-      "photoAccessBody": "Please enable photo library access to upload a room photo.",
+      "photoAccessBody": "Enable photo library access to upload a room photo.",
       "mediaUnavailableTitle": "Unable to open media",
       "exampleUnavailableBody": "This example photo could not be opened.",
       "markWallsTitle": "Mark the walls first",
@@ -484,7 +484,7 @@
       "pickColorTitle": "Pick a color",
       "pickColorBody": "Choose a wall color before continuing.",
       "autoDetectSuccess": "Walls detected. Brush to refine if needed.",
-      "autoDetectFailure": "Auto-detect couldn't run. Please brush manually.",
+      "autoDetectFailure": "Automatic detection could not complete. Please brush manually.",
       "renderFinishing": "This render is already finishing up.",
       "cancelSuccess": "Generation canceled. Your credit was kept.",
       "cancelUnavailable": "Unable to cancel right now.",
@@ -547,9 +547,9 @@
     "board": {
       "new": "New",
       "openEditor": "Tap to open your design editor",
-      "generationFailedTap": "Generation failed. Tap for details.",
-      "generationFailedTitle": "Generation failed",
-      "generationFailedBody": "This redesign did not finish. Please try generating again.",
+      "generationFailedTap": "Render encountered an issue. Tap for details.",
+      "generationFailedTitle": "Render failed",
+      "generationFailedBody": "This render did not complete. Please try again.",
       "tryAnotherPrompt": "Please go back and try another prompt."
     },
     "processing": {
@@ -571,16 +571,16 @@
     },
     "permissions": {
       "requiredTitle": "Permission Required",
-      "requiredBody": "Please enable camera or photo access in your system settings to continue.",
+      "requiredBody": "Enable camera or photo access in your system settings to continue.",
       "cameraAccessTitle": "Camera Access Needed",
-      "cameraAccessBody": "Please allow camera access in Settings to take a photo.",
+      "cameraAccessBody": "Allow camera access in Settings to take a photo.",
       "photoLibraryAccessTitle": "Photo Library Access Needed",
-      "photoLibraryAccessBody": "Please allow photo library access in Settings."
+      "photoLibraryAccessBody": "Allow photo library access in Settings."
     },
     "media": {
       "capturedPhoto": "Captured Photo",
       "uploadedPhoto": "Uploaded Photo",
-      "choosePhotoSource": "Choose how you'd like to add your image.",
+      "choosePhotoSource": "Choose how you want to add your image.",
       "cameraUnavailableTitle": "Camera Unavailable",
       "cameraUnavailableBody": "We couldn't open the camera. Please try again.",
       "photoLibraryUnavailableTitle": "Photo Library Unavailable",
@@ -593,21 +593,21 @@
     },
     "share": {
       "nothingTitle": "Nothing to share",
-      "generateFirst": "Generate an image first.",
+      "generateFirst": "Generate a design first.",
       "failedTitle": "Share failed",
-      "message": "Designed with HomeDecor.ai"
+      "message": "Designed with HomeDecor AI"
     },
     "download": {
       "nothingTitle": "Nothing to download",
-      "generateFirst": "Generate an image first.",
+      "generateFirst": "Generate a design first.",
       "failedTitle": "Download failed"
     },
     "generation": {
       "preparingSessionTitle": "Preparing your session",
       "preparingSessionBody": "Your guest profile is still loading. Please try again in a moment.",
       "completeStepsTitle": "Complete the steps",
-      "completeFloorBody": "Add a room photo, select your space type, curate a material, and choose a finish before continuing.",
-      "completePaintBody": "Add a room photo, select your space type, curate a wall color, and choose a finish before continuing.",
+      "completeFloorBody": "Add a room photo, define the floor area, choose a material, and select a finish before continuing.",
+      "completePaintBody": "Add a room photo, define the paintable surfaces, choose a wall color, and select a finish before continuing.",
       "completePreviousSteps": "Please finish the previous steps first.",
       "limitReached": "Limit Reached",
       "completeStepToContinue": "Complete this step to continue."
@@ -615,30 +615,30 @@
     "flow": {
       "customPromptTitle": "Describe Your Vision",
       "customPromptBody": "Describe the exact design direction you want before applying it.",
-      "selectSpaceType": "Tap a card to select your space type."
+      "selectSpaceType": "Tap a card to identify your space type."
     },
     "stepOne": {
       "gardenPhotoTitle": "Add a Garden Photo",
       "exteriorPhotoTitle": "Add an Exterior Photo",
       "floorPhotoTitle": "Add Floor Photo",
-      "gardenEmptyTitle": "Start Your Garden Redesign",
-      "exteriorEmptyTitle": "Start Exterior Redesign",
+      "gardenEmptyTitle": "Start Your Garden Transformation",
+      "exteriorEmptyTitle": "Start Your Exterior Transformation",
       "tapToAddPhoto": "Tap to add a photo from your camera or library"
     },
     "style": {
-      "tapToSelect": "Tap a card to select your style."
+      "tapToSelect": "Tap a card to define your style direction."
     }
   },
   "proSuccess": {
     "title": "Welcome to HomeDecor Pro!",
-    "subtitle": "You're fully powered up. Here's what's unlocked:",
+    "subtitle": "Your premium tools are now unlocked:",
     "features": {
-      "hyperRealism": "8K Hyper-Realism Enabled",
-      "virtualStaging": "Virtual Staging Unlocked",
-      "infiniteCredits": "Weekly or Monthly Credits Active"
+      "hyperRealism": "Ultra-high-detail rendering enabled",
+      "virtualStaging": "Premium design tools unlocked",
+      "infiniteCredits": "Weekly or monthly render quotas active"
     },
     "cta": "Start Designing",
-    "toast": "Account upgraded to Pro successfully."
+    "toast": "Your account has been upgraded to Pro."
   },
   "legalViewer": {
     "eyebrow": "Legal Viewer",
@@ -656,7 +656,7 @@
     "tabs": {
       "home": "Interiors",
       "exterior": "Exteriors",
-      "garden": "Garden"
+        "garden": "Landscapes"
     },
     "groups": {
       "kitchen": "Kitchen",
@@ -685,7 +685,7 @@
     "imageTitleTemplate": "{{title}} Image {{index}}",
     "emptyState": {
       "title": "Category unavailable",
-      "body": "The requested image group could not be found."
+      "body": "The requested image collection could not be found."
     }
   },
   "discoverCatalog": {

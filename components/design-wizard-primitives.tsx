@@ -19,9 +19,9 @@ import {
   WashingMachineIcon,
 } from "phosphor-react-native";
 
-export const DESIGN_WIZARD_ACCENT = "#CC3333";
-export const DESIGN_WIZARD_ACCENT_STRONG = "#E53935";
-export const DESIGN_WIZARD_DEPTH_SHADOW = "rgba(204,51,51,0.2)";
+export const DESIGN_WIZARD_ACCENT = "#121212";
+export const DESIGN_WIZARD_ACCENT_STRONG = "#121212";
+export const DESIGN_WIZARD_DEPTH_SHADOW = "rgba(18,18,18,0.18)";
 export const DESIGN_WIZARD_SURFACE = "#FFFFFF";
 export const DESIGN_WIZARD_SURFACE_MUTED = "#F5F5F5";
 export const DESIGN_WIZARD_BORDER = "#E3E3E3";
@@ -87,18 +87,18 @@ export function getWizardSelectionCardStyle(active: boolean, backgroundColor = D
     borderColor: active ? "transparent" : DESIGN_WIZARD_BORDER,
     backgroundColor: active ? "#000000" : backgroundColor,
     boxShadow: active
-      ? `0px 0px 0px 1px rgba(204,51,51,0.4), 0px 10px 20px ${DESIGN_WIZARD_DEPTH_SHADOW}`
+      ? `0px 0px 0px 1px rgba(18,18,18,0.18), 0px 10px 20px ${DESIGN_WIZARD_DEPTH_SHADOW}`
       : "0px 10px 24px rgba(15,23,42,0.05)",
   };
 }
 
 export function getWizardFloatingButtonStyle(active: boolean): ViewStyle {
   return {
-    borderRadius: 30,
+    borderRadius: 14,
     borderCurve: "continuous",
     backgroundColor: active ? DESIGN_WIZARD_ACCENT : "#ECECEC",
     boxShadow: active
-      ? `0px 18px 30px rgba(204,51,51,0.28)`
+      ? "0px 18px 30px rgba(18,18,18,0.16)"
       : "0px 14px 28px rgba(15,23,42,0.12)",
   };
 }

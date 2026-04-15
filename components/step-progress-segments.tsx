@@ -1,6 +1,8 @@
 import { memo } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 
+import { DS } from "../lib/design-system";
+
 type StepProgressSegmentsProps = {
   step: number;
   totalSteps: number;
@@ -43,9 +45,9 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   segmentActive: {
-    backgroundColor: "#111111",
+    backgroundColor: DS.colors.accent,
   },
   segmentInactive: {
-    backgroundColor: "#D6D8DD",
+    backgroundColor: DS.colors.border,
   },
 });

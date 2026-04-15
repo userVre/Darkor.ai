@@ -3,6 +3,7 @@ import { ChevronRight } from "@/components/material-icons";
 import type { ComponentType, ReactNode } from "react";
 
 import { useLocalizedAppFonts } from "../lib/i18n";
+import { DS } from "../lib/design-system";
 import { fonts } from "../styles/typography";
 
 type SettingsRowProps = {
@@ -22,13 +23,13 @@ type SettingsRowProps = {
 export function SettingsRow({
   label,
   icon: Icon,
-  iconColor = "#0A0A0A",
-  textColor = "#0A0A0A",
+  iconColor = DS.colors.textPrimary,
+  textColor = DS.colors.textPrimary,
   onPress,
   showChevron = true,
   rightAccessory,
   loading = false,
-  loadingColor = "#0A0A0A",
+  loadingColor = DS.colors.textPrimary,
   disabled = false,
   style,
 }: SettingsRowProps) {
@@ -54,7 +55,7 @@ export function SettingsRow({
       <View style={styles.rightSide}>
         {loading ? <ActivityIndicator color={loadingColor} /> : null}
         {!loading ? rightAccessory : null}
-        {!loading && showChevron ? <ChevronRight color="#B8B8B8" size={18} strokeWidth={1.9} /> : null}
+        {!loading && showChevron ? <ChevronRight color={DS.colors.textMuted} size={18} strokeWidth={1.9} /> : null}
       </View>
     </Pressable>
   );
@@ -67,8 +68,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#EFEFEF",
-    backgroundColor: "#FAFAFA",
+    borderColor: DS.colors.border,
+    backgroundColor: DS.colors.surfaceHigh,
     paddingHorizontal: 18,
     paddingVertical: 18,
     flexDirection: "row",

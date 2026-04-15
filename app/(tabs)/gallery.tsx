@@ -217,6 +217,7 @@ const styles = StyleSheet.create({
   headerWrap: {
     paddingBottom: 28,
     gap: 24,
+    backgroundColor: DS.colors.surface,
   },
   headerRow: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     flex: 1,
-    color: "#111111",
+    color: DS.colors.textPrimary,
     fontSize: 18,
     lineHeight: 24,
     ...fonts.bold,

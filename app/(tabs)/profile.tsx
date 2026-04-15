@@ -13,6 +13,7 @@ import { BoardImageCard } from "../../components/board-image-card";
 import { BoardPreviewModal } from "../../components/board-preview-modal";
 import { useProSuccess } from "../../components/pro-success-context";
 import { useViewerSession } from "../../components/viewer-session-context";
+import { DS } from "../../lib/design-system";
 import { mapArchiveToBoardItems, splitBoardColumns, type BoardItem, type BoardItemStatus } from "../../lib/board";
 import { hasGenerationImage, resolveGenerationStatus } from "../../lib/generation-status";
 import { loadLocalBoardItems, persistLocalBoardItems, type LocalBoardItem } from "../../lib/local-board-cache";
@@ -299,7 +300,7 @@ export default function ProfileScreen() {
         <View style={[styles.boardBody, { minHeight: boardBodyMinHeight }]}>
           {boardItems.length === 0 ? (
             <View style={styles.emptyState}>
-              <LayoutPanelTop color="#D0D0D0" size={56} strokeWidth={1.9} />
+              <LayoutPanelTop color={DS.colors.borderStrong} size={56} strokeWidth={1.9} />
               <Text style={styles.emptyTitle}>Your Portfolio is Empty</Text>
               {t("profile.emptySubtitle") ? <Text style={styles.emptySubtitle}>{t("profile.emptySubtitle")}</Text> : null}
             </View>
@@ -348,11 +349,11 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: DS.colors.background,
   },
   scrollView: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: DS.colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -364,9 +365,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
-    color: "#0A0A0A",
-    textAlign: "center",
-    alignSelf: "center",
+    color: DS.colors.textPrimary,
     fontSize: 20,
     lineHeight: 24,
     marginBottom: 32,
@@ -380,18 +379,16 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     marginTop: 16,
-    color: "#A0A0A0",
+    color: DS.colors.textSecondary,
     fontSize: 16,
     lineHeight: 24,
-    textAlign: "center",
     ...fonts.medium,
   },
   emptySubtitle: {
     marginTop: 8,
-    color: "#C0C0C0",
+    color: DS.colors.textMuted,
     fontSize: 13,
     lineHeight: 16,
-    textAlign: "center",
     ...fonts.regular,
   },
   grid: {

@@ -10,7 +10,8 @@ export const DS = {
     background: light.bg,
     backgroundAlt: light.surface,
     surface: light.surface,
-    surfaceRaised: "#FFFFFF",
+    surfaceHigh: light.surfaceHigh,
+    surfaceRaised: light.surfaceHigh,
     surfaceMuted: light.surfaceMuted,
     surfaceOverlay: light.surfaceOverlay,
     borderSubtle: light.border,
@@ -20,14 +21,22 @@ export const DS = {
     textSecondary: light.textSecondary,
     textTertiary: light.textMuted,
     textMuted: light.textMuted,
+    textInverse: light.textInverse,
     accent: light.brand,
     accentStrong: light.brandDark,
     accentSecondary: light.brand,
     accentGlow: light.brandSoft,
     accentGlowStrong: light.brand,
     accentSurface: light.brandSurface,
+    actionPrimary: light.brand,
+    actionPrimarySoft: light.brandDark,
+    creditPillBackground: light.surfaceHigh,
+    creditPillBorder: light.borderLight,
+    badgePro: light.success,
+    badgeProText: light.textInverse,
     positive: light.success,
     danger: light.error,
+    shadow: light.shadow,
   },
   spacing: {
     0: 0,
@@ -115,7 +124,7 @@ export function subtleBorder(color: string = DS.colors.borderSubtle): ViewStyle 
 
 export function ambientShadow(opacity = 0.04, radius = 15, y = 10): ViewStyle {
   return {
-    boxShadow: `0px ${y}px ${radius * 3}px rgba(17, 19, 24, ${opacity})`,
+    boxShadow: `0px ${y}px ${radius * 3}px ${DS.colors.shadow}`,
   };
 }
 
@@ -135,8 +144,8 @@ export function floatingButton(active = true): ViewStyle {
     borderCurve: "continuous",
     paddingHorizontal: 18,
     paddingVertical: 12,
-    backgroundColor: active ? DS.colors.accent : "rgba(255,255,255,0.78)",
-    ...(active ? ambientShadow(0.07, 15, 12) : subtleBorder("rgba(17, 19, 24, 0.08)")),
+    backgroundColor: active ? DS.colors.accent : DS.colors.surfaceRaised,
+    ...(active ? ambientShadow(0.07, 15, 12) : subtleBorder(DS.colors.border)),
   };
 }
 

@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { fonts } from "../styles/typography";
 import { spacing } from "../styles/spacing";
 import { type Theme, useTheme } from "@/styles/theme";
+import { DS } from "../lib/design-system";
 
 import { LuxPressable } from "./lux-pressable";
 import { useWorkspaceDraft } from "./workspace-context";
@@ -16,7 +17,7 @@ const PROGRESS_DURATION_MS = 15_000;
 const PROGRESS_MAX = 0.9;
 const STATUS_ROTATION_MS = 3_000;
 const SHIMMER_DURATION_MS = 2_000;
-const GENERATION_PROGRESS_COLOR = "#CC3333";
+const GENERATION_PROGRESS_COLOR = DS.colors.accent;
 
 type ServiceProcessingScreenProps = {
   imageUri?: string | null;

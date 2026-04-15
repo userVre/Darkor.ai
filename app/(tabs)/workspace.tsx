@@ -11,6 +11,7 @@ import { useLocalSearchParams, useNavigation, usePathname, useRouter } from "exp
 import { FlashList } from "@shopify/flash-list";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, startTransition, type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useIsFocused } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { spacing } from "../../styles/spacing";
 import {
@@ -2048,6 +2049,7 @@ export default function WorkspaceScreen() {
   const [processingStatusIndex, setProcessingStatusIndex] = useState(0);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [isServiceProcessing, setIsServiceProcessing] = useState(false);
+  const [isServiceStepFlowActive, setIsServiceStepFlowActive] = useState(false);
   const [, setPaintTool] = useState<PaintTool>("brush");
   const [, setPaintBrushWidth] = useState(28);
   const [paintColor, setPaintColor] = useState("#D946EF");
@@ -2079,6 +2081,7 @@ export default function WorkspaceScreen() {
 
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = getServiceType(serviceKey);
+  const isFocused = useIsFocused();
   const serviceLabel = getServiceLabel(t, serviceType);
   const isInteriorService = serviceType === "interior";
   const isExteriorService = serviceType === "exterior";
@@ -2086,7 +2089,9 @@ export default function WorkspaceScreen() {
   const isFloorService = serviceType === "floor";
   const isPaintService = serviceType === "paint";
   const isLeanGenerationService = isExteriorService || isGardenService;
-  const shouldHideNativeTabBar = pathname === "/workspace";
+  const isRedesignWizardActive = !isPaintService && !isFloorService && workflowStep <= 3;
+  const isWizardFlowActive = (isPaintService || isFloorService) ? isServiceStepFlowActive : isRedesignWizardActive;
+  const shouldHideNativeTabBar = pathname === "/workspace" && isFocused && isWizardFlowActive;
   const presetRoomOptions =
     serviceType === "exterior"
       ? SPACE_OPTIONS.exterior
@@ -2105,15 +2110,16 @@ export default function WorkspaceScreen() {
   }, [navigation, shouldHideNativeTabBar]);
 
   useEffect(() => {
-    setIsFlowActive(true);
+    setIsFlowActive(shouldHideNativeTabBar);
     return () => {
       setIsFlowActive(false);
     };
-  }, [setIsFlowActive]);
+  }, [setIsFlowActive, shouldHideNativeTabBar]);
 
   useEffect(() => {
     if (!isPaintService && !isFloorService) {
       setIsServiceProcessing(false);
+      setIsServiceStepFlowActive(false);
     }
   }, [isFloorService, isPaintService]);
 
@@ -2194,6 +2200,7 @@ export default function WorkspaceScreen() {
       setShowResumeToast(false);
       setAwaitingAuth(false);
       setIsServiceProcessing(false);
+      setIsServiceStepFlowActive(false);
       setPaintTool("brush");
       setPaintBrushWidth(28);
       setPaintColor("#D946EF");
@@ -3499,10 +3506,11 @@ export default function WorkspaceScreen() {
   const handleCloseWizard = useCallback(() => {
     if (workflowStep === 0) {
       handleResetWizard();
-      router.replace("/");
+      router.replace("/(tabs)");
       return;
     }
     handleResetWizard();
+    router.replace("/(tabs)");
   }, [handleResetWizard, router, workflowStep]);
 
   const cleanupTempFile = useCallback(async (uri: string | null | undefined) => {
@@ -4434,11 +4442,21 @@ export default function WorkspaceScreen() {
   const isPhotoPreviewBusy = isSelectingPhoto || isLoadingExample !== null;
 
   if (isPaintService) {
-    return <PaintWizard onProcessingStateChange={setIsServiceProcessing} />;
+    return (
+      <PaintWizard
+        onFlowActiveChange={setIsServiceStepFlowActive}
+        onProcessingStateChange={setIsServiceProcessing}
+      />
+    );
   }
 
   if (isFloorService) {
-    return <FloorWizard onProcessingStateChange={setIsServiceProcessing} />;
+    return (
+      <FloorWizard
+        onFlowActiveChange={setIsServiceStepFlowActive}
+        onProcessingStateChange={setIsServiceProcessing}
+      />
+    );
   }
 
   if (isInteriorService && workflowStep === 0) {
@@ -4640,7 +4658,7 @@ export default function WorkspaceScreen() {
     const uploadTileSize = wizardUploadSize;
     const stepOneExampleCardWidth = Math.min(Math.max(width * 0.36, 138), 168);
     const stepOneExampleCardHeight = Math.round(stepOneExampleCardWidth * 1.02);
-    const bottomBarOffset = isTabbedWorkspaceRoute ? 96 : 0;
+    const bottomBarOffset = isTabbedWorkspaceRoute && !shouldHideNativeTabBar ? 96 : 0;
     const continueBarOffset = bottomBarOffset + (isGenerationReviewStep ? 8 : 0);
     const topSafeAreaInset = process.env.EXPO_OS === "android" ? Math.max(insets.top, 44) : Math.max(insets.top, 20);
     const wizardStickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);

@@ -1,6 +1,5 @@
 import { Asset } from "expo-asset";
 import { useAuth } from "@clerk/expo";
-import { LinearGradient } from "expo-linear-gradient";
 import { Settings } from "@/components/material-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -139,14 +138,6 @@ export default function HomeScreen() {
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
-      <LinearGradient
-        colors={["#FFFDFC", "#F8F3EC", "#F3EEE6"]}
-        end={{ x: 1, y: 1 }}
-        start={{ x: 0.08, y: 0 }}
-        style={StyleSheet.absoluteFillObject}
-      />
-      <View pointerEvents="none" style={[styles.backdropOrb, styles.backdropOrbLeft]} />
-      <View pointerEvents="none" style={[styles.backdropOrb, styles.backdropOrbRight]} />
 
       <View style={[styles.headerShell, { paddingTop: insets.top + 10 }]}>
         <View style={styles.headerRow}>
@@ -202,25 +193,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F8F3EC",
-  },
-  backdropOrb: {
-    position: "absolute",
-    borderRadius: 999,
-    backgroundColor: "rgba(117, 188, 255, 0.18)",
-  },
-  backdropOrbLeft: {
-    top: -42,
-    left: -28,
-    width: 176,
-    height: 176,
-  },
-  backdropOrbRight: {
-    top: 22,
-    right: -54,
-    width: 148,
-    height: 148,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: DS.colors.background,
   },
   headerShell: {
     position: "absolute",
@@ -230,10 +203,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
     paddingHorizontal: 20,
     paddingBottom: 12,
-    backgroundColor: "rgba(248, 243, 236, 0.92)",
+    backgroundColor: DS.colors.background,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(17, 19, 24, 0.05)",
-    boxShadow: "0px 14px 40px rgba(17, 19, 24, 0.06)",
+    borderBottomColor: DS.colors.border,
+    boxShadow: `0px 14px 40px ${DS.colors.shadow}`,
   },
   headerRow: {
     flexDirection: "row",
@@ -252,7 +225,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   brandTitle: {
-    color: "#12161B",
+    color: DS.colors.textPrimary,
     ...DS.typography.button,
     fontSize: 19,
     lineHeight: 24,
@@ -261,16 +234,20 @@ const styles = StyleSheet.create({
   creditPill: {
     minHeight: 42,
     paddingHorizontal: 12,
-    backgroundColor: "rgba(255,255,255,0.8)",
-    boxShadow: "0px 10px 24px rgba(74, 113, 157, 0.14)",
+    backgroundColor: DS.colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: DS.colors.border,
+    boxShadow: `0px 10px 24px ${DS.colors.shadow}`,
   },
   settingsButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
     borderCurve: "continuous",
-    backgroundColor: "rgba(255,255,255,0.84)",
-    boxShadow: "0px 10px 24px rgba(17, 19, 24, 0.08)",
+    backgroundColor: DS.colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: DS.colors.border,
+    boxShadow: `0px 10px 24px ${DS.colors.shadow}`,
     alignItems: "center",
     justifyContent: "center",
   },

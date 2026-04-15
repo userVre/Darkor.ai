@@ -47,7 +47,7 @@ const REFERENCE_HEIGHT = 932;
 const SHEET_HEIGHT = 336;
 const SWIPE_DISMISS_DISTANCE = 84;
 const SWIPE_DISMISS_VELOCITY = 900;
-const ACTIVE_CONTINUE_COLOR = "#E53935";
+const ACTIVE_CONTINUE_COLOR = "#121212";
 
 function scaleValue(value: number, scale: number) {
   return value * scale;

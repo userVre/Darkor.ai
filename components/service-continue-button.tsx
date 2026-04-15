@@ -6,13 +6,13 @@ import { fonts } from "../styles/typography";
 import { spacing } from "../styles/spacing";
 import { createButtonStyles } from "@/styles/buttons";
 import { type Theme, useTheme } from "@/styles/theme";
+import { DS } from "../lib/design-system";
 
 import { LuxPressable } from "./lux-pressable";
 
 const pointerClassName = "cursor-pointer";
-const ACTIVE_BUTTON_COLOR = "#CC3333";
-const INACTIVE_BUTTON_COLOR = "#131B26";
-const INACTIVE_TEXT_COLOR = "#CFCFCF";
+const ACTIVE_BUTTON_COLOR = DS.colors.accent;
+const INACTIVE_BUTTON_COLOR = DS.colors.surfaceMuted;
 
 type ServiceContinueButtonProps = {
   active?: boolean;
@@ -95,7 +95,7 @@ export function ServiceContinueButton({
               <View style={[styles.button, active ? styles.buttonActive : styles.buttonInactive]}>
                 {loading ? (
                   <View style={styles.loadingRow}>
-                    <ActivityIndicator size="small" color={colors.textPrimary} />
+                    <ActivityIndicator size="small" color={DS.colors.textInverse} />
                     <Text style={styles.buttonText}>{t("common.states.loading")}</Text>
                   </View>
                 ) : (
@@ -160,7 +160,7 @@ function createStyles(colors: Theme) {
       boxShadow: "0px 10px 24px rgba(17, 19, 24, 0.05)",
     },
     buttonText: {
-      color: colors.textPrimary,
+      color: DS.colors.textInverse,
       fontSize: 16,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "800",
@@ -168,7 +168,7 @@ function createStyles(colors: Theme) {
       letterSpacing: -0.2,
     },
     buttonTextInactive: {
-      color: INACTIVE_TEXT_COLOR,
+      color: DS.colors.textMuted,
     },
     loadingRow: {
       flexDirection: "row",

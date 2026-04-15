@@ -18,13 +18,15 @@ export const DEFAULT_TAB_BAR_STYLE = {
   left: 20,
   right: 20,
   bottom: 18,
-  backgroundColor: "rgba(255,255,255,0.86)",
+  backgroundColor: DS.colors.surface,
   height: 86,
   paddingTop: 12,
   paddingBottom: 12,
   paddingHorizontal: spacing.sm,
   borderRadius: 32,
-  boxShadow: "0px 10px 30px rgba(17, 19, 24, 0.05)",
+  borderWidth: 1,
+  borderColor: DS.colors.border,
+  boxShadow: `0px 10px 30px ${DS.colors.shadow}`,
 };
 
 type TabButtonProps = PressableProps & {
