@@ -129,6 +129,7 @@
     "noActiveSubscriptions": "No active subscriptions were found.",
     "purchaseError": "Purchase Error",
     "planUnavailable": "The selected plan is unavailable right now.",
+    "moroccoPricingUnavailable": "Localized MAD pricing is temporarily unavailable. Please try again in a moment.",
     "subscriptionConfirmFailed": "We could not confirm your subscription. Please try again.",
     "purchaseCancelled": "Purchase cancelled.",
     "closeA11y": "Close paywall",
@@ -204,6 +205,7 @@
   },
   "discover": {
     "title": "Discover",
+    "subtitle": "Curated interiors, architecture, and landscape references organized into fast-scrolling collections.",
     "tabs": {
       "home": "Interiors",
       "garden": "Landscapes",
@@ -375,9 +377,9 @@
     "stepOne": {
       "title": "Upload Your Vision",
       "emptyTitle": "Upload Your Vision",
-      "emptySubtitle": "Start your transformation with a single photo.",
+      "emptySubtitle": "Redesign and Beautify your home.",
       "removePhoto": "Remove selected photo",
-      "cta": "Begin Now"
+      "cta": "Upload"
     },
     "interior": {
       "stepTwoTitle": "Identify Your Space",
@@ -396,7 +398,7 @@
     },
     "garden": {
       "stepOneEmptyTitle": "Upload Your Vision",
-      "stepOneEmptySubtitle": "Start your outdoor transformation with a single photo.",
+      "stepOneEmptySubtitle": "Redesign and Beautify your home.",
       "stepTwoTitle": "Define Your Aesthetic",
       "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
       "stepThreeTitle": "Color Harmony"
@@ -679,6 +681,9 @@
     "errorBody": "Unable to open the store review dialog right now."
   },
   "gallery": {
+    "clusters": {
+      "foundations": "Foundations"
+    },
     "tabs": {
       "home": "Interiors",
       "exterior": "Exteriors",
@@ -706,7 +711,10 @@
       "house": "House",
       "officeBuilding": "Office Building",
       "retail": "Retail",
-      "residential": "Residential"
+      "residential": "Residential",
+      "wall": "Wall",
+      "floor": "Floor",
+      "garden": "Garden"
     },
     "imageTitleTemplate": "{{title}} Image {{index}}",
     "emptyState": {

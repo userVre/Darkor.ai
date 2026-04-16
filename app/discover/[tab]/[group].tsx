@@ -4,14 +4,15 @@ import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { ArrowLeft } from "@/components/material-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 import { DiscoverImageCard } from "../../../components/discover-image-card";
 import { DiscoverPreviewModal } from "../../../components/discover-preview-modal";
 import { DS, floatingButton } from "../../../lib/design-system";
 import {
-  getDiscoverGroup,
   type DiscoverTabId,
   type DiscoverTile,
+  useDiscoverGroup,
 } from "../../../lib/discover-catalog";
 import { triggerHaptic } from "../../../lib/haptics";
 
@@ -28,6 +29,7 @@ function readRouteParam(value: string | string[] | undefined) {
 
 export default function DiscoverSeeAllScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const params = useLocalSearchParams<{ tab?: string | string[]; group?: string | string[] }>();
@@ -35,13 +37,7 @@ export default function DiscoverSeeAllScreen() {
 
   const tabId = readRouteParam(params.tab) as DiscoverTabId | undefined;
   const groupId = readRouteParam(params.group);
-  const group = useMemo(() => {
-    if (!tabId || !groupId) {
-      return undefined;
-    }
-
-    return getDiscoverGroup(tabId, groupId);
-  }, [groupId, tabId]);
+  const group = useDiscoverGroup(tabId ?? "discover", groupId);
 
   const cardWidth = useMemo(() => {
     const availableWidth = width - SCREEN_SIDE_MARGIN * 2 - GRID_GAP;
@@ -73,7 +69,7 @@ export default function DiscoverSeeAllScreen() {
         </Pressable>
 
         <Text numberOfLines={1} style={styles.headerTitle}>
-          {group?.title ?? "Discover"}
+          {group?.title ?? t("discover.title")}
         </Text>
 
         <View style={styles.headerSpacer} />
@@ -104,8 +100,8 @@ export default function DiscoverSeeAllScreen() {
         </ScrollView>
       ) : (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>Category unavailable</Text>
-          <Text style={styles.emptyBody}>The requested image group could not be found.</Text>
+          <Text style={styles.emptyTitle}>{t("gallery.emptyState.title")}</Text>
+          <Text style={styles.emptyBody}>{t("gallery.emptyState.body")}</Text>
         </View>
       )}
 

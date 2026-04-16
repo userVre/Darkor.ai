@@ -23,16 +23,16 @@ type DiamondCreditPillProps = {
 
 const VARIANT_STYLES = {
   dark: {
-    backgroundColor: DS.colors.creditPillBackground,
-    borderColor: DS.colors.creditPillBorder,
-    textColor: DS.colors.textPrimary,
-    prismPrimary: DS.colors.accent,
+    backgroundColor: "#111318",
+    borderColor: "#111318",
+    textColor: "#FFFFFF",
+    prismPrimary: "#2563EB",
   },
   light: {
-    backgroundColor: DS.colors.creditPillBackground,
-    borderColor: DS.colors.creditPillBorder,
-    textColor: DS.colors.textPrimary,
-    prismPrimary: DS.colors.accent,
+    backgroundColor: "#111318",
+    borderColor: "#111318",
+    textColor: "#FFFFFF",
+    prismPrimary: "#2563EB",
   },
 } as const;
 
@@ -52,9 +52,6 @@ export function DiamondCreditIcon({
         <Path
           d="M14 3.6 21.2 9.6 14 24.4 6.8 9.6 14 3.6Z"
           fill={primaryColor}
-          stroke={DS.colors.borderStrong}
-          strokeLinejoin="round"
-          strokeWidth="1.1"
         />
       </Svg>
     </View>
@@ -112,7 +109,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
     ...organicRadii(20, 14),
-    ...ambientShadow(0.035, 12, 8),
+    ...ambientShadow(0.06, 12, 8),
   },
   countText: {
     fontSize: 15,

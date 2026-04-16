@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle } from "react-native";
 import { useTranslation } from "react-i18next";
 
-import { DS, ambientShadow, floatingButton } from "../lib/design-system";
+import { DS, ambientShadow } from "../lib/design-system";
 import { LuxPressable } from "./lux-pressable";
 
 export type HomeToolCardItem = {
@@ -105,14 +105,16 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
   },
   button: {
-    ...floatingButton(true),
     borderRadius: 999,
     paddingHorizontal: 18,
     paddingVertical: 11,
-    backgroundColor: DS.colors.accent,
+    backgroundColor: "#111318",
+    borderWidth: 1,
+    borderColor: "#111318",
+    boxShadow: "0px 10px 24px rgba(17, 19, 24, 0.12)",
   },
   buttonText: {
-    color: DS.colors.textInverse,
+    color: "#FFFFFF",
     ...DS.typography.button,
   },
 });

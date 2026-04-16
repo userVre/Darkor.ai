@@ -11,7 +11,7 @@ import { DS } from "../lib/design-system";
 import { LuxPressable } from "./lux-pressable";
 
 const pointerClassName = "cursor-pointer";
-const ACTIVE_BUTTON_COLOR = DS.colors.accent;
+const ACTIVE_BUTTON_COLOR = "#111318";
 const INACTIVE_BUTTON_COLOR = DS.colors.surfaceMuted;
 
 type ServiceContinueButtonProps = {
@@ -143,7 +143,7 @@ function createStyles(colors: Theme) {
       top: 6,
       bottom: 0,
       borderRadius: 14,
-      backgroundColor: ACTIVE_BUTTON_COLOR,
+      backgroundColor: "rgba(17, 19, 24, 0.14)",
     },
     pressable: {
       width: "100%",
@@ -160,7 +160,7 @@ function createStyles(colors: Theme) {
       boxShadow: "0px 10px 24px rgba(17, 19, 24, 0.05)",
     },
     buttonText: {
-      color: DS.colors.textInverse,
+      color: "#FFFFFF",
       fontSize: 16,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "800",

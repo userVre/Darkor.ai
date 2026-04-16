@@ -4488,7 +4488,7 @@ export default function WorkspaceScreen() {
         creditCount={creditBalance}
         photoUri={selectedImage?.uri ?? null}
         examplePhotos={EXTERIOR_EXAMPLE_PHOTOS}
-        emptyStateSubtitle="Redesign and beautify your home"
+        emptyStateSubtitle="Redesign and Beautify your home."
         loadingExampleId={isLoadingExample}
         onTakePhoto={handleInteriorTakePhoto}
         onChooseFromGallery={handleInteriorChooseFromGallery}
@@ -4904,7 +4904,7 @@ export default function WorkspaceScreen() {
               >
                 {workflowStep === 0 ? (
                   <View style={{ flex: 1, gap: spacing.lg }}>
-                    <View style={{ gap: spacing.sm, alignItems: "center" }}>
+                    <View style={{ gap: spacing.sm, alignItems: "flex-start", width: "100%" }}>
                       <Text
                         style={[
                           SERVICE_WIZARD_THEME.typography.heroTitle,
@@ -4921,6 +4921,7 @@ export default function WorkspaceScreen() {
                           color: DS.colors.textSecondary,
                           ...DS.typography.bodySm,
                           textAlign: "left",
+                          width: "100%",
                           maxWidth: 320,
                         }}
                       >

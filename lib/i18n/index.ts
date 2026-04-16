@@ -43,7 +43,7 @@ const resources: Resource = {
   de: { translation: require("../../locales/de.json") },
   pt: { translation: require("../../locales/pt.json") },
   ru: { translation: require("../../locales/ru.json") },
-  sv: { translation: require("../../locales/en.json") },
+  sv: { translation: require("../../locales/sv.json") },
   ja: { translation: require("../../locales/ja.json") },
   ko: { translation: require("../../locales/ko.json") },
   "zh-Hans": { translation: require("../../locales/zh-Hans.json") },

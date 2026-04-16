@@ -1,0 +1,1164 @@
+{
+  "app": {
+    "name": "HomeDecor AI"
+  },
+  "common": {
+    "actions": {
+      "continue": "Fortsätt",
+      "cancel": "Avbryt",
+      "close": "Stäng",
+      "delete": "Ta bort",
+      "save": "Spara",
+      "share": "Dela",
+      "restore": "Återställ",
+      "upgrade": "Uppgradera",
+      "tryAgain": "Försök igen.",
+      "openSettings": "Öppna Inställningar",
+      "notNow": "Inte nu",
+      "takePhoto": "Ta foto",
+      "chooseFromGallery": "Välj från Galleri",
+      "addPhoto": "Lägg till ett foto",
+      "chooseMediaSource": "Välj en bildkälla",
+      "examplePhotos": "Exempelfoton",
+      "seeAll": "Utforska alla",
+      "uploadPlus": "Ladda upp +",
+      "exit": "Avsluta",
+      "connect": "Ansluter...",
+      "tryThis": "Prova detta"
+    },
+    "labels": {
+      "email": "E-post",
+      "password": "Lösenord",
+      "version": "Version {{version}}",
+      "lastUpdated": "Senast uppdaterad",
+      "step": "Steg {{current}} / {{total}}"
+    },
+    "alerts": {
+      "exitTitle": "Lämna den här designen?",
+      "progressLost": "Din nuvarande designutveckling kommer att gå förlorad.",
+      "completeStepTitle": "Slutför detta steg",
+      "makeSelection": "Gör ett val för att fortsätta.",
+      "addPhotoToContinue": "Lägg till ett foto för att fortsätta.",
+      "invalidHexTitle": "Ogiltig färg",
+      "invalidHexBody": "Ange en giltig sexsiffrig hex-kod som #D946EF."
+    },
+    "states": {
+      "workInProgress": "Arbete pågår",
+      "generationFailed": "Render stötte på ett problem. Försök igen.",
+      "savedToGallery": "Sparad i ditt fotobibliotek",
+      "photoPermissionNeeded": "Tillgång till fotobibliotek krävs.",
+      "loading": "Laddar..."
+    }
+  },
+  "boot": {
+    "loadingApp": "Laddar HomeDecor AI",
+    "loadingAccount": "Laddar ditt konto...",
+    "checkingPlan": "Granskar din plan...",
+    "secureAccount": "Säkra ditt konto för att börja designa...",
+    "missingEnvTitle": "Saknade miljövariabler",
+    "missingEnvBody": "Följande värden krävs innan HomeDecor AI kan startas:"
+  },
+  "tabs": {
+    "tools": "Verktyg",
+    "create": "Skapa",
+    "discover": "Upptäck",
+    "profile": "Min profil"
+  },
+  "home": {
+    "title": "HomeDecor AI",
+    "accessibility": {
+      "openCredits": "Öppna krediter"
+    },
+    "errors": {
+      "tryItUnavailableTitle": "Förhandsgranskning inte tillgänglig"
+    },
+    "tools": {
+      "interior": {
+        "title": "Inredning",
+        "description": "Förvandla alla rum med AI-driven inredning."
+      },
+      "exterior": {
+        "title": "Exteriör design",
+        "description": "Föreställ om ditt hems exteriör med fasadstyling i världsklass."
+      },
+      "garden": {
+        "title": "Trädgårdsdesign",
+        "description": "Designa fantastiska trädgårdar och utomhusutrymmen utan ansträngning."
+      },
+      "paint": {
+        "title": "Måla (vägg)",
+        "description": "Förfina dina väggar med skräddarsydda färgpaletter och designerstrukturer."
+      },
+      "floor": {
+        "title": "Golv Restyle",
+        "description": "Lyft ditt rums grund med förstklassiga material och finish."
+      },
+      "cta": "Prova detta"
+    }
+  },
+  "paywall": {
+    "features": {
+      "fasterRendering": "Prioriterad AI-bearbetning",
+      "adFree": "Ultra-HD (4K) kvalitetsrenderingar",
+      "unlimitedRenders": "Fasta kvoter: 20 veckovisa eller 80 månatliga renderingar"
+    },
+    "restore": "Återställ",
+    "bestOffer": "Bästa erbjudandet",
+    "yearlyAccess": "Årlig tillgång",
+    "weeklyAccess": "Veckovis tillgång",
+    "freeTrial": "3-dagars gratis provperiod",
+    "justPerYear": "Bara {{price}} per år",
+    "pricePerYear": "Bara {{price}} per år",
+    "pricePerWeek": "{{price}} per vecka",
+    "perWeek": "per vecka",
+    "thenWeekly": "Sedan {{price}}",
+    "thenPricePerWeek": "Därefter {{price}} per vecka",
+    "noPaymentNow": "Ingen betalning nu",
+    "cancelAnytime": "Avbryt när som helst",
+    "trialEnabled": "Gratis provperiod aktiverad",
+    "enableTrial": "Aktivera gratis provperiod",
+    "processing": "Bearbetar...",
+    "tryForFree": "Börja din Pro Trial",
+    "continue": "Börja din Pro Trial",
+    "subtitle": "Lås upp ultra-HD-rendering och exklusiva designerstilar.",
+    "terms": "Villkor",
+    "privacy": "Sekretess",
+    "subscriptionsUnavailable": "Prenumerationer är tillfälligt otillgängliga.",
+    "restoreFailed": "Återställningen misslyckades",
+    "restored": "Återställd",
+    "noActiveSubscriptions": "Inga aktiva prenumerationer hittades.",
+    "purchaseError": "Köpfel",
+    "planUnavailable": "Den valda planen är inte tillgänglig just nu.",
+    "moroccoPricingUnavailable": "Lokaliserade MAD-priser är inte tillgängliga för tillfället. Försök igen om ett ögonblick.",
+    "subscriptionConfirmFailed": "Vi kunde inte bekräfta din prenumeration. Försök igen.",
+    "purchaseCancelled": "Köpet annullerats.",
+    "closeA11y": "Stäng betalvägg",
+    "title": "Designa som ett proffs. Inga gränser.",
+    "beginTrial": "Börja din Pro Trial"
+  },
+  "creditLimit": {
+    "title": "Uppgradera för att fortsätta designa",
+    "body": "Du har nått den tillgängliga renderingsgränsen för det här kontot. Uppgradera för att låsa upp fler designiterationer och förstklassig utskriftskvalitet."
+  },
+  "settings": {
+    "title": "Inställningar",
+    "heroTitle": "Gratis plan",
+    "featureItems": {
+      "advancedAi": "Avancerad AI-modell",
+      "fastProcessing": "Snabb bearbetning",
+      "removeAds": "Ta bort alla annonser"
+    },
+    "upgradePro": "Uppgradera PRO",
+    "rows": {
+      "language": "Språk",
+      "feedback": "Feedback",
+      "faq": "FAQ",
+      "rateUs": "Betygsätt oss",
+      "shareWithFriends": "Dela med vänner",
+      "termsOfUse": "Användarvillkor",
+      "privacyPolicy": "Sekretesspolicy",
+      "restorePurchase": "Återställ köp",
+      "userId": "Användar-ID",
+      "deleteInformation": "Ta bort information"
+    },
+    "states": {
+      "notSignedIn": "Inte inloggad"
+    },
+    "language": {
+      "title": "Språk",
+      "description": "Välj om HomeDecor AI följer ditt enhetsspråk eller använder ett valt språk i appen.",
+      "auto": "Auto (Systemstandard)",
+      "autoShort": "Auto",
+      "usingSystem": "Följer för närvarande {{language}} från din enhet"
+    },
+    "messages": {
+      "destinationUnavailable": "Denna destination är inte tillgänglig just nu.",
+      "emailClientUnavailable": "Det går inte att öppna din e-postapp.",
+      "reviewUnavailable": "Granskningsförfrågningar är inte tillgängliga just nu.",
+      "shareUnavailable": "Det gick inte att öppna delningsarket.",
+      "subscriptionsUnavailable": "Prenumerationer är inte tillgängliga just nu.",
+      "noActiveSubscriptions": "Inga aktiva prenumerationer hittades.",
+      "restoreFailed": "Återställningen misslyckades. Försök igen.",
+      "noUserId": "Inget autentiserat användar-ID är tillgängligt.",
+      "userIdCopied": "Användar-ID har kopierats",
+      "deleteFailed": "Det går inte att ta bort ditt konto just nu."
+    },
+    "shareMessage": "Utforska design skapade med HomeDecor AI: {{url}}",
+    "deleteAccount": {
+      "title": "Ta bort konto?",
+      "body": "Detta kommer att radera ditt konto och all tillhörande data permanent. Denna åtgärd kan inte ångras."
+    }
+  },
+  "profile": {
+    "title": "Min designportfölj",
+    "emptyTitle": "Din portfölj är tom. Starta ett projekt för att se dina visioner komma till liv.",
+    "emptySubtitle": "",
+    "compareHint": "Dra för att jämföra. Dubbeltryck för att återställa.",
+    "deleteFromBoardTitle": "Ta bort från portföljen?",
+    "deleteFromBoardBody": "Denna design kommer att tas bort från din portfölj.",
+    "deletedFromBoard": "Borttagen från portföljen",
+    "unableDelete": "Det gick inte att ta bort denna design.",
+    "generationFailedBody": "Denna rendering slutfördes inte. Försök igen.",
+    "saveToGallery": "Spara i fotobibliotek",
+    "savedToGallery": "Sparad i fotobibliotek",
+    "unableSave": "Det gick inte att spara denna design."
+  },
+  "discover": {
+    "title": "Upptäck",
+    "subtitle": "Kurerade interiörer, arkitektur och grundreferenser organiserade i snabbrullande samlingar.",
+    "tabs": {
+      "home": "Interiörer",
+      "garden": "Landskap",
+      "exterior": "Arkitektur"
+    },
+    "tryThisStyle": "Prova denna stil"
+  },
+  "auth": {
+    "accountEyebrow": "HomeDecor AI Konto",
+    "emailPlaceholder": "you@company.com",
+    "signIn": {
+      "title": "Logga in",
+      "subtitle": "Få tillgång till dina sparade mönster, krediter, inköp och projekthistorik i en förfinad arbetsyta.",
+      "passwordPlaceholder": "Ange ditt lösenord",
+      "cta": "Fortsätt",
+      "loading": "Loggar in...",
+      "appleCta": "Fortsätt med Apple",
+      "additionalVerificationTitle": "Logga in",
+      "additionalVerificationBody": "Ytterligare verifiering krävs för det här kontot.",
+      "errorTitle": "Inloggningen misslyckades",
+      "errorFallback": "Det gick inte att logga in dig.",
+      "appleErrorFallback": "Apple inloggning misslyckades.",
+      "noAccount": "Inget konto?",
+      "createOne": "Skapa en"
+    },
+    "signUp": {
+      "title": "Skapa konto",
+      "subtitle": "Skapa ditt konto för att bära dina mönster, prenumerationer och sparade projekt över enheter.",
+      "passwordPlaceholder": "Skapa ett säkert lösenord",
+      "cta": "Skapa konto",
+      "loading": "Skapar...",
+      "appleCta": "Fortsätt med Apple",
+      "verifyTitle": "Verifiera e-post",
+      "verifyBody": "Kontrollera din inkorg efter verifieringskoden och logga sedan in.",
+      "errorTitle": "Registreringen misslyckades",
+      "errorFallback": "Det gick inte att skapa ditt konto.",
+      "appleErrorFallback": "Apple registrering misslyckades.",
+      "haveAccount": "Har du redan ett konto?",
+      "signInLink": "Logga in"
+    }
+  },
+  "faq": {
+    "eyebrow": "Support",
+    "title": "FAQ",
+    "description": "Tydliga svar på de vanligaste HomeDecor AI frågorna.",
+    "items": {
+      "credits": {
+        "question": "Hur fungerar krediter i HomeDecor AI?",
+        "answer": "Varje rendering använder krediter baserat på arbetsflödet och utdatanivån du väljer. Ditt återstående saldo uppdateras automatiskt efter varje generation."
+      },
+      "pro": {
+        "question": "Vad låser jag upp med PRO?",
+        "answer": "PRO låser upp förstklassiga renderingsverktyg, snabbare bearbetning och avancerad utskriftskvalitet genom uppgraderingsflödet i appen."
+      },
+      "slowResult": {
+        "question": "Varför tar mitt resultat längre tid än förväntat?",
+        "answer": "Återgivningstiderna beror på köefterfrågan, källbildens kvalitet och det arbetsflöde du valt. Att hålla appen öppen på en stabil anslutning hjälper till att undvika avbrott."
+      },
+      "deleteAccount": {
+        "question": "Hur tar jag bort mitt konto?",
+        "answer": "Öppna Inställningar och välj Ta bort information. Detta tar bort din kontodata permanent och loggar ut dig efter bekräftelse."
+      }
+    }
+  },
+  "privacy": {
+    "eyebrow": "Policy",
+    "title": "Sekretesspolicy",
+    "description": "Informationen vi samlar in, hur den används och kontrollerna du har i HomeDecor AI.",
+    "date": "14 mars 2026",
+    "sections": {
+      "overview": {
+        "title": "Översikt",
+        "body": "HomeDecor AI (\"HomeDecor\", \"vi\", \"vår\", \"oss\") tillhandahåller AI-drivna interiör- och exteriörredesigntjänster. Denna integritetspolicy förklarar vilken data vi samlar in, hur vi använder den och vilka val du har."
+      },
+      "informationWeCollect": {
+        "title": "Information vi samlar in",
+        "body": "Vi samlar in information som du tillhandahåller, såsom kontouppgifter och uppladdade bilder, användningsdata såsom funktionsinteraktioner och enhetsinformation, och betalningsstatusdata från RevenueCat för att hantera prenumerationer."
+      },
+      "howWeUseYourData": {
+        "title": "Hur vi använder dina uppgifter",
+        "body": "Vi använder din data för att leverera omdesigner, anpassa din upplevelse, hantera krediter och fakturering, förbättra modellkvaliteten och säkra appen. Vi säljer inte dina personuppgifter."
+      },
+      "imageProcessing": {
+        "title": "Bildbehandling",
+        "body": "Bilder du laddar upp bearbetas för att generera omdesigner. Vi lagrar genererade bilder och relaterad metadata så att du kan se dina resultat igen, och du kan ta bort din data genom att radera ditt konto."
+      },
+      "sharingAndDisclosure": {
+        "title": "Delning och avslöjande",
+        "body": "Vi delar endast data med leverantörer som krävs för att driva HomeDecor AI, såsom autentisering, analys och betalningshanteringspartner, eller när avslöjande krävs enligt lag."
+      },
+      "dataSecurity": {
+        "title": "Datasäkerhet",
+        "body": "Vi använder kryptering och åtkomstkontroller för att skydda dina data. Inget system är helt säkert, så vi rekommenderar också starka lösenord och en skyddad enhet."
+      },
+      "yourRights": {
+        "title": "Dina rättigheter",
+        "body": "Du kan komma åt, uppdatera eller radera dina kontodata när som helst. Radering av konto tar bort dina lagrade generationer och profilinformation från våra system."
+      },
+      "contactUs": {
+        "title": "Kontakta oss",
+        "body": "För sekretessfrågor eller förfrågningar, kontakta oss på support@homedecor.ai."
+      }
+    }
+  },
+  "terms": {
+    "eyebrow": "Policy",
+    "title": "Användarvillkor",
+    "description": "Reglerna, förväntningarna och tjänstegränserna för att använda HomeDecor AI.",
+    "date": "14 mars 2026",
+    "sections": {
+      "acceptanceOfTerms": {
+        "title": "Godkännande av villkor",
+        "body": "Genom att komma åt eller använda HomeDecor AI godkänner du dessa användarvillkor. Om du inte håller med, använd inte appen."
+      },
+      "serviceDescription": {
+        "title": "Servicebeskrivning",
+        "body": "HomeDecor AI tillhandahåller AI-genererade omdesigner för interiöra och exteriöra utrymmen. Utdata är visuella koncept och kanske inte tar hänsyn till strukturella, tekniska eller kodbegränsningar."
+      },
+      "accountAndEligibility": {
+        "title": "Konto och behörighet",
+        "body": "Du måste vara minst 13 år gammal för att använda HomeDecor AI. Du ansvarar för att upprätthålla kontosäkerheten och för aktivitet som sker under dina referenser."
+      },
+      "userContent": {
+        "title": "Användarinnehåll",
+        "body": "Du behåller äganderätten till bilder du laddar upp. Genom att använda tjänsten ger du HomeDecor AI en begränsad licens att bearbeta och lagra dem så att vi kan generera och returnera dina resultat."
+      },
+      "subscriptionsAndCredits": {
+        "title": "Prenumerationer och krediter",
+        "body": "Betala planer låser upp förbättrade funktioner och export av högre kvalitet. Krediter konsumeras per generation, och prenumerationsfakturering och förnyelser hanteras av din appbutik och RevenueCat."
+      },
+      "prohibitedUse": {
+        "title": "Förbjuden användning",
+        "body": "Du samtycker till att inte missbruka tjänsten, bakåtkonstruera appen eller ladda upp olagligt, skadligt eller kränkande innehåll."
+      },
+      "disclaimer": {
+        "title": "Ansvarsfriskrivning",
+        "body": "Tjänsten tillhandahålls \"i befintligt skick\" utan garantier av något slag. Vi garanterar inte specifika designresultat eller noggrannheten hos AI-genererade utdata."
+      },
+      "limitationOfLiability": {
+        "title": "Ansvarsbegränsning",
+        "body": "HomeDecor AI är inte ansvarigt för indirekta skador eller följdskador som uppstår till följd av din användning av tjänsten i den maximala utsträckning som lagen tillåter."
+      },
+      "contact": {
+        "title": "Kontakta",
+        "body": "Frågor om dessa villkor kan skickas till support@homedecor.ai."
+      }
+    }
+  },
+  "processing": {
+    "title": "AI skapar ditt arkitektoniska mästerverk...",
+    "eta": "Din vision kommer att vara klar inom ~15 sekunder.",
+    "cancelKeepCredit": "Avbryt och behåll min kredit",
+    "status": {
+      "analyzingGeometry": "Analyserar arkitektonisk geometri...",
+      "identifyingSurfaces": "Identifiera ytor och strukturella linjer...",
+      "applyingStyle": "Tillämpar din valda designriktning...",
+      "renderingMaterials": "Rendering av material och belysning...",
+      "addingDetails": "Förfinar de sista detaljerna...",
+      "almostReady": "Slutför din rendering...",
+      "renderingFinalLighting": "Komponerar det sista ljuspasset..."
+    }
+  },
+  "wizard": {
+    "headers": {
+      "back": "Gå tillbaka",
+      "close": "Stäng",
+      "previousStep": "Gå till föregående steg"
+    },
+    "stepOne": {
+      "title": "Ladda upp din vision",
+      "emptyTitle": "Ladda upp din vision",
+      "emptySubtitle": "Börja din förvandling med ett enda foto.",
+      "removePhoto": "Ta bort det valda fotot",
+      "cta": "Börja nu"
+    },
+    "interior": {
+      "stepTwoTitle": "Identifiera ditt utrymme",
+      "stepTwoSubtitle": "Välj rumstyp så att omdesignen förblir arkitektoniskt grundad.",
+      "stepThreeTitle": "Definiera din estetik",
+      "stepThreeSubtitle": "Välj en signaturstil för att forma din designvision.",
+      "stepFourMode": "Designintegritet",
+      "stepFourPalette": "Färg Harmony"
+    },
+    "exterior": {
+      "stepTwoTitle": "Identifiera byggnadstypen",
+      "stepTwoSubtitle": "Välj den arkitektoniska form du vill göra om.",
+      "stepThreeTitle": "Definiera din estetik",
+      "stepThreeSubtitle": "Välj en signaturstil för att forma din designvision.",
+      "stepFourTitle": "Färg Harmony"
+    },
+    "garden": {
+      "stepOneEmptyTitle": "Ladda upp din vision",
+      "stepOneEmptySubtitle": "Börja din utomhusförvandling med ett enda foto.",
+      "stepTwoTitle": "Definiera din estetik",
+      "stepTwoSubtitle": "Välj en signaturstil för att forma din designvision.",
+      "stepThreeTitle": "Färg Harmony"
+    },
+    "floorIntro": {
+      "hero": "Välj en golvstil för att omdefiniera ditt rums grund."
+    },
+    "paintIntro": {
+      "hero": "Spåra vilken yta som helst för att applicera anpassade färger och designertexturer direkt."
+    },
+    "floorFlow": {
+      "title": "Golv Restyle",
+      "masking": "Kartlägga ditt golvplan...",
+      "promptLabel": "Beskriv din vision",
+      "promptPlaceholder": "Beskriv vilken golvomvandling du vill ha, från materialriktning till humör och finish.",
+      "promptExamplesTitle": "Snabba exempel",
+      "generateCta": "Skapa min design",
+      "selectMaterialCta": "Välj ett material",
+      "selectMaterialTitle": "Välj Material",
+      "selectMaterialBody": "Välj ett förstklassigt material som är sammanställt för att läsas som fotorealistiskt, perspektivmedvetet och redo för listning.",
+      "selectedMaterial": "Valt material",
+      "noMaterialSelected": "Inget material valt",
+      "unlockMaterialBody": "Välj ett golvmaterial för att låsa upp AI-stilen.",
+      "addPromptTitle": "Lägg till en uppmaning",
+      "addPromptBody": "Beskriv exakt vilken golvförvandling du vill ha innan du fortsätter.",
+      "generatePromptBody": "Välj en anpassad golvprompt innan du genererar.",
+      "autoMaskPreparing": "Förbereder den automatiska golvmasken. Vänta ett ögonblick.",
+      "autoMaskSuccess": "Golvmask klar.",
+      "autoMaskFailure": "Automatisk upptäckt kunde inte slutföras. Borsta golvet manuellt.",
+      "savePermissionTitle": "Fotoåtkomst behövs",
+      "savePermissionBody": "Tillåt åtkomst till fotobibliotek för att spara din rendering på enheten.",
+      "cameraAccessTitle": "Kameraåtkomst behövs",
+      "cameraAccessBody": "Aktivera kameraåtkomst för att ta ett golvfoto.",
+      "photoAccessTitle": "Fotoåtkomst behövs",
+      "photoAccessBody": "Aktivera åtkomst till fotobibliotek för att ladda upp ett golvfoto.",
+      "mediaUnavailableTitle": "Det gick inte att öppna media",
+      "exampleUnavailableBody": "Detta exempelfoto kunde inte öppnas.",
+      "markFloorTitle": "Markera golvet först",
+      "markFloorBody": "Borsta över golvytan du vill styla om innan du fortsätter.",
+      "pickMaterialTitle": "Välj ett material",
+      "pickMaterialBody": "Välj ett golvmaterial innan du fortsätter.",
+      "renderFinishing": "Denna rendering håller redan på att slutföras.",
+      "cancelSuccess": "Generation avbruten. Din kredit behölls.",
+      "cancelUnavailable": "Det går inte att avbryta just nu.",
+      "supportingText": "Använder 1 poäng · {{creditsRemaining}}",
+      "creditsRemaining": "{{count}} kvar",
+      "promptExamples": {
+        "frenchOak": "Lyxig fransk ek med bred plank i en varm naturlig finish.",
+        "carraraMarble": "Polerad italiensk Carrara marmor med djupgrå ådring.",
+        "microcement": "Modern sömlös mikrocement för en industriell chic grund.",
+        "herringboneWalnut": "Elegant mörk valnöt i ett klassiskt fiskbensmönster.",
+        "walnut": "Moderna storformat Skifferstensplattor i kolgrå."
+      }
+    },
+    "paintFlow": {
+      "title": "Måla",
+      "selectionTitle": "Välj Ytor att transformera",
+      "maskTitle": "Välj Ytor att transformera",
+      "colorLabel": "Färg",
+      "surfaceLabel": "Yta",
+      "choose": "Välj",
+      "apply": "Ansök",
+      "colorPickerTitle": "Välj en färg för din vägg",
+      "surfacePickerTitle": "Välj Yttyp",
+      "detectTitle": "Upptäcker målningsbara ytor...",
+      "detectBody": "HomeDecor AI spårar ommålningsbara väggytor samtidigt som fönster, möbler, inredning och golv lämnas orörda.",
+      "preparingMaskTitle": "Förbereder din maskeringsyta...",
+      "preparingMaskBody": "HomeDecor AI förfinar duken så att du kan måla skarpa kanter runt inbyggnader, fönster och möbler.",
+      "brushWidth": "Borstbredd",
+      "eraserWidth": "Suddgummibredd",
+      "generateCta": "Måla mina väggar →",
+      "finishTitle": "Finish Typ",
+      "finishBody": "Välj hur färgen ska fånga ljus så att väggarna läser korrekt i en polerad, designer-grade rendering.",
+      "selectedColor": "Vald färg",
+      "selectedSurfaceSentence": "Yta: {{surface}}.",
+      "colorLockedBody": "Väggfärgen är låst. Välj nu den slutliga glansprofilen för renderingen.",
+      "customColorDescription": "Anpassad väggton vald från precisionsfärgväljaren.",
+      "noColorSelected": "Ingen färg har valts",
+      "chooseColorBody": "Välj en väggfärg innan du fortsätter.",
+      "savePermissionTitle": "Fotoåtkomst behövs",
+      "savePermissionBody": "Tillåt åtkomst till fotobibliotek för att spara din rendering på enheten.",
+      "cameraAccessTitle": "Kameraåtkomst behövs",
+      "cameraAccessBody": "Aktivera kameraåtkomst för att ta ett rumsfoto.",
+      "photoAccessTitle": "Fotoåtkomst behövs",
+      "photoAccessBody": "Aktivera åtkomst till fotobibliotek för att ladda upp ett rumsfoto.",
+      "mediaUnavailableTitle": "Det gick inte att öppna media",
+      "exampleUnavailableBody": "Detta exempelfoto kunde inte öppnas.",
+      "markWallsTitle": "Markera väggarna först",
+      "markWallsBody": "Pensla över väggytorna du vill måla om innan du genererar.",
+      "pickColorTitle": "Välj en färg",
+      "pickColorBody": "Välj en väggfärg innan du fortsätter.",
+      "autoDetectSuccess": "Väggar upptäckta. Borsta för att förfina om det behövs.",
+      "autoDetectFailure": "Automatisk upptäckt kunde inte slutföras. Vänligen borsta manuellt.",
+      "renderFinishing": "Denna rendering håller redan på att slutföras.",
+      "cancelSuccess": "Generation avbruten. Din kredit behölls.",
+      "cancelUnavailable": "Det går inte att avbryta just nu.",
+      "supportingText": "Använder 1 poäng · {{creditsRemaining}}",
+      "creditsRemaining": "{{count}} kvar",
+      "intakeTitle": "Ladda upp din vision",
+      "intakeBody": "Ladda upp ett rumsfoto för exakt väggfärgning.",
+      "intakeReadyTitle": "Foto har lagts till. Markera väggområdet härnäst.",
+      "intakeReadyBody": "Ditt foto är låst. Borsta sedan väggytorna så att omfärgningen förblir exakt runt trim, möbler och inredning.",
+      "surfaces": {
+        "auto": "Auto",
+        "brick": "Tegelsten",
+        "cabinet": "Skåp",
+        "door": "Dörr",
+        "wall": "Vägg",
+        "outsideWall": "Yttervägg"
+      },
+      "colorFamilies": {
+        "pink": "Rosa",
+        "blue": "Blå",
+        "green": "Grönt",
+        "yellow": "Gul",
+        "gray": "Grå",
+        "red": "Röd"
+      },
+      "finishes": {
+        "matte": {
+          "label": "Matte",
+          "description": "Mjuk färgutdelning i gallerikvalitet med minsta ytbländning."
+        },
+        "satin": {
+          "label": "Satin",
+          "description": "Balanserad glans för moderna interiörer med en subtil designglöd."
+        },
+        "glossy": {
+          "label": "Blankt",
+          "description": "En polerad reflekterande finish för djärva väggar med hög kontrast."
+        }
+      }
+    },
+    "examples": {
+      "floor": {
+        "crackedConcrete": "Sprucken Betong",
+        "damagedPlanks": "Skadade plankor",
+        "brokenTile": "Trasig kakel",
+        "renovationSubfloor": "Renovering Undergolv",
+        "wornPlywood": "Sliten plywood"
+      },
+      "paint": {
+        "rawConcrete": "Rå Betong",
+        "peelingPlaster": "Skalande gips",
+        "wornWhite": "Sliten Vit",
+        "exposedBrick": "Exponerad tegelsten",
+        "stainedPlaster": "Betsad gips",
+        "dampStreaks": "Fuktiga ränder"
+      }
+    }
+  },
+  "workspace": {
+    "board": {
+      "new": "Nytt",
+      "openEditor": "Tryck för att öppna din designredigerare",
+      "generationFailedTap": "Render stötte på ett problem. Tryck för mer information.",
+      "generationFailedTitle": "Renderingen misslyckades",
+      "generationFailedBody": "Denna rendering slutfördes inte. Försök igen.",
+      "tryAnotherPrompt": "Gå tillbaka och försök med en annan prompt."
+    },
+    "processing": {
+      "default": "HomeDecor AI bevarar arkitekturen samtidigt som den komponerar en raffinerad omdesign.",
+      "floor": "HomeDecor AI läser perspektiv, låser golvplanet och komponerar det nya materialet med förstklassiga detaljer.",
+      "paint": "HomeDecor AI isolerar väggplanen och skiktar din valda finish med gallerikvalitetsrealism."
+    },
+    "services": {
+      "interior": "Redesign av interiör",
+      "exterior": "Exteriör omdesign",
+      "garden": "Redesign av trädgården",
+      "floor": "Golv Restyle",
+      "paint": "Smart väggfärg"
+    },
+    "editor": {
+      "title": "Ditt professionella koncept",
+      "sourcePhoto": "Källa Foto",
+      "comparison": "Jämförelse",
+      "deleteA11y": "Ta bort denna design från My Design Portfolio",
+      "showComparison": "Visa före och efter jämförelse",
+      "hideComparison": "Göm före och efter jämförelse",
+      "removeWatermark": "Ta bort vattenstämpel",
+      "regenerate": "Återskapa",
+      "saving": "Sparar...",
+      "sharing": "Delar...",
+      "renderUnavailable": "Återgivningen är inte tillgänglig. Försök igen.",
+      "previewNotReady": "Förhandsgranskningen är inte klar. Försök igen.",
+      "floorReady": "Materialledd golvomvandling med ett levande före och efter reglage.",
+      "paintReady": "Väggfärgning anpassad till din valda finish och rumsbelysning.",
+      "defaultReady": "Samlad inuti din premium HomeDecor-bräda."
+    },
+    "permissions": {
+      "requiredTitle": "Tillstånd krävs",
+      "requiredBody": "Aktivera kamera- eller fotoåtkomst i dina systeminställningar för att fortsätta.",
+      "cameraAccessTitle": "Kameraåtkomst behövs",
+      "cameraAccessBody": "Tillåt kameraåtkomst i Inställningar för att ta ett foto.",
+      "photoLibraryAccessTitle": "Tillgång till fotobibliotek behövs",
+      "photoLibraryAccessBody": "Tillåt åtkomst till fotobibliotek i Inställningar.",
+      "photoLibrarySaveBody": "Tillåt åtkomst till fotobiblioteket för att spara ditt resultat i enhetsgalleriet."
+    },
+    "media": {
+      "capturedPhoto": "Taget foto",
+      "uploadedPhoto": "Uppladdat foto",
+      "choosePhotoSource": "Välj hur du vill lägga till din bild.",
+      "cameraUnavailableTitle": "Kameran är inte tillgänglig",
+      "cameraUnavailableBody": "Vi kunde inte öppna kameran. Försök igen.",
+      "photoLibraryUnavailableTitle": "Fotobibliotek ej tillgängligt",
+      "photoLibraryUnavailableBody": "Vi kunde inte öppna fotobiblioteket. Försök igen.",
+      "photoIntakeUnavailableTitle": "Fotointag ej tillgängligt",
+      "photoIntakeUnavailableBody": "Vi kunde inte öppna din kamera eller ditt fotobibliotek. Försök igen.",
+      "exampleImageUnavailable": "Exempelbild är inte tillgänglig.",
+      "exampleUnavailableTitle": "Exempel ej tillgängligt",
+      "tryAnotherImage": "Försök med en annan bild."
+    },
+    "share": {
+      "nothingTitle": "Inget att dela med sig av",
+      "generateFirst": "Skapa en design först.",
+      "failedTitle": "Delningen misslyckades",
+      "message": "Designad med HomeDecor AI"
+    },
+    "download": {
+      "nothingTitle": "Inget att ladda ner",
+      "generateFirst": "Skapa en design först.",
+      "failedTitle": "Nedladdningen misslyckades"
+    },
+    "generation": {
+      "preparingSessionTitle": "Förbereder din session",
+      "preparingSessionBody": "Din gästprofil laddas fortfarande. Försök igen om ett ögonblick.",
+      "completeStepsTitle": "Slutför stegen",
+      "completeFloorBody": "Lägg till ett rumsfoto, definiera golvytan, välj ett material och välj en finish innan du fortsätter.",
+      "completePaintBody": "Lägg till ett rumsfoto, definiera de målbara ytorna, välj en väggfärg och välj en finish innan du fortsätter.",
+      "completePreviousSteps": "Slutför de föregående stegen först.",
+      "limitReached": "Gräns uppnådd",
+      "completeStepToContinue": "Slutför detta steg för att fortsätta."
+    },
+    "flow": {
+      "customPromptTitle": "Beskriv din vision",
+      "customPromptBody": "Beskriv den exakta designriktningen du vill ha innan du applicerar den.",
+      "selectSpaceType": "Tryck på ett kort för att identifiera din utrymmestyp."
+    },
+    "resumeDraft": "Återupptar ditt sparade utkast till guiden.",
+    "feedback": {
+      "like": "Gillar",
+      "dislike": "Ogillar",
+      "liked": "Tack för feedbacken.",
+      "disliked": "Feedback skickas till designteamet.",
+      "failed": "Det går inte att skicka feedback just nu."
+    },
+    "stepOne": {
+      "gardenPhotoTitle": "Lägg till ett trädgårdsfoto",
+      "exteriorPhotoTitle": "Lägg till ett exteriörfoto",
+      "floorPhotoTitle": "Lägg till våningsfoto",
+      "gardenEmptyTitle": "Starta din trädgårdsförvandling",
+      "exteriorEmptyTitle": "Starta din yttre transformation",
+      "tapToAddPhoto": "Tryck för att lägga till ett foto från din kamera eller ditt bibliotek"
+    },
+    "style": {
+      "tapToSelect": "Tryck på ett kort för att definiera din stilriktning."
+    }
+  },
+  "proSuccess": {
+    "title": "Välkommen till HomeDecor Pro!",
+    "subtitle": "Dina premiumverktyg är nu upplåsta:",
+    "features": {
+      "hyperRealism": "Ultrahög detaljåtergivning aktiverad",
+      "virtualStaging": "Premium designverktyg upplåsta",
+      "infiniteCredits": "Vecko- eller månadsvisningskvoter aktiva"
+    },
+    "cta": "Börja designa",
+    "toast": "Ditt konto har uppgraderats till Pro."
+  },
+  "legalViewer": {
+    "eyebrow": "Juridisk tittare",
+    "switches": {
+      "terms": "Användarvillkor",
+      "privacy": "Sekretesspolicy"
+    }
+  },
+  "storeReview": {
+    "title": "Betygsätt HomeDecor AI",
+    "unavailableBody": "Granskningsförfrågningar är inte tillgängliga på den här enheten.",
+    "errorBody": "Det går inte att öppna dialogrutan för butiksrecension just nu."
+  },
+  "gallery": {
+    "clusters": {
+      "foundations": "Grunder"
+    },
+    "tabs": {
+      "home": "Interiörer",
+      "exterior": "Exteriörer",
+      "garden": "Landskap"
+    },
+    "groups": {
+      "kitchen": "Kök",
+      "livingRoom": "Vardagsrum",
+      "diningRoom": "Matsal",
+      "bedroom": "Sovrum",
+      "bathroom": "Badrum",
+      "gamingRoom": "Spelrum",
+      "homeOffice": "Hemmakontoret",
+      "coffeeShop": "Kafé",
+      "studyRoom": "Studierum",
+      "restaurant": "Restaurang",
+      "attic": "Attic",
+      "toilet": "Toalett",
+      "balcony": "Balkong",
+      "hall": "Hall",
+      "deck": "Däck",
+      "landscapeDesigns": "Landskapsdesign",
+      "villa": "Villa",
+      "apartment": "Lägenhet",
+      "house": "Hus",
+      "officeBuilding": "Kontorsbyggnad",
+      "retail": "Detaljhandel",
+      "residential": "Bostäder",
+      "wall": "Vägg",
+      "floor": "Golv",
+      "garden": "Trädgård"
+    },
+    "imageTitleTemplate": "{{title}} Bild {{index}}",
+    "emptyState": {
+      "title": "Kategori inte tillgänglig",
+      "body": "Den begärda bildsamlingen kunde inte hittas."
+    }
+  },
+  "discoverCatalog": {
+    "sections": {
+      "home": {
+        "title": "Interiör",
+        "description": "Designerledda rum för boende, sömn, middag, arbete och underhållning.",
+        "items": {
+          "sereneLounge": {
+            "title": "Serene Lounge",
+            "subtitle": "Vardagsrum / Mjuk Minimal",
+            "spaceType": "Vardagsrum",
+            "style": "Mjuk Minimal"
+          },
+          "moodyClubRoom": {
+            "title": "Moody Club-rum",
+            "subtitle": "Vardagsrum / Moody Luxe",
+            "spaceType": "Vardagsrum",
+            "style": "Moody Luxe"
+          },
+          "organicLiving": {
+            "title": "Organic Living",
+            "subtitle": "Vardagsrum / Varm Ekologisk",
+            "spaceType": "Vardagsrum",
+            "style": "Varm ekologisk"
+          },
+          "grandSalon": {
+            "title": "Stora Salongen",
+            "subtitle": "Vardagsrum / Luxe marmor",
+            "spaceType": "Vardagsrum",
+            "style": "Lyx marmor"
+          },
+          "editorialLounge": {
+            "title": "Editorial Lounge",
+            "subtitle": "Spelrum / Cyberpunk",
+            "spaceType": "Spelrum",
+            "style": "Cyberpunk"
+          }
+        }
+      },
+      "exterior": {
+        "title": "Exteriör",
+        "description": "Fasadinspiration från moderna villor, urbana kvarter, kontor och butiksskal.",
+        "items": {
+          "modernHouse": {
+            "title": "Modernt hus",
+            "subtitle": "Modernt hus / Dagsljus Minimal",
+            "spaceType": "Modernt hus",
+            "style": "Dagsljus minimal"
+          },
+          "modernHouseNight": {
+            "title": "Modern House Night",
+            "subtitle": "Modernt hus / kvällsluxe",
+            "spaceType": "Modernt hus",
+            "style": "Kvälls lyx"
+          },
+          "stoneVilla": {
+            "title": "Stenvilla",
+            "subtitle": "Villa / Medelhavet",
+            "spaceType": "Villa",
+            "style": "Medelhavet"
+          },
+          "glassOffice": {
+            "title": "Glaskontor",
+            "subtitle": "Kontorsbyggnad / Minimalistisk",
+            "spaceType": "Kontorsbyggnad",
+            "style": "Minimalistisk"
+          },
+          "ecoApartments": {
+            "title": "Eco Apartments",
+            "subtitle": "Hyreshus / Eco Futurist",
+            "spaceType": "Flerfamiljshus",
+            "style": "Eco Futurist"
+          }
+        }
+      },
+      "garden": {
+        "title": "Trädgård",
+        "description": "Utomhuslounger, terrasser, pooler, däck och resortinriktade trädgårdsscener.",
+        "items": {
+          "infinityPool": {
+            "title": "Infinitypool",
+            "subtitle": "Infinity Pool / Coastal Luxe",
+            "spaceType": "Infinitypool",
+            "style": "Coastal Luxe"
+          },
+          "waterfallCourt": {
+            "title": "Vattenfallsdomstolen",
+            "subtitle": "Vattenfall Trädgård / Zen Lyx",
+            "spaceType": "Vattenfall trädgård",
+            "style": "Zen Lyx"
+          },
+          "sunsetFirePit": {
+            "title": "Sunset Fire Pit",
+            "subtitle": "Fire Pit Lounge / Resort Sunset",
+            "spaceType": "Fire Pit Lounge",
+            "style": "Resort solnedgång"
+          },
+          "tropicalPoolLounge": {
+            "title": "Tropical Pool Lounge",
+            "subtitle": "Pool Lounge / Tropical Escape",
+            "spaceType": "Pool Lounge",
+            "style": "Tropisk flykt"
+          },
+          "luminousGardenWalk": {
+            "title": "Luminous Garden Walk",
+            "subtitle": "Trädgårdspromenad / kvällsglöd",
+            "spaceType": "Trädgårdspromenad",
+            "style": "Kvällsglöd"
+          }
+        }
+      },
+      "wall": {
+        "title": "Vägginspiration",
+        "description": "Färgreferenser i verkliga rum som öppnar direkt i Smart Wall Paint med finishen redan förvald.",
+        "items": {
+          "sagePlasterWall": {
+            "title": "Sage Gipsvägg",
+            "subtitle": "Texturerad vägg / Sage Green",
+            "spaceType": "Texturerad vägg",
+            "style": "Sage Green"
+          },
+          "linearSlatFeature": {
+            "title": "Linjär lamellfunktion",
+            "subtitle": "Lamellvägg / Kol",
+            "spaceType": "Lamellvägg",
+            "style": "Träkol"
+          },
+          "veinedMarbleWall": {
+            "title": "Ådrad marmorvägg",
+            "subtitle": "Marmorvägg / Mjuk elfenben",
+            "spaceType": "Marmorvägg",
+            "style": "Mjuk elfenben"
+          },
+          "minimalConcreteWall": {
+            "title": "Minimal betongvägg",
+            "subtitle": "Betongvägg / Träkol",
+            "spaceType": "Betongvägg",
+            "style": "Träkol"
+          },
+          "botanicalMuralWall": {
+            "title": "Botanisk väggmålning",
+            "subtitle": "Väggmålning Vägg / Olivmossa",
+            "spaceType": "Väggmålning vägg",
+            "style": "Olivmossa"
+          }
+        }
+      },
+      "floor": {
+        "title": "Golvstilar",
+        "description": "Premiumgolvreferenser sammanställda från verkliga interiörer och mappade direkt i Floor Restyle-arbetsflödet.",
+        "items": {
+          "heritageHerringbone": {
+            "title": "Heritage Herringbone",
+            "subtitle": "Trägolv / Valnötsträ",
+            "spaceType": "Trägolv",
+            "style": "Valnötsträ"
+          },
+          "carraraMarbleFlow": {
+            "title": "Carrara Marble Flow",
+            "subtitle": "Marmorgolv / Carrara marmor",
+            "spaceType": "Marmorgolv",
+            "style": "Carrara marmor"
+          },
+          "satinConcrete": {
+            "title": "Satin Betong",
+            "subtitle": "Betonggolv / Polerad Betong",
+            "spaceType": "Betonggolv",
+            "style": "Polerad betong"
+          },
+          "walnutGloss": {
+            "title": "Valnötsglans",
+            "subtitle": "Glansträ / Valnötsträ",
+            "spaceType": "Glans trä",
+            "style": "Valnötsträ"
+          },
+          "softLimestone": {
+            "title": "Mjuk kalksten",
+            "subtitle": "Stengolv / polerad betong",
+            "spaceType": "Stengolv",
+            "style": "Polerad betong"
+          }
+        }
+      }
+    },
+    "wallColors": {
+      "sageGreen": {
+        "title": "Sage Green",
+        "description": "Mjukt grönt lugn för ljusa, polerade vardagsrum.",
+        "discoverSubtitle": "Vägg / Botanisk Lugn"
+      },
+      "midnightNavy": {
+        "title": "Midnattsflotta",
+        "description": "Skräddarsytt marindjup med skarp arkitektonisk kontrast.",
+        "discoverSubtitle": "Vägg / Skräddarsydd Kontrast"
+      },
+      "terracottaGlow": {
+        "title": "Terracotta Glow",
+        "description": "Varm lerfärg med jordad, redaktionell energi.",
+        "discoverSubtitle": "Vägg / Varm lera"
+      },
+      "dustyRose": {
+        "title": "Dusty Rose",
+        "description": "Dämpad rougevärme med mjuk boutique-attraktion.",
+        "discoverSubtitle": "Vägg / Boutique Blush"
+      },
+      "galleryCharcoal": {
+        "title": "Galleri Charcoal",
+        "description": "Raffinerat kol för stämningsfulla, konstframåtriktade rum.",
+        "discoverSubtitle": "Wall / Moody Gallery"
+      },
+      "softIvory": {
+        "title": "Mjuk elfenben",
+        "description": "Lysande neutral som håller rummen ljusa, aldrig platt.",
+        "discoverSubtitle": "Vägg / Tyst Neutral"
+      },
+      "oliveGrove": {
+        "title": "Olivlund",
+        "description": "Jordnära olivdjup med en grundad designerstämning.",
+        "discoverSubtitle": "Vägg / jordnära djup"
+      },
+      "lavenderMist": {
+        "title": "Lavendeldimma",
+        "description": "Mjukt violett dis för upphöjda pastellfärger.",
+        "discoverSubtitle": "Vägg / Mjuk Pastell"
+      },
+      "pearlGray": {
+        "title": "Pärlgrå",
+        "description": "Ljus tonal grå med polerad vardagsflexibilitet.",
+        "discoverSubtitle": "Vägg / Modern Neutral"
+      }
+    },
+    "wallColorCategories": {
+      "calmNeutrals": {
+        "title": "Lugna neutrala",
+        "colors": {
+          "softIvory": "Mjuk elfenben",
+          "pearlGray": "Pärlgrå",
+          "sageGreen": "Sage Green"
+        }
+      },
+      "boutiquePastels": {
+        "title": "Boutique pasteller",
+        "colors": {
+          "dustyRose": "Dusty Rose",
+          "lavenderMist": "Lavendeldimma",
+          "terracottaGlow": "Terracotta Glow"
+        }
+      },
+      "architecturalDepth": {
+        "title": "Arkitektoniskt djup",
+        "colors": {
+          "midnightNavy": "Midnattsflotta",
+          "galleryCharcoal": "Galleri Charcoal",
+          "oliveGrove": "Olivlund"
+        }
+      }
+    },
+    "floorMaterials": {
+      "naturalOak": {
+        "title": "Naturlig ek",
+        "description": "Luftiga ekplankor med mjuk naturlig ådring.",
+        "promptLabel": "ljusa golv i natur ek med breda plankdetaljer",
+        "discoverSubtitle": "Golv / ljust trä"
+      },
+      "walnutWood": {
+        "title": "Valnötsträ",
+        "description": "Djupa valnötsplankor med rik skräddarsydd kontrast.",
+        "promptLabel": "lyxigt golv i valnötsträ med rik djup ådring",
+        "discoverSubtitle": "Golv / Mörk Trä"
+      },
+      "carraraMarble": {
+        "title": "Carrara marmor",
+        "description": "Ljus stenådring med en lugn lyxfinish.",
+        "promptLabel": "Carrara marmorgolv med elegant mjuk ådring",
+        "discoverSubtitle": "Golv / polerad sten"
+      },
+      "polishedConcrete": {
+        "title": "Polerad betong",
+        "description": "Slät betongglans med urbant gallerilugn.",
+        "promptLabel": "polerat betonggolv med förstklassig slät struktur",
+        "discoverSubtitle": "Golv / Industriell Minimal"
+      },
+      "herringboneOak": {
+        "title": "Fiskbens ek",
+        "description": "Klassiskt ekmönster med varma riktningsrörelser.",
+        "promptLabel": "fiskbensparkettgolv i ek med premiummönsterdefinition",
+        "discoverSubtitle": "Golv / mönstrat trä"
+      },
+      "terracottaTile": {
+        "title": "Terrakotta kakel",
+        "description": "Jordnära lervärme med handgjord karaktär.",
+        "promptLabel": "terrakotta golv med varm lera färgvariation",
+        "discoverSubtitle": "Golv / medelhavslera"
+      },
+      "slateTile": {
+        "title": "Skiffer Kakel",
+        "description": "Mörk skiffer med en skarp finish i storformat.",
+        "promptLabel": "mörkt skiffer klinkergolv med storformat stenplattor",
+        "discoverSubtitle": "Golv / mörk sten"
+      },
+      "plushCarpet": {
+        "title": "Plysch matta",
+        "description": "Mjuk krämmatta med en tyst, mysig känsla.",
+        "promptLabel": "lyxiga plyschmattor i en mjuk krämfärgad ton",
+        "discoverSubtitle": "Golv / Mjuk struktur"
+      },
+      "weatheredOak": {
+        "title": "Vittrad ek",
+        "description": "Mellanton ek med en mjukt åldrad finish.",
+        "promptLabel": "väderbitna ekgolv med subtil åldrad ådring",
+        "discoverSubtitle": "Golv / Rustik Värme"
+      }
+    },
+    "injectedGallery": {
+      "floorAfterScenes": {
+        "heritageHerringbone": "Heritage Herringbone",
+        "carraraMarble": "Carrara marmor",
+        "satinConcrete": "Satin Betong",
+        "walnutGloss": "Valnötsglans",
+        "limestoneSlab": "Kalkstensplatta"
+      },
+      "wallAfterScenes": {
+        "sagePlaster": "Sage Gips",
+        "linearSlats": "Linjära lameller",
+        "veinedMarble": "Ådrad marmor",
+        "minimalConcrete": "Minimal betong",
+        "botanicalMural": "Botanisk väggmålning"
+      },
+      "interiorExamples": {
+        "kitchen": "Kök",
+        "livingRoom": "Vardagsrum",
+        "bedroom": "Sovrum",
+        "bathroom": "Badrum",
+        "gamingRoom": "Spelrum",
+        "homeOffice": "Hemmakontoret"
+      },
+      "exteriorExamples": {
+        "apartment": "Lägenhet",
+        "house": "Hus",
+        "office": "Kontor",
+        "villa": "Villa",
+        "residential": "Bostäder",
+        "retail": "Detaljhandel"
+      },
+      "gardenExamples": {
+        "infinityPool": "Infinitypool",
+        "waterfallCourt": "Vattenfallsdomstolen",
+        "firePit": "Eldstad",
+        "tropicalLounge": "Tropical Lounge",
+        "resortDeck": "Resortdäck",
+        "lagoonFalls": "Lagoonfallen"
+      },
+      "homeCoreScenes": {
+        "kitchen": "Kök",
+        "livingRoom": "Vardagsrum",
+        "bedroom": "Sovrum",
+        "bathroom": "Badrum",
+        "diningRoom": "Matsal",
+        "gamingRoom": "Spelrum",
+        "homeOffice": "Hemmakontoret"
+      },
+      "homeFlexScenes": {
+        "coffeeShop": "Kafé",
+        "gamingStudio": "Spelstudio",
+        "atticLounge": "Attic Lounge",
+        "studyRoom": "Studierum",
+        "serviceRoom": "Servicerum",
+        "laundryRoom": "Tvättstuga"
+      },
+      "livingRoomScenes": {
+        "sereneLounge": "Serene Lounge",
+        "moodyLounge": "Moody Lounge",
+        "organicLiving": "Organic Living",
+        "grandSalon": "Stora Salongen",
+        "playfulLounge": "Lekfull lounge"
+      },
+      "homeLuxeScenes": {
+        "restaurant": "Restaurang",
+        "studyLibrary": "Studiebibliotek",
+        "atticRetreat": "Attic Retreat",
+        "toiletSuite": "Toalettsvit",
+        "balcony": "Balkong",
+        "hall": "Hall",
+        "deckDay": "Däcks dag",
+        "deckNight": "Däcksnatt"
+      },
+      "exteriorPrimaryScenes": {
+        "house": "Hus",
+        "residential": "Bostäder",
+        "villa": "Villa",
+        "glassCorner": "Glas hörn",
+        "apartment": "Lägenhet"
+      },
+      "exteriorSecondaryScenes": {
+        "apartmentTower": "Lägenhet Tower",
+        "retailPavilion": "Retail Pavilion",
+        "officeBuilding": "Kontorsbyggnad",
+        "modernVilla": "Modern villa",
+        "residentialTower": "Bostadstorn"
+      },
+      "gardenPrimaryScenes": {
+        "infinityPool": "Infinitypool",
+        "waterfallCourt": "Vattenfallsdomstolen",
+        "sunsetFirePit": "Sunset Fire Pit",
+        "tropicalLounge": "Tropical Lounge",
+        "livingWall": "Levande vägg",
+        "lightCourt": "Light Court"
+      },
+      "gardenSecondaryScenes": {
+        "sunsetPool": "Solnedgångspool",
+        "fireCove": "Fire Cove",
+        "poolCourt": "Pool Court",
+        "waterfallLounge": "Waterfall Lounge",
+        "resortDeck": "Resortdäck",
+        "lagoonFalls": "Lagoonfallen"
+      },
+      "exteriorBuildingTypes": {
+        "apartment": "Lägenhet",
+        "house": "Hus",
+        "officeBuilding": "Kontorsbyggnad",
+        "villa": "Villa",
+        "residential": "Bostäder",
+        "retail": "Detaljhandel"
+      }
+    }
+  },
+  "legacyUnlocalized": {
+    "paintWizard": {
+      "autoDetectFailureMessage": "Automatisk identifiering kunde inte köras. Vänligen borsta manuellt.",
+      "cancelledGenerationMessage": "Avbruten av användaren.",
+      "result": {
+        "heading": "Se din nya interiör",
+        "subheading": "Ett polerat väggkoncept, sammansatt för att bevara rummets struktur, inredningslayout och naturliga ljus.",
+        "appliedFinish": "Applicerad finish",
+        "saveToGallery": "Spara i Galleri",
+        "share": "Dela",
+        "tryAgain": "Försök igen"
+      }
+    }
+  }
+}

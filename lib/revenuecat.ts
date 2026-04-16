@@ -295,7 +295,8 @@ export async function fetchTieredPackage(
     .getCurrentOfferingForPlacement(REVENUECAT_PAYWALL_PLACEMENT)
     .catch(() => null);
 
-  const offering = placementOffering ?? resolveOfferingFromHints(offerings, tierContext);
+  const hintedOffering = resolveOfferingFromHints(offerings, tierContext);
+  const offering = hintedOffering ?? placementOffering ?? offerings.current ?? null;
 
   const result = {
     offering,

@@ -295,7 +295,9 @@ export default function ProfileScreen() {
           { paddingBottom: bottomContentInset },
         ]}
       >
-        <Text style={styles.title}>{t("profile.title")}</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t("profile.title")}</Text>
+        </View>
 
         <View style={[styles.boardBody, { minHeight: boardBodyMinHeight }]}>
           {boardItems.length === 0 ? (
@@ -359,6 +361,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: GRID_HORIZONTAL_PADDING,
   },
+  header: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 32,
+  },
   boardBody: {
     flexGrow: 1,
     alignItems: "center",
@@ -368,20 +375,22 @@ const styles = StyleSheet.create({
     color: DS.colors.textPrimary,
     fontSize: 20,
     lineHeight: 24,
-    marginBottom: 32,
+    textAlign: "center",
     ...fonts.bold,
   },
   emptyState: {
     width: "100%",
+    maxWidth: 320,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 0,
+    paddingHorizontal: 8,
   },
   emptyTitle: {
     marginTop: 16,
     color: DS.colors.textSecondary,
     fontSize: 16,
     lineHeight: 24,
+    textAlign: "center",
     ...fonts.medium,
   },
   emptySubtitle: {
@@ -389,6 +398,7 @@ const styles = StyleSheet.create({
     color: DS.colors.textMuted,
     fontSize: 13,
     lineHeight: 16,
+    textAlign: "center",
     ...fonts.regular,
   },
   grid: {

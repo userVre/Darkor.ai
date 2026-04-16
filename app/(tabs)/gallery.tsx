@@ -1,22 +1,19 @@
 import { StatusBar } from "expo-status-bar";
-import { useRouter } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
 import { memo, useCallback, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
-import { CreditLimitModal } from "../../components/credit-limit-modal";
-import { DiamondCreditPill } from "../../components/diamond-credit-pill";
 import { DiscoverImageCard } from "../../components/discover-image-card";
 import { DiscoverPreviewModal } from "../../components/discover-preview-modal";
-import { useViewerCredits } from "../../components/viewer-credits-context";
 import { DS } from "../../lib/design-system";
 import {
-  DISCOVER_FEED_ROWS,
-  type DiscoverFeedRow,
+  type DiscoverCluster,
+  type DiscoverClusterId,
   type DiscoverGroup,
   type DiscoverTile,
+  useDiscoverClusters,
 } from "../../lib/discover-catalog";
 import { triggerHaptic } from "../../lib/haptics";
 import { fonts } from "../../styles/typography";
@@ -24,26 +21,16 @@ import { fonts } from "../../styles/typography";
 const SCREEN_SIDE_MARGIN = 24;
 const CARD_GAP = 12;
 
-const DiscoverClusterHeader = memo(function DiscoverClusterHeader({ title }: { title: string }) {
-  return (
-    <View style={styles.clusterHeader}>
-      <Text style={styles.clusterTitle}>{title}</Text>
-    </View>
-  );
-});
-
 const DiscoverSection = memo(function DiscoverSection({
   group,
   cardWidth,
   cardHeight,
   onPreview,
-  onSeeAll,
 }: {
   group: DiscoverGroup;
   cardWidth: number;
   cardHeight: number;
   onPreview: (item: DiscoverTile) => void;
-  onSeeAll: (group: DiscoverGroup) => void;
 }) {
   const snapOffsets = useMemo(
     () => group.items.map((_, index) => index * (cardWidth + CARD_GAP)),
@@ -54,9 +41,6 @@ const DiscoverSection = memo(function DiscoverSection({
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{group.title}</Text>
-        <Pressable accessibilityRole="button" onPress={() => onSeeAll(group)} style={styles.seeAllButton}>
-          <Text style={styles.seeAllText}>Explore All</Text>
-        </Pressable>
       </View>
 
       <FlashList
@@ -83,15 +67,12 @@ const DiscoverSection = memo(function DiscoverSection({
 });
 
 export default function GalleryScreen() {
-  const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { credits: creditBalance } = useViewerCredits();
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
-  const [isCreditModalVisible, setIsCreditModalVisible] = useState(false);
-
-  const rows = useMemo(() => DISCOVER_FEED_ROWS, []);
+  const [selectedClusterId, setSelectedClusterId] = useState<DiscoverClusterId>("interiors");
+  const clusters = useDiscoverClusters();
   const cardWidth = useMemo(() => Math.min(Math.round(width * 0.46), 224), [width]);
   const cardHeight = useMemo(() => Math.round(cardWidth * 1.28), [cardWidth]);
   const contentContainerStyle = useMemo(
@@ -110,73 +91,54 @@ export default function GalleryScreen() {
     setPreviewItem(null);
   }, []);
 
-  const handleSeeAll = useCallback((group: DiscoverGroup) => {
-    triggerHaptic();
-    router.push({
-      pathname: "/discover/[tab]/[group]",
-      params: {
-        tab: "discover",
-        group: group.id,
-      },
-    } as never);
-  }, [router]);
+  const selectedCluster = useMemo(
+    () => clusters.find((cluster) => cluster.id === selectedClusterId) ?? clusters[0],
+    [clusters, selectedClusterId],
+  );
 
-  const handleCreditsPress = useCallback(() => {
+  const handleClusterPress = useCallback((clusterId: DiscoverClusterId) => {
     triggerHaptic();
-    setIsCreditModalVisible(true);
+    setSelectedClusterId(clusterId);
   }, []);
 
-  const handleCreditModalClose = useCallback(() => {
-    setIsCreditModalVisible(false);
-  }, []);
-
-  const handleCreditModalUpgrade = useCallback(() => {
-    setIsCreditModalVisible(false);
-    router.push("/paywall");
-  }, [router]);
-
-  const keyExtractor = useCallback((item: DiscoverFeedRow) => item.id, []);
+  const keyExtractor = useCallback((item: DiscoverGroup) => item.id, []);
 
   const renderSection = useCallback(
-    ({ item }: { item: DiscoverFeedRow }) => {
-      if (item.type === "cluster") {
-        return <DiscoverClusterHeader title={item.cluster.title} />;
-      }
-
+    ({ item }: { item: DiscoverGroup }) => {
       return (
         <DiscoverSection
-          group={item.group}
+          group={item}
           cardWidth={cardWidth}
           cardHeight={cardHeight}
           onPreview={handlePreviewOpen}
-          onSeeAll={handleSeeAll}
         />
       );
     },
-    [cardHeight, cardWidth, handlePreviewOpen, handleSeeAll],
+    [cardHeight, cardWidth, handlePreviewOpen],
   );
 
   const listHeader = useMemo(
     () => (
       <View style={[styles.headerWrap, { paddingTop: insets.top + 16 }]}>
-        <View style={styles.headerRow}>
-          <DiamondCreditPill
-            accessibilityLabel="Open credits"
-            count={creditBalance}
-            onPress={handleCreditsPress}
-            variant="dark"
-          />
-        </View>
+        <View style={styles.categoryTabs}>
+          {clusters.map((cluster: DiscoverCluster) => {
+            const active = cluster.id === (selectedCluster?.id ?? selectedClusterId);
 
-        <View style={styles.headerCopy}>
-          <Text style={styles.headerTitle}>{t("discover.title")}</Text>
-          <Text style={styles.headerSubtitle}>
-            Curated interiors, architecture, and foundation references organized into fast-scrolling collections.
-          </Text>
+            return (
+              <Pressable
+                key={cluster.id}
+                accessibilityRole="button"
+                onPress={() => handleClusterPress(cluster.id)}
+                style={[styles.categoryTab, active ? styles.categoryTabActive : null]}
+              >
+                <Text style={[styles.categoryTabText, active ? styles.categoryTabTextActive : null]}>{cluster.title}</Text>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
     ),
-    [creditBalance, handleCreditsPress, insets.top, t],
+    [clusters, handleClusterPress, insets.top, selectedCluster?.id, selectedClusterId],
   );
 
   return (
@@ -184,7 +146,7 @@ export default function GalleryScreen() {
       <StatusBar style="dark" />
 
       <FlashList
-        data={rows}
+        data={selectedCluster?.groups ?? []}
         keyExtractor={keyExtractor}
         renderItem={renderSection}
         showsVerticalScrollIndicator={false}
@@ -199,12 +161,6 @@ export default function GalleryScreen() {
         topInset={insets.top}
         onClose={handlePreviewClose}
       />
-
-      <CreditLimitModal
-        visible={isCreditModalVisible}
-        onClose={handleCreditModalClose}
-        onUpgrade={handleCreditModalUpgrade}
-      />
     </View>
   );
 }
@@ -215,36 +171,40 @@ const styles = StyleSheet.create({
     backgroundColor: DS.colors.background,
   },
   headerWrap: {
-    paddingBottom: 28,
-    gap: 24,
+    paddingBottom: 20,
     backgroundColor: DS.colors.surface,
   },
-  headerRow: {
+  categoryTabs: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "space-between",
+    gap: 10,
   },
-  headerCopy: {
-    paddingHorizontal: SCREEN_SIDE_MARGIN,
-    gap: 8,
+  categoryTab: {
+    flex: 1,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: DS.colors.border,
+    backgroundColor: DS.colors.surface,
+    paddingHorizontal: 12,
   },
-  headerTitle: {
-    color: DS.colors.textPrimary,
-    ...DS.typography.title,
+  categoryTabActive: {
+    backgroundColor: DS.colors.textPrimary,
+    borderColor: DS.colors.textPrimary,
   },
-  headerSubtitle: {
-    maxWidth: 360,
+  categoryTabText: {
     color: DS.colors.textSecondary,
-    ...DS.typography.bodySm,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
+    ...fonts.semibold,
   },
-  clusterHeader: {
-    paddingHorizontal: SCREEN_SIDE_MARGIN,
-    marginBottom: 14,
-  },
-  clusterTitle: {
-    color: DS.colors.textSecondary,
-    ...DS.typography.label,
+  categoryTabTextActive: {
+    color: DS.colors.textInverse,
   },
   section: {
     marginBottom: 32,
@@ -252,10 +212,6 @@ const styles = StyleSheet.create({
   sectionHeader: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
     marginBottom: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
   },
   sectionTitle: {
     flex: 1,
@@ -263,15 +219,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     ...fonts.bold,
-  },
-  seeAllButton: {
-    alignItems: "flex-end",
-    justifyContent: "center",
-  },
-  seeAllText: {
-    color: DS.colors.textSecondary,
-    ...DS.typography.bodySm,
-    fontWeight: "600",
   },
   sectionContent: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,

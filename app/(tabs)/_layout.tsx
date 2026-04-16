@@ -72,7 +72,7 @@ function TabIcon({
             width: 46,
             height: 46,
             borderRadius: 23,
-            backgroundColor: DS.colors.accentSurface,
+            backgroundColor: DS.colors.surfaceHigh,
           }}
         />
       ) : null}
@@ -85,7 +85,7 @@ function TabIcon({
           alignItems: "center",
           justifyContent: "center",
           paddingHorizontal: 10,
-          backgroundColor: focused ? DS.colors.accentSurface : "transparent",
+          backgroundColor: focused ? DS.colors.surfaceHigh : "transparent",
         }}
       >
         <Icon color={color} size={size} strokeWidth={focused ? 1.7 : 1.5} />
@@ -107,7 +107,7 @@ export default function TabsLayout() {
         headerShown: false,
         lazy: true,
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: DS.colors.accent,
+        tabBarActiveTintColor: DS.colors.textPrimary,
         tabBarInactiveTintColor: DS.colors.textSecondary,
         tabBarButton: (props) => <TabBarButton {...props} />,
         tabBarItemStyle: {

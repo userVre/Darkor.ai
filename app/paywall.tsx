@@ -58,20 +58,21 @@ import {
 import { radix } from "../styles/theme";
 import { fonts } from "../styles/typography";
 
-const SCREEN_BG = radix.dark.slate.slate12;
-const PANEL_BG = radix.dark.slate.slate3;
-const PANEL_BORDER = radix.dark.slate.slate7;
-const ACCENT = radix.dark.slate.slate1;
+const SCREEN_BG = "#0D0D0D";
+const PANEL_BG = radix.dark.slate.slate1;
+const PANEL_BG_ALT = radix.dark.slate.slate2;
+const PANEL_BORDER = radix.dark.slate.slate6;
+const ACCENT = "#FFFFFF";
 const BRAND_RED = radix.dark.ruby.ruby9;
 const BRAND_RED_ACTIVE = radix.dark.ruby.ruby10;
-const TOGGLE_OFF = radix.dark.slate.slate8;
-const TEXT_PRIMARY = radix.dark.slate.slate12;
-const TEXT_MUTED = radix.dark.slate.slate11;
-const TEXT_RESTORE = radix.dark.slate.slate11;
-const TEXT_ACCENT = radix.dark.slate.slate1;
-const CTA_TEXT = radix.dark.slate.slate1;
+const TOGGLE_OFF = radix.dark.slate.slate5;
+const TEXT_PRIMARY = "#FFFFFF";
+const TEXT_MUTED = "rgba(255,255,255,0.72)";
+const TEXT_RESTORE = "#FFFFFF";
+const TEXT_ACCENT = "#FFFFFF";
+const CTA_TEXT = "#FFFFFF";
 const ERROR_TEXT = radix.dark.ruby.ruby11;
-const INDIGO_BADGE = radix.dark.indigo.indigo9;
+const INDIGO_BADGE = radix.dark.slate.slate3;
 const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 2500;
 const CLOSE_DELAY_MS = 5000;
@@ -441,6 +442,14 @@ function getDisplayedYearlyPerWeekPrice(
   });
 }
 
+function filterPackagesByCurrency(
+  packages: RevenueCatPackage[],
+  currencyCode: string,
+) {
+  const matchingPackages = packages.filter((pkg) => pkg.product.currencyCode === currencyCode);
+  return matchingPackages.length > 0 ? matchingPackages : packages;
+}
+
 export default function PaywallScreen() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -512,8 +521,13 @@ export default function PaywallScreen() {
     [displayedWeeklyPrice.formatted, t],
   );
   const cachedOfferingPackages = useMemo(
-    () => getCachedTieredPackage(pricingContext.revenueCat)?.packages ?? [],
+    () =>
+      filterPackagesByCurrency(
+        getCachedTieredPackage(pricingContext.revenueCat)?.packages ?? [],
+        pricingContext.currencyCode,
+      ),
     [
+      pricingContext.currencyCode,
       pricingContext.revenueCat.countryCode,
       pricingContext.revenueCat.currencyCode,
       pricingContext.revenueCat.offeringHint,
@@ -533,6 +547,7 @@ export default function PaywallScreen() {
   const isYearlySelected = !freeTrialEnabled && selectedDuration === "yearly";
   const isWeeklySelected = freeTrialEnabled || selectedDuration === "weekly";
   const sheetHeight = Math.max(height - 12, 0);
+  const isMoroccoRegion = pricingContext.regionCode === "MA";
 
   useEffect(() => {
     entranceProgress.value = withTiming(1, {
@@ -623,7 +638,20 @@ export default function PaywallScreen() {
           return;
         }
 
-        setPackages(offeringResult.packages);
+        const nextPackages = filterPackagesByCurrency(
+          offeringResult.packages,
+          pricingContext.currencyCode,
+        );
+        setPackages(nextPackages);
+
+        if (isMoroccoRegion) {
+          const hasMoroccanCurrency = nextPackages.some((pkg) => pkg.product.currencyCode === "MAD");
+          if (!hasMoroccanCurrency) {
+            setErrorMessage(t("paywall.moroccoPricingUnavailable"));
+            return;
+          }
+        }
+
         setErrorMessage(null);
       } catch {
         if (active) {
@@ -639,6 +667,7 @@ export default function PaywallScreen() {
     };
   }, [
     cachedOfferingPackages,
+    isMoroccoRegion,
     isSignedIn,
     pricingContext.revenueCat.countryCode,
     pricingContext.revenueCat.currencyCode,
@@ -1108,7 +1137,7 @@ const styles = StyleSheet.create({
   heroImageWrap: {
     borderRadius: 12,
     overflow: "hidden",
-    backgroundColor: PANEL_BG,
+    backgroundColor: PANEL_BG_ALT,
   },
   heroImage: {
     width: "100%",
@@ -1170,7 +1199,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: PANEL_BG,
+    backgroundColor: PANEL_BG_ALT,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -1213,7 +1242,7 @@ const styles = StyleSheet.create({
   planCard: {
     minHeight: 78,
     borderRadius: 14,
-    backgroundColor: PANEL_BG,
+    backgroundColor: PANEL_BG_ALT,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1,
@@ -1238,6 +1267,8 @@ const styles = StyleSheet.create({
     right: 12,
     borderRadius: 14,
     backgroundColor: INDIGO_BADGE,
+    borderWidth: 1,
+    borderColor: PANEL_BORDER,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
@@ -1379,6 +1410,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: BRAND_RED,
     justifyContent: "center",
+    alignItems: "flex-start",
     paddingHorizontal: 20,
     paddingVertical: 14,
   },
@@ -1386,19 +1418,19 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   ctaContent: {
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
   },
   ctaLoadingRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     gap: 8,
   },
   ctaLabelRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
   },
   ctaText: {
     color: CTA_TEXT,

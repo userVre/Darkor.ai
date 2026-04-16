@@ -21,7 +21,7 @@ type NavItemProps = {
 };
 
 function NavItem({ icon: Icon, label, active, onPress }: NavItemProps) {
-  const color = active ? DS.colors.accent : DS.colors.textSecondary;
+  const color = active ? DS.colors.textPrimary : DS.colors.textSecondary;
 
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.item}>
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: DS.colors.accentSurface,
+    backgroundColor: DS.colors.surfaceHigh,
   },
   iconPill: {
     minWidth: 46,
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   iconPillActive: {
-    backgroundColor: DS.colors.accentSurface,
+    backgroundColor: DS.colors.surfaceHigh,
   },
   iconPillIdle: {
     backgroundColor: "transparent",

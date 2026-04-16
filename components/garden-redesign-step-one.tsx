@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
-import { Camera, Image as GalleryIcon } from "@/components/material-icons";
+import { Camera, Image as GalleryIcon, Plus } from "@/components/material-icons";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -242,7 +242,7 @@ export function GardenRedesignStepOne({
             <>
               <Text style={[styles.emptyTitle, { marginTop: scaleValue(148, innerScale) }]}>{t("wizard.garden.stepOneEmptyTitle")}</Text>
               <Text style={[styles.emptySubtitle, { marginTop: scaleValue(24, innerScale) }]}>
-                {t("wizard.garden.stepOneEmptySubtitle")}
+                {t("wizard.stepOne.emptySubtitle")}
               </Text>
               <Pressable
                 accessibilityRole="button"
@@ -258,6 +258,9 @@ export function GardenRedesignStepOne({
                   },
                 ]}
               >
+                <View style={styles.addPhotoButtonIconWrap}>
+                  <Plus color="#FFFFFF" size={28} strokeWidth={3.2} />
+                </View>
                 <Text style={styles.addPhotoButtonText}>{t("wizard.stepOne.cta")}</Text>
               </Pressable>
             </>
@@ -494,13 +497,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 10,
     backgroundColor: "#0A0A0A",
+  },
+  addPhotoButtonIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.12)",
   },
   addPhotoButtonText: {
     color: "#FFFFFF",
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 15,
+    lineHeight: 20,
     ...fonts.semibold,
   },
   examplesLabel: {

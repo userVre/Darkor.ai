@@ -1,9 +1,11 @@
 import type { ImageSourcePropType } from "react-native";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import { GENERATED_DISCOVER_ASSETS, type GeneratedDiscoverAssetId } from "./generated-discover-assets";
 
 export type DiscoverTabId = "discover";
-export type DiscoverClusterId = "interiors" | "architecture" | "foundations";
+export type DiscoverClusterId = "interiors" | "architecture" | "landscapes";
 export type DiscoverService = "interior" | "exterior" | "foundation" | "garden";
 
 export type DiscoverTile = {
@@ -42,94 +44,144 @@ export type DiscoverFeedRow =
 
 type DiscoverGroupDefinition = {
   id: GeneratedDiscoverAssetId;
-  title: string;
+  titleKey: string;
   clusterId: DiscoverClusterId;
   service: DiscoverService;
   visibleInFeed?: boolean;
 };
 
 const DISCOVER_GROUP_DEFINITIONS: DiscoverGroupDefinition[] = [
-  { id: "kitchen", title: "Kitchen", clusterId: "interiors", service: "interior" },
-  { id: "living-room", title: "Living Room", clusterId: "interiors", service: "interior" },
-  { id: "dining-room", title: "Dining Room", clusterId: "interiors", service: "interior" },
-  { id: "bedroom", title: "Bedroom", clusterId: "interiors", service: "interior" },
-  { id: "bathroom", title: "Bathroom", clusterId: "interiors", service: "interior" },
-  { id: "gaming-room", title: "Gaming Room", clusterId: "interiors", service: "interior" },
-  { id: "home-office", title: "Home Office", clusterId: "interiors", service: "interior" },
-  { id: "coffee-shop", title: "Coffee Shop", clusterId: "interiors", service: "interior" },
-  { id: "study-room", title: "Study Room", clusterId: "interiors", service: "interior" },
-  { id: "restaurant", title: "Restaurant", clusterId: "interiors", service: "interior" },
-  { id: "attic", title: "Attic", clusterId: "interiors", service: "interior" },
-  { id: "toilet", title: "Toilet", clusterId: "interiors", service: "interior" },
-  { id: "balcony", title: "Balcony", clusterId: "interiors", service: "interior" },
-  { id: "hall", title: "Hall", clusterId: "interiors", service: "interior" },
-  { id: "deck", title: "Deck", clusterId: "interiors", service: "interior" },
-  { id: "villa", title: "Villa", clusterId: "architecture", service: "exterior" },
-  { id: "apartment", title: "Apartment", clusterId: "architecture", service: "exterior" },
-  { id: "house", title: "House", clusterId: "architecture", service: "exterior" },
-  { id: "office-building", title: "Office Building", clusterId: "architecture", service: "exterior" },
-  { id: "retail", title: "Retail", clusterId: "architecture", service: "exterior" },
-  { id: "residential", title: "Residential", clusterId: "architecture", service: "exterior" },
-  { id: "wall", title: "Wall", clusterId: "foundations", service: "foundation" },
-  { id: "floor", title: "Floor", clusterId: "foundations", service: "foundation" },
-  { id: "garden", title: "Garden", clusterId: "foundations", service: "garden", visibleInFeed: false },
+  { id: "kitchen", titleKey: "gallery.groups.kitchen", clusterId: "interiors", service: "interior" },
+  { id: "living-room", titleKey: "gallery.groups.livingRoom", clusterId: "interiors", service: "interior" },
+  { id: "dining-room", titleKey: "gallery.groups.diningRoom", clusterId: "interiors", service: "interior" },
+  { id: "bedroom", titleKey: "gallery.groups.bedroom", clusterId: "interiors", service: "interior" },
+  { id: "bathroom", titleKey: "gallery.groups.bathroom", clusterId: "interiors", service: "interior" },
+  { id: "gaming-room", titleKey: "gallery.groups.gamingRoom", clusterId: "interiors", service: "interior" },
+  { id: "home-office", titleKey: "gallery.groups.homeOffice", clusterId: "interiors", service: "interior" },
+  { id: "coffee-shop", titleKey: "gallery.groups.coffeeShop", clusterId: "interiors", service: "interior" },
+  { id: "study-room", titleKey: "gallery.groups.studyRoom", clusterId: "interiors", service: "interior" },
+  { id: "restaurant", titleKey: "gallery.groups.restaurant", clusterId: "interiors", service: "interior" },
+  { id: "attic", titleKey: "gallery.groups.attic", clusterId: "interiors", service: "interior" },
+  { id: "toilet", titleKey: "gallery.groups.toilet", clusterId: "interiors", service: "interior" },
+  { id: "balcony", titleKey: "gallery.groups.balcony", clusterId: "interiors", service: "interior" },
+  { id: "hall", titleKey: "gallery.groups.hall", clusterId: "interiors", service: "interior" },
+  { id: "deck", titleKey: "gallery.groups.deck", clusterId: "interiors", service: "interior" },
+  { id: "villa", titleKey: "gallery.groups.villa", clusterId: "architecture", service: "exterior" },
+  { id: "apartment", titleKey: "gallery.groups.apartment", clusterId: "architecture", service: "exterior" },
+  { id: "house", titleKey: "gallery.groups.house", clusterId: "architecture", service: "exterior" },
+  { id: "office-building", titleKey: "gallery.groups.officeBuilding", clusterId: "architecture", service: "exterior" },
+  { id: "retail", titleKey: "gallery.groups.retail", clusterId: "architecture", service: "exterior" },
+  { id: "residential", titleKey: "gallery.groups.residential", clusterId: "architecture", service: "exterior" },
+  { id: "wall", titleKey: "gallery.groups.wall", clusterId: "landscapes", service: "foundation", visibleInFeed: false },
+  { id: "floor", titleKey: "gallery.groups.floor", clusterId: "landscapes", service: "foundation", visibleInFeed: false },
+  { id: "garden", titleKey: "gallery.groups.garden", clusterId: "landscapes", service: "garden" },
 ];
 
-function buildTiles(groupId: GeneratedDiscoverAssetId, title: string): DiscoverTile[] {
+const DISCOVER_CLUSTER_TITLE_KEYS: Record<DiscoverClusterId, string> = {
+  interiors: "discover.tabs.home",
+  architecture: "discover.tabs.exterior",
+  landscapes: "discover.tabs.garden",
+};
+
+function buildTiles(
+  groupId: GeneratedDiscoverAssetId,
+  title: string,
+  t: ReturnType<typeof useTranslation>["t"],
+): DiscoverTile[] {
   return GENERATED_DISCOVER_ASSETS[groupId].map((image, index) => ({
     id: `${groupId}-${index + 1}`,
-    title: `${title} ${index + 1}`,
+    title: t("gallery.imageTitleTemplate", { title, index: index + 1 }),
     previewTitle: title,
     categoryId: groupId,
     image,
   }));
 }
 
-export const DISCOVER_GROUPS: DiscoverGroup[] = DISCOVER_GROUP_DEFINITIONS.map((group) => ({
-  id: group.id,
-  title: group.title,
-  clusterId: group.clusterId,
-  service: group.service,
-  items: buildTiles(group.id, group.title),
-}));
+function buildDiscoverGroups(t: ReturnType<typeof useTranslation>["t"]) {
+  return DISCOVER_GROUP_DEFINITIONS.map((group) => {
+    const title = t(group.titleKey);
 
-export const DISCOVER_CLUSTERS: DiscoverCluster[] = [
-  { id: "interiors", title: "Interiors", groups: DISCOVER_GROUPS.filter((group) => group.clusterId === "interiors") },
-  {
-    id: "architecture",
-    title: "Architecture",
-    groups: DISCOVER_GROUPS.filter((group) => group.clusterId === "architecture"),
-  },
-  {
-    id: "foundations",
-    title: "Foundations",
-    groups: DISCOVER_GROUPS.filter(
-      (group) =>
-        group.clusterId === "foundations" &&
-        DISCOVER_GROUP_DEFINITIONS.find((definition) => definition.id === group.id)?.visibleInFeed !== false,
-    ),
-  },
-];
-
-export const DISCOVER_FEED_ROWS: DiscoverFeedRow[] = DISCOVER_CLUSTERS.flatMap((cluster) => [
-  {
-    id: `cluster-${cluster.id}`,
-    type: "cluster" as const,
-    cluster,
-  },
-  ...cluster.groups.map((group) => ({
-    id: `group-${group.id}`,
-    type: "group" as const,
-    group,
-  })),
-]);
-
-export function getDiscoverGroups(_tabId: DiscoverTabId = "discover") {
-  return DISCOVER_GROUPS.filter(
-    (group) => DISCOVER_GROUP_DEFINITIONS.find((definition) => definition.id === group.id)?.visibleInFeed !== false,
-  );
+    return {
+      id: group.id,
+      title,
+      clusterId: group.clusterId,
+      service: group.service,
+      items: buildTiles(group.id, title, t),
+    };
+  });
 }
 
-export function getDiscoverGroup(_tabId: DiscoverTabId, groupId: string) {
-  return getDiscoverGroups().find((group) => group.id === groupId);
+function buildDiscoverClusters(groups: DiscoverGroup[], t: ReturnType<typeof useTranslation>["t"]) {
+  return [
+    {
+      id: "interiors" as const,
+      title: t(DISCOVER_CLUSTER_TITLE_KEYS.interiors),
+      groups: groups.filter((group) => group.clusterId === "interiors"),
+    },
+    {
+      id: "architecture" as const,
+      title: t(DISCOVER_CLUSTER_TITLE_KEYS.architecture),
+      groups: groups.filter((group) => group.clusterId === "architecture"),
+    },
+    {
+      id: "landscapes" as const,
+      title: t(DISCOVER_CLUSTER_TITLE_KEYS.landscapes),
+      groups: groups.filter(
+        (group) =>
+          group.clusterId === "landscapes"
+          && DISCOVER_GROUP_DEFINITIONS.find((definition) => definition.id === group.id)?.visibleInFeed !== false,
+      ),
+    },
+  ];
+}
+
+function buildDiscoverFeedRows(clusters: DiscoverCluster[]): DiscoverFeedRow[] {
+  return clusters.flatMap((cluster) => [
+    {
+      id: `cluster-${cluster.id}`,
+      type: "cluster" as const,
+      cluster,
+    },
+    ...cluster.groups.map((group) => ({
+      id: `group-${group.id}`,
+      type: "group" as const,
+      group,
+    })),
+  ]);
+}
+
+export function useDiscoverGroups(_tabId: DiscoverTabId = "discover") {
+  const { t, i18n } = useTranslation();
+
+  return useMemo(() => {
+    const groups = buildDiscoverGroups(t);
+    return groups.filter(
+      (group) => DISCOVER_GROUP_DEFINITIONS.find((definition) => definition.id === group.id)?.visibleInFeed !== false,
+    );
+  }, [i18n.language, t]);
+}
+
+export function useDiscoverClusters(_tabId: DiscoverTabId = "discover") {
+  const { t, i18n } = useTranslation();
+
+  return useMemo(() => {
+    const groups = buildDiscoverGroups(t);
+    return buildDiscoverClusters(groups, t);
+  }, [i18n.language, t]);
+}
+
+export function useDiscoverFeedRows(_tabId: DiscoverTabId = "discover") {
+  const { t, i18n } = useTranslation();
+
+  return useMemo(() => {
+    const groups = buildDiscoverGroups(t);
+    const clusters = buildDiscoverClusters(groups, t);
+    return buildDiscoverFeedRows(clusters);
+  }, [i18n.language, t]);
+}
+
+export function useDiscoverGroup(_tabId: DiscoverTabId, groupId: string | undefined) {
+  const groups = useDiscoverGroups();
+
+  return useMemo(() => groups.find((group) => group.id === groupId), [groupId, groups]);
 }

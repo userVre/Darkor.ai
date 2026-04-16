@@ -57,7 +57,7 @@ export function InteriorRedesignStepOne({
   creditCount,
   photoUri,
   examplePhotos,
-  emptyStateSubtitle = "Redesign and beautify your room",
+  emptyStateSubtitle = "Redesign and Beautify your home.",
   loadingExampleId,
   onTakePhoto,
   onChooseFromGallery,
@@ -249,7 +249,7 @@ export function InteriorRedesignStepOne({
             <>
               <Text style={[styles.emptyTitle, { marginTop: scaleValue(148, innerScale) }]}>{t("wizard.stepOne.emptyTitle")}</Text>
               <Text style={[styles.emptySubtitle, { marginTop: scaleValue(24, innerScale) }]}>
-                {emptyStateSubtitle === "Redesign and beautify your room" ? t("wizard.stepOne.emptySubtitle") : emptyStateSubtitle}
+                {emptyStateSubtitle}
               </Text>
               <Pressable
                 accessibilityRole="button"
@@ -266,7 +266,7 @@ export function InteriorRedesignStepOne({
                 ]}
               >
                 <View style={styles.addPhotoButtonIconWrap}>
-                  <Plus color="#FFFFFF" size={20} strokeWidth={3} />
+                  <Plus color="#FFFFFF" size={28} strokeWidth={3.2} />
                 </View>
                 <Text style={styles.addPhotoButtonText}>{t("wizard.stepOne.cta")}</Text>
               </Pressable>
@@ -497,17 +497,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#0A0A0A",
   },
   addPhotoButtonIconWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.12)",
   },
   addPhotoButtonText: {
     color: "#FFFFFF",
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 15,
+    lineHeight: 20,
     ...fonts.semibold,
   },
   examplesLabel: {
