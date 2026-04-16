@@ -142,7 +142,7 @@ export default function HomeScreen() {
       <View style={[styles.headerShell, { paddingTop: insets.top + 10 }]}>
         <View style={styles.headerRow}>
           <DiamondCreditPill
-            accessibilityLabel="Open credits"
+            accessibilityLabel={t("home.accessibility.openCredits")}
             count={creditBalance}
             onPress={handleCreditsPress}
             style={styles.creditPill}
@@ -151,7 +151,7 @@ export default function HomeScreen() {
 
           <View pointerEvents="none" style={styles.centerBrand}>
             <Text numberOfLines={1} style={styles.brandTitle}>
-              HomeDecor AI
+              {t("app.name")}
             </Text>
           </View>
 

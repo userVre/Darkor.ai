@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { X } from "@/components/material-icons";
+import { useTranslation } from "react-i18next";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 
@@ -15,6 +16,7 @@ type BoardPreviewModalProps = {
 };
 
 export function BoardPreviewModal({ item, visible, onClose }: BoardPreviewModalProps) {
+  const { t } = useTranslation();
   const translateY = useSharedValue(0);
   const sliderX = useSharedValue(0);
   const sliderWidth = useSharedValue(0);
@@ -74,7 +76,7 @@ export function BoardPreviewModal({ item, visible, onClose }: BoardPreviewModalP
         <View style={styles.bottomBar}>
           <Text style={styles.styleName}>{item.styleName}</Text>
           <Text style={styles.roomType}>{item.roomType}</Text>
-          {hasComparison ? <Text style={styles.hint}>Drag to compare. Double-tap to reset.</Text> : null}
+          {hasComparison ? <Text style={styles.hint}>{t("profile.compareHint")}</Text> : null}
         </View>
       </View>
     </Modal>

@@ -66,6 +66,9 @@
   },
   "home": {
     "title": "HomeDecor AI",
+    "accessibility": {
+      "openCredits": "Open credits"
+    },
     "errors": {
       "tryItUnavailableTitle": "Preview unavailable"
     },
@@ -126,6 +129,7 @@
     "noActiveSubscriptions": "No active subscriptions were found.",
     "purchaseError": "Purchase Error",
     "planUnavailable": "The selected plan is unavailable right now.",
+    "subscriptionConfirmFailed": "We could not confirm your subscription. Please try again.",
     "purchaseCancelled": "Purchase cancelled.",
     "closeA11y": "Close paywall",
     "title": "Design Like a Pro. No Limits.",
@@ -188,6 +192,7 @@
     "title": "My Design Portfolio",
     "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
     "emptySubtitle": "",
+    "compareHint": "Drag to compare. Double-tap to reset.",
     "deleteFromBoardTitle": "Remove from portfolio?",
     "deleteFromBoardBody": "This design will be removed from your portfolio.",
     "deletedFromBoard": "Removed from portfolio",
@@ -565,6 +570,18 @@
       "paint": "Smart Wall Paint"
     },
     "editor": {
+      "title": "Your Professional Concept",
+      "sourcePhoto": "Source Photo",
+      "comparison": "Comparison",
+      "deleteA11y": "Delete this design from My Design Portfolio",
+      "showComparison": "Show before and after comparison",
+      "hideComparison": "Hide before and after comparison",
+      "removeWatermark": "Remove Watermark",
+      "regenerate": "Regenerate",
+      "saving": "Saving...",
+      "sharing": "Sharing...",
+      "renderUnavailable": "Render unavailable. Please try again.",
+      "previewNotReady": "Preview not ready. Please try again.",
       "floorReady": "Material-led floor transformation with a live before and after slider.",
       "paintReady": "Wall recoloring tuned to your selected finish and room lighting.",
       "defaultReady": "Curated inside your premium HomeDecor board."
@@ -575,7 +592,8 @@
       "cameraAccessTitle": "Camera Access Needed",
       "cameraAccessBody": "Allow camera access in Settings to take a photo.",
       "photoLibraryAccessTitle": "Photo Library Access Needed",
-      "photoLibraryAccessBody": "Allow photo library access in Settings."
+      "photoLibraryAccessBody": "Allow photo library access in Settings.",
+      "photoLibrarySaveBody": "Please allow photo library access to save your result to the device gallery."
     },
     "media": {
       "capturedPhoto": "Captured Photo",
@@ -616,6 +634,14 @@
       "customPromptTitle": "Describe Your Vision",
       "customPromptBody": "Describe the exact design direction you want before applying it.",
       "selectSpaceType": "Tap a card to identify your space type."
+    },
+    "resumeDraft": "Resuming your saved wizard draft.",
+    "feedback": {
+      "like": "Like",
+      "dislike": "Dislike",
+      "liked": "Thanks for the feedback.",
+      "disliked": "Feedback sent to the design team.",
+      "failed": "Unable to send feedback right now."
     },
     "stepOne": {
       "gardenPhotoTitle": "Add a Garden Photo",

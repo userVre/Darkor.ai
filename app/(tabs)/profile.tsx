@@ -295,13 +295,13 @@ export default function ProfileScreen() {
           { paddingBottom: bottomContentInset },
         ]}
       >
-        <Text style={styles.title}>My Design Portfolio</Text>
+        <Text style={styles.title}>{t("profile.title")}</Text>
 
         <View style={[styles.boardBody, { minHeight: boardBodyMinHeight }]}>
           {boardItems.length === 0 ? (
             <View style={styles.emptyState}>
               <LayoutPanelTop color={DS.colors.borderStrong} size={56} strokeWidth={1.9} />
-              <Text style={styles.emptyTitle}>Your Portfolio is Empty</Text>
+              <Text style={styles.emptyTitle}>{t("profile.emptyTitle")}</Text>
               {t("profile.emptySubtitle") ? <Text style={styles.emptySubtitle}>{t("profile.emptySubtitle")}</Text> : null}
             </View>
           ) : (

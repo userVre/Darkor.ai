@@ -1,6 +1,14 @@
-import { getLocalizedFonts, getInitialSupportedLanguage } from "../lib/i18n/language";
-
-export const fonts = getLocalizedFonts(getInitialSupportedLanguage());
+export const fonts = {
+  regular: { fontFamily: undefined as string | undefined, fontWeight: "400" as const },
+  medium: { fontFamily: undefined as string | undefined, fontWeight: "500" as const },
+  semibold: { fontFamily: undefined as string | undefined, fontWeight: "600" as const },
+  bold: { fontFamily: undefined as string | undefined, fontWeight: "700" as const },
+  italic: {
+    fontFamily: undefined as string | undefined,
+    fontWeight: "400" as const,
+    fontStyle: "italic" as const,
+  },
+};
 
 export const textStyles = {
   h1: { ...fonts.bold, fontSize: 40, lineHeight: 48, letterSpacing: -1.2 },

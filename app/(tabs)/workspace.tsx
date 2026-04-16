@@ -3526,15 +3526,15 @@ export default function WorkspaceScreen() {
 
   const promptOpenSettings = useCallback((title: string, message: string) => {
     Alert.alert(title, message, [
-      { text: "Cancel", style: "cancel" },
+      { text: t("common.actions.cancel"), style: "cancel" },
       {
-        text: "Open Settings",
+        text: t("common.actions.openSettings"),
         onPress: () => {
           void Linking.openSettings();
         },
       },
     ]);
-  }, []);
+  }, [t]);
 
   const ensureGallerySavePermission = useCallback(async () => {
     const permission = await MediaLibrary.requestPermissionsAsync();
@@ -3542,14 +3542,17 @@ export default function WorkspaceScreen() {
       return true;
     }
 
-    promptOpenSettings("Photo Access Needed", "Please allow photo library access to save your result to the device gallery.");
+    promptOpenSettings(
+      t("workspace.permissions.photoLibraryAccessTitle"),
+      t("workspace.permissions.photoLibrarySaveBody"),
+    );
     return false;
-  }, [promptOpenSettings]);
+  }, [promptOpenSettings, t]);
 
   const exportCurrentRender = useCallback(async () => {
     if (!currentImageHasWatermark) {
       if (!activeEditorImageUrl) {
-        throw new Error("Render unavailable. Please try again.");
+        throw new Error(t("workspace.editor.renderUnavailable"));
       }
       const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}homedecor-share-${Date.now()}.jpg`;
       const download = await FileSystem.downloadAsync(activeEditorImageUrl, targetUri);
@@ -3557,7 +3560,7 @@ export default function WorkspaceScreen() {
     }
 
     if (!exportCaptureRef.current) {
-      throw new Error("Preview not ready. Please try again.");
+      throw new Error(t("workspace.editor.previewNotReady"));
     }
 
     const previousSlider = sliderX.value;
@@ -4059,9 +4062,9 @@ export default function WorkspaceScreen() {
 
       setFeedbackState(sentiment);
       setFeedbackSubmitted(true);
-      showToast(sentiment === "liked" ? "Thanks for the feedback." : "Feedback sent to the design team.");
+      showToast(sentiment === "liked" ? t("workspace.feedback.liked") : t("workspace.feedback.disliked"));
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "Unable to send feedback right now.");
+      showToast(error instanceof Error ? error.message : t("workspace.feedback.failed"));
     } finally {
       setIsSubmittingFeedback(null);
     }
@@ -4076,6 +4079,7 @@ export default function WorkspaceScreen() {
     showToast,
     submitFeedbackSignal,
     submitGenerationFeedback,
+    t,
     viewerId,
   ]);
 
@@ -4817,7 +4821,7 @@ export default function WorkspaceScreen() {
               }}
             >
               <Text className="text-center text-sm font-semibold" style={[fonts.semibold, { color: wizardPrimaryTextColor }]}>
-                Resuming your saved wizard draft.
+                {t("workspace.resumeDraft")}
               </Text>
             </View>
           </MotiView>
@@ -6879,7 +6883,7 @@ export default function WorkspaceScreen() {
                   <View style={{ position: "absolute", left: 16, right: 16, top: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                     <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(0,0,0,0.4)", paddingHorizontal: spacing.sm, paddingVertical: spacing.sm }}>
                       <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "700", letterSpacing: 0.9, textTransform: "uppercase" }}>
-                        Source Photo
+                        {t("workspace.editor.sourcePhoto")}
                       </Text>
                     </View>
                     <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "rgba(18,6,26,0.72)", paddingHorizontal: spacing.sm, paddingVertical: spacing.sm }}>
@@ -6975,7 +6979,7 @@ export default function WorkspaceScreen() {
                 ...fonts.bold,
               }}
             >
-              Your Professional Concept
+              {t("workspace.editor.title")}
             </Text>
 
             <View className="flex-row items-center justify-between">
@@ -6997,7 +7001,7 @@ export default function WorkspaceScreen() {
                 <View style={{ width: 88, alignItems: "flex-end" }}>
                   <LuxPressable
                     accessibilityRole="button"
-                    accessibilityLabel="Delete this design from Your Board"
+                    accessibilityLabel={t("workspace.editor.deleteA11y")}
                     onPress={handleDeleteBoardItem}
                     className="cursor-pointer h-11 w-11 items-center justify-center"
                     style={{ ...floatingButton(false), paddingHorizontal: 0, paddingVertical: 0 }}
@@ -7056,7 +7060,7 @@ export default function WorkspaceScreen() {
                 <View className="absolute left-4 right-4 top-4 flex-row items-center justify-between">
                   <LuxPressable
                     accessibilityRole="button"
-                    accessibilityLabel={showSliderComparison ? "Hide before and after comparison" : "Show before and after comparison"}
+                    accessibilityLabel={showSliderComparison ? t("workspace.editor.hideComparison") : t("workspace.editor.showComparison")}
                     onPress={handleToggleComparisonSlider}
                     disabled={!hasComparisonImages}
                     className="cursor-pointer"
@@ -7080,7 +7084,7 @@ export default function WorkspaceScreen() {
 
                   <View className="bg-black/40 px-3 py-1.5" style={{ ...organicRadii(16, 12), ...ambientShadow(0.14, 12, 10) }}>
                     <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>
-                      {showSliderComparison ? "Comparison" : editorStyleLabel}
+                      {showSliderComparison ? t("workspace.editor.comparison") : editorStyleLabel}
                     </Text>
                   </View>
                 </View>
@@ -7181,8 +7185,8 @@ export default function WorkspaceScreen() {
                   >
                     <View style={{ flexDirection: "row", gap: 10 }}>
                       {([
-                        { key: "liked", icon: ThumbUp, label: "Like" },
-                        { key: "disliked", icon: ThumbDown, label: "Dislike" },
+                        { key: "liked", icon: ThumbUp, label: t("workspace.feedback.like") },
+                        { key: "disliked", icon: ThumbDown, label: t("workspace.feedback.dislike") },
                       ] as const).map((item) => {
                         const active = editorFeedbackState === item.key;
                         const busy = isSubmittingFeedback === item.key;
@@ -7229,7 +7233,7 @@ export default function WorkspaceScreen() {
                           >
                             <View className="flex-row items-center gap-2">
                               <Sparkles color="#ffffff" size={15} strokeWidth={1.8} />
-                              <Text className="text-sm font-semibold text-white" style={fonts.semibold}>Remove Watermark</Text>
+                              <Text className="text-sm font-semibold text-white" style={fonts.semibold}>{t("workspace.editor.removeWatermark")}</Text>
                             </View>
                           </LinearGradient>
                         </LuxPressable>
@@ -7255,7 +7259,7 @@ export default function WorkspaceScreen() {
           <View style={{ marginTop: spacing.lg, flexDirection: "row", gap: 12, alignItems: "stretch", justifyContent: "center" }}>
             <EditorActionButton
               icon={Redo2}
-              label={isGenerating ? "Working..." : "Regenerate"}
+              label={isGenerating ? t("common.states.loading") : t("workspace.editor.regenerate")}
               onPress={() => {
                 void handleRegenerate();
               }}
@@ -7265,7 +7269,7 @@ export default function WorkspaceScreen() {
             />
             <EditorActionButton
               icon={Download}
-              label={isSaveBusy ? "Saving..." : "Save"}
+              label={isSaveBusy ? t("workspace.editor.saving") : t("common.actions.save")}
               onPress={handleSaveToGallery}
               disabled={isEditorActionDisabled || isSaveBusy}
               loading={isSaveBusy}
@@ -7273,7 +7277,7 @@ export default function WorkspaceScreen() {
             />
             <EditorActionButton
               icon={Share2}
-              label={isSharingResult ? "Sharing..." : "Share"}
+              label={isSharingResult ? t("workspace.editor.sharing") : t("common.actions.share")}
               onPress={() => {
                 void handleShare();
               }}

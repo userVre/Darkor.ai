@@ -25,8 +25,14 @@ export type RevenueCatTierContext = {
   attributePayload?: Record<string, string>;
 };
 
+type CachedTieredOfferings = {
+  offering: Awaited<ReturnType<RevenueCatPurchases["getCurrentOfferingForPlacement"]>> | null;
+  packages: RevenueCatPackage[];
+};
+
 let purchasesClient: RevenueCatPurchases | null = null;
 let purchasesModulePromise: Promise<typeof import("react-native-purchases")> | null = null;
+const tieredOfferingsCache = new Map<string, CachedTieredOfferings>();
 
 function hasRevenueCatNativeModule() {
   return Boolean((NativeModules as { RNPurchases?: unknown }).RNPurchases);
@@ -97,6 +103,15 @@ function getOfferingAliases(tierContext?: RevenueCatTierContext | null) {
     normalizedCurrencyCode && normalizedTierId ? `${normalizedCurrencyCode}_${normalizedTierId}` : "",
     normalizedCurrencyCode && normalizedTierId ? `${normalizedTierId}_${normalizedCurrencyCode}` : "",
   ].filter((value, index, values) => value.length > 0 && values.indexOf(value) === index);
+}
+
+function getTierContextCacheKey(tierContext?: RevenueCatTierContext | null) {
+  return [
+    normalizeToken(tierContext?.tierId),
+    normalizeToken(tierContext?.countryCode),
+    normalizeToken(tierContext?.currencyCode),
+    normalizeToken(tierContext?.offeringHint),
+  ].join(":");
 }
 
 function resolveOfferingFromHints(
@@ -282,10 +297,17 @@ export async function fetchTieredPackage(
 
   const offering = placementOffering ?? resolveOfferingFromHints(offerings, tierContext);
 
-  return {
+  const result = {
     offering,
     packages: offering?.availablePackages ?? offerings.current?.availablePackages ?? [],
   };
+
+  tieredOfferingsCache.set(getTierContextCacheKey(tierContext), result);
+  return result;
+}
+
+export function getCachedTieredPackage(tierContext: RevenueCatTierContext) {
+  return tieredOfferingsCache.get(getTierContextCacheKey(tierContext)) ?? null;
 }
 
 export function getRevenueCatClient() {

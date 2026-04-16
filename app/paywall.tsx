@@ -45,6 +45,7 @@ import {
   configureRevenueCat,
   fetchTieredPackage,
   findRevenueCatPackage,
+  getCachedTieredPackage,
   getRevenueCatClient,
   hasActiveSubscription,
   resolveRevenueCatSubscription,
@@ -93,11 +94,6 @@ const HERO_CAROUSEL_DATA = Array.from({ length: HERO_IMAGES.length * HERO_CAROUS
   image: HERO_IMAGES[index % HERO_IMAGES.length],
 }));
 const HERO_CAROUSEL_INITIAL_INDEX = HERO_IMAGES.length * Math.floor(HERO_CAROUSEL_REPEAT_MULTIPLIER / 2);
-const FEATURE_ITEMS = [
-  "Faster Rendering",
-  "Ad-free Experience",
-  "Unlimited Design Renders",
-] as const;
 const AnimatedSvgCircle = Animated.createAnimatedComponent(SvgCircle);
 
 function FadeSwap({
@@ -515,6 +511,15 @@ export default function PaywallScreen() {
     () => t("paywall.thenPricePerWeek", { price: displayedWeeklyPrice.formatted }),
     [displayedWeeklyPrice.formatted, t],
   );
+  const cachedOfferingPackages = useMemo(
+    () => getCachedTieredPackage(pricingContext.revenueCat)?.packages ?? [],
+    [
+      pricingContext.revenueCat.countryCode,
+      pricingContext.revenueCat.currencyCode,
+      pricingContext.revenueCat.offeringHint,
+      pricingContext.revenueCat.tierId,
+    ],
+  );
   const selectedPackage = useMemo(() => {
     if (freeTrialEnabled) {
       return weeklyPackage ?? yearlyPackage ?? packages[0] ?? null;
@@ -597,6 +602,10 @@ export default function PaywallScreen() {
   useEffect(() => {
     let active = true;
 
+    if (cachedOfferingPackages.length > 0) {
+      setPackages(cachedOfferingPackages);
+    }
+
     const loadOfferings = async () => {
       try {
         const cached = getRevenueCatClient();
@@ -629,6 +638,7 @@ export default function PaywallScreen() {
       active = false;
     };
   }, [
+    cachedOfferingPackages,
     isSignedIn,
     pricingContext.revenueCat.countryCode,
     pricingContext.revenueCat.currencyCode,
@@ -767,12 +777,12 @@ export default function PaywallScreen() {
       setIsLoading(true);
       const result = await purchasesRef.current.purchasePackage(selectedPackage);
       if (!hasActiveSubscription(result.customerInfo)) {
-        throw new Error("We could not confirm your subscription. Please try again.");
+        throw new Error(t("paywall.subscriptionConfirmFailed"));
       }
 
       const subscriptionState = resolveRevenueCatSubscription(result.customerInfo);
       if (subscriptionState.plan === "free" || subscriptionState.subscriptionType === "free") {
-        throw new Error("We could not confirm your subscription. Please try again.");
+        throw new Error(t("paywall.subscriptionConfirmFailed"));
       }
 
       await persistPurchasedPlan(
@@ -796,7 +806,7 @@ export default function PaywallScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [completePaywall, persistPurchasedPlan, selectedPackage, setOptimisticAccess, showSuccess]);
+  }, [completePaywall, persistPurchasedPlan, selectedPackage, setOptimisticAccess, showSuccess, t]);
 
   const handleToggleTrial = useCallback(() => {
     if (isLoading) {
@@ -953,7 +963,7 @@ export default function PaywallScreen() {
             {[t("paywall.features.fasterRendering"), t("paywall.features.adFree"), t("paywall.features.unlimitedRenders")].map((feature, index) => (
               <FeatureRow
                 key={feature}
-                isLast={index === FEATURE_ITEMS.length - 1}
+                isLast={index === 2}
                 label={feature}
               />
             ))}
@@ -1110,16 +1120,16 @@ const styles = StyleSheet.create({
   },
   titleSection: {
     marginHorizontal: 20,
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 40,
     gap: 10,
   },
   subtitleText: {
-    maxWidth: 320,
+    maxWidth: 360,
     color: TEXT_MUTED,
     fontSize: 13,
     lineHeight: 18,
-    textAlign: "center",
+    textAlign: "left",
     letterSpacing: 0.3,
     ...fonts.medium,
   },
@@ -1127,7 +1137,7 @@ const styles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontSize: 30,
     lineHeight: 36,
-    textAlign: "center",
+    textAlign: "left",
     flexShrink: 1,
     ...fonts.bold,
   },
@@ -1406,13 +1416,13 @@ const styles = StyleSheet.create({
   legalFooter: {
     marginHorizontal: 20,
     paddingTop: 16,
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   legalLinksRow: {
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
-    justifyContent: "center",
+    justifyContent: "flex-start",
   },
   legalLinkButton: {
     minWidth: 40,

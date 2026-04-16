@@ -1,4 +1,5 @@
 import { getLocales, type Locale } from "expo-localization";
+import { Platform } from "react-native";
 
 export const SUPPORTED_LANGUAGES = [
   "en-US",
@@ -53,11 +54,18 @@ export const SUPPORTED_LANGUAGE_OPTIONS: readonly SupportedLanguageOption[] = [
     defaultRegion: "DE",
   },
   {
-    code: "pt",
-    englishLabel: "Portuguese",
-    nativeLabel: "Português",
-    localeBase: "pt",
-    defaultRegion: "PT",
+    code: "sv",
+    englishLabel: "Swedish",
+    nativeLabel: "Svenska",
+    localeBase: "sv",
+    defaultRegion: "SE",
+  },
+  {
+    code: "zh-Hans",
+    englishLabel: "Chinese (Simplified)",
+    nativeLabel: "简体中文",
+    localeBase: "zh-Hans",
+    defaultRegion: "CN",
   },
   {
     code: "ru",
@@ -67,11 +75,11 @@ export const SUPPORTED_LANGUAGE_OPTIONS: readonly SupportedLanguageOption[] = [
     defaultRegion: "RU",
   },
   {
-    code: "sv",
-    englishLabel: "Swedish",
-    nativeLabel: "Svenska",
-    localeBase: "sv",
-    defaultRegion: "SE",
+    code: "pt",
+    englishLabel: "Portuguese",
+    nativeLabel: "Português",
+    localeBase: "pt",
+    defaultRegion: "PT",
   },
   {
     code: "ja",
@@ -86,13 +94,6 @@ export const SUPPORTED_LANGUAGE_OPTIONS: readonly SupportedLanguageOption[] = [
     nativeLabel: "한국어",
     localeBase: "ko",
     defaultRegion: "KR",
-  },
-  {
-    code: "zh-Hans",
-    englishLabel: "Chinese (Simplified)",
-    nativeLabel: "简体中文",
-    localeBase: "zh-Hans",
-    defaultRegion: "CN",
   },
 ] as const;
 
@@ -154,11 +155,8 @@ export function resolveSupportedLanguage(input?: string | null): AppLanguage {
     || normalized.includes("hans")
     || normalized === "zh-hant"
     || normalized.includes("hant")
+    || normalized.startsWith("zh-")
   ) {
-    return "zh-Hans";
-  }
-
-  if (normalized.startsWith("zh-")) {
     return "zh-Hans";
   }
 
@@ -167,6 +165,16 @@ export function resolveSupportedLanguage(input?: string | null): AppLanguage {
 
 export function resolveSupportedLanguageFromLocales(locales?: readonly Locale[]) {
   for (const locale of locales ?? []) {
+    const regionCode = normalizeCountryCode(locale.regionCode);
+
+    if (regionCode === "US") {
+      return "en-US";
+    }
+
+    if (regionCode === "FR") {
+      return "fr";
+    }
+
     const candidate = resolveSupportedLanguage(
       locale.languageTag
         ?? locale.languageCode
@@ -215,6 +223,16 @@ export function isCjkLanguage(language?: string | null) {
   return ["ja", "ko", "zh-Hans"].includes(resolveSupportedLanguage(language));
 }
 
+function getCjkFallbackFontFamily(language: AppLanguage) {
+  if (Platform.OS === "ios") {
+    if (language === "ja") return "Hiragino Sans";
+    if (language === "ko") return "Apple SD Gothic Neo";
+    return "PingFang SC";
+  }
+
+  return "sans-serif";
+}
+
 function getFontWeight(weight: "regular" | "medium" | "semibold" | "bold") {
   if (weight === "regular") return "400" as const;
   if (weight === "medium") return "500" as const;
@@ -223,8 +241,11 @@ function getFontWeight(weight: "regular" | "medium" | "semibold" | "bold") {
 }
 
 export function getLocalizedFonts(language?: string | null) {
-  void language;
-  const fontFamily = "Inter";
+  const resolvedLanguage = resolveSupportedLanguage(language);
+  const fontFamily = isCjkLanguage(resolvedLanguage)
+    ? getCjkFallbackFontFamily(resolvedLanguage)
+    : "Inter";
+  const italicFontFamily = fontFamily === "Inter" ? "Inter-Italic" : fontFamily;
 
   return {
     regular: {
@@ -244,9 +265,9 @@ export function getLocalizedFonts(language?: string | null) {
       fontWeight: getFontWeight("bold"),
     },
     italic: {
-      fontFamily: "Inter-Italic",
+      fontFamily: italicFontFamily,
       fontWeight: getFontWeight("regular"),
-      fontStyle: "normal" as const,
+      fontStyle: fontFamily === "Inter" ? ("normal" as const) : ("italic" as const),
     },
   };
 }

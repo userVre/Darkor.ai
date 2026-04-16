@@ -32,6 +32,7 @@ import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../lib/guest-testing";
 import { consumeReferralCode, setReferralCode } from "../lib/referral";
 import {
   configureRevenueCat,
+  fetchTieredPackage,
   hasActiveSubscription,
   resolveRevenueCatSubscription,
   syncRevenueCatPricingAttributes,
@@ -139,9 +140,14 @@ function RevenueCatGate() {
     const purchases = purchasesRef.current;
     if (!revenueCatReady || !configuredRef.current || !isLoaded || !purchases) return;
 
-    void syncRevenueCatPricingAttributes(purchases, pricingContext.revenueCat).catch((error) => {
-      console.warn("[Boot] RevenueCat pricing sync failed", error);
-    });
+    void (async () => {
+      try {
+        await syncRevenueCatPricingAttributes(purchases, pricingContext.revenueCat);
+        await fetchTieredPackage(purchases, pricingContext.revenueCat);
+      } catch (error) {
+        console.warn("[Boot] RevenueCat pricing sync failed", error);
+      }
+    })();
   }, [
     isLoaded,
     pricingContext.revenueCat.countryCode,
