@@ -1,7 +1,6 @@
 import { ArrowLeft, X } from "@/components/material-icons";
 import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DS, floatingButton } from "../lib/design-system";
@@ -49,6 +48,7 @@ export function getStickyStepHeaderMetrics(topInset: number) {
 }
 
 export function StickyStepHeader({
+  title = "HomeDecor AI",
   creditCount = 0,
   step,
   totalSteps,
@@ -58,18 +58,12 @@ export function StickyStepHeader({
   backAccessibilityLabel = "Go back",
   closeAccessibilityLabel = "Close",
 }: StickyStepHeaderProps) {
-  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const metrics = getStickyStepHeaderMetrics(insets.top);
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
-  const stepLabel = t("wizard.headers.stepProgress", {
-    current: safeStep,
-    total: totalSteps,
-  });
-
   return (
     <>
       <View
@@ -97,19 +91,19 @@ export function StickyStepHeader({
                 </Pressable>
               ) : showCredits ? (
                 <DiamondCreditPill
-                  accessibilityLabel={t("wizard.headers.creditsRemaining")}
+                  accessibilityLabel="Credits remaining"
                   accessibilityRole="text"
                   count={creditCount}
                   style={styles.creditPill}
-                  variant="dark"
+                  variant="light"
                 />
               ) : null}
             </View>
 
-            <View style={styles.stepLabelWrap}>
-              <View style={styles.stepLabelChip}>
-                <Text style={styles.stepLabelText}>{stepLabel}</Text>
-              </View>
+            <View pointerEvents="none" style={styles.titleWrap}>
+              <Text numberOfLines={1} style={styles.titleText}>
+                {title}
+              </Text>
             </View>
 
             <View style={[styles.sideSlot, styles.sideSlotRight]}>
@@ -200,33 +194,22 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -1 }],
   },
   creditPill: {
-    minHeight: 38,
+    minHeight: 40,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  stepLabelWrap: {
+  titleWrap: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 12,
-  },
-  stepLabelChip: {
-    minHeight: 36,
-    minWidth: 108,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 999,
-    borderCurve: "continuous",
-    backgroundColor: DS.colors.surfaceHigh,
-    borderWidth: 1,
-    borderColor: DS.colors.border,
     paddingHorizontal: 16,
-    paddingVertical: 8,
   },
-  stepLabelText: {
+  titleText: {
     color: DS.colors.textPrimary,
-    ...DS.typography.label,
-    fontSize: 12,
-    letterSpacing: 1.2,
+    ...DS.typography.button,
+    fontSize: 19,
+    lineHeight: 24,
+    letterSpacing: -0.35,
+    textAlign: "center",
   },
 });

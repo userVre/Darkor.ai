@@ -29,6 +29,9 @@ export const DESIGN_WIZARD_TEXT = "#0A0A0A";
 export const DESIGN_WIZARD_TEXT_MUTED = "#686868";
 export const DESIGN_WIZARD_TEXT_ON_DARK = "#FFFFFF";
 export const DESIGN_WIZARD_RUBY = "#E53935";
+export const DESIGN_WIZARD_SELECTION_BLUE = "#2563EB";
+export const DESIGN_WIZARD_SELECTION_BLUE_SOFT = "rgba(37,99,235,0.14)";
+export const DESIGN_WIZARD_SELECTION_BLUE_GLOW = "rgba(37,99,235,0.18)";
 
 type RoomIconName =
   | "Bathroom"
@@ -84,11 +87,11 @@ export function getArchitecturalSelectionRadii(): ViewStyle {
 export function getWizardSelectionCardStyle(active: boolean, backgroundColor = DESIGN_WIZARD_SURFACE_MUTED): ViewStyle {
   return {
     ...getArchitecturalSelectionRadii(),
-    borderWidth: active ? 0 : 1.5,
-    borderColor: active ? "transparent" : DESIGN_WIZARD_BORDER,
-    backgroundColor: active ? "#000000" : backgroundColor,
+    borderWidth: active ? 2 : 1.5,
+    borderColor: active ? DESIGN_WIZARD_SELECTION_BLUE : DESIGN_WIZARD_BORDER,
+    backgroundColor,
     boxShadow: active
-      ? `0px 0px 0px 1px rgba(18,18,18,0.18), 0px 10px 20px ${DESIGN_WIZARD_DEPTH_SHADOW}`
+      ? `0px 0px 0px 1px ${DESIGN_WIZARD_SELECTION_BLUE_SOFT}, 0px 12px 28px ${DESIGN_WIZARD_SELECTION_BLUE_GLOW}`
       : "0px 10px 24px rgba(15,23,42,0.05)",
   };
 }
@@ -109,10 +112,10 @@ export function getWizardSelectedIconContainerStyle(active: boolean): ViewStyle 
     borderRadius: 18,
     borderCurve: "continuous",
     borderWidth: 1,
-    borderColor: active ? "rgba(229,57,53,0.2)" : "#E9E9E9",
+    borderColor: active ? DESIGN_WIZARD_SELECTION_BLUE_SOFT : "#E9E9E9",
     backgroundColor: active ? "#FFFFFF" : "#F7F7F7",
     boxShadow: active
-      ? "0px 0px 0px 1px rgba(229,57,53,0.14), 0px 10px 24px rgba(229,57,53,0.22)"
+      ? `0px 0px 0px 1px ${DESIGN_WIZARD_SELECTION_BLUE_SOFT}, 0px 8px 20px ${DESIGN_WIZARD_SELECTION_BLUE_GLOW}`
       : "none",
   };
 }

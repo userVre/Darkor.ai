@@ -120,7 +120,7 @@
     "processing": "Processing...",
     "tryForFree": "Begin Your Pro Trial",
     "continue": "Begin Your Pro Trial",
-    "subtitle": "Unlock ultra-HD rendering and exclusive designer styles.",
+    "subtitle": "Experience the full power of architectural AI with higher limits and 4K precision.",
     "terms": "Terms",
     "privacy": "Privacy",
     "subscriptionsUnavailable": "Subscriptions are temporarily unavailable.",
@@ -133,12 +133,12 @@
     "subscriptionConfirmFailed": "We could not confirm your subscription. Please try again.",
     "purchaseCancelled": "Purchase cancelled.",
     "closeA11y": "Close paywall",
-    "title": "Design Like a Pro. No Limits.",
+    "title": "Design Like a Pro. Unrestricted Creative Freedom.",
     "beginTrial": "Begin Your Pro Trial"
   },
   "creditLimit": {
-    "title": "Upgrade to continue designing",
-    "body": "You have reached the available render limit for this account. Upgrade to unlock more design iterations and premium output quality."
+    "title": "Upgrade to Professional Access.",
+    "body": "You've reached your standard rendering limit. Unlock high-res exports and faster processing now."
   },
   "settings": {
     "title": "Settings",

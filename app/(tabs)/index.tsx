@@ -141,13 +141,15 @@ export default function HomeScreen() {
 
       <View style={[styles.headerShell, { paddingTop: insets.top + 10 }]}>
         <View style={styles.headerRow}>
-          <DiamondCreditPill
-            accessibilityLabel={t("home.accessibility.openCredits")}
-            count={creditBalance}
-            onPress={handleCreditsPress}
-            style={styles.creditPill}
-            variant="light"
-          />
+          <View style={styles.sideSlot}>
+            <DiamondCreditPill
+              accessibilityLabel={t("home.accessibility.openCredits")}
+              count={creditBalance}
+              onPress={handleCreditsPress}
+              style={styles.creditPill}
+              variant="light"
+            />
+          </View>
 
           <View pointerEvents="none" style={styles.centerBrand}>
             <Text numberOfLines={1} style={styles.brandTitle}>
@@ -155,9 +157,11 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          <Pressable accessibilityRole="button" onPress={handleSettingsPress} style={styles.settingsButton}>
-            <Settings color={DS.colors.textPrimary} size={20} strokeWidth={2} />
-          </Pressable>
+          <View style={[styles.sideSlot, styles.sideSlotRight]}>
+            <Pressable accessibilityRole="button" onPress={handleSettingsPress} style={styles.settingsButton}>
+              <Settings color={DS.colors.textPrimary} size={20} strokeWidth={2} />
+            </Pressable>
+          </View>
         </View>
       </View>
 
@@ -213,16 +217,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     minHeight: 48,
-    position: "relative",
+  },
+  sideSlot: {
+    width: 120,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "flex-start",
+  },
+  sideSlotRight: {
+    alignItems: "flex-end",
   },
   centerBrand: {
-    position: "absolute",
-    left: 88,
-    right: 88,
-    top: 0,
-    bottom: 0,
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 12,
   },
   brandTitle: {
     color: DS.colors.textPrimary,

@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
+  DESIGN_WIZARD_SELECTION_BLUE,
   DESIGN_WIZARD_SURFACE,
   DESIGN_WIZARD_TEXT,
   DESIGN_WIZARD_TEXT_MUTED,
@@ -172,15 +173,15 @@ export function ExteriorRedesignStepTwo({
                           styles.labelBar,
                           {
                             height: cardLabelHeight,
-                            backgroundColor: active ? "#000000" : "#FFFFFF",
+                            backgroundColor: "#FFFFFF",
                           },
                         ]}
                       >
                         <View style={styles.labelRow}>
                           <View style={[styles.labelIconWrap, getWizardSelectedIconContainerStyle(active)]}>
-                            <BuildingIcon {...getArchitecturalIconProps(active ? "#E53935" : DESIGN_WIZARD_TEXT, 18)} />
+                            <BuildingIcon {...getArchitecturalIconProps(active ? DESIGN_WIZARD_SELECTION_BLUE : DESIGN_WIZARD_TEXT, 18)} />
                           </View>
-                          <Text numberOfLines={2} style={[styles.labelText, { color: active ? "#FFFFFF" : DESIGN_WIZARD_TEXT }]}>
+                          <Text numberOfLines={2} style={[styles.labelText, active ? styles.labelTextActive : null, { color: active ? DESIGN_WIZARD_SELECTION_BLUE : DESIGN_WIZARD_TEXT }]}>
                             {card.label ?? card.title}
                           </Text>
                         </View>
@@ -274,6 +275,9 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     textAlign: "center",
     ...fonts.semibold,
+  },
+  labelTextActive: {
+    ...fonts.bold,
   },
   bottomContainer: {
     position: "absolute",

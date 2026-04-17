@@ -1846,9 +1846,9 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       {step === "mask" ? (
         <View style={styles.maskScreen}>
           <StatusBar style="dark" />
-          <Text style={[styles.maskHeaderTitle, { top: stickyHeaderMetrics.contentOffset }]}>{t("wizard.paintFlow.maskTitle")}</Text>
+          <Text style={[styles.maskHeaderTitle, { top: stickyHeaderMetrics.contentOffset - scaleSelectionValue(14, selectionLayoutScale) }]}>{t("wizard.paintFlow.maskTitle")}</Text>
 
-          <View style={[styles.maskCanvasWrap, { marginTop: stickyHeaderMetrics.contentOffset + scaleSelectionValue(52, selectionLayoutScale) }]}>
+          <View style={[styles.maskCanvasWrap, { marginTop: stickyHeaderMetrics.contentOffset + scaleSelectionValue(30, selectionLayoutScale) }]}>
             <View onLayout={handleCanvasLayout} style={[styles.maskCanvasFrame, { width: maskCanvasWidth, height: maskCanvasHeight }]}>
               {selectedImage ? (
                 <>
@@ -1970,51 +1970,55 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
           </View>
 
           <View style={styles.maskToolBar}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => handleSelectMaskTool("brush")}
-              style={[styles.maskToolButton, { left: 24 }, maskTool === "brush" ? styles.maskToolButtonActive : null]}
-            >
-              <BrushCleaning color={maskTool === "brush" ? "#FFFFFF" : "#0A0A0A"} size={20} strokeWidth={2} />
-            </Pressable>
+            <View style={styles.maskToolGroup}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => handleSelectMaskTool("brush")}
+                style={[styles.maskToolButton, maskTool === "brush" ? styles.maskToolButtonActive : null]}
+              >
+                <BrushCleaning color={maskTool === "brush" ? "#FFFFFF" : "#0A0A0A"} size={20} strokeWidth={2} />
+              </Pressable>
 
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => handleSelectMaskTool("eraser")}
-              style={[styles.maskToolButton, { left: 124 }, maskTool === "eraser" ? styles.maskToolButtonActive : null]}
-            >
-              <Eraser color={maskTool === "eraser" ? "#FFFFFF" : "#0A0A0A"} size={20} strokeWidth={2} />
-            </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => handleSelectMaskTool("eraser")}
+                style={[styles.maskToolButton, maskTool === "eraser" ? styles.maskToolButtonActive : null]}
+              >
+                <Eraser color={maskTool === "eraser" ? "#FFFFFF" : "#0A0A0A"} size={20} strokeWidth={2} />
+              </Pressable>
 
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => handleSelectMaskTool("surface")}
-              style={[styles.maskToolButton, { left: 208 }, maskTool === "surface" || isAutoDetecting ? styles.maskToolButtonActive : null]}
-            >
-              {isAutoDetecting ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Box color={maskTool === "surface" ? "#FFFFFF" : "#0A0A0A"} size={20} strokeWidth={2} />
-              )}
-            </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => handleSelectMaskTool("surface")}
+                style={[styles.maskToolButton, maskTool === "surface" || isAutoDetecting ? styles.maskToolButtonActive : null]}
+              >
+                {isAutoDetecting ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Box color={maskTool === "surface" ? "#FFFFFF" : "#0A0A0A"} size={20} strokeWidth={2} />
+                )}
+              </Pressable>
+            </View>
 
-            <Pressable
-              accessibilityRole="button"
-              disabled={!paintStrokes.length}
-              onPress={undoLastStroke}
-              style={[styles.maskToolButton, styles.maskHistoryButton, { right: 88 }, !paintStrokes.length ? styles.maskToolButtonDisabled : null]}
-            >
-              <Undo2 color={!paintStrokes.length ? "#B8B8B8" : "#0A0A0A"} size={20} strokeWidth={2} />
-            </Pressable>
+            <View style={styles.maskToolGroup}>
+              <Pressable
+                accessibilityRole="button"
+                disabled={!paintStrokes.length}
+                onPress={undoLastStroke}
+                style={[styles.maskToolButton, styles.maskHistoryButton, !paintStrokes.length ? styles.maskToolButtonDisabled : null]}
+              >
+                <Undo2 color={!paintStrokes.length ? "#B8B8B8" : "#0A0A0A"} size={20} strokeWidth={2} />
+              </Pressable>
 
-            <Pressable
-              accessibilityRole="button"
-              disabled={!canRedo}
-              onPress={redoLastStroke}
-              style={[styles.maskToolButton, styles.maskHistoryButton, { right: 24 }, !canRedo ? styles.maskToolButtonDisabled : null]}
-            >
-              <Redo2 color={!canRedo ? "#B8B8B8" : "#0A0A0A"} size={20} strokeWidth={2} />
-            </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                disabled={!canRedo}
+                onPress={redoLastStroke}
+                style={[styles.maskToolButton, styles.maskHistoryButton, !canRedo ? styles.maskToolButtonDisabled : null]}
+              >
+                <Redo2 color={!canRedo ? "#B8B8B8" : "#0A0A0A"} size={20} strokeWidth={2} />
+              </Pressable>
+            </View>
           </View>
 
           <View style={styles.maskSliderSection}>
@@ -2025,8 +2029,8 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                   style={[
                     styles.maskSliderPreview,
                     {
-                      width: Math.max(brushWidth, 12),
-                      height: Math.max(brushWidth, 12),
+                      width: Math.max(brushWidth, 14),
+                      height: Math.max(brushWidth, 14),
                       backgroundColor: activeMaskTool === "eraser" ? "rgba(255,255,255,0.28)" : MASK_COLOR,
                       borderColor: activeMaskTool === "eraser" ? "rgba(10,10,10,0.82)" : "rgba(255,255,255,0.78)",
                     },
@@ -2959,11 +2963,19 @@ const styles = StyleSheet.create({
   },
   maskToolBar: {
     marginTop: 40,
-    height: 56,
+    minHeight: 56,
+    marginHorizontal: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  maskToolGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
   maskToolButton: {
-    position: "absolute",
-    top: 0,
     width: 48,
     height: 48,
     borderRadius: 14,
@@ -2982,7 +2994,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F4F4",
   },
   maskHistoryButton: {
-    top: 4,
     width: 44,
     height: 44,
     borderRadius: 14,
@@ -3011,6 +3022,7 @@ const styles = StyleSheet.create({
   maskSliderPreview: {
     borderRadius: 14,
     borderWidth: 1.5,
+    alignSelf: "center",
   },
   maskSliderValue: {
     color: "#6A6A6A",

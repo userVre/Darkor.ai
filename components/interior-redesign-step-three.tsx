@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check } from "@/components/material-icons";
 
 import {
-  DESIGN_WIZARD_ACCENT_STRONG,
+  DESIGN_WIZARD_SELECTION_BLUE,
   DESIGN_WIZARD_SURFACE,
   DESIGN_WIZARD_TEXT,
   DESIGN_WIZARD_TEXT_MUTED,
@@ -159,11 +159,11 @@ export function InteriorRedesignStepThree({
                     ]}
                   >
                     {active ? (
-                      <View style={stylesSheet.selectionBadge}>
-                        <View style={[stylesSheet.selectionBadgeInner, getWizardSelectedIconContainerStyle(true)]}>
-                          <Check color="#E53935" size={16} strokeWidth={2.4} />
+                        <View style={stylesSheet.selectionBadge}>
+                          <View style={[stylesSheet.selectionBadgeInner, getWizardSelectedIconContainerStyle(true)]}>
+                          <Check color={DESIGN_WIZARD_SELECTION_BLUE} size={16} strokeWidth={2.4} />
+                          </View>
                         </View>
-                      </View>
                     ) : null}
                     <View style={{ width: "100%", height: cardImageHeight, overflow: "hidden" }}>
                       <Image
@@ -183,7 +183,7 @@ export function InteriorRedesignStepThree({
                         stylesSheet.labelBar,
                         {
                           height: cardLabelHeight,
-                          backgroundColor: active ? "#000000" : "#FFFFFF",
+                          backgroundColor: "#FFFFFF",
                         },
                       ]}
                     >
@@ -194,8 +194,9 @@ export function InteriorRedesignStepThree({
                           {
                             top: labelTextTop,
                             left: labelTextLeft,
-                            color: active ? "#FFFFFF" : DESIGN_WIZARD_TEXT,
+                            color: active ? DESIGN_WIZARD_SELECTION_BLUE : DESIGN_WIZARD_TEXT,
                           },
+                          active ? stylesSheet.labelTextActive : null,
                         ]}
                       >
                           {styleCard.label ?? styleCard.title}
@@ -323,6 +324,9 @@ const stylesSheet = StyleSheet.create({
     fontSize: 11,
     lineHeight: 13,
     ...fonts.semibold,
+  },
+  labelTextActive: {
+    ...fonts.bold,
   },
   bottomContainer: {
     position: "absolute",

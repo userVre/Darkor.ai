@@ -63,8 +63,8 @@ const PANEL_BG = SCREEN_BG;
 const PANEL_BG_ALT = SCREEN_BG;
 const PANEL_BORDER = radix.dark.slate.slate6;
 const ACCENT = "#FFFFFF";
-const BRAND_RED = "#E53935";
-const BRAND_RED_ACTIVE = BRAND_RED;
+const BRAND_RED = radix.dark.ruby.ruby9;
+const BRAND_RED_ACTIVE = radix.dark.ruby.ruby10;
 const TOGGLE_OFF = radix.dark.slate.slate5;
 const TEXT_PRIMARY = "#FFFFFF";
 const TEXT_MUTED = "rgba(255,255,255,0.72)";
@@ -72,7 +72,8 @@ const TEXT_RESTORE = "#FFFFFF";
 const TEXT_ACCENT = "#FFFFFF";
 const CTA_TEXT = "#FFFFFF";
 const ERROR_TEXT = radix.dark.ruby.ruby11;
-const INDIGO_BADGE = radix.dark.slate.slate3;
+const RUBY_BADGE = radix.dark.ruby.ruby9;
+const RUBY_BADGE_BORDER = radix.dark.ruby.ruby10;
 const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 2500;
 const CLOSE_DELAY_MS = 5000;
@@ -396,12 +397,19 @@ function normalizeCarouselIndex(index: number) {
 function getDisplayedPrice(
   fallbackPrice: LocalizedPrice,
   locale: string,
+  preferredCurrencyCode?: string,
   pkg?: RevenueCatPackage | null,
 ) {
   const productPrice = pkg?.product?.price;
   const productCurrencyCode = pkg?.product?.currencyCode;
+  const shouldPreferFallback = preferredCurrencyCode != null && fallbackPrice.currencyCode === preferredCurrencyCode;
 
-  if (typeof productPrice !== "number" || !Number.isFinite(productPrice) || !productCurrencyCode) {
+  if (
+    shouldPreferFallback
+    || typeof productPrice !== "number"
+    || !Number.isFinite(productPrice)
+    || !productCurrencyCode
+  ) {
     return fallbackPrice;
   }
 
@@ -417,12 +425,14 @@ function getDisplayedYearlyPerWeekPrice(
   fallbackPrice: LocalizedPrice,
   locale: string,
   yearlyPrice: LocalizedPrice,
+  preferredCurrencyCode?: string,
   pkg?: RevenueCatPackage | null,
 ) {
   const productPricePerWeek = pkg?.product?.pricePerWeek;
   const productCurrencyCode = pkg?.product?.currencyCode ?? yearlyPrice.currencyCode;
+  const shouldPreferFallback = preferredCurrencyCode != null && yearlyPrice.currencyCode === preferredCurrencyCode;
 
-  if (typeof productPricePerWeek === "number" && Number.isFinite(productPricePerWeek) && productCurrencyCode) {
+  if (!shouldPreferFallback && typeof productPricePerWeek === "number" && Number.isFinite(productPricePerWeek) && productCurrencyCode) {
     return createLocalizedPrice({
       amount: productPricePerWeek,
       currencyCode: productCurrencyCode,
@@ -484,16 +494,18 @@ export default function PaywallScreen() {
   const heroSnapInterval = width / 2;
   const heroTrackPadding = Math.max((width - heroSnapInterval) / 2, 0);
   const heroRowHeight = heroCenterSize + HERO_SIDE_TRANSLATE_Y + 56;
+  const isMoroccoRegion = pricingContext.regionCode === "MA";
 
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly"), [packages]);
   const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly"), [packages]);
+  const forcedDisplayCurrencyCode = isMoroccoRegion ? "MAD" : undefined;
   const displayedYearlyPrice = useMemo(
-    () => getDisplayedPrice(pricingContext.prices.yearly, pricingContext.locale, yearlyPackage),
-    [pricingContext.locale, pricingContext.prices.yearly, yearlyPackage],
+    () => getDisplayedPrice(pricingContext.prices.yearly, pricingContext.locale, forcedDisplayCurrencyCode, yearlyPackage),
+    [forcedDisplayCurrencyCode, pricingContext.locale, pricingContext.prices.yearly, yearlyPackage],
   );
   const displayedWeeklyPrice = useMemo(
-    () => getDisplayedPrice(pricingContext.prices.weekly, pricingContext.locale, weeklyPackage),
-    [pricingContext.locale, pricingContext.prices.weekly, weeklyPackage],
+    () => getDisplayedPrice(pricingContext.prices.weekly, pricingContext.locale, forcedDisplayCurrencyCode, weeklyPackage),
+    [forcedDisplayCurrencyCode, pricingContext.locale, pricingContext.prices.weekly, weeklyPackage],
   );
   const displayedYearlyPerWeekPrice = useMemo(
     () =>
@@ -501,9 +513,10 @@ export default function PaywallScreen() {
         pricingContext.derived.yearlyPerWeek,
         pricingContext.locale,
         displayedYearlyPrice,
+        forcedDisplayCurrencyCode,
         yearlyPackage,
       ),
-    [displayedYearlyPrice, pricingContext.derived.yearlyPerWeek, pricingContext.locale, yearlyPackage],
+    [displayedYearlyPrice, forcedDisplayCurrencyCode, pricingContext.derived.yearlyPerWeek, pricingContext.locale, yearlyPackage],
   );
   const yearlyPriceText = useMemo(
     () => t("paywall.pricePerYear", { price: displayedYearlyPrice.formatted }),
@@ -544,7 +557,6 @@ export default function PaywallScreen() {
   const isYearlySelected = !freeTrialEnabled && selectedDuration === "yearly";
   const isWeeklySelected = freeTrialEnabled || selectedDuration === "weekly";
   const sheetHeight = Math.max(height - 12, 0);
-  const isMoroccoRegion = pricingContext.regionCode === "MA";
 
   useEffect(() => {
     entranceProgress.value = withTiming(1, {
@@ -640,14 +652,6 @@ export default function PaywallScreen() {
           pricingContext.currencyCode,
         );
         setPackages(nextPackages);
-
-        if (isMoroccoRegion) {
-          const hasMoroccanCurrency = nextPackages.some((pkg) => pkg.product.currencyCode === "MAD");
-          if (!hasMoroccanCurrency) {
-            setErrorMessage(t("paywall.moroccoPricingUnavailable"));
-            return;
-          }
-        }
 
         setErrorMessage(null);
       } catch {
@@ -1258,16 +1262,16 @@ const styles = StyleSheet.create({
   },
   planCardSelected: {
     borderWidth: 2,
-    borderColor: BRAND_RED,
+    borderColor: BRAND_RED_ACTIVE,
   },
   bestOfferBadge: {
     position: "absolute",
     top: -10,
     right: 12,
     borderRadius: 14,
-    backgroundColor: INDIGO_BADGE,
+    backgroundColor: RUBY_BADGE,
     borderWidth: 1,
-    borderColor: PANEL_BORDER,
+    borderColor: RUBY_BADGE_BORDER,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },

@@ -41,11 +41,11 @@ const styles = StyleSheet.create({
   },
   segment: {
     flex: 1,
-    height: 3,
+    height: 4,
     borderRadius: 999,
   },
   segmentActive: {
-    backgroundColor: DS.colors.accent,
+    backgroundColor: "#2563EB",
   },
   segmentInactive: {
     backgroundColor: DS.colors.border,

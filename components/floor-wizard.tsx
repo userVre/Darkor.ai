@@ -73,6 +73,7 @@ const DETECT_MS = 1500;
 const FIXED_FOOTER_OFFSET = 96;
 const MASK_SCREEN_REFERENCE_WIDTH = 456;
 const MASK_SCREEN_REFERENCE_HEIGHT = 932;
+const FLOOR_PROMPT_OFFSET = 30;
 const absoluteFill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
 const AUTO_DETECT_SUCCESS_MESSAGE = "wizard.floorFlow.autoMaskSuccess";
 const AUTO_DETECT_FAILURE_MESSAGE = "wizard.floorFlow.autoMaskFailure";
@@ -233,7 +234,8 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const maskTitleTop = stickyHeaderMetrics.contentOffset;
   const maskImageTop = maskTitleTop + scaleMaskValue(60, maskLayoutScale);
   const maskPreviewHeight = scaleMaskValue(412, maskLayoutScale);
-  const promptCardTop = maskImageTop + maskPreviewHeight + scaleMaskValue(132, maskLayoutScale);
+  const promptVerticalOffset = scaleMaskValue(FLOOR_PROMPT_OFFSET, maskLayoutScale);
+  const promptCardTop = maskImageTop + maskPreviewHeight + scaleMaskValue(132, maskLayoutScale) + promptVerticalOffset;
   const promptLabelTop = promptCardTop - scaleMaskValue(18, maskLayoutScale);
   const maskButtonBottom = Math.max(insets.bottom + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(44, maskLayoutScale));
   const promptModalTitleTop = Math.max(insets.top + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(92, maskLayoutScale));

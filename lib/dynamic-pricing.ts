@@ -168,6 +168,7 @@ const FX_SNAPSHOT_USD_TO_LOCAL: Record<string, FxSnapshot> = {
 
 const formatterCache = new Map<string, Intl.NumberFormat>();
 const fractionDigitCache = new Map<string, number>();
+const decimalFormatterCache = new Map<string, Intl.NumberFormat>();
 
 function getTierDefinition(tierId: PricingTierId) {
   return TIER_DEFINITIONS.find((tier) => tier.id === tierId) ?? TIER_DEFINITIONS[1];
@@ -231,6 +232,21 @@ function getFormatter(locale: string, currencyCode: string) {
   return formatter;
 }
 
+function getDecimalFormatter(locale: string, fractionDigits: number) {
+  const cacheKey = `${locale}:${fractionDigits}`;
+  const cached = decimalFormatterCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const formatter = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  });
+  decimalFormatterCache.set(cacheKey, formatter);
+  return formatter;
+}
+
 function getFractionDigits(locale: string, currencyCode: string) {
   const cacheKey = `${locale}:${currencyCode}`;
   const cached = fractionDigitCache.get(cacheKey);
@@ -279,10 +295,15 @@ export function createLocalizedPrice({
 }): LocalizedPrice {
   const fractionDigits = getFractionDigits(locale, currencyCode);
   const normalizedAmount = Number(amount.toFixed(fractionDigits));
+  const formatted =
+    currencyCode === "MAD"
+      ? `MAD ${getDecimalFormatter(locale, fractionDigits).format(normalizedAmount)}`
+      : getFormatter(locale, currencyCode).format(normalizedAmount).replace(/\s+/g, " ").trim();
+
   return {
     amount: normalizedAmount,
     currencyCode,
-    formatted: getFormatter(locale, currencyCode).format(normalizedAmount),
+    formatted,
     fractionDigits,
     source,
   };

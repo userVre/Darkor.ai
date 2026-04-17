@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
-  DESIGN_WIZARD_ACCENT_STRONG,
+  DESIGN_WIZARD_SELECTION_BLUE,
   DESIGN_WIZARD_SURFACE_MUTED,
   DESIGN_WIZARD_TEXT,
   DESIGN_WIZARD_TEXT_MUTED,
@@ -128,7 +128,7 @@ export function InteriorRedesignStepTwo({
                 {row.map((room, columnIndex) => {
                   const active = selectedRoom === room.id;
                   const RoomIcon = getArchitecturalRoomIcon(room.id);
-                  const iconColor = active ? DESIGN_WIZARD_ACCENT_STRONG : DESIGN_WIZARD_TEXT;
+                  const iconColor = active ? DESIGN_WIZARD_SELECTION_BLUE : DESIGN_WIZARD_TEXT;
 
                   return (
                     <Pressable
@@ -243,7 +243,8 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
   roomCardTitleActive: {
-    color: "#FFFFFF",
+    color: DESIGN_WIZARD_SELECTION_BLUE,
+    ...fonts.bold,
   },
   bottomContainer: {
     position: "absolute",

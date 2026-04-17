@@ -29,15 +29,17 @@ export function CreditLimitModal({ visible, onClose, onUpgrade }: CreditLimitMod
             </View>
           </Pressable>
 
-          <Text style={styles.title}>{t("creditLimit.title")}</Text>
+          <View style={styles.content}>
+            <Text style={styles.title}>{t("creditLimit.title")}</Text>
 
-          <Text style={styles.body}>
-            {t("creditLimit.body")}
-          </Text>
+            <Text style={styles.body}>
+              {t("creditLimit.body")}
+            </Text>
 
-          <Pressable accessibilityRole="button" onPress={onUpgrade} style={styles.upgradeButton}>
-            <Text style={styles.upgradeText}>{t("common.actions.upgrade")}</Text>
-          </Pressable>
+            <Pressable accessibilityRole="button" onPress={onUpgrade} style={styles.upgradeButton}>
+              <Text style={styles.upgradeText}>{t("common.actions.upgrade")}</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </Modal>
@@ -56,10 +58,16 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: "hidden",
   },
+  content: {
+    paddingTop: 36,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    gap: 14,
+  },
   closeButton: {
     position: "absolute",
-    top: 28,
-    right: 28,
+    top: 18,
+    right: 18,
     zIndex: 1,
     width: 44,
     height: 44,
@@ -74,9 +82,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
-    marginTop: 36,
-    marginBottom: 28,
-    marginHorizontal: 24,
     color: "#0A0A0A",
     textAlign: "center",
     fontSize: 20,
@@ -84,20 +89,14 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   body: {
-    marginTop: 28,
-    marginHorizontal: 24,
-    marginBottom: 32,
     color: "#808080",
     textAlign: "center",
     fontSize: 14,
-    lineHeight: 22,
+    lineHeight: 21,
     ...fonts.regular,
   },
   upgradeButton: {
     height: 56,
-    marginTop: 32,
-    marginHorizontal: 12,
-    marginBottom: 28,
     borderRadius: 16,
     backgroundColor: "#0A0A0A",
     alignItems: "center",
