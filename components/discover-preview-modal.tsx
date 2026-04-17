@@ -1,6 +1,7 @@
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View, Image as RNImage } from "react-native";
 import { ArrowLeft } from "@/components/material-icons";
-import { Image } from "expo-image";
+import { Image as ExpoImage } from "expo-image";
 
 import type { DiscoverTile } from "../lib/discover-catalog";
 import { fonts } from "../styles/typography";
@@ -18,6 +19,8 @@ export function DiscoverPreviewModal({
   topInset,
   onClose,
 }: DiscoverPreviewModalProps) {
+  const imageSource = useMemo(() => (item ? RNImage.resolveAssetSource(item.image) : null), [item]);
+
   if (!item) {
     return null;
   }
@@ -37,24 +40,35 @@ export function DiscoverPreviewModal({
           </Pressable>
 
           <Text numberOfLines={1} style={styles.previewTitle}>
-            {(item.previewTitle ?? item.title).toUpperCase()}
+            {item.previewTitle ?? item.title}
           </Text>
 
           <View style={styles.topBarSpacer} />
         </View>
 
-        <View style={styles.imageWrap}>
-          <Pressable onPress={onClose} style={styles.imageTapTarget}>
-            <Image
+        <ScrollView
+          bounces={false}
+          maximumZoomScale={3}
+          minimumZoomScale={1}
+          contentContainerStyle={styles.imageScrollContent}
+          style={styles.imageScroll}
+        >
+          <Pressable onPress={onClose} style={styles.imageWrap}>
+            <ExpoImage
               source={item.image}
               transition={150}
               cachePolicy="memory-disk"
               recyclingKey={item.id}
-              style={styles.image}
-              contentFit="contain"
+              style={[
+                styles.image,
+                imageSource?.width && imageSource?.height
+                  ? { aspectRatio: imageSource.width / imageSource.height }
+                  : null,
+              ]}
+              contentFit="cover"
             />
           </Pressable>
-        </View>
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -87,26 +101,29 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     textAlign: "center",
-    letterSpacing: 0.4,
     ...fonts.bold,
   },
   topBarSpacer: {
     width: 44,
     height: 44,
   },
-  imageWrap: {
+  imageScroll: {
     flex: 1,
-    paddingHorizontal: 18,
-    paddingBottom: 18,
   },
-  imageTapTarget: {
-    flex: 1,
+  imageScrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: 0,
+    paddingBottom: 24,
+  },
+  imageWrap: {
+    width: "100%",
     justifyContent: "center",
     alignItems: "center",
   },
   image: {
     width: "100%",
-    height: "100%",
+    minHeight: 320,
   },
 });
 

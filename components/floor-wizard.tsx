@@ -1039,6 +1039,16 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
                 >
                   <Text style={styles.promptModalTitle}>{t("wizard.floorFlow.promptLabel")}</Text>
 
+                  <Pressable accessibilityRole="button" onPress={handleCloseCustomPrompt} style={styles.promptModalBackButton}>
+                    <ChevronLeft color="#0A0A0A" size={20} strokeWidth={2.2} />
+                  </Pressable>
+
+                  <View style={styles.promptModalTitleSlot}>
+                    <Text numberOfLines={1} style={styles.promptModalTitleCentered}>
+                      {t("wizard.floorFlow.promptLabel")}
+                    </Text>
+                  </View>
+
                   <Pressable accessibilityRole="button" onPress={handleCloseCustomPrompt} style={styles.promptModalCloseButton}>
                     <X color="#0A0A0A" size={18} strokeWidth={2.3} />
                   </Pressable>
@@ -1247,13 +1257,16 @@ const styles = StyleSheet.create({
   maskContinueText: { fontSize: 16, lineHeight: 20, fontWeight: "700" },
   promptModalScreen: { ...StyleSheet.absoluteFillObject, backgroundColor: "#FFFFFF", zIndex: 10 },
   promptModalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  promptModalTitle: { color: "#0A0A0A", fontSize: 24, lineHeight: 28, fontWeight: "700" },
+  promptModalTitle: { position: "absolute", opacity: 0 },
+  promptModalBackButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center", marginLeft: -8 },
+  promptModalTitleSlot: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 12 },
+  promptModalTitleCentered: { color: "#0A0A0A", fontSize: 24, lineHeight: 28, fontWeight: "700", textAlign: "center" },
   promptModalCloseButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center", marginRight: -8 },
   promptModalContent: { flexGrow: 1 },
   promptModalInputWrap: { borderRadius: 12, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#F8F8F8", paddingTop: 28, paddingHorizontal: 20, paddingBottom: 20 },
   promptModalInputLabel: { color: "#0A0A0A", fontSize: 16, lineHeight: 20, fontWeight: "600" },
-  promptModalTextField: { flex: 1, minHeight: 116, marginTop: 24 },
-  promptModalInput: { flex: 1, color: "#111827", fontSize: 15, lineHeight: 22, padding: 0, paddingRight: 24 },
+  promptModalTextField: { flex: 1, minHeight: 116, marginTop: 28 },
+  promptModalInput: { flex: 1, color: "#111827", fontSize: 15, lineHeight: 22, paddingTop: 8, paddingBottom: 0, paddingHorizontal: 0, paddingRight: 24 },
   promptModalClearButton: { position: "absolute", top: 24, right: 24, width: 18, height: 18, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   promptExampleTitle: { color: "#0A0A0A", fontSize: 16, lineHeight: 20, fontWeight: "600" },
   promptExampleList: { gap: 16 },

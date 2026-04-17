@@ -680,9 +680,20 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     activeMaskTool === "eraser" ? t("wizard.paintFlow.eraserWidth") : t("wizard.paintFlow.brushWidth");
   const maskCanvasWidth = Math.min(width - 48, 412);
   const maskCanvasHeight = Math.min(Math.max(height * 0.45, 352), 416);
-  const selectedColorButtonText =
-    isColorConfirmed && selectedColorValue ? (selectedColorCategory ?? t("wizard.paintFlow.choose")) : t("wizard.paintFlow.choose");
   const previewColorButtonValue = isColorPickerOpen ? colorPickerDraft.hex : selectedColorValue;
+  const previewColorOption = useMemo(
+    () => (previewColorButtonValue ? localizedWallColorOptions.find((option) => option.value === previewColorButtonValue) ?? null : null),
+    [localizedWallColorOptions, previewColorButtonValue],
+  );
+  const previewColorCategory = useMemo(
+    () => (previewColorButtonValue ? resolveColorCategoryLabel(previewColorButtonValue, localizedColorLabels) : null),
+    [localizedColorLabels, previewColorButtonValue],
+  );
+  const selectedColorButtonText =
+    previewColorOption?.title
+    ?? previewColorCategory
+    ?? previewColorButtonValue
+    ?? t("wizard.paintFlow.choose");
   const selectedColorButtonBackground = previewColorButtonValue ?? "#0A0A0A";
   const selectedColorButtonTextColor = previewColorButtonValue ? resolveContrastTextColor(previewColorButtonValue) : "#FFFFFF";
   const selectedSurfaceButtonText = isSurfaceConfirmed ? selectedSurfaceOption.label : t("wizard.paintFlow.choose");
@@ -1656,7 +1667,19 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                     },
                   ]}
                 >
-                <Text style={[styles.colorPickerTitle, { marginTop: scaleSelectionValue(32, selectionLayoutScale) }]}>{t("wizard.paintFlow.colorPickerTitle")}</Text>
+                <View style={[styles.selectionModalHeader, { marginTop: scaleSelectionValue(20, selectionLayoutScale), marginHorizontal: scaleSelectionValue(20, selectionLayoutScale) }]}>
+                  <Pressable accessibilityRole="button" onPress={handleCloseColorPicker} style={styles.selectionModalNavButton}>
+                    <ChevronLeft color="#0A0A0A" size={20} strokeWidth={2.2} />
+                  </Pressable>
+
+                  <View style={styles.selectionModalTitleWrap}>
+                    <Text numberOfLines={1} style={styles.colorPickerTitle}>{t("wizard.paintFlow.colorPickerTitle")}</Text>
+                  </View>
+
+                  <Pressable accessibilityRole="button" onPress={handleCloseColorPicker} style={styles.selectionModalCloseButton}>
+                    <X color="#0A0A0A" size={18} strokeWidth={2.2} />
+                  </Pressable>
+                </View>
 
                 <View style={{ marginTop: scaleSelectionValue(52, selectionLayoutScale), alignItems: "center" }}>
                   <GestureDetector gesture={colorPickerSquareGesture}>
@@ -1758,25 +1781,21 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                 >
                 <View style={[styles.surfacePickerHandle, { marginTop: scaleSelectionValue(12, selectionLayoutScale) }]} />
 
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={handleCloseSurfacePicker}
-                  style={[styles.surfacePickerCloseButton, { top: scaleSelectionValue(20, selectionLayoutScale), right: scaleSelectionValue(20, selectionLayoutScale) }]}
-                >
-                  <X color="#0A0A0A" size={18} strokeWidth={2.2} />
-                </Pressable>
+                <View style={[styles.selectionModalHeader, { marginTop: scaleSelectionValue(20, selectionLayoutScale), marginHorizontal: scaleSelectionValue(20, selectionLayoutScale) }]}>
+                  <Pressable accessibilityRole="button" onPress={handleCloseSurfacePicker} style={styles.selectionModalNavButton}>
+                    <ChevronLeft color="#0A0A0A" size={20} strokeWidth={2.2} />
+                  </Pressable>
 
-                <Text
-                  style={[
-                    styles.surfacePickerTitle,
-                    {
-                      marginTop: scaleSelectionValue(56, selectionLayoutScale),
-                      marginLeft: scaleSelectionValue(28, selectionLayoutScale),
-                    },
-                  ]}
-                >
-                  {t("wizard.paintFlow.surfacePickerTitle")}
-                </Text>
+                  <View style={styles.selectionModalTitleWrap}>
+                    <Text numberOfLines={1} style={styles.surfacePickerTitle}>
+                      {t("wizard.paintFlow.surfacePickerTitle")}
+                    </Text>
+                  </View>
+
+                  <Pressable accessibilityRole="button" onPress={handleCloseSurfacePicker} style={styles.selectionModalCloseButton}>
+                    <X color="#0A0A0A" size={18} strokeWidth={2.2} />
+                  </Pressable>
+                </View>
 
                 <View style={styles.surfacePickerSheetBody}>
                   <ScrollView
@@ -2627,9 +2646,22 @@ const styles = StyleSheet.create({
   },
   selectionModalHeader: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
+  },
+  selectionModalNavButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  selectionModalTitleWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
   },
   selectionModalCopy: {
     flex: 1,

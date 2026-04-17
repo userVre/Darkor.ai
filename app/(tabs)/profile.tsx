@@ -3,7 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import * as MediaLibrary from "expo-media-library";
 import { LayoutPanelTop } from "@/components/material-icons";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Alert, FlatList, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import * as FileSystem from "expo-file-system/legacy";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,7 +14,7 @@ import { BoardPreviewModal } from "../../components/board-preview-modal";
 import { useProSuccess } from "../../components/pro-success-context";
 import { useViewerSession } from "../../components/viewer-session-context";
 import { DS } from "../../lib/design-system";
-import { mapArchiveToBoardItems, splitBoardColumns, type BoardItem, type BoardItemStatus } from "../../lib/board";
+import { mapArchiveToBoardItems, type BoardItem, type BoardItemStatus } from "../../lib/board";
 import { hasGenerationImage, resolveGenerationStatus } from "../../lib/generation-status";
 import { loadLocalBoardItems, persistLocalBoardItems, type LocalBoardItem } from "../../lib/local-board-cache";
 import { fonts } from "../../styles/typography";
@@ -38,9 +38,8 @@ type ArchiveGeneration = {
 };
 
 const GRID_HORIZONTAL_PADDING = 24;
-const GRID_COLUMN_GAP = 56;
+const GRID_GAP = 12;
 const GRID_MAX_CARD_WIDTH = 190;
-const GRID_VERTICAL_GAP = 28;
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
@@ -84,7 +83,6 @@ export default function ProfileScreen() {
       })),
     [archiveBoardItems, newBoardItemIdSet],
   );
-  const { leftColumnImages, rightColumnImages } = useMemo(() => splitBoardColumns(boardItems), [boardItems]);
 
   useEffect(() => {
     void (async () => {
@@ -180,11 +178,11 @@ export default function ProfileScreen() {
   }, []);
 
   const columnWidth = useMemo(() => {
-    const availableWidth = Math.max(width - GRID_HORIZONTAL_PADDING * 2 - GRID_COLUMN_GAP, 0);
+    const availableWidth = Math.max(width - GRID_HORIZONTAL_PADDING * 2 - GRID_GAP, 0);
     return Math.min(GRID_MAX_CARD_WIDTH, Math.floor(availableWidth / 2));
   }, [width]);
 
-  const gridWidth = columnWidth * 2 + GRID_COLUMN_GAP;
+  const gridWidth = columnWidth * 2 + GRID_GAP;
   const topContentInset = Math.max(insets.top + 16, 32);
   const bottomContentInset = Math.max(insets.bottom + 112, 128);
   const boardBodyMinHeight = Math.max(height - topContentInset - bottomContentInset - 64, 240);
@@ -228,6 +226,17 @@ export default function ProfileScreen() {
   const closeActions = () => {
     setActionItem(null);
   };
+
+  const renderPortfolioCard = ({ item }: { item: BoardItem }) => (
+    <BoardImageCard
+      item={item}
+      width={columnWidth}
+      onPress={handleImagePress}
+      onLongPress={handleImageLongPress}
+    />
+  );
+
+  const keyExtractor = (item: BoardItem) => item.id;
 
   const handleSaveToGallery = async () => {
     if (!actionItem?.imageUri) {
@@ -284,57 +293,37 @@ export default function ProfileScreen() {
     <View style={styles.screen}>
       <StatusBar style="dark" />
 
-      <ScrollView
+      <FlatList
+        data={boardItems}
+        key={columnWidth}
+        numColumns={2}
+        keyExtractor={keyExtractor}
+        renderItem={renderPortfolioCard}
         showsVerticalScrollIndicator={false}
-        horizontal={false}
         style={styles.scrollView}
-        contentInsetAdjustmentBehavior="never"
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={[
           styles.scrollContent,
           { paddingTop: topContentInset },
           { paddingBottom: bottomContentInset },
+          boardItems.length > 0 ? styles.gridContent : null,
         ]}
-      >
-        <View style={styles.header}>
-          <Text style={styles.title}>{t("profile.title")}</Text>
-        </View>
-
-        <View style={[styles.boardBody, { minHeight: boardBodyMinHeight }]}>
-          {boardItems.length === 0 ? (
+        ListHeaderComponent={(
+          <View style={styles.header}>
+            <Text style={styles.title}>{t("profile.title")}</Text>
+          </View>
+        )}
+        ListEmptyComponent={(
+          <View style={[styles.boardBody, { minHeight: boardBodyMinHeight }]}>
             <View style={styles.emptyState}>
               <LayoutPanelTop color={DS.colors.borderStrong} size={56} strokeWidth={1.9} />
               <Text style={styles.emptyTitle}>{t("profile.emptyTitle")}</Text>
               {t("profile.emptySubtitle") ? <Text style={styles.emptySubtitle}>{t("profile.emptySubtitle")}</Text> : null}
             </View>
-          ) : (
-            <View style={[styles.grid, { width: gridWidth }]}>
-              <View style={[styles.column, { width: columnWidth }]}>
-                {leftColumnImages.map((item) => (
-                  <BoardImageCard
-                    key={item.id}
-                    item={item}
-                    width={columnWidth}
-                    onPress={handleImagePress}
-                    onLongPress={handleImageLongPress}
-                  />
-                ))}
-              </View>
-
-              <View style={[styles.column, styles.rightColumn, { width: columnWidth }]}>
-                {rightColumnImages.map((item) => (
-                  <BoardImageCard
-                    key={item.id}
-                    item={item}
-                    width={columnWidth}
-                    onPress={handleImagePress}
-                    onLongPress={handleImageLongPress}
-                  />
-                ))}
-              </View>
-            </View>
-          )}
-        </View>
-      </ScrollView>
+          </View>
+        )}
+        columnWrapperStyle={boardItems.length > 0 ? [styles.gridRow, { width: gridWidth }] : undefined}
+      />
 
       <BoardPreviewModal item={previewItem} visible={previewItem !== null} onClose={closePreview} />
       <BoardActionsModal
@@ -358,8 +347,10 @@ const styles = StyleSheet.create({
     backgroundColor: DS.colors.background,
   },
   scrollContent: {
-    flexGrow: 1,
     paddingHorizontal: GRID_HORIZONTAL_PADDING,
+  },
+  gridContent: {
+    alignItems: "center",
   },
   header: {
     alignItems: "center",
@@ -367,7 +358,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   boardBody: {
-    flexGrow: 1,
+    width: "100%",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -401,16 +392,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     ...fonts.regular,
   },
-  grid: {
-    alignSelf: "center",
-    flexDirection: "row",
-    alignItems: "flex-start",
-  },
-  column: {
-    gap: GRID_VERTICAL_GAP,
-  },
-  rightColumn: {
-    marginLeft: GRID_COLUMN_GAP,
+  gridRow: {
+    justifyContent: "space-between",
+    marginBottom: GRID_GAP,
   },
 });
 

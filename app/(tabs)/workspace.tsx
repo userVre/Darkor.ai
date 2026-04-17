@@ -2076,6 +2076,7 @@ export default function WorkspaceScreen() {
   const paintCurrentStrokeRef = useRef<PaintStroke | null>(null);
   const lastFlowIdRef = useRef<string | null>(null);
   const hydratedDraftFlowIdRef = useRef<string | null>(null);
+  const previousWorkflowStepRef = useRef<number | null>(null);
   const sliderX = useSharedValue(0);
   const sliderWidth = useSharedValue(0);
 
@@ -2155,6 +2156,17 @@ export default function WorkspaceScreen() {
   useEffect(() => {
     setDraftAspectRatio(selectedAspectRatioId ?? null);
   }, [selectedAspectRatioId, setDraftAspectRatio]);
+
+  useEffect(() => {
+    const previousWorkflowStep = previousWorkflowStepRef.current;
+    const enteredFinalDesignStep = workflowStep === 3 && previousWorkflowStep !== 3;
+
+    if (enteredFinalDesignStep && !isPaintService && !isFloorService && !selectedModeId) {
+      setSelectedModeId("preserve");
+    }
+
+    previousWorkflowStepRef.current = workflowStep;
+  }, [isFloorService, isPaintService, selectedModeId, workflowStep]);
 
   useEffect(() => {
     if (typeof flowId !== "string" || flowId.trim().length === 0) {
@@ -4442,7 +4454,7 @@ export default function WorkspaceScreen() {
 
   const handleSelectMode = useCallback((value: ModeOption["id"]) => {
     triggerHaptic();
-    setSelectedModeId(value);
+    setSelectedModeId((current) => (current === value ? null : value));
   }, []);
 
   const handleOpenBoardItem = useCallback((item: BoardRenderItem) => {

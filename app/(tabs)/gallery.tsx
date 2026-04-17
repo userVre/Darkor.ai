@@ -1,5 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import { FlashList } from "@shopify/flash-list";
+import { useRouter } from "expo-router";
 import { memo, useCallback, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,11 +29,15 @@ const DiscoverSection = memo(function DiscoverSection({
   cardWidth,
   cardHeight,
   onPreview,
+  onExploreGroup,
+  seeAllLabel,
 }: {
   group: DiscoverGroup;
   cardWidth: number;
   cardHeight: number;
   onPreview: (item: DiscoverTile) => void;
+  onExploreGroup: (group: DiscoverGroup) => void;
+  seeAllLabel: string;
 }) {
   const snapOffsets = useMemo(
     () => group.items.map((_, index) => index * (cardWidth + CARD_GAP)),
@@ -43,6 +48,9 @@ const DiscoverSection = memo(function DiscoverSection({
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{group.title}</Text>
+        <Pressable accessibilityRole="button" hitSlop={8} onPress={() => onExploreGroup(group)} style={styles.sectionAction}>
+          <Text style={styles.sectionActionText}>{seeAllLabel}</Text>
+        </Pressable>
       </View>
 
       <FlashList
@@ -69,6 +77,7 @@ const DiscoverSection = memo(function DiscoverSection({
 });
 
 export default function GalleryScreen() {
+  const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -104,6 +113,17 @@ export default function GalleryScreen() {
     setSelectedClusterId(clusterId);
   }, []);
 
+  const handleExploreGroup = useCallback((group: DiscoverGroup) => {
+    triggerHaptic();
+    router.push({
+      pathname: "/discover/[tab]/[group]",
+      params: {
+        tab: "discover",
+        group: group.id,
+      },
+    });
+  }, [router]);
+
   const keyExtractor = useCallback((item: DiscoverGroup) => item.id, []);
 
   const renderSection = useCallback(
@@ -114,10 +134,12 @@ export default function GalleryScreen() {
           cardWidth={cardWidth}
           cardHeight={cardHeight}
           onPreview={handlePreviewOpen}
+          onExploreGroup={handleExploreGroup}
+          seeAllLabel={t("seeAll")}
         />
       );
     },
-    [cardHeight, cardWidth, handlePreviewOpen],
+    [cardHeight, cardWidth, handleExploreGroup, handlePreviewOpen, t],
   );
 
   const listHeader = useMemo(
@@ -269,6 +291,10 @@ const styles = StyleSheet.create({
   sectionHeader: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
     marginBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
   },
   sectionTitle: {
     flex: 1,
@@ -276,6 +302,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     ...fonts.bold,
+  },
+  sectionAction: {
+    minHeight: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sectionActionText: {
+    color: DS.colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
+    ...fonts.semibold,
   },
   sectionContent: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,

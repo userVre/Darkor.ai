@@ -158,7 +158,7 @@ export default function HomeScreen() {
           </View>
 
           <View pointerEvents="none" style={styles.centerBrand}>
-            <Text numberOfLines={1} style={styles.brandTitle}>
+            <Text style={styles.brandTitle}>
               {t("app.name")}
             </Text>
           </View>
@@ -234,10 +234,12 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   centerBrand: {
-    flex: 1,
+    position: "absolute",
+    left: 0,
+    right: 0,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 12,
+    minHeight: 48,
   },
   brandTitle: {
     color: DS.colors.textPrimary,
@@ -245,6 +247,8 @@ const styles = StyleSheet.create({
     fontSize: 19,
     lineHeight: 24,
     letterSpacing: -0.35,
+    flexShrink: 0,
+    textAlign: "center",
   },
   creditPill: {
     minHeight: 42,

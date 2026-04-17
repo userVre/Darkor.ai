@@ -105,6 +105,7 @@ const HERO_CAROUSEL_DATA = Array.from({ length: HERO_IMAGES.length * HERO_CAROUS
 }));
 const HERO_CAROUSEL_INITIAL_INDEX = HERO_IMAGES.length * Math.floor(HERO_CAROUSEL_REPEAT_MULTIPLIER / 2);
 const AnimatedSvgCircle = Animated.createAnimatedComponent(SvgCircle);
+const PAYWALL_FORCE_LTR = true;
 
 function FadeSwap({
   children,
@@ -133,7 +134,7 @@ function FadeSwap({
 
 function FeatureRow({ label, isLast }: { label: string; isLast: boolean }) {
   const localizedFonts = useLocalizedAppFonts();
-  const isRTL = I18nManager.isRTL;
+  const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   return (
     <View style={[styles.featureRow, !isLast ? styles.featureRowGap : null, { flexDirection: getDirectionalRow(isRTL) }]}>
       <View style={styles.featureIcon}>
@@ -242,7 +243,7 @@ function YearlyPlanCard({
 }) {
   const { t } = useTranslation();
   const localizedFonts = useLocalizedAppFonts();
-  const isRTL = I18nManager.isRTL;
+  const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, selected ? styles.planCardSelected : styles.planCardIdle, styles.yearlyCard]}>
       <View style={styles.bestOfferBadge}>
@@ -281,7 +282,7 @@ function WeeklyPlanCard({
 }) {
   const { t } = useTranslation();
   const localizedFonts = useLocalizedAppFonts();
-  const isRTL = I18nManager.isRTL;
+  const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   if (freeTrialEnabled) {
     return (
       <FadeSwap swapKey="weekly-trial-on">
@@ -489,7 +490,7 @@ export default function PaywallScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const localizedFonts = useLocalizedAppFonts();
-  const isRTL = I18nManager.isRTL;
+  const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   const pricingContext = usePricingContext();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -1463,11 +1464,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-start",
     gap: 8,
+    width: "100%",
   },
   ctaLabelRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
+    width: "100%",
   },
   ctaText: {
     color: CTA_TEXT,

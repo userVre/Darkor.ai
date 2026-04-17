@@ -12,13 +12,32 @@ type BoardImageCardProps = {
   onLongPress: (item: BoardItem) => void;
 };
 
+function formatPortfolioLabel(item: BoardItem, isProcessing: boolean, isFailed: boolean) {
+  if (isProcessing) {
+    return "AI is Designing...";
+  }
+
+  if (isFailed) {
+    return "Generation Failed";
+  }
+
+  const style = item.styleName?.trim();
+  const room = item.roomType?.trim();
+
+  if (style && room) {
+    return `${style} ${room}`;
+  }
+
+  return style || room || "Design Preview";
+}
+
 export function BoardImageCard({ item, width, onPress, onLongPress }: BoardImageCardProps) {
   const previewImage = item.imageUri ?? item.originalImageUri ?? null;
   const resolvedStatus = resolveGenerationStatus(item.status, item.imageUri);
   const isProcessing = resolvedStatus === "processing";
   const isFailed = resolvedStatus === "failed";
   const showNewBadge = item.isNew && resolvedStatus === "ready";
-  const subtitle = isProcessing ? "AI is Designing..." : isFailed ? "Generation failed" : item.roomType;
+  const portfolioLabel = formatPortfolioLabel(item, isProcessing, isFailed);
 
   return (
     <Pressable
@@ -50,11 +69,8 @@ export function BoardImageCard({ item, width, onPress, onLongPress }: BoardImage
       ) : null}
 
       <View style={styles.copy}>
-        <Text numberOfLines={1} style={styles.styleName}>
-          {item.styleName}
-        </Text>
-        <Text numberOfLines={1} style={[styles.roomType, isFailed ? styles.failedText : null]}>
-          {subtitle}
+        <Text numberOfLines={1} style={[styles.portfolioLabel, isFailed ? styles.failedText : null]}>
+          {portfolioLabel}
         </Text>
       </View>
     </Pressable>
@@ -120,26 +136,20 @@ const styles = StyleSheet.create({
   },
   copy: {
     position: "absolute",
-    left: 12,
-    right: 12,
-    bottom: 12,
-    borderRadius: 14,
-    backgroundColor: "#111111",
+    left: 10,
+    right: 10,
+    bottom: 10,
+    borderRadius: 999,
+    backgroundColor: "rgba(17, 17, 17, 0.88)",
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
-  styleName: {
+  portfolioLabel: {
     color: "#FFFFFF",
-    fontSize: 14,
-    lineHeight: 17,
-    ...fonts.semibold,
-  },
-  roomType: {
-    marginTop: 2,
-    color: "#CCCCCC",
     fontSize: 12,
     lineHeight: 14,
-    ...fonts.regular,
+    textAlign: "center",
+    ...fonts.semibold,
   },
   failedText: {
     color: "#F3B3BE",

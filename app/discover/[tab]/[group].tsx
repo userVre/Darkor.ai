@@ -1,7 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { ArrowLeft } from "@/components/material-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -76,7 +76,10 @@ export default function DiscoverSeeAllScreen() {
       </View>
 
       {group ? (
-        <ScrollView
+        <FlatList
+          data={group.items}
+          numColumns={2}
+          keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{
@@ -84,20 +87,17 @@ export default function DiscoverSeeAllScreen() {
             paddingTop: 24,
             paddingBottom: Math.max(insets.bottom + 120, 132),
           }}
-        >
-          <View style={styles.masonry}>
-            {group.items.map((item, index) => (
-              <DiscoverImageCard
-                key={item.id}
-                item={item}
-                width={cardWidth}
-                height={cardHeight}
-                onPress={handlePreviewOpen}
-                style={index % 2 === 0 ? styles.gridCardLeft : styles.gridCardRight}
-              />
-            ))}
-          </View>
-        </ScrollView>
+          columnWrapperStyle={styles.gridRow}
+          renderItem={({ item, index }) => (
+            <DiscoverImageCard
+              item={item}
+              width={cardWidth}
+              height={cardHeight}
+              onPress={handlePreviewOpen}
+              style={index % 2 === 0 ? styles.gridCardLeft : styles.gridCardRight}
+            />
+          )}
+        />
       ) : (
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>{t("gallery.emptyState.title")}</Text>
@@ -146,11 +146,8 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 48,
   },
-  masonry: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+  gridRow: {
     justifyContent: "space-between",
-    gap: GRID_GAP,
   },
   gridCardLeft: {
     marginBottom: GRID_GAP,
