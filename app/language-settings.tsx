@@ -11,7 +11,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import i18n from "../lib/i18n";
 import {
   setAppLanguage,
   setAppLanguageToSystemDefault,
@@ -63,11 +62,15 @@ export default function LanguageSettingsScreen() {
 
   const handleToggleAuto = (value: boolean) => {
     if (value) {
-      void setAppLanguageToSystemDefault();
+      void (async () => {
+        await setAppLanguageToSystemDefault();
+      })();
       return;
     }
 
-    void setAppLanguage(languagePreference.resolvedLanguage);
+    void (async () => {
+      await setAppLanguage(languagePreference.resolvedLanguage);
+    })();
   };
 
   const handleSelectLanguage = (language: string) => {
@@ -76,7 +79,6 @@ export default function LanguageSettingsScreen() {
     }
 
     void (async () => {
-      await i18n.changeLanguage(language);
       await setAppLanguage(language);
     })();
   };

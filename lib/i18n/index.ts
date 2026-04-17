@@ -38,14 +38,14 @@ const DEFAULT_LANGUAGE_PREFERENCE: StoredLanguagePreference = {
 
 const resources: Resource = {
   "en-US": { translation: require("../../locales/en.json") },
-  fr: { translation: require("../../locales/fr.json") },
-  es: { translation: require("../../locales/es.json") },
-  de: { translation: require("../../locales/de.json") },
-  pt: { translation: require("../../locales/pt.json") },
-  ru: { translation: require("../../locales/ru.json") },
   sv: { translation: require("../../locales/sv.json") },
+  de: { translation: require("../../locales/de.json") },
   ja: { translation: require("../../locales/ja.json") },
   ko: { translation: require("../../locales/ko.json") },
+  fr: { translation: require("../../locales/fr.json") },
+  es: { translation: require("../../locales/es.json") },
+  "pt-BR": { translation: require("../../locales/pt-BR.json") },
+  pt: { translation: require("../../locales/pt.json") },
   "zh-Hans": { translation: require("../../locales/zh-Hans.json") },
 };
 
@@ -239,13 +239,16 @@ async function applyLanguagePreference(preference: StoredLanguagePreference) {
   }
 
   const resolvedLanguage = resolveLanguageFromPreference(preference);
+  const preferenceChanged = setCurrentPreference(preference);
 
   if (getResolvedI18nLanguage() !== resolvedLanguage) {
     await i18n.changeLanguage(resolvedLanguage);
   }
 
-  setCurrentPreference(preference);
   await persistLanguagePreference(preference);
+  if (preferenceChanged) {
+    emitPreferenceChange();
+  }
 
   return resolvedLanguage;
 }

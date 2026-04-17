@@ -3,14 +3,13 @@ import { Platform } from "react-native";
 
 export const SUPPORTED_LANGUAGES = [
   "en-US",
-  "fr",
-  "es",
-  "de",
-  "pt",
-  "ru",
   "sv",
+  "de",
   "ja",
   "ko",
+  "fr",
+  "pt-BR",
+  "es",
   "zh-Hans",
 ] as const;
 
@@ -33,27 +32,6 @@ export const SUPPORTED_LANGUAGE_OPTIONS: readonly SupportedLanguageOption[] = [
     defaultRegion: "US",
   },
   {
-    code: "fr",
-    englishLabel: "French",
-    nativeLabel: "Français",
-    localeBase: "fr",
-    defaultRegion: "FR",
-  },
-  {
-    code: "es",
-    englishLabel: "Spanish",
-    nativeLabel: "Español",
-    localeBase: "es",
-    defaultRegion: "ES",
-  },
-  {
-    code: "de",
-    englishLabel: "German",
-    nativeLabel: "Deutsch",
-    localeBase: "de",
-    defaultRegion: "DE",
-  },
-  {
     code: "sv",
     englishLabel: "Swedish",
     nativeLabel: "Svenska",
@@ -61,25 +39,11 @@ export const SUPPORTED_LANGUAGE_OPTIONS: readonly SupportedLanguageOption[] = [
     defaultRegion: "SE",
   },
   {
-    code: "zh-Hans",
-    englishLabel: "Chinese (Simplified)",
-    nativeLabel: "简体中文",
-    localeBase: "zh-Hans",
-    defaultRegion: "CN",
-  },
-  {
-    code: "ru",
-    englishLabel: "Russian",
-    nativeLabel: "Русский",
-    localeBase: "ru",
-    defaultRegion: "RU",
-  },
-  {
-    code: "pt",
-    englishLabel: "Portuguese",
-    nativeLabel: "Português",
-    localeBase: "pt",
-    defaultRegion: "PT",
+    code: "de",
+    englishLabel: "German",
+    nativeLabel: "Deutsch",
+    localeBase: "de",
+    defaultRegion: "DE",
   },
   {
     code: "ja",
@@ -94,6 +58,34 @@ export const SUPPORTED_LANGUAGE_OPTIONS: readonly SupportedLanguageOption[] = [
     nativeLabel: "한국어",
     localeBase: "ko",
     defaultRegion: "KR",
+  },
+  {
+    code: "fr",
+    englishLabel: "French",
+    nativeLabel: "Français",
+    localeBase: "fr",
+    defaultRegion: "FR",
+  },
+  {
+    code: "pt-BR",
+    englishLabel: "Portuguese (Brazil)",
+    nativeLabel: "Português (Brasil)",
+    localeBase: "pt",
+    defaultRegion: "BR",
+  },
+  {
+    code: "es",
+    englishLabel: "Spanish",
+    nativeLabel: "Español",
+    localeBase: "es",
+    defaultRegion: "ES",
+  },
+  {
+    code: "zh-Hans",
+    englishLabel: "Chinese (Simplified)",
+    nativeLabel: "简体中文",
+    localeBase: "zh-Hans",
+    defaultRegion: "CN",
   },
 ] as const;
 
@@ -118,28 +110,12 @@ export function resolveSupportedLanguage(input?: string | null): AppLanguage {
     return "en-US";
   }
 
-  if (normalized === "fr" || normalized.startsWith("fr-")) {
-    return "fr";
-  }
-
-  if (normalized === "es" || normalized === "es-mx" || normalized.startsWith("es-")) {
-    return "es";
+  if (normalized === "sv" || normalized.startsWith("sv-")) {
+    return "sv";
   }
 
   if (normalized === "de" || normalized.startsWith("de-")) {
     return "de";
-  }
-
-  if (normalized === "pt" || normalized === "pt-br" || normalized.startsWith("pt-")) {
-    return "pt";
-  }
-
-  if (normalized === "ru" || normalized.startsWith("ru-")) {
-    return "ru";
-  }
-
-  if (normalized === "sv" || normalized.startsWith("sv-")) {
-    return "sv";
   }
 
   if (normalized === "ja" || normalized.startsWith("ja-")) {
@@ -148,6 +124,18 @@ export function resolveSupportedLanguage(input?: string | null): AppLanguage {
 
   if (normalized === "ko" || normalized.startsWith("ko-")) {
     return "ko";
+  }
+
+  if (normalized === "fr" || normalized.startsWith("fr-")) {
+    return "fr";
+  }
+
+  if (normalized === "pt" || normalized === "pt-br" || normalized.startsWith("pt-")) {
+    return "pt-BR";
+  }
+
+  if (normalized === "es" || normalized === "es-mx" || normalized.startsWith("es-")) {
+    return "es";
   }
 
   if (
@@ -171,8 +159,28 @@ export function resolveSupportedLanguageFromLocales(locales?: readonly Locale[])
       return "en-US";
     }
 
+    if (regionCode === "SE") {
+      return "sv";
+    }
+
+    if (regionCode === "DE") {
+      return "de";
+    }
+
+    if (regionCode === "JP") {
+      return "ja";
+    }
+
+    if (regionCode === "KR") {
+      return "ko";
+    }
+
     if (regionCode === "FR") {
       return "fr";
+    }
+
+    if (regionCode === "BR") {
+      return "pt-BR";
     }
 
     const candidate = resolveSupportedLanguage(
