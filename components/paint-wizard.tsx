@@ -56,7 +56,7 @@ import { ServiceProcessingScreen, useGenerationStatusMessages } from "./service-
 import { ServiceWizardHeader } from "./service-wizard-header";
 import { ServiceWizardStepScreen } from "./service-wizard-shared";
 import { getStickyStepHeaderMetrics } from "./sticky-step-header";
-import { getWizardFloatingButtonStyle } from "./design-wizard-primitives";
+import { DESIGN_WIZARD_SELECTION_BLUE, getWizardFloatingButtonStyle } from "./design-wizard-primitives";
 import { LuxPressable } from "./lux-pressable";
 import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerCredits } from "./viewer-credits-context";
@@ -441,13 +441,13 @@ const FinishCard = memo(function FinishCard({
   onPress: () => void;
 }) {
   return (
-    <LuxPressable
-      onPress={onPress}
-      className={pointerClassName}
-      style={{ width: "100%" }}
-      glowColor={active ? "rgba(217,70,239,0.2)" : "rgba(255,255,255,0.04)"}
-      scale={0.985}
-    >
+      <LuxPressable
+        onPress={onPress}
+        className={pointerClassName}
+        style={{ width: "100%" }}
+        glowColor={active ? "rgba(37,99,235,0.2)" : "rgba(255,255,255,0.04)"}
+        scale={0.985}
+      >
       <View style={[styles.finishCard, active ? styles.finishCardActive : null]}>
         <FinishPreview finishId={option.id} />
         <View style={styles.finishCopy}>
@@ -1539,11 +1539,11 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
             </View>
 
             <View style={[styles.selectionCardsRow, { gap: selectionCardGap, marginTop: scaleSelectionValue(44, selectionLayoutScale) }]}>
-              <View style={[styles.selectionChoiceCard, { width: selectionCardWidth, minHeight: selectionCardHeight }]}>
+              <View style={[styles.selectionChoiceCard, selectedColorValue ? styles.selectionChoiceCardActive : null, { width: selectionCardWidth, minHeight: selectionCardHeight }]}>
                 <View style={styles.selectionCardIconWrap}>
                   <BrushCleaning color="#0A0A0A" size={18} strokeWidth={2.1} />
                 </View>
-                <Text style={styles.selectionCardLabel}>{t("wizard.paintFlow.colorLabel")}</Text>
+                <Text style={[styles.selectionCardLabel, selectedColorValue ? styles.selectionCardLabelActive : null]}>{t("wizard.paintFlow.colorLabel")}</Text>
                 <Pressable
                   accessibilityRole="button"
                   onPress={handleOpenColorPicker}
@@ -1569,11 +1569,11 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                 </Pressable>
               </View>
 
-              <View style={[styles.selectionChoiceCard, { width: selectionCardWidth, minHeight: selectionCardHeight }]}>
+              <View style={[styles.selectionChoiceCard, isSurfaceConfirmed ? styles.selectionChoiceCardActive : null, { width: selectionCardWidth, minHeight: selectionCardHeight }]}>
                 <View style={styles.selectionCardIconWrap}>
                   <PaintSurfaceIcon surface={selectedSurface} color="#0A0A0A" size={18} />
                 </View>
-                <Text style={[styles.selectionCardLabel, styles.selectionSurfaceCardLabel]}>{t("wizard.paintFlow.surfaceLabel")}</Text>
+                <Text style={[styles.selectionCardLabel, styles.selectionSurfaceCardLabel, isSurfaceConfirmed ? styles.selectionCardLabelActive : null]}>{t("wizard.paintFlow.surfaceLabel")}</Text>
                 <Pressable
                   accessibilityRole="button"
                   onPress={handleOpenSurfacePicker}
@@ -1802,7 +1802,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                           style={[
                             styles.surfacePickerRow,
                             { height: scaleSelectionValue(72, selectionLayoutScale) },
-                            isAuto ? styles.surfacePickerRowAuto : null,
                             active ? styles.surfacePickerRowActive : null,
                           ]}
                         >
@@ -2287,6 +2286,16 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 16,
   },
+  selectionChoiceCardActive: {
+    borderWidth: 2,
+    borderColor: "#2563EB",
+    shadowColor: "#2563EB",
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+    boxShadow: "0px 0px 0px 1px rgba(37,99,235,0.14), 0px 12px 28px rgba(37,99,235,0.2)",
+  },
   selectionCardIconWrap: {
     width: 40,
     height: 40,
@@ -2303,6 +2312,10 @@ const styles = StyleSheet.create({
     color: "#0A0A0A",
     fontSize: 16,
     lineHeight: 20,
+    ...fonts.semibold,
+  },
+  selectionCardLabelActive: {
+    color: "#2563EB",
     ...fonts.bold,
   },
   selectionSurfaceCardLabel: {
@@ -2514,23 +2527,26 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   surfacePickerRow: {
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "#ECECEC",
-    backgroundColor: "#FFFFFF",
+      borderRadius: 24,
+      borderWidth: 1,
+      borderColor: "#ECECEC",
+      backgroundColor: "#FFFFFF",
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  surfacePickerRowAuto: {
-    backgroundColor: "#F8F8F8",
-    borderColor: "#E5E7EB",
-  },
   surfacePickerRowActive: {
-      borderColor: "#CC3333",
-    backgroundColor: "#FFF3F2",
-  },
+      borderWidth: 2,
+      borderColor: "#2563EB",
+      backgroundColor: "#FFFFFF",
+      shadowColor: "#2563EB",
+      shadowOpacity: 0.2,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 8,
+      boxShadow: "0px 0px 0px 1px rgba(37,99,235,0.14), 0px 12px 28px rgba(37,99,235,0.2)",
+    },
   surfacePickerRowLeading: {
     flexDirection: "row",
     alignItems: "center",
@@ -2549,8 +2565,9 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
   surfacePickerRowTextActive: {
-    color: "#0A0A0A",
-  },
+      color: "#2563EB",
+      ...fonts.bold,
+    },
   surfacePickerCheckCircle: {
     width: 24,
     height: 24,
@@ -2562,9 +2579,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   surfacePickerCheckCircleActive: {
-      borderColor: "#CC3333",
-      backgroundColor: "#CC3333",
-  },
+        borderColor: "#2563EB",
+        backgroundColor: "#2563EB",
+    },
   surfacePickerApplyButton: {
     position: "absolute",
     height: 56,
@@ -3399,13 +3416,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.02)",
   },
   swatchOuterActive: {
-    borderColor: SERVICE_WIZARD_THEME.colors.accent,
-    backgroundColor: SERVICE_WIZARD_THEME.colors.accentSurface,
-    shadowColor: SERVICE_WIZARD_THEME.colors.accent,
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-  },
+      borderWidth: 2,
+      borderColor: "#2563EB",
+      backgroundColor: CARD_BLACK_SOFT,
+      shadowColor: "#2563EB",
+      shadowOpacity: 0.2,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 6 },
+    },
   swatchInner: {
     width: 64,
     height: 64,
@@ -3421,8 +3439,9 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   swatchLabelActive: {
-    color: "#ffffff",
-  },
+      color: "#2563EB",
+      ...fonts.bold,
+    },
   finishSummaryCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -3485,9 +3504,16 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   finishCardActive: {
-    borderColor: "rgba(217,70,239,0.42)",
-    backgroundColor: "rgba(217,70,239,0.08)",
-  },
+      borderWidth: 2,
+      borderColor: "#2563EB",
+      backgroundColor: CARD_BLACK_SOFT,
+      shadowColor: "#2563EB",
+      shadowOpacity: 0.2,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 8,
+      boxShadow: "0px 0px 0px 1px rgba(37,99,235,0.14), 0px 12px 28px rgba(37,99,235,0.2)",
+    },
   finishPreviewBase: {
     width: 40,
     height: 40,
@@ -3534,14 +3560,15 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   finishTitle: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontFamily: fonts.regular.fontFamily,
-    fontWeight: "700",
-  },
+      color: "#ffffff",
+      fontSize: 18,
+      fontFamily: fonts.regular.fontFamily,
+      fontWeight: "600",
+    },
   finishTitleActive: {
-    color: "#ffffff",
-  },
+      color: "#2563EB",
+      fontWeight: "700",
+    },
   finishText: {
     color: "#a1a1aa",
     fontSize: 13,

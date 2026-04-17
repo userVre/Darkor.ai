@@ -8,52 +8,23 @@ import { LuxPressable } from "../components/lux-pressable";
 import { DS, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
 import { triggerHaptic } from "../lib/haptics";
 
-const PRIVACY_SECTIONS = [
-  {
-    title: "Overview",
-    body:
-      'HomeDecor AI ("HomeDecor", "we", "our", "us") provides AI-powered interior and exterior redesign services. This Privacy Policy explains what data we collect, how we use it, and the choices you have.',
-  },
-  {
-    title: "Information We Collect",
-    body:
-      "We collect information you provide, such as account details and uploaded images, usage data such as feature interactions and device information, and payment status data from RevenueCat to manage subscriptions.",
-  },
-  {
-    title: "How We Use Your Data",
-    body:
-      "We use your data to deliver redesigns, personalize your experience, manage credits and billing, improve model quality, and secure the app. We do not sell your personal data.",
-  },
-  {
-    title: "Image Processing",
-    body:
-      "Images you upload are processed to generate redesigns. We store generated images and related metadata so you can revisit your results, and you can remove your data by deleting your account.",
-  },
-  {
-    title: "Sharing and Disclosure",
-    body:
-      "We share data only with providers required to operate HomeDecor AI, such as authentication, analytics, and payment processing partners, or when disclosure is required by law.",
-  },
-  {
-    title: "Data Security",
-    body:
-      "We use encryption and access controls to protect your data. No system is perfectly secure, so we also recommend strong passwords and a protected device.",
-  },
-  {
-    title: "Your Rights",
-    body:
-      "You can access, update, or delete your account data at any time. Account deletion removes your stored generations and profile information from our systems.",
-  },
-  {
-    title: "Contact Us",
-    body: "For privacy questions or requests, contact us at support@homedecor.ai.",
-  },
-];
-
 export default function PrivacyPolicyScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const privacySections = [
+    "overview",
+    "informationWeCollect",
+    "howWeUseYourData",
+    "imageProcessing",
+    "sharingAndDisclosure",
+    "dataSecurity",
+    "yourRights",
+    "contactUs",
+  ].map((sectionId) => ({
+    title: t(`privacy.sections.${sectionId}.title`),
+    body: t(`privacy.sections.${sectionId}.body`),
+  }));
 
   return (
     <SafeAreaView edges={["top"]} style={styles.screen}>
@@ -94,7 +65,7 @@ export default function PrivacyPolicyScreen() {
         </View>
 
         <View style={styles.sectionStack}>
-          {PRIVACY_SECTIONS.map((section) => (
+          {privacySections.map((section) => (
             <View key={section.title} style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>{section.title}</Text>
               <Text style={styles.sectionBody}>{section.body}</Text>

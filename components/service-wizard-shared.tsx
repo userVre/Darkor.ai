@@ -10,6 +10,7 @@ import { light as colors } from "@/styles/theme";
 import { DS, ambientShadow, glowShadow } from "../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { LuxPressable } from "./lux-pressable";
+import { DESIGN_WIZARD_SELECTION_BLUE } from "./design-wizard-primitives";
 
 const pointerClassName = "cursor-pointer";
 
@@ -173,7 +174,7 @@ export function ServiceSelectionCard({
       className={pointerClassName}
       pressableClassName={pointerClassName}
       style={{ width: fullWidth ? "100%" : width }}
-      glowColor={active ? colors.brand : colors.surfaceHigh}
+      glowColor={active ? "rgba(37,99,235,0.2)" : colors.surfaceHigh}
       scale={0.99}
     >
       <View style={[styles.selectionCard, active ? styles.selectionCardActive : null]}>
@@ -191,7 +192,7 @@ export function ServiceSelectionCard({
             </View>
           ) : null}
           <View style={[styles.selectionCopy, fullWidth ? styles.selectionCopyCentered : null]}>
-            <Text style={styles.selectionTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82}>
+            <Text style={[styles.selectionTitle, active ? styles.selectionTitleActive : null]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82}>
               {title}
             </Text>
           </View>
@@ -447,7 +448,13 @@ const styles = StyleSheet.create({
   selectionCardActive: {
     backgroundColor: colors.surfaceHigh,
     borderWidth: 2,
-    borderColor: SERVICE_WIZARD_THEME.colors.accent,
+    borderColor: DESIGN_WIZARD_SELECTION_BLUE,
+    shadowColor: DESIGN_WIZARD_SELECTION_BLUE,
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+    boxShadow: "0px 0px 0px 1px rgba(37,99,235,0.14), 0px 12px 28px rgba(37,99,235,0.2)",
   },
   selectionImageWrap: {
     flex: 1,
@@ -507,9 +514,13 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 18,
     fontFamily: fonts.regular.fontFamily,
-    fontWeight: "800",
+    fontWeight: "600",
     lineHeight: 22,
     letterSpacing: -0.35,
+  },
+  selectionTitleActive: {
+    color: DESIGN_WIZARD_SELECTION_BLUE,
+    fontWeight: "800",
   },
   selectionGrid: {
     gap: spacing.md,

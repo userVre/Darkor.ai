@@ -1,136 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft } from "@/components/material-icons";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DS, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
 import { triggerHaptic } from "../lib/haptics";
 
-const PRIVACY_SECTIONS = [
-  {
-    title: "Overview",
-    body:
-      'HomeDecor AI ("HomeDecor", "we", "our", "us") provides AI-powered interior and exterior redesign services. This Privacy Policy explains what data we collect, how we use it, and the choices you have.',
-  },
-  {
-    title: "Information We Collect",
-    body:
-      "We collect information you provide, such as account details and uploaded images, usage data such as feature interactions and device information, and payment status data from RevenueCat to manage subscriptions.",
-  },
-  {
-    title: "How We Use Your Data",
-    body:
-      "We use your data to deliver redesigns, personalize your experience, manage credits and billing, improve model quality, and secure the app. We do not sell your personal data.",
-  },
-  {
-    title: "Image Processing",
-    body:
-      "Images you upload are processed to generate redesigns. We store generated images and related metadata so you can revisit your results, and you can remove your data by deleting your account.",
-  },
-  {
-    title: "Sharing and Disclosure",
-    body:
-      "We share data only with providers required to operate HomeDecor AI, such as authentication, analytics, and payment processing partners, or when disclosure is required by law.",
-  },
-  {
-    title: "Data Security",
-    body:
-      "We use encryption and access controls to protect your data. No system is perfectly secure, so we also recommend strong passwords and a protected device.",
-  },
-  {
-    title: "Your Rights",
-    body:
-      "You can access, update, or delete your account data at any time. Account deletion removes your stored generations and profile information from our systems.",
-  },
-  {
-    title: "Contact Us",
-    body: "For privacy questions or requests, contact us at support@homedecor.ai.",
-  },
-] as const;
-
-const TERMS_SECTIONS = [
-  {
-    title: "Acceptance of Terms",
-    body:
-      "By accessing or using HomeDecor AI, you agree to these Terms of Service. If you do not agree, do not use the app.",
-  },
-  {
-    title: "Service Description",
-    body:
-      "HomeDecor AI provides AI-generated redesigns for interior and exterior spaces. Outputs are visual concepts and may not account for structural, engineering, or code constraints.",
-  },
-  {
-    title: "Account and Eligibility",
-    body:
-      "You must be at least 13 years old to use HomeDecor AI. You are responsible for maintaining account security and for activity that happens under your credentials.",
-  },
-  {
-    title: "User Content",
-    body:
-      "You retain ownership of images you upload. By using the service, you grant HomeDecor AI a limited license to process and store them so we can generate and return your results.",
-  },
-  {
-    title: "Subscriptions and Credits",
-    body:
-      "Paid plans unlock enhanced features and higher-quality exports. Credits are consumed per generation, and subscription billing and renewals are handled by your app store and RevenueCat.",
-  },
-  {
-    title: "Refund Policy",
-    body:
-      "Refund eligibility is determined by the Apple App Store or Google Play policy tied to your purchase. Except where required by law, used credits and completed generations are not refundable.",
-  },
-  {
-    title: "Prohibited Use",
-    body:
-      "You agree not to misuse the service, reverse engineer the app, or upload unlawful, harmful, or infringing content.",
-  },
-  {
-    title: "AI Disclaimer",
-    body:
-      'The service is provided "as is" without warranties of any kind. AI-generated redesigns are concept art, not professional construction guidance, and we do not guarantee code compliance or specific real-world results.',
-  },
-  {
-    title: "Limitation of Liability",
-    body:
-      "To the maximum extent permitted by law, HomeDecor AI is not liable for indirect or consequential damages arising from your use of the service.",
-  },
-  {
-    title: "Contact",
-    body: "Questions about these terms can be sent to support@homedecor.ai.",
-  },
-] as const;
-
-const LEGAL_DOCUMENTS = {
-  privacy: {
-    eyebrow: "Legal Viewer",
-    title: "Privacy Policy",
-    description: "The information we collect, how it is used, and the controls you have inside HomeDecor AI.",
-    date: "March 14, 2026",
-    sections: PRIVACY_SECTIONS,
-  },
-  terms: {
-    eyebrow: "Legal Viewer",
-    title: "Terms of Service",
-    description: "The rules, expectations, and service boundaries for using HomeDecor AI.",
-    date: "March 14, 2026",
-    sections: TERMS_SECTIONS,
-  },
-} as const;
-
-const LEGAL_PRIORITY_NOTICES = [
-  {
-    title: "Refund Policy",
-    body:
-      "Subscriptions and credit purchases are billed through Apple or Google. Refund requests follow the applicable store policy, and unused credits are non-refundable except where required by law.",
-  },
-  {
-    title: "AI Disclaimer",
-    body:
-      "HomeDecor AI creates visual concepts with AI. Outputs are not architectural, structural, engineering, safety, or code-compliance advice and should be reviewed by a qualified professional before real-world changes.",
-  },
-] as const;
-
-type LegalDocumentKey = keyof typeof LEGAL_DOCUMENTS;
+type LegalDocumentKey = "privacy" | "terms";
 
 function readDocumentParam(value: string | string[] | undefined): LegalDocumentKey {
   if (Array.isArray(value)) {
@@ -142,10 +19,64 @@ function readDocumentParam(value: string | string[] | undefined): LegalDocumentK
 
 export default function LegalViewerScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ document?: string | string[] }>();
   const documentKey = readDocumentParam(params.document);
-  const document = LEGAL_DOCUMENTS[documentKey];
+  const privacySections = [
+    "overview",
+    "informationWeCollect",
+    "howWeUseYourData",
+    "imageProcessing",
+    "sharingAndDisclosure",
+    "dataSecurity",
+    "yourRights",
+    "contactUs",
+  ].map((sectionId) => ({
+    title: t(`privacy.sections.${sectionId}.title`),
+    body: t(`privacy.sections.${sectionId}.body`),
+  }));
+  const termsSections = [
+    "acceptanceOfTerms",
+    "serviceDescription",
+    "accountAndEligibility",
+    "userContent",
+    "subscriptionsAndCredits",
+    "prohibitedUse",
+    "disclaimer",
+    "limitationOfLiability",
+    "contact",
+  ].map((sectionId) => ({
+    title: t(`terms.sections.${sectionId}.title`),
+    body: t(`terms.sections.${sectionId}.body`),
+  }));
+  const legalDocuments = {
+    privacy: {
+      eyebrow: t("privacy.eyebrow"),
+      title: t("privacy.title"),
+      description: t("privacy.description"),
+      date: t("privacy.date"),
+      sections: privacySections,
+    },
+    terms: {
+      eyebrow: t("terms.eyebrow"),
+      title: t("terms.title"),
+      description: t("terms.description"),
+      date: t("terms.date"),
+      sections: termsSections,
+    },
+  } as const;
+  const legalPriorityNotices = [
+    {
+      title: t("terms.sections.subscriptionsAndCredits.title"),
+      body: t("terms.sections.subscriptionsAndCredits.body"),
+    },
+    {
+      title: t("terms.sections.disclaimer.title"),
+      body: t("terms.sections.disclaimer.body"),
+    },
+  ];
+  const document = legalDocuments[documentKey as LegalDocumentKey];
 
   return (
     <SafeAreaView edges={["top"]} style={styles.screen}>
@@ -181,7 +112,7 @@ export default function LegalViewerScreen() {
         </View>
 
         <View style={styles.priorityStack}>
-          {LEGAL_PRIORITY_NOTICES.map((notice) => (
+          {legalPriorityNotices.map((notice) => (
             <View key={notice.title} style={styles.priorityCard}>
               <Text style={styles.priorityTitle}>{notice.title}</Text>
               <Text style={styles.priorityBody}>{notice.body}</Text>
@@ -190,7 +121,7 @@ export default function LegalViewerScreen() {
         </View>
 
         <View style={styles.metaCard}>
-          <Text style={styles.metaLabel}>Last updated</Text>
+          <Text style={styles.metaLabel}>{t("common.labels.lastUpdated")}</Text>
           <Text style={styles.metaValue}>{document.date}</Text>
         </View>
 
@@ -208,7 +139,7 @@ export default function LegalViewerScreen() {
             style={[styles.switchButton, documentKey === "terms" ? styles.switchButtonActive : null]}
           >
             <Text style={[styles.switchLabel, documentKey === "terms" ? styles.switchLabelActive : null]}>
-              Terms of Service
+              {t("terms.title")}
             </Text>
           </Pressable>
 
@@ -225,13 +156,13 @@ export default function LegalViewerScreen() {
             style={[styles.switchButton, documentKey === "privacy" ? styles.switchButtonActive : null]}
           >
             <Text style={[styles.switchLabel, documentKey === "privacy" ? styles.switchLabelActive : null]}>
-              Privacy Policy
+              {t("privacy.title")}
             </Text>
           </Pressable>
         </View>
 
         <View style={styles.sectionStack}>
-          {document.sections.map((section) => (
+          {document.sections.map((section: { title: string; body: string }) => (
             <View key={section.title} style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>{section.title}</Text>
               <Text style={styles.sectionBody}>{section.body}</Text>

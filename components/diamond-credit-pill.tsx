@@ -23,14 +23,14 @@ type DiamondCreditPillProps = {
 
 const VARIANT_STYLES = {
   dark: {
-    backgroundColor: "#0D0D0D",
-    textColor: "#FFFFFF",
-    prismPrimary: "#2563EB",
+    backgroundColor: "#FFFFFF",
+    textColor: "#0F172A",
+    prismPrimary: "#1D4ED8",
   },
   light: {
     backgroundColor: "#FFFFFF",
-    textColor: "#111827",
-    prismPrimary: "#2563EB",
+    textColor: "#0F172A",
+    prismPrimary: "#1D4ED8",
   },
 } as const;
 
@@ -53,24 +53,24 @@ export function DiamondCreditIcon({
         />
         <Path
           d="M5.108 2.25 9 6.32l3.892-4.07"
-          stroke="#93C5FD"
+          stroke="#60A5FA"
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={0.9}
+          strokeWidth={1}
         />
         <Path
           d="M1.999 6.32h14.001"
-          stroke="#1D4ED8"
+          stroke="#1E40AF"
           strokeLinecap="round"
-          strokeWidth={0.9}
+          strokeWidth={1}
         />
         <Path
           d="M5.108 2.25 9 15.75 12.892 2.25"
-          stroke="#DBEAFE"
+          stroke="#BFDBFE"
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={0.8}
-          opacity={0.9}
+          strokeWidth={0.9}
+          opacity={0.95}
         />
       </Svg>
     </View>
@@ -124,22 +124,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 7,
     paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.08)",
     ...organicRadii(20, 14),
     ...ambientShadow(0.06, 12, 8),
   },
   countText: {
     fontSize: 15,
-    lineHeight: 15,
+    lineHeight: 18,
     fontVariant: ["tabular-nums"],
-    textAlignVertical: "center",
+    includeFontPadding: false,
     ...fonts.bold,
   },
   creditIconWrap: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 0.5,
   },
 });

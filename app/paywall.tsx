@@ -402,11 +402,28 @@ function getDisplayedPrice(
 ) {
   const productPrice = pkg?.product?.price;
   const productCurrencyCode = pkg?.product?.currencyCode;
+  const localizedPriceString = String((pkg?.product as { localizedPriceString?: string } | undefined)?.localizedPriceString ?? "").trim();
   const shouldPreferFallback = preferredCurrencyCode != null && fallbackPrice.currencyCode === preferredCurrencyCode;
 
+  if (shouldPreferFallback) {
+    return fallbackPrice;
+  }
+
+  if (localizedPriceString.length > 0) {
+    return {
+      amount:
+        typeof productPrice === "number" && Number.isFinite(productPrice)
+          ? Number(productPrice.toFixed(fallbackPrice.fractionDigits))
+          : fallbackPrice.amount,
+      currencyCode: productCurrencyCode || fallbackPrice.currencyCode,
+      formatted: localizedPriceString.replace(/\s+/g, " ").trim(),
+      fractionDigits: fallbackPrice.fractionDigits,
+      source: "store" as const,
+    };
+  }
+
   if (
-    shouldPreferFallback
-    || typeof productPrice !== "number"
+    typeof productPrice !== "number"
     || !Number.isFinite(productPrice)
     || !productCurrencyCode
   ) {
@@ -495,10 +512,15 @@ export default function PaywallScreen() {
   const heroTrackPadding = Math.max((width - heroSnapInterval) / 2, 0);
   const heroRowHeight = heroCenterSize + HERO_SIDE_TRANSLATE_Y + 56;
   const isMoroccoRegion = pricingContext.regionCode === "MA";
+  const isUnitedStatesRegion = pricingContext.regionCode === "US";
 
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly"), [packages]);
   const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly"), [packages]);
-  const forcedDisplayCurrencyCode = isMoroccoRegion ? "MAD" : undefined;
+  const forcedDisplayCurrencyCode = isMoroccoRegion
+    ? "MAD"
+    : isUnitedStatesRegion
+      ? "USD"
+      : undefined;
   const displayedYearlyPrice = useMemo(
     () => getDisplayedPrice(pricingContext.prices.yearly, pricingContext.locale, forcedDisplayCurrencyCode, yearlyPackage),
     [forcedDisplayCurrencyCode, pricingContext.locale, pricingContext.prices.yearly, yearlyPackage],
@@ -668,7 +690,7 @@ export default function PaywallScreen() {
     };
   }, [
     cachedOfferingPackages,
-    isMoroccoRegion,
+    forcedDisplayCurrencyCode,
     isSignedIn,
     pricingContext.revenueCat.countryCode,
     pricingContext.revenueCat.currencyCode,

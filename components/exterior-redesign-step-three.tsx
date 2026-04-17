@@ -12,6 +12,7 @@ import {
   DESIGN_WIZARD_TEXT,
   DESIGN_WIZARD_TEXT_MUTED,
   getWizardFloatingButtonStyle,
+  getWizardSelectedLabelTextStyle,
   getWizardSelectedIconContainerStyle,
   getWizardSelectionCardStyle,
 } from "./design-wizard-primitives";
@@ -193,8 +194,8 @@ export function ExteriorRedesignStepThree({
                           {
                             top: labelTextTop,
                             left: labelTextLeft,
-                            color: active ? DESIGN_WIZARD_SELECTION_BLUE : DESIGN_WIZARD_TEXT,
                           },
+                          getWizardSelectedLabelTextStyle(active),
                           active ? stylesSheet.labelTextActive : null,
                         ]}
                       >

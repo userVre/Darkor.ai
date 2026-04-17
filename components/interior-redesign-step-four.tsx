@@ -6,13 +6,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BadgeCheck, PaintRoller, Wand2 } from "@/components/material-icons";
 import {
-  DESIGN_WIZARD_ACCENT,
   DESIGN_WIZARD_ACCENT_STRONG,
-  DESIGN_WIZARD_RUBY,
+  DESIGN_WIZARD_SELECTION_BLUE,
   DESIGN_WIZARD_SURFACE,
   DESIGN_WIZARD_TEXT,
   DESIGN_WIZARD_TEXT_MUTED,
   getWizardFloatingButtonStyle,
+  getWizardSelectedLabelTextStyle,
   getWizardSelectedIconContainerStyle,
   getWizardSelectionCardStyle,
 } from "./design-wizard-primitives";
@@ -115,7 +115,7 @@ function ModeSelectionCard({
               getWizardSelectedIconContainerStyle(active),
             ]}
           >
-            <ModeIcon color={active ? DESIGN_WIZARD_RUBY : "#111111"} size={iconSize} strokeWidth={2.2} />
+            <ModeIcon color={active ? DESIGN_WIZARD_SELECTION_BLUE : "#111111"} size={iconSize} strokeWidth={2.2} />
           </View>
           {active ? (
             <View style={styles.modeSelectedBadge}>
@@ -125,7 +125,7 @@ function ModeSelectionCard({
         </View>
 
         <View style={{ marginTop: titleTopGap }}>
-          <Text style={[styles.modeTitle, active ? styles.modeTitleActive : null]} numberOfLines={2}>
+          <Text style={[styles.modeTitle, getWizardSelectedLabelTextStyle(active), active ? styles.modeTitleActive : null]} numberOfLines={2}>
             {title}
           </Text>
         </View>
@@ -285,7 +285,7 @@ export function InteriorRedesignStepFour({
                         {active ? (
                           <View style={styles.paletteSelectionBadge}>
                             <View style={[styles.paletteSelectionBadgeInner, getWizardSelectedIconContainerStyle(true)]}>
-                              <BadgeCheck color={DESIGN_WIZARD_RUBY} size={16} strokeWidth={2.1} />
+                              <BadgeCheck color={DESIGN_WIZARD_SELECTION_BLUE} size={16} strokeWidth={2.1} />
                             </View>
                           </View>
                         ) : null}
@@ -299,7 +299,7 @@ export function InteriorRedesignStepFour({
                           styles.paletteLabelBar,
                           {
                             height: paletteLabelHeight,
-                            backgroundColor: active ? "#000000" : "#EFEFEF",
+                              backgroundColor: "#EFEFEF",
                           },
                         ]}
                       >
@@ -310,10 +310,10 @@ export function InteriorRedesignStepFour({
                             {
                               top: paletteLabelTop,
                               left: paletteLabelLeft,
-                              color: active ? "#FFFFFF" : DESIGN_WIZARD_TEXT,
-                            },
-                          ]}
-                        >
+                              },
+                              getWizardSelectedLabelTextStyle(active),
+                            ]}
+                          >
                           {palette.displayLabel ?? palette.label}
                         </Text>
                       </View>
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(37,99,235,0.08)",
   },
   modeTitle: {
     color: DESIGN_WIZARD_TEXT,
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   modeTitleActive: {
-    color: "#FFFFFF",
+    ...fonts.bold,
   },
   modeDescriptionBlock: {
     flex: 1,
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     ...fonts.regular,
   },
   modeDescriptionActive: {
-    color: "rgba(255,255,255,0.72)",
+    color: DESIGN_WIZARD_TEXT_MUTED,
   },
   paletteCard: {
     overflow: "hidden",

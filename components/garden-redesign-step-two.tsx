@@ -12,6 +12,7 @@ import {
   DESIGN_WIZARD_TEXT,
   DESIGN_WIZARD_TEXT_MUTED,
   getWizardFloatingButtonStyle,
+  getWizardSelectedLabelTextStyle,
   getWizardSelectedIconContainerStyle,
   getWizardSelectionCardStyle,
 } from "./design-wizard-primitives";
@@ -185,14 +186,14 @@ export function GardenRedesignStepTwo({
                       >
                         <Text
                           numberOfLines={2}
-                          style={[
-                            stylesSheet.labelText,
-                            {
-                              color: active ? DESIGN_WIZARD_SELECTION_BLUE : DESIGN_WIZARD_TEXT,
-                            },
-                            active ? stylesSheet.labelTextActive : null,
-                          ]}
-                        >
+                        style={[
+                          stylesSheet.labelText,
+                          {
+                          },
+                          getWizardSelectedLabelTextStyle(active),
+                          active ? stylesSheet.labelTextActive : null,
+                        ]}
+                      >
                           {styleCard.label ?? styleCard.title}
                         </Text>
                       </View>

@@ -12,6 +12,7 @@ import {
   getArchitecturalIconProps,
   getArchitecturalRoomIcon,
   getWizardFloatingButtonStyle,
+  getWizardSelectedLabelTextStyle,
   getWizardSelectedIconContainerStyle,
   getWizardSelectionCardStyle,
 } from "./design-wizard-primitives";
@@ -151,7 +152,7 @@ export function InteriorRedesignStepTwo({
                           <View style={[styles.roomIconWrap, getWizardSelectedIconContainerStyle(active)]}>
                             <RoomIcon {...getArchitecturalIconProps(iconColor, ROOM_ICON_SIZE)} />
                           </View>
-                          <Text style={[styles.roomCardTitle, active ? styles.roomCardTitleActive : null]} numberOfLines={2}>
+                          <Text style={[styles.roomCardTitle, getWizardSelectedLabelTextStyle(active), active ? styles.roomCardTitleActive : null]} numberOfLines={2}>
                             {room.label}
                           </Text>
                         </View>
@@ -243,7 +244,6 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
   roomCardTitleActive: {
-    color: DESIGN_WIZARD_SELECTION_BLUE,
     ...fonts.bold,
   },
   bottomContainer: {

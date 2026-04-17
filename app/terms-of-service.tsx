@@ -8,57 +8,24 @@ import { LuxPressable } from "../components/lux-pressable";
 import { DS, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
 import { triggerHaptic } from "../lib/haptics";
 
-const TERMS_SECTIONS = [
-  {
-    title: "Acceptance of Terms",
-    body:
-      "By accessing or using HomeDecor AI, you agree to these Terms of Service. If you do not agree, do not use the app.",
-  },
-  {
-    title: "Service Description",
-    body:
-      "HomeDecor AI provides AI-generated redesigns for interior and exterior spaces. Outputs are visual concepts and may not account for structural, engineering, or code constraints.",
-  },
-  {
-    title: "Account and Eligibility",
-    body:
-      "You must be at least 13 years old to use HomeDecor AI. You are responsible for maintaining account security and for activity that happens under your credentials.",
-  },
-  {
-    title: "User Content",
-    body:
-      "You retain ownership of images you upload. By using the service, you grant HomeDecor AI a limited license to process and store them so we can generate and return your results.",
-  },
-  {
-    title: "Subscriptions and Credits",
-    body:
-      "Paid plans unlock enhanced features and higher-quality exports. Credits are consumed per generation, and subscription billing and renewals are handled by your app store and RevenueCat.",
-  },
-  {
-    title: "Prohibited Use",
-    body:
-      "You agree not to misuse the service, reverse engineer the app, or upload unlawful, harmful, or infringing content.",
-  },
-  {
-    title: "Disclaimer",
-    body:
-      'The service is provided "as is" without warranties of any kind. We do not guarantee specific design results or the accuracy of AI-generated outputs.',
-  },
-  {
-    title: "Limitation of Liability",
-    body:
-      "To the maximum extent permitted by law, HomeDecor AI is not liable for indirect or consequential damages arising from your use of the service.",
-  },
-  {
-    title: "Contact",
-    body: "Questions about these terms can be sent to support@homedecor.ai.",
-  },
-];
-
 export default function TermsOfServiceScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const termsSections = [
+    "acceptanceOfTerms",
+    "serviceDescription",
+    "accountAndEligibility",
+    "userContent",
+    "subscriptionsAndCredits",
+    "prohibitedUse",
+    "disclaimer",
+    "limitationOfLiability",
+    "contact",
+  ].map((sectionId) => ({
+    title: t(`terms.sections.${sectionId}.title`),
+    body: t(`terms.sections.${sectionId}.body`),
+  }));
 
   return (
     <SafeAreaView edges={["top"]} style={styles.screen}>
@@ -99,7 +66,7 @@ export default function TermsOfServiceScreen() {
         </View>
 
         <View style={styles.sectionStack}>
-          {TERMS_SECTIONS.map((section) => (
+          {termsSections.map((section) => (
             <View key={section.title} style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>{section.title}</Text>
               <Text style={styles.sectionBody}>{section.body}</Text>

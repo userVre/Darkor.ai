@@ -153,7 +153,7 @@ export default function HomeScreen() {
 
           <View pointerEvents="none" style={styles.centerBrand}>
             <Text numberOfLines={1} style={styles.brandTitle}>
-              {t("app.name")}
+              HomeDecor AI
             </Text>
           </View>
 

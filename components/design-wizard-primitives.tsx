@@ -1,4 +1,4 @@
-import type { ViewStyle } from "react-native";
+import type { TextStyle, ViewStyle } from "react-native";
 import type { Icon, IconProps } from "phosphor-react-native";
 import {
   ArmchairIcon,
@@ -31,7 +31,7 @@ export const DESIGN_WIZARD_TEXT_ON_DARK = "#FFFFFF";
 export const DESIGN_WIZARD_RUBY = "#E53935";
 export const DESIGN_WIZARD_SELECTION_BLUE = "#2563EB";
 export const DESIGN_WIZARD_SELECTION_BLUE_SOFT = "rgba(37,99,235,0.14)";
-export const DESIGN_WIZARD_SELECTION_BLUE_GLOW = "rgba(37,99,235,0.18)";
+export const DESIGN_WIZARD_SELECTION_BLUE_GLOW = "rgba(37,99,235,0.2)";
 
 type RoomIconName =
   | "Bathroom"
@@ -87,13 +87,30 @@ export function getArchitecturalSelectionRadii(): ViewStyle {
 export function getWizardSelectionCardStyle(active: boolean, backgroundColor = DESIGN_WIZARD_SURFACE_MUTED): ViewStyle {
   return {
     ...getArchitecturalSelectionRadii(),
-    borderWidth: active ? 2 : 1.5,
+    borderWidth: active ? 2 : 1,
     borderColor: active ? DESIGN_WIZARD_SELECTION_BLUE : DESIGN_WIZARD_BORDER,
     backgroundColor,
+    shadowColor: DESIGN_WIZARD_SELECTION_BLUE,
+    shadowOpacity: active ? 0.2 : 0.05,
+    shadowRadius: active ? 16 : 12,
+    shadowOffset: { width: 0, height: active ? 8 : 6 },
+    elevation: active ? 8 : 2,
     boxShadow: active
       ? `0px 0px 0px 1px ${DESIGN_WIZARD_SELECTION_BLUE_SOFT}, 0px 12px 28px ${DESIGN_WIZARD_SELECTION_BLUE_GLOW}`
       : "0px 10px 24px rgba(15,23,42,0.05)",
   };
+}
+
+export function getWizardSelectedLabelTextStyle(active: boolean): TextStyle {
+  return active
+    ? {
+        color: DESIGN_WIZARD_SELECTION_BLUE,
+        fontWeight: "700",
+      }
+    : {
+        color: DESIGN_WIZARD_TEXT,
+        fontWeight: "600",
+      };
 }
 
 export function getWizardFloatingButtonStyle(active: boolean): ViewStyle {

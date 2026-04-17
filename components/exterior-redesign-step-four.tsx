@@ -6,9 +6,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check } from "@/components/material-icons";
 
 import {
+  DESIGN_WIZARD_SELECTION_BLUE,
   DESIGN_WIZARD_SURFACE,
   DESIGN_WIZARD_TEXT,
   getWizardFloatingButtonStyle,
+  getWizardSelectedLabelTextStyle,
   getWizardSelectedIconContainerStyle,
   getWizardSelectionCardStyle,
 } from "./design-wizard-primitives";
@@ -155,7 +157,7 @@ export function ExteriorRedesignStepFour({
                       {active ? (
                         <View style={styles.selectionBadge}>
                           <View style={[styles.selectionBadgeInner, getWizardSelectedIconContainerStyle(true)]}>
-                            <Check color="#E53935" size={16} strokeWidth={2.4} />
+                            <Check color={DESIGN_WIZARD_SELECTION_BLUE} size={16} strokeWidth={2.4} />
                           </View>
                         </View>
                       ) : null}
@@ -169,7 +171,7 @@ export function ExteriorRedesignStepFour({
                           styles.paletteLabelBar,
                           {
                             height: paletteLabelHeight,
-                            backgroundColor: active ? "#000000" : "#EFEFEF",
+                              backgroundColor: "#EFEFEF",
                           },
                         ]}
                       >
@@ -180,10 +182,10 @@ export function ExteriorRedesignStepFour({
                             {
                               top: paletteLabelTop,
                               left: paletteLabelLeft,
-                              color: active ? "#FFFFFF" : DESIGN_WIZARD_TEXT,
-                            },
-                          ]}
-                        >
+                              },
+                              getWizardSelectedLabelTextStyle(active),
+                            ]}
+                          >
                           {palette.label}
                         </Text>
                       </View>

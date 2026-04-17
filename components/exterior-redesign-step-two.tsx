@@ -13,6 +13,7 @@ import {
   getArchitecturalBuildingIcon,
   getArchitecturalIconProps,
   getWizardFloatingButtonStyle,
+  getWizardSelectedLabelTextStyle,
   getWizardSelectedIconContainerStyle,
   getWizardSelectionCardStyle,
 } from "./design-wizard-primitives";
@@ -181,7 +182,7 @@ export function ExteriorRedesignStepTwo({
                           <View style={[styles.labelIconWrap, getWizardSelectedIconContainerStyle(active)]}>
                             <BuildingIcon {...getArchitecturalIconProps(active ? DESIGN_WIZARD_SELECTION_BLUE : DESIGN_WIZARD_TEXT, 18)} />
                           </View>
-                          <Text numberOfLines={2} style={[styles.labelText, active ? styles.labelTextActive : null, { color: active ? DESIGN_WIZARD_SELECTION_BLUE : DESIGN_WIZARD_TEXT }]}>
+                          <Text numberOfLines={2} style={[styles.labelText, getWizardSelectedLabelTextStyle(active), active ? styles.labelTextActive : null]}>
                             {card.label ?? card.title}
                           </Text>
                         </View>
