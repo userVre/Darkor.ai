@@ -682,9 +682,9 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const maskCanvasHeight = Math.min(Math.max(height * 0.45, 352), 416);
   const selectedColorButtonText =
     isColorConfirmed && selectedColorValue ? (selectedColorCategory ?? t("wizard.paintFlow.choose")) : t("wizard.paintFlow.choose");
-  const selectedColorButtonBackground = isColorConfirmed && selectedColorValue ? selectedColorValue : "#0A0A0A";
-  const selectedColorButtonTextColor =
-    isColorConfirmed && selectedColorValue ? resolveContrastTextColor(selectedColorValue) : "#FFFFFF";
+  const previewColorButtonValue = isColorPickerOpen ? colorPickerDraft.hex : selectedColorValue;
+  const selectedColorButtonBackground = previewColorButtonValue ?? "#0A0A0A";
+  const selectedColorButtonTextColor = previewColorButtonValue ? resolveContrastTextColor(previewColorButtonValue) : "#FFFFFF";
   const selectedSurfaceButtonText = isSurfaceConfirmed ? selectedSurfaceOption.label : t("wizard.paintFlow.choose");
   const selectedSurfaceIconColor = isSurfaceConfirmed ? "#FFFFFF" : "#0A0A0A";
 

@@ -66,8 +66,8 @@ export function PaintIntroScreen({
   const heroCopyTop = scaleValue(296, layoutScale);
   const heroCopyLeft = scaleValue(28, layoutScale);
   const heroCopyWidth = Math.min(
-    scaleValue(232, layoutScale),
-    Math.max(mainWidth - heroCopyLeft - scaleValue(104, layoutScale), scaleValue(196, layoutScale)),
+    scaleValue(208, layoutScale),
+    Math.max(mainWidth - heroCopyLeft - scaleValue(128, layoutScale), scaleValue(188, layoutScale)),
   );
   const heroButtonTop = scaleValue(522, layoutScale);
   const heroButtonLeft = scaleValue(126, layoutScale);
@@ -211,7 +211,9 @@ export function PaintIntroScreen({
         >
           <Image source={HERO_IMAGE} style={styles.heroImage} contentFit="cover" transition={120} cachePolicy="memory-disk" />
 
-          <Text style={[styles.heroText, { top: heroCopyTop, left: heroCopyLeft, width: heroCopyWidth }]}>
+          <Text
+            style={[styles.heroText, { top: heroCopyTop, left: heroCopyLeft, width: heroCopyWidth }]}
+          >
             {t("wizard.paintIntro.hero")}
           </Text>
 
@@ -383,6 +385,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     textAlign: "left",
+    maxWidth: 208,
     ...fonts.semibold,
   },
   uploadButton: {
