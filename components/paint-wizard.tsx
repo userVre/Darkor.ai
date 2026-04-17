@@ -128,7 +128,7 @@ const BRUSH_MAX = 64;
 const DETECT_DURATION_MS = 1700;
 const FIXED_FOOTER_OFFSET = 96;
 const AUTO_DETECT_SUCCESS_MESSAGE = "wizard.paintFlow.autoDetectSuccess";
-const AUTO_DETECT_FAILURE_MESSAGE = "Auto-detect couldn't run � please brush manually.";
+const AUTO_DETECT_FAILURE_MESSAGE = "legacyUnlocalized.paintWizard.autoDetectFailureMessage";
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 const CANCEL_SUCCESS_TOAST = "wizard.paintFlow.cancelSuccess";
 const SELECTION_REFERENCE_WIDTH = 456;
@@ -518,6 +518,15 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     }),
     [i18n.language, t],
   );
+  const localizedWallColorOptions = useMemo(
+    () =>
+      WALL_COLOR_OPTIONS.map((option) => ({
+        ...option,
+        title: t(`wizard.paintFlow.colors.${option.id}.title`),
+        description: t(`wizard.paintFlow.colors.${option.id}.description`),
+      })),
+    [i18n.language, t],
+  );
 
   const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as MeResponse | null | undefined;
   const generationArchive = useQuery("generations:getUserArchive" as any, viewerReady ? viewerArgs : "skip") as
@@ -594,8 +603,8 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   });
 
   const selectedColorOption = useMemo(
-    () => WALL_COLOR_OPTIONS.find((option) => option.value === selectedColorValue) ?? null,
-    [selectedColorValue],
+    () => localizedWallColorOptions.find((option) => option.value === selectedColorValue) ?? null,
+    [localizedWallColorOptions, selectedColorValue],
   );
   const selectedFinish = useMemo(
     () => localizedFinishOptions.find((option) => option.id === selectedFinishId) ?? localizedFinishOptions[0],
@@ -2162,9 +2171,9 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.resultIntro}>
-            <Text style={styles.resultHeading}>Behold your new interior</Text>
+            <Text style={styles.resultHeading}>{t("legacyUnlocalized.paintWizard.result.heading")}</Text>
             <Text style={styles.resultSubheading}>
-              A polished wall concept, composed to preserve the room's structure, furnishing layout, and natural light.
+              {t("legacyUnlocalized.paintWizard.result.subheading")}
             </Text>
           </View>
 
@@ -2189,19 +2198,19 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
             <View style={styles.resultActions}>
               <LuxPressable onPress={handleSaveResult} className={pointerClassName} style={{ width: "100%" }} scale={0.99}>
                 <View style={[styles.resultActionButton, styles.resultActionSave]}>
-                  <Text style={styles.resultActionSaveText}>Save to Gallery</Text>
+                  <Text style={styles.resultActionSaveText}>{t("legacyUnlocalized.paintWizard.result.saveToGallery")}</Text>
                 </View>
               </LuxPressable>
 
               <LuxPressable onPress={handleShareResult} className={pointerClassName} style={{ width: "100%" }} scale={0.99}>
                 <View style={[styles.resultActionButton, styles.resultActionShare]}>
-                  <Text style={styles.resultActionShareText}>Share</Text>
+                  <Text style={styles.resultActionShareText}>{t("legacyUnlocalized.paintWizard.result.share")}</Text>
                 </View>
               </LuxPressable>
 
               <LuxPressable onPress={resetProject} className={pointerClassName} style={{ width: "100%" }} scale={0.99}>
                 <View style={[styles.resultActionButton, styles.resultActionRetry]}>
-                  <Text style={styles.resultActionRetryText}>Try Again</Text>
+                  <Text style={styles.resultActionRetryText}>{t("legacyUnlocalized.paintWizard.result.tryAgain")}</Text>
                 </View>
               </LuxPressable>
             </View>

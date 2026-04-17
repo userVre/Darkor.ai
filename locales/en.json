@@ -372,7 +372,9 @@
     "headers": {
       "back": "Go back",
       "close": "Close",
-      "previousStep": "Go to the previous step"
+      "previousStep": "Go to the previous step",
+      "stepProgress": "Step {{current}}/{{total}}",
+      "creditsRemaining": "Credits remaining"
     },
     "stepOne": {
       "title": "Upload Your Vision",
@@ -451,6 +453,56 @@
         "microcement": "Contemporary seamless Micro-cement for an industrial chic foundation.",
         "herringboneWalnut": "Elegant Dark Walnut in a classic Herringbone pattern.",
         "walnut": "Modern large-format Slate Stone tiles in charcoal gray."
+      },
+      "result": {
+        "heading": "Behold your new interior",
+        "subheading": "A material-led floor transformation designed to stay true to the room's perspective, furnishings, and natural light.",
+        "before": "Before",
+        "after": "After",
+        "materialApplied": "Material Applied",
+        "materialFallback": "Material",
+        "summary": "Your floor has been restyled while preserving room geometry, furniture alignment, and natural light behavior.",
+        "saveToGallery": "Save to Gallery",
+        "share": "Share",
+        "tryAgain": "Try Again"
+      },
+      "materials": {
+        "natural-oak": {
+          "title": "Natural Oak",
+          "description": "Airy oak planks with soft natural grain."
+        },
+        "walnut-wood": {
+          "title": "Walnut Wood",
+          "description": "Deep walnut planks with rich tailored contrast."
+        },
+        "carrara-marble": {
+          "title": "Carrara Marble",
+          "description": "Bright stone veining with a calm luxe finish."
+        },
+        "polished-concrete": {
+          "title": "Polished Concrete",
+          "description": "Smooth concrete sheen with urban gallery calm."
+        },
+        "herringbone-oak": {
+          "title": "Herringbone Oak",
+          "description": "Classic oak pattern with warm directional movement."
+        },
+        "terracotta-tile": {
+          "title": "Terracotta Tile",
+          "description": "Earthy clay warmth with handcrafted character."
+        },
+        "slate-tile": {
+          "title": "Slate Tile",
+          "description": "Dark slate with a crisp large-format finish."
+        },
+        "plush-carpet": {
+          "title": "Plush Carpet",
+          "description": "Soft cream carpet with a quiet, cozy feel."
+        },
+        "weathered-oak": {
+          "title": "Weathered Oak",
+          "description": "Mid-tone oak with a gently aged finish."
+        }
       }
     },
     "paintFlow": {
@@ -516,6 +568,44 @@
         "yellow": "Yellow",
         "gray": "Gray",
         "red": "Red"
+      },
+      "colors": {
+        "sage-green": {
+          "title": "Sage Green",
+          "description": "Soft green calm for bright, polished living spaces."
+        },
+        "midnight-navy": {
+          "title": "Midnight Navy",
+          "description": "Tailored navy depth with crisp architectural contrast."
+        },
+        "terracotta-glow": {
+          "title": "Terracotta Glow",
+          "description": "Warm clay color with grounded, editorial energy."
+        },
+        "dusty-rose": {
+          "title": "Dusty Rose",
+          "description": "Muted blush warmth with soft boutique appeal."
+        },
+        "gallery-charcoal": {
+          "title": "Gallery Charcoal",
+          "description": "Refined charcoal for moody, art-forward rooms."
+        },
+        "soft-ivory": {
+          "title": "Soft Ivory",
+          "description": "Luminous neutral that keeps rooms light, never flat."
+        },
+        "olive-grove": {
+          "title": "Olive Grove",
+          "description": "Earthy olive depth with a grounded designer mood."
+        },
+        "lavender-mist": {
+          "title": "Lavender Mist",
+          "description": "Soft violet haze for elevated pastel rooms."
+        },
+        "pearl-gray": {
+          "title": "Pearl Gray",
+          "description": "Light tonal gray with polished everyday flexibility."
+        }
       },
       "finishes": {
         "matte": {
@@ -655,6 +745,156 @@
     },
     "style": {
       "tapToSelect": "Tap a card to define your style direction."
+    },
+    "localization": {
+      "rooms": {
+        "livingRoom": "Living Room",
+        "bedroom": "Bedroom",
+        "kitchen": "Kitchen",
+        "bathroom": "Bathroom",
+        "homeOffice": "Home Office",
+        "diningRoom": "Dining Room",
+        "nursery": "Nursery",
+        "homeTheater": "Home Theater",
+        "gamingRoom": "Gaming Room",
+        "hall": "Hall",
+        "library": "Library",
+        "laundry": "Laundry"
+      },
+      "examples": {
+        "interior": {
+          "emptyRoom": "Empty Room",
+          "messyLounge": "Messy Lounge",
+          "wornRoom": "Worn Room",
+          "emptyKitchen": "Empty Kitchen",
+          "damagedRoom": "Damaged Room",
+          "outdatedKitchen": "Outdated Kitchen"
+        },
+        "exterior": {
+          "scaffoldHouse": "Scaffold House",
+          "weatheredHouse": "Weathered House",
+          "brickShell": "Brick Shell",
+          "overgrownCottage": "Overgrown Cottage",
+          "abandonedHome": "Abandoned Home",
+          "concreteFrame": "Concrete Frame"
+        },
+        "garden": {
+          "muddyYard": "Muddy Yard",
+          "weedyYard": "Weedy Yard",
+          "rubbleYard": "Rubble Yard",
+          "overgrownCorner": "Overgrown Corner",
+          "abandonedYard": "Abandoned Yard",
+          "crackedPatio": "Cracked Patio"
+        }
+      },
+      "styles": {
+        "modern": "Modern",
+        "luxury": "Luxury",
+        "japandi": "Japandi",
+        "cyberpunk": "Cyberpunk",
+        "tropical": "Tropical",
+        "minimalist": "Minimalist",
+        "scandinavian": "Scandinavian",
+        "bohemian": "Bohemian",
+        "midcentury": "Midcentury",
+        "artDeco": "Art Deco",
+        "coastal": "Coastal",
+        "rustic": "Rustic",
+        "vintage": "Vintage",
+        "mediterranean": "Mediterranean",
+        "glam": "Glam",
+        "coastalRetreat": "Coastal Retreat",
+        "rusticManor": "Rustic Manor",
+        "hollywoodRegency": "Hollywood Regency",
+        "neoClassic": "Neo-Classic",
+        "shabbyChic": "Shabby Chic",
+        "frenchCountry": "French Country",
+        "brutalist": "Brutalist",
+        "hollywoodRegencyNoir": "Hollywood Regency Noir",
+        "artNouveau": "Art Nouveau",
+        "custom": "Custom",
+        "chinese": "Chinese",
+        "cottage": "Cottage",
+        "farmHouse": "Farm House",
+        "french": "French",
+        "gothic": "Gothic",
+        "italianate": "Italianate",
+        "christmas": "Christmas",
+        "minimalistic": "Minimalistic",
+        "baroque": "Baroque"
+      },
+      "buildings": {
+        "apartment": "Apartment",
+        "house": "House",
+        "officeBuilding": "Office Building",
+        "residential": "Residential",
+        "retail": "Retail",
+        "villa": "Villa"
+      },
+      "modes": {
+        "preserve": {
+          "title": "Structural Preservation",
+          "description": "Preserve your room's architectural DNA while flawlessly refreshing its aesthetic."
+        },
+        "renovate": {
+          "title": "Renovation Design",
+          "description": "Total creative liberty to redefine furniture layouts and structural boundaries for a complete remodel."
+        }
+      },
+      "palettes": {
+        "surprise": "Curated Mix",
+        "gray": "Millennial Gray",
+        "terracotta": "Terracotta Mirage",
+        "forest": "Forest Hues",
+        "peach": "Peach Orchard",
+        "fuchsia": "Fuchsia Blossom",
+        "emerald": "Emerald Gem",
+        "pastel": "Pastel Breeze",
+        "ocean": "Ocean Mist",
+        "velvet": "Velvet Dusk",
+        "amethyst": "Amethyst Dream",
+        "sunset": "Fuchsia Noir"
+      },
+      "gardenPalettes": {
+        "garden-surprise": "Surprise Me",
+        "garden-gray": "Millennial Gray",
+        "garden-terracotta": "Terracotta Mirage",
+        "garden-neon-sunset": "Neon Sunset",
+        "garden-forest": "Forest Hues",
+        "garden-peach": "Peach Orchard",
+        "garden-fuschia": "Fuchsia Blossom",
+        "garden-emerald": "Emerald Gem",
+        "garden-pastel": "Pastel Breeze",
+        "garden-azure": "Azure Mirage",
+        "garden-twilight": "Twilight Blues",
+        "garden-earthy": "Earthy Harmony"
+      },
+      "summary": {
+        "roomType": "Room Type",
+        "style": "Style",
+        "mode": "Mode",
+        "palette": "Palette",
+        "missing": "⚠ Missing"
+      },
+      "previewThumbnailLabel": "Sample output · {{style}}",
+      "toasts": {
+        "completeStyleSelections": "Complete your style selections to generate."
+      },
+      "requiredSelections": {
+        "photo": "Please select a photo to continue.",
+        "room": "Please select a room to continue.",
+        "style": "Please select a style to continue.",
+        "mode": "Please complete the mode selection to continue.",
+        "palette": "Please complete the palette selection to continue."
+      },
+      "regenerationUnavailable": "Regeneration unavailable",
+      "feedbackUnavailable": "Feedback is unavailable for this image.",
+      "cta": {
+        "getMoreCredits": "Get More Credits",
+        "generateMyDesign": "Generate My Design"
+      },
+      "stepFourSticky": "Step 4: Refine Direction",
+      "exteriorEmptyStateSubtitle": "Redesign and beautify your home."
     }
   },
   "proSuccess": {

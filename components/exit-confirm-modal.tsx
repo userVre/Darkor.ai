@@ -1,4 +1,5 @@
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { DS, ambientShadow, organicRadii } from "../lib/design-system";
 
@@ -9,6 +10,8 @@ type ExitConfirmModalProps = {
 };
 
 export function ExitConfirmModal({ visible, onCancel, onExit }: ExitConfirmModalProps) {
+  const { t } = useTranslation();
+
   return (
     <Modal
       visible={visible}
@@ -22,16 +25,16 @@ export function ExitConfirmModal({ visible, onCancel, onExit }: ExitConfirmModal
         <Pressable accessibilityRole="button" onPress={onCancel} style={StyleSheet.absoluteFillObject} />
 
         <View style={styles.card}>
-          <Text style={styles.title}>Abandon Design?</Text>
-          <Text style={styles.body}>Progress will be lost.</Text>
+          <Text style={styles.title}>{t("common.alerts.exitTitle")}</Text>
+          <Text style={styles.body}>{t("common.alerts.progressLost")}</Text>
 
           <View style={styles.actions}>
             <Pressable accessibilityRole="button" onPress={onCancel} style={styles.secondaryButton}>
-              <Text style={styles.secondaryButtonText}>CANCEL</Text>
+              <Text style={styles.secondaryButtonText}>{t("common.actions.cancel").toUpperCase()}</Text>
             </Pressable>
 
             <Pressable accessibilityRole="button" onPress={onExit} style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>EXIT</Text>
+              <Text style={styles.primaryButtonText}>{t("common.actions.exit").toUpperCase()}</Text>
             </Pressable>
           </View>
         </View>

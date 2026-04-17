@@ -12,6 +12,7 @@ import {
   getArchitecturalBuildingIcon,
   getArchitecturalIconProps,
   getWizardFloatingButtonStyle,
+  getWizardSelectedIconContainerStyle,
   getWizardSelectionCardStyle,
 } from "./design-wizard-primitives";
 import { triggerHaptic } from "../lib/haptics";
@@ -22,6 +23,7 @@ type ExteriorRedesignStepTwoCard = {
   id: string;
   title: string;
   image: number;
+  label?: string;
 };
 
 type ExteriorRedesignStepTwoProps = {
@@ -175,9 +177,11 @@ export function ExteriorRedesignStepTwo({
                         ]}
                       >
                         <View style={styles.labelRow}>
-                          <BuildingIcon {...getArchitecturalIconProps(active ? "#FFFFFF" : DESIGN_WIZARD_TEXT, 18)} />
+                          <View style={[styles.labelIconWrap, getWizardSelectedIconContainerStyle(active)]}>
+                            <BuildingIcon {...getArchitecturalIconProps(active ? "#E53935" : DESIGN_WIZARD_TEXT, 18)} />
+                          </View>
                           <Text numberOfLines={2} style={[styles.labelText, { color: active ? "#FFFFFF" : DESIGN_WIZARD_TEXT }]}>
-                            {card.title}
+                            {card.label ?? card.title}
                           </Text>
                         </View>
                       </View>
@@ -258,6 +262,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+  },
+  labelIconWrap: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
   },
   labelText: {
     fontSize: 15,

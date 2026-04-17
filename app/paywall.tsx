@@ -59,12 +59,12 @@ import { radix } from "../styles/theme";
 import { fonts } from "../styles/typography";
 
 const SCREEN_BG = "#0D0D0D";
-const PANEL_BG = radix.dark.slate.slate1;
-const PANEL_BG_ALT = radix.dark.slate.slate2;
+const PANEL_BG = SCREEN_BG;
+const PANEL_BG_ALT = SCREEN_BG;
 const PANEL_BORDER = radix.dark.slate.slate6;
 const ACCENT = "#FFFFFF";
-const BRAND_RED = radix.dark.ruby.ruby9;
-const BRAND_RED_ACTIVE = radix.dark.ruby.ruby10;
+const BRAND_RED = "#E53935";
+const BRAND_RED_ACTIVE = BRAND_RED;
 const TOGGLE_OFF = radix.dark.slate.slate5;
 const TEXT_PRIMARY = "#FFFFFF";
 const TEXT_MUTED = "rgba(255,255,255,0.72)";
@@ -276,14 +276,11 @@ function WeeklyPlanCard({
         <View>
           <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, styles.planCardSelected, styles.weeklyCard]}>
             <View style={styles.planRow}>
-              <View style={styles.planCopy}>
-                <View style={styles.trialBadge}>
-                  <View style={[styles.trialBadgeCircle, styles.trialBadgeCircleOne]} />
-                  <View style={[styles.trialBadgeCircle, styles.trialBadgeCircleTwo]} />
-                  <View style={[styles.trialBadgeCircle, styles.trialBadgeCircleThree]} />
-                  <Text style={[styles.trialBadgeText, localizedFonts.bold]}>{t("paywall.freeTrial").toUpperCase()}</Text>
+                <View style={styles.planCopy}>
+                  <View style={styles.trialBadge}>
+                    <Text style={[styles.trialBadgeText, localizedFonts.bold]}>{t("paywall.freeTrial").toUpperCase()}</Text>
+                  </View>
                 </View>
-              </View>
 
               <View style={styles.planPriceColumn}>
                 <Text style={[styles.weeklyTrialPrice, localizedFonts.bold]}>{trialThenPriceText}</Text>
@@ -452,7 +449,7 @@ function filterPackagesByCurrency(
 
 export default function PaywallScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const localizedFonts = useLocalizedAppFonts();
   const pricingContext = usePricingContext();
   const { width, height } = useWindowDimensions();
@@ -510,15 +507,15 @@ export default function PaywallScreen() {
   );
   const yearlyPriceText = useMemo(
     () => t("paywall.pricePerYear", { price: displayedYearlyPrice.formatted }),
-    [displayedYearlyPrice.formatted, t],
+    [displayedYearlyPrice.formatted, i18n.language, t],
   );
   const weeklyPriceText = useMemo(
     () => t("paywall.pricePerWeek", { price: displayedWeeklyPrice.formatted }),
-    [displayedWeeklyPrice.formatted, t],
+    [displayedWeeklyPrice.formatted, i18n.language, t],
   );
   const thenWeeklyPriceText = useMemo(
     () => t("paywall.thenPricePerWeek", { price: displayedWeeklyPrice.formatted }),
-    [displayedWeeklyPrice.formatted, t],
+    [displayedWeeklyPrice.formatted, i18n.language, t],
   );
   const cachedOfferingPackages = useMemo(
     () =>
@@ -1199,7 +1196,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: PANEL_BG_ALT,
+    backgroundColor: SCREEN_BG,
+    borderWidth: 1,
+    borderColor: PANEL_BORDER,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -1242,7 +1241,7 @@ const styles = StyleSheet.create({
   planCard: {
     minHeight: 78,
     borderRadius: 14,
-    backgroundColor: PANEL_BG_ALT,
+    backgroundColor: SCREEN_BG,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1,
@@ -1330,36 +1329,12 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   trialBadge: {
-    minHeight: 34,
+    minHeight: 32,
     alignSelf: "flex-start",
     justifyContent: "center",
-    paddingHorizontal: 14,
-    position: "relative",
-  },
-  trialBadgeCircle: {
-    position: "absolute",
+    paddingHorizontal: 12,
     borderRadius: 999,
     backgroundColor: BRAND_RED,
-  },
-  trialBadgeCircleOne: {
-    width: 34,
-    height: 34,
-    left: 0,
-    top: 0,
-  },
-  trialBadgeCircleTwo: {
-    width: 28,
-    height: 28,
-    left: 22,
-    top: 3,
-    backgroundColor: BRAND_RED_ACTIVE,
-  },
-  trialBadgeCircleThree: {
-    width: 24,
-    height: 24,
-    right: 8,
-    top: 5,
-    backgroundColor: BRAND_RED_ACTIVE,
   },
   trialBadgeText: {
     color: TEXT_PRIMARY,

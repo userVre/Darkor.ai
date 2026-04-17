@@ -2456,6 +2456,56 @@ export default function WorkspaceScreen() {
     if (serviceType === "garden") return SPACE_OPTIONS.garden;
     return SPACE_OPTIONS.interior;
   }, [serviceType]);
+  const localizedInteriorRoomOptions = useMemo(
+    () => [
+      { id: "Living Room", label: t("workspace.localization.rooms.livingRoom") },
+      { id: "Bedroom", label: t("workspace.localization.rooms.bedroom") },
+      { id: "Kitchen", label: t("workspace.localization.rooms.kitchen") },
+      { id: "Bathroom", label: t("workspace.localization.rooms.bathroom") },
+      { id: "Home Office", label: t("workspace.localization.rooms.homeOffice") },
+      { id: "Dining Room", label: t("workspace.localization.rooms.diningRoom") },
+      { id: "Nursery", label: t("workspace.localization.rooms.nursery") },
+      { id: "Home Theater", label: t("workspace.localization.rooms.homeTheater") },
+      { id: "Gaming Room", label: t("workspace.localization.rooms.gamingRoom") },
+      { id: "Hall", label: t("workspace.localization.rooms.hall") },
+      { id: "Library", label: t("workspace.localization.rooms.library") },
+      { id: "Laundry", label: t("workspace.localization.rooms.laundry") },
+    ],
+    [i18n.language, t],
+  );
+  const interiorExamplePhotos = useMemo(
+    () => [
+      { ...INTERIOR_EXAMPLE_PHOTOS[0], label: t("workspace.localization.examples.interior.emptyRoom") },
+      { ...INTERIOR_EXAMPLE_PHOTOS[1], label: t("workspace.localization.examples.interior.messyLounge") },
+      { ...INTERIOR_EXAMPLE_PHOTOS[2], label: t("workspace.localization.examples.interior.wornRoom") },
+      { ...INTERIOR_EXAMPLE_PHOTOS[3], label: t("workspace.localization.examples.interior.emptyKitchen") },
+      { ...INTERIOR_EXAMPLE_PHOTOS[4], label: t("workspace.localization.examples.interior.damagedRoom") },
+      { ...INTERIOR_EXAMPLE_PHOTOS[5], label: t("workspace.localization.examples.interior.outdatedKitchen") },
+    ],
+    [i18n.language, t],
+  );
+  const exteriorExamplePhotos = useMemo(
+    () => [
+      { ...EXTERIOR_EXAMPLE_PHOTOS[0], label: t("workspace.localization.examples.exterior.scaffoldHouse") },
+      { ...EXTERIOR_EXAMPLE_PHOTOS[1], label: t("workspace.localization.examples.exterior.weatheredHouse") },
+      { ...EXTERIOR_EXAMPLE_PHOTOS[2], label: t("workspace.localization.examples.exterior.brickShell") },
+      { ...EXTERIOR_EXAMPLE_PHOTOS[3], label: t("workspace.localization.examples.exterior.overgrownCottage") },
+      { ...EXTERIOR_EXAMPLE_PHOTOS[4], label: t("workspace.localization.examples.exterior.abandonedHome") },
+      { ...EXTERIOR_EXAMPLE_PHOTOS[5], label: t("workspace.localization.examples.exterior.concreteFrame") },
+    ],
+    [i18n.language, t],
+  );
+  const gardenExamplePhotos = useMemo(
+    () => [
+      { ...GARDEN_EXAMPLE_PHOTOS[0], label: t("workspace.localization.examples.garden.muddyYard") },
+      { ...GARDEN_EXAMPLE_PHOTOS[1], label: t("workspace.localization.examples.garden.weedyYard") },
+      { ...GARDEN_EXAMPLE_PHOTOS[2], label: t("workspace.localization.examples.garden.rubbleYard") },
+      { ...GARDEN_EXAMPLE_PHOTOS[3], label: t("workspace.localization.examples.garden.overgrownCorner") },
+      { ...GARDEN_EXAMPLE_PHOTOS[4], label: t("workspace.localization.examples.garden.abandonedYard") },
+      { ...GARDEN_EXAMPLE_PHOTOS[5], label: t("workspace.localization.examples.garden.crackedPatio") },
+    ],
+    [i18n.language, t],
+  );
   const spaceCatalogItems = useMemo(
     () =>
       spaceOptions.map((option) => {
@@ -2526,13 +2576,33 @@ export default function WorkspaceScreen() {
     ];
   }, [customPrompt, isFloorService, isLeanGenerationService, isPaintService, styleCatalogItems]);
   const interiorStyleGalleryCards = useMemo(
-    () =>
-      STYLE_LIBRARY.map((style) => ({
-        id: style.id,
-        title: style.title,
-        image: style.image,
-      })),
-    [],
+    () => [
+      { id: "modern", title: "Modern", label: t("workspace.localization.styles.modern"), image: STYLE_LIBRARY[0].image },
+      { id: "luxury", title: "Luxury", label: t("workspace.localization.styles.luxury"), image: STYLE_LIBRARY[1].image },
+      { id: "japandi", title: "Japandi", label: t("workspace.localization.styles.japandi"), image: STYLE_LIBRARY[2].image },
+      { id: "cyberpunk", title: "Cyberpunk", label: t("workspace.localization.styles.cyberpunk"), image: STYLE_LIBRARY[3].image },
+      { id: "tropical", title: "Tropical", label: t("workspace.localization.styles.tropical"), image: STYLE_LIBRARY[4].image },
+      { id: "minimalist", title: "Minimalist", label: t("workspace.localization.styles.minimalist"), image: STYLE_LIBRARY[5].image },
+      { id: "scandinavian", title: "Scandinavian", label: t("workspace.localization.styles.scandinavian"), image: STYLE_LIBRARY[6].image },
+      { id: "bohemian", title: "Bohemian", label: t("workspace.localization.styles.bohemian"), image: STYLE_LIBRARY[7].image },
+      { id: "midcentury", title: "Midcentury", label: t("workspace.localization.styles.midcentury"), image: STYLE_LIBRARY[8].image },
+      { id: "art-deco", title: "Art Deco", label: t("workspace.localization.styles.artDeco"), image: STYLE_LIBRARY[9].image },
+      { id: "coastal", title: "Coastal", label: t("workspace.localization.styles.coastal"), image: STYLE_LIBRARY[10].image },
+      { id: "rustic", title: "Rustic", label: t("workspace.localization.styles.rustic"), image: STYLE_LIBRARY[11].image },
+      { id: "vintage", title: "Vintage", label: t("workspace.localization.styles.vintage"), image: STYLE_LIBRARY[12].image },
+      { id: "mediterranean", title: "Mediterranean", label: t("workspace.localization.styles.mediterranean"), image: STYLE_LIBRARY[13].image },
+      { id: "glam", title: "Glam", label: t("workspace.localization.styles.glam"), image: STYLE_LIBRARY[14].image },
+      { id: "coastal-retreat", title: "Coastal Retreat", label: t("workspace.localization.styles.coastalRetreat"), image: STYLE_LIBRARY[15].image },
+      { id: "rustic-manor", title: "Rustic Manor", label: t("workspace.localization.styles.rusticManor"), image: STYLE_LIBRARY[16].image },
+      { id: "hollywood-regency", title: "Hollywood Regency", label: t("workspace.localization.styles.hollywoodRegency"), image: STYLE_LIBRARY[17].image },
+      { id: "neo-classic", title: "Neo-Classic", label: t("workspace.localization.styles.neoClassic"), image: STYLE_LIBRARY[18].image },
+      { id: "shabby-chic", title: "Shabby Chic", label: t("workspace.localization.styles.shabbyChic"), image: STYLE_LIBRARY[19].image },
+      { id: "french-country", title: "French Country", label: t("workspace.localization.styles.frenchCountry"), image: STYLE_LIBRARY[20].image },
+      { id: "brutalist", title: "Brutalist", label: t("workspace.localization.styles.brutalist"), image: STYLE_LIBRARY[21].image },
+      { id: "hollywood-regency-noir", title: "Hollywood Regency Noir", label: t("workspace.localization.styles.hollywoodRegencyNoir"), image: STYLE_LIBRARY[22].image },
+      { id: "art-nouveau", title: "Art Nouveau", label: t("workspace.localization.styles.artNouveau"), image: STYLE_LIBRARY[23].image },
+    ],
+    [i18n.language, t],
   );
   const selectedInteriorStyle = useMemo(
     () => (interiorStyleGalleryCards.some((style) => style.title === selectedStyle) ? selectedStyle : null),
@@ -2543,59 +2613,68 @@ export default function WorkspaceScreen() {
       {
         id: "preserve",
         title: "Structural Preservation",
-        description: "Preserve your room's architectural DNA while flawlessly refreshing its aesthetic.",
+        label: t("workspace.localization.modes.preserve.title"),
+        description: t("workspace.localization.modes.preserve.description"),
       },
       {
         id: "renovate",
         title: "Renovation Design",
-        description: "Total creative liberty to redefine furniture layouts and structural boundaries for a complete remodel.",
+        label: t("workspace.localization.modes.renovate.title"),
+        description: t("workspace.localization.modes.renovate.description"),
       },
     ],
-    [],
+    [i18n.language, t],
   );
   const interiorPaletteCards = useMemo(
     () =>
       PALETTE_OPTIONS.map((palette) => ({
         id: palette.id,
         label: palette.label,
+        displayLabel: t(`workspace.localization.palettes.${palette.id}`),
         colors: palette.colors,
       })),
-    [],
+    [i18n.language, t],
   );
   const exteriorBuildingCards = useMemo(
     () => [
       {
         id: "apartment",
         title: "Apartment",
+        label: t("workspace.localization.buildings.apartment"),
         image: require("../../assets/media/discover/exterior/exterior-apartment-block.jpg"),
       },
       {
         id: "house",
         title: "House",
+        label: t("workspace.localization.buildings.house"),
         image: require("../../assets/media/discover/exterior/exterior-modern-villa.jpg"),
       },
       {
         id: "office-building",
         title: "Office Building",
+        label: t("workspace.localization.buildings.officeBuilding"),
         image: require("../../assets/media/discover/exterior/exterior-glass-office.jpg"),
       },
       {
         id: "residential",
         title: "Residential",
+        label: t("workspace.localization.buildings.residential"),
         image: require("../../assets/media/discover/exterior/exterior-stone-manor.jpg"),
       },
       {
         id: "retail",
         title: "Retail",
+        label: t("workspace.localization.buildings.retail"),
         image: require("../../assets/media/discover/exterior/exterior-retail-storefront.jpg"),
       },
       {
         id: "villa",
         title: "Villa",
+        label: t("workspace.localization.buildings.villa"),
         image: require("../../assets/media/discover/exterior/exterior-pool-house.jpg"),
       },
     ],
-    [],
+    [i18n.language, t],
   );
   const selectedExteriorBuildingType = useMemo(
     () => (selectedRoom ? EXTERIOR_BUILDING_PRESET_ALIASES[selectedRoom.trim().toLowerCase()] ?? selectedRoom : null),
@@ -2606,50 +2685,59 @@ export default function WorkspaceScreen() {
       {
         id: "custom",
         title: "Custom",
+        label: t("workspace.localization.styles.custom"),
         image: require("../../assets/media/styles/style-luxury.jpg"),
       },
       {
         id: "art-deco",
         title: "Art Deco",
+        label: t("workspace.localization.styles.artDeco"),
         image: require("../../assets/media/styles/style-art-deco.jpg"),
       },
       {
         id: "brutalist",
         title: "Brutalist",
+        label: t("workspace.localization.styles.brutalist"),
         image: require("../../assets/media/styles/style-exterior-brutalist.jpg"),
       },
       {
         id: "chinese",
         title: "Chinese",
+        label: t("workspace.localization.styles.chinese"),
         image: require("../../assets/media/styles/style-art-nouveau.jpg"),
       },
       {
         id: "cottage",
         title: "Cottage",
+        label: t("workspace.localization.styles.cottage"),
         image: require("../../assets/media/styles/style-rustic-alt.jpg"),
       },
       {
         id: "farm-house",
         title: "Farm House",
+        label: t("workspace.localization.styles.farmHouse"),
         image: require("../../assets/media/styles/style-rustic.jpg"),
       },
       {
         id: "french",
         title: "French",
+        label: t("workspace.localization.styles.french"),
         image: require("../../assets/media/styles/style-french-country.jpg"),
       },
       {
         id: "gothic",
         title: "Gothic",
+        label: t("workspace.localization.styles.gothic"),
         image: require("../../assets/media/styles/style-exterior-gothic.jpg"),
       },
       {
         id: "italianate",
         title: "Italianate",
+        label: t("workspace.localization.styles.italianate"),
         image: require("../../assets/media/styles/style-neo-classic-alt.jpg"),
       },
     ],
-    [],
+    [i18n.language, t],
   );
   const selectedExteriorStyle = useMemo(
     () => (exteriorStyleGalleryCards.some((style) => style.title === selectedStyle) ? selectedStyle : null),
@@ -2657,76 +2745,85 @@ export default function WorkspaceScreen() {
   );
   const exteriorPaletteCards = useMemo(
     () => [
-      { id: "surprise", label: "Surprise Me", colors: ["#f7f7f5", "#f4d7a6", "#fd5d82", "#6b8afd", "#121212"] },
-      { id: "gray", label: "Millennial Gray", colors: ["#f5f5f4", "#d6d3d1", "#a8a29e", "#78716c", "#44403c"] },
-      { id: "terracotta", label: "Terracotta Mirage", colors: ["#fff7ed", "#fed7aa", "#fdba74", "#fb923c", "#ea580c"] },
-      { id: "sunset", label: "Neon Sunset", colors: ["#16081f", "#4c1d95", "#7c3aed", "#d946ef", "#f5d0fe"] },
-      { id: "forest", label: "Forest Hues", colors: ["#ecfccb", "#cbd5b1", "#9caf88", "#6f8f72", "#334d36"] },
-      { id: "peach", label: "Peach Orchard", colors: ["#fff7ed", "#fde1d3", "#fac9b8", "#f3b49f", "#e68a73"] },
-      { id: "fuchsia", label: "Fuschia Blossom", colors: ["#fdf2f8", "#fbcfe8", "#f9a8d4", "#ec4899", "#be185d"] },
-      { id: "emerald", label: "Emerald Gem", colors: ["#e8f5ec", "#bfd8c2", "#7aa182", "#425a41", "#1f2f23"] },
-      { id: "pastel", label: "Pastel Breeze", colors: ["#e0f2fe", "#fffbea", "#eef6f0", "#f5f4f7", "#e9d5ff"] },
+      { id: "surprise", label: t("workspace.localization.palettes.surprise"), colors: ["#f7f7f5", "#f4d7a6", "#fd5d82", "#6b8afd", "#121212"] },
+      { id: "gray", label: t("workspace.localization.palettes.gray"), colors: ["#f5f5f4", "#d6d3d1", "#a8a29e", "#78716c", "#44403c"] },
+      { id: "terracotta", label: t("workspace.localization.palettes.terracotta"), colors: ["#fff7ed", "#fed7aa", "#fdba74", "#fb923c", "#ea580c"] },
+      { id: "sunset", label: t("workspace.localization.palettes.sunset"), colors: ["#16081f", "#4c1d95", "#7c3aed", "#d946ef", "#f5d0fe"] },
+      { id: "forest", label: t("workspace.localization.palettes.forest"), colors: ["#ecfccb", "#cbd5b1", "#9caf88", "#6f8f72", "#334d36"] },
+      { id: "peach", label: t("workspace.localization.palettes.peach"), colors: ["#fff7ed", "#fde1d3", "#fac9b8", "#f3b49f", "#e68a73"] },
+      { id: "fuchsia", label: t("workspace.localization.palettes.fuchsia"), colors: ["#fdf2f8", "#fbcfe8", "#f9a8d4", "#ec4899", "#be185d"] },
+      { id: "emerald", label: t("workspace.localization.palettes.emerald"), colors: ["#e8f5ec", "#bfd8c2", "#7aa182", "#425a41", "#1f2f23"] },
+      { id: "pastel", label: t("workspace.localization.palettes.pastel"), colors: ["#e0f2fe", "#fffbea", "#eef6f0", "#f5f4f7", "#e9d5ff"] },
     ],
-    [],
+    [i18n.language, t],
   );
   const gardenPaletteCards = useMemo(
     () =>
       GARDEN_PALETTE_OPTIONS.map((palette) => ({
         id: palette.id,
-        label: palette.label,
+        label: t(`workspace.localization.gardenPalettes.${palette.id}`),
         colors: palette.colors,
       })),
-    [],
+    [i18n.language, t],
   );
   const gardenStyleGalleryCards = useMemo(
     () => [
       {
         id: "custom",
         title: "Custom",
+        label: t("workspace.localization.styles.custom"),
         image: require("../../assets/media/discover/garden/garden-backyard.jpg"),
       },
       {
         id: "christmas",
         title: "Christmas",
+        label: t("workspace.localization.styles.christmas"),
         image: require("../../assets/media/discover/garden/garden-villa-entry.jpg"),
       },
       {
         id: "modern",
         title: "Modern",
+        label: t("workspace.localization.styles.modern"),
         image: require("../../assets/media/discover/garden/garden-terrace.jpg"),
       },
       {
         id: "tropical",
         title: "Tropical",
+        label: t("workspace.localization.styles.tropical"),
         image: require("../../assets/media/discover/garden/garden-swimming-pool.jpg"),
       },
       {
         id: "minimalistic",
         title: "Minimalistic",
+        label: t("workspace.localization.styles.minimalistic"),
         image: require("../../assets/media/discover/garden/garden-deck.jpg"),
       },
       {
         id: "bohemian",
         title: "Bohemian",
+        label: t("workspace.localization.styles.bohemian"),
         image: require("../../assets/media/discover/garden/garden-fireside-patio.jpg"),
       },
       {
         id: "rustic",
         title: "Rustic",
+        label: t("workspace.localization.styles.rustic"),
         image: require("../../assets/media/discover/garden/garden-patio.jpg"),
       },
       {
         id: "vintage",
         title: "Vintage",
+        label: t("workspace.localization.styles.vintage"),
         image: require("../../assets/media/discover/garden/garden-front-yard.jpg"),
       },
       {
         id: "baroque",
         title: "Baroque",
+        label: t("workspace.localization.styles.baroque"),
         image: require("../../assets/media/discover/garden/garden-pool-courtyard.jpg"),
       },
     ],
-    [],
+    [i18n.language, t],
   );
   const selectedGardenStyle = useMemo(
     () => (gardenStyleGalleryCards.some((style) => style.title === selectedStyle) ? selectedStyle : null),
@@ -2751,35 +2848,37 @@ export default function WorkspaceScreen() {
     return getStylePreviewImage(selectedStyle, fallbackImage);
   }, [selectedRoom, selectedStyle, spaceCatalogItems]);
   const selectedStyleDisplayName = normalizeStyleDisplayName(selectedStyle);
-  const previewThumbnailLabel = `Sample output \u00b7 ${selectedStyleDisplayName ?? "Custom"}`;
+  const previewThumbnailLabel = t("workspace.localization.previewThumbnailLabel", {
+    style: selectedStyleDisplayName ?? t("workspace.localization.styles.custom"),
+  });
   const confirmationSummaryChips = useMemo<ConfirmationSummaryChip[]>(
     () => [
       {
         key: "room",
-        title: "Room Type",
-        value: selectedRoom ?? "\u26a0 Missing",
+        title: t("workspace.localization.summary.roomType"),
+        value: selectedRoom ?? t("workspace.localization.summary.missing"),
         missing: !selectedRoom,
       },
       {
         key: "style",
-        title: "Style",
-        value: selectedStyleDisplayName ?? "\u26a0 Missing",
+        title: t("workspace.localization.summary.style"),
+        value: selectedStyleDisplayName ?? t("workspace.localization.summary.missing"),
         missing: !selectedStyleDisplayName,
       },
       {
         key: "mode",
-        title: "Mode",
-        value: selectedMode?.title ?? "\u26a0 Missing",
+        title: t("workspace.localization.summary.mode"),
+        value: selectedMode ? t(`workspace.localization.modes.${selectedMode.id}.title`) : t("workspace.localization.summary.missing"),
         missing: !selectedMode,
       },
       {
         key: "palette",
-        title: "Palette",
-        value: selectedPalette?.label ?? "\u26a0 Missing",
+        title: t("workspace.localization.summary.palette"),
+        value: selectedPalette ? t(`workspace.localization.palettes.${selectedPalette.id}`) : t("workspace.localization.summary.missing"),
         missing: !selectedPalette,
       },
     ],
-    [selectedMode, selectedPalette, selectedRoom, selectedStyleDisplayName],
+    [i18n.language, selectedMode, selectedPalette, selectedRoom, selectedStyleDisplayName, t],
   );
   const hasBrokenGenerateSummary = confirmationSummaryChips.some((item) => item.missing);
 
@@ -3105,8 +3204,8 @@ export default function WorkspaceScreen() {
     setWorkflowStep(fallbackStep);
     showToast(
       missingSelection === "mode" || missingSelection === "palette"
-        ? "Complete your style selections to generate."
-        : `Please select a ${missingSelection} to continue.`,
+        ? t("workspace.localization.toasts.completeStyleSelections")
+        : t(`workspace.localization.requiredSelections.${missingSelection}`),
     );
     return false;
   }, [
@@ -4004,7 +4103,7 @@ export default function WorkspaceScreen() {
         customPrompt: activeBoardItem.customPrompt ?? undefined,
       });
     } catch (error) {
-      Alert.alert("Regeneration unavailable", error instanceof Error ? error.message : t("common.actions.tryAgain"));
+      Alert.alert(t("workspace.localization.regenerationUnavailable"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(cleanupUri);
     }
@@ -4033,7 +4132,7 @@ export default function WorkspaceScreen() {
 
   const handleSubmitEditorFeedback = useCallback(async (sentiment: FeedbackSentiment) => {
     if (!activeGenerationRecordId) {
-      showToast("Feedback is unavailable for this image.");
+      showToast(t("workspace.localization.feedbackUnavailable"));
       return;
     }
 
@@ -4468,7 +4567,7 @@ export default function WorkspaceScreen() {
       <InteriorRedesignStepOne
         creditCount={creditBalance}
         photoUri={selectedImage?.uri ?? null}
-        examplePhotos={INTERIOR_EXAMPLE_PHOTOS}
+        examplePhotos={interiorExamplePhotos}
         loadingExampleId={isLoadingExample}
         onTakePhoto={handleInteriorTakePhoto}
         onChooseFromGallery={handleInteriorChooseFromGallery}
@@ -4487,8 +4586,8 @@ export default function WorkspaceScreen() {
       <InteriorRedesignStepOne
         creditCount={creditBalance}
         photoUri={selectedImage?.uri ?? null}
-        examplePhotos={EXTERIOR_EXAMPLE_PHOTOS}
-        emptyStateSubtitle="Redesign and Beautify your home."
+        examplePhotos={exteriorExamplePhotos}
+        emptyStateSubtitle={t("workspace.localization.exteriorEmptyStateSubtitle")}
         loadingExampleId={isLoadingExample}
         onTakePhoto={handleInteriorTakePhoto}
         onChooseFromGallery={handleInteriorChooseFromGallery}
@@ -4507,7 +4606,7 @@ export default function WorkspaceScreen() {
       <GardenRedesignStepOne
         creditCount={creditBalance}
         photoUri={selectedImage?.uri ?? null}
-        examplePhotos={GARDEN_EXAMPLE_PHOTOS}
+        examplePhotos={gardenExamplePhotos}
         loadingExampleId={isLoadingExample}
         onTakePhoto={handleInteriorTakePhoto}
         onChooseFromGallery={handleInteriorChooseFromGallery}
@@ -4592,7 +4691,7 @@ export default function WorkspaceScreen() {
     return (
       <InteriorRedesignStepTwo
         creditCount={creditBalance}
-        roomOptions={[...SPACE_OPTIONS.interior]}
+        roomOptions={localizedInteriorRoomOptions}
         selectedRoom={selectedRoom}
         onSelectRoom={handleSetSelectedRoom}
         onBack={handleBack}
@@ -4780,10 +4879,10 @@ export default function WorkspaceScreen() {
     const showContinueBar = !isCustomPromptViewOpen;
     const continueButtonVisible = true;
     const stepButtonLabel = !isGenerationReviewStep
-      ? "Continue"
+      ? t("common.actions.continue")
       : !hasGenerationCredits
-        ? "Get More Credits"
-        : "Generate My Design";
+        ? t("workspace.localization.cta.getMoreCredits")
+        : t("workspace.localization.cta.generateMyDesign");
     const stepButtonActive = isPhotoStep
       ? Boolean(selectedImage)
       : isSpaceStep
@@ -4856,7 +4955,7 @@ export default function WorkspaceScreen() {
                 }}
               >
                 <Text style={{ color: "rgba(255,255,255,0.54)", fontSize: 12, fontWeight: "700", letterSpacing: 0.5 }}>
-                  Step 4: Refine Direction
+                  {t("workspace.localization.stepFourSticky")}
                 </Text>
               </View>
             </MotiView>
@@ -6990,8 +7089,6 @@ export default function WorkspaceScreen() {
                     style={{
                       alignSelf: "flex-start",
                       minHeight: 42,
-                      borderColor: "rgba(255,255,255,0.12)",
-                      backgroundColor: "#050505",
                       paddingHorizontal: 12,
                       paddingVertical: 8,
                     }}

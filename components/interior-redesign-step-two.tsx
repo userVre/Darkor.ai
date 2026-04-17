@@ -12,6 +12,7 @@ import {
   getArchitecturalIconProps,
   getArchitecturalRoomIcon,
   getWizardFloatingButtonStyle,
+  getWizardSelectedIconContainerStyle,
   getWizardSelectionCardStyle,
 } from "./design-wizard-primitives";
 import { triggerHaptic } from "../lib/haptics";
@@ -20,7 +21,10 @@ import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-head
 
 type InteriorRedesignStepTwoProps = {
   creditCount: number;
-  roomOptions: string[];
+  roomOptions: {
+    id: string;
+    label: string;
+  }[];
   selectedRoom: string | null;
   onSelectRoom: (room: string | null) => void;
   onBack: () => void;
@@ -38,8 +42,8 @@ function scaleValue(value: number, scale: number) {
   return value * scale;
 }
 
-function chunkIntoRows(items: string[], size: number) {
-  const rows: string[][] = [];
+function chunkIntoRows<T>(items: T[], size: number) {
+  const rows: T[][] = [];
   for (let index = 0; index < items.length; index += size) {
     rows.push(items.slice(index, index + size));
   }
@@ -122,17 +126,17 @@ export function InteriorRedesignStepTwo({
             {roomRows.map((row, rowIndex) => (
               <View key={`interior-room-row-${rowIndex}`} style={styles.gridRow}>
                 {row.map((room, columnIndex) => {
-                  const active = selectedRoom === room;
-                  const RoomIcon = getArchitecturalRoomIcon(room);
+                  const active = selectedRoom === room.id;
+                  const RoomIcon = getArchitecturalRoomIcon(room.id);
                   const iconColor = active ? DESIGN_WIZARD_ACCENT_STRONG : DESIGN_WIZARD_TEXT;
 
                   return (
                     <Pressable
-                      key={room}
+                      key={room.id}
                       accessibilityRole="button"
                       accessibilityState={{ selected: active }}
                       hitSlop={12}
-                      onPress={() => handleRoomPress(room)}
+                      onPress={() => handleRoomPress(room.id)}
                       style={[
                         styles.roomCard,
                         {
@@ -143,12 +147,14 @@ export function InteriorRedesignStepTwo({
                         getWizardSelectionCardStyle(active, DESIGN_WIZARD_SURFACE_MUTED),
                       ]}
                     >
-                      <View style={styles.roomCardContent}>
-                        <RoomIcon {...getArchitecturalIconProps(iconColor, ROOM_ICON_SIZE)} />
-                        <Text style={[styles.roomCardTitle, active ? styles.roomCardTitleActive : null]} numberOfLines={2}>
-                          {room}
-                        </Text>
-                      </View>
+                        <View style={styles.roomCardContent}>
+                          <View style={[styles.roomIconWrap, getWizardSelectedIconContainerStyle(active)]}>
+                            <RoomIcon {...getArchitecturalIconProps(iconColor, ROOM_ICON_SIZE)} />
+                          </View>
+                          <Text style={[styles.roomCardTitle, active ? styles.roomCardTitleActive : null]} numberOfLines={2}>
+                            {room.label}
+                          </Text>
+                        </View>
                     </Pressable>
                   );
                 })}
@@ -221,6 +227,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+  },
+  roomIconWrap: {
+    width: 42,
+    height: 42,
+    alignItems: "center",
+    justifyContent: "center",
   },
   roomCardTitle: {
     color: DESIGN_WIZARD_TEXT,

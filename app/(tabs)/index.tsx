@@ -20,7 +20,7 @@ import { withWorkspaceFlowId } from "../../lib/try-it-flow";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isSignedIn } = useAuth();
   const { clearDraft } = useWorkspaceDraft();
@@ -67,7 +67,7 @@ export default function HomeScreen() {
         serviceParam: "floor",
       },
     ],
-    [t],
+    [i18n.language, t],
   );
 
   useEffect(() => {
@@ -234,10 +234,6 @@ const styles = StyleSheet.create({
   creditPill: {
     minHeight: 42,
     paddingHorizontal: 12,
-    backgroundColor: DS.colors.surfaceHigh,
-    borderWidth: 1,
-    borderColor: DS.colors.border,
-    boxShadow: `0px 10px 24px ${DS.colors.shadow}`,
   },
   settingsButton: {
     width: 44,

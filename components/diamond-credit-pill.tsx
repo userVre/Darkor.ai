@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
-import { DS, ambientShadow, organicRadii, subtleBorder } from "../lib/design-system";
+import { ambientShadow, organicRadii } from "../lib/design-system";
 import { fonts } from "../styles/typography";
 
 type DiamondCreditPillProps = {
@@ -23,14 +23,12 @@ type DiamondCreditPillProps = {
 
 const VARIANT_STYLES = {
   dark: {
-    backgroundColor: "#111318",
-    borderColor: "#111318",
+    backgroundColor: "#0D0D0D",
     textColor: "#FFFFFF",
     prismPrimary: "#2563EB",
   },
   light: {
-    backgroundColor: "#111318",
-    borderColor: "#111318",
+    backgroundColor: "#0D0D0D",
     textColor: "#FFFFFF",
     prismPrimary: "#2563EB",
   },
@@ -43,14 +41,14 @@ export function DiamondCreditIcon({
   primaryColor: string;
   size?: number;
 }) {
-  const width = size + 10;
-  const height = size + 10;
+  const width = size;
+  const height = size;
 
   return (
     <View accessibilityElementsHidden pointerEvents="none" style={[styles.creditIconWrap, { width, height }]}>
-      <Svg width={width} height={height} viewBox="0 0 28 28">
+      <Svg width={width} height={height} viewBox="0 0 18 18">
         <Path
-          d="M14 3.6 21.2 9.6 14 24.4 6.8 9.6 14 3.6Z"
+          d="M9 1.5 15.25 6.85 9 16.5 2.75 6.85 9 1.5Z"
           fill={primaryColor}
         />
       </Svg>
@@ -79,7 +77,6 @@ export function DiamondCreditPill({
     {
       backgroundColor: palette.backgroundColor,
     },
-    subtleBorder(palette.borderColor),
     style,
   ];
 
@@ -105,8 +102,8 @@ const styles = StyleSheet.create({
     minHeight: 40,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
+    gap: 10,
+    paddingHorizontal: 14,
     paddingVertical: 9,
     ...organicRadii(20, 14),
     ...ambientShadow(0.06, 12, 8),

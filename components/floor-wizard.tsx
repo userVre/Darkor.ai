@@ -132,6 +132,15 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const { showToast } = useProSuccess();
   const { credits: sharedCredits, setOptimisticCredits } = useViewerCredits();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
+  const localizedFloorMaterials = useMemo(
+    () =>
+      FLOOR_MATERIAL_OPTIONS.map((material) => ({
+        ...material,
+        title: t(`wizard.floorFlow.materials.${material.id}.title`),
+        description: t(`wizard.floorFlow.materials.${material.id}.description`),
+      })),
+    [i18n.language, t],
+  );
 
   const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as MeResponse | null | undefined;
   const generationArchive = useQuery("generations:getUserArchive" as any, viewerReady ? viewerArgs : "skip") as
@@ -182,8 +191,8 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   });
 
   const selectedMaterial = useMemo(
-    () => FLOOR_MATERIAL_OPTIONS.find((material) => material.id === selectedMaterialId) ?? null,
-    [selectedMaterialId],
+    () => localizedFloorMaterials.find((material) => material.id === selectedMaterialId) ?? null,
+    [localizedFloorMaterials, selectedMaterialId],
   );
   const availableCredits = sharedCredits;
   const generationSpeedTier = useMemo<"standard" | "pro" | "ultra">(() => {
@@ -352,7 +361,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
 
   const prepareGeneratedImageFile = useCallback(async () => {
     if (!generatedImageUrl) {
-      throw new Error("Generate an image first.");
+      throw new Error(t("workspace.download.generateFirst"));
     }
 
     if (generatedImageUrl.startsWith("file://")) {
@@ -362,7 +371,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}homedecor-floor-result-${Date.now()}.jpg`;
     const download = await FileSystem.downloadAsync(generatedImageUrl, targetUri);
     return { uri: download.uri, temporary: true };
-  }, [generatedImageUrl]);
+  }, [generatedImageUrl, t]);
 
   const cleanupTempFile = useCallback(async (uri: string | null | undefined, temporary: boolean) => {
     if (!uri || !temporary) {
@@ -1145,7 +1154,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
             <Text style={styles.stepTitle}>{t("wizard.floorFlow.selectMaterialTitle")}</Text>
             <Text style={styles.stepText}>{t("wizard.floorFlow.selectMaterialBody")}</Text>
             <ServiceSelectionGrid>
-              {FLOOR_MATERIAL_OPTIONS.map((option) => (
+              {localizedFloorMaterials.map((option) => (
                 <ServiceSelectionCard
                   key={option.id}
                   title={option.title}
@@ -1180,9 +1189,9 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       {step === "result" ? (
         <ScrollView contentContainerStyle={{ paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: Math.max(insets.bottom + 28, 34), gap: spacing.md }} showsVerticalScrollIndicator={false}>
           <View style={styles.resultIntro}>
-            <Text style={styles.resultHeading}>Behold your new interior</Text>
+            <Text style={styles.resultHeading}>{t("wizard.floorFlow.result.heading")}</Text>
             <Text style={styles.resultSubheading}>
-              A material-led floor transformation designed to stay true to the room's perspective, furnishings, and natural light.
+              {t("wizard.floorFlow.result.subheading")}
             </Text>
           </View>
           <View style={styles.resultFrame}>
@@ -1191,26 +1200,26 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
                 <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="cover" />
                 <View style={[absoluteFill, { width: `${comparisonPosition * 100}%`, overflow: "hidden" }]}><Image source={{ uri: generatedImageUrl }} style={{ width: resultFrameWidth, height: "100%" }} contentFit="cover" /></View>
                 <GestureDetector gesture={comparisonGesture}><View style={{ position: "absolute", top: 0, bottom: 0, left: `${comparisonPosition * 100}%`, marginLeft: -26, width: 52, alignItems: "center", justifyContent: "center" }}><View style={styles.resultDivider} /><View style={styles.resultHandle}><MoveHorizontal color="#ffffff" size={18} /></View></View></GestureDetector>
-                <View style={[styles.badge, { left: 14 }]}><Text style={styles.badgeText}>Before</Text></View>
-                <View style={[styles.badge, { right: 14 }]}><Text style={styles.badgeText}>After</Text></View>
+                <View style={[styles.badge, { left: 14 }]}><Text style={styles.badgeText}>{t("wizard.floorFlow.result.before")}</Text></View>
+                <View style={[styles.badge, { right: 14 }]}><Text style={styles.badgeText}>{t("wizard.floorFlow.result.after")}</Text></View>
               </View>
             ) : <View style={styles.resultFallback}><ActivityIndicator color="#ffffff" /></View>}
           </View>
-          <View style={styles.summaryCard}><Text style={styles.summaryLabel}>Material Applied</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? "Material"}</Text><Text style={styles.summaryText}>Your floor has been restyled while preserving room geometry, furniture alignment, and natural light behavior.</Text></View>
+          <View style={styles.summaryCard}><Text style={styles.summaryLabel}>{t("wizard.floorFlow.result.materialApplied")}</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? t("wizard.floorFlow.result.materialFallback")}</Text><Text style={styles.summaryText}>{t("wizard.floorFlow.result.summary")}</Text></View>
             <View style={styles.resultActions}>
               <LuxPressable onPress={handleSaveResult} className={pointerClassName} style={{ width: "100%" }} scale={0.99}>
                 <View style={[styles.resultActionButton, styles.resultActionSave]}>
-                  <Text style={styles.resultActionSaveText}>Save to Gallery</Text>
+                  <Text style={styles.resultActionSaveText}>{t("wizard.floorFlow.result.saveToGallery")}</Text>
                 </View>
               </LuxPressable>
               <LuxPressable onPress={handleShareResult} className={pointerClassName} style={{ width: "100%" }} scale={0.99}>
                 <View style={[styles.resultActionButton, styles.resultActionShare]}>
-                  <Text style={styles.resultActionShareText}>Share</Text>
+                  <Text style={styles.resultActionShareText}>{t("wizard.floorFlow.result.share")}</Text>
                 </View>
               </LuxPressable>
               <LuxPressable onPress={resetProject} className={pointerClassName} style={{ width: "100%" }} scale={0.99}>
                 <View style={[styles.resultActionButton, styles.resultActionRetry]}>
-                  <Text style={styles.resultActionRetryText}>Try Again</Text>
+                  <Text style={styles.resultActionRetryText}>{t("wizard.floorFlow.result.tryAgain")}</Text>
                 </View>
               </LuxPressable>
             </View>

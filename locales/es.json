@@ -372,7 +372,9 @@
     "headers": {
       "back": "volver",
       "close": "Cerrar",
-      "previousStep": "Ir al paso anterior"
+      "previousStep": "Ir al paso anterior",
+      "stepProgress": "Paso {{current}}/{{total}}",
+      "creditsRemaining": "Créditos restantes"
     },
     "stepOne": {
       "title": "Sube tu visión",
@@ -451,6 +453,56 @@
         "microcement": "Microcemento contemporáneo sin costuras para una base industrial elegante.",
         "herringboneWalnut": "Elegante nogal oscuro con un clásico diseño en espiga.",
         "walnut": "Baldosas modernas de Piedra Pizarra de gran formato en color gris antracita."
+      },
+      "result": {
+        "heading": "Contempla tu nuevo interior",
+        "subheading": "Una transformación de suelo guiada por materiales, diseñada para respetar la perspectiva de la habitación, el mobiliario y la luz natural.",
+        "before": "Antes",
+        "after": "Después",
+        "materialApplied": "Material aplicado",
+        "materialFallback": "Material",
+        "summary": "Tu suelo ha sido renovado preservando la geometría de la habitación, la alineación del mobiliario y el comportamiento de la luz natural.",
+        "saveToGallery": "Guardar en la galería",
+        "share": "Compartir",
+        "tryAgain": "Intentar de nuevo"
+      },
+      "materials": {
+        "natural-oak": {
+          "title": "Roble natural",
+          "description": "Tablas de roble ligeras con veta natural suave."
+        },
+        "walnut-wood": {
+          "title": "Madera de nogal",
+          "description": "Tablas de nogal oscuro con un contraste rico y elegante."
+        },
+        "carrara-marble": {
+          "title": "Mármol Carrara",
+          "description": "Vetas de piedra claras con un acabado sereno y lujoso."
+        },
+        "polished-concrete": {
+          "title": "Hormigón pulido",
+          "description": "Brillo suave de hormigón con calma urbana de galería."
+        },
+        "herringbone-oak": {
+          "title": "Roble en espiga",
+          "description": "Patrón clásico de roble con movimiento cálido y direccional."
+        },
+        "terracotta-tile": {
+          "title": "Baldosa terracota",
+          "description": "Calidez arcillosa con carácter artesanal."
+        },
+        "slate-tile": {
+          "title": "Baldosa de pizarra",
+          "description": "Pizarra oscura con un acabado limpio de gran formato."
+        },
+        "plush-carpet": {
+          "title": "Alfombra mullida",
+          "description": "Alfombra crema suave con una sensación tranquila y acogedora."
+        },
+        "weathered-oak": {
+          "title": "Roble envejecido",
+          "description": "Roble de tono medio con un acabado suavemente envejecido."
+        }
       }
     },
     "paintFlow": {
@@ -516,6 +568,44 @@
         "yellow": "amarillo",
         "gray": "gris",
         "red": "rojo"
+      },
+      "colors": {
+        "sage-green": {
+          "title": "Verde salvia",
+          "description": "Calma verde suave para espacios luminosos y pulidos."
+        },
+        "midnight-navy": {
+          "title": "Azul marino medianoche",
+          "description": "Profundidad azul marino con contraste arquitectónico nítido."
+        },
+        "terracotta-glow": {
+          "title": "Brillo terracota",
+          "description": "Color arcilloso cálido con una energía editorial y equilibrada."
+        },
+        "dusty-rose": {
+          "title": "Rosa empolvado",
+          "description": "Calidez rosada apagada con un aire boutique suave."
+        },
+        "gallery-charcoal": {
+          "title": "Carbón galería",
+          "description": "Carbón refinado para ambientes artísticos y melancólicos."
+        },
+        "soft-ivory": {
+          "title": "Marfil suave",
+          "description": "Neutro luminoso que mantiene las habitaciones claras sin verse plano."
+        },
+        "olive-grove": {
+          "title": "Oliva profunda",
+          "description": "Profundidad oliva terrosa con un ambiente de diseñador."
+        },
+        "lavender-mist": {
+          "title": "Neblina lavanda",
+          "description": "Bruma violeta suave para interiores pastel refinados."
+        },
+        "pearl-gray": {
+          "title": "Gris perla",
+          "description": "Gris tonal claro con flexibilidad pulida para el día a día."
+        }
       },
       "finishes": {
         "matte": {
@@ -655,6 +745,156 @@
     },
     "style": {
       "tapToSelect": "Toque una tarjeta para definir la dirección de su estilo."
+    },
+    "localization": {
+      "rooms": {
+        "livingRoom": "Sala de estar",
+        "bedroom": "Dormitorio",
+        "kitchen": "Cocina",
+        "bathroom": "Baño",
+        "homeOffice": "Oficina en casa",
+        "diningRoom": "Comedor",
+        "nursery": "Habitación infantil",
+        "homeTheater": "Sala de cine en casa",
+        "gamingRoom": "Sala de juegos",
+        "hall": "Recibidor",
+        "library": "Biblioteca",
+        "laundry": "Lavandería"
+      },
+      "examples": {
+        "interior": {
+          "emptyRoom": "Habitación vacía",
+          "messyLounge": "Sala desordenada",
+          "wornRoom": "Habitación desgastada",
+          "emptyKitchen": "Cocina vacía",
+          "damagedRoom": "Habitación dañada",
+          "outdatedKitchen": "Cocina anticuada"
+        },
+        "exterior": {
+          "scaffoldHouse": "Casa con andamios",
+          "weatheredHouse": "Casa envejecida",
+          "brickShell": "Estructura de ladrillo",
+          "overgrownCottage": "Cabaña cubierta de maleza",
+          "abandonedHome": "Casa abandonada",
+          "concreteFrame": "Estructura de hormigón"
+        },
+        "garden": {
+          "muddyYard": "Patio embarrado",
+          "weedyYard": "Patio con maleza",
+          "rubbleYard": "Patio con escombros",
+          "overgrownCorner": "Rincón cubierto de maleza",
+          "abandonedYard": "Patio abandonado",
+          "crackedPatio": "Patio agrietado"
+        }
+      },
+      "styles": {
+        "modern": "Moderno",
+        "luxury": "Lujo",
+        "japandi": "Japandi",
+        "cyberpunk": "Cyberpunk",
+        "tropical": "Tropical",
+        "minimalist": "Minimalista",
+        "scandinavian": "Escandinavo",
+        "bohemian": "Bohemio",
+        "midcentury": "Midcentury",
+        "artDeco": "Art Déco",
+        "coastal": "Costero",
+        "rustic": "Rústico",
+        "vintage": "Vintage",
+        "mediterranean": "Mediterráneo",
+        "glam": "Glam",
+        "coastalRetreat": "Retiro costero",
+        "rusticManor": "Mansión rústica",
+        "hollywoodRegency": "Hollywood Regency",
+        "neoClassic": "Neoclásico",
+        "shabbyChic": "Shabby Chic",
+        "frenchCountry": "Campo francés",
+        "brutalist": "Brutalista",
+        "hollywoodRegencyNoir": "Hollywood Regency Noir",
+        "artNouveau": "Art Nouveau",
+        "custom": "Personalizado",
+        "chinese": "Chino",
+        "cottage": "Casa de campo",
+        "farmHouse": "Granja",
+        "french": "Francés",
+        "gothic": "Gótico",
+        "italianate": "Italianizante",
+        "christmas": "Navidad",
+        "minimalistic": "Minimalista",
+        "baroque": "Barroco"
+      },
+      "buildings": {
+        "apartment": "Apartamento",
+        "house": "Casa",
+        "officeBuilding": "Edificio de oficinas",
+        "residential": "Residencial",
+        "retail": "Comercial",
+        "villa": "Villa"
+      },
+      "modes": {
+        "preserve": {
+          "title": "Preservación estructural",
+          "description": "Conserva el ADN arquitectónico de tu habitación mientras renuevas su estética con precisión."
+        },
+        "renovate": {
+          "title": "Diseño de renovación",
+          "description": "Libertad creativa total para redefinir la distribución del mobiliario y los límites estructurales en una remodelación completa."
+        }
+      },
+      "palettes": {
+        "surprise": "Mezcla curada",
+        "gray": "Gris milenial",
+        "terracotta": "Espejismo terracota",
+        "forest": "Tonos de bosque",
+        "peach": "Huerto melocotón",
+        "fuchsia": "Flor de fucsia",
+        "emerald": "Gema esmeralda",
+        "pastel": "Brisa pastel",
+        "ocean": "Bruma oceánica",
+        "velvet": "Crepúsculo aterciopelado",
+        "amethyst": "Sueño amatista",
+        "sunset": "Fucsia noir"
+      },
+      "gardenPalettes": {
+        "garden-surprise": "Sorpréndeme",
+        "garden-gray": "Gris milenial",
+        "garden-terracotta": "Espejismo terracota",
+        "garden-neon-sunset": "Atardecer neón",
+        "garden-forest": "Tonos de bosque",
+        "garden-peach": "Huerto melocotón",
+        "garden-fuschia": "Flor de fucsia",
+        "garden-emerald": "Gema esmeralda",
+        "garden-pastel": "Brisa pastel",
+        "garden-azure": "Espejismo azul",
+        "garden-twilight": "Azules crepusculares",
+        "garden-earthy": "Armonía terrosa"
+      },
+      "summary": {
+        "roomType": "Tipo de espacio",
+        "style": "Estilo",
+        "mode": "Modo",
+        "palette": "Paleta",
+        "missing": "⚠ Falta"
+      },
+      "previewThumbnailLabel": "Vista previa · {{style}}",
+      "toasts": {
+        "completeStyleSelections": "Completa tus selecciones de estilo para generar."
+      },
+      "requiredSelections": {
+        "photo": "Selecciona una foto para continuar.",
+        "room": "Selecciona un espacio para continuar.",
+        "style": "Selecciona un estilo para continuar.",
+        "mode": "Completa la selección del modo para continuar.",
+        "palette": "Completa la selección de la paleta para continuar."
+      },
+      "regenerationUnavailable": "Regeneración no disponible",
+      "feedbackUnavailable": "Los comentarios no están disponibles para esta imagen.",
+      "cta": {
+        "getMoreCredits": "Obtener más créditos",
+        "generateMyDesign": "Generar mi diseño"
+      },
+      "stepFourSticky": "Paso 4: Refinar dirección",
+      "exteriorEmptyStateSubtitle": "Rediseña y embellece tu hogar."
     }
   },
   "proSuccess": {

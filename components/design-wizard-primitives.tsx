@@ -28,6 +28,7 @@ export const DESIGN_WIZARD_BORDER = "#E3E3E3";
 export const DESIGN_WIZARD_TEXT = "#0A0A0A";
 export const DESIGN_WIZARD_TEXT_MUTED = "#686868";
 export const DESIGN_WIZARD_TEXT_ON_DARK = "#FFFFFF";
+export const DESIGN_WIZARD_RUBY = "#E53935";
 
 type RoomIconName =
   | "Bathroom"
@@ -100,6 +101,19 @@ export function getWizardFloatingButtonStyle(active: boolean): ViewStyle {
     boxShadow: active
       ? "0px 18px 30px rgba(18,18,18,0.16)"
       : "0px 14px 28px rgba(15,23,42,0.12)",
+  };
+}
+
+export function getWizardSelectedIconContainerStyle(active: boolean): ViewStyle {
+  return {
+    borderRadius: 18,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: active ? "rgba(229,57,53,0.2)" : "#E9E9E9",
+    backgroundColor: active ? "#FFFFFF" : "#F7F7F7",
+    boxShadow: active
+      ? "0px 0px 0px 1px rgba(229,57,53,0.14), 0px 10px 24px rgba(229,57,53,0.22)"
+      : "none",
   };
 }
 

@@ -1,6 +1,7 @@
 import { ArrowLeft, X } from "@/components/material-icons";
 import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DS, floatingButton } from "../lib/design-system";
@@ -57,13 +58,17 @@ export function StickyStepHeader({
   backAccessibilityLabel = "Go back",
   closeAccessibilityLabel = "Close",
 }: StickyStepHeaderProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const metrics = getStickyStepHeaderMetrics(insets.top);
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
-  const stepLabel = `Step ${safeStep}/${totalSteps}`;
+  const stepLabel = t("wizard.headers.stepProgress", {
+    current: safeStep,
+    total: totalSteps,
+  });
 
   return (
     <>
@@ -92,7 +97,7 @@ export function StickyStepHeader({
                 </Pressable>
               ) : showCredits ? (
                 <DiamondCreditPill
-                  accessibilityLabel="Credits remaining"
+                  accessibilityLabel={t("wizard.headers.creditsRemaining")}
                   accessibilityRole="text"
                   count={creditCount}
                   style={styles.creditPill}

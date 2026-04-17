@@ -11,6 +11,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import i18n from "../lib/i18n";
 import {
   setAppLanguage,
   setAppLanguageToSystemDefault,
@@ -39,6 +40,9 @@ export default function LanguageSettingsScreen() {
   const localizedFonts = useLocalizedAppFonts();
   const languagePreference = useAppLanguagePreference();
   const isAutoEnabled = languagePreference.mode === "auto";
+  const isCurrentLanguageSelected = (language: string) =>
+    languagePreference.resolvedLanguage === language
+    && (isAutoEnabled || languagePreference.manualLanguage === language);
 
   const autoDescription = useMemo(
     () =>
@@ -67,7 +71,14 @@ export default function LanguageSettingsScreen() {
   };
 
   const handleSelectLanguage = (language: string) => {
-    void setAppLanguage(language);
+    if (isCurrentLanguageSelected(language)) {
+      return;
+    }
+
+    void (async () => {
+      await i18n.changeLanguage(language);
+      await setAppLanguage(language);
+    })();
   };
 
   return (
@@ -118,9 +129,7 @@ export default function LanguageSettingsScreen() {
 
         <View style={styles.listBlock}>
           {SUPPORTED_LANGUAGE_OPTIONS.map((option) => {
-            const isSelected =
-              languagePreference.resolvedLanguage === option.code
-              && (isAutoEnabled || languagePreference.manualLanguage === option.code);
+            const isSelected = isCurrentLanguageSelected(option.code);
             const englishLabel = getLanguageEnglishLabel(option.code);
             const showEnglishLabel = englishLabel !== option.nativeLabel;
 

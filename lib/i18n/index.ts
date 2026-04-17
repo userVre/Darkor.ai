@@ -53,6 +53,7 @@ let initPromise: Promise<typeof i18n> | null = null;
 let currentPreference: StoredLanguagePreference = DEFAULT_LANGUAGE_PREFERENCE;
 let cachedSnapshot: AppLanguagePreferenceSnapshot | null = null;
 const listeners = new Set<() => void>();
+let i18nEventsBound = false;
 
 function emitPreferenceChange() {
   listeners.forEach((listener) => listener());
@@ -180,8 +181,25 @@ function subscribe(listener: () => void) {
   };
 }
 
+function bindI18nEvents() {
+  if (i18nEventsBound) {
+    return;
+  }
+
+  i18n.on("initialized", () => {
+    emitPreferenceChange();
+  });
+
+  i18n.on("languageChanged", () => {
+    emitPreferenceChange();
+  });
+
+  i18nEventsBound = true;
+}
+
 export async function initializeI18n() {
   if (i18n.isInitialized) {
+    bindI18nEvents();
     return i18n;
   }
 
@@ -211,6 +229,7 @@ export async function initializeI18n() {
     })();
   }
 
+  bindI18nEvents();
   return initPromise;
 }
 

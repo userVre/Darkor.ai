@@ -7,6 +7,8 @@ import { useTranslation } from "react-i18next";
 
 import { DiscoverImageCard } from "../../components/discover-image-card";
 import { DiscoverPreviewModal } from "../../components/discover-preview-modal";
+import { DiamondCreditPill } from "../../components/diamond-credit-pill";
+import { useViewerCredits } from "../../components/viewer-credits-context";
 import { DS } from "../../lib/design-system";
 import {
   type DiscoverCluster,
@@ -70,6 +72,7 @@ export default function GalleryScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const { credits } = useViewerCredits();
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
   const [selectedClusterId, setSelectedClusterId] = useState<DiscoverClusterId>("interiors");
   const clusters = useDiscoverClusters();
@@ -120,6 +123,24 @@ export default function GalleryScreen() {
   const listHeader = useMemo(
     () => (
       <View style={[styles.headerWrap, { paddingTop: insets.top + 16 }]}>
+        <View style={styles.topRow}>
+          <View style={styles.creditSlot}>
+            <DiamondCreditPill
+              accessibilityLabel={t("home.accessibility.openCredits")}
+              accessibilityRole="text"
+              count={credits}
+              style={styles.creditPill}
+              variant="dark"
+            />
+          </View>
+
+          <View pointerEvents="none" style={styles.titleWrap}>
+            <Text style={styles.headerTitle}>{t("tabs.discover")}</Text>
+          </View>
+
+          <View style={styles.rightSpacer} />
+        </View>
+
         <View style={styles.categoryTabs}>
           {clusters.map((cluster: DiscoverCluster) => {
             const active = cluster.id === (selectedCluster?.id ?? selectedClusterId);
@@ -138,7 +159,7 @@ export default function GalleryScreen() {
         </View>
       </View>
     ),
-    [clusters, handleClusterPress, insets.top, selectedCluster?.id, selectedClusterId],
+    [clusters, credits, handleClusterPress, insets.top, selectedCluster?.id, selectedClusterId, t],
   );
 
   return (
@@ -173,6 +194,42 @@ const styles = StyleSheet.create({
   headerWrap: {
     paddingBottom: 20,
     backgroundColor: DS.colors.surface,
+  },
+  topRow: {
+    minHeight: 48,
+    marginBottom: 18,
+    paddingHorizontal: SCREEN_SIDE_MARGIN,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    position: "relative",
+  },
+  creditSlot: {
+    minWidth: 88,
+    alignItems: "flex-start",
+    justifyContent: "center",
+  },
+  creditPill: {
+    minHeight: 42,
+  },
+  titleWrap: {
+    position: "absolute",
+    left: 88,
+    right: 88,
+    top: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    color: DS.colors.textPrimary,
+    fontSize: 24,
+    lineHeight: 30,
+    textAlign: "center",
+    ...fonts.bold,
+  },
+  rightSpacer: {
+    width: 88,
   },
   categoryTabs: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,

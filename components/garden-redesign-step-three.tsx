@@ -2,11 +2,13 @@ import { StatusBar } from "expo-status-bar";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Check } from "@/components/material-icons";
 
 import {
   DESIGN_WIZARD_SURFACE,
   DESIGN_WIZARD_TEXT,
   getWizardFloatingButtonStyle,
+  getWizardSelectedIconContainerStyle,
   getWizardSelectionCardStyle,
 } from "./design-wizard-primitives";
 import { triggerHaptic } from "../lib/haptics";
@@ -147,6 +149,13 @@ export function GardenRedesignStepThree({
                         getWizardSelectionCardStyle(active, DESIGN_WIZARD_SURFACE),
                       ]}
                     >
+                      {active ? (
+                        <View style={styles.selectionBadge}>
+                          <View style={[styles.selectionBadgeInner, getWizardSelectedIconContainerStyle(true)]}>
+                            <Check color="#E53935" size={16} strokeWidth={2.4} />
+                          </View>
+                        </View>
+                      ) : null}
                       <View style={{ height: paletteCardTopHeight, flexDirection: "row" }}>
                         {palette.colors.slice(0, 4).map((color) => (
                           <View key={`${palette.id}-${color}`} style={{ flex: 1, backgroundColor: color }} />
@@ -261,6 +270,18 @@ const styles = StyleSheet.create({
   },
   paletteCard: {
     overflow: "hidden",
+  },
+  selectionBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 2,
+  },
+  selectionBadgeInner: {
+    width: 34,
+    height: 34,
+    alignItems: "center",
+    justifyContent: "center",
   },
   paletteLabelBar: {
     position: "relative",

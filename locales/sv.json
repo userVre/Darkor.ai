@@ -372,7 +372,9 @@
     "headers": {
       "back": "Gå tillbaka",
       "close": "Stäng",
-      "previousStep": "Gå till föregående steg"
+      "previousStep": "Gå till föregående steg",
+      "stepProgress": "Steg {{current}}/{{total}}",
+      "creditsRemaining": "Återstående krediter"
     },
     "stepOne": {
       "title": "Ladda upp din vision",
@@ -451,6 +453,56 @@
         "microcement": "Modern sömlös mikrocement för en industriell chic grund.",
         "herringboneWalnut": "Elegant mörk valnöt i ett klassiskt fiskbensmönster.",
         "walnut": "Moderna storformat Skifferstensplattor i kolgrå."
+      },
+      "result": {
+        "heading": "Se din nya interiör",
+        "subheading": "En materialdriven golvförvandling som är utformad för att vara trogen rummets perspektiv, möblering och naturliga ljus.",
+        "before": "Före",
+        "after": "Efter",
+        "materialApplied": "Applicerat material",
+        "materialFallback": "Material",
+        "summary": "Ditt golv har stylats om samtidigt som rummets geometri, möblernas placering och det naturliga ljuset bevaras.",
+        "saveToGallery": "Spara i galleriet",
+        "share": "Dela",
+        "tryAgain": "Försök igen"
+      },
+      "materials": {
+        "natural-oak": {
+          "title": "Naturlig ek",
+          "description": "Luftiga ekplankor med mjuk naturlig ådring."
+        },
+        "walnut-wood": {
+          "title": "Valnötsträ",
+          "description": "Mörka valnötsplankor med rik och skräddad kontrast."
+        },
+        "carrara-marble": {
+          "title": "Carraramarmor",
+          "description": "Ljus stenådring med en lugn och lyxig finish."
+        },
+        "polished-concrete": {
+          "title": "Polerad betong",
+          "description": "Mjuk betongglans med urban gallerikänsla."
+        },
+        "herringbone-oak": {
+          "title": "Fiskbens-ek",
+          "description": "Klassiskt ekmönster med varm riktning och rörelse."
+        },
+        "terracotta-tile": {
+          "title": "Terrakottakakel",
+          "description": "Jordnära lervärme med hantverkskänsla."
+        },
+        "slate-tile": {
+          "title": "Skifferkakel",
+          "description": "Mörk skiffer med en ren storformatsfinish."
+        },
+        "plush-carpet": {
+          "title": "Mjuk matta",
+          "description": "Mjuk krämfärgad matta med en stillsam och ombonad känsla."
+        },
+        "weathered-oak": {
+          "title": "Väderbiten ek",
+          "description": "Mellantons-ek med en varsamt åldrad finish."
+        }
       }
     },
     "paintFlow": {
@@ -516,6 +568,44 @@
         "yellow": "Gul",
         "gray": "Grå",
         "red": "Röd"
+      },
+      "colors": {
+        "sage-green": {
+          "title": "Salviagrön",
+          "description": "Mjuk grön harmoni för ljusa och polerade rum."
+        },
+        "midnight-navy": {
+          "title": "Midnattsblå",
+          "description": "Skräddad marinblå djup med skarp arkitektonisk kontrast."
+        },
+        "terracotta-glow": {
+          "title": "Terrakottaglöd",
+          "description": "Varm lerfärg med jordad och redaktionell energi."
+        },
+        "dusty-rose": {
+          "title": "Dämpad ros",
+          "description": "Dämpad rosaton med mjuk boutiquekänsla."
+        },
+        "gallery-charcoal": {
+          "title": "Galleri-kol",
+          "description": "Förfinat kol för stämningsfulla och konstnärliga rum."
+        },
+        "soft-ivory": {
+          "title": "Mjuk elfenben",
+          "description": "Ljus neutral ton som håller rummen lätta utan att kännas platta."
+        },
+        "olive-grove": {
+          "title": "Olivlund",
+          "description": "Jordig olivdjup med en förankrad designerkänsla."
+        },
+        "lavender-mist": {
+          "title": "Lavendeldimma",
+          "description": "Mjuk violett dimma för förhöjda pastellrum."
+        },
+        "pearl-gray": {
+          "title": "Pärlgrå",
+          "description": "Ljus grå ton med polerad vardagsflexibilitet."
+        }
       },
       "finishes": {
         "matte": {
@@ -655,6 +745,156 @@
     },
     "style": {
       "tapToSelect": "Tryck på ett kort för att definiera din stilriktning."
+    },
+    "localization": {
+      "rooms": {
+        "livingRoom": "Vardagsrum",
+        "bedroom": "Sovrum",
+        "kitchen": "Kök",
+        "bathroom": "Badrum",
+        "homeOffice": "Hemm kontor",
+        "diningRoom": "Matsal",
+        "nursery": "Barnrum",
+        "homeTheater": "Hemmabio",
+        "gamingRoom": "Spelrum",
+        "hall": "Hall",
+        "library": "Bibliotek",
+        "laundry": "Tvättstuga"
+      },
+      "examples": {
+        "interior": {
+          "emptyRoom": "Tomt rum",
+          "messyLounge": "Stökig lounge",
+          "wornRoom": "Slitet rum",
+          "emptyKitchen": "Tomt kök",
+          "damagedRoom": "Skadat rum",
+          "outdatedKitchen": "Omodernt kök"
+        },
+        "exterior": {
+          "scaffoldHouse": "Hus med ställning",
+          "weatheredHouse": "Väderbitet hus",
+          "brickShell": "Tegelskal",
+          "overgrownCottage": "Övervuxen stuga",
+          "abandonedHome": "Övergivet hem",
+          "concreteFrame": "Betongstomme"
+        },
+        "garden": {
+          "muddyYard": "Lerig gård",
+          "weedyYard": "Ogräsig gård",
+          "rubbleYard": "Gård med bråte",
+          "overgrownCorner": "Övervuxet hörn",
+          "abandonedYard": "Övergiven gård",
+          "crackedPatio": "Sprucken uteplats"
+        }
+      },
+      "styles": {
+        "modern": "Modern",
+        "luxury": "Lyx",
+        "japandi": "Japandi",
+        "cyberpunk": "Cyberpunk",
+        "tropical": "Tropisk",
+        "minimalist": "Minimalistisk",
+        "scandinavian": "Skandinavisk",
+        "bohemian": "Bohemisk",
+        "midcentury": "Midcentury",
+        "artDeco": "Art déco",
+        "coastal": "Kustnära",
+        "rustic": "Rustik",
+        "vintage": "Vintage",
+        "mediterranean": "Medelhavsstil",
+        "glam": "Glam",
+        "coastalRetreat": "Kustretreat",
+        "rusticManor": "Rustik herrgård",
+        "hollywoodRegency": "Hollywood Regency",
+        "neoClassic": "Nyklassisk",
+        "shabbyChic": "Shabby Chic",
+        "frenchCountry": "Fransk lantstil",
+        "brutalist": "Brutalistisk",
+        "hollywoodRegencyNoir": "Hollywood Regency Noir",
+        "artNouveau": "Art Nouveau",
+        "custom": "Anpassad",
+        "chinese": "Kinesisk",
+        "cottage": "Stuga",
+        "farmHouse": "Bondgårdsstil",
+        "french": "Fransk",
+        "gothic": "Gotisk",
+        "italianate": "Italiensk",
+        "christmas": "Jul",
+        "minimalistic": "Minimalistisk",
+        "baroque": "Barock"
+      },
+      "buildings": {
+        "apartment": "Lägenhet",
+        "house": "Hus",
+        "officeBuilding": "Kontorsbyggnad",
+        "residential": "Bostad",
+        "retail": "Butik",
+        "villa": "Villa"
+      },
+      "modes": {
+        "preserve": {
+          "title": "Strukturellt bevarande",
+          "description": "Bevara rummets arkitektoniska DNA medan estetiken förfinas med precision."
+        },
+        "renovate": {
+          "title": "Renoveringsdesign",
+          "description": "Full kreativ frihet att omdefiniera möblering och strukturella gränser för en komplett ombyggnad."
+        }
+      },
+      "palettes": {
+        "surprise": "Kuraterad mix",
+        "gray": "Millennial Gray",
+        "terracotta": "Terrakotta-mirage",
+        "forest": "Skogstoner",
+        "peach": "Persikoträdgård",
+        "fuchsia": "Fuchsiablom",
+        "emerald": "Smaragdjuvel",
+        "pastel": "Pastellbris",
+        "ocean": "Havsdimma",
+        "velvet": "Sammetsdusk",
+        "amethyst": "Ametistdröm",
+        "sunset": "Fuchsia noir"
+      },
+      "gardenPalettes": {
+        "garden-surprise": "Överraska mig",
+        "garden-gray": "Millennial Gray",
+        "garden-terracotta": "Terrakotta-mirage",
+        "garden-neon-sunset": "Neonsolnedgång",
+        "garden-forest": "Skogstoner",
+        "garden-peach": "Persikoträdgård",
+        "garden-fuschia": "Fuchsiablom",
+        "garden-emerald": "Smaragdjuvel",
+        "garden-pastel": "Pastellbris",
+        "garden-azure": "Azur-mirage",
+        "garden-twilight": "Skymningsblått",
+        "garden-earthy": "Jordnära harmoni"
+      },
+      "summary": {
+        "roomType": "Rumstyp",
+        "style": "Stil",
+        "mode": "Läge",
+        "palette": "Palett",
+        "missing": "⚠ Saknas"
+      },
+      "previewThumbnailLabel": "Förhandsvisning · {{style}}",
+      "toasts": {
+        "completeStyleSelections": "Slutför dina stilval för att generera."
+      },
+      "requiredSelections": {
+        "photo": "Välj ett foto för att fortsätta.",
+        "room": "Välj ett rum för att fortsätta.",
+        "style": "Välj en stil för att fortsätta.",
+        "mode": "Slutför valet av läge för att fortsätta.",
+        "palette": "Slutför valet av palett för att fortsätta."
+      },
+      "regenerationUnavailable": "Regenerering är inte tillgänglig",
+      "feedbackUnavailable": "Feedback är inte tillgänglig för den här bilden.",
+      "cta": {
+        "getMoreCredits": "Få fler krediter",
+        "generateMyDesign": "Generera min design"
+      },
+      "stepFourSticky": "Steg 4: Förfina riktning",
+      "exteriorEmptyStateSubtitle": "Gör om och försköna ditt hem."
     }
   },
   "proSuccess": {

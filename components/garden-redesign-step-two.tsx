@@ -4,12 +4,14 @@ import { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Check } from "@/components/material-icons";
 
 import {
   DESIGN_WIZARD_SURFACE,
   DESIGN_WIZARD_TEXT,
   DESIGN_WIZARD_TEXT_MUTED,
   getWizardFloatingButtonStyle,
+  getWizardSelectedIconContainerStyle,
   getWizardSelectionCardStyle,
 } from "./design-wizard-primitives";
 import { triggerHaptic } from "../lib/haptics";
@@ -20,6 +22,7 @@ type GardenRedesignStepTwoStyleCard = {
   id: string;
   title: string;
   image: number;
+  label?: string;
 };
 
 type GardenRedesignStepTwoProps = {
@@ -149,6 +152,13 @@ export function GardenRedesignStepTwo({
                         getWizardSelectionCardStyle(active, DESIGN_WIZARD_SURFACE),
                       ]}
                     >
+                      {active ? (
+                        <View style={stylesSheet.selectionBadge}>
+                          <View style={[stylesSheet.selectionBadgeInner, getWizardSelectedIconContainerStyle(true)]}>
+                            <Check color="#E53935" size={16} strokeWidth={2.4} />
+                          </View>
+                        </View>
+                      ) : null}
                       <View style={[stylesSheet.cardImageWrap, { height: cardImageHeight }]}>
                         <Image
                           source={styleCard.image}
@@ -181,7 +191,7 @@ export function GardenRedesignStepTwo({
                             },
                           ]}
                         >
-                          {styleCard.title}
+                          {styleCard.label ?? styleCard.title}
                         </Text>
                       </View>
                   </Pressable>
@@ -243,6 +253,18 @@ const stylesSheet = StyleSheet.create({
   },
   styleCard: {
     overflow: "hidden",
+  },
+  selectionBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 2,
+  },
+  selectionBadgeInner: {
+    width: 34,
+    height: 34,
+    alignItems: "center",
+    justifyContent: "center",
   },
   cardImageWrap: {
     width: "100%",

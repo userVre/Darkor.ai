@@ -8,10 +8,12 @@ import { BadgeCheck, PaintRoller, Wand2 } from "@/components/material-icons";
 import {
   DESIGN_WIZARD_ACCENT,
   DESIGN_WIZARD_ACCENT_STRONG,
+  DESIGN_WIZARD_RUBY,
   DESIGN_WIZARD_SURFACE,
   DESIGN_WIZARD_TEXT,
   DESIGN_WIZARD_TEXT_MUTED,
   getWizardFloatingButtonStyle,
+  getWizardSelectedIconContainerStyle,
   getWizardSelectionCardStyle,
 } from "./design-wizard-primitives";
 import { triggerHaptic } from "../lib/haptics";
@@ -22,12 +24,14 @@ type InteriorRedesignStepFourMode = {
   id: string;
   title: string;
   description: string;
+  label?: string;
 };
 
 type InteriorRedesignStepFourPalette = {
   id: string;
   label: string;
   colors: string[];
+  displayLabel?: string;
 };
 
 type InteriorRedesignStepFourProps = {
@@ -108,13 +112,10 @@ function ModeSelectionCard({
           <View
             style={[
               styles.modeIconWrap,
-              {
-                borderColor: active ? "rgba(204,51,51,0.38)" : "#E9E9E9",
-                backgroundColor: active ? "rgba(204,51,51,0.12)" : "#F7F7F7",
-              },
+              getWizardSelectedIconContainerStyle(active),
             ]}
           >
-            <ModeIcon color={active ? DESIGN_WIZARD_ACCENT_STRONG : "#111111"} size={iconSize} strokeWidth={2.2} />
+            <ModeIcon color={active ? DESIGN_WIZARD_RUBY : "#111111"} size={iconSize} strokeWidth={2.2} />
           </View>
           {active ? (
             <View style={styles.modeSelectedBadge}>
@@ -241,7 +242,7 @@ export function InteriorRedesignStepFour({
                   height={modeCardHeight}
                   layoutScale={layoutScale}
                   style={index === modes.length - 1 ? undefined : { marginRight: modeCardGap }}
-                  title={mode.title}
+                  title={mode.label ?? mode.title}
                   variant={mode.id === "renovate" ? "renovate" : "preserve"}
                   width={modeCardWidth}
                 />
@@ -280,8 +281,15 @@ export function InteriorRedesignStepFour({
                         },
                         getWizardSelectionCardStyle(active, DESIGN_WIZARD_SURFACE),
                       ]}
-                    >
-                      <View style={{ height: paletteCardTopHeight, flexDirection: "row" }}>
+                      >
+                        {active ? (
+                          <View style={styles.paletteSelectionBadge}>
+                            <View style={[styles.paletteSelectionBadgeInner, getWizardSelectedIconContainerStyle(true)]}>
+                              <BadgeCheck color={DESIGN_WIZARD_RUBY} size={16} strokeWidth={2.1} />
+                            </View>
+                          </View>
+                        ) : null}
+                        <View style={{ height: paletteCardTopHeight, flexDirection: "row" }}>
                         {palette.colors.map((color) => (
                           <View key={`${palette.id}-${color}`} style={{ flex: 1, backgroundColor: color }} />
                         ))}
@@ -306,7 +314,7 @@ export function InteriorRedesignStepFour({
                             },
                           ]}
                         >
-                          {palette.label}
+                          {palette.displayLabel ?? palette.label}
                         </Text>
                       </View>
                     </Pressable>
@@ -415,7 +423,6 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 20,
-    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -452,6 +459,18 @@ const styles = StyleSheet.create({
   },
   paletteCard: {
     overflow: "hidden",
+  },
+  paletteSelectionBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 2,
+  },
+  paletteSelectionBadgeInner: {
+    width: 34,
+    height: 34,
+    alignItems: "center",
+    justifyContent: "center",
   },
   paletteLabelBar: {
     position: "relative",
