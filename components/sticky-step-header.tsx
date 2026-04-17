@@ -1,9 +1,16 @@
 import { ArrowLeft, X } from "@/components/material-icons";
 import { useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { I18nManager, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DS, floatingButton } from "../lib/design-system";
+import {
+  getDirectionalAlignment,
+  getDirectionalArrowScale,
+  getDirectionalOppositeAlignment,
+  getDirectionalRow,
+} from "../lib/i18n/rtl";
 import { DiamondCreditPill } from "./diamond-credit-pill";
 import { ExitConfirmModal } from "./exit-confirm-modal";
 import { StepProgressSegments } from "./step-progress-segments";
@@ -48,7 +55,7 @@ export function getStickyStepHeaderMetrics(topInset: number) {
 }
 
 export function StickyStepHeader({
-  title = "HomeDecor AI",
+  title,
   creditCount = 0,
   step,
   totalSteps,
@@ -58,12 +65,15 @@ export function StickyStepHeader({
   backAccessibilityLabel = "Go back",
   closeAccessibilityLabel = "Close",
 }: StickyStepHeaderProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const isRTL = I18nManager.isRTL;
   const metrics = getStickyStepHeaderMetrics(insets.top);
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
+  const resolvedTitle = title ?? t("app.name");
   return (
     <>
       <View
@@ -77,8 +87,8 @@ export function StickyStepHeader({
         ]}
       >
         <View style={[styles.inner, { marginHorizontal: horizontalInset }]}>
-          <View style={styles.topRow}>
-            <View style={styles.sideSlot}>
+          <View style={[styles.topRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+            <View style={[styles.sideSlot, { alignItems: getDirectionalAlignment(isRTL) }]}>
               {showBack ? (
                 <Pressable
                   accessibilityLabel={backAccessibilityLabel}
@@ -87,7 +97,20 @@ export function StickyStepHeader({
                   onPress={onBack}
                   style={styles.iconButton}
                 >
-                  <ArrowLeft color={DS.colors.textPrimary} size={18} strokeWidth={1.9} style={styles.backIcon} />
+                  <ArrowLeft
+                    color={DS.colors.textPrimary}
+                    size={18}
+                    strokeWidth={1.9}
+                    style={[
+                      styles.backIcon,
+                      {
+                        transform: [
+                          { scaleX: getDirectionalArrowScale(isRTL) },
+                          { translateX: isRTL ? 1 : -1 },
+                        ],
+                      },
+                    ]}
+                  />
                 </Pressable>
               ) : showCredits ? (
                 <DiamondCreditPill
@@ -102,11 +125,11 @@ export function StickyStepHeader({
 
             <View pointerEvents="none" style={styles.titleWrap}>
               <Text numberOfLines={1} style={styles.titleText}>
-                {title}
+                {resolvedTitle}
               </Text>
             </View>
 
-            <View style={[styles.sideSlot, styles.sideSlotRight]}>
+            <View style={[styles.sideSlot, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
               <Pressable
                 accessibilityLabel={closeAccessibilityLabel}
                 accessibilityRole="button"

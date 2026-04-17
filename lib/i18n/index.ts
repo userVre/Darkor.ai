@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import i18n, { type Resource } from "i18next";
 import { useMemo, useSyncExternalStore } from "react";
+import { I18nManager } from "react-native";
 import { initReactI18next } from "react-i18next";
 
 import {
@@ -8,11 +9,13 @@ import {
   SUPPORTED_LANGUAGES,
   getDeviceSupportedLanguage,
   getLocalizedFonts,
+  isRtlLanguage,
   resolveSupportedLanguage,
   type AppLanguage,
 } from "./language";
 
 const LANGUAGE_PREFERENCE_STORAGE_KEY = "homedecor.ai.language.preference.v2";
+const RTL_PREFERENCE_STORAGE_KEY = "homedecor.ai.layout.rtl.v1";
 const LEGACY_LANGUAGE_STORAGE_KEY = "homedecor.ai.language";
 const LEGACY_DARKOR_LANGUAGE_STORAGE_KEY = "darkor.ai.language";
 
@@ -30,6 +33,7 @@ export type AppLanguagePreferenceSnapshot = {
   mode: StoredLanguagePreference["mode"];
   manualLanguage: AppLanguage | null;
   resolvedLanguage: AppLanguage;
+  isRTL: boolean;
 };
 
 const DEFAULT_LANGUAGE_PREFERENCE: StoredLanguagePreference = {
@@ -38,6 +42,7 @@ const DEFAULT_LANGUAGE_PREFERENCE: StoredLanguagePreference = {
 
 const resources: Resource = {
   "en-US": { translation: require("../../locales/en.json") },
+  ar: { translation: require("../../locales/ar.json") },
   sv: { translation: require("../../locales/sv.json") },
   de: { translation: require("../../locales/de.json") },
   ja: { translation: require("../../locales/ja.json") },
@@ -52,6 +57,7 @@ const resources: Resource = {
 
 let initPromise: Promise<typeof i18n> | null = null;
 let currentPreference: StoredLanguagePreference = DEFAULT_LANGUAGE_PREFERENCE;
+let currentIsRTL = I18nManager.isRTL;
 let cachedSnapshot: AppLanguagePreferenceSnapshot | null = null;
 const listeners = new Set<() => void>();
 let i18nEventsBound = false;
@@ -77,6 +83,31 @@ function arePreferencesEqual(
 
 function getResolvedI18nLanguage() {
   return resolveSupportedLanguage(i18n.resolvedLanguage ?? i18n.language);
+}
+
+function readBooleanPreference(rawValue?: string | null) {
+  const trimmedValue = String(rawValue ?? "").trim();
+  if (!trimmedValue) {
+    return null;
+  }
+
+  if (trimmedValue === "true") return true;
+  if (trimmedValue === "false") return false;
+
+  try {
+    const parsed = JSON.parse(trimmedValue) as boolean | { isRTL?: boolean };
+    if (typeof parsed === "boolean") {
+      return parsed;
+    }
+
+    if (typeof parsed?.isRTL === "boolean") {
+      return parsed.isRTL;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
 }
 
 function resolveLanguageFromPreference(preference: StoredLanguagePreference) {
@@ -132,12 +163,41 @@ async function readStoredLanguagePreference(): Promise<StoredLanguagePreference>
   }
 }
 
+async function readStoredRtlPreference() {
+  try {
+    return readBooleanPreference(await AsyncStorage.getItem(RTL_PREFERENCE_STORAGE_KEY));
+  } catch {
+    return null;
+  }
+}
+
 async function persistLanguagePreference(preference: StoredLanguagePreference) {
   try {
     await AsyncStorage.setItem(LANGUAGE_PREFERENCE_STORAGE_KEY, JSON.stringify(preference));
   } catch {
     // Ignore persistence errors so app boot is never blocked.
   }
+}
+
+async function persistRtlPreference(isRTL: boolean) {
+  try {
+    await AsyncStorage.setItem(RTL_PREFERENCE_STORAGE_KEY, JSON.stringify({ isRTL }));
+  } catch {
+    // Ignore persistence errors so app boot is never blocked.
+  }
+}
+
+function applyLayoutDirection(isRTL: boolean) {
+  currentIsRTL = isRTL;
+  I18nManager.allowRTL(isRTL);
+  I18nManager.swapLeftAndRightInRTL(true);
+
+  const directionChanged = I18nManager.isRTL !== isRTL;
+  if (directionChanged) {
+    I18nManager.forceRTL(isRTL);
+  }
+
+  return directionChanged;
 }
 
 function setCurrentPreference(preference: StoredLanguagePreference) {
@@ -160,6 +220,7 @@ function getSnapshot(): AppLanguagePreferenceSnapshot {
     mode: currentPreference.mode,
     manualLanguage: currentPreference.mode === "manual" ? currentPreference.language : null,
     resolvedLanguage,
+    isRTL: currentIsRTL,
   };
 
   if (
@@ -167,6 +228,7 @@ function getSnapshot(): AppLanguagePreferenceSnapshot {
     && cachedSnapshot.mode === nextSnapshot.mode
     && cachedSnapshot.manualLanguage === nextSnapshot.manualLanguage
     && cachedSnapshot.resolvedLanguage === nextSnapshot.resolvedLanguage
+    && cachedSnapshot.isRTL === nextSnapshot.isRTL
   ) {
     return cachedSnapshot;
   }
@@ -209,6 +271,8 @@ export async function initializeI18n() {
       const storedPreference = await readStoredLanguagePreference();
       currentPreference = storedPreference;
       const language = resolveLanguageFromPreference(storedPreference);
+      const storedRtlPreference = await readStoredRtlPreference();
+      applyLayoutDirection(storedRtlPreference ?? isRtlLanguage(language));
 
       await i18n.use(initReactI18next).init({
         compatibilityJSON: "v4",
@@ -240,6 +304,8 @@ async function applyLanguagePreference(preference: StoredLanguagePreference) {
   }
 
   const resolvedLanguage = resolveLanguageFromPreference(preference);
+  const shouldUseRTL = isRtlLanguage(resolvedLanguage);
+  const layoutDirectionChanged = applyLayoutDirection(shouldUseRTL);
   const preferenceChanged = setCurrentPreference(preference);
 
   if (getResolvedI18nLanguage() !== resolvedLanguage) {
@@ -247,11 +313,16 @@ async function applyLanguagePreference(preference: StoredLanguagePreference) {
   }
 
   await persistLanguagePreference(preference);
+  await persistRtlPreference(shouldUseRTL);
   if (preferenceChanged) {
     emitPreferenceChange();
   }
 
-  return resolvedLanguage;
+  return {
+    resolvedLanguage,
+    isRTL: shouldUseRTL,
+    layoutDirectionChanged,
+  };
 }
 
 export async function setAppLanguage(language: string) {
@@ -269,18 +340,16 @@ export async function setAppLanguageToSystemDefault() {
 
 export async function syncAppLanguageWithSystem() {
   if (!i18n.isInitialized || currentPreference.mode !== "auto") {
-    return getSnapshot().resolvedLanguage;
+    return {
+      resolvedLanguage: getSnapshot().resolvedLanguage,
+      isRTL: getSnapshot().isRTL,
+      layoutDirectionChanged: false,
+    };
   }
 
-  const resolvedLanguage = resolveLanguageFromPreference(currentPreference);
-
-  if (getResolvedI18nLanguage() === resolvedLanguage) {
-    return resolvedLanguage;
-  }
-
-  await i18n.changeLanguage(resolvedLanguage);
-  emitPreferenceChange();
-  return resolvedLanguage;
+  return applyLanguagePreference({
+    mode: "auto",
+  });
 }
 
 export function getAppLanguagePreferenceSnapshot() {

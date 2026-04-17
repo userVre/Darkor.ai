@@ -1,6 +1,8 @@
 import { Stack, useRouter } from "expo-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
+  ActivityIndicator,
+  I18nManager,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -22,6 +24,12 @@ import {
   getLanguageEnglishLabel,
   getLanguageNativeLabel,
 } from "../lib/i18n/language";
+import {
+  getDirectionalArrowScale,
+  getDirectionalRow,
+  getDirectionalTextAlign,
+  reloadAppForLayoutDirection,
+} from "../lib/i18n/rtl";
 import { fonts } from "../styles/typography";
 
 function Radio({ selected }: { selected: boolean }) {
@@ -38,6 +46,8 @@ export default function LanguageSettingsScreen() {
   const insets = useSafeAreaInsets();
   const localizedFonts = useLocalizedAppFonts();
   const languagePreference = useAppLanguagePreference();
+  const [isApplyingDirection, setIsApplyingDirection] = useState(false);
+  const isRTL = I18nManager.isRTL;
   const isAutoEnabled = languagePreference.mode === "auto";
   const isCurrentLanguageSelected = (language: string) =>
     languagePreference.resolvedLanguage === language
@@ -61,25 +71,44 @@ export default function LanguageSettingsScreen() {
   };
 
   const handleToggleAuto = (value: boolean) => {
+    if (isApplyingDirection) {
+      return;
+    }
+
     if (value) {
       void (async () => {
-        await setAppLanguageToSystemDefault();
+        setIsApplyingDirection(true);
+        const result = await setAppLanguageToSystemDefault();
+        if (result.layoutDirectionChanged) {
+          await reloadAppForLayoutDirection();
+        }
+        setIsApplyingDirection(false);
       })();
       return;
     }
 
     void (async () => {
-      await setAppLanguage(languagePreference.resolvedLanguage);
+      setIsApplyingDirection(true);
+      const result = await setAppLanguage(languagePreference.resolvedLanguage);
+      if (result.layoutDirectionChanged) {
+        await reloadAppForLayoutDirection();
+      }
+      setIsApplyingDirection(false);
     })();
   };
 
   const handleSelectLanguage = (language: string) => {
-    if (isCurrentLanguageSelected(language)) {
+    if (isCurrentLanguageSelected(language) || isApplyingDirection) {
       return;
     }
 
     void (async () => {
-      await setAppLanguage(language);
+      setIsApplyingDirection(true);
+      const result = await setAppLanguage(language);
+      if (result.layoutDirectionChanged) {
+        await reloadAppForLayoutDirection();
+      }
+      setIsApplyingDirection(false);
     })();
   };
 
@@ -103,24 +132,33 @@ export default function LanguageSettingsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable accessibilityRole="button" onPress={handleBack} style={styles.backButton}>
-          <Text style={[styles.backText, localizedFonts.medium]}>{"\u2039"}</Text>
+        <Pressable accessibilityRole="button" disabled={isApplyingDirection} onPress={handleBack} style={styles.backButton}>
+          <Text
+            style={[
+              styles.backText,
+              localizedFonts.medium,
+              { transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] },
+            ]}
+          >
+            {"\u2039"}
+          </Text>
         </Pressable>
 
         <View style={styles.headerBlock}>
-          <Text style={[styles.eyebrow, localizedFonts.semibold]}>{t("settings.rows.language")}</Text>
-          <Text style={[styles.title, localizedFonts.bold]}>{t("settings.language.title")}</Text>
-          <Text style={[styles.description, localizedFonts.regular]}>{t("settings.language.description")}</Text>
+          <Text style={[styles.eyebrow, localizedFonts.semibold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("settings.rows.language")}</Text>
+          <Text style={[styles.title, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("settings.language.title")}</Text>
+          <Text style={[styles.description, localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("settings.language.description")}</Text>
         </View>
 
         <View style={styles.card}>
-          <View style={styles.autoRow}>
-            <View style={styles.autoCopy}>
-              <Text style={[styles.autoTitle, localizedFonts.semibold]}>{t("settings.language.auto")}</Text>
-              <Text style={[styles.autoDescription, localizedFonts.regular]}>{autoDescription}</Text>
+          <View style={[styles.autoRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+            <View style={[styles.autoCopy, { alignItems: isRTL ? "flex-end" : "flex-start" }]}>
+              <Text style={[styles.autoTitle, localizedFonts.semibold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("settings.language.auto")}</Text>
+              <Text style={[styles.autoDescription, localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }]}>{autoDescription}</Text>
             </View>
 
             <Switch
+              disabled={isApplyingDirection}
               onValueChange={handleToggleAuto}
               thumbColor={isAutoEnabled ? "#FFFFFF" : "#FFFFFF"}
               trackColor={{ false: "#D4D4D4", true: "#0A0A0A" }}
@@ -141,12 +179,12 @@ export default function LanguageSettingsScreen() {
                 accessibilityRole="radio"
                 accessibilityState={{ checked: isSelected }}
                 onPress={() => handleSelectLanguage(option.code)}
-                style={styles.languageRow}
+                style={[styles.languageRow, { flexDirection: getDirectionalRow(isRTL) }]}
               >
-                <View style={styles.languageCopy}>
-                  <Text style={[styles.languageNative, localizedFonts.medium]}>{option.nativeLabel}</Text>
+                <View style={[styles.languageCopy, { alignItems: isRTL ? "flex-end" : "flex-start" }]}>
+                  <Text style={[styles.languageNative, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{option.nativeLabel}</Text>
                   {showEnglishLabel ? (
-                    <Text style={[styles.languageEnglish, localizedFonts.regular]}>{englishLabel}</Text>
+                    <Text style={[styles.languageEnglish, localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }]}>{englishLabel}</Text>
                   ) : null}
                 </View>
 
@@ -155,6 +193,15 @@ export default function LanguageSettingsScreen() {
             );
           })}
         </View>
+
+        {isApplyingDirection ? (
+          <View style={[styles.restartState, { flexDirection: getDirectionalRow(isRTL) }]}>
+            <ActivityIndicator color="#0A0A0A" />
+            <Text style={[styles.restartText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>
+              {t("settings.language.restartNotice")}
+            </Text>
+          </View>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -287,5 +334,17 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: "#0A0A0A",
+  },
+  restartState: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 16,
+  },
+  restartText: {
+    color: "#6B6B6B",
+    fontSize: 13,
+    lineHeight: 18,
+    ...fonts.medium,
   },
 });

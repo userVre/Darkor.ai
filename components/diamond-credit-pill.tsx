@@ -1,4 +1,5 @@
 import {
+  I18nManager,
   Pressable,
   StyleSheet,
   Text,
@@ -85,6 +86,7 @@ export function DiamondCreditPill({
   onPress,
   style,
 }: DiamondCreditPillProps) {
+  const isRTL = I18nManager.isRTL;
   const palette = VARIANT_STYLES[variant];
   const content = (
     <>
@@ -95,6 +97,7 @@ export function DiamondCreditPill({
 
   const pillStyle = [
     styles.pill,
+    isRTL ? styles.pillRtl : null,
     {
       backgroundColor: palette.backgroundColor,
     },
@@ -131,6 +134,9 @@ const styles = StyleSheet.create({
     borderColor: "rgba(15, 23, 42, 0.08)",
     ...organicRadii(20, 14),
     ...ambientShadow(0.06, 12, 8),
+  },
+  pillRtl: {
+    flexDirection: "row-reverse",
   },
   countText: {
     fontSize: 15,

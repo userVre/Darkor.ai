@@ -1,9 +1,10 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import { ActivityIndicator, I18nManager, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { ChevronRight } from "@/components/material-icons";
 import type { ComponentType, ReactNode } from "react";
 
 import { useLocalizedAppFonts } from "../lib/i18n";
 import { DS } from "../lib/design-system";
+import { getDirectionalArrowScale, getDirectionalRow, getDirectionalTextAlign } from "../lib/i18n/rtl";
 import { fonts } from "../styles/typography";
 
 type SettingsRowProps = {
@@ -34,6 +35,7 @@ export function SettingsRow({
   style,
 }: SettingsRowProps) {
   const localizedFonts = useLocalizedAppFonts();
+  const isRTL = I18nManager.isRTL;
   const isInteractive = Boolean(onPress) && !disabled;
 
   return (
@@ -43,19 +45,33 @@ export function SettingsRow({
       onPress={() => {
         void onPress?.();
       }}
-      style={[styles.row, style]}
+      style={[styles.row, { flexDirection: getDirectionalRow(isRTL) }, style]}
     >
-      <View style={styles.leftSide}>
+      <View style={[styles.leftSide, { flexDirection: getDirectionalRow(isRTL) }]}>
         <Icon color={iconColor} size={20} strokeWidth={2.1} />
-        <Text numberOfLines={2} style={[styles.label, localizedFonts.medium, { color: textColor }]}>
+        <Text
+          numberOfLines={2}
+          style={[
+            styles.label,
+            localizedFonts.medium,
+            { color: textColor, textAlign: getDirectionalTextAlign(isRTL) },
+          ]}
+        >
           {label}
         </Text>
       </View>
 
-      <View style={styles.rightSide}>
+      <View style={[styles.rightSide, { flexDirection: getDirectionalRow(isRTL) }]}>
         {loading ? <ActivityIndicator color={loadingColor} /> : null}
         {!loading ? rightAccessory : null}
-        {!loading && showChevron ? <ChevronRight color={DS.colors.textMuted} size={18} strokeWidth={1.9} /> : null}
+        {!loading && showChevron ? (
+          <ChevronRight
+            color={DS.colors.textMuted}
+            size={18}
+            strokeWidth={1.9}
+            style={{ transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] }}
+          />
+        ) : null}
       </View>
     </Pressable>
   );

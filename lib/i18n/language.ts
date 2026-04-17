@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 
 export const SUPPORTED_LANGUAGES = [
   "en-US",
+  "ar",
   "sv",
   "de",
   "ja",
@@ -32,6 +33,13 @@ export const SUPPORTED_LANGUAGE_OPTIONS: readonly SupportedLanguageOption[] = [
     nativeLabel: "English (US)",
     localeBase: "en",
     defaultRegion: "US",
+  },
+  {
+    code: "ar",
+    englishLabel: "Arabic",
+    nativeLabel: "\u0627\u0644\u0639\u0631\u0628\u064a\u0629",
+    localeBase: "ar",
+    defaultRegion: "SA",
   },
   {
     code: "sv",
@@ -124,6 +132,10 @@ export function resolveSupportedLanguage(input?: string | null): AppLanguage {
 
   if (normalized === "en" || normalized.startsWith("en-")) {
     return "en-US";
+  }
+
+  if (normalized === "ar" || normalized.startsWith("ar-")) {
+    return "ar";
   }
 
   if (normalized === "sv" || normalized.startsWith("sv-")) {
@@ -241,6 +253,10 @@ export function isCjkLanguage(language?: string | null) {
   return ["ja", "ko", "zh-Hans"].includes(resolveSupportedLanguage(language));
 }
 
+export function isRtlLanguage(language?: string | null) {
+  return resolveSupportedLanguage(language) === "ar";
+}
+
 function getCjkFallbackFontFamily(language: AppLanguage) {
   if (Platform.OS === "ios") {
     if (language === "ja") return "Hiragino Sans";
@@ -262,6 +278,12 @@ export function getLocalizedFonts(language?: string | null) {
   const resolvedLanguage = resolveSupportedLanguage(language);
   const fontFamily = isCjkLanguage(resolvedLanguage)
     ? getCjkFallbackFontFamily(resolvedLanguage)
+    : isRtlLanguage(resolvedLanguage)
+      ? Platform.select({
+          ios: "Geeza Pro",
+          android: "sans-serif",
+          default: "sans-serif",
+        }) ?? "sans-serif"
     : "Inter";
   const italicFontFamily = fontFamily === "Inter" ? "Inter-Italic" : fontFamily;
 

@@ -169,7 +169,8 @@
       "description": "Choose whether HomeDecor AI follows your device language or uses a selected in-app language.",
       "auto": "Auto (System Default)",
       "autoShort": "Auto",
-      "usingSystem": "Currently following {{language}} from your device"
+      "usingSystem": "Currently following {{language}} from your device",
+      "restartNotice": "Applying the new layout direction..."
     },
     "messages": {
       "destinationUnavailable": "This destination is unavailable right now.",

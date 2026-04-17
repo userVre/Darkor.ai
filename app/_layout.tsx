@@ -42,8 +42,10 @@ import {
 import i18n, {
   initializeI18n,
   syncAppLanguageWithSystem,
+  useAppLanguagePreference,
   useLocalizedAppFonts,
 } from "../lib/i18n";
+import { getDirectionalTextAlign, reloadAppForLayoutDirection } from "../lib/i18n/rtl";
 import { tokenCache } from "../lib/token-cache";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -53,11 +55,15 @@ const TextInputWithDefaults = TextInput as typeof TextInput & { defaultProps?: T
 
 let lastAppliedTypographyKey = "";
 
-function applyGlobalTypographyDefaults(localizedFonts: ReturnType<typeof useLocalizedAppFonts>) {
+function applyGlobalTypographyDefaults(
+  localizedFonts: ReturnType<typeof useLocalizedAppFonts>,
+  isRTL: boolean,
+) {
   const nextTypographyKey = [
     localizedFonts.regular.fontFamily,
     localizedFonts.medium.fontFamily,
     localizedFonts.bold.fontFamily,
+    String(isRTL),
   ].join(":");
 
   if (lastAppliedTypographyKey === nextTypographyKey) {
@@ -66,12 +72,12 @@ function applyGlobalTypographyDefaults(localizedFonts: ReturnType<typeof useLoca
 
   TextWithDefaults.defaultProps = {
     ...TextWithDefaults.defaultProps,
-    style: [localizedFonts.regular, { textAlign: "left" }],
+    style: [localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }],
   };
 
   TextInputWithDefaults.defaultProps = {
     ...TextInputWithDefaults.defaultProps,
-    style: [localizedFonts.regular, { textAlign: "left" }],
+    style: [localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }],
   };
 
   lastAppliedTypographyKey = nextTypographyKey;
@@ -272,7 +278,11 @@ function LocalizationSyncGate() {
     .join("|");
 
   useEffect(() => {
-    void syncAppLanguageWithSystem();
+    void syncAppLanguageWithSystem().then((result) => {
+      if (result.layoutDirectionChanged) {
+        void reloadAppForLayoutDirection();
+      }
+    });
   }, [localeSignature]);
 
   return null;
@@ -376,13 +386,15 @@ function CreateAccessGate({ children }: { children: React.ReactNode }) {
 }
 
 function AppShell() {
+  const languagePreference = useAppLanguagePreference();
+
   return (
     <Stack
       initialRouteName="index"
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: "#FFFFFF" },
-        animation: "slide_from_right",
+        animation: languagePreference.isRTL ? "slide_from_left" : "slide_from_right",
         animationDuration: 260,
       }}
     >
@@ -409,6 +421,7 @@ function AppShell() {
 }
 
 export default function RootLayout() {
+  const languagePreference = useAppLanguagePreference();
   const localizedFonts = useLocalizedAppFonts();
   const [fontsLoaded] = useFonts({
     Inter: require("../assets/Fonts/InterVariable.ttf"),
@@ -420,7 +433,7 @@ export default function RootLayout() {
   const clerkKey = envReport.values.clerkPublishableKey;
 
   if (fontsLoaded) {
-    applyGlobalTypographyDefaults(localizedFonts);
+    applyGlobalTypographyDefaults(localizedFonts, languagePreference.isRTL);
   }
 
   useEffect(() => {
@@ -477,7 +490,10 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView
+      key={languagePreference.isRTL ? "rtl" : "ltr"}
+      style={{ flex: 1, direction: languagePreference.isRTL ? "rtl" : "ltr" }}
+    >
       <AppErrorBoundary>
         <SafeAreaProvider>
           <ClerkProvider publishableKey={clerkKey ?? ""} tokenCache={tokenCache}>

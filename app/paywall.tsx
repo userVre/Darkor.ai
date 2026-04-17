@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Animated as NativeAnimated,
   Alert,
+  I18nManager,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Pressable,
@@ -40,6 +41,13 @@ import { useViewerSession } from "../components/viewer-session-context";
 import { getGenerationLimit } from "../convex/subscriptions";
 import { triggerHaptic } from "../lib/haptics";
 import { useLocalizedAppFonts } from "../lib/i18n";
+import {
+  getDirectionalAlignment,
+  getDirectionalArrowScale,
+  getDirectionalOppositeAlignment,
+  getDirectionalRow,
+  getDirectionalTextAlign,
+} from "../lib/i18n/rtl";
 import { dismissLaunchPaywall } from "../lib/launch-paywall";
 import {
   configureRevenueCat,
@@ -125,12 +133,13 @@ function FadeSwap({
 
 function FeatureRow({ label, isLast }: { label: string; isLast: boolean }) {
   const localizedFonts = useLocalizedAppFonts();
+  const isRTL = I18nManager.isRTL;
   return (
-    <View style={[styles.featureRow, !isLast ? styles.featureRowGap : null]}>
+    <View style={[styles.featureRow, !isLast ? styles.featureRowGap : null, { flexDirection: getDirectionalRow(isRTL) }]}>
       <View style={styles.featureIcon}>
         <Check color={TEXT_PRIMARY} size={12} strokeWidth={3} />
       </View>
-      <Text style={[styles.featureText, localizedFonts.medium]}>{label}</Text>
+      <Text style={[styles.featureText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{label}</Text>
     </View>
   );
 }
@@ -233,19 +242,20 @@ function YearlyPlanCard({
 }) {
   const { t } = useTranslation();
   const localizedFonts = useLocalizedAppFonts();
+  const isRTL = I18nManager.isRTL;
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, selected ? styles.planCardSelected : styles.planCardIdle, styles.yearlyCard]}>
       <View style={styles.bestOfferBadge}>
         <Text style={[styles.bestOfferText, localizedFonts.bold]}>{t("paywall.bestOffer").toUpperCase()}</Text>
       </View>
 
-      <View style={styles.planRow}>
+      <View style={[styles.planRow, { flexDirection: getDirectionalRow(isRTL) }]}>
         <View style={styles.planCopy}>
-          <Text style={[styles.planLabel, localizedFonts.bold]}>{t("paywall.yearlyAccess").toUpperCase()}</Text>
-          <Text style={[styles.planSubtext, localizedFonts.regular]}>{pricePerYearText}</Text>
+          <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("paywall.yearlyAccess").toUpperCase()}</Text>
+          <Text style={[styles.planSubtext, localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }]}>{pricePerYearText}</Text>
         </View>
 
-        <View style={styles.planPriceColumn}>
+        <View style={[styles.planPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
           <Text adjustsFontSizeToFit minimumFontScale={0.85} numberOfLines={1} style={[styles.yearlyPrice, localizedFonts.bold]}>
             {pricePerWeekText}
           </Text>
@@ -271,25 +281,26 @@ function WeeklyPlanCard({
 }) {
   const { t } = useTranslation();
   const localizedFonts = useLocalizedAppFonts();
+  const isRTL = I18nManager.isRTL;
   if (freeTrialEnabled) {
     return (
       <FadeSwap swapKey="weekly-trial-on">
         <View>
           <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, styles.planCardSelected, styles.weeklyCard]}>
-            <View style={styles.planRow}>
+            <View style={[styles.planRow, { flexDirection: getDirectionalRow(isRTL) }]}>
                 <View style={styles.planCopy}>
                   <View style={styles.trialBadge}>
                     <Text style={[styles.trialBadgeText, localizedFonts.bold]}>{t("paywall.freeTrial").toUpperCase()}</Text>
                   </View>
                 </View>
 
-              <View style={styles.planPriceColumn}>
+              <View style={[styles.planPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
                 <Text style={[styles.weeklyTrialPrice, localizedFonts.bold]}>{trialThenPriceText}</Text>
               </View>
             </View>
           </Pressable>
 
-          <View style={styles.noPaymentRow}>
+          <View style={[styles.noPaymentRow, { flexDirection: getDirectionalRow(isRTL), justifyContent: getDirectionalAlignment(isRTL) }]}>
             <Shield color={TEXT_MUTED} size={14} strokeWidth={2.1} />
             <Text style={[styles.noticeText, localizedFonts.medium]}>{t("paywall.noPaymentNow")}</Text>
           </View>
@@ -302,18 +313,18 @@ function WeeklyPlanCard({
     <FadeSwap swapKey="weekly-trial-off">
       <View>
         <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, selected ? styles.planCardSelected : styles.planCardIdle, styles.weeklyCard]}>
-          <View style={styles.planRow}>
+          <View style={[styles.planRow, { flexDirection: getDirectionalRow(isRTL) }]}>
             <View style={styles.planCopy}>
-              <Text style={[styles.planLabel, localizedFonts.bold]}>{t("paywall.weeklyAccess").toUpperCase()}</Text>
+              <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("paywall.weeklyAccess").toUpperCase()}</Text>
             </View>
 
-            <View style={styles.planPriceColumn}>
+            <View style={[styles.planPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
               <Text style={[styles.weeklyPrice, localizedFonts.bold]}>{pricePerWeekText}</Text>
             </View>
           </View>
         </Pressable>
 
-        <View style={styles.cancelAnytimeRow}>
+        <View style={[styles.cancelAnytimeRow, { flexDirection: getDirectionalRow(isRTL), justifyContent: getDirectionalAlignment(isRTL) }]}>
           <Shield color={TEXT_MUTED} size={14} strokeWidth={2.1} />
           <Text style={[styles.noticeText, localizedFonts.medium]}>{t("paywall.cancelAnytime")}</Text>
         </View>
@@ -478,6 +489,7 @@ export default function PaywallScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const localizedFonts = useLocalizedAppFonts();
+  const isRTL = I18nManager.isRTL;
   const pricingContext = usePricingContext();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -513,11 +525,14 @@ export default function PaywallScreen() {
   const heroRowHeight = heroCenterSize + HERO_SIDE_TRANSLATE_Y + 56;
   const isMoroccoRegion = pricingContext.regionCode === "MA";
   const isUnitedStatesRegion = pricingContext.regionCode === "US";
+  const isGulfRegion = ["AE", "SA", "QA"].includes(pricingContext.regionCode);
 
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly"), [packages]);
   const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly"), [packages]);
   const forcedDisplayCurrencyCode = isMoroccoRegion
     ? "MAD"
+    : isGulfRegion
+      ? pricingContext.currencyCode
     : isUnitedStatesRegion
       ? "USD"
       : undefined;
@@ -951,7 +966,12 @@ export default function PaywallScreen() {
       <Animated.View pointerEvents="none" style={[styles.overlay, overlayAnimatedStyle]} />
 
       <Animated.View style={[styles.sheet, { minHeight: sheetHeight }, sheetAnimatedStyle]}>
-        <Pressable accessibilityRole="button" disabled={isLoading} onPress={() => void handleRestore()} style={styles.restoreButton}>
+        <Pressable
+          accessibilityRole="button"
+          disabled={isLoading}
+          onPress={() => void handleRestore()}
+          style={[styles.restoreButton, { [isRTL ? "right" : "left"]: 20 }]}
+        >
           <Text style={[styles.restoreText, localizedFonts.medium]}>{t("paywall.restore")}</Text>
         </Pressable>
 
@@ -1006,9 +1026,9 @@ export default function PaywallScreen() {
             </NativeAnimated.ScrollView>
           </View>
 
-          <View style={styles.titleSection}>
-            <Text style={[styles.titleText, localizedFonts.bold]}>{t("paywall.title")}</Text>
-            <Text style={[styles.subtitleText, localizedFonts.medium]}>{t("paywall.subtitle")}</Text>
+          <View style={[styles.titleSection, { alignItems: getDirectionalAlignment(isRTL) }]}>
+            <Text style={[styles.titleText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("paywall.title")}</Text>
+            <Text style={[styles.subtitleText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("paywall.subtitle")}</Text>
           </View>
 
           <View style={styles.featuresSection}>
@@ -1021,8 +1041,15 @@ export default function PaywallScreen() {
             ))}
           </View>
 
-          <Pressable accessibilityRole="switch" accessibilityState={{ checked: freeTrialEnabled }} onPress={handleToggleTrial} style={styles.trialBar}>
-            <Text style={[styles.trialLabel, localizedFonts.medium]}>{freeTrialEnabled ? t("paywall.trialEnabled") : t("paywall.enableTrial")}</Text>
+          <Pressable
+            accessibilityRole="switch"
+            accessibilityState={{ checked: freeTrialEnabled }}
+            onPress={handleToggleTrial}
+            style={[styles.trialBar, { flexDirection: getDirectionalRow(isRTL) }]}
+          >
+            <Text style={[styles.trialLabel, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>
+              {freeTrialEnabled ? t("paywall.trialEnabled") : t("paywall.enableTrial")}
+            </Text>
             <ToggleSwitch value={freeTrialEnabled} />
           </Pressable>
 
@@ -1045,7 +1072,9 @@ export default function PaywallScreen() {
             />
           </View>
 
-          {errorMessage ? <Text style={[styles.errorText, localizedFonts.medium]}>{errorMessage}</Text> : null}
+          {errorMessage ? (
+            <Text style={[styles.errorText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{errorMessage}</Text>
+          ) : null}
 
           <Pressable accessibilityRole="button" disabled={ctaDisabled} onPress={() => void handlePurchase()} style={[styles.ctaButton, ctaDisabled ? styles.ctaButtonDisabled : null]}>
             {isLoading ? (
@@ -1055,16 +1084,24 @@ export default function PaywallScreen() {
               </View>
             ) : (
               <FadeSwap swapKey={freeTrialEnabled ? "cta-trial" : "cta-continue"} style={styles.ctaContent}>
-                <View style={styles.ctaLabelRow}>
+                <View style={[styles.ctaLabelRow, { flexDirection: getDirectionalRow(isRTL) }]}>
                   <Text style={[styles.ctaText, localizedFonts.bold]}>{freeTrialEnabled ? t("paywall.tryForFree") : t("paywall.continue")}</Text>
-                  <Text style={[styles.ctaArrow, localizedFonts.bold]}>{">"}</Text>
+                  <Text
+                    style={[
+                      styles.ctaArrow,
+                      localizedFonts.bold,
+                      { transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] },
+                    ]}
+                  >
+                    {">"}
+                  </Text>
                 </View>
               </FadeSwap>
             )}
           </Pressable>
 
           <View style={[styles.legalFooter, { paddingBottom: Math.max(insets.bottom + 12, 12) }]}>
-            <View style={styles.legalLinksRow}>
+            <View style={[styles.legalLinksRow, { flexDirection: getDirectionalRow(isRTL), justifyContent: getDirectionalAlignment(isRTL) }]}>
               <LegalLink label={t("paywall.terms")} onPress={handleOpenTerms} />
               <Text style={[styles.legalDivider, localizedFonts.regular]}>|</Text>
               <LegalLink label={t("paywall.privacy")} onPress={handleOpenPrivacy} />
@@ -1093,7 +1130,6 @@ const styles = StyleSheet.create({
   restoreButton: {
     position: "absolute",
     top: 40,
-    left: 20,
     zIndex: 10,
   },
   restoreText: {
@@ -1207,7 +1243,7 @@ const styles = StyleSheet.create({
     backgroundColor: BRAND_RED,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
+    marginHorizontal: 12,
   },
   featureText: {
     flex: 1,
@@ -1320,7 +1356,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     alignItems: "flex-end",
     justifyContent: "center",
-    marginLeft: 12,
+    marginHorizontal: 12,
   },
   planLabel: {
     color: TEXT_PRIMARY,
@@ -1440,7 +1476,7 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   ctaArrow: {
-    marginLeft: 8,
+    marginHorizontal: 8,
     color: CTA_TEXT,
     fontSize: 20,
     lineHeight: 22,

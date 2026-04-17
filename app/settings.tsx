@@ -8,7 +8,7 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
-import { Alert, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { Alert, I18nManager, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import * as SecureStore from "expo-secure-store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -33,6 +33,7 @@ import { useProSuccess } from "../components/pro-success-context";
 import { useWorkspaceDraft } from "../components/workspace-context";
 import { useAppLanguagePreference, useLocalizedAppFonts } from "../lib/i18n";
 import { getLanguageNativeLabel } from "../lib/i18n/language";
+import { getDirectionalArrowScale, getDirectionalRow, getDirectionalTextAlign } from "../lib/i18n/rtl";
 import {
   configureRevenueCat,
   getRevenueCatClient,
@@ -86,6 +87,7 @@ export default function SettingsScreen() {
     languagePreference.mode === "auto"
       ? `${t("settings.language.autoShort")} - ${getLanguageNativeLabel(languagePreference.resolvedLanguage)}`
       : getLanguageNativeLabel(languagePreference.resolvedLanguage);
+  const isRTL = I18nManager.isRTL;
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -324,27 +326,36 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.heroSection}>
-          <Pressable accessibilityRole="button" onPress={handleBack} style={[styles.backArrow, { top: heroTopInset }]}>
-            <Text style={styles.backArrowText}>{"\u2039"}</Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={handleBack}
+            style={[styles.backArrow, { top: heroTopInset, [isRTL ? "right" : "left"]: 16 }]}
+          >
+            <Text style={[styles.backArrowText, { transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] }]}>{"\u2039"}</Text>
           </Pressable>
 
           <View style={[styles.heroContent, { paddingTop: heroTopInset + 48 }]}>
-            <Text style={[styles.headerTitle, localizedFonts.semibold]}>{t("settings.title")}</Text>
-            <Text style={[styles.heroTitle, localizedFonts.bold]}>{t("settings.heroTitle")}</Text>
+            <Text style={[styles.headerTitle, localizedFonts.semibold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("settings.title")}</Text>
+            <Text style={[styles.heroTitle, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("settings.heroTitle")}</Text>
 
             <View style={styles.featureList}>
               {featureItems.map((item) => (
-                <View key={item} style={styles.featureRow}>
+                <View key={item} style={[styles.featureRow, { flexDirection: getDirectionalRow(isRTL) }]}>
                   <View style={styles.featureIconBox}>
-                    <ChevronRight color="#0A0A0A" size={14} strokeWidth={2.4} />
+                    <ChevronRight
+                      color="#0A0A0A"
+                      size={14}
+                      strokeWidth={2.4}
+                      style={{ transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] }}
+                    />
                   </View>
-                  <Text style={[styles.featureText, localizedFonts.medium]}>{item}</Text>
+                  <Text style={[styles.featureText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{item}</Text>
                 </View>
               ))}
             </View>
 
             <Pressable accessibilityRole="button" onPress={handleUpgrade} style={styles.upgradeButton}>
-              <View style={styles.upgradeButtonContent}>
+              <View style={[styles.upgradeButtonContent, { flexDirection: getDirectionalRow(isRTL) }]}>
                 <Diamond color="#FFFFFF" size={16} strokeWidth={2.2} />
                 <Text style={[styles.upgradeButtonText, localizedFonts.semibold]}>{t("settings.upgradePro")}</Text>
               </View>
@@ -423,7 +434,6 @@ const styles = StyleSheet.create({
   },
   backArrow: {
     position: "absolute",
-    left: 16,
     width: 44,
     height: 44,
     alignItems: "center",
@@ -444,8 +454,7 @@ const styles = StyleSheet.create({
   },
   heroContent: {
     flex: 1,
-    paddingLeft: 24,
-    paddingRight: 24,
+    paddingHorizontal: 24,
     paddingBottom: 24,
     justifyContent: "flex-end",
   },
@@ -533,7 +542,7 @@ const styles = StyleSheet.create({
     color: "#6B6B6B",
     fontSize: 12,
     lineHeight: 16,
-    textAlign: "right",
+    textAlign: "auto",
     ...fonts.regular,
   },
   copyButton: {
@@ -548,8 +557,8 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 32,
     color: "#A0A0A0",
-    textAlign: "left",
-    marginLeft: 24,
+    textAlign: "auto",
+    marginHorizontal: 24,
     fontSize: 12,
     lineHeight: 16,
     ...fonts.regular,

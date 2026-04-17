@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { I18nManager, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 
 import { DS } from "../lib/design-system";
 
@@ -22,7 +22,7 @@ export const StepProgressSegments = memo(function StepProgressSegments({
       accessibilityLabel={`Step ${safeStep} of ${safeTotalSteps}`}
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 1, max: safeTotalSteps, now: safeStep }}
-      style={[styles.row, style]}
+      style={[styles.row, I18nManager.isRTL ? styles.rowRtl : null, style]}
     >
       {Array.from({ length: safeTotalSteps }).map((_, index) => {
         const active = index < safeStep;
@@ -38,6 +38,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+  },
+  rowRtl: {
+    flexDirection: "row-reverse",
   },
   segment: {
     flex: 1,

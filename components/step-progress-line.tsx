@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from "react-native";
+import { Animated, I18nManager, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from "react-native";
 
 import { DS } from "../lib/design-system";
 
@@ -48,7 +48,17 @@ export function StepProgressLine({
 
   return (
     <View onLayout={handleLayout} style={[styles.track, { backgroundColor: trackColor }, style]}>
-      <Animated.View pointerEvents="none" style={[styles.fill, { width: fillWidth, backgroundColor: fillColor }]} />
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.fill,
+          {
+            width: fillWidth,
+            backgroundColor: fillColor,
+            [I18nManager.isRTL ? "right" : "left"]: 0,
+          },
+        ]}
+      />
     </View>
   );
 }
@@ -60,6 +70,9 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   fill: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
     height: "100%",
     borderRadius: 999,
   },

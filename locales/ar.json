@@ -1,0 +1,1082 @@
+{
+  "app": {
+    "name": "هوم ديكور AI"
+  },
+  "common": {
+    "actions": {
+      "continue": "متابعة",
+      "cancel": "إلغاء",
+      "close": "إغلاق",
+      "delete": "حذف",
+      "save": "حفظ",
+      "share": "مشاركة",
+      "restore": "استعادة",
+      "upgrade": "ترقية",
+      "tryAgain": "يرجى المحاولة مرة أخرى.",
+      "openSettings": "فتح الإعدادات",
+      "notNow": "ليس الآن",
+      "takePhoto": "التقاط صورة",
+      "chooseFromGallery": "الاختيار من المعرض",
+      "addPhoto": "إضافة صورة",
+      "chooseMediaSource": "اختر مصدر الصورة",
+      "examplePhotos": "صور نموذجية",
+      "seeAll": "استكشاف الكل",
+      "uploadPlus": "رفع +",
+      "exit": "خروج",
+      "connect": "جارٍ الاتصال...",
+      "tryThis": "جرّب هذا"
+    },
+    "labels": {
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "version": "الإصدار {{version}}",
+      "lastUpdated": "آخر تحديث",
+      "step": "الخطوة {{current}} / {{total}}"
+    },
+    "alerts": {
+      "exitTitle": "مغادرة هذا التصميم؟",
+      "progressLost": "سيتم فقدان تقدمك الحالي في التصميم.",
+      "completeStepTitle": "أكمل هذه الخطوة",
+      "makeSelection": "قم بتحديد خيار للمتابعة.",
+      "addPhotoToContinue": "أضف صورة للمتابعة.",
+      "invalidHexTitle": "لون غير صالح",
+      "invalidHexBody": "أدخل رمز HEX صحيحًا من 6 خانات مثل #D946EF."
+    },
+    "states": {
+      "workInProgress": "العمل جارٍ",
+      "generationFailed": "حدثت مشكلة أثناء إنشاء التصميم. يرجى المحاولة مرة أخرى.",
+      "savedToGallery": "تم الحفظ في مكتبة الصور",
+      "photoPermissionNeeded": "يلزم الوصول إلى مكتبة الصور.",
+      "loading": "جارٍ التحميل..."
+    }
+  },
+  "boot": {
+    "loadingApp": "جارٍ تحميل هوم ديكور AI",
+    "loadingAccount": "جارٍ تحميل حسابك...",
+    "checkingPlan": "جارٍ مراجعة خطتك...",
+    "secureAccount": "أمّن حسابك لبدء التصميم...",
+    "missingEnvTitle": "متغيرات البيئة مفقودة",
+    "missingEnvBody": "القيم التالية مطلوبة قبل تشغيل هوم ديكور AI:"
+  },
+  "tabs": {
+    "tools": "الأدوات",
+    "create": "إنشاء",
+    "discover": "استكشاف",
+    "profile": "ملفي"
+  },
+  "home": {
+    "title": "هوم ديكور AI",
+    "accessibility": {
+      "openCredits": "فتح الرصيد"
+    },
+    "errors": {
+      "tryItUnavailableTitle": "المعاينة غير متاحة"
+    },
+    "tools": {
+      "interior": {
+        "title": "التصميم الداخلي",
+        "description": "حوّل أي غرفة بتصميم داخلي مدعوم بالذكاء الاصطناعي."
+      },
+      "exterior": {
+        "title": "التصميم الخارجي",
+        "description": "أعد تصور واجهة منزلك بأسلوب معماري عالمي المستوى."
+      },
+      "garden": {
+        "title": "تصميم الحديقة",
+        "description": "صمّم حدائق ومساحات خارجية مبهرة بسهولة."
+      },
+      "paint": {
+        "title": "الطلاء (الجدار)",
+        "description": "ارتقِ بجدرانك عبر ألوان مخصصة وملامس مصممة بعناية."
+      },
+      "floor": {
+        "title": "تجديد الأرضية",
+        "description": "ارفع مستوى أساس الغرفة بمواد وتشطيبات فاخرة."
+      },
+      "cta": "جرّب هذا"
+    }
+  },
+  "paywall": {
+    "features": {
+      "fasterRendering": "معالجة ذكاء اصطناعي ذات أولوية",
+      "adFree": "تصييرات فائقة الدقة Ultra-HD (4K)",
+      "unlimitedRenders": "حصص ثابتة: 20 تصييرًا أسبوعيًا أو 80 تصييرًا شهريًا"
+    },
+    "restore": "استعادة",
+    "bestOffer": "أفضل عرض",
+    "yearlyAccess": "اشتراك سنوي",
+    "weeklyAccess": "اشتراك أسبوعي",
+    "freeTrial": "تجربة مجانية لمدة 3 أيام",
+    "justPerYear": "{{price}} سنويًا فقط",
+    "pricePerYear": "{{price}} سنويًا فقط",
+    "pricePerWeek": "{{price}} أسبوعيًا",
+    "perWeek": "أسبوعيًا",
+    "thenWeekly": "ثم {{price}}",
+    "thenPricePerWeek": "ثم {{price}} أسبوعيًا",
+    "noPaymentNow": "لا يوجد دفع الآن",
+    "cancelAnytime": "يمكن الإلغاء في أي وقت",
+    "trialEnabled": "تم تفعيل التجربة المجانية",
+    "enableTrial": "تفعيل التجربة المجانية",
+    "processing": "جارٍ المعالجة...",
+    "tryForFree": "ابدأ تجربة Pro",
+    "continue": "ابدأ تجربة Pro",
+    "subtitle": "استمتع بالقوة الكاملة للذكاء المعماري بحدود أعلى ودقة 4K.",
+    "terms": "الشروط",
+    "privacy": "الخصوصية",
+    "subscriptionsUnavailable": "الاشتراكات غير متاحة مؤقتًا.",
+    "restoreFailed": "فشلت الاستعادة",
+    "restored": "تمت الاستعادة",
+    "noActiveSubscriptions": "لم يتم العثور على اشتراكات نشطة.",
+    "purchaseError": "خطأ في الشراء",
+    "planUnavailable": "الخطة المحددة غير متاحة حاليًا.",
+    "moroccoPricingUnavailable": "التسعير المحلي بالدرهم المغربي غير متاح مؤقتًا. يرجى المحاولة بعد قليل.",
+    "subscriptionConfirmFailed": "لم نتمكن من تأكيد اشتراكك. يرجى المحاولة مرة أخرى.",
+    "purchaseCancelled": "تم إلغاء عملية الشراء.",
+    "closeA11y": "إغلاق شاشة الاشتراك",
+    "title": "صمّم باحتراف. حرية إبداعية بلا قيود.",
+    "beginTrial": "ابدأ تجربة Pro"
+  },
+  "creditLimit": {
+    "title": "قم بالترقية إلى الوصول الاحترافي.",
+    "body": "لقد وصلت إلى حد التصيير القياسي. افتح التصدير عالي الدقة والمعالجة الأسرع الآن."
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "heroTitle": "الخطة المجانية",
+    "featureItems": {
+      "advancedAi": "نموذج ذكاء اصطناعي متقدم",
+      "fastProcessing": "معالجة سريعة",
+      "removeAds": "إزالة جميع الإعلانات"
+    },
+    "upgradePro": "الترقية إلى PRO",
+    "rows": {
+      "language": "اللغة",
+      "feedback": "الملاحظات",
+      "faq": "الأسئلة الشائعة",
+      "rateUs": "قيّمنا",
+      "shareWithFriends": "شارك مع الأصدقاء",
+      "termsOfUse": "شروط الاستخدام",
+      "privacyPolicy": "سياسة الخصوصية",
+      "restorePurchase": "استعادة الشراء",
+      "userId": "معرّف المستخدم",
+      "deleteInformation": "حذف المعلومات"
+    },
+    "states": {
+      "notSignedIn": "لم يتم تسجيل الدخول"
+    },
+    "language": {
+      "title": "اللغة",
+      "description": "اختر ما إذا كان هوم ديكور AI سيتبع لغة جهازك أو سيستخدم لغة محددة داخل التطبيق.",
+      "auto": "تلقائي (افتراضي النظام)",
+      "autoShort": "تلقائي",
+      "usingSystem": "يتم حاليًا اتباع {{language}} من جهازك",
+      "restartNotice": "جارٍ تطبيق اتجاه الواجهة الجديد..."
+    },
+    "messages": {
+      "destinationUnavailable": "هذه الوجهة غير متاحة حاليًا.",
+      "emailClientUnavailable": "تعذر فتح تطبيق البريد الإلكتروني.",
+      "reviewUnavailable": "طلبات المراجعة غير متاحة حاليًا.",
+      "shareUnavailable": "تعذر فتح نافذة المشاركة.",
+      "subscriptionsUnavailable": "الاشتراكات غير متاحة حاليًا.",
+      "noActiveSubscriptions": "لم يتم العثور على اشتراكات نشطة.",
+      "restoreFailed": "فشلت الاستعادة. يرجى المحاولة مرة أخرى.",
+      "noUserId": "لا يتوفر معرّف مستخدم موثّق.",
+      "userIdCopied": "تم نسخ معرّف المستخدم",
+      "deleteFailed": "تعذر حذف حسابك حاليًا."
+    },
+    "shareMessage": "استكشف التصاميم المنشأة عبر هوم ديكور AI: {{url}}",
+    "deleteAccount": {
+      "title": "حذف الحساب؟",
+      "body": "سيؤدي هذا إلى حذف حسابك وجميع البيانات المرتبطة به نهائيًا. لا يمكن التراجع عن هذا الإجراء."
+    }
+  },
+  "profile": {
+    "title": "محفظة تصاميمي",
+    "emptyTitle": "محفظتك فارغة. ابدأ مشروعًا لترى رؤاك تتحول إلى واقع.",
+    "emptySubtitle": "ابدأ مشروعك الأول لترى تصاميمك محفوظة هنا.",
+    "compareHint": "اسحب للمقارنة. انقر مرتين لإعادة الضبط.",
+    "deleteFromBoardTitle": "إزالة من المحفظة؟",
+    "deleteFromBoardBody": "سيتم إزالة هذا التصميم من محفظتك.",
+    "deletedFromBoard": "تمت الإزالة من المحفظة",
+    "unableDelete": "تعذر إزالة هذا التصميم.",
+    "generationFailedBody": "لم يكتمل هذا التصيير بنجاح. يرجى المحاولة مرة أخرى.",
+    "saveToGallery": "حفظ في مكتبة الصور",
+    "savedToGallery": "تم الحفظ في مكتبة الصور",
+    "unableSave": "تعذر حفظ هذا التصميم."
+  },
+  "discover": {
+    "title": "استكشاف",
+    "subtitle": "مراجع منتقاة للتصميمات الداخلية والعمارة والمناظر الطبيعية منظّمة في مجموعات سريعة التصفح.",
+    "tabs": {
+      "home": "الديكورات الداخلية",
+      "garden": "المناظر الطبيعية",
+      "exterior": "العمارة"
+    },
+    "tryThisStyle": "جرّب هذا النمط"
+  },
+  "auth": {
+    "accountEyebrow": "حساب هوم ديكور AI",
+    "emailPlaceholder": "name@example.com",
+    "signIn": {
+      "title": "تسجيل الدخول",
+      "subtitle": "ادخل إلى تصاميمك المحفوظة، وأرصدة الاستخدام، والمشتريات، وسجل المشاريع في مساحة عمل أنيقة واحدة.",
+      "passwordPlaceholder": "أدخل كلمة المرور",
+      "cta": "متابعة",
+      "loading": "جارٍ تسجيل الدخول...",
+      "appleCta": "المتابعة عبر Apple",
+      "additionalVerificationTitle": "تسجيل الدخول",
+      "additionalVerificationBody": "يلزم تحقق إضافي لهذا الحساب.",
+      "errorTitle": "فشل تسجيل الدخول",
+      "errorFallback": "تعذر تسجيل دخولك.",
+      "appleErrorFallback": "فشل تسجيل الدخول عبر Apple.",
+      "noAccount": "ليس لديك حساب؟",
+      "createOne": "أنشئ حسابًا"
+    },
+    "signUp": {
+      "title": "إنشاء حساب",
+      "subtitle": "أنشئ حسابك لنقل تصاميمك واشتراكاتك ومشاريعك المحفوظة بين الأجهزة.",
+      "passwordPlaceholder": "أنشئ كلمة مرور آمنة",
+      "cta": "إنشاء حساب",
+      "loading": "جارٍ الإنشاء...",
+      "appleCta": "المتابعة عبر Apple",
+      "verifyTitle": "تأكيد البريد الإلكتروني",
+      "verifyBody": "تحقق من صندوق الوارد للحصول على رمز التحقق ثم سجّل الدخول.",
+      "errorTitle": "فشل إنشاء الحساب",
+      "errorFallback": "تعذر إنشاء حسابك.",
+      "appleErrorFallback": "فشل إنشاء الحساب عبر Apple.",
+      "haveAccount": "هل لديك حساب بالفعل؟",
+      "signInLink": "تسجيل الدخول"
+    }
+  },
+  "faq": {
+    "eyebrow": "الدعم",
+    "title": "الأسئلة الشائعة",
+    "description": "إجابات واضحة عن أكثر أسئلة هوم ديكور AI شيوعًا.",
+    "items": {
+      "credits": {
+        "question": "كيف يعمل الرصيد في هوم ديكور AI؟",
+        "answer": "يستخدم كل تصيير رصيدًا بحسب سير العمل ومستوى الإخراج الذي تختاره. يتم تحديث رصيدك المتبقي تلقائيًا بعد كل عملية إنشاء."
+      },
+      "pro": {
+        "question": "ماذا أحصل عليه مع PRO؟",
+        "answer": "يفتح PRO أدوات تصيير مميزة، ومعالجة أسرع، وجودة إخراج أعلى عبر مسار الترقية داخل التطبيق."
+      },
+      "slowResult": {
+        "question": "لماذا تستغرق النتيجة وقتًا أطول من المتوقع؟",
+        "answer": "يعتمد وقت التصيير على ضغط الطابور، وجودة الصورة الأصلية، وسير العمل الذي اخترته. إبقاء التطبيق مفتوحًا مع اتصال مستقر يساعد على تجنب الانقطاع."
+      },
+      "deleteAccount": {
+        "question": "كيف أحذف حسابي؟",
+        "answer": "افتح الإعدادات واختر حذف المعلومات. سيؤدي ذلك إلى إزالة بيانات حسابك نهائيًا وتسجيل خروجك بعد التأكيد."
+      }
+    }
+  },
+  "privacy": {
+    "eyebrow": "السياسة",
+    "title": "سياسة الخصوصية",
+    "description": "المعلومات التي نجمعها، وكيف نستخدمها، والخيارات المتاحة لك داخل هوم ديكور AI.",
+    "date": "14 مارس 2026",
+    "sections": {
+      "overview": {
+        "title": "نظرة عامة",
+        "body": "يوفر هوم ديكور AI (\"HomeDecor\" و\"نحن\" و\"لنا\") خدمات إعادة تصميم داخلية وخارجية مدعومة بالذكاء الاصطناعي. توضح سياسة الخصوصية هذه البيانات التي نجمعها، وكيف نستخدمها، والخيارات المتاحة لك."
+      },
+      "informationWeCollect": {
+        "title": "المعلومات التي نجمعها",
+        "body": "نجمع المعلومات التي تقدمها مثل بيانات الحساب والصور المرفوعة، وبيانات الاستخدام مثل تفاعلات الميزات ومعلومات الجهاز، وبيانات حالة الدفع من RevenueCat لإدارة الاشتراكات."
+      },
+      "howWeUseYourData": {
+        "title": "كيف نستخدم بياناتك",
+        "body": "نستخدم بياناتك لتقديم عمليات إعادة التصميم، وتخصيص تجربتك، وإدارة الرصيد والفوترة، وتحسين جودة النماذج، وتأمين التطبيق. نحن لا نبيع بياناتك الشخصية."
+      },
+      "imageProcessing": {
+        "title": "معالجة الصور",
+        "body": "تُعالَج الصور التي ترفعها لإنشاء التصاميم. نخزن الصور الناتجة والبيانات الوصفية المرتبطة بها حتى تتمكن من الرجوع إلى نتائجك، ويمكنك إزالة بياناتك عبر حذف حسابك."
+      },
+      "sharingAndDisclosure": {
+        "title": "المشاركة والإفصاح",
+        "body": "نشارك البيانات فقط مع الجهات اللازمة لتشغيل هوم ديكور AI، مثل شركاء المصادقة والتحليلات ومعالجة الدفع، أو عندما يكون الإفصاح مطلوبًا قانونيًا."
+      },
+      "dataSecurity": {
+        "title": "أمن البيانات",
+        "body": "نستخدم التشفير وضوابط الوصول لحماية بياناتك. لا يوجد نظام آمن بشكل كامل، لذا نوصي أيضًا بكلمات مرور قوية وجهاز محمي."
+      },
+      "yourRights": {
+        "title": "حقوقك",
+        "body": "يمكنك الوصول إلى بيانات حسابك أو تحديثها أو حذفها في أي وقت. يؤدي حذف الحساب إلى إزالة التصاميم المخزنة ومعلومات الملف الشخصي من أنظمتنا."
+      },
+      "contactUs": {
+        "title": "تواصل معنا",
+        "body": "للاستفسارات أو الطلبات المتعلقة بالخصوصية، تواصل معنا عبر support@homedecor.ai."
+      }
+    }
+  },
+  "terms": {
+    "eyebrow": "السياسة",
+    "title": "شروط الخدمة",
+    "description": "القواعد والتوقعات وحدود الخدمة الخاصة باستخدام هوم ديكور AI.",
+    "date": "14 مارس 2026",
+    "sections": {
+      "acceptanceOfTerms": {
+        "title": "قبول الشروط",
+        "body": "من خلال الوصول إلى هوم ديكور AI أو استخدامه، فإنك توافق على شروط الخدمة هذه. إذا لم توافق، فلا تستخدم التطبيق."
+      },
+      "serviceDescription": {
+        "title": "وصف الخدمة",
+        "body": "يوفر هوم ديكور AI إعادة تصميم مولّدة بالذكاء الاصطناعي للمساحات الداخلية والخارجية. المخرجات هي مفاهيم بصرية وقد لا تراعي القيود الإنشائية أو الهندسية أو التنظيمية."
+      },
+      "accountAndEligibility": {
+        "title": "الحساب والأهلية",
+        "body": "يجب ألا يقل عمرك عن 13 عامًا لاستخدام هوم ديكور AI. أنت مسؤول عن الحفاظ على أمان حسابك وعن أي نشاط يحدث باستخدام بيانات اعتمادك."
+      },
+      "userContent": {
+        "title": "محتوى المستخدم",
+        "body": "تحتفظ بملكية الصور التي ترفعها. باستخدام الخدمة، فإنك تمنح هوم ديكور AI ترخيصًا محدودًا لمعالجتها وتخزينها حتى نتمكن من إنشاء النتائج وإعادتها إليك."
+      },
+      "subscriptionsAndCredits": {
+        "title": "الاشتراكات والأرصدة",
+        "body": "تفتح الخطط المدفوعة ميزات محسّنة وتصديرات بجودة أعلى. يتم استهلاك الرصيد لكل عملية إنشاء، وتتم إدارة فوترة الاشتراك وتجديداته عبر متجر التطبيقات الخاص بك وRevenueCat."
+      },
+      "prohibitedUse": {
+        "title": "الاستخدام المحظور",
+        "body": "أنت توافق على عدم إساءة استخدام الخدمة، أو إجراء هندسة عكسية للتطبيق، أو رفع محتوى غير قانوني أو ضار أو منتهك للحقوق."
+      },
+      "disclaimer": {
+        "title": "إخلاء المسؤولية",
+        "body": "تُقدَّم الخدمة \"كما هي\" دون أي ضمانات من أي نوع. نحن لا نضمن نتائج تصميم محددة أو دقة المخرجات المولدة بالذكاء الاصطناعي."
+      },
+      "limitationOfLiability": {
+        "title": "تحديد المسؤولية",
+        "body": "إلى أقصى حد يسمح به القانون، لا تتحمل هوم ديكور AI مسؤولية الأضرار غير المباشرة أو التبعية الناشئة عن استخدامك للخدمة."
+      },
+      "contact": {
+        "title": "التواصل",
+        "body": "يمكن إرسال الأسئلة المتعلقة بهذه الشروط إلى support@homedecor.ai."
+      }
+    }
+  },
+  "processing": {
+    "title": "الذكاء الاصطناعي يصوغ تحفتك المعمارية...",
+    "eta": "ستكون رؤيتك جاهزة خلال حوالي 15 ثانية.",
+    "cancelKeepCredit": "إلغاء والاحتفاظ برصيدي",
+    "status": {
+      "analyzingGeometry": "جارٍ تحليل الهندسة المعمارية...",
+      "identifyingSurfaces": "جارٍ تحديد الأسطح والخطوط الإنشائية...",
+      "applyingStyle": "جارٍ تطبيق الاتجاه التصميمي الذي اخترته...",
+      "renderingMaterials": "جارٍ تصيير المواد والإضاءة...",
+      "addingDetails": "جارٍ تنقيح التفاصيل النهائية...",
+      "almostReady": "جارٍ إنهاء التصيير...",
+      "renderingFinalLighting": "جارٍ إعداد طبقة الإضاءة النهائية..."
+    }
+  },
+  "wizard": {
+    "headers": {
+      "back": "رجوع",
+      "close": "إغلاق",
+      "previousStep": "الانتقال إلى الخطوة السابقة",
+      "stepProgress": "الخطوة {{current}}/{{total}}",
+      "creditsRemaining": "الرصيد المتبقي"
+    },
+    "stepOne": {
+      "title": "ارفع رؤيتك",
+      "emptyTitle": "ارفع رؤيتك",
+      "emptySubtitle": "أعد تصميم منزلك وجمّله.",
+      "removePhoto": "إزالة الصورة المحددة",
+      "cta": "رفع"
+    },
+    "interior": {
+      "stepTwoTitle": "حدّد مساحتك",
+      "stepTwoSubtitle": "اختر نوع الغرفة ليبقى التصميم متجذرًا معماريًا.",
+      "stepThreeTitle": "حدّد ذوقك",
+      "stepThreeSubtitle": "اختر أسلوبًا مميزًا لتشكيل رؤيتك التصميمية.",
+      "stepFourMode": "تكامل التصميم",
+      "stepFourPalette": "انسجام الألوان"
+    },
+    "exterior": {
+      "stepTwoTitle": "حدّد نوع المبنى",
+      "stepTwoSubtitle": "اختر الشكل المعماري الذي تريد إعادة تصميمه.",
+      "stepThreeTitle": "حدّد ذوقك",
+      "stepThreeSubtitle": "اختر أسلوبًا مميزًا لتشكيل رؤيتك التصميمية.",
+      "stepFourTitle": "انسجام الألوان"
+    },
+    "garden": {
+      "stepOneEmptyTitle": "ارفع رؤيتك",
+      "stepOneEmptySubtitle": "أعد تصميم منزلك وجمّله.",
+      "stepTwoTitle": "حدّد ذوقك",
+      "stepTwoSubtitle": "اختر أسلوبًا مميزًا لتشكيل رؤيتك التصميمية.",
+      "stepThreeTitle": "انسجام الألوان"
+    },
+    "floorIntro": {
+      "hero": "اختر نمط أرضية يعيد تعريف أساس الغرفة بذوق احترافي."
+    },
+    "paintIntro": {
+      "hero": "حدّد أي سطح لتطبيق ألوان مخصّصة وتشطيبات مصممة فوراً."
+    },
+    "floorFlow": {
+      "title": "تجديد الأرضية",
+      "masking": "جارٍ تحديد مستوى الأرضية...",
+      "promptLabel": "صف رؤيتك",
+      "promptPlaceholder": "صف التحول الذي تريده للأرضية، من اتجاه الخامة إلى الإحساس العام والتشطيب.",
+      "promptExamplesTitle": "أمثلة على الوصف",
+      "generateCta": "أنشئ تصميمي",
+      "selectMaterialCta": "اختر خامة",
+      "selectMaterialTitle": "اختر الخامة",
+      "selectMaterialBody": "اختر خامة فاخرة مصممة لتبدو واقعية بصرياً ومتوافقة مع المنظور وجاهزة للعرض.",
+      "selectedMaterial": "الخامة المختارة",
+      "noMaterialSelected": "لم يتم اختيار خامة",
+      "unlockMaterialBody": "اختر خامة أرضية لفتح إعادة التصميم بالذكاء الاصطناعي.",
+      "addPromptTitle": "أضف وصفاً",
+      "addPromptBody": "صف بدقة التحول الذي تريده للأرضية قبل المتابعة.",
+      "generatePromptBody": "اختر وصفاً مخصصاً للأرضية قبل التوليد.",
+      "autoMaskPreparing": "جارٍ تجهيز قناع الأرضية التلقائي. يرجى الانتظار قليلاً.",
+      "autoMaskSuccess": "قناع الأرضية جاهز.",
+      "autoMaskFailure": "تعذر إكمال الاكتشاف التلقائي. يرجى تحديد الأرضية يدوياً.",
+      "savePermissionTitle": "مطلوب إذن الصور",
+      "savePermissionBody": "اسمح بالوصول إلى مكتبة الصور لحفظ التصيير على الجهاز.",
+      "cameraAccessTitle": "مطلوب إذن الكاميرا",
+      "cameraAccessBody": "فعّل الوصول إلى الكاميرا لالتقاط صورة للأرضية.",
+      "photoAccessTitle": "مطلوب إذن الصور",
+      "photoAccessBody": "فعّل الوصول إلى مكتبة الصور لرفع صورة للأرضية.",
+      "mediaUnavailableTitle": "تعذر فتح الوسائط",
+      "exampleUnavailableBody": "تعذر فتح هذه الصورة النموذجية.",
+      "markFloorTitle": "حدّد الأرضية أولاً",
+      "markFloorBody": "مرّر فوق مساحة الأرضية التي تريد تجديدها قبل المتابعة.",
+      "pickMaterialTitle": "اختر خامة",
+      "pickMaterialBody": "اختر خامة أرضية قبل المتابعة.",
+      "renderFinishing": "هذا التصيير يوشك على الاكتمال بالفعل.",
+      "cancelSuccess": "تم إلغاء التوليد مع الاحتفاظ برصيدك.",
+      "cancelUnavailable": "يتعذر الإلغاء حالياً.",
+      "supportingText": "يستخدم رصيداً واحداً · {{creditsRemaining}}",
+      "creditsRemaining": "{{count}} متبقي",
+      "promptExamples": {
+        "frenchOak": "خشب بلوط فرنسي فاخر بألواح عريضة وتشطيب طبيعي دافئ.",
+        "carraraMarble": "رخام كرارا إيطالي مصقول بعروق رمادية عميقة.",
+        "microcement": "مايكروسمنت عصري بلا فواصل لقاعدة صناعية أنيقة.",
+        "herringboneWalnut": "خشب جوز داكن أنيق بنمط هيرينغبون كلاسيكي.",
+        "walnut": "بلاط أردوازي كبير وحديث بدرجة فحمية رمادية."
+      },
+      "result": {
+        "heading": "إليك مساحتك الجديدة",
+        "subheading": "تحول أرضية قائم على الخامة مع الحفاظ على منظور الغرفة والأثاث والإضاءة الطبيعية.",
+        "before": "قبل",
+        "after": "بعد",
+        "materialApplied": "الخامة المطبقة",
+        "materialFallback": "الخامة",
+        "summary": "تمت إعادة تصميم الأرضية مع الحفاظ على هندسة الغرفة ومحاذاة الأثاث وسلوك الإضاءة الطبيعية.",
+        "saveToGallery": "حفظ في المعرض",
+        "share": "مشاركة",
+        "tryAgain": "أعد المحاولة"
+      },
+      "materials": {
+        "natural-oak": {
+          "title": "بلوط طبيعي",
+          "description": "ألواح بلوط هوائية بعروق طبيعية ناعمة."
+        },
+        "walnut-wood": {
+          "title": "خشب الجوز",
+          "description": "ألواح جوز عميقة بتباين غني ومصقول."
+        },
+        "carrara-marble": {
+          "title": "رخام كرارا",
+          "description": "عروق حجرية مشرقة بتشطيب فاخر هادئ."
+        },
+        "polished-concrete": {
+          "title": "خرسانة مصقولة",
+          "description": "لمعة خرسانية ناعمة بطابع معرض حضري هادئ."
+        },
+        "herringbone-oak": {
+          "title": "بلوط هيرينغبون",
+          "description": "نمط بلوط كلاسيكي بحركة اتجاهية دافئة."
+        },
+        "terracotta-tile": {
+          "title": "بلاط تيراكوتا",
+          "description": "دفء طيني ترابي بطابع يدوي الصنع."
+        },
+        "slate-tile": {
+          "title": "بلاط أردوازي",
+          "description": "أردواز داكن بتشطيب واسع ومحدد."
+        },
+        "plush-carpet": {
+          "title": "سجاد فاخر",
+          "description": "سجاد كريمي ناعم بإحساس هادئ ومريح."
+        },
+        "weathered-oak": {
+          "title": "بلوط معتق",
+          "description": "بلوط متوسط الدرجة بلمسة عمر خفيفة."
+        }
+      }
+    },
+    "paintFlow": {
+      "title": "الطلاء",
+      "selectionTitle": "حدّد الأسطح المطلوب تحويلها",
+      "maskTitle": "حدّد الأسطح المطلوب تحويلها",
+      "colorLabel": "اللون",
+      "surfaceLabel": "السطح",
+      "choose": "اختر",
+      "apply": "تطبيق",
+      "colorPickerTitle": "اختر لوناً لجدارك",
+      "surfacePickerTitle": "اختر نوع السطح",
+      "detectTitle": "جارٍ اكتشاف الأسطح القابلة للطلاء...",
+      "detectBody": "يقوم هوم ديكور AI بتتبع أسطح الجدران القابلة لإعادة الطلاء مع ترك النوافذ والأثاث والزخارف والأرضيات دون تغيير.",
+      "preparingMaskTitle": "جارٍ تجهيز سطح التحديد...",
+      "preparingMaskBody": "يقوم هوم ديكور AI بصقل المساحة لتتمكن من طلاء الحواف بدقة حول الخزائن والنوافذ والأثاث.",
+      "brushWidth": "عرض الفرشاة",
+      "eraserWidth": "عرض الممحاة",
+      "generateCta": "لوّن جدراني →",
+      "finishTitle": "نوع التشطيب",
+      "finishBody": "اختر كيف يلتقط الطلاء الضوء حتى تظهر الجدران بشكل صحيح داخل تصور مصقول واحترافي.",
+      "selectedColor": "اللون المختار",
+      "selectedSurfaceSentence": "السطح: {{surface}}.",
+      "colorLockedBody": "تم تثبيت لون الجدار. اختر الآن درجة اللمعان النهائية للتصيير.",
+      "customColorDescription": "تم اختيار درجة جدار مخصصة من منتقي الألوان الدقيق.",
+      "noColorSelected": "لم يتم اختيار لون",
+      "chooseColorBody": "اختر لون الجدار قبل المتابعة.",
+      "savePermissionTitle": "مطلوب إذن الصور",
+      "savePermissionBody": "اسمح بالوصول إلى مكتبة الصور لحفظ التصيير على الجهاز.",
+      "cameraAccessTitle": "مطلوب إذن الكاميرا",
+      "cameraAccessBody": "فعّل الوصول إلى الكاميرا لالتقاط صورة للغرفة.",
+      "photoAccessTitle": "مطلوب إذن الصور",
+      "photoAccessBody": "فعّل الوصول إلى مكتبة الصور لرفع صورة للغرفة.",
+      "mediaUnavailableTitle": "تعذر فتح الوسائط",
+      "exampleUnavailableBody": "تعذر فتح هذه الصورة النموذجية.",
+      "markWallsTitle": "حدّد الجدران أولاً",
+      "markWallsBody": "مرّر فوق أسطح الجدران التي تريد إعادة طلائها قبل التوليد.",
+      "pickColorTitle": "اختر لوناً",
+      "pickColorBody": "اختر لون الجدار قبل المتابعة.",
+      "autoDetectSuccess": "تم اكتشاف الجدران. يمكنك التحديد يدوياً لتحسين النتيجة عند الحاجة.",
+      "autoDetectFailure": "تعذر إكمال الاكتشاف التلقائي. يرجى التحديد يدوياً.",
+      "renderFinishing": "هذا التصيير يوشك على الاكتمال بالفعل.",
+      "cancelSuccess": "تم إلغاء التوليد مع الاحتفاظ برصيدك.",
+      "cancelUnavailable": "يتعذر الإلغاء حالياً.",
+      "supportingText": "يستخدم رصيداً واحداً · {{creditsRemaining}}",
+      "creditsRemaining": "{{count}} متبقي",
+      "intakeTitle": "ارفع رؤيتك",
+      "intakeBody": "ارفع صورة غرفة لإعادة تلوين الجدران بدقة.",
+      "intakeReadyTitle": "تمت إضافة الصورة. حدّد مساحة الجدار الآن.",
+      "intakeReadyBody": "تم تثبيت الصورة. الخطوة التالية هي تحديد أسطح الجدران حتى يبقى التلوين دقيقاً حول الزخارف والأثاث والديكور.",
+      "surfaces": {
+        "auto": "تلقائي",
+        "brick": "طوب",
+        "cabinet": "خزانة",
+        "door": "باب",
+        "wall": "جدار",
+        "outsideWall": "جدار خارجي"
+      },
+      "colorFamilies": {
+        "pink": "وردي",
+        "blue": "أزرق",
+        "green": "أخضر",
+        "yellow": "أصفر",
+        "gray": "رمادي",
+        "red": "أحمر"
+      },
+      "colors": {
+        "sage-green": {
+          "title": "أخضر المريمية",
+          "description": "هدوء أخضر ناعم للمساحات المضيئة والأنيقة."
+        },
+        "midnight-navy": {
+          "title": "كحلي منتصف الليل",
+          "description": "عمق كحلي أنيق بتباين معماري واضح."
+        },
+        "terracotta-glow": {
+          "title": "وهج التيراكوتا",
+          "description": "دفء طيني غني يمنح المساحة طاقة تحريرية راقية."
+        },
+        "dusty-rose": {
+          "title": "وردي غباري",
+          "description": "دفء وردي هادئ بلمسة بوتيكية ناعمة."
+        },
+        "gallery-charcoal": {
+          "title": "فحمي المعرض",
+          "description": "فحمي مصقول للمساحات المزاجية ذات الطابع الفني."
+        },
+        "soft-ivory": {
+          "title": "عاجي ناعم",
+          "description": "حيادي مضيء يحافظ على إشراق الغرف من دون بهتان."
+        },
+        "olive-grove": {
+          "title": "زيتوني البستان",
+          "description": "عمق زيتوني ترابي بإحساس مصمم متزن."
+        },
+        "lavender-mist": {
+          "title": "ضباب الخزامى",
+          "description": "بنفسجي ضبابي ناعم للمساحات الباستيلية الراقية."
+        },
+        "pearl-gray": {
+          "title": "رمادي لؤلؤي",
+          "description": "رمادي فاتح مرن يمنح أناقة يومية مصقولة."
+        }
+      },
+      "finishes": {
+        "matte": {
+          "label": "مطفي",
+          "description": "لون ناعم بلمسة عرض فنية مع أقل قدر من اللمعان السطحي."
+        },
+        "satin": {
+          "label": "ساتان",
+          "description": "لمعة متوازنة للمساحات العصرية مع توهج مصمم خفيف."
+        },
+        "glossy": {
+          "label": "لامع",
+          "description": "تشطيب عاكس مصقول للجدران الجريئة عالية التباين."
+        }
+      }
+    },
+    "examples": {
+      "floor": {
+        "crackedConcrete": "خرسانة متشققة",
+        "damagedPlanks": "ألواح متضررة",
+        "brokenTile": "بلاط مكسور",
+        "renovationSubfloor": "أرضية تأسيس للتجديد",
+        "wornPlywood": "خشب رقائقي مهترئ"
+      },
+      "paint": {
+        "rawConcrete": "خرسانة خام",
+        "peelingPlaster": "لياسة متقشرة",
+        "wornWhite": "أبيض باهت",
+        "exposedBrick": "طوب مكشوف",
+        "stainedPlaster": "لياسة ملطخة",
+        "dampStreaks": "آثار رطوبة"
+      }
+    }
+  },
+  "workspace": {
+    "board": {
+      "new": "جديد",
+      "openEditor": "اضغط لفتح محرر التصميم",
+      "generationFailedTap": "واجه التصيير مشكلة. اضغط للتفاصيل.",
+      "generationFailedTitle": "فشل التصيير",
+      "generationFailedBody": "لم يكتمل هذا التصيير. يرجى المحاولة مرة أخرى.",
+      "tryAnotherPrompt": "يُرجى الرجوع وتجربة وصف آخر."
+    },
+    "processing": {
+      "default": "يحافظ هوم ديكور AI على البنية المعمارية أثناء صياغة إعادة تصميم راقية.",
+      "floor": "يقرأ هوم ديكور AI المنظور ويثبت مستوى الأرضية ثم يركّب الخامة الجديدة بتفاصيل فاخرة.",
+      "paint": "يعزل هوم ديكور AI مستويات الجدران ويطبّق التشطيب الذي اخترته بواقعية احترافية."
+    },
+    "services": {
+      "interior": "إعادة تصميم داخلية",
+      "exterior": "إعادة تصميم خارجية",
+      "garden": "إعادة تصميم الحديقة",
+      "floor": "تجديد الأرضية",
+      "paint": "طلاء الجدران الذكي"
+    },
+    "editor": {
+      "title": "تصورك الاحترافي",
+      "sourcePhoto": "الصورة الأصلية",
+      "comparison": "المقارنة",
+      "deleteA11y": "احذف هذا التصميم من محفظة تصاميمي",
+      "showComparison": "إظهار مقارنة قبل وبعد",
+      "hideComparison": "إخفاء مقارنة قبل وبعد",
+      "removeWatermark": "إزالة العلامة المائية",
+      "regenerate": "إعادة التوليد",
+      "saving": "جارٍ الحفظ...",
+      "sharing": "جارٍ المشاركة...",
+      "renderUnavailable": "التصيير غير متاح. يرجى المحاولة مرة أخرى.",
+      "previewNotReady": "المعاينة غير جاهزة بعد. يرجى المحاولة مرة أخرى.",
+      "floorReady": "تحويل أرضية قائم على الخامة مع شريط مقارنة مباشر قبل وبعد.",
+      "paintReady": "إعادة تلوين الجدار مضبوطة وفق التشطيب المختار وإضاءة الغرفة.",
+      "defaultReady": "محفوظ داخل لوحة هوم ديكور المميزة الخاصة بك."
+    },
+    "permissions": {
+      "requiredTitle": "يلزم إذن",
+      "requiredBody": "فعّل إذن الكاميرا أو الصور من إعدادات النظام للمتابعة.",
+      "cameraAccessTitle": "مطلوب إذن الكاميرا",
+      "cameraAccessBody": "اسمح بالوصول إلى الكاميرا من الإعدادات لالتقاط صورة.",
+      "photoLibraryAccessTitle": "مطلوب إذن الصور",
+      "photoLibraryAccessBody": "اسمح بالوصول إلى مكتبة الصور من الإعدادات.",
+      "photoLibrarySaveBody": "يرجى السماح بالوصول إلى مكتبة الصور لحفظ النتيجة في الجهاز."
+    },
+    "media": {
+      "capturedPhoto": "صورة ملتقطة",
+      "uploadedPhoto": "صورة مرفوعة",
+      "choosePhotoSource": "اختر طريقة إضافة الصورة.",
+      "cameraUnavailableTitle": "الكاميرا غير متاحة",
+      "cameraUnavailableBody": "تعذر فتح الكاميرا. يرجى المحاولة مرة أخرى.",
+      "photoLibraryUnavailableTitle": "مكتبة الصور غير متاحة",
+      "photoLibraryUnavailableBody": "تعذر فتح مكتبة الصور. يرجى المحاولة مرة أخرى.",
+      "photoIntakeUnavailableTitle": "إضافة الصورة غير متاحة",
+      "photoIntakeUnavailableBody": "تعذر فتح الكاميرا أو مكتبة الصور. يرجى المحاولة مرة أخرى.",
+      "exampleImageUnavailable": "الصورة النموذجية غير متاحة.",
+      "exampleUnavailableTitle": "النموذج غير متاح",
+      "tryAnotherImage": "يرجى تجربة صورة أخرى."
+    },
+    "share": {
+      "nothingTitle": "لا يوجد ما يمكن مشاركته",
+      "generateFirst": "أنشئ تصميماً أولاً.",
+      "failedTitle": "فشلت المشاركة",
+      "message": "تم التصميم باستخدام هوم ديكور AI"
+    },
+    "download": {
+      "nothingTitle": "لا يوجد ما يمكن تنزيله",
+      "generateFirst": "أنشئ تصميماً أولاً.",
+      "failedTitle": "فشل التنزيل"
+    },
+    "generation": {
+      "preparingSessionTitle": "جارٍ تجهيز الجلسة",
+      "preparingSessionBody": "ملفك كضيف ما زال قيد التحميل. يرجى المحاولة بعد لحظات.",
+      "completeStepsTitle": "أكمل الخطوات",
+      "completeFloorBody": "أضف صورة للغرفة وحدد مساحة الأرضية واختر الخامة والتشطيب قبل المتابعة.",
+      "completePaintBody": "أضف صورة للغرفة وحدد الأسطح القابلة للطلاء واختر لون الجدار والتشطيب قبل المتابعة.",
+      "completePreviousSteps": "يرجى إنهاء الخطوات السابقة أولاً.",
+      "limitReached": "تم بلوغ الحد",
+      "completeStepToContinue": "أكمل هذه الخطوة للمتابعة."
+    },
+    "flow": {
+      "customPromptTitle": "صف رؤيتك",
+      "customPromptBody": "صف الاتجاه التصميمي الذي تريده بدقة قبل تطبيقه.",
+      "selectSpaceType": "اضغط على بطاقة لتحديد نوع المساحة."
+    },
+    "resumeDraft": "جارٍ استئناف مسودة المعالج المحفوظة.",
+    "feedback": {
+      "like": "إعجاب",
+      "dislike": "عدم إعجاب",
+      "liked": "شكراً على ملاحظتك.",
+      "disliked": "تم إرسال الملاحظة إلى فريق التصميم.",
+      "failed": "يتعذر إرسال الملاحظات الآن."
+    },
+    "stepOne": {
+      "gardenPhotoTitle": "أضف صورة للحديقة",
+      "exteriorPhotoTitle": "أضف صورة للواجهة الخارجية",
+      "floorPhotoTitle": "أضف صورة للأرضية",
+      "gardenEmptyTitle": "ابدأ تحويل حديقتك",
+      "exteriorEmptyTitle": "ابدأ تحويل الواجهة الخارجية",
+      "tapToAddPhoto": "اضغط لإضافة صورة من الكاميرا أو المكتبة"
+    },
+    "style": {
+      "tapToSelect": "اضغط على بطاقة لتحديد اتجاه الأسلوب."
+    },
+    "localization": {
+      "rooms": {
+        "livingRoom": "غرفة المعيشة",
+        "bedroom": "غرفة النوم",
+        "kitchen": "المطبخ",
+        "bathroom": "الحمام",
+        "homeOffice": "المكتب المنزلي",
+        "diningRoom": "غرفة الطعام",
+        "nursery": "غرفة الأطفال",
+        "homeTheater": "المسرح المنزلي",
+        "gamingRoom": "غرفة الألعاب",
+        "hall": "الردهة",
+        "library": "المكتبة",
+        "laundry": "غرفة الغسيل"
+      },
+      "examples": {
+        "interior": {
+          "emptyRoom": "غرفة فارغة",
+          "messyLounge": "صالة غير مرتبة",
+          "wornRoom": "غرفة مستهلكة",
+          "emptyKitchen": "مطبخ فارغ",
+          "damagedRoom": "غرفة متضررة",
+          "outdatedKitchen": "مطبخ قديم الطراز"
+        },
+        "exterior": {
+          "scaffoldHouse": "منزل قيد السقالات",
+          "weatheredHouse": "منزل متأثر بالعوامل",
+          "brickShell": "هيكل طوبي",
+          "overgrownCottage": "كوخ متضخم بالنباتات",
+          "abandonedHome": "منزل مهجور",
+          "concreteFrame": "هيكل خرساني"
+        },
+        "garden": {
+          "muddyYard": "ساحة موحلة",
+          "weedyYard": "ساحة مليئة بالأعشاب",
+          "rubbleYard": "ساحة ركام",
+          "overgrownCorner": "زاوية متضخمة بالنباتات",
+          "abandonedYard": "ساحة مهجورة",
+          "crackedPatio": "فناء متشقق"
+        }
+      },
+      "styles": {
+        "modern": "عصري",
+        "luxury": "فاخر",
+        "japandi": "جاباندي",
+        "cyberpunk": "سايبربانك",
+        "tropical": "استوائي",
+        "minimalist": "مينيمال",
+        "scandinavian": "إسكندنافي",
+        "bohemian": "بوهيمي",
+        "midcentury": "منتصف القرن",
+        "artDeco": "آرت ديكو",
+        "coastal": "ساحلي",
+        "rustic": "ريفي",
+        "vintage": "كلاسيكي",
+        "mediterranean": "متوسطي",
+        "glam": "غلام",
+        "coastalRetreat": "ملاذ ساحلي",
+        "rusticManor": "قصر ريفي",
+        "hollywoodRegency": "هوليوود ريجنسي",
+        "neoClassic": "نيو كلاسيك",
+        "shabbyChic": "شابي شيك",
+        "frenchCountry": "ريف فرنسي",
+        "brutalist": "بروتالي",
+        "hollywoodRegencyNoir": "هوليوود ريجنسي نوار",
+        "artNouveau": "آرت نوفو",
+        "custom": "مخصص",
+        "chinese": "صيني",
+        "cottage": "كوخ",
+        "farmHouse": "منزل مزرعة",
+        "french": "فرنسي",
+        "gothic": "قوطي",
+        "italianate": "إيطالي الطابع",
+        "christmas": "احتفالي",
+        "minimalistic": "تبسيطي",
+        "baroque": "باروكي"
+      },
+      "buildings": {
+        "apartment": "شقة",
+        "house": "منزل",
+        "officeBuilding": "مبنى مكاتب",
+        "residential": "سكني",
+        "retail": "تجاري",
+        "villa": "فيلا"
+      },
+      "modes": {
+        "preserve": {
+          "title": "الحفاظ المعماري",
+          "description": "حافظ على الحمض المعماري للمساحة مع تحديث جمالي متقن."
+        },
+        "renovate": {
+          "title": "تصميم التجديد",
+          "description": "حرية إبداعية كاملة لإعادة تعريف توزيع الأثاث وحدود المساحة لتحقيق تجديد شامل."
+        }
+      },
+      "palettes": {
+        "surprise": "مزيج منسق",
+        "gray": "رمادي عصري",
+        "terracotta": "سراب التيراكوتا",
+        "forest": "ألوان الغابة",
+        "peach": "بستان الخوخ",
+        "fuchsia": "زهرة الفوشيا",
+        "emerald": "زمردي",
+        "pastel": "نسيم الباستيل",
+        "ocean": "ضباب المحيط",
+        "velvet": "غسق مخملي",
+        "amethyst": "حلم الجمشت",
+        "sunset": "فوشيا نوار"
+      },
+      "gardenPalettes": {
+        "garden-surprise": "فاجئني",
+        "garden-gray": "رمادي عصري",
+        "garden-terracotta": "سراب التيراكوتا",
+        "garden-neon-sunset": "غروب نيون",
+        "garden-forest": "ألوان الغابة",
+        "garden-peach": "بستان الخوخ",
+        "garden-fuschia": "زهرة الفوشيا",
+        "garden-emerald": "زمردي",
+        "garden-pastel": "نسيم الباستيل",
+        "garden-azure": "سراب أزرق",
+        "garden-twilight": "أزرق الشفق",
+        "garden-earthy": "انسجام ترابي"
+      },
+      "summary": {
+        "roomType": "نوع المساحة",
+        "style": "الأسلوب",
+        "mode": "الوضع",
+        "palette": "لوحة الألوان",
+        "missing": "⚠ غير مكتمل"
+      },
+      "previewThumbnailLabel": "معاينة نموذجية · {{style}}",
+      "toasts": {
+        "completeStyleSelections": "أكمل اختيارات الأسلوب لتتمكن من التوليد."
+      },
+      "requiredSelections": {
+        "photo": "يرجى اختيار صورة للمتابعة.",
+        "room": "يرجى اختيار نوع الغرفة للمتابعة.",
+        "style": "يرجى اختيار الأسلوب للمتابعة.",
+        "mode": "يرجى إكمال اختيار الوضع للمتابعة.",
+        "palette": "يرجى إكمال اختيار لوحة الألوان للمتابعة."
+      },
+      "regenerationUnavailable": "إعادة التوليد غير متاحة",
+      "feedbackUnavailable": "الملاحظات غير متاحة لهذه الصورة.",
+      "cta": {
+        "getMoreCredits": "احصل على المزيد من الأرصدة",
+        "generateMyDesign": "أنشئ تصميمي"
+      },
+      "stepFourSticky": "الخطوة 4: صقل الاتجاه",
+      "exteriorEmptyStateSubtitle": "أعد تصميم منزلك وجمّله."
+    }
+  },
+  "proSuccess": {
+    "title": "مرحباً بك في HomeDecor Pro!",
+    "subtitle": "أدواتك المميزة أصبحت متاحة الآن:",
+    "features": {
+      "hyperRealism": "تم تفعيل التصيير فائق التفاصيل",
+      "virtualStaging": "تم فتح أدوات التصميم المميزة",
+      "infiniteCredits": "تم تفعيل حصص التصيير الأسبوعية أو الشهرية"
+    },
+    "cta": "ابدأ التصميم",
+    "toast": "تمت ترقية حسابك إلى Pro."
+  },
+  "legalViewer": {
+    "eyebrow": "عارض المستندات القانونية",
+    "switches": {
+      "terms": "شروط الخدمة",
+      "privacy": "سياسة الخصوصية"
+    }
+  },
+  "storeReview": {
+    "title": "قيّم هوم ديكور AI",
+    "unavailableBody": "طلبات التقييم غير متاحة على هذا الجهاز.",
+    "errorBody": "تعذر فتح نافذة التقييم حالياً."
+  },
+  "gallery": {
+    "clusters": {
+      "foundations": "الأساسيات"
+    },
+    "tabs": {
+      "home": "الديكورات الداخلية",
+      "exterior": "الواجهات الخارجية",
+      "garden": "المناظر الطبيعية"
+    },
+    "groups": {
+      "kitchen": "المطبخ",
+      "livingRoom": "غرفة المعيشة",
+      "diningRoom": "غرفة الطعام",
+      "bedroom": "غرفة النوم",
+      "bathroom": "الحمام",
+      "gamingRoom": "غرفة الألعاب",
+      "homeOffice": "المكتب المنزلي",
+      "coffeeShop": "مقهى",
+      "studyRoom": "غرفة دراسة",
+      "restaurant": "مطعم",
+      "attic": "العلية",
+      "toilet": "دورة المياه",
+      "balcony": "الشرفة",
+      "hall": "الردهة",
+      "deck": "السطح الخارجي",
+      "landscapeDesigns": "تصاميم المناظر الطبيعية",
+      "villa": "فيلا",
+      "apartment": "شقة",
+      "house": "منزل",
+      "officeBuilding": "مبنى مكاتب",
+      "retail": "تجاري",
+      "residential": "سكني",
+      "wall": "جدار",
+      "floor": "أرضية",
+      "garden": "حديقة"
+    },
+    "imageTitleTemplate": "صورة {{title}} {{index}}",
+    "emptyState": {
+      "title": "الفئة غير متاحة",
+      "body": "تعذر العثور على مجموعة الصور المطلوبة."
+    }
+  },
+  "discoverCatalog": {
+    "sections": {
+      "home": {
+        "title": "الديكور الداخلي",
+        "description": "مساحات منسقة يقودها المصممون للمعيشة والنوم والطعام والعمل والترفيه.",
+        "items": {
+          "sereneLounge": { "title": "صالة هادئة", "subtitle": "غرفة معيشة / بساطة ناعمة", "spaceType": "غرفة معيشة", "style": "بساطة ناعمة" },
+          "moodyClubRoom": { "title": "غرفة نادي مزاجية", "subtitle": "غرفة معيشة / فخامة مزاجية", "spaceType": "غرفة معيشة", "style": "فخامة مزاجية" },
+          "organicLiving": { "title": "معيشة عضوية", "subtitle": "غرفة معيشة / دفء عضوي", "spaceType": "غرفة معيشة", "style": "دفء عضوي" },
+          "grandSalon": { "title": "صالون فخم", "subtitle": "غرفة معيشة / فخامة رخامية", "spaceType": "غرفة معيشة", "style": "فخامة رخامية" },
+          "editorialLounge": { "title": "صالة تحريرية", "subtitle": "غرفة ألعاب / سايبربانك", "spaceType": "غرفة ألعاب", "style": "سايبربانك" }
+        }
+      },
+      "exterior": {
+        "title": "الواجهات الخارجية",
+        "description": "إلهام للواجهات من الفلل الحديثة والمجمعات الحضرية والمكاتب والمساحات التجارية.",
+        "items": {
+          "modernHouse": { "title": "منزل حديث", "subtitle": "منزل حديث / بساطة نهارية", "spaceType": "منزل حديث", "style": "بساطة نهارية" },
+          "modernHouseNight": { "title": "منزل حديث ليلاً", "subtitle": "منزل حديث / فخامة مسائية", "spaceType": "منزل حديث", "style": "فخامة مسائية" },
+          "stoneVilla": { "title": "فيلا حجرية", "subtitle": "فيلا / متوسطي", "spaceType": "فيلا", "style": "متوسطي" },
+          "glassOffice": { "title": "مكتب زجاجي", "subtitle": "مبنى مكاتب / مينيمال", "spaceType": "مبنى مكاتب", "style": "مينيمال" },
+          "ecoApartments": { "title": "شقق بيئية", "subtitle": "مجمع شقق / مستقبلية بيئية", "spaceType": "مجمع شقق", "style": "مستقبلية بيئية" }
+        }
+      },
+      "garden": {
+        "title": "الحديقة",
+        "description": "صالات خارجية وتراسات ومسابح ومنصات ومشاهد حدائق بطابع منتجعي.",
+        "items": {
+          "infinityPool": { "title": "مسبح إنفينيتي", "subtitle": "مسبح إنفينيتي / فخامة ساحلية", "spaceType": "مسبح إنفينيتي", "style": "فخامة ساحلية" },
+          "waterfallCourt": { "title": "فناء الشلال", "subtitle": "حديقة شلال / فخامة زِن", "spaceType": "حديقة شلال", "style": "فخامة زِن" },
+          "sunsetFirePit": { "title": "موقد غروب الشمس", "subtitle": "جلسة موقد / غروب منتجعي", "spaceType": "جلسة موقد", "style": "غروب منتجعي" },
+          "tropicalPoolLounge": { "title": "صالة مسبح استوائية", "subtitle": "صالة مسبح / هروب استوائي", "spaceType": "صالة مسبح", "style": "هروب استوائي" },
+          "luminousGardenWalk": { "title": "ممشى حديقة مضيء", "subtitle": "ممشى حديقة / توهج مسائي", "spaceType": "ممشى حديقة", "style": "توهج مسائي" }
+        }
+      },
+      "wall": {
+        "title": "إلهام الجدران",
+        "description": "مرجعيات طلاء من غرف حقيقية تفتح مباشرة في Smart Wall Paint مع تحديد التشطيب مسبقاً.",
+        "items": {
+          "sagePlasterWall": { "title": "جدار لياسة مريمية", "subtitle": "جدار مزخرف / أخضر المريمية", "spaceType": "جدار مزخرف", "style": "أخضر المريمية" },
+          "linearSlatFeature": { "title": "عنصر شرائحي خطي", "subtitle": "جدار شرائحي / فحمي", "spaceType": "جدار شرائحي", "style": "فحمي" },
+          "veinedMarbleWall": { "title": "جدار رخام بعروق", "subtitle": "جدار رخامي / عاجي ناعم", "spaceType": "جدار رخامي", "style": "عاجي ناعم" },
+          "minimalConcreteWall": { "title": "جدار خرساني بسيط", "subtitle": "جدار خرساني / فحمي", "spaceType": "جدار خرساني", "style": "فحمي" },
+          "botanicalMuralWall": { "title": "جدار جداري نباتي", "subtitle": "جدار جداري / زيتوني طحلبي", "spaceType": "جدار جداري", "style": "زيتوني طحلبي" }
+        }
+      },
+      "floor": {
+        "title": "أنماط الأرضيات",
+        "description": "مرجعيات أرضيات فاخرة منسقة من مساحات حقيقية ومربوطة مباشرة بتدفق Floor Restyle.",
+        "items": {
+          "heritageHerringbone": { "title": "هيرينغبون كلاسيكي", "subtitle": "أرضية خشبية / خشب الجوز", "spaceType": "أرضية خشبية", "style": "خشب الجوز" },
+          "carraraMarbleFlow": { "title": "انسياب كرارا الرخامي", "subtitle": "أرضية رخامية / رخام كرارا", "spaceType": "أرضية رخامية", "style": "رخام كرارا" },
+          "satinConcrete": { "title": "خرسانة ساتان", "subtitle": "أرضية خرسانية / خرسانة مصقولة", "spaceType": "أرضية خرسانية", "style": "خرسانة مصقولة" },
+          "walnutGloss": { "title": "لمعة الجوز", "subtitle": "خشب لامع / خشب الجوز", "spaceType": "خشب لامع", "style": "خشب الجوز" },
+          "softLimestone": { "title": "حجر جيري ناعم", "subtitle": "أرضية حجرية / خرسانة مصقولة", "spaceType": "أرضية حجرية", "style": "خرسانة مصقولة" }
+        }
+      }
+    },
+    "wallColors": {
+      "sageGreen": { "title": "أخضر المريمية", "description": "هدوء أخضر ناعم للمساحات المضيئة والمصقولة.", "discoverSubtitle": "جدار / هدوء نباتي" },
+      "midnightNavy": { "title": "كحلي منتصف الليل", "description": "عمق كحلي أنيق مع تباين معماري حاد.", "discoverSubtitle": "جدار / تباين أنيق" },
+      "terracottaGlow": { "title": "وهج التيراكوتا", "description": "لون طيني دافئ بطاقة راسخة وطابع تحريري.", "discoverSubtitle": "جدار / طين دافئ" },
+      "dustyRose": { "title": "وردي غباري", "description": "دفء وردي هادئ بلمسة بوتيكية ناعمة.", "discoverSubtitle": "جدار / وردي بوتيكي" },
+      "galleryCharcoal": { "title": "فحمي المعرض", "description": "فحمي راقٍ للمساحات المزاجية ذات الحس الفني.", "discoverSubtitle": "جدار / معرض مزاجي" },
+      "softIvory": { "title": "عاجي ناعم", "description": "حيادي مضيء يحافظ على إشراق الغرفة دون تسطيح.", "discoverSubtitle": "جدار / حيادي هادئ" },
+      "oliveGrove": { "title": "زيتوني البستان", "description": "عمق زيتوني ترابي بإحساس مصمم ثابت.", "discoverSubtitle": "جدار / عمق ترابي" },
+      "lavenderMist": { "title": "ضباب الخزامى", "description": "بنفسجي ضبابي ناعم للمساحات الباستيلية الراقية.", "discoverSubtitle": "جدار / باستيل ناعم" },
+      "pearlGray": { "title": "رمادي لؤلؤي", "description": "رمادي فاتح بمرونة أنيقة للاستخدام اليومي.", "discoverSubtitle": "جدار / حيادي عصري" }
+    },
+    "wallColorCategories": {
+      "calmNeutrals": { "title": "درجات حيادية هادئة", "colors": { "softIvory": "عاجي ناعم", "pearlGray": "رمادي لؤلؤي", "sageGreen": "أخضر المريمية" } },
+      "boutiquePastels": { "title": "باستيلات بوتيكية", "colors": { "dustyRose": "وردي غباري", "lavenderMist": "ضباب الخزامى", "terracottaGlow": "وهج التيراكوتا" } },
+      "architecturalDepth": { "title": "عمق معماري", "colors": { "midnightNavy": "كحلي منتصف الليل", "galleryCharcoal": "فحمي المعرض", "oliveGrove": "زيتوني البستان" } }
+    },
+    "floorMaterials": {
+      "naturalOak": { "title": "بلوط طبيعي", "description": "ألواح بلوط هوائية بعروق طبيعية ناعمة.", "promptLabel": "أرضية من البلوط الطبيعي الفاتح بعروق عريضة واضحة", "discoverSubtitle": "أرضية / خشب فاتح" },
+      "walnutWood": { "title": "خشب الجوز", "description": "ألواح جوز عميقة بتباين غني ومصقول.", "promptLabel": "أرضية فاخرة من خشب الجوز بعروق عميقة وغنية", "discoverSubtitle": "أرضية / خشب داكن" },
+      "carraraMarble": { "title": "رخام كرارا", "description": "عروق حجرية مشرقة بتشطيب فاخر هادئ.", "promptLabel": "أرضية من رخام كرارا بعروق ناعمة وأنيقة", "discoverSubtitle": "أرضية / حجر مصقول" },
+      "polishedConcrete": { "title": "خرسانة مصقولة", "description": "لمعة خرسانية ناعمة بطابع معرض حضري هادئ.", "promptLabel": "أرضية خرسانية مصقولة بملمس ناعم فاخر", "discoverSubtitle": "أرضية / صناعي مينيمال" },
+      "herringboneOak": { "title": "بلوط هيرينغبون", "description": "نمط بلوط كلاسيكي بحركة اتجاهية دافئة.", "promptLabel": "أرضية باركيه بلوط هيرينغبون بنقشة فاخرة واضحة", "discoverSubtitle": "أرضية / خشب مزخرف" },
+      "terracottaTile": { "title": "بلاط تيراكوتا", "description": "دفء طيني ترابي بطابع يدوي الصنع.", "promptLabel": "أرضية بلاط تيراكوتا بتدرجات طينية دافئة", "discoverSubtitle": "أرضية / طين متوسطي" },
+      "slateTile": { "title": "بلاط أردوازي", "description": "أردواز داكن بتشطيب واسع ومحدد.", "promptLabel": "أرضية من بلاط الأردواز الداكن بألواح حجرية كبيرة", "discoverSubtitle": "أرضية / حجر داكن" },
+      "plushCarpet": { "title": "سجاد فاخر", "description": "سجاد كريمي ناعم بإحساس هادئ ومريح.", "promptLabel": "أرضية سجاد فاخر بدرجة كريمية ناعمة", "discoverSubtitle": "أرضية / ملمس ناعم" },
+      "weatheredOak": { "title": "بلوط معتق", "description": "بلوط متوسط الدرجة بلمسة عمر خفيفة.", "promptLabel": "أرضية من البلوط المعتق بعروق قديمة خفيفة", "discoverSubtitle": "أرضية / دفء ريفي" }
+    },
+    "injectedGallery": {
+      "floorAfterScenes": { "heritageHerringbone": "هيرينغبون كلاسيكي", "carraraMarble": "رخام كرارا", "satinConcrete": "خرسانة ساتان", "walnutGloss": "لمعة الجوز", "limestoneSlab": "لوح حجر جيري" },
+      "wallAfterScenes": { "sagePlaster": "لياسة مريمية", "linearSlats": "شرائح خطية", "veinedMarble": "رخام بعروق", "minimalConcrete": "خرسانة بسيطة", "botanicalMural": "جدارية نباتية" },
+      "interiorExamples": { "kitchen": "المطبخ", "livingRoom": "غرفة المعيشة", "bedroom": "غرفة النوم", "bathroom": "الحمام", "gamingRoom": "غرفة الألعاب", "homeOffice": "المكتب المنزلي" },
+      "exteriorExamples": { "apartment": "شقة", "house": "منزل", "office": "مكتب", "villa": "فيلا", "residential": "سكني", "retail": "تجاري" },
+      "gardenExamples": { "infinityPool": "مسبح إنفينيتي", "waterfallCourt": "فناء الشلال", "firePit": "موقد نار", "tropicalLounge": "صالة استوائية", "resortDeck": "سطح منتجعي", "lagoonFalls": "شلالات البحيرة" },
+      "homeCoreScenes": { "kitchen": "المطبخ", "livingRoom": "غرفة المعيشة", "bedroom": "غرفة النوم", "bathroom": "الحمام", "diningRoom": "غرفة الطعام", "gamingRoom": "غرفة الألعاب", "homeOffice": "المكتب المنزلي" },
+      "homeFlexScenes": { "coffeeShop": "مقهى", "gamingStudio": "استوديو ألعاب", "atticLounge": "صالة علوية", "studyRoom": "غرفة دراسة", "serviceRoom": "غرفة خدمة", "laundryRoom": "غرفة غسيل" },
+      "livingRoomScenes": { "sereneLounge": "صالة هادئة", "moodyLounge": "صالة مزاجية", "organicLiving": "معيشة عضوية", "grandSalon": "صالون فخم", "playfulLounge": "صالة مرحة" },
+      "homeLuxeScenes": { "restaurant": "مطعم", "studyLibrary": "مكتبة دراسة", "atticRetreat": "ملاذ علوي", "toiletSuite": "جناح دورة مياه", "balcony": "شرفة", "hall": "ردهة", "deckDay": "سطح نهاري", "deckNight": "سطح ليلي" },
+      "exteriorPrimaryScenes": { "house": "منزل", "residential": "سكني", "villa": "فيلا", "glassCorner": "زاوية زجاجية", "apartment": "شقة" },
+      "exteriorSecondaryScenes": { "apartmentTower": "برج شقق", "retailPavilion": "جناح تجاري", "officeBuilding": "مبنى مكاتب", "modernVilla": "فيلا حديثة", "residentialTower": "برج سكني" },
+      "gardenPrimaryScenes": { "infinityPool": "مسبح إنفينيتي", "waterfallCourt": "فناء الشلال", "sunsetFirePit": "موقد غروب الشمس", "tropicalLounge": "صالة استوائية", "livingWall": "جدار حي", "lightCourt": "فناء مضيء" },
+      "gardenSecondaryScenes": { "sunsetPool": "مسبح الغروب", "fireCove": "خليج النار", "poolCourt": "فناء المسبح", "waterfallLounge": "صالة الشلال", "resortDeck": "سطح منتجعي", "lagoonFalls": "شلالات البحيرة" },
+      "exteriorBuildingTypes": { "apartment": "شقة", "house": "منزل", "officeBuilding": "مبنى مكاتب", "villa": "فيلا", "residential": "سكني", "retail": "تجاري" }
+    }
+  },
+  "legacyUnlocalized": {
+    "paintWizard": {
+      "autoDetectFailureMessage": "تعذر تشغيل الاكتشاف التلقائي. يرجى التحديد يدوياً.",
+      "cancelledGenerationMessage": "تم الإلغاء من قبل المستخدم.",
+      "result": {
+        "heading": "إليك مساحتك الجديدة",
+        "subheading": "تصور جدار مصقول يحافظ على بنية الغرفة وتوزيع الأثاث والإضاءة الطبيعية.",
+        "appliedFinish": "التشطيب المطبق",
+        "saveToGallery": "حفظ في المعرض",
+        "share": "مشاركة",
+        "tryAgain": "أعد المحاولة"
+      }
+    }
+  }
+}

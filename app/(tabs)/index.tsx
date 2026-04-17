@@ -4,7 +4,7 @@ import { Settings } from "@/components/material-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, I18nManager, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -16,6 +16,11 @@ import { useViewerCredits } from "../../components/viewer-credits-context";
 import { DS } from "../../lib/design-system";
 import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
 import { triggerHaptic } from "../../lib/haptics";
+import {
+  getDirectionalAlignment,
+  getDirectionalOppositeAlignment,
+  getDirectionalRow,
+} from "../../lib/i18n/rtl";
 import { withWorkspaceFlowId } from "../../lib/try-it-flow";
 
 export default function HomeScreen() {
@@ -26,6 +31,7 @@ export default function HomeScreen() {
   const { clearDraft } = useWorkspaceDraft();
   const { credits: creditBalance, hasPaidAccess } = useViewerCredits();
   const [isCreditModalVisible, setIsCreditModalVisible] = useState(false);
+  const isRTL = I18nManager.isRTL;
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const sidePadding = 20;
   const headerHeight = insets.top + 70;
@@ -140,8 +146,8 @@ export default function HomeScreen() {
       <StatusBar style="dark" />
 
       <View style={[styles.headerShell, { paddingTop: insets.top + 10 }]}>
-        <View style={styles.headerRow}>
-          <View style={styles.sideSlot}>
+        <View style={[styles.headerRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+          <View style={[styles.sideSlot, { alignItems: getDirectionalAlignment(isRTL) }]}>
             <DiamondCreditPill
               accessibilityLabel={t("home.accessibility.openCredits")}
               count={creditBalance}
@@ -153,11 +159,11 @@ export default function HomeScreen() {
 
           <View pointerEvents="none" style={styles.centerBrand}>
             <Text numberOfLines={1} style={styles.brandTitle}>
-              HomeDecor AI
+              {t("app.name")}
             </Text>
           </View>
 
-          <View style={[styles.sideSlot, styles.sideSlotRight]}>
+          <View style={[styles.sideSlot, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
             <Pressable accessibilityRole="button" onPress={handleSettingsPress} style={styles.settingsButton}>
               <Settings color={DS.colors.textPrimary} size={20} strokeWidth={2} />
             </Pressable>

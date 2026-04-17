@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-
-const BRAND_NAME = "HomeDecor AI";
+import { useTranslation } from "react-i18next";
 const TYPEWRITER_INTERVAL_MS = 74;
 const HOLD_DURATION_MS = 820;
 
@@ -10,6 +9,8 @@ type BrandLaunchScreenProps = {
 };
 
 export function BrandLaunchScreen({ onFinish }: BrandLaunchScreenProps) {
+  const { t } = useTranslation();
+  const brandName = t("app.name");
   const [visibleLength, setVisibleLength] = useState(0);
   const [cursorVisible, setCursorVisible] = useState(true);
 
@@ -19,7 +20,7 @@ export function BrandLaunchScreen({ onFinish }: BrandLaunchScreenProps) {
 
     const typeTimer = setInterval(() => {
       setVisibleLength((current) => {
-        if (current >= BRAND_NAME.length) {
+        if (current >= brandName.length) {
           clearInterval(typeTimer);
           finishTimer = setTimeout(() => {
             onFinish();
@@ -44,14 +45,14 @@ export function BrandLaunchScreen({ onFinish }: BrandLaunchScreenProps) {
         clearTimeout(finishTimer);
       }
     };
-  }, [onFinish]);
+  }, [brandName.length, onFinish]);
 
   return (
     <View style={styles.screen}>
       <View style={styles.grid} pointerEvents="none" />
       <View style={styles.wordmarkWrap}>
         <Text style={styles.wordmark}>
-          {BRAND_NAME.slice(0, visibleLength)}
+          {brandName.slice(0, visibleLength)}
           <Text style={[styles.cursor, !cursorVisible ? styles.cursorHidden : null]}>|</Text>
         </Text>
         <Text style={styles.caption}>ARCHITECTURAL AI PORTFOLIO</Text>

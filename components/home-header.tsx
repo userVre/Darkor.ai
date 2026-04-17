@@ -1,5 +1,6 @@
 import { memo, useCallback, useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { fonts } from "../styles/typography";
 import { spacing } from "../styles/spacing";
 import { type Theme, useTheme } from "@/styles/theme";
@@ -20,6 +21,7 @@ export const HomeHeader = memo(function HomeHeader({
   progressValue,
   onUpgradeToPro,
 }: HomeHeaderProps) {
+  const { t } = useTranslation();
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const handleOpenCredits = useCallback(() => {
@@ -35,7 +37,7 @@ export const HomeHeader = memo(function HomeHeader({
             <Logo size={32} />
           </View>
           <View style={styles.brandCopy}>
-            <Text style={styles.eyebrow}>HomeDecor AI</Text>
+            <Text style={styles.eyebrow}>{t("app.name")}</Text>
             <Text style={styles.brandLabel}>Design Studio</Text>
           </View>
         </View>
