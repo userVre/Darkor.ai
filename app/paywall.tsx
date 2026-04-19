@@ -296,7 +296,9 @@ function WeeklyPlanCard({
                 </View>
 
               <View style={[styles.planPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
-                <Text style={[styles.weeklyTrialPrice, localizedFonts.bold]}>{trialThenPriceText}</Text>
+                <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={[styles.weeklyTrialPrice, localizedFonts.bold]}>
+                  {trialThenPriceText}
+                </Text>
               </View>
             </View>
           </Pressable>
@@ -320,7 +322,9 @@ function WeeklyPlanCard({
             </View>
 
             <View style={[styles.planPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
-              <Text style={[styles.weeklyPrice, localizedFonts.bold]}>{pricePerWeekText}</Text>
+              <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={[styles.weeklyPrice, localizedFonts.bold]}>
+                {pricePerWeekText}
+              </Text>
             </View>
           </View>
         </Pressable>
@@ -804,7 +808,7 @@ export default function PaywallScreen() {
       );
       setOptimisticAccess({
         credits: getGenerationLimit(subscriptionState.subscriptionType),
-        hasPaidAccess: subscriptionState.plan === "pro",
+        hasPaidAccess: subscriptionState.plan === "pro" || subscriptionState.plan === "trial",
         subscriptionType: subscriptionState.subscriptionType,
       });
       showSuccess();
@@ -853,7 +857,7 @@ export default function PaywallScreen() {
       );
       setOptimisticAccess({
         credits: getGenerationLimit(subscriptionState.subscriptionType),
-        hasPaidAccess: subscriptionState.plan === "pro",
+        hasPaidAccess: subscriptionState.plan === "pro" || subscriptionState.plan === "trial",
         subscriptionType: subscriptionState.subscriptionType,
       });
       showSuccess();
@@ -1374,12 +1378,14 @@ const styles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontSize: 16,
     lineHeight: 20,
+    flexShrink: 1,
     ...fonts.bold,
   },
   weeklyPrice: {
     color: TEXT_PRIMARY,
     fontSize: 16,
     lineHeight: 20,
+    flexShrink: 1,
     ...fonts.bold,
   },
   trialBadge: {
