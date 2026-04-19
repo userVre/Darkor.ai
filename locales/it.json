@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "HomeDecor AI"
+    "name": "__GETTONE_0__"
   },
   "common": {
     "actions": {
@@ -8,8 +8,11 @@
       "cancel": "Annulla",
       "close": "Chiudi",
       "delete": "Elimina",
+      "save": "Salva",
+      "share": "Condividi",
       "restore": "Ripristina",
       "upgrade": "Passa a Pro",
+      "tryAgain": "Per favore riprova.",
       "openSettings": "Apri impostazioni",
       "notNow": "Non ora",
       "takePhoto": "Scatta foto",
@@ -17,20 +20,43 @@
       "addPhoto": "Aggiungi una foto",
       "chooseMediaSource": "Seleziona sorgente media",
       "examplePhotos": "Foto di esempio",
-      "seeAll": "Explore All",
+      "seeAll": "Esplora tutto",
       "uploadPlus": "Carica +",
-      "tryThis": "Try This"
+      "exit": "Esci",
+      "connect": "Connessione...",
+      "tryThis": "Prova questo"
     },
     "labels": {
       "email": "E-mail",
-      "password": "Password",
+      "password": "Parola d'ordine",
+      "version": "Versione {{version}}",
       "lastUpdated": "Ultimo aggiornamento",
       "step": "Passaggio {{current}} / {{total}}"
     },
     "alerts": {
       "exitTitle": "Uscire?",
-      "progressLost": "I tuoi progressi andranno persi."
+      "progressLost": "I tuoi progressi andranno persi.",
+      "completeStepTitle": "Completa questo passaggio",
+      "makeSelection": "Effettua una selezione per continuare.",
+      "addPhotoToContinue": "Aggiungi una foto per continuare.",
+      "invalidHexTitle": "Colore non valido",
+      "invalidHexBody": "Inserisci un codice esadecimale valido di 6 cifre come #D946EF."
+    },
+    "states": {
+      "workInProgress": "Lavori in corso",
+      "generationFailed": "Il rendering ha riscontrato un problema. Per favore riprova.",
+      "savedToGallery": "Salvato nella tua libreria di foto",
+      "photoPermissionNeeded": "È richiesto l'accesso alla libreria fotografica.",
+      "loading": "Caricamento..."
     }
+  },
+  "boot": {
+    "loadingApp": "Caricamento HomeDecor AI",
+    "loadingAccount": "Caricamento del tuo account...",
+    "checkingPlan": "Revisione del tuo piano...",
+    "secureAccount": "Proteggi il tuo account per iniziare a progettare...",
+    "missingEnvTitle": "Variabili d'ambiente mancanti",
+    "missingEnvBody": "I seguenti valori sono richiesti prima che HomeDecor AI possa essere avviato:"
   },
   "tabs": {
     "tools": "Strumenti",
@@ -38,131 +64,1342 @@
     "discover": "Scopri",
     "profile": "Il mio profilo"
   },
+  "home": {
+    "title": "__GETTONE_0__",
+    "accessibility": {
+      "openCredits": "Crediti aperti"
+    },
+    "errors": {
+      "tryItUnavailableTitle": "Anteprima non disponibile"
+    },
+    "tools": {
+      "interior": {
+        "title": "Progettazione degli interni",
+        "description": "Reimagine your space with AI precision."
+      },
+      "exterior": {
+        "title": "Design esterno",
+        "description": "Reinventa l'esterno della tua casa con uno stile di facciata di prim'ordine."
+      },
+      "garden": {
+        "title": "Progettazione del giardino",
+        "description": "Progetta splendidi giardini e spazi esterni senza sforzo."
+      },
+      "paint": {
+        "title": "Vernice (muro)",
+        "description": "Perfeziona le tue pareti con tavolozze di colori su misura e texture di design."
+      },
+      "floor": {
+        "title": "Rifacimento del pavimento",
+        "description": "Migliora le fondamenta della tua stanza con materiali e finiture di prima qualità."
+      },
+      "cta": "Prova questo"
+    }
+  },
+  "paywall": {
+    "features": {
+      "fasterRendering": "Faster Results, Every Time",
+      "adFree": "Ultra-HD Quality Renders",
+      "unlimitedRenders": "Unlimited Designs, Always"
+    },
+    "restore": "Ripristina",
+    "bestOffer": "Migliore offerta",
+    "yearlyAccess": "Accesso annuale",
+    "weeklyAccess": "Accesso settimanale",
+    "freeTrial": "Prova gratuita di 3 giorni",
+    "justPerYear": "Solo {{price}} all'anno",
+    "pricePerYear": "Solo {{price}} all'anno",
+    "pricePerWeek": "{{price}} a settimana",
+    "perWeek": "a settimana",
+    "thenWeekly": "Quindi {{price}}",
+    "thenPricePerWeek": "Poi {{price}} a settimana",
+    "noPaymentNow": "Nessun pagamento adesso",
+    "cancelAnytime": "Annulla in qualsiasi momento",
+    "trialEnabled": "Prova gratuita abilitata",
+    "enableTrial": "Abilita la prova gratuita",
+    "processing": "Elaborazione...",
+    "tryForFree": "Inizia la tua prova Pro",
+    "continue": "Inizia la tua prova Pro",
+    "subtitle": "Sperimenta tutta la potenza dell'architettura AI con limiti più elevati e precisione 4K.",
+    "terms": "Termini",
+    "privacy": "Privacy",
+    "subscriptionsUnavailable": "Gli abbonamenti sono temporaneamente non disponibili.",
+    "restoreFailed": "Ripristino non riuscito",
+    "restored": "Restaurato",
+    "noActiveSubscriptions": "Non è stata trovata alcuna sottoscrizione attiva.",
+    "purchaseError": "Errore di acquisto",
+    "planUnavailable": "Il piano selezionato non è disponibile al momento.",
+    "moroccoPricingUnavailable": "I prezzi localizzati MAD sono temporaneamente non disponibili. Per favore riprova tra poco.",
+    "subscriptionConfirmFailed": "Non è stato possibile confermare la tua iscrizione. Per favore riprova.",
+    "purchaseCancelled": "Acquisto annullato.",
+    "closeA11y": "Chiudi il pagamento",
+    "title": "Design Like a Pro. No Limits.",
+    "beginTrial": "Inizia la tua prova Pro"
+  },
+  "creditLimit": {
+    "title": "Passa all'accesso professionale.",
+    "body": "Hai raggiunto il limite di rendering standard. Sblocca subito le esportazioni ad alta risoluzione e l'elaborazione più rapida."
+  },
   "settings": {
     "title": "Impostazioni",
-    "heroTitle": "Free Plan"
+    "heroTitle": "Piano gratuito",
+    "featureItems": {
+      "advancedAi": "Modello AI avanzato",
+      "fastProcessing": "Elaborazione veloce",
+      "removeAds": "Rimuovi tutti gli annunci"
+    },
+    "upgradePro": "Aggiorna PRO",
+    "rows": {
+      "language": "Lingua",
+      "feedback": "Feedback",
+      "faq": "Domande frequenti",
+      "rateUs": "Valutaci",
+      "shareWithFriends": "Condividi con gli amici",
+      "termsOfUse": "Condizioni d'uso",
+      "privacyPolicy": "Informativa sulla privacy",
+      "restorePurchase": "Ripristina acquisto",
+      "userId": "ID utente",
+      "deleteInformation": "Elimina informazioni"
+    },
+    "states": {
+      "notSignedIn": "Non ho effettuato l'accesso"
+    },
+    "language": {
+      "title": "Lingua",
+      "description": "Scegli se HomeDecor AI segue la lingua del tuo dispositivo o utilizza una lingua in-app selezionata.",
+      "auto": "Automatico (impostazione predefinita del sistema)",
+      "autoShort": "Automatico",
+      "usingSystem": "Attualmente seguo {{language}} dal tuo dispositivo",
+      "restartNotice": "Applicazione della nuova direzione del layout..."
+    },
+    "messages": {
+      "destinationUnavailable": "Questa destinazione non è al momento disponibile.",
+      "emailClientUnavailable": "Impossibile aprire l'app di posta elettronica.",
+      "reviewUnavailable": "Le richieste di revisione non sono al momento disponibili.",
+      "shareUnavailable": "Impossibile aprire il foglio di condivisione.",
+      "subscriptionsUnavailable": "Gli abbonamenti non sono disponibili al momento.",
+      "noActiveSubscriptions": "Non è stata trovata alcuna sottoscrizione attiva.",
+      "restoreFailed": "Ripristino non riuscito. Per favore riprova.",
+      "noUserId": "Non è disponibile alcun ID utente autenticato.",
+      "userIdCopied": "ID utente copiato",
+      "deleteFailed": "Impossibile eliminare il tuo account in questo momento."
+    },
+    "shareMessage": "Esplora i progetti creati con HomeDecor AI: {{url}}",
+    "deleteAccount": {
+      "title": "Eliminare l'account?",
+      "body": "Ciò eliminerà definitivamente il tuo account e tutti i dati associati. Questa azione non può essere annullata."
+    }
   },
   "profile": {
-    "title": "My Design Portfolio",
-    "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
-    "emptySubtitle": ""
+    "title": "Il mio portfolio di design",
+    "emptyTitle": "Il tuo portafoglio è vuoto. Avvia un progetto per vedere le tue visioni prendere vita.",
+    "emptySubtitle": "",
+    "compareHint": "Trascina per confrontare. Tocca due volte per reimpostare.",
+    "deleteFromBoardTitle": "Rimuovere dal portafoglio?",
+    "deleteFromBoardBody": "Questo design verrà rimosso dal tuo portfolio.",
+    "deletedFromBoard": "Rimosso dal portafoglio",
+    "unableDelete": "Impossibile rimuovere questo disegno.",
+    "generationFailedBody": "Questo rendering non è stato completato correttamente. Per favore riprova.",
+    "saveToGallery": "Salva nella Libreria foto",
+    "savedToGallery": "Salvato nella Libreria foto",
+    "unableSave": "Impossibile salvare questo disegno."
   },
   "discover": {
     "title": "Scopri",
+    "subtitle": "Interni curati, architettura e riferimenti paesaggistici organizzati in raccolte a scorrimento rapido.",
     "tabs": {
       "home": "Interior",
       "garden": "Garden",
       "exterior": "Exterior "
     },
-    "tryThisStyle": "Try This Style"
+    "tryThisStyle": "Prova questo stile"
   },
   "auth": {
     "accountEyebrow": "Account HomeDecor AI",
     "emailPlaceholder": "tu@azienda.com",
     "signIn": {
       "title": "Accedi",
+      "subtitle": "Accedi ai progetti salvati, ai crediti, agli acquisti e alla cronologia dei progetti in un unico spazio di lavoro perfezionato.",
+      "passwordPlaceholder": "Inserisci la tua password",
       "cta": "Continua",
       "loading": "Accesso in corso...",
-      "appleCta": "Continua con Apple"
+      "appleCta": "Continua con Apple",
+      "additionalVerificationTitle": "Accedi",
+      "additionalVerificationBody": "Per questo account è richiesta un'ulteriore verifica.",
+      "errorTitle": "Accesso non riuscito",
+      "errorFallback": "Impossibile farti accedere.",
+      "appleErrorFallback": "Accesso a Apple non riuscito.",
+      "noAccount": "Nessun conto?",
+      "createOne": "Creane uno"
     },
     "signUp": {
       "title": "Crea account",
+      "subtitle": "Crea il tuo account per trasferire i tuoi progetti, abbonamenti e progetti salvati su tutti i dispositivi.",
+      "passwordPlaceholder": "Crea una password sicura",
       "cta": "Crea account",
       "loading": "Creazione...",
-      "appleCta": "Continua con Apple"
+      "appleCta": "Continua con Apple",
+      "verifyTitle": "Verifica l'e-mail",
+      "verifyBody": "Controlla la tua casella di posta per il codice di verifica, quindi accedi.",
+      "errorTitle": "La registrazione non è riuscita",
+      "errorFallback": "Impossibile creare il tuo account.",
+      "appleErrorFallback": "Registrazione a Apple non riuscita.",
+      "haveAccount": "Hai già un account?",
+      "signInLink": "Accedi"
     }
   },
   "faq": {
     "eyebrow": "Supporto",
-    "title": "FAQ"
+    "title": "Domande frequenti",
+    "description": "Risposte chiare alle domande HomeDecor AI più comuni.",
+    "items": {
+      "credits": {
+        "question": "Come funzionano i crediti in HomeDecor AI?",
+        "answer": "Ogni rendering utilizza crediti in base al flusso di lavoro e al livello di output scelti. Il saldo rimanente si aggiorna automaticamente dopo ogni generazione."
+      },
+      "pro": {
+        "question": "Cosa sblocco con PRO?",
+        "answer": "PRO sblocca strumenti di rendering premium, elaborazione più rapida e qualità di output di fascia alta attraverso il flusso di aggiornamento in-app."
+      },
+      "slowResult": {
+        "question": "Perché il risultato richiede più tempo del previsto?",
+        "answer": "I tempi di rendering dipendono dalla richiesta della coda, dalla qualità dell'immagine sorgente e dal flusso di lavoro selezionato. Mantenere l'app aperta con una connessione stabile aiuta a evitare interruzioni."
+      },
+      "deleteAccount": {
+        "question": "Come posso eliminare il mio account?",
+        "answer": "Apri Impostazioni e scegli Elimina informazioni. Ciò rimuove permanentemente i dati del tuo account e ti disconnette dopo la conferma."
+      }
+    }
   },
   "privacy": {
     "eyebrow": "Politica",
     "title": "Informativa sulla privacy",
-    "date": "14 marzo 2026"
+    "description": "Le informazioni che raccogliamo, come vengono utilizzate e i controlli che hai all'interno di HomeDecor AI.",
+    "date": "14 marzo 2026",
+    "sections": {
+      "overview": {
+        "title": "Panoramica",
+        "body": "HomeDecor AI (\"HomeDecor\", \"noi\", \"nostro\", \"ci\") fornisce servizi di riprogettazione di interni ed esterni basati su AI. La presente Informativa sulla privacy spiega quali dati raccogliamo, come li utilizziamo e le scelte a tua disposizione."
+      },
+      "informationWeCollect": {
+        "title": "Informazioni che raccogliamo",
+        "body": "Raccogliamo le informazioni fornite, come dettagli dell'account e immagini caricate, dati di utilizzo come interazioni con funzionalità e informazioni sul dispositivo e dati sullo stato del pagamento da RevenueCat per gestire gli abbonamenti."
+      },
+      "howWeUseYourData": {
+        "title": "Come utilizziamo i tuoi dati",
+        "body": "Utilizziamo i tuoi dati per fornire riprogettazioni, personalizzare la tua esperienza, gestire crediti e fatturazione, migliorare la qualità del modello e proteggere l'app. Non vendiamo i tuoi dati personali."
+      },
+      "imageProcessing": {
+        "title": "Elaborazione delle immagini",
+        "body": "Le immagini caricate vengono elaborate per generare riprogettazioni. Memorizziamo le immagini generate e i relativi metadati in modo che tu possa rivisitare i tuoi risultati e rimuovere i tuoi dati eliminando il tuo account."
+      },
+      "sharingAndDisclosure": {
+        "title": "Condivisione e divulgazione",
+        "body": "Condividiamo i dati solo con i fornitori necessari per gestire HomeDecor AI, come partner di autenticazione, analisi ed elaborazione dei pagamenti, o quando la divulgazione è richiesta dalla legge."
+      },
+      "dataSecurity": {
+        "title": "Sicurezza dei dati",
+        "body": "Utilizziamo la crittografia e i controlli di accesso per proteggere i tuoi dati. Nessun sistema è perfettamente sicuro, quindi consigliamo anche password complesse e un dispositivo protetto."
+      },
+      "yourRights": {
+        "title": "I tuoi diritti",
+        "body": "Puoi accedere, aggiornare o eliminare i dati del tuo account in qualsiasi momento. La cancellazione dell'account rimuove le generazioni memorizzate e le informazioni del profilo dai nostri sistemi."
+      },
+      "contactUs": {
+        "title": "Contattaci",
+        "body": "Per domande o richieste sulla privacy, contattaci all'indirizzo support@homedecor.ai."
+      }
+    }
   },
   "terms": {
     "eyebrow": "Politica",
     "title": "Termini di servizio",
-    "date": "14 marzo 2026"
+    "description": "Le regole, le aspettative e i limiti del servizio per l'utilizzo di HomeDecor AI.",
+    "date": "14 marzo 2026",
+    "sections": {
+      "acceptanceOfTerms": {
+        "title": "Accettazione dei Termini",
+        "body": "Accedendo o utilizzando HomeDecor AI, accetti i presenti Termini di servizio. Se non sei d'accordo, non utilizzare l'app."
+      },
+      "serviceDescription": {
+        "title": "Descrizione del servizio",
+        "body": "HomeDecor AI fornisce riprogettazioni generate da AI per spazi interni ed esterni. Gli output sono concetti visivi e potrebbero non tenere conto di vincoli strutturali, ingegneristici o di codice."
+      },
+      "accountAndEligibility": {
+        "title": "Conto e idoneità",
+        "body": "Devi avere almeno 13 anni per utilizzare HomeDecor AI. Sei responsabile del mantenimento della sicurezza dell'account e delle attività che si svolgono sotto le tue credenziali."
+      },
+      "userContent": {
+        "title": "Contenuto dell'utente",
+        "body": "Mantieni la proprietà delle immagini che carichi. Utilizzando il servizio, concedi a HomeDecor AI una licenza limitata per elaborarli e archiviarli in modo che possiamo generare e restituire i tuoi risultati."
+      },
+      "subscriptionsAndCredits": {
+        "title": "Abbonamenti e Crediti",
+        "body": "I piani a pagamento sbloccano funzionalità avanzate ed esportazioni di qualità superiore. I crediti vengono consumati per generazione e la fatturazione e i rinnovi dell'abbonamento vengono gestiti dal tuo app store e da RevenueCat."
+      },
+      "prohibitedUse": {
+        "title": "Uso vietato",
+        "body": "Accetti di non utilizzare in modo improprio il servizio, decodificare l'app o caricare contenuti illegali, dannosi o che violino la legge."
+      },
+      "disclaimer": {
+        "title": "Dichiarazione di non responsabilità",
+        "body": "Il servizio viene fornito \"così com'è\" senza garanzie di alcun tipo. Non garantiamo risultati di progettazione specifici o l'accuratezza degli output generati da AI."
+      },
+      "limitationOfLiability": {
+        "title": "Limitazione di responsabilità",
+        "body": "Nella misura massima consentita dalla legge, HomeDecor AI non è responsabile per danni indiretti o consequenziali derivanti dall'utilizzo del servizio."
+      },
+      "contact": {
+        "title": "Contatto",
+        "body": "Le domande su questi termini possono essere inviate a support@homedecor.ai."
+      }
+    }
   },
-  "home": {
-    "title": "HomeDecor AI",
-    "tools": {
-      "interior": {
-        "title": "Interior Design",
-        "description": "Reimagine your space with AI precision."
-      },
-      "exterior": {
-        "title": "Exterior Design",
-        "description": "Reimagine your home's exterior with world-class facade styling."
-      },
-      "garden": {
-        "title": "Garden Design",
-        "description": "Design stunning gardens and outdoor spaces effortlessly."
-      },
-      "paint": {
-        "title": "Paint (Wall)",
-        "description": "Refine your walls with bespoke color palettes and designer textures."
-      },
-      "floor": {
-        "title": "Floor Restyle",
-        "description": "Elevate your room's foundation with premium materials and finishes."
-      },
-      "cta": "Try This"
+  "processing": {
+    "title": "AI sta realizzando il tuo capolavoro architettonico...",
+    "eta": "La tua visione sarà pronta tra ~15 secondi.",
+    "cancelKeepCredit": "Annulla e mantieni il mio credito",
+    "status": {
+      "analyzingGeometry": "Analizzare la geometria architettonica...",
+      "identifyingSurfaces": "Identificare superfici e linee strutturali...",
+      "applyingStyle": "Applicazione della direzione di progettazione selezionata...",
+      "renderingMaterials": "Rendering materiali e illuminazione...",
+      "addingDetails": "Affinando gli ultimi dettagli...",
+      "almostReady": "Finalizzazione del rendering...",
+      "renderingFinalLighting": "Composizione del passaggio luci finale..."
     }
   },
   "wizard": {
-    "headers": {},
+    "headers": {
+      "back": "Torna indietro",
+      "close": "Chiudi",
+      "previousStep": "Vai al passaggio precedente",
+      "stepProgress": "Passaggio {{current}}/{{total}}",
+      "creditsRemaining": "Crediti rimanenti"
+    },
     "stepOne": {
-      "title": "Upload Your Vision",
-      "emptyTitle": "Upload Your Vision",
+      "title": "Carica la tua visione",
+      "emptyTitle": "Carica la tua visione",
+      "emptySubtitle": "Riprogetta e abbellisci la tua casa.",
+      "removePhoto": "Rimuovi la foto selezionata",
       "cta": "Begin Your Transformation"
     },
     "interior": {
       "stepTwoTitle": "Choose Your Space",
+      "stepTwoSubtitle": "Seleziona la tipologia di camera in modo che la riprogettazione rimanga architettonicamente radicata.",
       "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepThreeSubtitle": "Scegli uno stile distintivo per dare forma alla tua visione del design.",
       "stepFourMode": "Design Mode",
-      "stepFourPalette": "Color Harmony"
+      "stepFourPalette": "Armonia dei colori"
     },
     "exterior": {
       "stepTwoTitle": "Select Building Type",
+      "stepTwoSubtitle": "Seleziona la forma architettonica che desideri riprogettare.",
       "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
-      "stepFourTitle": "Color Harmony"
+      "stepThreeSubtitle": "Scegli uno stile distintivo per dare forma alla tua visione del design.",
+      "stepFourTitle": "Armonia dei colori"
     },
     "garden": {
-      "stepOneEmptyTitle": "Upload Your Vision",
+      "stepOneEmptyTitle": "Carica la tua visione",
+      "stepOneEmptySubtitle": "Riprogetta e abbellisci la tua casa.",
       "stepTwoTitle": "Curate Your Aesthetic",
-      "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
-      "stepThreeTitle": "Color Harmony"
+      "stepTwoSubtitle": "Scegli uno stile distintivo per dare forma alla tua visione del design.",
+      "stepThreeTitle": "Armonia dei colori"
+    },
+    "floorIntro": {
+      "hero": "Seleziona uno stile di pavimentazione per ridefinire le fondamenta della tua stanza."
+    },
+    "paintIntro": {
+      "hero": "Traccia qualsiasi superficie per applicare istantaneamente colori personalizzati e texture di design."
     },
     "floorFlow": {
-      "promptLabel": "Describe Your Vision",
-      "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials."
+      "title": "Rifacimento del pavimento",
+      "masking": "Mappatura del piano del pavimento...",
+      "promptLabel": "Descrivi la tua visione",
+      "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials.",
+      "promptExamplesTitle": "Esempi suggeriti",
+      "generateCta": "Genera il mio progetto",
+      "selectMaterialCta": "Seleziona un materiale",
+      "selectMaterialTitle": "Seleziona materiale",
+      "selectMaterialBody": "Seleziona un materiale premium curato per essere letto come fotorealistico, sensibile alla prospettiva e pronto per l'inserimento nell'elenco.",
+      "selectedMaterial": "Materiale selezionato",
+      "noMaterialSelected": "Nessun materiale selezionato",
+      "unlockMaterialBody": "Seleziona un materiale per la pavimentazione per sbloccare il restyling AI.",
+      "addPromptTitle": "Aggiungi un suggerimento",
+      "addPromptBody": "Descrivi l'esatta trasformazione del pavimento che desideri prima di continuare.",
+      "generatePromptBody": "Scegli un messaggio di piano personalizzato prima di generare.",
+      "autoMaskPreparing": "Preparazione della maschera da pavimento automatica. Per favore aspetta un momento.",
+      "autoMaskSuccess": "Maschera da pavimento pronta.",
+      "autoMaskFailure": "Impossibile completare il rilevamento automatico. Si prega di spazzolare il pavimento manualmente.",
+      "savePermissionTitle": "È necessario l'accesso alle foto",
+      "savePermissionBody": "Consenti l'accesso alla libreria di foto per salvare il rendering sul dispositivo.",
+      "cameraAccessTitle": "È necessario l'accesso alla fotocamera",
+      "cameraAccessBody": "Abilita l'accesso alla fotocamera per scattare una foto del pavimento.",
+      "photoAccessTitle": "È necessario l'accesso alle foto",
+      "photoAccessBody": "Abilita l'accesso alla libreria fotografica per caricare una foto del piano.",
+      "mediaUnavailableTitle": "Impossibile aprire il supporto",
+      "exampleUnavailableBody": "Impossibile aprire questa foto di esempio.",
+      "markFloorTitle": "Segna prima il pavimento",
+      "markFloorBody": "Spennella l'area del pavimento che desideri rinnovare prima di continuare.",
+      "pickMaterialTitle": "Scegli un materiale",
+      "pickMaterialBody": "Scegli un materiale per la pavimentazione prima di continuare.",
+      "renderFinishing": "Questo rendering è già terminato.",
+      "cancelSuccess": "Generazione annullata. Il tuo credito è stato trattenuto.",
+      "cancelUnavailable": "Impossibile annullare in questo momento.",
+      "supportingText": "Utilizza 1 credito · {{creditsRemaining}}",
+      "creditsRemaining": "{{count}} rimanenti",
+      "promptExamples": {
+        "frenchOak": "Lussuoso rovere francese a plancia larga con una calda finitura naturale.",
+        "carraraMarble": "Marmo italiano di Carrara lucido con venature grigio intenso.",
+        "microcement": "Microcemento contemporaneo senza giunture per un fondotinta industrial chic.",
+        "herringboneWalnut": "Elegante noce scuro con classico motivo a spina di pesce.",
+        "walnut": "Piastrelle moderne in pietra ardesia di grande formato in grigio antracite."
+      },
+      "result": {
+        "heading": "Ecco i tuoi nuovi interni",
+        "subheading": "Una trasformazione del pavimento guidata dai materiali, progettata per rimanere fedele alla prospettiva, all'arredamento e alla luce naturale della stanza.",
+        "before": "Prima",
+        "after": "Dopo",
+        "materialApplied": "Materiale applicato",
+        "materialFallback": "Materiale",
+        "summary": "Il tuo pavimento è stato ridisegnato preservando la geometria della stanza, l'allineamento dei mobili e il comportamento della luce naturale.",
+        "saveToGallery": "Salva nella Galleria",
+        "share": "Condividi",
+        "tryAgain": "Riprova"
+      },
+      "materials": {
+        "natural-oak": {
+          "title": "Rovere Naturale",
+          "description": "Plance di rovere arioso con venature naturali morbide."
+        },
+        "walnut-wood": {
+          "title": "Legno di noce",
+          "description": "Tavole di noce profonde con ricco contrasto su misura."
+        },
+        "carrara-marble": {
+          "title": "Marmo di Carrara",
+          "description": "Venature di pietra luminose con una finitura tranquilla e lussuosa."
+        },
+        "polished-concrete": {
+          "title": "Cemento lucidato",
+          "description": "La lucentezza del cemento liscio con la calma della galleria urbana."
+        },
+        "herringbone-oak": {
+          "title": "Rovere a spina di pesce",
+          "description": "Modello classico in rovere con caldo movimento direzionale."
+        },
+        "terracotta-tile": {
+          "title": "Piastrella in terracotta",
+          "description": "Calore terroso dell'argilla con carattere artigianale."
+        },
+        "slate-tile": {
+          "title": "Piastrella in ardesia",
+          "description": "Ardesia scura con una finitura nitida di grande formato."
+        },
+        "plush-carpet": {
+          "title": "Tappeto in peluche",
+          "description": "Morbido tappeto color crema dall'atmosfera tranquilla e accogliente."
+        },
+        "weathered-oak": {
+          "title": "Quercia stagionata",
+          "description": "Rovere di tonalità media con finitura delicatamente invecchiata."
+        }
+      }
     },
     "paintFlow": {
-      "selectionTitle": "Select Surfaces to Transform",
-      "maskTitle": "Select Surfaces to Transform",
-      "intakeTitle": "Upload Your Vision",
-      "intakeReadyTitle": "Photo added. Mark the wall area next."
+      "title": "Dipingere",
+      "selectionTitle": "Seleziona Superfici da trasformare",
+      "maskTitle": "Seleziona Superfici da trasformare",
+      "colorLabel": "Colore",
+      "surfaceLabel": "Superficie",
+      "choose": "Scegli",
+      "apply": "Applicare",
+      "colorPickerTitle": "Scegli un colore per la tua parete",
+      "surfacePickerTitle": "Seleziona Tipo di superficie",
+      "detectTitle": "Rilevamento delle superfici verniciabili...",
+      "detectBody": "HomeDecor AI traccia superfici murali riverniciabili lasciando intatti finestre, mobili, finiture e pavimenti.",
+      "preparingMaskTitle": "Preparazione della superficie di mascheratura...",
+      "preparingMaskBody": "HomeDecor AI sta perfezionando la tela in modo da poter dipingere bordi netti attorno a edifici, finestre e mobili.",
+      "brushWidth": "Larghezza pennello",
+      "eraserWidth": "Larghezza della gomma",
+      "generateCta": "Dipingi le mie pareti →",
+      "finishTitle": "Tipo di finitura",
+      "finishBody": "Scegli il modo in cui la vernice dovrebbe catturare la luce in modo che le pareti vengano lette correttamente in un rendering lucido e di design.",
+      "selectedColor": "Colore selezionato",
+      "selectedSurfaceSentence": "Superficie: {{surface}}.",
+      "colorLockedBody": "Il colore della parete è bloccato. Ora scegli il profilo di lucentezza finale per il rendering.",
+      "customColorDescription": "Tonalità della parete personalizzata selezionata dal selettore di colori di precisione.",
+      "noColorSelected": "Nessun colore selezionato",
+      "chooseColorBody": "Scegli un colore della parete prima di continuare.",
+      "savePermissionTitle": "È necessario l'accesso alle foto",
+      "savePermissionBody": "Consenti l'accesso alla libreria di foto per salvare il rendering sul dispositivo.",
+      "cameraAccessTitle": "È necessario l'accesso alla fotocamera",
+      "cameraAccessBody": "Abilita l'accesso alla fotocamera per scattare una foto della stanza.",
+      "photoAccessTitle": "È necessario l'accesso alle foto",
+      "photoAccessBody": "Abilita l'accesso alla libreria fotografica per caricare la foto di una stanza.",
+      "mediaUnavailableTitle": "Impossibile aprire il supporto",
+      "exampleUnavailableBody": "Impossibile aprire questa foto di esempio.",
+      "markWallsTitle": "Segna prima i muri",
+      "markWallsBody": "Spennella le superfici del muro che desideri ridipingere prima di generare.",
+      "pickColorTitle": "Scegli un colore",
+      "pickColorBody": "Scegli un colore della parete prima di continuare.",
+      "autoDetectSuccess": "Rilevati muri. Spennellare per rifinire se necessario.",
+      "autoDetectFailure": "Impossibile completare il rilevamento automatico. Si prega di spazzolare manualmente.",
+      "renderFinishing": "Questo rendering è già terminato.",
+      "cancelSuccess": "Generazione annullata. Il tuo credito è stato trattenuto.",
+      "cancelUnavailable": "Impossibile annullare in questo momento.",
+      "supportingText": "Utilizza 1 credito · {{creditsRemaining}}",
+      "creditsRemaining": "{{count}} rimanenti",
+      "intakeTitle": "Carica la tua visione",
+      "intakeBody": "Carica la foto di una stanza per ricolorare con precisione le pareti.",
+      "intakeReadyTitle": "Foto aggiunta. Segna successivamente l'area del muro.",
+      "intakeReadyBody": "La tua foto è bloccata. Successivamente, spazzola le superfici delle pareti in modo che la ricolorazione rimanga precisa attorno a finiture, mobili e decorazioni.",
+      "surfaces": {
+        "auto": "Automatico",
+        "brick": "Mattone",
+        "cabinet": "Gabinetto",
+        "door": "Porta",
+        "wall": "Muro",
+        "outsideWall": "Muro esterno"
+      },
+      "colorFamilies": {
+        "pink": "Rosa",
+        "blue": "Blu",
+        "green": "Verde",
+        "yellow": "Giallo",
+        "gray": "Grigio",
+        "red": "Rosso"
+      },
+      "colors": {
+        "sage-green": {
+          "title": "Verde salvia",
+          "description": "Tenue calma verde per spazi abitativi luminosi e raffinati."
+        },
+        "midnight-navy": {
+          "title": "Marina di mezzanotte",
+          "description": "Profondità blu scuro su misura con un netto contrasto architettonico."
+        },
+        "terracotta-glow": {
+          "title": "Bagliore di terracotta",
+          "description": "Caldo colore argilla con energia editoriale radicata."
+        },
+        "dusty-rose": {
+          "title": "Rosa polverosa",
+          "description": "Calore tenue del rossore con un morbido appeal boutique."
+        },
+        "gallery-charcoal": {
+          "title": "Galleria Carbone",
+          "description": "Carbone raffinato per stanze lunatiche e artistiche."
+        },
+        "soft-ivory": {
+          "title": "Avorio morbido",
+          "description": "Neutro luminoso che mantiene gli ambienti luminosi, mai piatti."
+        },
+        "olive-grove": {
+          "title": "Uliveto",
+          "description": "Profondità olivastra terrosa con un'atmosfera da designer radicata."
+        },
+        "lavender-mist": {
+          "title": "Nebbia di lavanda",
+          "description": "Tenue foschia viola per stanze pastello elevate."
+        },
+        "pearl-gray": {
+          "title": "Grigio Perla",
+          "description": "Grigio tono chiaro con lucida flessibilità quotidiana."
+        }
+      },
+      "finishes": {
+        "matte": {
+          "label": "Opaco",
+          "description": "Risultato cromatico morbido, da galleria, con il minor riflesso superficiale."
+        },
+        "satin": {
+          "label": "Raso",
+          "description": "Lucentezza equilibrata per interni moderni con una delicata luminosità di design."
+        },
+        "glossy": {
+          "label": "Lucido",
+          "description": "Una finitura riflettente lucida per pareti audaci e ad alto contrasto."
+        }
+      }
+    },
+    "examples": {
+      "floor": {
+        "crackedConcrete": "Calcestruzzo incrinato",
+        "damagedPlanks": "Tavole danneggiate",
+        "brokenTile": "Piastrella rotta",
+        "renovationSubfloor": "Sottofondo di ristrutturazione",
+        "wornPlywood": "Compensato usurato"
+      },
+      "paint": {
+        "rawConcrete": "Calcestruzzo grezzo",
+        "peelingPlaster": "Intonaco scrostato",
+        "wornWhite": "Indossato bianco",
+        "exposedBrick": "Mattone a vista",
+        "stainedPlaster": "Intonaco colorato",
+        "dampStreaks": "Strisce umide"
+      }
     }
   },
-  "paywall": {
-    "title": "Design Like a Pro. No Limits.",
-    "features": {
-      "fasterRendering": "Faster Results, Every Time",
-      "adFree": "Ultra-HD Quality Renders",
-      "unlimitedRenders": "Unlimited Designs, Always"
-    },
-    "tryForFree": "Begin Your Pro Trial",
-    "continue": "Begin Your Pro Trial",
-    "beginTrial": "Begin Your Pro Trial"
-  },
   "workspace": {
+    "board": {
+      "new": "Nuovo",
+      "openEditor": "Tocca per aprire l'editor di progettazione",
+      "generationFailedTap": "Il rendering ha riscontrato un problema. Tocca per i dettagli.",
+      "generationFailedTitle": "Rendering non riuscito",
+      "generationFailedBody": "Questo rendering non è stato completato. Per favore riprova.",
+      "tryAnotherPrompt": "Torna indietro e prova un altro messaggio."
+    },
+    "processing": {
+      "default": "HomeDecor AI sta preservando l'architettura componendo al contempo una riprogettazione raffinata.",
+      "floor": "HomeDecor AI sta leggendo la prospettiva, bloccando il piano del pavimento e componendo il nuovo materiale con dettagli premium.",
+      "paint": "HomeDecor AI isola i piani delle pareti e sovrappone la finitura selezionata con un realismo da galleria."
+    },
+    "services": {
+      "interior": "Riprogettazione degli interni",
+      "exterior": "Riprogettazione esterna",
+      "garden": "Riprogettazione del giardino",
+      "floor": "Rifacimento del pavimento",
+      "paint": "Pittura murale intelligente"
+    },
+    "editor": {
+      "title": "Il tuo concetto professionale",
+      "sourcePhoto": "Foto sorgente",
+      "comparison": "Confronto",
+      "deleteA11y": "Elimina questo disegno dal mio portfolio di progetti",
+      "showComparison": "Mostra il confronto prima e dopo",
+      "hideComparison": "Nascondi prima e dopo il confronto",
+      "removeWatermark": "Rimuovi filigrana",
+      "regenerate": "Rigenerarsi",
+      "saving": "Salvataggio...",
+      "sharing": "Condivisione...",
+      "renderUnavailable": "Rendering non disponibile. Per favore riprova.",
+      "previewNotReady": "Anteprima non pronta. Per favore riprova.",
+      "floorReady": "Trasformazione del pavimento basata sui materiali con uno slider prima e dopo in tempo reale.",
+      "paintReady": "Ricolorazione delle pareti in base alla finitura selezionata e all'illuminazione della stanza.",
+      "defaultReady": "Curato all'interno del tuo pannello HomeDecor premium."
+    },
+    "permissions": {
+      "requiredTitle": "Autorizzazione richiesta",
+      "requiredBody": "Abilita l'accesso alla fotocamera o alle foto nelle impostazioni del sistema per continuare.",
+      "cameraAccessTitle": "È necessario l'accesso alla telecamera",
+      "cameraAccessBody": "Consenti l'accesso alla fotocamera nelle Impostazioni per scattare una foto.",
+      "photoLibraryAccessTitle": "È necessario l'accesso alla libreria fotografica",
+      "photoLibraryAccessBody": "Consenti l'accesso alla libreria di foto nelle Impostazioni.",
+      "photoLibrarySaveBody": "Consenti l'accesso alla libreria di foto per salvare il risultato nella galleria del dispositivo."
+    },
+    "media": {
+      "capturedPhoto": "Foto catturata",
+      "uploadedPhoto": "Foto caricata",
+      "choosePhotoSource": "Scegli come vuoi aggiungere la tua immagine.",
+      "cameraUnavailableTitle": "Fotocamera non disponibile",
+      "cameraUnavailableBody": "Non siamo riusciti ad aprire la fotocamera. Per favore riprova.",
+      "photoLibraryUnavailableTitle": "Libreria foto non disponibile",
+      "photoLibraryUnavailableBody": "Non è stato possibile aprire la libreria di foto. Per favore riprova.",
+      "photoIntakeUnavailableTitle": "Assunzione di foto non disponibile",
+      "photoIntakeUnavailableBody": "Non è stato possibile aprire la fotocamera o la libreria di foto. Per favore riprova.",
+      "exampleImageUnavailable": "Immagine di esempio non disponibile.",
+      "exampleUnavailableTitle": "Esempio non disponibile",
+      "tryAnotherImage": "Per favore prova un'altra immagine."
+    },
+    "share": {
+      "nothingTitle": "Niente da condividere",
+      "generateFirst": "Generare prima un disegno.",
+      "failedTitle": "Condivisione non riuscita",
+      "message": "Progettato con HomeDecor AI"
+    },
+    "download": {
+      "nothingTitle": "Niente da scaricare",
+      "generateFirst": "Generare prima un disegno.",
+      "failedTitle": "Download non riuscito"
+    },
+    "generation": {
+      "preparingSessionTitle": "Preparare la sessione",
+      "preparingSessionBody": "Il tuo profilo ospite è ancora in caricamento. Per favore riprova tra poco.",
+      "completeStepsTitle": "Completa i passaggi",
+      "completeFloorBody": "Aggiungi la foto della stanza, definisci l'area del pavimento, scegli un materiale e seleziona una finitura prima di continuare.",
+      "completePaintBody": "Aggiungi la foto della stanza, definisci le superfici verniciabili, scegli un colore per la parete e seleziona una finitura prima di continuare.",
+      "completePreviousSteps": "Si prega di completare prima i passaggi precedenti.",
+      "limitReached": "Limite raggiunto",
+      "completeStepToContinue": "Completa questo passaggio per continuare."
+    },
     "flow": {
-      "customPromptTitle": "Describe Your Vision"
+      "customPromptTitle": "Descrivi la tua visione",
+      "customPromptBody": "Descrivi l'esatta direzione del disegno che desideri prima di applicarlo.",
+      "selectSpaceType": "Tocca una carta per identificare il tipo di spazio."
+    },
+    "resumeDraft": "Ripresa della bozza della procedura guidata salvata.",
+    "feedback": {
+      "like": "Mi piace",
+      "dislike": "Antipatia",
+      "liked": "Grazie per il feedback",
+      "disliked": "Feedback inviato al team di progettazione.",
+      "failed": "Impossibile inviare feedback in questo momento."
+    },
+    "stepOne": {
+      "gardenPhotoTitle": "Aggiungi una foto del giardino",
+      "exteriorPhotoTitle": "Aggiungi una foto esterna",
+      "floorPhotoTitle": "Aggiungi foto del pavimento",
+      "gardenEmptyTitle": "Inizia la trasformazione del tuo giardino",
+      "exteriorEmptyTitle": "Inizia la tua trasformazione esterna",
+      "tapToAddPhoto": "Tocca per aggiungere una foto dalla fotocamera o dalla libreria"
+    },
+    "style": {
+      "tapToSelect": "Tocca una carta per definire la direzione del tuo stile."
+    },
+    "localization": {
+      "rooms": {
+        "livingRoom": "Soggiorno",
+        "bedroom": "Camera da letto",
+        "kitchen": "Cucina",
+        "bathroom": "Bagno",
+        "homeOffice": "Ufficio domestico",
+        "diningRoom": "Sala da pranzo",
+        "nursery": "Vivaio",
+        "homeTheater": "Teatro domestico",
+        "gamingRoom": "Sala da gioco",
+        "hall": "Sala",
+        "library": "Biblioteca",
+        "laundry": "Lavanderia"
+      },
+      "examples": {
+        "interior": {
+          "emptyRoom": "Stanza vuota",
+          "messyLounge": "Salotto disordinato",
+          "wornRoom": "Stanza usurata",
+          "emptyKitchen": "Cucina vuota",
+          "damagedRoom": "Stanza danneggiata",
+          "outdatedKitchen": "Cucina obsoleta"
+        },
+        "exterior": {
+          "scaffoldHouse": "Casa dell'impalcatura",
+          "weatheredHouse": "Casa esposta alle intemperie",
+          "brickShell": "Guscio di mattoni",
+          "overgrownCottage": "Cottage invaso dalla vegetazione",
+          "abandonedHome": "Casa abbandonata",
+          "concreteFrame": "Telaio in cemento"
+        },
+        "garden": {
+          "muddyYard": "Cortile fangoso",
+          "weedyYard": "Giardino erboso",
+          "rubbleYard": "Deposito di macerie",
+          "overgrownCorner": "Angolo invaso dalla vegetazione",
+          "abandonedYard": "Cortile abbandonato",
+          "crackedPatio": "Patio rotto"
+        }
+      },
+      "styles": {
+        "modern": "Moderno",
+        "luxury": "Lusso",
+        "japandi": "Japandi",
+        "cyberpunk": "Cyberpunk",
+        "tropical": "Tropicale",
+        "minimalist": "Minimalista",
+        "scandinavian": "Scandinavo",
+        "bohemian": "Boemo",
+        "midcentury": "Metà del secolo",
+        "artDeco": "Art Déco",
+        "coastal": "Costiero",
+        "rustic": "Rustico",
+        "vintage": "Annata",
+        "mediterranean": "Mediterraneo",
+        "glam": "Glam",
+        "coastalRetreat": "Ritiro costiero",
+        "rusticManor": "Maniero rustico",
+        "hollywoodRegency": "Reggenza di Hollywood",
+        "neoClassic": "Neoclassico",
+        "shabbyChic": "Shabby Chic",
+        "frenchCountry": "Paese francese",
+        "brutalist": "Brutalista",
+        "hollywoodRegencyNoir": "Reggenza di Hollywood Noir",
+        "artNouveau": "Art Nouveau",
+        "custom": "Personalizzato",
+        "chinese": "Cinese",
+        "cottage": "Cottage",
+        "farmHouse": "Agriturismo",
+        "french": "francese",
+        "gothic": "Gotico",
+        "italianate": "Italianizzare",
+        "christmas": "Natale",
+        "minimalistic": "Minimalista",
+        "baroque": "Barocco"
+      },
+      "buildings": {
+        "apartment": "Appartamento",
+        "house": "Casa",
+        "officeBuilding": "Edificio per uffici",
+        "residential": "Residenziale",
+        "retail": "Vendita al dettaglio",
+        "villa": "Villa"
+      },
+      "modes": {
+        "preserve": {
+          "title": "Conservazione strutturale",
+          "description": "Preserva il DNA architettonico della tua stanza rinnovandone perfettamente l'estetica."
+        },
+        "renovate": {
+          "title": "Progettazione di ristrutturazioni",
+          "description": "Totale libertà creativa per ridefinire la disposizione dei mobili e i confini strutturali per una ristrutturazione completa."
+        }
+      },
+      "palettes": {
+        "surprise": "Miscela curata",
+        "gray": "Grigio millenario",
+        "terracotta": "Miraggio di terracotta",
+        "forest": "Tonalità della foresta",
+        "peach": "Frutteto di pesche",
+        "fuchsia": "Fiore fucsia",
+        "emerald": "Gemma di smeraldo",
+        "pastel": "Brezza pastello",
+        "ocean": "Nebbia dell'oceano",
+        "velvet": "Crepuscolo di velluto",
+        "amethyst": "Sogno di ametista",
+        "sunset": "Fucsia Nero"
+      },
+      "gardenPalettes": {
+        "garden-surprise": "Sorprendimi",
+        "garden-gray": "Grigio millenario",
+        "garden-terracotta": "Miraggio di terracotta",
+        "garden-neon-sunset": "Tramonto al neon",
+        "garden-forest": "Tonalità della foresta",
+        "garden-peach": "Frutteto di pesche",
+        "garden-fuschia": "Fiore fucsia",
+        "garden-emerald": "Gemma di smeraldo",
+        "garden-pastel": "Brezza pastello",
+        "garden-azure": "Miraggio azzurro",
+        "garden-twilight": "Blues crepuscolari",
+        "garden-earthy": "Armonia terrestre"
+      },
+      "summary": {
+        "roomType": "Tipologia di camera",
+        "style": "Stile",
+        "mode": "Modalità",
+        "palette": "Tavolozza",
+        "missing": "⚠ Mancante"
+      },
+      "previewThumbnailLabel": "Output di esempio · {{style}}",
+      "toasts": {
+        "completeStyleSelections": "Completa le selezioni di stile per generare."
+      },
+      "requiredSelections": {
+        "photo": "Seleziona una foto per continuare.",
+        "room": "Seleziona una stanza per continuare.",
+        "style": "Seleziona uno stile per continuare.",
+        "mode": "Completa la selezione della modalità per continuare.",
+        "palette": "Completa la selezione della tavolozza per continuare."
+      },
+      "regenerationUnavailable": "Rigenerazione non disponibile",
+      "feedbackUnavailable": "Il feedback non è disponibile per questa immagine.",
+      "cta": {
+        "getMoreCredits": "Ottieni più crediti",
+        "generateMyDesign": "Genera il mio progetto"
+      },
+      "stepFourSticky": "Passaggio 4: perfezionare la direzione",
+      "exteriorEmptyStateSubtitle": "Riprogetta e abbellisci la tua casa."
+    }
+  },
+  "proSuccess": {
+    "title": "Benvenuto in HomeDecor Pro!",
+    "subtitle": "I tuoi strumenti premium sono ora sbloccati:",
+    "features": {
+      "hyperRealism": "Abilitato il rendering ad altissimo dettaglio",
+      "virtualStaging": "Strumenti di progettazione premium sbloccati",
+      "infiniteCredits": "Quote di rendering settimanali o mensili attive"
+    },
+    "cta": "Inizia a progettare",
+    "toast": "Il tuo account è stato aggiornato a Pro."
+  },
+  "legalViewer": {
+    "eyebrow": "Visualizzatore legale",
+    "switches": {
+      "terms": "Termini di servizio",
+      "privacy": "Informativa sulla privacy"
+    }
+  },
+  "storeReview": {
+    "title": "Valuta HomeDecor AI",
+    "unavailableBody": "Le richieste di revisione non sono disponibili su questo dispositivo.",
+    "errorBody": "Impossibile aprire la finestra di dialogo di revisione del negozio in questo momento."
+  },
+  "gallery": {
+    "clusters": {
+      "foundations": "Fondazioni"
+    },
+    "tabs": {
+      "home": "Interni",
+      "exterior": "Esterni",
+      "garden": "Paesaggi"
+    },
+    "groups": {
+      "kitchen": "Cucina",
+      "livingRoom": "Soggiorno",
+      "diningRoom": "Sala da pranzo",
+      "bedroom": "Camera da letto",
+      "bathroom": "Bagno",
+      "gamingRoom": "Sala da gioco",
+      "homeOffice": "Ufficio domestico",
+      "coffeeShop": "Caffetteria",
+      "studyRoom": "Sala studio",
+      "restaurant": "Ristorante",
+      "attic": "Soffitta",
+      "toilet": "WC",
+      "balcony": "Balcone",
+      "hall": "Sala",
+      "deck": "Mazzo",
+      "landscapeDesigns": "Disegni di paesaggi",
+      "villa": "Villa",
+      "apartment": "Appartamento",
+      "house": "Casa",
+      "officeBuilding": "Edificio per uffici",
+      "retail": "Vedere al dettaglio",
+      "residential": "Residenziale",
+      "wall": "Muro",
+      "floor": "Pavimento",
+      "garden": "Giardino"
+    },
+    "imageTitleTemplate": "{{title}} Immagine {{index}}",
+    "emptyState": {
+      "title": "Categoria non disponibile",
+      "body": "Impossibile trovare la raccolta di immagini richiesta."
+    }
+  },
+  "discoverCatalog": {
+    "sections": {
+      "home": {
+        "title": "Interno",
+        "description": "Camere progettate da designer che spaziano dal soggiorno, al sonno, alla sala da pranzo, al lavoro e all'intrattenimento.",
+        "items": {
+          "sereneLounge": {
+            "title": "Salotto sereno",
+            "subtitle": "Soggiorno/Soft Minimal",
+            "spaceType": "Soggiorno",
+            "style": "Morbido minimo"
+          },
+          "moodyClubRoom": {
+            "title": "Camera lunatica del club",
+            "subtitle": "Soggiorno / Lusso lunatico",
+            "spaceType": "Soggiorno",
+            "style": "Lusso lunatico"
+          },
+          "organicLiving": {
+            "title": "Vita organica",
+            "subtitle": "Soggiorno / Caldo organico",
+            "spaceType": "Soggiorno",
+            "style": "Caldo organico"
+          },
+          "grandSalon": {
+            "title": "Gran Salone",
+            "subtitle": "Soggiorno / Marmo di lusso",
+            "spaceType": "Soggiorno",
+            "style": "Marmo di lusso"
+          },
+          "editorialLounge": {
+            "title": "Salotto Editoriale",
+            "subtitle": "Sala da gioco/Cyberpunk",
+            "spaceType": "Sala da gioco",
+            "style": "Cyberpunk"
+          }
+        }
+      },
+      "exterior": {
+        "title": "Esterno",
+        "description": "Ispirazione per facciate di ville moderne, isolati urbani, uffici e involucri commerciali.",
+        "items": {
+          "modernHouse": {
+            "title": "Casa moderna",
+            "subtitle": "Casa moderna/luce del giorno minima",
+            "spaceType": "Casa moderna",
+            "style": "Luce diurna minima"
+          },
+          "modernHouseNight": {
+            "title": "Notte in una casa moderna",
+            "subtitle": "Casa moderna/luxe serale",
+            "spaceType": "Casa moderna",
+            "style": "Lusso serale"
+          },
+          "stoneVilla": {
+            "title": "Villa in pietra",
+            "subtitle": "Villa/mediterranea",
+            "spaceType": "Villa",
+            "style": "Mediterraneo"
+          },
+          "glassOffice": {
+            "title": "Ufficio di vetro",
+            "subtitle": "Edificio per uffici/minimalista",
+            "spaceType": "Edificio per uffici",
+            "style": "Minimalista"
+          },
+          "ecoApartments": {
+            "title": "Appartamenti ecologici",
+            "subtitle": "Condominio / Ecofuturista",
+            "spaceType": "Condominio",
+            "style": "Ecofuturista"
+          }
+        }
+      },
+      "garden": {
+        "title": "Giardino",
+        "description": "Salotti all'aperto, terrazze, piscine, ponti e scene di giardini in stile resort.",
+        "items": {
+          "infinityPool": {
+            "title": "Piscina a sfioro",
+            "subtitle": "Piscina a sfioro / Lusso costiero",
+            "spaceType": "Piscina a sfioro",
+            "style": "Lusso costiero"
+          },
+          "waterfallCourt": {
+            "title": "Corte delle Cascate",
+            "subtitle": "Giardino con cascata / Lusso Zen",
+            "spaceType": "Giardino delle cascate",
+            "style": "Lusso Zen"
+          },
+          "sunsetFirePit": {
+            "title": "Pozzo del fuoco al tramonto",
+            "subtitle": "Salotto del pozzo del fuoco/Tramonto del resort",
+            "spaceType": "Salotto del pozzo del fuoco",
+            "style": "Resort Tramonto"
+          },
+          "tropicalPoolLounge": {
+            "title": "Sala piscina tropicale",
+            "subtitle": "Lounge in piscina / Fuga tropicale",
+            "spaceType": "Sala della piscina",
+            "style": "Fuga tropicale"
+          },
+          "luminousGardenWalk": {
+            "title": "Passeggiata luminosa nel giardino",
+            "subtitle": "Passeggiata in giardino / Bagliore serale",
+            "spaceType": "Passeggiata in giardino",
+            "style": "Bagliore serale"
+          }
+        }
+      },
+      "wall": {
+        "title": "Ispirazione al muro",
+        "description": "Riferimenti di vernici per stanze reali che si aprono direttamente in Smart Wall Paint con la finitura già preselezionata.",
+        "items": {
+          "sagePlasterWall": {
+            "title": "Muro in gesso salvia",
+            "subtitle": "Parete strutturata / Verde salvia",
+            "spaceType": "Muro strutturato",
+            "style": "Verde salvia"
+          },
+          "linearSlatFeature": {
+            "title": "Caratteristica lamella lineare",
+            "subtitle": "Parete a doghe / Carbone",
+            "spaceType": "Parete a doghe",
+            "style": "Carbone"
+          },
+          "veinedMarbleWall": {
+            "title": "Parete in marmo venato",
+            "subtitle": "Parete in Marmo/Avorio Tenue",
+            "spaceType": "Muro di marmo",
+            "style": "Avorio morbido"
+          },
+          "minimalConcreteWall": {
+            "title": "Muro di cemento minimo",
+            "subtitle": "Muro di cemento/carbone",
+            "spaceType": "Muro di cemento",
+            "style": "Carbone"
+          },
+          "botanicalMuralWall": {
+            "title": "Muro murale botanico",
+            "subtitle": "Murale / Muschio d'oliva",
+            "spaceType": "Muro murale",
+            "style": "Muschio d'oliva"
+          }
+        }
+      },
+      "floor": {
+        "title": "Stili del pavimento",
+        "description": "Riferimenti di pavimenti premium selezionati da interni reali e mappati direttamente nel flusso di lavoro Floor Restyle.",
+        "items": {
+          "heritageHerringbone": {
+            "title": "Patrimonio a spina di pesce",
+            "subtitle": "Pavimento in legno / Legno di noce",
+            "spaceType": "Pavimento in legno",
+            "style": "Legno di noce"
+          },
+          "carraraMarbleFlow": {
+            "title": "Flusso di marmo di Carrara",
+            "subtitle": "Pavimento in Marmo/Marmo di Carrara",
+            "spaceType": "Pavimento in marmo",
+            "style": "Marmo di Carrara"
+          },
+          "satinConcrete": {
+            "title": "Cemento satinato",
+            "subtitle": "Pavimento in cemento/cemento lucidato",
+            "spaceType": "Pavimento in cemento",
+            "style": "Cemento lucidato"
+          },
+          "walnutGloss": {
+            "title": "Noce lucido",
+            "subtitle": "Legno lucido / Legno di noce",
+            "spaceType": "Legno lucido",
+            "style": "Legno di noce"
+          },
+          "softLimestone": {
+            "title": "Calcare tenero",
+            "subtitle": "Pavimento in pietra/cemento lucido",
+            "spaceType": "Pavimento in pietra",
+            "style": "Cemento lucidato"
+          }
+        }
+      }
+    },
+    "wallColors": {
+      "sageGreen": {
+        "title": "Verde salvia",
+        "description": "Tenue calma verde per spazi abitativi luminosi e raffinati.",
+        "discoverSubtitle": "Muro / Calma botanica"
+      },
+      "midnightNavy": {
+        "title": "Marina di mezzanotte",
+        "description": "Profondità blu scuro su misura con un netto contrasto architettonico.",
+        "discoverSubtitle": "Parete / Contrasto su misura"
+      },
+      "terracottaGlow": {
+        "title": "Bagliore di terracotta",
+        "description": "Caldo colore argilla con energia editoriale radicata.",
+        "discoverSubtitle": "Muro/Argilla Calda"
+      },
+      "dustyRose": {
+        "title": "Rosa polverosa",
+        "description": "Calore tenue del rossore con un morbido appeal boutique.",
+        "discoverSubtitle": "Parete/Boutique Blush"
+      },
+      "galleryCharcoal": {
+        "title": "Galleria Carbone",
+        "description": "Carbone raffinato per stanze lunatiche e artistiche.",
+        "discoverSubtitle": "Parete/Galleria Moody"
+      },
+      "softIvory": {
+        "title": "Avorio morbido",
+        "description": "Neutro luminoso che mantiene gli ambienti luminosi, mai piatti.",
+        "discoverSubtitle": "Muro/Silenzioso Neutro"
+      },
+      "oliveGrove": {
+        "title": "Uliveto",
+        "description": "Profondità olivastra terrosa con un'atmosfera da designer radicata.",
+        "discoverSubtitle": "Parete/profondità terrestre"
+      },
+      "lavenderMist": {
+        "title": "Nebbia di lavanda",
+        "description": "Tenue foschia viola per stanze pastello elevate.",
+        "discoverSubtitle": "Parete/Pastello tenue"
+      },
+      "pearlGray": {
+        "title": "Grigio Perla",
+        "description": "Grigio tono chiaro con lucida flessibilità quotidiana.",
+        "discoverSubtitle": "Parete/Moderno Neutro"
+      }
+    },
+    "wallColorCategories": {
+      "calmNeutrals": {
+        "title": "Neutrali calmi",
+        "colors": {
+          "softIvory": "Avorio morbido",
+          "pearlGray": "Grigio Perla",
+          "sageGreen": "Verde salvia"
+        }
+      },
+      "boutiquePastels": {
+        "title": "Pastelli boutique",
+        "colors": {
+          "dustyRose": "Rosa polverosa",
+          "lavenderMist": "Nebbia di lavanda",
+          "terracottaGlow": "Bagliore di terracotta"
+        }
+      },
+      "architecturalDepth": {
+        "title": "Profondità architettonica",
+        "colors": {
+          "midnightNavy": "Marina di mezzanotte",
+          "galleryCharcoal": "Galleria Carbone",
+          "oliveGrove": "Uliveto"
+        }
+      }
+    },
+    "floorMaterials": {
+      "naturalOak": {
+        "title": "Rovere Naturale",
+        "description": "Plance di rovere arioso con venature naturali morbide.",
+        "promptLabel": "pavimento in rovere naturale chiaro con dettaglio a venature larghe",
+        "discoverSubtitle": "Pavimento/Legno Chiaro"
+      },
+      "walnutWood": {
+        "title": "Legno di noce",
+        "description": "Tavole di noce profonde con ricco contrasto su misura.",
+        "promptLabel": "lussuoso pavimento in legno di noce con ricche venature profonde",
+        "discoverSubtitle": "Pavimento / Legno scuro"
+      },
+      "carraraMarble": {
+        "title": "Marmo di Carrara",
+        "description": "Venature di pietra luminose con una finitura tranquilla e lussuosa.",
+        "promptLabel": "pavimento in marmo di carrara dalle eleganti venature morbide",
+        "discoverSubtitle": "Pavimento/Pietra Lucida"
+      },
+      "polishedConcrete": {
+        "title": "Cemento lucidato",
+        "description": "La lucentezza del cemento liscio con la calma della galleria urbana.",
+        "promptLabel": "pavimento in cemento lucidato con struttura liscia premium",
+        "discoverSubtitle": "Pavimento/Industriale Minimal"
+      },
+      "herringboneOak": {
+        "title": "Rovere a spina di pesce",
+        "description": "Modello classico in rovere con caldo movimento direzionale.",
+        "promptLabel": "Parquet in rovere a spina di pesce con definizione del disegno premium",
+        "discoverSubtitle": "Pavimento / Legno con motivi"
+      },
+      "terracottaTile": {
+        "title": "Piastrella in terracotta",
+        "description": "Calore terroso dell'argilla con carattere artigianale.",
+        "promptLabel": "pavimento in piastrelle di cotto con variazione di colore caldo dell'argilla",
+        "discoverSubtitle": "Pavimento/Argilla Mediterranea"
+      },
+      "slateTile": {
+        "title": "Piastrella in ardesia",
+        "description": "Ardesia scura con una finitura nitida di grande formato.",
+        "promptLabel": "pavimento in piastrelle di ardesia scura con lastre di pietra di grande formato",
+        "discoverSubtitle": "Pavimento/Pietra Scura"
+      },
+      "plushCarpet": {
+        "title": "Tappeto in peluche",
+        "description": "Morbido tappeto color crema dall'atmosfera tranquilla e accogliente.",
+        "promptLabel": "lussuoso pavimento in morbida moquette in una morbida tonalità crema",
+        "discoverSubtitle": "Pavimento/Texture morbida"
+      },
+      "weatheredOak": {
+        "title": "Quercia stagionata",
+        "description": "Rovere di tonalità media con finitura delicatamente invecchiata.",
+        "promptLabel": "pavimento in rovere stagionato con sottili venature invecchiate",
+        "discoverSubtitle": "Pavimento/calore rustico"
+      }
+    },
+    "injectedGallery": {
+      "floorAfterScenes": {
+        "heritageHerringbone": "Patrimonio a spina di pesce",
+        "carraraMarble": "Marmo di Carrara",
+        "satinConcrete": "Cemento satinato",
+        "walnutGloss": "Noce lucido",
+        "limestoneSlab": "Lastra di calcare"
+      },
+      "wallAfterScenes": {
+        "sagePlaster": "Gesso alla salvia",
+        "linearSlats": "Doghe lineari",
+        "veinedMarble": "Marmo venato",
+        "minimalConcrete": "Calcestruzzo minimo",
+        "botanicalMural": "Murale botanico"
+      },
+      "interiorExamples": {
+        "kitchen": "Cucina",
+        "livingRoom": "Soggiorno",
+        "bedroom": "Camera da letto",
+        "bathroom": "Bagno",
+        "gamingRoom": "Sala da gioco",
+        "homeOffice": "Ufficio domestico"
+      },
+      "exteriorExamples": {
+        "apartment": "Appartamento",
+        "house": "Casa",
+        "office": "Ufficio",
+        "villa": "Villa",
+        "residential": "Residenziale",
+        "retail": "Vendita al dettaglio"
+      },
+      "gardenExamples": {
+        "infinityPool": "Piscina a sfioro",
+        "waterfallCourt": "Corte delle Cascate",
+        "firePit": "Pozzo del fuoco",
+        "tropicalLounge": "Salotto tropicale",
+        "resortDeck": "Ponte del resort",
+        "lagoonFalls": "Cascate della Laguna"
+      },
+      "homeCoreScenes": {
+        "kitchen": "Cucina",
+        "livingRoom": "Soggiorno",
+        "bedroom": "Camera da letto",
+        "bathroom": "Bagno",
+        "diningRoom": "Sala da pranzo",
+        "gamingRoom": "Sala da gioco",
+        "homeOffice": "Ufficio domestico"
+      },
+      "homeFlexScenes": {
+        "coffeeShop": "Caffetteria",
+        "gamingStudio": "Studio di gioco",
+        "atticLounge": "Salotto mansardato",
+        "studyRoom": "Sala studio",
+        "serviceRoom": "Sala di servizio",
+        "laundryRoom": "Lavanderia"
+      },
+      "livingRoomScenes": {
+        "sereneLounge": "Salotto sereno",
+        "moodyLounge": "Sala lunatica",
+        "organicLiving": "Vita organica",
+        "grandSalon": "Gran Salone",
+        "playfulLounge": "Salotto giocoso"
+      },
+      "homeLuxeScenes": {
+        "restaurant": "Ristorante",
+        "studyLibrary": "Biblioteca di studio",
+        "atticRetreat": "Ritiro in soffitta",
+        "toiletSuite": "Servizi igienici",
+        "balcony": "Balcone",
+        "hall": "Sala",
+        "deckDay": "Giorno del ponte",
+        "deckNight": "Notte sul ponte"
+      },
+      "exteriorPrimaryScenes": {
+        "house": "Casa",
+        "residential": "Residenziale",
+        "villa": "Villa",
+        "glassCorner": "Angolo di vetro",
+        "apartment": "Appartamento"
+      },
+      "exteriorSecondaryScenes": {
+        "apartmentTower": "Appartamento Torre",
+        "retailPavilion": "Padiglione della vendita al dettaglio",
+        "officeBuilding": "Edificio per uffici",
+        "modernVilla": "Villa moderna",
+        "residentialTower": "Torre residenziale"
+      },
+      "gardenPrimaryScenes": {
+        "infinityPool": "Piscina a sfioro",
+        "waterfallCourt": "Corte delle Cascate",
+        "sunsetFirePit": "Pozzo del fuoco al tramonto",
+        "tropicalLounge": "Salotto tropicale",
+        "livingWall": "Muro vivente",
+        "lightCourt": "Corte leggera"
+      },
+      "gardenSecondaryScenes": {
+        "sunsetPool": "Piscina al tramonto",
+        "fireCove": "Baia del Fuoco",
+        "poolCourt": "Campo da biliardo",
+        "waterfallLounge": "Salotto della cascata",
+        "resortDeck": "Ponte del resort",
+        "lagoonFalls": "Cascate della Laguna"
+      },
+      "exteriorBuildingTypes": {
+        "apartment": "Appartamento",
+        "house": "Casa",
+        "officeBuilding": "Edificio per uffici",
+        "villa": "Villa",
+        "residential": "Residenziale",
+        "retail": "Vendita al dettaglio"
+      }
+    }
+  },
+  "legacyUnlocalized": {
+    "paintWizard": {
+      "autoDetectFailureMessage": "Impossibile eseguire il rilevamento automatico. Si prega di spazzolare manualmente.",
+      "cancelledGenerationMessage": "Annullato dall'utente.",
+      "result": {
+        "heading": "Ecco i tuoi nuovi interni",
+        "subheading": "Un concetto di parete raffinato, composto per preservare la struttura della stanza, la disposizione degli arredi e la luce naturale.",
+        "appliedFinish": "Finitura applicata",
+        "saveToGallery": "Salva nella Galleria",
+        "share": "Condividi",
+        "tryAgain": "Riprova"
+      }
     }
   }
 }

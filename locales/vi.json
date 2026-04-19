@@ -1,29 +1,62 @@
 {
+  "app": {
+    "name": "HomeDecor AI"
+  },
   "common": {
     "actions": {
       "continue": "Tiếp tục",
       "cancel": "Hủy",
+      "close": "Đóng",
+      "delete": "Xóa",
       "save": "Lưu",
       "share": "Chia sẻ",
+      "restore": "Khôi phục",
+      "upgrade": "Nâng cấp",
+      "tryAgain": "Vui lòng thử lại.",
       "openSettings": "Mở cài đặt",
+      "notNow": "Không phải bây giờ",
+      "takePhoto": "Chụp ảnh",
+      "chooseFromGallery": "Chọn từ Thư viện",
       "addPhoto": "Thêm ảnh",
+      "chooseMediaSource": "Chọn nguồn hình ảnh",
+      "examplePhotos": "Ảnh mẫu",
+      "seeAll": "Khám phá tất cả",
+      "uploadPlus": "Tải lên +",
       "exit": "Thoát",
-      "seeAll": "Explore All",
-      "tryThis": "Try This"
+      "connect": "Đang kết nối...",
+      "tryThis": "Hãy thử cái này"
+    },
+    "labels": {
+      "email": "Email",
+      "password": "Mật khẩu",
+      "version": "Phiên bản {{version}}",
+      "lastUpdated": "Cập nhật lần cuối",
+      "step": "Bước {{current}} / {{total}}"
     },
     "alerts": {
       "exitTitle": "Thoát?",
-      "progressLost": "Tiến trình của bạn sẽ bị mất."
+      "progressLost": "Tiến trình của bạn sẽ bị mất.",
+      "completeStepTitle": "Hoàn tất bước này",
+      "makeSelection": "Thực hiện lựa chọn để tiếp tục.",
+      "addPhotoToContinue": "Thêm một bức ảnh để tiếp tục.",
+      "invalidHexTitle": "Màu không hợp lệ",
+      "invalidHexBody": "Nhập mã hex hợp lệ gồm 6 chữ số, chẳng hạn như #D946EF."
     },
     "states": {
-      "savedToGallery": "Đã lưu vào thư viện"
+      "workInProgress": "Công việc đang được tiến hành",
+      "generationFailed": "Kết xuất gặp phải sự cố. Vui lòng thử lại.",
+      "savedToGallery": "Đã lưu vào thư viện",
+      "photoPermissionNeeded": "Cần có quyền truy cập vào thư viện ảnh.",
+      "loading": "Đang tải..."
     }
   },
   "boot": {
     "loadingApp": "Đang tải HomeDecor AI",
     "loadingAccount": "Đang tải tài khoản...",
     "checkingPlan": "Đang kiểm tra gói...",
-    "secureAccount": "Bảo vệ tài khoản để bắt đầu sáng tạo..."
+    "secureAccount": "Bảo vệ tài khoản để bắt đầu sáng tạo...",
+    "missingEnvTitle": "Thiếu biến môi trường",
+    "missingEnvBody": "Các giá trị sau là bắt buộc trước khi HomeDecor AI có thể khởi chạy:"
   },
   "tabs": {
     "tools": "Công cụ",
@@ -33,80 +66,450 @@
   },
   "home": {
     "title": "HomeDecor AI",
+    "accessibility": {
+      "openCredits": "Tín dụng mở"
+    },
+    "errors": {
+      "tryItUnavailableTitle": "Xem trước không có sẵn"
+    },
     "tools": {
       "interior": {
-        "title": "Interior Design",
+        "title": "Thiết kế nội thất",
         "description": "Reimagine your space with AI precision."
       },
       "exterior": {
-        "title": "Exterior Design",
-        "description": "Reimagine your home's exterior with world-class facade styling."
+        "title": "Thiết kế ngoại thất",
+        "description": "Hãy tưởng tượng lại ngoại thất ngôi nhà của bạn với kiểu dáng mặt tiền đẳng cấp thế giới."
       },
       "garden": {
-        "title": "Garden Design",
-        "description": "Design stunning gardens and outdoor spaces effortlessly."
+        "title": "Thiết kế sân vườn",
+        "description": "Dễ dàng thiết kế những khu vườn và không gian ngoài trời tuyệt đẹp."
       },
       "paint": {
-        "title": "Paint (Wall)",
-        "description": "Refine your walls with bespoke color palettes and designer textures."
+        "title": "Sơn (Tường)",
+        "description": "Tinh chỉnh các bức tường của bạn bằng các bảng màu và họa tiết được thiết kế riêng."
       },
       "floor": {
-        "title": "Floor Restyle",
-        "description": "Elevate your room's foundation with premium materials and finishes."
+        "title": "Tầng Restyle",
+        "description": "Nâng cao nền móng căn phòng của bạn bằng vật liệu và hoàn thiện cao cấp."
       },
-      "cta": "Try This"
+      "cta": "Hãy thử cái này"
     }
   },
   "paywall": {
-    "restore": "Khôi phục",
-    "bestOffer": "Ưu đãi tốt nhất",
-    "yearlyAccess": "Truy cập năm",
-    "weeklyAccess": "Truy cập tuần",
-    "freeTrial": "Dùng thử 3 ngày",
-    "pricePerYear": "Chỉ {{price}} mỗi năm",
-    "pricePerWeek": "{{price}} mỗi tuần",
-    "perWeek": "mỗi tuần",
-    "thenPricePerWeek": "Sau đó {{price}} mỗi tuần",
-    "noPaymentNow": "Chưa cần thanh toán",
-    "cancelAnytime": "Hủy bất cứ lúc nào",
-    "processing": "Đang xử lý...",
-    "tryForFree": "Begin Your Pro Trial",
-    "continue": "Begin Your Pro Trial",
-    "terms": "Điều khoản",
-    "privacy": "Quyền riêng tư",
-    "title": "Design Like a Pro. No Limits.",
     "features": {
       "fasterRendering": "Faster Results, Every Time",
       "adFree": "Ultra-HD Quality Renders",
       "unlimitedRenders": "Unlimited Designs, Always"
     },
-    "beginTrial": "Begin Your Pro Trial"
+    "restore": "Khôi phục",
+    "bestOffer": "Ưu đãi tốt nhất",
+    "yearlyAccess": "Truy cập năm",
+    "weeklyAccess": "Truy cập tuần",
+    "freeTrial": "Dùng thử 3 ngày",
+    "justPerYear": "Chỉ {{price}} mỗi năm",
+    "pricePerYear": "Chỉ {{price}} mỗi năm",
+    "pricePerWeek": "{{price}} mỗi tuần",
+    "perWeek": "mỗi tuần",
+    "thenWeekly": "Sau đó {{price}}",
+    "thenPricePerWeek": "Sau đó {{price}} mỗi tuần",
+    "noPaymentNow": "Chưa cần thanh toán",
+    "cancelAnytime": "Hủy bất cứ lúc nào",
+    "trialEnabled": "Đã bật dùng thử miễn phí",
+    "enableTrial": "Cho phép dùng thử miễn phí",
+    "processing": "Đang xử lý...",
+    "tryForFree": "Bắt đầu bản dùng thử chuyên nghiệp của bạn",
+    "continue": "Bắt đầu bản dùng thử chuyên nghiệp của bạn",
+    "subtitle": "Trải nghiệm toàn bộ sức mạnh của kiến ​​trúc AI với giới hạn cao hơn và độ chính xác 4K.",
+    "terms": "Điều khoản",
+    "privacy": "Quyền riêng tư",
+    "subscriptionsUnavailable": "Đăng ký tạm thời không có sẵn.",
+    "restoreFailed": "Khôi phục không thành công",
+    "restored": "Đã khôi phục",
+    "noActiveSubscriptions": "Không có đăng ký hoạt động được tìm thấy.",
+    "purchaseError": "Lỗi mua hàng",
+    "planUnavailable": "Kế hoạch đã chọn hiện không khả dụng.",
+    "moroccoPricingUnavailable": "Giá MAD được bản địa hóa tạm thời không có sẵn. Vui lòng thử lại sau giây lát.",
+    "subscriptionConfirmFailed": "Chúng tôi không thể xác nhận đăng ký của bạn. Vui lòng thử lại.",
+    "purchaseCancelled": "Đã hủy mua hàng.",
+    "closeA11y": "Đóng tường phí",
+    "title": "Design Like a Pro. No Limits.",
+    "beginTrial": "Bắt đầu bản dùng thử chuyên nghiệp của bạn"
+  },
+  "creditLimit": {
+    "title": "Nâng cấp lên quyền truy cập chuyên nghiệp.",
+    "body": "Bạn đã đạt đến giới hạn hiển thị tiêu chuẩn của mình. Mở khóa tính năng xuất có độ phân giải cao và xử lý nhanh hơn ngay bây giờ."
   },
   "settings": {
     "title": "Cài đặt",
-    "heroTitle": "Free Plan",
-    "upgradePro": "Nâng cấp PRO"
+    "heroTitle": "Gói miễn phí",
+    "featureItems": {
+      "advancedAi": "Mô hình AI nâng cao",
+      "fastProcessing": "Xử lý nhanh",
+      "removeAds": "Xóa tất cả quảng cáo"
+    },
+    "upgradePro": "Nâng cấp PRO",
+    "rows": {
+      "language": "Ngôn ngữ",
+      "feedback": "Phản hồi",
+      "faq": "Câu hỏi thường gặp",
+      "rateUs": "Đánh giá chúng tôi",
+      "shareWithFriends": "Chia sẻ với bạn bè",
+      "termsOfUse": "Điều khoản sử dụng",
+      "privacyPolicy": "Chính sách bảo mật",
+      "restorePurchase": "Khôi phục mua hàng",
+      "userId": "ID người dùng",
+      "deleteInformation": "Xóa thông tin"
+    },
+    "states": {
+      "notSignedIn": "Chưa đăng nhập"
+    },
+    "language": {
+      "title": "Ngôn ngữ",
+      "description": "Chọn xem HomeDecor AI tuân theo ngôn ngữ thiết bị của bạn hay sử dụng ngôn ngữ đã chọn trong ứng dụng.",
+      "auto": "Tự động (Mặc định hệ thống)",
+      "autoShort": "Tự động",
+      "usingSystem": "Hiện đang theo dõi {{language}} từ thiết bị của bạn",
+      "restartNotice": "Đang áp dụng hướng bố cục mới..."
+    },
+    "messages": {
+      "destinationUnavailable": "Điểm đến này hiện không có sẵn.",
+      "emailClientUnavailable": "Không thể mở ứng dụng email của bạn.",
+      "reviewUnavailable": "Yêu cầu xem xét hiện không có sẵn.",
+      "shareUnavailable": "Không thể mở bảng chia sẻ.",
+      "subscriptionsUnavailable": "Đăng ký không có sẵn ngay bây giờ.",
+      "noActiveSubscriptions": "Không có đăng ký hoạt động được tìm thấy.",
+      "restoreFailed": "Khôi phục không thành công. Vui lòng thử lại.",
+      "noUserId": "Không có ID người dùng được xác thực có sẵn.",
+      "userIdCopied": "Đã sao chép ID người dùng",
+      "deleteFailed": "Không thể xóa tài khoản của bạn ngay bây giờ."
+    },
+    "shareMessage": "Khám phá các thiết kế được tạo bằng HomeDecor AI: {{url}}",
+    "deleteAccount": {
+      "title": "Xóa tài khoản?",
+      "body": "Điều này sẽ xóa vĩnh viễn tài khoản của bạn và tất cả dữ liệu liên quan. Không thể hoàn tác hành động này."
+    }
+  },
+  "profile": {
+    "title": "Danh mục thiết kế của tôi",
+    "emptyTitle": "Danh mục đầu tư của bạn trống. Bắt đầu một dự án để biến tầm nhìn của bạn thành hiện thực.",
+    "emptySubtitle": "",
+    "compareHint": "Kéo để so sánh. Nhấn đúp để đặt lại.",
+    "deleteFromBoardTitle": "Xóa khỏi danh mục đầu tư?",
+    "deleteFromBoardBody": "Thiết kế này sẽ bị xóa khỏi danh mục đầu tư của bạn.",
+    "deletedFromBoard": "Đã xóa khỏi danh mục đầu tư",
+    "unableDelete": "Không thể loại bỏ thiết kế này.",
+    "generationFailedBody": "Kết xuất này không hoàn tất thành công. Vui lòng thử lại.",
+    "saveToGallery": "Lưu vào Thư viện ảnh",
+    "savedToGallery": "Đã lưu vào Thư viện ảnh",
+    "unableSave": "Không thể lưu thiết kế này."
+  },
+  "discover": {
+    "title": "Khám phá",
+    "subtitle": "Các tài liệu tham khảo về nội thất, kiến ​​trúc và cảnh quan được sắp xếp thành các bộ sưu tập cuộn nhanh.",
+    "tabs": {
+      "home": "Interior",
+      "garden": "Garden",
+      "exterior": "Exterior "
+    },
+    "tryThisStyle": "Hãy thử phong cách này"
+  },
+  "auth": {
+    "accountEyebrow": "HomeDecor AI Tài khoản",
+    "emailPlaceholder": "you@company.com",
+    "signIn": {
+      "title": "Đăng nhập",
+      "subtitle": "Truy cập các thiết kế, tín dụng, giao dịch mua và lịch sử dự án đã lưu của bạn trong một không gian làm việc được tinh chỉnh.",
+      "passwordPlaceholder": "Nhập mật khẩu của bạn",
+      "cta": "Tiếp tục",
+      "loading": "Đang đăng nhập...",
+      "appleCta": "Tiếp tục với Apple",
+      "additionalVerificationTitle": "Đăng nhập",
+      "additionalVerificationBody": "Cần phải xác minh bổ sung cho tài khoản này.",
+      "errorTitle": "Đăng nhập không thành công",
+      "errorFallback": "Không thể đăng nhập cho bạn.",
+      "appleErrorFallback": "Apple đăng nhập không thành công.",
+      "noAccount": "Không có tài khoản?",
+      "createOne": "Tạo một cái"
+    },
+    "signUp": {
+      "title": "Tạo tài khoản",
+      "subtitle": "Tạo tài khoản của bạn để truyền tải các thiết kế, đăng ký và dự án đã lưu của bạn trên các thiết bị.",
+      "passwordPlaceholder": "Tạo mật khẩu an toàn",
+      "cta": "Tạo tài khoản",
+      "loading": "Đang tạo...",
+      "appleCta": "Tiếp tục với Apple",
+      "verifyTitle": "Xác minh email",
+      "verifyBody": "Kiểm tra hộp thư đến của bạn để lấy mã xác minh, sau đó đăng nhập.",
+      "errorTitle": "Đăng ký không thành công",
+      "errorFallback": "Không thể tạo tài khoản của bạn.",
+      "appleErrorFallback": "Apple đăng ký không thành công.",
+      "haveAccount": "Đã có tài khoản?",
+      "signInLink": "Đăng nhập"
+    }
+  },
+  "faq": {
+    "eyebrow": "Hỗ trợ",
+    "title": "Câu hỏi thường gặp",
+    "description": "Câu trả lời rõ ràng cho các câu hỏi HomeDecor AI phổ biến nhất.",
+    "items": {
+      "credits": {
+        "question": "Tín dụng hoạt động như thế nào trong HomeDecor AI?",
+        "answer": "Mỗi kết xuất sử dụng tín dụng dựa trên quy trình làm việc và cấp đầu ra mà bạn chọn. Số dư còn lại của bạn sẽ tự động cập nhật sau mỗi thế hệ."
+      },
+      "pro": {
+        "question": "Tôi phải mở khóa cái gì bằng PRO?",
+        "answer": "PRO mở khóa các công cụ kết xuất cao cấp, xử lý nhanh hơn và chất lượng đầu ra cao cấp hơn thông qua quy trình nâng cấp trong ứng dụng."
+      },
+      "slowResult": {
+        "question": "Tại sao kết quả của tôi mất nhiều thời gian hơn dự kiến?",
+        "answer": "Thời gian kết xuất phụ thuộc vào nhu cầu xếp hàng, chất lượng hình ảnh nguồn và quy trình làm việc bạn đã chọn. Việc duy trì ứng dụng mở trên kết nối ổn định sẽ giúp tránh bị gián đoạn."
+      },
+      "deleteAccount": {
+        "question": "Làm cách nào để xóa tài khoản của tôi?",
+        "answer": "Mở Cài đặt và chọn Xóa thông tin. Thao tác này sẽ xóa vĩnh viễn dữ liệu tài khoản của bạn và đăng xuất bạn sau khi xác nhận."
+      }
+    }
+  },
+  "privacy": {
+    "eyebrow": "Chính sách",
+    "title": "Chính sách bảo mật",
+    "description": "Thông tin chúng tôi thu thập, cách sử dụng và các quyền kiểm soát mà bạn có trong HomeDecor AI.",
+    "date": "Ngày 14 tháng 3 năm 2026",
+    "sections": {
+      "overview": {
+        "title": "Tổng quan",
+        "body": "HomeDecor AI (\"HomeDecor\", \"chúng tôi\", \"của chúng tôi\") cung cấp các dịch vụ thiết kế lại nội thất và ngoại thất dựa trên AI. Chính sách quyền riêng tư này giải thích những dữ liệu chúng tôi thu thập, cách chúng tôi sử dụng dữ liệu đó và những lựa chọn mà bạn có."
+      },
+      "informationWeCollect": {
+        "title": "Thông tin chúng tôi thu thập",
+        "body": "Chúng tôi thu thập thông tin bạn cung cấp, chẳng hạn như chi tiết tài khoản và hình ảnh đã tải lên, dữ liệu sử dụng như tương tác tính năng và thông tin thiết bị cũng như dữ liệu trạng thái thanh toán từ RevenueCat để quản lý đăng ký."
+      },
+      "howWeUseYourData": {
+        "title": "Cách chúng tôi sử dụng dữ liệu của bạn",
+        "body": "Chúng tôi sử dụng dữ liệu của bạn để cung cấp các thiết kế lại, cá nhân hóa trải nghiệm của bạn, quản lý tín dụng và thanh toán, cải thiện chất lượng mô hình và bảo mật ứng dụng. Chúng tôi không bán dữ liệu cá nhân của bạn."
+      },
+      "imageProcessing": {
+        "title": "Xử lý hình ảnh",
+        "body": "Hình ảnh bạn tải lên sẽ được xử lý để tạo ra các thiết kế lại. Chúng tôi lưu trữ hình ảnh được tạo và siêu dữ liệu liên quan để bạn có thể xem lại kết quả của mình và bạn có thể xóa dữ liệu bằng cách xóa tài khoản của mình."
+      },
+      "sharingAndDisclosure": {
+        "title": "Chia sẻ và tiết lộ",
+        "body": "Chúng tôi chỉ chia sẻ dữ liệu với các nhà cung cấp được yêu cầu để vận hành HomeDecor AI, chẳng hạn như các đối tác xác thực, phân tích và xử lý thanh toán hoặc khi luật pháp yêu cầu tiết lộ."
+      },
+      "dataSecurity": {
+        "title": "Bảo mật dữ liệu",
+        "body": "Chúng tôi sử dụng các biện pháp kiểm soát mã hóa và truy cập để bảo vệ dữ liệu của bạn. Không có hệ thống nào là an toàn tuyệt đối, vì vậy chúng tôi cũng khuyên dùng mật khẩu mạnh và thiết bị được bảo vệ."
+      },
+      "yourRights": {
+        "title": "Quyền của bạn",
+        "body": "Bạn có thể truy cập, cập nhật hoặc xóa dữ liệu tài khoản của mình bất kỳ lúc nào. Việc xóa tài khoản sẽ xóa các thế hệ và thông tin hồ sơ được lưu trữ của bạn khỏi hệ thống của chúng tôi."
+      },
+      "contactUs": {
+        "title": "Liên hệ với chúng tôi",
+        "body": "Nếu có câu hỏi hoặc yêu cầu về quyền riêng tư, hãy liên hệ với chúng tôi tại support@homedecor.ai."
+      }
+    }
+  },
+  "terms": {
+    "eyebrow": "Chính sách",
+    "title": "Điều khoản dịch vụ",
+    "description": "Các quy tắc, kỳ vọng và ranh giới dịch vụ khi sử dụng HomeDecor AI.",
+    "date": "Ngày 14 tháng 3 năm 2026",
+    "sections": {
+      "acceptanceOfTerms": {
+        "title": "Chấp nhận các điều khoản",
+        "body": "Bằng cách truy cập hoặc sử dụng HomeDecor AI, bạn đồng ý với các Điều khoản dịch vụ này. Nếu bạn không đồng ý, không sử dụng ứng dụng."
+      },
+      "serviceDescription": {
+        "title": "Mô tả dịch vụ",
+        "body": "HomeDecor AI cung cấp các thiết kế lại do AI tạo cho không gian nội thất và ngoại thất. Đầu ra là các khái niệm trực quan và có thể không tính đến các ràng buộc về cấu trúc, kỹ thuật hoặc mã."
+      },
+      "accountAndEligibility": {
+        "title": "Tài khoản và tính đủ điều kiện",
+        "body": "Bạn phải ít nhất 13 tuổi để sử dụng HomeDecor AI. Bạn chịu trách nhiệm duy trì bảo mật tài khoản và hoạt động diễn ra dưới thông tin xác thực của bạn."
+      },
+      "userContent": {
+        "title": "Nội dung người dùng",
+        "body": "Bạn giữ quyền sở hữu hình ảnh bạn tải lên. Bằng cách sử dụng dịch vụ, bạn cấp cho HomeDecor AI giấy phép có giới hạn để xử lý và lưu trữ chúng để chúng tôi có thể tạo và trả về kết quả của bạn."
+      },
+      "subscriptionsAndCredits": {
+        "title": "Đăng ký và tín dụng",
+        "body": "Gói trả phí mở khóa các tính năng nâng cao và xuất khẩu chất lượng cao hơn. Tín dụng được tiêu thụ theo mỗi thế hệ và việc thanh toán cũng như gia hạn đăng ký sẽ do cửa hàng ứng dụng của bạn và RevenueCat xử lý."
+      },
+      "prohibitedUse": {
+        "title": "Sử dụng bị cấm",
+        "body": "Bạn đồng ý không sử dụng sai mục đích dịch vụ, thiết kế đối chiếu ứng dụng hoặc tải lên nội dung bất hợp pháp, có hại hoặc vi phạm."
+      },
+      "disclaimer": {
+        "title": "Tuyên bố từ chối trách nhiệm",
+        "body": "Dịch vụ được cung cấp \"nguyên trạng\" mà không có bất kỳ hình thức bảo đảm nào. Chúng tôi không đảm bảo kết quả thiết kế cụ thể hoặc độ chính xác của kết quả đầu ra do AI tạo ra."
+      },
+      "limitationOfLiability": {
+        "title": "Giới hạn trách nhiệm pháp lý",
+        "body": "Trong phạm vi tối đa được pháp luật cho phép, HomeDecor AI không chịu trách nhiệm về những thiệt hại gián tiếp hoặc do hậu quả phát sinh từ việc bạn sử dụng dịch vụ."
+      },
+      "contact": {
+        "title": "Liên hệ",
+        "body": "Câu hỏi về các điều khoản này có thể được gửi tới support@homedecor.ai."
+      }
+    }
+  },
+  "processing": {
+    "title": "AI đang tạo ra kiệt tác kiến trúc của bạn...",
+    "eta": "Tầm nhìn của bạn sẽ sẵn sàng sau ~15 giây.",
+    "cancelKeepCredit": "Hủy và giữ tín dụng của tôi",
+    "status": {
+      "analyzingGeometry": "Phân tích hình học kiến trúc...",
+      "identifyingSurfaces": "Xác định các bề mặt và đường kết cấu...",
+      "applyingStyle": "Áp dụng hướng thiết kế đã chọn của bạn...",
+      "renderingMaterials": "Vật liệu kết xuất và ánh sáng...",
+      "addingDetails": "Đang hoàn thiện những chi tiết cuối cùng...",
+      "almostReady": "Đang hoàn tất kết xuất của bạn...",
+      "renderingFinalLighting": "Đang soạn đường truyền ánh sáng cuối cùng..."
+    }
   },
   "wizard": {
     "headers": {
+      "back": "Quay lại",
       "close": "Đóng",
-      "previousStep": "Về bước trước"
+      "previousStep": "Về bước trước",
+      "stepProgress": "Bước {{current}}/{{total}}",
+      "creditsRemaining": "Tín dụng còn lại"
     },
     "stepOne": {
-      "title": "Upload Your Vision",
-      "emptyTitle": "Upload Your Vision",
+      "title": "Tải lên tầm nhìn của bạn",
+      "emptyTitle": "Tải lên tầm nhìn của bạn",
+      "emptySubtitle": "Thiết kế lại và làm đẹp ngôi nhà của bạn.",
+      "removePhoto": "Xóa ảnh đã chọn",
       "cta": "Begin Your Transformation"
+    },
+    "interior": {
+      "stepTwoTitle": "Choose Your Space",
+      "stepTwoSubtitle": "Chọn loại phòng để việc thiết kế lại vẫn giữ được nền tảng kiến ​​trúc.",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "Chọn một phong cách đặc trưng để định hình tầm nhìn thiết kế của bạn.",
+      "stepFourMode": "Design Mode",
+      "stepFourPalette": "Màu sắc hài hòa"
+    },
+    "exterior": {
+      "stepTwoTitle": "Select Building Type",
+      "stepTwoSubtitle": "Chọn hình thức kiến ​​trúc bạn muốn thiết kế lại.",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "Chọn một phong cách đặc trưng để định hình tầm nhìn thiết kế của bạn.",
+      "stepFourTitle": "Màu sắc hài hòa"
+    },
+    "garden": {
+      "stepOneEmptyTitle": "Tải lên tầm nhìn của bạn",
+      "stepOneEmptySubtitle": "Thiết kế lại và làm đẹp ngôi nhà của bạn.",
+      "stepTwoTitle": "Curate Your Aesthetic",
+      "stepTwoSubtitle": "Chọn một phong cách đặc trưng để định hình tầm nhìn thiết kế của bạn.",
+      "stepThreeTitle": "Màu sắc hài hòa"
+    },
+    "floorIntro": {
+      "hero": "Chọn kiểu sàn để xác định lại nền móng căn phòng của bạn."
+    },
+    "paintIntro": {
+      "hero": "Vẽ vết bất kỳ bề mặt nào để áp dụng màu sắc tùy chỉnh và họa tiết được thiết kế ngay lập tức."
     },
     "floorFlow": {
       "title": "Làm mới sàn",
-      "promptLabel": "Describe Your Vision",
+      "masking": "Lập bản đồ mặt phẳng sàn của bạn...",
+      "promptLabel": "Mô tả tầm nhìn của bạn",
+      "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials.",
+      "promptExamplesTitle": "Ví dụ gợi ý",
       "generateCta": "Tạo thiết kế của tôi →",
-      "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials."
+      "selectMaterialCta": "Chọn một vật liệu",
+      "selectMaterialTitle": "Chọn vật liệu",
+      "selectMaterialBody": "Chọn tài liệu cao cấp được tuyển chọn để đọc dưới dạng ảnh thật, nhận biết phối cảnh và sẵn sàng cho danh sách.",
+      "selectedMaterial": "Vật liệu được chọn",
+      "noMaterialSelected": "Không có tài liệu nào được chọn",
+      "unlockMaterialBody": "Chọn vật liệu sàn để mở khóa kiểu dáng AI.",
+      "addPromptTitle": "Thêm lời nhắc",
+      "addPromptBody": "Mô tả chính xác sự chuyển đổi tầng mà bạn muốn trước khi tiếp tục.",
+      "generatePromptBody": "Chọn lời nhắc tầng tùy chỉnh trước khi tạo.",
+      "autoMaskPreparing": "Chuẩn bị mặt nạ sàn tự động. Xin vui lòng chờ một lát.",
+      "autoMaskSuccess": "Mặt nạ sàn đã sẵn sàng.",
+      "autoMaskFailure": "Việc phát hiện tự động không thể hoàn tất. Hãy lau sàn bằng tay.",
+      "savePermissionTitle": "Cần có quyền truy cập ảnh",
+      "savePermissionBody": "Cho phép truy cập thư viện ảnh để lưu kết xuất của bạn vào thiết bị.",
+      "cameraAccessTitle": "Cần có quyền truy cập vào máy ảnh",
+      "cameraAccessBody": "Cho phép truy cập máy ảnh để chụp ảnh tầng.",
+      "photoAccessTitle": "Cần có quyền truy cập ảnh",
+      "photoAccessBody": "Cho phép truy cập thư viện ảnh để tải lên ảnh tầng.",
+      "mediaUnavailableTitle": "Không thể mở phương tiện",
+      "exampleUnavailableBody": "Không thể mở được ảnh ví dụ này.",
+      "markFloorTitle": "Đánh dấu tầng đầu tiên",
+      "markFloorBody": "Quét lên khu vực sàn mà bạn muốn tạo kiểu lại trước khi tiếp tục.",
+      "pickMaterialTitle": "Chọn một vật liệu",
+      "pickMaterialBody": "Chọn vật liệu sàn trước khi tiếp tục.",
+      "renderFinishing": "Kết xuất này đã hoàn tất.",
+      "cancelSuccess": "Thế hệ bị hủy bỏ. Tín dụng của bạn đã được giữ.",
+      "cancelUnavailable": "Không thể hủy ngay bây giờ.",
+      "supportingText": "Sử dụng 1 tín dụng · {{creditsRemaining}}",
+      "creditsRemaining": "{{count}} còn lại",
+      "promptExamples": {
+        "frenchOak": "Gỗ sồi Pháp ván rộng sang trọng có lớp hoàn thiện tự nhiên ấm áp.",
+        "carraraMarble": "Đá cẩm thạch Carrara Ý được đánh bóng với đường vân màu xám đậm.",
+        "microcement": "Xi măng siêu nhỏ liền mạch hiện đại cho nền móng công nghiệp sang trọng.",
+        "herringboneWalnut": "Dark Walnut thanh lịch với họa tiết xương cá cổ điển.",
+        "walnut": "Gạch Slate Stone khổ lớn hiện đại màu xám than."
+      },
+      "result": {
+        "heading": "Xem nội thất mới của bạn",
+        "subheading": "Sự biến đổi sàn bằng vật liệu được thiết kế để phù hợp với phối cảnh, đồ đạc và ánh sáng tự nhiên của căn phòng.",
+        "before": "trước đây",
+        "after": "Sau",
+        "materialApplied": "Vật liệu được áp dụng",
+        "materialFallback": "Chất liệu",
+        "summary": "Sàn nhà của bạn đã được thiết kế lại trong khi vẫn giữ nguyên hình dạng căn phòng, sự thẳng hàng của đồ nội thất và hoạt động của ánh sáng tự nhiên.",
+        "saveToGallery": "Lưu vào Thư viện",
+        "share": "Chia sẻ",
+        "tryAgain": "Thử lại"
+      },
+      "materials": {
+        "natural-oak": {
+          "title": "Sồi tự nhiên",
+          "description": "Ván gỗ sồi thoáng mát với vân gỗ tự nhiên mềm mại."
+        },
+        "walnut-wood": {
+          "title": "Gỗ óc chó",
+          "description": "Ván gỗ óc chó sâu với độ tương phản phù hợp phong phú."
+        },
+        "carrara-marble": {
+          "title": "Đá cẩm thạch Carrara",
+          "description": "Đường vân đá sáng bóng với bề mặt sang trọng nhẹ nhàng."
+        },
+        "polished-concrete": {
+          "title": "Bê tông đánh bóng",
+          "description": "Bê tông mịn màng với phòng trưng bày đô thị yên tĩnh."
+        },
+        "herringbone-oak": {
+          "title": "Sồi xương cá",
+          "description": "Mẫu gỗ sồi cổ điển với chuyển động có hướng ấm áp."
+        },
+        "terracotta-tile": {
+          "title": "Ngói đất nung",
+          "description": "Sự ấm áp của đất sét với đặc tính thủ công."
+        },
+        "slate-tile": {
+          "title": "Ngói đá phiến",
+          "description": "Đá phiến đen với bề mặt khổ lớn sắc nét."
+        },
+        "plush-carpet": {
+          "title": "Thảm sang trọng",
+          "description": "Thảm màu kem mềm mại mang lại cảm giác yên tĩnh, ấm cúng."
+        },
+        "weathered-oak": {
+          "title": "Sồi phong hóa",
+          "description": "Gỗ sồi có tông màu trung tính với lớp sơn hoàn thiện được ủ lâu năm."
+        }
+      }
     },
     "paintFlow": {
       "title": "Sơn",
-      "selectionTitle": "Select Surfaces to Transform",
-      "maskTitle": "Select Surfaces to Transform",
+      "selectionTitle": "Chọn bề mặt để biến đổi",
+      "maskTitle": "Chọn bề mặt để biến đổi",
       "colorLabel": "Màu",
       "surfaceLabel": "Bề mặt",
       "choose": "Chọn",
@@ -114,77 +517,889 @@
       "colorPickerTitle": "Chọn màu cho tường",
       "surfacePickerTitle": "Chọn loại bề mặt",
       "detectTitle": "Đang phát hiện bề mặt có thể sơn...",
+      "detectBody": "HomeDecor AI đang truy tìm các bề mặt tường có thể sơn lại trong khi vẫn giữ nguyên cửa sổ, đồ nội thất, đồ trang trí và sàn nhà.",
       "preparingMaskTitle": "Đang chuẩn bị bề mặt mặt nạ...",
+      "preparingMaskBody": "HomeDecor AI đang tinh chỉnh khung vẽ để bạn có thể vẽ các cạnh sắc nét xung quanh vật dụng tích hợp, cửa sổ và đồ nội thất.",
       "brushWidth": "Độ rộng cọ",
       "eraserWidth": "Độ rộng tẩy",
       "generateCta": "Sơn tường của tôi →",
       "finishTitle": "Kiểu hoàn thiện",
+      "finishBody": "Chọn cách sơn bắt ánh sáng để các bức tường được hiển thị chính xác trong bản kết xuất bóng bẩy, đạt tiêu chuẩn thiết kế.",
       "selectedColor": "Màu đã chọn",
-      "intakeTitle": "Upload Your Vision",
-      "intakeReadyTitle": "Photo added. Mark the wall area next."
+      "selectedSurfaceSentence": "Bề mặt: {{surface}}.",
+      "colorLockedBody": "Màu tường bị khóa. Bây giờ chọn cấu hình ánh sáng cuối cùng cho kết xuất.",
+      "customColorDescription": "Tông màu tường tùy chỉnh được chọn từ bộ chọn màu chính xác.",
+      "noColorSelected": "Không có màu nào được chọn",
+      "chooseColorBody": "Chọn màu tường trước khi tiếp tục.",
+      "savePermissionTitle": "Cần có quyền truy cập ảnh",
+      "savePermissionBody": "Cho phép truy cập thư viện ảnh để lưu kết xuất của bạn vào thiết bị.",
+      "cameraAccessTitle": "Cần có quyền truy cập vào máy ảnh",
+      "cameraAccessBody": "Cho phép truy cập máy ảnh để chụp ảnh phòng.",
+      "photoAccessTitle": "Cần có quyền truy cập ảnh",
+      "photoAccessBody": "Cho phép truy cập thư viện ảnh để tải ảnh phòng lên.",
+      "mediaUnavailableTitle": "Không thể mở phương tiện",
+      "exampleUnavailableBody": "Không thể mở được ảnh ví dụ này.",
+      "markWallsTitle": "Đánh dấu các bức tường đầu tiên",
+      "markWallsBody": "Quét lên bề mặt tường bạn muốn sơn lại trước khi tạo.",
+      "pickColorTitle": "Chọn một màu",
+      "pickColorBody": "Chọn màu tường trước khi tiếp tục.",
+      "autoDetectSuccess": "Bức tường được phát hiện. Brush để tinh chỉnh nếu cần thiết.",
+      "autoDetectFailure": "Việc phát hiện tự động không thể hoàn tất. Hãy chải bằng tay.",
+      "renderFinishing": "Kết xuất này đã hoàn tất.",
+      "cancelSuccess": "Thế hệ bị hủy bỏ. Tín dụng của bạn đã được giữ.",
+      "cancelUnavailable": "Không thể hủy ngay bây giờ.",
+      "supportingText": "Sử dụng 1 tín dụng · {{creditsRemaining}}",
+      "creditsRemaining": "{{count}} còn lại",
+      "intakeTitle": "Tải lên tầm nhìn của bạn",
+      "intakeBody": "Tải ảnh phòng lên để đổi màu tường chính xác.",
+      "intakeReadyTitle": "Đã thêm ảnh. Đánh dấu khu vực tường tiếp theo.",
+      "intakeReadyBody": "Ảnh của bạn đã được khóa. Tiếp theo, quét các bề mặt tường để màu sắc vẫn chính xác xung quanh đồ trang trí, đồ nội thất và đồ trang trí.",
+      "surfaces": {
+        "auto": "Tự động",
+        "brick": "Gạch",
+        "cabinet": "tủ",
+        "door": "cửa",
+        "wall": "Tường",
+        "outsideWall": "Tường ngoài"
+      },
+      "colorFamilies": {
+        "pink": "Hồng",
+        "blue": "Màu xanh",
+        "green": "màu xanh lá cây",
+        "yellow": "màu vàng",
+        "gray": "Màu xám",
+        "red": "màu đỏ"
+      },
+      "colors": {
+        "sage-green": {
+          "title": "Xô thơm xanh",
+          "description": "Màu xanh dịu êm dịu cho không gian sống tươi sáng, lịch sự."
+        },
+        "midnight-navy": {
+          "title": "Hải quân nửa đêm",
+          "description": "Chiều sâu hải quân phù hợp với độ tương phản kiến ​​trúc sắc nét."
+        },
+        "terracotta-glow": {
+          "title": "đất nung phát sáng",
+          "description": "Màu đất sét ấm áp với năng lượng biên tập có căn cứ."
+        },
+        "dusty-rose": {
+          "title": "Hoa hồng bụi",
+          "description": "Màu má hồng ấm áp với sự hấp dẫn nhẹ nhàng của cửa hàng."
+        },
+        "gallery-charcoal": {
+          "title": "Thư viện ảnh than",
+          "description": "Than tinh luyện dành cho những căn phòng mang tính nghệ thuật, buồn bã."
+        },
+        "soft-ivory": {
+          "title": "Ngà mềm",
+          "description": "Màu trung tính sáng giúp căn phòng luôn sáng sủa, không bao giờ bằng phẳng."
+        },
+        "olive-grove": {
+          "title": "Rừng Ôliu",
+          "description": "Độ sâu màu ô liu của đất với tâm trạng thiết kế có căn cứ."
+        },
+        "lavender-mist": {
+          "title": "Sương mù hoa oải hương",
+          "description": "Làn sương tím mềm mại dành cho những căn phòng có tông màu phấn cao."
+        },
+        "pearl-gray": {
+          "title": "Màu xám ngọc trai",
+          "description": "Tông màu xám nhạt với sự linh hoạt được đánh bóng hàng ngày."
+        }
+      },
+      "finishes": {
+        "matte": {
+          "label": "Mờ",
+          "description": "Màu sắc mềm mại, đạt tiêu chuẩn thư viện với độ chói bề mặt ít nhất."
+        },
+        "satin": {
+          "label": "sa-tanh",
+          "description": "Ánh sáng cân bằng cho nội thất hiện đại với ánh sáng thiết kế tinh tế."
+        },
+        "glossy": {
+          "label": "Bóng",
+          "description": "Lớp hoàn thiện phản chiếu được đánh bóng dành cho các bức tường nổi bật, có độ tương phản cao."
+        }
+      }
     },
-    "interior": {
-      "stepTwoTitle": "Choose Your Space",
-      "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
-      "stepFourMode": "Design Mode",
-      "stepFourPalette": "Color Harmony"
-    },
-    "exterior": {
-      "stepTwoTitle": "Select Building Type",
-      "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
-      "stepFourTitle": "Color Harmony"
-    },
-    "garden": {
-      "stepOneEmptyTitle": "Upload Your Vision",
-      "stepTwoTitle": "Curate Your Aesthetic",
-      "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
-      "stepThreeTitle": "Color Harmony"
+    "examples": {
+      "floor": {
+        "crackedConcrete": "Bê tông nứt",
+        "damagedPlanks": "Ván bị hư hỏng",
+        "brokenTile": "Ngói vỡ",
+        "renovationSubfloor": "Cải tạo sàn phụ",
+        "wornPlywood": "Ván ép bị mòn"
+      },
+      "paint": {
+        "rawConcrete": "Bê tông thô",
+        "peelingPlaster": "Tróc thạch cao",
+        "wornWhite": "Mặc trắng",
+        "exposedBrick": "Gạch lộ ra ngoài",
+        "stainedPlaster": "Thạch cao màu",
+        "dampStreaks": "Vệt ẩm"
+      }
     }
   },
   "workspace": {
+    "board": {
+      "new": "Mới",
+      "openEditor": "Nhấn để mở trình chỉnh sửa thiết kế của bạn",
+      "generationFailedTap": "Kết xuất gặp phải sự cố. Nhấn để biết chi tiết.",
+      "generationFailedTitle": "Kết xuất không thành công",
+      "generationFailedBody": "Kết xuất này chưa hoàn thành. Vui lòng thử lại.",
+      "tryAnotherPrompt": "Vui lòng quay lại và thử lời nhắc khác."
+    },
+    "processing": {
+      "default": "HomeDecor AI đang bảo tồn kiến ​​trúc trong khi soạn thảo thiết kế lại tinh tế.",
+      "floor": "HomeDecor AI đang đọc phối cảnh, khóa mặt phẳng sàn và soạn thảo vật liệu mới với chi tiết cao cấp.",
+      "paint": "HomeDecor AI đang cô lập các mặt phẳng của bức tường và xếp lớp lớp hoàn thiện đã chọn của bạn theo chủ nghĩa hiện thực cấp phòng trưng bày."
+    },
+    "services": {
+      "interior": "Thiết kế lại nội thất",
+      "exterior": "Thiết kế lại ngoại thất",
+      "garden": "Thiết kế lại sân vườn",
+      "floor": "Tầng Restyle",
+      "paint": "Sơn tường thông minh"
+    },
+    "editor": {
+      "title": "Khái niệm chuyên nghiệp của bạn",
+      "sourcePhoto": "Nguồn ảnh",
+      "comparison": "So sánh",
+      "deleteA11y": "Xóa thiết kế này khỏi Danh mục thiết kế của tôi",
+      "showComparison": "Hiển thị trước và sau so sánh",
+      "hideComparison": "Ẩn trước và sau so sánh",
+      "removeWatermark": "Xóa hình mờ",
+      "regenerate": "tái sinh",
+      "saving": "Đang lưu...",
+      "sharing": "Chia sẻ...",
+      "renderUnavailable": "Kết xuất không khả dụng. Vui lòng thử lại.",
+      "previewNotReady": "Xem trước chưa sẵn sàng. Vui lòng thử lại.",
+      "floorReady": "Chuyển đổi sàn bằng vật liệu với thanh trượt trực tiếp trước và sau.",
+      "paintReady": "Việc đổi màu tường được điều chỉnh theo độ hoàn thiện và ánh sáng trong phòng đã chọn của bạn.",
+      "defaultReady": "Được tuyển chọn bên trong bảng HomeDecor cao cấp của bạn."
+    },
+    "permissions": {
+      "requiredTitle": "Cần có sự cho phép",
+      "requiredBody": "Cho phép truy cập máy ảnh hoặc ảnh trong cài đặt hệ thống của bạn để tiếp tục.",
+      "cameraAccessTitle": "Cần có quyền truy cập vào máy ảnh",
+      "cameraAccessBody": "Cho phép truy cập vào máy ảnh trong Cài đặt để chụp ảnh.",
+      "photoLibraryAccessTitle": "Cần có quyền truy cập thư viện ảnh",
+      "photoLibraryAccessBody": "Cho phép truy cập thư viện ảnh trong Cài đặt.",
+      "photoLibrarySaveBody": "Vui lòng cho phép truy cập thư viện ảnh để lưu kết quả của bạn vào thư viện thiết bị."
+    },
+    "media": {
+      "capturedPhoto": "Ảnh đã chụp",
+      "uploadedPhoto": "Ảnh đã tải lên",
+      "choosePhotoSource": "Chọn cách bạn muốn thêm hình ảnh của mình.",
+      "cameraUnavailableTitle": "Máy ảnh không có sẵn",
+      "cameraUnavailableBody": "Chúng tôi không thể mở camera. Vui lòng thử lại.",
+      "photoLibraryUnavailableTitle": "Thư viện ảnh không có sẵn",
+      "photoLibraryUnavailableBody": "Chúng tôi không thể mở thư viện ảnh. Vui lòng thử lại.",
+      "photoIntakeUnavailableTitle": "Ảnh không có sẵn",
+      "photoIntakeUnavailableBody": "Chúng tôi không thể mở máy ảnh hoặc thư viện ảnh của bạn. Vui lòng thử lại.",
+      "exampleImageUnavailable": "Hình ảnh ví dụ không có sẵn.",
+      "exampleUnavailableTitle": "Ví dụ không khả dụng",
+      "tryAnotherImage": "Hãy thử một hình ảnh khác."
+    },
+    "share": {
+      "nothingTitle": "Không có gì để chia sẻ",
+      "generateFirst": "Tạo một thiết kế đầu tiên.",
+      "failedTitle": "Chia sẻ thất bại",
+      "message": "Thiết kế với HomeDecor.ai"
+    },
+    "download": {
+      "nothingTitle": "Không có gì để tải xuống",
+      "generateFirst": "Tạo một thiết kế đầu tiên.",
+      "failedTitle": "Lưu thất bại"
+    },
     "generation": {
       "preparingSessionTitle": "Đang chuẩn bị phiên",
       "preparingSessionBody": "Hồ sơ khách vẫn đang tải. Vui lòng thử lại sau ít phút.",
-      "limitReached": "Đã đạt giới hạn"
-    },
-    "share": {
-      "message": "Thiết kế với HomeDecor.ai",
-      "failedTitle": "Chia sẻ thất bại"
-    },
-    "download": {
-      "failedTitle": "Lưu thất bại"
-    },
-    "media": {
-      "exampleUnavailableTitle": "Ví dụ không khả dụng"
+      "completeStepsTitle": "Hoàn thành các bước",
+      "completeFloorBody": "Thêm ảnh căn phòng, xác định diện tích sàn, chọn vật liệu và chọn lớp hoàn thiện trước khi tiếp tục.",
+      "completePaintBody": "Thêm ảnh căn phòng, xác định các bề mặt có thể sơn, chọn màu tường và chọn lớp hoàn thiện trước khi tiếp tục.",
+      "completePreviousSteps": "Vui lòng hoàn thành các bước trước đó trước.",
+      "limitReached": "Đã đạt giới hạn",
+      "completeStepToContinue": "Hoàn tất bước này để tiếp tục."
     },
     "flow": {
-      "customPromptTitle": "Describe Your Vision",
+      "customPromptTitle": "Mô tả tầm nhìn của bạn",
       "customPromptBody": "Mô tả chính xác hướng thiết kế trước khi áp dụng.",
       "selectSpaceType": "Chạm vào một thẻ để chọn loại không gian."
+    },
+    "resumeDraft": "Đang tiếp tục bản thảo hướng dẫn đã lưu của bạn.",
+    "feedback": {
+      "like": "thích",
+      "dislike": "Không thích",
+      "liked": "Cảm ơn bạn đã phản hồi.",
+      "disliked": "Phản hồi được gửi đến nhóm thiết kế.",
+      "failed": "Không thể gửi phản hồi ngay bây giờ."
+    },
+    "stepOne": {
+      "gardenPhotoTitle": "Thêm một bức ảnh vườn",
+      "exteriorPhotoTitle": "Thêm ảnh ngoại thất",
+      "floorPhotoTitle": "Thêm ảnh tầng",
+      "gardenEmptyTitle": "Bắt đầu chuyển đổi khu vườn của bạn",
+      "exteriorEmptyTitle": "Bắt đầu chuyển đổi bên ngoài của bạn",
+      "tapToAddPhoto": "Nhấn để thêm ảnh từ máy ảnh hoặc thư viện của bạn"
+    },
+    "style": {
+      "tapToSelect": "Nhấn vào một thẻ để xác định hướng phong cách của bạn."
+    },
+    "localization": {
+      "rooms": {
+        "livingRoom": "Phòng khách",
+        "bedroom": "Phòng ngủ",
+        "kitchen": "Nhà bếp",
+        "bathroom": "Phòng tắm",
+        "homeOffice": "Văn phòng tại nhà",
+        "diningRoom": "Phòng ăn",
+        "nursery": "Nhà trẻ",
+        "homeTheater": "Rạp hát tại nhà",
+        "gamingRoom": "Phòng chơi game",
+        "hall": "Hội trường",
+        "library": "Thư viện",
+        "laundry": "Giặt ủi"
+      },
+      "examples": {
+        "interior": {
+          "emptyRoom": "Phòng trống",
+          "messyLounge": "Phòng chờ lộn xộn",
+          "wornRoom": "phòng cũ",
+          "emptyKitchen": "Bếp trống",
+          "damagedRoom": "Phòng hư hỏng",
+          "outdatedKitchen": "Nhà bếp lỗi thời"
+        },
+        "exterior": {
+          "scaffoldHouse": "Nhà giàn giáo",
+          "weatheredHouse": "Ngôi nhà phong hóa",
+          "brickShell": "Vỏ gạch",
+          "overgrownCottage": "Ngôi nhà mọc um tùm",
+          "abandonedHome": "Ngôi nhà bỏ hoang",
+          "concreteFrame": "Khung bê tông"
+        },
+        "garden": {
+          "muddyYard": "Sân bùn",
+          "weedyYard": "Sân cỏ",
+          "rubbleYard": "Bãi đổ nát",
+          "overgrownCorner": "Góc cây cối um tùm",
+          "abandonedYard": "sân bỏ hoang",
+          "crackedPatio": "Sân hiên nứt nẻ"
+        }
+      },
+      "styles": {
+        "modern": "hiện đại",
+        "luxury": "sang trọng",
+        "japandi": "tiếng Nhật",
+        "cyberpunk": "Cyberpunk",
+        "tropical": "nhiệt đới",
+        "minimalist": "tối giản",
+        "scandinavian": "người Scandinavi",
+        "bohemian": "phong cách Bohemian",
+        "midcentury": "giữa thế kỷ",
+        "artDeco": "Trang trí nghệ thuật",
+        "coastal": "ven biển",
+        "rustic": "mộc mạc",
+        "vintage": "cổ điển",
+        "mediterranean": "Địa Trung Hải",
+        "glam": "quyến rũ",
+        "coastalRetreat": "nơi nghỉ dưỡng ven biển",
+        "rusticManor": "Trang viên mộc mạc",
+        "hollywoodRegency": "Nhiếp chính Hollywood",
+        "neoClassic": "Tân cổ điển",
+        "shabbyChic": "sang trọng tồi tàn",
+        "frenchCountry": "Đất nước Pháp",
+        "brutalist": "tàn bạo",
+        "hollywoodRegencyNoir": "Hollywood Regency Noir",
+        "artNouveau": "Tân nghệ thuật",
+        "custom": "tùy chỉnh",
+        "chinese": "Tiếng Trung",
+        "cottage": "Nhà tranh",
+        "farmHouse": "Nhà nông trại",
+        "french": "người Pháp",
+        "gothic": "kiểu Gothic",
+        "italianate": "tiếng Ý",
+        "christmas": "giáng sinh",
+        "minimalistic": "tối giản",
+        "baroque": "kiểu baroque"
+      },
+      "buildings": {
+        "apartment": "Căn hộ",
+        "house": "Nhà",
+        "officeBuilding": "Tòa nhà văn phòng",
+        "residential": "Khu dân cư",
+        "retail": "bán lẻ",
+        "villa": "biệt thự"
+      },
+      "modes": {
+        "preserve": {
+          "title": "Bảo tồn cấu trúc",
+          "description": "Bảo tồn DNA kiến ​​trúc căn phòng của bạn trong khi làm mới tính thẩm mỹ của nó một cách hoàn hảo."
+        },
+        "renovate": {
+          "title": "Thiết kế cải tạo",
+          "description": "Hoàn toàn tự do sáng tạo để xác định lại cách bố trí đồ nội thất và ranh giới cấu trúc cho một bản sửa sang hoàn chỉnh."
+        }
+      },
+      "palettes": {
+        "surprise": "Hỗn hợp tuyển chọn",
+        "gray": "Xám ngàn năm",
+        "terracotta": "Ảo ảnh đất nung",
+        "forest": "Màu rừng",
+        "peach": "Vườn đào",
+        "fuchsia": "Hoa Fuchsia",
+        "emerald": "Ngọc lục bảo",
+        "pastel": "Làn Gió Pastel",
+        "ocean": "Sương biển",
+        "velvet": "Hoàng hôn nhung",
+        "amethyst": "Giấc mơ thạch anh tím",
+        "sunset": "Fuchsia Noir"
+      },
+      "gardenPalettes": {
+        "garden-surprise": "làm tôi ngạc nhiên",
+        "garden-gray": "Xám ngàn năm",
+        "garden-terracotta": "Ảo ảnh đất nung",
+        "garden-neon-sunset": "Hoàng hôn neon",
+        "garden-forest": "Màu rừng",
+        "garden-peach": "Vườn đào",
+        "garden-fuschia": "Hoa Fuchsia",
+        "garden-emerald": "Ngọc lục bảo",
+        "garden-pastel": "Làn Gió Pastel",
+        "garden-azure": "ảo ảnh Azure",
+        "garden-twilight": "Chạng vạng Blues",
+        "garden-earthy": "Sự hòa hợp trần gian"
+      },
+      "summary": {
+        "roomType": "Loại phòng",
+        "style": "phong cách",
+        "mode": "Chế độ",
+        "palette": "Bảng màu",
+        "missing": "⚠ Thiếu"
+      },
+      "previewThumbnailLabel": "Đầu ra mẫu · {{style}}",
+      "toasts": {
+        "completeStyleSelections": "Hoàn thành các lựa chọn kiểu của bạn để tạo."
+      },
+      "requiredSelections": {
+        "photo": "Vui lòng chọn một ảnh để tiếp tục.",
+        "room": "Vui lòng chọn một phòng để tiếp tục.",
+        "style": "Vui lòng chọn một phong cách để tiếp tục.",
+        "mode": "Vui lòng hoàn tất việc lựa chọn chế độ để tiếp tục.",
+        "palette": "Vui lòng hoàn thành việc lựa chọn bảng màu để tiếp tục."
+      },
+      "regenerationUnavailable": "Tái sinh không có sẵn",
+      "feedbackUnavailable": "Phản hồi không có sẵn cho hình ảnh này.",
+      "cta": {
+        "getMoreCredits": "Nhận thêm tín dụng",
+        "generateMyDesign": "Tạo thiết kế của tôi"
+      },
+      "stepFourSticky": "Bước 4: Tinh chỉnh hướng",
+      "exteriorEmptyStateSubtitle": "Thiết kế lại và làm đẹp ngôi nhà của bạn."
     }
   },
   "proSuccess": {
     "title": "Chào mừng đến với HomeDecor Pro!",
     "subtitle": "Mọi thứ đã được mở khóa. Đây là những gì bạn nhận được:",
+    "features": {
+      "hyperRealism": "Đã bật hiển thị chi tiết cực cao",
+      "virtualStaging": "Đã mở khóa công cụ thiết kế cao cấp",
+      "infiniteCredits": "Hạn ngạch kết xuất hàng tuần hoặc hàng tháng đang hoạt động"
+    },
     "cta": "Bắt đầu thiết kế",
     "toast": "Tài khoản đã được nâng cấp lên Pro."
   },
-  "app": {
-    "name": "HomeDecor AI"
+  "legalViewer": {
+    "eyebrow": "Người xem pháp lý",
+    "switches": {
+      "terms": "Điều khoản dịch vụ",
+      "privacy": "Chính sách bảo mật"
+    }
   },
-  "discover": {
-    "tabs": {
-      "home": "Interior",
-      "exterior": "Exterior ",
-      "garden": "Garden"
+  "storeReview": {
+    "title": "Đánh giá HomeDecor AI",
+    "unavailableBody": "Yêu cầu đánh giá không có sẵn trên thiết bị này.",
+    "errorBody": "Không thể mở hộp thoại đánh giá cửa hàng ngay bây giờ."
+  },
+  "gallery": {
+    "clusters": {
+      "foundations": "Nền móng"
     },
-    "tryThisStyle": "Try This Style"
+    "tabs": {
+      "home": "Nội thất",
+      "exterior": "ngoại thất",
+      "garden": "phong cảnh"
+    },
+    "groups": {
+      "kitchen": "Nhà bếp",
+      "livingRoom": "Phòng khách",
+      "diningRoom": "Phòng ăn",
+      "bedroom": "Phòng ngủ",
+      "bathroom": "Phòng tắm",
+      "gamingRoom": "Phòng chơi game",
+      "homeOffice": "Văn phòng tại nhà",
+      "coffeeShop": "quán cà phê",
+      "studyRoom": "Phòng học",
+      "restaurant": "Nhà hàng",
+      "attic": "Gác mái",
+      "toilet": "nhà vệ sinh",
+      "balcony": "ban công",
+      "hall": "Hội trường",
+      "deck": "Bộ bài",
+      "landscapeDesigns": "Thiết Kế Cảnh Quan",
+      "villa": "biệt thự",
+      "apartment": "Căn hộ",
+      "house": "Nhà",
+      "officeBuilding": "Tòa nhà văn phòng",
+      "retail": "bán lẻ",
+      "residential": "Khu dân cư",
+      "wall": "Tường",
+      "floor": "Tầng",
+      "garden": "Vườn"
+    },
+    "imageTitleTemplate": "{{title}} Hình ảnh {{index}}",
+    "emptyState": {
+      "title": "Danh mục không có sẵn",
+      "body": "Không thể tìm thấy bộ sưu tập hình ảnh được yêu cầu."
+    }
   },
-  "profile": {
-    "title": "My Design Portfolio",
-    "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
-    "emptySubtitle": ""
+  "discoverCatalog": {
+    "sections": {
+      "home": {
+        "title": "nội thất",
+        "description": "Các phòng được thiết kế riêng xuyên suốt khu vực sinh hoạt, ngủ nghỉ, ăn uống, làm việc và giải trí.",
+        "items": {
+          "sereneLounge": {
+            "title": "Phòng chờ thanh thản",
+            "subtitle": "Phòng khách / Tối giản mềm mại",
+            "spaceType": "Phòng khách",
+            "style": "mềm tối thiểu"
+          },
+          "moodyClubRoom": {
+            "title": "Phòng Câu lạc bộ Tâm trạng",
+            "subtitle": "Phòng khách / Tâm trạng sang trọng",
+            "spaceType": "Phòng khách",
+            "style": "Luxe ủ rũ"
+          },
+          "organicLiving": {
+            "title": "Cuộc sống hữu cơ",
+            "subtitle": "Phòng khách / Ấm áp hữu cơ",
+            "spaceType": "Phòng khách",
+            "style": "Hữu cơ ấm áp"
+          },
+          "grandSalon": {
+            "title": "Grand Salon",
+            "subtitle": "Phòng khách / Đá cẩm thạch sang trọng",
+            "spaceType": "Phòng khách",
+            "style": "Đá cẩm thạch sang trọng"
+          },
+          "editorialLounge": {
+            "title": "Phòng biên tập",
+            "subtitle": "Phòng chơi game / Cyberpunk",
+            "spaceType": "Phòng chơi game",
+            "style": "Cyberpunk"
+          }
+        }
+      },
+      "exterior": {
+        "title": "ngoại thất",
+        "description": "Cảm hứng mặt tiền từ các biệt thự hiện đại, các khu đô thị, văn phòng và các khu bán lẻ.",
+        "items": {
+          "modernHouse": {
+            "title": "Ngôi nhà hiện đại",
+            "subtitle": "Ngôi nhà hiện đại / Ánh sáng ban ngày tối thiểu",
+            "spaceType": "Ngôi nhà hiện đại",
+            "style": "Ánh sáng ban ngày tối thiểu"
+          },
+          "modernHouseNight": {
+            "title": "Đêm nhà hiện đại",
+            "subtitle": "Ngôi nhà hiện đại / Buổi tối sang trọng",
+            "spaceType": "Ngôi nhà hiện đại",
+            "style": "buổi tối sang trọng"
+          },
+          "stoneVilla": {
+            "title": "Biệt thự đá",
+            "subtitle": "Biệt thự / Địa Trung Hải",
+            "spaceType": "biệt thự",
+            "style": "Địa Trung Hải"
+          },
+          "glassOffice": {
+            "title": "Văn phòng kính",
+            "subtitle": "Tòa nhà văn phòng / Tối giản",
+            "spaceType": "Tòa nhà văn phòng",
+            "style": "tối giản"
+          },
+          "ecoApartments": {
+            "title": "Căn hộ sinh thái",
+            "subtitle": "Khu chung cư / Nhà tương lai sinh thái",
+            "spaceType": "Khu chung cư",
+            "style": "Nhà tương lai sinh thái"
+          }
+        }
+      },
+      "garden": {
+        "title": "Vườn",
+        "description": "Sảnh ngoài trời, sân hiên, hồ bơi, sân hiên và khung cảnh khu vườn mang hơi hướng khu nghỉ dưỡng.",
+        "items": {
+          "infinityPool": {
+            "title": "Bể bơi vô cực",
+            "subtitle": "Bể bơi vô cực / Ven biển Luxe",
+            "spaceType": "Bể bơi vô cực",
+            "style": "Luxe ven biển"
+          },
+          "waterfallCourt": {
+            "title": "Sân thác nước",
+            "subtitle": "Vườn thác nước / Zen sang trọng",
+            "spaceType": "Vườn Thác Nước",
+            "style": "Thiền sang trọng"
+          },
+          "sunsetFirePit": {
+            "title": "Hố lửa hoàng hôn",
+            "subtitle": "Phòng chờ hố lửa / Hoàng hôn tại khu nghỉ dưỡng",
+            "spaceType": "Phòng chờ hố lửa",
+            "style": "Khu nghỉ dưỡng hoàng hôn"
+          },
+          "tropicalPoolLounge": {
+            "title": "Phòng chờ hồ bơi nhiệt đới",
+            "subtitle": "Phòng chờ hồ bơi / Lối thoát nhiệt đới",
+            "spaceType": "Phòng chờ hồ bơi",
+            "style": "Thoát khỏi nhiệt đới"
+          },
+          "luminousGardenWalk": {
+            "title": "Đi dạo trong vườn phát sáng",
+            "subtitle": "Đi dạo trong vườn/Tỏa sáng buổi tối",
+            "spaceType": "Đi dạo trong vườn",
+            "style": "buổi tối rực rỡ"
+          }
+        }
+      },
+      "wall": {
+        "title": "Cảm hứng từ bức tường",
+        "description": "Tham chiếu sơn trong phòng thực mở trực tiếp vào Smart Wall Paint với lớp hoàn thiện đã được chọn trước.",
+        "items": {
+          "sagePlasterWall": {
+            "title": "Tường thạch cao xô thơm",
+            "subtitle": "Tường có họa tiết / Màu xanh lá cây xô thơm",
+            "spaceType": "Tường kết cấu",
+            "style": "Xô thơm xanh"
+          },
+          "linearSlatFeature": {
+            "title": "Tính năng đá phiến tuyến tính",
+            "subtitle": "Tường lát / Than",
+            "spaceType": "Tường lát",
+            "style": "than củi"
+          },
+          "veinedMarbleWall": {
+            "title": "Tường đá cẩm thạch có vân",
+            "subtitle": "Tường đá cẩm thạch / Ngà mềm",
+            "spaceType": "Tường đá cẩm thạch",
+            "style": "Ngà mềm"
+          },
+          "minimalConcreteWall": {
+            "title": "Tường bê tông tối thiểu",
+            "subtitle": "Tường bê tông / Than",
+            "spaceType": "Tường bê tông",
+            "style": "than củi"
+          },
+          "botanicalMuralWall": {
+            "title": "Bức tranh tường thực vật",
+            "subtitle": "Bức tường tranh tường / Rêu ô liu",
+            "spaceType": "Bức tranh tường",
+            "style": "Rêu ô liu"
+          }
+        }
+      },
+      "floor": {
+        "title": "Kiểu sàn",
+        "description": "Các tài liệu tham khảo về sàn cao cấp được tuyển chọn từ nội thất thực và được ánh xạ trực tiếp vào quy trình làm việc của Floor Restyle.",
+        "items": {
+          "heritageHerringbone": {
+            "title": "Xương cá di sản",
+            "subtitle": "Sàn Gỗ / Gỗ óc chó",
+            "spaceType": "Sàn gỗ",
+            "style": "Gỗ óc chó"
+          },
+          "carraraMarbleFlow": {
+            "title": "Dòng đá cẩm thạch Carrara",
+            "subtitle": "Sàn đá cẩm thạch / Đá cẩm thạch Carrara",
+            "spaceType": "Sàn đá cẩm thạch",
+            "style": "Đá cẩm thạch Carrara"
+          },
+          "satinConcrete": {
+            "title": "Bê tông satin",
+            "subtitle": "Sàn bê tông / Bê tông đánh bóng",
+            "spaceType": "Sàn bê tông",
+            "style": "Bê tông đánh bóng"
+          },
+          "walnutGloss": {
+            "title": "Quả óc chó bóng",
+            "subtitle": "Gỗ bóng / Gỗ óc chó",
+            "spaceType": "Gỗ bóng",
+            "style": "Gỗ óc chó"
+          },
+          "softLimestone": {
+            "title": "Đá vôi mềm",
+            "subtitle": "Sàn đá / Bê tông đánh bóng",
+            "spaceType": "Sàn đá",
+            "style": "Bê tông đánh bóng"
+          }
+        }
+      }
+    },
+    "wallColors": {
+      "sageGreen": {
+        "title": "Xô thơm xanh",
+        "description": "Màu xanh dịu êm dịu cho không gian sống tươi sáng, lịch sự.",
+        "discoverSubtitle": "Bức tường/Bình tĩnh thực vật"
+      },
+      "midnightNavy": {
+        "title": "Hải quân nửa đêm",
+        "description": "Chiều sâu hải quân phù hợp với độ tương phản kiến ​​trúc sắc nét.",
+        "discoverSubtitle": "Tường / Độ tương phản phù hợp"
+      },
+      "terracottaGlow": {
+        "title": "đất nung phát sáng",
+        "description": "Màu đất sét ấm áp với năng lượng biên tập có căn cứ.",
+        "discoverSubtitle": "Tường / Đất sét ấm"
+      },
+      "dustyRose": {
+        "title": "Hoa hồng bụi",
+        "description": "Màu má hồng ấm áp với sự hấp dẫn nhẹ nhàng của cửa hàng.",
+        "discoverSubtitle": "Tường / Boutique má hồng"
+      },
+      "galleryCharcoal": {
+        "title": "Thư viện ảnh than",
+        "description": "Than tinh luyện dành cho những căn phòng mang tính nghệ thuật, buồn bã.",
+        "discoverSubtitle": "Bức tường / Phòng trưng bày tâm trạng"
+      },
+      "softIvory": {
+        "title": "Ngà mềm",
+        "description": "Màu trung tính sáng giúp căn phòng luôn sáng sủa, không bao giờ bằng phẳng.",
+        "discoverSubtitle": "Tường / Yên tĩnh Trung tính"
+      },
+      "oliveGrove": {
+        "title": "Rừng Ôliu",
+        "description": "Độ sâu màu ô liu của đất với tâm trạng thiết kế có căn cứ.",
+        "discoverSubtitle": "Tường / Độ sâu đất"
+      },
+      "lavenderMist": {
+        "title": "Sương mù hoa oải hương",
+        "description": "Làn sương tím mềm mại dành cho những căn phòng có tông màu phấn cao.",
+        "discoverSubtitle": "Tường / Màu pastel mềm mại"
+      },
+      "pearlGray": {
+        "title": "Màu xám ngọc trai",
+        "description": "Tông màu xám nhạt với sự linh hoạt được đánh bóng hàng ngày.",
+        "discoverSubtitle": "Tường / Trung tính hiện đại"
+      }
+    },
+    "wallColorCategories": {
+      "calmNeutrals": {
+        "title": "Bình tĩnh trung lập",
+        "colors": {
+          "softIvory": "Ngà mềm",
+          "pearlGray": "Màu xám ngọc trai",
+          "sageGreen": "Xô thơm xanh"
+        }
+      },
+      "boutiquePastels": {
+        "title": "Cửa hàng phấn màu",
+        "colors": {
+          "dustyRose": "Hoa hồng bụi",
+          "lavenderMist": "Sương mù hoa oải hương",
+          "terracottaGlow": "đất nung phát sáng"
+        }
+      },
+      "architecturalDepth": {
+        "title": "Chiều sâu kiến trúc",
+        "colors": {
+          "midnightNavy": "Hải quân nửa đêm",
+          "galleryCharcoal": "Thư viện ảnh than",
+          "oliveGrove": "Rừng Ôliu"
+        }
+      }
+    },
+    "floorMaterials": {
+      "naturalOak": {
+        "title": "Sồi tự nhiên",
+        "description": "Ván gỗ sồi thoáng mát với vân gỗ tự nhiên mềm mại.",
+        "promptLabel": "sàn gỗ sồi tự nhiên nhẹ nhàng với các chi tiết ván rộng",
+        "discoverSubtitle": "Sàn/Gỗ nhẹ"
+      },
+      "walnutWood": {
+        "title": "Gỗ óc chó",
+        "description": "Ván gỗ óc chó sâu với độ tương phản phù hợp phong phú.",
+        "promptLabel": "sàn gỗ óc chó sang trọng với vân gỗ đậm đà",
+        "discoverSubtitle": "Sàn/Gỗ tối màu"
+      },
+      "carraraMarble": {
+        "title": "Đá cẩm thạch Carrara",
+        "description": "Đường vân đá sáng bóng với bề mặt sang trọng nhẹ nhàng.",
+        "promptLabel": "sàn đá cẩm thạch carrara với đường vân mềm mại trang nhã",
+        "discoverSubtitle": "Sàn/ Đá đánh bóng"
+      },
+      "polishedConcrete": {
+        "title": "Bê tông đánh bóng",
+        "description": "Bê tông mịn màng với phòng trưng bày đô thị yên tĩnh.",
+        "promptLabel": "sàn bê tông đánh bóng với kết cấu mịn cao cấp",
+        "discoverSubtitle": "Tầng / Công nghiệp tối thiểu"
+      },
+      "herringboneOak": {
+        "title": "Sồi xương cá",
+        "description": "Mẫu gỗ sồi cổ điển với chuyển động có hướng ấm áp.",
+        "promptLabel": "sàn gỗ sồi xương cá với hoa văn cao cấp",
+        "discoverSubtitle": "Sàn/Gỗ có hoa văn"
+      },
+      "terracottaTile": {
+        "title": "Ngói đất nung",
+        "description": "Sự ấm áp của đất sét với đặc tính thủ công.",
+        "promptLabel": "sàn gạch đất nung với biến thể màu đất sét ấm áp",
+        "discoverSubtitle": "Sàn nhà / Đất sét Địa Trung Hải"
+      },
+      "slateTile": {
+        "title": "Ngói đá phiến",
+        "description": "Đá phiến đen với bề mặt khổ lớn sắc nét.",
+        "promptLabel": "sàn gạch đá phiến tối màu với các tấm đá khổ lớn",
+        "discoverSubtitle": "Sàn/ Đá tối màu"
+      },
+      "plushCarpet": {
+        "title": "Thảm sang trọng",
+        "description": "Thảm màu kem mềm mại mang lại cảm giác yên tĩnh, ấm cúng.",
+        "promptLabel": "sàn trải thảm sang trọng sang trọng với tông màu kem mềm mại",
+        "discoverSubtitle": "Sàn / Kết cấu mềm"
+      },
+      "weatheredOak": {
+        "title": "Sồi phong hóa",
+        "description": "Gỗ sồi có tông màu trung tính với lớp sơn hoàn thiện được ủ lâu năm.",
+        "promptLabel": "sàn gỗ sồi phong hóa với hạt già tinh tế",
+        "discoverSubtitle": "Sàn nhà / Sự ấm áp mộc mạc"
+      }
+    },
+    "injectedGallery": {
+      "floorAfterScenes": {
+        "heritageHerringbone": "Xương cá di sản",
+        "carraraMarble": "Đá cẩm thạch Carrara",
+        "satinConcrete": "Bê tông satin",
+        "walnutGloss": "Quả óc chó bóng",
+        "limestoneSlab": "Tấm đá vôi"
+      },
+      "wallAfterScenes": {
+        "sagePlaster": "Thạch cao xô thơm",
+        "linearSlats": "Thanh tuyến tính",
+        "veinedMarble": "Đá cẩm thạch có vân",
+        "minimalConcrete": "Bê tông tối thiểu",
+        "botanicalMural": "Bức tranh tường thực vật"
+      },
+      "interiorExamples": {
+        "kitchen": "Nhà bếp",
+        "livingRoom": "Phòng khách",
+        "bedroom": "Phòng ngủ",
+        "bathroom": "Phòng tắm",
+        "gamingRoom": "Phòng chơi game",
+        "homeOffice": "Văn phòng tại nhà"
+      },
+      "exteriorExamples": {
+        "apartment": "Căn hộ",
+        "house": "Nhà",
+        "office": "văn phòng",
+        "villa": "biệt thự",
+        "residential": "Khu dân cư",
+        "retail": "bán lẻ"
+      },
+      "gardenExamples": {
+        "infinityPool": "Bể bơi vô cực",
+        "waterfallCourt": "Sân thác nước",
+        "firePit": "Hố lửa",
+        "tropicalLounge": "Phòng chờ nhiệt đới",
+        "resortDeck": "Sàn nghỉ dưỡng",
+        "lagoonFalls": "Thác đầm phá"
+      },
+      "homeCoreScenes": {
+        "kitchen": "Nhà bếp",
+        "livingRoom": "Phòng khách",
+        "bedroom": "Phòng ngủ",
+        "bathroom": "Phòng tắm",
+        "diningRoom": "Phòng ăn",
+        "gamingRoom": "Phòng chơi game",
+        "homeOffice": "Văn phòng tại nhà"
+      },
+      "homeFlexScenes": {
+        "coffeeShop": "quán cà phê",
+        "gamingStudio": "Studio chơi game",
+        "atticLounge": "Phòng gác mái",
+        "studyRoom": "Phòng học",
+        "serviceRoom": "Phòng dịch vụ",
+        "laundryRoom": "Phòng giặt ủi"
+      },
+      "livingRoomScenes": {
+        "sereneLounge": "Phòng chờ thanh thản",
+        "moodyLounge": "Phòng chờ ủ rũ",
+        "organicLiving": "Cuộc sống hữu cơ",
+        "grandSalon": "Grand Salon",
+        "playfulLounge": "Phòng chờ vui tươi"
+      },
+      "homeLuxeScenes": {
+        "restaurant": "Nhà hàng",
+        "studyLibrary": "Thư viện nghiên cứu",
+        "atticRetreat": "Gác mái rút lui",
+        "toiletSuite": "Phòng vệ sinh",
+        "balcony": "ban công",
+        "hall": "Hội trường",
+        "deckDay": "Ngày boong",
+        "deckNight": "Đêm boong"
+      },
+      "exteriorPrimaryScenes": {
+        "house": "Nhà",
+        "residential": "Khu dân cư",
+        "villa": "biệt thự",
+        "glassCorner": "Góc kính",
+        "apartment": "Căn hộ"
+      },
+      "exteriorSecondaryScenes": {
+        "apartmentTower": "Tháp căn hộ",
+        "retailPavilion": "Gian hàng bán lẻ",
+        "officeBuilding": "Tòa nhà văn phòng",
+        "modernVilla": "Biệt thự hiện đại",
+        "residentialTower": "Tháp dân cư"
+      },
+      "gardenPrimaryScenes": {
+        "infinityPool": "Bể bơi vô cực",
+        "waterfallCourt": "Sân thác nước",
+        "sunsetFirePit": "Hố lửa hoàng hôn",
+        "tropicalLounge": "Phòng chờ nhiệt đới",
+        "livingWall": "Bức Tường Sống",
+        "lightCourt": "Tòa án ánh sáng"
+      },
+      "gardenSecondaryScenes": {
+        "sunsetPool": "Bể bơi lúc hoàng hôn",
+        "fireCove": "Vịnh lửa",
+        "poolCourt": "Sân hồ bơi",
+        "waterfallLounge": "Phòng chờ thác nước",
+        "resortDeck": "Sàn nghỉ dưỡng",
+        "lagoonFalls": "Thác đầm phá"
+      },
+      "exteriorBuildingTypes": {
+        "apartment": "Căn hộ",
+        "house": "Nhà",
+        "officeBuilding": "Tòa nhà văn phòng",
+        "villa": "biệt thự",
+        "residential": "Khu dân cư",
+        "retail": "bán lẻ"
+      }
+    }
+  },
+  "legacyUnlocalized": {
+    "paintWizard": {
+      "autoDetectFailureMessage": "Tự động phát hiện không thể chạy. Hãy chải bằng tay.",
+      "cancelledGenerationMessage": "Đã bị người dùng hủy.",
+      "result": {
+        "heading": "Xem nội thất mới của bạn",
+        "subheading": "Ý tưởng tường bóng bẩy, được sáng tác để bảo toàn cấu trúc, cách bố trí nội thất và ánh sáng tự nhiên của căn phòng.",
+        "appliedFinish": "Hoàn thiện ứng dụng",
+        "saveToGallery": "Lưu vào Thư viện",
+        "share": "Chia sẻ",
+        "tryAgain": "Thử lại"
+      }
+    }
   }
 }

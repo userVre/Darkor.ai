@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "HomeDecor AI"
+    "name": "__トークン_0__"
   },
   "common": {
     "actions": {
@@ -8,11 +8,11 @@
       "cancel": "キャンセル",
       "close": "閉じる",
       "delete": "削除",
-      "save": "Save",
-      "share": "Share",
+      "save": "保存",
+      "share": "シェアする",
       "restore": "復元",
       "upgrade": "アップグレード",
-      "tryAgain": "Please try again.",
+      "tryAgain": "もう一度試してください。",
       "openSettings": "設定を開く",
       "notNow": "今はしない",
       "takePhoto": "写真を撮る",
@@ -20,43 +20,43 @@
       "addPhoto": "写真を追加",
       "chooseMediaSource": "メディアソースを選択",
       "examplePhotos": "サンプル写真",
-      "seeAll": "Explore All",
+      "seeAll": "すべてを探索する",
       "uploadPlus": "アップロード +",
-      "exit": "Exit",
-      "connect": "Connecting...",
-      "tryThis": "Try This"
+      "exit": "終了",
+      "connect": "接続中...",
+      "tryThis": "これを試してください"
     },
     "labels": {
       "email": "メールアドレス",
       "password": "パスワード",
-      "version": "Version {{version}}",
+      "version": "バージョン {{version}}",
       "lastUpdated": "最終更新",
       "step": "ステップ {{current}} / {{total}}"
     },
     "alerts": {
       "exitTitle": "終了しますか？",
       "progressLost": "進行状況は失われます。",
-      "completeStepTitle": "Complete this step",
-      "makeSelection": "Make a selection to continue.",
-      "addPhotoToContinue": "Add a photo to continue.",
-      "invalidHexTitle": "Invalid color",
-      "invalidHexBody": "Enter a valid 6-digit hex code such as #D946EF."
+      "completeStepTitle": "このステップを完了してください",
+      "makeSelection": "続行するには選択を行ってください。",
+      "addPhotoToContinue": "続行するには写真を追加してください。",
+      "invalidHexTitle": "無効な色です",
+      "invalidHexBody": "#D946EF などの有効な 6 桁の 16 進コードを入力します。"
     },
     "states": {
-      "workInProgress": "Work in progress",
-      "generationFailed": "Render encountered an issue. Please try again.",
-      "savedToGallery": "Saved to your photo library",
-      "photoPermissionNeeded": "Photo library access is required.",
-      "loading": "Loading..."
+      "workInProgress": "作業中です",
+      "generationFailed": "レンダリングで問題が発生しました。もう一度試してください。",
+      "savedToGallery": "写真ライブラリに保存されました",
+      "photoPermissionNeeded": "フォトライブラリへのアクセスが必要です。",
+      "loading": "読み込み中..."
     }
   },
   "boot": {
-    "loadingApp": "Loading HomeDecor AI",
-    "loadingAccount": "Loading your account...",
-    "checkingPlan": "Reviewing your plan...",
-    "secureAccount": "Secure your account to begin designing...",
-    "missingEnvTitle": "Missing Environment Variables",
-    "missingEnvBody": "The following values are required before HomeDecor AI can launch:"
+    "loadingApp": "HomeDecor AIをロード中",
+    "loadingAccount": "アカウントを読み込んでいます...",
+    "checkingPlan": "計画を見直しています...",
+    "secureAccount": "アカウントを保護してデザインを開始してください...",
+    "missingEnvTitle": "環境変数が欠落しています",
+    "missingEnvBody": "HomeDecor AI を起動するには、次の値が必要です。"
   },
   "tabs": {
     "tools": "ツール",
@@ -65,35 +65,35 @@
     "profile": "プロフィール"
   },
   "home": {
-    "title": "HomeDecor AI",
+    "title": "__トークン_0__",
     "accessibility": {
-      "openCredits": "Open credits"
+      "openCredits": "オープンクレジット"
     },
     "errors": {
-      "tryItUnavailableTitle": "Preview unavailable"
+      "tryItUnavailableTitle": "プレビューは利用できません"
     },
     "tools": {
       "interior": {
-        "title": "Interior Design",
+        "title": "インテリアデザイン",
         "description": "Reimagine your space with AI precision."
       },
       "exterior": {
-        "title": "Exterior Design",
-        "description": "Reimagine your home's exterior with world-class facade styling."
+        "title": "外装デザイン",
+        "description": "世界クラスのファサード スタイルであなたの家の外観を再考してください。"
       },
       "garden": {
-        "title": "Garden Design",
-        "description": "Design stunning gardens and outdoor spaces effortlessly."
+        "title": "ガーデンデザイン",
+        "description": "美しい庭園や屋外スペースを簡単にデザインできます。"
       },
       "paint": {
-        "title": "Paint (Wall)",
-        "description": "Refine your walls with bespoke color palettes and designer textures."
+        "title": "ペイント（壁）",
+        "description": "オーダーメイドのカラーパレットとデザイナーのテクスチャで壁を洗練させましょう。"
       },
       "floor": {
-        "title": "Floor Restyle",
-        "description": "Elevate your room's foundation with premium materials and finishes."
+        "title": "床のリスタイル",
+        "description": "プレミアムな素材と仕上げでお部屋の基礎を高めます。"
       },
-      "cta": "Try This"
+      "cta": "これを試してください"
     }
   },
   "paywall": {
@@ -102,1302 +102,1303 @@
       "adFree": "Ultra-HD Quality Renders",
       "unlimitedRenders": "Unlimited Designs, Always"
     },
-    "restore": "Restore",
-    "bestOffer": "Best Offer",
-    "yearlyAccess": "Yearly Access",
-    "weeklyAccess": "Weekly Access",
-    "freeTrial": "3-Days Free Trial",
-    "justPerYear": "Just {{price}} per year",
-    "pricePerYear": "Just {{price}} per year",
-    "pricePerWeek": "{{price}} per week",
-    "perWeek": "per week",
-    "thenWeekly": "Then {{price}}",
-    "thenPricePerWeek": "Then {{price}} per week",
-    "noPaymentNow": "No Payment Now",
-    "cancelAnytime": "Cancel anytime",
-    "trialEnabled": "Free trial enabled",
-    "enableTrial": "Enable free trial",
-    "processing": "Processing...",
-    "tryForFree": "Begin Your Pro Trial",
-    "continue": "Begin Your Pro Trial",
-    "subtitle": "Experience the full power of architectural AI with higher limits and 4K precision.",
-    "terms": "Terms",
-    "privacy": "Privacy",
-    "subscriptionsUnavailable": "Subscriptions are temporarily unavailable.",
-    "restoreFailed": "Restore failed",
-    "restored": "Restored",
-    "noActiveSubscriptions": "No active subscriptions were found.",
-    "purchaseError": "Purchase Error",
-    "planUnavailable": "The selected plan is unavailable right now.",
-    "moroccoPricingUnavailable": "Localized MAD pricing is temporarily unavailable. Please try again in a moment.",
-    "subscriptionConfirmFailed": "We could not confirm your subscription. Please try again.",
-    "purchaseCancelled": "Purchase cancelled.",
-    "closeA11y": "Close paywall",
+    "restore": "復元",
+    "bestOffer": "ベストオファー",
+    "yearlyAccess": "年間アクセス",
+    "weeklyAccess": "週間アクセス",
+    "freeTrial": "3日間の無料トライアル",
+    "justPerYear": "年間わずか {{price}}",
+    "pricePerYear": "年間わずか {{price}}",
+    "pricePerWeek": "週あたり{{price}}",
+    "perWeek": "週あたり",
+    "thenWeekly": "次に、{{price}}",
+    "thenPricePerWeek": "その後、1週間あたり{{price}}",
+    "noPaymentNow": "今は支払いがありません",
+    "cancelAnytime": "いつでもキャンセル可能",
+    "trialEnabled": "無料トライアルが有効になりました",
+    "enableTrial": "無料トライアルを有効にする",
+    "processing": "処理中...",
+    "tryForFree": "プロトライアルを開始する",
+    "continue": "プロトライアルを開始する",
+    "subtitle": "より高い制限と 4K 精度を備えたアーキテクチャ AI のフルパワーを体験してください。",
+    "terms": "規約",
+    "privacy": "プライバシー",
+    "subscriptionsUnavailable": "サブスクリプションは一時的に利用できなくなります。",
+    "restoreFailed": "復元に失敗しました",
+    "restored": "復元されました",
+    "noActiveSubscriptions": "アクティブなサブスクリプションが見つかりませんでした。",
+    "purchaseError": "購入エラー",
+    "planUnavailable": "選択したプランは現在ご利用いただけません。",
+    "moroccoPricingUnavailable": "ローカライズされた MAD 価格は一時的に利用できなくなります。しばらくしてからもう一度お試しください。",
+    "subscriptionConfirmFailed": "あなたのサブスクリプションを確認できませんでした。もう一度試してください。",
+    "purchaseCancelled": "購入はキャンセルされました。",
+    "closeA11y": "ペイウォールを閉じる",
     "title": "Design Like a Pro. No Limits.",
-    "beginTrial": "Begin Your Pro Trial"
+    "beginTrial": "プロトライアルを開始する"
   },
   "creditLimit": {
-    "title": "Upgrade to Professional Access.",
-    "body": "You've reached your standard rendering limit. Unlock high-res exports and faster processing now."
+    "title": "プロフェッショナル アクセスにアップグレードします。",
+    "body": "標準のレンダリング制限に達しました。今すぐ高解像度のエクスポートと高速処理のロックを解除してください。"
   },
   "settings": {
     "title": "設定",
-    "heroTitle": "Free Plan",
+    "heroTitle": "無料プラン",
     "featureItems": {
-      "advancedAi": "Advanced AI Model",
-      "fastProcessing": "Fast Processing",
-      "removeAds": "Remove All Ads"
+      "advancedAi": "高度な AI モデル",
+      "fastProcessing": "高速処理",
+      "removeAds": "すべての広告を削除"
     },
-    "upgradePro": "Upgrade PRO",
+    "upgradePro": "PRO をアップグレードする",
     "rows": {
-      "language": "Language",
-      "feedback": "Feedback",
-      "faq": "FAQ",
-      "rateUs": "Rate Us",
-      "shareWithFriends": "Share with Friends",
-      "termsOfUse": "Terms of Use",
-      "privacyPolicy": "Privacy Policy",
-      "restorePurchase": "Restore Purchase",
-      "userId": "User ID",
-      "deleteInformation": "Delete Information"
+      "language": "言語",
+      "feedback": "フィードバック",
+      "faq": "よくある質問",
+      "rateUs": "評価してください",
+      "shareWithFriends": "友達と共有する",
+      "termsOfUse": "利用規約",
+      "privacyPolicy": "プライバシーポリシー",
+      "restorePurchase": "購入を復元する",
+      "userId": "ユーザーID",
+      "deleteInformation": "情報の削除"
     },
     "states": {
-      "notSignedIn": "Not signed in"
+      "notSignedIn": "サインインしていません"
     },
     "language": {
-      "title": "Language",
-      "description": "Choose whether HomeDecor AI follows your device language or uses a selected in-app language.",
-      "auto": "Auto (System Default)",
-      "autoShort": "Auto",
-      "usingSystem": "Currently following {{language}} from your device"
+      "title": "言語",
+      "description": "HomeDecor AI がデバイスの言語に従うか、選択したアプリ内言語を使用するかを選択します。",
+      "auto": "自動 (システムのデフォルト)",
+      "autoShort": "自動",
+      "usingSystem": "現在、デバイスから {{language}} をフォローしています",
+      "restartNotice": "新しいレイアウト方向を適用しています..."
     },
     "messages": {
-      "destinationUnavailable": "This destination is unavailable right now.",
-      "emailClientUnavailable": "Unable to open your email app.",
-      "reviewUnavailable": "Review requests are unavailable right now.",
-      "shareUnavailable": "Unable to open the share sheet.",
-      "subscriptionsUnavailable": "Subscriptions are unavailable right now.",
-      "noActiveSubscriptions": "No active subscriptions were found.",
-      "restoreFailed": "Restore failed. Please try again.",
-      "noUserId": "No authenticated user ID is available.",
-      "userIdCopied": "User ID copied",
-      "deleteFailed": "Unable to delete your account right now."
+      "destinationUnavailable": "この宛先は現在利用できません。",
+      "emailClientUnavailable": "メールアプリを開けません。",
+      "reviewUnavailable": "現在レビューリクエストは受け付けておりません。",
+      "shareUnavailable": "共有シートを開けません。",
+      "subscriptionsUnavailable": "現在、サブスクリプションはご利用いただけません。",
+      "noActiveSubscriptions": "アクティブなサブスクリプションが見つかりませんでした。",
+      "restoreFailed": "復元に失敗しました。もう一度試してください。",
+      "noUserId": "認証されたユーザー ID がありません。",
+      "userIdCopied": "ユーザーIDをコピーしました",
+      "deleteFailed": "現在アカウントを削除できません。"
     },
-    "shareMessage": "Explore designs created with HomeDecor AI: {{url}}",
+    "shareMessage": "HomeDecor AI: {{url}} で作成されたデザインを探索する",
     "deleteAccount": {
-      "title": "Delete account?",
-      "body": "This will permanently delete your account and all associated data. This action cannot be undone."
+      "title": "アカウントを削除しますか?",
+      "body": "これにより、アカウントとすべての関連データが完全に削除されます。この操作は元に戻すことができません。"
     }
   },
   "profile": {
-    "title": "My Design Portfolio",
-    "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
+    "title": "マイデザインポートフォリオ",
+    "emptyTitle": "あなたのポートフォリオは空です。プロジェクトを開始して、あなたのビジョンが実現するのを確認してください。",
     "emptySubtitle": "",
-    "compareHint": "Drag to compare. Double-tap to reset.",
-    "deleteFromBoardTitle": "Remove from portfolio?",
-    "deleteFromBoardBody": "This design will be removed from your portfolio.",
-    "deletedFromBoard": "Removed from portfolio",
-    "unableDelete": "Unable to remove this design.",
-    "generationFailedBody": "This render did not complete successfully. Please try again.",
-    "saveToGallery": "Save to Photo Library",
-    "savedToGallery": "Saved to Photo Library",
-    "unableSave": "Unable to save this design."
+    "compareHint": "ドラッグして比較します。ダブルタップしてリセットします。",
+    "deleteFromBoardTitle": "ポートフォリオから削除しますか?",
+    "deleteFromBoardBody": "このデザインはポートフォリオから削除されます。",
+    "deletedFromBoard": "ポートフォリオから削除されました",
+    "unableDelete": "このデザインは削除できません。",
+    "generationFailedBody": "このレンダリングは正常に完了しませんでした。もう一度試してください。",
+    "saveToGallery": "フォトライブラリに保存",
+    "savedToGallery": "フォトライブラリに保存されました",
+    "unableSave": "このデザインを保存できません。"
   },
   "discover": {
     "title": "発見",
-    "subtitle": "Curated interiors, architecture, and landscape references organized into fast-scrolling collections.",
+    "subtitle": "厳選されたインテリア、建築、風景の参考資料が高速スクロール コレクションにまとめられています。",
     "tabs": {
       "home": "Interior",
       "garden": "Garden",
       "exterior": "Exterior "
     },
-    "tryThisStyle": "Try This Style"
+    "tryThisStyle": "このスタイルを試してください"
   },
   "auth": {
     "accountEyebrow": "HomeDecor AI アカウント",
-    "emailPlaceholder": "you@company.com",
+    "emailPlaceholder": "__トークン_0__",
     "signIn": {
       "title": "サインイン",
-      "subtitle": "Access your saved designs, credits, purchases, and project history in one refined workspace.",
-      "passwordPlaceholder": "Enter your password",
+      "subtitle": "保存したデザイン、クレジット、購入、プロジェクト履歴に 1 つの洗練されたワークスペースでアクセスします。",
+      "passwordPlaceholder": "パスワードを入力してください",
       "cta": "続ける",
       "loading": "サインイン中...",
       "appleCta": "Appleで続ける",
-      "additionalVerificationTitle": "Sign in",
-      "additionalVerificationBody": "Additional verification is required for this account.",
-      "errorTitle": "Sign-in failed",
-      "errorFallback": "Unable to sign you in.",
-      "appleErrorFallback": "Apple sign-in failed.",
-      "noAccount": "No account?",
-      "createOne": "Create one"
+      "additionalVerificationTitle": "サインイン",
+      "additionalVerificationBody": "このアカウントには追加の検証が必要です。",
+      "errorTitle": "サインインに失敗しました",
+      "errorFallback": "サインインできません。",
+      "appleErrorFallback": "Apple サインインに失敗しました。",
+      "noAccount": "アカウントがありませんか?",
+      "createOne": "作成する"
     },
     "signUp": {
       "title": "アカウント作成",
-      "subtitle": "Create your account to carry your designs, subscriptions, and saved projects across devices.",
-      "passwordPlaceholder": "Create a secure password",
+      "subtitle": "アカウントを作成して、デザイン、サブスクリプション、保存したプロジェクトをデバイス間で持ち運ぶことができます。",
+      "passwordPlaceholder": "安全なパスワードを作成する",
       "cta": "アカウント作成",
       "loading": "作成中...",
       "appleCta": "Appleで続ける",
-      "verifyTitle": "Verify email",
-      "verifyBody": "Check your inbox for the verification code, then sign in.",
-      "errorTitle": "Sign-up failed",
-      "errorFallback": "Unable to create your account.",
-      "appleErrorFallback": "Apple sign-up failed.",
-      "haveAccount": "Already have an account?",
-      "signInLink": "Sign in"
+      "verifyTitle": "メールの確認",
+      "verifyBody": "受信トレイで確認コードを確認し、サインインします。",
+      "errorTitle": "サインアップに失敗しました",
+      "errorFallback": "アカウントを作成できません。",
+      "appleErrorFallback": "Apple のサインアップに失敗しました。",
+      "haveAccount": "すでにアカウントをお持ちですか?",
+      "signInLink": "サインイン"
     }
   },
   "faq": {
     "eyebrow": "サポート",
-    "title": "FAQ",
-    "description": "Clear answers to the most common HomeDecor AI questions.",
+    "title": "よくある質問",
+    "description": "最も一般的な HomeDecor AI の質問に対する明確な回答。",
     "items": {
       "credits": {
-        "question": "How do credits work in HomeDecor AI?",
-        "answer": "Each render uses credits based on the workflow and output tier you choose. Your remaining balance updates automatically after every generation."
+        "question": "HomeDecor AI ではクレジットはどのように機能しますか?",
+        "answer": "各レンダリングでは、選択したワークフローと出力層に基づいてクレジットが使用されます。残高は世代ごとに自動的に更新されます。"
       },
       "pro": {
-        "question": "What do I unlock with PRO?",
-        "answer": "PRO unlocks premium rendering tools, faster processing, and higher-end output quality through the in-app upgrade flow."
+        "question": "PRO で何をロック解除できますか?",
+        "answer": "PRO は、アプリ内アップグレード フローを通じて、プレミアム レンダリング ツール、高速処理、ハイエンドの出力品質を実現します。"
       },
       "slowResult": {
-        "question": "Why is my result taking longer than expected?",
-        "answer": "Render times depend on queue demand, source image quality, and the workflow you selected. Keeping the app open on a stable connection helps avoid interruptions."
+        "question": "結果が予想よりも時間がかかるのはなぜですか?",
+        "answer": "レンダリング時間は、キューの需要、ソース画像の品質、選択したワークフローによって異なります。安定した接続でアプリを開いたままにしておくと、中断を避けることができます。"
       },
       "deleteAccount": {
-        "question": "How do I delete my account?",
-        "answer": "Open Settings and choose Delete Information. This permanently removes your account data and signs you out after confirmation."
+        "question": "アカウントを削除するにはどうすればよいですか?",
+        "answer": "[設定] を開き、[情報の削除] を選択します。これにより、アカウント データが永久に削除され、確認後にサインアウトされます。"
       }
     }
   },
   "privacy": {
     "eyebrow": "ポリシー",
     "title": "プライバシーポリシー",
-    "description": "The information we collect, how it is used, and the controls you have inside HomeDecor AI.",
+    "description": "当社が収集する情報、その使用方法、HomeDecor AI 内での制御。",
     "date": "2026年3月14日",
     "sections": {
       "overview": {
-        "title": "Overview",
-        "body": "HomeDecor AI (\"HomeDecor\", \"we\", \"our\", \"us\") provides AI-powered interior and exterior redesign services. This Privacy Policy explains what data we collect, how we use it, and the choices you have."
+        "title": "概要",
+        "body": "HomeDecor AI (「HomeDecor」、「当社」、「当社」、「当社」) は、AI を活用した内装および外装の再設計サービスを提供します。このプライバシー ポリシーでは、当社が収集するデータ、その使用方法、およびお客様の選択肢について説明します。"
       },
       "informationWeCollect": {
-        "title": "Information We Collect",
-        "body": "We collect information you provide, such as account details and uploaded images, usage data such as feature interactions and device information, and payment status data from RevenueCat to manage subscriptions."
+        "title": "当社が収集する情報",
+        "body": "当社は、サブスクリプションを管理するために、アカウントの詳細やアップロードされた画像などのお客様が提供する情報、機能の操作やデバイス情報などの使用データ、RevenueCat からの支払いステータス データを収集します。"
       },
       "howWeUseYourData": {
-        "title": "How We Use Your Data",
-        "body": "We use your data to deliver redesigns, personalize your experience, manage credits and billing, improve model quality, and secure the app. We do not sell your personal data."
+        "title": "データの使用方法",
+        "body": "当社はお客様のデータを使用して、再設計の提供、エクスペリエンスのパーソナライズ、クレジットと請求の管理、モデルの品質の向上、アプリの保護を行います。当社はあなたの個人データを販売しません。"
       },
       "imageProcessing": {
-        "title": "Image Processing",
-        "body": "Images you upload are processed to generate redesigns. We store generated images and related metadata so you can revisit your results, and you can remove your data by deleting your account."
+        "title": "画像処理",
+        "body": "アップロードした画像は処理されて再デザインが生成されます。生成された画像と関連メタデータは保存されるため、結果を再確認したり、アカウントを削除してデータを削除したりできます。"
       },
       "sharingAndDisclosure": {
-        "title": "Sharing and Disclosure",
-        "body": "We share data only with providers required to operate HomeDecor AI, such as authentication, analytics, and payment processing partners, or when disclosure is required by law."
+        "title": "共有と開示",
+        "body": "当社は、認証、分析、支払い処理パートナーなど、HomeDecor AI の運用に必要なプロバイダーとのみ、または法律で開示が要求されている場合にのみデータを共有します。"
       },
       "dataSecurity": {
-        "title": "Data Security",
-        "body": "We use encryption and access controls to protect your data. No system is perfectly secure, so we also recommend strong passwords and a protected device."
+        "title": "データセキュリティ",
+        "body": "当社では暗号化とアクセス制御を使用してデータを保護します。完全に安全なシステムは存在しないため、強力なパスワードと保護されたデバイスを使用することもお勧めします。"
       },
       "yourRights": {
-        "title": "Your Rights",
-        "body": "You can access, update, or delete your account data at any time. Account deletion removes your stored generations and profile information from our systems."
+        "title": "あなたの権利",
+        "body": "いつでもアカウント データにアクセス、更新、削除できます。アカウントを削除すると、保存されている世代とプロフィール情報が当社のシステムから削除されます。"
       },
       "contactUs": {
-        "title": "Contact Us",
-        "body": "For privacy questions or requests, contact us at support@homedecor.ai."
+        "title": "お問い合わせ",
+        "body": "プライバシーに関する質問やリクエストについては、support@homedecor.ai までお問い合わせください。"
       }
     }
   },
   "terms": {
     "eyebrow": "ポリシー",
     "title": "利用規約",
-    "description": "The rules, expectations, and service boundaries for using HomeDecor AI.",
+    "description": "HomeDecor AI を使用するためのルール、期待事項、およびサービス境界。",
     "date": "2026年3月14日",
     "sections": {
       "acceptanceOfTerms": {
-        "title": "Acceptance of Terms",
-        "body": "By accessing or using HomeDecor AI, you agree to these Terms of Service. If you do not agree, do not use the app."
+        "title": "規約への同意",
+        "body": "HomeDecor AI にアクセスまたは使用すると、これらの利用規約に同意したことになります。同意できない場合は、アプリを使用しないでください。"
       },
       "serviceDescription": {
-        "title": "Service Description",
-        "body": "HomeDecor AI provides AI-generated redesigns for interior and exterior spaces. Outputs are visual concepts and may not account for structural, engineering, or code constraints."
+        "title": "サービスの説明",
+        "body": "HomeDecor AI は、AI によって生成された内部および外部スペースの再設計を提供します。出力は視覚的な概念であり、構造、エンジニアリング、またはコードの制約を考慮していない場合があります。"
       },
       "accountAndEligibility": {
-        "title": "Account and Eligibility",
-        "body": "You must be at least 13 years old to use HomeDecor AI. You are responsible for maintaining account security and for activity that happens under your credentials."
+        "title": "アカウントと資格",
+        "body": "HomeDecor AI を使用するには、13 歳以上である必要があります。あなたは、アカウントのセキュリティを維持し、自分の資格情報に基づいて行われるアクティビティに対して責任を負います。"
       },
       "userContent": {
-        "title": "User Content",
-        "body": "You retain ownership of images you upload. By using the service, you grant HomeDecor AI a limited license to process and store them so we can generate and return your results."
+        "title": "ユーザーコンテンツ",
+        "body": "アップロードした画像の所有権はお客様が保持します。このサービスを使用すると、HomeDecor AI に結果を生成して返すことができるように、データを処理および保存する限定的なライセンスが付与されます。"
       },
       "subscriptionsAndCredits": {
-        "title": "Subscriptions and Credits",
-        "body": "Paid plans unlock enhanced features and higher-quality exports. Credits are consumed per generation, and subscription billing and renewals are handled by your app store and RevenueCat."
+        "title": "サブスクリプションとクレジット",
+        "body": "有料プランでは、拡張機能と高品質のエクスポートを利用できるようになります。クレジットは世代ごとに消費され、サブスクリプションの請求と更新はアプリ ストアと RevenueCat によって処理されます。"
       },
       "prohibitedUse": {
-        "title": "Prohibited Use",
-        "body": "You agree not to misuse the service, reverse engineer the app, or upload unlawful, harmful, or infringing content."
+        "title": "使用禁止",
+        "body": "お客様は、サービスの悪用、アプリのリバース エンジニアリング、違法、有害、または侵害的なコンテンツのアップロードを行わないことに同意するものとします。"
       },
       "disclaimer": {
-        "title": "Disclaimer",
-        "body": "The service is provided \"as is\" without warranties of any kind. We do not guarantee specific design results or the accuracy of AI-generated outputs."
+        "title": "免責事項",
+        "body": "サービスは「現状のまま」提供され、いかなる種類の保証もありません。当社は、特定の設計結果や AI で生成された出力の精度を保証しません。"
       },
       "limitationOfLiability": {
-        "title": "Limitation of Liability",
-        "body": "To the maximum extent permitted by law, HomeDecor AI is not liable for indirect or consequential damages arising from your use of the service."
+        "title": "責任の制限",
+        "body": "法律で認められる最大限の範囲で、HomeDecor AI は、サービスの使用から生じる間接的または結果的な損害に対して責任を負いません。"
       },
       "contact": {
-        "title": "Contact",
-        "body": "Questions about these terms can be sent to support@homedecor.ai."
+        "title": "お問い合わせ",
+        "body": "これらの規約に関する質問は、support@homedecor.ai に送信できます。"
       }
     }
   },
   "processing": {
-    "title": "AI is crafting your architectural masterpiece...",
-    "eta": "Your vision will be ready in ~15 seconds.",
-    "cancelKeepCredit": "Cancel and keep my credit",
+    "title": "AI はあなたの建築の傑作を作り上げています...",
+    "eta": "あなたのビジョンは ~15 秒以内に完成します。",
+    "cancelKeepCredit": "キャンセルしてクレジットを保持してください",
     "status": {
-      "analyzingGeometry": "Analyzing architectural geometry...",
-      "identifyingSurfaces": "Identifying surfaces and structural lines...",
-      "applyingStyle": "Applying your selected design direction...",
-      "renderingMaterials": "Rendering materials and lighting...",
-      "addingDetails": "Refining the final details...",
-      "almostReady": "Finalizing your render...",
-      "renderingFinalLighting": "Composing the final lighting pass..."
+      "analyzingGeometry": "建築幾何学を分析しています...",
+      "identifyingSurfaces": "サーフェスと構造線を識別しています...",
+      "applyingStyle": "選択したデザインの方向性を適用しています...",
+      "renderingMaterials": "レンダリングマテリアルとライティング...",
+      "addingDetails": "最終的な詳細を調整中...",
+      "almostReady": "レンダリングを完成させています...",
+      "renderingFinalLighting": "最終的なライティング パスを構成しています..."
     }
   },
   "wizard": {
     "headers": {
-      "back": "Go back",
-      "close": "Close",
-      "previousStep": "Go to the previous step",
-      "stepProgress": "Step {{current}}/{{total}}",
-      "creditsRemaining": "Credits remaining"
+      "back": "戻る",
+      "close": "閉じる",
+      "previousStep": "前のステップに戻る",
+      "stepProgress": "ステップ {{current}}/{{total}}",
+      "creditsRemaining": "残りのクレジット"
     },
     "stepOne": {
-      "title": "Upload Your Vision",
-      "emptyTitle": "Upload Your Vision",
-      "emptySubtitle": "Redesign and Beautify your home.",
-      "removePhoto": "Remove selected photo",
+      "title": "ビジョンをアップロードする",
+      "emptyTitle": "ビジョンをアップロードする",
+      "emptySubtitle": "あなたの家を再設計して美しくしましょう。",
+      "removePhoto": "選択した写真を削除する",
       "cta": "Begin Your Transformation"
     },
     "interior": {
       "stepTwoTitle": "Choose Your Space",
-      "stepTwoSubtitle": "Select the room type so the redesign stays architecturally grounded.",
+      "stepTwoSubtitle": "再設計が建築上の根拠を保つように部屋のタイプを選択してください。",
       "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepThreeSubtitle": "デザインのビジョンを形作るために署名スタイルを選択してください。",
       "stepFourMode": "Design Mode",
-      "stepFourPalette": "Color Harmony"
+      "stepFourPalette": "カラーハーモニー"
     },
     "exterior": {
       "stepTwoTitle": "Select Building Type",
-      "stepTwoSubtitle": "Select the architectural form you want to redesign.",
+      "stepTwoSubtitle": "再設計したい建築形式を選択します。",
       "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
-      "stepFourTitle": "Color Harmony"
+      "stepThreeSubtitle": "デザインのビジョンを形作るために署名スタイルを選択してください。",
+      "stepFourTitle": "カラーハーモニー"
     },
     "garden": {
-      "stepOneEmptyTitle": "Upload Your Vision",
-      "stepOneEmptySubtitle": "Redesign and Beautify your home.",
+      "stepOneEmptyTitle": "ビジョンをアップロードする",
+      "stepOneEmptySubtitle": "あなたの家を再設計して美しくしましょう。",
       "stepTwoTitle": "Curate Your Aesthetic",
-      "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
-      "stepThreeTitle": "Color Harmony"
+      "stepTwoSubtitle": "デザインのビジョンを形作るために署名スタイルを選択してください。",
+      "stepThreeTitle": "カラーハーモニー"
     },
     "floorIntro": {
-      "hero": "Select a flooring style to redefine your room's foundation."
+      "hero": "床のスタイルを選択して、部屋の基礎を再定義します。"
     },
     "paintIntro": {
-      "hero": "Trace any surface to apply custom colors and designer textures instantly."
+      "hero": "任意の表面をトレースして、カスタム カラーとデザイナー テクスチャを瞬時に適用します。"
     },
     "floorFlow": {
-      "title": "Floor Restyle",
-      "masking": "Mapping your floor plane...",
-      "promptLabel": "Describe Your Vision",
+      "title": "床のリスタイル",
+      "masking": "フロアプレーンをマッピングしています...",
+      "promptLabel": "あなたのビジョンを説明してください",
       "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials.",
-      "promptExamplesTitle": "Prompt examples",
-      "generateCta": "Generate My Design",
-      "selectMaterialCta": "Select a Material",
-      "selectMaterialTitle": "Select Material",
-      "selectMaterialBody": "Select a premium material curated to read as photoreal, perspective-aware, and listing-ready.",
-      "selectedMaterial": "Selected Material",
-      "noMaterialSelected": "No material selected",
-      "unlockMaterialBody": "Select a flooring material to unlock the AI restyle.",
-      "addPromptTitle": "Add a prompt",
-      "addPromptBody": "Describe the exact floor transformation you want before continuing.",
-      "generatePromptBody": "Choose a custom floor prompt before generating.",
-      "autoMaskPreparing": "Preparing the automatic floor mask. Please wait a moment.",
-      "autoMaskSuccess": "Floor mask ready.",
-      "autoMaskFailure": "Automatic detection could not complete. Please brush the floor manually.",
-      "savePermissionTitle": "Photo access needed",
-      "savePermissionBody": "Allow photo library access to save your render to the device.",
-      "cameraAccessTitle": "Camera access needed",
-      "cameraAccessBody": "Enable camera access to capture a floor photo.",
-      "photoAccessTitle": "Photo access needed",
-      "photoAccessBody": "Enable photo library access to upload a floor photo.",
-      "mediaUnavailableTitle": "Unable to open media",
-      "exampleUnavailableBody": "This example photo could not be opened.",
-      "markFloorTitle": "Mark the floor first",
-      "markFloorBody": "Brush over the floor area you want to restyle before continuing.",
-      "pickMaterialTitle": "Pick a material",
-      "pickMaterialBody": "Choose a flooring material before continuing.",
-      "renderFinishing": "This render is already finishing up.",
-      "cancelSuccess": "Generation canceled. Your credit was kept.",
-      "cancelUnavailable": "Unable to cancel right now.",
-      "supportingText": "Uses 1 credit · {{creditsRemaining}}",
-      "creditsRemaining": "{{count}} remaining",
+      "promptExamplesTitle": "プロンプトの例",
+      "generateCta": "マイデザインの生成",
+      "selectMaterialCta": "素材を選択してください",
+      "selectMaterialTitle": "素材の選択",
+      "selectMaterialBody": "写真のようにリアルで遠近感を意識した、すぐにリストに掲載できるように厳選されたプレミアム素材を選択してください。",
+      "selectedMaterial": "選択された素材",
+      "noMaterialSelected": "素材が選択されていません",
+      "unlockMaterialBody": "AI のリスタイルのロックを解除するには、床材を選択してください。",
+      "addPromptTitle": "プロンプトを追加する",
+      "addPromptBody": "続行する前に、必要な床の変形を正確に説明してください。",
+      "generatePromptBody": "生成する前にカスタムフロアプロンプトを選択してください。",
+      "autoMaskPreparing": "自動フロアマスクの準備。しばらくお待ちください。",
+      "autoMaskSuccess": "フロアマスクの準備完了。",
+      "autoMaskFailure": "自動検出を完了できませんでした。床は手動でブラッシングしてください。",
+      "savePermissionTitle": "写真へのアクセスが必要です",
+      "savePermissionBody": "レンダリングをデバイスに保存するためのフォト ライブラリへのアクセスを許可します。",
+      "cameraAccessTitle": "カメラへのアクセスが必要です",
+      "cameraAccessBody": "カメラアクセスを有効にしてフロア写真を撮影します。",
+      "photoAccessTitle": "写真へのアクセスが必要です",
+      "photoAccessBody": "フロアの写真をアップロードするには、フォト ライブラリへのアクセスを有効にします。",
+      "mediaUnavailableTitle": "メディアを開けません",
+      "exampleUnavailableBody": "このサンプル写真は開けませんでした。",
+      "markFloorTitle": "まず床に印を付けます",
+      "markFloorBody": "続行する前に、スタイルを変更したい床領域をブラシで塗ります。",
+      "pickMaterialTitle": "素材を選ぶ",
+      "pickMaterialBody": "続行する前に、床材を選択してください。",
+      "renderFinishing": "このレンダリングはすでに終了しています。",
+      "cancelSuccess": "生成がキャンセルされました。あなたの信用は保たれました。",
+      "cancelUnavailable": "現在キャンセルできません。",
+      "supportingText": "1 クレジットを使用 · {{creditsRemaining}}",
+      "creditsRemaining": "残り{{count}}",
       "promptExamples": {
-        "frenchOak": "Luxurious wide-plank French Oak in a warm natural finish.",
-        "carraraMarble": "Polished Italian Carrara Marble with deep gray veining.",
-        "microcement": "Contemporary seamless Micro-cement for an industrial chic foundation.",
-        "herringboneWalnut": "Elegant Dark Walnut in a classic Herringbone pattern.",
-        "walnut": "Modern large-format Slate Stone tiles in charcoal gray."
+        "frenchOak": "温かみのあるナチュラル仕上げの豪華な幅広のフレンチオーク材。",
+        "carraraMarble": "深い灰色の縞模様が入った、磨かれたイタリアのカラーラ大理石。",
+        "microcement": "インダストリアルシックな基礎のための現代的なシームレスなマイクロセメント。",
+        "herringboneWalnut": "クラシックなヘリンボーン柄のエレガントなダークウォルナット。",
+        "walnut": "チャコール グレーのモダンな大判スレート ストーン タイル。"
       },
       "result": {
-        "heading": "Behold your new interior",
-        "subheading": "A material-led floor transformation designed to stay true to the room's perspective, furnishings, and natural light.",
-        "before": "Before",
-        "after": "After",
-        "materialApplied": "Material Applied",
-        "materialFallback": "Material",
-        "summary": "Your floor has been restyled while preserving room geometry, furniture alignment, and natural light behavior.",
-        "saveToGallery": "Save to Gallery",
-        "share": "Share",
-        "tryAgain": "Try Again"
+        "heading": "あなたの新しいインテリアをご覧ください",
+        "subheading": "部屋の視点、家具、自然光に忠実になるように設計された、素材主導の床の変革。",
+        "before": "以前",
+        "after": "後",
+        "materialApplied": "適用された材料",
+        "materialFallback": "材質",
+        "summary": "部屋の形状、家具の配置、自然光の動作を維持しながら、床のスタイルが変更されました。",
+        "saveToGallery": "ギャラリーに保存",
+        "share": "シェアする",
+        "tryAgain": "もう一度試してください"
       },
       "materials": {
         "natural-oak": {
-          "title": "Natural Oak",
-          "description": "Airy oak planks with soft natural grain."
+          "title": "ナチュラルオーク",
+          "description": "柔らかい天然の木目を持つ風通しの良いオーク板。"
         },
         "walnut-wood": {
-          "title": "Walnut Wood",
-          "description": "Deep walnut planks with rich tailored contrast."
+          "title": "ウォールナット材",
+          "description": "仕立てられた豊かなコントラストを備えた深みのあるウォールナット板。"
         },
         "carrara-marble": {
-          "title": "Carrara Marble",
-          "description": "Bright stone veining with a calm luxe finish."
+          "title": "カララ大理石",
+          "description": "明るい石脈が落ち着いた高級感のある仕上がりです。"
         },
         "polished-concrete": {
-          "title": "Polished Concrete",
-          "description": "Smooth concrete sheen with urban gallery calm."
+          "title": "磨かれたコンクリート",
+          "description": "滑らかなコンクリートの光沢と都会的なギャラリーの落ち着き。"
         },
         "herringbone-oak": {
-          "title": "Herringbone Oak",
-          "description": "Classic oak pattern with warm directional movement."
+          "title": "ヘリンボーンオーク",
+          "description": "温かみのある方向性のある動きを備えたクラシックなオークパターン。"
         },
         "terracotta-tile": {
-          "title": "Terracotta Tile",
-          "description": "Earthy clay warmth with handcrafted character."
+          "title": "テラコッタタイル",
+          "description": "手作りの個性を備えた素朴な粘土の温かさ。"
         },
         "slate-tile": {
-          "title": "Slate Tile",
-          "description": "Dark slate with a crisp large-format finish."
+          "title": "スレートタイル",
+          "description": "くっきりとした大判仕上げのダークスレート。"
         },
         "plush-carpet": {
-          "title": "Plush Carpet",
-          "description": "Soft cream carpet with a quiet, cozy feel."
+          "title": "プラッシュカーペット",
+          "description": "静かで心地よい感触のソフトクリームカーペット。"
         },
         "weathered-oak": {
-          "title": "Weathered Oak",
-          "description": "Mid-tone oak with a gently aged finish."
+          "title": "風化したオーク",
+          "description": "穏やかに熟成させたミッドトーンのオーク材。"
         }
       }
     },
     "paintFlow": {
-      "title": "Paint",
-      "selectionTitle": "Select Surfaces to Transform",
-      "maskTitle": "Select Surfaces to Transform",
-      "colorLabel": "Color",
-      "surfaceLabel": "Surface",
-      "choose": "Choose",
-      "apply": "Apply",
-      "colorPickerTitle": "Choose a color for your wall",
-      "surfacePickerTitle": "Select Surface Type",
-      "detectTitle": "Detecting paintable surfaces...",
-      "detectBody": "HomeDecor AI is tracing repaintable wall surfaces while leaving windows, furniture, trim, and flooring untouched.",
-      "preparingMaskTitle": "Preparing your masking surface...",
-      "preparingMaskBody": "HomeDecor AI is refining the canvas so you can paint crisp edges around built-ins, windows, and furniture.",
-      "brushWidth": "Brush Width",
-      "eraserWidth": "Eraser Width",
-      "generateCta": "Paint My Walls →",
-      "finishTitle": "Finish Type",
-      "finishBody": "Choose how the paint should catch light so the walls read correctly in a polished, designer-grade render.",
-      "selectedColor": "Selected Color",
-      "selectedSurfaceSentence": "Surface: {{surface}}.",
-      "colorLockedBody": "Wall color is locked. Now choose the final sheen profile for the render.",
-      "customColorDescription": "Custom wall tone selected from the precision color picker.",
-      "noColorSelected": "No color selected",
-      "chooseColorBody": "Choose a wall color before continuing.",
-      "savePermissionTitle": "Photo access needed",
-      "savePermissionBody": "Allow photo library access to save your render to the device.",
-      "cameraAccessTitle": "Camera access needed",
-      "cameraAccessBody": "Enable camera access to capture a room photo.",
-      "photoAccessTitle": "Photo access needed",
-      "photoAccessBody": "Enable photo library access to upload a room photo.",
-      "mediaUnavailableTitle": "Unable to open media",
-      "exampleUnavailableBody": "This example photo could not be opened.",
-      "markWallsTitle": "Mark the walls first",
-      "markWallsBody": "Brush over the wall surfaces you want to repaint before generating.",
-      "pickColorTitle": "Pick a color",
-      "pickColorBody": "Choose a wall color before continuing.",
-      "autoDetectSuccess": "Walls detected. Brush to refine if needed.",
-      "autoDetectFailure": "Automatic detection could not complete. Please brush manually.",
-      "renderFinishing": "This render is already finishing up.",
-      "cancelSuccess": "Generation canceled. Your credit was kept.",
-      "cancelUnavailable": "Unable to cancel right now.",
-      "supportingText": "Uses 1 credit · {{creditsRemaining}}",
-      "creditsRemaining": "{{count}} remaining",
-      "intakeTitle": "Upload Your Vision",
-      "intakeBody": "Upload a room photo for precise wall recoloring.",
-      "intakeReadyTitle": "Photo added. Mark the wall area next.",
-      "intakeReadyBody": "Your photo is locked in. Next, brush the wall surfaces so the recolor stays precise around trim, furniture, and decor.",
+      "title": "ペイント",
+      "selectionTitle": "変換するサーフェスを選択してください",
+      "maskTitle": "変換するサーフェスを選択してください",
+      "colorLabel": "色",
+      "surfaceLabel": "表面",
+      "choose": "選択してください",
+      "apply": "申し込む",
+      "colorPickerTitle": "壁の色をお選びください",
+      "surfacePickerTitle": "サーフェスタイプの選択",
+      "detectTitle": "ペイント可能な表面を検出しています...",
+      "detectBody": "HomeDecor AI は、窓、家具、トリム、床はそのままにして、再塗装可能な壁面をトレースしています。",
+      "preparingMaskTitle": "マスキング面を準備しています...",
+      "preparingMaskBody": "HomeDecor AI は、建物、窓、家具の周りのエッジを鮮明にペイントできるようにキャンバスを改良しています。",
+      "brushWidth": "ブラシ幅",
+      "eraserWidth": "消しゴムの幅",
+      "generateCta": "私の壁をペイント →",
+      "finishTitle": "仕上げタイプ",
+      "finishBody": "洗練されたデザイナー グレードのレンダリングで壁が正しく読み取れるように、ペイントが光を捉える方法を選択します。",
+      "selectedColor": "選択した色",
+      "selectedSurfaceSentence": "表面: {{surface}}。",
+      "colorLockedBody": "壁の色はロックされています。次に、レンダリング用の最終的な光沢プロファイルを選択します。",
+      "customColorDescription": "高精度のカラーピッカーから選択されたカスタムの壁のトーン。",
+      "noColorSelected": "色が選択されていません",
+      "chooseColorBody": "続行する前に壁の色を選択してください。",
+      "savePermissionTitle": "写真へのアクセスが必要です",
+      "savePermissionBody": "レンダリングをデバイスに保存するためのフォト ライブラリへのアクセスを許可します。",
+      "cameraAccessTitle": "カメラへのアクセスが必要です",
+      "cameraAccessBody": "カメラアクセスを有効にして部屋の写真を撮影します。",
+      "photoAccessTitle": "写真へのアクセスが必要です",
+      "photoAccessBody": "部屋の写真をアップロードするには、フォト ライブラリへのアクセスを有効にします。",
+      "mediaUnavailableTitle": "メディアを開けません",
+      "exampleUnavailableBody": "このサンプル写真は開けませんでした。",
+      "markWallsTitle": "まず壁に印を付けます",
+      "markWallsBody": "生成する前に、再ペイントする壁面をブラシで塗ります。",
+      "pickColorTitle": "色を選択してください",
+      "pickColorBody": "続行する前に壁の色を選択してください。",
+      "autoDetectSuccess": "壁が検出されました。必要に応じてブラシをかけて磨きます。",
+      "autoDetectFailure": "自動検出を完了できませんでした。手動でブラッシングしてください。",
+      "renderFinishing": "このレンダリングはすでに終了しています。",
+      "cancelSuccess": "生成がキャンセルされました。あなたの信用は保たれました。",
+      "cancelUnavailable": "現在キャンセルできません。",
+      "supportingText": "1 クレジットを使用 · {{creditsRemaining}}",
+      "creditsRemaining": "残り{{count}}",
+      "intakeTitle": "ビジョンをアップロードする",
+      "intakeBody": "部屋の写真をアップロードして、壁の色を正確に変更します。",
+      "intakeReadyTitle": "写真を追加しました。次に壁の領域にマークを付けます。",
+      "intakeReadyBody": "写真はロックされています。次に、トリム、家具、装飾の色が正確に保たれるように、壁面をブラシで磨きます。",
       "surfaces": {
-        "auto": "Auto",
-        "brick": "Brick",
-        "cabinet": "Cabinet",
-        "door": "Door",
-        "wall": "Wall",
-        "outsideWall": "Outside Wall"
+        "auto": "自動",
+        "brick": "レンガ",
+        "cabinet": "キャビネット",
+        "door": "ドア",
+        "wall": "壁",
+        "outsideWall": "外壁"
       },
       "colorFamilies": {
-        "pink": "Pink",
-        "blue": "Blue",
-        "green": "Green",
-        "yellow": "Yellow",
-        "gray": "Gray",
-        "red": "Red"
+        "pink": "ピンク",
+        "blue": "ブルー",
+        "green": "緑",
+        "yellow": "黄色",
+        "gray": "グレー",
+        "red": "赤"
       },
       "colors": {
         "sage-green": {
-          "title": "Sage Green",
-          "description": "Soft green calm for bright, polished living spaces."
+          "title": "セージグリーン",
+          "description": "落ち着いた柔らかなグリーンで、明るく洗練された住空間を演出します。"
         },
         "midnight-navy": {
-          "title": "Midnight Navy",
-          "description": "Tailored navy depth with crisp architectural contrast."
+          "title": "ミッドナイトネイビー",
+          "description": "鮮やかな構築的なコントラストを備えた、テーラードなネイビーの深さ。"
         },
         "terracotta-glow": {
-          "title": "Terracotta Glow",
-          "description": "Warm clay color with grounded, editorial energy."
+          "title": "テラコッタ グロー",
+          "description": "温かみのある粘土色で、地に足の着いた編集的なエネルギーを持っています。"
         },
         "dusty-rose": {
-          "title": "Dusty Rose",
-          "description": "Muted blush warmth with soft boutique appeal."
+          "title": "ダスティ・ローズ",
+          "description": "柔らかなブティックの魅力を備えた、落ち着いた赤面の暖かさ。"
         },
         "gallery-charcoal": {
-          "title": "Gallery Charcoal",
-          "description": "Refined charcoal for moody, art-forward rooms."
+          "title": "ギャラリーチャコール",
+          "description": "洗練された木炭でムーディーでアートな雰囲気のお部屋に。"
         },
         "soft-ivory": {
-          "title": "Soft Ivory",
-          "description": "Luminous neutral that keeps rooms light, never flat."
+          "title": "ソフトアイボリー",
+          "description": "明るいニュートラルで部屋を明るく保ち、決して平坦ではありません。"
         },
         "olive-grove": {
-          "title": "Olive Grove",
-          "description": "Earthy olive depth with a grounded designer mood."
+          "title": "オリーブ グローブ",
+          "description": "大地に根ざしたデザイナーのムードを備えた素朴なオリーブの深み。"
         },
         "lavender-mist": {
-          "title": "Lavender Mist",
-          "description": "Soft violet haze for elevated pastel rooms."
+          "title": "ラベンダーミスト",
+          "description": "パステル調の部屋にぴったりの柔らかなバイオレットヘイズ。"
         },
         "pearl-gray": {
-          "title": "Pearl Gray",
-          "description": "Light tonal gray with polished everyday flexibility."
+          "title": "パールグレー",
+          "description": "洗練された日常の柔軟性を備えたライトトーングレー。"
         }
       },
       "finishes": {
         "matte": {
-          "label": "Matte",
-          "description": "Soft, gallery-grade color payoff with the least surface glare."
+          "label": "マット",
+          "description": "表面のぎらつきを最小限に抑えた、ギャラリーグレードのソフトなカラー効果。"
         },
         "satin": {
-          "label": "Satin",
-          "description": "Balanced sheen for modern interiors with a subtle designer glow."
+          "label": "サテン",
+          "description": "モダンなインテリアに適したバランスの取れた光沢と、デザイナーの繊細な輝き。"
         },
         "glossy": {
-          "label": "Glossy",
-          "description": "A polished reflective finish for bold, high-contrast statement walls."
+          "label": "光沢のある",
+          "description": "洗練された反射仕上げで、大胆でハイコントラストな印象的な壁を実現します。"
         }
       }
     },
     "examples": {
       "floor": {
-        "crackedConcrete": "Cracked Concrete",
-        "damagedPlanks": "Damaged Planks",
-        "brokenTile": "Broken Tile",
-        "renovationSubfloor": "Renovation Subfloor",
-        "wornPlywood": "Worn Plywood"
+        "crackedConcrete": "ひび割れたコンクリート",
+        "damagedPlanks": "破損した板",
+        "brokenTile": "壊れたタイル",
+        "renovationSubfloor": "床下改修工事",
+        "wornPlywood": "摩耗した合板"
       },
       "paint": {
-        "rawConcrete": "Raw Concrete",
-        "peelingPlaster": "Peeling Plaster",
-        "wornWhite": "Worn White",
-        "exposedBrick": "Exposed Brick",
-        "stainedPlaster": "Stained Plaster",
-        "dampStreaks": "Damp Streaks"
+        "rawConcrete": "生コンクリート",
+        "peelingPlaster": "石膏の剥離",
+        "wornWhite": "ウォーンホワイト",
+        "exposedBrick": "露出レンガ",
+        "stainedPlaster": "ステンド石膏",
+        "dampStreaks": "湿った縞模様"
       }
     }
   },
   "workspace": {
     "board": {
-      "new": "New",
-      "openEditor": "Tap to open your design editor",
-      "generationFailedTap": "Render encountered an issue. Tap for details.",
-      "generationFailedTitle": "Render failed",
-      "generationFailedBody": "This render did not complete. Please try again.",
-      "tryAnotherPrompt": "Please go back and try another prompt."
+      "new": "新しい",
+      "openEditor": "タップしてデザインエディターを開きます",
+      "generationFailedTap": "レンダリングで問題が発生しました。詳細については、タップしてください。",
+      "generationFailedTitle": "レンダリングに失敗しました",
+      "generationFailedBody": "このレンダリングは完了しませんでした。もう一度試してください。",
+      "tryAnotherPrompt": "戻って別のプロンプトを試してください。"
     },
     "processing": {
-      "default": "HomeDecor AI is preserving the architecture while composing a refined redesign.",
-      "floor": "HomeDecor AI is reading perspective, locking the floor plane, and composing the new material with premium detail.",
-      "paint": "HomeDecor AI is isolating the wall planes and layering your selected finish with gallery-grade realism."
+      "default": "HomeDecor AI は、アーキテクチャを維持しながら、洗練された再設計を行っています。",
+      "floor": "HomeDecor AI はパースを読み取り、フロア プレーンをロックし、プレミアムなディテールを備えた新しいマテリアルを構成します。",
+      "paint": "HomeDecor AI は壁の平面を分離し、選択した仕上げをギャラリー グレードのリアリズムで重ねています。"
     },
     "services": {
-      "interior": "Interior Redesign",
-      "exterior": "Exterior Redesign",
-      "garden": "Garden Redesign",
-      "floor": "Floor Restyle",
-      "paint": "Smart Wall Paint"
+      "interior": "インテリアの再設計",
+      "exterior": "外装リニューアル",
+      "garden": "庭の再設計",
+      "floor": "床のリスタイル",
+      "paint": "スマートウォールペイント"
     },
     "editor": {
-      "title": "Your Professional Concept",
-      "sourcePhoto": "Source Photo",
-      "comparison": "Comparison",
-      "deleteA11y": "Delete this design from My Design Portfolio",
-      "showComparison": "Show before and after comparison",
-      "hideComparison": "Hide before and after comparison",
-      "removeWatermark": "Remove Watermark",
-      "regenerate": "Regenerate",
-      "saving": "Saving...",
-      "sharing": "Sharing...",
-      "renderUnavailable": "Render unavailable. Please try again.",
-      "previewNotReady": "Preview not ready. Please try again.",
-      "floorReady": "Material-led floor transformation with a live before and after slider.",
-      "paintReady": "Wall recoloring tuned to your selected finish and room lighting.",
-      "defaultReady": "Curated inside your premium HomeDecor board."
+      "title": "あなたのプロフェッショナルコンセプト",
+      "sourcePhoto": "出典写真",
+      "comparison": "比較",
+      "deleteA11y": "このデザインをマイデザインポートフォリオから削除します",
+      "showComparison": "前後の比較を表示",
+      "hideComparison": "比較の前後で非表示にする",
+      "removeWatermark": "透かしを削除する",
+      "regenerate": "再生する",
+      "saving": "保存中...",
+      "sharing": "共有中...",
+      "renderUnavailable": "レンダリングは使用できません。もう一度試してください。",
+      "previewNotReady": "プレビューの準備ができていません。もう一度試してください。",
+      "floorReady": "ライブ前後のスライダーによるマテリアル主導のフロアの変化。",
+      "paintReady": "選択した仕上げと部屋の照明に合わせて壁の色を変更します。",
+      "defaultReady": "プレミアム HomeDecor ボード内に厳選されています。"
     },
     "permissions": {
-      "requiredTitle": "Permission Required",
-      "requiredBody": "Enable camera or photo access in your system settings to continue.",
-      "cameraAccessTitle": "Camera Access Needed",
-      "cameraAccessBody": "Allow camera access in Settings to take a photo.",
-      "photoLibraryAccessTitle": "Photo Library Access Needed",
-      "photoLibraryAccessBody": "Allow photo library access in Settings.",
-      "photoLibrarySaveBody": "Please allow photo library access to save your result to the device gallery."
+      "requiredTitle": "許可が必要です",
+      "requiredBody": "続行するには、システム設定でカメラまたは写真へのアクセスを有効にしてください。",
+      "cameraAccessTitle": "カメラへのアクセスが必要です",
+      "cameraAccessBody": "写真を撮影するには、設定でカメラへのアクセスを許可します。",
+      "photoLibraryAccessTitle": "写真ライブラリへのアクセスが必要です",
+      "photoLibraryAccessBody": "設定で写真ライブラリへのアクセスを許可します。",
+      "photoLibrarySaveBody": "結果をデバイス ギャラリーに保存するには、フォト ライブラリへのアクセスを許可してください。"
     },
     "media": {
-      "capturedPhoto": "Captured Photo",
-      "uploadedPhoto": "Uploaded Photo",
-      "choosePhotoSource": "Choose how you want to add your image.",
-      "cameraUnavailableTitle": "Camera Unavailable",
-      "cameraUnavailableBody": "We couldn't open the camera. Please try again.",
-      "photoLibraryUnavailableTitle": "Photo Library Unavailable",
-      "photoLibraryUnavailableBody": "We couldn't open the photo library. Please try again.",
-      "photoIntakeUnavailableTitle": "Photo Intake Unavailable",
-      "photoIntakeUnavailableBody": "We couldn't open your camera or photo library. Please try again.",
-      "exampleImageUnavailable": "Example image unavailable.",
-      "exampleUnavailableTitle": "Example unavailable",
-      "tryAnotherImage": "Please try another image."
+      "capturedPhoto": "撮影した写真",
+      "uploadedPhoto": "アップロードされた写真",
+      "choosePhotoSource": "画像を追加する方法を選択します。",
+      "cameraUnavailableTitle": "カメラが使用できません",
+      "cameraUnavailableBody": "カメラを開けることができませんでした。もう一度試してください。",
+      "photoLibraryUnavailableTitle": "フォトライブラリが利用できません",
+      "photoLibraryUnavailableBody": "フォトライブラリを開けませんでした。もう一度試してください。",
+      "photoIntakeUnavailableTitle": "写真の取り込みができません",
+      "photoIntakeUnavailableBody": "カメラまたは写真ライブラリを開けませんでした。もう一度試してください。",
+      "exampleImageUnavailable": "サンプル画像は利用できません。",
+      "exampleUnavailableTitle": "例は利用できません",
+      "tryAnotherImage": "別の画像をお試しください。"
     },
     "share": {
-      "nothingTitle": "Nothing to share",
-      "generateFirst": "Generate a design first.",
-      "failedTitle": "Share failed",
-      "message": "Designed with HomeDecor AI"
+      "nothingTitle": "共有できるものは何もありません",
+      "generateFirst": "まずデザインを生成します。",
+      "failedTitle": "共有に失敗しました",
+      "message": "HomeDecor AI で設計"
     },
     "download": {
-      "nothingTitle": "Nothing to download",
-      "generateFirst": "Generate a design first.",
-      "failedTitle": "Download failed"
+      "nothingTitle": "ダウンロードするものがありません",
+      "generateFirst": "まずデザインを生成します。",
+      "failedTitle": "ダウンロードに失敗しました"
     },
     "generation": {
-      "preparingSessionTitle": "Preparing your session",
-      "preparingSessionBody": "Your guest profile is still loading. Please try again in a moment.",
-      "completeStepsTitle": "Complete the steps",
-      "completeFloorBody": "Add a room photo, define the floor area, choose a material, and select a finish before continuing.",
-      "completePaintBody": "Add a room photo, define the paintable surfaces, choose a wall color, and select a finish before continuing.",
-      "completePreviousSteps": "Please finish the previous steps first.",
-      "limitReached": "Limit Reached",
-      "completeStepToContinue": "Complete this step to continue."
+      "preparingSessionTitle": "セッションの準備",
+      "preparingSessionBody": "ゲスト プロファイルはまだ読み込まれています。しばらくしてからもう一度お試しください。",
+      "completeStepsTitle": "手順を完了します",
+      "completeFloorBody": "続行する前に、部屋の写真を追加し、床面積を定義し、素材を選択し、仕上げを選択します。",
+      "completePaintBody": "続行する前に、部屋の写真を追加し、ペイント可能な表面を定義し、壁の色を選択し、仕上げを選択します。",
+      "completePreviousSteps": "まず前の手順を完了してください。",
+      "limitReached": "限界に達しました",
+      "completeStepToContinue": "続行するには、この手順を完了してください。"
     },
     "flow": {
-      "customPromptTitle": "Describe Your Vision",
-      "customPromptBody": "Describe the exact design direction you want before applying it.",
-      "selectSpaceType": "Tap a card to identify your space type."
+      "customPromptTitle": "あなたのビジョンを説明してください",
+      "customPromptBody": "適用する前に、希望する正確なデザインの方向性を説明してください。",
+      "selectSpaceType": "カードをタップしてスペースのタイプを特定します。"
     },
-    "resumeDraft": "Resuming your saved wizard draft.",
+    "resumeDraft": "保存したウィザードの下書きを再開します。",
     "feedback": {
-      "like": "Like",
-      "dislike": "Dislike",
-      "liked": "Thanks for the feedback.",
-      "disliked": "Feedback sent to the design team.",
-      "failed": "Unable to send feedback right now."
+      "like": "いいね",
+      "dislike": "嫌い",
+      "liked": "フィードバックありがとうございます。",
+      "disliked": "フィードバックはデザイン チームに送信されました。",
+      "failed": "現在フィードバックを送信できません。"
     },
     "stepOne": {
-      "gardenPhotoTitle": "Add a Garden Photo",
-      "exteriorPhotoTitle": "Add an Exterior Photo",
-      "floorPhotoTitle": "Add Floor Photo",
-      "gardenEmptyTitle": "Start Your Garden Transformation",
-      "exteriorEmptyTitle": "Start Your Exterior Transformation",
-      "tapToAddPhoto": "Tap to add a photo from your camera or library"
+      "gardenPhotoTitle": "庭の写真を追加する",
+      "exteriorPhotoTitle": "外観写真を追加する",
+      "floorPhotoTitle": "フロア写真を追加",
+      "gardenEmptyTitle": "庭の変革を始めましょう",
+      "exteriorEmptyTitle": "外装の変革を始めましょう",
+      "tapToAddPhoto": "タップしてカメラまたはライブラリから写真を追加します"
     },
     "style": {
-      "tapToSelect": "Tap a card to define your style direction."
+      "tapToSelect": "カードをタップしてスタイルの方向性を定義します。"
     },
     "localization": {
       "rooms": {
-        "livingRoom": "Living Room",
-        "bedroom": "Bedroom",
-        "kitchen": "Kitchen",
-        "bathroom": "Bathroom",
-        "homeOffice": "Home Office",
-        "diningRoom": "Dining Room",
-        "nursery": "Nursery",
-        "homeTheater": "Home Theater",
-        "gamingRoom": "Gaming Room",
-        "hall": "Hall",
-        "library": "Library",
-        "laundry": "Laundry"
+        "livingRoom": "リビングルーム",
+        "bedroom": "寝室",
+        "kitchen": "キッチン",
+        "bathroom": "バスルーム",
+        "homeOffice": "ホームオフィス",
+        "diningRoom": "ダイニングルーム",
+        "nursery": "保育園",
+        "homeTheater": "ホームシアター",
+        "gamingRoom": "ゲームルーム",
+        "hall": "ホール",
+        "library": "図書館",
+        "laundry": "ランドリー"
       },
       "examples": {
         "interior": {
-          "emptyRoom": "Empty Room",
-          "messyLounge": "Messy Lounge",
-          "wornRoom": "Worn Room",
-          "emptyKitchen": "Empty Kitchen",
-          "damagedRoom": "Damaged Room",
-          "outdatedKitchen": "Outdated Kitchen"
+          "emptyRoom": "空の部屋",
+          "messyLounge": "乱雑なラウンジ",
+          "wornRoom": "ボロボロの部屋",
+          "emptyKitchen": "空のキッチン",
+          "damagedRoom": "破損した部屋",
+          "outdatedKitchen": "時代遅れのキッチン"
         },
         "exterior": {
-          "scaffoldHouse": "Scaffold House",
-          "weatheredHouse": "Weathered House",
-          "brickShell": "Brick Shell",
-          "overgrownCottage": "Overgrown Cottage",
-          "abandonedHome": "Abandoned Home",
-          "concreteFrame": "Concrete Frame"
+          "scaffoldHouse": "足場の家",
+          "weatheredHouse": "風化した家",
+          "brickShell": "ブリックシェル",
+          "overgrownCottage": "草に覆われたコテージ",
+          "abandonedHome": "廃屋",
+          "concreteFrame": "コンクリートフレーム"
         },
         "garden": {
-          "muddyYard": "Muddy Yard",
-          "weedyYard": "Weedy Yard",
-          "rubbleYard": "Rubble Yard",
-          "overgrownCorner": "Overgrown Corner",
-          "abandonedYard": "Abandoned Yard",
-          "crackedPatio": "Cracked Patio"
+          "muddyYard": "マディヤード",
+          "weedyYard": "ウィーディー・ヤード",
+          "rubbleYard": "瓦礫置き場",
+          "overgrownCorner": "生い茂ったコーナー",
+          "abandonedYard": "放棄された庭",
+          "crackedPatio": "ひび割れたパティオ"
         }
       },
       "styles": {
-        "modern": "Modern",
-        "luxury": "Luxury",
-        "japandi": "Japandi",
-        "cyberpunk": "Cyberpunk",
-        "tropical": "Tropical",
-        "minimalist": "Minimalist",
-        "scandinavian": "Scandinavian",
-        "bohemian": "Bohemian",
-        "midcentury": "Midcentury",
-        "artDeco": "Art Deco",
-        "coastal": "Coastal",
-        "rustic": "Rustic",
-        "vintage": "Vintage",
-        "mediterranean": "Mediterranean",
-        "glam": "Glam",
-        "coastalRetreat": "Coastal Retreat",
-        "rusticManor": "Rustic Manor",
-        "hollywoodRegency": "Hollywood Regency",
-        "neoClassic": "Neo-Classic",
-        "shabbyChic": "Shabby Chic",
-        "frenchCountry": "French Country",
-        "brutalist": "Brutalist",
-        "hollywoodRegencyNoir": "Hollywood Regency Noir",
-        "artNouveau": "Art Nouveau",
-        "custom": "Custom",
-        "chinese": "Chinese",
-        "cottage": "Cottage",
-        "farmHouse": "Farm House",
-        "french": "French",
-        "gothic": "Gothic",
-        "italianate": "Italianate",
-        "christmas": "Christmas",
-        "minimalistic": "Minimalistic",
-        "baroque": "Baroque"
+        "modern": "モダン",
+        "luxury": "贅沢",
+        "japandi": "ジャパンディ",
+        "cyberpunk": "サイバーパンク",
+        "tropical": "トロピカル",
+        "minimalist": "ミニマリスト",
+        "scandinavian": "スカンジナビア料理",
+        "bohemian": "ボヘミアン",
+        "midcentury": "ミッドセンチュリー",
+        "artDeco": "アールデコ調",
+        "coastal": "海岸沿い",
+        "rustic": "素朴な",
+        "vintage": "ヴィンテージ",
+        "mediterranean": "地中海料理",
+        "glam": "グラム",
+        "coastalRetreat": "コースタル リトリート",
+        "rusticManor": "素朴な邸宅",
+        "hollywoodRegency": "ハリウッド リージェンシー",
+        "neoClassic": "ネオクラシック",
+        "shabbyChic": "シャビーシック",
+        "frenchCountry": "フレンチカントリー",
+        "brutalist": "ブルータリスト",
+        "hollywoodRegencyNoir": "ハリウッド リージェンシー ノワール",
+        "artNouveau": "アールヌーボー様式",
+        "custom": "カスタム",
+        "chinese": "中国語",
+        "cottage": "コテージ",
+        "farmHouse": "ファームハウス",
+        "french": "フランス語",
+        "gothic": "ゴシック",
+        "italianate": "イタリア風",
+        "christmas": "クリスマス",
+        "minimalistic": "ミニマルな",
+        "baroque": "バロック様式"
       },
       "buildings": {
-        "apartment": "Apartment",
-        "house": "House",
-        "officeBuilding": "Office Building",
-        "residential": "Residential",
-        "retail": "Retail",
-        "villa": "Villa"
+        "apartment": "アパートメント",
+        "house": "ハウス",
+        "officeBuilding": "オフィスビル",
+        "residential": "住宅用",
+        "retail": "小売",
+        "villa": "ヴィラ"
       },
       "modes": {
         "preserve": {
-          "title": "Structural Preservation",
-          "description": "Preserve your room's architectural DNA while flawlessly refreshing its aesthetic."
+          "title": "構造保存",
+          "description": "お部屋の建築的 DNA を維持しながら、その美しさを完璧にリフレッシュします。"
         },
         "renovate": {
-          "title": "Renovation Design",
-          "description": "Total creative liberty to redefine furniture layouts and structural boundaries for a complete remodel."
+          "title": "リノベーションデザイン",
+          "description": "家具のレイアウトや構造の境界を再定義して完全なリフォームを行うための完全な創造的自由。"
         }
       },
       "palettes": {
-        "surprise": "Curated Mix",
-        "gray": "Millennial Gray",
-        "terracotta": "Terracotta Mirage",
-        "forest": "Forest Hues",
-        "peach": "Peach Orchard",
-        "fuchsia": "Fuchsia Blossom",
-        "emerald": "Emerald Gem",
-        "pastel": "Pastel Breeze",
-        "ocean": "Ocean Mist",
-        "velvet": "Velvet Dusk",
-        "amethyst": "Amethyst Dream",
-        "sunset": "Fuchsia Noir"
+        "surprise": "厳選されたミックス",
+        "gray": "ミレニアル・グレイ",
+        "terracotta": "テラコッタミラージュ",
+        "forest": "森の色合い",
+        "peach": "桃園",
+        "fuchsia": "フクシア ブロッサム",
+        "emerald": "エメラルドジェム",
+        "pastel": "パステルブリーズ",
+        "ocean": "オーシャンミスト",
+        "velvet": "ベルベットダスク",
+        "amethyst": "アメジスト ドリーム",
+        "sunset": "フューシャ ノワール"
       },
       "gardenPalettes": {
-        "garden-surprise": "Surprise Me",
-        "garden-gray": "Millennial Gray",
-        "garden-terracotta": "Terracotta Mirage",
-        "garden-neon-sunset": "Neon Sunset",
-        "garden-forest": "Forest Hues",
-        "garden-peach": "Peach Orchard",
-        "garden-fuschia": "Fuchsia Blossom",
-        "garden-emerald": "Emerald Gem",
-        "garden-pastel": "Pastel Breeze",
-        "garden-azure": "Azure Mirage",
-        "garden-twilight": "Twilight Blues",
-        "garden-earthy": "Earthy Harmony"
+        "garden-surprise": "サプライズ・ミー",
+        "garden-gray": "ミレニアル・グレイ",
+        "garden-terracotta": "テラコッタミラージュ",
+        "garden-neon-sunset": "ネオンサンセット",
+        "garden-forest": "森の色合い",
+        "garden-peach": "桃園",
+        "garden-fuschia": "フクシア ブロッサム",
+        "garden-emerald": "エメラルドジェム",
+        "garden-pastel": "パステルブリーズ",
+        "garden-azure": "アズールミラージュ",
+        "garden-twilight": "トワイライト・ブルース",
+        "garden-earthy": "素朴なハーモニー"
       },
       "summary": {
-        "roomType": "Room Type",
-        "style": "Style",
-        "mode": "Mode",
-        "palette": "Palette",
-        "missing": "⚠ Missing"
+        "roomType": "部屋タイプ",
+        "style": "スタイル",
+        "mode": "モード",
+        "palette": "パレット",
+        "missing": "⚠ 行方不明"
       },
-      "previewThumbnailLabel": "Sample output · {{style}}",
+      "previewThumbnailLabel": "サンプル出力 · {{style}}",
       "toasts": {
-        "completeStyleSelections": "Complete your style selections to generate."
+        "completeStyleSelections": "生成するスタイルの選択を完了します。"
       },
       "requiredSelections": {
-        "photo": "Please select a photo to continue.",
-        "room": "Please select a room to continue.",
-        "style": "Please select a style to continue.",
-        "mode": "Please complete the mode selection to continue.",
-        "palette": "Please complete the palette selection to continue."
+        "photo": "続行するには写真を選択してください。",
+        "room": "続行するには部屋を選択してください。",
+        "style": "続行するにはスタイルを選択してください。",
+        "mode": "続行するにはモードの選択を完了してください。",
+        "palette": "続行するにはパレットの選択を完了してください。"
       },
-      "regenerationUnavailable": "Regeneration unavailable",
-      "feedbackUnavailable": "Feedback is unavailable for this image.",
+      "regenerationUnavailable": "再生は利用できません",
+      "feedbackUnavailable": "この画像に対するフィードバックは利用できません。",
       "cta": {
-        "getMoreCredits": "Get More Credits",
-        "generateMyDesign": "Generate My Design"
+        "getMoreCredits": "さらにクレジットを取得",
+        "generateMyDesign": "マイデザインの生成"
       },
-      "stepFourSticky": "Step 4: Refine Direction",
-      "exteriorEmptyStateSubtitle": "Redesign and beautify your home."
+      "stepFourSticky": "ステップ 4: 方向を調整する",
+      "exteriorEmptyStateSubtitle": "あなたの家を再設計して美しくしましょう。"
     }
   },
   "proSuccess": {
-    "title": "Welcome to HomeDecor Pro!",
-    "subtitle": "Your premium tools are now unlocked:",
+    "title": "ホームデコプロへようこそ！",
+    "subtitle": "プレミアム ツールのロックが解除されました。",
     "features": {
-      "hyperRealism": "Ultra-high-detail rendering enabled",
-      "virtualStaging": "Premium design tools unlocked",
-      "infiniteCredits": "Weekly or monthly render quotas active"
+      "hyperRealism": "超高精細レンダリングが有効",
+      "virtualStaging": "プレミアムデザインツールのロックが解除されました",
+      "infiniteCredits": "毎週または毎月のレンダリング クォータが有効です"
     },
-    "cta": "Start Designing",
-    "toast": "Your account has been upgraded to Pro."
+    "cta": "設計を開始する",
+    "toast": "あなたのアカウントは Pro にアップグレードされました。"
   },
   "legalViewer": {
-    "eyebrow": "Legal Viewer",
+    "eyebrow": "法的ビューア",
     "switches": {
-      "terms": "Terms of Service",
-      "privacy": "Privacy Policy"
+      "terms": "利用規約",
+      "privacy": "プライバシーポリシー"
     }
   },
   "storeReview": {
-    "title": "Rate HomeDecor AI",
-    "unavailableBody": "Review requests are not available on this device.",
-    "errorBody": "Unable to open the store review dialog right now."
+    "title": "レートHomeDecor AI",
+    "unavailableBody": "このデバイスではレビューリクエストを利用できません。",
+    "errorBody": "現在、ストア レビュー ダイアログを開くことができません。"
   },
   "gallery": {
     "clusters": {
-      "foundations": "Foundations"
+      "foundations": "基礎"
     },
     "tabs": {
-      "home": "Interiors",
-      "exterior": "Exteriors",
-      "garden": "Landscapes"
+      "home": "インテリア",
+      "exterior": "外装",
+      "garden": "風景"
     },
     "groups": {
-      "kitchen": "Kitchen",
-      "livingRoom": "Living Room",
-      "diningRoom": "Dining Room",
-      "bedroom": "Bedroom",
-      "bathroom": "Bathroom",
-      "gamingRoom": "Gaming Room",
-      "homeOffice": "Home Office",
-      "coffeeShop": "Coffee Shop",
-      "studyRoom": "Study Room",
-      "restaurant": "Restaurant",
-      "attic": "Attic",
-      "toilet": "Toilet",
-      "balcony": "Balcony",
-      "hall": "Hall",
-      "deck": "Deck",
-      "landscapeDesigns": "Landscape Designs",
-      "villa": "Villa",
-      "apartment": "Apartment",
-      "house": "House",
-      "officeBuilding": "Office Building",
-      "retail": "Retail",
-      "residential": "Residential",
-      "wall": "Wall",
-      "floor": "Floor",
-      "garden": "Garden"
+      "kitchen": "キッチン",
+      "livingRoom": "リビングルーム",
+      "diningRoom": "ダイニングルーム",
+      "bedroom": "寝室",
+      "bathroom": "バスルーム",
+      "gamingRoom": "ゲームルーム",
+      "homeOffice": "ホームオフィス",
+      "coffeeShop": "コーヒーショップ",
+      "studyRoom": "自習室",
+      "restaurant": "レストラン",
+      "attic": "屋根裏部屋",
+      "toilet": "トイレ",
+      "balcony": "バルコニー",
+      "hall": "ホール",
+      "deck": "デッキ",
+      "landscapeDesigns": "ランドスケープデザイン",
+      "villa": "ヴィラ",
+      "apartment": "アパートメント",
+      "house": "ハウス",
+      "officeBuilding": "オフィスビル",
+      "retail": "小売り",
+      "residential": "住宅用",
+      "wall": "壁",
+      "floor": "床",
+      "garden": "庭園"
     },
-    "imageTitleTemplate": "{{title}} Image {{index}}",
+    "imageTitleTemplate": "{{title}} 画像 {{index}}",
     "emptyState": {
-      "title": "Category unavailable",
-      "body": "The requested image collection could not be found."
+      "title": "カテゴリが利用できません",
+      "body": "要求された画像コレクションが見つかりませんでした。"
     }
   },
   "discoverCatalog": {
     "sections": {
       "home": {
-        "title": "Interior",
-        "description": "Designer-led rooms across living, sleep, dining, work, and entertainment.",
+        "title": "インテリア",
+        "description": "リビング、睡眠、ダイニング、仕事、エンターテイメントを網羅するデザイナー主導の客室。",
         "items": {
           "sereneLounge": {
-            "title": "Serene Lounge",
-            "subtitle": "Living Room / Soft Minimal",
-            "spaceType": "Living Room",
-            "style": "Soft Minimal"
+            "title": "セリーンラウンジ",
+            "subtitle": "リビングルーム / ソフトミニマル",
+            "spaceType": "リビングルーム",
+            "style": "ソフトミニマル"
           },
           "moodyClubRoom": {
-            "title": "Moody Club Room",
-            "subtitle": "Living Room / Moody Luxe",
-            "spaceType": "Living Room",
-            "style": "Moody Luxe"
+            "title": "ムーディークラブルーム",
+            "subtitle": "リビングルーム / ムーディーラックス",
+            "spaceType": "リビングルーム",
+            "style": "ムーディーラックス"
           },
           "organicLiving": {
-            "title": "Organic Living",
-            "subtitle": "Living Room / Warm Organic",
-            "spaceType": "Living Room",
-            "style": "Warm Organic"
+            "title": "オーガニックリビング",
+            "subtitle": "リビングルーム / ウォームオーガニック",
+            "spaceType": "リビングルーム",
+            "style": "ウォームオーガニック"
           },
           "grandSalon": {
-            "title": "Grand Salon",
-            "subtitle": "Living Room / Luxe Marble",
-            "spaceType": "Living Room",
-            "style": "Luxe Marble"
+            "title": "グランドサロン",
+            "subtitle": "リビングルーム / 高級大理石",
+            "spaceType": "リビングルーム",
+            "style": "豪華な大理石"
           },
           "editorialLounge": {
-            "title": "Editorial Lounge",
-            "subtitle": "Gaming Room / Cyberpunk",
-            "spaceType": "Gaming Room",
-            "style": "Cyberpunk"
+            "title": "編集ラウンジ",
+            "subtitle": "ゲームルーム / サイバーパンク",
+            "spaceType": "ゲームルーム",
+            "style": "サイバーパンク"
           }
         }
       },
       "exterior": {
-        "title": "Exterior",
-        "description": "Facade inspiration from modern villas, urban blocks, offices, and retail shells.",
+        "title": "外観",
+        "description": "モダンなヴィラ、都市ブロック、オフィス、小売店のシェルからのファサードのインスピレーション。",
         "items": {
           "modernHouse": {
-            "title": "Modern House",
-            "subtitle": "Modern House / Daylight Minimal",
-            "spaceType": "Modern House",
-            "style": "Daylight Minimal"
+            "title": "モダンハウス",
+            "subtitle": "モダンハウス / 採光最小限",
+            "spaceType": "モダンハウス",
+            "style": "日光最小"
           },
           "modernHouseNight": {
-            "title": "Modern House Night",
-            "subtitle": "Modern House / Evening Luxe",
-            "spaceType": "Modern House",
-            "style": "Evening Luxe"
+            "title": "モダンハウスナイト",
+            "subtitle": "モダンハウス / イブニング リュクス",
+            "spaceType": "モダンハウス",
+            "style": "イブニング リュクス"
           },
           "stoneVilla": {
-            "title": "Stone Villa",
-            "subtitle": "Villa / Mediterranean",
-            "spaceType": "Villa",
-            "style": "Mediterranean"
+            "title": "ストーン ヴィラ",
+            "subtitle": "ヴィラ / 地中海",
+            "spaceType": "ヴィラ",
+            "style": "地中海料理"
           },
           "glassOffice": {
-            "title": "Glass Office",
-            "subtitle": "Office Building / Minimalist",
-            "spaceType": "Office Building",
-            "style": "Minimalist"
+            "title": "ガラスオフィス",
+            "subtitle": "オフィスビル / ミニマリスト",
+            "spaceType": "オフィスビル",
+            "style": "ミニマリスト"
           },
           "ecoApartments": {
-            "title": "Eco Apartments",
-            "subtitle": "Apartment Block / Eco Futurist",
-            "spaceType": "Apartment Block",
-            "style": "Eco Futurist"
+            "title": "エコ アパートメンツ",
+            "subtitle": "集合住宅 / エコフューチャリスト",
+            "spaceType": "集合住宅棟",
+            "style": "エコ未来家"
           }
         }
       },
       "garden": {
-        "title": "Garden",
-        "description": "Outdoor lounges, terraces, pools, decks, and resort-minded garden scenes.",
+        "title": "庭園",
+        "description": "屋外ラウンジ、テラス、プール、デッキ、リゾート風のガーデンシーン。",
         "items": {
           "infinityPool": {
-            "title": "Infinity Pool",
-            "subtitle": "Infinity Pool / Coastal Luxe",
-            "spaceType": "Infinity Pool",
-            "style": "Coastal Luxe"
+            "title": "インフィニティプール",
+            "subtitle": "インフィニティプール/コースタルラックス",
+            "spaceType": "インフィニティプール",
+            "style": "コースタル ラックス"
           },
           "waterfallCourt": {
-            "title": "Waterfall Court",
-            "subtitle": "Waterfall Garden / Zen Luxury",
-            "spaceType": "Waterfall Garden",
-            "style": "Zen Luxury"
+            "title": "ウォーターフォール コート",
+            "subtitle": "滝の庭園 / 禅の贅沢",
+            "spaceType": "滝の庭園",
+            "style": "禅の贅沢"
           },
           "sunsetFirePit": {
-            "title": "Sunset Fire Pit",
-            "subtitle": "Fire Pit Lounge / Resort Sunset",
-            "spaceType": "Fire Pit Lounge",
-            "style": "Resort Sunset"
+            "title": "サンセットファイヤーピット",
+            "subtitle": "ファイヤーピットラウンジ/リゾートサンセット",
+            "spaceType": "ファイヤーピットラウンジ",
+            "style": "リゾートサンセット"
           },
           "tropicalPoolLounge": {
-            "title": "Tropical Pool Lounge",
-            "subtitle": "Pool Lounge / Tropical Escape",
-            "spaceType": "Pool Lounge",
-            "style": "Tropical Escape"
+            "title": "トロピカルプールラウンジ",
+            "subtitle": "プールラウンジ / トロピカル エスケープ",
+            "spaceType": "プールラウンジ",
+            "style": "トロピカル エスケープ"
           },
           "luminousGardenWalk": {
-            "title": "Luminous Garden Walk",
-            "subtitle": "Garden Walk / Evening Glow",
-            "spaceType": "Garden Walk",
-            "style": "Evening Glow"
+            "title": "ルミナスガーデンウォーク",
+            "subtitle": "ガーデンウォーク・夕焼け",
+            "spaceType": "ガーデンウォーク",
+            "style": "夕焼け"
           }
         }
       },
       "wall": {
-        "title": "Wall Inspiration",
-        "description": "Real-room paint references that open directly into Smart Wall Paint with the finish already preselected.",
+        "title": "壁のインスピレーション",
+        "description": "事前に選択された仕上げを備えた Smart Wall Paint に直接開く、実際の部屋のペイント参照。",
         "items": {
           "sagePlasterWall": {
-            "title": "Sage Plaster Wall",
-            "subtitle": "Textured Wall / Sage Green",
-            "spaceType": "Textured Wall",
-            "style": "Sage Green"
+            "title": "セージ漆喰壁",
+            "subtitle": "テクスチャードウォール / セージグリーン",
+            "spaceType": "テクスチャーのある壁",
+            "style": "セージグリーン"
           },
           "linearSlatFeature": {
-            "title": "Linear Slat Feature",
-            "subtitle": "Slatted Wall / Charcoal",
-            "spaceType": "Slatted Wall",
-            "style": "Charcoal"
+            "title": "リニアスラット機能",
+            "subtitle": "すのこ壁/木炭",
+            "spaceType": "すのこ壁",
+            "style": "木炭"
           },
           "veinedMarbleWall": {
-            "title": "Veined Marble Wall",
-            "subtitle": "Marble Wall / Soft Ivory",
-            "spaceType": "Marble Wall",
-            "style": "Soft Ivory"
+            "title": "縞模様のある大理石の壁",
+            "subtitle": "大理石の壁 / ソフトアイボリー",
+            "spaceType": "大理石の壁",
+            "style": "ソフトアイボリー"
           },
           "minimalConcreteWall": {
-            "title": "Minimal Concrete Wall",
-            "subtitle": "Concrete Wall / Charcoal",
-            "spaceType": "Concrete Wall",
-            "style": "Charcoal"
+            "title": "最小限のコンクリート壁",
+            "subtitle": "コンクリート壁・木炭",
+            "spaceType": "コンクリート壁",
+            "style": "木炭"
           },
           "botanicalMuralWall": {
-            "title": "Botanical Mural Wall",
-            "subtitle": "Mural Wall / Olive Moss",
-            "spaceType": "Mural Wall",
-            "style": "Olive Moss"
+            "title": "植物の壁画",
+            "subtitle": "壁画壁 / オリーブモス",
+            "spaceType": "壁画の壁",
+            "style": "オリーブモス"
           }
         }
       },
       "floor": {
-        "title": "Floor Styles",
-        "description": "Premium flooring references curated from real interiors and mapped directly into the Floor Restyle workflow.",
+        "title": "床のスタイル",
+        "description": "実際のインテリアから厳選され、Floor Restyle ワークフローに直接マッピングされたプレミアム フローリング リファレンス。",
         "items": {
           "heritageHerringbone": {
-            "title": "Heritage Herringbone",
-            "subtitle": "Wood Floor / Walnut Wood",
-            "spaceType": "Wood Floor",
-            "style": "Walnut Wood"
+            "title": "ヘリテージ ヘリンボーン",
+            "subtitle": "ウッドフロア/ウォールナット材",
+            "spaceType": "木の床",
+            "style": "ウォールナット材"
           },
           "carraraMarbleFlow": {
-            "title": "Carrara Marble Flow",
-            "subtitle": "Marble Floor / Carrara Marble",
-            "spaceType": "Marble Floor",
-            "style": "Carrara Marble"
+            "title": "カララ マーブル フロー",
+            "subtitle": "大理石の床 / カララ大理石",
+            "spaceType": "大理石の床",
+            "style": "カララ大理石"
           },
           "satinConcrete": {
-            "title": "Satin Concrete",
-            "subtitle": "Concrete Floor / Polished Concrete",
-            "spaceType": "Concrete Floor",
-            "style": "Polished Concrete"
+            "title": "サテンコンクリート",
+            "subtitle": "コンクリート床 / 磨きコンクリート",
+            "spaceType": "コンクリートの床",
+            "style": "磨かれたコンクリート"
           },
           "walnutGloss": {
-            "title": "Walnut Gloss",
-            "subtitle": "Gloss Wood / Walnut Wood",
-            "spaceType": "Gloss Wood",
-            "style": "Walnut Wood"
+            "title": "ウォールナットグロス",
+            "subtitle": "グロスウッド / ウォールナットウッド",
+            "spaceType": "グロスウッド",
+            "style": "ウォールナット材"
           },
           "softLimestone": {
-            "title": "Soft Limestone",
-            "subtitle": "Stone Floor / Polished Concrete",
-            "spaceType": "Stone Floor",
-            "style": "Polished Concrete"
+            "title": "柔らかい石灰岩",
+            "subtitle": "石床 / 磨きコンクリート",
+            "spaceType": "石の床",
+            "style": "磨かれたコンクリート"
           }
         }
       }
     },
     "wallColors": {
       "sageGreen": {
-        "title": "Sage Green",
-        "description": "Soft green calm for bright, polished living spaces.",
-        "discoverSubtitle": "Wall / Botanical Calm"
+        "title": "セージグリーン",
+        "description": "落ち着いた柔らかなグリーンで、明るく洗練された住空間を演出します。",
+        "discoverSubtitle": "壁 / ボタニカルカーム"
       },
       "midnightNavy": {
-        "title": "Midnight Navy",
-        "description": "Tailored navy depth with crisp architectural contrast.",
-        "discoverSubtitle": "Wall / Tailored Contrast"
+        "title": "ミッドナイトネイビー",
+        "description": "鮮やかな構築的なコントラストを備えた、テーラードなネイビーの深さ。",
+        "discoverSubtitle": "壁 / カスタマイズされたコントラスト"
       },
       "terracottaGlow": {
-        "title": "Terracotta Glow",
-        "description": "Warm clay color with grounded, editorial energy.",
-        "discoverSubtitle": "Wall / Warm Clay"
+        "title": "テラコッタ グロー",
+        "description": "温かみのある粘土色で、地に足の着いた編集的なエネルギーを持っています。",
+        "discoverSubtitle": "壁 / 暖かい粘土"
       },
       "dustyRose": {
-        "title": "Dusty Rose",
-        "description": "Muted blush warmth with soft boutique appeal.",
-        "discoverSubtitle": "Wall / Boutique Blush"
+        "title": "ダスティ・ローズ",
+        "description": "柔らかなブティックの魅力を備えた、落ち着いた赤面の暖かさ。",
+        "discoverSubtitle": "ウォール / ブティック ブラッシュ"
       },
       "galleryCharcoal": {
-        "title": "Gallery Charcoal",
-        "description": "Refined charcoal for moody, art-forward rooms.",
-        "discoverSubtitle": "Wall / Moody Gallery"
+        "title": "ギャラリーチャコール",
+        "description": "洗練された木炭でムーディーでアートな雰囲気のお部屋に。",
+        "discoverSubtitle": "ウォール / ムーディーギャラリー"
       },
       "softIvory": {
-        "title": "Soft Ivory",
-        "description": "Luminous neutral that keeps rooms light, never flat.",
-        "discoverSubtitle": "Wall / Quiet Neutral"
+        "title": "ソフトアイボリー",
+        "description": "明るいニュートラルで部屋を明るく保ち、決して平坦ではありません。",
+        "discoverSubtitle": "壁 / 静かなニュートラル"
       },
       "oliveGrove": {
-        "title": "Olive Grove",
-        "description": "Earthy olive depth with a grounded designer mood.",
-        "discoverSubtitle": "Wall / Earthy Depth"
+        "title": "オリーブ グローブ",
+        "description": "大地に根ざしたデザイナーのムードを備えた素朴なオリーブの深み。",
+        "discoverSubtitle": "壁 / 土の深さ"
       },
       "lavenderMist": {
-        "title": "Lavender Mist",
-        "description": "Soft violet haze for elevated pastel rooms.",
-        "discoverSubtitle": "Wall / Soft Pastel"
+        "title": "ラベンダーミスト",
+        "description": "パステル調の部屋にぴったりの柔らかなバイオレットヘイズ。",
+        "discoverSubtitle": "壁 / ソフトパステル"
       },
       "pearlGray": {
-        "title": "Pearl Gray",
-        "description": "Light tonal gray with polished everyday flexibility.",
-        "discoverSubtitle": "Wall / Modern Neutral"
+        "title": "パールグレー",
+        "description": "洗練された日常の柔軟性を備えたライトトーングレー。",
+        "discoverSubtitle": "壁 / モダンニュートラル"
       }
     },
     "wallColorCategories": {
       "calmNeutrals": {
-        "title": "Calm Neutrals",
+        "title": "カームニュートラル",
         "colors": {
-          "softIvory": "Soft Ivory",
-          "pearlGray": "Pearl Gray",
-          "sageGreen": "Sage Green"
+          "softIvory": "ソフトアイボリー",
+          "pearlGray": "パールグレー",
+          "sageGreen": "セージグリーン"
         }
       },
       "boutiquePastels": {
-        "title": "Boutique Pastels",
+        "title": "ブティックパステル",
         "colors": {
-          "dustyRose": "Dusty Rose",
-          "lavenderMist": "Lavender Mist",
-          "terracottaGlow": "Terracotta Glow"
+          "dustyRose": "ダスティ・ローズ",
+          "lavenderMist": "ラベンダーミスト",
+          "terracottaGlow": "テラコッタ グロー"
         }
       },
       "architecturalDepth": {
-        "title": "Architectural Depth",
+        "title": "建築の奥行き",
         "colors": {
-          "midnightNavy": "Midnight Navy",
-          "galleryCharcoal": "Gallery Charcoal",
-          "oliveGrove": "Olive Grove"
+          "midnightNavy": "ミッドナイトネイビー",
+          "galleryCharcoal": "ギャラリーチャコール",
+          "oliveGrove": "オリーブ グローブ"
         }
       }
     },
     "floorMaterials": {
       "naturalOak": {
-        "title": "Natural Oak",
-        "description": "Airy oak planks with soft natural grain.",
-        "promptLabel": "light natural oak flooring with wide-plank grain detail",
-        "discoverSubtitle": "Floor / Light Wood"
+        "title": "ナチュラルオーク",
+        "description": "柔らかい天然の木目を持つ風通しの良いオーク板。",
+        "promptLabel": "幅広の板の木目のディテールを施した明るい天然オーク材の床",
+        "discoverSubtitle": "床 / ライトウッド"
       },
       "walnutWood": {
-        "title": "Walnut Wood",
-        "description": "Deep walnut planks with rich tailored contrast.",
-        "promptLabel": "luxury walnut wood flooring with rich deep grain",
-        "discoverSubtitle": "Floor / Dark Wood"
+        "title": "ウォールナット材",
+        "description": "仕立てられた豊かなコントラストを備えた深みのあるウォールナット板。",
+        "promptLabel": "深みのある木目が美しい高級ウォールナット材の床材",
+        "discoverSubtitle": "床 / ダークウッド"
       },
       "carraraMarble": {
-        "title": "Carrara Marble",
-        "description": "Bright stone veining with a calm luxe finish.",
-        "promptLabel": "carrara marble flooring with elegant soft veining",
-        "discoverSubtitle": "Floor / Polished Stone"
+        "title": "カララ大理石",
+        "description": "明るい石脈が落ち着いた高級感のある仕上がりです。",
+        "promptLabel": "エレガントな柔らかな縞模様のカララ大理石の床",
+        "discoverSubtitle": "床/磨き石"
       },
       "polishedConcrete": {
-        "title": "Polished Concrete",
-        "description": "Smooth concrete sheen with urban gallery calm.",
-        "promptLabel": "polished concrete flooring with premium smooth texture",
-        "discoverSubtitle": "Floor / Industrial Minimal"
+        "title": "磨かれたコンクリート",
+        "description": "滑らかなコンクリートの光沢と都会的なギャラリーの落ち着き。",
+        "promptLabel": "プレミアムで滑らかな質感の磨かれたコンクリート床",
+        "discoverSubtitle": "フロア / インダストリアルミニマル"
       },
       "herringboneOak": {
-        "title": "Herringbone Oak",
-        "description": "Classic oak pattern with warm directional movement.",
-        "promptLabel": "herringbone oak parquet flooring with premium pattern definition",
-        "discoverSubtitle": "Floor / Patterned Wood"
+        "title": "ヘリンボーンオーク",
+        "description": "温かみのある方向性のある動きを備えたクラシックなオークパターン。",
+        "promptLabel": "プレミアムパターン定義のヘリンボーンオーク寄木細工の床",
+        "discoverSubtitle": "床 / 模様のある木材"
       },
       "terracottaTile": {
-        "title": "Terracotta Tile",
-        "description": "Earthy clay warmth with handcrafted character.",
-        "promptLabel": "terracotta tile flooring with warm clay color variation",
-        "discoverSubtitle": "Floor / Mediterranean Clay"
+        "title": "テラコッタタイル",
+        "description": "手作りの個性を備えた素朴な粘土の温かさ。",
+        "promptLabel": "温かみのある粘土色のバリエーションを持つテラコッタ タイルの床",
+        "discoverSubtitle": "床 / 地中海粘土"
       },
       "slateTile": {
-        "title": "Slate Tile",
-        "description": "Dark slate with a crisp large-format finish.",
-        "promptLabel": "dark slate tile flooring with large format stone slabs",
-        "discoverSubtitle": "Floor / Dark Stone"
+        "title": "スレートタイル",
+        "description": "くっきりとした大判仕上げのダークスレート。",
+        "promptLabel": "大判の石板を使用したダークスレートタイルの床",
+        "discoverSubtitle": "床 / ダークストーン"
       },
       "plushCarpet": {
-        "title": "Plush Carpet",
-        "description": "Soft cream carpet with a quiet, cozy feel.",
-        "promptLabel": "luxury plush carpet flooring in a soft cream tone",
-        "discoverSubtitle": "Floor / Soft Texture"
+        "title": "プラッシュカーペット",
+        "description": "静かで心地よい感触のソフトクリームカーペット。",
+        "promptLabel": "柔らかいクリーム色の豪華な豪華なカーペットの床",
+        "discoverSubtitle": "床 / ソフトな質感"
       },
       "weatheredOak": {
-        "title": "Weathered Oak",
-        "description": "Mid-tone oak with a gently aged finish.",
-        "promptLabel": "weathered oak flooring with subtle aged grain",
-        "discoverSubtitle": "Floor / Rustic Warmth"
+        "title": "風化したオーク",
+        "description": "穏やかに熟成させたミッドトーンのオーク材。",
+        "promptLabel": "微妙に古びた木目を持つ風化したオーク材の床",
+        "discoverSubtitle": "床 / 素朴な温もり"
       }
     },
     "injectedGallery": {
       "floorAfterScenes": {
-        "heritageHerringbone": "Heritage Herringbone",
-        "carraraMarble": "Carrara Marble",
-        "satinConcrete": "Satin Concrete",
-        "walnutGloss": "Walnut Gloss",
-        "limestoneSlab": "Limestone Slab"
+        "heritageHerringbone": "ヘリテージ ヘリンボーン",
+        "carraraMarble": "カララ大理石",
+        "satinConcrete": "サテンコンクリート",
+        "walnutGloss": "ウォールナットグロス",
+        "limestoneSlab": "石灰岩のスラブ"
       },
       "wallAfterScenes": {
-        "sagePlaster": "Sage Plaster",
-        "linearSlats": "Linear Slats",
-        "veinedMarble": "Veined Marble",
-        "minimalConcrete": "Minimal Concrete",
-        "botanicalMural": "Botanical Mural"
+        "sagePlaster": "セージプラスター",
+        "linearSlats": "リニアスラット",
+        "veinedMarble": "縞模様のある大理石",
+        "minimalConcrete": "最小限のコンクリート",
+        "botanicalMural": "植物の壁画"
       },
       "interiorExamples": {
-        "kitchen": "Kitchen",
-        "livingRoom": "Living Room",
-        "bedroom": "Bedroom",
-        "bathroom": "Bathroom",
-        "gamingRoom": "Gaming Room",
-        "homeOffice": "Home Office"
+        "kitchen": "キッチン",
+        "livingRoom": "リビングルーム",
+        "bedroom": "寝室",
+        "bathroom": "バスルーム",
+        "gamingRoom": "ゲームルーム",
+        "homeOffice": "ホームオフィス"
       },
       "exteriorExamples": {
-        "apartment": "Apartment",
-        "house": "House",
-        "office": "Office",
-        "villa": "Villa",
-        "residential": "Residential",
-        "retail": "Retail"
+        "apartment": "アパートメント",
+        "house": "ハウス",
+        "office": "オフィス",
+        "villa": "ヴィラ",
+        "residential": "住宅用",
+        "retail": "小売"
       },
       "gardenExamples": {
-        "infinityPool": "Infinity Pool",
-        "waterfallCourt": "Waterfall Court",
-        "firePit": "Fire Pit",
-        "tropicalLounge": "Tropical Lounge",
-        "resortDeck": "Resort Deck",
-        "lagoonFalls": "Lagoon Falls"
+        "infinityPool": "インフィニティプール",
+        "waterfallCourt": "ウォーターフォール コート",
+        "firePit": "ファイヤーピット",
+        "tropicalLounge": "トロピカルラウンジ",
+        "resortDeck": "リゾートデッキ",
+        "lagoonFalls": "ラグーン フォールズ"
       },
       "homeCoreScenes": {
-        "kitchen": "Kitchen",
-        "livingRoom": "Living Room",
-        "bedroom": "Bedroom",
-        "bathroom": "Bathroom",
-        "diningRoom": "Dining Room",
-        "gamingRoom": "Gaming Room",
-        "homeOffice": "Home Office"
+        "kitchen": "キッチン",
+        "livingRoom": "リビングルーム",
+        "bedroom": "寝室",
+        "bathroom": "バスルーム",
+        "diningRoom": "ダイニングルーム",
+        "gamingRoom": "ゲームルーム",
+        "homeOffice": "ホームオフィス"
       },
       "homeFlexScenes": {
-        "coffeeShop": "Coffee Shop",
-        "gamingStudio": "Gaming Studio",
-        "atticLounge": "Attic Lounge",
-        "studyRoom": "Study Room",
-        "serviceRoom": "Service Room",
-        "laundryRoom": "Laundry Room"
+        "coffeeShop": "コーヒーショップ",
+        "gamingStudio": "ゲームスタジオ",
+        "atticLounge": "アティック ラウンジ",
+        "studyRoom": "自習室",
+        "serviceRoom": "サービスルーム",
+        "laundryRoom": "ランドリールーム"
       },
       "livingRoomScenes": {
-        "sereneLounge": "Serene Lounge",
-        "moodyLounge": "Moody Lounge",
-        "organicLiving": "Organic Living",
-        "grandSalon": "Grand Salon",
-        "playfulLounge": "Playful Lounge"
+        "sereneLounge": "セリーンラウンジ",
+        "moodyLounge": "ムーディーラウンジ",
+        "organicLiving": "オーガニックリビング",
+        "grandSalon": "グランドサロン",
+        "playfulLounge": "プレイフルラウンジ"
       },
       "homeLuxeScenes": {
-        "restaurant": "Restaurant",
-        "studyLibrary": "Study Library",
-        "atticRetreat": "Attic Retreat",
-        "toiletSuite": "Toilet Suite",
-        "balcony": "Balcony",
-        "hall": "Hall",
-        "deckDay": "Deck Day",
-        "deckNight": "Deck Night"
+        "restaurant": "レストラン",
+        "studyLibrary": "研究図書館",
+        "atticRetreat": "アティック リトリート",
+        "toiletSuite": "トイレスイート",
+        "balcony": "バルコニー",
+        "hall": "ホール",
+        "deckDay": "デッキデー",
+        "deckNight": "デッキナイト"
       },
       "exteriorPrimaryScenes": {
-        "house": "House",
-        "residential": "Residential",
-        "villa": "Villa",
-        "glassCorner": "Glass Corner",
-        "apartment": "Apartment"
+        "house": "ハウス",
+        "residential": "住宅用",
+        "villa": "ヴィラ",
+        "glassCorner": "ガラスコーナー",
+        "apartment": "アパートメント"
       },
       "exteriorSecondaryScenes": {
-        "apartmentTower": "Apartment Tower",
-        "retailPavilion": "Retail Pavilion",
-        "officeBuilding": "Office Building",
-        "modernVilla": "Modern Villa",
-        "residentialTower": "Residential Tower"
+        "apartmentTower": "アパートメントタワー",
+        "retailPavilion": "小売パビリオン",
+        "officeBuilding": "オフィスビル",
+        "modernVilla": "モダンなヴィラ",
+        "residentialTower": "レジデンシャルタワー"
       },
       "gardenPrimaryScenes": {
-        "infinityPool": "Infinity Pool",
-        "waterfallCourt": "Waterfall Court",
-        "sunsetFirePit": "Sunset Fire Pit",
-        "tropicalLounge": "Tropical Lounge",
-        "livingWall": "Living Wall",
-        "lightCourt": "Light Court"
+        "infinityPool": "インフィニティプール",
+        "waterfallCourt": "ウォーターフォール コート",
+        "sunsetFirePit": "サンセットファイヤーピット",
+        "tropicalLounge": "トロピカルラウンジ",
+        "livingWall": "リビングウォール",
+        "lightCourt": "ライトコート"
       },
       "gardenSecondaryScenes": {
-        "sunsetPool": "Sunset Pool",
-        "fireCove": "Fire Cove",
-        "poolCourt": "Pool Court",
-        "waterfallLounge": "Waterfall Lounge",
-        "resortDeck": "Resort Deck",
-        "lagoonFalls": "Lagoon Falls"
+        "sunsetPool": "サンセットプール",
+        "fireCove": "ファイヤーコーブ",
+        "poolCourt": "プールコート",
+        "waterfallLounge": "ウォーターフォール ラウンジ",
+        "resortDeck": "リゾートデッキ",
+        "lagoonFalls": "ラグーン フォールズ"
       },
       "exteriorBuildingTypes": {
-        "apartment": "Apartment",
-        "house": "House",
-        "officeBuilding": "Office Building",
-        "villa": "Villa",
-        "residential": "Residential",
-        "retail": "Retail"
+        "apartment": "アパートメント",
+        "house": "ハウス",
+        "officeBuilding": "オフィスビル",
+        "villa": "ヴィラ",
+        "residential": "住宅用",
+        "retail": "小売"
       }
     }
   },
   "legacyUnlocalized": {
     "paintWizard": {
-      "autoDetectFailureMessage": "Auto-detect couldn't run. Please brush manually.",
-      "cancelledGenerationMessage": "Cancelled by user.",
+      "autoDetectFailureMessage": "Auto-detect couldn't run.手動でブラッシングしてください。",
+      "cancelledGenerationMessage": "ユーザーによりキャンセルされました。",
       "result": {
-        "heading": "Behold your new interior",
-        "subheading": "A polished wall concept, composed to preserve the room's structure, furnishing layout, and natural light.",
-        "appliedFinish": "Applied Finish",
-        "saveToGallery": "Save to Gallery",
-        "share": "Share",
-        "tryAgain": "Try Again"
+        "heading": "あなたの新しいインテリアをご覧ください",
+        "subheading": "部屋の構造、家具のレイアウト、自然光を維持するように構成された、洗練された壁のコンセプト。",
+        "appliedFinish": "応用仕上げ",
+        "saveToGallery": "ギャラリーに保存",
+        "share": "シェアする",
+        "tryAgain": "もう一度やり直してください"
       }
     }
   }

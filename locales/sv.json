@@ -169,7 +169,8 @@
       "description": "Välj om HomeDecor AI följer ditt enhetsspråk eller använder ett valt språk i appen.",
       "auto": "Auto (Systemstandard)",
       "autoShort": "Auto",
-      "usingSystem": "Följer för närvarande {{language}} från din enhet"
+      "usingSystem": "Följer för närvarande {{language}} från din enhet",
+      "restartNotice": "Tillämpar den nya layoutriktningen..."
     },
     "messages": {
       "destinationUnavailable": "Denna destination är inte tillgänglig just nu.",
@@ -788,7 +789,7 @@
         }
       },
       "styles": {
-        "modern": "Modern",
+        "modern": "Modernt",
         "luxury": "Lyx",
         "japandi": "Japandi",
         "cyberpunk": "Cyberpunk",
@@ -843,7 +844,7 @@
       },
       "palettes": {
         "surprise": "Kuraterad mix",
-        "gray": "Millennial Gray",
+        "gray": "Millennial Grey",
         "terracotta": "Terrakotta-mirage",
         "forest": "Skogstoner",
         "peach": "Persikoträdgård",
@@ -857,7 +858,7 @@
       },
       "gardenPalettes": {
         "garden-surprise": "Överraska mig",
-        "garden-gray": "Millennial Gray",
+        "garden-gray": "Millennial Grey",
         "garden-terracotta": "Terrakotta-mirage",
         "garden-neon-sunset": "Neonsolnedgång",
         "garden-forest": "Skogstoner",

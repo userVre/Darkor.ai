@@ -1,53 +1,53 @@
 {
   "app": {
-    "name": "HomeDecor AI"
+    "name": "__토큰_0__"
   },
   "common": {
     "actions": {
       "continue": "계속",
       "cancel": "취소",
-      "close": "Close",
-      "delete": "Delete",
+      "close": "닫기",
+      "delete": "삭제",
       "save": "저장",
       "share": "공유",
-      "restore": "Restore",
-      "upgrade": "Upgrade",
-      "tryAgain": "Please try again.",
+      "restore": "복원",
+      "upgrade": "업그레이드",
+      "tryAgain": "다시 시도해 주세요.",
       "openSettings": "설정 열기",
-      "notNow": "Not now",
-      "takePhoto": "Take Photo",
-      "chooseFromGallery": "Choose from Gallery",
+      "notNow": "지금은 아님",
+      "takePhoto": "사진 찍기",
+      "chooseFromGallery": "갤러리에서 선택",
       "addPhoto": "사진 추가",
-      "chooseMediaSource": "Choose an image source",
-      "examplePhotos": "Example Photos",
-      "seeAll": "Explore All",
-      "uploadPlus": "Upload +",
+      "chooseMediaSource": "이미지 소스 선택",
+      "examplePhotos": "예시 사진",
+      "seeAll": "모두 탐색",
+      "uploadPlus": "업로드 +",
       "exit": "나가기",
-      "connect": "Connecting...",
-      "tryThis": "Try This"
+      "connect": "연결 중...",
+      "tryThis": "이것을 시도하십시오"
     },
     "labels": {
-      "email": "Email",
-      "password": "Password",
-      "version": "Version {{version}}",
-      "lastUpdated": "Last updated",
-      "step": "Step {{current}} / {{total}}"
+      "email": "이메일",
+      "password": "비밀번호",
+      "version": "버전 {{version}}",
+      "lastUpdated": "마지막 업데이트",
+      "step": "단계 {{current}} / {{total}}"
     },
     "alerts": {
       "exitTitle": "나가시겠습니까?",
       "progressLost": "진행 상황이 사라집니다.",
-      "completeStepTitle": "Complete this step",
-      "makeSelection": "Make a selection to continue.",
-      "addPhotoToContinue": "Add a photo to continue.",
-      "invalidHexTitle": "Invalid color",
-      "invalidHexBody": "Enter a valid 6-digit hex code such as #D946EF."
+      "completeStepTitle": "이 단계를 완료하세요",
+      "makeSelection": "계속하려면 선택하세요.",
+      "addPhotoToContinue": "계속하려면 사진을 추가하세요.",
+      "invalidHexTitle": "잘못된 색상",
+      "invalidHexBody": "#D946EF과 같은 유효한 6자리 16진수 코드를 입력하세요."
     },
     "states": {
-      "workInProgress": "Work in progress",
-      "generationFailed": "Render encountered an issue. Please try again.",
+      "workInProgress": "작업 진행 중",
+      "generationFailed": "렌더링에 문제가 발생했습니다. 다시 시도해 주세요.",
       "savedToGallery": "갤러리에 저장됨",
-      "photoPermissionNeeded": "Photo library access is required.",
-      "loading": "Loading..."
+      "photoPermissionNeeded": "사진 라이브러리 접근 권한이 필요합니다.",
+      "loading": "로드 중..."
     }
   },
   "boot": {
@@ -55,8 +55,8 @@
     "loadingAccount": "계정을 불러오는 중...",
     "checkingPlan": "요금제를 확인하는 중...",
     "secureAccount": "계정을 보호하고 제작을 시작하세요...",
-    "missingEnvTitle": "Missing Environment Variables",
-    "missingEnvBody": "The following values are required before HomeDecor AI can launch:"
+    "missingEnvTitle": "누락된 환경 변수",
+    "missingEnvBody": "HomeDecor AI을(를) 실행하려면 다음 값이 필요합니다."
   },
   "tabs": {
     "tools": "도구",
@@ -65,35 +65,35 @@
     "profile": "프로필"
   },
   "home": {
-    "title": "HomeDecor AI",
+    "title": "__토큰_0__",
     "accessibility": {
-      "openCredits": "Open credits"
+      "openCredits": "오픈 크레딧"
     },
     "errors": {
-      "tryItUnavailableTitle": "Preview unavailable"
+      "tryItUnavailableTitle": "미리보기를 사용할 수 없습니다."
     },
     "tools": {
       "interior": {
-        "title": "Interior Design",
+        "title": "인테리어 디자인",
         "description": "Reimagine your space with AI precision."
       },
       "exterior": {
-        "title": "Exterior Design",
-        "description": "Reimagine your home's exterior with world-class facade styling."
+        "title": "외관 디자인",
+        "description": "세계적 수준의 외관 스타일로 집의 외관을 새롭게 상상해보세요."
       },
       "garden": {
-        "title": "Garden Design",
-        "description": "Design stunning gardens and outdoor spaces effortlessly."
+        "title": "정원 디자인",
+        "description": "멋진 정원과 야외 공간을 손쉽게 디자인해보세요."
       },
       "paint": {
-        "title": "Paint (Wall)",
-        "description": "Refine your walls with bespoke color palettes and designer textures."
+        "title": "페인트(벽)",
+        "description": "맞춤형 색상 팔레트와 디자이너 텍스처로 벽을 세련되게 꾸며보세요."
       },
       "floor": {
-        "title": "Floor Restyle",
-        "description": "Elevate your room's foundation with premium materials and finishes."
+        "title": "바닥 리스타일",
+        "description": "프리미엄 소재와 마감재로 객실의 기초를 한층 높여보세요."
       },
-      "cta": "Try This"
+      "cta": "이것을 시도하십시오"
     }
   },
   "paywall": {
@@ -107,408 +107,409 @@
     "yearlyAccess": "연간 이용",
     "weeklyAccess": "주간 이용",
     "freeTrial": "3일 무료 체험",
-    "justPerYear": "Just {{price}} per year",
+    "justPerYear": "연간 {{price}}",
     "pricePerYear": "연간 {{price}}",
     "pricePerWeek": "주간 {{price}}",
     "perWeek": "매주",
-    "thenWeekly": "Then {{price}}",
+    "thenWeekly": "그런 다음 {{price}}",
     "thenPricePerWeek": "이후 주당 {{price}}",
     "noPaymentNow": "지금 결제 없음",
     "cancelAnytime": "언제든 취소 가능",
-    "trialEnabled": "Free trial enabled",
-    "enableTrial": "Enable free trial",
+    "trialEnabled": "무료 평가판이 활성화되었습니다.",
+    "enableTrial": "무료 평가판 활성화",
     "processing": "처리 중...",
-    "tryForFree": "Begin Your Pro Trial",
-    "continue": "Begin Your Pro Trial",
-    "subtitle": "Experience the full power of architectural AI with higher limits and 4K precision.",
+    "tryForFree": "프로 평가판을 시작하세요",
+    "continue": "프로 평가판을 시작하세요",
+    "subtitle": "더 높은 한도와 4K 정밀도로 아키텍처 AI의 모든 기능을 경험해 보세요.",
     "terms": "약관",
     "privacy": "개인정보",
-    "subscriptionsUnavailable": "Subscriptions are temporarily unavailable.",
-    "restoreFailed": "Restore failed",
-    "restored": "Restored",
-    "noActiveSubscriptions": "No active subscriptions were found.",
-    "purchaseError": "Purchase Error",
-    "planUnavailable": "The selected plan is unavailable right now.",
-    "moroccoPricingUnavailable": "Localized MAD pricing is temporarily unavailable. Please try again in a moment.",
-    "subscriptionConfirmFailed": "We could not confirm your subscription. Please try again.",
-    "purchaseCancelled": "Purchase cancelled.",
-    "closeA11y": "Close paywall",
+    "subscriptionsUnavailable": "일시적으로 구독을 사용할 수 없습니다.",
+    "restoreFailed": "복원 실패",
+    "restored": "복원됨",
+    "noActiveSubscriptions": "활성 구독을 찾을 수 없습니다.",
+    "purchaseError": "구매 오류",
+    "planUnavailable": "선택한 요금제는 현재 사용할 수 없습니다.",
+    "moroccoPricingUnavailable": "현지화된 MAD 가격은 일시적으로 제공되지 않습니다. 잠시 후 다시 시도해 주세요.",
+    "subscriptionConfirmFailed": "구독을 확인할 수 없습니다. 다시 시도해 주세요.",
+    "purchaseCancelled": "구매가 취소되었습니다.",
+    "closeA11y": "페이월 닫기",
     "title": "Design Like a Pro. No Limits.",
-    "beginTrial": "Begin Your Pro Trial"
+    "beginTrial": "프로 평가판을 시작하세요"
   },
   "creditLimit": {
-    "title": "Upgrade to Professional Access.",
-    "body": "You've reached your standard rendering limit. Unlock high-res exports and faster processing now."
+    "title": "Professional Access로 업그레이드하세요.",
+    "body": "표준 렌더링 한도에 도달했습니다. 지금 고해상도 내보내기 및 더 빠른 처리를 잠금 해제하세요."
   },
   "settings": {
     "title": "설정",
-    "heroTitle": "Free Plan",
+    "heroTitle": "무료 플랜",
     "featureItems": {
-      "advancedAi": "Advanced AI Model",
-      "fastProcessing": "Fast Processing",
-      "removeAds": "Remove All Ads"
+      "advancedAi": "고급 AI 모델",
+      "fastProcessing": "빠른 처리",
+      "removeAds": "모든 광고 제거"
     },
     "upgradePro": "PRO 업그레이드",
     "rows": {
-      "language": "Language",
-      "feedback": "Feedback",
+      "language": "언어",
+      "feedback": "피드백",
       "faq": "FAQ",
-      "rateUs": "Rate Us",
-      "shareWithFriends": "Share with Friends",
-      "termsOfUse": "Terms of Use",
-      "privacyPolicy": "Privacy Policy",
-      "restorePurchase": "Restore Purchase",
-      "userId": "User ID",
-      "deleteInformation": "Delete Information"
+      "rateUs": "우리를 평가해 주세요",
+      "shareWithFriends": "친구와 공유",
+      "termsOfUse": "이용약관",
+      "privacyPolicy": "개인 정보 보호 정책",
+      "restorePurchase": "구매 복원",
+      "userId": "사용자 ID",
+      "deleteInformation": "정보 삭제"
     },
     "states": {
-      "notSignedIn": "Not signed in"
+      "notSignedIn": "로그인되지 않음"
     },
     "language": {
-      "title": "Language",
-      "description": "Choose whether HomeDecor AI follows your device language or uses a selected in-app language.",
-      "auto": "Auto (System Default)",
-      "autoShort": "Auto",
-      "usingSystem": "Currently following {{language}} from your device"
+      "title": "언어",
+      "description": "HomeDecor AI이(가) 기기 언어를 따르거나 선택한 인앱 언어를 사용할지 선택하세요.",
+      "auto": "자동(시스템 기본값)",
+      "autoShort": "자동",
+      "usingSystem": "현재 기기에서 {{language}}을(를) 팔로우하고 있습니다.",
+      "restartNotice": "새로운 레이아웃 방향을 적용하는 중..."
     },
     "messages": {
-      "destinationUnavailable": "This destination is unavailable right now.",
-      "emailClientUnavailable": "Unable to open your email app.",
-      "reviewUnavailable": "Review requests are unavailable right now.",
-      "shareUnavailable": "Unable to open the share sheet.",
-      "subscriptionsUnavailable": "Subscriptions are unavailable right now.",
-      "noActiveSubscriptions": "No active subscriptions were found.",
-      "restoreFailed": "Restore failed. Please try again.",
-      "noUserId": "No authenticated user ID is available.",
-      "userIdCopied": "User ID copied",
-      "deleteFailed": "Unable to delete your account right now."
+      "destinationUnavailable": "지금은 이 목적지를 사용할 수 없습니다.",
+      "emailClientUnavailable": "이메일 앱을 열 수 없습니다.",
+      "reviewUnavailable": "지금은 검토 요청을 할 수 없습니다.",
+      "shareUnavailable": "공유 시트를 열 수 없습니다.",
+      "subscriptionsUnavailable": "지금은 구독을 사용할 수 없습니다.",
+      "noActiveSubscriptions": "활성 구독을 찾을 수 없습니다.",
+      "restoreFailed": "복원에 실패했습니다. 다시 시도해 주세요.",
+      "noUserId": "인증된 사용자 ID가 없습니다.",
+      "userIdCopied": "사용자 ID가 복사되었습니다.",
+      "deleteFailed": "지금은 계정을 삭제할 수 없습니다."
     },
-    "shareMessage": "Explore designs created with HomeDecor AI: {{url}}",
+    "shareMessage": "HomeDecor AI: {{url}}으로 만든 디자인 살펴보기",
     "deleteAccount": {
-      "title": "Delete account?",
-      "body": "This will permanently delete your account and all associated data. This action cannot be undone."
+      "title": "계정을 삭제하시겠습니까?",
+      "body": "이렇게 하면 귀하의 계정 및 모든 관련 데이터가 영구적으로 삭제됩니다. 이 작업은 취소할 수 없습니다."
     }
   },
   "profile": {
-    "title": "My Design Portfolio",
-    "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
+    "title": "내 디자인 포트폴리오",
+    "emptyTitle": "귀하의 포트폴리오가 비어 있습니다. 당신의 비전이 실현되는 것을 확인하기 위해 프로젝트를 시작하십시오.",
     "emptySubtitle": "",
-    "compareHint": "Drag to compare. Double-tap to reset.",
-    "deleteFromBoardTitle": "Remove from portfolio?",
-    "deleteFromBoardBody": "This design will be removed from your portfolio.",
-    "deletedFromBoard": "Removed from portfolio",
-    "unableDelete": "Unable to remove this design.",
-    "generationFailedBody": "This render did not complete successfully. Please try again.",
-    "saveToGallery": "Save to Photo Library",
-    "savedToGallery": "Saved to Photo Library",
-    "unableSave": "Unable to save this design."
+    "compareHint": "비교하려면 드래그하세요. 재설정하려면 두 번 탭하세요.",
+    "deleteFromBoardTitle": "포트폴리오에서 삭제하시겠습니까?",
+    "deleteFromBoardBody": "이 디자인은 귀하의 포트폴리오에서 제거됩니다.",
+    "deletedFromBoard": "포트폴리오에서 삭제됨",
+    "unableDelete": "이 디자인을 제거할 수 없습니다.",
+    "generationFailedBody": "이 렌더링이 성공적으로 완료되지 않았습니다. 다시 시도해 주세요.",
+    "saveToGallery": "사진 라이브러리에 저장",
+    "savedToGallery": "사진 라이브러리에 저장됨",
+    "unableSave": "이 디자인을 저장할 수 없습니다."
   },
   "discover": {
-    "title": "Discover",
-    "subtitle": "Curated interiors, architecture, and landscape references organized into fast-scrolling collections.",
+    "title": "발견하다",
+    "subtitle": "빠르게 스크롤되는 컬렉션으로 정리된 엄선된 인테리어, 건축물, 조경 자료입니다.",
     "tabs": {
       "home": "Interior",
       "garden": "Garden",
       "exterior": "Exterior "
     },
-    "tryThisStyle": "Try This Style"
+    "tryThisStyle": "이 스타일을 시도해 보세요"
   },
   "auth": {
-    "accountEyebrow": "HomeDecor AI Account",
-    "emailPlaceholder": "you@company.com",
+    "accountEyebrow": "HomeDecor AI 계정",
+    "emailPlaceholder": "__토큰_0__",
     "signIn": {
-      "title": "Sign in",
-      "subtitle": "Access your saved designs, credits, purchases, and project history in one refined workspace.",
-      "passwordPlaceholder": "Enter your password",
-      "cta": "Continue",
-      "loading": "Signing in...",
-      "appleCta": "Continue with Apple",
-      "additionalVerificationTitle": "Sign in",
-      "additionalVerificationBody": "Additional verification is required for this account.",
-      "errorTitle": "Sign-in failed",
-      "errorFallback": "Unable to sign you in.",
-      "appleErrorFallback": "Apple sign-in failed.",
-      "noAccount": "No account?",
-      "createOne": "Create one"
+      "title": "로그인",
+      "subtitle": "하나의 세련된 작업 공간에서 저장된 디자인, 크레딧, 구매 및 프로젝트 기록에 액세스하세요.",
+      "passwordPlaceholder": "비밀번호를 입력하세요",
+      "cta": "계속하다",
+      "loading": "로그인 중...",
+      "appleCta": "Apple로 계속하기",
+      "additionalVerificationTitle": "로그인",
+      "additionalVerificationBody": "이 계정에 대한 추가 확인이 필요합니다.",
+      "errorTitle": "로그인 실패",
+      "errorFallback": "로그인할 수 없습니다.",
+      "appleErrorFallback": "Apple 로그인에 실패했습니다.",
+      "noAccount": "계정이 없나요?",
+      "createOne": "하나 만들기"
     },
     "signUp": {
-      "title": "Create account",
-      "subtitle": "Create your account to carry your designs, subscriptions, and saved projects across devices.",
-      "passwordPlaceholder": "Create a secure password",
-      "cta": "Create account",
-      "loading": "Creating...",
-      "appleCta": "Continue with Apple",
-      "verifyTitle": "Verify email",
-      "verifyBody": "Check your inbox for the verification code, then sign in.",
-      "errorTitle": "Sign-up failed",
-      "errorFallback": "Unable to create your account.",
-      "appleErrorFallback": "Apple sign-up failed.",
-      "haveAccount": "Already have an account?",
-      "signInLink": "Sign in"
+      "title": "계정 만들기",
+      "subtitle": "귀하의 디자인, 구독, 저장된 프로젝트를 여러 장치에서 사용할 수 있도록 계정을 만드세요.",
+      "passwordPlaceholder": "안전한 비밀번호를 만드세요",
+      "cta": "계정 만들기",
+      "loading": "만드는 중...",
+      "appleCta": "Apple로 계속하기",
+      "verifyTitle": "이메일 확인",
+      "verifyBody": "받은편지함에서 인증 코드를 확인한 후 로그인하세요.",
+      "errorTitle": "가입 실패",
+      "errorFallback": "계정을 만들 수 없습니다.",
+      "appleErrorFallback": "Apple 가입에 실패했습니다.",
+      "haveAccount": "이미 계정이 있나요?",
+      "signInLink": "로그인"
     }
   },
   "faq": {
-    "eyebrow": "Support",
+    "eyebrow": "지원",
     "title": "FAQ",
-    "description": "Clear answers to the most common HomeDecor AI questions.",
+    "description": "가장 일반적인 HomeDecor AI 질문에 대한 명확한 답을 얻으세요.",
     "items": {
       "credits": {
-        "question": "How do credits work in HomeDecor AI?",
-        "answer": "Each render uses credits based on the workflow and output tier you choose. Your remaining balance updates automatically after every generation."
+        "question": "HomeDecor AI에서 크레딧은 어떻게 작동하나요?",
+        "answer": "각 렌더링은 선택한 워크플로 및 출력 계층에 따라 크레딧을 사용합니다. 남은 잔액은 매 세대마다 자동으로 업데이트됩니다."
       },
       "pro": {
-        "question": "What do I unlock with PRO?",
-        "answer": "PRO unlocks premium rendering tools, faster processing, and higher-end output quality through the in-app upgrade flow."
+        "question": "PRO으로 무엇을 잠금 해제할 수 있나요?",
+        "answer": "PRO은 인앱 업그레이드 흐름을 통해 프리미엄 렌더링 도구, 더 빠른 처리 및 고급 출력 품질을 제공합니다."
       },
       "slowResult": {
-        "question": "Why is my result taking longer than expected?",
-        "answer": "Render times depend on queue demand, source image quality, and the workflow you selected. Keeping the app open on a stable connection helps avoid interruptions."
+        "question": "결과가 예상보다 오래 걸리는 이유는 무엇입니까?",
+        "answer": "렌더링 시간은 대기열 수요, 소스 이미지 품질 및 선택한 작업 흐름에 따라 달라집니다. 안정적인 연결 상태에서 앱을 열어두면 중단을 방지하는 데 도움이 됩니다."
       },
       "deleteAccount": {
-        "question": "How do I delete my account?",
-        "answer": "Open Settings and choose Delete Information. This permanently removes your account data and signs you out after confirmation."
+        "question": "내 계정을 어떻게 삭제하나요?",
+        "answer": "설정을 열고 정보 삭제를 선택합니다. 이렇게 하면 계정 데이터가 영구적으로 제거되고 확인 후 로그아웃됩니다."
       }
     }
   },
   "privacy": {
-    "eyebrow": "Policy",
-    "title": "Privacy Policy",
-    "description": "The information we collect, how it is used, and the controls you have inside HomeDecor AI.",
-    "date": "March 14, 2026",
+    "eyebrow": "정책",
+    "title": "개인 정보 보호 정책",
+    "description": "당사가 수집하는 정보, 정보 사용 방법 및 HomeDecor AI 내부 제어 기능입니다.",
+    "date": "2026년 3월 14일",
     "sections": {
       "overview": {
-        "title": "Overview",
-        "body": "HomeDecor AI (\"HomeDecor\", \"we\", \"our\", \"us\") provides AI-powered interior and exterior redesign services. This Privacy Policy explains what data we collect, how we use it, and the choices you have."
+        "title": "개요",
+        "body": "HomeDecor AI(\"HomeDecor\", \"우리\", \"우리의\", \"우리\")는 AI 기반 내부 및 외부 재설계 서비스를 제공합니다. 본 개인정보 보호정책은 당사가 수집하는 데이터, 사용 방법 및 귀하의 선택권에 대해 설명합니다."
       },
       "informationWeCollect": {
-        "title": "Information We Collect",
-        "body": "We collect information you provide, such as account details and uploaded images, usage data such as feature interactions and device information, and payment status data from RevenueCat to manage subscriptions."
+        "title": "당사가 수집하는 정보",
+        "body": "당사는 구독을 관리하기 위해 계정 세부정보 및 업로드된 이미지, 기능 상호 작용 및 장치 정보와 같은 사용 데이터, 결제 상태 데이터 등 귀하가 제공하는 정보를 RevenueCat에서 수집합니다."
       },
       "howWeUseYourData": {
-        "title": "How We Use Your Data",
-        "body": "We use your data to deliver redesigns, personalize your experience, manage credits and billing, improve model quality, and secure the app. We do not sell your personal data."
+        "title": "당사가 귀하의 데이터를 사용하는 방법",
+        "body": "우리는 귀하의 데이터를 사용하여 재설계를 제공하고, 귀하의 경험을 개인화하고, 크레딧 및 청구를 관리하고, 모델 품질을 개선하고, 앱을 보호합니다. 우리는 귀하의 개인 데이터를 판매하지 않습니다."
       },
       "imageProcessing": {
-        "title": "Image Processing",
-        "body": "Images you upload are processed to generate redesigns. We store generated images and related metadata so you can revisit your results, and you can remove your data by deleting your account."
+        "title": "이미지 처리",
+        "body": "업로드한 이미지는 재디자인을 생성하기 위해 처리됩니다. 생성된 이미지와 관련 메타데이터는 귀하가 결과를 다시 확인할 수 있도록 저장되며, 귀하는 계정을 삭제하여 데이터를 제거할 수 있습니다."
       },
       "sharingAndDisclosure": {
-        "title": "Sharing and Disclosure",
-        "body": "We share data only with providers required to operate HomeDecor AI, such as authentication, analytics, and payment processing partners, or when disclosure is required by law."
+        "title": "공유 및 공개",
+        "body": "우리는 인증, 분석, 결제 처리 파트너 등 HomeDecor AI을 운영하는 데 필요한 제공업체나 법률에 따라 공개가 요구되는 경우에만 데이터를 공유합니다."
       },
       "dataSecurity": {
-        "title": "Data Security",
-        "body": "We use encryption and access controls to protect your data. No system is perfectly secure, so we also recommend strong passwords and a protected device."
+        "title": "데이터 보안",
+        "body": "우리는 귀하의 데이터를 보호하기 위해 암호화 및 액세스 제어를 사용합니다. 완벽하게 안전한 시스템은 없으므로 강력한 비밀번호와 보호된 장치를 권장합니다."
       },
       "yourRights": {
-        "title": "Your Rights",
-        "body": "You can access, update, or delete your account data at any time. Account deletion removes your stored generations and profile information from our systems."
+        "title": "귀하의 권리",
+        "body": "귀하는 언제든지 귀하의 계정 데이터에 접근, 업데이트 또는 삭제할 수 있습니다. 계정을 삭제하면 당사 시스템에서 저장된 세대 및 프로필 정보가 제거됩니다."
       },
       "contactUs": {
-        "title": "Contact Us",
-        "body": "For privacy questions or requests, contact us at support@homedecor.ai."
+        "title": "문의하기",
+        "body": "개인정보 보호 관련 질문이나 요청이 있는 경우 support@homedecor.ai로 문의하세요."
       }
     }
   },
   "terms": {
-    "eyebrow": "Policy",
-    "title": "Terms of Service",
-    "description": "The rules, expectations, and service boundaries for using HomeDecor AI.",
-    "date": "March 14, 2026",
+    "eyebrow": "정책",
+    "title": "서비스 약관",
+    "description": "HomeDecor AI 사용에 대한 규칙, 기대치 및 서비스 경계입니다.",
+    "date": "2026년 3월 14일",
     "sections": {
       "acceptanceOfTerms": {
-        "title": "Acceptance of Terms",
-        "body": "By accessing or using HomeDecor AI, you agree to these Terms of Service. If you do not agree, do not use the app."
+        "title": "약관 동의",
+        "body": "HomeDecor AI에 액세스하거나 사용함으로써 귀하는 본 서비스 약관에 동의하게 됩니다. 동의하지 않으시면 앱을 사용하지 마세요."
       },
       "serviceDescription": {
-        "title": "Service Description",
-        "body": "HomeDecor AI provides AI-generated redesigns for interior and exterior spaces. Outputs are visual concepts and may not account for structural, engineering, or code constraints."
+        "title": "서비스 설명",
+        "body": "HomeDecor AI은 내부 및 외부 공간에 대한 AI 생성 재설계를 제공합니다. 출력은 시각적 개념이며 구조적, 엔지니어링 또는 코드 제약 조건을 설명하지 않을 수 있습니다."
       },
       "accountAndEligibility": {
-        "title": "Account and Eligibility",
-        "body": "You must be at least 13 years old to use HomeDecor AI. You are responsible for maintaining account security and for activity that happens under your credentials."
+        "title": "계정 및 자격",
+        "body": "HomeDecor AI을(를) 사용하려면 13세 이상이어야 합니다. 귀하는 계정 보안을 유지하고 귀하의 자격 증명에 따라 발생하는 활동에 대한 책임이 있습니다."
       },
       "userContent": {
-        "title": "User Content",
-        "body": "You retain ownership of images you upload. By using the service, you grant HomeDecor AI a limited license to process and store them so we can generate and return your results."
+        "title": "사용자 콘텐츠",
+        "body": "업로드한 이미지의 소유권은 귀하에게 있습니다. 서비스를 사용하면 HomeDecor AI에 결과를 생성하고 반환할 수 있도록 처리하고 저장할 수 있는 제한된 라이선스가 부여됩니다."
       },
       "subscriptionsAndCredits": {
-        "title": "Subscriptions and Credits",
-        "body": "Paid plans unlock enhanced features and higher-quality exports. Credits are consumed per generation, and subscription billing and renewals are handled by your app store and RevenueCat."
+        "title": "구독 및 크레딧",
+        "body": "유료 플랜을 사용하면 향상된 기능과 고품질 내보내기가 가능합니다. 크레딧은 세대별로 소비되며 구독 청구 및 갱신은 앱 스토어와 RevenueCat에서 처리됩니다."
       },
       "prohibitedUse": {
-        "title": "Prohibited Use",
-        "body": "You agree not to misuse the service, reverse engineer the app, or upload unlawful, harmful, or infringing content."
+        "title": "금지된 사용",
+        "body": "귀하는 서비스를 오용하거나, 앱을 리버스 엔지니어링하거나, 불법적이거나 유해하거나 침해적인 콘텐츠를 업로드하지 않을 것에 동의합니다."
       },
       "disclaimer": {
-        "title": "Disclaimer",
-        "body": "The service is provided \"as is\" without warranties of any kind. We do not guarantee specific design results or the accuracy of AI-generated outputs."
+        "title": "면책조항",
+        "body": "서비스는 어떠한 종류의 보증도 없이 \"있는 그대로\" 제공됩니다. 우리는 특정 설계 결과나 AI 생성 출력의 정확성을 보장하지 않습니다."
       },
       "limitationOfLiability": {
-        "title": "Limitation of Liability",
-        "body": "To the maximum extent permitted by law, HomeDecor AI is not liable for indirect or consequential damages arising from your use of the service."
+        "title": "책임의 제한",
+        "body": "법률이 허용하는 최대 한도 내에서 HomeDecor AI은(는) 귀하의 서비스 사용으로 인해 발생하는 간접적 또는 결과적 손해에 대해 책임을 지지 않습니다."
       },
       "contact": {
-        "title": "Contact",
-        "body": "Questions about these terms can be sent to support@homedecor.ai."
+        "title": "연락처",
+        "body": "이 용어에 대한 질문은 support@homedecor.ai로 보낼 수 있습니다."
       }
     }
   },
   "processing": {
-    "title": "AI is crafting your architectural masterpiece...",
-    "eta": "Your vision will be ready in ~15 seconds.",
-    "cancelKeepCredit": "Cancel and keep my credit",
+    "title": "AI이 당신의 건축 걸작을 만들고 있습니다...",
+    "eta": "~15초 안에 비전이 준비됩니다.",
+    "cancelKeepCredit": "취소하고 신용을 유지하세요",
     "status": {
-      "analyzingGeometry": "Analyzing architectural geometry...",
-      "identifyingSurfaces": "Identifying surfaces and structural lines...",
-      "applyingStyle": "Applying your selected design direction...",
-      "renderingMaterials": "Rendering materials and lighting...",
-      "addingDetails": "Refining the final details...",
-      "almostReady": "Finalizing your render...",
-      "renderingFinalLighting": "Composing the final lighting pass..."
+      "analyzingGeometry": "건축 기하학을 분석하는 중...",
+      "identifyingSurfaces": "표면과 구조선 식별...",
+      "applyingStyle": "선택한 디자인 방향을 적용하는 중...",
+      "renderingMaterials": "렌더링 재료 및 조명...",
+      "addingDetails": "최종 세부 사항을 다듬는 중...",
+      "almostReady": "렌더링을 마무리하는 중...",
+      "renderingFinalLighting": "최종 조명 패스를 구성하는 중..."
     }
   },
   "wizard": {
     "headers": {
-      "back": "Go back",
+      "back": "돌아가기",
       "close": "닫기",
       "previousStep": "이전 단계로 이동",
-      "stepProgress": "Step {{current}}/{{total}}",
-      "creditsRemaining": "Credits remaining"
+      "stepProgress": "단계 {{current}}/{{total}}",
+      "creditsRemaining": "남은 크레딧"
     },
     "stepOne": {
-      "title": "Upload Your Vision",
-      "emptyTitle": "Upload Your Vision",
-      "emptySubtitle": "Redesign and Beautify your home.",
-      "removePhoto": "Remove selected photo",
+      "title": "당신의 비전을 업로드하세요",
+      "emptyTitle": "당신의 비전을 업로드하세요",
+      "emptySubtitle": "집을 재설계하고 아름답게 만드세요.",
+      "removePhoto": "선택한 사진 삭제",
       "cta": "Begin Your Transformation"
     },
     "interior": {
       "stepTwoTitle": "Choose Your Space",
-      "stepTwoSubtitle": "Select the room type so the redesign stays architecturally grounded.",
+      "stepTwoSubtitle": "재설계가 건축학적 기반을 유지하도록 객실 유형을 선택하세요.",
       "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepThreeSubtitle": "디자인 비전을 형성하는 시그니처 스타일을 선택하세요.",
       "stepFourMode": "Design Mode",
-      "stepFourPalette": "Color Harmony"
+      "stepFourPalette": "컬러 하모니"
     },
     "exterior": {
       "stepTwoTitle": "Select Building Type",
-      "stepTwoSubtitle": "Select the architectural form you want to redesign.",
+      "stepTwoSubtitle": "재설계하려는 건축 형태를 선택하세요.",
       "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
-      "stepFourTitle": "Color Harmony"
+      "stepThreeSubtitle": "디자인 비전을 형성하는 시그니처 스타일을 선택하세요.",
+      "stepFourTitle": "컬러 하모니"
     },
     "garden": {
-      "stepOneEmptyTitle": "Upload Your Vision",
-      "stepOneEmptySubtitle": "Redesign and Beautify your home.",
+      "stepOneEmptyTitle": "당신의 비전을 업로드하세요",
+      "stepOneEmptySubtitle": "집을 재설계하고 아름답게 만드세요.",
       "stepTwoTitle": "Curate Your Aesthetic",
-      "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
-      "stepThreeTitle": "Color Harmony"
+      "stepTwoSubtitle": "디자인 비전을 형성하는 시그니처 스타일을 선택하세요.",
+      "stepThreeTitle": "컬러 하모니"
     },
     "floorIntro": {
-      "hero": "Select a flooring style to redefine your room's foundation."
+      "hero": "바닥 스타일을 선택하여 방의 기초를 재정의하세요."
     },
     "paintIntro": {
-      "hero": "Trace any surface to apply custom colors and designer textures instantly."
+      "hero": "표면을 추적하여 맞춤형 색상과 디자이너 텍스처를 즉시 적용할 수 있습니다."
     },
     "floorFlow": {
       "title": "바닥 리스타일",
-      "masking": "Mapping your floor plane...",
-      "promptLabel": "Describe Your Vision",
+      "masking": "평면도 매핑 중...",
+      "promptLabel": "당신의 비전을 설명하세요",
       "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials.",
-      "promptExamplesTitle": "Prompt examples",
+      "promptExamplesTitle": "프롬프트 예시",
       "generateCta": "내 디자인 생성 →",
-      "selectMaterialCta": "Select a Material",
-      "selectMaterialTitle": "Select Material",
-      "selectMaterialBody": "Select a premium material curated to read as photoreal, perspective-aware, and listing-ready.",
-      "selectedMaterial": "Selected Material",
-      "noMaterialSelected": "No material selected",
-      "unlockMaterialBody": "Select a flooring material to unlock the AI restyle.",
-      "addPromptTitle": "Add a prompt",
-      "addPromptBody": "Describe the exact floor transformation you want before continuing.",
-      "generatePromptBody": "Choose a custom floor prompt before generating.",
-      "autoMaskPreparing": "Preparing the automatic floor mask. Please wait a moment.",
-      "autoMaskSuccess": "Floor mask ready.",
-      "autoMaskFailure": "Automatic detection could not complete. Please brush the floor manually.",
-      "savePermissionTitle": "Photo access needed",
-      "savePermissionBody": "Allow photo library access to save your render to the device.",
-      "cameraAccessTitle": "Camera access needed",
-      "cameraAccessBody": "Enable camera access to capture a floor photo.",
-      "photoAccessTitle": "Photo access needed",
-      "photoAccessBody": "Enable photo library access to upload a floor photo.",
-      "mediaUnavailableTitle": "Unable to open media",
-      "exampleUnavailableBody": "This example photo could not be opened.",
-      "markFloorTitle": "Mark the floor first",
-      "markFloorBody": "Brush over the floor area you want to restyle before continuing.",
-      "pickMaterialTitle": "Pick a material",
-      "pickMaterialBody": "Choose a flooring material before continuing.",
-      "renderFinishing": "This render is already finishing up.",
-      "cancelSuccess": "Generation canceled. Your credit was kept.",
-      "cancelUnavailable": "Unable to cancel right now.",
-      "supportingText": "Uses 1 credit · {{creditsRemaining}}",
-      "creditsRemaining": "{{count}} remaining",
+      "selectMaterialCta": "재료를 선택하세요",
+      "selectMaterialTitle": "재료 선택",
+      "selectMaterialBody": "사실적이고 관점을 인식하며 목록에 바로 게재되도록 선별된 프리미엄 자료를 선택하세요.",
+      "selectedMaterial": "선택된 재료",
+      "noMaterialSelected": "선택한 재료가 없습니다.",
+      "unlockMaterialBody": "AI 리스타일을 잠금 해제하려면 바닥재를 선택하세요.",
+      "addPromptTitle": "프롬프트 추가",
+      "addPromptBody": "계속하기 전에 원하는 바닥 변형을 정확하게 설명하세요.",
+      "generatePromptBody": "생성하기 전에 사용자 정의 층 프롬프트를 선택하세요.",
+      "autoMaskPreparing": "자동 바닥 마스크를 준비합니다. 잠시만 기다려주세요.",
+      "autoMaskSuccess": "바닥 마스크가 준비되었습니다.",
+      "autoMaskFailure": "자동 감지를 완료할 수 없습니다. 바닥을 손으로 솔질해 주세요.",
+      "savePermissionTitle": "사진 액세스 권한 필요",
+      "savePermissionBody": "렌더링을 기기에 저장하려면 사진 라이브러리 액세스를 허용하세요.",
+      "cameraAccessTitle": "카메라 액세스가 필요합니다",
+      "cameraAccessBody": "층 사진을 찍으려면 카메라 액세스를 활성화하세요.",
+      "photoAccessTitle": "사진 액세스 권한 필요",
+      "photoAccessBody": "층 사진을 업로드하려면 사진 라이브러리 액세스를 활성화하세요.",
+      "mediaUnavailableTitle": "미디어를 열 수 없습니다.",
+      "exampleUnavailableBody": "이 예시 사진을 열 수 없습니다.",
+      "markFloorTitle": "바닥을 먼저 표시하세요.",
+      "markFloorBody": "계속하기 전에 스타일을 다시 지정하려는 바닥 영역을 브러시로 칠하세요.",
+      "pickMaterialTitle": "재료를 선택하세요",
+      "pickMaterialBody": "계속하기 전에 바닥재를 선택하십시오.",
+      "renderFinishing": "이 렌더링은 이미 마무리 중입니다.",
+      "cancelSuccess": "세대가 취소되었습니다. 귀하의 신용이 유지되었습니다.",
+      "cancelUnavailable": "지금은 취소할 수 없습니다.",
+      "supportingText": "1크레딧 사용 · {{creditsRemaining}}",
+      "creditsRemaining": "{{count}} 남음",
       "promptExamples": {
-        "frenchOak": "Luxurious wide-plank French Oak in a warm natural finish.",
-        "carraraMarble": "Polished Italian Carrara Marble with deep gray veining.",
-        "microcement": "Contemporary seamless Micro-cement for an industrial chic foundation.",
-        "herringboneWalnut": "Elegant Dark Walnut in a classic Herringbone pattern.",
-        "walnut": "Modern large-format Slate Stone tiles in charcoal gray."
+        "frenchOak": "따뜻하고 자연스러운 마감 처리된 고급스러운 넓은 판자 프렌치 오크입니다.",
+        "carraraMarble": "짙은 회색 결이 있는 세련된 이탈리아 카라라 대리석.",
+        "microcement": "인더스트리얼 시크 기반을 위한 현대적인 이음매 없는 마이크로 시멘트.",
+        "herringboneWalnut": "클래식한 헤링본 패턴의 우아한 다크 월넛입니다.",
+        "walnut": "차콜 그레이 색상의 현대적인 대형 슬레이트 스톤 타일입니다."
       },
       "result": {
-        "heading": "Behold your new interior",
-        "subheading": "A material-led floor transformation designed to stay true to the room's perspective, furnishings, and natural light.",
-        "before": "Before",
-        "after": "After",
-        "materialApplied": "Material Applied",
-        "materialFallback": "Material",
-        "summary": "Your floor has been restyled while preserving room geometry, furniture alignment, and natural light behavior.",
-        "saveToGallery": "Save to Gallery",
-        "share": "Share",
-        "tryAgain": "Try Again"
+        "heading": "새로운 인테리어를 만나보세요",
+        "subheading": "방의 관점, 가구 및 자연광을 그대로 유지하도록 설계된 재료 중심의 바닥 변형입니다.",
+        "before": "이전",
+        "after": "이후",
+        "materialApplied": "적용된 소재",
+        "materialFallback": "소재",
+        "summary": "방의 기하학적 구조, 가구 정렬 및 자연광 동작을 유지하면서 바닥 스타일을 다시 지정했습니다.",
+        "saveToGallery": "갤러리에 저장",
+        "share": "공유",
+        "tryAgain": "다시 시도"
       },
       "materials": {
         "natural-oak": {
-          "title": "Natural Oak",
-          "description": "Airy oak planks with soft natural grain."
+          "title": "천연 오크",
+          "description": "부드러운 천연 결을 지닌 바람이 잘 통하는 오크 판자."
         },
         "walnut-wood": {
-          "title": "Walnut Wood",
-          "description": "Deep walnut planks with rich tailored contrast."
+          "title": "호두나무",
+          "description": "풍부한 테일러드 대비를 갖춘 깊은 호두나무 판자."
         },
         "carrara-marble": {
-          "title": "Carrara Marble",
-          "description": "Bright stone veining with a calm luxe finish."
+          "title": "카라라 대리석",
+          "description": "차분한 럭셔리 마감의 밝은 스톤 결이 특징입니다."
         },
         "polished-concrete": {
-          "title": "Polished Concrete",
-          "description": "Smooth concrete sheen with urban gallery calm."
+          "title": "광택 콘크리트",
+          "description": "매끈한 콘크리트 광택과 도시 갤러리의 차분함."
         },
         "herringbone-oak": {
-          "title": "Herringbone Oak",
-          "description": "Classic oak pattern with warm directional movement."
+          "title": "헤링본 오크",
+          "description": "따뜻한 방향성 움직임이 있는 클래식 오크 패턴입니다."
         },
         "terracotta-tile": {
-          "title": "Terracotta Tile",
-          "description": "Earthy clay warmth with handcrafted character."
+          "title": "테라코타 타일",
+          "description": "손으로 만든 특성을 지닌 흙빛 점토 따뜻함."
         },
         "slate-tile": {
-          "title": "Slate Tile",
-          "description": "Dark slate with a crisp large-format finish."
+          "title": "슬레이트 타일",
+          "description": "선명한 대형 마감 처리를 갖춘 다크 슬레이트입니다."
         },
         "plush-carpet": {
-          "title": "Plush Carpet",
-          "description": "Soft cream carpet with a quiet, cozy feel."
+          "title": "봉제 카펫",
+          "description": "조용하고 아늑한 느낌을 주는 부드러운 크림색 카펫입니다."
         },
         "weathered-oak": {
-          "title": "Weathered Oak",
-          "description": "Mid-tone oak with a gently aged finish."
+          "title": "풍화된 오크",
+          "description": "부드럽게 에이징된 마감의 중간톤 오크입니다."
         }
       }
     },
     "paintFlow": {
       "title": "페인트",
-      "selectionTitle": "Select Surfaces to Transform",
-      "maskTitle": "Select Surfaces to Transform",
+      "selectionTitle": "변환할 표면 선택",
+      "maskTitle": "변환할 표면 선택",
       "colorLabel": "색상",
       "surfaceLabel": "표면",
       "choose": "선택",
@@ -516,888 +517,888 @@
       "colorPickerTitle": "벽 색상을 선택하세요",
       "surfacePickerTitle": "표면 유형 선택",
       "detectTitle": "칠할 수 있는 표면을 감지하는 중...",
-      "detectBody": "HomeDecor AI is tracing repaintable wall surfaces while leaving windows, furniture, trim, and flooring untouched.",
+      "detectBody": "HomeDecor AI은 창문, 가구, 장식 및 바닥을 그대로 유지하면서 다시 칠할 수 있는 벽면을 추적하고 있습니다.",
       "preparingMaskTitle": "마스킹 표면을 준비하는 중...",
-      "preparingMaskBody": "HomeDecor AI is refining the canvas so you can paint crisp edges around built-ins, windows, and furniture.",
+      "preparingMaskBody": "HomeDecor AI에서는 빌트인, 창문, 가구 주변의 선명한 가장자리를 칠할 수 있도록 캔버스를 개선하고 있습니다.",
       "brushWidth": "브러시 너비",
       "eraserWidth": "지우개 너비",
       "generateCta": "벽 페인트하기 →",
       "finishTitle": "마감 유형",
-      "finishBody": "Choose how the paint should catch light so the walls read correctly in a polished, designer-grade render.",
+      "finishBody": "세련된 디자이너급 렌더링에서 벽이 올바르게 인식되도록 페인트가 빛을 받는 방법을 선택합니다.",
       "selectedColor": "선택한 색상",
-      "selectedSurfaceSentence": "Surface: {{surface}}.",
-      "colorLockedBody": "Wall color is locked. Now choose the final sheen profile for the render.",
-      "customColorDescription": "Custom wall tone selected from the precision color picker.",
-      "noColorSelected": "No color selected",
-      "chooseColorBody": "Choose a wall color before continuing.",
-      "savePermissionTitle": "Photo access needed",
-      "savePermissionBody": "Allow photo library access to save your render to the device.",
-      "cameraAccessTitle": "Camera access needed",
-      "cameraAccessBody": "Enable camera access to capture a room photo.",
-      "photoAccessTitle": "Photo access needed",
-      "photoAccessBody": "Enable photo library access to upload a room photo.",
-      "mediaUnavailableTitle": "Unable to open media",
-      "exampleUnavailableBody": "This example photo could not be opened.",
-      "markWallsTitle": "Mark the walls first",
-      "markWallsBody": "Brush over the wall surfaces you want to repaint before generating.",
-      "pickColorTitle": "Pick a color",
-      "pickColorBody": "Choose a wall color before continuing.",
-      "autoDetectSuccess": "Walls detected. Brush to refine if needed.",
-      "autoDetectFailure": "Automatic detection could not complete. Please brush manually.",
-      "renderFinishing": "This render is already finishing up.",
-      "cancelSuccess": "Generation canceled. Your credit was kept.",
-      "cancelUnavailable": "Unable to cancel right now.",
-      "supportingText": "Uses 1 credit · {{creditsRemaining}}",
-      "creditsRemaining": "{{count}} remaining",
-      "intakeTitle": "Upload Your Vision",
-      "intakeBody": "Upload a room photo for precise wall recoloring.",
-      "intakeReadyTitle": "Photo added. Mark the wall area next.",
-      "intakeReadyBody": "Your photo is locked in. Next, brush the wall surfaces so the recolor stays precise around trim, furniture, and decor.",
+      "selectedSurfaceSentence": "표면: {{surface}}.",
+      "colorLockedBody": "벽 색상이 잠겨 있습니다. 이제 렌더링에 대한 최종 광택 프로필을 선택합니다.",
+      "customColorDescription": "정밀 색상 선택기에서 선택한 사용자 정의 벽 톤.",
+      "noColorSelected": "선택한 색상이 없습니다.",
+      "chooseColorBody": "계속하기 전에 벽 색상을 선택하세요.",
+      "savePermissionTitle": "사진 액세스 권한 필요",
+      "savePermissionBody": "렌더링을 기기에 저장하려면 사진 라이브러리 액세스를 허용하세요.",
+      "cameraAccessTitle": "카메라 액세스가 필요합니다",
+      "cameraAccessBody": "방 사진을 찍으려면 카메라 액세스를 활성화하세요.",
+      "photoAccessTitle": "사진 액세스 권한 필요",
+      "photoAccessBody": "회의실 사진을 업로드하려면 사진 라이브러리 액세스를 활성화하세요.",
+      "mediaUnavailableTitle": "미디어를 열 수 없습니다.",
+      "exampleUnavailableBody": "이 예시 사진을 열 수 없습니다.",
+      "markWallsTitle": "먼저 벽에 표시를 하세요",
+      "markWallsBody": "생성하기 전에 다시 칠할 벽면을 브러시로 칠하세요.",
+      "pickColorTitle": "색상을 선택하세요",
+      "pickColorBody": "계속하기 전에 벽 색상을 선택하세요.",
+      "autoDetectSuccess": "벽이 감지되었습니다. 필요한 경우 브러시로 다듬습니다.",
+      "autoDetectFailure": "자동 감지를 완료할 수 없습니다. 수동으로 브러싱해 주세요.",
+      "renderFinishing": "이 렌더링은 이미 마무리 중입니다.",
+      "cancelSuccess": "세대가 취소되었습니다. 귀하의 신용이 유지되었습니다.",
+      "cancelUnavailable": "지금은 취소할 수 없습니다.",
+      "supportingText": "1크레딧 사용 · {{creditsRemaining}}",
+      "creditsRemaining": "{{count}} 남음",
+      "intakeTitle": "당신의 비전을 업로드하세요",
+      "intakeBody": "정확한 벽 채색을 위해 방 사진을 업로드하세요.",
+      "intakeReadyTitle": "사진이 추가되었습니다. 다음으로 벽 영역을 표시하십시오.",
+      "intakeReadyBody": "사진이 고정되었습니다. 다음으로 벽 표면을 브러시로 칠하여 장식, 가구 및 장식 주위에 색상이 정확하게 유지되도록 합니다.",
       "surfaces": {
-        "auto": "Auto",
-        "brick": "Brick",
-        "cabinet": "Cabinet",
-        "door": "Door",
-        "wall": "Wall",
-        "outsideWall": "Outside Wall"
+        "auto": "자동",
+        "brick": "벽돌",
+        "cabinet": "캐비닛",
+        "door": "문",
+        "wall": "벽",
+        "outsideWall": "외벽"
       },
       "colorFamilies": {
-        "pink": "Pink",
-        "blue": "Blue",
-        "green": "Green",
-        "yellow": "Yellow",
-        "gray": "Gray",
-        "red": "Red"
+        "pink": "핑크",
+        "blue": "블루",
+        "green": "녹색",
+        "yellow": "노란색",
+        "gray": "그레이",
+        "red": "빨간색"
       },
       "colors": {
         "sage-green": {
-          "title": "Sage Green",
-          "description": "Soft green calm for bright, polished living spaces."
+          "title": "세이지 그린",
+          "description": "밝고 세련된 생활 공간을 위한 부드러운 녹색 차분함."
         },
         "midnight-navy": {
-          "title": "Midnight Navy",
-          "description": "Tailored navy depth with crisp architectural contrast."
+          "title": "미드나잇 네이비",
+          "description": "선명한 구조적 대비를 갖춘 맞춤형 네이비 깊이."
         },
         "terracotta-glow": {
-          "title": "Terracotta Glow",
-          "description": "Warm clay color with grounded, editorial energy."
+          "title": "테라코타 글로우",
+          "description": "근거 있고 편집적인 에너지가 담긴 따뜻한 점토 색상입니다."
         },
         "dusty-rose": {
-          "title": "Dusty Rose",
-          "description": "Muted blush warmth with soft boutique appeal."
+          "title": "더스티 로즈",
+          "description": "부드러운 부티크 매력과 차분한 블러셔의 따뜻함."
         },
         "gallery-charcoal": {
-          "title": "Gallery Charcoal",
-          "description": "Refined charcoal for moody, art-forward rooms."
+          "title": "갤러리 차콜",
+          "description": "분위기 있고 예술적인 공간을 위한 정제된 숯입니다."
         },
         "soft-ivory": {
-          "title": "Soft Ivory",
-          "description": "Luminous neutral that keeps rooms light, never flat."
+          "title": "소프트 아이보리",
+          "description": "방을 밝게 유지하고 절대 밋밋하지 않게 해주는 빛나는 중성색입니다."
         },
         "olive-grove": {
-          "title": "Olive Grove",
-          "description": "Earthy olive depth with a grounded designer mood."
+          "title": "올리브 그로브",
+          "description": "접지된 디자이너 무드와 흙빛 올리브 깊이."
         },
         "lavender-mist": {
-          "title": "Lavender Mist",
-          "description": "Soft violet haze for elevated pastel rooms."
+          "title": "라벤더 미스트",
+          "description": "고상한 파스텔 객실을 위한 부드러운 보라색 안개."
         },
         "pearl-gray": {
-          "title": "Pearl Gray",
-          "description": "Light tonal gray with polished everyday flexibility."
+          "title": "펄 그레이",
+          "description": "세련된 일상의 유연성을 지닌 밝은 톤의 그레이."
         }
       },
       "finishes": {
         "matte": {
-          "label": "Matte",
-          "description": "Soft, gallery-grade color payoff with the least surface glare."
+          "label": "매트",
+          "description": "표면 눈부심이 최소화된 부드러운 갤러리급 색상 표현."
         },
         "satin": {
-          "label": "Satin",
-          "description": "Balanced sheen for modern interiors with a subtle designer glow."
+          "label": "공단",
+          "description": "은은한 디자이너 광채와 현대적인 인테리어를 위한 균형 잡힌 광택."
         },
         "glossy": {
-          "label": "Glossy",
-          "description": "A polished reflective finish for bold, high-contrast statement walls."
+          "label": "광택",
+          "description": "대담하고 대비가 강한 성명 벽을 위한 광택 반사 마감입니다."
         }
       }
     },
     "examples": {
       "floor": {
-        "crackedConcrete": "Cracked Concrete",
-        "damagedPlanks": "Damaged Planks",
-        "brokenTile": "Broken Tile",
-        "renovationSubfloor": "Renovation Subfloor",
-        "wornPlywood": "Worn Plywood"
+        "crackedConcrete": "갈라진 콘크리트",
+        "damagedPlanks": "손상된 판자",
+        "brokenTile": "깨진 타일",
+        "renovationSubfloor": "리노베이션 지하층",
+        "wornPlywood": "낡은 합판"
       },
       "paint": {
-        "rawConcrete": "Raw Concrete",
-        "peelingPlaster": "Peeling Plaster",
-        "wornWhite": "Worn White",
-        "exposedBrick": "Exposed Brick",
-        "stainedPlaster": "Stained Plaster",
-        "dampStreaks": "Damp Streaks"
+        "rawConcrete": "원시 콘크리트",
+        "peelingPlaster": "필링 석고",
+        "wornWhite": "낡은 흰색",
+        "exposedBrick": "노출된 벽돌",
+        "stainedPlaster": "얼룩진 석고",
+        "dampStreaks": "축축한 줄무늬"
       }
     }
   },
   "workspace": {
     "board": {
-      "new": "New",
-      "openEditor": "Tap to open your design editor",
-      "generationFailedTap": "Render encountered an issue. Tap for details.",
-      "generationFailedTitle": "Render failed",
-      "generationFailedBody": "This render did not complete. Please try again.",
-      "tryAnotherPrompt": "Please go back and try another prompt."
+      "new": "새로운",
+      "openEditor": "디자인 편집기를 열려면 탭하세요.",
+      "generationFailedTap": "렌더링에 문제가 발생했습니다. 자세한 내용을 보려면 탭하세요.",
+      "generationFailedTitle": "렌더링 실패",
+      "generationFailedBody": "이 렌더링이 완료되지 않았습니다. 다시 시도해 주세요.",
+      "tryAnotherPrompt": "돌아가서 다른 메시지를 시도해 보세요."
     },
     "processing": {
-      "default": "HomeDecor AI is preserving the architecture while composing a refined redesign.",
-      "floor": "HomeDecor AI is reading perspective, locking the floor plane, and composing the new material with premium detail.",
-      "paint": "HomeDecor AI is isolating the wall planes and layering your selected finish with gallery-grade realism."
+      "default": "HomeDecor AI은 세련된 재설계를 구성하면서 아키텍처를 보존하고 있습니다.",
+      "floor": "HomeDecor AI은(는) 관점을 읽고, 바닥면을 잠그고, 프리미엄 디테일로 새로운 소재를 구성하고 있습니다.",
+      "paint": "HomeDecor AI은 벽면을 분리하고 선택한 마감재를 갤러리 수준의 현실감으로 레이어링합니다."
     },
     "services": {
-      "interior": "Interior Redesign",
-      "exterior": "Exterior Redesign",
-      "garden": "Garden Redesign",
-      "floor": "Floor Restyle",
-      "paint": "Smart Wall Paint"
+      "interior": "인테리어 재설계",
+      "exterior": "외부 재설계",
+      "garden": "정원 재설계",
+      "floor": "바닥 리스타일",
+      "paint": "스마트 벽 페인트"
     },
     "editor": {
-      "title": "Your Professional Concept",
-      "sourcePhoto": "Source Photo",
-      "comparison": "Comparison",
-      "deleteA11y": "Delete this design from My Design Portfolio",
-      "showComparison": "Show before and after comparison",
-      "hideComparison": "Hide before and after comparison",
-      "removeWatermark": "Remove Watermark",
-      "regenerate": "Regenerate",
-      "saving": "Saving...",
-      "sharing": "Sharing...",
-      "renderUnavailable": "Render unavailable. Please try again.",
-      "previewNotReady": "Preview not ready. Please try again.",
-      "floorReady": "Material-led floor transformation with a live before and after slider.",
-      "paintReady": "Wall recoloring tuned to your selected finish and room lighting.",
-      "defaultReady": "Curated inside your premium HomeDecor board."
+      "title": "귀하의 전문적인 개념",
+      "sourcePhoto": "원본 사진",
+      "comparison": "비교",
+      "deleteA11y": "내 디자인 포트폴리오에서 이 디자인을 삭제하세요.",
+      "showComparison": "전후 비교 표시",
+      "hideComparison": "비교 전후 숨기기",
+      "removeWatermark": "워터마크 제거",
+      "regenerate": "재생성",
+      "saving": "저장 중...",
+      "sharing": "공유...",
+      "renderUnavailable": "렌더링을 사용할 수 없습니다. 다시 시도해 주세요.",
+      "previewNotReady": "미리보기가 준비되지 않았습니다. 다시 시도해 주세요.",
+      "floorReady": "실시간 전후 슬라이더를 사용한 재질 기반 바닥 변형입니다.",
+      "paintReady": "선택한 마감재와 실내 조명에 맞춰 벽을 다시 칠합니다.",
+      "defaultReady": "프리미엄 HomeDecor 보드 내부에 선별되어 있습니다."
     },
     "permissions": {
-      "requiredTitle": "Permission Required",
-      "requiredBody": "Enable camera or photo access in your system settings to continue.",
-      "cameraAccessTitle": "Camera Access Needed",
-      "cameraAccessBody": "Allow camera access in Settings to take a photo.",
-      "photoLibraryAccessTitle": "Photo Library Access Needed",
-      "photoLibraryAccessBody": "Allow photo library access in Settings.",
-      "photoLibrarySaveBody": "Please allow photo library access to save your result to the device gallery."
+      "requiredTitle": "권한 필요",
+      "requiredBody": "계속하려면 시스템 설정에서 카메라 또는 사진 액세스를 활성화하세요.",
+      "cameraAccessTitle": "카메라 액세스 필요",
+      "cameraAccessBody": "사진을 찍으려면 설정에서 카메라 액세스를 허용하세요.",
+      "photoLibraryAccessTitle": "사진 라이브러리 액세스 필요",
+      "photoLibraryAccessBody": "설정에서 사진 라이브러리 액세스를 허용하세요.",
+      "photoLibrarySaveBody": "결과를 기기 갤러리에 저장하려면 사진 라이브러리 액세스를 허용하세요."
     },
     "media": {
-      "capturedPhoto": "Captured Photo",
-      "uploadedPhoto": "Uploaded Photo",
-      "choosePhotoSource": "Choose how you want to add your image.",
-      "cameraUnavailableTitle": "Camera Unavailable",
-      "cameraUnavailableBody": "We couldn't open the camera. Please try again.",
-      "photoLibraryUnavailableTitle": "Photo Library Unavailable",
-      "photoLibraryUnavailableBody": "We couldn't open the photo library. Please try again.",
-      "photoIntakeUnavailableTitle": "Photo Intake Unavailable",
-      "photoIntakeUnavailableBody": "We couldn't open your camera or photo library. Please try again.",
-      "exampleImageUnavailable": "Example image unavailable.",
+      "capturedPhoto": "캡처된 사진",
+      "uploadedPhoto": "업로드된 사진",
+      "choosePhotoSource": "이미지를 추가할 방법을 선택하세요.",
+      "cameraUnavailableTitle": "카메라를 사용할 수 없음",
+      "cameraUnavailableBody": "카메라를 열 수 없었습니다. 다시 시도해 주세요.",
+      "photoLibraryUnavailableTitle": "사진 라이브러리를 사용할 수 없습니다.",
+      "photoLibraryUnavailableBody": "사진 라이브러리를 열 수 없습니다. 다시 시도해 주세요.",
+      "photoIntakeUnavailableTitle": "사진 촬영 불가",
+      "photoIntakeUnavailableBody": "카메라나 사진 라이브러리를 열 수 없습니다. 다시 시도해 주세요.",
+      "exampleImageUnavailable": "예시 이미지를 사용할 수 없습니다.",
       "exampleUnavailableTitle": "예시를 열 수 없음",
-      "tryAnotherImage": "Please try another image."
+      "tryAnotherImage": "다른 이미지를 시도해 보세요."
     },
     "share": {
-      "nothingTitle": "Nothing to share",
-      "generateFirst": "Generate a design first.",
+      "nothingTitle": "공유할 내용 없음",
+      "generateFirst": "먼저 디자인을 생성하십시오.",
       "failedTitle": "공유 실패",
       "message": "HomeDecor.ai로 디자인함"
     },
     "download": {
-      "nothingTitle": "Nothing to download",
-      "generateFirst": "Generate a design first.",
+      "nothingTitle": "다운로드할 항목이 없습니다.",
+      "generateFirst": "먼저 디자인을 생성하십시오.",
       "failedTitle": "저장 실패"
     },
     "generation": {
       "preparingSessionTitle": "세션 준비 중",
       "preparingSessionBody": "게스트 프로필을 아직 불러오는 중입니다. 잠시 후 다시 시도해 주세요.",
-      "completeStepsTitle": "Complete the steps",
-      "completeFloorBody": "Add a room photo, define the floor area, choose a material, and select a finish before continuing.",
-      "completePaintBody": "Add a room photo, define the paintable surfaces, choose a wall color, and select a finish before continuing.",
-      "completePreviousSteps": "Please finish the previous steps first.",
+      "completeStepsTitle": "단계를 완료하세요",
+      "completeFloorBody": "계속하기 전에 방 사진을 추가하고, 바닥 면적을 정의하고, 재료를 선택하고, 마감재를 선택하세요.",
+      "completePaintBody": "계속하기 전에 방 사진을 추가하고, 페인팅 가능한 표면을 정의하고, 벽 색상을 선택하고, 마감재를 선택하세요.",
+      "completePreviousSteps": "먼저 이전 단계를 완료하세요.",
       "limitReached": "한도 도달",
-      "completeStepToContinue": "Complete this step to continue."
+      "completeStepToContinue": "계속하려면 이 단계를 완료하세요."
     },
     "flow": {
-      "customPromptTitle": "Describe Your Vision",
+      "customPromptTitle": "당신의 비전을 설명하세요",
       "customPromptBody": "적용하기 전에 원하는 디자인 방향을 자세히 설명해 주세요.",
       "selectSpaceType": "카드를 눌러 공간 유형을 선택하세요."
     },
-    "resumeDraft": "Resuming your saved wizard draft.",
+    "resumeDraft": "저장된 마법사 초안을 재개하는 중입니다.",
     "feedback": {
-      "like": "Like",
-      "dislike": "Dislike",
-      "liked": "Thanks for the feedback.",
-      "disliked": "Feedback sent to the design team.",
-      "failed": "Unable to send feedback right now."
+      "like": "좋아요",
+      "dislike": "싫어함",
+      "liked": "피드백을 보내주셔서 감사합니다.",
+      "disliked": "디자인팀에 피드백을 보냈습니다.",
+      "failed": "지금은 의견을 보낼 수 없습니다."
     },
     "stepOne": {
-      "gardenPhotoTitle": "Add a Garden Photo",
-      "exteriorPhotoTitle": "Add an Exterior Photo",
-      "floorPhotoTitle": "Add Floor Photo",
-      "gardenEmptyTitle": "Start Your Garden Transformation",
-      "exteriorEmptyTitle": "Start Your Exterior Transformation",
-      "tapToAddPhoto": "Tap to add a photo from your camera or library"
+      "gardenPhotoTitle": "정원 사진 추가",
+      "exteriorPhotoTitle": "외부 사진 추가",
+      "floorPhotoTitle": "층 사진 추가",
+      "gardenEmptyTitle": "정원 변화를 시작하세요",
+      "exteriorEmptyTitle": "외부 변화를 시작하세요",
+      "tapToAddPhoto": "탭하여 카메라나 라이브러리의 사진을 추가하세요."
     },
     "style": {
-      "tapToSelect": "Tap a card to define your style direction."
+      "tapToSelect": "카드를 탭하여 스타일 방향을 정의하세요."
     },
     "localization": {
       "rooms": {
-        "livingRoom": "Living Room",
-        "bedroom": "Bedroom",
-        "kitchen": "Kitchen",
-        "bathroom": "Bathroom",
-        "homeOffice": "Home Office",
-        "diningRoom": "Dining Room",
-        "nursery": "Nursery",
-        "homeTheater": "Home Theater",
-        "gamingRoom": "Gaming Room",
-        "hall": "Hall",
-        "library": "Library",
-        "laundry": "Laundry"
+        "livingRoom": "거실",
+        "bedroom": "침실",
+        "kitchen": "주방",
+        "bathroom": "욕실",
+        "homeOffice": "홈오피스",
+        "diningRoom": "다이닝룸",
+        "nursery": "보육원",
+        "homeTheater": "홈시어터",
+        "gamingRoom": "게임룸",
+        "hall": "홀",
+        "library": "도서관",
+        "laundry": "세탁"
       },
       "examples": {
         "interior": {
-          "emptyRoom": "Empty Room",
-          "messyLounge": "Messy Lounge",
-          "wornRoom": "Worn Room",
-          "emptyKitchen": "Empty Kitchen",
-          "damagedRoom": "Damaged Room",
-          "outdatedKitchen": "Outdated Kitchen"
+          "emptyRoom": "빈 방",
+          "messyLounge": "지저분한 라운지",
+          "wornRoom": "낡은 방",
+          "emptyKitchen": "빈 주방",
+          "damagedRoom": "손상된 방",
+          "outdatedKitchen": "오래된 주방"
         },
         "exterior": {
-          "scaffoldHouse": "Scaffold House",
-          "weatheredHouse": "Weathered House",
-          "brickShell": "Brick Shell",
-          "overgrownCottage": "Overgrown Cottage",
-          "abandonedHome": "Abandoned Home",
-          "concreteFrame": "Concrete Frame"
+          "scaffoldHouse": "비계 하우스",
+          "weatheredHouse": "풍화된 집",
+          "brickShell": "벽돌 껍질",
+          "overgrownCottage": "자란 코티지",
+          "abandonedHome": "버려진 집",
+          "concreteFrame": "콘크리트 프레임"
         },
         "garden": {
-          "muddyYard": "Muddy Yard",
-          "weedyYard": "Weedy Yard",
-          "rubbleYard": "Rubble Yard",
-          "overgrownCorner": "Overgrown Corner",
-          "abandonedYard": "Abandoned Yard",
-          "crackedPatio": "Cracked Patio"
+          "muddyYard": "머디 야드",
+          "weedyYard": "위디 야드",
+          "rubbleYard": "러블 야드",
+          "overgrownCorner": "무성한 코너",
+          "abandonedYard": "버려진 마당",
+          "crackedPatio": "금이 간 테라스"
         }
       },
       "styles": {
-        "modern": "Modern",
-        "luxury": "Luxury",
-        "japandi": "Japandi",
-        "cyberpunk": "Cyberpunk",
-        "tropical": "Tropical",
-        "minimalist": "Minimalist",
-        "scandinavian": "Scandinavian",
-        "bohemian": "Bohemian",
-        "midcentury": "Midcentury",
-        "artDeco": "Art Deco",
-        "coastal": "Coastal",
-        "rustic": "Rustic",
-        "vintage": "Vintage",
-        "mediterranean": "Mediterranean",
-        "glam": "Glam",
-        "coastalRetreat": "Coastal Retreat",
-        "rusticManor": "Rustic Manor",
-        "hollywoodRegency": "Hollywood Regency",
-        "neoClassic": "Neo-Classic",
-        "shabbyChic": "Shabby Chic",
-        "frenchCountry": "French Country",
-        "brutalist": "Brutalist",
-        "hollywoodRegencyNoir": "Hollywood Regency Noir",
-        "artNouveau": "Art Nouveau",
-        "custom": "Custom",
-        "chinese": "Chinese",
-        "cottage": "Cottage",
-        "farmHouse": "Farm House",
-        "french": "French",
-        "gothic": "Gothic",
-        "italianate": "Italianate",
-        "christmas": "Christmas",
-        "minimalistic": "Minimalistic",
-        "baroque": "Baroque"
+        "modern": "현대",
+        "luxury": "럭셔리",
+        "japandi": "재팬디",
+        "cyberpunk": "사이버펑크",
+        "tropical": "열대",
+        "minimalist": "미니멀리스트",
+        "scandinavian": "스칸디나비아 사람",
+        "bohemian": "보헤미안",
+        "midcentury": "세기 중반",
+        "artDeco": "아르데코",
+        "coastal": "해안",
+        "rustic": "소박한",
+        "vintage": "빈티지",
+        "mediterranean": "지중해",
+        "glam": "글램",
+        "coastalRetreat": "해안 휴양지",
+        "rusticManor": "러스틱 매너",
+        "hollywoodRegency": "할리우드 리젠시",
+        "neoClassic": "네오클래식",
+        "shabbyChic": "셰비 시크",
+        "frenchCountry": "프랑스 국가",
+        "brutalist": "잔혹주의자",
+        "hollywoodRegencyNoir": "할리우드 리젠시 느와르",
+        "artNouveau": "아르누보",
+        "custom": "맞춤",
+        "chinese": "중국어",
+        "cottage": "코티지",
+        "farmHouse": "팜 하우스",
+        "french": "프랑스어",
+        "gothic": "고딕",
+        "italianate": "이탈리아식",
+        "christmas": "크리스마스",
+        "minimalistic": "미니멀리즘",
+        "baroque": "바로크"
       },
       "buildings": {
-        "apartment": "Apartment",
-        "house": "House",
-        "officeBuilding": "Office Building",
-        "residential": "Residential",
-        "retail": "Retail",
-        "villa": "Villa"
+        "apartment": "아파트",
+        "house": "집",
+        "officeBuilding": "오피스 빌딩",
+        "residential": "주거용",
+        "retail": "소매",
+        "villa": "빌라"
       },
       "modes": {
         "preserve": {
-          "title": "Structural Preservation",
-          "description": "Preserve your room's architectural DNA while flawlessly refreshing its aesthetic."
+          "title": "구조적 보존",
+          "description": "객실의 건축 DNA를 보존하는 동시에 미적 감각도 완벽하게 새롭게 단장합니다."
         },
         "renovate": {
-          "title": "Renovation Design",
-          "description": "Total creative liberty to redefine furniture layouts and structural boundaries for a complete remodel."
+          "title": "혁신 디자인",
+          "description": "완전한 리모델링을 위해 가구 레이아웃과 구조적 경계를 재정의할 수 있는 완전한 창의적 자유입니다."
         }
       },
       "palettes": {
-        "surprise": "Curated Mix",
-        "gray": "Millennial Gray",
-        "terracotta": "Terracotta Mirage",
-        "forest": "Forest Hues",
-        "peach": "Peach Orchard",
-        "fuchsia": "Fuchsia Blossom",
-        "emerald": "Emerald Gem",
-        "pastel": "Pastel Breeze",
-        "ocean": "Ocean Mist",
-        "velvet": "Velvet Dusk",
-        "amethyst": "Amethyst Dream",
-        "sunset": "Fuchsia Noir"
+        "surprise": "선별된 믹스",
+        "gray": "밀레니얼 그레이",
+        "terracotta": "테라코타 미라지",
+        "forest": "숲의 색조",
+        "peach": "복숭아 과수원",
+        "fuchsia": "자홍색 꽃",
+        "emerald": "에메랄드 보석",
+        "pastel": "파스텔 브리즈",
+        "ocean": "오션 미스트",
+        "velvet": "벨벳 황혼",
+        "amethyst": "자수정 꿈",
+        "sunset": "자홍색 느와르"
       },
       "gardenPalettes": {
-        "garden-surprise": "Surprise Me",
-        "garden-gray": "Millennial Gray",
-        "garden-terracotta": "Terracotta Mirage",
-        "garden-neon-sunset": "Neon Sunset",
-        "garden-forest": "Forest Hues",
-        "garden-peach": "Peach Orchard",
-        "garden-fuschia": "Fuchsia Blossom",
-        "garden-emerald": "Emerald Gem",
-        "garden-pastel": "Pastel Breeze",
-        "garden-azure": "Azure Mirage",
-        "garden-twilight": "Twilight Blues",
-        "garden-earthy": "Earthy Harmony"
+        "garden-surprise": "나를 놀라게 해주세요",
+        "garden-gray": "밀레니얼 그레이",
+        "garden-terracotta": "테라코타 미라지",
+        "garden-neon-sunset": "네온 일몰",
+        "garden-forest": "숲의 색조",
+        "garden-peach": "복숭아 과수원",
+        "garden-fuschia": "자홍색 꽃",
+        "garden-emerald": "에메랄드 보석",
+        "garden-pastel": "파스텔 브리즈",
+        "garden-azure": "푸른 미라지",
+        "garden-twilight": "황혼의 블루스",
+        "garden-earthy": "흙빛 하모니"
       },
       "summary": {
-        "roomType": "Room Type",
-        "style": "Style",
-        "mode": "Mode",
-        "palette": "Palette",
-        "missing": "⚠ Missing"
+        "roomType": "객실타입",
+        "style": "스타일",
+        "mode": "모드",
+        "palette": "팔레트",
+        "missing": "⚠ 누락"
       },
-      "previewThumbnailLabel": "Sample output · {{style}}",
+      "previewThumbnailLabel": "샘플 출력 · {{style}}",
       "toasts": {
-        "completeStyleSelections": "Complete your style selections to generate."
+        "completeStyleSelections": "생성할 스타일 선택을 완료하세요."
       },
       "requiredSelections": {
-        "photo": "Please select a photo to continue.",
-        "room": "Please select a room to continue.",
-        "style": "Please select a style to continue.",
-        "mode": "Please complete the mode selection to continue.",
-        "palette": "Please complete the palette selection to continue."
+        "photo": "계속하려면 사진을 선택하세요.",
+        "room": "계속하려면 객실을 선택하세요.",
+        "style": "계속하려면 스타일을 선택하세요.",
+        "mode": "계속하려면 모드 선택을 완료하세요.",
+        "palette": "계속하려면 팔레트 선택을 완료하세요."
       },
-      "regenerationUnavailable": "Regeneration unavailable",
-      "feedbackUnavailable": "Feedback is unavailable for this image.",
+      "regenerationUnavailable": "재생 불가",
+      "feedbackUnavailable": "이 이미지에는 피드백이 제공되지 않습니다.",
       "cta": {
-        "getMoreCredits": "Get More Credits",
-        "generateMyDesign": "Generate My Design"
+        "getMoreCredits": "더 많은 크레딧 받기",
+        "generateMyDesign": "내 디자인 생성"
       },
-      "stepFourSticky": "Step 4: Refine Direction",
-      "exteriorEmptyStateSubtitle": "Redesign and beautify your home."
+      "stepFourSticky": "4단계: 방향 수정",
+      "exteriorEmptyStateSubtitle": "집을 재설계하고 아름답게 꾸며보세요."
     }
   },
   "proSuccess": {
     "title": "HomeDecor Pro에 오신 것을 환영합니다!",
     "subtitle": "이제 모든 기능이 열렸습니다. 다음이 활성화되었습니다:",
     "features": {
-      "hyperRealism": "Ultra-high-detail rendering enabled",
-      "virtualStaging": "Premium design tools unlocked",
-      "infiniteCredits": "Weekly or monthly render quotas active"
+      "hyperRealism": "초고세밀 렌더링 가능",
+      "virtualStaging": "프리미엄 디자인 도구 잠금 해제",
+      "infiniteCredits": "주간 또는 월간 렌더링 할당량이 활성화되었습니다."
     },
     "cta": "디자인 시작",
     "toast": "계정이 Pro로 업그레이드되었습니다."
   },
   "legalViewer": {
-    "eyebrow": "Legal Viewer",
+    "eyebrow": "법적 뷰어",
     "switches": {
-      "terms": "Terms of Service",
-      "privacy": "Privacy Policy"
+      "terms": "서비스 약관",
+      "privacy": "개인 정보 보호 정책"
     }
   },
   "storeReview": {
-    "title": "Rate HomeDecor AI",
-    "unavailableBody": "Review requests are not available on this device.",
-    "errorBody": "Unable to open the store review dialog right now."
+    "title": "환율 HomeDecor AI",
+    "unavailableBody": "이 기기에서는 검토 요청을 사용할 수 없습니다.",
+    "errorBody": "지금은 매장 리뷰 대화상자를 열 수 없습니다."
   },
   "gallery": {
     "clusters": {
-      "foundations": "Foundations"
+      "foundations": "기초"
     },
     "tabs": {
-      "home": "Interiors",
-      "exterior": "Exteriors",
-      "garden": "Landscapes"
+      "home": "인테리어",
+      "exterior": "외관",
+      "garden": "풍경"
     },
     "groups": {
-      "kitchen": "Kitchen",
-      "livingRoom": "Living Room",
-      "diningRoom": "Dining Room",
-      "bedroom": "Bedroom",
-      "bathroom": "Bathroom",
-      "gamingRoom": "Gaming Room",
-      "homeOffice": "Home Office",
-      "coffeeShop": "Coffee Shop",
-      "studyRoom": "Study Room",
-      "restaurant": "Restaurant",
-      "attic": "Attic",
-      "toilet": "Toilet",
-      "balcony": "Balcony",
-      "hall": "Hall",
-      "deck": "Deck",
-      "landscapeDesigns": "Landscape Designs",
-      "villa": "Villa",
-      "apartment": "Apartment",
-      "house": "House",
-      "officeBuilding": "Office Building",
-      "retail": "Retail",
-      "residential": "Residential",
-      "wall": "Wall",
-      "floor": "Floor",
-      "garden": "Garden"
+      "kitchen": "주방",
+      "livingRoom": "거실",
+      "diningRoom": "다이닝룸",
+      "bedroom": "침실",
+      "bathroom": "욕실",
+      "gamingRoom": "게임룸",
+      "homeOffice": "홈오피스",
+      "coffeeShop": "커피숍",
+      "studyRoom": "공부방",
+      "restaurant": "레스토랑",
+      "attic": "다락방",
+      "toilet": "화장실",
+      "balcony": "발코니",
+      "hall": "홀",
+      "deck": "데크",
+      "landscapeDesigns": "조경 디자인",
+      "villa": "빌라",
+      "apartment": "아파트",
+      "house": "집",
+      "officeBuilding": "오피스 빌딩",
+      "retail": "소매",
+      "residential": "주거용",
+      "wall": "벽",
+      "floor": "바닥",
+      "garden": "정원"
     },
-    "imageTitleTemplate": "{{title}} Image {{index}}",
+    "imageTitleTemplate": "{{title}} 이미지 {{index}}",
     "emptyState": {
-      "title": "Category unavailable",
-      "body": "The requested image collection could not be found."
+      "title": "사용할 수 없는 카테고리",
+      "body": "요청한 이미지 컬렉션을 찾을 수 없습니다."
     }
   },
   "discoverCatalog": {
     "sections": {
       "home": {
-        "title": "Interior",
-        "description": "Designer-led rooms across living, sleep, dining, work, and entertainment.",
+        "title": "인테리어",
+        "description": "거실, 수면, 식사, 업무, 엔터테인먼트 전반에 걸쳐 디자이너가 주도하는 객실입니다.",
         "items": {
           "sereneLounge": {
-            "title": "Serene Lounge",
-            "subtitle": "Living Room / Soft Minimal",
-            "spaceType": "Living Room",
-            "style": "Soft Minimal"
+            "title": "세린 라운지",
+            "subtitle": "거실 / 소프트 미니멀",
+            "spaceType": "거실",
+            "style": "소프트 미니멀"
           },
           "moodyClubRoom": {
-            "title": "Moody Club Room",
-            "subtitle": "Living Room / Moody Luxe",
-            "spaceType": "Living Room",
-            "style": "Moody Luxe"
+            "title": "무디 클럽룸",
+            "subtitle": "거실 / 무디 럭스",
+            "spaceType": "거실",
+            "style": "무디 럭스"
           },
           "organicLiving": {
-            "title": "Organic Living",
-            "subtitle": "Living Room / Warm Organic",
-            "spaceType": "Living Room",
-            "style": "Warm Organic"
+            "title": "유기농 생활",
+            "subtitle": "거실 / 따뜻한 유기농",
+            "spaceType": "거실",
+            "style": "따뜻한 유기농"
           },
           "grandSalon": {
-            "title": "Grand Salon",
-            "subtitle": "Living Room / Luxe Marble",
-            "spaceType": "Living Room",
-            "style": "Luxe Marble"
+            "title": "그랜드 살롱",
+            "subtitle": "거실 / 럭스마블",
+            "spaceType": "거실",
+            "style": "럭스 마블"
           },
           "editorialLounge": {
-            "title": "Editorial Lounge",
-            "subtitle": "Gaming Room / Cyberpunk",
-            "spaceType": "Gaming Room",
-            "style": "Cyberpunk"
+            "title": "편집 라운지",
+            "subtitle": "게임룸/사이버펑크",
+            "spaceType": "게임룸",
+            "style": "사이버펑크"
           }
         }
       },
       "exterior": {
-        "title": "Exterior",
-        "description": "Facade inspiration from modern villas, urban blocks, offices, and retail shells.",
+        "title": "외관",
+        "description": "현대적인 빌라, 도시 블록, 사무실 및 소매점에서 영감을 받은 외관입니다.",
         "items": {
           "modernHouse": {
-            "title": "Modern House",
-            "subtitle": "Modern House / Daylight Minimal",
-            "spaceType": "Modern House",
-            "style": "Daylight Minimal"
+            "title": "모던하우스",
+            "subtitle": "모던 하우스 / 일광 최소화",
+            "spaceType": "모던하우스",
+            "style": "일광 최소"
           },
           "modernHouseNight": {
-            "title": "Modern House Night",
-            "subtitle": "Modern House / Evening Luxe",
-            "spaceType": "Modern House",
-            "style": "Evening Luxe"
+            "title": "모던 하우스 나이트",
+            "subtitle": "모던 하우스 / 이브닝 럭스",
+            "spaceType": "모던하우스",
+            "style": "이브닝 럭스"
           },
           "stoneVilla": {
-            "title": "Stone Villa",
-            "subtitle": "Villa / Mediterranean",
-            "spaceType": "Villa",
-            "style": "Mediterranean"
+            "title": "스톤 빌라",
+            "subtitle": "빌라 / 지중해",
+            "spaceType": "빌라",
+            "style": "지중해"
           },
           "glassOffice": {
-            "title": "Glass Office",
-            "subtitle": "Office Building / Minimalist",
-            "spaceType": "Office Building",
-            "style": "Minimalist"
+            "title": "유리 사무실",
+            "subtitle": "오피스빌딩 / 미니멀리스트",
+            "spaceType": "오피스 빌딩",
+            "style": "미니멀리스트"
           },
           "ecoApartments": {
-            "title": "Eco Apartments",
-            "subtitle": "Apartment Block / Eco Futurist",
-            "spaceType": "Apartment Block",
-            "style": "Eco Futurist"
+            "title": "에코 아파트먼트",
+            "subtitle": "아파트 단지 / 친환경 미래학자",
+            "spaceType": "아파트 블록",
+            "style": "에코 미래학자"
           }
         }
       },
       "garden": {
-        "title": "Garden",
-        "description": "Outdoor lounges, terraces, pools, decks, and resort-minded garden scenes.",
+        "title": "정원",
+        "description": "야외 라운지, 테라스, 수영장, 데크, 리조트 분위기의 정원 장면.",
         "items": {
           "infinityPool": {
-            "title": "Infinity Pool",
-            "subtitle": "Infinity Pool / Coastal Luxe",
-            "spaceType": "Infinity Pool",
-            "style": "Coastal Luxe"
+            "title": "인피니티 풀",
+            "subtitle": "인피니티 풀 / 코스탈 럭스",
+            "spaceType": "인피니티 풀",
+            "style": "코스털 럭스"
           },
           "waterfallCourt": {
-            "title": "Waterfall Court",
-            "subtitle": "Waterfall Garden / Zen Luxury",
-            "spaceType": "Waterfall Garden",
-            "style": "Zen Luxury"
+            "title": "워터폴 코트",
+            "subtitle": "폭포 정원 / 젠 럭셔리",
+            "spaceType": "폭포 정원",
+            "style": "젠 럭셔리"
           },
           "sunsetFirePit": {
-            "title": "Sunset Fire Pit",
-            "subtitle": "Fire Pit Lounge / Resort Sunset",
-            "spaceType": "Fire Pit Lounge",
-            "style": "Resort Sunset"
+            "title": "일몰 화덕",
+            "subtitle": "파이어 핏 라운지/리조트 선셋",
+            "spaceType": "화덕 라운지",
+            "style": "리조트 선셋"
           },
           "tropicalPoolLounge": {
-            "title": "Tropical Pool Lounge",
-            "subtitle": "Pool Lounge / Tropical Escape",
-            "spaceType": "Pool Lounge",
-            "style": "Tropical Escape"
+            "title": "트로피컬 풀 라운지",
+            "subtitle": "풀 라운지 / 트로피컬 이스케이프",
+            "spaceType": "풀 라운지",
+            "style": "트로피컬 이스케이프"
           },
           "luminousGardenWalk": {
-            "title": "Luminous Garden Walk",
-            "subtitle": "Garden Walk / Evening Glow",
-            "spaceType": "Garden Walk",
-            "style": "Evening Glow"
+            "title": "루미너스 가든 워크",
+            "subtitle": "가든 워크/저녁놀",
+            "spaceType": "가든 워크",
+            "style": "저녁 노을"
           }
         }
       },
       "wall": {
-        "title": "Wall Inspiration",
-        "description": "Real-room paint references that open directly into Smart Wall Paint with the finish already preselected.",
+        "title": "벽 영감",
+        "description": "마감이 이미 미리 선택된 상태로 Smart Wall Paint로 직접 열리는 실제 실내 페인트 참조입니다.",
         "items": {
           "sagePlasterWall": {
-            "title": "Sage Plaster Wall",
-            "subtitle": "Textured Wall / Sage Green",
-            "spaceType": "Textured Wall",
-            "style": "Sage Green"
+            "title": "세이지 석고 벽",
+            "subtitle": "질감 있는 벽 / 세이지 그린",
+            "spaceType": "질감 있는 벽",
+            "style": "세이지 그린"
           },
           "linearSlatFeature": {
-            "title": "Linear Slat Feature",
-            "subtitle": "Slatted Wall / Charcoal",
-            "spaceType": "Slatted Wall",
-            "style": "Charcoal"
+            "title": "선형 판금 기능",
+            "subtitle": "슬레이트 벽 / 숯",
+            "spaceType": "슬레이트 벽",
+            "style": "숯"
           },
           "veinedMarbleWall": {
-            "title": "Veined Marble Wall",
-            "subtitle": "Marble Wall / Soft Ivory",
-            "spaceType": "Marble Wall",
-            "style": "Soft Ivory"
+            "title": "결이 있는 대리석 벽",
+            "subtitle": "대리석 벽 / 소프트 아이보리",
+            "spaceType": "대리석 벽",
+            "style": "소프트 아이보리"
           },
           "minimalConcreteWall": {
-            "title": "Minimal Concrete Wall",
-            "subtitle": "Concrete Wall / Charcoal",
-            "spaceType": "Concrete Wall",
-            "style": "Charcoal"
+            "title": "최소한의 콘크리트 벽",
+            "subtitle": "콘크리트 벽 / 숯",
+            "spaceType": "콘크리트 벽",
+            "style": "숯"
           },
           "botanicalMuralWall": {
-            "title": "Botanical Mural Wall",
-            "subtitle": "Mural Wall / Olive Moss",
-            "spaceType": "Mural Wall",
-            "style": "Olive Moss"
+            "title": "식물벽화",
+            "subtitle": "벽화 / 올리브이끼",
+            "spaceType": "벽화",
+            "style": "올리브모스"
           }
         }
       },
       "floor": {
-        "title": "Floor Styles",
-        "description": "Premium flooring references curated from real interiors and mapped directly into the Floor Restyle workflow.",
+        "title": "바닥 스타일",
+        "description": "실제 인테리어에서 엄선된 프리미엄 바닥재 참조 자료를 바닥 리스타일 워크플로우에 직접 매핑합니다.",
         "items": {
           "heritageHerringbone": {
-            "title": "Heritage Herringbone",
-            "subtitle": "Wood Floor / Walnut Wood",
-            "spaceType": "Wood Floor",
-            "style": "Walnut Wood"
+            "title": "헤리티지 헤링본",
+            "subtitle": "나무 바닥 / 호두 나무",
+            "spaceType": "나무 바닥",
+            "style": "호두나무"
           },
           "carraraMarbleFlow": {
-            "title": "Carrara Marble Flow",
-            "subtitle": "Marble Floor / Carrara Marble",
-            "spaceType": "Marble Floor",
-            "style": "Carrara Marble"
+            "title": "카라라 대리석 흐름",
+            "subtitle": "대리석 바닥 / 카라라 대리석",
+            "spaceType": "대리석 바닥",
+            "style": "카라라 대리석"
           },
           "satinConcrete": {
-            "title": "Satin Concrete",
-            "subtitle": "Concrete Floor / Polished Concrete",
-            "spaceType": "Concrete Floor",
-            "style": "Polished Concrete"
+            "title": "새틴 콘크리트",
+            "subtitle": "콘크리트 바닥 / 광택 콘크리트",
+            "spaceType": "콘크리트 바닥",
+            "style": "광택 콘크리트"
           },
           "walnutGloss": {
-            "title": "Walnut Gloss",
-            "subtitle": "Gloss Wood / Walnut Wood",
-            "spaceType": "Gloss Wood",
-            "style": "Walnut Wood"
+            "title": "월넛 글로스",
+            "subtitle": "글로스 우드 / 월넛 우드",
+            "spaceType": "광택 목재",
+            "style": "호두나무"
           },
           "softLimestone": {
-            "title": "Soft Limestone",
-            "subtitle": "Stone Floor / Polished Concrete",
-            "spaceType": "Stone Floor",
-            "style": "Polished Concrete"
+            "title": "부드러운 석회암",
+            "subtitle": "석재 바닥 / 광택 콘크리트",
+            "spaceType": "돌바닥",
+            "style": "광택 콘크리트"
           }
         }
       }
     },
     "wallColors": {
       "sageGreen": {
-        "title": "Sage Green",
-        "description": "Soft green calm for bright, polished living spaces.",
-        "discoverSubtitle": "Wall / Botanical Calm"
+        "title": "세이지 그린",
+        "description": "밝고 세련된 생활 공간을 위한 부드러운 녹색 차분함.",
+        "discoverSubtitle": "벽 / 보태니컬 캄"
       },
       "midnightNavy": {
-        "title": "Midnight Navy",
-        "description": "Tailored navy depth with crisp architectural contrast.",
-        "discoverSubtitle": "Wall / Tailored Contrast"
+        "title": "미드나잇 네이비",
+        "description": "선명한 구조적 대비를 갖춘 맞춤형 네이비 깊이.",
+        "discoverSubtitle": "벽 / 맞춤형 대비"
       },
       "terracottaGlow": {
-        "title": "Terracotta Glow",
-        "description": "Warm clay color with grounded, editorial energy.",
-        "discoverSubtitle": "Wall / Warm Clay"
+        "title": "테라코타 글로우",
+        "description": "근거 있고 편집적인 에너지가 담긴 따뜻한 점토 색상입니다.",
+        "discoverSubtitle": "벽 / 따뜻한 점토"
       },
       "dustyRose": {
-        "title": "Dusty Rose",
-        "description": "Muted blush warmth with soft boutique appeal.",
-        "discoverSubtitle": "Wall / Boutique Blush"
+        "title": "더스티 로즈",
+        "description": "부드러운 부티크 매력과 차분한 블러셔의 따뜻함.",
+        "discoverSubtitle": "월 / 부티크 블러셔"
       },
       "galleryCharcoal": {
-        "title": "Gallery Charcoal",
-        "description": "Refined charcoal for moody, art-forward rooms.",
-        "discoverSubtitle": "Wall / Moody Gallery"
+        "title": "갤러리 차콜",
+        "description": "분위기 있고 예술적인 공간을 위한 정제된 숯입니다.",
+        "discoverSubtitle": "벽 / 무디 갤러리"
       },
       "softIvory": {
-        "title": "Soft Ivory",
-        "description": "Luminous neutral that keeps rooms light, never flat.",
-        "discoverSubtitle": "Wall / Quiet Neutral"
+        "title": "소프트 아이보리",
+        "description": "방을 밝게 유지하고 절대 밋밋하지 않게 해주는 빛나는 중성색입니다.",
+        "discoverSubtitle": "벽/조용한 중립"
       },
       "oliveGrove": {
-        "title": "Olive Grove",
-        "description": "Earthy olive depth with a grounded designer mood.",
-        "discoverSubtitle": "Wall / Earthy Depth"
+        "title": "올리브 그로브",
+        "description": "접지된 디자이너 무드와 흙빛 올리브 깊이.",
+        "discoverSubtitle": "벽 / 흙깊이"
       },
       "lavenderMist": {
-        "title": "Lavender Mist",
-        "description": "Soft violet haze for elevated pastel rooms.",
-        "discoverSubtitle": "Wall / Soft Pastel"
+        "title": "라벤더 미스트",
+        "description": "고상한 파스텔 객실을 위한 부드러운 보라색 안개.",
+        "discoverSubtitle": "벽 / 소프트 파스텔"
       },
       "pearlGray": {
-        "title": "Pearl Gray",
-        "description": "Light tonal gray with polished everyday flexibility.",
-        "discoverSubtitle": "Wall / Modern Neutral"
+        "title": "펄 그레이",
+        "description": "세련된 일상의 유연성을 지닌 밝은 톤의 그레이.",
+        "discoverSubtitle": "벽 / 현대 중립"
       }
     },
     "wallColorCategories": {
       "calmNeutrals": {
-        "title": "Calm Neutrals",
+        "title": "차분한 중립",
         "colors": {
-          "softIvory": "Soft Ivory",
-          "pearlGray": "Pearl Gray",
-          "sageGreen": "Sage Green"
+          "softIvory": "소프트 아이보리",
+          "pearlGray": "펄 그레이",
+          "sageGreen": "세이지 그린"
         }
       },
       "boutiquePastels": {
-        "title": "Boutique Pastels",
+        "title": "부티크 파스텔",
         "colors": {
-          "dustyRose": "Dusty Rose",
-          "lavenderMist": "Lavender Mist",
-          "terracottaGlow": "Terracotta Glow"
+          "dustyRose": "더스티 로즈",
+          "lavenderMist": "라벤더 미스트",
+          "terracottaGlow": "테라코타 글로우"
         }
       },
       "architecturalDepth": {
-        "title": "Architectural Depth",
+        "title": "건축적 깊이",
         "colors": {
-          "midnightNavy": "Midnight Navy",
-          "galleryCharcoal": "Gallery Charcoal",
-          "oliveGrove": "Olive Grove"
+          "midnightNavy": "미드나잇 네이비",
+          "galleryCharcoal": "갤러리 차콜",
+          "oliveGrove": "올리브 그로브"
         }
       }
     },
     "floorMaterials": {
       "naturalOak": {
-        "title": "Natural Oak",
-        "description": "Airy oak planks with soft natural grain.",
-        "promptLabel": "light natural oak flooring with wide-plank grain detail",
-        "discoverSubtitle": "Floor / Light Wood"
+        "title": "천연 오크",
+        "description": "부드러운 천연 결을 지닌 바람이 잘 통하는 오크 판자.",
+        "promptLabel": "넓은 판자 디테일의 가벼운 천연 오크 바닥재",
+        "discoverSubtitle": "바닥 / 라이트 우드"
       },
       "walnutWood": {
-        "title": "Walnut Wood",
-        "description": "Deep walnut planks with rich tailored contrast.",
-        "promptLabel": "luxury walnut wood flooring with rich deep grain",
-        "discoverSubtitle": "Floor / Dark Wood"
+        "title": "호두나무",
+        "description": "풍부한 테일러드 대비를 갖춘 깊은 호두나무 판자.",
+        "promptLabel": "깊은 결이 풍부한 고급 호두나무 바닥재",
+        "discoverSubtitle": "바닥 / 다크 우드"
       },
       "carraraMarble": {
-        "title": "Carrara Marble",
-        "description": "Bright stone veining with a calm luxe finish.",
-        "promptLabel": "carrara marble flooring with elegant soft veining",
-        "discoverSubtitle": "Floor / Polished Stone"
+        "title": "카라라 대리석",
+        "description": "차분한 럭셔리 마감의 밝은 스톤 결이 특징입니다.",
+        "promptLabel": "우아하고 부드러운 결이 있는 카라라 대리석 바닥",
+        "discoverSubtitle": "바닥 / 연마석"
       },
       "polishedConcrete": {
-        "title": "Polished Concrete",
-        "description": "Smooth concrete sheen with urban gallery calm.",
-        "promptLabel": "polished concrete flooring with premium smooth texture",
-        "discoverSubtitle": "Floor / Industrial Minimal"
+        "title": "광택 콘크리트",
+        "description": "매끈한 콘크리트 광택과 도시 갤러리의 차분함.",
+        "promptLabel": "프리미엄 매끄러운 질감을 지닌 광택 콘크리트 바닥",
+        "discoverSubtitle": "바닥/산업용 미니멀"
       },
       "herringboneOak": {
-        "title": "Herringbone Oak",
-        "description": "Classic oak pattern with warm directional movement.",
-        "promptLabel": "herringbone oak parquet flooring with premium pattern definition",
-        "discoverSubtitle": "Floor / Patterned Wood"
+        "title": "헤링본 오크",
+        "description": "따뜻한 방향성 움직임이 있는 클래식 오크 패턴입니다.",
+        "promptLabel": "프리미엄 패턴 정의를 갖춘 헤링본 오크 마루 바닥",
+        "discoverSubtitle": "바닥 / 무늬목"
       },
       "terracottaTile": {
-        "title": "Terracotta Tile",
-        "description": "Earthy clay warmth with handcrafted character.",
-        "promptLabel": "terracotta tile flooring with warm clay color variation",
-        "discoverSubtitle": "Floor / Mediterranean Clay"
+        "title": "테라코타 타일",
+        "description": "손으로 만든 특성을 지닌 흙빛 점토 따뜻함.",
+        "promptLabel": "따뜻한 클레이 색상 변화가 있는 테라코타 타일 바닥",
+        "discoverSubtitle": "바닥 / 지중해 점토"
       },
       "slateTile": {
-        "title": "Slate Tile",
-        "description": "Dark slate with a crisp large-format finish.",
-        "promptLabel": "dark slate tile flooring with large format stone slabs",
-        "discoverSubtitle": "Floor / Dark Stone"
+        "title": "슬레이트 타일",
+        "description": "선명한 대형 마감 처리를 갖춘 다크 슬레이트입니다.",
+        "promptLabel": "대형 석판이 있는 다크 슬레이트 타일 바닥",
+        "discoverSubtitle": "바닥 / 다크스톤"
       },
       "plushCarpet": {
-        "title": "Plush Carpet",
-        "description": "Soft cream carpet with a quiet, cozy feel.",
-        "promptLabel": "luxury plush carpet flooring in a soft cream tone",
-        "discoverSubtitle": "Floor / Soft Texture"
+        "title": "봉제 카펫",
+        "description": "조용하고 아늑한 느낌을 주는 부드러운 크림색 카펫입니다.",
+        "promptLabel": "부드러운 크림 톤의 고급 플러시 카펫 바닥",
+        "discoverSubtitle": "바닥 / 부드러운 질감"
       },
       "weatheredOak": {
-        "title": "Weathered Oak",
-        "description": "Mid-tone oak with a gently aged finish.",
-        "promptLabel": "weathered oak flooring with subtle aged grain",
-        "discoverSubtitle": "Floor / Rustic Warmth"
+        "title": "풍화된 오크",
+        "description": "부드럽게 에이징된 마감의 중간톤 오크입니다.",
+        "promptLabel": "미묘한 노화된 결을 지닌 풍화 오크 바닥재",
+        "discoverSubtitle": "바닥 / 소박한 따뜻함"
       }
     },
     "injectedGallery": {
       "floorAfterScenes": {
-        "heritageHerringbone": "Heritage Herringbone",
-        "carraraMarble": "Carrara Marble",
-        "satinConcrete": "Satin Concrete",
-        "walnutGloss": "Walnut Gloss",
-        "limestoneSlab": "Limestone Slab"
+        "heritageHerringbone": "헤리티지 헤링본",
+        "carraraMarble": "카라라 대리석",
+        "satinConcrete": "새틴 콘크리트",
+        "walnutGloss": "월넛 글로스",
+        "limestoneSlab": "석회석 석판"
       },
       "wallAfterScenes": {
-        "sagePlaster": "Sage Plaster",
-        "linearSlats": "Linear Slats",
-        "veinedMarble": "Veined Marble",
-        "minimalConcrete": "Minimal Concrete",
-        "botanicalMural": "Botanical Mural"
+        "sagePlaster": "세이지 석고",
+        "linearSlats": "선형 판금",
+        "veinedMarble": "결이 있는 대리석",
+        "minimalConcrete": "최소한의 콘크리트",
+        "botanicalMural": "식물 벽화"
       },
       "interiorExamples": {
-        "kitchen": "Kitchen",
-        "livingRoom": "Living Room",
-        "bedroom": "Bedroom",
-        "bathroom": "Bathroom",
-        "gamingRoom": "Gaming Room",
-        "homeOffice": "Home Office"
+        "kitchen": "주방",
+        "livingRoom": "거실",
+        "bedroom": "침실",
+        "bathroom": "욕실",
+        "gamingRoom": "게임룸",
+        "homeOffice": "홈오피스"
       },
       "exteriorExamples": {
-        "apartment": "Apartment",
-        "house": "House",
-        "office": "Office",
-        "villa": "Villa",
-        "residential": "Residential",
-        "retail": "Retail"
+        "apartment": "아파트",
+        "house": "집",
+        "office": "사무실",
+        "villa": "빌라",
+        "residential": "주거용",
+        "retail": "소매"
       },
       "gardenExamples": {
-        "infinityPool": "Infinity Pool",
-        "waterfallCourt": "Waterfall Court",
-        "firePit": "Fire Pit",
-        "tropicalLounge": "Tropical Lounge",
-        "resortDeck": "Resort Deck",
-        "lagoonFalls": "Lagoon Falls"
+        "infinityPool": "인피니티 풀",
+        "waterfallCourt": "워터폴 코트",
+        "firePit": "화덕",
+        "tropicalLounge": "트로피컬 라운지",
+        "resortDeck": "리조트 데크",
+        "lagoonFalls": "라군 폭포"
       },
       "homeCoreScenes": {
-        "kitchen": "Kitchen",
-        "livingRoom": "Living Room",
-        "bedroom": "Bedroom",
-        "bathroom": "Bathroom",
-        "diningRoom": "Dining Room",
-        "gamingRoom": "Gaming Room",
-        "homeOffice": "Home Office"
+        "kitchen": "주방",
+        "livingRoom": "거실",
+        "bedroom": "침실",
+        "bathroom": "욕실",
+        "diningRoom": "다이닝룸",
+        "gamingRoom": "게임룸",
+        "homeOffice": "홈오피스"
       },
       "homeFlexScenes": {
-        "coffeeShop": "Coffee Shop",
-        "gamingStudio": "Gaming Studio",
-        "atticLounge": "Attic Lounge",
-        "studyRoom": "Study Room",
-        "serviceRoom": "Service Room",
-        "laundryRoom": "Laundry Room"
+        "coffeeShop": "커피숍",
+        "gamingStudio": "게이밍 스튜디오",
+        "atticLounge": "다락방 라운지",
+        "studyRoom": "공부방",
+        "serviceRoom": "서비스 룸",
+        "laundryRoom": "세탁실"
       },
       "livingRoomScenes": {
-        "sereneLounge": "Serene Lounge",
-        "moodyLounge": "Moody Lounge",
-        "organicLiving": "Organic Living",
-        "grandSalon": "Grand Salon",
-        "playfulLounge": "Playful Lounge"
+        "sereneLounge": "세린 라운지",
+        "moodyLounge": "무디 라운지",
+        "organicLiving": "유기농 생활",
+        "grandSalon": "그랜드 살롱",
+        "playfulLounge": "플레이풀 라운지"
       },
       "homeLuxeScenes": {
-        "restaurant": "Restaurant",
-        "studyLibrary": "Study Library",
-        "atticRetreat": "Attic Retreat",
-        "toiletSuite": "Toilet Suite",
-        "balcony": "Balcony",
-        "hall": "Hall",
-        "deckDay": "Deck Day",
-        "deckNight": "Deck Night"
+        "restaurant": "레스토랑",
+        "studyLibrary": "연구 도서관",
+        "atticRetreat": "애틱 리트리트",
+        "toiletSuite": "화장실 스위트",
+        "balcony": "발코니",
+        "hall": "홀",
+        "deckDay": "데크 데이",
+        "deckNight": "데크 나이트"
       },
       "exteriorPrimaryScenes": {
-        "house": "House",
-        "residential": "Residential",
-        "villa": "Villa",
-        "glassCorner": "Glass Corner",
-        "apartment": "Apartment"
+        "house": "집",
+        "residential": "주거용",
+        "villa": "빌라",
+        "glassCorner": "유리코너",
+        "apartment": "아파트"
       },
       "exteriorSecondaryScenes": {
-        "apartmentTower": "Apartment Tower",
-        "retailPavilion": "Retail Pavilion",
-        "officeBuilding": "Office Building",
-        "modernVilla": "Modern Villa",
-        "residentialTower": "Residential Tower"
+        "apartmentTower": "아파트 타워",
+        "retailPavilion": "리테일 파빌리온",
+        "officeBuilding": "오피스 빌딩",
+        "modernVilla": "모던 빌라",
+        "residentialTower": "주거용 타워"
       },
       "gardenPrimaryScenes": {
-        "infinityPool": "Infinity Pool",
-        "waterfallCourt": "Waterfall Court",
-        "sunsetFirePit": "Sunset Fire Pit",
-        "tropicalLounge": "Tropical Lounge",
-        "livingWall": "Living Wall",
-        "lightCourt": "Light Court"
+        "infinityPool": "인피니티 풀",
+        "waterfallCourt": "워터폴 코트",
+        "sunsetFirePit": "일몰 화덕",
+        "tropicalLounge": "트로피컬 라운지",
+        "livingWall": "살아있는 벽",
+        "lightCourt": "라이트 코트"
       },
       "gardenSecondaryScenes": {
-        "sunsetPool": "Sunset Pool",
-        "fireCove": "Fire Cove",
-        "poolCourt": "Pool Court",
-        "waterfallLounge": "Waterfall Lounge",
-        "resortDeck": "Resort Deck",
-        "lagoonFalls": "Lagoon Falls"
+        "sunsetPool": "선셋 풀",
+        "fireCove": "파이어 코브",
+        "poolCourt": "풀 코트",
+        "waterfallLounge": "폭포라운지",
+        "resortDeck": "리조트 데크",
+        "lagoonFalls": "라군 폭포"
       },
       "exteriorBuildingTypes": {
-        "apartment": "Apartment",
-        "house": "House",
-        "officeBuilding": "Office Building",
-        "villa": "Villa",
-        "residential": "Residential",
-        "retail": "Retail"
+        "apartment": "아파트",
+        "house": "집",
+        "officeBuilding": "오피스 빌딩",
+        "villa": "빌라",
+        "residential": "주거용",
+        "retail": "소매"
       }
     }
   },
   "legacyUnlocalized": {
     "paintWizard": {
-      "autoDetectFailureMessage": "Auto-detect couldn't run. Please brush manually.",
-      "cancelledGenerationMessage": "Cancelled by user.",
+      "autoDetectFailureMessage": "자동 감지를 실행할 수 없습니다. 수동으로 브러싱해 주세요.",
+      "cancelledGenerationMessage": "사용자가 취소했습니다.",
       "result": {
-        "heading": "Behold your new interior",
-        "subheading": "A polished wall concept, composed to preserve the room's structure, furnishing layout, and natural light.",
-        "appliedFinish": "Applied Finish",
-        "saveToGallery": "Save to Gallery",
-        "share": "Share",
-        "tryAgain": "Try Again"
+        "heading": "새로운 인테리어를 만나보세요",
+        "subheading": "방의 구조, 가구 배치 및 자연광을 보존하도록 구성된 세련된 벽 컨셉입니다.",
+        "appliedFinish": "마감 적용",
+        "saveToGallery": "갤러리에 저장",
+        "share": "공유",
+        "tryAgain": "다시 시도"
       }
     }
   }

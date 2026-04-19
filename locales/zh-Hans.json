@@ -6,48 +6,48 @@
     "actions": {
       "continue": "继续",
       "cancel": "取消",
-      "close": "Close",
-      "delete": "Delete",
+      "close": "关闭",
+      "delete": "删除",
       "save": "保存",
       "share": "分享",
-      "restore": "Restore",
-      "upgrade": "Upgrade",
-      "tryAgain": "Please try again.",
+      "restore": "恢复",
+      "upgrade": "升级",
+      "tryAgain": "请再试一次。",
       "openSettings": "打开设置",
-      "notNow": "Not now",
-      "takePhoto": "Take Photo",
-      "chooseFromGallery": "Choose from Gallery",
+      "notNow": "现在不要",
+      "takePhoto": "拍照",
+      "chooseFromGallery": "从图库中选择",
       "addPhoto": "添加照片",
-      "chooseMediaSource": "Choose an image source",
-      "examplePhotos": "Example Photos",
-      "seeAll": "Explore All",
-      "uploadPlus": "Upload +",
+      "chooseMediaSource": "选择图像源",
+      "examplePhotos": "示例照片",
+      "seeAll": "探索全部",
+      "uploadPlus": "上传+",
       "exit": "退出",
-      "connect": "Connecting...",
-      "tryThis": "Try This"
+      "connect": "正在连接...",
+      "tryThis": "试试这个"
     },
     "labels": {
-      "email": "Email",
-      "password": "Password",
-      "version": "Version {{version}}",
-      "lastUpdated": "Last updated",
-      "step": "Step {{current}} / {{total}}"
+      "email": "电子邮件",
+      "password": "密码",
+      "version": "版本 {{version}}",
+      "lastUpdated": "最后更新",
+      "step": "步骤 {{current}} / {{total}}"
     },
     "alerts": {
       "exitTitle": "要退出吗？",
       "progressLost": "你的进度将会丢失。",
-      "completeStepTitle": "Complete this step",
-      "makeSelection": "Make a selection to continue.",
-      "addPhotoToContinue": "Add a photo to continue.",
-      "invalidHexTitle": "Invalid color",
-      "invalidHexBody": "Enter a valid 6-digit hex code such as #D946EF."
+      "completeStepTitle": "完成此步骤",
+      "makeSelection": "做出选择以继续。",
+      "addPhotoToContinue": "添加照片以继续。",
+      "invalidHexTitle": "颜色无效",
+      "invalidHexBody": "输入有效的 6 位十六进制代码，例如 #D946EF。"
     },
     "states": {
-      "workInProgress": "Work in progress",
-      "generationFailed": "Render encountered an issue. Please try again.",
+      "workInProgress": "工作正在进行中",
+      "generationFailed": "渲染遇到问题。请再试一次。",
       "savedToGallery": "已保存到相册",
-      "photoPermissionNeeded": "Photo library access is required.",
-      "loading": "Loading..."
+      "photoPermissionNeeded": "需要访问照片库。",
+      "loading": "加载中..."
     }
   },
   "boot": {
@@ -55,8 +55,8 @@
     "loadingAccount": "正在加载你的账户...",
     "checkingPlan": "正在检查你的套餐...",
     "secureAccount": "保护你的账户后开始创作...",
-    "missingEnvTitle": "Missing Environment Variables",
-    "missingEnvBody": "The following values are required before HomeDecor AI can launch:"
+    "missingEnvTitle": "缺少环境变量",
+    "missingEnvBody": "在启动 HomeDecor AI 之前需要以下值："
   },
   "tabs": {
     "tools": "工具",
@@ -67,33 +67,33 @@
   "home": {
     "title": "HomeDecor AI",
     "accessibility": {
-      "openCredits": "Open credits"
+      "openCredits": "开放学分"
     },
     "errors": {
-      "tryItUnavailableTitle": "Preview unavailable"
+      "tryItUnavailableTitle": "预览不可用"
     },
     "tools": {
       "interior": {
-        "title": "Interior Design",
+        "title": "室内设计",
         "description": "Reimagine your space with AI precision."
       },
       "exterior": {
-        "title": "Exterior Design",
-        "description": "Reimagine your home's exterior with world-class facade styling."
+        "title": "外观设计",
+        "description": "用世界一流的外观造型重新构想您家的外观。"
       },
       "garden": {
-        "title": "Garden Design",
-        "description": "Design stunning gardens and outdoor spaces effortlessly."
+        "title": "园林设计",
+        "description": "轻松设计令人惊叹的花园和户外空间。"
       },
       "paint": {
-        "title": "Paint (Wall)",
-        "description": "Refine your walls with bespoke color palettes and designer textures."
+        "title": "油漆（墙）",
+        "description": "使用定制的调色板和设计师纹理来美化您的墙壁。"
       },
       "floor": {
-        "title": "Floor Restyle",
-        "description": "Elevate your room's foundation with premium materials and finishes."
+        "title": "地板改造",
+        "description": "使用优质材料和饰面提升您房间的基础。"
       },
-      "cta": "Try This"
+      "cta": "试试这个"
     }
   },
   "paywall": {
@@ -107,408 +107,409 @@
     "yearlyAccess": "年度访问",
     "weeklyAccess": "每周访问",
     "freeTrial": "3 天免费试用",
-    "justPerYear": "Just {{price}} per year",
+    "justPerYear": "每年只需 {{price}}",
     "pricePerYear": "仅需 {{price}} / 年",
     "pricePerWeek": "{{price}} / 周",
     "perWeek": "每周",
-    "thenWeekly": "Then {{price}}",
+    "thenWeekly": "然后{{price}}",
     "thenPricePerWeek": "之后 {{price}} / 周",
     "noPaymentNow": "现在无需付款",
     "cancelAnytime": "随时取消",
-    "trialEnabled": "Free trial enabled",
-    "enableTrial": "Enable free trial",
+    "trialEnabled": "已启用免费试用",
+    "enableTrial": "启用免费试用",
     "processing": "处理中...",
-    "tryForFree": "Begin Your Pro Trial",
-    "continue": "Begin Your Pro Trial",
-    "subtitle": "Experience the full power of architectural AI with higher limits and 4K precision.",
+    "tryForFree": "开始您的专业试用",
+    "continue": "开始您的专业试用",
+    "subtitle": "体验具有更高限制和 4K 精度的架构 AI 的全部功能。",
     "terms": "条款",
     "privacy": "隐私",
-    "subscriptionsUnavailable": "Subscriptions are temporarily unavailable.",
-    "restoreFailed": "Restore failed",
-    "restored": "Restored",
-    "noActiveSubscriptions": "No active subscriptions were found.",
-    "purchaseError": "Purchase Error",
-    "planUnavailable": "The selected plan is unavailable right now.",
-    "moroccoPricingUnavailable": "Localized MAD pricing is temporarily unavailable. Please try again in a moment.",
-    "subscriptionConfirmFailed": "We could not confirm your subscription. Please try again.",
-    "purchaseCancelled": "Purchase cancelled.",
-    "closeA11y": "Close paywall",
+    "subscriptionsUnavailable": "订阅暂时不可用。",
+    "restoreFailed": "恢复失败",
+    "restored": "已恢复",
+    "noActiveSubscriptions": "未找到有效的订阅。",
+    "purchaseError": "购买错误",
+    "planUnavailable": "所选计划目前不可用。",
+    "moroccoPricingUnavailable": "本地化 MAD 定价暂时不可用。请稍后重试。",
+    "subscriptionConfirmFailed": "我们无法确认您的订阅。请再试一次。",
+    "purchaseCancelled": "购买已取消。",
+    "closeA11y": "关闭付费专区",
     "title": "Design Like a Pro. No Limits.",
-    "beginTrial": "Begin Your Pro Trial"
+    "beginTrial": "开始您的专业试用"
   },
   "creditLimit": {
-    "title": "Upgrade to Professional Access.",
-    "body": "You've reached your standard rendering limit. Unlock high-res exports and faster processing now."
+    "title": "升级到专业访问权限。",
+    "body": "您已达到标准渲染限制。立即解锁高分辨率导出和更快的处理速度。"
   },
   "settings": {
     "title": "设置",
-    "heroTitle": "Free Plan",
+    "heroTitle": "免费计划",
     "featureItems": {
-      "advancedAi": "Advanced AI Model",
-      "fastProcessing": "Fast Processing",
-      "removeAds": "Remove All Ads"
+      "advancedAi": "高级 AI 模型",
+      "fastProcessing": "快速处理",
+      "removeAds": "删除所有广告"
     },
     "upgradePro": "升级到 PRO",
     "rows": {
-      "language": "Language",
-      "feedback": "Feedback",
-      "faq": "FAQ",
-      "rateUs": "Rate Us",
-      "shareWithFriends": "Share with Friends",
-      "termsOfUse": "Terms of Use",
-      "privacyPolicy": "Privacy Policy",
-      "restorePurchase": "Restore Purchase",
-      "userId": "User ID",
-      "deleteInformation": "Delete Information"
+      "language": "语言",
+      "feedback": "反馈",
+      "faq": "常问问题",
+      "rateUs": "评价我们",
+      "shareWithFriends": "与朋友分享",
+      "termsOfUse": "使用条款",
+      "privacyPolicy": "隐私政策",
+      "restorePurchase": "恢复购买",
+      "userId": "用户身份",
+      "deleteInformation": "删除信息"
     },
     "states": {
-      "notSignedIn": "Not signed in"
+      "notSignedIn": "未登录"
     },
     "language": {
-      "title": "Language",
-      "description": "Choose whether HomeDecor AI follows your device language or uses a selected in-app language.",
-      "auto": "Auto (System Default)",
-      "autoShort": "Auto",
-      "usingSystem": "Currently following {{language}} from your device"
+      "title": "语言",
+      "description": "选择 HomeDecor AI 是遵循您的设备语言还是使用选定的应用内语言。",
+      "auto": "自动（系统默认）",
+      "autoShort": "汽车",
+      "usingSystem": "当前正在通过您的设备关注 {{language}}",
+      "restartNotice": "应用新的布局方向..."
     },
     "messages": {
-      "destinationUnavailable": "This destination is unavailable right now.",
-      "emailClientUnavailable": "Unable to open your email app.",
-      "reviewUnavailable": "Review requests are unavailable right now.",
-      "shareUnavailable": "Unable to open the share sheet.",
-      "subscriptionsUnavailable": "Subscriptions are unavailable right now.",
-      "noActiveSubscriptions": "No active subscriptions were found.",
-      "restoreFailed": "Restore failed. Please try again.",
-      "noUserId": "No authenticated user ID is available.",
-      "userIdCopied": "User ID copied",
-      "deleteFailed": "Unable to delete your account right now."
+      "destinationUnavailable": "该目的地目前不可用。",
+      "emailClientUnavailable": "无法打开您的电子邮件应用程序。",
+      "reviewUnavailable": "目前无法提出审核请求。",
+      "shareUnavailable": "无法打开共享表。",
+      "subscriptionsUnavailable": "目前无法订阅。",
+      "noActiveSubscriptions": "未找到有效的订阅。",
+      "restoreFailed": "恢复失败。请再试一次。",
+      "noUserId": "没有经过身份验证的用户 ID 可用。",
+      "userIdCopied": "已复制用户 ID",
+      "deleteFailed": "目前无法删除您的帐户。"
     },
-    "shareMessage": "Explore designs created with HomeDecor AI: {{url}}",
+    "shareMessage": "探索使用 HomeDecor AI 创建的设计：{{url}}",
     "deleteAccount": {
-      "title": "Delete account?",
-      "body": "This will permanently delete your account and all associated data. This action cannot be undone."
+      "title": "删除帐户？",
+      "body": "这将永久删除您的帐户和所有相关数据。此操作无法撤消。"
     }
   },
   "profile": {
-    "title": "My Design Portfolio",
-    "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
+    "title": "我的设计作品集",
+    "emptyTitle": "您的投资组合是空的。启动一个项目，让您的愿景成为现实。",
     "emptySubtitle": "",
-    "compareHint": "Drag to compare. Double-tap to reset.",
-    "deleteFromBoardTitle": "Remove from portfolio?",
-    "deleteFromBoardBody": "This design will be removed from your portfolio.",
-    "deletedFromBoard": "Removed from portfolio",
-    "unableDelete": "Unable to remove this design.",
-    "generationFailedBody": "This render did not complete successfully. Please try again.",
-    "saveToGallery": "Save to Photo Library",
-    "savedToGallery": "Saved to Photo Library",
-    "unableSave": "Unable to save this design."
+    "compareHint": "拖动进行比较。双击即可重置。",
+    "deleteFromBoardTitle": "从投资组合中删除？",
+    "deleteFromBoardBody": "该设计将从您的作品集中删除。",
+    "deletedFromBoard": "从投资组合中删除",
+    "unableDelete": "无法删除此设计。",
+    "generationFailedBody": "此渲染未成功完成。请再试一次。",
+    "saveToGallery": "保存到照片库",
+    "savedToGallery": "保存到照片库",
+    "unableSave": "无法保存此设计。"
   },
   "discover": {
-    "title": "Discover",
-    "subtitle": "Curated interiors, architecture, and landscape references organized into fast-scrolling collections.",
+    "title": "发现",
+    "subtitle": "精心策划的室内设计、建筑和景观参考资料被组织成快速滚动的集合。",
     "tabs": {
       "home": "Interior",
       "garden": "Garden",
       "exterior": "Exterior "
     },
-    "tryThisStyle": "Try This Style"
+    "tryThisStyle": "尝试这种风格"
   },
   "auth": {
-    "accountEyebrow": "HomeDecor AI Account",
+    "accountEyebrow": "HomeDecor AI 账户",
     "emailPlaceholder": "you@company.com",
     "signIn": {
-      "title": "Sign in",
-      "subtitle": "Access your saved designs, credits, purchases, and project history in one refined workspace.",
-      "passwordPlaceholder": "Enter your password",
-      "cta": "Continue",
-      "loading": "Signing in...",
-      "appleCta": "Continue with Apple",
-      "additionalVerificationTitle": "Sign in",
-      "additionalVerificationBody": "Additional verification is required for this account.",
-      "errorTitle": "Sign-in failed",
-      "errorFallback": "Unable to sign you in.",
-      "appleErrorFallback": "Apple sign-in failed.",
-      "noAccount": "No account?",
-      "createOne": "Create one"
+      "title": "登入",
+      "subtitle": "在一个精致的工作区中访问您保存的设计、积分、购买和项目历史记录。",
+      "passwordPlaceholder": "输入您的密码",
+      "cta": "继续",
+      "loading": "正在登录...",
+      "appleCta": "继续使用 Apple",
+      "additionalVerificationTitle": "登入",
+      "additionalVerificationBody": "此帐户需要额外验证。",
+      "errorTitle": "登录失败",
+      "errorFallback": "无法让您登录。",
+      "appleErrorFallback": "Apple 登录失败。",
+      "noAccount": "没有帐户？",
+      "createOne": "创建一个"
     },
     "signUp": {
-      "title": "Create account",
-      "subtitle": "Create your account to carry your designs, subscriptions, and saved projects across devices.",
-      "passwordPlaceholder": "Create a secure password",
-      "cta": "Create account",
-      "loading": "Creating...",
-      "appleCta": "Continue with Apple",
-      "verifyTitle": "Verify email",
-      "verifyBody": "Check your inbox for the verification code, then sign in.",
-      "errorTitle": "Sign-up failed",
-      "errorFallback": "Unable to create your account.",
-      "appleErrorFallback": "Apple sign-up failed.",
-      "haveAccount": "Already have an account?",
-      "signInLink": "Sign in"
+      "title": "创建账户",
+      "subtitle": "创建您的帐户以跨设备携带您的设计、订阅和保存的项目。",
+      "passwordPlaceholder": "创建安全密码",
+      "cta": "创建账户",
+      "loading": "创造...",
+      "appleCta": "继续使用 Apple",
+      "verifyTitle": "验证电子邮件",
+      "verifyBody": "检查收件箱中的验证码，然后登录。",
+      "errorTitle": "注册失败",
+      "errorFallback": "无法创建您的帐户。",
+      "appleErrorFallback": "Apple 注册失败。",
+      "haveAccount": "已经有帐户？",
+      "signInLink": "登入"
     }
   },
   "faq": {
-    "eyebrow": "Support",
-    "title": "FAQ",
-    "description": "Clear answers to the most common HomeDecor AI questions.",
+    "eyebrow": "支持",
+    "title": "常问问题",
+    "description": "最常见 HomeDecor AI 问题的清晰答案。",
     "items": {
       "credits": {
-        "question": "How do credits work in HomeDecor AI?",
-        "answer": "Each render uses credits based on the workflow and output tier you choose. Your remaining balance updates automatically after every generation."
+        "question": "HomeDecor AI 中的积分如何运作？",
+        "answer": "每个渲染根据您选择的工作流程和输出层使用积分。您的剩余余额在每一代后都会自动更新。"
       },
       "pro": {
-        "question": "What do I unlock with PRO?",
-        "answer": "PRO unlocks premium rendering tools, faster processing, and higher-end output quality through the in-app upgrade flow."
+        "question": "我可以使用 PRO 解锁什么？",
+        "answer": "PRO 通过应用内升级流程解锁高级渲染工具、更快的处理速度和更高端的输出质量。"
       },
       "slowResult": {
-        "question": "Why is my result taking longer than expected?",
-        "answer": "Render times depend on queue demand, source image quality, and the workflow you selected. Keeping the app open on a stable connection helps avoid interruptions."
+        "question": "为什么我的结果比预期的时间要长？",
+        "answer": "渲染时间取决于队列需求、源图像质量以及您选择的工作流程。在稳定的连接上保持应用程序打开有助于避免中断。"
       },
       "deleteAccount": {
-        "question": "How do I delete my account?",
-        "answer": "Open Settings and choose Delete Information. This permanently removes your account data and signs you out after confirmation."
+        "question": "如何删除我的帐户？",
+        "answer": "打开“设置”并选择“删除信息”。这将永久删除您的帐户数据并在确认后将您注销。"
       }
     }
   },
   "privacy": {
-    "eyebrow": "Policy",
-    "title": "Privacy Policy",
-    "description": "The information we collect, how it is used, and the controls you have inside HomeDecor AI.",
-    "date": "March 14, 2026",
+    "eyebrow": "政策",
+    "title": "隐私政策",
+    "description": "我们收集的信息、信息的使用方式以及您在 HomeDecor AI 中拥有的控制权。",
+    "date": "2026 年 3 月 14 日",
     "sections": {
       "overview": {
-        "title": "Overview",
-        "body": "HomeDecor AI (\"HomeDecor\", \"we\", \"our\", \"us\") provides AI-powered interior and exterior redesign services. This Privacy Policy explains what data we collect, how we use it, and the choices you have."
+        "title": "概述",
+        "body": "HomeDecor AI（“HomeDecor”、“我们”、“我们的”、“我们”）提供 AI 支持的内部和外部重新设计服务。本隐私政策解释了我们收集哪些数据、我们如何使用这些数据以及您拥有的选择。"
       },
       "informationWeCollect": {
-        "title": "Information We Collect",
-        "body": "We collect information you provide, such as account details and uploaded images, usage data such as feature interactions and device information, and payment status data from RevenueCat to manage subscriptions."
+        "title": "我们收集的信息",
+        "body": "我们收集您提供的信息（例如帐户详细信息和上传的图像）、使用数据（例如功能交互和设备信息）以及来自 RevenueCat 的付款状态数据来管理订阅。"
       },
       "howWeUseYourData": {
-        "title": "How We Use Your Data",
-        "body": "We use your data to deliver redesigns, personalize your experience, manage credits and billing, improve model quality, and secure the app. We do not sell your personal data."
+        "title": "我们如何使用您的数据",
+        "body": "我们使用您的数据来进行重新设计、个性化您的体验、管理积分和计费、提高模型质量并确保应用程序安全。我们不会出售您的个人数据。"
       },
       "imageProcessing": {
-        "title": "Image Processing",
-        "body": "Images you upload are processed to generate redesigns. We store generated images and related metadata so you can revisit your results, and you can remove your data by deleting your account."
+        "title": "图像处理",
+        "body": "您上传的图像将被处理以生成重新设计。我们存储生成的图像和相关元数据，以便您可以重新访问结果，并且可以通过删除帐户来删除数据。"
       },
       "sharingAndDisclosure": {
-        "title": "Sharing and Disclosure",
-        "body": "We share data only with providers required to operate HomeDecor AI, such as authentication, analytics, and payment processing partners, or when disclosure is required by law."
+        "title": "分享与披露",
+        "body": "我们仅与需要运营 HomeDecor AI 的提供商（例如身份验证、分析和支付处理合作伙伴）或在法律要求披露时共享数据。"
       },
       "dataSecurity": {
-        "title": "Data Security",
-        "body": "We use encryption and access controls to protect your data. No system is perfectly secure, so we also recommend strong passwords and a protected device."
+        "title": "数据安全",
+        "body": "我们使用加密和访问控制来保护您的数据。没有系统是完全安全的，因此我们还建议使用强密码和受保护的设备。"
       },
       "yourRights": {
-        "title": "Your Rights",
-        "body": "You can access, update, or delete your account data at any time. Account deletion removes your stored generations and profile information from our systems."
+        "title": "您的权利",
+        "body": "您可以随时访问、更新或删除您的帐户数据。帐户删除将从我们的系统中删除您存储的世代和个人资料信息。"
       },
       "contactUs": {
-        "title": "Contact Us",
-        "body": "For privacy questions or requests, contact us at support@homedecor.ai."
+        "title": "联系我们",
+        "body": "如有隐私问题或请求，请通过 support@homedecor.ai 联系我们。"
       }
     }
   },
   "terms": {
-    "eyebrow": "Policy",
-    "title": "Terms of Service",
-    "description": "The rules, expectations, and service boundaries for using HomeDecor AI.",
-    "date": "March 14, 2026",
+    "eyebrow": "政策",
+    "title": "服务条款",
+    "description": "使用 HomeDecor AI 的规则、期望和服务边界。",
+    "date": "2026 年 3 月 14 日",
     "sections": {
       "acceptanceOfTerms": {
-        "title": "Acceptance of Terms",
-        "body": "By accessing or using HomeDecor AI, you agree to these Terms of Service. If you do not agree, do not use the app."
+        "title": "接受条款",
+        "body": "访问或使用 HomeDecor AI，即表示您同意这些服务条款。如果您不同意，请勿使用该应用程序。"
       },
       "serviceDescription": {
-        "title": "Service Description",
-        "body": "HomeDecor AI provides AI-generated redesigns for interior and exterior spaces. Outputs are visual concepts and may not account for structural, engineering, or code constraints."
+        "title": "服务说明",
+        "body": "HomeDecor AI 提供 AI 生成的内部和外部空间重新设计。输出是视觉概念，可能不考虑结构、工程或代码约束。"
       },
       "accountAndEligibility": {
-        "title": "Account and Eligibility",
-        "body": "You must be at least 13 years old to use HomeDecor AI. You are responsible for maintaining account security and for activity that happens under your credentials."
+        "title": "账户和资格",
+        "body": "您必须年满 13 岁才能使用 HomeDecor AI。您有责任维护帐户安全以及在您的凭据下发生的活动。"
       },
       "userContent": {
-        "title": "User Content",
-        "body": "You retain ownership of images you upload. By using the service, you grant HomeDecor AI a limited license to process and store them so we can generate and return your results."
+        "title": "用户内容",
+        "body": "您保留所上传图像的所有权。通过使用该服务，您授予HomeDecor AI处理和存储它们的有限许可，以便我们可以生成并返回您的结果。"
       },
       "subscriptionsAndCredits": {
-        "title": "Subscriptions and Credits",
-        "body": "Paid plans unlock enhanced features and higher-quality exports. Credits are consumed per generation, and subscription billing and renewals are handled by your app store and RevenueCat."
+        "title": "订阅和积分",
+        "body": "付费计划可解锁增强的功能和更高质量的导出。积分按代消耗，订阅计费和续订由您的应用商店和 RevenueCat 处理。"
       },
       "prohibitedUse": {
-        "title": "Prohibited Use",
-        "body": "You agree not to misuse the service, reverse engineer the app, or upload unlawful, harmful, or infringing content."
+        "title": "禁止使用",
+        "body": "您同意不滥用服务、对应用程序进行逆向工程或上传非法、有害或侵权内容。"
       },
       "disclaimer": {
-        "title": "Disclaimer",
-        "body": "The service is provided \"as is\" without warranties of any kind. We do not guarantee specific design results or the accuracy of AI-generated outputs."
+        "title": "免责声明",
+        "body": "该服务按“原样”提供，不提供任何形式的保证。我们不保证具体的设计结果或 AI 生成的输出的准确性。"
       },
       "limitationOfLiability": {
-        "title": "Limitation of Liability",
-        "body": "To the maximum extent permitted by law, HomeDecor AI is not liable for indirect or consequential damages arising from your use of the service."
+        "title": "责任限制",
+        "body": "在法律允许的最大范围内，HomeDecor AI 对您因使用服务而产生的间接或后果性损害不承担责任。"
       },
       "contact": {
-        "title": "Contact",
-        "body": "Questions about these terms can be sent to support@homedecor.ai."
+        "title": "接触",
+        "body": "有关这些条款的问题可以发送至 support@homedecor.ai。"
       }
     }
   },
   "processing": {
-    "title": "AI is crafting your architectural masterpiece...",
-    "eta": "Your vision will be ready in ~15 seconds.",
-    "cancelKeepCredit": "Cancel and keep my credit",
+    "title": "AI 正在打造您的建筑杰作......",
+    "eta": "您的愿景将在 ~15 秒内准备就绪。",
+    "cancelKeepCredit": "取消并保留我的信用",
     "status": {
-      "analyzingGeometry": "Analyzing architectural geometry...",
-      "identifyingSurfaces": "Identifying surfaces and structural lines...",
-      "applyingStyle": "Applying your selected design direction...",
-      "renderingMaterials": "Rendering materials and lighting...",
-      "addingDetails": "Refining the final details...",
-      "almostReady": "Finalizing your render...",
-      "renderingFinalLighting": "Composing the final lighting pass..."
+      "analyzingGeometry": "分析建筑几何...",
+      "identifyingSurfaces": "识别表面和结构线...",
+      "applyingStyle": "应用您选择的设计方向...",
+      "renderingMaterials": "渲染材质和灯光...",
+      "addingDetails": "完善最终细节...",
+      "almostReady": "正在完成渲染...",
+      "renderingFinalLighting": "编写最终的照明通道..."
     }
   },
   "wizard": {
     "headers": {
-      "back": "Go back",
+      "back": "回去",
       "close": "关闭",
       "previousStep": "返回上一步",
-      "stepProgress": "Step {{current}}/{{total}}",
-      "creditsRemaining": "Credits remaining"
+      "stepProgress": "步骤 {{current}}/{{total}}",
+      "creditsRemaining": "剩余积分"
     },
     "stepOne": {
-      "title": "Upload Your Vision",
-      "emptyTitle": "Upload Your Vision",
-      "emptySubtitle": "Redesign and Beautify your home.",
-      "removePhoto": "Remove selected photo",
+      "title": "上传您的愿景",
+      "emptyTitle": "上传您的愿景",
+      "emptySubtitle": "重新设计和美化您的家。",
+      "removePhoto": "删除选定的照片",
       "cta": "Begin Your Transformation"
     },
     "interior": {
       "stepTwoTitle": "Choose Your Space",
-      "stepTwoSubtitle": "Select the room type so the redesign stays architecturally grounded.",
+      "stepTwoSubtitle": "选择房间类型，以便重新设计保持建筑基础。",
       "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepThreeSubtitle": "选择标志性风格来塑造您的设计愿景。",
       "stepFourMode": "Design Mode",
-      "stepFourPalette": "Color Harmony"
+      "stepFourPalette": "色彩和谐"
     },
     "exterior": {
       "stepTwoTitle": "Select Building Type",
-      "stepTwoSubtitle": "Select the architectural form you want to redesign.",
+      "stepTwoSubtitle": "选择您想要重新设计的建筑形式。",
       "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
-      "stepFourTitle": "Color Harmony"
+      "stepThreeSubtitle": "选择标志性风格来塑造您的设计愿景。",
+      "stepFourTitle": "色彩和谐"
     },
     "garden": {
-      "stepOneEmptyTitle": "Upload Your Vision",
-      "stepOneEmptySubtitle": "Redesign and Beautify your home.",
+      "stepOneEmptyTitle": "上传您的愿景",
+      "stepOneEmptySubtitle": "重新设计和美化您的家。",
       "stepTwoTitle": "Curate Your Aesthetic",
-      "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
-      "stepThreeTitle": "Color Harmony"
+      "stepTwoSubtitle": "选择标志性风格来塑造您的设计愿景。",
+      "stepThreeTitle": "色彩和谐"
     },
     "floorIntro": {
-      "hero": "Select a flooring style to redefine your room's foundation."
+      "hero": "选择地板风格来重新定义房间的基础。"
     },
     "paintIntro": {
-      "hero": "Trace any surface to apply custom colors and designer textures instantly."
+      "hero": "描画任何表面以立即应用自定义颜色和设计师纹理。"
     },
     "floorFlow": {
       "title": "地面重塑",
-      "masking": "Mapping your floor plane...",
-      "promptLabel": "Describe Your Vision",
+      "masking": "绘制您的地板平面...",
+      "promptLabel": "描述您的愿景",
       "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials.",
-      "promptExamplesTitle": "Prompt examples",
+      "promptExamplesTitle": "提示示例",
       "generateCta": "生成我的设计 →",
-      "selectMaterialCta": "Select a Material",
-      "selectMaterialTitle": "Select Material",
-      "selectMaterialBody": "Select a premium material curated to read as photoreal, perspective-aware, and listing-ready.",
-      "selectedMaterial": "Selected Material",
-      "noMaterialSelected": "No material selected",
-      "unlockMaterialBody": "Select a flooring material to unlock the AI restyle.",
-      "addPromptTitle": "Add a prompt",
-      "addPromptBody": "Describe the exact floor transformation you want before continuing.",
-      "generatePromptBody": "Choose a custom floor prompt before generating.",
-      "autoMaskPreparing": "Preparing the automatic floor mask. Please wait a moment.",
-      "autoMaskSuccess": "Floor mask ready.",
-      "autoMaskFailure": "Automatic detection could not complete. Please brush the floor manually.",
-      "savePermissionTitle": "Photo access needed",
-      "savePermissionBody": "Allow photo library access to save your render to the device.",
-      "cameraAccessTitle": "Camera access needed",
-      "cameraAccessBody": "Enable camera access to capture a floor photo.",
-      "photoAccessTitle": "Photo access needed",
-      "photoAccessBody": "Enable photo library access to upload a floor photo.",
-      "mediaUnavailableTitle": "Unable to open media",
-      "exampleUnavailableBody": "This example photo could not be opened.",
-      "markFloorTitle": "Mark the floor first",
-      "markFloorBody": "Brush over the floor area you want to restyle before continuing.",
-      "pickMaterialTitle": "Pick a material",
-      "pickMaterialBody": "Choose a flooring material before continuing.",
-      "renderFinishing": "This render is already finishing up.",
-      "cancelSuccess": "Generation canceled. Your credit was kept.",
-      "cancelUnavailable": "Unable to cancel right now.",
-      "supportingText": "Uses 1 credit · {{creditsRemaining}}",
-      "creditsRemaining": "{{count}} remaining",
+      "selectMaterialCta": "选择材料",
+      "selectMaterialTitle": "选择材料",
+      "selectMaterialBody": "选择优质的材料，阅读起来如照片般真实，具有透视意识，并且可以列出。",
+      "selectedMaterial": "精选材料",
+      "noMaterialSelected": "未选择材料",
+      "unlockMaterialBody": "选择地板材料以解锁 AI 重新设计。",
+      "addPromptTitle": "添加提示",
+      "addPromptBody": "在继续之前，请描述您想要的确切楼层转换。",
+      "generatePromptBody": "在生成之前选择自定义楼层提示。",
+      "autoMaskPreparing": "准备自动地板面罩。请稍等。",
+      "autoMaskSuccess": "地板面膜准备好了。",
+      "autoMaskFailure": "自动检测无法完成。请手动刷地板。",
+      "savePermissionTitle": "需要访问照片",
+      "savePermissionBody": "允许访问照片库以将渲染保存到设备。",
+      "cameraAccessTitle": "需要相机访问权限",
+      "cameraAccessBody": "启用相机访问以拍摄地面照片。",
+      "photoAccessTitle": "需要访问照片",
+      "photoAccessBody": "启用照片库访问以上传楼层照片。",
+      "mediaUnavailableTitle": "无法打开媒体",
+      "exampleUnavailableBody": "无法打开此示例照片。",
+      "markFloorTitle": "首先在地板上做标记",
+      "markFloorBody": "在继续之前，先刷过您想要重新设计的地板区域。",
+      "pickMaterialTitle": "选择材料",
+      "pickMaterialBody": "在继续之前选择地板材料。",
+      "renderFinishing": "该渲染已经完成。",
+      "cancelSuccess": "一代被取消。你的信用被保留了。",
+      "cancelUnavailable": "现在无法取消。",
+      "supportingText": "使用 1 个积分 · {{creditsRemaining}}",
+      "creditsRemaining": "剩余 {{count}}",
       "promptExamples": {
-        "frenchOak": "Luxurious wide-plank French Oak in a warm natural finish.",
-        "carraraMarble": "Polished Italian Carrara Marble with deep gray veining.",
-        "microcement": "Contemporary seamless Micro-cement for an industrial chic foundation.",
-        "herringboneWalnut": "Elegant Dark Walnut in a classic Herringbone pattern.",
-        "walnut": "Modern large-format Slate Stone tiles in charcoal gray."
+        "frenchOak": "奢华宽板法国橡木，表面温暖自然。",
+        "carraraMarble": "抛光意大利卡拉拉大理石，带有深灰色纹理。",
+        "microcement": "现代无缝微水泥，打造工业时尚的基础。",
+        "herringboneWalnut": "优雅的黑胡桃木，经典人字形图案。",
+        "walnut": "现代大幅面炭灰色板岩瓷砖。"
       },
       "result": {
-        "heading": "Behold your new interior",
-        "subheading": "A material-led floor transformation designed to stay true to the room's perspective, furnishings, and natural light.",
-        "before": "Before",
-        "after": "After",
-        "materialApplied": "Material Applied",
-        "materialFallback": "Material",
-        "summary": "Your floor has been restyled while preserving room geometry, furniture alignment, and natural light behavior.",
-        "saveToGallery": "Save to Gallery",
-        "share": "Share",
-        "tryAgain": "Try Again"
+        "heading": "看看你的新内饰",
+        "subheading": "以材料为主导的地板改造，旨在保持房间的视角、家具和自然光。",
+        "before": "前",
+        "after": "后",
+        "materialApplied": "应用材料",
+        "materialFallback": "材料",
+        "summary": "您的地板已重新设计，同时保留房间几何形状、家具对齐和自然光行为。",
+        "saveToGallery": "保存到图库",
+        "share": "分享",
+        "tryAgain": "再试一次"
       },
       "materials": {
         "natural-oak": {
-          "title": "Natural Oak",
-          "description": "Airy oak planks with soft natural grain."
+          "title": "天然橡木",
+          "description": "通风的橡木板具有柔软的天然纹理。"
         },
         "walnut-wood": {
-          "title": "Walnut Wood",
-          "description": "Deep walnut planks with rich tailored contrast."
+          "title": "胡桃木",
+          "description": "深胡桃木板具有丰富的剪裁对比。"
         },
         "carrara-marble": {
-          "title": "Carrara Marble",
-          "description": "Bright stone veining with a calm luxe finish."
+          "title": "卡拉拉大理石",
+          "description": "明亮的石纹具有平静的奢华饰面。"
         },
         "polished-concrete": {
-          "title": "Polished Concrete",
-          "description": "Smooth concrete sheen with urban gallery calm."
+          "title": "抛光混凝土",
+          "description": "光滑的混凝土光泽与城市画廊的平静。"
         },
         "herringbone-oak": {
-          "title": "Herringbone Oak",
-          "description": "Classic oak pattern with warm directional movement."
+          "title": "人字形橡木",
+          "description": "经典的橡木图案，带有温暖的定向运动。"
         },
         "terracotta-tile": {
-          "title": "Terracotta Tile",
-          "description": "Earthy clay warmth with handcrafted character."
+          "title": "赤土砖",
+          "description": "泥土般的温暖与手工制作的特色。"
         },
         "slate-tile": {
-          "title": "Slate Tile",
-          "description": "Dark slate with a crisp large-format finish."
+          "title": "板岩砖",
+          "description": "深色石板色，具有清晰的大尺寸饰面。"
         },
         "plush-carpet": {
-          "title": "Plush Carpet",
-          "description": "Soft cream carpet with a quiet, cozy feel."
+          "title": "毛绒地毯",
+          "description": "柔软的奶油色地毯，给人一种安静、舒适的感觉。"
         },
         "weathered-oak": {
-          "title": "Weathered Oak",
-          "description": "Mid-tone oak with a gently aged finish."
+          "title": "风化橡木",
+          "description": "中色调橡木，带有轻微老化的余味。"
         }
       }
     },
     "paintFlow": {
       "title": "涂装",
-      "selectionTitle": "Select Surfaces to Transform",
-      "maskTitle": "Select Surfaces to Transform",
+      "selectionTitle": "选择要变换的曲面",
+      "maskTitle": "选择要变换的曲面",
       "colorLabel": "颜色",
       "surfaceLabel": "表面",
       "choose": "选择",
@@ -516,888 +517,888 @@
       "colorPickerTitle": "选择墙面颜色",
       "surfacePickerTitle": "选择表面类型",
       "detectTitle": "正在检测可涂装表面...",
-      "detectBody": "HomeDecor AI is tracing repaintable wall surfaces while leaving windows, furniture, trim, and flooring untouched.",
+      "detectBody": "HomeDecor AI 正在描画可重新粉刷的墙面，同时保持窗户、家具、装饰和地板不变。",
       "preparingMaskTitle": "正在准备遮罩表面...",
-      "preparingMaskBody": "HomeDecor AI is refining the canvas so you can paint crisp edges around built-ins, windows, and furniture.",
+      "preparingMaskBody": "HomeDecor AI 正在完善画布，以便您可以在内置部件、窗户和家具周围绘制清晰的边缘。",
       "brushWidth": "画笔宽度",
       "eraserWidth": "橡皮宽度",
       "generateCta": "为我的墙面上色 →",
       "finishTitle": "饰面类型",
-      "finishBody": "Choose how the paint should catch light so the walls read correctly in a polished, designer-grade render.",
+      "finishBody": "选择油漆如何捕捉光线，以便墙壁在抛光的设计师级渲染中正确读取。",
       "selectedColor": "已选颜色",
-      "selectedSurfaceSentence": "Surface: {{surface}}.",
-      "colorLockedBody": "Wall color is locked. Now choose the final sheen profile for the render.",
-      "customColorDescription": "Custom wall tone selected from the precision color picker.",
-      "noColorSelected": "No color selected",
-      "chooseColorBody": "Choose a wall color before continuing.",
-      "savePermissionTitle": "Photo access needed",
-      "savePermissionBody": "Allow photo library access to save your render to the device.",
-      "cameraAccessTitle": "Camera access needed",
-      "cameraAccessBody": "Enable camera access to capture a room photo.",
-      "photoAccessTitle": "Photo access needed",
-      "photoAccessBody": "Enable photo library access to upload a room photo.",
-      "mediaUnavailableTitle": "Unable to open media",
-      "exampleUnavailableBody": "This example photo could not be opened.",
-      "markWallsTitle": "Mark the walls first",
-      "markWallsBody": "Brush over the wall surfaces you want to repaint before generating.",
-      "pickColorTitle": "Pick a color",
-      "pickColorBody": "Choose a wall color before continuing.",
-      "autoDetectSuccess": "Walls detected. Brush to refine if needed.",
-      "autoDetectFailure": "Automatic detection could not complete. Please brush manually.",
-      "renderFinishing": "This render is already finishing up.",
-      "cancelSuccess": "Generation canceled. Your credit was kept.",
-      "cancelUnavailable": "Unable to cancel right now.",
-      "supportingText": "Uses 1 credit · {{creditsRemaining}}",
-      "creditsRemaining": "{{count}} remaining",
-      "intakeTitle": "Upload Your Vision",
-      "intakeBody": "Upload a room photo for precise wall recoloring.",
-      "intakeReadyTitle": "Photo added. Mark the wall area next.",
-      "intakeReadyBody": "Your photo is locked in. Next, brush the wall surfaces so the recolor stays precise around trim, furniture, and decor.",
+      "selectedSurfaceSentence": "表面：{{surface}}。",
+      "colorLockedBody": "墙壁颜色已锁定。现在选择渲染的最终光泽配置文件。",
+      "customColorDescription": "从精确颜色选择器中选择的自定义墙壁色调。",
+      "noColorSelected": "未选择颜色",
+      "chooseColorBody": "在继续之前选择墙壁颜色。",
+      "savePermissionTitle": "需要访问照片",
+      "savePermissionBody": "允许访问照片库以将渲染保存到设备。",
+      "cameraAccessTitle": "需要相机访问权限",
+      "cameraAccessBody": "启用相机访问以拍摄房间照片。",
+      "photoAccessTitle": "需要访问照片",
+      "photoAccessBody": "启用照片库访问以上传房间照片。",
+      "mediaUnavailableTitle": "无法打开媒体",
+      "exampleUnavailableBody": "无法打开此示例照片。",
+      "markWallsTitle": "首先在墙壁上做标记",
+      "markWallsBody": "在生成之前刷过要重新粉刷的墙面。",
+      "pickColorTitle": "选择一种颜色",
+      "pickColorBody": "在继续之前选择墙壁颜色。",
+      "autoDetectSuccess": "检测到墙壁。如果需要的话，用刷子进行细化。",
+      "autoDetectFailure": "自动检测无法完成。请手动刷。",
+      "renderFinishing": "该渲染已经完成。",
+      "cancelSuccess": "一代被取消。你的信用被保留了。",
+      "cancelUnavailable": "现在无法取消。",
+      "supportingText": "使用 1 个积分 · {{creditsRemaining}}",
+      "creditsRemaining": "剩余 {{count}}",
+      "intakeTitle": "上传您的愿景",
+      "intakeBody": "上传房间照片以进行精确的墙壁重新着色。",
+      "intakeReadyTitle": "照片已添加。接下来标记墙壁区域。",
+      "intakeReadyBody": "您的照片已锁定。接下来，刷墙壁表面，以便重新着色在装饰、家具和装饰周围保持精确。",
       "surfaces": {
-        "auto": "Auto",
-        "brick": "Brick",
-        "cabinet": "Cabinet",
-        "door": "Door",
-        "wall": "Wall",
-        "outsideWall": "Outside Wall"
+        "auto": "汽车",
+        "brick": "砖",
+        "cabinet": "内阁",
+        "door": "门",
+        "wall": "墙",
+        "outsideWall": "外墙"
       },
       "colorFamilies": {
-        "pink": "Pink",
-        "blue": "Blue",
-        "green": "Green",
-        "yellow": "Yellow",
-        "gray": "Gray",
-        "red": "Red"
+        "pink": "粉色的",
+        "blue": "蓝色的",
+        "green": "绿色的",
+        "yellow": "黄色的",
+        "gray": "灰色的",
+        "red": "红色的"
       },
       "colors": {
         "sage-green": {
-          "title": "Sage Green",
-          "description": "Soft green calm for bright, polished living spaces."
+          "title": "鼠尾草绿",
+          "description": "柔和的绿色营造出明亮、优雅的生活空间。"
         },
         "midnight-navy": {
-          "title": "Midnight Navy",
-          "description": "Tailored navy depth with crisp architectural contrast."
+          "title": "午夜海军蓝",
+          "description": "量身定制的海军蓝深度与清晰的建筑对比。"
         },
         "terracotta-glow": {
-          "title": "Terracotta Glow",
-          "description": "Warm clay color with grounded, editorial energy."
+          "title": "兵马俑发光",
+          "description": "温暖的粘土色，具有扎实的编辑能量。"
         },
         "dusty-rose": {
-          "title": "Dusty Rose",
-          "description": "Muted blush warmth with soft boutique appeal."
+          "title": "尘土飞扬的玫瑰",
+          "description": "柔和的腮红温暖与柔和的精品魅力。"
         },
         "gallery-charcoal": {
-          "title": "Gallery Charcoal",
-          "description": "Refined charcoal for moody, art-forward rooms."
+          "title": "画廊木炭",
+          "description": "精制木炭，适合喜怒无常、艺术前卫的房间。"
         },
         "soft-ivory": {
-          "title": "Soft Ivory",
-          "description": "Luminous neutral that keeps rooms light, never flat."
+          "title": "软象牙色",
+          "description": "发光的中性色使房间保持明亮，绝不平坦。"
         },
         "olive-grove": {
-          "title": "Olive Grove",
-          "description": "Earthy olive depth with a grounded designer mood."
+          "title": "橄榄园",
+          "description": "朴实的橄榄色深度和脚踏实地的设计师情绪。"
         },
         "lavender-mist": {
-          "title": "Lavender Mist",
-          "description": "Soft violet haze for elevated pastel rooms."
+          "title": "薰衣草薄雾",
+          "description": "柔和的紫罗兰色薄雾，适合高雅柔和的房间。"
         },
         "pearl-gray": {
-          "title": "Pearl Gray",
-          "description": "Light tonal gray with polished everyday flexibility."
+          "title": "珍珠灰",
+          "description": "浅灰色调，具有抛光的日常灵活性。"
         }
       },
       "finishes": {
         "matte": {
-          "label": "Matte",
-          "description": "Soft, gallery-grade color payoff with the least surface glare."
+          "label": "哑光的",
+          "description": "柔和的画廊级色彩效果，表面眩光最少。"
         },
         "satin": {
-          "label": "Satin",
-          "description": "Balanced sheen for modern interiors with a subtle designer glow."
+          "label": "缎",
+          "description": "现代室内装饰的平衡光泽与微妙的设计师光芒。"
         },
         "glossy": {
-          "label": "Glossy",
-          "description": "A polished reflective finish for bold, high-contrast statement walls."
+          "label": "光滑",
+          "description": "抛光反光饰面，打造大胆、高对比度的个性墙壁。"
         }
       }
     },
     "examples": {
       "floor": {
-        "crackedConcrete": "Cracked Concrete",
-        "damagedPlanks": "Damaged Planks",
-        "brokenTile": "Broken Tile",
-        "renovationSubfloor": "Renovation Subfloor",
-        "wornPlywood": "Worn Plywood"
+        "crackedConcrete": "开裂混凝土",
+        "damagedPlanks": "损坏的木板",
+        "brokenTile": "破碎的瓷砖",
+        "renovationSubfloor": "装修底层地板",
+        "wornPlywood": "磨损的胶合板"
       },
       "paint": {
-        "rawConcrete": "Raw Concrete",
-        "peelingPlaster": "Peeling Plaster",
-        "wornWhite": "Worn White",
-        "exposedBrick": "Exposed Brick",
-        "stainedPlaster": "Stained Plaster",
-        "dampStreaks": "Damp Streaks"
+        "rawConcrete": "生混凝土",
+        "peelingPlaster": "脱皮膏药",
+        "wornWhite": "破旧的白色",
+        "exposedBrick": "裸露砖",
+        "stainedPlaster": "染色石膏",
+        "dampStreaks": "潮湿条纹"
       }
     }
   },
   "workspace": {
     "board": {
-      "new": "New",
-      "openEditor": "Tap to open your design editor",
-      "generationFailedTap": "Render encountered an issue. Tap for details.",
-      "generationFailedTitle": "Render failed",
-      "generationFailedBody": "This render did not complete. Please try again.",
-      "tryAnotherPrompt": "Please go back and try another prompt."
+      "new": "新的",
+      "openEditor": "点击打开您的设计编辑器",
+      "generationFailedTap": "渲染遇到问题。点击查看详细信息。",
+      "generationFailedTitle": "渲染失败",
+      "generationFailedBody": "此渲染未完成。请再试一次。",
+      "tryAnotherPrompt": "请返回并尝试另一个提示。"
     },
     "processing": {
-      "default": "HomeDecor AI is preserving the architecture while composing a refined redesign.",
-      "floor": "HomeDecor AI is reading perspective, locking the floor plane, and composing the new material with premium detail.",
-      "paint": "HomeDecor AI is isolating the wall planes and layering your selected finish with gallery-grade realism."
+      "default": "HomeDecor AI 在保留架构的同时进行了精致的重新设计。",
+      "floor": "HomeDecor AI 正在读取透视图，锁定地板平面，并以优质细节构成新材料。",
+      "paint": "HomeDecor AI 正在隔离墙壁平面，并将您选择的饰面与画廊级的真实感分层。"
     },
     "services": {
-      "interior": "Interior Redesign",
-      "exterior": "Exterior Redesign",
-      "garden": "Garden Redesign",
-      "floor": "Floor Restyle",
-      "paint": "Smart Wall Paint"
+      "interior": "室内重新设计",
+      "exterior": "外观重新设计",
+      "garden": "花园重新设计",
+      "floor": "地板改造",
+      "paint": "智能墙漆"
     },
     "editor": {
-      "title": "Your Professional Concept",
-      "sourcePhoto": "Source Photo",
-      "comparison": "Comparison",
-      "deleteA11y": "Delete this design from My Design Portfolio",
-      "showComparison": "Show before and after comparison",
-      "hideComparison": "Hide before and after comparison",
-      "removeWatermark": "Remove Watermark",
-      "regenerate": "Regenerate",
-      "saving": "Saving...",
-      "sharing": "Sharing...",
-      "renderUnavailable": "Render unavailable. Please try again.",
-      "previewNotReady": "Preview not ready. Please try again.",
-      "floorReady": "Material-led floor transformation with a live before and after slider.",
-      "paintReady": "Wall recoloring tuned to your selected finish and room lighting.",
-      "defaultReady": "Curated inside your premium HomeDecor board."
+      "title": "您的专业理念",
+      "sourcePhoto": "来源照片",
+      "comparison": "比较",
+      "deleteA11y": "从我的设计组合中删除此设计",
+      "showComparison": "显示前后对比",
+      "hideComparison": "比较前后隐藏",
+      "removeWatermark": "删除水印",
+      "regenerate": "再生",
+      "saving": "保存...",
+      "sharing": "分享...",
+      "renderUnavailable": "渲染不可用。请再试一次。",
+      "previewNotReady": "预览尚未准备好。请再试一次。",
+      "floorReady": "以材料为主导的地板改造，带有实时滑块前后。",
+      "paintReady": "根据您选择的饰面和房间照明进行墙壁重新着色。",
+      "defaultReady": "在您的高级 HomeDecor 板内进行策划。"
     },
     "permissions": {
-      "requiredTitle": "Permission Required",
-      "requiredBody": "Enable camera or photo access in your system settings to continue.",
-      "cameraAccessTitle": "Camera Access Needed",
-      "cameraAccessBody": "Allow camera access in Settings to take a photo.",
-      "photoLibraryAccessTitle": "Photo Library Access Needed",
-      "photoLibraryAccessBody": "Allow photo library access in Settings.",
-      "photoLibrarySaveBody": "Please allow photo library access to save your result to the device gallery."
+      "requiredTitle": "需要许可",
+      "requiredBody": "在系统设置中启用相机或照片访问权限以继续。",
+      "cameraAccessTitle": "需要访问相机",
+      "cameraAccessBody": "在“设置”中允许相机访问以拍照。",
+      "photoLibraryAccessTitle": "需要访问照片库",
+      "photoLibraryAccessBody": "在“设置”中允许访问照片库。",
+      "photoLibrarySaveBody": "请允许照片库访问，以便将您的结果保存到设备图库中。"
     },
     "media": {
-      "capturedPhoto": "Captured Photo",
-      "uploadedPhoto": "Uploaded Photo",
-      "choosePhotoSource": "Choose how you want to add your image.",
-      "cameraUnavailableTitle": "Camera Unavailable",
-      "cameraUnavailableBody": "We couldn't open the camera. Please try again.",
-      "photoLibraryUnavailableTitle": "Photo Library Unavailable",
-      "photoLibraryUnavailableBody": "We couldn't open the photo library. Please try again.",
-      "photoIntakeUnavailableTitle": "Photo Intake Unavailable",
-      "photoIntakeUnavailableBody": "We couldn't open your camera or photo library. Please try again.",
-      "exampleImageUnavailable": "Example image unavailable.",
+      "capturedPhoto": "拍摄的照片",
+      "uploadedPhoto": "上传照片",
+      "choosePhotoSource": "选择您想要添加图像的方式。",
+      "cameraUnavailableTitle": "相机不可用",
+      "cameraUnavailableBody": "我们无法打开相机。请再试一次。",
+      "photoLibraryUnavailableTitle": "照片库不可用",
+      "photoLibraryUnavailableBody": "我们无法打开照片库。请再试一次。",
+      "photoIntakeUnavailableTitle": "无法拍摄照片",
+      "photoIntakeUnavailableBody": "我们无法打开您的相机或照片库。请再试一次。",
+      "exampleImageUnavailable": "示例图像不可用。",
       "exampleUnavailableTitle": "示例不可用",
-      "tryAnotherImage": "Please try another image."
+      "tryAnotherImage": "请尝试其他图像。"
     },
     "share": {
-      "nothingTitle": "Nothing to share",
-      "generateFirst": "Generate a design first.",
+      "nothingTitle": "没有什么可分享的",
+      "generateFirst": "首先生成设计。",
       "failedTitle": "分享失败",
       "message": "使用 HomeDecor.ai 设计"
     },
     "download": {
-      "nothingTitle": "Nothing to download",
-      "generateFirst": "Generate a design first.",
+      "nothingTitle": "没有什么可下载的",
+      "generateFirst": "首先生成设计。",
       "failedTitle": "保存失败"
     },
     "generation": {
       "preparingSessionTitle": "正在准备会话",
       "preparingSessionBody": "访客资料仍在加载中，请稍后重试。",
-      "completeStepsTitle": "Complete the steps",
-      "completeFloorBody": "Add a room photo, define the floor area, choose a material, and select a finish before continuing.",
-      "completePaintBody": "Add a room photo, define the paintable surfaces, choose a wall color, and select a finish before continuing.",
-      "completePreviousSteps": "Please finish the previous steps first.",
+      "completeStepsTitle": "完成步骤",
+      "completeFloorBody": "添加房间照片、定义地板面积、选择材料并选择饰面，然后再继续。",
+      "completePaintBody": "添加房间照片、定义可涂漆表面、选择墙壁颜色并选择饰面，然后再继续。",
+      "completePreviousSteps": "请先完成前面的步骤。",
       "limitReached": "已达到上限",
-      "completeStepToContinue": "Complete this step to continue."
+      "completeStepToContinue": "完成此步骤以继续。"
     },
     "flow": {
-      "customPromptTitle": "Describe Your Vision",
+      "customPromptTitle": "描述您的愿景",
       "customPromptBody": "应用前请描述你想要的具体设计方向。",
       "selectSpaceType": "点击卡片以选择空间类型。"
     },
-    "resumeDraft": "Resuming your saved wizard draft.",
+    "resumeDraft": "恢复您保存的向导草稿。",
     "feedback": {
-      "like": "Like",
-      "dislike": "Dislike",
-      "liked": "Thanks for the feedback.",
-      "disliked": "Feedback sent to the design team.",
-      "failed": "Unable to send feedback right now."
+      "like": "喜欢",
+      "dislike": "不喜欢",
+      "liked": "感谢您的反馈。",
+      "disliked": "反馈发送给设计团队。",
+      "failed": "目前无法发送反馈。"
     },
     "stepOne": {
-      "gardenPhotoTitle": "Add a Garden Photo",
-      "exteriorPhotoTitle": "Add an Exterior Photo",
-      "floorPhotoTitle": "Add Floor Photo",
-      "gardenEmptyTitle": "Start Your Garden Transformation",
-      "exteriorEmptyTitle": "Start Your Exterior Transformation",
-      "tapToAddPhoto": "Tap to add a photo from your camera or library"
+      "gardenPhotoTitle": "添加花园照片",
+      "exteriorPhotoTitle": "添加外部照片",
+      "floorPhotoTitle": "添加楼层照片",
+      "gardenEmptyTitle": "开始你的花园改造",
+      "exteriorEmptyTitle": "开始你的外观改造",
+      "tapToAddPhoto": "点击即可添加相机或图库中的照片"
     },
     "style": {
-      "tapToSelect": "Tap a card to define your style direction."
+      "tapToSelect": "点击一张卡片来定义您的风格方向。"
     },
     "localization": {
       "rooms": {
-        "livingRoom": "Living Room",
-        "bedroom": "Bedroom",
-        "kitchen": "Kitchen",
-        "bathroom": "Bathroom",
-        "homeOffice": "Home Office",
-        "diningRoom": "Dining Room",
-        "nursery": "Nursery",
-        "homeTheater": "Home Theater",
-        "gamingRoom": "Gaming Room",
-        "hall": "Hall",
-        "library": "Library",
-        "laundry": "Laundry"
+        "livingRoom": "客厅",
+        "bedroom": "卧室",
+        "kitchen": "厨房",
+        "bathroom": "浴室",
+        "homeOffice": "家庭办公室",
+        "diningRoom": "饭厅",
+        "nursery": "苗圃",
+        "homeTheater": "家庭影院",
+        "gamingRoom": "游戏室",
+        "hall": "大厅",
+        "library": "图书馆",
+        "laundry": "洗衣店"
       },
       "examples": {
         "interior": {
-          "emptyRoom": "Empty Room",
-          "messyLounge": "Messy Lounge",
-          "wornRoom": "Worn Room",
-          "emptyKitchen": "Empty Kitchen",
-          "damagedRoom": "Damaged Room",
-          "outdatedKitchen": "Outdated Kitchen"
+          "emptyRoom": "空房间",
+          "messyLounge": "凌乱的休息室",
+          "wornRoom": "破旧的房间",
+          "emptyKitchen": "空厨房",
+          "damagedRoom": "损坏的房间",
+          "outdatedKitchen": "过时的厨房"
         },
         "exterior": {
-          "scaffoldHouse": "Scaffold House",
-          "weatheredHouse": "Weathered House",
-          "brickShell": "Brick Shell",
-          "overgrownCottage": "Overgrown Cottage",
-          "abandonedHome": "Abandoned Home",
-          "concreteFrame": "Concrete Frame"
+          "scaffoldHouse": "棚架屋",
+          "weatheredHouse": "风化的房子",
+          "brickShell": "砖壳",
+          "overgrownCottage": "杂草丛生的小屋",
+          "abandonedHome": "废弃的家",
+          "concreteFrame": "混凝土框架"
         },
         "garden": {
-          "muddyYard": "Muddy Yard",
-          "weedyYard": "Weedy Yard",
-          "rubbleYard": "Rubble Yard",
-          "overgrownCorner": "Overgrown Corner",
-          "abandonedYard": "Abandoned Yard",
-          "crackedPatio": "Cracked Patio"
+          "muddyYard": "泥泞的院子",
+          "weedyYard": "杂草丛生的院子",
+          "rubbleYard": "碎石场",
+          "overgrownCorner": "杂草丛生的角落",
+          "abandonedYard": "废弃的院子",
+          "crackedPatio": "破裂的露台"
         }
       },
       "styles": {
-        "modern": "Modern",
-        "luxury": "Luxury",
-        "japandi": "Japandi",
-        "cyberpunk": "Cyberpunk",
-        "tropical": "Tropical",
-        "minimalist": "Minimalist",
-        "scandinavian": "Scandinavian",
-        "bohemian": "Bohemian",
-        "midcentury": "Midcentury",
-        "artDeco": "Art Deco",
-        "coastal": "Coastal",
-        "rustic": "Rustic",
-        "vintage": "Vintage",
-        "mediterranean": "Mediterranean",
-        "glam": "Glam",
-        "coastalRetreat": "Coastal Retreat",
-        "rusticManor": "Rustic Manor",
-        "hollywoodRegency": "Hollywood Regency",
-        "neoClassic": "Neo-Classic",
-        "shabbyChic": "Shabby Chic",
-        "frenchCountry": "French Country",
-        "brutalist": "Brutalist",
-        "hollywoodRegencyNoir": "Hollywood Regency Noir",
-        "artNouveau": "Art Nouveau",
-        "custom": "Custom",
-        "chinese": "Chinese",
-        "cottage": "Cottage",
-        "farmHouse": "Farm House",
-        "french": "French",
-        "gothic": "Gothic",
-        "italianate": "Italianate",
-        "christmas": "Christmas",
-        "minimalistic": "Minimalistic",
-        "baroque": "Baroque"
+        "modern": "现代的",
+        "luxury": "奢华",
+        "japandi": "日本迪",
+        "cyberpunk": "赛博朋克",
+        "tropical": "热带",
+        "minimalist": "极简主义者",
+        "scandinavian": "斯堪的纳维亚语",
+        "bohemian": "波西米亚风格",
+        "midcentury": "世纪中叶",
+        "artDeco": "装饰艺术",
+        "coastal": "沿海",
+        "rustic": "乡村",
+        "vintage": "优质的",
+        "mediterranean": "地中海",
+        "glam": "华丽",
+        "coastalRetreat": "海岸隐居",
+        "rusticManor": "乡村庄园",
+        "hollywoodRegency": "好莱坞摄政酒店",
+        "neoClassic": "新古典主义",
+        "shabbyChic": "破旧别致",
+        "frenchCountry": "法国乡村",
+        "brutalist": "野兽派",
+        "hollywoodRegencyNoir": "好莱坞黑色摄政",
+        "artNouveau": "新艺术风格",
+        "custom": "风俗",
+        "chinese": "中国人",
+        "cottage": "小屋",
+        "farmHouse": "农舍",
+        "french": "法语",
+        "gothic": "哥特",
+        "italianate": "意大利式",
+        "christmas": "圣诞节",
+        "minimalistic": "简约",
+        "baroque": "巴洛克风格"
       },
       "buildings": {
-        "apartment": "Apartment",
-        "house": "House",
-        "officeBuilding": "Office Building",
-        "residential": "Residential",
-        "retail": "Retail",
-        "villa": "Villa"
+        "apartment": "公寓",
+        "house": "房子",
+        "officeBuilding": "办公楼",
+        "residential": "住宅",
+        "retail": "零售",
+        "villa": "别墅"
       },
       "modes": {
         "preserve": {
-          "title": "Structural Preservation",
-          "description": "Preserve your room's architectural DNA while flawlessly refreshing its aesthetic."
+          "title": "结构保护",
+          "description": "保留您房间的建筑 DNA，同时完美地刷新其美感。"
         },
         "renovate": {
-          "title": "Renovation Design",
-          "description": "Total creative liberty to redefine furniture layouts and structural boundaries for a complete remodel."
+          "title": "装修设计",
+          "description": "完全的创意自由重新定义家具布局和结构边界以进行彻底的改造。"
         }
       },
       "palettes": {
-        "surprise": "Curated Mix",
-        "gray": "Millennial Gray",
-        "terracotta": "Terracotta Mirage",
-        "forest": "Forest Hues",
-        "peach": "Peach Orchard",
-        "fuchsia": "Fuchsia Blossom",
-        "emerald": "Emerald Gem",
-        "pastel": "Pastel Breeze",
-        "ocean": "Ocean Mist",
-        "velvet": "Velvet Dusk",
-        "amethyst": "Amethyst Dream",
-        "sunset": "Fuchsia Noir"
+        "surprise": "精选组合",
+        "gray": "千禧灰",
+        "terracotta": "兵马俑海市蜃楼",
+        "forest": "森林色调",
+        "peach": "桃园",
+        "fuchsia": "紫红色花",
+        "emerald": "祖母绿宝石",
+        "pastel": "柔和的微风",
+        "ocean": "海洋薄雾",
+        "velvet": "天鹅绒黄昏",
+        "amethyst": "紫水晶梦",
+        "sunset": "黑紫红色"
       },
       "gardenPalettes": {
-        "garden-surprise": "Surprise Me",
-        "garden-gray": "Millennial Gray",
-        "garden-terracotta": "Terracotta Mirage",
-        "garden-neon-sunset": "Neon Sunset",
-        "garden-forest": "Forest Hues",
-        "garden-peach": "Peach Orchard",
-        "garden-fuschia": "Fuchsia Blossom",
-        "garden-emerald": "Emerald Gem",
-        "garden-pastel": "Pastel Breeze",
-        "garden-azure": "Azure Mirage",
-        "garden-twilight": "Twilight Blues",
-        "garden-earthy": "Earthy Harmony"
+        "garden-surprise": "给我惊喜",
+        "garden-gray": "千禧灰",
+        "garden-terracotta": "兵马俑海市蜃楼",
+        "garden-neon-sunset": "霓虹日落",
+        "garden-forest": "森林色调",
+        "garden-peach": "桃园",
+        "garden-fuschia": "紫红色花",
+        "garden-emerald": "祖母绿宝石",
+        "garden-pastel": "柔和的微风",
+        "garden-azure": "蔚蓝幻影",
+        "garden-twilight": "暮光蓝调",
+        "garden-earthy": "土质和谐"
       },
       "summary": {
-        "roomType": "Room Type",
-        "style": "Style",
-        "mode": "Mode",
-        "palette": "Palette",
-        "missing": "⚠ Missing"
+        "roomType": "房型",
+        "style": "风格",
+        "mode": "模式",
+        "palette": "调色板",
+        "missing": "⚠ 失踪"
       },
-      "previewThumbnailLabel": "Sample output · {{style}}",
+      "previewThumbnailLabel": "示例输出 · {{style}}",
       "toasts": {
-        "completeStyleSelections": "Complete your style selections to generate."
+        "completeStyleSelections": "完成要生成的样式选择。"
       },
       "requiredSelections": {
-        "photo": "Please select a photo to continue.",
-        "room": "Please select a room to continue.",
-        "style": "Please select a style to continue.",
-        "mode": "Please complete the mode selection to continue.",
-        "palette": "Please complete the palette selection to continue."
+        "photo": "请选择一张照片以继续。",
+        "room": "请选择一个房间以继续。",
+        "style": "请选择一种样式以继续。",
+        "mode": "请完成模式选择以继续。",
+        "palette": "请完成调色板选择以继续。"
       },
-      "regenerationUnavailable": "Regeneration unavailable",
-      "feedbackUnavailable": "Feedback is unavailable for this image.",
+      "regenerationUnavailable": "无法再生",
+      "feedbackUnavailable": "此图像无法提供反馈。",
       "cta": {
-        "getMoreCredits": "Get More Credits",
-        "generateMyDesign": "Generate My Design"
+        "getMoreCredits": "获得更多学分",
+        "generateMyDesign": "生成我的设计"
       },
-      "stepFourSticky": "Step 4: Refine Direction",
-      "exteriorEmptyStateSubtitle": "Redesign and beautify your home."
+      "stepFourSticky": "第四步：细化方向",
+      "exteriorEmptyStateSubtitle": "重新设计和美化您的家。"
     }
   },
   "proSuccess": {
     "title": "欢迎使用 HomeDecor Pro！",
     "subtitle": "现在所有内容都已解锁。你将获得：",
     "features": {
-      "hyperRealism": "Ultra-high-detail rendering enabled",
-      "virtualStaging": "Premium design tools unlocked",
-      "infiniteCredits": "Weekly or monthly render quotas active"
+      "hyperRealism": "启用超高细节渲染",
+      "virtualStaging": "解锁高级设计工具",
+      "infiniteCredits": "每周或每月渲染配额处于活动状态"
     },
     "cta": "开始设计",
     "toast": "账户已成功升级为 Pro。"
   },
   "legalViewer": {
-    "eyebrow": "Legal Viewer",
+    "eyebrow": "法律查看器",
     "switches": {
-      "terms": "Terms of Service",
-      "privacy": "Privacy Policy"
+      "terms": "服务条款",
+      "privacy": "隐私政策"
     }
   },
   "storeReview": {
-    "title": "Rate HomeDecor AI",
-    "unavailableBody": "Review requests are not available on this device.",
-    "errorBody": "Unable to open the store review dialog right now."
+    "title": "评价 HomeDecor AI",
+    "unavailableBody": "此设备上不支持审核请求。",
+    "errorBody": "目前无法打开商店评论对话框。"
   },
   "gallery": {
     "clusters": {
-      "foundations": "Foundations"
+      "foundations": "基础"
     },
     "tabs": {
-      "home": "Interiors",
-      "exterior": "Exteriors",
-      "garden": "Landscapes"
+      "home": "内饰",
+      "exterior": "外观",
+      "garden": "风景"
     },
     "groups": {
-      "kitchen": "Kitchen",
-      "livingRoom": "Living Room",
-      "diningRoom": "Dining Room",
-      "bedroom": "Bedroom",
-      "bathroom": "Bathroom",
-      "gamingRoom": "Gaming Room",
-      "homeOffice": "Home Office",
-      "coffeeShop": "Coffee Shop",
-      "studyRoom": "Study Room",
-      "restaurant": "Restaurant",
-      "attic": "Attic",
-      "toilet": "Toilet",
-      "balcony": "Balcony",
-      "hall": "Hall",
-      "deck": "Deck",
-      "landscapeDesigns": "Landscape Designs",
-      "villa": "Villa",
-      "apartment": "Apartment",
-      "house": "House",
-      "officeBuilding": "Office Building",
-      "retail": "Retail",
-      "residential": "Residential",
-      "wall": "Wall",
-      "floor": "Floor",
-      "garden": "Garden"
+      "kitchen": "厨房",
+      "livingRoom": "客厅",
+      "diningRoom": "饭厅",
+      "bedroom": "卧室",
+      "bathroom": "浴室",
+      "gamingRoom": "游戏室",
+      "homeOffice": "家庭办公室",
+      "coffeeShop": "咖啡馆",
+      "studyRoom": "自习室",
+      "restaurant": "餐厅",
+      "attic": "阁楼",
+      "toilet": "洗手间",
+      "balcony": "阳台",
+      "hall": "大厅",
+      "deck": "甲板",
+      "landscapeDesigns": "景观设计",
+      "villa": "别墅",
+      "apartment": "公寓",
+      "house": "房子",
+      "officeBuilding": "办公楼",
+      "retail": "零售",
+      "residential": "住宅",
+      "wall": "墙",
+      "floor": "地面",
+      "garden": "花园"
     },
-    "imageTitleTemplate": "{{title}} Image {{index}}",
+    "imageTitleTemplate": "{{title}} 图片 {{index}}",
     "emptyState": {
-      "title": "Category unavailable",
-      "body": "The requested image collection could not be found."
+      "title": "类别不可用",
+      "body": "找不到请求的图像集。"
     }
   },
   "discoverCatalog": {
     "sections": {
       "home": {
-        "title": "Interior",
-        "description": "Designer-led rooms across living, sleep, dining, work, and entertainment.",
+        "title": "内部的",
+        "description": "设计师主导的房间涵盖起居、睡眠、餐饮、工作和娱乐。",
         "items": {
           "sereneLounge": {
-            "title": "Serene Lounge",
-            "subtitle": "Living Room / Soft Minimal",
-            "spaceType": "Living Room",
-            "style": "Soft Minimal"
+            "title": "宁静休息室",
+            "subtitle": "客厅/软简约",
+            "spaceType": "客厅",
+            "style": "软最小"
           },
           "moodyClubRoom": {
-            "title": "Moody Club Room",
-            "subtitle": "Living Room / Moody Luxe",
-            "spaceType": "Living Room",
-            "style": "Moody Luxe"
+            "title": "穆迪俱乐部间",
+            "subtitle": "客厅 / Moody Luxe",
+            "spaceType": "客厅",
+            "style": "穆迪奢华酒店"
           },
           "organicLiving": {
-            "title": "Organic Living",
-            "subtitle": "Living Room / Warm Organic",
-            "spaceType": "Living Room",
-            "style": "Warm Organic"
+            "title": "有机生活",
+            "subtitle": "客厅 / 温暖有机",
+            "spaceType": "客厅",
+            "style": "温暖有机"
           },
           "grandSalon": {
-            "title": "Grand Salon",
-            "subtitle": "Living Room / Luxe Marble",
-            "spaceType": "Living Room",
-            "style": "Luxe Marble"
+            "title": "大沙龙",
+            "subtitle": "客厅 / 豪华大理石",
+            "spaceType": "客厅",
+            "style": "奢华大理石"
           },
           "editorialLounge": {
-            "title": "Editorial Lounge",
-            "subtitle": "Gaming Room / Cyberpunk",
-            "spaceType": "Gaming Room",
-            "style": "Cyberpunk"
+            "title": "编辑休息室",
+            "subtitle": "游戏室 / 赛博朋克",
+            "spaceType": "游戏室",
+            "style": "赛博朋克"
           }
         }
       },
       "exterior": {
-        "title": "Exterior",
-        "description": "Facade inspiration from modern villas, urban blocks, offices, and retail shells.",
+        "title": "外部的",
+        "description": "外观灵感来自现代别墅、城市街区、办公室和零售外壳。",
         "items": {
           "modernHouse": {
-            "title": "Modern House",
-            "subtitle": "Modern House / Daylight Minimal",
-            "spaceType": "Modern House",
-            "style": "Daylight Minimal"
+            "title": "现代住宅",
+            "subtitle": "现代住宅/日光最小",
+            "spaceType": "现代住宅",
+            "style": "日光最小"
           },
           "modernHouseNight": {
-            "title": "Modern House Night",
-            "subtitle": "Modern House / Evening Luxe",
-            "spaceType": "Modern House",
-            "style": "Evening Luxe"
+            "title": "现代住宅之夜",
+            "subtitle": "现代住宅/晚间奢华",
+            "spaceType": "现代住宅",
+            "style": "晚间豪华房"
           },
           "stoneVilla": {
-            "title": "Stone Villa",
-            "subtitle": "Villa / Mediterranean",
-            "spaceType": "Villa",
-            "style": "Mediterranean"
+            "title": "石头别墅",
+            "subtitle": "别墅 / 地中海",
+            "spaceType": "别墅",
+            "style": "地中海"
           },
           "glassOffice": {
-            "title": "Glass Office",
-            "subtitle": "Office Building / Minimalist",
-            "spaceType": "Office Building",
-            "style": "Minimalist"
+            "title": "玻璃办公室",
+            "subtitle": "办公楼 / 极简主义",
+            "spaceType": "办公楼",
+            "style": "极简主义者"
           },
           "ecoApartments": {
-            "title": "Eco Apartments",
-            "subtitle": "Apartment Block / Eco Futurist",
-            "spaceType": "Apartment Block",
-            "style": "Eco Futurist"
+            "title": "生态公寓",
+            "subtitle": "公寓楼 / 生态未来主义者",
+            "spaceType": "公寓楼",
+            "style": "生态未来主义者"
           }
         }
       },
       "garden": {
-        "title": "Garden",
-        "description": "Outdoor lounges, terraces, pools, decks, and resort-minded garden scenes.",
+        "title": "花园",
+        "description": "户外休息室、露台、游泳池、甲板和度假村风格的花园景观。",
         "items": {
           "infinityPool": {
-            "title": "Infinity Pool",
-            "subtitle": "Infinity Pool / Coastal Luxe",
-            "spaceType": "Infinity Pool",
-            "style": "Coastal Luxe"
+            "title": "无边泳池",
+            "subtitle": "无边泳池 / 海岸豪华房",
+            "spaceType": "无边泳池",
+            "style": "海岸奢华"
           },
           "waterfallCourt": {
-            "title": "Waterfall Court",
-            "subtitle": "Waterfall Garden / Zen Luxury",
-            "spaceType": "Waterfall Garden",
-            "style": "Zen Luxury"
+            "title": "瀑布阁",
+            "subtitle": "瀑布花园 / 禅宗奢华",
+            "spaceType": "瀑布花园",
+            "style": "禅宗奢华"
           },
           "sunsetFirePit": {
-            "title": "Sunset Fire Pit",
-            "subtitle": "Fire Pit Lounge / Resort Sunset",
-            "spaceType": "Fire Pit Lounge",
-            "style": "Resort Sunset"
+            "title": "日落火坑",
+            "subtitle": "火坑休息室/度假村日落",
+            "spaceType": "火坑休息室",
+            "style": "度假村日落"
           },
           "tropicalPoolLounge": {
-            "title": "Tropical Pool Lounge",
-            "subtitle": "Pool Lounge / Tropical Escape",
-            "spaceType": "Pool Lounge",
-            "style": "Tropical Escape"
+            "title": "热带泳池酒廊",
+            "subtitle": "泳池酒廊 / 热带度假",
+            "spaceType": "泳池酒廊",
+            "style": "热带度假"
           },
           "luminousGardenWalk": {
-            "title": "Luminous Garden Walk",
-            "subtitle": "Garden Walk / Evening Glow",
-            "spaceType": "Garden Walk",
-            "style": "Evening Glow"
+            "title": "发光花园步道",
+            "subtitle": "花园漫步 / 晚霞",
+            "spaceType": "花园大道",
+            "style": "晚霞"
           }
         }
       },
       "wall": {
-        "title": "Wall Inspiration",
-        "description": "Real-room paint references that open directly into Smart Wall Paint with the finish already preselected.",
+        "title": "墙壁灵感",
+        "description": "真实房间的油漆参考可直接打开智能墙漆，并已预先选择饰面。",
         "items": {
           "sagePlasterWall": {
-            "title": "Sage Plaster Wall",
-            "subtitle": "Textured Wall / Sage Green",
-            "spaceType": "Textured Wall",
-            "style": "Sage Green"
+            "title": "鼠尾草石膏墙",
+            "subtitle": "纹理墙/鼠尾草绿",
+            "spaceType": "纹理墙",
+            "style": "鼠尾草绿"
           },
           "linearSlatFeature": {
-            "title": "Linear Slat Feature",
-            "subtitle": "Slatted Wall / Charcoal",
-            "spaceType": "Slatted Wall",
-            "style": "Charcoal"
+            "title": "线性板条特征",
+            "subtitle": "板条墙/木炭",
+            "spaceType": "板条墙",
+            "style": "木炭"
           },
           "veinedMarbleWall": {
-            "title": "Veined Marble Wall",
-            "subtitle": "Marble Wall / Soft Ivory",
-            "spaceType": "Marble Wall",
-            "style": "Soft Ivory"
+            "title": "纹理大理石墙",
+            "subtitle": "大理石墙/软象牙色",
+            "spaceType": "大理石墙",
+            "style": "软象牙色"
           },
           "minimalConcreteWall": {
-            "title": "Minimal Concrete Wall",
-            "subtitle": "Concrete Wall / Charcoal",
-            "spaceType": "Concrete Wall",
-            "style": "Charcoal"
+            "title": "最小混凝土墙",
+            "subtitle": "混凝土墙/木炭",
+            "spaceType": "混凝土墙",
+            "style": "木炭"
           },
           "botanicalMuralWall": {
-            "title": "Botanical Mural Wall",
-            "subtitle": "Mural Wall / Olive Moss",
-            "spaceType": "Mural Wall",
-            "style": "Olive Moss"
+            "title": "植物壁画墙",
+            "subtitle": "壁画 / 橄榄苔",
+            "spaceType": "壁画墙",
+            "style": "橄榄苔"
           }
         }
       },
       "floor": {
-        "title": "Floor Styles",
-        "description": "Premium flooring references curated from real interiors and mapped directly into the Floor Restyle workflow.",
+        "title": "地板样式",
+        "description": "优质地板参考从真实的室内设计中挑选出来，并直接映射到地板重新设计工作流程中。",
         "items": {
           "heritageHerringbone": {
-            "title": "Heritage Herringbone",
-            "subtitle": "Wood Floor / Walnut Wood",
-            "spaceType": "Wood Floor",
-            "style": "Walnut Wood"
+            "title": "遗产人字形",
+            "subtitle": "木地板/胡桃木",
+            "spaceType": "木地板",
+            "style": "胡桃木"
           },
           "carraraMarbleFlow": {
-            "title": "Carrara Marble Flow",
-            "subtitle": "Marble Floor / Carrara Marble",
-            "spaceType": "Marble Floor",
-            "style": "Carrara Marble"
+            "title": "卡拉拉大理石流",
+            "subtitle": "大理石地板/卡拉拉大理石",
+            "spaceType": "大理石地板",
+            "style": "卡拉拉大理石"
           },
           "satinConcrete": {
-            "title": "Satin Concrete",
-            "subtitle": "Concrete Floor / Polished Concrete",
-            "spaceType": "Concrete Floor",
-            "style": "Polished Concrete"
+            "title": "缎面混凝土",
+            "subtitle": "混凝土地板/抛光混凝土",
+            "spaceType": "混凝土地板",
+            "style": "抛光混凝土"
           },
           "walnutGloss": {
-            "title": "Walnut Gloss",
-            "subtitle": "Gloss Wood / Walnut Wood",
-            "spaceType": "Gloss Wood",
-            "style": "Walnut Wood"
+            "title": "胡桃木光泽",
+            "subtitle": "光泽木/胡桃木",
+            "spaceType": "光泽木",
+            "style": "胡桃木"
           },
           "softLimestone": {
-            "title": "Soft Limestone",
-            "subtitle": "Stone Floor / Polished Concrete",
-            "spaceType": "Stone Floor",
-            "style": "Polished Concrete"
+            "title": "软石灰石",
+            "subtitle": "石材地板/抛光混凝土",
+            "spaceType": "石材地板",
+            "style": "抛光混凝土"
           }
         }
       }
     },
     "wallColors": {
       "sageGreen": {
-        "title": "Sage Green",
-        "description": "Soft green calm for bright, polished living spaces.",
-        "discoverSubtitle": "Wall / Botanical Calm"
+        "title": "鼠尾草绿",
+        "description": "柔和的绿色营造出明亮、优雅的生活空间。",
+        "discoverSubtitle": "墙壁/植物平静"
       },
       "midnightNavy": {
-        "title": "Midnight Navy",
-        "description": "Tailored navy depth with crisp architectural contrast.",
-        "discoverSubtitle": "Wall / Tailored Contrast"
+        "title": "午夜海军蓝",
+        "description": "量身定制的海军蓝深度与清晰的建筑对比。",
+        "discoverSubtitle": "墙壁/定制对比"
       },
       "terracottaGlow": {
-        "title": "Terracotta Glow",
-        "description": "Warm clay color with grounded, editorial energy.",
-        "discoverSubtitle": "Wall / Warm Clay"
+        "title": "兵马俑发光",
+        "description": "温暖的粘土色，具有扎实的编辑能量。",
+        "discoverSubtitle": "墙壁/温暖的粘土"
       },
       "dustyRose": {
-        "title": "Dusty Rose",
-        "description": "Muted blush warmth with soft boutique appeal.",
-        "discoverSubtitle": "Wall / Boutique Blush"
+        "title": "尘土飞扬的玫瑰",
+        "description": "柔和的腮红温暖与柔和的精品魅力。",
+        "discoverSubtitle": "墙/精品腮红"
       },
       "galleryCharcoal": {
-        "title": "Gallery Charcoal",
-        "description": "Refined charcoal for moody, art-forward rooms.",
-        "discoverSubtitle": "Wall / Moody Gallery"
+        "title": "画廊木炭",
+        "description": "精制木炭，适合喜怒无常、艺术前卫的房间。",
+        "discoverSubtitle": "墙 / 穆迪画廊"
       },
       "softIvory": {
-        "title": "Soft Ivory",
-        "description": "Luminous neutral that keeps rooms light, never flat.",
-        "discoverSubtitle": "Wall / Quiet Neutral"
+        "title": "软象牙色",
+        "description": "发光的中性色使房间保持明亮，绝不平坦。",
+        "discoverSubtitle": "墙壁/安静中性"
       },
       "oliveGrove": {
-        "title": "Olive Grove",
-        "description": "Earthy olive depth with a grounded designer mood.",
-        "discoverSubtitle": "Wall / Earthy Depth"
+        "title": "橄榄园",
+        "description": "朴实的橄榄色深度和脚踏实地的设计师情绪。",
+        "discoverSubtitle": "墙/土深度"
       },
       "lavenderMist": {
-        "title": "Lavender Mist",
-        "description": "Soft violet haze for elevated pastel rooms.",
-        "discoverSubtitle": "Wall / Soft Pastel"
+        "title": "薰衣草薄雾",
+        "description": "柔和的紫罗兰色薄雾，适合高雅柔和的房间。",
+        "discoverSubtitle": "墙壁/柔和的粉彩"
       },
       "pearlGray": {
-        "title": "Pearl Gray",
-        "description": "Light tonal gray with polished everyday flexibility.",
-        "discoverSubtitle": "Wall / Modern Neutral"
+        "title": "珍珠灰",
+        "description": "浅灰色调，具有抛光的日常灵活性。",
+        "discoverSubtitle": "墙壁/现代中性"
       }
     },
     "wallColorCategories": {
       "calmNeutrals": {
-        "title": "Calm Neutrals",
+        "title": "冷静中性",
         "colors": {
-          "softIvory": "Soft Ivory",
-          "pearlGray": "Pearl Gray",
-          "sageGreen": "Sage Green"
+          "softIvory": "软象牙色",
+          "pearlGray": "珍珠灰",
+          "sageGreen": "鼠尾草绿"
         }
       },
       "boutiquePastels": {
-        "title": "Boutique Pastels",
+        "title": "精品粉彩",
         "colors": {
-          "dustyRose": "Dusty Rose",
-          "lavenderMist": "Lavender Mist",
-          "terracottaGlow": "Terracotta Glow"
+          "dustyRose": "尘土飞扬的玫瑰",
+          "lavenderMist": "薰衣草薄雾",
+          "terracottaGlow": "兵马俑发光"
         }
       },
       "architecturalDepth": {
-        "title": "Architectural Depth",
+        "title": "建筑深度",
         "colors": {
-          "midnightNavy": "Midnight Navy",
-          "galleryCharcoal": "Gallery Charcoal",
-          "oliveGrove": "Olive Grove"
+          "midnightNavy": "午夜海军蓝",
+          "galleryCharcoal": "画廊木炭",
+          "oliveGrove": "橄榄园"
         }
       }
     },
     "floorMaterials": {
       "naturalOak": {
-        "title": "Natural Oak",
-        "description": "Airy oak planks with soft natural grain.",
-        "promptLabel": "light natural oak flooring with wide-plank grain detail",
-        "discoverSubtitle": "Floor / Light Wood"
+        "title": "天然橡木",
+        "description": "通风的橡木板具有柔软的天然纹理。",
+        "promptLabel": "浅色天然橡木地板，带有宽木板纹理细节",
+        "discoverSubtitle": "地板/轻木"
       },
       "walnutWood": {
-        "title": "Walnut Wood",
-        "description": "Deep walnut planks with rich tailored contrast.",
-        "promptLabel": "luxury walnut wood flooring with rich deep grain",
-        "discoverSubtitle": "Floor / Dark Wood"
+        "title": "胡桃木",
+        "description": "深胡桃木板具有丰富的剪裁对比。",
+        "promptLabel": "奢华胡桃木地板，纹理丰富",
+        "discoverSubtitle": "地板/深色木色"
       },
       "carraraMarble": {
-        "title": "Carrara Marble",
-        "description": "Bright stone veining with a calm luxe finish.",
-        "promptLabel": "carrara marble flooring with elegant soft veining",
-        "discoverSubtitle": "Floor / Polished Stone"
+        "title": "卡拉拉大理石",
+        "description": "明亮的石纹具有平静的奢华饰面。",
+        "promptLabel": "卡拉拉大理石地板，带有优雅柔和的纹理",
+        "discoverSubtitle": "地板/抛光石"
       },
       "polishedConcrete": {
-        "title": "Polished Concrete",
-        "description": "Smooth concrete sheen with urban gallery calm.",
-        "promptLabel": "polished concrete flooring with premium smooth texture",
-        "discoverSubtitle": "Floor / Industrial Minimal"
+        "title": "抛光混凝土",
+        "description": "光滑的混凝土光泽与城市画廊的平静。",
+        "promptLabel": "抛光混凝土地板具有优质光滑的质感",
+        "discoverSubtitle": "地板/工业简约"
       },
       "herringboneOak": {
-        "title": "Herringbone Oak",
-        "description": "Classic oak pattern with warm directional movement.",
-        "promptLabel": "herringbone oak parquet flooring with premium pattern definition",
-        "discoverSubtitle": "Floor / Patterned Wood"
+        "title": "人字形橡木",
+        "description": "经典的橡木图案，带有温暖的定向运动。",
+        "promptLabel": "人字形橡木镶木地板，具有优质图案定义",
+        "discoverSubtitle": "地板/花纹木"
       },
       "terracottaTile": {
-        "title": "Terracotta Tile",
-        "description": "Earthy clay warmth with handcrafted character.",
-        "promptLabel": "terracotta tile flooring with warm clay color variation",
-        "discoverSubtitle": "Floor / Mediterranean Clay"
+        "title": "赤土砖",
+        "description": "泥土般的温暖与手工制作的特色。",
+        "promptLabel": "赤土砖地板，带有温暖的粘土颜色变化",
+        "discoverSubtitle": "地板/地中海粘土"
       },
       "slateTile": {
-        "title": "Slate Tile",
-        "description": "Dark slate with a crisp large-format finish.",
-        "promptLabel": "dark slate tile flooring with large format stone slabs",
-        "discoverSubtitle": "Floor / Dark Stone"
+        "title": "板岩砖",
+        "description": "深色石板色，具有清晰的大尺寸饰面。",
+        "promptLabel": "深色板岩瓷砖地板和大尺寸石板",
+        "discoverSubtitle": "地板/深色石材"
       },
       "plushCarpet": {
-        "title": "Plush Carpet",
-        "description": "Soft cream carpet with a quiet, cozy feel.",
-        "promptLabel": "luxury plush carpet flooring in a soft cream tone",
-        "discoverSubtitle": "Floor / Soft Texture"
+        "title": "毛绒地毯",
+        "description": "柔软的奶油色地毯，给人一种安静、舒适的感觉。",
+        "promptLabel": "柔软奶油色的豪华毛绒地毯地板",
+        "discoverSubtitle": "地板/质地柔软"
       },
       "weatheredOak": {
-        "title": "Weathered Oak",
-        "description": "Mid-tone oak with a gently aged finish.",
-        "promptLabel": "weathered oak flooring with subtle aged grain",
-        "discoverSubtitle": "Floor / Rustic Warmth"
+        "title": "风化橡木",
+        "description": "中色调橡木，带有轻微老化的余味。",
+        "promptLabel": "风化橡木地板，带有微妙的老化纹理",
+        "discoverSubtitle": "地板/质朴温暖"
       }
     },
     "injectedGallery": {
       "floorAfterScenes": {
-        "heritageHerringbone": "Heritage Herringbone",
-        "carraraMarble": "Carrara Marble",
-        "satinConcrete": "Satin Concrete",
-        "walnutGloss": "Walnut Gloss",
-        "limestoneSlab": "Limestone Slab"
+        "heritageHerringbone": "遗产人字形",
+        "carraraMarble": "卡拉拉大理石",
+        "satinConcrete": "缎面混凝土",
+        "walnutGloss": "胡桃木光泽",
+        "limestoneSlab": "石灰石板"
       },
       "wallAfterScenes": {
-        "sagePlaster": "Sage Plaster",
-        "linearSlats": "Linear Slats",
-        "veinedMarble": "Veined Marble",
-        "minimalConcrete": "Minimal Concrete",
-        "botanicalMural": "Botanical Mural"
+        "sagePlaster": "鼠尾草膏",
+        "linearSlats": "线性板条",
+        "veinedMarble": "纹理大理石",
+        "minimalConcrete": "最少的混凝土",
+        "botanicalMural": "植物壁画"
       },
       "interiorExamples": {
-        "kitchen": "Kitchen",
-        "livingRoom": "Living Room",
-        "bedroom": "Bedroom",
-        "bathroom": "Bathroom",
-        "gamingRoom": "Gaming Room",
-        "homeOffice": "Home Office"
+        "kitchen": "厨房",
+        "livingRoom": "客厅",
+        "bedroom": "卧室",
+        "bathroom": "浴室",
+        "gamingRoom": "游戏室",
+        "homeOffice": "家庭办公室"
       },
       "exteriorExamples": {
-        "apartment": "Apartment",
-        "house": "House",
-        "office": "Office",
-        "villa": "Villa",
-        "residential": "Residential",
-        "retail": "Retail"
+        "apartment": "公寓",
+        "house": "房子",
+        "office": "办公室",
+        "villa": "别墅",
+        "residential": "住宅",
+        "retail": "零售"
       },
       "gardenExamples": {
-        "infinityPool": "Infinity Pool",
-        "waterfallCourt": "Waterfall Court",
-        "firePit": "Fire Pit",
-        "tropicalLounge": "Tropical Lounge",
-        "resortDeck": "Resort Deck",
-        "lagoonFalls": "Lagoon Falls"
+        "infinityPool": "无边泳池",
+        "waterfallCourt": "瀑布阁",
+        "firePit": "火坑",
+        "tropicalLounge": "热带休息室",
+        "resortDeck": "度假村甲板",
+        "lagoonFalls": "泻湖瀑布"
       },
       "homeCoreScenes": {
-        "kitchen": "Kitchen",
-        "livingRoom": "Living Room",
-        "bedroom": "Bedroom",
-        "bathroom": "Bathroom",
-        "diningRoom": "Dining Room",
-        "gamingRoom": "Gaming Room",
-        "homeOffice": "Home Office"
+        "kitchen": "厨房",
+        "livingRoom": "客厅",
+        "bedroom": "卧室",
+        "bathroom": "浴室",
+        "diningRoom": "饭厅",
+        "gamingRoom": "游戏室",
+        "homeOffice": "家庭办公室"
       },
       "homeFlexScenes": {
-        "coffeeShop": "Coffee Shop",
-        "gamingStudio": "Gaming Studio",
-        "atticLounge": "Attic Lounge",
-        "studyRoom": "Study Room",
-        "serviceRoom": "Service Room",
-        "laundryRoom": "Laundry Room"
+        "coffeeShop": "咖啡馆",
+        "gamingStudio": "游戏工作室",
+        "atticLounge": "阁楼酒廊",
+        "studyRoom": "自习室",
+        "serviceRoom": "服务室",
+        "laundryRoom": "洗衣房"
       },
       "livingRoomScenes": {
-        "sereneLounge": "Serene Lounge",
-        "moodyLounge": "Moody Lounge",
-        "organicLiving": "Organic Living",
-        "grandSalon": "Grand Salon",
-        "playfulLounge": "Playful Lounge"
+        "sereneLounge": "宁静休息室",
+        "moodyLounge": "穆迪酒廊",
+        "organicLiving": "有机生活",
+        "grandSalon": "大沙龙",
+        "playfulLounge": "俏皮休息室"
       },
       "homeLuxeScenes": {
-        "restaurant": "Restaurant",
-        "studyLibrary": "Study Library",
-        "atticRetreat": "Attic Retreat",
-        "toiletSuite": "Toilet Suite",
-        "balcony": "Balcony",
-        "hall": "Hall",
-        "deckDay": "Deck Day",
-        "deckNight": "Deck Night"
+        "restaurant": "餐厅",
+        "studyLibrary": "学习图书馆",
+        "atticRetreat": "阁楼静修处",
+        "toiletSuite": "卫生间套房",
+        "balcony": "阳台",
+        "hall": "大厅",
+        "deckDay": "甲板日",
+        "deckNight": "甲板之夜"
       },
       "exteriorPrimaryScenes": {
-        "house": "House",
-        "residential": "Residential",
-        "villa": "Villa",
-        "glassCorner": "Glass Corner",
-        "apartment": "Apartment"
+        "house": "房子",
+        "residential": "住宅",
+        "villa": "别墅",
+        "glassCorner": "玻璃角",
+        "apartment": "公寓"
       },
       "exteriorSecondaryScenes": {
-        "apartmentTower": "Apartment Tower",
-        "retailPavilion": "Retail Pavilion",
-        "officeBuilding": "Office Building",
-        "modernVilla": "Modern Villa",
-        "residentialTower": "Residential Tower"
+        "apartmentTower": "公寓塔楼",
+        "retailPavilion": "零售馆",
+        "officeBuilding": "办公楼",
+        "modernVilla": "现代别墅",
+        "residentialTower": "住宅塔楼"
       },
       "gardenPrimaryScenes": {
-        "infinityPool": "Infinity Pool",
-        "waterfallCourt": "Waterfall Court",
-        "sunsetFirePit": "Sunset Fire Pit",
-        "tropicalLounge": "Tropical Lounge",
-        "livingWall": "Living Wall",
-        "lightCourt": "Light Court"
+        "infinityPool": "无边泳池",
+        "waterfallCourt": "瀑布阁",
+        "sunsetFirePit": "日落火坑",
+        "tropicalLounge": "热带休息室",
+        "livingWall": "生命墙",
+        "lightCourt": "光阁"
       },
       "gardenSecondaryScenes": {
-        "sunsetPool": "Sunset Pool",
-        "fireCove": "Fire Cove",
-        "poolCourt": "Pool Court",
-        "waterfallLounge": "Waterfall Lounge",
-        "resortDeck": "Resort Deck",
-        "lagoonFalls": "Lagoon Falls"
+        "sunsetPool": "日落泳池",
+        "fireCove": "火湾",
+        "poolCourt": "泳池阁",
+        "waterfallLounge": "瀑布酒廊",
+        "resortDeck": "度假村甲板",
+        "lagoonFalls": "泻湖瀑布"
       },
       "exteriorBuildingTypes": {
-        "apartment": "Apartment",
-        "house": "House",
-        "officeBuilding": "Office Building",
-        "villa": "Villa",
-        "residential": "Residential",
-        "retail": "Retail"
+        "apartment": "公寓",
+        "house": "房子",
+        "officeBuilding": "办公楼",
+        "villa": "别墅",
+        "residential": "住宅",
+        "retail": "零售"
       }
     }
   },
   "legacyUnlocalized": {
     "paintWizard": {
-      "autoDetectFailureMessage": "Auto-detect couldn't run. Please brush manually.",
-      "cancelledGenerationMessage": "Cancelled by user.",
+      "autoDetectFailureMessage": "自动检测无法运行。请手动刷。",
+      "cancelledGenerationMessage": "已被用户取消。",
       "result": {
-        "heading": "Behold your new interior",
-        "subheading": "A polished wall concept, composed to preserve the room's structure, furnishing layout, and natural light.",
-        "appliedFinish": "Applied Finish",
-        "saveToGallery": "Save to Gallery",
-        "share": "Share",
-        "tryAgain": "Try Again"
+        "heading": "看看你的新内饰",
+        "subheading": "抛光墙概念，旨在保留房间的结构、家具布局和自然光。",
+        "appliedFinish": "应用表面处理",
+        "saveToGallery": "保存到图库",
+        "share": "分享",
+        "tryAgain": "再试一次"
       }
     }
   }

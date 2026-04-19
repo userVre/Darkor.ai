@@ -1,53 +1,53 @@
 {
   "app": {
-    "name": "HomeDecor AI"
+    "name": "__ТОКЕН_0__"
   },
   "common": {
     "actions": {
       "continue": "Продолжить",
       "cancel": "Отмена",
-      "close": "Close",
-      "delete": "Delete",
+      "close": "Закрыть",
+      "delete": "Удалить",
       "save": "Сохранить",
       "share": "Поделиться",
-      "restore": "Restore",
-      "upgrade": "Upgrade",
-      "tryAgain": "Please try again.",
+      "restore": "Восстановить",
+      "upgrade": "Обновление",
+      "tryAgain": "Пожалуйста, попробуйте еще раз.",
       "openSettings": "Открыть настройки",
-      "notNow": "Not now",
-      "takePhoto": "Take Photo",
-      "chooseFromGallery": "Choose from Gallery",
+      "notNow": "Не сейчас",
+      "takePhoto": "Сфотографироваться",
+      "chooseFromGallery": "Выбрать из галереи",
       "addPhoto": "Добавить фото",
-      "chooseMediaSource": "Choose an image source",
-      "examplePhotos": "Example Photos",
-      "seeAll": "Explore All",
-      "uploadPlus": "Upload +",
+      "chooseMediaSource": "Выберите источник изображения",
+      "examplePhotos": "Примеры фотографий",
+      "seeAll": "Исследуйте все",
+      "uploadPlus": "Загрузить +",
       "exit": "Выйти",
-      "connect": "Connecting...",
-      "tryThis": "Try This"
+      "connect": "Подключение...",
+      "tryThis": "Попробуйте это"
     },
     "labels": {
-      "email": "Email",
-      "password": "Password",
-      "version": "Version {{version}}",
-      "lastUpdated": "Last updated",
-      "step": "Step {{current}} / {{total}}"
+      "email": "электронная почта",
+      "password": "Пароль",
+      "version": "Версия {{version}}",
+      "lastUpdated": "Последнее обновление",
+      "step": "Шаг {{current}} / {{total}}"
     },
     "alerts": {
       "exitTitle": "Выйти?",
       "progressLost": "Ваш прогресс будет потерян.",
-      "completeStepTitle": "Complete this step",
-      "makeSelection": "Make a selection to continue.",
-      "addPhotoToContinue": "Add a photo to continue.",
-      "invalidHexTitle": "Invalid color",
-      "invalidHexBody": "Enter a valid 6-digit hex code such as #D946EF."
+      "completeStepTitle": "Завершите этот шаг",
+      "makeSelection": "Сделайте выбор, чтобы продолжить.",
+      "addPhotoToContinue": "Добавьте фотографию, чтобы продолжить.",
+      "invalidHexTitle": "Неверный цвет",
+      "invalidHexBody": "Введите действительный шестизначный шестнадцатеричный код, например #D946EF."
     },
     "states": {
-      "workInProgress": "Work in progress",
-      "generationFailed": "Render encountered an issue. Please try again.",
+      "workInProgress": "Работа в процессе",
+      "generationFailed": "В рендере возникла проблема. Пожалуйста, попробуйте еще раз.",
       "savedToGallery": "Сохранено в галерею",
-      "photoPermissionNeeded": "Photo library access is required.",
-      "loading": "Loading..."
+      "photoPermissionNeeded": "Требуется доступ к библиотеке фотографий.",
+      "loading": "Загрузка..."
     }
   },
   "boot": {
@@ -55,8 +55,8 @@
     "loadingAccount": "Загрузка аккаунта...",
     "checkingPlan": "Проверка тарифа...",
     "secureAccount": "Защитите аккаунт, чтобы начать создавать...",
-    "missingEnvTitle": "Missing Environment Variables",
-    "missingEnvBody": "The following values are required before HomeDecor AI can launch:"
+    "missingEnvTitle": "Отсутствующие переменные среды",
+    "missingEnvBody": "Для запуска HomeDecor AI необходимы следующие значения:"
   },
   "tabs": {
     "tools": "Инструменты",
@@ -65,35 +65,35 @@
     "profile": "Профиль"
   },
   "home": {
-    "title": "HomeDecor AI",
+    "title": "__ТОКЕН_0__",
     "accessibility": {
-      "openCredits": "Open credits"
+      "openCredits": "Открытые кредиты"
     },
     "errors": {
-      "tryItUnavailableTitle": "Preview unavailable"
+      "tryItUnavailableTitle": "Предварительный просмотр недоступен"
     },
     "tools": {
       "interior": {
-        "title": "Interior Design",
+        "title": "Дизайн интерьера",
         "description": "Reimagine your space with AI precision."
       },
       "exterior": {
-        "title": "Exterior Design",
-        "description": "Reimagine your home's exterior with world-class facade styling."
+        "title": "Внешний дизайн",
+        "description": "Переосмыслите внешний вид своего дома с помощью фасада мирового класса."
       },
       "garden": {
-        "title": "Garden Design",
-        "description": "Design stunning gardens and outdoor spaces effortlessly."
+        "title": "Дизайн Сада",
+        "description": "Создавайте потрясающие сады и открытые пространства без особых усилий."
       },
       "paint": {
-        "title": "Paint (Wall)",
-        "description": "Refine your walls with bespoke color palettes and designer textures."
+        "title": "Краска (Стена)",
+        "description": "Украсьте свои стены с помощью индивидуальных цветовых палитр и дизайнерских текстур."
       },
       "floor": {
-        "title": "Floor Restyle",
-        "description": "Elevate your room's foundation with premium materials and finishes."
+        "title": "Рестайлинг пола",
+        "description": "Улучшите фундамент своей комнаты с помощью материалов и отделки премиум-класса."
       },
-      "cta": "Try This"
+      "cta": "Попробуйте это"
     }
   },
   "paywall": {
@@ -107,408 +107,409 @@
     "yearlyAccess": "Годовой доступ",
     "weeklyAccess": "Недельный доступ",
     "freeTrial": "3 дня бесплатно",
-    "justPerYear": "Just {{price}} per year",
+    "justPerYear": "Всего {{price}} в год",
     "pricePerYear": "Всего {{price}} в год",
     "pricePerWeek": "{{price}} в неделю",
     "perWeek": "в неделю",
-    "thenWeekly": "Then {{price}}",
+    "thenWeekly": "Затем {{price}}",
     "thenPricePerWeek": "Затем {{price}} в неделю",
     "noPaymentNow": "Без оплаты сейчас",
     "cancelAnytime": "Отмена в любой момент",
-    "trialEnabled": "Free trial enabled",
-    "enableTrial": "Enable free trial",
+    "trialEnabled": "Бесплатная пробная версия включена",
+    "enableTrial": "Включить бесплатную пробную версию",
     "processing": "Обработка...",
-    "tryForFree": "Begin Your Pro Trial",
-    "continue": "Begin Your Pro Trial",
-    "subtitle": "Experience the full power of architectural AI with higher limits and 4K precision.",
+    "tryForFree": "Начните пробную версию Pro",
+    "continue": "Начните пробную версию Pro",
+    "subtitle": "Испытайте всю мощь архитектурного AI с более высокими ограничениями и точностью 4K.",
     "terms": "Условия",
     "privacy": "Конфиденциальность",
-    "subscriptionsUnavailable": "Subscriptions are temporarily unavailable.",
-    "restoreFailed": "Restore failed",
-    "restored": "Restored",
-    "noActiveSubscriptions": "No active subscriptions were found.",
-    "purchaseError": "Purchase Error",
-    "planUnavailable": "The selected plan is unavailable right now.",
-    "moroccoPricingUnavailable": "Localized MAD pricing is temporarily unavailable. Please try again in a moment.",
-    "subscriptionConfirmFailed": "We could not confirm your subscription. Please try again.",
-    "purchaseCancelled": "Purchase cancelled.",
-    "closeA11y": "Close paywall",
+    "subscriptionsUnavailable": "Подписки временно недоступны.",
+    "restoreFailed": "Восстановление не удалось",
+    "restored": "Восстановлен",
+    "noActiveSubscriptions": "Активных подписок не обнаружено.",
+    "purchaseError": "Ошибка покупки",
+    "planUnavailable": "Выбранный план сейчас недоступен.",
+    "moroccoPricingUnavailable": "Локализованные цены на MAD временно недоступны. Пожалуйста, повторите попытку через минуту.",
+    "subscriptionConfirmFailed": "Нам не удалось подтвердить вашу подписку. Пожалуйста, попробуйте еще раз.",
+    "purchaseCancelled": "Покупка отменена.",
+    "closeA11y": "Закрыть платный доступ",
     "title": "Design Like a Pro. No Limits.",
-    "beginTrial": "Begin Your Pro Trial"
+    "beginTrial": "Начните пробную версию Pro"
   },
   "creditLimit": {
-    "title": "Upgrade to Professional Access.",
-    "body": "You've reached your standard rendering limit. Unlock high-res exports and faster processing now."
+    "title": "Обновите до профессионального доступа.",
+    "body": "Вы достигли стандартного предела рендеринга. Откройте для себя экспорт в высоком разрешении и более быструю обработку прямо сейчас."
   },
   "settings": {
     "title": "Настройки",
-    "heroTitle": "Free Plan",
+    "heroTitle": "Бесплатный план",
     "featureItems": {
-      "advancedAi": "Advanced AI Model",
-      "fastProcessing": "Fast Processing",
-      "removeAds": "Remove All Ads"
+      "advancedAi": "Расширенная модель AI",
+      "fastProcessing": "Быстрая обработка",
+      "removeAds": "Удалить все объявления"
     },
     "upgradePro": "Перейти на PRO",
     "rows": {
-      "language": "Language",
-      "feedback": "Feedback",
-      "faq": "FAQ",
-      "rateUs": "Rate Us",
-      "shareWithFriends": "Share with Friends",
-      "termsOfUse": "Terms of Use",
-      "privacyPolicy": "Privacy Policy",
-      "restorePurchase": "Restore Purchase",
-      "userId": "User ID",
-      "deleteInformation": "Delete Information"
+      "language": "Язык",
+      "feedback": "Обратная связь",
+      "faq": "Часто задаваемые вопросы",
+      "rateUs": "Оцените нас",
+      "shareWithFriends": "Поделитесь с друзьями",
+      "termsOfUse": "Условия использования",
+      "privacyPolicy": "Политика конфиденциальности",
+      "restorePurchase": "Восстановить покупку",
+      "userId": "Идентификатор пользователя",
+      "deleteInformation": "Удалить информацию"
     },
     "states": {
-      "notSignedIn": "Not signed in"
+      "notSignedIn": "Не авторизован"
     },
     "language": {
-      "title": "Language",
-      "description": "Choose whether HomeDecor AI follows your device language or uses a selected in-app language.",
-      "auto": "Auto (System Default)",
-      "autoShort": "Auto",
-      "usingSystem": "Currently following {{language}} from your device"
+      "title": "Язык",
+      "description": "Выберите, будет ли HomeDecor AI следовать языку вашего устройства или будет использовать выбранный язык в приложении.",
+      "auto": "Авто (системная настройка по умолчанию)",
+      "autoShort": "Авто",
+      "usingSystem": "В настоящее время подписан на {{language}} с вашего устройства",
+      "restartNotice": "Применение нового направления макета..."
     },
     "messages": {
-      "destinationUnavailable": "This destination is unavailable right now.",
-      "emailClientUnavailable": "Unable to open your email app.",
-      "reviewUnavailable": "Review requests are unavailable right now.",
-      "shareUnavailable": "Unable to open the share sheet.",
-      "subscriptionsUnavailable": "Subscriptions are unavailable right now.",
-      "noActiveSubscriptions": "No active subscriptions were found.",
-      "restoreFailed": "Restore failed. Please try again.",
-      "noUserId": "No authenticated user ID is available.",
-      "userIdCopied": "User ID copied",
-      "deleteFailed": "Unable to delete your account right now."
+      "destinationUnavailable": "Это направление сейчас недоступно.",
+      "emailClientUnavailable": "Невозможно открыть приложение электронной почты.",
+      "reviewUnavailable": "Запросы на проверку сейчас недоступны.",
+      "shareUnavailable": "Невозможно открыть общий лист.",
+      "subscriptionsUnavailable": "Подписки сейчас недоступны.",
+      "noActiveSubscriptions": "Активных подписок не обнаружено.",
+      "restoreFailed": "Восстановление не удалось. Пожалуйста, попробуйте еще раз.",
+      "noUserId": "Идентификатор аутентифицированного пользователя недоступен.",
+      "userIdCopied": "Идентификатор пользователя скопирован.",
+      "deleteFailed": "Невозможно удалить вашу учетную запись прямо сейчас."
     },
-    "shareMessage": "Explore designs created with HomeDecor AI: {{url}}",
+    "shareMessage": "Изучите дизайны, созданные с помощью HomeDecor AI: {{url}}.",
     "deleteAccount": {
-      "title": "Delete account?",
-      "body": "This will permanently delete your account and all associated data. This action cannot be undone."
+      "title": "Удалить аккаунт?",
+      "body": "Это приведет к безвозвратному удалению вашей учетной записи и всех связанных с ней данных. Это действие невозможно отменить."
     }
   },
   "profile": {
-    "title": "My Design Portfolio",
-    "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
+    "title": "Мое дизайнерское портфолио",
+    "emptyTitle": "Ваше портфолио пусто. Начните проект, чтобы увидеть, как ваши видения воплощаются в жизнь.",
     "emptySubtitle": "",
-    "compareHint": "Drag to compare. Double-tap to reset.",
-    "deleteFromBoardTitle": "Remove from portfolio?",
-    "deleteFromBoardBody": "This design will be removed from your portfolio.",
-    "deletedFromBoard": "Removed from portfolio",
-    "unableDelete": "Unable to remove this design.",
-    "generationFailedBody": "This render did not complete successfully. Please try again.",
-    "saveToGallery": "Save to Photo Library",
-    "savedToGallery": "Saved to Photo Library",
-    "unableSave": "Unable to save this design."
+    "compareHint": "Перетащите, чтобы сравнить. Дважды нажмите, чтобы сбросить настройки.",
+    "deleteFromBoardTitle": "Удалить из портфолио?",
+    "deleteFromBoardBody": "Этот дизайн будет удален из вашего портфолио.",
+    "deletedFromBoard": "Удален из портфолио",
+    "unableDelete": "Невозможно удалить этот дизайн.",
+    "generationFailedBody": "Этот рендеринг не завершился успешно. Пожалуйста, попробуйте еще раз.",
+    "saveToGallery": "Сохранить в библиотеку фотографий",
+    "savedToGallery": "Сохранено в библиотеке фотографий.",
+    "unableSave": "Не удалось сохранить этот дизайн."
   },
   "discover": {
-    "title": "Discover",
-    "subtitle": "Curated interiors, architecture, and landscape references organized into fast-scrolling collections.",
+    "title": "Откройте для себя",
+    "subtitle": "Подборки интерьеров, архитектуры и ландшафта, организованные в быстро прокручиваемые коллекции.",
     "tabs": {
       "home": "Interior",
       "garden": "Garden",
       "exterior": "Exterior "
     },
-    "tryThisStyle": "Try This Style"
+    "tryThisStyle": "Попробуйте этот стиль"
   },
   "auth": {
-    "accountEyebrow": "HomeDecor AI Account",
-    "emailPlaceholder": "you@company.com",
+    "accountEyebrow": "HomeDecor AI Аккаунт",
+    "emailPlaceholder": "__ТОКЕН_0__",
     "signIn": {
-      "title": "Sign in",
-      "subtitle": "Access your saved designs, credits, purchases, and project history in one refined workspace.",
-      "passwordPlaceholder": "Enter your password",
-      "cta": "Continue",
-      "loading": "Signing in...",
-      "appleCta": "Continue with Apple",
-      "additionalVerificationTitle": "Sign in",
-      "additionalVerificationBody": "Additional verification is required for this account.",
-      "errorTitle": "Sign-in failed",
-      "errorFallback": "Unable to sign you in.",
-      "appleErrorFallback": "Apple sign-in failed.",
-      "noAccount": "No account?",
-      "createOne": "Create one"
+      "title": "Войти",
+      "subtitle": "Получите доступ к своим сохраненным проектам, кредитам, покупкам и истории проектов в одном усовершенствованном рабочем пространстве.",
+      "passwordPlaceholder": "Введите свой пароль",
+      "cta": "Продолжать",
+      "loading": "Вход в систему...",
+      "appleCta": "Продолжить с Apple",
+      "additionalVerificationTitle": "Войти",
+      "additionalVerificationBody": "Для этого аккаунта требуется дополнительная проверка.",
+      "errorTitle": "Не удалось войти в систему",
+      "errorFallback": "Не удалось войти в систему.",
+      "appleErrorFallback": "Не удалось войти в систему Apple.",
+      "noAccount": "Нет аккаунта?",
+      "createOne": "Создать один"
     },
     "signUp": {
-      "title": "Create account",
-      "subtitle": "Create your account to carry your designs, subscriptions, and saved projects across devices.",
-      "passwordPlaceholder": "Create a secure password",
-      "cta": "Create account",
-      "loading": "Creating...",
-      "appleCta": "Continue with Apple",
-      "verifyTitle": "Verify email",
-      "verifyBody": "Check your inbox for the verification code, then sign in.",
-      "errorTitle": "Sign-up failed",
-      "errorFallback": "Unable to create your account.",
-      "appleErrorFallback": "Apple sign-up failed.",
-      "haveAccount": "Already have an account?",
-      "signInLink": "Sign in"
+      "title": "Создать учетную запись",
+      "subtitle": "Создайте свою учетную запись, чтобы переносить свои проекты, подписки и сохраненные проекты на разные устройства.",
+      "passwordPlaceholder": "Создайте надежный пароль",
+      "cta": "Создать учетную запись",
+      "loading": "Создание...",
+      "appleCta": "Продолжить с Apple",
+      "verifyTitle": "Подтвердите адрес электронной почты",
+      "verifyBody": "Проверьте свой почтовый ящик на наличие кода подтверждения, затем войдите в систему.",
+      "errorTitle": "Регистрация не удалась",
+      "errorFallback": "Не удалось создать учетную запись.",
+      "appleErrorFallback": "Регистрация Apple не удалась.",
+      "haveAccount": "У вас уже есть аккаунт?",
+      "signInLink": "Войти"
     }
   },
   "faq": {
-    "eyebrow": "Support",
-    "title": "FAQ",
-    "description": "Clear answers to the most common HomeDecor AI questions.",
+    "eyebrow": "Поддержка",
+    "title": "Часто задаваемые вопросы",
+    "description": "Четкие ответы на самые распространенные вопросы HomeDecor AI.",
     "items": {
       "credits": {
-        "question": "How do credits work in HomeDecor AI?",
-        "answer": "Each render uses credits based on the workflow and output tier you choose. Your remaining balance updates automatically after every generation."
+        "question": "Как кредиты работают в HomeDecor AI?",
+        "answer": "Для каждого рендеринга используются кредиты в зависимости от выбранного вами рабочего процесса и уровня вывода. Оставшийся баланс автоматически обновляется после каждого поколения."
       },
       "pro": {
-        "question": "What do I unlock with PRO?",
-        "answer": "PRO unlocks premium rendering tools, faster processing, and higher-end output quality through the in-app upgrade flow."
+        "question": "Что я могу разблокировать с помощью PRO?",
+        "answer": "PRO открывает доступ к инструментам рендеринга премиум-класса, более быстрой обработке и более высокому качеству вывода благодаря обновлению в приложении."
       },
       "slowResult": {
-        "question": "Why is my result taking longer than expected?",
-        "answer": "Render times depend on queue demand, source image quality, and the workflow you selected. Keeping the app open on a stable connection helps avoid interruptions."
+        "question": "Почему мой результат занимает больше времени, чем ожидалось?",
+        "answer": "Время рендеринга зависит от требований очереди, качества исходного изображения и выбранного вами рабочего процесса. Если приложение будет открыто при стабильном соединении, это поможет избежать перебоев."
       },
       "deleteAccount": {
-        "question": "How do I delete my account?",
-        "answer": "Open Settings and choose Delete Information. This permanently removes your account data and signs you out after confirmation."
+        "question": "Как мне удалить свою учетную запись?",
+        "answer": "Откройте «Настройки» и выберите «Удалить информацию». При этом данные вашей учетной записи будут удалены без возможности восстановления, а после подтверждения вы выйдете из системы."
       }
     }
   },
   "privacy": {
-    "eyebrow": "Policy",
-    "title": "Privacy Policy",
-    "description": "The information we collect, how it is used, and the controls you have inside HomeDecor AI.",
-    "date": "March 14, 2026",
+    "eyebrow": "Политика",
+    "title": "Политика конфиденциальности",
+    "description": "Информация, которую мы собираем, способы ее использования и элементы управления, которые у вас есть внутри HomeDecor AI.",
+    "date": "14 марта 2026 г.",
     "sections": {
       "overview": {
-        "title": "Overview",
-        "body": "HomeDecor AI (\"HomeDecor\", \"we\", \"our\", \"us\") provides AI-powered interior and exterior redesign services. This Privacy Policy explains what data we collect, how we use it, and the choices you have."
+        "title": "Обзор",
+        "body": "HomeDecor AI («HomeDecor», «мы», «наш», «нас») предоставляет услуги по дизайну интерьера и экстерьера на базе AI. В настоящей Политике конфиденциальности объясняется, какие данные мы собираем, как мы их используем и какой у вас есть выбор."
       },
       "informationWeCollect": {
-        "title": "Information We Collect",
-        "body": "We collect information you provide, such as account details and uploaded images, usage data such as feature interactions and device information, and payment status data from RevenueCat to manage subscriptions."
+        "title": "Информация, которую мы собираем",
+        "body": "Мы собираем предоставленную вами информацию, такую ​​как данные учетной записи и загруженные изображения, данные об использовании, такие как взаимодействие функций и информацию об устройстве, а также данные о статусе оплаты из RevenueCat для управления подписками."
       },
       "howWeUseYourData": {
-        "title": "How We Use Your Data",
-        "body": "We use your data to deliver redesigns, personalize your experience, manage credits and billing, improve model quality, and secure the app. We do not sell your personal data."
+        "title": "Как мы используем ваши данные",
+        "body": "Мы используем ваши данные для внесения изменений в дизайн, персонализации вашего опыта, управления кредитами и выставлением счетов, улучшения качества моделей и обеспечения безопасности приложения. Мы не продаем ваши персональные данные."
       },
       "imageProcessing": {
-        "title": "Image Processing",
-        "body": "Images you upload are processed to generate redesigns. We store generated images and related metadata so you can revisit your results, and you can remove your data by deleting your account."
+        "title": "Обработка изображений",
+        "body": "Загружаемые вами изображения обрабатываются для изменения дизайна. Мы храним сгенерированные изображения и связанные с ними метаданные, чтобы вы могли повторно просмотреть свои результаты, а также удалить свои данные, удалив свою учетную запись."
       },
       "sharingAndDisclosure": {
-        "title": "Sharing and Disclosure",
-        "body": "We share data only with providers required to operate HomeDecor AI, such as authentication, analytics, and payment processing partners, or when disclosure is required by law."
+        "title": "Обмен и раскрытие информации",
+        "body": "Мы передаем данные только поставщикам, необходимым для работы HomeDecor AI, например партнерам по аутентификации, аналитике и обработке платежей, или когда раскрытие информации требуется по закону."
       },
       "dataSecurity": {
-        "title": "Data Security",
-        "body": "We use encryption and access controls to protect your data. No system is perfectly secure, so we also recommend strong passwords and a protected device."
+        "title": "Безопасность данных",
+        "body": "Мы используем шифрование и контроль доступа для защиты ваших данных. Ни одна система не является абсолютно безопасной, поэтому мы также рекомендуем использовать надежные пароли и защищенное устройство."
       },
       "yourRights": {
-        "title": "Your Rights",
-        "body": "You can access, update, or delete your account data at any time. Account deletion removes your stored generations and profile information from our systems."
+        "title": "Ваши права",
+        "body": "Вы можете получить доступ, обновить или удалить данные своей учетной записи в любое время. Удаление учетной записи приведет к удалению сохраненных вами поколений и информации профиля из наших систем."
       },
       "contactUs": {
-        "title": "Contact Us",
-        "body": "For privacy questions or requests, contact us at support@homedecor.ai."
+        "title": "Свяжитесь с нами",
+        "body": "По вопросам конфиденциальности или запросам свяжитесь с нами по адресу support@homedecor.ai."
       }
     }
   },
   "terms": {
-    "eyebrow": "Policy",
-    "title": "Terms of Service",
-    "description": "The rules, expectations, and service boundaries for using HomeDecor AI.",
-    "date": "March 14, 2026",
+    "eyebrow": "Политика",
+    "title": "Условия использования",
+    "description": "Правила, ожидания и границы обслуживания для использования HomeDecor AI.",
+    "date": "14 марта 2026 г.",
     "sections": {
       "acceptanceOfTerms": {
-        "title": "Acceptance of Terms",
-        "body": "By accessing or using HomeDecor AI, you agree to these Terms of Service. If you do not agree, do not use the app."
+        "title": "Принятие условий",
+        "body": "Получая доступ к HomeDecor AI или используя его, вы соглашаетесь с настоящими Условиями обслуживания. Если вы не согласны, не используйте приложение."
       },
       "serviceDescription": {
-        "title": "Service Description",
-        "body": "HomeDecor AI provides AI-generated redesigns for interior and exterior spaces. Outputs are visual concepts and may not account for structural, engineering, or code constraints."
+        "title": "Описание услуги",
+        "body": "HomeDecor AI обеспечивает созданный AI редизайн внутренних и внешних пространств. Выходные данные представляют собой визуальные концепции и могут не учитывать структурные, инженерные ограничения или ограничения кода."
       },
       "accountAndEligibility": {
-        "title": "Account and Eligibility",
-        "body": "You must be at least 13 years old to use HomeDecor AI. You are responsible for maintaining account security and for activity that happens under your credentials."
+        "title": "Счет и право на участие",
+        "body": "Чтобы использовать HomeDecor AI, вам должно быть не менее 13 лет. Вы несете ответственность за поддержание безопасности учетной записи и за действия, которые происходят под вашими учетными данными."
       },
       "userContent": {
-        "title": "User Content",
-        "body": "You retain ownership of images you upload. By using the service, you grant HomeDecor AI a limited license to process and store them so we can generate and return your results."
+        "title": "Пользовательский контент",
+        "body": "Вы сохраняете право собственности на загружаемые изображения. Используя эту службу, вы предоставляете HomeDecor AI ограниченную лицензию на их обработку и хранение, чтобы мы могли генерировать и возвращать ваши результаты."
       },
       "subscriptionsAndCredits": {
-        "title": "Subscriptions and Credits",
-        "body": "Paid plans unlock enhanced features and higher-quality exports. Credits are consumed per generation, and subscription billing and renewals are handled by your app store and RevenueCat."
+        "title": "Подписки и кредиты",
+        "body": "Платные планы открывают расширенные функции и экспорт более высокого качества. Кредиты расходуются для каждого поколения, а выставление счетов и продление подписки обрабатываются вашим магазином приложений и RevenueCat."
       },
       "prohibitedUse": {
-        "title": "Prohibited Use",
-        "body": "You agree not to misuse the service, reverse engineer the app, or upload unlawful, harmful, or infringing content."
+        "title": "Запрещенное использование",
+        "body": "Вы соглашаетесь не использовать службу не по назначению, не перепроектировать приложение и не загружать незаконный, вредный или нарушающий авторские права контент."
       },
       "disclaimer": {
-        "title": "Disclaimer",
-        "body": "The service is provided \"as is\" without warranties of any kind. We do not guarantee specific design results or the accuracy of AI-generated outputs."
+        "title": "Отказ от ответственности",
+        "body": "Услуга предоставляется «как есть», без каких-либо гарантий. Мы не гарантируем конкретные результаты проектирования или точность результатов, генерируемых AI."
       },
       "limitationOfLiability": {
-        "title": "Limitation of Liability",
-        "body": "To the maximum extent permitted by law, HomeDecor AI is not liable for indirect or consequential damages arising from your use of the service."
+        "title": "Ограничение ответственности",
+        "body": "В максимальной степени, разрешенной законом, HomeDecor AI не несет ответственности за косвенные или косвенные убытки, возникшие в результате использования вами услуги."
       },
       "contact": {
-        "title": "Contact",
-        "body": "Questions about these terms can be sent to support@homedecor.ai."
+        "title": "Контакт",
+        "body": "Вопросы об этих условиях можно отправлять по адресу support@homedecor.ai."
       }
     }
   },
   "processing": {
-    "title": "AI is crafting your architectural masterpiece...",
-    "eta": "Your vision will be ready in ~15 seconds.",
-    "cancelKeepCredit": "Cancel and keep my credit",
+    "title": "AI создает ваш архитектурный шедевр...",
+    "eta": "Ваше видение будет готово через ~15 секунд.",
+    "cancelKeepCredit": "Отменить и сохранить мой кредит",
     "status": {
-      "analyzingGeometry": "Analyzing architectural geometry...",
-      "identifyingSurfaces": "Identifying surfaces and structural lines...",
-      "applyingStyle": "Applying your selected design direction...",
-      "renderingMaterials": "Rendering materials and lighting...",
-      "addingDetails": "Refining the final details...",
-      "almostReady": "Finalizing your render...",
-      "renderingFinalLighting": "Composing the final lighting pass..."
+      "analyzingGeometry": "Анализ архитектурной геометрии...",
+      "identifyingSurfaces": "Определение поверхностей и структурных линий...",
+      "applyingStyle": "Применение выбранного вами направления дизайна...",
+      "renderingMaterials": "Рендеринг материалов и освещения...",
+      "addingDetails": "Уточняем последние детали...",
+      "almostReady": "Завершение рендера...",
+      "renderingFinalLighting": "Составляем финальный проход освещения..."
     }
   },
   "wizard": {
     "headers": {
-      "back": "Go back",
+      "back": "Вернуться назад",
       "close": "Закрыть",
       "previousStep": "Вернуться к предыдущему шагу",
-      "stepProgress": "Step {{current}}/{{total}}",
-      "creditsRemaining": "Credits remaining"
+      "stepProgress": "Шаг {{current}}/{{total}}",
+      "creditsRemaining": "Оставшиеся кредиты"
     },
     "stepOne": {
-      "title": "Upload Your Vision",
-      "emptyTitle": "Upload Your Vision",
-      "emptySubtitle": "Redesign and Beautify your home.",
-      "removePhoto": "Remove selected photo",
+      "title": "Загрузите свое видение",
+      "emptyTitle": "Загрузите свое видение",
+      "emptySubtitle": "Перепроектируйте и украсьте свой дом.",
+      "removePhoto": "Удалить выбранную фотографию",
       "cta": "Begin Your Transformation"
     },
     "interior": {
       "stepTwoTitle": "Choose Your Space",
-      "stepTwoSubtitle": "Select the room type so the redesign stays architecturally grounded.",
+      "stepTwoSubtitle": "Выберите тип номера, чтобы редизайн оставался архитектурно обоснованным.",
       "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
+      "stepThreeSubtitle": "Выберите фирменный стиль, чтобы сформировать свое дизайнерское видение.",
       "stepFourMode": "Design Mode",
-      "stepFourPalette": "Color Harmony"
+      "stepFourPalette": "Цветовая гармония"
     },
     "exterior": {
       "stepTwoTitle": "Select Building Type",
-      "stepTwoSubtitle": "Select the architectural form you want to redesign.",
+      "stepTwoSubtitle": "Выберите архитектурную форму, которую хотите изменить.",
       "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
-      "stepFourTitle": "Color Harmony"
+      "stepThreeSubtitle": "Выберите фирменный стиль, чтобы сформировать свое дизайнерское видение.",
+      "stepFourTitle": "Цветовая гармония"
     },
     "garden": {
-      "stepOneEmptyTitle": "Upload Your Vision",
-      "stepOneEmptySubtitle": "Redesign and Beautify your home.",
+      "stepOneEmptyTitle": "Загрузите свое видение",
+      "stepOneEmptySubtitle": "Перепроектируйте и украсьте свой дом.",
       "stepTwoTitle": "Curate Your Aesthetic",
-      "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
-      "stepThreeTitle": "Color Harmony"
+      "stepTwoSubtitle": "Выберите фирменный стиль, чтобы сформировать свое дизайнерское видение.",
+      "stepThreeTitle": "Цветовая гармония"
     },
     "floorIntro": {
-      "hero": "Select a flooring style to redefine your room's foundation."
+      "hero": "Выберите стиль напольного покрытия, чтобы изменить фундамент вашей комнаты."
     },
     "paintIntro": {
-      "hero": "Trace any surface to apply custom colors and designer textures instantly."
+      "hero": "Обрисуйте любую поверхность, чтобы мгновенно применить индивидуальные цвета и дизайнерские текстуры."
     },
     "floorFlow": {
       "title": "Обновление пола",
-      "masking": "Mapping your floor plane...",
-      "promptLabel": "Describe Your Vision",
+      "masking": "Нанесение на карту плоскости пола...",
+      "promptLabel": "Опишите свое видение",
       "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials.",
-      "promptExamplesTitle": "Prompt examples",
+      "promptExamplesTitle": "Подскажите примеры",
       "generateCta": "Создать мой дизайн →",
-      "selectMaterialCta": "Select a Material",
-      "selectMaterialTitle": "Select Material",
-      "selectMaterialBody": "Select a premium material curated to read as photoreal, perspective-aware, and listing-ready.",
-      "selectedMaterial": "Selected Material",
-      "noMaterialSelected": "No material selected",
-      "unlockMaterialBody": "Select a flooring material to unlock the AI restyle.",
-      "addPromptTitle": "Add a prompt",
-      "addPromptBody": "Describe the exact floor transformation you want before continuing.",
-      "generatePromptBody": "Choose a custom floor prompt before generating.",
-      "autoMaskPreparing": "Preparing the automatic floor mask. Please wait a moment.",
-      "autoMaskSuccess": "Floor mask ready.",
-      "autoMaskFailure": "Automatic detection could not complete. Please brush the floor manually.",
-      "savePermissionTitle": "Photo access needed",
-      "savePermissionBody": "Allow photo library access to save your render to the device.",
-      "cameraAccessTitle": "Camera access needed",
-      "cameraAccessBody": "Enable camera access to capture a floor photo.",
-      "photoAccessTitle": "Photo access needed",
-      "photoAccessBody": "Enable photo library access to upload a floor photo.",
-      "mediaUnavailableTitle": "Unable to open media",
-      "exampleUnavailableBody": "This example photo could not be opened.",
-      "markFloorTitle": "Mark the floor first",
-      "markFloorBody": "Brush over the floor area you want to restyle before continuing.",
-      "pickMaterialTitle": "Pick a material",
-      "pickMaterialBody": "Choose a flooring material before continuing.",
-      "renderFinishing": "This render is already finishing up.",
-      "cancelSuccess": "Generation canceled. Your credit was kept.",
-      "cancelUnavailable": "Unable to cancel right now.",
-      "supportingText": "Uses 1 credit · {{creditsRemaining}}",
-      "creditsRemaining": "{{count}} remaining",
+      "selectMaterialCta": "Выберите материал",
+      "selectMaterialTitle": "Выберите материал",
+      "selectMaterialBody": "Выберите материал премиум-класса, который будет считаться фотореалистичным, учитывающим перспективу и готовым к публикации.",
+      "selectedMaterial": "Выбранный материал",
+      "noMaterialSelected": "Материал не выбран",
+      "unlockMaterialBody": "Выберите материал напольного покрытия, чтобы разблокировать рестиль AI.",
+      "addPromptTitle": "Добавить подсказку",
+      "addPromptBody": "Прежде чем продолжить, опишите точную трансформацию пола, которую вы хотите.",
+      "generatePromptBody": "Перед созданием выберите пользовательский запрос этажа.",
+      "autoMaskPreparing": "Приготовление автоматической маски для пола. Пожалуйста, подождите немного.",
+      "autoMaskSuccess": "Маска для пола готова.",
+      "autoMaskFailure": "Автоматическое обнаружение не удалось завершить. Пожалуйста, почистите пол вручную.",
+      "savePermissionTitle": "Нужен доступ к фото",
+      "savePermissionBody": "Разрешите доступ к библиотеке фотографий, чтобы сохранить рендер на устройстве.",
+      "cameraAccessTitle": "Нужен доступ к камере",
+      "cameraAccessBody": "Включите доступ к камере, чтобы сделать фотографию пола.",
+      "photoAccessTitle": "Нужен доступ к фото",
+      "photoAccessBody": "Включите доступ к библиотеке фотографий, чтобы загрузить фотографию пола.",
+      "mediaUnavailableTitle": "Невозможно открыть медиа",
+      "exampleUnavailableBody": "Этот пример фотографии не удалось открыть.",
+      "markFloorTitle": "Сначала разметьте пол",
+      "markFloorBody": "Прежде чем продолжить, прокрасьте область пола, которую хотите изменить.",
+      "pickMaterialTitle": "Выберите материал",
+      "pickMaterialBody": "Прежде чем продолжить, выберите материал напольного покрытия.",
+      "renderFinishing": "Этот рендер уже завершается.",
+      "cancelSuccess": "Генерация отменена. Ваш кредит был сохранен.",
+      "cancelUnavailable": "Невозможно отменить прямо сейчас.",
+      "supportingText": "Использует 1 кредит · {{creditsRemaining}}",
+      "creditsRemaining": "осталось {{count}}",
       "promptExamples": {
-        "frenchOak": "Luxurious wide-plank French Oak in a warm natural finish.",
-        "carraraMarble": "Polished Italian Carrara Marble with deep gray veining.",
-        "microcement": "Contemporary seamless Micro-cement for an industrial chic foundation.",
-        "herringboneWalnut": "Elegant Dark Walnut in a classic Herringbone pattern.",
-        "walnut": "Modern large-format Slate Stone tiles in charcoal gray."
+        "frenchOak": "Роскошная широкая доска французского дуба с теплой натуральной отделкой.",
+        "carraraMarble": "Полированный итальянский каррарский мрамор с темно-серыми прожилками.",
+        "microcement": "Современный бесшовный микроцемент для шикарной индустриальной основы.",
+        "herringboneWalnut": "Элегантный темный орех с классическим узором «елочка».",
+        "walnut": "Современная крупноформатная плитка Slate Stone угольно-серого цвета."
       },
       "result": {
-        "heading": "Behold your new interior",
-        "subheading": "A material-led floor transformation designed to stay true to the room's perspective, furnishings, and natural light.",
-        "before": "Before",
-        "after": "After",
-        "materialApplied": "Material Applied",
-        "materialFallback": "Material",
-        "summary": "Your floor has been restyled while preserving room geometry, furniture alignment, and natural light behavior.",
-        "saveToGallery": "Save to Gallery",
-        "share": "Share",
-        "tryAgain": "Try Again"
+        "heading": "Узрите свой новый интерьер",
+        "subheading": "Трансформация пола с использованием материалов, призванная сохранить верность перспективе, мебели и естественному освещению комнаты.",
+        "before": "До",
+        "after": "После",
+        "materialApplied": "Применяемый материал",
+        "materialFallback": "Материал",
+        "summary": "Ваш пол был изменен, сохранив при этом геометрию комнаты, расположение мебели и поведение при естественном освещении.",
+        "saveToGallery": "Сохранить в галерею",
+        "share": "Поделиться",
+        "tryAgain": "Попробуйте еще раз"
       },
       "materials": {
         "natural-oak": {
-          "title": "Natural Oak",
-          "description": "Airy oak planks with soft natural grain."
+          "title": "Натуральный Дуб",
+          "description": "Воздушные дубовые доски с мягкой натуральной текстурой."
         },
         "walnut-wood": {
-          "title": "Walnut Wood",
-          "description": "Deep walnut planks with rich tailored contrast."
+          "title": "Ореховое дерево",
+          "description": "Глубокие доски из орехового дерева с богатым индивидуальным контрастом."
         },
         "carrara-marble": {
-          "title": "Carrara Marble",
-          "description": "Bright stone veining with a calm luxe finish."
+          "title": "Каррарский мрамор",
+          "description": "Яркие каменные прожилки со спокойной роскошной отделкой."
         },
         "polished-concrete": {
-          "title": "Polished Concrete",
-          "description": "Smooth concrete sheen with urban gallery calm."
+          "title": "Полированный бетон",
+          "description": "Гладкий бетонный блеск с городской галереей спокойствия."
         },
         "herringbone-oak": {
-          "title": "Herringbone Oak",
-          "description": "Classic oak pattern with warm directional movement."
+          "title": "Дуб Елочка",
+          "description": "Классический дубовый узор с теплым направленным движением."
         },
         "terracotta-tile": {
-          "title": "Terracotta Tile",
-          "description": "Earthy clay warmth with handcrafted character."
+          "title": "Терракотовая Плитка",
+          "description": "Землистое глиняное тепло с характером ручной работы."
         },
         "slate-tile": {
-          "title": "Slate Tile",
-          "description": "Dark slate with a crisp large-format finish."
+          "title": "Сланцевая плитка",
+          "description": "Темный сланец с четкой крупноформатной отделкой."
         },
         "plush-carpet": {
-          "title": "Plush Carpet",
-          "description": "Soft cream carpet with a quiet, cozy feel."
+          "title": "Плюшевый ковер",
+          "description": "Мягкий кремовый ковер, создающий ощущение тишины и уюта."
         },
         "weathered-oak": {
-          "title": "Weathered Oak",
-          "description": "Mid-tone oak with a gently aged finish."
+          "title": "Выдержанный дуб",
+          "description": "Дуб средних тонов с слегка состаренной отделкой."
         }
       }
     },
     "paintFlow": {
       "title": "Покраска",
-      "selectionTitle": "Select Surfaces to Transform",
-      "maskTitle": "Select Surfaces to Transform",
+      "selectionTitle": "Выберите поверхности для преобразования",
+      "maskTitle": "Выберите поверхности для преобразования",
       "colorLabel": "Цвет",
       "surfaceLabel": "Поверхность",
       "choose": "Выбрать",
@@ -516,888 +517,888 @@
       "colorPickerTitle": "Выберите цвет стены",
       "surfacePickerTitle": "Выберите тип поверхности",
       "detectTitle": "Определяем окрашиваемые поверхности...",
-      "detectBody": "HomeDecor AI is tracing repaintable wall surfaces while leaving windows, furniture, trim, and flooring untouched.",
+      "detectBody": "HomeDecor AI отслеживает поверхности стен, подлежащие перекрашиванию, оставляя нетронутыми окна, мебель, отделку и пол.",
       "preparingMaskTitle": "Подготавливаем маску...",
-      "preparingMaskBody": "HomeDecor AI is refining the canvas so you can paint crisp edges around built-ins, windows, and furniture.",
+      "preparingMaskBody": "HomeDecor AI совершенствует холст, чтобы вы могли рисовать четкие края вокруг встроенных элементов, окон и мебели.",
       "brushWidth": "Ширина кисти",
       "eraserWidth": "Ширина ластика",
       "generateCta": "Покрасить стены →",
       "finishTitle": "Тип финиша",
-      "finishBody": "Choose how the paint should catch light so the walls read correctly in a polished, designer-grade render.",
+      "finishBody": "Выберите, как краска должна отражать свет, чтобы стены правильно читались в полированной, дизайнерской штукатурке.",
       "selectedColor": "Выбранный цвет",
-      "selectedSurfaceSentence": "Surface: {{surface}}.",
-      "colorLockedBody": "Wall color is locked. Now choose the final sheen profile for the render.",
-      "customColorDescription": "Custom wall tone selected from the precision color picker.",
-      "noColorSelected": "No color selected",
-      "chooseColorBody": "Choose a wall color before continuing.",
-      "savePermissionTitle": "Photo access needed",
-      "savePermissionBody": "Allow photo library access to save your render to the device.",
-      "cameraAccessTitle": "Camera access needed",
-      "cameraAccessBody": "Enable camera access to capture a room photo.",
-      "photoAccessTitle": "Photo access needed",
-      "photoAccessBody": "Enable photo library access to upload a room photo.",
-      "mediaUnavailableTitle": "Unable to open media",
-      "exampleUnavailableBody": "This example photo could not be opened.",
-      "markWallsTitle": "Mark the walls first",
-      "markWallsBody": "Brush over the wall surfaces you want to repaint before generating.",
-      "pickColorTitle": "Pick a color",
-      "pickColorBody": "Choose a wall color before continuing.",
-      "autoDetectSuccess": "Walls detected. Brush to refine if needed.",
-      "autoDetectFailure": "Automatic detection could not complete. Please brush manually.",
-      "renderFinishing": "This render is already finishing up.",
-      "cancelSuccess": "Generation canceled. Your credit was kept.",
-      "cancelUnavailable": "Unable to cancel right now.",
-      "supportingText": "Uses 1 credit · {{creditsRemaining}}",
-      "creditsRemaining": "{{count}} remaining",
-      "intakeTitle": "Upload Your Vision",
-      "intakeBody": "Upload a room photo for precise wall recoloring.",
-      "intakeReadyTitle": "Photo added. Mark the wall area next.",
-      "intakeReadyBody": "Your photo is locked in. Next, brush the wall surfaces so the recolor stays precise around trim, furniture, and decor.",
+      "selectedSurfaceSentence": "Поверхность: {{surface}}.",
+      "colorLockedBody": "Цвет стены заблокирован. Теперь выберите окончательный профиль блеска для рендера.",
+      "customColorDescription": "Пользовательский тон стены, выбранный с помощью точной палитры цветов.",
+      "noColorSelected": "Цвет не выбран",
+      "chooseColorBody": "Прежде чем продолжить, выберите цвет стены.",
+      "savePermissionTitle": "Нужен доступ к фото",
+      "savePermissionBody": "Разрешите доступ к библиотеке фотографий, чтобы сохранить рендер на устройстве.",
+      "cameraAccessTitle": "Нужен доступ к камере",
+      "cameraAccessBody": "Включите доступ к камере, чтобы сделать снимок комнаты.",
+      "photoAccessTitle": "Нужен доступ к фото",
+      "photoAccessBody": "Включите доступ к библиотеке фотографий, чтобы загрузить фотографию комнаты.",
+      "mediaUnavailableTitle": "Невозможно открыть медиа",
+      "exampleUnavailableBody": "Этот пример фотографии не удалось открыть.",
+      "markWallsTitle": "Сначала разметьте стены",
+      "markWallsBody": "Перед созданием кисти нанесите кисть на поверхности стен, которые вы хотите перекрасить.",
+      "pickColorTitle": "Выберите цвет",
+      "pickColorBody": "Прежде чем продолжить, выберите цвет стены.",
+      "autoDetectSuccess": "Стены обнаружены. Кисть для доработки при необходимости.",
+      "autoDetectFailure": "Автоматическое обнаружение не удалось завершить. Пожалуйста, чистите вручную.",
+      "renderFinishing": "Этот рендер уже завершается.",
+      "cancelSuccess": "Генерация отменена. Ваш кредит был сохранен.",
+      "cancelUnavailable": "Невозможно отменить прямо сейчас.",
+      "supportingText": "Использует 1 кредит · {{creditsRemaining}}",
+      "creditsRemaining": "осталось {{count}}",
+      "intakeTitle": "Загрузите свое видение",
+      "intakeBody": "Загрузите фотографию комнаты, чтобы точно перекрасить стены.",
+      "intakeReadyTitle": "Фото добавлено. Далее отметьте область стены.",
+      "intakeReadyBody": "Ваша фотография зафиксирована. Затем почистите поверхность стены, чтобы перекрашивание отделки, мебели и декора оставалось точным.",
       "surfaces": {
-        "auto": "Auto",
-        "brick": "Brick",
-        "cabinet": "Cabinet",
-        "door": "Door",
-        "wall": "Wall",
-        "outsideWall": "Outside Wall"
+        "auto": "Авто",
+        "brick": "Кирпич",
+        "cabinet": "Кабинет",
+        "door": "Дверь",
+        "wall": "Стена",
+        "outsideWall": "Внешняя стена"
       },
       "colorFamilies": {
-        "pink": "Pink",
-        "blue": "Blue",
-        "green": "Green",
-        "yellow": "Yellow",
-        "gray": "Gray",
-        "red": "Red"
+        "pink": "Розовый",
+        "blue": "Синий",
+        "green": "Зеленый",
+        "yellow": "Желтый",
+        "gray": "Серый",
+        "red": "Красный"
       },
       "colors": {
         "sage-green": {
-          "title": "Sage Green",
-          "description": "Soft green calm for bright, polished living spaces."
+          "title": "Шалфей Грин",
+          "description": "Мягкий зеленый, спокойный для ярких, изысканных жилых помещений."
         },
         "midnight-navy": {
-          "title": "Midnight Navy",
-          "description": "Tailored navy depth with crisp architectural contrast."
+          "title": "Полуночный флот",
+          "description": "Индивидуальная глубина темно-синего цвета с четким архитектурным контрастом."
         },
         "terracotta-glow": {
-          "title": "Terracotta Glow",
-          "description": "Warm clay color with grounded, editorial energy."
+          "title": "Терракотовое свечение",
+          "description": "Теплый глинистый цвет с приземленной редакционной энергией."
         },
         "dusty-rose": {
-          "title": "Dusty Rose",
-          "description": "Muted blush warmth with soft boutique appeal."
+          "title": "Пыльная Роуз",
+          "description": "Приглушенные, теплые румяна с мягкой привлекательностью."
         },
         "gallery-charcoal": {
-          "title": "Gallery Charcoal",
-          "description": "Refined charcoal for moody, art-forward rooms."
+          "title": "Галерея Уголь",
+          "description": "Рафинированный древесный уголь для угрюмых, арт-номеров."
         },
         "soft-ivory": {
-          "title": "Soft Ivory",
-          "description": "Luminous neutral that keeps rooms light, never flat."
+          "title": "Мягкая слоновая кость",
+          "description": "Светящийся нейтральный цвет, благодаря которому помещения остаются светлыми, а не плоскими."
         },
         "olive-grove": {
-          "title": "Olive Grove",
-          "description": "Earthy olive depth with a grounded designer mood."
+          "title": "Оливковая роща",
+          "description": "Землисто-оливковая глубина с приземленным дизайнерским настроением."
         },
         "lavender-mist": {
-          "title": "Lavender Mist",
-          "description": "Soft violet haze for elevated pastel rooms."
+          "title": "Лавандовый туман",
+          "description": "Мягкая фиолетовая дымка для возвышенных пастельных комнат."
         },
         "pearl-gray": {
-          "title": "Pearl Gray",
-          "description": "Light tonal gray with polished everyday flexibility."
+          "title": "Жемчужно-серый",
+          "description": "Светло-серый оттенок с полированной повседневной гибкостью."
         }
       },
       "finishes": {
         "matte": {
-          "label": "Matte",
-          "description": "Soft, gallery-grade color payoff with the least surface glare."
+          "label": "матовый",
+          "description": "Мягкая цветопередача галерейного качества с наименьшим количеством бликов на поверхности."
         },
         "satin": {
-          "label": "Satin",
-          "description": "Balanced sheen for modern interiors with a subtle designer glow."
+          "label": "Сатин",
+          "description": "Сбалансированный блеск для современных интерьеров с тонким дизайнерским сиянием."
         },
         "glossy": {
-          "label": "Glossy",
-          "description": "A polished reflective finish for bold, high-contrast statement walls."
+          "label": "Глянцевый",
+          "description": "Полированное светоотражающее покрытие для эффектных, контрастных стен."
         }
       }
     },
     "examples": {
       "floor": {
-        "crackedConcrete": "Cracked Concrete",
-        "damagedPlanks": "Damaged Planks",
-        "brokenTile": "Broken Tile",
-        "renovationSubfloor": "Renovation Subfloor",
-        "wornPlywood": "Worn Plywood"
+        "crackedConcrete": "Треснувший бетон",
+        "damagedPlanks": "Поврежденные доски",
+        "brokenTile": "Сломанная плитка",
+        "renovationSubfloor": "Ремонт чернового пола",
+        "wornPlywood": "Изношенная фанера"
       },
       "paint": {
-        "rawConcrete": "Raw Concrete",
-        "peelingPlaster": "Peeling Plaster",
-        "wornWhite": "Worn White",
-        "exposedBrick": "Exposed Brick",
-        "stainedPlaster": "Stained Plaster",
-        "dampStreaks": "Damp Streaks"
+        "rawConcrete": "Сырой бетон",
+        "peelingPlaster": "Пилинг Пластырь",
+        "wornWhite": "Изношенный белый",
+        "exposedBrick": "Открытый кирпич",
+        "stainedPlaster": "Витражная штукатурка",
+        "dampStreaks": "Влажные полосы"
       }
     }
   },
   "workspace": {
     "board": {
-      "new": "New",
-      "openEditor": "Tap to open your design editor",
-      "generationFailedTap": "Render encountered an issue. Tap for details.",
-      "generationFailedTitle": "Render failed",
-      "generationFailedBody": "This render did not complete. Please try again.",
-      "tryAnotherPrompt": "Please go back and try another prompt."
+      "new": "Новый",
+      "openEditor": "Нажмите, чтобы открыть редактор дизайна",
+      "generationFailedTap": "В рендере возникла проблема. Нажмите, чтобы узнать подробности.",
+      "generationFailedTitle": "Не удалось выполнить рендеринг",
+      "generationFailedBody": "Этот рендеринг не завершен. Пожалуйста, попробуйте еще раз.",
+      "tryAnotherPrompt": "Пожалуйста, вернитесь и попробуйте другой запрос."
     },
     "processing": {
-      "default": "HomeDecor AI is preserving the architecture while composing a refined redesign.",
-      "floor": "HomeDecor AI is reading perspective, locking the floor plane, and composing the new material with premium detail.",
-      "paint": "HomeDecor AI is isolating the wall planes and layering your selected finish with gallery-grade realism."
+      "default": "HomeDecor AI сохраняет архитектуру, но вносит усовершенствованный редизайн.",
+      "floor": "HomeDecor AI считывает перспективу, фиксирует плоскость пола и создает новый материал с высочайшей детализацией.",
+      "paint": "HomeDecor AI изолирует плоскости стен и накладывает выбранную вами отделку на уровень реализма галерейного уровня."
     },
     "services": {
-      "interior": "Interior Redesign",
-      "exterior": "Exterior Redesign",
-      "garden": "Garden Redesign",
-      "floor": "Floor Restyle",
-      "paint": "Smart Wall Paint"
+      "interior": "Редизайн интерьера",
+      "exterior": "Внешний Редизайн",
+      "garden": "Редизайн сада",
+      "floor": "Рестайлинг пола",
+      "paint": "Умная краска для стен"
     },
     "editor": {
-      "title": "Your Professional Concept",
-      "sourcePhoto": "Source Photo",
-      "comparison": "Comparison",
-      "deleteA11y": "Delete this design from My Design Portfolio",
-      "showComparison": "Show before and after comparison",
-      "hideComparison": "Hide before and after comparison",
-      "removeWatermark": "Remove Watermark",
-      "regenerate": "Regenerate",
-      "saving": "Saving...",
-      "sharing": "Sharing...",
-      "renderUnavailable": "Render unavailable. Please try again.",
-      "previewNotReady": "Preview not ready. Please try again.",
-      "floorReady": "Material-led floor transformation with a live before and after slider.",
-      "paintReady": "Wall recoloring tuned to your selected finish and room lighting.",
-      "defaultReady": "Curated inside your premium HomeDecor board."
+      "title": "Ваша профессиональная концепция",
+      "sourcePhoto": "Исходное фото",
+      "comparison": "Сравнение",
+      "deleteA11y": "Удалить этот дизайн из моего портфолио дизайнов",
+      "showComparison": "Показать сравнение до и после",
+      "hideComparison": "Скрыть сравнение до и после",
+      "removeWatermark": "Удалить водяной знак",
+      "regenerate": "Регенерировать",
+      "saving": "Сохранение...",
+      "sharing": "Делюсь...",
+      "renderUnavailable": "Рендеринг недоступен. Пожалуйста, попробуйте еще раз.",
+      "previewNotReady": "Предварительный просмотр не готов. Пожалуйста, попробуйте еще раз.",
+      "floorReady": "Преобразование пола на основе материалов с помощью живого слайдера «до» и «после».",
+      "paintReady": "Перекрашивание стен в соответствии с выбранной вами отделкой и освещением комнаты.",
+      "defaultReady": "Куратор внутри вашей премиальной доски HomeDecor."
     },
     "permissions": {
-      "requiredTitle": "Permission Required",
-      "requiredBody": "Enable camera or photo access in your system settings to continue.",
-      "cameraAccessTitle": "Camera Access Needed",
-      "cameraAccessBody": "Allow camera access in Settings to take a photo.",
-      "photoLibraryAccessTitle": "Photo Library Access Needed",
-      "photoLibraryAccessBody": "Allow photo library access in Settings.",
-      "photoLibrarySaveBody": "Please allow photo library access to save your result to the device gallery."
+      "requiredTitle": "Требуется разрешение",
+      "requiredBody": "Чтобы продолжить, включите доступ к камере или фотографиям в настройках вашей системы.",
+      "cameraAccessTitle": "Требуется доступ к камере",
+      "cameraAccessBody": "Разрешите доступ к камере в настройках, чтобы сделать снимок.",
+      "photoLibraryAccessTitle": "Требуется доступ к библиотеке фотографий",
+      "photoLibraryAccessBody": "Разрешите доступ к библиотеке фотографий в настройках.",
+      "photoLibrarySaveBody": "Разрешите доступ к библиотеке фотографий, чтобы сохранить результат в галерее устройства."
     },
     "media": {
-      "capturedPhoto": "Captured Photo",
-      "uploadedPhoto": "Uploaded Photo",
-      "choosePhotoSource": "Choose how you want to add your image.",
-      "cameraUnavailableTitle": "Camera Unavailable",
-      "cameraUnavailableBody": "We couldn't open the camera. Please try again.",
-      "photoLibraryUnavailableTitle": "Photo Library Unavailable",
-      "photoLibraryUnavailableBody": "We couldn't open the photo library. Please try again.",
-      "photoIntakeUnavailableTitle": "Photo Intake Unavailable",
-      "photoIntakeUnavailableBody": "We couldn't open your camera or photo library. Please try again.",
-      "exampleImageUnavailable": "Example image unavailable.",
+      "capturedPhoto": "Сделанное фото",
+      "uploadedPhoto": "Загруженное фото",
+      "choosePhotoSource": "Выберите, как вы хотите добавить свое изображение.",
+      "cameraUnavailableTitle": "Камера недоступна",
+      "cameraUnavailableBody": "Мы не смогли открыть камеру. Пожалуйста, попробуйте еще раз.",
+      "photoLibraryUnavailableTitle": "Библиотека фотографий недоступна",
+      "photoLibraryUnavailableBody": "Мы не смогли открыть библиотеку фотографий. Пожалуйста, попробуйте еще раз.",
+      "photoIntakeUnavailableTitle": "Фотосъемка недоступна",
+      "photoIntakeUnavailableBody": "Нам не удалось открыть вашу камеру или библиотеку фотографий. Пожалуйста, попробуйте еще раз.",
+      "exampleImageUnavailable": "Пример изображения недоступен.",
       "exampleUnavailableTitle": "Пример недоступен",
-      "tryAnotherImage": "Please try another image."
+      "tryAnotherImage": "Пожалуйста, попробуйте другое изображение."
     },
     "share": {
-      "nothingTitle": "Nothing to share",
-      "generateFirst": "Generate a design first.",
+      "nothingTitle": "Нечем поделиться",
+      "generateFirst": "Сначала создайте дизайн.",
       "failedTitle": "Не удалось поделиться",
       "message": "Создано в HomeDecor.ai"
     },
     "download": {
-      "nothingTitle": "Nothing to download",
-      "generateFirst": "Generate a design first.",
+      "nothingTitle": "Нечего скачивать",
+      "generateFirst": "Сначала создайте дизайн.",
       "failedTitle": "Не удалось сохранить"
     },
     "generation": {
       "preparingSessionTitle": "Подготовка сессии",
       "preparingSessionBody": "Профиль гостя ещё загружается. Попробуйте снова через мгновение.",
-      "completeStepsTitle": "Complete the steps",
-      "completeFloorBody": "Add a room photo, define the floor area, choose a material, and select a finish before continuing.",
-      "completePaintBody": "Add a room photo, define the paintable surfaces, choose a wall color, and select a finish before continuing.",
-      "completePreviousSteps": "Please finish the previous steps first.",
+      "completeStepsTitle": "Выполните шаги",
+      "completeFloorBody": "Прежде чем продолжить, добавьте фотографию комнаты, определите площадь пола, выберите материал и отделку.",
+      "completePaintBody": "Прежде чем продолжить, добавьте фотографию комнаты, определите поверхности, которые можно покрасить, выберите цвет стен и отделку.",
+      "completePreviousSteps": "Пожалуйста, сначала завершите предыдущие шаги.",
       "limitReached": "Лимит достигнут",
-      "completeStepToContinue": "Complete this step to continue."
+      "completeStepToContinue": "Завершите этот шаг, чтобы продолжить."
     },
     "flow": {
-      "customPromptTitle": "Describe Your Vision",
+      "customPromptTitle": "Опишите свое видение",
       "customPromptBody": "Опишите точное дизайнерское направление перед применением.",
       "selectSpaceType": "Нажмите на карточку, чтобы выбрать тип пространства."
     },
-    "resumeDraft": "Resuming your saved wizard draft.",
+    "resumeDraft": "Возобновление сохраненного черновика мастера.",
     "feedback": {
-      "like": "Like",
-      "dislike": "Dislike",
-      "liked": "Thanks for the feedback.",
-      "disliked": "Feedback sent to the design team.",
-      "failed": "Unable to send feedback right now."
+      "like": "Нравится",
+      "dislike": "Не нравится",
+      "liked": "Спасибо за отзыв.",
+      "disliked": "Отзыв отправлен команде дизайнеров.",
+      "failed": "Невозможно отправить отзыв прямо сейчас."
     },
     "stepOne": {
-      "gardenPhotoTitle": "Add a Garden Photo",
-      "exteriorPhotoTitle": "Add an Exterior Photo",
-      "floorPhotoTitle": "Add Floor Photo",
-      "gardenEmptyTitle": "Start Your Garden Transformation",
-      "exteriorEmptyTitle": "Start Your Exterior Transformation",
-      "tapToAddPhoto": "Tap to add a photo from your camera or library"
+      "gardenPhotoTitle": "Добавить фотографию сада",
+      "exteriorPhotoTitle": "Добавить фотографию экстерьера",
+      "floorPhotoTitle": "Добавить фото пола",
+      "gardenEmptyTitle": "Начните преобразование вашего сада",
+      "exteriorEmptyTitle": "Начните свою внешнюю трансформацию",
+      "tapToAddPhoto": "Нажмите, чтобы добавить фотографию с камеры или из библиотеки."
     },
     "style": {
-      "tapToSelect": "Tap a card to define your style direction."
+      "tapToSelect": "Коснитесь карточки, чтобы определить направление своего стиля."
     },
     "localization": {
       "rooms": {
-        "livingRoom": "Living Room",
-        "bedroom": "Bedroom",
-        "kitchen": "Kitchen",
-        "bathroom": "Bathroom",
-        "homeOffice": "Home Office",
-        "diningRoom": "Dining Room",
-        "nursery": "Nursery",
-        "homeTheater": "Home Theater",
-        "gamingRoom": "Gaming Room",
-        "hall": "Hall",
-        "library": "Library",
-        "laundry": "Laundry"
+        "livingRoom": "Гостиная",
+        "bedroom": "Спальня",
+        "kitchen": "Кухня",
+        "bathroom": "Ванная комната",
+        "homeOffice": "Домашний офис",
+        "diningRoom": "Столовая",
+        "nursery": "Питомник",
+        "homeTheater": "Домашний кинотеатр",
+        "gamingRoom": "Игровая комната",
+        "hall": "Холл",
+        "library": "Библиотека",
+        "laundry": "Прачечная"
       },
       "examples": {
         "interior": {
-          "emptyRoom": "Empty Room",
-          "messyLounge": "Messy Lounge",
-          "wornRoom": "Worn Room",
-          "emptyKitchen": "Empty Kitchen",
-          "damagedRoom": "Damaged Room",
-          "outdatedKitchen": "Outdated Kitchen"
+          "emptyRoom": "Пустая комната",
+          "messyLounge": "Грязный салон",
+          "wornRoom": "Изношенная комната",
+          "emptyKitchen": "Пустая кухня",
+          "damagedRoom": "Поврежденная комната",
+          "outdatedKitchen": "Устаревшая Кухня"
         },
         "exterior": {
-          "scaffoldHouse": "Scaffold House",
-          "weatheredHouse": "Weathered House",
-          "brickShell": "Brick Shell",
-          "overgrownCottage": "Overgrown Cottage",
-          "abandonedHome": "Abandoned Home",
-          "concreteFrame": "Concrete Frame"
+          "scaffoldHouse": "Дом Лесов",
+          "weatheredHouse": "Выдержанный дом",
+          "brickShell": "Кирпичная оболочка",
+          "overgrownCottage": "Заросший коттедж",
+          "abandonedHome": "Заброшенный дом",
+          "concreteFrame": "Бетонный каркас"
         },
         "garden": {
-          "muddyYard": "Muddy Yard",
-          "weedyYard": "Weedy Yard",
-          "rubbleYard": "Rubble Yard",
-          "overgrownCorner": "Overgrown Corner",
-          "abandonedYard": "Abandoned Yard",
-          "crackedPatio": "Cracked Patio"
+          "muddyYard": "Грязный двор",
+          "weedyYard": "Сорняковый двор",
+          "rubbleYard": "Щебень Двор",
+          "overgrownCorner": "Заросший уголок",
+          "abandonedYard": "Заброшенный двор",
+          "crackedPatio": "Треснувший внутренний дворик"
         }
       },
       "styles": {
-        "modern": "Modern",
-        "luxury": "Luxury",
-        "japandi": "Japandi",
-        "cyberpunk": "Cyberpunk",
-        "tropical": "Tropical",
-        "minimalist": "Minimalist",
-        "scandinavian": "Scandinavian",
-        "bohemian": "Bohemian",
-        "midcentury": "Midcentury",
-        "artDeco": "Art Deco",
-        "coastal": "Coastal",
-        "rustic": "Rustic",
-        "vintage": "Vintage",
-        "mediterranean": "Mediterranean",
-        "glam": "Glam",
-        "coastalRetreat": "Coastal Retreat",
-        "rusticManor": "Rustic Manor",
-        "hollywoodRegency": "Hollywood Regency",
-        "neoClassic": "Neo-Classic",
-        "shabbyChic": "Shabby Chic",
-        "frenchCountry": "French Country",
-        "brutalist": "Brutalist",
-        "hollywoodRegencyNoir": "Hollywood Regency Noir",
-        "artNouveau": "Art Nouveau",
-        "custom": "Custom",
-        "chinese": "Chinese",
-        "cottage": "Cottage",
-        "farmHouse": "Farm House",
-        "french": "French",
-        "gothic": "Gothic",
-        "italianate": "Italianate",
-        "christmas": "Christmas",
-        "minimalistic": "Minimalistic",
-        "baroque": "Baroque"
+        "modern": "Современный",
+        "luxury": "Роскошь",
+        "japandi": "Джапанди",
+        "cyberpunk": "Киберпанк",
+        "tropical": "Тропический",
+        "minimalist": "Минималистский",
+        "scandinavian": "скандинавский",
+        "bohemian": "богемный",
+        "midcentury": "Середина века",
+        "artDeco": "Арт Деко",
+        "coastal": "Прибрежный",
+        "rustic": "деревенский",
+        "vintage": "Винтаж",
+        "mediterranean": "Средиземноморский",
+        "glam": "Глэм",
+        "coastalRetreat": "Прибрежное отступление",
+        "rusticManor": "Деревенская усадьба",
+        "hollywoodRegency": "Голливудское Регентство",
+        "neoClassic": "Нео-Классика",
+        "shabbyChic": "Потертый шик",
+        "frenchCountry": "Французская страна",
+        "brutalist": "Бруталист",
+        "hollywoodRegencyNoir": "Голливуд Регентство Нуар",
+        "artNouveau": "Модерн",
+        "custom": "Пользовательский",
+        "chinese": "китайский",
+        "cottage": "Коттедж",
+        "farmHouse": "Фермерский дом",
+        "french": "французский",
+        "gothic": "Готика",
+        "italianate": "Итальянский",
+        "christmas": "Рождество",
+        "minimalistic": "Минималистичный",
+        "baroque": "Барокко"
       },
       "buildings": {
-        "apartment": "Apartment",
-        "house": "House",
-        "officeBuilding": "Office Building",
-        "residential": "Residential",
-        "retail": "Retail",
-        "villa": "Villa"
+        "apartment": "Квартира",
+        "house": "Дом",
+        "officeBuilding": "Офисное здание",
+        "residential": "Жилой",
+        "retail": "Розничная торговля",
+        "villa": "Вилла"
       },
       "modes": {
         "preserve": {
-          "title": "Structural Preservation",
-          "description": "Preserve your room's architectural DNA while flawlessly refreshing its aesthetic."
+          "title": "Структурное сохранение",
+          "description": "Сохраните архитектурную ДНК вашей комнаты, безупречно освежив ее эстетику."
         },
         "renovate": {
-          "title": "Renovation Design",
-          "description": "Total creative liberty to redefine furniture layouts and structural boundaries for a complete remodel."
+          "title": "Дизайн ремонта",
+          "description": "Полная творческая свобода переопределить расположение мебели и структурные границы для полной реконструкции."
         }
       },
       "palettes": {
-        "surprise": "Curated Mix",
-        "gray": "Millennial Gray",
-        "terracotta": "Terracotta Mirage",
-        "forest": "Forest Hues",
-        "peach": "Peach Orchard",
-        "fuchsia": "Fuchsia Blossom",
-        "emerald": "Emerald Gem",
-        "pastel": "Pastel Breeze",
-        "ocean": "Ocean Mist",
-        "velvet": "Velvet Dusk",
-        "amethyst": "Amethyst Dream",
-        "sunset": "Fuchsia Noir"
+        "surprise": "Кураторский микс",
+        "gray": "Тысячелетний серый",
+        "terracotta": "Терракотовый Мираж",
+        "forest": "Лесные оттенки",
+        "peach": "Персиковый сад",
+        "fuchsia": "Фуксия Цветок",
+        "emerald": "Изумрудный драгоценный камень",
+        "pastel": "Пастельный Бриз",
+        "ocean": "Океанский туман",
+        "velvet": "Бархатные сумерки",
+        "amethyst": "Аметистовая мечта",
+        "sunset": "Фуксия Нуар"
       },
       "gardenPalettes": {
-        "garden-surprise": "Surprise Me",
-        "garden-gray": "Millennial Gray",
-        "garden-terracotta": "Terracotta Mirage",
-        "garden-neon-sunset": "Neon Sunset",
-        "garden-forest": "Forest Hues",
-        "garden-peach": "Peach Orchard",
-        "garden-fuschia": "Fuchsia Blossom",
-        "garden-emerald": "Emerald Gem",
-        "garden-pastel": "Pastel Breeze",
-        "garden-azure": "Azure Mirage",
-        "garden-twilight": "Twilight Blues",
-        "garden-earthy": "Earthy Harmony"
+        "garden-surprise": "Удиви меня",
+        "garden-gray": "Тысячелетний серый",
+        "garden-terracotta": "Терракотовый Мираж",
+        "garden-neon-sunset": "Неоновый закат",
+        "garden-forest": "Лесные оттенки",
+        "garden-peach": "Персиковый сад",
+        "garden-fuschia": "Фуксия Цветок",
+        "garden-emerald": "Изумрудный драгоценный камень",
+        "garden-pastel": "Пастельный Бриз",
+        "garden-azure": "Лазурный мираж",
+        "garden-twilight": "Сумеречный блюз",
+        "garden-earthy": "Земная гармония"
       },
       "summary": {
-        "roomType": "Room Type",
-        "style": "Style",
-        "mode": "Mode",
-        "palette": "Palette",
-        "missing": "⚠ Missing"
+        "roomType": "Тип номера",
+        "style": "Стиль",
+        "mode": "Режим",
+        "palette": "Палитра",
+        "missing": "⚠ Пропал"
       },
-      "previewThumbnailLabel": "Sample output · {{style}}",
+      "previewThumbnailLabel": "Пример вывода · {{style}}",
       "toasts": {
-        "completeStyleSelections": "Complete your style selections to generate."
+        "completeStyleSelections": "Завершите выбор стиля для создания."
       },
       "requiredSelections": {
-        "photo": "Please select a photo to continue.",
-        "room": "Please select a room to continue.",
-        "style": "Please select a style to continue.",
-        "mode": "Please complete the mode selection to continue.",
-        "palette": "Please complete the palette selection to continue."
+        "photo": "Пожалуйста, выберите фотографию, чтобы продолжить.",
+        "room": "Пожалуйста, выберите комнату, чтобы продолжить.",
+        "style": "Пожалуйста, выберите стиль, чтобы продолжить.",
+        "mode": "Пожалуйста, завершите выбор режима, чтобы продолжить.",
+        "palette": "Пожалуйста, завершите выбор палитры, чтобы продолжить."
       },
-      "regenerationUnavailable": "Regeneration unavailable",
-      "feedbackUnavailable": "Feedback is unavailable for this image.",
+      "regenerationUnavailable": "Регенерация недоступна",
+      "feedbackUnavailable": "Обратная связь недоступна для этого изображения.",
       "cta": {
-        "getMoreCredits": "Get More Credits",
-        "generateMyDesign": "Generate My Design"
+        "getMoreCredits": "Получите больше кредитов",
+        "generateMyDesign": "Создать мой дизайн"
       },
-      "stepFourSticky": "Step 4: Refine Direction",
-      "exteriorEmptyStateSubtitle": "Redesign and beautify your home."
+      "stepFourSticky": "Шаг 4: Уточните направление",
+      "exteriorEmptyStateSubtitle": "Преобразите и украсьте свой дом."
     }
   },
   "proSuccess": {
     "title": "Добро пожаловать в HomeDecor Pro!",
     "subtitle": "Теперь всё разблокировано. Вот что доступно:",
     "features": {
-      "hyperRealism": "Ultra-high-detail rendering enabled",
-      "virtualStaging": "Premium design tools unlocked",
-      "infiniteCredits": "Weekly or monthly render quotas active"
+      "hyperRealism": "Включена сверхвысокая детализация рендеринга",
+      "virtualStaging": "Премиум-инструменты дизайна разблокированы",
+      "infiniteCredits": "Еженедельные или ежемесячные квоты на рендеринг активны"
     },
     "cta": "Начать дизайн",
     "toast": "Аккаунт успешно обновлён до Pro."
   },
   "legalViewer": {
-    "eyebrow": "Legal Viewer",
+    "eyebrow": "Юридический просмотрщик",
     "switches": {
-      "terms": "Terms of Service",
-      "privacy": "Privacy Policy"
+      "terms": "Условия использования",
+      "privacy": "Политика конфиденциальности"
     }
   },
   "storeReview": {
-    "title": "Rate HomeDecor AI",
-    "unavailableBody": "Review requests are not available on this device.",
-    "errorBody": "Unable to open the store review dialog right now."
+    "title": "Оценить HomeDecor AI",
+    "unavailableBody": "Запросы на проверку недоступны на этом устройстве.",
+    "errorBody": "Сейчас невозможно открыть диалоговое окно обзора магазина."
   },
   "gallery": {
     "clusters": {
-      "foundations": "Foundations"
+      "foundations": "Фонды"
     },
     "tabs": {
-      "home": "Interiors",
-      "exterior": "Exteriors",
-      "garden": "Landscapes"
+      "home": "Интерьеры",
+      "exterior": "Экстерьеры",
+      "garden": "Пейзажи"
     },
     "groups": {
-      "kitchen": "Kitchen",
-      "livingRoom": "Living Room",
-      "diningRoom": "Dining Room",
-      "bedroom": "Bedroom",
-      "bathroom": "Bathroom",
-      "gamingRoom": "Gaming Room",
-      "homeOffice": "Home Office",
-      "coffeeShop": "Coffee Shop",
-      "studyRoom": "Study Room",
-      "restaurant": "Restaurant",
-      "attic": "Attic",
-      "toilet": "Toilet",
-      "balcony": "Balcony",
-      "hall": "Hall",
-      "deck": "Deck",
-      "landscapeDesigns": "Landscape Designs",
-      "villa": "Villa",
-      "apartment": "Apartment",
-      "house": "House",
-      "officeBuilding": "Office Building",
-      "retail": "Retail",
-      "residential": "Residential",
-      "wall": "Wall",
-      "floor": "Floor",
-      "garden": "Garden"
+      "kitchen": "Кухня",
+      "livingRoom": "Гостиная",
+      "diningRoom": "Столовая",
+      "bedroom": "Спальня",
+      "bathroom": "Ванная комната",
+      "gamingRoom": "Игровая комната",
+      "homeOffice": "Домашний офис",
+      "coffeeShop": "Кофейня",
+      "studyRoom": "Кабинет",
+      "restaurant": "Ресторан",
+      "attic": "Чердак",
+      "toilet": "Туалет",
+      "balcony": "Балкон",
+      "hall": "Холл",
+      "deck": "Колода",
+      "landscapeDesigns": "Ландшафтный Дизайн",
+      "villa": "Вилла",
+      "apartment": "Квартира",
+      "house": "Дом",
+      "officeBuilding": "Офисное здание",
+      "retail": "Розничная торговля",
+      "residential": "Жилой",
+      "wall": "Стена",
+      "floor": "Этаж",
+      "garden": "Сад"
     },
-    "imageTitleTemplate": "{{title}} Image {{index}}",
+    "imageTitleTemplate": "{{title}} Изображение {{index}}",
     "emptyState": {
-      "title": "Category unavailable",
-      "body": "The requested image collection could not be found."
+      "title": "Категория недоступна",
+      "body": "Запрошенная коллекция изображений не найдена."
     }
   },
   "discoverCatalog": {
     "sections": {
       "home": {
-        "title": "Interior",
-        "description": "Designer-led rooms across living, sleep, dining, work, and entertainment.",
+        "title": "Интерьер",
+        "description": "Дизайнерские комнаты для проживания, сна, столовой, работы и развлечений.",
         "items": {
           "sereneLounge": {
-            "title": "Serene Lounge",
-            "subtitle": "Living Room / Soft Minimal",
-            "spaceType": "Living Room",
-            "style": "Soft Minimal"
+            "title": "Безмятежный салон",
+            "subtitle": "Гостиная / Мягкий Минимализм",
+            "spaceType": "Гостиная",
+            "style": "Мягкий Минимализм"
           },
           "moodyClubRoom": {
-            "title": "Moody Club Room",
-            "subtitle": "Living Room / Moody Luxe",
-            "spaceType": "Living Room",
-            "style": "Moody Luxe"
+            "title": "Клубный номер «Муди»",
+            "subtitle": "Гостиная / Муди Люкс",
+            "spaceType": "Гостиная",
+            "style": "Муди Люкс"
           },
           "organicLiving": {
-            "title": "Organic Living",
-            "subtitle": "Living Room / Warm Organic",
-            "spaceType": "Living Room",
-            "style": "Warm Organic"
+            "title": "Органическая жизнь",
+            "subtitle": "Гостиная / Теплый органический",
+            "spaceType": "Гостиная",
+            "style": "Теплый органический"
           },
           "grandSalon": {
-            "title": "Grand Salon",
-            "subtitle": "Living Room / Luxe Marble",
-            "spaceType": "Living Room",
-            "style": "Luxe Marble"
+            "title": "Большой Салон",
+            "subtitle": "Гостиная / Роскошный мрамор",
+            "spaceType": "Гостиная",
+            "style": "Роскошный мрамор"
           },
           "editorialLounge": {
-            "title": "Editorial Lounge",
-            "subtitle": "Gaming Room / Cyberpunk",
-            "spaceType": "Gaming Room",
-            "style": "Cyberpunk"
+            "title": "Редакционная гостиная",
+            "subtitle": "Игровая комната / Киберпанк",
+            "spaceType": "Игровая комната",
+            "style": "Киберпанк"
           }
         }
       },
       "exterior": {
-        "title": "Exterior",
-        "description": "Facade inspiration from modern villas, urban blocks, offices, and retail shells.",
+        "title": "Экстерьер",
+        "description": "Фасады вдохновлены современными виллами, городскими кварталами, офисами и торговыми точками.",
         "items": {
           "modernHouse": {
-            "title": "Modern House",
-            "subtitle": "Modern House / Daylight Minimal",
-            "spaceType": "Modern House",
-            "style": "Daylight Minimal"
+            "title": "Современный Дом",
+            "subtitle": "Современный дом / Минимальный дневной свет",
+            "spaceType": "Современный Дом",
+            "style": "Минимальный дневной свет"
           },
           "modernHouseNight": {
-            "title": "Modern House Night",
-            "subtitle": "Modern House / Evening Luxe",
-            "spaceType": "Modern House",
-            "style": "Evening Luxe"
+            "title": "Современный дом Ночь",
+            "subtitle": "Современный дом/Вечерний люкс",
+            "spaceType": "Современный Дом",
+            "style": "Вечерний Люкс"
           },
           "stoneVilla": {
-            "title": "Stone Villa",
-            "subtitle": "Villa / Mediterranean",
-            "spaceType": "Villa",
-            "style": "Mediterranean"
+            "title": "Каменная вилла",
+            "subtitle": "Вилла / Средиземноморье",
+            "spaceType": "Вилла",
+            "style": "Средиземноморский"
           },
           "glassOffice": {
-            "title": "Glass Office",
-            "subtitle": "Office Building / Minimalist",
-            "spaceType": "Office Building",
-            "style": "Minimalist"
+            "title": "Стеклянный офис",
+            "subtitle": "Офисное здание / Минималист",
+            "spaceType": "Офисное здание",
+            "style": "Минималистский"
           },
           "ecoApartments": {
-            "title": "Eco Apartments",
-            "subtitle": "Apartment Block / Eco Futurist",
-            "spaceType": "Apartment Block",
-            "style": "Eco Futurist"
+            "title": "Эко-апартаменты",
+            "subtitle": "Многоквартирный дом / Эко-футурист",
+            "spaceType": "Многоквартирный дом",
+            "style": "Эко Футурист"
           }
         }
       },
       "garden": {
-        "title": "Garden",
-        "description": "Outdoor lounges, terraces, pools, decks, and resort-minded garden scenes.",
+        "title": "Сад",
+        "description": "Открытые гостиные, террасы, бассейны, террасы и садовые пейзажи в курортном стиле.",
         "items": {
           "infinityPool": {
-            "title": "Infinity Pool",
-            "subtitle": "Infinity Pool / Coastal Luxe",
-            "spaceType": "Infinity Pool",
-            "style": "Coastal Luxe"
+            "title": "Бесконечный бассейн",
+            "subtitle": "Бесконечный бассейн/Прибрежный люкс",
+            "spaceType": "Бесконечный бассейн",
+            "style": "Прибрежный люкс"
           },
           "waterfallCourt": {
-            "title": "Waterfall Court",
-            "subtitle": "Waterfall Garden / Zen Luxury",
-            "spaceType": "Waterfall Garden",
-            "style": "Zen Luxury"
+            "title": "Водопад Корт",
+            "subtitle": "Сад с водопадом / Дзен-люкс",
+            "spaceType": "Водопадный сад",
+            "style": "Дзен-люкс"
           },
           "sunsetFirePit": {
-            "title": "Sunset Fire Pit",
-            "subtitle": "Fire Pit Lounge / Resort Sunset",
-            "spaceType": "Fire Pit Lounge",
-            "style": "Resort Sunset"
+            "title": "Огненная яма на закате",
+            "subtitle": "Лаундж Fire Pit / Курортный закат",
+            "spaceType": "Зал с камином",
+            "style": "Курортный закат"
           },
           "tropicalPoolLounge": {
-            "title": "Tropical Pool Lounge",
-            "subtitle": "Pool Lounge / Tropical Escape",
-            "spaceType": "Pool Lounge",
-            "style": "Tropical Escape"
+            "title": "Тропический лаундж у бассейна",
+            "subtitle": "Лаундж у бассейна / Тропический побег",
+            "spaceType": "Зал у бассейна",
+            "style": "Тропический побег"
           },
           "luminousGardenWalk": {
-            "title": "Luminous Garden Walk",
-            "subtitle": "Garden Walk / Evening Glow",
-            "spaceType": "Garden Walk",
-            "style": "Evening Glow"
+            "title": "Светящаяся прогулка по саду",
+            "subtitle": "Прогулка по саду / Вечернее сияние",
+            "spaceType": "Садовая прогулка",
+            "style": "Вечернее сияние"
           }
         }
       },
       "wall": {
-        "title": "Wall Inspiration",
-        "description": "Real-room paint references that open directly into Smart Wall Paint with the finish already preselected.",
+        "title": "Стена Вдохновение",
+        "description": "Образцы красок для реальных комнат, которые открываются непосредственно в Smart Wall Paint с уже выбранной отделкой.",
         "items": {
           "sagePlasterWall": {
-            "title": "Sage Plaster Wall",
-            "subtitle": "Textured Wall / Sage Green",
-            "spaceType": "Textured Wall",
-            "style": "Sage Green"
+            "title": "Штукатурная стена из шалфея",
+            "subtitle": "Текстурированная стена / Шалфейный зеленый",
+            "spaceType": "Текстурированная стена",
+            "style": "Шалфей Грин"
           },
           "linearSlatFeature": {
-            "title": "Linear Slat Feature",
-            "subtitle": "Slatted Wall / Charcoal",
-            "spaceType": "Slatted Wall",
-            "style": "Charcoal"
+            "title": "Линейная планка",
+            "subtitle": "Решётчатая стена/уголь",
+            "spaceType": "Решётчатая стена",
+            "style": "Древесный уголь"
           },
           "veinedMarbleWall": {
-            "title": "Veined Marble Wall",
-            "subtitle": "Marble Wall / Soft Ivory",
-            "spaceType": "Marble Wall",
-            "style": "Soft Ivory"
+            "title": "Прожилковая мраморная стена",
+            "subtitle": "Мраморная стена / Мягкая слоновая кость",
+            "spaceType": "Мраморная стена",
+            "style": "Мягкая слоновая кость"
           },
           "minimalConcreteWall": {
-            "title": "Minimal Concrete Wall",
-            "subtitle": "Concrete Wall / Charcoal",
-            "spaceType": "Concrete Wall",
-            "style": "Charcoal"
+            "title": "Минимальная бетонная стена",
+            "subtitle": "Бетонная стена/уголь",
+            "spaceType": "Бетонная стена",
+            "style": "Древесный уголь"
           },
           "botanicalMuralWall": {
-            "title": "Botanical Mural Wall",
-            "subtitle": "Mural Wall / Olive Moss",
-            "spaceType": "Mural Wall",
-            "style": "Olive Moss"
+            "title": "Ботаническая настенная роспись",
+            "subtitle": "Фотообои Стена / Оливковый Мох",
+            "spaceType": "Настенная Стена",
+            "style": "Оливковый Мосс"
           }
         }
       },
       "floor": {
-        "title": "Floor Styles",
-        "description": "Premium flooring references curated from real interiors and mapped directly into the Floor Restyle workflow.",
+        "title": "Стили полов",
+        "description": "Образцы напольных покрытий премиум-класса, созданные на основе реальных интерьеров и отображенные непосредственно в рабочем процессе Floor Restyle.",
         "items": {
           "heritageHerringbone": {
-            "title": "Heritage Herringbone",
-            "subtitle": "Wood Floor / Walnut Wood",
-            "spaceType": "Wood Floor",
-            "style": "Walnut Wood"
+            "title": "Наследие Елочка",
+            "subtitle": "Деревянный пол/ореховое дерево",
+            "spaceType": "Деревянный пол",
+            "style": "Ореховое дерево"
           },
           "carraraMarbleFlow": {
-            "title": "Carrara Marble Flow",
-            "subtitle": "Marble Floor / Carrara Marble",
-            "spaceType": "Marble Floor",
-            "style": "Carrara Marble"
+            "title": "Каррарский мраморный поток",
+            "subtitle": "Мраморный пол / Каррарский мрамор",
+            "spaceType": "Мраморный пол",
+            "style": "Каррарский мрамор"
           },
           "satinConcrete": {
-            "title": "Satin Concrete",
-            "subtitle": "Concrete Floor / Polished Concrete",
-            "spaceType": "Concrete Floor",
-            "style": "Polished Concrete"
+            "title": "Сатиновый бетон",
+            "subtitle": "Бетонный пол/полированный бетон",
+            "spaceType": "Бетонный пол",
+            "style": "Полированный бетон"
           },
           "walnutGloss": {
-            "title": "Walnut Gloss",
-            "subtitle": "Gloss Wood / Walnut Wood",
-            "spaceType": "Gloss Wood",
-            "style": "Walnut Wood"
+            "title": "Ореховый блеск",
+            "subtitle": "Глянцевое дерево/ореховое дерево",
+            "spaceType": "Глянцевое дерево",
+            "style": "Ореховое дерево"
           },
           "softLimestone": {
-            "title": "Soft Limestone",
-            "subtitle": "Stone Floor / Polished Concrete",
-            "spaceType": "Stone Floor",
-            "style": "Polished Concrete"
+            "title": "Мягкий известняк",
+            "subtitle": "Каменный пол/полированный бетон",
+            "spaceType": "Каменный пол",
+            "style": "Полированный бетон"
           }
         }
       }
     },
     "wallColors": {
       "sageGreen": {
-        "title": "Sage Green",
-        "description": "Soft green calm for bright, polished living spaces.",
-        "discoverSubtitle": "Wall / Botanical Calm"
+        "title": "Шалфей Грин",
+        "description": "Мягкий зеленый, спокойный для ярких, изысканных жилых помещений.",
+        "discoverSubtitle": "Стена / Ботаническое спокойствие"
       },
       "midnightNavy": {
-        "title": "Midnight Navy",
-        "description": "Tailored navy depth with crisp architectural contrast.",
-        "discoverSubtitle": "Wall / Tailored Contrast"
+        "title": "Полуночный флот",
+        "description": "Индивидуальная глубина темно-синего цвета с четким архитектурным контрастом.",
+        "discoverSubtitle": "Стена / Индивидуальный контраст"
       },
       "terracottaGlow": {
-        "title": "Terracotta Glow",
-        "description": "Warm clay color with grounded, editorial energy.",
-        "discoverSubtitle": "Wall / Warm Clay"
+        "title": "Терракотовое свечение",
+        "description": "Теплый глинистый цвет с приземленной редакционной энергией.",
+        "discoverSubtitle": "Стена / Теплая Глина"
       },
       "dustyRose": {
-        "title": "Dusty Rose",
-        "description": "Muted blush warmth with soft boutique appeal.",
-        "discoverSubtitle": "Wall / Boutique Blush"
+        "title": "Пыльная Роуз",
+        "description": "Приглушенные, теплые румяна с мягкой привлекательностью.",
+        "discoverSubtitle": "Стена / Бутик Румяна"
       },
       "galleryCharcoal": {
-        "title": "Gallery Charcoal",
-        "description": "Refined charcoal for moody, art-forward rooms.",
-        "discoverSubtitle": "Wall / Moody Gallery"
+        "title": "Галерея Уголь",
+        "description": "Рафинированный древесный уголь для угрюмых, арт-номеров.",
+        "discoverSubtitle": "Стена / Галерея Муди"
       },
       "softIvory": {
-        "title": "Soft Ivory",
-        "description": "Luminous neutral that keeps rooms light, never flat.",
-        "discoverSubtitle": "Wall / Quiet Neutral"
+        "title": "Мягкая слоновая кость",
+        "description": "Светящийся нейтральный цвет, благодаря которому помещения остаются светлыми, а не плоскими.",
+        "discoverSubtitle": "Настенный / Тихий нейтральный"
       },
       "oliveGrove": {
-        "title": "Olive Grove",
-        "description": "Earthy olive depth with a grounded designer mood.",
-        "discoverSubtitle": "Wall / Earthy Depth"
+        "title": "Оливковая роща",
+        "description": "Землисто-оливковая глубина с приземленным дизайнерским настроением.",
+        "discoverSubtitle": "Стена / Земляная глубина"
       },
       "lavenderMist": {
-        "title": "Lavender Mist",
-        "description": "Soft violet haze for elevated pastel rooms.",
-        "discoverSubtitle": "Wall / Soft Pastel"
+        "title": "Лавандовый туман",
+        "description": "Мягкая фиолетовая дымка для возвышенных пастельных комнат.",
+        "discoverSubtitle": "Стена / Мягкая пастель"
       },
       "pearlGray": {
-        "title": "Pearl Gray",
-        "description": "Light tonal gray with polished everyday flexibility.",
-        "discoverSubtitle": "Wall / Modern Neutral"
+        "title": "Жемчужно-серый",
+        "description": "Светло-серый оттенок с полированной повседневной гибкостью.",
+        "discoverSubtitle": "Настенный / Современный Нейтральный"
       }
     },
     "wallColorCategories": {
       "calmNeutrals": {
-        "title": "Calm Neutrals",
+        "title": "Спокойные нейтральные цвета",
         "colors": {
-          "softIvory": "Soft Ivory",
-          "pearlGray": "Pearl Gray",
-          "sageGreen": "Sage Green"
+          "softIvory": "Мягкая слоновая кость",
+          "pearlGray": "Жемчужно-серый",
+          "sageGreen": "Шалфей Грин"
         }
       },
       "boutiquePastels": {
-        "title": "Boutique Pastels",
+        "title": "Бутик Пастель",
         "colors": {
-          "dustyRose": "Dusty Rose",
-          "lavenderMist": "Lavender Mist",
-          "terracottaGlow": "Terracotta Glow"
+          "dustyRose": "Пыльная Роуз",
+          "lavenderMist": "Лавандовый туман",
+          "terracottaGlow": "Терракотовое свечение"
         }
       },
       "architecturalDepth": {
-        "title": "Architectural Depth",
+        "title": "Архитектурная глубина",
         "colors": {
-          "midnightNavy": "Midnight Navy",
-          "galleryCharcoal": "Gallery Charcoal",
-          "oliveGrove": "Olive Grove"
+          "midnightNavy": "Полуночный флот",
+          "galleryCharcoal": "Галерея Уголь",
+          "oliveGrove": "Оливковая роща"
         }
       }
     },
     "floorMaterials": {
       "naturalOak": {
-        "title": "Natural Oak",
-        "description": "Airy oak planks with soft natural grain.",
-        "promptLabel": "light natural oak flooring with wide-plank grain detail",
-        "discoverSubtitle": "Floor / Light Wood"
+        "title": "Натуральный Дуб",
+        "description": "Воздушные дубовые доски с мягкой натуральной текстурой.",
+        "promptLabel": "пол из светлого натурального дуба с отделкой из широких досок",
+        "discoverSubtitle": "Пол / Светлое Дерево"
       },
       "walnutWood": {
-        "title": "Walnut Wood",
-        "description": "Deep walnut planks with rich tailored contrast.",
-        "promptLabel": "luxury walnut wood flooring with rich deep grain",
-        "discoverSubtitle": "Floor / Dark Wood"
+        "title": "Ореховое дерево",
+        "description": "Глубокие доски из орехового дерева с богатым индивидуальным контрастом.",
+        "promptLabel": "Роскошный пол из орехового дерева с богатой глубокой текстурой",
+        "discoverSubtitle": "Пол / Темное Дерево"
       },
       "carraraMarble": {
-        "title": "Carrara Marble",
-        "description": "Bright stone veining with a calm luxe finish.",
-        "promptLabel": "carrara marble flooring with elegant soft veining",
-        "discoverSubtitle": "Floor / Polished Stone"
+        "title": "Каррарский мрамор",
+        "description": "Яркие каменные прожилки со спокойной роскошной отделкой.",
+        "promptLabel": "Пол из каррарского мрамора с элегантными мягкими прожилками",
+        "discoverSubtitle": "Пол / Полированный камень"
       },
       "polishedConcrete": {
-        "title": "Polished Concrete",
-        "description": "Smooth concrete sheen with urban gallery calm.",
-        "promptLabel": "polished concrete flooring with premium smooth texture",
-        "discoverSubtitle": "Floor / Industrial Minimal"
+        "title": "Полированный бетон",
+        "description": "Гладкий бетонный блеск с городской галереей спокойствия.",
+        "promptLabel": "полированный бетонный пол с гладкой текстурой премиум-класса",
+        "discoverSubtitle": "Напольный/Промышленный Минимальный"
       },
       "herringboneOak": {
-        "title": "Herringbone Oak",
-        "description": "Classic oak pattern with warm directional movement.",
-        "promptLabel": "herringbone oak parquet flooring with premium pattern definition",
-        "discoverSubtitle": "Floor / Patterned Wood"
+        "title": "Дуб Елочка",
+        "description": "Классический дубовый узор с теплым направленным движением.",
+        "promptLabel": "дубовый паркет «елочка» с превосходным четко выраженным рисунком",
+        "discoverSubtitle": "Пол / Узорчатое дерево"
       },
       "terracottaTile": {
-        "title": "Terracotta Tile",
-        "description": "Earthy clay warmth with handcrafted character.",
-        "promptLabel": "terracotta tile flooring with warm clay color variation",
-        "discoverSubtitle": "Floor / Mediterranean Clay"
+        "title": "Терракотовая Плитка",
+        "description": "Землистое глиняное тепло с характером ручной работы.",
+        "promptLabel": "Пол из терракотовой плитки с вариацией теплого глиняного цвета",
+        "discoverSubtitle": "Пол / Средиземноморская глина"
       },
       "slateTile": {
-        "title": "Slate Tile",
-        "description": "Dark slate with a crisp large-format finish.",
-        "promptLabel": "dark slate tile flooring with large format stone slabs",
-        "discoverSubtitle": "Floor / Dark Stone"
+        "title": "Сланцевая плитка",
+        "description": "Темный сланец с четкой крупноформатной отделкой.",
+        "promptLabel": "Пол из темного сланца с каменными плитами большого формата",
+        "discoverSubtitle": "Пол / Темный камень"
       },
       "plushCarpet": {
-        "title": "Plush Carpet",
-        "description": "Soft cream carpet with a quiet, cozy feel.",
-        "promptLabel": "luxury plush carpet flooring in a soft cream tone",
-        "discoverSubtitle": "Floor / Soft Texture"
+        "title": "Плюшевый ковер",
+        "description": "Мягкий кремовый ковер, создающий ощущение тишины и уюта.",
+        "promptLabel": "Роскошное плюшевое ковровое покрытие нежного кремового тона.",
+        "discoverSubtitle": "Пол / Мягкая текстура"
       },
       "weatheredOak": {
-        "title": "Weathered Oak",
-        "description": "Mid-tone oak with a gently aged finish.",
-        "promptLabel": "weathered oak flooring with subtle aged grain",
-        "discoverSubtitle": "Floor / Rustic Warmth"
+        "title": "Выдержанный дуб",
+        "description": "Дуб средних тонов с слегка состаренной отделкой.",
+        "promptLabel": "Пол из состаренного дуба с тонкой состаренной текстурой",
+        "discoverSubtitle": "Пол/Деревенское тепло"
       }
     },
     "injectedGallery": {
       "floorAfterScenes": {
-        "heritageHerringbone": "Heritage Herringbone",
-        "carraraMarble": "Carrara Marble",
-        "satinConcrete": "Satin Concrete",
-        "walnutGloss": "Walnut Gloss",
-        "limestoneSlab": "Limestone Slab"
+        "heritageHerringbone": "Наследие Елочка",
+        "carraraMarble": "Каррарский мрамор",
+        "satinConcrete": "Сатиновый бетон",
+        "walnutGloss": "Ореховый блеск",
+        "limestoneSlab": "Известняковая плита"
       },
       "wallAfterScenes": {
-        "sagePlaster": "Sage Plaster",
-        "linearSlats": "Linear Slats",
-        "veinedMarble": "Veined Marble",
-        "minimalConcrete": "Minimal Concrete",
-        "botanicalMural": "Botanical Mural"
+        "sagePlaster": "Шалфейный пластырь",
+        "linearSlats": "Линейные рейки",
+        "veinedMarble": "Прожилковый мрамор",
+        "minimalConcrete": "Минимальный бетон",
+        "botanicalMural": "Ботаническая Фреска"
       },
       "interiorExamples": {
-        "kitchen": "Kitchen",
-        "livingRoom": "Living Room",
-        "bedroom": "Bedroom",
-        "bathroom": "Bathroom",
-        "gamingRoom": "Gaming Room",
-        "homeOffice": "Home Office"
+        "kitchen": "Кухня",
+        "livingRoom": "Гостиная",
+        "bedroom": "Спальня",
+        "bathroom": "Ванная комната",
+        "gamingRoom": "Игровая комната",
+        "homeOffice": "Домашний офис"
       },
       "exteriorExamples": {
-        "apartment": "Apartment",
-        "house": "House",
-        "office": "Office",
-        "villa": "Villa",
-        "residential": "Residential",
-        "retail": "Retail"
+        "apartment": "Квартира",
+        "house": "Дом",
+        "office": "Офис",
+        "villa": "Вилла",
+        "residential": "Жилой",
+        "retail": "Розничная торговля"
       },
       "gardenExamples": {
-        "infinityPool": "Infinity Pool",
-        "waterfallCourt": "Waterfall Court",
-        "firePit": "Fire Pit",
-        "tropicalLounge": "Tropical Lounge",
-        "resortDeck": "Resort Deck",
-        "lagoonFalls": "Lagoon Falls"
+        "infinityPool": "Бесконечный бассейн",
+        "waterfallCourt": "Водопад Корт",
+        "firePit": "Огненная яма",
+        "tropicalLounge": "Тропический салон",
+        "resortDeck": "Курортная палуба",
+        "lagoonFalls": "Лагун-Фолс"
       },
       "homeCoreScenes": {
-        "kitchen": "Kitchen",
-        "livingRoom": "Living Room",
-        "bedroom": "Bedroom",
-        "bathroom": "Bathroom",
-        "diningRoom": "Dining Room",
-        "gamingRoom": "Gaming Room",
-        "homeOffice": "Home Office"
+        "kitchen": "Кухня",
+        "livingRoom": "Гостиная",
+        "bedroom": "Спальня",
+        "bathroom": "Ванная комната",
+        "diningRoom": "Столовая",
+        "gamingRoom": "Игровая комната",
+        "homeOffice": "Домашний офис"
       },
       "homeFlexScenes": {
-        "coffeeShop": "Coffee Shop",
-        "gamingStudio": "Gaming Studio",
-        "atticLounge": "Attic Lounge",
-        "studyRoom": "Study Room",
-        "serviceRoom": "Service Room",
-        "laundryRoom": "Laundry Room"
+        "coffeeShop": "Кофейня",
+        "gamingStudio": "Игровая студия",
+        "atticLounge": "Мансарда",
+        "studyRoom": "Кабинет",
+        "serviceRoom": "Сервисная комната",
+        "laundryRoom": "Прачечная"
       },
       "livingRoomScenes": {
-        "sereneLounge": "Serene Lounge",
-        "moodyLounge": "Moody Lounge",
-        "organicLiving": "Organic Living",
-        "grandSalon": "Grand Salon",
-        "playfulLounge": "Playful Lounge"
+        "sereneLounge": "Безмятежный салон",
+        "moodyLounge": "Муди Лаундж",
+        "organicLiving": "Органическая жизнь",
+        "grandSalon": "Большой Салон",
+        "playfulLounge": "Игривый салон"
       },
       "homeLuxeScenes": {
-        "restaurant": "Restaurant",
-        "studyLibrary": "Study Library",
-        "atticRetreat": "Attic Retreat",
-        "toiletSuite": "Toilet Suite",
-        "balcony": "Balcony",
-        "hall": "Hall",
-        "deckDay": "Deck Day",
-        "deckNight": "Deck Night"
+        "restaurant": "Ресторан",
+        "studyLibrary": "Учебная библиотека",
+        "atticRetreat": "Мансарда Ретрит",
+        "toiletSuite": "Туалетный люкс",
+        "balcony": "Балкон",
+        "hall": "Холл",
+        "deckDay": "День колоды",
+        "deckNight": "Палуба Ночь"
       },
       "exteriorPrimaryScenes": {
-        "house": "House",
-        "residential": "Residential",
-        "villa": "Villa",
-        "glassCorner": "Glass Corner",
-        "apartment": "Apartment"
+        "house": "Дом",
+        "residential": "Жилой",
+        "villa": "Вилла",
+        "glassCorner": "Стеклянный уголок",
+        "apartment": "Квартира"
       },
       "exteriorSecondaryScenes": {
-        "apartmentTower": "Apartment Tower",
-        "retailPavilion": "Retail Pavilion",
-        "officeBuilding": "Office Building",
-        "modernVilla": "Modern Villa",
-        "residentialTower": "Residential Tower"
+        "apartmentTower": "Квартира Башня",
+        "retailPavilion": "Розничный павильон",
+        "officeBuilding": "Офисное здание",
+        "modernVilla": "Современная вилла",
+        "residentialTower": "Жилая башня"
       },
       "gardenPrimaryScenes": {
-        "infinityPool": "Infinity Pool",
-        "waterfallCourt": "Waterfall Court",
-        "sunsetFirePit": "Sunset Fire Pit",
-        "tropicalLounge": "Tropical Lounge",
-        "livingWall": "Living Wall",
-        "lightCourt": "Light Court"
+        "infinityPool": "Бесконечный бассейн",
+        "waterfallCourt": "Водопад Корт",
+        "sunsetFirePit": "Огненная яма на закате",
+        "tropicalLounge": "Тропический салон",
+        "livingWall": "Живая стена",
+        "lightCourt": "Светлый двор"
       },
       "gardenSecondaryScenes": {
-        "sunsetPool": "Sunset Pool",
-        "fireCove": "Fire Cove",
-        "poolCourt": "Pool Court",
-        "waterfallLounge": "Waterfall Lounge",
-        "resortDeck": "Resort Deck",
-        "lagoonFalls": "Lagoon Falls"
+        "sunsetPool": "Закатный бассейн",
+        "fireCove": "Огненная бухта",
+        "poolCourt": "Бассейн Корт",
+        "waterfallLounge": "Зал «Водопад»",
+        "resortDeck": "Курортная палуба",
+        "lagoonFalls": "Лагун-Фолс"
       },
       "exteriorBuildingTypes": {
-        "apartment": "Apartment",
-        "house": "House",
-        "officeBuilding": "Office Building",
-        "villa": "Villa",
-        "residential": "Residential",
-        "retail": "Retail"
+        "apartment": "Квартира",
+        "house": "Дом",
+        "officeBuilding": "Офисное здание",
+        "villa": "Вилла",
+        "residential": "Жилой",
+        "retail": "Розничная торговля"
       }
     }
   },
   "legacyUnlocalized": {
     "paintWizard": {
-      "autoDetectFailureMessage": "Auto-detect couldn't run. Please brush manually.",
-      "cancelledGenerationMessage": "Cancelled by user.",
+      "autoDetectFailureMessage": "Автоопределение не удалось запустить. Пожалуйста, чистите вручную.",
+      "cancelledGenerationMessage": "Отменено пользователем.",
       "result": {
-        "heading": "Behold your new interior",
-        "subheading": "A polished wall concept, composed to preserve the room's structure, furnishing layout, and natural light.",
-        "appliedFinish": "Applied Finish",
-        "saveToGallery": "Save to Gallery",
-        "share": "Share",
-        "tryAgain": "Try Again"
+        "heading": "Узрите свой новый интерьер",
+        "subheading": "Концепция полированной стены, созданная для сохранения структуры комнаты, планировки мебели и естественного света.",
+        "appliedFinish": "Прикладная отделка",
+        "saveToGallery": "Сохранить в галерею",
+        "share": "Поделиться",
+        "tryAgain": "Попробуйте еще раз"
       }
     }
   }

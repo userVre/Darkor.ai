@@ -1,29 +1,62 @@
 {
+  "app": {
+    "name": "HomeDecor AI"
+  },
   "common": {
     "actions": {
       "continue": "繼續",
       "cancel": "取消",
+      "close": "關閉",
+      "delete": "刪除",
       "save": "儲存",
       "share": "分享",
+      "restore": "恢復",
+      "upgrade": "升級",
+      "tryAgain": "請再試一次。",
       "openSettings": "開啟設定",
+      "notNow": "現在不要",
+      "takePhoto": "拍照",
+      "chooseFromGallery": "從圖庫中選擇",
       "addPhoto": "新增照片",
+      "chooseMediaSource": "選擇影像來源",
+      "examplePhotos": "範例照片",
+      "seeAll": "探索全部",
+      "uploadPlus": "上傳+",
       "exit": "離開",
-      "seeAll": "Explore All",
-      "tryThis": "Try This"
+      "connect": "正在連接...",
+      "tryThis": "試試這個"
+    },
+    "labels": {
+      "email": "電子郵件",
+      "password": "密碼",
+      "version": "版本 {{version}}",
+      "lastUpdated": "最後更新",
+      "step": "步驟 {{current}} / {{total}}"
     },
     "alerts": {
       "exitTitle": "要離開嗎？",
-      "progressLost": "你的進度將會遺失。"
+      "progressLost": "你的進度將會遺失。",
+      "completeStepTitle": "完成此步驟",
+      "makeSelection": "做出選擇以繼續。",
+      "addPhotoToContinue": "添加照片以繼續。",
+      "invalidHexTitle": "顏色無效",
+      "invalidHexBody": "輸入有效的 6 位元十六進位代碼，例如 #D946EF。"
     },
     "states": {
-      "savedToGallery": "已儲存到相簿"
+      "workInProgress": "工作正在進行中",
+      "generationFailed": "渲染遇到問題。請再試一次。",
+      "savedToGallery": "已儲存到相簿",
+      "photoPermissionNeeded": "需要存取照片庫。",
+      "loading": "載入中..."
     }
   },
   "boot": {
     "loadingApp": "正在載入 HomeDecor AI",
     "loadingAccount": "正在載入你的帳戶...",
     "checkingPlan": "正在檢查你的方案...",
-    "secureAccount": "保護你的帳戶後開始創作..."
+    "secureAccount": "保護你的帳戶後開始創作...",
+    "missingEnvTitle": "缺少環境變數",
+    "missingEnvBody": "在啟動 HomeDecor AI 之前需要以下值："
   },
   "tabs": {
     "tools": "工具",
@@ -33,80 +66,450 @@
   },
   "home": {
     "title": "HomeDecor AI",
+    "accessibility": {
+      "openCredits": "開放學分"
+    },
+    "errors": {
+      "tryItUnavailableTitle": "預覽不可用"
+    },
     "tools": {
       "interior": {
-        "title": "Interior Design",
+        "title": "室內設計",
         "description": "Reimagine your space with AI precision."
       },
       "exterior": {
-        "title": "Exterior Design",
-        "description": "Reimagine your home's exterior with world-class facade styling."
+        "title": "外觀設計",
+        "description": "以世界一流的外觀造型重新構想您家的外觀。"
       },
       "garden": {
-        "title": "Garden Design",
-        "description": "Design stunning gardens and outdoor spaces effortlessly."
+        "title": "庭園設計",
+        "description": "輕鬆設計令人驚嘆的花園和戶外空間。"
       },
       "paint": {
-        "title": "Paint (Wall)",
-        "description": "Refine your walls with bespoke color palettes and designer textures."
+        "title": "油漆（牆）",
+        "description": "使用客製化的調色板和設計師紋理來美化您的牆壁。"
       },
       "floor": {
-        "title": "Floor Restyle",
-        "description": "Elevate your room's foundation with premium materials and finishes."
+        "title": "地板改造",
+        "description": "使用優質材料和飾面提升您房間的基礎。"
       },
-      "cta": "Try This"
+      "cta": "試試這個"
     }
   },
   "paywall": {
-    "restore": "恢復購買",
-    "bestOffer": "最佳優惠",
-    "yearlyAccess": "年度存取",
-    "weeklyAccess": "每週存取",
-    "freeTrial": "3 天免費試用",
-    "pricePerYear": "每年只要 {{price}}",
-    "pricePerWeek": "每週 {{price}}",
-    "perWeek": "每週",
-    "thenPricePerWeek": "之後每週 {{price}}",
-    "noPaymentNow": "現在不用付款",
-    "cancelAnytime": "隨時取消",
-    "processing": "處理中...",
-    "tryForFree": "Begin Your Pro Trial",
-    "continue": "Begin Your Pro Trial",
-    "terms": "條款",
-    "privacy": "隱私",
-    "title": "Design Like a Pro. No Limits.",
     "features": {
       "fasterRendering": "Faster Results, Every Time",
       "adFree": "Ultra-HD Quality Renders",
       "unlimitedRenders": "Unlimited Designs, Always"
     },
-    "beginTrial": "Begin Your Pro Trial"
+    "restore": "恢復購買",
+    "bestOffer": "最佳優惠",
+    "yearlyAccess": "年度存取",
+    "weeklyAccess": "每週存取",
+    "freeTrial": "3 天免費試用",
+    "justPerYear": "每年只需 {{price}}",
+    "pricePerYear": "每年只要 {{price}}",
+    "pricePerWeek": "每週 {{price}}",
+    "perWeek": "每週",
+    "thenWeekly": "然後{{price}}",
+    "thenPricePerWeek": "之後每週 {{price}}",
+    "noPaymentNow": "現在不用付款",
+    "cancelAnytime": "隨時取消",
+    "trialEnabled": "已啟用免費試用",
+    "enableTrial": "啟用免費試用",
+    "processing": "處理中...",
+    "tryForFree": "開始您的專業試用",
+    "continue": "開始您的專業試用",
+    "subtitle": "體驗具有更高限制和 4K 精度的架構 AI 的全部功能。",
+    "terms": "條款",
+    "privacy": "隱私",
+    "subscriptionsUnavailable": "訂閱暫時無法使用。",
+    "restoreFailed": "恢復失敗",
+    "restored": "已恢復",
+    "noActiveSubscriptions": "未找到有效的訂閱。",
+    "purchaseError": "購買錯誤",
+    "planUnavailable": "所選計劃目前無法使用。",
+    "moroccoPricingUnavailable": "在地化 MAD 定價暫時不可用。請稍後重試。",
+    "subscriptionConfirmFailed": "我們無法確認您的訂閱。請再試一次。",
+    "purchaseCancelled": "購買已取消。",
+    "closeA11y": "關閉付費專區",
+    "title": "Design Like a Pro. No Limits.",
+    "beginTrial": "開始您的專業試用"
+  },
+  "creditLimit": {
+    "title": "升級到專業存取權限。",
+    "body": "您已達到標準渲染限制。立即解鎖高解析度導出和更快的處理速度。"
   },
   "settings": {
     "title": "設定",
-    "heroTitle": "Free Plan",
-    "upgradePro": "升級到 PRO"
+    "heroTitle": "免費規劃",
+    "featureItems": {
+      "advancedAi": "高階 AI 模型",
+      "fastProcessing": "快速處理",
+      "removeAds": "刪除所有廣告"
+    },
+    "upgradePro": "升級到 PRO",
+    "rows": {
+      "language": "語言",
+      "feedback": "回饋",
+      "faq": "常問問題",
+      "rateUs": "評價我們",
+      "shareWithFriends": "與朋友分享",
+      "termsOfUse": "使用條款",
+      "privacyPolicy": "隱私權政策",
+      "restorePurchase": "恢復購買",
+      "userId": "使用者身分",
+      "deleteInformation": "刪除訊息"
+    },
+    "states": {
+      "notSignedIn": "未登入"
+    },
+    "language": {
+      "title": "語言",
+      "description": "選擇 HomeDecor AI 是遵循您的裝置語言還是使用選定的應用程式內語言。",
+      "auto": "自動（系統預設）",
+      "autoShort": "汽車",
+      "usingSystem": "目前正在透過您的裝置關注 {{language}}",
+      "restartNotice": "應用新的佈局方向..."
+    },
+    "messages": {
+      "destinationUnavailable": "該目的地目前不可用。",
+      "emailClientUnavailable": "無法開啟您的電子郵件應用程式。",
+      "reviewUnavailable": "目前無法提出審核請求。",
+      "shareUnavailable": "無法開啟共享表。",
+      "subscriptionsUnavailable": "目前無法訂閱。",
+      "noActiveSubscriptions": "未找到有效的訂閱。",
+      "restoreFailed": "恢復失敗。請再試一次。",
+      "noUserId": "沒有經過身份驗證的使用者 ID 可用。",
+      "userIdCopied": "已複製使用者 ID",
+      "deleteFailed": "目前無法刪除您的帳戶。"
+    },
+    "shareMessage": "探索使用 HomeDecor AI 建立的設計：{{url}}",
+    "deleteAccount": {
+      "title": "刪除帳戶？",
+      "body": "這將永久刪除您的帳戶和所有相關資料。此操作無法撤銷。"
+    }
+  },
+  "profile": {
+    "title": "我的設計作品集",
+    "emptyTitle": "您的投資組合是空的。啟動一個項目，讓您的願景成為現實。",
+    "emptySubtitle": "",
+    "compareHint": "拖曳進行比較。雙擊即可重置。",
+    "deleteFromBoardTitle": "從投資組合中刪除？",
+    "deleteFromBoardBody": "設計將從您的作品集中刪除。",
+    "deletedFromBoard": "從投資組合中刪除",
+    "unableDelete": "無法刪除此設計。",
+    "generationFailedBody": "此渲染未成功完成。請再試一次。",
+    "saveToGallery": "儲存到照片庫",
+    "savedToGallery": "儲存到照片庫",
+    "unableSave": "無法儲存此設計。"
+  },
+  "discover": {
+    "title": "發現",
+    "subtitle": "精心策劃的室內設計、建築和景觀參考資料被組織成快速滾動的集合。",
+    "tabs": {
+      "home": "Interior",
+      "garden": "Garden",
+      "exterior": "Exterior "
+    },
+    "tryThisStyle": "嘗試這種風格"
+  },
+  "auth": {
+    "accountEyebrow": "HomeDecor AI 帳戶",
+    "emailPlaceholder": "you@company.com",
+    "signIn": {
+      "title": "登入",
+      "subtitle": "在一個精緻的工作區中存取您保存的設計、積分、購買和項目歷史記錄。",
+      "passwordPlaceholder": "輸入您的密碼",
+      "cta": "繼續",
+      "loading": "正在登入...",
+      "appleCta": "繼續使用 Apple",
+      "additionalVerificationTitle": "登入",
+      "additionalVerificationBody": "此帳戶需要額外驗證。",
+      "errorTitle": "登入失敗",
+      "errorFallback": "無法讓您登入。",
+      "appleErrorFallback": "Apple 登入失敗。",
+      "noAccount": "沒有帳戶？",
+      "createOne": "創建一個"
+    },
+    "signUp": {
+      "title": "建立帳戶",
+      "subtitle": "建立您的帳戶以跨裝置攜帶您的設計、訂閱和保存的項目。",
+      "passwordPlaceholder": "建立安全密碼",
+      "cta": "建立帳戶",
+      "loading": "創造...",
+      "appleCta": "繼續使用 Apple",
+      "verifyTitle": "驗證電子郵件",
+      "verifyBody": "檢查收件匣中的驗證碼，然後登入。",
+      "errorTitle": "註冊失敗",
+      "errorFallback": "無法建立您的帳戶。",
+      "appleErrorFallback": "Apple 註冊失敗。",
+      "haveAccount": "已經有帳戶？",
+      "signInLink": "登入"
+    }
+  },
+  "faq": {
+    "eyebrow": "支援",
+    "title": "常問問題",
+    "description": "最常見 HomeDecor AI 問題的清晰答案。",
+    "items": {
+      "credits": {
+        "question": "HomeDecor AI 中的積分如何運作？",
+        "answer": "每個渲染根據您選擇的工作流程和輸出層使用積分。您的剩餘餘額在每一代後都會自動更新。"
+      },
+      "pro": {
+        "question": "我可以使用 PRO 解鎖什麼？",
+        "answer": "PRO 透過應用程式內升級流程解鎖進階渲染工具、更快的處理速度和更高階的輸出品質。"
+      },
+      "slowResult": {
+        "question": "為什麼我的結果比預期的時間還要長？",
+        "answer": "渲染時間取決於佇列需求、來源影像品質以及您選擇的工作流程。在穩定的連線上保持應用程式開啟有助於避免中斷。"
+      },
+      "deleteAccount": {
+        "question": "如何刪除我的帳戶？",
+        "answer": "打開“設定”並選擇“刪除訊息”。這將永久刪除您的帳戶資料並在確認後將您登出。"
+      }
+    }
+  },
+  "privacy": {
+    "eyebrow": "政策",
+    "title": "隱私權政策",
+    "description": "我們收集的資訊、資訊的使用方式以及您在 HomeDecor AI 中擁有的控制權。",
+    "date": "2026 年 3 月 14 日",
+    "sections": {
+      "overview": {
+        "title": "概述",
+        "body": "HomeDecor AI（「HomeDecor」、「我們」、「我們的」、「我們」）提供 AI 支援的內部和外部重新設計服務。本隱私權政策解釋了我們收集哪些資料、我們如何使用這些資料以及您擁有的選擇。"
+      },
+      "informationWeCollect": {
+        "title": "我們收集的資訊",
+        "body": "我們收集您提供的資訊（例如帳戶詳細資訊和上傳的圖像）、使用資料（例如功能互動和裝置資訊）以及來自 RevenueCat 的付款狀態資料來管理訂閱。"
+      },
+      "howWeUseYourData": {
+        "title": "我們如何使用您的數據",
+        "body": "我們使用您的資料來進行重新設計、個人化您的體驗、管理積分和計費、提高模型品質並確保應用程式安全。我們不會出售您的個人資料。"
+      },
+      "imageProcessing": {
+        "title": "影像處理",
+        "body": "您上傳的圖像將被處理以產生重新設計。我們儲存產生的圖像和相關元數據，以便您可以重新存取結果，並且可以透過刪除帳戶來刪除數據。"
+      },
+      "sharingAndDisclosure": {
+        "title": "分享與揭露",
+        "body": "我們僅與需要營運 HomeDecor AI 的提供者（例如身分驗證、分析和支付處理合作夥伴）或在法律要求揭露時共用資料。"
+      },
+      "dataSecurity": {
+        "title": "資料安全",
+        "body": "我們使用加密和存取控制來保護您的資料。沒有系統是完全安全的，因此我們也建議使用強密碼和受保護的設備。"
+      },
+      "yourRights": {
+        "title": "您的權利",
+        "body": "您可以隨時存取、更新或刪除您的帳戶資料。帳戶刪除將從我們的系統中刪除您儲存的世代和個人資料資訊。"
+      },
+      "contactUs": {
+        "title": "聯絡我們",
+        "body": "如有隱私問題或請求，請透過 support@homedecor.ai 與我們聯絡。"
+      }
+    }
+  },
+  "terms": {
+    "eyebrow": "政策",
+    "title": "服務條款",
+    "description": "使用 HomeDecor AI 的規則、期望值和服務邊界。",
+    "date": "2026 年 3 月 14 日",
+    "sections": {
+      "acceptanceOfTerms": {
+        "title": "接受條款",
+        "body": "存取或使用 HomeDecor AI，即表示您同意本服務條款。如果您不同意，請勿使用該應用程式。"
+      },
+      "serviceDescription": {
+        "title": "服務說明",
+        "body": "HomeDecor AI 提供 AI 產生的內部和外部空間重新設計。輸出是視覺概念，可能不考慮結構、工程或程式碼約束。"
+      },
+      "accountAndEligibility": {
+        "title": "帳戶和資格",
+        "body": "您必須年滿 13 歲才能使用 HomeDecor AI。您有責任維護帳戶安全以及在您的憑證下發生的活動。"
+      },
+      "userContent": {
+        "title": "使用者內容",
+        "body": "您保留所上傳圖像的所有權。透過使用本服務，您授予HomeDecor AI處理和儲存它們的有限許可，以便我們可以產生並傳回您的結果。"
+      },
+      "subscriptionsAndCredits": {
+        "title": "訂閱和積分",
+        "body": "付費方案可解鎖增強的功能和更高品質的匯出。積分按代消耗，訂閱計費和續約由您的應用程式商店和 RevenueCat 處理。"
+      },
+      "prohibitedUse": {
+        "title": "禁止使用",
+        "body": "您同意不濫用服務、對應用程式進行逆向工程或上傳非法、有害或侵權內容。"
+      },
+      "disclaimer": {
+        "title": "免責聲明",
+        "body": "本服務以「現況」提供，不提供任何形式的保證。我們不保證具體的設計結果或 AI 產生的輸出的準確性。"
+      },
+      "limitationOfLiability": {
+        "title": "責任限制",
+        "body": "在法律允許的最大範圍內，HomeDecor AI 對您因使用服務而產生的間接或後果性損害不承擔責任。"
+      },
+      "contact": {
+        "title": "接觸",
+        "body": "有關這些條款的問題可以發送至 support@homedecor.ai。"
+      }
+    }
+  },
+  "processing": {
+    "title": "AI 正在打造您的建築傑作...",
+    "eta": "您的願景將在 ~15 秒內準備就緒。",
+    "cancelKeepCredit": "取消並保留我的信用",
+    "status": {
+      "analyzingGeometry": "分析建築幾何...",
+      "identifyingSurfaces": "辨識表面和結構線...",
+      "applyingStyle": "應用您選擇的設計方向...",
+      "renderingMaterials": "渲染材質和燈光...",
+      "addingDetails": "完善最終細節...",
+      "almostReady": "正在完成渲染...",
+      "renderingFinalLighting": "編寫最終的照明通道..."
+    }
   },
   "wizard": {
     "headers": {
+      "back": "回去",
       "close": "關閉",
-      "previousStep": "返回上一步"
+      "previousStep": "返回上一步",
+      "stepProgress": "步驟 {{current}}/{{total}}",
+      "creditsRemaining": "剩餘積分"
     },
     "stepOne": {
-      "title": "Upload Your Vision",
-      "emptyTitle": "Upload Your Vision",
+      "title": "上傳您的願景",
+      "emptyTitle": "上傳您的願景",
+      "emptySubtitle": "重新設計和美化您的家。",
+      "removePhoto": "刪除選定的照片",
       "cta": "Begin Your Transformation"
+    },
+    "interior": {
+      "stepTwoTitle": "Choose Your Space",
+      "stepTwoSubtitle": "選擇房間類型，以便重新設計以保持建築基礎。",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "選擇標誌性風格來塑造您的設計願景。",
+      "stepFourMode": "Design Mode",
+      "stepFourPalette": "色彩和諧"
+    },
+    "exterior": {
+      "stepTwoTitle": "Select Building Type",
+      "stepTwoSubtitle": "選擇您想要重新設計的建築形式。",
+      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeSubtitle": "選擇標誌性風格來塑造您的設計願景。",
+      "stepFourTitle": "色彩和諧"
+    },
+    "garden": {
+      "stepOneEmptyTitle": "上傳您的願景",
+      "stepOneEmptySubtitle": "重新設計和美化您的家。",
+      "stepTwoTitle": "Curate Your Aesthetic",
+      "stepTwoSubtitle": "選擇標誌性風格來塑造您的設計願景。",
+      "stepThreeTitle": "色彩和諧"
+    },
+    "floorIntro": {
+      "hero": "選擇地板風格來重新定義房間的基礎。"
+    },
+    "paintIntro": {
+      "hero": "描畫任何表面以立即套用自訂顏色和設計師紋理。"
     },
     "floorFlow": {
       "title": "地板重塑",
-      "promptLabel": "Describe Your Vision",
+      "masking": "繪製您的地板平面...",
+      "promptLabel": "描述您的願景",
+      "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials.",
+      "promptExamplesTitle": "提示範例",
       "generateCta": "生成我的設計 →",
-      "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials."
+      "selectMaterialCta": "選擇材料",
+      "selectMaterialTitle": "選擇材料",
+      "selectMaterialBody": "選擇優質的材料，閱讀起來如照片般真實，具有透視意識，並且可以列出。",
+      "selectedMaterial": "精選材料",
+      "noMaterialSelected": "未選擇材料",
+      "unlockMaterialBody": "選擇地板材料以解鎖 AI 重新設計。",
+      "addPromptTitle": "新增提示",
+      "addPromptBody": "在繼續之前，請描述您想要的確切樓層轉換。",
+      "generatePromptBody": "在生成之前選擇自訂樓層提示。",
+      "autoMaskPreparing": "準備自動地板面罩。請稍等。",
+      "autoMaskSuccess": "地板面膜準備好了。",
+      "autoMaskFailure": "自動檢測無法完成。請手動刷地板。",
+      "savePermissionTitle": "需要訪問照片",
+      "savePermissionBody": "允許存取照片庫以將渲染儲存到裝置。",
+      "cameraAccessTitle": "需要相機存取權限",
+      "cameraAccessBody": "啟用相機存取以拍攝地面照片。",
+      "photoAccessTitle": "需要訪問照片",
+      "photoAccessBody": "啟用照片庫存取以上傳樓層照片。",
+      "mediaUnavailableTitle": "無法打開媒體",
+      "exampleUnavailableBody": "無法開啟此範例照片。",
+      "markFloorTitle": "首先在地板上做標記",
+      "markFloorBody": "在繼續之前，先刷過您想要重新設計的地板區域。",
+      "pickMaterialTitle": "選擇材料",
+      "pickMaterialBody": "在繼續之前選擇地板材料。",
+      "renderFinishing": "該渲染已經完成。",
+      "cancelSuccess": "一代被取消。你的信用被保留了。",
+      "cancelUnavailable": "現在無法取消。",
+      "supportingText": "使用 1 個積分 · {{creditsRemaining}}",
+      "creditsRemaining": "剩餘 {{count}}",
+      "promptExamples": {
+        "frenchOak": "奢華寬板法國橡木，表面溫暖自然。",
+        "carraraMarble": "拋光義大利卡拉拉大理石，帶有深灰色紋理。",
+        "microcement": "現代無縫微水泥，打造工業時尚的基礎。",
+        "herringboneWalnut": "優雅的黑胡桃木，經典人字形圖案。",
+        "walnut": "現代大幅面炭灰色板岩瓷磚。"
+      },
+      "result": {
+        "heading": "看看你的新內飾",
+        "subheading": "以材料為主導的地板改造，旨在保持房間的視角、家具和自然光。",
+        "before": "前",
+        "after": "後",
+        "materialApplied": "應用材料",
+        "materialFallback": "材料",
+        "summary": "您的地板已重新設計，同時保留房間幾何、家具對齊和自然光行為。",
+        "saveToGallery": "儲存到圖庫",
+        "share": "分享",
+        "tryAgain": "再試一次"
+      },
+      "materials": {
+        "natural-oak": {
+          "title": "天然橡木",
+          "description": "通風的橡木板具有柔軟的天然紋理。"
+        },
+        "walnut-wood": {
+          "title": "胡桃木",
+          "description": "深胡桃木板具有豐富的剪裁對比。"
+        },
+        "carrara-marble": {
+          "title": "卡拉拉大理石",
+          "description": "明亮的石紋具有平靜的奢華飾面。"
+        },
+        "polished-concrete": {
+          "title": "拋光混凝土",
+          "description": "光滑的混凝土光澤與城市畫廊的平靜。"
+        },
+        "herringbone-oak": {
+          "title": "人字形橡木",
+          "description": "經典的橡木圖案，帶有溫暖的定向運動。"
+        },
+        "terracotta-tile": {
+          "title": "赤土磚",
+          "description": "泥土般的溫暖與手工製作的特色。"
+        },
+        "slate-tile": {
+          "title": "板岩磚",
+          "description": "深色石板色，具有清晰的大尺寸飾面。"
+        },
+        "plush-carpet": {
+          "title": "毛絨地毯",
+          "description": "柔軟的奶油色地毯，給人一種安靜、舒適的感覺。"
+        },
+        "weathered-oak": {
+          "title": "風化橡木",
+          "description": "中色調橡木，帶有輕微老化的餘韻。"
+        }
+      }
     },
     "paintFlow": {
       "title": "塗裝",
-      "selectionTitle": "Select Surfaces to Transform",
-      "maskTitle": "Select Surfaces to Transform",
+      "selectionTitle": "選擇要變換的曲面",
+      "maskTitle": "選擇要變換的曲面",
       "colorLabel": "顏色",
       "surfaceLabel": "表面",
       "choose": "選擇",
@@ -114,77 +517,889 @@
       "colorPickerTitle": "選擇牆面顏色",
       "surfacePickerTitle": "選擇表面類型",
       "detectTitle": "正在偵測可塗裝表面...",
+      "detectBody": "HomeDecor AI 正在描繪可重新粉刷的牆面，同時保持窗戶、家具、裝飾和地板不變。",
       "preparingMaskTitle": "正在準備遮罩表面...",
+      "preparingMaskBody": "HomeDecor AI 正在完善畫布，以便您可以在內建部件、窗戶和家具周圍繪製清晰的邊緣。",
       "brushWidth": "筆刷寬度",
       "eraserWidth": "橡皮擦寬度",
       "generateCta": "為我的牆面上色 →",
       "finishTitle": "表面效果",
+      "finishBody": "選擇油漆如何捕捉光線，以便牆壁在拋光的設計師級渲染中正確讀取。",
       "selectedColor": "已選顏色",
-      "intakeTitle": "Upload Your Vision",
-      "intakeReadyTitle": "Photo added. Mark the wall area next."
+      "selectedSurfaceSentence": "表面：{{surface}}。",
+      "colorLockedBody": "牆壁顏色已鎖定。現在選擇渲染的最終光澤配置檔。",
+      "customColorDescription": "從精確顏色選擇器中選擇的自訂牆壁色調。",
+      "noColorSelected": "未選擇顏色",
+      "chooseColorBody": "在繼續之前選擇牆壁顏色。",
+      "savePermissionTitle": "需要訪問照片",
+      "savePermissionBody": "允許存取照片庫以將渲染儲存到裝置。",
+      "cameraAccessTitle": "需要相機存取權限",
+      "cameraAccessBody": "啟用相機訪問以拍攝房間照片。",
+      "photoAccessTitle": "需要訪問照片",
+      "photoAccessBody": "啟用照片庫存取以上傳房間照片。",
+      "mediaUnavailableTitle": "無法打開媒體",
+      "exampleUnavailableBody": "無法開啟此範例照片。",
+      "markWallsTitle": "首先在牆壁上做標記",
+      "markWallsBody": "在生成之前刷過要重新粉刷的牆面。",
+      "pickColorTitle": "選擇一種顏色",
+      "pickColorBody": "在繼續之前選擇牆壁顏色。",
+      "autoDetectSuccess": "偵測到牆壁。如果需要的話，用刷子進行細化。",
+      "autoDetectFailure": "自動檢測無法完成。請手動刷。",
+      "renderFinishing": "該渲染已經完成。",
+      "cancelSuccess": "一代被取消。你的信用被保留了。",
+      "cancelUnavailable": "現在無法取消。",
+      "supportingText": "使用 1 個積分 · {{creditsRemaining}}",
+      "creditsRemaining": "剩餘 {{count}}",
+      "intakeTitle": "上傳您的願景",
+      "intakeBody": "上傳房間照片以進行精確的牆壁重新著色。",
+      "intakeReadyTitle": "照片已新增。接下來標記牆壁區域。",
+      "intakeReadyBody": "您的照片已鎖定。接下來，刷牆壁表面，以便重新著色在裝飾、家具和裝飾周圍保持精確。",
+      "surfaces": {
+        "auto": "汽車",
+        "brick": "磚",
+        "cabinet": "內閣",
+        "door": "門",
+        "wall": "牆",
+        "outsideWall": "外牆"
+      },
+      "colorFamilies": {
+        "pink": "粉紅色的",
+        "blue": "藍色的",
+        "green": "綠色的",
+        "yellow": "黃色的",
+        "gray": "灰色的",
+        "red": "紅色的"
+      },
+      "colors": {
+        "sage-green": {
+          "title": "鼠尾草綠",
+          "description": "柔和的綠色營造出明亮、優雅的生活空間。"
+        },
+        "midnight-navy": {
+          "title": "午夜海軍藍",
+          "description": "量身定制的海軍藍深度與清晰的建築對比。"
+        },
+        "terracotta-glow": {
+          "title": "兵馬俑發光",
+          "description": "溫暖的黏土色，具有紮實的編輯能量。"
+        },
+        "dusty-rose": {
+          "title": "塵土飛揚的玫瑰",
+          "description": "柔和的腮紅溫暖與柔和的精品魅力。"
+        },
+        "gallery-charcoal": {
+          "title": "畫廊木炭",
+          "description": "精製木炭，適合喜怒無常、藝術前衛的房間。"
+        },
+        "soft-ivory": {
+          "title": "軟象牙色",
+          "description": "發光的中性色使房間保持明亮，絕不平坦。"
+        },
+        "olive-grove": {
+          "title": "橄欖園",
+          "description": "樸實的橄欖色深度和腳踏實地的設計師情緒。"
+        },
+        "lavender-mist": {
+          "title": "薰衣草薄霧",
+          "description": "柔和的紫羅蘭色薄霧，適合優雅柔和的房間。"
+        },
+        "pearl-gray": {
+          "title": "珍珠灰",
+          "description": "淺灰色調，具有拋光的日常靈活性。"
+        }
+      },
+      "finishes": {
+        "matte": {
+          "label": "霧面的",
+          "description": "柔和的畫廊級色彩效果，表面眩光最少。"
+        },
+        "satin": {
+          "label": "緞",
+          "description": "現代室內裝潢的平衡光澤與微妙的設計師光芒。"
+        },
+        "glossy": {
+          "label": "光滑",
+          "description": "拋光反光飾面，打造大膽、高對比的個性牆。"
+        }
+      }
     },
-    "interior": {
-      "stepTwoTitle": "Choose Your Space",
-      "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
-      "stepFourMode": "Design Mode",
-      "stepFourPalette": "Color Harmony"
-    },
-    "exterior": {
-      "stepTwoTitle": "Select Building Type",
-      "stepThreeTitle": "Curate Your Aesthetic",
-      "stepThreeSubtitle": "Choose a signature style to shape your design vision.",
-      "stepFourTitle": "Color Harmony"
-    },
-    "garden": {
-      "stepOneEmptyTitle": "Upload Your Vision",
-      "stepTwoTitle": "Curate Your Aesthetic",
-      "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
-      "stepThreeTitle": "Color Harmony"
+    "examples": {
+      "floor": {
+        "crackedConcrete": "開裂混凝土",
+        "damagedPlanks": "損壞的木板",
+        "brokenTile": "破碎的瓷磚",
+        "renovationSubfloor": "裝修底層地板",
+        "wornPlywood": "磨損的膠合板"
+      },
+      "paint": {
+        "rawConcrete": "生混凝土",
+        "peelingPlaster": "脫皮膏藥",
+        "wornWhite": "破舊的白色",
+        "exposedBrick": "裸露磚",
+        "stainedPlaster": "染色石膏",
+        "dampStreaks": "潮濕條紋"
+      }
     }
   },
   "workspace": {
+    "board": {
+      "new": "新的",
+      "openEditor": "點擊開啟您的設計編輯器",
+      "generationFailedTap": "渲染遇到問題。點擊查看詳細資訊。",
+      "generationFailedTitle": "渲染失敗",
+      "generationFailedBody": "此渲染未完成。請再試一次。",
+      "tryAnotherPrompt": "請返回並嘗試另一個提示。"
+    },
+    "processing": {
+      "default": "HomeDecor AI 在保留架構的同時進行了精緻的重新設計。",
+      "floor": "HomeDecor AI 正在讀取透視圖，鎖定地板平面，並以優質細節構成新材料。",
+      "paint": "HomeDecor AI 正在隔離牆壁平面，並將您選擇的飾面與畫廊等級的真實感分層。"
+    },
+    "services": {
+      "interior": "室內重新設計",
+      "exterior": "外觀重新設計",
+      "garden": "花園重新設計",
+      "floor": "地板改造",
+      "paint": "智慧牆漆"
+    },
+    "editor": {
+      "title": "您的專業理念",
+      "sourcePhoto": "來源照片",
+      "comparison": "比較",
+      "deleteA11y": "從我的設計組合中刪除此設計",
+      "showComparison": "顯示前後對比",
+      "hideComparison": "比較前後隱藏",
+      "removeWatermark": "刪除浮水印",
+      "regenerate": "再生",
+      "saving": "儲存...",
+      "sharing": "分享...",
+      "renderUnavailable": "渲染不可用。請再試一次。",
+      "previewNotReady": "預覽尚未準備好。請再試一次。",
+      "floorReady": "以材料為主導的地板改造，帶有實時滑塊前後。",
+      "paintReady": "根據您選擇的飾面和房間照明進行牆壁重新著色。",
+      "defaultReady": "在您的高級 HomeDecor 板內進行策劃。"
+    },
+    "permissions": {
+      "requiredTitle": "需要許可",
+      "requiredBody": "在系統設定中啟用相機或照片存取權限以繼續。",
+      "cameraAccessTitle": "需要訪問相機",
+      "cameraAccessBody": "在“設定”中允許相機存取以拍照。",
+      "photoLibraryAccessTitle": "需要存取照片庫",
+      "photoLibraryAccessBody": "在「設定」中允許存取照片庫。",
+      "photoLibrarySaveBody": "請允許照片庫訪問，以便將您的結果保存到設備圖庫中。"
+    },
+    "media": {
+      "capturedPhoto": "拍攝的照片",
+      "uploadedPhoto": "上傳照片",
+      "choosePhotoSource": "選擇您想要新增圖像的方式。",
+      "cameraUnavailableTitle": "相機不可用",
+      "cameraUnavailableBody": "我們無法打開相機。請再試一次。",
+      "photoLibraryUnavailableTitle": "照片庫不可用",
+      "photoLibraryUnavailableBody": "我們無法開啟照片庫。請再試一次。",
+      "photoIntakeUnavailableTitle": "無法拍攝照片",
+      "photoIntakeUnavailableBody": "我們無法開啟您的相機或照片庫。請再試一次。",
+      "exampleImageUnavailable": "範例影像不可用。",
+      "exampleUnavailableTitle": "範例無法使用",
+      "tryAnotherImage": "請嘗試其他圖像。"
+    },
+    "share": {
+      "nothingTitle": "沒有什麼好分享的",
+      "generateFirst": "首先生成設計。",
+      "failedTitle": "分享失敗",
+      "message": "使用 HomeDecor.ai 設計"
+    },
+    "download": {
+      "nothingTitle": "沒什麼好下載的",
+      "generateFirst": "首先生成設計。",
+      "failedTitle": "儲存失敗"
+    },
     "generation": {
       "preparingSessionTitle": "正在準備工作階段",
       "preparingSessionBody": "訪客資料仍在載入中，請稍後再試。",
-      "limitReached": "已達上限"
-    },
-    "share": {
-      "message": "使用 HomeDecor.ai 設計",
-      "failedTitle": "分享失敗"
-    },
-    "download": {
-      "failedTitle": "儲存失敗"
-    },
-    "media": {
-      "exampleUnavailableTitle": "範例無法使用"
+      "completeStepsTitle": "完成步驟",
+      "completeFloorBody": "添加房間照片、定義地板面積、選擇材料並選擇飾面，然後再繼續。",
+      "completePaintBody": "添加房間照片、定義可塗漆表面、選擇牆壁顏色並選擇飾面，然後再繼續。",
+      "completePreviousSteps": "請先完成前面的步驟。",
+      "limitReached": "已達上限",
+      "completeStepToContinue": "完成此步驟以繼續。"
     },
     "flow": {
-      "customPromptTitle": "Describe Your Vision",
+      "customPromptTitle": "描述您的願景",
       "customPromptBody": "套用前請描述你想要的具體設計方向。",
       "selectSpaceType": "點選卡片以選擇空間類型。"
+    },
+    "resumeDraft": "恢復您已儲存的嚮導草稿。",
+    "feedback": {
+      "like": "喜歡",
+      "dislike": "不喜歡",
+      "liked": "感謝您的回饋。",
+      "disliked": "回饋發送給設計團隊。",
+      "failed": "目前無法發送回饋。"
+    },
+    "stepOne": {
+      "gardenPhotoTitle": "添加花園照片",
+      "exteriorPhotoTitle": "添加外部照片",
+      "floorPhotoTitle": "新增樓層照片",
+      "gardenEmptyTitle": "開始你的花園改造",
+      "exteriorEmptyTitle": "開始你的外觀改造",
+      "tapToAddPhoto": "點擊即可新增相機或圖庫中的照片"
+    },
+    "style": {
+      "tapToSelect": "點擊一張卡片來定義您的風格方向。"
+    },
+    "localization": {
+      "rooms": {
+        "livingRoom": "客廳",
+        "bedroom": "臥室",
+        "kitchen": "廚房",
+        "bathroom": "浴室",
+        "homeOffice": "家庭辦公室",
+        "diningRoom": "飯廳",
+        "nursery": "苗圃",
+        "homeTheater": "家庭劇院",
+        "gamingRoom": "遊戲室",
+        "hall": "大廳",
+        "library": "圖書館",
+        "laundry": "洗衣店"
+      },
+      "examples": {
+        "interior": {
+          "emptyRoom": "空房間",
+          "messyLounge": "凌亂的休息室",
+          "wornRoom": "破舊的房間",
+          "emptyKitchen": "空廚房",
+          "damagedRoom": "損壞的房間",
+          "outdatedKitchen": "過時的廚房"
+        },
+        "exterior": {
+          "scaffoldHouse": "棚架屋",
+          "weatheredHouse": "風化的房子",
+          "brickShell": "磚殼",
+          "overgrownCottage": "雜草叢生的小屋",
+          "abandonedHome": "廢棄的家",
+          "concreteFrame": "混凝土框架"
+        },
+        "garden": {
+          "muddyYard": "泥濘的院子",
+          "weedyYard": "雜草叢生的院子",
+          "rubbleYard": "碎石場",
+          "overgrownCorner": "雜草叢生的角落",
+          "abandonedYard": "廢棄的院子",
+          "crackedPatio": "破開的露台"
+        }
+      },
+      "styles": {
+        "modern": "現代的",
+        "luxury": "奢華",
+        "japandi": "日本迪",
+        "cyberpunk": "賽博朋克",
+        "tropical": "熱帶",
+        "minimalist": "極簡主義者",
+        "scandinavian": "斯堪的納維亞語",
+        "bohemian": "波西米亞風格",
+        "midcentury": "世紀中葉",
+        "artDeco": "裝飾藝術",
+        "coastal": "海岸",
+        "rustic": "鄉村",
+        "vintage": "優質的",
+        "mediterranean": "地中海",
+        "glam": "華麗",
+        "coastalRetreat": "海岸隱居",
+        "rusticManor": "鄉村莊園",
+        "hollywoodRegency": "好萊塢攝政酒店",
+        "neoClassic": "新古典主義",
+        "shabbyChic": "破舊別緻",
+        "frenchCountry": "法國鄉村",
+        "brutalist": "野獸派",
+        "hollywoodRegencyNoir": "好萊塢黑色攝政",
+        "artNouveau": "新藝術風格",
+        "custom": "風俗",
+        "chinese": "中國人",
+        "cottage": "小屋",
+        "farmHouse": "農舍",
+        "french": "法語",
+        "gothic": "歌德",
+        "italianate": "義大利式",
+        "christmas": "聖誕節",
+        "minimalistic": "簡約",
+        "baroque": "巴洛克風格"
+      },
+      "buildings": {
+        "apartment": "公寓",
+        "house": "房子",
+        "officeBuilding": "辦公大樓",
+        "residential": "住宅",
+        "retail": "零售",
+        "villa": "別墅"
+      },
+      "modes": {
+        "preserve": {
+          "title": "結構保護",
+          "description": "保留您房間的建築 DNA，同時完美地刷新其美感。"
+        },
+        "renovate": {
+          "title": "裝潢設計",
+          "description": "完全的創意自由重新定義家具佈置和結構邊界以進行徹底的改造。"
+        }
+      },
+      "palettes": {
+        "surprise": "精選組合",
+        "gray": "千禧灰",
+        "terracotta": "兵馬俑海市蜃樓",
+        "forest": "森林色調",
+        "peach": "桃園",
+        "fuchsia": "紫紅色花",
+        "emerald": "祖母綠寶石",
+        "pastel": "柔和的微風",
+        "ocean": "海洋薄霧",
+        "velvet": "天鵝絨黃昏",
+        "amethyst": "紫水晶夢",
+        "sunset": "黑紫紅色"
+      },
+      "gardenPalettes": {
+        "garden-surprise": "給我驚喜",
+        "garden-gray": "千禧灰",
+        "garden-terracotta": "兵馬俑海市蜃樓",
+        "garden-neon-sunset": "霓虹日落",
+        "garden-forest": "森林色調",
+        "garden-peach": "桃園",
+        "garden-fuschia": "紫紅色花",
+        "garden-emerald": "祖母綠寶石",
+        "garden-pastel": "柔和的微風",
+        "garden-azure": "蔚藍幻影",
+        "garden-twilight": "暮光藍調",
+        "garden-earthy": "土質和諧"
+      },
+      "summary": {
+        "roomType": "房型",
+        "style": "風格",
+        "mode": "模式",
+        "palette": "調色盤",
+        "missing": "⚠ 失踪"
+      },
+      "previewThumbnailLabel": "範例輸出 · {{style}}",
+      "toasts": {
+        "completeStyleSelections": "完成要產生的樣式選擇。"
+      },
+      "requiredSelections": {
+        "photo": "請選擇一張照片以繼續。",
+        "room": "請選擇一個房間以繼續。",
+        "style": "請選擇一種樣式以繼續。",
+        "mode": "請完成模式選擇以繼續。",
+        "palette": "請完成調色板選擇以繼續。"
+      },
+      "regenerationUnavailable": "無法再生",
+      "feedbackUnavailable": "此圖像無法提供回饋。",
+      "cta": {
+        "getMoreCredits": "獲得更多學分",
+        "generateMyDesign": "生成我的設計"
+      },
+      "stepFourSticky": "第四步：細化方向",
+      "exteriorEmptyStateSubtitle": "重新設計和美化您的家。"
     }
   },
   "proSuccess": {
     "title": "歡迎使用 HomeDecor Pro！",
     "subtitle": "現在所有內容都已解鎖。你將獲得：",
+    "features": {
+      "hyperRealism": "啟用超高細節渲染",
+      "virtualStaging": "解鎖高級設計工具",
+      "infiniteCredits": "每週或每月渲染配額處於活動狀態"
+    },
     "cta": "開始設計",
     "toast": "帳戶已成功升級為 Pro。"
   },
-  "app": {
-    "name": "HomeDecor AI"
+  "legalViewer": {
+    "eyebrow": "法律檢視器",
+    "switches": {
+      "terms": "服務條款",
+      "privacy": "隱私權政策"
+    }
   },
-  "discover": {
-    "tabs": {
-      "home": "Interior",
-      "exterior": "Exterior ",
-      "garden": "Garden"
+  "storeReview": {
+    "title": "評價 HomeDecor AI",
+    "unavailableBody": "此設備上不支援審核請求。",
+    "errorBody": "目前無法開啟商店評論對話框。"
+  },
+  "gallery": {
+    "clusters": {
+      "foundations": "基礎"
     },
-    "tryThisStyle": "Try This Style"
+    "tabs": {
+      "home": "內飾",
+      "exterior": "外觀",
+      "garden": "風景"
+    },
+    "groups": {
+      "kitchen": "廚房",
+      "livingRoom": "客廳",
+      "diningRoom": "飯廳",
+      "bedroom": "臥室",
+      "bathroom": "浴室",
+      "gamingRoom": "遊戲室",
+      "homeOffice": "家庭辦公室",
+      "coffeeShop": "咖啡廳",
+      "studyRoom": "自習室",
+      "restaurant": "餐廳",
+      "attic": "閣樓",
+      "toilet": "洗手間",
+      "balcony": "陽台",
+      "hall": "大廳",
+      "deck": "甲板",
+      "landscapeDesigns": "景觀設計",
+      "villa": "別墅",
+      "apartment": "公寓",
+      "house": "房子",
+      "officeBuilding": "辦公大樓",
+      "retail": "零售",
+      "residential": "住宅",
+      "wall": "牆",
+      "floor": "地面",
+      "garden": "花園"
+    },
+    "imageTitleTemplate": "{{title}} 圖片 {{index}}",
+    "emptyState": {
+      "title": "類別不可用",
+      "body": "找不到請求的圖像集。"
+    }
   },
-  "profile": {
-    "title": "My Design Portfolio",
-    "emptyTitle": "Your Portfolio is empty. Start a project to see your visions come to life.",
-    "emptySubtitle": ""
+  "discoverCatalog": {
+    "sections": {
+      "home": {
+        "title": "內部的",
+        "description": "設計師主導的房間涵蓋起居、睡眠、餐飲、工作和娛樂。",
+        "items": {
+          "sereneLounge": {
+            "title": "寧靜休息室",
+            "subtitle": "客廳/軟簡約",
+            "spaceType": "客廳",
+            "style": "軟最小"
+          },
+          "moodyClubRoom": {
+            "title": "穆迪俱樂部間",
+            "subtitle": "客廳 / Moody Luxe",
+            "spaceType": "客廳",
+            "style": "穆迪奢華酒店"
+          },
+          "organicLiving": {
+            "title": "有機生活",
+            "subtitle": "客廳 / 溫暖有機",
+            "spaceType": "客廳",
+            "style": "溫暖有機"
+          },
+          "grandSalon": {
+            "title": "大沙龍",
+            "subtitle": "客廳 / 豪華大理石",
+            "spaceType": "客廳",
+            "style": "奢華大理石"
+          },
+          "editorialLounge": {
+            "title": "編輯休息室",
+            "subtitle": "遊戲室 / 賽博龐克",
+            "spaceType": "遊戲室",
+            "style": "賽博朋克"
+          }
+        }
+      },
+      "exterior": {
+        "title": "外部的",
+        "description": "外觀靈感來自現代別墅、城市街區、辦公室和零售外殼。",
+        "items": {
+          "modernHouse": {
+            "title": "現代住宅",
+            "subtitle": "現代住宅/日光最小",
+            "spaceType": "現代住宅",
+            "style": "日光最小"
+          },
+          "modernHouseNight": {
+            "title": "現代住宅之夜",
+            "subtitle": "現代住宅/晚間奢華",
+            "spaceType": "現代住宅",
+            "style": "晚間豪華房"
+          },
+          "stoneVilla": {
+            "title": "石頭別墅",
+            "subtitle": "別墅 / 地中海",
+            "spaceType": "別墅",
+            "style": "地中海"
+          },
+          "glassOffice": {
+            "title": "玻璃辦公室",
+            "subtitle": "辦公大樓 / 極簡主義",
+            "spaceType": "辦公大樓",
+            "style": "極簡主義者"
+          },
+          "ecoApartments": {
+            "title": "生態公寓",
+            "subtitle": "公寓大樓 / 生態未來主義者",
+            "spaceType": "公寓大樓",
+            "style": "生態未來主義者"
+          }
+        }
+      },
+      "garden": {
+        "title": "花園",
+        "description": "戶外休息室、露台、游泳池、甲板和度假村風格的花園景觀。",
+        "items": {
+          "infinityPool": {
+            "title": "無邊際泳池",
+            "subtitle": "無邊際泳池 / 海岸豪華房",
+            "spaceType": "無邊際泳池",
+            "style": "海岸奢華"
+          },
+          "waterfallCourt": {
+            "title": "瀑布閣",
+            "subtitle": "瀑布花園 / 禪宗奢華",
+            "spaceType": "瀑布花園",
+            "style": "禪宗奢華"
+          },
+          "sunsetFirePit": {
+            "title": "日落火坑",
+            "subtitle": "火坑休息室/度假村日落",
+            "spaceType": "火坑休息室",
+            "style": "度假村日落"
+          },
+          "tropicalPoolLounge": {
+            "title": "熱帶泳池酒廊",
+            "subtitle": "泳池酒廊 / 熱帶度假",
+            "spaceType": "泳池酒廊",
+            "style": "熱帶度假"
+          },
+          "luminousGardenWalk": {
+            "title": "發光花園步道",
+            "subtitle": "花園漫步 / 晚霞",
+            "spaceType": "花園大道",
+            "style": "晚霞"
+          }
+        }
+      },
+      "wall": {
+        "title": "牆壁靈感",
+        "description": "真實房間的油漆參考可直接打開智慧牆漆，並已預先選擇飾面。",
+        "items": {
+          "sagePlasterWall": {
+            "title": "鼠尾草石膏牆",
+            "subtitle": "紋理牆/鼠尾草綠",
+            "spaceType": "紋理牆",
+            "style": "鼠尾草綠"
+          },
+          "linearSlatFeature": {
+            "title": "線性板條特徵",
+            "subtitle": "板條牆/木炭",
+            "spaceType": "板條牆",
+            "style": "木炭"
+          },
+          "veinedMarbleWall": {
+            "title": "紋理大理石牆",
+            "subtitle": "大理石牆/軟象牙色",
+            "spaceType": "大理石牆",
+            "style": "軟象牙色"
+          },
+          "minimalConcreteWall": {
+            "title": "最小混凝土牆",
+            "subtitle": "混凝土牆/木炭",
+            "spaceType": "混凝土牆",
+            "style": "木炭"
+          },
+          "botanicalMuralWall": {
+            "title": "植物壁畫牆",
+            "subtitle": "壁畫 / 橄欖苔",
+            "spaceType": "壁畫牆",
+            "style": "橄欖苔"
+          }
+        }
+      },
+      "floor": {
+        "title": "地板樣式",
+        "description": "優質地板參考從真實的室內設計中挑選出來，並直接映射到地板重新設計工作流程。",
+        "items": {
+          "heritageHerringbone": {
+            "title": "遺產人字形",
+            "subtitle": "木地板/胡桃木",
+            "spaceType": "木地板",
+            "style": "胡桃木"
+          },
+          "carraraMarbleFlow": {
+            "title": "卡拉拉大理石流",
+            "subtitle": "大理石地板/卡拉拉大理石",
+            "spaceType": "大理石地板",
+            "style": "卡拉拉大理石"
+          },
+          "satinConcrete": {
+            "title": "緞面混凝土",
+            "subtitle": "混凝土地板/拋光混凝土",
+            "spaceType": "混凝土地板",
+            "style": "拋光混凝土"
+          },
+          "walnutGloss": {
+            "title": "胡桃木光澤",
+            "subtitle": "光澤木/胡桃木",
+            "spaceType": "光澤木",
+            "style": "胡桃木"
+          },
+          "softLimestone": {
+            "title": "軟石灰岩",
+            "subtitle": "石材地板/拋光混凝土",
+            "spaceType": "石材地板",
+            "style": "拋光混凝土"
+          }
+        }
+      }
+    },
+    "wallColors": {
+      "sageGreen": {
+        "title": "鼠尾草綠",
+        "description": "柔和的綠色營造出明亮、優雅的生活空間。",
+        "discoverSubtitle": "牆壁/植物平靜"
+      },
+      "midnightNavy": {
+        "title": "午夜海軍藍",
+        "description": "量身定制的海軍藍深度與清晰的建築對比。",
+        "discoverSubtitle": "牆壁/客製化對比"
+      },
+      "terracottaGlow": {
+        "title": "兵馬俑發光",
+        "description": "溫暖的黏土色，具有紮實的編輯能量。",
+        "discoverSubtitle": "牆壁/溫暖的粘土"
+      },
+      "dustyRose": {
+        "title": "塵土飛揚的玫瑰",
+        "description": "柔和的腮紅溫暖與柔和的精品魅力。",
+        "discoverSubtitle": "牆/精品腮紅"
+      },
+      "galleryCharcoal": {
+        "title": "畫廊木炭",
+        "description": "精製木炭，適合喜怒無常、藝術前衛的房間。",
+        "discoverSubtitle": "牆 / 穆迪畫廊"
+      },
+      "softIvory": {
+        "title": "軟象牙色",
+        "description": "發光的中性色使房間保持明亮，絕不平坦。",
+        "discoverSubtitle": "牆壁/安靜中性"
+      },
+      "oliveGrove": {
+        "title": "橄欖園",
+        "description": "樸實的橄欖色深度和腳踏實地的設計師情緒。",
+        "discoverSubtitle": "牆/土深度"
+      },
+      "lavenderMist": {
+        "title": "薰衣草薄霧",
+        "description": "柔和的紫羅蘭色薄霧，適合優雅柔和的房間。",
+        "discoverSubtitle": "牆壁/柔和的粉彩"
+      },
+      "pearlGray": {
+        "title": "珍珠灰",
+        "description": "淺灰色調，具有拋光的日常靈活性。",
+        "discoverSubtitle": "牆/現代中性"
+      }
+    },
+    "wallColorCategories": {
+      "calmNeutrals": {
+        "title": "冷靜且中性",
+        "colors": {
+          "softIvory": "軟象牙色",
+          "pearlGray": "珍珠灰",
+          "sageGreen": "鼠尾草綠"
+        }
+      },
+      "boutiquePastels": {
+        "title": "精品粉彩",
+        "colors": {
+          "dustyRose": "塵土飛揚的玫瑰",
+          "lavenderMist": "薰衣草薄霧",
+          "terracottaGlow": "兵馬俑發光"
+        }
+      },
+      "architecturalDepth": {
+        "title": "建築深度",
+        "colors": {
+          "midnightNavy": "午夜海軍藍",
+          "galleryCharcoal": "畫廊木炭",
+          "oliveGrove": "橄欖園"
+        }
+      }
+    },
+    "floorMaterials": {
+      "naturalOak": {
+        "title": "天然橡木",
+        "description": "通風的橡木板具有柔軟的天然紋理。",
+        "promptLabel": "淺色天然橡木地板，帶有寬木板紋理細節",
+        "discoverSubtitle": "地板/輕木"
+      },
+      "walnutWood": {
+        "title": "胡桃木",
+        "description": "深胡桃木板具有豐富的剪裁對比。",
+        "promptLabel": "奢華胡桃木地板，紋理豐富",
+        "discoverSubtitle": "地板/深色木色"
+      },
+      "carraraMarble": {
+        "title": "卡拉拉大理石",
+        "description": "明亮的石紋具有平靜的奢華飾面。",
+        "promptLabel": "卡拉拉大理石地板，帶有優雅柔和的紋理",
+        "discoverSubtitle": "地板/拋光石"
+      },
+      "polishedConcrete": {
+        "title": "拋光混凝土",
+        "description": "光滑的混凝土光澤與城市畫廊的平靜。",
+        "promptLabel": "拋光混凝土地板具有優質光滑的質感",
+        "discoverSubtitle": "地板/工業簡約"
+      },
+      "herringboneOak": {
+        "title": "人字形橡木",
+        "description": "經典的橡木圖案，帶有溫暖的定向運動。",
+        "promptLabel": "人字形橡木鑲木地板，具有優質圖案定義",
+        "discoverSubtitle": "地板/花紋木"
+      },
+      "terracottaTile": {
+        "title": "赤土磚",
+        "description": "泥土般的溫暖與手工製作的特色。",
+        "promptLabel": "赤土磚地板，帶有溫暖的粘土顏色變化",
+        "discoverSubtitle": "地板/地中海粘土"
+      },
+      "slateTile": {
+        "title": "板岩磚",
+        "description": "深色石板色，具有清晰的大尺寸飾面。",
+        "promptLabel": "深色板岩瓷磚地板和大尺寸石板",
+        "discoverSubtitle": "地板/深色石材"
+      },
+      "plushCarpet": {
+        "title": "毛絨地毯",
+        "description": "柔軟的奶油色地毯，給人一種安靜、舒適的感覺。",
+        "promptLabel": "柔軟奶油色的豪華毛絨地毯地板",
+        "discoverSubtitle": "地板/質地柔軟"
+      },
+      "weatheredOak": {
+        "title": "風化橡木",
+        "description": "中色調橡木，帶有輕微老化的餘韻。",
+        "promptLabel": "風化橡木地板，帶有微妙的老化紋理",
+        "discoverSubtitle": "地板/質樸溫暖"
+      }
+    },
+    "injectedGallery": {
+      "floorAfterScenes": {
+        "heritageHerringbone": "遺產人字形",
+        "carraraMarble": "卡拉拉大理石",
+        "satinConcrete": "緞面混凝土",
+        "walnutGloss": "胡桃木光澤",
+        "limestoneSlab": "石灰石板"
+      },
+      "wallAfterScenes": {
+        "sagePlaster": "鼠尾草膏",
+        "linearSlats": "線性板條",
+        "veinedMarble": "紋理大理石",
+        "minimalConcrete": "最少的混凝土",
+        "botanicalMural": "植物壁畫"
+      },
+      "interiorExamples": {
+        "kitchen": "廚房",
+        "livingRoom": "客廳",
+        "bedroom": "臥室",
+        "bathroom": "浴室",
+        "gamingRoom": "遊戲室",
+        "homeOffice": "家庭辦公室"
+      },
+      "exteriorExamples": {
+        "apartment": "公寓",
+        "house": "房子",
+        "office": "辦公室",
+        "villa": "別墅",
+        "residential": "住宅",
+        "retail": "零售"
+      },
+      "gardenExamples": {
+        "infinityPool": "無邊際泳池",
+        "waterfallCourt": "瀑布閣",
+        "firePit": "火坑",
+        "tropicalLounge": "熱帶休息室",
+        "resortDeck": "度假村甲板",
+        "lagoonFalls": "潟湖瀑布"
+      },
+      "homeCoreScenes": {
+        "kitchen": "廚房",
+        "livingRoom": "客廳",
+        "bedroom": "臥室",
+        "bathroom": "浴室",
+        "diningRoom": "飯廳",
+        "gamingRoom": "遊戲室",
+        "homeOffice": "家庭辦公室"
+      },
+      "homeFlexScenes": {
+        "coffeeShop": "咖啡廳",
+        "gamingStudio": "遊戲工作室",
+        "atticLounge": "閣樓酒廊",
+        "studyRoom": "自習室",
+        "serviceRoom": "服務室",
+        "laundryRoom": "洗衣房"
+      },
+      "livingRoomScenes": {
+        "sereneLounge": "寧靜休息室",
+        "moodyLounge": "穆迪酒廊",
+        "organicLiving": "有機生活",
+        "grandSalon": "大沙龍",
+        "playfulLounge": "俏皮休息室"
+      },
+      "homeLuxeScenes": {
+        "restaurant": "餐廳",
+        "studyLibrary": "學習圖書館",
+        "atticRetreat": "閣樓靜修處",
+        "toiletSuite": "衛浴套房",
+        "balcony": "陽台",
+        "hall": "大廳",
+        "deckDay": "甲板日",
+        "deckNight": "甲板之夜"
+      },
+      "exteriorPrimaryScenes": {
+        "house": "房子",
+        "residential": "住宅",
+        "villa": "別墅",
+        "glassCorner": "玻璃角",
+        "apartment": "公寓"
+      },
+      "exteriorSecondaryScenes": {
+        "apartmentTower": "公寓塔樓",
+        "retailPavilion": "零售館",
+        "officeBuilding": "辦公大樓",
+        "modernVilla": "現代別墅",
+        "residentialTower": "住宅塔樓"
+      },
+      "gardenPrimaryScenes": {
+        "infinityPool": "無邊際泳池",
+        "waterfallCourt": "瀑布閣",
+        "sunsetFirePit": "日落火坑",
+        "tropicalLounge": "熱帶休息室",
+        "livingWall": "生命牆",
+        "lightCourt": "光閣"
+      },
+      "gardenSecondaryScenes": {
+        "sunsetPool": "日落泳池",
+        "fireCove": "火灣",
+        "poolCourt": "泳池閣",
+        "waterfallLounge": "瀑布酒廊",
+        "resortDeck": "度假村甲板",
+        "lagoonFalls": "潟湖瀑布"
+      },
+      "exteriorBuildingTypes": {
+        "apartment": "公寓",
+        "house": "房子",
+        "officeBuilding": "辦公大樓",
+        "villa": "別墅",
+        "residential": "住宅",
+        "retail": "零售"
+      }
+    }
+  },
+  "legacyUnlocalized": {
+    "paintWizard": {
+      "autoDetectFailureMessage": "自動偵測無法運作。請手動刷。",
+      "cancelledGenerationMessage": "已被用戶取消。",
+      "result": {
+        "heading": "看看你的新內飾",
+        "subheading": "拋光牆概​​念，旨在保留房間的結構、家具佈局和自然光。",
+        "appliedFinish": "應用表面處理",
+        "saveToGallery": "儲存到圖庫",
+        "share": "分享",
+        "tryAgain": "再試一次"
+      }
+    }
   }
 }
