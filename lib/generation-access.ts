@@ -15,6 +15,8 @@ export type GenerationAccessState = {
   generationStatusMessage?: string | null;
   hasPaidAccess?: boolean | null;
   canGenerateNow?: boolean | null;
+  lastRefillTimestamp?: number | null;
+  pricingTier?: string | null;
 };
 
 export type GenerationAccessDecision = {
@@ -31,6 +33,16 @@ function toSafeNumber(value: unknown) {
 
 export function canUserGenerate(state?: GenerationAccessState | null): GenerationAccessDecision {
   const hasPaidAccess = Boolean(state?.hasPaidAccess);
+  if (hasPaidAccess) {
+    return {
+      allowed: true,
+      reason: "ok",
+      remaining: Number.MAX_SAFE_INTEGER,
+      hasPaidAccess,
+      message: String(state?.generationStatusMessage ?? "Unlimited generations").trim() || "Unlimited generations",
+    };
+  }
+
   const hasSubscriptionQuota = state?.subscriptionType === "weekly" || state?.subscriptionType === "yearly";
   const remaining =
     typeof state?.imagesRemaining === "number"
@@ -79,6 +91,8 @@ export async function persistGenerationAccessSnapshot(snapshot: GenerationAccess
       generationStatusMessage: snapshot.generationStatusMessage ?? null,
       hasPaidAccess: Boolean(snapshot.hasPaidAccess),
       canGenerateNow: snapshot.canGenerateNow ?? null,
+      lastRefillTimestamp: snapshot.lastRefillTimestamp ?? 0,
+      pricingTier: snapshot.pricingTier ?? null,
       cachedAt: Date.now(),
     }),
   );

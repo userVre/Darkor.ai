@@ -87,6 +87,10 @@ function buildViewerResponse(user: any) {
     canRemoveWatermark: state.canRemoveWatermark,
     canVirtualStage: state.canVirtualStage,
     canEditDesigns: state.canEditDesigns,
+    lastRefillTimestamp: state.lastResetDate,
+    pricingTier: user.pricingTier ?? null,
+    pricingCountryCode: user.pricingCountryCode ?? null,
+    pricingCurrencyCode: user.pricingCurrencyCode ?? null,
     isGuest: !user.clerkId,
   };
 }
@@ -303,10 +307,18 @@ export const setViewerPlanFromRevenueCat = mutationGeneric({
     subscriptionEntitlement: v.optional(v.union(v.literal("weekly_pro"), v.literal("annual_pro"), v.literal("free"))),
     purchasedAt: v.optional(v.number()),
     subscriptionEnd: v.optional(v.number()),
+    pricingTier: v.optional(v.string()),
+    pricingCountryCode: v.optional(v.string()),
+    pricingCurrencyCode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const viewer = await ensureViewerUser(ctx, args.anonymousId);
     await persistRevenueCatPlanForUser(ctx, viewer.user, args);
+    await ctx.db.patch(viewer.user._id, omitUndefined({
+      pricingTier: args.pricingTier,
+      pricingCountryCode: args.pricingCountryCode,
+      pricingCurrencyCode: args.pricingCurrencyCode,
+    }));
     return { ok: true, viewerKind: viewer.kind };
   },
 });
@@ -446,11 +458,11 @@ async function consumeAllowance(ctx: any, anonymousId?: string, ignoreCooldown?:
   const remaining =
     state.subscriptionType === "free" ? Math.max(state.credits - 1, 0) : Math.max(state.limit - nextImageGenerationCount, 0);
   const statusLabel =
-    state.subscriptionType === "weekly"
-      ? `${remaining} / ${state.limit} images left`
-      : state.subscriptionType === "yearly"
-        ? `${remaining} / ${state.limit} this month`
-        : `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`;
+    state.subscriptionType === "free"
+      ? `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`
+      : state.plan === "trial"
+        ? "Unlimited generations during your active trial"
+        : "Unlimited generations";
 
   return {
     count: nextGenerationCount,
@@ -461,7 +473,7 @@ async function consumeAllowance(ctx: any, anonymousId?: string, ignoreCooldown?:
     imagesRemaining: remaining,
     subscriptionType: state.subscriptionType,
     generationStatusLabel: statusLabel,
-    generationStatusMessage: remaining <= 0 ? `Limit Reached - ${statusLabel}` : statusLabel,
+    generationStatusMessage: state.subscriptionType === "free" && remaining <= 0 ? `Limit Reached - ${statusLabel}` : statusLabel,
   };
 }
 
@@ -511,11 +523,11 @@ export const releaseGenerationAllowance = mutationGeneric({
       imageGenerationCount: nextImageGenerationCount,
       imagesRemaining: remaining,
       generationStatusLabel:
-        state.subscriptionType === "weekly"
-          ? `${remaining} / ${state.limit} images left`
-          : state.subscriptionType === "yearly"
-            ? `${remaining} / ${state.limit} this month`
-            : `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`,
+        state.subscriptionType === "free"
+          ? `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`
+          : state.plan === "trial"
+            ? "Unlimited generations during your active trial"
+            : "Unlimited generations",
     };
   },
 });
@@ -619,7 +631,7 @@ export const claimThreeDayReward = mutationGeneric({
     }
 
     const currentCredits = Math.min(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), FREE_IMAGE_LIMIT);
-    const nextCredits = Math.min(currentCredits + 1, FREE_IMAGE_LIMIT);
+    const nextCredits = FREE_IMAGE_LIMIT;
     const creditsAdded = Math.max(nextCredits - currentCredits, 0);
 
     await ctx.db.patch(user._id, {

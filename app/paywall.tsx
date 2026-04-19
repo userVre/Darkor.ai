@@ -524,26 +524,15 @@ export default function PaywallScreen() {
   const heroSnapInterval = width / 2;
   const heroTrackPadding = Math.max((width - heroSnapInterval) / 2, 0);
   const heroRowHeight = heroCenterSize + HERO_SIDE_TRANSLATE_Y + 56;
-  const isMoroccoRegion = pricingContext.regionCode === "MA";
-  const isUnitedStatesRegion = pricingContext.regionCode === "US";
-  const isGulfRegion = ["AE", "SA", "QA"].includes(pricingContext.regionCode);
-
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly"), [packages]);
   const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly"), [packages]);
-  const forcedDisplayCurrencyCode = isMoroccoRegion
-    ? "MAD"
-    : isGulfRegion
-      ? pricingContext.currencyCode
-    : isUnitedStatesRegion
-      ? "USD"
-      : undefined;
   const displayedYearlyPrice = useMemo(
-    () => getDisplayedPrice(pricingContext.prices.yearly, pricingContext.locale, forcedDisplayCurrencyCode, yearlyPackage),
-    [forcedDisplayCurrencyCode, pricingContext.locale, pricingContext.prices.yearly, yearlyPackage],
+    () => getDisplayedPrice(pricingContext.prices.yearly, pricingContext.locale, pricingContext.currencyCode, yearlyPackage),
+    [pricingContext.currencyCode, pricingContext.locale, pricingContext.prices.yearly, yearlyPackage],
   );
   const displayedWeeklyPrice = useMemo(
-    () => getDisplayedPrice(pricingContext.prices.weekly, pricingContext.locale, forcedDisplayCurrencyCode, weeklyPackage),
-    [forcedDisplayCurrencyCode, pricingContext.locale, pricingContext.prices.weekly, weeklyPackage],
+    () => getDisplayedPrice(pricingContext.prices.weekly, pricingContext.locale, pricingContext.currencyCode, weeklyPackage),
+    [pricingContext.currencyCode, pricingContext.locale, pricingContext.prices.weekly, weeklyPackage],
   );
   const displayedYearlyPerWeekPrice = useMemo(
     () =>
@@ -551,10 +540,10 @@ export default function PaywallScreen() {
         pricingContext.derived.yearlyPerWeek,
         pricingContext.locale,
         displayedYearlyPrice,
-        forcedDisplayCurrencyCode,
+        pricingContext.currencyCode,
         yearlyPackage,
       ),
-    [displayedYearlyPrice, forcedDisplayCurrencyCode, pricingContext.derived.yearlyPerWeek, pricingContext.locale, yearlyPackage],
+    [displayedYearlyPrice, pricingContext.currencyCode, pricingContext.derived.yearlyPerWeek, pricingContext.locale, yearlyPackage],
   );
   const yearlyPriceText = useMemo(
     () => t("paywall.pricePerYear", { price: displayedYearlyPrice.formatted }),
@@ -706,7 +695,6 @@ export default function PaywallScreen() {
     };
   }, [
     cachedOfferingPackages,
-    forcedDisplayCurrencyCode,
     isSignedIn,
     pricingContext.revenueCat.countryCode,
     pricingContext.revenueCat.currencyCode,
@@ -730,9 +718,12 @@ export default function PaywallScreen() {
         subscriptionEntitlement,
         purchasedAt: typeof purchasedAt === "number" ? purchasedAt : undefined,
         subscriptionEnd: typeof subscriptionEnd === "number" ? subscriptionEnd : undefined,
+        pricingTier: pricingContext.tierId,
+        pricingCountryCode: pricingContext.countryCode,
+        pricingCurrencyCode: pricingContext.currencyCode,
       });
     },
-    [anonymousId, setPlan],
+    [anonymousId, pricingContext.countryCode, pricingContext.currencyCode, pricingContext.tierId, setPlan],
   );
 
   const closePaywall = useCallback(() => {

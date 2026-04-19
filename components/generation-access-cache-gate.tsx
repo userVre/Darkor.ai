@@ -17,6 +17,8 @@ type CachedViewerState = {
   generationStatusMessage?: string;
   hasPaidAccess?: boolean;
   canGenerateNow?: boolean;
+  lastRefillTimestamp?: number;
+  pricingTier?: string | null;
 } | null;
 
 export function GenerationAccessCacheGate() {

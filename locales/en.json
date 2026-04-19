@@ -100,7 +100,7 @@
     "features": {
       "fasterRendering": "Priority AI Processing",
       "adFree": "Ultra-HD (4K) Quality Renders",
-      "unlimitedRenders": "Fixed Quotas: 20 weekly or 80 monthly renders"
+      "unlimitedRenders": "Unlimited generations with no watermark"
     },
     "restore": "Restore",
     "bestOffer": "Best Offer",
@@ -120,7 +120,7 @@
     "processing": "Processing...",
     "tryForFree": "Begin Your Pro Trial",
     "continue": "Begin Your Pro Trial",
-    "subtitle": "Experience the full power of architectural AI with higher limits and 4K precision.",
+    "subtitle": "Experience unlimited architectural AI with instant 4K precision and clean exports.",
     "terms": "Terms",
     "privacy": "Privacy",
     "subscriptionsUnavailable": "Subscriptions are temporarily unavailable.",

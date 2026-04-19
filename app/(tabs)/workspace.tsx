@@ -2933,16 +2933,14 @@ export default function WorkspaceScreen() {
   const hasGenerationCredits = generationAccess.allowed;
   const remainingCreditsAfterGenerate = Math.max(creditBalance - 1, 0);
   const generationCreditLabel = hasPaidAccess
-    ? me?.subscriptionType === "yearly"
-      ? `1 generation \u00b7 ${remainingCreditsAfterGenerate} left this month`
-      : `1 generation \u00b7 ${remainingCreditsAfterGenerate} left this week`
+    ? "Unlimited generations \u00b7 4K Ultra-HD"
     : `Uses 1 Diamond \u00b7 ${remainingCreditsAfterGenerate} remaining`;
   const usageBadgeLabel = hasPaidAccess
-    ? me?.subscriptionType === "yearly"
-      ? "Yearly Pro"
-      : "Weekly Pro"
+    ? me?.plan === "trial"
+      ? "Trial Unlimited"
+      : "Pro Unlimited"
     : `Diamonds ${creditBalance}`;
-  const usageBadgeDetail = hasPaidAccess ? `${creditBalance} left` : null;
+  const usageBadgeDetail = hasPaidAccess ? "No watermark" : "Refills to 3 every 72h";
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const showStyleScrollCue = !isPaintService && !isFloorService && displayedStyleCards.length > 6;
   const isDownloadingStandard = isDownloading === "standard";

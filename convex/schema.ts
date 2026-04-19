@@ -25,6 +25,9 @@ export default defineSchema({
     imageLimit: optionalNumberLike,
     imageGenerationCount: optionalNumberLike,
     lastResetDate: optionalNumberLike,
+    pricingTier: v.optional(v.string()),
+    pricingCountryCode: v.optional(v.string()),
+    pricingCurrencyCode: v.optional(v.string()),
   })
     .index("by_clerkId", ["clerkId"])
     .index("by_anonymousId", ["anonymousId"]),

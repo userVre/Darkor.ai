@@ -3,8 +3,9 @@ export const WEEK_MS = 7 * DAY_MS;
 export const YEAR_MS = 365 * DAY_MS;
 export const MONTHLY_RESET_MS = 30 * DAY_MS;
 export const FREE_IMAGE_LIMIT = 3;
-export const WEEKLY_IMAGE_LIMIT = 20;
-export const YEARLY_MONTHLY_IMAGE_LIMIT = 80;
+export const WEEKLY_IMAGE_LIMIT = Number.MAX_SAFE_INTEGER;
+export const YEARLY_MONTHLY_IMAGE_LIMIT = Number.MAX_SAFE_INTEGER;
+export const FREE_REFILL_INTERVAL_MS = 72 * 60 * 60 * 1000;
 
 export type SubscriptionType = "weekly" | "yearly" | "free";
 export type SubscriptionEntitlement = "weekly_pro" | "annual_pro" | "free";
@@ -277,18 +278,16 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
       }
 
       const active = subscriptionEnd > now;
-      const remaining = active ? Math.max(imageLimit - imageGenerationCount, 0) : 0;
-      const reachedLimit = active && imageGenerationCount >= imageLimit;
+      const remaining = active ? Number.MAX_SAFE_INTEGER : 0;
+      const reachedLimit = false;
       const statusLabel =
-        subscriptionType === "weekly"
-          ? `${remaining} / ${imageLimit} generations left this week`
-          : `${remaining} / ${imageLimit} generations left this month`;
+        plan === "trial"
+          ? "Unlimited generations during your active trial"
+          : "Unlimited generations";
       const statusMessage = !active
         ? "Plan expired. Upgrade or renew to continue."
-        : reachedLimit
-          ? `Limit Reached - ${statusLabel}`
-          : statusLabel;
-      const hasPaidAccess = active && plan === "pro";
+        : statusLabel;
+      const hasPaidAccess = active && (plan === "pro" || plan === "trial");
 
       return {
         plan,
@@ -336,6 +335,14 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
     }
   }
 
+  const refillEligible = credits < FREE_IMAGE_LIMIT && (lastResetDate <= 0 || now - lastResetDate >= FREE_REFILL_INTERVAL_MS);
+  if (refillEligible) {
+    credits = FREE_IMAGE_LIMIT;
+    lastResetDate = now;
+    patch.credits = FREE_IMAGE_LIMIT;
+    patch.lastResetDate = now;
+  }
+
   const remaining = Math.max(credits, 0);
   const reachedLimit = remaining <= 0;
   const statusLabel = `${remaining} / ${FREE_IMAGE_LIMIT} Diamonds left`;
@@ -350,8 +357,8 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
     subscriptionEnd: 0,
     imageLimit,
     imageGenerationCount,
-    lastResetDate: 0,
-    nextResetDate: 0,
+    lastResetDate,
+    nextResetDate: lastResetDate > 0 ? lastResetDate + FREE_REFILL_INTERVAL_MS : now + FREE_REFILL_INTERVAL_MS,
     limit: imageLimit,
     remaining,
     active: false,
