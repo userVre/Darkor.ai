@@ -24,6 +24,7 @@ import {
   type NativeSyntheticEvent,
   ScrollView,
   Share,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -62,6 +63,7 @@ import {
   MoveHorizontal,
   Redo2,
   Share2,
+  Zap,
 } from "@/components/material-icons";
 import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
 import { GENERATION_FAILED_TOAST, getFriendlyGenerationError } from "../../lib/generation-errors";
@@ -95,11 +97,12 @@ import { useWorkspaceDraft } from "../../components/workspace-context";
 import { useViewerSession } from "../../components/viewer-session-context";
 import { useProSuccess } from "../../components/pro-success-context";
 import { captureRef } from "react-native-view-shot";
-import { DS, HAIRLINE, ambientShadow, floatingButton, glowShadow, organicRadii } from "../../lib/design-system";
+import { DS, HAIRLINE, ambientShadow, floatingButton, glowShadow, organicRadii, surfaceCard } from "../../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../../lib/service-wizard-theme";
 import { getFloorWizardExamplePhotos, getPaintWizardExamplePhotos } from "../../lib/wizard-example-photos";
 import { canUserGenerate as canUserGenerateNow } from "../../lib/generation-access";
 import { hasGenerationImage, isGenerationFailure, resolveGenerationStatus } from "../../lib/generation-status";
+import { getRewardStatus } from "../../lib/rewards";
 import {
   GUEST_TESTING_STARTER_CREDITS,
   isGuestWizardTestingSession,
@@ -117,6 +120,7 @@ type MeResponse = {
   imageLimit?: number;
   imageGenerationCount?: number;
   lastResetDate?: number;
+  lastRewardDate?: number;
   generationResetAt?: number;
   imageGenerationLimit?: number;
   imagesRemaining?: number;
@@ -490,28 +494,29 @@ const EditorActionButton = memo(function EditorActionButton({
   loading?: boolean;
   tone?: "dark" | "light" | "accent";
 }) {
-  const backgroundColor = tone === "accent" ? "#CC3333" : tone === "light" ? "#F3F4F6" : "#05070A";
-  const borderColor = tone === "accent" ? "rgba(204,51,51,0.4)" : tone === "light" ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.12)";
+  const backgroundColor = tone === "accent" ? "#CC3333" : tone === "light" ? "#F3F4F6" : "#111827";
+  const borderColor = tone === "accent" ? "rgba(204,51,51,0.32)" : "rgba(17,24,39,0.08)";
   const iconColor = tone === "light" ? "#05070A" : "#FFFFFF";
-  const textColor = tone === "light" ? "#05070A" : "#FFFFFF";
+  const textColor = "#111827";
 
   return (
     <LuxPressable onPress={onPress} disabled={disabled || loading} className="cursor-pointer" style={{ flex: 1 }}>
-      <View
-        style={{
-          minHeight: 84,
-          borderRadius: 14,
-          borderWidth: 0.5,
-          borderColor,
-          backgroundColor,
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          paddingHorizontal: 12,
-          paddingVertical: 14,
-        }}
-      >
-        {loading ? <ActivityIndicator color={iconColor} /> : <Icon color={iconColor} size={20} strokeWidth={2.2} />}
+      <View style={{ alignItems: "center", gap: 10, opacity: disabled ? 0.55 : 1 }}>
+        <View
+          style={{
+            width: 74,
+            height: 74,
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor,
+            backgroundColor,
+            alignItems: "center",
+            justifyContent: "center",
+            ...ambientShadow(0.08, 12, 8),
+          }}
+        >
+          {loading ? <ActivityIndicator color={iconColor} /> : <Icon color={iconColor} size={24} strokeWidth={2.1} />}
+        </View>
         <Text style={{ color: textColor, fontSize: 13, lineHeight: 16, textAlign: "center", ...fonts.semibold }}>{label}</Text>
       </View>
     </LuxPressable>
@@ -2008,6 +2013,7 @@ export default function WorkspaceScreen() {
   const startGeneration = useMutation("generations:startGeneration" as any);
   const submitGenerationFeedback = useMutation("generations:submitFeedback" as any);
   const submitFeedbackSignal = useMutation("feedback:submit" as any);
+  const claimThreeDayReward = useMutation("users:claimThreeDayReward" as any);
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
@@ -2044,6 +2050,7 @@ export default function WorkspaceScreen() {
   const [, setLastGenerationCount] = useState<number | null>(null);
   const [showResumeToast, setShowResumeToast] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
+  const [pendingRegenerateConfirm, setPendingRegenerateConfirm] = useState(false);
   const [pendingReviewState, setPendingReviewState] = useState<{ count: number; shouldPrompt: boolean } | null>(null);
   const [wizardNavDirection, setWizardNavDirection] = useState<1 | -1>(1);
   const [processingStatusIndex, setProcessingStatusIndex] = useState(0);
@@ -3041,6 +3048,7 @@ export default function WorkspaceScreen() {
     setGeneratedImageUrl(targetItem.imageUrl ?? null);
     setGenerationId(targetItem.generationId ?? null);
     setShowComparisonSlider(false);
+    setPendingRegenerateConfirm(false);
     setFeedbackState(null);
     setFeedbackSubmitted(false);
     if (sliderWidth.value > 0) {
@@ -3586,6 +3594,7 @@ export default function WorkspaceScreen() {
       setPendingReviewState(null);
       setActiveBoardItemId(null);
       setShowComparisonSlider(false);
+      setPendingRegenerateConfirm(false);
       setFeedbackMessage("");
       setFeedbackState(null);
       setFeedbackSubmitted(false);
@@ -3919,6 +3928,7 @@ export default function WorkspaceScreen() {
     try {
       setFeedbackState(null);
       setFeedbackSubmitted(false);
+      setPendingRegenerateConfirm(false);
       setGeneratedImageUrl(null);
       setGenerationId(null);
       generationAlertedFailureRef.current = null;
@@ -4078,6 +4088,29 @@ export default function WorkspaceScreen() {
     }
 
     if (!diagnostic && !generationAccess.allowed) {
+      const refillEligible =
+        generationAccess.reason === "paywall"
+        && me?.plan === "free"
+        && getRewardStatus(me?.lastRewardDate).isEligible;
+      let refillGranted = false;
+
+      if (refillEligible) {
+        try {
+          const rewardResult = await claimThreeDayReward({ anonymousId: viewerId ?? undefined }) as {
+            granted: boolean;
+            credits: number;
+          };
+
+          if (rewardResult?.granted) {
+            setOptimisticCredits(rewardResult.credits);
+            refillGranted = true;
+          }
+        } catch {
+          // If the refill claim fails, fall back to the normal generation gate below.
+        }
+      }
+
+      if (!refillGranted) {
       if (generationAccess.reason === "paywall" && !effectiveSignedIn) {
         openAuthWall("/workspace", true);
         return;
@@ -4090,6 +4123,7 @@ export default function WorkspaceScreen() {
 
       showToast(generationAccess.message || t("workspace.generation.limitReached"));
       return;
+      }
     }
 
     triggerHaptic();
@@ -4121,6 +4155,7 @@ export default function WorkspaceScreen() {
     }
   }, [
     activeBoardItem,
+    claimThreeDayReward,
     cleanupTempFile,
     diagnostic,
     effectiveSignedIn,
@@ -4128,6 +4163,8 @@ export default function WorkspaceScreen() {
     generationAccess.message,
     generationAccess.reason,
     handleGenerate,
+    me?.lastRewardDate,
+    me?.plan,
     openAuthWall,
     openGenerationPaywall,
     prepareRegenerateSourceImage,
@@ -4138,9 +4175,54 @@ export default function WorkspaceScreen() {
     selectedStyle,
     selectedFinishId,
     serviceType,
+    setOptimisticCredits,
     showToast,
     t,
+    viewerId,
   ]);
+
+  const handleOpenRegenerateStep = useCallback(() => {
+    if (!activeBoardItem) {
+      return;
+    }
+
+    triggerHaptic();
+    setWizardNavDirection(-1);
+    setPendingRegenerateConfirm(true);
+    setShowComparisonSlider(false);
+    setSelectedRoom(activeBoardItem.roomLabel ?? selectedRoom ?? null);
+    setSelectedStyle(
+      resolveBoardStyleSelection(
+        activeBoardItem.styleLabel ?? selectedStyle,
+        activeBoardItem.serviceType ?? serviceType,
+        activeBoardItem.customPrompt,
+      ),
+    );
+    setSelectedModeId((activeBoardItem.modeId as ModeOption["id"] | null) ?? selectedModeId ?? null);
+    setSelectedPaletteId(activeBoardItem.paletteId ?? selectedPaletteId ?? null);
+    setSelectedFinishId((activeBoardItem.finishId as FinishOption["id"] | null) ?? selectedFinishId ?? null);
+    setCustomPrompt(activeBoardItem.customPrompt ?? customPrompt);
+    setDraftPrompt(activeBoardItem.customPrompt ?? customPrompt);
+    setWorkflowStep(3);
+  }, [
+    activeBoardItem,
+    customPrompt,
+    selectedFinishId,
+    selectedModeId,
+    selectedPaletteId,
+    selectedRoom,
+    selectedStyle,
+    serviceType,
+    setDraftPrompt,
+  ]);
+
+  const handleRemoveWatermark = useCallback(() => {
+    triggerHaptic();
+    router.push({
+      pathname: "/paywall",
+      params: { source: "remove-watermark" },
+    } as any);
+  }, [router]);
 
   const handleSubmitEditorFeedback = useCallback(async (sentiment: FeedbackSentiment) => {
     if (!activeGenerationRecordId) {
@@ -4215,6 +4297,10 @@ export default function WorkspaceScreen() {
     }
 
     if (workflowStep === 3) {
+      if (pendingRegenerateConfirm) {
+        void handleRegenerate();
+        return;
+      }
       if (!diagnostic && !generationAccess.allowed) {
         if (generationAccess.reason === "paywall" && !effectiveSignedIn) {
           openAuthWall("/workspace", true);
@@ -4235,7 +4321,7 @@ export default function WorkspaceScreen() {
     startTransition(() => {
       setWorkflowStep((prev) => Math.min(prev + 1, 3));
     });
-  }, [canContinue, diagnostic, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, handleGenerate, openAuthWall, openGenerationPaywall, showToast, workflowStep, t]);
+  }, [canContinue, diagnostic, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, handleGenerate, handleRegenerate, openAuthWall, openGenerationPaywall, pendingRegenerateConfirm, showToast, workflowStep, t]);
 
   const handleContinueFromGardenPhotoStep = useCallback(() => {
     if (!selectedImage) {
@@ -4483,6 +4569,7 @@ export default function WorkspaceScreen() {
     setGeneratedImageUrl(resultImageUrl);
     setGenerationId(item.generationId ?? null);
     setShowComparisonSlider(false);
+    setPendingRegenerateConfirm(false);
     setFeedbackState(null);
     setFeedbackSubmitted(false);
     if (sliderWidth.value > 0) {
@@ -4518,6 +4605,7 @@ export default function WorkspaceScreen() {
     setWorkflowStep(effectiveSignedIn ? (isFloorService ? 2 : 4) : 3);
     setActiveBoardItemId(null);
     setShowComparisonSlider(false);
+    setPendingRegenerateConfirm(false);
   }, [effectiveSignedIn, entrySource, isFloorService, router]);
 
   const handleDeleteBoardItem = useCallback(() => {
@@ -7075,74 +7163,111 @@ export default function WorkspaceScreen() {
     }
 
     return (
-      <View className="flex-1 bg-black" style={{ backgroundColor: "#000000" }}>
-        <View className="px-5" style={{ paddingTop: Math.max(insets.top + 10, 20) }}>
-          <View style={{ minHeight: 52, justifyContent: "center" }}>
-            <Text
-              style={{
-                position: "absolute",
-                left: 88,
-                right: 88,
-                color: "#ffffff",
-                fontSize: 22,
-                lineHeight: 28,
-                letterSpacing: -0.4,
-                textAlign: "center",
-                ...fonts.bold,
-              }}
-            >
-              {t("workspace.editor.title")}
-            </Text>
+      <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
+        <View
+          style={{
+            paddingTop: insets.top + 10,
+            paddingHorizontal: 20,
+            paddingBottom: 14,
+            backgroundColor: DS.colors.background,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: DS.colors.border,
+          }}
+        >
+          <View style={{ minHeight: 48, justifyContent: "center" }}>
+            <View pointerEvents="none" style={{ position: "absolute", left: 88, right: 88, top: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}>
+              <Text
+                style={{
+                  color: DS.colors.textPrimary,
+                  fontSize: 22,
+                  lineHeight: 28,
+                  letterSpacing: -0.4,
+                  textAlign: "center",
+                  ...fonts.bold,
+                }}
+              >
+                Your Design
+              </Text>
+            </View>
 
-            <View className="flex-row items-center justify-between">
-                <View style={{ minWidth: 88 }}>
-                  <DiamondCreditPill
-                    count={creditBalance}
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <View style={{ minWidth: 88, alignItems: "flex-start" }}>
+                <DiamondCreditPill
+                  count={creditBalance}
+                  style={{ minHeight: 42 }}
+                  variant="dark"
+                />
+              </View>
+
+              <View style={{ width: 88, alignItems: "flex-end" }}>
+                <LuxPressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("common.actions.close")}
+                  onPress={handleCloseBoardEditor}
+                  className="cursor-pointer"
+                >
+                  <View
                     style={{
-                      alignSelf: "flex-start",
-                      minHeight: 42,
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
+                      width: 42,
+                      height: 42,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: DS.colors.border,
+                      backgroundColor: DS.colors.surface,
                     }}
-                    variant="dark"
-                  />
-                </View>
-
-                <View style={{ width: 88, alignItems: "flex-end" }}>
-                  <LuxPressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t("workspace.editor.deleteA11y")}
-                    onPress={handleDeleteBoardItem}
-                    className="cursor-pointer h-11 w-11 items-center justify-center"
-                    style={{ ...floatingButton(false), paddingHorizontal: 0, paddingVertical: 0 }}
                   >
-                    <Trash2 color="#ffffff" size={18} strokeWidth={2.2} />
-                  </LuxPressable>
-                </View>
+                    <Close color={DS.colors.textPrimary} size={18} strokeWidth={1.6} />
+                  </View>
+                </LuxPressable>
+              </View>
             </View>
           </View>
         </View>
 
         <ScrollView
-          className="flex-1 bg-black"
-          style={{ backgroundColor: "#000000" }}
+          style={{ flex: 1, backgroundColor: DS.colors.background }}
           contentContainerStyle={{
-            paddingHorizontal: spacing.md,
-            paddingTop: spacing.lg,
-            paddingBottom: Math.max(insets.bottom + 34, 42),
+            paddingHorizontal: 20,
+            paddingTop: 24,
+            paddingBottom: Math.max(insets.bottom + 32, 40),
+            gap: 18,
           }}
           contentInsetAdjustmentBehavior="never"
+          showsVerticalScrollIndicator={false}
         >
-          <MotiView from={{ opacity: 0, scale: 0.96, translateY: 18 }} animate={{ opacity: 1, scale: 1, translateY: 0 }} transition={LUX_SPRING}>
-            <View className="overflow-hidden bg-zinc-950" style={{ ...organicRadii(), ...ambientShadow(0.18, 18, 18) }}>
-              <View ref={exportCaptureRef} className="relative h-[460px] w-full">
+          <MotiView
+            from={{ opacity: 0, scale: 0.98, translateY: 12 }}
+            animate={{ opacity: 1, scale: 1, translateY: 0 }}
+            transition={LUX_SPRING}
+          >
+            <View
+              style={{
+                ...surfaceCard("#FFFFFF"),
+                overflow: "hidden",
+                padding: 12,
+                gap: 12,
+              }}
+            >
+              <View
+                ref={exportCaptureRef}
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  height: Math.min(Math.max(width * 1.02, 360), 470),
+                  overflow: "hidden",
+                  borderRadius: 28,
+                  backgroundColor: DS.colors.surfaceHigh,
+                }}
+              >
                 {showSliderComparison && beforeImageSource && editorImageSource ? (
                   <MotiView
                     key={editorImageUrl}
-                    from={{ opacity: 0, scale: 0.985 }}
+                    from={{ opacity: 0, scale: 0.99 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={LUX_SPRING}
-                    className="h-full w-full"
+                    style={{ width: "100%", height: "100%" }}
                   >
                     <BeforeAfterSlider
                       afterSource={editorImageSource}
@@ -7151,23 +7276,43 @@ export default function WorkspaceScreen() {
                       sliderWidth={sliderWidth}
                       sliderX={sliderX}
                       style={{ width: "100%", height: "100%" }}
-                    >
-                      <View className="absolute inset-0 bg-black/10" />
-                    </BeforeAfterSlider>
+                    />
                   </MotiView>
                 ) : editorImageSource ? (
-                  <Image source={editorImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+                  <Image
+                    source={editorImageSource}
+                    style={{ width: "100%", height: "100%" }}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                    transition={120}
+                  />
                 ) : beforeImageSource ? (
-                  <Image source={beforeImageSource} style={{ width: "100%", height: "100%" }} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+                  <Image
+                    source={beforeImageSource}
+                    style={{ width: "100%", height: "100%" }}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                    transition={120}
+                  />
                 ) : (
-                  <View className="h-full w-full items-center justify-center bg-zinc-900">
-                    <Sparkles color="#71717a" size={28} />
+                  <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                    <Sparkles color={DS.colors.textMuted} size={28} />
                   </View>
                 )}
 
-                {!showSliderComparison ? <View className="absolute inset-0 bg-black/10" /> : null}
+                {!showSliderComparison ? <View style={{ position: "absolute", inset: 0, backgroundColor: "rgba(10,10,10,0.06)" }} /> : null}
 
-                <View className="absolute left-4 right-4 top-4 flex-row items-center justify-between">
+                <View
+                  style={{
+                    position: "absolute",
+                    top: 14,
+                    left: 14,
+                    right: 14,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <LuxPressable
                     accessibilityRole="button"
                     accessibilityLabel={showSliderComparison ? t("workspace.editor.hideComparison") : t("workspace.editor.showComparison")}
@@ -7177,209 +7322,187 @@ export default function WorkspaceScreen() {
                   >
                     <View
                       style={{
-                        height: 44,
                         width: 44,
+                        height: 44,
                         alignItems: "center",
                         justifyContent: "center",
-                        ...organicRadii(16, 14),
-                        ...floatingButton(false),
-                        borderColor: showSliderComparison ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.12)",
-                        backgroundColor: showSliderComparison ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.44)",
+                        borderRadius: 999,
+                        borderWidth: 1,
+                        borderColor: "rgba(255,255,255,0.82)",
+                        backgroundColor: showSliderComparison ? "rgba(214,64,103,0.92)" : "rgba(255,255,255,0.94)",
                         opacity: hasComparisonImages ? 1 : 0.45,
                       }}
                     >
-                      <MoveHorizontal color="#FFFFFF" size={18} strokeWidth={2.2} />
+                      <MoveHorizontal color={showSliderComparison ? "#FFFFFF" : "#121212"} size={18} strokeWidth={1.9} />
                     </View>
                   </LuxPressable>
 
-                  <View className="bg-black/40 px-3 py-1.5" style={{ ...organicRadii(16, 12), ...ambientShadow(0.14, 12, 10) }}>
-                    <Text className="text-xs font-semibold uppercase tracking-[1.6px] text-white/85" style={fonts.semibold}>
-                      {showSliderComparison ? t("workspace.editor.comparison") : editorStyleLabel}
-                    </Text>
-                  </View>
-                </View>
-
-                {isEditorProcessing ? (
-                  <View
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      paddingHorizontal: spacing.lg,
-                    }}
+                  <LuxPressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t("workspace.editor.deleteA11y")}
+                    onPress={handleDeleteBoardItem}
+                    className="cursor-pointer"
                   >
-                    <MotiView
-                      animate={{ scale: [0.92, 1.08, 0.92], opacity: [0.14, 0.28, 0.14] }}
-                      transition={{ duration: 2100, loop: true }}
-                      style={{
-                        position: "absolute",
-                        height: 210,
-                        width: 210,
-                        borderRadius: 999,
-                        backgroundColor: "rgba(217,70,239,0.14)",
-                      }}
-                    />
-                    <MotiView
-                      animate={{ translateY: ["-22%", "110%"], opacity: [0, 0.28, 0] }}
-                      transition={{ duration: 1800, loop: true }}
-                      style={{
-                        position: "absolute",
-                        left: 18,
-                        right: 18,
-                        height: 120,
-                        borderRadius: 28,
-                        backgroundColor: "rgba(217,70,239,0.08)",
-                        borderWidth: 1,
-                        borderColor: "rgba(255,255,255,0.08)",
-                      }}
-                    />
                     <View
                       style={{
-                        borderRadius: 28,
-                        borderWidth: 1,
-                        borderColor: "rgba(255,255,255,0.12)",
-                        backgroundColor: "rgba(0,0,0,0.58)",
-                        paddingHorizontal: spacing.lg,
-                        paddingVertical: spacing.md,
+                        width: 44,
+                        height: 44,
                         alignItems: "center",
-                        gap: spacing.sm,
+                        justifyContent: "center",
+                        borderRadius: 999,
+                        borderWidth: 1,
+                        borderColor: "rgba(255,255,255,0.82)",
+                        backgroundColor: "rgba(255,255,255,0.94)",
                       }}
                     >
-                      <ActivityIndicator size="small" color="#ffffff" />
-                      <Text style={{ color: "#ffffff", fontSize: 18, lineHeight: 22, textAlign: "left", ...fonts.bold }}>
-                        {getProcessingLabel(t)}
-                      </Text>
-                      <Text style={{ color: "#d4d4d8", fontSize: 13, lineHeight: 20, textAlign: "left", ...fonts.regular }}>
-                        {getProcessingStatusCopy(t, editorServiceType)}
-                      </Text>
+                      <Trash2 color="#121212" size={18} strokeWidth={1.8} />
                     </View>
-                  </View>
-                ) : null}
+                  </LuxPressable>
+                </View>
 
                 {isEditorFailed ? (
-                  <View
-                    style={{
-                      position: "absolute",
-                      left: 18,
-                      right: 18,
-                      bottom: 18,
-                      borderRadius: 24,
-                      borderWidth: 1,
-                      borderColor: "rgba(255,255,255,0.08)",
-                      backgroundColor: "rgba(10,10,10,0.82)",
-                      paddingHorizontal: spacing.md,
-                      paddingVertical: spacing.md,
-                    }}
-                  >
-                    <Text style={{ color: "#ffffff", fontSize: 14, lineHeight: 18, textAlign: "left", ...fonts.bold }}>
-                      {t("workspace.board.generationFailedTitle")}
-                    </Text>
-                    <Text style={{ color: "#a1a1aa", fontSize: 13, lineHeight: 20, marginTop: spacing.xs, textAlign: "left", ...fonts.regular }}>
-                      {activeBoardItem?.errorMessage ?? t("workspace.board.tryAnotherPrompt")}
-                    </Text>
-                  </View>
-                ) : null}
-
-                {!isEditorProcessing && !isEditorFailed ? (
                   <View
                     style={{
                       position: "absolute",
                       left: 16,
                       right: 16,
                       bottom: 16,
-                      flexDirection: "row",
-                      alignItems: "flex-end",
-                      justifyContent: "space-between",
+                      borderRadius: 22,
+                      backgroundColor: "rgba(255,255,255,0.94)",
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
                     }}
                   >
-                    <View style={{ flexDirection: "row", gap: 10 }}>
-                      {([
-                        { key: "liked", icon: ThumbUp, label: t("workspace.feedback.like") },
-                        { key: "disliked", icon: ThumbDown, label: t("workspace.feedback.dislike") },
-                      ] as const).map((item) => {
-                        const active = editorFeedbackState === item.key;
-                        const busy = isSubmittingFeedback === item.key;
-                        return (
-                          <LuxPressable
-                            key={item.key}
-                            onPress={() => {
-                              void handleSubmitEditorFeedback(item.key);
-                            }}
-                            disabled={isEditorActionDisabled || busy || isFeedbackBusy}
-                            className="cursor-pointer"
-                          >
-                            <View
-                              style={{
-                                height: 46,
-                                width: 46,
-                                alignItems: "center",
-                                justifyContent: "center",
-                                borderRadius: 999,
-                                borderWidth: 0.5,
-                                borderColor: active ? "rgba(255,255,255,0.32)" : "rgba(255,255,255,0.12)",
-                                backgroundColor: active ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.42)",
-                              }}
-                            >
-                              {busy ? (
-                                <ActivityIndicator color="#FFFFFF" size="small" />
-                              ) : (
-                                <item.icon color="#FFFFFF" size={18} strokeWidth={2.2} />
-                              )}
-                            </View>
-                          </LuxPressable>
-                        );
-                      })}
-                    </View>
-
-                    {currentImageHasWatermark ? (
-                      <MotiView animate={{ scale: [1, 1.03, 1], opacity: [1, 0.94, 1] }} transition={{ duration: 2200, loop: true }}>
-                        <LuxPressable onPress={handleUpgrade} className="cursor-pointer">
-                          <LinearGradient
-                            colors={["#1A2B3D", "#3A536A"]}
-                            start={{ x: 0, y: 0.5 }}
-                            end={{ x: 1, y: 0.5 }}
-                            style={{ ...organicRadii(18, 14), paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}
-                          >
-                            <View className="flex-row items-center gap-2">
-                              <Sparkles color="#ffffff" size={15} strokeWidth={1.8} />
-                              <Text className="text-sm font-semibold text-white" style={fonts.semibold}>{t("workspace.editor.removeWatermark")}</Text>
-                            </View>
-                          </LinearGradient>
-                        </LuxPressable>
-                      </MotiView>
-                    ) : null}
+                    <Text style={{ color: DS.colors.textPrimary, ...DS.typography.bodySm, ...fonts.bold }}>
+                      {t("workspace.board.generationFailedTitle")}
+                    </Text>
+                    <Text style={{ marginTop: 4, color: DS.colors.textMuted, ...DS.typography.bodySm }}>
+                      {activeBoardItem?.errorMessage ?? t("workspace.board.tryAnotherPrompt")}
+                    </Text>
                   </View>
                 ) : null}
 
                 {!isEditorProcessing && !isEditorFailed && currentImageHasWatermark && editorImageUrl ? (
-                  <View className="absolute bottom-24 right-4 bg-black px-4 py-2" style={{ ...organicRadii(16, 12) }}>
-                    <Text style={{ color: "#FFFFFF", fontSize: 12, lineHeight: 14, ...fonts.semibold }}>HomeDecor.ai</Text>
+                  <View
+                    style={{
+                      position: "absolute",
+                      right: 14,
+                      bottom: 74,
+                      borderRadius: 14,
+                      backgroundColor: "rgba(255,255,255,0.92)",
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                    }}
+                  >
+                    <Text style={{ color: DS.colors.textPrimary, fontSize: 12, lineHeight: 14, ...fonts.semibold }}>HomeDecor.ai</Text>
                   </View>
                 ) : null}
+
+                {!isEditorProcessing && !isEditorFailed && currentImageHasWatermark ? (
+                  <View
+                    style={{
+                      position: "absolute",
+                      right: 14,
+                      bottom: 14,
+                    }}
+                  >
+                    <LuxPressable onPress={handleRemoveWatermark} className="cursor-pointer">
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 8,
+                          borderRadius: 16,
+                          backgroundColor: "rgba(214,64,103,0.96)",
+                          paddingHorizontal: 14,
+                          paddingVertical: 10,
+                          ...ambientShadow(0.12, 12, 8),
+                        }}
+                      >
+                        <Zap color="#FFFFFF" size={15} strokeWidth={2.1} />
+                        <Text style={{ color: "#FFFFFF", ...DS.typography.button }}>
+                          Remove Watermark
+                        </Text>
+                      </View>
+                    </LuxPressable>
+                  </View>
+                ) : null}
+              </View>
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  paddingHorizontal: 4,
+                  minHeight: 48,
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                  {([
+                    { key: "liked", icon: ThumbUp, label: t("workspace.feedback.like") },
+                    { key: "disliked", icon: ThumbDown, label: t("workspace.feedback.dislike") },
+                  ] as const).map((item) => {
+                    const active = editorFeedbackState === item.key;
+                    const busy = isSubmittingFeedback === item.key;
+
+                    return (
+                      <LuxPressable
+                        key={item.key}
+                        onPress={() => {
+                          void handleSubmitEditorFeedback(item.key);
+                        }}
+                        disabled={isEditorActionDisabled || busy || isFeedbackBusy}
+                        className="cursor-pointer"
+                      >
+                        <View
+                          style={{
+                            width: 46,
+                            height: 46,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: active ? DS.colors.accent : DS.colors.border,
+                            backgroundColor: active ? DS.colors.accentSurface : "#FFFFFF",
+                          }}
+                        >
+                          {busy ? (
+                            <ActivityIndicator size="small" color={DS.colors.accent} />
+                          ) : (
+                            <item.icon color={active ? DS.colors.accent : DS.colors.textPrimary} size={18} strokeWidth={1.9} />
+                          )}
+                        </View>
+                      </LuxPressable>
+                    );
+                  })}
+                </View>
+
+                <View style={{ minWidth: 44 }} />
               </View>
             </View>
           </MotiView>
 
-          <View className="mt-5">
-            <Text className="text-lg font-semibold text-white" style={fonts.semibold}>{editorTitle}</Text>
-            <Text className="mt-1 text-sm text-zinc-400" style={{ textAlign: "left", ...fonts.regular }}>{editorSubtitle}</Text>
-          </View>
-
-          <View style={{ marginTop: spacing.lg, flexDirection: "row", gap: 12, alignItems: "stretch", justifyContent: "center" }}>
+          <View
+            style={{
+              marginTop: 6,
+              flexDirection: "row",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
             <EditorActionButton
               icon={Redo2}
-              label={isGenerating ? t("common.states.loading") : t("workspace.editor.regenerate")}
-              onPress={() => {
-                void handleRegenerate();
-              }}
+              label="Regenerate"
+              onPress={handleOpenRegenerateStep}
               disabled={isEditorActionDisabled || isGenerating}
-              loading={isGenerating}
+              loading={false}
               tone="light"
             />
             <EditorActionButton
               icon={Download}
-              label={isSaveBusy ? t("workspace.editor.saving") : t("common.actions.save")}
+              label="Save"
               onPress={handleSaveToGallery}
               disabled={isEditorActionDisabled || isSaveBusy}
               loading={isSaveBusy}
@@ -7387,7 +7510,7 @@ export default function WorkspaceScreen() {
             />
             <EditorActionButton
               icon={Share2}
-              label={isSharingResult ? t("workspace.editor.sharing") : t("common.actions.share")}
+              label="Share"
               onPress={() => {
                 void handleShare();
               }}

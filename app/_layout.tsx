@@ -19,6 +19,7 @@ import { AppErrorBoundary } from "../components/app-error-boundary";
 import { BrandLaunchScreen } from "../components/brand-launch-screen";
 import { GenerationAccessCacheGate } from "../components/generation-access-cache-gate";
 import { FlowUIProvider } from "../components/flow-ui-context";
+import { OfflineOverlay } from "../components/offline-overlay";
 import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
 import { ViewerCreditsProvider } from "../components/viewer-credits-context";
 import { ViewerSessionProvider } from "../components/viewer-session-context";
@@ -509,6 +510,7 @@ export default function RootLayout() {
                           <CreateAccessGate>
                             <AppShell />
                           </CreateAccessGate>
+                          <OfflineOverlay />
                         </BottomSheetModalProvider>
                       </WorkspaceDraftProvider>
                     </FlowUIProvider>

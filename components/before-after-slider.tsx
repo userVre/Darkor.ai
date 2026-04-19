@@ -25,6 +25,7 @@ import { triggerHaptic } from "../lib/haptics";
 import { fonts } from "../styles/typography";
 
 const HANDLE_TOUCH_WIDTH = 72;
+const HANDLE_VISUAL_SIZE = 42;
 const LABEL_EDGE_INSET = 18;
 const LABEL_FADE_DISTANCE = 96;
 const CENTER_HIT_THRESHOLD = 10;
@@ -212,9 +213,16 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
         </Animated.View>
 
         <Animated.View pointerEvents="none" style={[styles.handleWrap, handleStyle]}>
-          <View style={styles.handleDividerCluster}>
-            <View style={styles.handleDivider} />
-            <View style={styles.handleDivider} />
+          <View style={styles.handleTrack}>
+            <View style={styles.handleLine} />
+          </View>
+
+          <View style={styles.handleKnob}>
+            <View style={styles.handleKnobGlyphRow}>
+              <View style={styles.handleKnobGlyph} />
+              <View style={styles.handleKnobGlyph} />
+              <View style={styles.handleKnobGlyph} />
+            </View>
           </View>
         </Animated.View>
       </View>
@@ -279,17 +287,42 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  handleDividerCluster: {
-    height: "62%",
-    flexDirection: "row",
-    alignItems: "stretch",
+  handleTrack: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
     justifyContent: "center",
-    gap: 6,
+    alignItems: "center",
   },
-  handleDivider: {
-    width: 2,
+  handleLine: {
+    width: 3,
+    height: "100%",
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.94)",
+    backgroundColor: "rgba(255,255,255,0.96)",
+    boxShadow: "0px 0px 16px rgba(0, 0, 0, 0.18)",
+  },
+  handleKnob: {
+    width: HANDLE_VISUAL_SIZE,
+    height: HANDLE_VISUAL_SIZE,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.82)",
+    backgroundColor: "rgba(255,255,255,0.96)",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0px 12px 24px rgba(0, 0, 0, 0.22)",
+  },
+  handleKnobGlyphRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+  },
+  handleKnobGlyph: {
+    width: 2,
+    height: 12,
+    borderRadius: 999,
+    backgroundColor: "rgba(17,24,39,0.78)",
   },
 });
 

@@ -57,6 +57,7 @@ import {
   UserRound,
   UtensilsCrossed,
   Wallpaper,
+  Zap,
   WandSparkles as WandSparklesBase,
   X,
   type LucideIcon,
@@ -223,6 +224,7 @@ export {
   UserRound,
   UtensilsCrossed,
   Wallpaper,
+  Zap,
   X,
 };
 
