@@ -6,7 +6,7 @@ import {
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
-import { buildDesignPrompt as buildAIDesignPrompt, normalizeAspectRatio as normalizeAIAspectRatio } from "./ai";
+import { buildStabilityPrompt as buildAIDesignPrompt, normalizeAspectRatio as normalizeAIAspectRatio } from "../lib/stability-prompt-builder";
 import { canUserGenerateState, deriveSubscriptionState, FREE_IMAGE_LIMIT, toFiniteNumber } from "./subscriptions";
 import {
   buildDefaultUserFields,
@@ -370,6 +370,7 @@ export const startGeneration = mutationGeneric({
       aspectRatio: normalizedAspectRatio,
       regenerate: args.regenerate,
       speedTier: args.speedTier ?? "standard",
+      planUsed: allowance.planUsed,
     });
 
     return {

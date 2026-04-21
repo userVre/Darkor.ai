@@ -2,39 +2,36 @@ import { actionGeneric, internalActionGeneric, internalMutationGeneric } from "c
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
+import {
+  buildStabilityNegativePrompt,
+  buildStabilityPrompt,
+  normalizeAspectRatio,
+} from "../lib/stability-prompt-builder";
 
-const GOOGLE_GENERATIVE_LANGUAGE_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL ?? "gemini-3.1-pro-preview";
-const GEMINI_DETECTION_MODEL = process.env.GEMINI_DETECTION_MODEL ?? "gemini-2.5-flash";
-const NANO_BANANA_MODEL = process.env.NANO_BANANA_MODEL ?? "gemini-2.5-flash-image";
-const NANO_BANANA_PRO_MODEL = process.env.NANO_BANANA_PRO_MODEL ?? "nano-banana-pro-preview";
-const GEMINI_TEXT_ENDPOINT = `${GOOGLE_GENERATIVE_LANGUAGE_BASE}/${GEMINI_TEXT_MODEL}:generateContent`;
-const GEMINI_DETECTION_ENDPOINT = `${GOOGLE_GENERATIVE_LANGUAGE_BASE}/${GEMINI_DETECTION_MODEL}:generateContent`;
-const PRO_MIN_DELAY_MS = 4_000;
-const MODEL_REQUEST_TIMEOUT_MS = 45_000;
+const STABILITY_API_BASE = "https://api.stability.ai";
+const STABILITY_V1_IMAGE_TO_IMAGE_BASE = `${STABILITY_API_BASE}/v1/generation`;
+const STABILITY_V2_INPAINT_ENDPOINT = `${STABILITY_API_BASE}/v2beta/stable-image/edit/inpaint`;
+const STABILITY_OUTPUT_FORMAT = "png";
+const STABILITY_REQUEST_TIMEOUT_MS = 90_000;
 const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
+const PRO_MIN_DELAY_MS = 4_000;
+const STABILITY_ALLOWED_DIMENSIONS = [
+  { width: 1024, height: 1024 },
+  { width: 1152, height: 896 },
+  { width: 1216, height: 832 },
+  { width: 1344, height: 768 },
+  { width: 1536, height: 640 },
+  { width: 640, height: 1536 },
+  { width: 768, height: 1344 },
+  { width: 832, height: 1216 },
+  { width: 896, height: 1152 },
+];
+
+const FREE_ENGINE = "stable-diffusion-xl-1024-v1-0";
+const PRO_ENGINE = "stable-diffusion-xl-1024-v1-0";
 
 type ServiceType = "paint" | "floor" | "redesign";
 type SpeedTier = "standard" | "pro" | "ultra";
-
-type GeminiInlinePart = {
-  inlineData?: {
-    data?: string;
-    mimeType?: string;
-  };
-  text?: string;
-};
-
-type GeminiResponse = {
-  candidates?: Array<{
-    content?: {
-      parts?: GeminiInlinePart[];
-    };
-  }>;
-  promptFeedback?: {
-    blockReason?: string;
-  };
-};
 
 type DetectionPoint = {
   x: number;
@@ -42,93 +39,34 @@ type DetectionPoint = {
 };
 
 type DetectionResponse = {
-  confidence?: number;
-  polygons?: DetectionPoint[][];
-  reason?: string;
+  confidence: number;
+  polygons: DetectionPoint[][];
+  reason?: string | null;
 };
 
-type NanoBananaGenerationPayload = {
-  image_base64: string;
-  image_mime_type: string;
-  mask_base64?: string | null;
-  mask_mime_type?: string | null;
-  room_type: string;
-  design_style: string;
-  target_color?: string | null;
-  color_category?: string | null;
-  surface_type?: string | null;
-  user_prompt: string;
-  service_type: ServiceType;
-  aspect_ratio: string;
+type StabilityArtifact = {
+  base64?: string;
+  finishReason?: string;
+  seed?: number;
+};
+
+type StabilityV1Response = {
+  artifacts?: StabilityArtifact[];
+  message?: string;
+  name?: string;
+  errors?: string[];
+};
+
+type StabilityErrorPayload = {
+  errors?: string[];
+  message?: string;
+  name?: string;
+  id?: string;
 };
 
 function trimOptional(value?: string | null) {
   const trimmed = value?.trim();
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
-}
-
-export function normalizeAspectRatio(aspectRatio?: string | null) {
-  const trimmed = aspectRatio?.trim();
-  if (!trimmed) return "1:1";
-  return /^\d+:\d+$/.test(trimmed) ? trimmed : "1:1";
-}
-
-export function buildDesignPrompt(args: {
-  serviceType: ServiceType;
-  roomType: string;
-  style: string;
-  colorPalette: string;
-  customPrompt?: string;
-  aspectRatio?: string;
-  regenerate?: boolean;
-}) {
-  const roomType = trimOptional(args.roomType) ?? "space";
-  const style = trimOptional(args.style) ?? "luxury contemporary";
-  const colorPalette = trimOptional(args.colorPalette) ?? style;
-  const customPrompt = trimOptional(args.customPrompt);
-  const aspectRatio = normalizeAspectRatio(args.aspectRatio);
-  const variationInstruction = args.regenerate
-    ? "Create a fresh alternate variation while preserving the same architectural shell, framing, and level of realism."
-    : undefined;
-
-  if (args.serviceType === "paint") {
-    return [
-      `You are an expert interior designer and architectural visualizer. Repaint only the masked wall area of this ${roomType.toLowerCase()} using a ${colorPalette} palette with a ${style} finish.`,
-      "The second image is the edit mask. White marks the only editable wall region. Black must remain untouched.",
-      "Preserve the room geometry, ceiling, trim, flooring, furniture, doors, windows, artwork, lighting, shadows, reflections, and camera framing exactly as they appear.",
-      customPrompt ? `Follow these instructions exactly: ${customPrompt}.` : "Deliver a premium, believable paint transformation with refined material response and professional styling.",
-      `Output a photorealistic architectural render in a ${aspectRatio} frame.`,
-      variationInstruction,
-    ]
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  if (args.serviceType === "floor") {
-    return [
-      `You are an expert interior designer and architectural visualizer. Replace only the masked floor area in this ${roomType.toLowerCase()} with a ${style} material direction using a ${colorPalette} palette.`,
-      "The second image is the edit mask. White marks the only editable floor region. Black must remain untouched.",
-      "Preserve the walls, furniture, decor, trim, windows, doors, lighting, shadows, reflections, and camera framing exactly as they appear.",
-      "Keep the floor perspective, material scale, joins, and grounding physically believable so the new finish looks installed in the real scene.",
-      customPrompt ? `Follow these instructions exactly: ${customPrompt}.` : "Deliver a premium, photorealistic architectural material replacement with clean edge transitions.",
-      `Output a photorealistic architectural render in a ${aspectRatio} frame.`,
-      variationInstruction,
-    ]
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  return [
-    `You are an expert interior designer. Redesign this ${roomType} in a ${style} aesthetic.`,
-    customPrompt ? `Follow these instructions: ${customPrompt}.` : "Follow these instructions: elevate the space with a refined, premium, editorial-quality composition.",
-    `Use a ${colorPalette} theme.`,
-    "Preserve the original floorplan, walls, doors, windows, ceiling height, and camera framing while redesigning finishes, furniture, decor, and styling.",
-    "Do not warp the architecture, do not invent impossible geometry, and keep the result grounded in real-world materials and lighting.",
-    `Output: 8k photorealistic architectural render in a ${aspectRatio} frame.`,
-    variationInstruction,
-  ]
-    .filter(Boolean)
-    .join(" ");
 }
 
 function decodeBase64ToBytes(base64: string) {
@@ -154,21 +92,83 @@ async function blobToBase64(blob: Blob) {
   return btoa(binary);
 }
 
-async function parseGeminiError(response: Response) {
+function normalizeGenerationError(message?: string | null) {
+  const raw = trimOptional(message) ?? "Generation failed.";
+  const normalized = raw.toLowerCase();
+
+  if (raw === AI_PROVIDER_DOWN) {
+    return AI_PROVIDER_DOWN;
+  }
+
+  if (
+    normalized.includes("missing stability_api_key") ||
+    normalized.includes("api key missing") ||
+    normalized.includes("api key invalid") ||
+    normalized.includes("unauthorized") ||
+    normalized.includes("permission denied")
+  ) {
+    return "AI service configuration is unavailable right now. Please try again shortly.";
+  }
+
+  if (
+    normalized.includes("content filtered") ||
+    normalized.includes("content_filter") ||
+    normalized.includes("safety") ||
+    normalized.includes("moderation")
+  ) {
+    return "This request could not be processed safely. Try a different photo or prompt.";
+  }
+
+  if (
+    normalized.includes("credit") ||
+    normalized.includes("quota") ||
+    normalized.includes("rate limit") ||
+    normalized.includes("resource exhausted") ||
+    normalized.includes("temporarily unavailable")
+  ) {
+    return "HomeDecor AI is temporarily at capacity. Please try again in a few minutes.";
+  }
+
+  if (
+    normalized.includes("invalid image") ||
+    normalized.includes("unsupported image") ||
+    normalized.includes("unable to decode") ||
+    normalized.includes("invalid_file_size") ||
+    normalized.includes("invalid_mime_type")
+  ) {
+    return "The selected image could not be processed. Please try a different photo.";
+  }
+
+  if (normalized.includes("timed out")) {
+    return "AI is busy, please try again in a moment.";
+  }
+
+  return raw;
+}
+
+async function parseStabilityError(response: Response) {
   const raw = await response.text();
   try {
-    const json = JSON.parse(raw) as { error?: { message?: string } };
-    return json.error?.message ?? raw;
+    const parsed = JSON.parse(raw) as StabilityErrorPayload;
+    const combined = [
+      ...(Array.isArray(parsed.errors) ? parsed.errors : []),
+      parsed.message,
+      parsed.name,
+      parsed.id,
+    ]
+      .filter(Boolean)
+      .join(" | ");
+    return combined || raw;
   } catch {
     return raw;
   }
 }
 
-function shouldRetryGeminiStatus(status: number) {
+function shouldRetryStatus(status: number) {
   return status === 408 || status === 429 || status >= 500;
 }
 
-function shouldRetryGeminiErrorMessage(message: string) {
+function shouldRetryMessage(message: string) {
   const normalized = message.toLowerCase();
   return (
     normalized.includes("network request failed") ||
@@ -179,67 +179,12 @@ function shouldRetryGeminiErrorMessage(message: string) {
   );
 }
 
-function normalizeGenerationError(message?: string | null) {
-  const raw = trimOptional(message) ?? "Generation failed.";
-  const normalized = raw.toLowerCase();
-
-  if (raw === AI_PROVIDER_DOWN) {
-    return AI_PROVIDER_DOWN;
-  }
-
-  if (normalized === "payment required") {
-    return "Payment Required";
-  }
-
-  if (
-    normalized.includes("missing gemini_api_key") ||
-    normalized.includes("missing gemini_text_api_key") ||
-    normalized.includes("missing nano_banana_api_key") ||
-    normalized.includes("api key not valid") ||
-    normalized.includes("invalid api key") ||
-    normalized.includes("permission denied")
-  ) {
-    return "AI service configuration is unavailable right now. Please try again shortly.";
-  }
-
-  if (
-    normalized.includes("quota") ||
-    normalized.includes("resource exhausted") ||
-    normalized.includes("resource_exhausted") ||
-    normalized.includes("rate limit")
-  ) {
-    return "HomeDecor AI is temporarily at capacity. Please try again in a few minutes.";
-  }
-
-  if (
-    normalized.includes("invalid image") ||
-    normalized.includes("unsupported image") ||
-    normalized.includes("unable to decode image") ||
-    normalized.includes("image could not be loaded")
-  ) {
-    return "AI is busy, please try again in a moment.";
-  }
-
-  if (normalized.includes("blocked")) {
-    return "This request could not be processed safely. Try a different photo or prompt.";
-  }
-
-  if (normalized.includes("timed out")) {
-    return "AI is busy, please try again in a moment.";
-  }
-
-  return raw;
-}
-
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    return await fetch(url, {
-      ...init,
-      signal: controller.signal,
-    });
+    return await fetch(url, { ...init, signal: controller.signal });
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       throw new Error("The AI request timed out.");
@@ -250,9 +195,9 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   }
 }
 
-async function requestModelWithRetry(args: {
+async function requestStabilityWithRetry(args: {
   apiKey: string;
-  body: string;
+  body: BodyInit;
   endpoint: string;
   providerLabel: string;
 }) {
@@ -265,21 +210,21 @@ async function requestModelWithRetry(args: {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": args.apiKey,
+            authorization: `Bearer ${args.apiKey}`,
+            accept: "application/json",
           },
           body: args.body,
         },
-        MODEL_REQUEST_TIMEOUT_MS,
+        STABILITY_REQUEST_TIMEOUT_MS,
       );
 
       if (!response.ok) {
-        const errorMessage = normalizeGenerationError(await parseGeminiError(response));
-        if (attempt === 0 && shouldRetryGeminiStatus(response.status)) {
-          await new Promise((resolve) => setTimeout(resolve, 1200));
+        const errorMessage = normalizeGenerationError(await parseStabilityError(response));
+        if (attempt === 0 && shouldRetryStatus(response.status)) {
+          await new Promise((resolve) => setTimeout(resolve, 1_500));
           continue;
         }
-        if (shouldRetryGeminiStatus(response.status)) {
+        if (shouldRetryStatus(response.status)) {
           throw new ConvexError(AI_PROVIDER_DOWN);
         }
         throw new ConvexError(errorMessage || `${args.providerLabel} request failed with status ${response.status}.`);
@@ -287,13 +232,13 @@ async function requestModelWithRetry(args: {
 
       return response;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Gemini request failed.";
+      const message = error instanceof Error ? error.message : `${args.providerLabel} request failed.`;
       lastError = error instanceof Error ? error : new Error(message);
-      if (attempt === 0 && shouldRetryGeminiErrorMessage(message)) {
-        await new Promise((resolve) => setTimeout(resolve, 1200));
+      if (attempt === 0 && shouldRetryMessage(message)) {
+        await new Promise((resolve) => setTimeout(resolve, 1_500));
         continue;
       }
-      if (shouldRetryGeminiErrorMessage(message)) {
+      if (shouldRetryMessage(message)) {
         throw new ConvexError(AI_PROVIDER_DOWN);
       }
       throw error;
@@ -303,60 +248,250 @@ async function requestModelWithRetry(args: {
   throw lastError ?? new ConvexError(`${args.providerLabel} request failed.`);
 }
 
-function extractGeneratedImage(response: GeminiResponse) {
-  const candidates = Array.isArray(response.candidates) ? response.candidates : [];
-  for (const candidate of candidates) {
-    const parts = candidate.content?.parts ?? [];
-    for (const part of parts) {
-      const data = part.inlineData?.data;
-      if (data) {
-        return {
-          data,
-          mimeType: part.inlineData?.mimeType ?? "image/png",
-        };
-      }
-    }
+function resolveRenderProfile(args: { planUsed?: string; speedTier?: SpeedTier; serviceType: ServiceType }) {
+  const isProPlan = args.planUsed === "pro";
+  const isPaidTier = isProPlan || args.speedTier === "pro" || args.speedTier === "ultra";
+
+  if (args.serviceType === "redesign") {
+    return {
+      engine: isPaidTier ? PRO_ENGINE : FREE_ENGINE,
+      cfgScale: isPaidTier ? 11 : 7,
+      steps: isPaidTier ? 50 : 28,
+      imageStrength: isPaidTier ? 0.42 : 0.36,
+      providerLabel: "Stability image-to-image generator",
+      width: 1024,
+      height: 1024,
+      watermarkRequired: !isProPlan,
+    };
   }
 
-  const blockReason = response.promptFeedback?.blockReason;
-  if (blockReason) {
-    throw new ConvexError(normalizeGenerationError(`Gemini blocked the request (${blockReason}).`));
-  }
-
-  throw new ConvexError("Gemini returned no image.");
+  return {
+    engine: isPaidTier ? PRO_ENGINE : FREE_ENGINE,
+    cfgScale: isPaidTier ? 10 : 7,
+    steps: isPaidTier ? 45 : 28,
+    imageStrength: undefined,
+    providerLabel: "Stability inpainting generator",
+    width: 1024,
+    height: 1024,
+    watermarkRequired: !isProPlan,
+  };
 }
 
-function extractTextResponse(response: GeminiResponse) {
-  const candidates = Array.isArray(response.candidates) ? response.candidates : [];
-  const textParts: string[] = [];
-  for (const candidate of candidates) {
-    const parts = candidate.content?.parts ?? [];
-    for (const part of parts) {
-      if (typeof part.text === "string" && part.text.trim().length > 0) {
-        textParts.push(part.text.trim());
-      }
-    }
+function extractGeneratedImage(response: StabilityV1Response) {
+  const artifacts = Array.isArray(response.artifacts) ? response.artifacts : [];
+  const successful = artifacts.find((artifact) => artifact.finishReason !== "CONTENT_FILTERED" && artifact.base64);
+  if (successful?.base64) {
+    return successful.base64;
   }
 
-  const blockReason = response.promptFeedback?.blockReason;
-  if (!textParts.length && blockReason) {
-    throw new ConvexError(normalizeGenerationError(`Gemini blocked the request (${blockReason}).`));
+  if (artifacts.some((artifact) => artifact.finishReason === "CONTENT_FILTERED")) {
+    throw new ConvexError("CONTENT_FILTERED");
   }
 
-  if (!textParts.length) {
-    throw new ConvexError("Gemini returned no detection result.");
-  }
-
-  return textParts.join("\n");
+  const errors = Array.isArray(response.errors) ? response.errors.join(" | ") : "";
+  throw new ConvexError(errors || response.message || "Stability returned no image.");
 }
 
-function parseJsonPayload<T>(raw: string): T {
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
-  const candidate = fenced ?? raw;
-  const start = candidate.indexOf("{");
-  const end = candidate.lastIndexOf("}");
-  const jsonText = start >= 0 && end >= start ? candidate.slice(start, end + 1) : candidate;
-  return JSON.parse(jsonText) as T;
+function buildPrompt(args: {
+  serviceType: ServiceType;
+  roomType: string;
+  style: string;
+  colorPalette: string;
+  customPrompt?: string;
+  targetColor?: string;
+  targetSurface?: string;
+  aspectRatio?: string;
+  regenerate?: boolean;
+}) {
+  return buildStabilityPrompt({
+    serviceType: args.serviceType,
+    roomType: args.roomType,
+    style: args.style,
+    colorPalette: args.colorPalette,
+    customPrompt: args.customPrompt,
+    targetColor: args.targetColor,
+    targetSurface: args.targetSurface,
+    aspectRatio: args.aspectRatio,
+    regenerate: args.regenerate,
+  });
+}
+
+function appendPromptFields(formData: FormData, args: {
+  prompt: string;
+  negativePrompt: string;
+  cfgScale: number;
+  steps: number;
+  width?: number;
+  height?: number;
+  imageStrength?: number;
+}) {
+  formData.append("text_prompts[0][text]", args.prompt);
+  formData.append("text_prompts[0][weight]", "1");
+  formData.append("text_prompts[1][text]", args.negativePrompt);
+  formData.append("text_prompts[1][weight]", "-1");
+  formData.append("cfg_scale", String(args.cfgScale));
+  formData.append("steps", String(args.steps));
+  formData.append("samples", "1");
+  if (typeof args.width === "number") {
+    formData.append("width", String(args.width));
+  }
+  if (typeof args.height === "number") {
+    formData.append("height", String(args.height));
+  }
+  if (typeof args.imageStrength === "number") {
+    formData.append("init_image_mode", "IMAGE_STRENGTH");
+    formData.append("image_strength", String(args.imageStrength));
+  }
+}
+
+async function runRedesignGeneration(args: {
+  apiKey: string;
+  prompt: string;
+  negativePrompt: string;
+  sourceBlob: Blob;
+  renderProfile: ReturnType<typeof resolveRenderProfile>;
+}) {
+  const formData = new FormData();
+  formData.append("init_image", args.sourceBlob, "source.png");
+  appendPromptFields(formData, {
+    prompt: args.prompt,
+    negativePrompt: args.negativePrompt,
+    cfgScale: args.renderProfile.cfgScale,
+    steps: args.renderProfile.steps,
+    imageStrength: args.renderProfile.imageStrength,
+  });
+
+  const response = await requestStabilityWithRetry({
+    apiKey: args.apiKey,
+    body: formData,
+    endpoint: `${STABILITY_V1_IMAGE_TO_IMAGE_BASE}/${args.renderProfile.engine}/image-to-image`,
+    providerLabel: args.renderProfile.providerLabel,
+  });
+
+  const payload = (await response.json()) as StabilityV1Response;
+  return extractGeneratedImage(payload);
+}
+
+async function runMaskedGeneration(args: {
+  apiKey: string;
+  prompt: string;
+  negativePrompt: string;
+  sourceBlob: Blob;
+  maskBlob: Blob;
+  renderProfile: ReturnType<typeof resolveRenderProfile>;
+}) {
+  const formData = new FormData();
+  formData.append("image", args.sourceBlob, "source.png");
+  formData.append("mask", args.maskBlob, "mask.png");
+  formData.append("prompt", args.prompt);
+  formData.append("negative_prompt", args.negativePrompt);
+  formData.append("output_format", STABILITY_OUTPUT_FORMAT);
+  formData.append("strength", String(args.renderProfile.imageStrength ?? 0.35));
+
+  const response = await requestStabilityWithRetry({
+    apiKey: args.apiKey,
+    body: formData,
+    endpoint: STABILITY_V2_INPAINT_ENDPOINT,
+    providerLabel: args.renderProfile.providerLabel,
+  });
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    const payload = (await response.json()) as StabilityV1Response & { image?: string };
+    const encoded = payload.image ?? extractGeneratedImage(payload);
+    return encoded;
+  }
+
+  const generatedBlob = await response.blob();
+  return blobToBase64(generatedBlob);
+}
+
+async function applyHomeDecorWatermark(blob: Blob) {
+  const jimpModule = (await import("jimp-compact")) as any;
+  const Jimp = jimpModule.default ?? jimpModule;
+  const image = await Jimp.read(new Uint8Array(await blob.arrayBuffer()));
+  const font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
+  const width = image.bitmap.width;
+  const height = image.bitmap.height;
+  const margin = Math.max(24, Math.round(Math.min(width, height) * 0.035));
+  const boxHeight = Math.max(52, Math.round(height * 0.075));
+  const overlayTop = height - boxHeight - margin;
+
+  image.scan(0, overlayTop, width, boxHeight + margin, (x: number, y: number, index: number) => {
+    if (y < overlayTop) return;
+    image.bitmap.data[index + 0] = Math.round(image.bitmap.data[index + 0] * 0.78);
+    image.bitmap.data[index + 1] = Math.round(image.bitmap.data[index + 1] * 0.78);
+    image.bitmap.data[index + 2] = Math.round(image.bitmap.data[index + 2] * 0.78);
+  });
+
+  image.print(
+    font,
+    margin,
+    overlayTop + Math.max(10, Math.round(boxHeight * 0.2)),
+    {
+      text: "HomeDecor.ai",
+      alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT,
+      alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE,
+    },
+    width - margin * 2,
+    boxHeight,
+  );
+
+  const watermarked = await image.getBufferAsync(Jimp.MIME_PNG);
+  return new Blob([watermarked], { type: "image/png" });
+}
+
+function chooseClosestDimension(width: number, height: number, preferLarger: boolean) {
+  const aspectRatio = width / Math.max(height, 1);
+  const sourceArea = width * height;
+
+  return STABILITY_ALLOWED_DIMENSIONS.slice().sort((left, right) => {
+    const leftAspectPenalty = Math.abs(left.width / left.height - aspectRatio);
+    const rightAspectPenalty = Math.abs(right.width / right.height - aspectRatio);
+    if (leftAspectPenalty !== rightAspectPenalty) {
+      return leftAspectPenalty - rightAspectPenalty;
+    }
+
+    const leftAreaPenalty = Math.abs(left.width * left.height - sourceArea);
+    const rightAreaPenalty = Math.abs(right.width * right.height - sourceArea);
+    if (leftAreaPenalty !== rightAreaPenalty) {
+      return leftAreaPenalty - rightAreaPenalty;
+    }
+
+    return preferLarger
+      ? right.width * right.height - left.width * left.height
+      : left.width * left.height - right.width * right.height;
+  })[0]!;
+}
+
+async function normalizeImagesForStability(args: {
+  sourceBlob: Blob;
+  maskBlob?: Blob | null;
+  preferLarger: boolean;
+}) {
+  const jimpModule = (await import("jimp-compact")) as any;
+  const Jimp = jimpModule.default ?? jimpModule;
+  const source = await Jimp.read(new Uint8Array(await args.sourceBlob.arrayBuffer()));
+  const dimension = chooseClosestDimension(source.bitmap.width, source.bitmap.height, args.preferLarger);
+
+  source.cover(dimension.width, dimension.height);
+  const sourceBuffer = await source.getBufferAsync(Jimp.MIME_PNG);
+
+  let normalizedMaskBlob: Blob | null = null;
+  if (args.maskBlob) {
+    const mask = await Jimp.read(new Uint8Array(await args.maskBlob.arrayBuffer()));
+    mask.cover(dimension.width, dimension.height, Jimp.RESIZE_NEAREST_NEIGHBOR);
+    mask.greyscale();
+    mask.threshold({ max: 120 });
+    const maskBuffer = await mask.getBufferAsync(Jimp.MIME_PNG);
+    normalizedMaskBlob = new Blob([maskBuffer], { type: "image/png" });
+  }
+
+  return {
+    sourceBlob: new Blob([sourceBuffer], { type: "image/png" }),
+    maskBlob: normalizedMaskBlob,
+    dimension,
+  };
 }
 
 function clampDetectionCoordinate(value: number) {
@@ -364,201 +499,42 @@ function clampDetectionCoordinate(value: number) {
   return Math.max(0, Math.min(1000, Math.round(value)));
 }
 
-function sanitizeDetectionResponse(raw: DetectionResponse) {
-  const confidence = Math.max(0, Math.min(100, Math.round(raw.confidence ?? 0)));
-  const polygons = Array.isArray(raw.polygons)
-    ? raw.polygons
-        .map((polygon) =>
-          Array.isArray(polygon)
-            ? polygon
-                .map((point) => ({
-                  x: clampDetectionCoordinate(point?.x ?? 0),
-                  y: clampDetectionCoordinate(point?.y ?? 0),
-                }))
-                .filter((point, index, points) => {
-                  if (index === 0) return true;
-                  const previous = points[index - 1];
-                  return previous.x !== point.x || previous.y !== point.y;
-                })
-            : [],
-        )
-        .filter((polygon) => polygon.length >= 3)
-    : [];
+function heuristicDetection(target: "paint" | "floor"): DetectionResponse {
+  if (target === "floor") {
+    return {
+      confidence: 42,
+      polygons: [[
+        { x: 80, y: 620 },
+        { x: 920, y: 620 },
+        { x: 980, y: 980 },
+        { x: 20, y: 980 },
+      ]],
+      reason: "Automatic detection is temporarily conservative during the Stability migration.",
+    };
+  }
 
   return {
-    confidence,
-    polygons,
-    reason: trimOptional(raw.reason) ?? null,
+    confidence: 38,
+    polygons: [
+      [
+        { x: 20, y: 40 },
+        { x: 470, y: 40 },
+        { x: 470, y: 760 },
+        { x: 20, y: 760 },
+      ],
+      [
+        { x: 530, y: 40 },
+        { x: 980, y: 40 },
+        { x: 980, y: 760 },
+        { x: 530, y: 760 },
+      ],
+    ],
+    reason: "Automatic detection is temporarily conservative during the Stability migration.",
   };
-}
-
-function buildDetectionPrompt(target: "paint" | "floor") {
-  const subject =
-    target === "paint"
-      ? "all visible wall surfaces that should be repaintable"
-      : "all visible floor surfaces that should be restylable";
-  const exclusions =
-    target === "paint"
-      ? "furniture, windows, doors, trim, baseboards, ceiling, art, mirrors, lamps, rugs, and flooring"
-      : "walls, baseboards, rugs, mats, furniture, furniture legs, decor, stairs, and reflections";
-
-  return [
-    `Analyze this interior photo and detect ${subject}.`,
-    `Exclude ${exclusions}.`,
-    "Return JSON only with this exact shape:",
-    '{"confidence": 0, "polygons": [[{"x": 0, "y": 0}]], "reason": ""}',
-    "Use image-space coordinates from 0 to 1000 for both x and y.",
-    "Each polygon should tightly trace one contiguous editable surface.",
-    "Return up to 8 polygons.",
-    "If confidence is below 70 or the target surface is unclear, return confidence below 70 and an empty polygons array.",
-    "Do not include markdown fences or any text outside the JSON object.",
-  ].join(" ");
-}
-
-function buildPromptOptimizationInstruction(args: {
-  serviceType: ServiceType;
-  roomType: string;
-  style: string;
-  colorPalette: string;
-  customPrompt?: string;
-  targetColor?: string;
-  targetColorCategory?: string;
-  targetSurface?: string;
-  aspectRatio?: string;
-  regenerate?: boolean;
-}) {
-  const basePrompt = buildDesignPrompt(args);
-
-  return [
-    "You are an architectural prompt optimizer for premium AI image generation.",
-    `Service type: ${args.serviceType}.`,
-    `Room type: ${args.roomType}.`,
-    `Style direction: ${args.style}.`,
-    `Palette direction: ${args.colorPalette}.`,
-    args.targetColor ? `Target color: ${args.targetColor}.` : undefined,
-    args.targetColorCategory ? `Color family: ${args.targetColorCategory}.` : undefined,
-    args.targetSurface ? `Surface type: ${args.targetSurface}.` : undefined,
-    args.customPrompt ? `User notes: ${args.customPrompt}.` : "User notes: none.",
-    `Aspect ratio: ${normalizeAspectRatio(args.aspectRatio)}.`,
-    args.regenerate ? "This is a regeneration request. Preserve the concept while varying the styling details." : undefined,
-    "Refine the following draft into a single vivid, high-conversion architectural image prompt.",
-    "Keep it photorealistic, composition-aware, and specific about materials, lighting, styling, and preservation constraints.",
-    "If a target color or surface is provided, weave it naturally into a professional architectural description.",
-    "Do not mention camera UI, markdown, JSON, bullet points, or safety policies.",
-    "Return only the final optimized prompt as plain text.",
-    `Draft prompt: ${basePrompt}`,
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
-
-function buildNanoBananaGenerationPayload(args: {
-  imageBase64: string;
-  imageMimeType: string;
-  maskBase64?: string | null;
-  maskMimeType?: string | null;
-  serviceType: ServiceType;
-  roomType: string;
-  style: string;
-  optimizedPrompt: string;
-  targetColor?: string;
-  targetColorCategory?: string;
-  targetSurface?: string;
-  aspectRatio?: string;
-}) {
-  return {
-    image_base64: args.imageBase64,
-    image_mime_type: args.imageMimeType,
-    mask_base64: args.maskBase64 ?? null,
-    mask_mime_type: args.maskMimeType ?? null,
-    room_type: trimOptional(args.roomType) ?? "space",
-    design_style: trimOptional(args.style) ?? "premium architectural",
-    target_color: trimOptional(args.targetColor) ?? null,
-    color_category: trimOptional(args.targetColorCategory) ?? null,
-    surface_type: trimOptional(args.targetSurface) ?? null,
-    user_prompt: args.optimizedPrompt,
-    service_type: args.serviceType,
-    aspect_ratio: normalizeAspectRatio(args.aspectRatio),
-  } satisfies NanoBananaGenerationPayload;
-}
-
-function buildNanoBananaRequestContext(args: {
-  serviceType: ServiceType;
-  roomType: string;
-  style: string;
-  colorPalette: string;
-  customPrompt?: string;
-  targetColor?: string;
-  targetColorHex?: string;
-  targetColorCategory?: string;
-  targetSurface?: string;
-  aspectRatio?: string;
-  optimizedPrompt: string;
-  hasMask: boolean;
-}) {
-  return {
-    serviceType: args.serviceType,
-    roomType: trimOptional(args.roomType) ?? "space",
-    selectedColorOrMaterial: trimOptional(args.colorPalette) ?? null,
-    selectedSurfaceOrStyle: trimOptional(args.style) ?? null,
-    userPrompt: trimOptional(args.customPrompt) ?? null,
-    target_color: trimOptional(args.targetColor) ?? null,
-    target_color_hex: trimOptional(args.targetColorHex) ?? null,
-    target_color_category: trimOptional(args.targetColorCategory) ?? null,
-    target_surface: trimOptional(args.targetSurface) ?? null,
-    optimizedPrompt: args.optimizedPrompt,
-    aspectRatio: normalizeAspectRatio(args.aspectRatio),
-    editMask:
-      args.hasMask
-        ? args.serviceType === "paint"
-          ? "white = editable wall region"
-          : args.serviceType === "floor"
-            ? "white = editable floor region"
-            : "white = editable redesign region"
-        : null,
-  };
-}
-
-function sanitizeOptimizedPrompt(raw: string) {
-  const withoutFences = raw.replace(/```[\s\S]*?```/g, " ").replace(/\s+/g, " ").trim();
-  if (!withoutFences) {
-    throw new ConvexError("Gemini returned an empty optimized prompt.");
-  }
-  return withoutFences;
-}
-
-function resolveServiceApiKey(primary?: string | null, fallback?: string | null) {
-  const direct = primary?.trim();
-  if (direct) {
-    return direct;
-  }
-  const backup = fallback?.trim();
-  if (backup) {
-    return backup;
-  }
-  return null;
-}
-
-function resolveImageSize(speedTier?: SpeedTier) {
-  if (speedTier === "ultra") {
-    return "4K";
-  }
-  if (speedTier === "pro") {
-    return "2K";
-  }
-  return "1K";
-}
-
-function buildModelEndpoint(modelName: string) {
-  return `${GOOGLE_GENERATIVE_LANGUAGE_BASE}/${modelName}:generateContent`;
-}
-
-function resolveImageGenerationModel(speedTier?: SpeedTier) {
-  return speedTier === "standard" ? NANO_BANANA_MODEL : NANO_BANANA_PRO_MODEL;
 }
 
 async function waitForMinimumDuration(startedAt: number, speedTier?: SpeedTier) {
-  if (speedTier !== "pro") {
+  if (speedTier !== "pro" && speedTier !== "ultra") {
     return;
   }
 
@@ -633,25 +609,15 @@ export const generateDesign: any = internalActionGeneric({
     aspectRatio: v.optional(v.string()),
     regenerate: v.optional(v.boolean()),
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
+    planUsed: v.optional(v.string()),
   },
   handler: async (
     ctx,
     args,
   ): Promise<{ ok: true; storageId: string; imageUrl: string | null }> => {
-    const geminiTextApiKey = resolveServiceApiKey(process.env.GEMINI_TEXT_API_KEY, process.env.GEMINI_API_KEY);
-    if (!geminiTextApiKey) {
-      const message = normalizeGenerationError("Missing GEMINI_TEXT_API_KEY in Convex environment variables.");
-      await ctx.runMutation((internal as any).generations.markGenerationFailed, {
-        generationId: args.generationId,
-        ownerId: args.ownerId,
-        errorMessage: message,
-      });
-      throw new ConvexError(message);
-    }
-
-    const nanoBananaApiKey = resolveServiceApiKey(process.env.NANO_BANANA_API_KEY, process.env.GEMINI_API_KEY);
-    if (!nanoBananaApiKey) {
-      const message = normalizeGenerationError("Missing NANO_BANANA_API_KEY in Convex environment variables.");
+    const apiKey = trimOptional(process.env.STABILITY_API_KEY);
+    if (!apiKey) {
+      const message = normalizeGenerationError("Missing STABILITY_API_KEY in Convex environment variables.");
       await ctx.runMutation((internal as any).generations.markGenerationFailed, {
         generationId: args.generationId,
         ownerId: args.ownerId,
@@ -674,133 +640,63 @@ export const generateDesign: any = internalActionGeneric({
         throw new ConvexError("The edit mask could not be loaded from storage.");
       }
 
-      const promptOptimizationInstruction = buildPromptOptimizationInstruction({
+      const normalizedAssets = await normalizeImagesForStability({
+        sourceBlob,
+        maskBlob,
+        preferLarger: args.planUsed === "pro" || args.speedTier === "pro" || args.speedTier === "ultra",
+      });
+
+      const renderProfile = resolveRenderProfile({
+        planUsed: trimOptional(args.planUsed),
+        speedTier: (args.speedTier as SpeedTier | undefined) ?? "standard",
+        serviceType: args.serviceType,
+      });
+
+      const optimizedPrompt = buildPrompt({
         serviceType: args.serviceType,
         roomType: args.roomType,
         style: args.style,
         colorPalette: args.colorPalette,
         customPrompt: args.customPrompt,
         targetColor: args.targetColor,
-        targetColorCategory: args.targetColorCategory,
         targetSurface: args.targetSurface,
         aspectRatio: args.aspectRatio,
         regenerate: args.regenerate,
       });
-
-      const promptResponse = await requestModelWithRetry({
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: promptOptimizationInstruction }],
-            },
-          ],
-          generationConfig: {
-            maxOutputTokens: 1024,
-            thinkingConfig: {
-              thinkingLevel: "high",
-            },
-          },
-        }),
-        apiKey: geminiTextApiKey,
-        endpoint: GEMINI_TEXT_ENDPOINT,
-        providerLabel: "Gemini prompt optimizer",
+      const negativePrompt = buildStabilityNegativePrompt({
+        serviceType: args.serviceType,
       });
-      const promptPayload = (await promptResponse.json()) as GeminiResponse;
-      const optimizedPrompt = sanitizeOptimizedPrompt(extractTextResponse(promptPayload));
+
       await ctx.runMutation((internal as any).ai.saveOptimizedPrompt, {
         generationId: args.generationId,
         prompt: optimizedPrompt,
       });
-      const sourceBase64 = await blobToBase64(sourceBlob);
-      const maskBase64 = maskBlob ? await blobToBase64(maskBlob) : null;
-      const generationPayload = buildNanoBananaGenerationPayload({
-        imageBase64: sourceBase64,
-        imageMimeType: sourceBlob.type || "image/jpeg",
-        maskBase64,
-        maskMimeType: maskBlob?.type || "image/png",
-        serviceType: args.serviceType,
-        roomType: args.roomType,
-        style: args.style,
-        optimizedPrompt,
-        targetColor: args.targetColor,
-        targetColorCategory: args.targetColorCategory,
-        targetSurface: args.targetSurface,
-        aspectRatio: args.aspectRatio,
-      });
-      const requestContext = buildNanoBananaRequestContext({
-        serviceType: args.serviceType,
-        roomType: args.roomType,
-        style: args.style,
-        colorPalette: args.colorPalette,
-        customPrompt: args.customPrompt,
-        targetColor: args.targetColor,
-        targetColorHex: args.targetColorHex,
-        targetColorCategory: args.targetColorCategory,
-        targetSurface: args.targetSurface,
-        aspectRatio: args.aspectRatio,
-        optimizedPrompt,
-        hasMask: Boolean(maskBlob),
-      });
 
-      const parts: GeminiInlinePart[] = [
-        { text: `Optimized prompt:\n${optimizedPrompt}` },
-        { text: `Structured generation context JSON:\n${JSON.stringify(requestContext)}` },
-        {
-          text: `Nano Banana generation payload JSON:\n${JSON.stringify({
-            ...generationPayload,
-            image_base64: `[base64:${generationPayload.image_base64.length}]`,
-            mask_base64: generationPayload.mask_base64 ? `[base64:${generationPayload.mask_base64.length}]` : null,
-          })}`,
-        },
-        {
-          inlineData: {
-            mimeType: generationPayload.image_mime_type,
-            data: generationPayload.image_base64,
-          },
-        },
-      ];
+      const generatedBase64 =
+        args.serviceType === "redesign"
+          ? await runRedesignGeneration({
+              apiKey,
+              prompt: optimizedPrompt,
+              negativePrompt,
+              sourceBlob: normalizedAssets.sourceBlob,
+              renderProfile,
+            })
+          : await runMaskedGeneration({
+              apiKey,
+              prompt: optimizedPrompt,
+              negativePrompt,
+              sourceBlob: normalizedAssets.sourceBlob,
+              maskBlob: normalizedAssets.maskBlob!,
+              renderProfile,
+            });
 
-      if (maskBlob) {
-        parts.push({
-          text:
-            args.serviceType === "paint"
-              ? "Reference edit mask for wall repainting. White marks the only editable wall region."
-              : "Reference edit mask for floor restyling. White marks the only editable floor region.",
-        });
-        parts.push({
-          inlineData: {
-            mimeType: generationPayload.mask_mime_type || "image/png",
-            data: generationPayload.mask_base64 || "",
-          },
-        });
-      }
-
-      const imageGenerationModel = resolveImageGenerationModel((args.speedTier as SpeedTier | undefined) ?? "standard");
-      const response = await requestModelWithRetry({
-        body: JSON.stringify({
-          contents: [
-            {
-              parts,
-            },
-          ],
-          generationConfig: {
-            responseModalities: ["TEXT", "IMAGE"],
-            imageConfig: {
-              aspectRatio: normalizeAspectRatio(args.aspectRatio),
-              imageSize: resolveImageSize(args.speedTier as SpeedTier | undefined),
-            },
-          },
-        }),
-        apiKey: nanoBananaApiKey,
-        endpoint: process.env.NANO_BANANA_ENDPOINT?.trim() || buildModelEndpoint(imageGenerationModel),
-        providerLabel: "Nano Banana image generator",
-      });
-
-      const payload = (await response.json()) as GeminiResponse;
-      const generated = extractGeneratedImage(payload);
-      const bytes = decodeBase64ToBytes(generated.data);
+      const bytes = decodeBase64ToBytes(generatedBase64);
       const imageBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
-      const outputBlob = new Blob([imageBuffer], { type: generated.mimeType ?? "image/png" });
+      let outputBlob = new Blob([imageBuffer], { type: "image/png" });
+
+      if (renderProfile.watermarkRequired) {
+        outputBlob = await applyHomeDecorWatermark(outputBlob);
+      }
 
       await waitForMinimumDuration(startedAt, (args.speedTier as SpeedTier | undefined) ?? "standard");
       generatedStorageId = (await ctx.storage.store(outputBlob)) as string;
@@ -836,44 +732,17 @@ export const detectEditMask: any = actionGeneric({
     imageStorageId: v.id("_storage"),
     target: v.union(v.literal("paint"), v.literal("floor")),
   },
-  handler: async (ctx, args) => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new ConvexError(normalizeGenerationError("Missing GEMINI_API_KEY in Convex environment variables."));
-    }
-
-    const sourceBlob = await ctx.storage.get(args.imageStorageId);
-    if (!sourceBlob) {
-      throw new ConvexError("The source image could not be loaded from storage.");
-    }
-
-    const response = await requestModelWithRetry({
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: buildDetectionPrompt(args.target) },
-              {
-                inlineData: {
-                  mimeType: sourceBlob.type || "image/jpeg",
-                  data: await blobToBase64(sourceBlob),
-                },
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 2048,
-        },
-      }),
-      apiKey,
-      endpoint: GEMINI_DETECTION_ENDPOINT,
-      providerLabel: "Gemini mask detector",
-    });
-
-    const payload = (await response.json()) as GeminiResponse;
-    const rawText = extractTextResponse(payload);
-    return sanitizeDetectionResponse(parseJsonPayload<DetectionResponse>(rawText));
+  handler: async (_ctx, args) => {
+    const fallback = heuristicDetection(args.target);
+    return {
+      confidence: clampDetectionCoordinate(fallback.confidence),
+      polygons: fallback.polygons.map((polygon) =>
+        polygon.map((point) => ({
+          x: clampDetectionCoordinate(point.x),
+          y: clampDetectionCoordinate(point.y),
+        })),
+      ),
+      reason: trimOptional(fallback.reason) ?? null,
+    };
   },
 });
