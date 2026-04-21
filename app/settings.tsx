@@ -6,7 +6,6 @@ import * as Clipboard from "expo-clipboard";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
 import { Alert, I18nManager, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -57,12 +56,6 @@ function truncateUserId(value: string) {
   return `${value.slice(0, 15)}...`;
 }
 
-function joinAppUrl(path: string) {
-  const normalizedBase = APP_URL.endsWith("/") ? APP_URL.slice(0, -1) : APP_URL;
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${normalizedBase}${normalizedPath}`;
-}
-
 export default function SettingsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -107,19 +100,6 @@ export default function SettingsScreen() {
     await Linking.openURL(url);
   };
 
-  const openBrowserOrRoute = async (path: string, fallbackRoute: "/faq" | "/terms-of-service" | "/privacy-policy") => {
-    try {
-      if (APP_URL.startsWith("http")) {
-        await WebBrowser.openBrowserAsync(joinAppUrl(path));
-        return;
-      }
-    } catch {
-      // Fall back to in-app route below.
-    }
-
-    router.push(fallbackRoute);
-  };
-
   const handleUpgrade = () => {
     router.push("/paywall");
   };
@@ -133,7 +113,7 @@ export default function SettingsScreen() {
   };
 
   const handleFaq = async () => {
-    await openBrowserOrRoute("/faq", "/faq");
+    router.push("/faq");
   };
 
   const handleRateUs = async () => {
@@ -165,11 +145,11 @@ export default function SettingsScreen() {
   };
 
   const handleTerms = async () => {
-    await openBrowserOrRoute("/terms-of-service", "/terms-of-service");
+    router.push({ pathname: "/legal-viewer", params: { document: "terms" } } as never);
   };
 
   const handlePrivacy = async () => {
-    await openBrowserOrRoute("/privacy-policy", "/privacy-policy");
+    router.push({ pathname: "/legal-viewer", params: { document: "privacy" } } as never);
   };
 
   const handleLanguageSettings = () => {

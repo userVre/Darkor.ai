@@ -296,23 +296,27 @@ function buildPrompt(args: {
   serviceType: ServiceType;
   roomType: string;
   style: string;
+  styleSelections?: string[];
   colorPalette: string;
   customPrompt?: string;
   targetColor?: string;
   targetSurface?: string;
   aspectRatio?: string;
   regenerate?: boolean;
+  smartSuggest?: boolean;
 }) {
   return buildStabilityPrompt({
     serviceType: args.serviceType,
     roomType: args.roomType,
     style: args.style,
+    styleSelections: args.styleSelections,
     colorPalette: args.colorPalette,
     customPrompt: args.customPrompt,
     targetColor: args.targetColor,
     targetSurface: args.targetSurface,
     aspectRatio: args.aspectRatio,
     regenerate: args.regenerate,
+    smartSuggest: args.smartSuggest,
   });
 }
 
@@ -545,6 +549,144 @@ async function waitForMinimumDuration(startedAt: number, speedTier?: SpeedTier) 
   }
 }
 
+function extractJsonBlock(value: string) {
+  const fencedMatch = value.match(/```json\s*([\s\S]*?)```/i) ?? value.match(/```([\s\S]*?)```/i);
+  return (fencedMatch?.[1] ?? value).trim();
+}
+
+function normalizeSuggestionChoice(value: string | undefined, options: string[], fallback: string) {
+  const normalizedValue = trimOptional(value)?.toLowerCase();
+  if (!normalizedValue) {
+    return fallback;
+  }
+
+  const directMatch = options.find((option) => option.toLowerCase() === normalizedValue);
+  if (directMatch) {
+    return directMatch;
+  }
+
+  const partialMatch = options.find((option) => normalizedValue.includes(option.toLowerCase()) || option.toLowerCase().includes(normalizedValue));
+  return partialMatch ?? fallback;
+}
+
+function buildFallbackSuggestion(args: {
+  roomType: string;
+  availableStyles: string[];
+  availablePalettes: string[];
+}) {
+  const room = args.roomType.toLowerCase();
+  const styleFallback =
+    args.availableStyles.find((style) => room.includes("bath") && style.toLowerCase().includes("minimal")) ??
+    args.availableStyles.find((style) => room.includes("bed") && style.toLowerCase().includes("japandi")) ??
+    args.availableStyles.find((style) => room.includes("living") && style.toLowerCase().includes("modern")) ??
+    args.availableStyles[0] ??
+    "Modern";
+  const paletteFallback =
+    args.availablePalettes.find((palette) => room.includes("bath") && palette.toLowerCase().includes("gray")) ??
+    args.availablePalettes.find((palette) => room.includes("bed") && palette.toLowerCase().includes("surprise")) ??
+    args.availablePalettes.find((palette) => room.includes("living") && palette.toLowerCase().includes("terracotta")) ??
+    args.availablePalettes[0] ??
+    "surprise";
+
+  return {
+    style: styleFallback,
+    paletteId: paletteFallback,
+    reason: `Fallback recommendation tuned to the detected ${args.roomType} context.`,
+    source: "fallback" as const,
+  };
+}
+
+export const suggestDesignOptions: any = actionGeneric({
+  args: {
+    imageStorageId: v.id("_storage"),
+    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign")),
+    roomType: v.string(),
+    availableStyles: v.array(v.string()),
+    availablePalettes: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const fallback = buildFallbackSuggestion(args);
+    const apiKey = trimOptional(process.env.GEMINI_API_KEY);
+    const model = trimOptional(process.env.GEMINI_TEXT_MODEL) ?? "gemini-3.1-pro-preview";
+
+    if (!apiKey) {
+      return fallback;
+    }
+
+    const sourceBlob = await ctx.storage.get(args.imageStorageId);
+    if (!sourceBlob) {
+      return fallback;
+    }
+
+    try {
+      const base64 = await blobToBase64(sourceBlob);
+      const prompt = [
+        "You are an architectural interior and exterior design selector.",
+        `Service type: ${args.serviceType}.`,
+        `Room type: ${args.roomType}.`,
+        `Available styles: ${args.availableStyles.join(", ")}.`,
+        `Available palettes: ${args.availablePalettes.join(", ")}.`,
+        "Choose exactly one best style and one best palette for the uploaded architecture.",
+        'Return strict JSON like {"style":"Modern","paletteId":"terracotta","reason":"..."} with no extra text.',
+      ].join(" ");
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { text: prompt },
+                {
+                  inlineData: {
+                    mimeType: sourceBlob.type || "image/jpeg",
+                    data: base64,
+                  },
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.35,
+            responseMimeType: "application/json",
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        return fallback;
+      }
+
+      const payload = await response.json() as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      const text = payload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("").trim();
+      if (!text) {
+        return fallback;
+      }
+
+      const parsed = JSON.parse(extractJsonBlock(text)) as {
+        style?: string;
+        paletteId?: string;
+        reason?: string;
+      };
+
+      return {
+        style: normalizeSuggestionChoice(parsed.style, args.availableStyles, fallback.style),
+        paletteId: normalizeSuggestionChoice(parsed.paletteId, args.availablePalettes, fallback.paletteId),
+        reason: trimOptional(parsed.reason) ?? fallback.reason,
+        source: "gemini" as const,
+      };
+    } catch {
+      return fallback;
+    }
+  },
+});
+
 export const saveGeneration = internalMutationGeneric({
   args: {
     generationId: v.id("generations"),
@@ -596,10 +738,12 @@ export const generateDesign: any = internalActionGeneric({
     generationId: v.id("generations"),
     ownerId: v.string(),
     imageStorageId: v.id("_storage"),
+    referenceImageStorageIds: v.optional(v.array(v.id("_storage"))),
     maskStorageId: v.optional(v.id("_storage")),
     serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign")),
     roomType: v.string(),
     style: v.string(),
+    styleSelections: v.optional(v.array(v.string())),
     colorPalette: v.string(),
     customPrompt: v.optional(v.string()),
     targetColor: v.optional(v.string()),
@@ -608,6 +752,7 @@ export const generateDesign: any = internalActionGeneric({
     targetSurface: v.optional(v.string()),
     aspectRatio: v.optional(v.string()),
     regenerate: v.optional(v.boolean()),
+    smartSuggest: v.optional(v.boolean()),
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
     planUsed: v.optional(v.string()),
   },
@@ -656,12 +801,14 @@ export const generateDesign: any = internalActionGeneric({
         serviceType: args.serviceType,
         roomType: args.roomType,
         style: args.style,
+        styleSelections: args.styleSelections,
         colorPalette: args.colorPalette,
         customPrompt: args.customPrompt,
         targetColor: args.targetColor,
         targetSurface: args.targetSurface,
         aspectRatio: args.aspectRatio,
         regenerate: args.regenerate,
+        smartSuggest: args.smartSuggest,
       });
       const negativePrompt = buildStabilityNegativePrompt({
         serviceType: args.serviceType,

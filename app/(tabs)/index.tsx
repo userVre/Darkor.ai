@@ -192,6 +192,8 @@ export default function HomeScreen() {
       </ScrollView>
 
       <CreditLimitModal
+        body="You can use Diamonds to start new redesigns, and upgrading unlocks more generations with premium output quality."
+        title="Credit Balance"
         visible={isCreditModalVisible}
         onClose={handleCreditModalClose}
         onUpgrade={handleCreditModalUpgrade}

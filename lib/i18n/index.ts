@@ -45,14 +45,18 @@ const resources: Resource = {
   ar: { translation: require("../../locales/ar.json") },
   sv: { translation: require("../../locales/sv.json") },
   de: { translation: require("../../locales/de.json") },
+  it: { translation: require("../../locales/it.json") },
   ja: { translation: require("../../locales/ja.json") },
   ko: { translation: require("../../locales/ko.json") },
   fr: { translation: require("../../locales/fr.json") },
   es: { translation: require("../../locales/es.json") },
+  "es-MX": { translation: require("../../locales/es-MX.json") },
   ru: { translation: require("../../locales/ru.json") },
   pt: { translation: require("../../locales/pt.json") },
   "pt-BR": { translation: require("../../locales/pt-BR.json") },
   "zh-Hans": { translation: require("../../locales/zh-Hans.json") },
+  "zh-Hant": { translation: require("../../locales/zh-Hant.json") },
+  vi: { translation: require("../../locales/vi.json") },
 };
 
 let initPromise: Promise<typeof i18n> | null = null;

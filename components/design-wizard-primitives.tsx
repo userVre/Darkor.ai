@@ -19,9 +19,9 @@ import {
   WashingMachineIcon,
 } from "phosphor-react-native";
 
-export const DESIGN_WIZARD_ACCENT = "#121212";
-export const DESIGN_WIZARD_ACCENT_STRONG = "#121212";
-export const DESIGN_WIZARD_DEPTH_SHADOW = "rgba(18,18,18,0.18)";
+export const DESIGN_WIZARD_ACCENT = "#1D4ED8";
+export const DESIGN_WIZARD_ACCENT_STRONG = "#1E40AF";
+export const DESIGN_WIZARD_DEPTH_SHADOW = "rgba(29,78,216,0.22)";
 export const DESIGN_WIZARD_SURFACE = "#FFFFFF";
 export const DESIGN_WIZARD_SURFACE_MUTED = "#F5F5F5";
 export const DESIGN_WIZARD_BORDER = "#E3E3E3";
@@ -119,7 +119,7 @@ export function getWizardFloatingButtonStyle(active: boolean): ViewStyle {
     borderCurve: "continuous",
     backgroundColor: active ? DESIGN_WIZARD_ACCENT : "#ECECEC",
     boxShadow: active
-      ? "0px 18px 30px rgba(18,18,18,0.16)"
+      ? "0px 18px 30px rgba(29,78,216,0.24)"
       : "0px 14px 28px rgba(15,23,42,0.12)",
   };
 }

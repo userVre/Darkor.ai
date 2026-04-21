@@ -98,7 +98,7 @@ export function StickyStepHeader({
                   style={styles.iconButton}
                 >
                   <ArrowLeft
-                    color={DS.colors.textPrimary}
+                    color="#000000"
                     size={18}
                     strokeWidth={1.9}
                     style={[

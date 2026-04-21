@@ -6,14 +6,18 @@ export const SUPPORTED_LANGUAGES = [
   "ar",
   "sv",
   "de",
+  "it",
   "ja",
   "ko",
   "fr",
   "pt",
   "pt-BR",
   "es",
+  "es-MX",
   "ru",
   "zh-Hans",
+  "zh-Hant",
+  "vi",
 ] as const;
 
 export type AppLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -54,6 +58,13 @@ export const SUPPORTED_LANGUAGE_OPTIONS: readonly SupportedLanguageOption[] = [
     nativeLabel: "Deutsch",
     localeBase: "de",
     defaultRegion: "DE",
+  },
+  {
+    code: "it",
+    englishLabel: "Italian",
+    nativeLabel: "Italiano",
+    localeBase: "it",
+    defaultRegion: "IT",
   },
   {
     code: "ja",
@@ -98,6 +109,13 @@ export const SUPPORTED_LANGUAGE_OPTIONS: readonly SupportedLanguageOption[] = [
     defaultRegion: "ES",
   },
   {
+    code: "es-MX",
+    englishLabel: "Spanish (Mexico)",
+    nativeLabel: "Espa\u00f1ol (M\u00e9xico)",
+    localeBase: "es",
+    defaultRegion: "MX",
+  },
+  {
     code: "ru",
     englishLabel: "Russian",
     nativeLabel: "\u0420\u0443\u0441\u0441\u043a\u0438\u0439",
@@ -110,6 +128,20 @@ export const SUPPORTED_LANGUAGE_OPTIONS: readonly SupportedLanguageOption[] = [
     nativeLabel: "\u7b80\u4f53\u4e2d\u6587",
     localeBase: "zh-Hans",
     defaultRegion: "CN",
+  },
+  {
+    code: "zh-Hant",
+    englishLabel: "Chinese (Traditional)",
+    nativeLabel: "\u7e41\u9ad4\u4e2d\u6587",
+    localeBase: "zh-Hant",
+    defaultRegion: "TW",
+  },
+  {
+    code: "vi",
+    englishLabel: "Vietnamese",
+    nativeLabel: "Ti\u1ebfng Vi\u1ec7t",
+    localeBase: "vi",
+    defaultRegion: "VN",
   },
 ] as const;
 
@@ -146,6 +178,10 @@ export function resolveSupportedLanguage(input?: string | null): AppLanguage {
     return "de";
   }
 
+  if (normalized === "it" || normalized.startsWith("it-")) {
+    return "it";
+  }
+
   if (normalized === "ja" || normalized.startsWith("ja-")) {
     return "ja";
   }
@@ -170,7 +206,11 @@ export function resolveSupportedLanguage(input?: string | null): AppLanguage {
     return "pt";
   }
 
-  if (normalized === "es" || normalized === "es-mx" || normalized.startsWith("es-")) {
+  if (normalized === "es-mx" || normalized.startsWith("es-mx")) {
+    return "es-MX";
+  }
+
+  if (normalized === "es" || normalized.startsWith("es-")) {
     return "es";
   }
 
@@ -181,10 +221,27 @@ export function resolveSupportedLanguage(input?: string | null): AppLanguage {
   if (
     normalized === "zh-hans"
     || normalized.includes("hans")
-    || normalized === "zh-hant"
-    || normalized.includes("hant")
-    || normalized.startsWith("zh-")
+    || normalized.startsWith("zh-cn")
+    || normalized.startsWith("zh-sg")
   ) {
+    return "zh-Hans";
+  }
+
+  if (
+    normalized === "zh-hant"
+    || normalized.includes("hant")
+    || normalized.startsWith("zh-tw")
+    || normalized.startsWith("zh-hk")
+    || normalized.startsWith("zh-mo")
+  ) {
+    return "zh-Hant";
+  }
+
+  if (normalized === "vi" || normalized.startsWith("vi-")) {
+    return "vi";
+  }
+
+  if (normalized.startsWith("zh-")) {
     return "zh-Hans";
   }
 
@@ -198,12 +255,16 @@ export function resolveSupportedLanguageFromLocales(locales?: readonly Locale[])
     if (regionCode === "US") return "en-US";
     if (regionCode === "SE") return "sv";
     if (regionCode === "DE") return "de";
+    if (regionCode === "IT") return "it";
     if (regionCode === "JP") return "ja";
     if (regionCode === "KR") return "ko";
     if (regionCode === "FR") return "fr";
     if (regionCode === "PT") return "pt";
     if (regionCode === "BR") return "pt-BR";
+    if (regionCode === "MX") return "es-MX";
     if (regionCode === "RU") return "ru";
+    if (regionCode === "TW" || regionCode === "HK" || regionCode === "MO") return "zh-Hant";
+    if (regionCode === "VN") return "vi";
 
     const candidate = resolveSupportedLanguage(
       locale.languageTag
@@ -250,7 +311,7 @@ export function getLanguageLocaleTag(language?: string | null, regionCode?: stri
 }
 
 export function isCjkLanguage(language?: string | null) {
-  return ["ja", "ko", "zh-Hans"].includes(resolveSupportedLanguage(language));
+  return ["ja", "ko", "zh-Hans", "zh-Hant"].includes(resolveSupportedLanguage(language));
 }
 
 export function isRtlLanguage(language?: string | null) {

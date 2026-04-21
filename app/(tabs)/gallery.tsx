@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { DiscoverImageCard } from "../../components/discover-image-card";
 import { DiscoverPreviewModal } from "../../components/discover-preview-modal";
 import { DiamondCreditPill } from "../../components/diamond-credit-pill";
+import { CreditLimitModal } from "../../components/credit-limit-modal";
 import { useViewerCredits } from "../../components/viewer-credits-context";
 import { DS } from "../../lib/design-system";
 import {
@@ -83,6 +84,7 @@ export default function GalleryScreen() {
   const { width } = useWindowDimensions();
   const { credits } = useViewerCredits();
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
+  const [isCreditModalVisible, setIsCreditModalVisible] = useState(false);
   const [selectedClusterId, setSelectedClusterId] = useState<DiscoverClusterId>("interiors");
   const clusters = useDiscoverClusters();
   const cardWidth = useMemo(() => Math.min(Math.round(width * 0.46), 224), [width]);
@@ -124,6 +126,20 @@ export default function GalleryScreen() {
     });
   }, [router]);
 
+  const handleCreditsPress = useCallback(() => {
+    triggerHaptic();
+    setIsCreditModalVisible(true);
+  }, []);
+
+  const handleCreditModalClose = useCallback(() => {
+    setIsCreditModalVisible(false);
+  }, []);
+
+  const handleCreditModalUpgrade = useCallback(() => {
+    setIsCreditModalVisible(false);
+    router.push("/paywall");
+  }, [router]);
+
   const keyExtractor = useCallback((item: DiscoverGroup) => item.id, []);
 
   const renderSection = useCallback(
@@ -149,8 +165,9 @@ export default function GalleryScreen() {
           <View style={styles.creditSlot}>
             <DiamondCreditPill
               accessibilityLabel={t("home.accessibility.openCredits")}
-              accessibilityRole="text"
+              accessibilityRole="button"
               count={credits}
+              onPress={handleCreditsPress}
               style={styles.creditPill}
               variant="dark"
             />
@@ -181,7 +198,7 @@ export default function GalleryScreen() {
         </View>
       </View>
     ),
-    [clusters, credits, handleClusterPress, insets.top, selectedCluster?.id, selectedClusterId, t],
+    [clusters, credits, handleClusterPress, handleCreditsPress, insets.top, selectedCluster?.id, selectedClusterId, t],
   );
 
   return (
@@ -203,6 +220,14 @@ export default function GalleryScreen() {
         visible={Boolean(previewItem)}
         topInset={insets.top}
         onClose={handlePreviewClose}
+      />
+
+      <CreditLimitModal
+        body="You can use Diamonds to unlock more redesigns from Discover, or upgrade now to jump straight into the paywall."
+        title="Credit Balance"
+        visible={isCreditModalVisible}
+        onClose={handleCreditModalClose}
+        onUpgrade={handleCreditModalUpgrade}
       />
     </View>
   );

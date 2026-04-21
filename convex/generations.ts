@@ -264,9 +264,11 @@ export const startGeneration = mutationGeneric({
   args: {
     anonymousId: v.optional(v.string()),
     imageStorageId: v.id("_storage"),
+    referenceImageStorageIds: v.optional(v.array(v.id("_storage"))),
     maskStorageId: v.optional(v.id("_storage")),
     serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign")),
     selection: v.string(),
+    styleSelections: v.optional(v.array(v.string())),
     roomType: v.string(),
     displayStyle: v.optional(v.string()),
     customPrompt: v.optional(v.string()),
@@ -278,6 +280,9 @@ export const startGeneration = mutationGeneric({
     modeId: v.optional(v.string()),
     paletteId: v.optional(v.string()),
     finishId: v.optional(v.string()),
+    aiSuggestedStyle: v.optional(v.string()),
+    aiSuggestedPaletteId: v.optional(v.string()),
+    smartSuggest: v.optional(v.boolean()),
     regenerate: v.optional(v.boolean()),
     ignoreReviewCooldown: v.optional(v.boolean()),
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
@@ -293,6 +298,12 @@ export const startGeneration = mutationGeneric({
       const maskMetadata = await ctx.db.system.get("_storage", args.maskStorageId);
       if (!maskMetadata) {
         throw new ConvexError("The selected mask is no longer available. Please paint the walls again.");
+      }
+    }
+    for (const referenceStorageId of args.referenceImageStorageIds ?? []) {
+      const referenceMetadata = await ctx.db.system.get("_storage", referenceStorageId);
+      if (!referenceMetadata) {
+        throw new ConvexError("One of the reference images is no longer available. Please reselect your photos.");
       }
     }
 
@@ -320,12 +331,14 @@ export const startGeneration = mutationGeneric({
     const generationId = await ctx.db.insert("generations", {
       userId: viewer.userId,
       sourceImageStorageId: args.imageStorageId,
+      referenceImageStorageIds: args.referenceImageStorageIds,
       maskImageStorageId: args.maskStorageId,
       storageId: undefined,
       imageUrl: undefined,
       watermarkRequired,
       prompt,
       style: resolvedStyle,
+      styleSelections: args.styleSelections?.filter(Boolean),
       roomType: args.roomType,
       customPrompt: trimOptional(args.customPrompt),
       colorPalette: normalizedSelection,
@@ -334,6 +347,9 @@ export const startGeneration = mutationGeneric({
       modeId: trimOptional(args.modeId),
       paletteId: trimOptional(args.paletteId),
       finishId: trimOptional(args.finishId),
+      aiSuggestedStyle: trimOptional(args.aiSuggestedStyle),
+      aiSuggestedPaletteId: trimOptional(args.aiSuggestedPaletteId),
+      smartSuggest: args.smartSuggest === true,
       mode:
         args.serviceType === "paint"
           ? "Smart Wall Paint"
@@ -357,10 +373,12 @@ export const startGeneration = mutationGeneric({
       generationId,
       ownerId: viewer.userId,
       imageStorageId: args.imageStorageId,
+      referenceImageStorageIds: args.referenceImageStorageIds,
       maskStorageId: args.maskStorageId,
       serviceType: args.serviceType,
       roomType: args.roomType,
       style: resolvedStyle,
+      styleSelections: args.styleSelections?.filter(Boolean),
       colorPalette: normalizedSelection,
       customPrompt: trimOptional(args.customPrompt),
       targetColor: trimOptional(args.targetColor),
@@ -369,6 +387,9 @@ export const startGeneration = mutationGeneric({
       targetSurface: trimOptional(args.targetSurface),
       aspectRatio: normalizedAspectRatio,
       regenerate: args.regenerate,
+      aiSuggestedStyle: trimOptional(args.aiSuggestedStyle),
+      aiSuggestedPaletteId: trimOptional(args.aiSuggestedPaletteId),
+      smartSuggest: args.smartSuggest === true,
       speedTier: args.speedTier ?? "standard",
       planUsed: allowance.planUsed,
     });

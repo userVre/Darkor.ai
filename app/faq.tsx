@@ -44,7 +44,7 @@ export default function FaqScreen() {
             className="cursor-pointer"
             glowColor={DS.colors.accentGlow}
           >
-            <ChevronLeft color={DS.colors.textPrimary} size={18} strokeWidth={2.2} />
+            <ChevronLeft color="#000000" size={18} strokeWidth={2.2} />
           </LuxPressable>
 
           <View style={styles.heroCard}>

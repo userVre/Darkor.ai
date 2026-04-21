@@ -23,8 +23,10 @@ type TryItExampleInput = {
 
 type WorkspaceDraftSetters = {
   setDraftImage: (image: DraftImage | null) => void;
+  setDraftImages?: (images: DraftImage[] | null) => void;
   setDraftRoom: (room: string | null) => void;
   setDraftStyle: (style: string | null) => void;
+  setDraftStyles?: (styles: string[] | null) => void;
   setDraftPalette: (paletteId: string | null) => void;
   setDraftMode: (modeId: string | null) => void;
   setDraftFinish: (finishId: string | null) => void;
@@ -138,8 +140,10 @@ export async function prepareTryItFlow(
   }
 
   setters.setDraftImage({ uri, label: example.room });
+  setters.setDraftImages?.([{ uri, label: example.room }]);
   setters.setDraftRoom(example.room);
   setters.setDraftStyle(example.style);
+  setters.setDraftStyles?.([example.style]);
   setters.setDraftPalette(example.paletteId ?? null);
   setters.setDraftMode(example.modeId ?? null);
   setters.setDraftFinish(example.finishId ?? null);

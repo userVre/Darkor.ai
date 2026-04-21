@@ -8,10 +8,23 @@ type CreditLimitModalProps = {
   visible: boolean;
   onClose: () => void;
   onUpgrade: () => void;
+  title?: string;
+  body?: string;
+  upgradeLabel?: string;
 };
 
-export function CreditLimitModal({ visible, onClose, onUpgrade }: CreditLimitModalProps) {
+export function CreditLimitModal({
+  visible,
+  onClose,
+  onUpgrade,
+  title,
+  body,
+  upgradeLabel,
+}: CreditLimitModalProps) {
   const { t } = useTranslation();
+  const resolvedTitle = title ?? t("creditLimit.title");
+  const resolvedBody = body ?? t("creditLimit.body");
+  const resolvedUpgradeLabel = upgradeLabel ?? t("common.actions.upgrade");
   return (
     <Modal
       visible={visible}
@@ -30,14 +43,14 @@ export function CreditLimitModal({ visible, onClose, onUpgrade }: CreditLimitMod
           </Pressable>
 
           <View style={styles.content}>
-            <Text style={styles.title}>{t("creditLimit.title")}</Text>
+            <Text style={styles.title}>{resolvedTitle}</Text>
 
             <Text style={styles.body}>
-              {t("creditLimit.body")}
+              {resolvedBody}
             </Text>
 
             <Pressable accessibilityRole="button" onPress={onUpgrade} style={styles.upgradeButton}>
-              <Text style={styles.upgradeText}>{t("common.actions.upgrade")}</Text>
+              <Text style={styles.upgradeText}>{resolvedUpgradeLabel}</Text>
             </Pressable>
           </View>
         </View>
@@ -98,7 +111,7 @@ const styles = StyleSheet.create({
   upgradeButton: {
     height: 56,
     borderRadius: 16,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#1D4ED8",
     alignItems: "center",
     justifyContent: "center",
   },

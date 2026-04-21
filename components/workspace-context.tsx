@@ -9,25 +9,32 @@ export type DraftImage = {
 
 type WorkspaceDraft = {
   image?: DraftImage | null;
+  images?: DraftImage[] | null;
   room?: string | null;
   style?: string | null;
+  styles?: string[] | null;
   paletteId?: string | null;
   modeId?: string | null;
   finishId?: string | null;
   prompt?: string | null;
   aspectRatio?: string | null;
+  aiSuggestedStyle?: string | null;
+  aiSuggestedPaletteId?: string | null;
 };
 
 type WorkspaceDraftContextValue = {
   draft: WorkspaceDraft;
   setDraftImage: (image: DraftImage | null) => void;
+  setDraftImages: (images: DraftImage[] | null) => void;
   setDraftRoom: (room: string | null) => void;
   setDraftStyle: (style: string | null) => void;
+  setDraftStyles: (styles: string[] | null) => void;
   setDraftPalette: (paletteId: string | null) => void;
   setDraftMode: (modeId: string | null) => void;
   setDraftFinish: (finishId: string | null) => void;
   setDraftPrompt: (prompt: string | null) => void;
   setDraftAspectRatio: (aspectRatio: string | null) => void;
+  setDraftAiSuggestion: (suggestion: { style?: string | null; paletteId?: string | null }) => void;
   clearDraft: () => void;
 };
 
@@ -37,6 +44,39 @@ const PERSIST_DELAY_MS = 180;
 
 function sameDraftImage(left?: DraftImage | null, right?: DraftImage | null) {
   return (left?.uri ?? null) === (right?.uri ?? null) && (left?.label ?? null) === (right?.label ?? null);
+}
+
+function normalizeDraftImages(images?: DraftImage[] | null) {
+  if (!images || images.length === 0) {
+    return null;
+  }
+
+  return images.map((image) => ({
+    uri: image.uri,
+    label: image.label,
+  }));
+}
+
+function sameDraftImages(left?: DraftImage[] | null, right?: DraftImage[] | null) {
+  const normalizedLeft = normalizeDraftImages(left) ?? [];
+  const normalizedRight = normalizeDraftImages(right) ?? [];
+
+  if (normalizedLeft.length !== normalizedRight.length) {
+    return false;
+  }
+
+  return normalizedLeft.every((image, index) => sameDraftImage(image, normalizedRight[index]));
+}
+
+function sameDraftStyles(left?: string[] | null, right?: string[] | null) {
+  const normalizedLeft = left ?? [];
+  const normalizedRight = right ?? [];
+
+  if (normalizedLeft.length !== normalizedRight.length) {
+    return false;
+  }
+
+  return normalizedLeft.every((style, index) => style === normalizedRight[index]);
 }
 
 export function WorkspaceDraftProvider({ children }: { children: React.ReactNode }) {
@@ -52,13 +92,17 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
         if (isMounted) {
           setDraft({
             image: parsed.image ?? null,
+            images: parsed.images ?? (parsed.image ? [parsed.image] : null),
             room: parsed.room ?? null,
             style: parsed.style ?? null,
+            styles: parsed.styles ?? (parsed.style ? [parsed.style] : null),
             paletteId: parsed.paletteId ?? null,
             modeId: parsed.modeId ?? null,
             finishId: parsed.finishId ?? null,
             prompt: parsed.prompt ?? null,
             aspectRatio: parsed.aspectRatio ?? null,
+            aiSuggestedStyle: parsed.aiSuggestedStyle ?? null,
+            aiSuggestedPaletteId: parsed.aiSuggestedPaletteId ?? null,
           });
         }
       } catch {
@@ -77,13 +121,17 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
         try {
           const payload: WorkspaceDraft = {
             image: draft.image ? { uri: draft.image.uri, label: draft.image.label } : null,
+            images: draft.images ? normalizeDraftImages(draft.images) : draft.image ? normalizeDraftImages([draft.image]) : null,
             room: draft.room ?? null,
             style: draft.style ?? null,
+            styles: draft.styles ?? (draft.style ? [draft.style] : null),
             paletteId: draft.paletteId ?? null,
             modeId: draft.modeId ?? null,
             finishId: draft.finishId ?? null,
             prompt: draft.prompt ?? null,
             aspectRatio: draft.aspectRatio ?? null,
+            aiSuggestedStyle: draft.aiSuggestedStyle ?? null,
+            aiSuggestedPaletteId: draft.aiSuggestedPaletteId ?? null,
           };
           await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
         } catch {
@@ -101,7 +149,22 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
       if (sameDraftImage(prev.image, image)) {
         return prev;
       }
-      return { ...prev, image };
+      return { ...prev, image, images: image ? [image] : null };
+    });
+  }, []);
+
+  const setDraftImages = useCallback((images: DraftImage[] | null) => {
+    const normalizedImages = normalizeDraftImages(images);
+    setDraft((prev) => {
+      if (sameDraftImages(prev.images, normalizedImages)) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        images: normalizedImages,
+        image: normalizedImages?.[0] ?? null,
+      };
     });
   }, []);
 
@@ -110,7 +173,22 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
   }, []);
 
   const setDraftStyle = useCallback((style: string | null) => {
-    setDraft((prev) => (prev.style === style ? prev : { ...prev, style }));
+    setDraft((prev) => (prev.style === style ? prev : { ...prev, style, styles: style ? [style] : null }));
+  }, []);
+
+  const setDraftStyles = useCallback((styles: string[] | null) => {
+    const normalizedStyles = styles?.filter(Boolean) ?? [];
+    setDraft((prev) => {
+      if (sameDraftStyles(prev.styles, normalizedStyles)) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        styles: normalizedStyles.length > 0 ? normalizedStyles : null,
+        style: normalizedStyles[0] ?? null,
+      };
+    });
   }, []);
 
   const setDraftPalette = useCallback((paletteId: string | null) => {
@@ -133,6 +211,14 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
     setDraft((prev) => (prev.aspectRatio === aspectRatio ? prev : { ...prev, aspectRatio }));
   }, []);
 
+  const setDraftAiSuggestion = useCallback((suggestion: { style?: string | null; paletteId?: string | null }) => {
+    setDraft((prev) => ({
+      ...prev,
+      aiSuggestedStyle: suggestion.style ?? null,
+      aiSuggestedPaletteId: suggestion.paletteId ?? null,
+    }));
+  }, []);
+
   const clearDraft = useCallback(() => {
     setDraft({});
     AsyncStorage.removeItem(STORAGE_KEY).catch(() => undefined);
@@ -142,26 +228,32 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
     () => ({
       draft,
       setDraftImage,
+      setDraftImages,
       setDraftRoom,
       setDraftStyle,
+      setDraftStyles,
       setDraftPalette,
       setDraftMode,
       setDraftFinish,
       setDraftPrompt,
       setDraftAspectRatio,
+      setDraftAiSuggestion,
       clearDraft,
     }),
     [
       clearDraft,
       draft,
       setDraftAspectRatio,
+      setDraftAiSuggestion,
       setDraftFinish,
       setDraftImage,
+      setDraftImages,
       setDraftMode,
       setDraftPalette,
       setDraftPrompt,
       setDraftRoom,
       setDraftStyle,
+      setDraftStyles,
     ],
   );
 

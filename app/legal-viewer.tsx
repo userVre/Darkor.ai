@@ -101,7 +101,7 @@ export default function LegalViewerScreen() {
             }}
             style={styles.backButton}
           >
-            <ArrowLeft color={DS.colors.textPrimary} size={18} strokeWidth={2.2} />
+            <ArrowLeft color="#000000" size={18} strokeWidth={2.2} />
           </Pressable>
 
           <View style={styles.heroCard}>

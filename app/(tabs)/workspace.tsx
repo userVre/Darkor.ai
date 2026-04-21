@@ -1,6 +1,6 @@
 import { useAuth } from "@clerk/expo";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { Asset } from "expo-asset";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -63,6 +63,7 @@ import {
   MoveHorizontal,
   Redo2,
   Share2,
+  Wand2,
   Zap,
 } from "@/components/material-icons";
 import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
@@ -91,6 +92,11 @@ import { getStickyStepHeaderMetrics } from "../../components/sticky-step-header"
 import { BeforeAfterSlider } from "../../components/before-after-slider";
 import { RenovationSparkIcon, StructuralDraftIcon } from "../../components/architectural-mode-icons";
 import { DiamondCreditPill } from "../../components/diamond-credit-pill";
+import {
+  DESIGN_WIZARD_SELECTION_BLUE,
+  DESIGN_WIZARD_SELECTION_BLUE_GLOW,
+  DESIGN_WIZARD_SELECTION_BLUE_SOFT,
+} from "../../components/design-wizard-primitives";
 import { useFlowUI } from "../../components/flow-ui-context";
 import { useViewerCredits } from "../../components/viewer-credits-context";
 import { useWorkspaceDraft } from "../../components/workspace-context";
@@ -140,6 +146,13 @@ type SelectedImage = {
   uri: string;
   base64?: string;
   label?: string;
+};
+
+type AiSuggestionResult = {
+  style: string;
+  paletteId: string;
+  reason?: string;
+  source?: "gemini" | "fallback";
 };
 
 type PhotoSource = "camera" | "library";
@@ -243,13 +256,18 @@ type FeedbackSentiment = "liked" | "disliked";
 type GenerateRequestOverrides = {
   regenerate?: boolean;
   sourceImage?: SelectedImage | null;
+  sourceImages?: SelectedImage[] | null;
   roomLabel?: string | null;
   styleLabel?: string | null;
+  styleSelections?: string[] | null;
   finishId?: FinishOption["id"] | null;
   modeId?: ModeOption["id"] | null;
   paletteId?: string | null;
   aspectRatio?: string | null;
   customPrompt?: string | null;
+  aiSuggestedStyle?: string | null;
+  aiSuggestedPaletteId?: string | null;
+  smartSuggest?: boolean;
 };
 
 type ModeOption = {
@@ -1357,6 +1375,10 @@ const GARDEN_PALETTE_OPTIONS: PaletteOption[] = [
 ];
 
 const POPULAR_PALETTE_IDS = new Set(["surprise", "gray"]);
+const SMART_SUGGEST_STYLE_LABEL = "AI Suggest";
+const SMART_SUGGEST_PALETTE_ID = "smart-suggest";
+const SMART_SUGGEST_WALL_LABEL = "AI Pick";
+const SMART_SUGGEST_FLOOR_LABEL = "Surprise Me";
 
 const ASPECT_RATIO_OPTIONS: AspectRatioOption[] = [
   {
@@ -1989,11 +2011,14 @@ export default function WorkspaceScreen() {
     setDraftAspectRatio,
     setDraftFinish,
     setDraftImage,
+    setDraftImages,
+    setDraftAiSuggestion,
     setDraftMode,
     setDraftPalette,
     setDraftPrompt,
     setDraftRoom,
     setDraftStyle,
+    setDraftStyles,
   } =
     useWorkspaceDraft();
   const { setIsFlowActive } = useFlowUI();
@@ -2011,14 +2036,17 @@ export default function WorkspaceScreen() {
   const createSourceUploadUrl = useMutation("generations:createSourceUploadUrl" as any);
   const deleteGeneration = useMutation("generations:deleteGeneration" as any);
   const startGeneration = useMutation("generations:startGeneration" as any);
+  const suggestDesignOptions = useAction("ai:suggestDesignOptions" as any);
   const submitGenerationFeedback = useMutation("generations:submitFeedback" as any);
   const submitFeedbackSignal = useMutation("feedback:submit" as any);
   const claimThreeDayReward = useMutation("users:claimThreeDayReward" as any);
 
   const [workflowStep, setWorkflowStep] = useState(0);
-  const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
+  const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
+  const [focusedImageUri, setFocusedImageUri] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [selectedFinishId, setSelectedFinishId] = useState<FinishOption["id"] | null>(null);
   const [selectedModeId, setSelectedModeId] = useState<ModeOption["id"] | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
@@ -2069,6 +2097,11 @@ export default function WorkspaceScreen() {
   const [, setPaintTutorialSeen] = useState(false);
   const [paintColorPickerOpen, setPaintColorPickerOpen] = useState(false);
   const [paintSurfacePickerOpen, setPaintSurfacePickerOpen] = useState(false);
+  const [isAiSuggesting, setIsAiSuggesting] = useState(false);
+  const [aiSuggestedStyle, setAiSuggestedStyle] = useState<string | null>(null);
+  const [aiSuggestedPaletteId, setAiSuggestedPaletteId] = useState<string | null>(null);
+  const [aiSuggestionPulseKey, setAiSuggestionPulseKey] = useState(0);
+  const [smartSuggestEnabled, setSmartSuggestEnabled] = useState(false);
 
   const reviewSheetRef = useRef<BottomSheetModal>(null);
   const imageContainerRef = useRef<View>(null);
@@ -2098,6 +2131,10 @@ export default function WorkspaceScreen() {
   const isPaintService = serviceType === "paint";
   const isLeanGenerationService = isExteriorService || isGardenService;
   const isRedesignWizardActive = !isPaintService && !isFloorService && workflowStep <= 3;
+  const selectedImage = useMemo(
+    () => selectedImages.find((image) => image.uri === focusedImageUri) ?? selectedImages[0] ?? null,
+    [focusedImageUri, selectedImages],
+  );
   const isWizardFlowActive = (isPaintService || isFloorService) ? isServiceStepFlowActive : isRedesignWizardActive;
   const shouldHideNativeTabBar = pathname === "/workspace" && isFocused && isWizardFlowActive;
   const presetRoomOptions =
@@ -2133,11 +2170,20 @@ export default function WorkspaceScreen() {
 
   useEffect(() => {
     setDraftImage(selectedImage ?? null);
-  }, [selectedImage, setDraftImage]);
+    setDraftImages(selectedImages);
+  }, [selectedImage, selectedImages, setDraftImage, setDraftImages]);
 
   useEffect(() => {
     setDraftRoom(selectedRoom ?? null);
   }, [selectedRoom, setDraftRoom]);
+
+  useEffect(() => {
+    if (isPaintService || isFloorService || isLeanGenerationService) {
+      return;
+    }
+
+    setDraftStyles(selectedStyles);
+  }, [isFloorService, isLeanGenerationService, isPaintService, selectedStyles, setDraftStyles]);
 
   useEffect(() => {
     setDraftStyle(selectedStyle ?? null);
@@ -2146,6 +2192,13 @@ export default function WorkspaceScreen() {
   useEffect(() => {
     setDraftPalette(selectedPaletteId ?? null);
   }, [selectedPaletteId, setDraftPalette]);
+
+  useEffect(() => {
+    setDraftAiSuggestion({
+      style: aiSuggestedStyle,
+      paletteId: aiSuggestedPaletteId,
+    });
+  }, [aiSuggestedPaletteId, aiSuggestedStyle, setDraftAiSuggestion]);
 
   useEffect(() => {
     setDraftMode(selectedModeId ?? null);
@@ -2198,16 +2251,23 @@ export default function WorkspaceScreen() {
     startTransition(() => {
       setWizardNavDirection(1);
       setWorkflowStep(0);
-      setSelectedImage(draft.image ?? null);
+      const hydratedImages = draft.images ?? (draft.image ? [draft.image] : []);
+      const hydratedStyles = draft.styles ?? (draft.style ? [draft.style] : []);
+      setSelectedImages(hydratedImages);
+      setFocusedImageUri(hydratedImages[0]?.uri ?? null);
       setSelectedRoom(draft.room ?? null);
-      setSelectedStyle(draft.style ?? null);
+      setSelectedStyle(hydratedStyles[0] ?? null);
+      setSelectedStyles(hydratedStyles);
       setSelectedFinishId((draft.finishId as FinishOption["id"] | null) ?? null);
       setSelectedModeId((draft.modeId as ModeOption["id"] | null) ?? null);
       setCustomPrompt(draft.prompt ?? "");
       setCustomPromptDraft(draft.prompt ?? "");
       setIsCustomPromptViewOpen(false);
-      setSelectedPaletteId(draft.paletteId ?? null);
-      setSelectedAspectRatioId((draft.aspectRatio as AspectRatioOption["id"] | null) ?? "post");
+        setSelectedPaletteId(draft.paletteId ?? null);
+        setAiSuggestedStyle(draft.aiSuggestedStyle ?? null);
+        setAiSuggestedPaletteId(draft.aiSuggestedPaletteId ?? null);
+        setSmartSuggestEnabled(Boolean(draft.aiSuggestedStyle || draft.aiSuggestedPaletteId));
+        setSelectedAspectRatioId((draft.aspectRatio as AspectRatioOption["id"] | null) ?? "post");
       setGeneratedImageUrl(null);
       setGenerationId(null);
       setPendingBoardItems([]);
@@ -2234,8 +2294,10 @@ export default function WorkspaceScreen() {
 
   useEffect(() => {
     if (!startStep || hasAppliedStartStepRef.current) return;
-    const canSkip = Boolean(draft.image && draft.room);
-    const hasStyle = Boolean(presetStyle || draft.style || selectedStyle);
+    const draftHasImage = Boolean((draft.images && draft.images.length > 0) || draft.image);
+    const draftHasStyle = Boolean((draft.styles && draft.styles.length > 0) || draft.style);
+    const canSkip = Boolean(draftHasImage && draft.room);
+    const hasStyle = Boolean(presetStyle || draftHasStyle || selectedStyle);
     if (canSkip && hasStyle) {
       const parsed = Number(startStep);
       const nextStep = Number.isFinite(parsed) ? Math.max(0, Math.min(parsed - 1, 3)) : 0;
@@ -2247,7 +2309,7 @@ export default function WorkspaceScreen() {
       toastTimeoutRef.current = setTimeout(() => setShowResumeToast(false), 2200);
     }
     hasAppliedStartStepRef.current = true;
-  }, [draft.image, draft.room, draft.style, presetStyle, selectedStyle, startStep]);
+  }, [draft.image, draft.images, draft.room, draft.style, draft.styles, presetStyle, selectedStyle, startStep]);
 
   useEffect(() => {
     return () => {
@@ -2258,7 +2320,7 @@ export default function WorkspaceScreen() {
   }, []);
 
   useEffect(() => {
-    if (!presetStyle || selectedStyle) return;
+    if (!presetStyle || selectedStyles.length > 0 || selectedStyle) return;
     const normalized = String(presetStyle).trim().toLowerCase();
     const stylePool =
       serviceType === "exterior"
@@ -2273,8 +2335,9 @@ export default function WorkspaceScreen() {
     const matched = stylePool.find((style) => style.toLowerCase() === normalized);
     if (matched) {
       setSelectedStyle(matched);
+      setSelectedStyles([matched]);
     }
-  }, [presetStyle, selectedStyle, serviceType]);
+  }, [presetStyle, selectedStyle, selectedStyles.length, serviceType]);
 
   useEffect(() => {
     if (!presetRoom || selectedRoom) return;
@@ -2624,8 +2687,8 @@ export default function WorkspaceScreen() {
     [i18n.language, t],
   );
   const selectedInteriorStyle = useMemo(
-    () => (interiorStyleGalleryCards.some((style) => style.title === selectedStyle) ? selectedStyle : null),
-    [interiorStyleGalleryCards, selectedStyle],
+    () => selectedStyles.find((style) => interiorStyleGalleryCards.some((card) => card.title === style)) ?? null,
+    [interiorStyleGalleryCards, selectedStyles],
   );
   const interiorModeCards = useMemo(
     () => [
@@ -2759,8 +2822,8 @@ export default function WorkspaceScreen() {
     [i18n.language, t],
   );
   const selectedExteriorStyle = useMemo(
-    () => (exteriorStyleGalleryCards.some((style) => style.title === selectedStyle) ? selectedStyle : null),
-    [exteriorStyleGalleryCards, selectedStyle],
+    () => selectedStyles.find((style) => exteriorStyleGalleryCards.some((card) => card.title === style)) ?? null,
+    [exteriorStyleGalleryCards, selectedStyles],
   );
   const exteriorPaletteCards = useMemo(
     () => [
@@ -2845,8 +2908,8 @@ export default function WorkspaceScreen() {
     [i18n.language, t],
   );
   const selectedGardenStyle = useMemo(
-    () => (gardenStyleGalleryCards.some((style) => style.title === selectedStyle) ? selectedStyle : null),
-    [gardenStyleGalleryCards, selectedStyle],
+    () => selectedStyles.find((style) => gardenStyleGalleryCards.some((card) => card.title === style)) ?? null,
+    [gardenStyleGalleryCards, selectedStyles],
   );
   const selectedPaletteOrDefault = useMemo(() => selectedPalette ?? null, [selectedPalette]);
   const selectedModeOrDefault = useMemo(
@@ -2861,12 +2924,19 @@ export default function WorkspaceScreen() {
     () => MODE_OPTIONS.find((option) => option.id === activeBoardItem?.modeId) ?? null,
     [activeBoardItem?.modeId],
   );
+  const primarySelectedStyle = selectedStyle ?? selectedStyles[0] ?? null;
+  const selectedStyleDisplayName = useMemo(
+    () =>
+      selectedStyles.length > 1
+        ? selectedStyles.map((style) => normalizeStyleDisplayName(style) ?? style).join(" · ")
+        : normalizeStyleDisplayName(primarySelectedStyle),
+    [primarySelectedStyle, selectedStyles],
+  );
   const finalPreviewImage = useMemo(() => {
     const selectedSpaceCard = spaceCatalogItems.find((card) => card.title === selectedRoom);
     const fallbackImage = selectedSpaceCard?.image ?? DEFAULT_SPACE_IMAGE;
-    return getStylePreviewImage(selectedStyle, fallbackImage);
-  }, [selectedRoom, selectedStyle, spaceCatalogItems]);
-  const selectedStyleDisplayName = normalizeStyleDisplayName(selectedStyle);
+    return getStylePreviewImage(primarySelectedStyle, fallbackImage);
+  }, [primarySelectedStyle, selectedRoom, spaceCatalogItems]);
   const previewThumbnailLabel = t("workspace.localization.previewThumbnailLabel", {
     style: selectedStyleDisplayName ?? t("workspace.localization.styles.custom"),
   });
@@ -2987,12 +3057,12 @@ export default function WorkspaceScreen() {
     [selectedFinishId],
   );
   const selectedWallColorOption = useMemo(
-    () => WALL_COLOR_OPTIONS.find((option) => option.title === selectedStyle) ?? null,
-    [selectedStyle],
+    () => WALL_COLOR_OPTIONS.find((option) => option.title === primarySelectedStyle) ?? null,
+    [primarySelectedStyle],
   );
   const selectedFloorMaterialOption = useMemo(
-    () => FLOOR_MATERIAL_OPTIONS.find((option) => option.title === selectedStyle) ?? null,
-    [selectedStyle],
+    () => FLOOR_MATERIAL_OPTIONS.find((option) => option.title === primarySelectedStyle) ?? null,
+    [primarySelectedStyle],
   );
   const activeEditorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
   const activeGenerationRecordId = activeBoardItem?.generationId ?? activeBoardItem?.id ?? generationId ?? null;
@@ -3161,25 +3231,25 @@ export default function WorkspaceScreen() {
   }, [boardItems, effectiveSignedIn, generatedImageUrl, generationId, isGenerating, pendingReviewState, router, showToast]);
 
   const canContinue = useMemo(() => {
-    if (workflowStep === 0) return Boolean(selectedImage);
+    if (workflowStep === 0) return selectedImages.length > 0;
     if (workflowStep === 1) return Boolean(selectedRoom);
     if (workflowStep === 2) {
-      if (!isPaintService && !isFloorService && !isLeanGenerationService && selectedStyle === "Custom") {
+      if (!isPaintService && !isFloorService && !isLeanGenerationService && selectedStyles.includes("Custom")) {
         return customPrompt.trim().length > 0;
       }
-      return Boolean(selectedStyle);
+      return isPaintService || isFloorService ? Boolean(selectedStyle || smartSuggestEnabled) : selectedStyles.length > 0;
     }
     if (workflowStep === 3) {
       if (isPaintService || isFloorService) {
         return Boolean(selectedFinishId);
       }
       if (isExteriorService) {
-        return Boolean(selectedPaletteId);
+        return Boolean(selectedPaletteId || smartSuggestEnabled);
       }
       if (isGardenService) {
-        return Boolean(selectedPaletteId);
+        return Boolean(selectedPaletteId || smartSuggestEnabled);
       }
-      return Boolean(selectedModeId && selectedPaletteId);
+      return Boolean(selectedModeId && (selectedPaletteId || smartSuggestEnabled));
     }
     return false;
   }, [
@@ -3188,21 +3258,22 @@ export default function WorkspaceScreen() {
     isLeanGenerationService,
     isPaintService,
     selectedFinishId,
-    selectedImage,
+    selectedImages.length,
     selectedModeId,
     selectedPaletteId,
     selectedRoom,
     selectedStyle,
+    selectedStyles,
     workflowStep,
   ]);
 
   const ensureWorkspaceSelectionsComplete = useCallback(() => {
     const missingSelection = resolveMissingWorkspaceSelectionLabel({
-      hasImage: Boolean(selectedImage),
+      hasImage: selectedImages.length > 0,
       hasRoom: Boolean(selectedRoom),
-      hasStyle: Boolean(selectedStyle),
+      hasStyle: isPaintService || isFloorService ? Boolean(selectedStyle || smartSuggestEnabled) : selectedStyles.length > 0,
       hasMode: isExteriorService || isGardenService || isPaintService || isFloorService || Boolean(selectedModeId),
-      hasPalette: isGardenService || isPaintService || isFloorService || Boolean(selectedPaletteId),
+      hasPalette: isGardenService || isPaintService || isFloorService || Boolean(selectedPaletteId || smartSuggestEnabled),
     });
 
     if (!missingSelection) {
@@ -3227,15 +3298,19 @@ export default function WorkspaceScreen() {
     );
     return false;
   }, [
+    isExteriorService,
     isFloorService,
+    isGardenService,
     isLeanGenerationService,
     isPaintService,
-    selectedImage,
+    selectedImages.length,
     selectedModeId,
     selectedPaletteId,
     selectedRoom,
     selectedStyle,
+    selectedStyles.length,
     showToast,
+    t,
   ]);
 
   const openSystemSettings = useCallback(() => {
@@ -3271,24 +3346,88 @@ export default function WorkspaceScreen() {
     return false;
   }, [showPermissionAlert]);
 
-  const commitSelectedImage = useCallback(
-    (image: SelectedImage | null) => {
-      startTransition(() => {
-        setSelectedImage(image);
-        setDraftImage(image);
-      });
-    },
-    [setDraftImage],
-  );
+  const commitSelectedImages = useCallback((images: SelectedImage[], nextFocusedUri?: string | null) => {
+    const normalizedImages = images.slice(0, 3);
+    const nextFocused =
+      nextFocusedUri && normalizedImages.some((image) => image.uri === nextFocusedUri)
+        ? nextFocusedUri
+        : normalizedImages[0]?.uri ?? null;
+
+    startTransition(() => {
+      setSelectedImages(normalizedImages);
+      setFocusedImageUri(nextFocused);
+      setDraftImage(normalizedImages[0] ?? null);
+      setGeneratedImageUrl(null);
+      setGenerationId(null);
+    });
+  }, [setDraftImage]);
+
+  const appendSelectedImages = useCallback((images: SelectedImage[]) => {
+    if (images.length === 0) {
+      return;
+    }
+
+    setSelectedImages((current) => {
+      const merged = [...current];
+      for (const image of images) {
+        if (merged.some((item) => item.uri === image.uri)) {
+          continue;
+        }
+        if (merged.length >= 3) {
+          break;
+        }
+        merged.push(image);
+      }
+
+      const nextFocused =
+        focusedImageUri && merged.some((image) => image.uri === focusedImageUri)
+          ? focusedImageUri
+          : merged[merged.length - 1]?.uri ?? merged[0]?.uri ?? null;
+      setFocusedImageUri(nextFocused);
+      setDraftImage(merged[0] ?? null);
+      setGeneratedImageUrl(null);
+      setGenerationId(null);
+      return merged;
+    });
+  }, [focusedImageUri, setDraftImage]);
+
+  const focusSelectedImage = useCallback((uri: string) => {
+    if (!selectedImages.some((image) => image.uri === uri)) {
+      return;
+    }
+
+    triggerHaptic();
+    setSelectedImages((current) => {
+      const selectedImage = current.find((image) => image.uri === uri);
+      if (!selectedImage) {
+        return current;
+      }
+
+      const reordered = [selectedImage, ...current.filter((image) => image.uri !== uri)];
+      setFocusedImageUri(reordered[0]?.uri ?? null);
+      setDraftImage(reordered[0] ?? null);
+      return reordered;
+    });
+  }, [selectedImages, setDraftImage]);
+
+  const removeSelectedImage = useCallback((uri: string) => {
+    triggerHaptic();
+    setSelectedImages((current) => {
+      const nextImages = current.filter((image) => image.uri !== uri);
+      const nextFocused = focusedImageUri === uri ? nextImages[0]?.uri ?? null : focusedImageUri;
+      setFocusedImageUri(nextFocused);
+      setDraftImage(nextImages[0] ?? null);
+      setGeneratedImageUrl(null);
+      setGenerationId(null);
+      return nextImages;
+    });
+  }, [focusedImageUri, setDraftImage]);
 
   const applyPickedAsset = useCallback(
     (asset: ImagePicker.ImagePickerAsset, label: string) => {
-      commitSelectedImage({
-        uri: asset.uri,
-        label,
-      });
+      appendSelectedImages([{ uri: asset.uri, label }]);
     },
-    [commitSelectedImage],
+    [appendSelectedImages],
   );
 
   const showSettingsPermissionAlert = useCallback(
@@ -3408,17 +3547,22 @@ export default function WorkspaceScreen() {
               })
             : await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
+                allowsEditing: false,
+                allowsMultipleSelection: true,
+                selectionLimit: Math.max(1, 3 - selectedImages.length),
                 quality: 0.82,
                 exif: false,
               });
 
-        if (result.canceled || !result.assets?.[0]) {
+        if (result.canceled || !result.assets?.length) {
           return;
         }
 
-        const asset = result.assets[0];
-        applyPickedAsset(asset, source === "camera" ? t("workspace.media.capturedPhoto") : t("workspace.media.uploadedPhoto"));
+        const assets = result.assets.slice(0, Math.max(1, 3 - selectedImages.length));
+        const label = source === "camera" ? t("workspace.media.capturedPhoto") : t("workspace.media.uploadedPhoto");
+        for (const asset of assets) {
+          applyPickedAsset(asset, label);
+        }
       } catch (error) {
         Alert.alert(
           t("workspace.media.photoIntakeUnavailableTitle"),
@@ -3428,7 +3572,7 @@ export default function WorkspaceScreen() {
         setIsSelectingPhoto(false);
       }
     },
-    [applyPickedAsset, ensureCameraPermission, ensureMediaLibraryPermission, t],
+    [applyPickedAsset, ensureCameraPermission, ensureMediaLibraryPermission, selectedImages.length, t],
   );
 
   const presentPhotoSourceMenu = useCallback(() => {
@@ -3479,14 +3623,14 @@ export default function WorkspaceScreen() {
 
   const handleClearSelectedImage = useCallback(() => {
     triggerHaptic();
-    commitSelectedImage(null);
+    commitSelectedImages([]);
     paintCurrentStrokeRef.current = null;
     setPaintCurrentStroke(null);
     setPaintStrokes([]);
     setPaintRedoStrokes([]);
     setIsLoadingExample(null);
     setIsSelectingPhoto(false);
-  }, [commitSelectedImage]);
+  }, [commitSelectedImages]);
 
   const handleSelectExample = useCallback(async (example: ExamplePhoto) => {
     try {
@@ -3498,13 +3642,13 @@ export default function WorkspaceScreen() {
       if (!uri) {
         throw new Error(t("workspace.media.exampleImageUnavailable"));
       }
-      commitSelectedImage({ uri, label: example.label });
+      commitSelectedImages([{ uri, label: example.label }], uri);
     } catch (error) {
       Alert.alert(t("workspace.media.exampleUnavailableTitle"), error instanceof Error ? error.message : t("workspace.media.tryAnotherImage"));
     } finally {
       setIsLoadingExample(null);
     }
-  }, [commitSelectedImage, t]);
+  }, [commitSelectedImages, t]);
 
   const handleClosePaintColorPicker = useCallback(() => {
     triggerHaptic();
@@ -3578,13 +3722,18 @@ export default function WorkspaceScreen() {
     setDraftAspectRatio(null);
     startTransition(() => {
       setWorkflowStep(0);
-      setSelectedImage(null);
+      setSelectedImages([]);
+      setFocusedImageUri(null);
       setSelectedRoom(null);
       setSelectedStyle(null);
+      setSelectedStyles([]);
       setSelectedFinishId(null);
       setSelectedModeId(null);
       setCustomPrompt("");
       setSelectedPaletteId(null);
+      setAiSuggestedStyle(null);
+      setAiSuggestedPaletteId(null);
+      setSmartSuggestEnabled(false);
       setSelectedAspectRatioId("post");
       setGeneratedImageUrl(null);
       setGenerationId(null);
@@ -3824,9 +3973,20 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    const activeSelectedImage = options?.sourceImage ?? selectedImage;
+    const activeSelectedImages = options?.sourceImages ?? (options?.sourceImage ? [options.sourceImage] : selectedImages);
+    const activeSelectedImage = activeSelectedImages[0] ?? selectedImage;
     const activeRoomLabel = options?.roomLabel ?? selectedRoom;
-    const activeStyleLabel = options?.styleLabel ?? selectedStyle;
+    const activeSmartSuggest = options?.smartSuggest ?? smartSuggestEnabled;
+    const activeStyleSelections = options?.styleSelections ?? (
+      isPaintService || isFloorService
+        ? activeSmartSuggest
+          ? []
+          : (selectedStyle ? [selectedStyle] : [])
+        : selectedStyles
+    );
+    const activeStyleLabel = options?.styleLabel ?? activeStyleSelections[activeStyleSelections.length - 1] ?? selectedStyle;
+    const activeAiSuggestedStyle = options?.aiSuggestedStyle ?? aiSuggestedStyle;
+    const activeAiSuggestedPaletteId = options?.aiSuggestedPaletteId ?? aiSuggestedPaletteId;
     const activeFinishOption =
       FINISH_OPTIONS.find((option) => option.id === (options?.finishId ?? null)) ??
       selectedFinishOption;
@@ -3845,16 +4005,16 @@ export default function WorkspaceScreen() {
     }
 
     if (isFloorService) {
-      if (!activeSelectedImage || !activeRoomLabel || !activeStyleLabel || !activeFinishOption || !activeFloorMaterialOption) {
+      if (!activeSelectedImage || !activeRoomLabel || !activeFinishOption || (!activeSmartSuggest && (!activeStyleLabel || !activeFloorMaterialOption))) {
         Alert.alert(t("workspace.generation.completeStepsTitle"), t("workspace.generation.completeFloorBody"));
         return;
       }
     } else if (isPaintService) {
-      if (!activeSelectedImage || !activeRoomLabel || !activeStyleLabel || !activeFinishOption || !activeWallColorOption) {
+      if (!activeSelectedImage || !activeRoomLabel || !activeFinishOption || (!activeSmartSuggest && (!activeStyleLabel || !activeWallColorOption))) {
         Alert.alert(t("workspace.generation.completeStepsTitle"), t("workspace.generation.completePaintBody"));
         return;
       }
-    } else if (!activeSelectedImage || !activeRoomLabel || !activeStyleLabel || !activePaletteOption || !activeModeOption) {
+    } else if (!activeSelectedImage || !activeRoomLabel || !activeStyleLabel || (!activeSmartSuggest && !activePaletteOption) || !activeModeOption) {
       Alert.alert(t("workspace.generation.completeStepsTitle"), t("workspace.generation.completePreviousSteps"));
       return;
     }
@@ -3881,15 +4041,23 @@ export default function WorkspaceScreen() {
     const temporaryBoardId = `pending-${requestStartedAt}`;
     const selectedSpaceLabel = activeRoomLabel ?? serviceLabel;
     const finishLabel = activeFinishOption?.title ?? "Matte";
-    const paintColorLabel = activeWallColorOption?.title ?? normalizeStyleDisplayName(activeStyleLabel) ?? "Sage Green";
-    const paintColorValue = activeWallColorOption?.value ?? "#7C9174";
-    const paintStyleLabel = `${paintColorLabel} Paint`;
-    const floorMaterialLabel = activeFloorMaterialOption?.title ?? normalizeStyleDisplayName(activeStyleLabel) ?? "Hardwood";
-    const floorStyleLabel = `${floorMaterialLabel} Flooring`;
+    const paintColorLabel = activeSmartSuggest
+      ? SMART_SUGGEST_WALL_LABEL
+      : activeWallColorOption?.title ?? normalizeStyleDisplayName(activeStyleLabel) ?? "Sage Green";
+    const paintColorValue = activeSmartSuggest ? "" : activeWallColorOption?.value ?? "#7C9174";
+    const paintStyleLabel = activeSmartSuggest ? "AI Suggested Paint" : `${paintColorLabel} Paint`;
+    const floorMaterialLabel = activeSmartSuggest
+      ? SMART_SUGGEST_FLOOR_LABEL
+      : activeFloorMaterialOption?.title ?? normalizeStyleDisplayName(activeStyleLabel) ?? "Hardwood";
+    const floorStyleLabel = activeSmartSuggest ? "AI Suggested Flooring" : `${floorMaterialLabel} Flooring`;
     const generationSelection = isFloorService
-      ? `${activeFloorMaterialOption?.promptLabel ?? floorMaterialLabel} with a ${finishLabel.toLowerCase()} finish`
+      ? activeSmartSuggest
+        ? `AI-selected floor material with a ${finishLabel.toLowerCase()} finish`
+        : `${activeFloorMaterialOption?.promptLabel ?? floorMaterialLabel} with a ${finishLabel.toLowerCase()} finish`
       : isPaintService
-        ? `${paintColorLabel} (${paintColorValue}) with a ${finishLabel.toLowerCase()} finish`
+        ? activeSmartSuggest
+          ? `AI-selected wall paint color with a ${finishLabel.toLowerCase()} finish`
+          : `${paintColorLabel} (${paintColorValue}) with a ${finishLabel.toLowerCase()} finish`
         : activeStyleLabel!;
     const generationDisplayStyle = isFloorService ? floorStyleLabel : isPaintService ? paintStyleLabel : activeStyleLabel!;
     const generationCustomPrompt = isFloorService
@@ -3935,18 +4103,25 @@ export default function WorkspaceScreen() {
       setActiveBoardItemId(temporaryBoardId);
       setPendingBoardItems((current) => [processingBoardItem, ...current.filter((item) => item.id !== temporaryBoardId)]);
 
-      const imageStorageId = await uploadSelectedImageToStorage(activeSelectedImage);
+      const [imageStorageId, ...referenceImageStorageIds] = await Promise.all(
+        activeSelectedImages.map((image) => uploadSelectedImageToStorage(image)),
+      );
       const startResult = (await startGeneration({
         anonymousId: viewerId,
         imageStorageId,
+        referenceImageStorageIds,
         serviceType: backendServiceType,
         selection: generationSelection,
+        styleSelections: activeStyleSelections.length > 0 ? activeStyleSelections : undefined,
         roomType: selectedSpaceLabel,
         displayStyle: generationDisplayStyle,
         customPrompt: generationCustomPrompt,
         aspectRatio: activeAspectRatioLabel,
         modeId: activeModeOption?.id,
         paletteId: activePaletteOption?.id,
+        aiSuggestedStyle: activeAiSuggestedStyle ?? undefined,
+        aiSuggestedPaletteId: activeAiSuggestedPaletteId ?? undefined,
+        smartSuggest: activeSmartSuggest,
         finishId: activeFinishOption?.id,
         regenerate: options?.regenerate ?? false,
         ignoreReviewCooldown,
@@ -4021,6 +4196,8 @@ export default function WorkspaceScreen() {
       showToast(getFriendlyGenerationError(rawMessage));
     }
   }, [
+    aiSuggestedPaletteId,
+    aiSuggestedStyle,
     createSourceUploadUrl,
     customPrompt,
     diagnostic,
@@ -4043,10 +4220,13 @@ export default function WorkspaceScreen() {
     selectedFloorMaterialOption,
     hasPaidAccess,
     selectedImage,
+    selectedImages,
     selectedModeOrDefault,
     selectedPaletteOrDefault,
     selectedRoom,
     selectedStyle,
+    selectedStyles,
+    smartSuggestEnabled,
     selectedWallColorOption,
     serviceLabel,
     serviceType,
@@ -4058,7 +4238,7 @@ export default function WorkspaceScreen() {
   ]);
 
   const prepareRegenerateSourceImage = useCallback(async () => {
-    const sourceUri = draft.image?.uri ?? selectedImage?.uri ?? activeBoardItem?.originalImageUrl ?? null;
+    const sourceUri = draft.images?.[0]?.uri ?? draft.image?.uri ?? selectedImages[0]?.uri ?? selectedImage?.uri ?? activeBoardItem?.originalImageUrl ?? null;
     if (!sourceUri) {
       throw new Error("Original photo unavailable. Please start from the source image again.");
     }
@@ -4077,7 +4257,7 @@ export default function WorkspaceScreen() {
       image: { uri: download.uri } as SelectedImage,
       cleanupUri: download.uri,
     };
-  }, [activeBoardItem?.originalImageUrl, draft.image?.uri, selectedImage?.uri]);
+  }, [activeBoardItem?.originalImageUrl, draft.image?.uri, draft.images, selectedImage?.uri, selectedImages]);
 
   const handleRegenerate = useCallback(async () => {
     if (!activeBoardItem) {
@@ -4189,13 +4369,13 @@ export default function WorkspaceScreen() {
     setPendingRegenerateConfirm(true);
     setShowComparisonSlider(false);
     setSelectedRoom(activeBoardItem.roomLabel ?? selectedRoom ?? null);
-    setSelectedStyle(
-      resolveBoardStyleSelection(
-        activeBoardItem.styleLabel ?? selectedStyle,
-        activeBoardItem.serviceType ?? serviceType,
-        activeBoardItem.customPrompt,
-      ),
+    const resolvedStyle = resolveBoardStyleSelection(
+      activeBoardItem.styleLabel ?? selectedStyle,
+      activeBoardItem.serviceType ?? serviceType,
+      activeBoardItem.customPrompt,
     );
+    setSelectedStyle(resolvedStyle);
+    setSelectedStyles(resolvedStyle ? [resolvedStyle] : []);
     setSelectedModeId((activeBoardItem.modeId as ModeOption["id"] | null) ?? selectedModeId ?? null);
     setSelectedPaletteId(activeBoardItem.paletteId ?? selectedPaletteId ?? null);
     setSelectedFinishId((activeBoardItem.finishId as FinishOption["id"] | null) ?? selectedFinishId ?? null);
@@ -4316,9 +4496,7 @@ export default function WorkspaceScreen() {
     }
 
     setWizardNavDirection(1);
-    startTransition(() => {
-      setWorkflowStep((prev) => Math.min(prev + 1, 3));
-    });
+    setWorkflowStep((prev) => Math.min(prev + 1, 3));
   }, [canContinue, diagnostic, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, handleGenerate, handleRegenerate, openAuthWall, openGenerationPaywall, pendingRegenerateConfirm, showToast, workflowStep, t]);
 
   const handleContinueFromGardenPhotoStep = useCallback(() => {
@@ -4334,9 +4512,7 @@ export default function WorkspaceScreen() {
     setSelectedRoom(inferredGardenArea);
     setDraftRoom(inferredGardenArea);
     setWizardNavDirection(1);
-    startTransition(() => {
-      setWorkflowStep(2);
-    });
+    setWorkflowStep(2);
   }, [selectedImage, setDraftRoom, t]);
 
   const handleSelectRoom = useCallback(
@@ -4390,6 +4566,7 @@ export default function WorkspaceScreen() {
   const handleSetSelectedExteriorStyle = useCallback(
     (style: string | null) => {
       setSelectedStyle(style);
+      setSelectedStyles(style ? [style] : []);
       setDraftStyle(style);
     },
     [setDraftStyle],
@@ -4405,17 +4582,18 @@ export default function WorkspaceScreen() {
   }, [handleContinue, selectedExteriorStyle, setDraftStyle]);
 
   const handleContinueFromExteriorPaletteStep = useCallback(() => {
-    if (!selectedPaletteId) {
+    if (!selectedPaletteId && !smartSuggestEnabled) {
       return;
     }
 
     setDraftPalette(selectedPaletteId);
     handleContinue();
-  }, [handleContinue, selectedPaletteId, setDraftPalette]);
+  }, [handleContinue, selectedPaletteId, setDraftPalette, smartSuggestEnabled]);
 
   const handleSetSelectedGardenStyle = useCallback(
     (style: string | null) => {
       setSelectedStyle(style);
+      setSelectedStyles(style ? [style] : []);
       setDraftStyle(style);
     },
     [setDraftStyle],
@@ -4431,17 +4609,18 @@ export default function WorkspaceScreen() {
   }, [handleContinue, selectedGardenStyle, setDraftStyle]);
 
   const handleContinueFromGardenPaletteStep = useCallback(() => {
-    if (!selectedPaletteId) {
+    if (!selectedPaletteId && !smartSuggestEnabled) {
       return;
     }
 
     setDraftPalette(selectedPaletteId);
     handleContinue();
-  }, [handleContinue, selectedPaletteId, setDraftPalette]);
+  }, [handleContinue, selectedPaletteId, setDraftPalette, smartSuggestEnabled]);
 
   const handleSetSelectedStyle = useCallback(
     (style: string | null) => {
       setSelectedStyle(style);
+      setSelectedStyles(style ? [style] : []);
       setDraftStyle(style);
     },
     [setDraftStyle],
@@ -4469,13 +4648,13 @@ export default function WorkspaceScreen() {
   );
 
   const handleContinueFromInteriorFinalStep = useCallback(() => {
-    if (!selectedModeId || !selectedPaletteId) {
+    if (!selectedModeId || (!selectedPaletteId && !smartSuggestEnabled)) {
       return;
     }
 
     setDraftPalette(selectedPaletteId);
     handleContinue();
-  }, [handleContinue, selectedModeId, selectedPaletteId, setDraftPalette]);
+  }, [handleContinue, selectedModeId, selectedPaletteId, setDraftPalette, smartSuggestEnabled]);
 
   const handleCloseCustomStyle = useCallback(() => {
     triggerHaptic();
@@ -4497,12 +4676,11 @@ export default function WorkspaceScreen() {
 
     triggerHaptic();
     setWizardNavDirection(1);
-    startTransition(() => {
-      setCustomPrompt(trimmed);
-      setSelectedStyle("Custom");
-      setIsCustomPromptViewOpen(false);
-      setWorkflowStep(3);
-    });
+    setCustomPrompt(trimmed);
+    setSelectedStyle("Custom");
+    setSelectedStyles(["Custom"]);
+    setIsCustomPromptViewOpen(false);
+    setWorkflowStep(3);
   }, [customPromptDraft]);
 
   const handleSelectStyle = useCallback((value: string) => {
@@ -4512,10 +4690,25 @@ export default function WorkspaceScreen() {
       setIsCustomPromptViewOpen(true);
       return;
     }
+
+    setSmartSuggestEnabled(false);
+    setAiSuggestedStyle(null);
+    setAiSuggestedPaletteId((current) => (value === SMART_SUGGEST_WALL_LABEL || value === SMART_SUGGEST_FLOOR_LABEL ? current : null));
     startTransition(() => {
-      setSelectedStyle((current) => (current === value ? null : value));
+      if (isPaintService || isFloorService || isLeanGenerationService) {
+        setSelectedStyle((current) => (current === value ? null : value));
+        setSelectedStyles((current) => (current[0] === value ? [] : [value]));
+        return;
+      }
+
+      setSelectedStyles((current) => {
+        const exists = current.includes(value);
+        const next = exists ? current.filter((item) => item !== value) : [...current, value];
+        setSelectedStyle(next[next.length - 1] ?? null);
+        return next;
+      });
     });
-  }, [customPrompt]);
+  }, [customPrompt, isFloorService, isLeanGenerationService, isPaintService]);
 
   const handleChangeCustomPrompt = useCallback((value: string) => {
     setCustomPromptDraft(value);
@@ -4528,18 +4721,111 @@ export default function WorkspaceScreen() {
 
   const handleSelectFinish = useCallback((value: FinishOption["id"]) => {
     triggerHaptic();
+    setSmartSuggestEnabled(false);
     setSelectedFinishId((current) => (current === value ? null : value));
   }, []);
 
   const handleSelectPalette = useCallback((value: string) => {
     triggerHaptic();
+    setSmartSuggestEnabled(false);
+    setAiSuggestedPaletteId(null);
     setSelectedPaletteId(value);
   }, []);
 
   const handleSelectMode = useCallback((value: ModeOption["id"]) => {
     triggerHaptic();
+    setSmartSuggestEnabled(false);
     setSelectedModeId((current) => (current === value ? null : value));
   }, []);
+
+  const handleEnableSmartSuggest = useCallback(() => {
+    triggerHaptic();
+    setSmartSuggestEnabled(true);
+    setAiSuggestedStyle(null);
+    setAiSuggestedPaletteId(null);
+
+    if (isPaintService) {
+      setSelectedStyle(SMART_SUGGEST_WALL_LABEL);
+      setSelectedStyles([SMART_SUGGEST_WALL_LABEL]);
+      return;
+    }
+
+    if (isFloorService) {
+      setSelectedStyle(SMART_SUGGEST_FLOOR_LABEL);
+      setSelectedStyles([SMART_SUGGEST_FLOOR_LABEL]);
+      return;
+    }
+
+    setSelectedPaletteId(SMART_SUGGEST_PALETTE_ID);
+  }, [isFloorService, isPaintService]);
+
+  const handleAiSuggest = useCallback(async () => {
+    if (!selectedImage || !selectedRoom) {
+      return;
+    }
+
+    if (isPaintService || isFloorService) {
+      handleEnableSmartSuggest();
+      return;
+    }
+
+    const availablePalettes = (isGardenService ? GARDEN_PALETTE_OPTIONS : PALETTE_OPTIONS).map((palette) => palette.id);
+    const availableStyles = displayedStyleCards.filter((card) => !card.isCustom).map((card) => card.title);
+    if (availableStyles.length === 0 || availablePalettes.length === 0) {
+      return;
+    }
+
+    triggerHaptic();
+    setIsAiSuggesting(true);
+    setAiSuggestedStyle(null);
+    setAiSuggestedPaletteId(null);
+
+    try {
+      const imageStorageId = await uploadSelectedImageToStorage(selectedImage);
+      const suggestion = (await suggestDesignOptions({
+        imageStorageId,
+        serviceType,
+        roomType: selectedRoom,
+        availableStyles,
+        availablePalettes,
+      })) as AiSuggestionResult;
+
+      const suggestedStyle = suggestion?.style ?? null;
+      const suggestedPalette = suggestion?.paletteId ?? null;
+      if (!suggestedStyle || !suggestedPalette) {
+        throw new Error("AI suggestion unavailable");
+      }
+
+      startTransition(() => {
+        setSmartSuggestEnabled(true);
+        setSelectedStyle(suggestedStyle);
+        setSelectedStyles([suggestedStyle]);
+        setSelectedPaletteId(suggestedPalette);
+        setAiSuggestedStyle(suggestedStyle);
+        setAiSuggestedPaletteId(suggestedPalette);
+        setAiSuggestionPulseKey((current) => current + 1);
+      });
+    } catch (error) {
+      Alert.alert(
+        t("workspace.generation.failedTitle"),
+        error instanceof Error ? error.message : t("common.actions.tryAgain"),
+      );
+    } finally {
+      setIsAiSuggesting(false);
+    }
+  }, [
+    displayedStyleCards,
+    isFloorService,
+    isGardenService,
+    isPaintService,
+    handleEnableSmartSuggest,
+    selectedImage,
+    selectedRoom,
+    serviceType,
+    suggestDesignOptions,
+    t,
+    uploadSelectedImageToStorage,
+  ]);
 
   const handleOpenBoardItem = useCallback((item: BoardRenderItem) => {
     if (!effectiveSignedIn) {
@@ -4848,8 +5134,8 @@ export default function WorkspaceScreen() {
     const isStyleStep = workflowStep === 2;
     const isTabbedWorkspaceRoute = pathname === "/workspace";
     const displayedSelectedImage = selectedImage;
-    const hasVisiblePhoto = Boolean(displayedSelectedImage);
-    const activeExampleLabel = selectedImage?.label ?? null;
+    const hasVisiblePhoto = selectedImages.length > 0;
+    const activeExampleLabel = selectedImages[0]?.label ?? null;
     const wizardBackgroundColor = SERVICE_WIZARD_THEME.colors.background;
     const wizardPrimaryTextColor = SERVICE_WIZARD_THEME.colors.textPrimary;
     const wizardMutedTextColor = SERVICE_WIZARD_THEME.colors.textMuted;
@@ -4982,18 +5268,18 @@ export default function WorkspaceScreen() {
         ? t("workspace.localization.cta.getMoreCredits")
         : t("workspace.localization.cta.generateMyDesign");
     const stepButtonActive = isPhotoStep
-      ? Boolean(selectedImage)
+      ? selectedImages.length > 0
       : isSpaceStep
         ? Boolean(selectedRoom)
         : isStyleStep
-          ? Boolean(selectedStyle)
+          ? (isPaintService || isFloorService ? Boolean(selectedStyle) : selectedStyles.length > 0)
           : isContinueActive;
     const stepButtonAttention = isPhotoStep
-      ? Boolean(selectedImage)
+      ? selectedImages.length > 0
       : isSpaceStep
         ? Boolean(selectedRoom)
         : isStyleStep
-          ? Boolean(selectedStyle)
+          ? (isPaintService || isFloorService ? Boolean(selectedStyle) : selectedStyles.length > 0)
           : false;
     const stepButtonSupportingText = isGenerationReviewStep ? generationCreditLabel : null;
 
@@ -5160,6 +5446,84 @@ export default function WorkspaceScreen() {
                               transition={180}
                               cachePolicy="memory-disk"
                             />
+                            <LinearGradient
+                              colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.14)", "rgba(0,0,0,0.42)"]}
+                              style={{ position: "absolute", inset: 0 }}
+                            />
+                            {selectedImages.slice(1).map((image, index) => {
+                              const offset = index * 54;
+                              const isFocusedThumb = displayedSelectedImage?.uri === image.uri;
+                              return (
+                                <View
+                                  key={image.uri}
+                                  style={{
+                                    position: "absolute",
+                                    right: 18 + offset,
+                                    bottom: 18 + index * 6,
+                                    zIndex: 12 - index,
+                                  }}
+                                >
+                                  <LuxPressable
+                                    onPress={(event) => {
+                                      event.stopPropagation();
+                                      focusSelectedImage(image.uri);
+                                    }}
+                                    className="cursor-pointer"
+                                    style={{
+                                      width: 74,
+                                      height: 74,
+                                      borderRadius: 24,
+                                      overflow: "hidden",
+                                      borderWidth: isFocusedThumb ? 2 : 1,
+                                      borderColor: isFocusedThumb ? "#2563eb" : "rgba(255,255,255,0.68)",
+                                      backgroundColor: "#111114",
+                                      ...glowShadow(isFocusedThumb ? "rgba(37,99,235,0.32)" : "rgba(0,0,0,0.2)", 16),
+                                    }}
+                                  >
+                                    <Image source={{ uri: image.uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                                  </LuxPressable>
+                                  <LuxPressable
+                                    onPress={(event) => {
+                                      event.stopPropagation();
+                                      removeSelectedImage(image.uri);
+                                    }}
+                                    className="cursor-pointer"
+                                    style={{
+                                      position: "absolute",
+                                      right: -8,
+                                      top: -8,
+                                      width: 28,
+                                      height: 28,
+                                      borderRadius: 999,
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      borderWidth: 1,
+                                      borderColor: "rgba(255,255,255,0.12)",
+                                      backgroundColor: "rgba(8,9,11,0.92)",
+                                    }}
+                                  >
+                                    <Close color="#ffffff" size={14} strokeWidth={2.1} />
+                                  </LuxPressable>
+                                </View>
+                              );
+                            })}
+                            <View
+                              style={{
+                                position: "absolute",
+                                left: 16,
+                                bottom: 16,
+                                borderRadius: 999,
+                                borderWidth: 1,
+                                borderColor: "rgba(255,255,255,0.16)",
+                                backgroundColor: "rgba(8,9,11,0.76)",
+                                paddingHorizontal: spacing.sm,
+                                paddingVertical: spacing.xs,
+                              }}
+                            >
+                              <Text style={{ color: "#ffffff", fontSize: 12, fontWeight: "700" }}>
+                                {`${selectedImages.length}/3 photos`}
+                              </Text>
+                            </View>
                             {isPhotoPreviewBusy ? (
                               <View
                                 style={{
@@ -5239,7 +5603,7 @@ export default function WorkspaceScreen() {
                                     textAlign: "left",
                                   }}
                                 >
-                                  {emptyUploadTitle}
+                              {emptyUploadTitle}
                                 </Text>
                                 <Text
                                   style={{
@@ -5258,31 +5622,61 @@ export default function WorkspaceScreen() {
                         )}
 
                         {hasVisiblePhoto ? (
-                            <LuxPressable
-                              onPress={(event) => {
-                                event.stopPropagation();
-                                handleClearSelectedImage();
-                              }}
-                              style={{
-                                position: "absolute",
-                                right: 14,
-                                top: 14,
-                                zIndex: 20,
-                                width: 44,
-                                height: 44,
-                                alignItems: "center",
-                                justifyContent: "center",
-                                borderRadius: 999,
-                                borderWidth: HAIRLINE,
-                                borderColor: DS.colors.border,
-                                backgroundColor: "rgba(8,9,11,0.88)",
-                                ...glowShadow("rgba(255,255,255,0.05)", 16),
-                              }}
-                              className="cursor-pointer"
-                              scale={0.96}
-                            >
-                              <Close color="#ffffff" size={16} strokeWidth={2.4} />
-                            </LuxPressable>
+                            <>
+                              <LuxPressable
+                                onPress={(event) => {
+                                  event.stopPropagation();
+                                  if (selectedImage) {
+                                    removeSelectedImage(selectedImage.uri);
+                                  }
+                                }}
+                                style={{
+                                  position: "absolute",
+                                  right: 14,
+                                  top: 14,
+                                  zIndex: 20,
+                                  width: 44,
+                                  height: 44,
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  borderRadius: 999,
+                                  borderWidth: HAIRLINE,
+                                  borderColor: DS.colors.border,
+                                  backgroundColor: "rgba(8,9,11,0.88)",
+                                  ...glowShadow("rgba(255,255,255,0.05)", 16),
+                                }}
+                                className="cursor-pointer"
+                                scale={0.96}
+                              >
+                                  <Close color="#ffffff" size={16} strokeWidth={2.2} />
+                              </LuxPressable>
+                              {selectedImages.length < 3 ? (
+                                <LuxPressable
+                                  onPress={(event) => {
+                                    event.stopPropagation();
+                                    handlePickPhoto();
+                                  }}
+                                  style={{
+                                    position: "absolute",
+                                    left: 14,
+                                    top: 14,
+                                    zIndex: 20,
+                                    minWidth: 92,
+                                    height: 40,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    borderRadius: 999,
+                                    borderWidth: HAIRLINE,
+                                    borderColor: "rgba(37,99,235,0.45)",
+                                    backgroundColor: "rgba(37,99,235,0.18)",
+                                    paddingHorizontal: spacing.sm,
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Text style={{ color: "#dbeafe", fontSize: 12, fontWeight: "700" }}>Add photo</Text>
+                                </LuxPressable>
+                              ) : null}
+                            </>
                         ) : null}
                       </LuxPressable>
                     </MotiView>
@@ -5473,21 +5867,56 @@ export default function WorkspaceScreen() {
                       </View>
 
                       <View style={wizardCenteredGridStyle}>
+                        <MotiView {...staggerFadeUp(0, 20)} style={{ width: wizardCardWidth }}>
+                          <LuxPressable
+                            onPress={() => void handleAiSuggest()}
+                            className="cursor-pointer rounded-[32px] border"
+                            style={{
+                              minHeight: 188,
+                              borderWidth: 1.5,
+                              borderColor: smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE : "rgba(37,99,235,0.34)",
+                              backgroundColor: smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE_SOFT : "rgba(37,99,235,0.12)",
+                              paddingHorizontal: spacing.md,
+                              paddingVertical: spacing.md,
+                              ...glowShadow(smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE_GLOW : "rgba(37,99,235,0.2)", 22),
+                            }}
+                          >
+                            <View style={{ flex: 1, gap: spacing.md, justifyContent: "center" }}>
+                              <View style={{ alignSelf: "center", width: 86, height: 86, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.08)", borderWidth: 1, borderColor: "rgba(255,255,255,0.18)" }}>
+                                <Wand2 color="#dbeafe" size={34} strokeWidth={2.1} />
+                              </View>
+                              <View style={{ gap: spacing.sm }}>
+                                <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", textAlign: "left", letterSpacing: -0.35 }}>
+                                  {SMART_SUGGEST_WALL_LABEL}
+                                </Text>
+                                <Text style={{ color: smartSuggestEnabled ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: "left" }}>
+                                  Let the model choose the strongest wall color for this room.
+                                </Text>
+                              </View>
+                            </View>
+                            {smartSuggestEnabled ? (
+                              <View className="absolute right-3 top-3 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(37,99,235,0.28)", backgroundColor: "#0f0f10" }}>
+                                <BadgeCheck color={DESIGN_WIZARD_SELECTION_BLUE} size={16} strokeWidth={2} />
+                              </View>
+                            ) : null}
+                          </LuxPressable>
+                        </MotiView>
                         {WALL_COLOR_OPTIONS.map((option, index) => {
-                          const active = selectedStyle === option.title;
-                          const isFullWidthWallOption = shouldSpanFullWidthInTwoColumnGrid(index, WALL_COLOR_OPTIONS.length, wizardCardColumns);
+                          const active = !smartSuggestEnabled && selectedStyle === option.title;
+                          const isFullWidthWallOption = shouldSpanFullWidthInTwoColumnGrid(index, WALL_COLOR_OPTIONS.length + 1, wizardCardColumns);
                           return (
-                            <MotiView key={option.id} {...staggerFadeUp(index, 24)} style={{ width: isFullWidthWallOption ? "100%" : wizardCardWidth }}>
+                            <MotiView key={option.id} {...staggerFadeUp(index + 1, 24)} style={{ width: isFullWidthWallOption ? "100%" : wizardCardWidth }}>
                               <LuxPressable
                                 onPress={() => handleSelectStyle(option.title)}
                                 className="cursor-pointer rounded-[32px] border"
                                 style={{
                                   minHeight: 188,
                                   borderWidth: active ? 1.5 : 1,
-                                  borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
-                                  backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
+                                  borderColor: active ? DESIGN_WIZARD_SELECTION_BLUE : wizardSurfaceBorderColor,
+                                  backgroundColor: active ? DESIGN_WIZARD_SELECTION_BLUE_SOFT : wizardSurfaceColor,
                                   paddingHorizontal: spacing.md,
                                   paddingVertical: spacing.md,
+                                  ...glowShadow(active ? DESIGN_WIZARD_SELECTION_BLUE_GLOW : "rgba(255,255,255,0.04)", active ? 22 : 12),
                                 }}
                               >
                                 <View style={{ flex: 1, gap: spacing.md }}>
@@ -5508,14 +5937,14 @@ export default function WorkspaceScreen() {
                                     <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", textAlign: "left", letterSpacing: -0.35 }}>
                                       {option.title}
                                     </Text>
-                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: "left" }}>
+                                    <Text style={{ color: active ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: "left" }}>
                                       {option.description}
                                     </Text>
                                   </View>
                                 </View>
                                 {active ? (
-                                  <View className="absolute right-3 top-3 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "#0f0f10" }}>
-                                    <BadgeCheck color="#d946ef" size={16} strokeWidth={2} />
+                                  <View className="absolute right-3 top-3 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(37,99,235,0.28)", backgroundColor: "#0f0f10" }}>
+                                    <BadgeCheck color={DESIGN_WIZARD_SELECTION_BLUE} size={16} strokeWidth={2} />
                                   </View>
                                 ) : null}
                               </LuxPressable>
@@ -5536,23 +5965,58 @@ export default function WorkspaceScreen() {
                       </View>
 
                       <View style={wizardCenteredGridStyle}>
+                        <MotiView {...staggerFadeUp(0, 20)} style={{ width: wizardCardWidth }}>
+                          <LuxPressable
+                            onPress={() => void handleAiSuggest()}
+                            className="cursor-pointer rounded-[32px] border"
+                            style={{
+                              minHeight: 226,
+                              borderWidth: 1.5,
+                              borderColor: smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE : "rgba(37,99,235,0.34)",
+                              backgroundColor: smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE_SOFT : "rgba(37,99,235,0.12)",
+                              paddingHorizontal: spacing.md,
+                              paddingTop: spacing.md,
+                              paddingBottom: spacing.md,
+                              gap: spacing.md,
+                              ...glowShadow(smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE_GLOW : "rgba(37,99,235,0.2)", 22),
+                            }}
+                          >
+                            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", borderRadius: 24, backgroundColor: "rgba(255,255,255,0.05)" }}>
+                              <Wand2 color="#dbeafe" size={34} strokeWidth={2.1} />
+                            </View>
+                            <View style={{ gap: spacing.sm }}>
+                              <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.35 }}>
+                                {SMART_SUGGEST_FLOOR_LABEL}
+                              </Text>
+                              <Text style={{ color: smartSuggestEnabled ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
+                                Let the model choose the best flooring material and tone for this room.
+                              </Text>
+                            </View>
+                            {smartSuggestEnabled ? (
+                              <View className="absolute right-3 top-3 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(37,99,235,0.28)", backgroundColor: "#0f0f10" }}>
+                                <BadgeCheck color={DESIGN_WIZARD_SELECTION_BLUE} size={16} strokeWidth={2} />
+                              </View>
+                            ) : null}
+                          </LuxPressable>
+                        </MotiView>
                         {FLOOR_MATERIAL_OPTIONS.map((material, index) => {
-                          const active = selectedStyle === material.title;
-                          const isFullWidthMaterialCard = shouldSpanFullWidthInTwoColumnGrid(index, FLOOR_MATERIAL_OPTIONS.length, wizardCardColumns);
+                          const active = !smartSuggestEnabled && selectedStyle === material.title;
+                          const isFullWidthMaterialCard = shouldSpanFullWidthInTwoColumnGrid(index, FLOOR_MATERIAL_OPTIONS.length + 1, wizardCardColumns);
                           return (
-                            <MotiView key={material.id} {...staggerFadeUp(index, 24)} style={{ width: isFullWidthMaterialCard ? "100%" : wizardCardWidth }}>
+                            <MotiView key={material.id} {...staggerFadeUp(index + 1, 24)} style={{ width: isFullWidthMaterialCard ? "100%" : wizardCardWidth }}>
                               <LuxPressable
                                 onPress={() => handleSelectStyle(material.title)}
                                 className="cursor-pointer rounded-[32px] border"
                                 style={{
                                   minHeight: 226,
                                   borderWidth: active ? 1.5 : 1,
-                                  borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
-                                  backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
+                                  borderColor: active ? DESIGN_WIZARD_SELECTION_BLUE : wizardSurfaceBorderColor,
+                                  backgroundColor: active ? DESIGN_WIZARD_SELECTION_BLUE_SOFT : wizardSurfaceColor,
                                   paddingHorizontal: spacing.md,
                                   paddingTop: spacing.md,
                                   paddingBottom: spacing.md,
                                   gap: spacing.md,
+                                  ...glowShadow(active ? DESIGN_WIZARD_SELECTION_BLUE_GLOW : "rgba(255,255,255,0.04)", active ? 22 : 12),
                                 }}
                               >
                                 <FloorMaterialPreview material={material} active={active} />
@@ -5560,13 +6024,13 @@ export default function WorkspaceScreen() {
                                   <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.35, textAlign: isFullWidthMaterialCard ? "center" : "left" }}>
                                     {material.title}
                                   </Text>
-                                  <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: isFullWidthMaterialCard ? "center" : "left", maxWidth: isFullWidthMaterialCard ? 360 : undefined }}>
+                                  <Text style={{ color: active ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: isFullWidthMaterialCard ? "center" : "left", maxWidth: isFullWidthMaterialCard ? 360 : undefined }}>
                                     {material.description}
                                   </Text>
                                 </View>
                                 {active ? (
-                                  <View className="absolute right-3 top-3 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "#0f0f10" }}>
-                                    <BadgeCheck color="#d946ef" size={16} strokeWidth={2} />
+                                  <View className="absolute right-3 top-3 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(37,99,235,0.28)", backgroundColor: "#0f0f10" }}>
+                                    <BadgeCheck color={DESIGN_WIZARD_SELECTION_BLUE} size={16} strokeWidth={2} />
                                   </View>
                                 ) : null}
                               </LuxPressable>
@@ -5599,9 +6063,59 @@ export default function WorkspaceScreen() {
                         </MotiView>
                       ) : null}
 
+                      <MotiView
+                        key={`ai-suggest-style-${aiSuggestionPulseKey}`}
+                        from={{ opacity: 0.9, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={LUX_SPRING}
+                        style={{ width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}
+                      >
+                        <LuxPressable
+                          onPress={() => void handleAiSuggest()}
+                          className="cursor-pointer overflow-hidden rounded-[24px] border"
+                          style={{
+                            borderWidth: 1,
+                            borderColor: "rgba(37,99,235,0.34)",
+                            backgroundColor: "rgba(37,99,235,0.12)",
+                            paddingHorizontal: spacing.md,
+                            paddingVertical: spacing.md,
+                            marginBottom: spacing.sm,
+                          }}
+                        >
+                          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md, flex: 1 }}>
+                              <MotiView
+                                animate={isAiSuggesting ? { rotate: "12deg", scale: [1, 1.08, 1] } : { rotate: "0deg", scale: 1 }}
+                                transition={{ duration: 900, loop: isAiSuggesting }}
+                                style={{
+                                  width: 48,
+                                  height: 48,
+                                  borderRadius: 18,
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  backgroundColor: "rgba(37,99,235,0.22)",
+                                }}
+                              >
+                                <Wand2 color="#dbeafe" size={22} strokeWidth={2.2} />
+                              </MotiView>
+                              <View style={{ flex: 1, gap: spacing.xs }}>
+                                <Text style={{ color: "#eff6ff", fontSize: 17, fontWeight: "700" }}>AI Suggest</Text>
+                                <Text style={{ color: "#bfdbfe", fontSize: 13, lineHeight: 19 }}>
+                                  {isAiSuggesting
+                                    ? "Scanning the room architecture and matching a design direction."
+                                    : "Let Gemini compose a style and palette direction from the room itself."}
+                                </Text>
+                              </View>
+                            </View>
+                            {isAiSuggesting ? <ActivityIndicator size="small" color="#dbeafe" /> : null}
+                          </View>
+                        </LuxPressable>
+                      </MotiView>
+
                       <View style={wizardCenteredGridStyle}>
                         {displayedStyleCards.map((style, index) => {
-                          const active = selectedStyle === style.title;
+                          const active = style.isCustom ? selectedStyle === style.title : selectedStyles.includes(style.title);
+                          const aiActive = aiSuggestedStyle === style.title;
                           const isFullWidthStyleCard = shouldSpanFullWidthInTwoColumnGrid(index, displayedStyleCards.length, wizardCardColumns);
                           const StyleIcon = style.icon ?? Sparkles;
                           const styleBadge = getStyleCardBadge(style) ?? (isFullWidthStyleCard ? { label: "Editorial", tone: "violet" as const } : null);
@@ -5615,9 +6129,9 @@ export default function WorkspaceScreen() {
                                   width: "100%",
                                   minHeight: 238,
                                   borderWidth: active ? 1.5 : 1,
-                                  borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
-                                  backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
-                                  ...glowShadow(active ? DS.colors.accentGlowStrong : "rgba(255,255,255,0.04)", active ? 26 : 14),
+                                  borderColor: aiActive || active ? DESIGN_WIZARD_SELECTION_BLUE : wizardSurfaceBorderColor,
+                                  backgroundColor: aiActive || active ? DESIGN_WIZARD_SELECTION_BLUE_SOFT : wizardSurfaceColor,
+                                  ...glowShadow(aiActive || active ? DESIGN_WIZARD_SELECTION_BLUE_GLOW : "rgba(255,255,255,0.04)", aiActive || active ? 24 : 14),
                                 }}
                               >
                                 {style.image ? (
@@ -5699,11 +6213,11 @@ export default function WorkspaceScreen() {
                                           justifyContent: "center",
                                           borderRadius: 15,
                                           borderWidth: 1,
-                                          borderColor: active ? "rgba(255,107,242,0.55)" : "rgba(255,255,255,0.16)",
+                                          borderColor: aiActive || active ? "rgba(37,99,235,0.55)" : "rgba(255,255,255,0.16)",
                                           backgroundColor: "rgba(8,8,10,0.62)",
                                         }}
                                       >
-                                        <StyleIcon color="#ffffff" size={18} strokeWidth={2} />
+                                        <StyleIcon color={aiActive || active ? "#dbeafe" : "#ffffff"} size={18} strokeWidth={2} />
                                       </View>
                                     ) : null}
                                     {styleBadge && badgeColors ? (
@@ -5734,7 +6248,7 @@ export default function WorkspaceScreen() {
                                       </View>
                                     ) : null}
                                   </View>
-                                  {active ? (
+                                  {active || aiActive ? (
                                     <View
                                       style={{
                                         height: 36,
@@ -5742,7 +6256,7 @@ export default function WorkspaceScreen() {
                                         borderRadius: 999,
                                         borderWidth: 1,
                                         borderColor: "rgba(255,255,255,0.22)",
-                                        backgroundColor: "#d946ef",
+                                        backgroundColor: DESIGN_WIZARD_SELECTION_BLUE,
                                         alignItems: "center",
                                         justifyContent: "center",
                                       }}
@@ -5772,17 +6286,17 @@ export default function WorkspaceScreen() {
                                         justifyContent: "center",
                                         borderRadius: 16,
                                         borderWidth: 1,
-                                        borderColor: active ? "rgba(255,107,242,0.55)" : "rgba(255,255,255,0.16)",
+                                        borderColor: active || aiActive ? "rgba(37,99,235,0.55)" : "rgba(255,255,255,0.16)",
                                         backgroundColor: "rgba(8,8,10,0.62)",
                                       }}
                                     >
-                                      <StyleIcon color="#ffffff" size={20} strokeWidth={2} />
+                                      <StyleIcon color={aiActive || active ? "#dbeafe" : "#ffffff"} size={20} strokeWidth={2} />
                                     </View>
                                   ) : null}
                                   <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700", lineHeight: 22, letterSpacing: -0.28, textAlign: isFullWidthStyleCard ? "center" : "left" }} numberOfLines={2}>
                                     {style.title}
                                   </Text>
-                                  <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 12, lineHeight: 17.5, textAlign: isFullWidthStyleCard ? "center" : "left", maxWidth: isFullWidthStyleCard ? 360 : undefined }} numberOfLines={3}>
+                                  <Text style={{ color: active || aiActive ? "#dbeafe" : wizardMutedTextColor, fontSize: 12, lineHeight: 17.5, textAlign: isFullWidthStyleCard ? "center" : "left", maxWidth: isFullWidthStyleCard ? 360 : undefined }} numberOfLines={3}>
                                     {style.description}
                                   </Text>
                                   {isFullWidthStyleCard ? (
@@ -6063,6 +6577,54 @@ export default function WorkspaceScreen() {
                         </Text>
                       </View>
 
+                      <MotiView
+                        key={`ai-suggest-palette-${aiSuggestionPulseKey}`}
+                        from={{ opacity: 0.9, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={LUX_SPRING}
+                        style={{ width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}
+                      >
+                        <LuxPressable
+                          onPress={() => void handleAiSuggest()}
+                          className="cursor-pointer overflow-hidden rounded-[24px] border"
+                          style={{
+                            borderWidth: 1,
+                            borderColor: "rgba(37,99,235,0.34)",
+                            backgroundColor: "rgba(37,99,235,0.12)",
+                            paddingHorizontal: spacing.md,
+                            paddingVertical: spacing.md,
+                          }}
+                        >
+                          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md, flex: 1 }}>
+                              <MotiView
+                                animate={isAiSuggesting ? { rotate: "12deg", scale: [1, 1.08, 1] } : { rotate: "0deg", scale: 1 }}
+                                transition={{ duration: 900, loop: isAiSuggesting }}
+                                style={{
+                                  width: 48,
+                                  height: 48,
+                                  borderRadius: 18,
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  backgroundColor: "rgba(37,99,235,0.22)",
+                                }}
+                              >
+                                <Wand2 color="#dbeafe" size={22} strokeWidth={2.2} />
+                              </MotiView>
+                              <View style={{ flex: 1, gap: spacing.xs }}>
+                                <Text style={{ color: "#eff6ff", fontSize: 17, fontWeight: "700" }}>AI Suggest</Text>
+                                <Text style={{ color: "#bfdbfe", fontSize: 13, lineHeight: 19 }}>
+                                  {isAiSuggesting
+                                    ? "Reading the room architecture and composing the best palette."
+                                    : "Let Gemini read the room and pick the strongest style and palette pairing."}
+                                </Text>
+                              </View>
+                            </View>
+                            {isAiSuggesting ? <ActivityIndicator size="small" color="#dbeafe" /> : null}
+                          </View>
+                        </LuxPressable>
+                      </MotiView>
+
                       <View style={{ gap: spacing.sm, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
                         <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>{t("wizard.interior.stepFourMode")}</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
@@ -6119,6 +6681,7 @@ export default function WorkspaceScreen() {
                         <View style={wizardPaletteGridStyle}>
                           {PALETTE_OPTIONS.slice(0, 8).map((palette, index) => {
                             const active = selectedPaletteId === palette.id;
+                            const aiActive = aiSuggestedPaletteId === palette.id;
                             const isPopular = POPULAR_PALETTE_IDS.has(palette.id);
                             const isFullWidthPaletteCard = shouldSpanFullWidthInTwoColumnGrid(index, PALETTE_OPTIONS.slice(0, 8).length, wizardPaletteColumns);
                             return (
@@ -6128,8 +6691,8 @@ export default function WorkspaceScreen() {
                                   className="cursor-pointer overflow-hidden rounded-[22px] border"
                                   style={{
                                     borderWidth: active ? 1.5 : 1,
-                                    borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
-                                    backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
+                                    borderColor: aiActive ? "#2563eb" : active ? "#d946ef" : wizardSurfaceBorderColor,
+                                    backgroundColor: aiActive ? "rgba(37,99,235,0.16)" : active ? wizardActiveSurfaceColor : wizardSurfaceColor,
                                   }}
                                 >
                                   <View style={{ height: 74, flexDirection: "row" }}>
@@ -6162,9 +6725,9 @@ export default function WorkspaceScreen() {
                                       {palette.description}
                                     </Text>
                                   </View>
-                                  {active ? (
-                                    <View className="absolute right-2 top-2 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "#0f0f10" }}>
-                                      <BadgeCheck color="#d946ef" size={16} strokeWidth={2} />
+                                  {active || aiActive ? (
+                                    <View className="absolute right-2 top-2 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: aiActive ? "rgba(37,99,235,0.28)" : "rgba(217,70,239,0.22)", backgroundColor: "#0f0f10" }}>
+                                      <BadgeCheck color={aiActive ? "#2563eb" : "#d946ef"} size={16} strokeWidth={2} />
                                     </View>
                                   ) : null}
                                 </LuxPressable>

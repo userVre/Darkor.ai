@@ -19,29 +19,41 @@ export function buildStabilityPrompt(args: {
   serviceType: ServiceType;
   roomType: string;
   style: string;
+  styleSelections?: string[];
   colorPalette: string;
   customPrompt?: string;
   targetColor?: string;
   targetSurface?: string;
   aspectRatio?: string;
   regenerate?: boolean;
+  smartSuggest?: boolean;
 }) {
   const roomType = trimOptional(args.roomType) ?? "space";
   const style = trimOptional(args.style) ?? "luxury contemporary";
+  const styleBlend =
+    (args.styleSelections ?? [])
+      .map((value) => trimOptional(value))
+      .filter((value): value is string => Boolean(value))
+      .join(", ");
   const palette = trimOptional(args.colorPalette) ?? style;
   const targetColor = trimOptional(args.targetColor);
   const targetSurface = trimOptional(args.targetSurface);
   const customPrompt = trimOptional(args.customPrompt);
   const aspectRatio = normalizeAspectRatio(args.aspectRatio);
+  const smartSuggest = Boolean(args.smartSuggest);
   const variationInstruction = args.regenerate
     ? "Create a fresh alternate variation while preserving the same architecture, framing, and realism."
     : undefined;
 
   if (args.serviceType === "paint") {
     return compact([
-      `A photorealistic, highly detailed ${style} ${roomType.toLowerCase()} with ${targetColor ?? palette} wall finishes.`,
+      smartSuggest
+        ? `A photorealistic, highly detailed redesign of this ${roomType.toLowerCase()} where you choose the most compatible wall paint color and finish for the space.`
+        : `A photorealistic, highly detailed ${style} ${roomType.toLowerCase()} with ${targetColor ?? palette} wall finishes.`,
+      styleBlend ? `Blend these style influences intelligently: ${styleBlend}.` : undefined,
       targetSurface ? `Only repaint the masked ${targetSurface.toLowerCase()} area.` : "Only repaint the masked wall area.",
       "Preserve the original structure, furniture, lighting, shadows, trim, windows, decor, and camera perspective perfectly.",
+      smartSuggest ? "Select a paint tone that harmonizes with the room architecture, daylight, furnishings, and existing materials." : undefined,
       "Architectural photography style, believable paint texture, clean masking edges, cinematic lighting, premium interior render.",
       customPrompt ? `Additional direction: ${customPrompt}.` : undefined,
       `Output in a ${aspectRatio} composition.`,
@@ -51,9 +63,13 @@ export function buildStabilityPrompt(args: {
 
   if (args.serviceType === "floor") {
     return compact([
-      `A photorealistic, highly detailed ${style} ${roomType.toLowerCase()} with ${targetColor ?? palette} flooring tones.`,
+      smartSuggest
+        ? `A photorealistic, highly detailed redesign of this ${roomType.toLowerCase()} where you choose the most compatible floor material and finish for the space.`
+        : `A photorealistic, highly detailed ${style} ${roomType.toLowerCase()} with ${targetColor ?? palette} flooring tones.`,
+      styleBlend ? `Blend these style influences intelligently: ${styleBlend}.` : undefined,
       "Only replace the masked floor area and preserve every non-masked region exactly as photographed.",
       "Keep realistic floor perspective, seams, reflections, grounding, and material scale.",
+      smartSuggest ? "Select the floor material, tone, and finish that best suit the architecture, lighting, and furnishings." : undefined,
       "Architectural photography style, premium material rendering, cinematic natural light, editorial realism.",
       customPrompt ? `Additional direction: ${customPrompt}.` : undefined,
       `Output in a ${aspectRatio} composition.`,
@@ -62,8 +78,12 @@ export function buildStabilityPrompt(args: {
   }
 
   return compact([
-    `A photorealistic, highly detailed ${style} ${roomType.toLowerCase()} with ${targetColor ?? palette} finishes.`,
+    smartSuggest
+      ? `A photorealistic, highly detailed redesign of this ${roomType.toLowerCase()} where you choose the most compatible design style, palette, and materials for the space.`
+      : `A photorealistic, highly detailed ${style} ${roomType.toLowerCase()} with ${targetColor ?? palette} finishes.`,
+    styleBlend ? `Blend these style influences intelligently: ${styleBlend}.` : undefined,
     "Use the uploaded photo as the composition and structural reference.",
+    smartSuggest ? "Decide the strongest style direction, color palette, and material language from the architecture itself." : undefined,
     "Preserve the room or facade geometry, perspective, openings, and major built elements while redesigning materials, colors, furnishings, and styling.",
     "Architectural photography style, cinematic lighting, realistic materials, editorial composition, ultra-detailed decor, premium home design render.",
     customPrompt ? `Additional direction: ${customPrompt}.` : undefined,

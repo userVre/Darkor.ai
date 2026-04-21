@@ -50,7 +50,7 @@ export default function TermsOfServiceScreen() {
             style={styles.backButton}
             glowColor={DS.colors.accentGlow}
           >
-            <ArrowLeft color={DS.colors.textPrimary} size={18} strokeWidth={2.2} />
+            <ArrowLeft color="#000000" size={18} strokeWidth={2.2} />
           </LuxPressable>
 
           <View style={styles.heroCard}>

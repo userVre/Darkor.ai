@@ -7,12 +7,14 @@ import { spacing } from "../styles/spacing";
 import { createButtonStyles } from "@/styles/buttons";
 import { type Theme, useTheme } from "@/styles/theme";
 import { DS } from "../lib/design-system";
+import { DIAMOND_PILL_BLUE } from "./diamond-credit-pill";
 
 import { LuxPressable } from "./lux-pressable";
 
 const pointerClassName = "cursor-pointer";
-const ACTIVE_BUTTON_COLOR = "#111318";
+const ACTIVE_BUTTON_COLOR = DIAMOND_PILL_BLUE;
 const INACTIVE_BUTTON_COLOR = DS.colors.surfaceMuted;
+const ACTIVE_BUTTON_GLOW = "rgba(29, 78, 216, 0.28)";
 
 type ServiceContinueButtonProps = {
   active?: boolean;
@@ -89,7 +91,7 @@ export function ServiceContinueButton({
               className={pointerClassName}
               pressableClassName={pointerClassName}
               style={styles.pressable}
-              glowColor={ACTIVE_BUTTON_COLOR}
+              glowColor={ACTIVE_BUTTON_GLOW}
               scale={0.99}
             >
               <View style={[styles.button, active ? styles.buttonActive : styles.buttonInactive]}>
@@ -143,7 +145,7 @@ function createStyles(colors: Theme) {
       top: 6,
       bottom: 0,
       borderRadius: 14,
-      backgroundColor: "rgba(17, 19, 24, 0.14)",
+      backgroundColor: "rgba(29, 78, 216, 0.16)",
     },
     pressable: {
       width: "100%",

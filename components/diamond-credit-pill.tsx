@@ -22,16 +22,18 @@ type DiamondCreditPillProps = {
   style?: StyleProp<ViewStyle>;
 };
 
+export const DIAMOND_PILL_BLUE = "#1D4ED8";
+
 const VARIANT_STYLES = {
   dark: {
     backgroundColor: "#FFFFFF",
     textColor: "#0F172A",
-    prismPrimary: "#1D4ED8",
+    prismPrimary: DIAMOND_PILL_BLUE,
   },
   light: {
     backgroundColor: "#FFFFFF",
     textColor: "#0F172A",
-    prismPrimary: "#1D4ED8",
+    prismPrimary: DIAMOND_PILL_BLUE,
   },
 } as const;
 
