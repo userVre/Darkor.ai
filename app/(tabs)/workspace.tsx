@@ -3407,7 +3407,7 @@ export default function WorkspaceScreen() {
       const nextFocused =
         focusedImageUri && merged.some((image) => image.uri === focusedImageUri)
           ? focusedImageUri
-          : merged[merged.length - 1]?.uri ?? merged[0]?.uri ?? null;
+          : merged[0]?.uri ?? null;
       setFocusedImageUri(nextFocused);
       setDraftImage(merged[0] ?? null);
       setGeneratedImageUrl(null);
@@ -3422,17 +3422,9 @@ export default function WorkspaceScreen() {
     }
 
     triggerHaptic();
-    setSelectedImages((current) => {
-      const selectedImage = current.find((image) => image.uri === uri);
-      if (!selectedImage) {
-        return current;
-      }
-
-      const reordered = [selectedImage, ...current.filter((image) => image.uri !== uri)];
-      setFocusedImageUri(reordered[0]?.uri ?? null);
-      setDraftImage(reordered[0] ?? null);
-      return reordered;
-    });
+    setFocusedImageUri(uri);
+    const nextFocusedImage = selectedImages.find((image) => image.uri === uri) ?? null;
+    setDraftImage(nextFocusedImage ?? selectedImages[0] ?? null);
   }, [selectedImages, setDraftImage]);
 
   const removeSelectedImage = useCallback((uri: string) => {
@@ -4622,14 +4614,14 @@ export default function WorkspaceScreen() {
   );
 
   const handleContinueFromExteriorStyleStep = useCallback(() => {
-    if (!selectedExteriorStyle) {
+    if (selectedStyles.length === 0) {
       return;
     }
 
-    setDraftStyle(selectedStyles[0] ?? selectedExteriorStyle);
+    setDraftStyle(selectedStyle ?? selectedStyles[0] ?? selectedExteriorStyle);
     setDraftStyles(selectedStyles);
     handleContinue();
-  }, [handleContinue, selectedExteriorStyle, selectedStyles, setDraftStyle, setDraftStyles]);
+  }, [handleContinue, selectedExteriorStyle, selectedStyle, selectedStyles, setDraftStyle, setDraftStyles]);
 
   const handleContinueFromExteriorPaletteStep = useCallback(() => {
     if (!selectedPaletteId && !smartSuggestEnabled) {
@@ -4659,14 +4651,14 @@ export default function WorkspaceScreen() {
   );
 
   const handleContinueFromGardenStyleStep = useCallback(() => {
-    if (!selectedGardenStyle) {
+    if (selectedStyles.length === 0) {
       return;
     }
 
-    setDraftStyle(selectedStyles[0] ?? selectedGardenStyle);
+    setDraftStyle(selectedStyle ?? selectedStyles[0] ?? selectedGardenStyle);
     setDraftStyles(selectedStyles);
     handleContinue();
-  }, [handleContinue, selectedGardenStyle, selectedStyles, setDraftStyle, setDraftStyles]);
+  }, [handleContinue, selectedGardenStyle, selectedStyle, selectedStyles, setDraftStyle, setDraftStyles]);
 
   const handleContinueFromGardenPaletteStep = useCallback(() => {
     if (!selectedPaletteId && !smartSuggestEnabled) {
@@ -4701,14 +4693,14 @@ export default function WorkspaceScreen() {
   );
 
   const handleContinueFromInteriorStyleStep = useCallback(() => {
-    if (!selectedInteriorStyle) {
+    if (selectedStyles.length === 0) {
       return;
     }
 
-    setDraftStyle(selectedStyles[0] ?? selectedInteriorStyle);
+    setDraftStyle(selectedStyle ?? selectedStyles[0] ?? selectedInteriorStyle);
     setDraftStyles(selectedStyles);
     handleContinue();
-  }, [handleContinue, selectedInteriorStyle, selectedStyles, setDraftStyle, setDraftStyles]);
+  }, [handleContinue, selectedInteriorStyle, selectedStyle, selectedStyles, setDraftStyle, setDraftStyles]);
 
   const handleSetSelectedModeId = useCallback((modeId: string | null) => {
     setSelectedModeId((modeId as ModeOption["id"] | null) ?? null);

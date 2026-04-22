@@ -67,6 +67,16 @@ type StabilityErrorPayload = {
   id?: string;
 };
 
+type DesignOrchestrationResult = {
+  style: string;
+  paletteId?: string;
+  wallColor?: string;
+  floorMaterial?: string;
+  customPrompt?: string;
+  reason?: string;
+  source: "gemini" | "fallback";
+};
+
 function trimOptional(value?: string | null) {
   const trimmed = value?.trim();
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
@@ -170,6 +180,34 @@ function normalizeGenerationError(message?: string | null) {
   }
 
   return raw;
+}
+
+function joinNaturalLanguage(values: string[]) {
+  if (values.length === 0) return "";
+  if (values.length === 1) return values[0];
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+  return `${values.slice(0, -1).join(", ")}, and ${values[values.length - 1]}`;
+}
+
+function buildStyleDirection(style: string, styleSelections?: string[]) {
+  const normalizedStyle = trimOptional(style) ?? "Modern";
+  const normalizedSelections =
+    (styleSelections ?? [])
+      .map((value) => trimOptional(value))
+      .filter((value): value is string => Boolean(value && value.toLowerCase() !== normalizedStyle.toLowerCase()));
+
+  if (normalizedSelections.length === 0) {
+    return normalizedStyle;
+  }
+
+  return `${joinNaturalLanguage([normalizedStyle, ...normalizedSelections])} blend`;
+}
+
+function compactPromptSegments(parts: Array<string | undefined>) {
+  return parts
+    .map((part) => trimOptional(part))
+    .filter((part): part is string => Boolean(part))
+    .join(" ");
 }
 
 async function parseStabilityError(response: Response) {
@@ -622,6 +660,55 @@ function buildFallbackSuggestion(args: {
   };
 }
 
+function buildFallbackOrchestration(args: {
+  serviceType: ServiceType;
+  roomType: string;
+  style: string;
+  styleSelections?: string[];
+  colorPalette?: string;
+}) {
+  const normalizedRoom = args.roomType.toLowerCase();
+  const styleDirection = buildStyleDirection(args.style, args.styleSelections);
+  const balancedWallColor =
+    normalizedRoom.includes("bath") ? "soft warm white" :
+    normalizedRoom.includes("bed") ? "muted greige" :
+    normalizedRoom.includes("living") ? "refined mushroom beige" :
+    "balanced warm white";
+  const balancedFloorMaterial =
+    normalizedRoom.includes("bath") ? "honed light travertine" :
+    normalizedRoom.includes("bed") ? "natural matte oak planks" :
+    normalizedRoom.includes("living") ? "wide-plank European oak" :
+    "matte natural oak flooring";
+
+  if (args.serviceType === "paint") {
+    return {
+      style: styleDirection,
+      wallColor: balancedWallColor,
+      customPrompt: `Use ${balancedWallColor} as the professionally balanced wall color choice after analyzing the room's current furniture, lighting, and materials.`,
+      reason: "Fallback balanced wall color selected for a high-end result.",
+      source: "fallback" as const,
+    };
+  }
+
+  if (args.serviceType === "floor") {
+    return {
+      style: styleDirection,
+      floorMaterial: balancedFloorMaterial,
+      customPrompt: `Use ${balancedFloorMaterial} as the professionally balanced flooring material after analyzing the room's furniture, lighting, and overall design language.`,
+      reason: "Fallback balanced floor material selected for a high-end result.",
+      source: "fallback" as const,
+    };
+  }
+
+  return {
+    style: styleDirection,
+    paletteId: trimOptional(args.colorPalette) ?? "surprise",
+    customPrompt: `Resolve the room using a refined ${styleDirection} direction with a premium, cohesive material palette informed by the existing furniture and lighting.`,
+    reason: "Fallback style direction selected for a cohesive redesign.",
+    source: "fallback" as const,
+  };
+}
+
 function parseSuggestionResponse(payload: any) {
   const directText = trimOptional(payload?.text);
   if (directText) {
@@ -636,6 +723,125 @@ function parseSuggestionResponse(payload: any) {
   return trimOptional(candidateText);
 }
 
+async function requestGeminiDesignOrchestration(args: {
+  sourceBlob: Blob;
+  serviceType: ServiceType;
+  roomType: string;
+  style: string;
+  styleSelections?: string[];
+  colorPalette?: string;
+  availableStyles?: string[];
+  availablePalettes?: string[];
+}) {
+  const fallback = buildFallbackOrchestration({
+    serviceType: args.serviceType,
+    roomType: args.roomType,
+    style: args.style,
+    styleSelections: args.styleSelections,
+    colorPalette: args.colorPalette,
+  });
+  const apiKey = trimOptional(process.env.GEMINI_API_KEY);
+  const model = trimOptional(process.env.GEMINI_TEXT_MODEL) ?? "gemini-3.1-pro-preview";
+
+  if (!apiKey) {
+    return fallback;
+  }
+
+  const { base64, mimeType } = await prepareSuggestionImage(args.sourceBlob);
+  const styleDirection = buildStyleDirection(args.style, args.styleSelections);
+  const requestShape =
+    args.serviceType === "paint"
+      ? '{"style":"...","wallColor":"...","reason":"..."}'
+      : args.serviceType === "floor"
+        ? '{"style":"...","floorMaterial":"...","reason":"..."}'
+        : '{"style":"...","paletteId":"...","reason":"..."}';
+  const taskInstruction =
+    args.serviceType === "paint"
+      ? "Analyze the room's current furniture, lighting, and materials, then choose the best professional wall color for a premium final result."
+      : args.serviceType === "floor"
+        ? "Analyze the room's current furniture, lighting, and materials, then choose the best professional floor material and finish for a premium final result."
+        : "Analyze the room's current furniture, lighting, and materials, then choose the best design style and palette direction for a premium final result.";
+
+  const prompt = [
+    "You are a senior architectural design director.",
+    `Service type: ${args.serviceType}.`,
+    `Room type: ${args.roomType}.`,
+    `Current desired direction: ${styleDirection}.`,
+    args.availableStyles?.length ? `Allowed styles: ${args.availableStyles.join(", ")}.` : undefined,
+    args.availablePalettes?.length ? `Allowed palettes: ${args.availablePalettes.join(", ")}.` : undefined,
+    taskInstruction,
+    "If the user selected AI Suggest, Surprise Me, AI Choice, or Random, you must still return a professionally balanced, high-end choice rather than something extreme.",
+    `Return strict JSON in the shape ${requestShape} with no markdown and no extra text.`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), GEMINI_SUGGEST_REQUEST_TIMEOUT_MS);
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: prompt },
+              {
+                inlineData: {
+                  mimeType,
+                  data: base64,
+                },
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.35,
+          responseMimeType: "application/json",
+        },
+      }),
+    }).finally(() => clearTimeout(timeout));
+
+    if (!response.ok) {
+      console.error("requestGeminiDesignOrchestration: Gemini request failed", response.status, await response.text().catch(() => ""));
+      return fallback;
+    }
+
+    const payload = await response.json();
+    const text = parseSuggestionResponse(payload);
+    if (!text) {
+      return fallback;
+    }
+
+    const parsed = JSON.parse(extractJsonBlock(text)) as {
+      style?: string;
+      paletteId?: string;
+      wallColor?: string;
+      floorMaterial?: string;
+      reason?: string;
+    };
+
+    return {
+      style: trimOptional(parsed.style) ?? fallback.style,
+      paletteId: trimOptional(parsed.paletteId) ?? fallback.paletteId,
+      wallColor: trimOptional(parsed.wallColor) ?? fallback.wallColor,
+      floorMaterial: trimOptional(parsed.floorMaterial) ?? fallback.floorMaterial,
+      customPrompt: fallback.customPrompt,
+      reason: trimOptional(parsed.reason) ?? fallback.reason,
+      source: "gemini" as const,
+    } satisfies DesignOrchestrationResult;
+  } catch (error) {
+    console.error("requestGeminiDesignOrchestration: falling back after error", error);
+    return fallback;
+  }
+}
+
 export const suggestDesignOptions: any = actionGeneric({
   args: {
     imageStorageId: v.id("_storage"),
@@ -646,85 +852,27 @@ export const suggestDesignOptions: any = actionGeneric({
   },
   handler: async (ctx, args) => {
     const fallback = buildFallbackSuggestion(args);
-    const apiKey = trimOptional(process.env.GEMINI_API_KEY);
-    const model = trimOptional(process.env.GEMINI_TEXT_MODEL) ?? "gemini-3.1-pro-preview";
-
-    if (!apiKey) {
-      return fallback;
-    }
-
     const sourceBlob = await ctx.storage.get(args.imageStorageId);
     if (!sourceBlob) {
       return fallback;
     }
 
     try {
-      const { base64, mimeType } = await prepareSuggestionImage(sourceBlob);
-      const prompt = [
-        "You are an architectural interior and exterior design selector.",
-        `Service type: ${args.serviceType}.`,
-        `Room type: ${args.roomType}.`,
-        `Available styles: ${args.availableStyles.join(", ")}.`,
-        `Available palettes: ${args.availablePalettes.join(", ")}.`,
-        "Analyze the room architecture and automatically pick the most suitable design style.",
-        "Then choose the best matching palette.",
-        'Return strict JSON like {"style":"Modern","paletteId":"terracotta","reason":"..."} with no extra text.',
-      ].join(" ");
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), GEMINI_SUGGEST_REQUEST_TIMEOUT_MS);
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal: controller.signal,
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                { text: prompt },
-                {
-                  inlineData: {
-                    mimeType,
-                    data: base64,
-                  },
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.35,
-            responseMimeType: "application/json",
-          },
-        }),
-      }).finally(() => clearTimeout(timeout));
-
-      if (!response.ok) {
-        console.error("suggestDesignOptions: Gemini request failed", response.status, await response.text().catch(() => ""));
-        return fallback;
-      }
-
-      const payload = await response.json();
-      const text = parseSuggestionResponse(payload);
-      if (!text) {
-        console.error("suggestDesignOptions: Gemini returned no text payload");
-        return fallback;
-      }
-
-      const parsed = JSON.parse(extractJsonBlock(text)) as {
-        style?: string;
-        paletteId?: string;
-        reason?: string;
-      };
+      const parsed = await requestGeminiDesignOrchestration({
+        sourceBlob,
+        serviceType: args.serviceType,
+        roomType: args.roomType,
+        style: fallback.style,
+        colorPalette: fallback.paletteId,
+        availableStyles: args.availableStyles,
+        availablePalettes: args.availablePalettes,
+      });
 
       return {
         style: normalizeSuggestionChoice(parsed.style, args.availableStyles, fallback.style),
         paletteId: normalizeSuggestionChoice(parsed.paletteId, args.availablePalettes, fallback.paletteId),
         reason: trimOptional(parsed.reason) ?? fallback.reason,
-        source: "gemini" as const,
+        source: parsed.source,
       };
     } catch (error) {
       console.error("suggestDesignOptions: falling back after error", error);
@@ -843,14 +991,44 @@ export const generateDesign: any = internalActionGeneric({
         serviceType: args.serviceType,
       });
 
+      const orchestratedDirection =
+        args.smartSuggest
+          ? await requestGeminiDesignOrchestration({
+              sourceBlob,
+              serviceType: args.serviceType,
+              roomType: args.roomType,
+              style: args.style,
+              styleSelections: args.styleSelections,
+              colorPalette: args.colorPalette,
+            })
+          : null;
+      const resolvedStyle = trimOptional(orchestratedDirection?.style) ?? args.style;
+      const resolvedPalette = trimOptional(orchestratedDirection?.paletteId) ?? args.colorPalette;
+      const resolvedTargetColor = trimOptional(orchestratedDirection?.wallColor) ?? args.targetColor;
+      const orchestrationPrompt = trimOptional(orchestratedDirection?.customPrompt);
+      const orchestrationReason = trimOptional(orchestratedDirection?.reason);
+      const resolvedCustomPrompt = compactPromptSegments([
+        args.customPrompt,
+        args.serviceType === "paint" && orchestratedDirection?.wallColor
+          ? `Primary wall color recommendation: ${orchestratedDirection.wallColor}.`
+          : undefined,
+        args.serviceType === "floor" && orchestratedDirection?.floorMaterial
+          ? `Primary flooring recommendation: ${orchestratedDirection.floorMaterial}.`
+          : undefined,
+        args.serviceType === "redesign" && orchestrationReason
+          ? `Design direction rationale: ${orchestrationReason}.`
+          : undefined,
+        orchestrationPrompt,
+      ]);
+
       const optimizedPrompt = buildPrompt({
         serviceType: args.serviceType,
         roomType: args.roomType,
-        style: args.style,
+        style: resolvedStyle,
         styleSelections: args.styleSelections,
-        colorPalette: args.colorPalette,
-        customPrompt: args.customPrompt,
-        targetColor: args.targetColor,
+        colorPalette: resolvedPalette,
+        customPrompt: resolvedCustomPrompt,
+        targetColor: resolvedTargetColor,
         targetSurface: args.targetSurface,
         aspectRatio: args.aspectRatio,
         regenerate: args.regenerate,

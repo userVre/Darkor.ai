@@ -1766,6 +1766,24 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                   </GestureDetector>
 
                   <View style={[styles.colorPickerPresetRow, { marginTop: scaleSelectionValue(40, selectionLayoutScale), paddingLeft: scaleSelectionValue(32, selectionLayoutScale), gap: scaleSelectionValue(40, selectionLayoutScale) }]}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="AI suggest wall color"
+                      onPress={handleAiColorSuggestionPress}
+                      style={[
+                        styles.colorPickerPresetSwatch,
+                        styles.colorPickerPresetAiSwatch,
+                        {
+                          width: colorPickerSwatchSize,
+                          height: colorPickerSwatchSize,
+                          borderRadius: colorPickerSwatchSize / 2,
+                        },
+                        isAiColorSuggestionEnabled ? styles.colorPickerPresetSwatchActive : null,
+                        isAiColorSuggestionEnabled ? styles.colorPickerPresetAiSwatchActive : null,
+                      ]}
+                    >
+                      <Wand2 color={isAiColorSuggestionEnabled ? "#0A0A0A" : "#FFFFFF"} size={Math.max(colorPickerSwatchSize * 0.56, 14)} strokeWidth={2.1} />
+                    </Pressable>
                     {COLOR_PICKER_PRESET_SWATCHES.map((swatch) => {
                       const isActive = colorPickerDraft.hex === swatch.value;
                       return (
@@ -2533,6 +2551,15 @@ const styles = StyleSheet.create({
   colorPickerPresetSwatch: {
     borderWidth: 1,
     borderColor: "rgba(10,10,10,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  colorPickerPresetAiSwatch: {
+    backgroundColor: "#111113",
+  },
+  colorPickerPresetAiSwatchActive: {
+    backgroundColor: "#F4E6B8",
+    borderColor: "#0A0A0A",
   },
   colorPickerPresetSwatchActive: {
     borderWidth: 3,

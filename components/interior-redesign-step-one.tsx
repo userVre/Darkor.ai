@@ -100,6 +100,10 @@ export function InteriorRedesignStepOne({
     () => selectedPhotos.find((photo) => photo.uri === focusedPhotoUri) ?? selectedPhotos[0] ?? null,
     [focusedPhotoUri, selectedPhotos],
   );
+  const focusedPhotoIndex = useMemo(
+    () => selectedPhotos.findIndex((photo) => photo.uri === focusedPhoto?.uri),
+    [focusedPhoto?.uri, selectedPhotos],
+  );
 
   const [isSheetMounted, setIsSheetMounted] = useState(false);
   const [pendingSource, setPendingSource] = useState<MediaSourceOption | null>(null);
@@ -262,8 +266,8 @@ export function InteriorRedesignStepOne({
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.thumbnailRail}
                 >
-                  {selectedPhotos.map((photo) => {
-                    const active = photo.uri === focusedPhoto.uri;
+                  {selectedPhotos.map((photo, index) => {
+                    const active = index === focusedPhotoIndex;
 
                     return (
                       <Pressable

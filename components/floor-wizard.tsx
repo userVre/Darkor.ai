@@ -84,6 +84,8 @@ const MASK_SCREEN_REFERENCE_WIDTH = 456;
 const MASK_SCREEN_REFERENCE_HEIGHT = 932;
 const FLOOR_PROMPT_OFFSET = 30;
 const AI_CHOICE_PROMPT = "AI's Choice";
+const FLOOR_MAGIC_LABEL = "Magic";
+const AI_GENERATED_FLOOR_LABEL = "AI Generated Material";
 const absoluteFill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
 const AUTO_DETECT_SUCCESS_MESSAGE = "wizard.floorFlow.autoMaskSuccess";
 const AUTO_DETECT_FAILURE_MESSAGE = "wizard.floorFlow.autoMaskFailure";
@@ -252,10 +254,13 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const promptModalTitleTop = Math.max(insets.top + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(92, maskLayoutScale));
   const promptModalSaveBottom = Math.max(insets.bottom + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(12, maskLayoutScale));
   const canSaveCustomPrompt = isAiMaterialSuggestionEnabled || customPromptDraft.trim().length > 0;
-  const effectiveFloorMaterialTitle = isAiMaterialSuggestionEnabled ? "AI's Choice" : (selectedMaterial?.title ?? t("wizard.floorFlow.noMaterialSelected"));
+  const effectiveFloorMaterialTitle = isAiMaterialSuggestionEnabled ? FLOOR_MAGIC_LABEL : (selectedMaterial?.title ?? t("wizard.floorFlow.noMaterialSelected"));
   const effectiveFloorMaterialDescription = isAiMaterialSuggestionEnabled
     ? "The AI will choose the most fitting floor material and finish for this room based on lighting, furniture, and overall design balance."
     : (selectedMaterial?.description ?? t("wizard.floorFlow.unlockMaterialBody"));
+  const resultFloorMaterialTitle = isAiMaterialSuggestionEnabled
+    ? AI_GENERATED_FLOOR_LABEL
+    : (selectedMaterial?.title ?? t("wizard.floorFlow.result.materialFallback"));
   const creditsRemainingLabel = t("wizard.floorFlow.creditsRemaining", {
     count: Math.max(availableCredits - 1, 0),
   });
@@ -1256,7 +1261,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
               </View>
             ) : <View style={styles.resultFallback}><ActivityIndicator color="#ffffff" /></View>}
           </View>
-          <View style={styles.summaryCard}><Text style={styles.summaryLabel}>{t("wizard.floorFlow.result.materialApplied")}</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? t("wizard.floorFlow.result.materialFallback")}</Text><Text style={styles.summaryText}>{t("wizard.floorFlow.result.summary")}</Text></View>
+          <View style={styles.summaryCard}><Text style={styles.summaryLabel}>{t("wizard.floorFlow.result.materialApplied")}</Text><Text style={styles.summaryTitle}>{resultFloorMaterialTitle}</Text><Text style={styles.summaryText}>{t("wizard.floorFlow.result.summary")}</Text></View>
             <View style={styles.resultActions}>
               <LuxPressable onPress={handleSaveResult} className={pointerClassName} style={{ width: "100%" }} scale={0.99}>
                 <View style={[styles.resultActionButton, styles.resultActionSave]}>
