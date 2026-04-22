@@ -30,6 +30,7 @@ type FloorIntroScreenProps = {
   onTakePhoto: () => Promise<boolean>;
   onChooseFromGallery: () => Promise<boolean>;
   onExamplePress: (example: FloorIntroExamplePhoto) => void;
+  onCreditsPress?: () => void;
   onExit: () => void;
 };
 
@@ -52,6 +53,7 @@ export function FloorIntroScreen({
   onTakePhoto,
   onChooseFromGallery,
   onExamplePress,
+  onCreditsPress,
   onExit,
 }: FloorIntroScreenProps) {
   const { t } = useTranslation();
@@ -70,7 +72,7 @@ export function FloorIntroScreen({
   const heroButtonLeft = scaleValue(126, layoutScale);
   const heroButtonHeight = scaleValue(48, layoutScale);
   const heroButtonRadius = scaleValue(24, layoutScale);
-  const sectionTopGap = scaleValue(24, layoutScale);
+  const sectionTopGap = scaleValue(12, layoutScale);
   const examplesTitleLeft = scaleValue(20, layoutScale);
   const examplesRailLeft = scaleValue(28, layoutScale);
   const examplesRailGap = scaleValue(8, layoutScale);
@@ -182,6 +184,7 @@ export function FloorIntroScreen({
         closeAccessibilityLabel="Close floor restyle flow"
         creditCount={creditCount}
         horizontalInset={sideInset}
+        onCreditsPress={onCreditsPress}
         onClose={onExit}
         step={1}
         totalSteps={4}
@@ -237,7 +240,7 @@ export function FloorIntroScreen({
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={{ marginTop: scaleValue(20, layoutScale) }}
+            style={{ marginTop: scaleValue(12, layoutScale) }}
             contentContainerStyle={{
               paddingLeft: examplesRailLeft,
               paddingRight: examplesRailLeft,

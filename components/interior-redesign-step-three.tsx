@@ -1,10 +1,10 @@
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
-import { useMemo } from "react";
+import { type ComponentType, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check } from "@/components/material-icons";
+import { Check, Sparkles } from "@/components/material-icons";
 
 import {
   DESIGN_WIZARD_SELECTION_BLUE,
@@ -23,8 +23,10 @@ import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-head
 type InteriorRedesignStepThreeStyleCard = {
   id: string;
   title: string;
-  image: number;
+  image: number | null;
   label?: string;
+  description?: string;
+  icon?: ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
 };
 
 type InteriorRedesignStepThreeProps = {
@@ -141,6 +143,8 @@ export function InteriorRedesignStepThree({
             >
               {row.map((styleCard, columnIndex) => {
                 const active = selectedStyles.includes(styleCard.title);
+                const CardIcon = styleCard.icon ?? Sparkles;
+                const isIconCard = styleCard.image === null;
 
                 return (
                   <Pressable
@@ -166,19 +170,48 @@ export function InteriorRedesignStepThree({
                           </View>
                         </View>
                     ) : null}
-                    <View style={{ width: "100%", height: cardImageHeight, overflow: "hidden" }}>
-                      <Image
-                        source={styleCard.image}
-                        style={{
-                          width: "100%",
-                          height: cardImageHeight + THUMBNAIL_CROP_OVERFLOW,
-                          transform: [{ translateY: THUMBNAIL_CROP_SHIFT }],
-                        }}
-                        contentFit="cover"
-                        transition={120}
-                        cachePolicy="memory-disk"
-                      />
-                    </View>
+                    {isIconCard ? (
+                      <View
+                        style={[
+                          stylesSheet.iconCardMedia,
+                          {
+                            height: cardImageHeight,
+                            backgroundColor: active ? "#DBEAFE" : "#F4F7FB",
+                          },
+                        ]}
+                      >
+                        <View
+                          style={[
+                            stylesSheet.iconCardBadge,
+                            { backgroundColor: active ? "#2563EB" : "#0F172A" },
+                          ]}
+                        >
+                          <CardIcon color="#FFFFFF" size={28} strokeWidth={2.1} />
+                        </View>
+                        <Text style={[stylesSheet.iconCardTitle, active ? stylesSheet.iconCardTitleActive : null]}>
+                          {styleCard.label ?? styleCard.title}
+                        </Text>
+                        {styleCard.description ? (
+                          <Text style={[stylesSheet.iconCardDescription, active ? stylesSheet.iconCardDescriptionActive : null]}>
+                            {styleCard.description}
+                          </Text>
+                        ) : null}
+                      </View>
+                    ) : (
+                      <View style={{ width: "100%", height: cardImageHeight, overflow: "hidden" }}>
+                        <Image
+                          source={styleCard.image}
+                          style={{
+                            width: "100%",
+                            height: cardImageHeight + THUMBNAIL_CROP_OVERFLOW,
+                            transform: [{ translateY: THUMBNAIL_CROP_SHIFT }],
+                          }}
+                          contentFit="cover"
+                          transition={120}
+                          cachePolicy="memory-disk"
+                        />
+                      </View>
+                    )}
                     <View
                       style={[
                         stylesSheet.labelBar,
@@ -315,6 +348,39 @@ const stylesSheet = StyleSheet.create({
     height: 34,
     alignItems: "center",
     justifyContent: "center",
+  },
+  iconCardMedia: {
+    width: "100%",
+    alignItems: "flex-start",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  iconCardBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconCardTitle: {
+    color: "#0F172A",
+    fontSize: 15,
+    lineHeight: 18,
+    ...fonts.bold,
+  },
+  iconCardTitleActive: {
+    color: DESIGN_WIZARD_SELECTION_BLUE,
+  },
+  iconCardDescription: {
+    color: DESIGN_WIZARD_TEXT_MUTED,
+    fontSize: 11,
+    lineHeight: 14,
+    ...fonts.regular,
+  },
+  iconCardDescriptionActive: {
+    color: "#1D4ED8",
   },
   labelBar: {
     position: "relative",

@@ -34,6 +34,7 @@ type GardenRedesignStepOneProps = {
   onRemovePhoto: () => void;
   onSelectExample: (example: GardenRedesignStepOneExamplePhoto) => void;
   onContinue: () => void;
+  onCreditsPress?: () => void;
   onExit: () => void;
 };
 
@@ -60,6 +61,7 @@ export function GardenRedesignStepOne({
   onRemovePhoto,
   onSelectExample,
   onContinue,
+  onCreditsPress,
   onExit,
 }: GardenRedesignStepOneProps) {
   const { t } = useTranslation();
@@ -192,6 +194,7 @@ export function GardenRedesignStepOne({
         closeAccessibilityLabel={t("wizard.headers.close")}
         creditCount={creditCount}
         horizontalInset={sideInset}
+        onCreditsPress={onCreditsPress}
         onClose={onExit}
         step={1}
         totalSteps={3}

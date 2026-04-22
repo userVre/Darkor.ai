@@ -57,6 +57,7 @@ import { ServiceWizardHeader } from "./service-wizard-header";
 import { ServiceWizardStepScreen } from "./service-wizard-shared";
 import { getStickyStepHeaderMetrics } from "./sticky-step-header";
 import { DESIGN_WIZARD_SELECTION_BLUE, getWizardFloatingButtonStyle } from "./design-wizard-primitives";
+import { DIAMOND_PILL_BLUE } from "./diamond-credit-pill";
 import { LuxPressable } from "./lux-pressable";
 import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerCredits } from "./viewer-credits-context";
@@ -902,6 +903,11 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     router.replace("/(tabs)");
   }, [resetProject, router]);
 
+  const handleOpenPaywall = useCallback(() => {
+    triggerHaptic();
+    router.push("/paywall" as any);
+  }, [router]);
+
   const confirmExitDesignFlow = useCallback(() => {
     triggerHaptic();
     Alert.alert(t("common.alerts.exitTitle"), t("common.alerts.progressLost"), [
@@ -1512,6 +1518,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
           title={t("wizard.paintFlow.title")}
           step={currentStepNumber}
           creditCount={availableCredits}
+          onCreditsPress={handleOpenPaywall}
           canGoBack={currentStepNumber > 1}
           onBack={handleBack}
           onClose={handleClose}
@@ -1525,6 +1532,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
           onTakePhoto={() => handleSelectMedia("camera")}
           onChooseFromGallery={() => handleSelectMedia("library")}
           onExamplePress={handleSelectExample}
+          onCreditsPress={handleOpenPaywall}
           onExit={handleClose}
         />
       ) : null}
@@ -2090,7 +2098,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
               styles.maskContinueButton,
               {
                 bottom: Math.max(insets.bottom + 44, 44),
-                backgroundColor: canContinueFromMask ? MASK_ACCENT : "#E8E8E8",
+                backgroundColor: canContinueFromMask ? DIAMOND_PILL_BLUE : "#E8E8E8",
               },
             ]}
           >
@@ -2403,7 +2411,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   selectionContinueButtonActive: {
-    backgroundColor: "#121212",
+    backgroundColor: DIAMOND_PILL_BLUE,
   },
   selectionContinueButtonDisabled: {
     backgroundColor: "#E8E8E8",
@@ -2707,8 +2715,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   selectionSwatchCardActive: {
-      borderColor: "#CC3333",
-    backgroundColor: "#FFF3F2",
+      borderColor: DIAMOND_PILL_BLUE,
+    backgroundColor: "#EEF4FF",
   },
   selectionSwatchDot: {
     width: 24,
@@ -2748,8 +2756,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   selectionSurfaceRowActive: {
-      borderColor: "#CC3333",
-    backgroundColor: "#FFF3F2",
+      borderColor: DIAMOND_PILL_BLUE,
+    backgroundColor: "#EEF4FF",
   },
   selectionSurfaceRowText: {
     color: "#0A0A0A",
@@ -3035,8 +3043,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   maskToolButtonActive: {
-    borderColor: MASK_ACCENT,
-    backgroundColor: MASK_ACCENT,
+    borderColor: DIAMOND_PILL_BLUE,
+    backgroundColor: DIAMOND_PILL_BLUE,
   },
   maskToolButtonDisabled: {
     borderColor: "#ECECEC",
@@ -3752,7 +3760,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   resultActionSave: {
-    backgroundColor: "#CC3333",
+    backgroundColor: DIAMOND_PILL_BLUE,
   },
   resultActionShare: {
     backgroundColor: "#05070A",

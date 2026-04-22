@@ -47,6 +47,7 @@ import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerCredits } from "./viewer-credits-context";
 import { useViewerSession } from "./viewer-session-context";
 import { fonts } from "../styles/typography";
+import { DIAMOND_PILL_BLUE } from "./diamond-credit-pill";
 
 type WizardStep = "intake" | "mask" | "materials" | "processing" | "result";
 type SelectedImage = { uri: string; photoUri?: string | null; width: number; height: number };
@@ -74,7 +75,7 @@ const FLOOR_WIZARD_STEP_ORDER: Record<WizardStep, number> = {
 };
 
 const pointerClassName = "cursor-pointer";
-const MASK_ACCENT = "#CC3333";
+const MASK_ACCENT = DIAMOND_PILL_BLUE;
 const MIN_BRUSH = 10;
 const MAX_BRUSH = 54;
 const DETECT_MS = 1500;
@@ -443,6 +444,11 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     resetProject();
     router.replace("/(tabs)");
   }, [resetProject, router]);
+
+  const handleOpenPaywall = useCallback(() => {
+    triggerHaptic();
+    router.push("/paywall" as any);
+  }, [router]);
 
   const confirmExitDesignFlow = useCallback(() => {
     triggerHaptic();
@@ -912,6 +918,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
           title={t("wizard.floorFlow.title")}
           step={currentStepNumber}
           creditCount={availableCredits}
+          onCreditsPress={handleOpenPaywall}
           canGoBack={currentStepNumber > 1}
           onBack={handleBack}
           onClose={handleClose}
@@ -925,6 +932,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
           onTakePhoto={() => handleSelectMedia("camera")}
           onChooseFromGallery={() => handleSelectMedia("library")}
           onExamplePress={handleSelectExample}
+          onCreditsPress={handleOpenPaywall}
           onExit={handleClose}
         />
       ) : null}
@@ -1019,7 +1027,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
                 right: scaleMaskValue(24, maskLayoutScale),
                 bottom: maskButtonBottom,
                 height: scaleMaskValue(60, maskLayoutScale),
-                backgroundColor: canContinueFromMask ? "#121212" : "#E7E7E7",
+                backgroundColor: canContinueFromMask ? DIAMOND_PILL_BLUE : "#E7E7E7",
               },
             ]}
           >
@@ -1136,7 +1144,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
                       right: scaleMaskValue(20, maskLayoutScale),
                       bottom: promptModalSaveBottom,
                       height: scaleMaskValue(60, maskLayoutScale),
-                      backgroundColor: canSaveCustomPrompt ? "#121212" : "#E7E7E7",
+                      backgroundColor: canSaveCustomPrompt ? DIAMOND_PILL_BLUE : "#E7E7E7",
                     },
                   ]}
                 >
@@ -1278,9 +1286,9 @@ const styles = StyleSheet.create({
   promptExampleTitle: { color: "#0A0A0A", fontSize: 16, lineHeight: 20, fontWeight: "600" },
   promptExampleList: { gap: 16 },
   promptExampleChip: { height: 48, borderRadius: 14, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#F8F8F8", alignItems: "center", justifyContent: "center", paddingHorizontal: 20 },
-  promptExampleChipActive: { borderColor: "#CC3333", backgroundColor: "#FFF1F1" },
+  promptExampleChipActive: { borderColor: DIAMOND_PILL_BLUE, backgroundColor: "#FFFFFF" },
   promptExampleText: { color: "#6B7280", fontSize: 14, lineHeight: 18, textAlign: "center" },
-  promptExampleTextActive: { color: "#0A0A0A", fontWeight: "600" },
+  promptExampleTextActive: { color: DIAMOND_PILL_BLUE, fontWeight: "600" },
   promptModalSaveButton: { position: "absolute", borderRadius: 14, alignItems: "center", justifyContent: "center" },
   promptModalSaveText: { fontSize: 16, lineHeight: 20, fontWeight: "700" },
   topBar: { paddingHorizontal: spacing.md, paddingBottom: spacing.sm, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
@@ -1386,7 +1394,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  resultActionSave: { backgroundColor: "#121212" },
+  resultActionSave: { backgroundColor: DIAMOND_PILL_BLUE },
   resultActionShare: { backgroundColor: "#05070A" },
   resultActionRetry: { backgroundColor: "#F0F0F0" },
   resultActionSaveText: {

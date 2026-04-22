@@ -21,6 +21,7 @@ type DesignStepHeaderProps = {
   step: number;
   totalSteps: number;
   horizontalInset: number;
+  onCreditsPress?: () => void;
   onBack?: () => void;
   onClose: () => void;
   backAccessibilityLabel?: string;
@@ -59,6 +60,7 @@ export function DesignStepHeader({
   step,
   totalSteps,
   horizontalInset,
+  onCreditsPress,
   onBack,
   onClose,
   backAccessibilityLabel = "Go back",
@@ -114,8 +116,9 @@ export function DesignStepHeader({
               ) : showCredits ? (
                 <DiamondCreditPill
                   accessibilityLabel="Credits remaining"
-                  accessibilityRole="text"
+                  accessibilityRole={onCreditsPress ? "button" : "text"}
                   count={creditCount ?? 0}
+                  onPress={onCreditsPress}
                   style={styles.creditPill}
                   variant="light"
                 />
@@ -138,13 +141,18 @@ export function DesignStepHeader({
                 }}
                 style={styles.iconButton}
               >
-                <X color={DS.colors.textPrimary} size={18} strokeWidth={2} />
+                <X color="#000000" size={18} strokeWidth={2} />
               </Pressable>
             </View>
           </View>
 
           <View style={styles.progressWrap}>
-            <StepProgressSegments step={safeStep} totalSteps={totalSteps} style={styles.progressRail} />
+            <StepProgressSegments
+              key={`design-step-progress-${safeStep}-${totalSteps}`}
+              step={safeStep}
+              totalSteps={totalSteps}
+              style={styles.progressRail}
+            />
           </View>
         </View>
       </View>

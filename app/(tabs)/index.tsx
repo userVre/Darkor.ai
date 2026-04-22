@@ -130,7 +130,7 @@ export default function HomeScreen() {
 
   const handleCreditsPress = () => {
     triggerHaptic();
-    setIsCreditModalVisible(true);
+    router.push("/paywall");
   };
 
   const handleCreditModalClose = () => {

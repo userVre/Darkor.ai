@@ -2676,6 +2676,14 @@ export default function WorkspaceScreen() {
   }, [customPrompt, isAiSuggesting, isFloorService, isLeanGenerationService, isPaintService, styleCatalogItems]);
   const interiorStyleGalleryCards = useMemo(
     () => [
+      {
+        id: "ai-suggest",
+        title: SMART_SUGGEST_STYLE_LABEL,
+        label: "Surprise Me",
+        description: "Analyze the room architecture and automatically pick the most suitable design style.",
+        image: null,
+        icon: Wand2,
+      },
       { id: "modern", title: "Modern", label: t("workspace.localization.styles.modern"), image: STYLE_LIBRARY[0].image },
       { id: "luxury", title: "Luxury", label: t("workspace.localization.styles.luxury"), image: STYLE_LIBRARY[1].image },
       { id: "japandi", title: "Japandi", label: t("workspace.localization.styles.japandi"), image: STYLE_LIBRARY[2].image },
@@ -3462,6 +3470,11 @@ export default function WorkspaceScreen() {
       return false;
     }
 
+    if (selectedImages.length >= 3) {
+      Alert.alert("Photo limit reached", "You can select up to 3 photos.");
+      return false;
+    }
+
     triggerHaptic();
     setIsSelectingPhoto(true);
 
@@ -3497,10 +3510,16 @@ export default function WorkspaceScreen() {
     } finally {
       setIsSelectingPhoto(false);
     }
-  }, [applyPickedAsset, isSelectingPhoto, showSettingsPermissionAlert, t]);
+  }, [applyPickedAsset, isSelectingPhoto, selectedImages.length, showSettingsPermissionAlert, t]);
 
   const handleInteriorChooseFromGallery = useCallback(async () => {
     if (isSelectingPhoto) {
+      return false;
+    }
+
+    const remainingSlots = Math.max(0, 3 - selectedImages.length);
+    if (remainingSlots === 0) {
+      Alert.alert("Photo limit reached", "You can select up to 3 photos.");
       return false;
     }
 
@@ -3520,15 +3539,19 @@ export default function WorkspaceScreen() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 1,
-        allowsEditing: true,
-        aspect: [1, 1],
+        allowsEditing: false,
+        allowsMultipleSelection: true,
+        selectionLimit: remainingSlots,
       });
 
-      if (result.canceled || !result.assets?.[0]) {
+      if (result.canceled || !result.assets?.length) {
         return false;
       }
 
-      applyPickedAsset(result.assets[0], t("workspace.media.uploadedPhoto"));
+      const label = t("workspace.media.uploadedPhoto");
+      for (const asset of result.assets.slice(0, remainingSlots)) {
+        applyPickedAsset(asset, label);
+      }
       return true;
     } catch (error) {
       Alert.alert(
@@ -3539,7 +3562,7 @@ export default function WorkspaceScreen() {
     } finally {
       setIsSelectingPhoto(false);
     }
-  }, [applyPickedAsset, isSelectingPhoto, showSettingsPermissionAlert, t]);
+  }, [applyPickedAsset, isSelectingPhoto, selectedImages.length, showSettingsPermissionAlert, t]);
 
   const launchPhotoSource = useCallback(
     async (source: PhotoSource) => {
@@ -4656,6 +4679,11 @@ export default function WorkspaceScreen() {
 
   const handleSetSelectedStyle = useCallback(
     (style: string) => {
+      if (style === SMART_SUGGEST_STYLE_LABEL) {
+        void handleAiSuggest();
+        return;
+      }
+
       triggerHaptic();
       setSmartSuggestEnabled(false);
       setAiSuggestedStyle(null);
@@ -4669,7 +4697,7 @@ export default function WorkspaceScreen() {
         });
       });
     },
-    [],
+    [handleAiSuggest],
   );
 
   const handleContinueFromInteriorStyleStep = useCallback(() => {
@@ -4810,7 +4838,7 @@ export default function WorkspaceScreen() {
     setSelectedPaletteId(SMART_SUGGEST_PALETTE_ID);
   }, [isFloorService, isPaintService]);
 
-  const handleAiSuggest = useCallback(async () => {
+  async function handleAiSuggest() {
     if (!selectedImage || !selectedRoom) {
       return;
     }
@@ -4866,19 +4894,7 @@ export default function WorkspaceScreen() {
     } finally {
       setIsAiSuggesting(false);
     }
-  }, [
-    displayedStyleCards,
-    isFloorService,
-    isGardenService,
-    isPaintService,
-    handleEnableSmartSuggest,
-    selectedImage,
-    selectedRoom,
-    serviceType,
-    suggestDesignOptions,
-    t,
-    uploadSelectedImageToStorage,
-  ]);
+  }
 
   const handleOpenBoardItem = useCallback((item: BoardRenderItem) => {
     if (!effectiveSignedIn) {
@@ -5015,6 +5031,7 @@ export default function WorkspaceScreen() {
           void handleSelectExample(example);
         }}
         onContinue={handleContinue}
+        onCreditsPress={handleUpgrade}
         onExit={handleCloseWizard}
       />
     );
@@ -5037,6 +5054,7 @@ export default function WorkspaceScreen() {
           void handleSelectExample(example);
         }}
         onContinue={handleContinue}
+        onCreditsPress={handleUpgrade}
         onExit={handleCloseWizard}
       />
     );
@@ -5056,6 +5074,7 @@ export default function WorkspaceScreen() {
           void handleSelectExample(example);
         }}
         onContinue={handleContinueFromGardenPhotoStep}
+        onCreditsPress={handleUpgrade}
         onExit={handleCloseWizard}
       />
     );
@@ -5408,6 +5427,7 @@ export default function WorkspaceScreen() {
           step={currentStepNumber}
           totalSteps={totalWizardSteps}
           creditCount={creditBalance}
+          onCreditsPress={handleUpgrade}
           canGoBack={workflowStep > 0}
           onBack={handleBack}
           onClose={handleCloseWizard}
@@ -5923,91 +5943,100 @@ export default function WorkspaceScreen() {
                         </Text>
                       </View>
 
-                      <View style={wizardCenteredGridStyle}>
-                        <MotiView {...staggerFadeUp(0, 20)} style={{ width: wizardCardWidth }}>
-                          <LuxPressable
-                            onPress={() => void handleAiSuggest()}
-                            className="cursor-pointer rounded-[32px] border"
+                      <View style={{ gap: spacing.lg }}>
+                        <View
+                          style={{
+                            borderRadius: 28,
+                            borderWidth: 1,
+                            borderColor: wizardSurfaceBorderColor,
+                            backgroundColor: wizardSurfaceColor,
+                            paddingHorizontal: spacing.md,
+                            paddingVertical: spacing.md,
+                            gap: spacing.md,
+                          }}
+                        >
+                          <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700", letterSpacing: -0.2 }}>
+                            Wall Color
+                          </Text>
+                          <View
                             style={{
-                              minHeight: 188,
-                              borderWidth: 1.5,
-                              borderColor: smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE : "rgba(37,99,235,0.34)",
-                              backgroundColor: smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE_SOFT : "rgba(37,99,235,0.12)",
-                              paddingHorizontal: spacing.md,
-                              paddingVertical: spacing.md,
-                              ...glowShadow(smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE_GLOW : "rgba(37,99,235,0.2)", 22),
+                              flexDirection: "row",
+                              flexWrap: "wrap",
+                              justifyContent: "space-between",
+                              gap: spacing.md,
                             }}
                           >
-                            <View style={{ flex: 1, gap: spacing.md, justifyContent: "center" }}>
-                              <View style={{ alignSelf: "center", width: 86, height: 86, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.08)", borderWidth: 1, borderColor: "rgba(255,255,255,0.18)" }}>
-                                <Wand2 color="#dbeafe" size={34} strokeWidth={2.1} />
-                              </View>
-                              <View style={{ gap: spacing.sm }}>
-                                <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", textAlign: "left", letterSpacing: -0.35 }}>
-                                  {SMART_SUGGEST_WALL_LABEL}
-                                </Text>
-                                <Text style={{ color: smartSuggestEnabled ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: "left" }}>
-                                  Let the model choose the strongest wall color for this room.
-                                </Text>
-                              </View>
-                            </View>
-                            {smartSuggestEnabled ? (
-                              <View className="absolute right-3 top-3 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(37,99,235,0.28)", backgroundColor: "#0f0f10" }}>
-                                <BadgeCheck color={DESIGN_WIZARD_SELECTION_BLUE} size={16} strokeWidth={2} />
-                              </View>
-                            ) : null}
-                          </LuxPressable>
-                        </MotiView>
-                        {WALL_COLOR_OPTIONS.map((option, index) => {
-                          const active = !smartSuggestEnabled && selectedStyle === option.title;
-                          const isFullWidthWallOption = shouldSpanFullWidthInTwoColumnGrid(index, WALL_COLOR_OPTIONS.length + 1, wizardCardColumns);
-                          return (
-                            <MotiView key={option.id} {...staggerFadeUp(index + 1, 24)} style={{ width: isFullWidthWallOption ? "100%" : wizardCardWidth }}>
-                              <LuxPressable
-                                onPress={() => handleSelectStyle(option.title)}
-                                className="cursor-pointer rounded-[32px] border"
+                            <LuxPressable
+                              onPress={() => void handleAiSuggest()}
+                              className="cursor-pointer"
+                              style={{ alignItems: "center", width: 88 }}
+                            >
+                              <View
                                 style={{
-                                  minHeight: 188,
-                                  borderWidth: active ? 1.5 : 1,
-                                  borderColor: active ? DESIGN_WIZARD_SELECTION_BLUE : wizardSurfaceBorderColor,
-                                  backgroundColor: active ? DESIGN_WIZARD_SELECTION_BLUE_SOFT : wizardSurfaceColor,
-                                  paddingHorizontal: spacing.md,
-                                  paddingVertical: spacing.md,
-                                  ...glowShadow(active ? DESIGN_WIZARD_SELECTION_BLUE_GLOW : "rgba(255,255,255,0.04)", active ? 22 : 12),
+                                  width: 74,
+                                  height: 74,
+                                  borderRadius: 999,
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  borderWidth: smartSuggestEnabled ? 2.5 : 1.5,
+                                  borderColor: smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE : "rgba(255,255,255,0.18)",
+                                  backgroundColor: smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE_SOFT : "rgba(255,255,255,0.03)",
+                                  ...glowShadow(smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE_GLOW : "rgba(255,255,255,0.04)", smartSuggestEnabled ? 18 : 10),
                                 }}
                               >
-                                <View style={{ flex: 1, gap: spacing.md }}>
-                                  <View
-                                    style={{
-                                      height: 86,
-                                      width: 86,
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      alignSelf: "center",
-                                      borderRadius: 999,
-                                      borderWidth: 3,
-                                      borderColor: active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.18)",
-                                      backgroundColor: option.value,
-                                    }}
-                                  />
-                                  <View style={{ gap: spacing.sm }}>
-                                    <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", textAlign: "left", letterSpacing: -0.35 }}>
-                                      {option.title}
-                                    </Text>
-                                    <Text style={{ color: active ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: "left" }}>
-                                      {option.description}
-                                    </Text>
-                                  </View>
-                                </View>
-                                {active ? (
-                                  <View className="absolute right-3 top-3 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: "rgba(37,99,235,0.28)", backgroundColor: "#0f0f10" }}>
-                                    <BadgeCheck color={DESIGN_WIZARD_SELECTION_BLUE} size={16} strokeWidth={2} />
-                                  </View>
-                                ) : null}
-                              </LuxPressable>
-                            </MotiView>
-                          );
-                        })}
+                                <Wand2 color={smartSuggestEnabled ? "#60A5FA" : "#E5E7EB"} size={24} strokeWidth={2.1} />
+                              </View>
+                              <Text style={{ marginTop: 10, color: smartSuggestEnabled ? "#dbeafe" : "#ffffff", fontSize: 12, fontWeight: "700", textAlign: "center" }}>
+                                Random / AI Pick
+                              </Text>
+                            </LuxPressable>
+
+                            {WALL_COLOR_OPTIONS.map((option, index) => {
+                              const active = !smartSuggestEnabled && selectedStyle === option.title;
+
+                              return (
+                                <MotiView key={option.id} {...staggerFadeUp(index + 1, 20)} style={{ width: 88, alignItems: "center" }}>
+                                  <LuxPressable onPress={() => handleSelectStyle(option.title)} className="cursor-pointer">
+                                    <View
+                                      style={{
+                                        width: 74,
+                                        height: 74,
+                                        borderRadius: 999,
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        borderWidth: active ? 3 : 1.5,
+                                        borderColor: active ? DESIGN_WIZARD_SELECTION_BLUE : "rgba(255,255,255,0.18)",
+                                        backgroundColor: option.value,
+                                        ...glowShadow(active ? DESIGN_WIZARD_SELECTION_BLUE_GLOW : "rgba(255,255,255,0.04)", active ? 18 : 10),
+                                      }}
+                                    >
+                                      {active ? <BadgeCheck color="#FFFFFF" size={18} strokeWidth={2.1} /> : null}
+                                    </View>
+                                  </LuxPressable>
+                                  <Text style={{ marginTop: 10, color: active ? "#dbeafe" : "#ffffff", fontSize: 12, fontWeight: "700", textAlign: "center" }}>
+                                    {option.title}
+                                  </Text>
+                                </MotiView>
+                              );
+                            })}
+                          </View>
+                        </View>
+
+                        <View
+                          style={{
+                            borderRadius: 24,
+                            borderWidth: 1,
+                            borderColor: smartSuggestEnabled ? "rgba(37,99,235,0.38)" : wizardSurfaceBorderColor,
+                            backgroundColor: smartSuggestEnabled ? "rgba(37,99,235,0.12)" : wizardSurfaceColor,
+                            paddingHorizontal: spacing.md,
+                            paddingVertical: spacing.md,
+                          }}
+                        >
+                          <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>AI Pick</Text>
+                          <Text style={{ color: smartSuggestEnabled ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, marginTop: 6 }}>
+                            Lets AI decide the best color harmony for the room.
+                          </Text>
+                        </View>
                       </View>
                     </>
                   ) : isFloorService ? (
@@ -6028,25 +6057,25 @@ export default function WorkspaceScreen() {
                             className="cursor-pointer rounded-[32px] border"
                             style={{
                               minHeight: 226,
-                              borderWidth: 1.5,
-                              borderColor: smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE : "rgba(37,99,235,0.34)",
-                              backgroundColor: smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE_SOFT : "rgba(37,99,235,0.12)",
+                              borderWidth: smartSuggestEnabled ? 1.5 : 1,
+                              borderColor: smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE : wizardSurfaceBorderColor,
+                              backgroundColor: smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE_SOFT : wizardSurfaceColor,
                               paddingHorizontal: spacing.md,
                               paddingTop: spacing.md,
                               paddingBottom: spacing.md,
                               gap: spacing.md,
-                              ...glowShadow(smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE_GLOW : "rgba(37,99,235,0.2)", 22),
+                              ...glowShadow(smartSuggestEnabled ? DESIGN_WIZARD_SELECTION_BLUE_GLOW : "rgba(255,255,255,0.04)", smartSuggestEnabled ? 22 : 12),
                             }}
                           >
-                            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", borderRadius: 24, backgroundColor: "rgba(255,255,255,0.05)" }}>
-                              <Wand2 color="#dbeafe" size={34} strokeWidth={2.1} />
+                            <View style={{ height: 122, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: smartSuggestEnabled ? "rgba(37,99,235,0.14)" : "rgba(255,255,255,0.04)" }}>
+                              <Sparkles color={smartSuggestEnabled ? "#60A5FA" : "#F3F4F6"} size={34} strokeWidth={2.1} />
                             </View>
                             <View style={{ gap: spacing.sm }}>
                               <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.35 }}>
-                                {SMART_SUGGEST_FLOOR_LABEL}
+                                Surprise Me
                               </Text>
                               <Text style={{ color: smartSuggestEnabled ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
-                                Let the model choose the best flooring material and tone for this room.
+                                AI will choose marble, wood, or stone based on the room's vibe.
                               </Text>
                             </View>
                             {smartSuggestEnabled ? (

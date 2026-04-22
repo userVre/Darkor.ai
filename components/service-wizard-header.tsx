@@ -8,6 +8,7 @@ type ServiceWizardHeaderProps = {
   totalSteps?: number;
   creditCount?: number;
   horizontalInset?: number;
+  onCreditsPress?: () => void;
   canGoBack?: boolean;
   leftAccessory?: ReactNode;
   onBack?: () => void;
@@ -20,6 +21,7 @@ export function ServiceWizardHeader({
   totalSteps = 4,
   creditCount,
   horizontalInset = 20,
+  onCreditsPress,
   canGoBack = false,
   leftAccessory: _leftAccessory,
   onBack,
@@ -32,6 +34,7 @@ export function ServiceWizardHeader({
     <StickyStepHeader
       creditCount={creditCount}
       horizontalInset={horizontalInset}
+      onCreditsPress={onCreditsPress}
       onBack={showBack ? onBack : undefined}
       onClose={onClose}
       step={safeStep}

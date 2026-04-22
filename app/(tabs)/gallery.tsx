@@ -128,8 +128,8 @@ export default function GalleryScreen() {
 
   const handleCreditsPress = useCallback(() => {
     triggerHaptic();
-    setIsCreditModalVisible(true);
-  }, []);
+    router.push("/paywall");
+  }, [router]);
 
   const handleCreditModalClose = useCallback(() => {
     setIsCreditModalVisible(false);

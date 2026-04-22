@@ -36,7 +36,7 @@ export function DiscoverPreviewModal({
       <View style={styles.overlay}>
         <View style={[styles.topBar, { paddingTop: Math.max(topInset + 8, 20) }]}>
           <Pressable accessibilityRole="button" hitSlop={10} onPress={onClose} style={styles.backButton}>
-            <ArrowLeft color="#FFFFFF" size={24} strokeWidth={2.3} />
+            <ArrowLeft color="#000000" size={24} strokeWidth={2.3} />
           </Pressable>
 
           <Text numberOfLines={1} style={styles.previewTitle}>

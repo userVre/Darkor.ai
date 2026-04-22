@@ -10,7 +10,7 @@ import { light as colors } from "@/styles/theme";
 import { DS, ambientShadow, glowShadow } from "../lib/design-system";
 import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
 import { LuxPressable } from "./lux-pressable";
-import { DESIGN_WIZARD_SELECTION_BLUE } from "./design-wizard-primitives";
+import { DESIGN_WIZARD_SELECTION_BLUE, DESIGN_WIZARD_SELECTION_BLUE_GLOW, DESIGN_WIZARD_SELECTION_BLUE_SOFT } from "./design-wizard-primitives";
 
 const pointerClassName = "cursor-pointer";
 
@@ -289,7 +289,7 @@ export function ServiceWizardStepScreen({
 
 const styles = StyleSheet.create({
   intakeContent: {
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   intakeContentUploaded: {
     gap: spacing.md,
@@ -411,7 +411,8 @@ const styles = StyleSheet.create({
     maxWidth: 210,
   },
   examplesSection: {
-    gap: spacing.md,
+    gap: spacing.sm,
+    marginTop: -4,
   },
   examplesTitle: {
     color: colors.textPrimary,
@@ -421,7 +422,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   examplesRailContent: {
-    gap: spacing.md,
+    gap: spacing.sm,
     paddingHorizontal: spacing.xs,
   },
   exampleCard: {
@@ -454,7 +455,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
-    boxShadow: "0px 0px 0px 1px rgba(37,99,235,0.14), 0px 12px 28px rgba(37,99,235,0.2)",
+    boxShadow: `0px 0px 0px 1px ${DESIGN_WIZARD_SELECTION_BLUE_SOFT}, 0px 12px 28px ${DESIGN_WIZARD_SELECTION_BLUE_GLOW}`,
   },
   selectionImageWrap: {
     flex: 1,
@@ -476,7 +477,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: DS.colors.accent,
+    backgroundColor: DESIGN_WIZARD_SELECTION_BLUE,
   },
   selectionBadgeOffset: {
     right: 120,

@@ -30,6 +30,7 @@ type PaintIntroScreenProps = {
   onTakePhoto: () => Promise<boolean>;
   onChooseFromGallery: () => Promise<boolean>;
   onExamplePress: (example: PaintIntroExamplePhoto) => void;
+  onCreditsPress?: () => void;
   onExit: () => void;
 };
 
@@ -52,6 +53,7 @@ export function PaintIntroScreen({
   onTakePhoto,
   onChooseFromGallery,
   onExamplePress,
+  onCreditsPress,
   onExit,
 }: PaintIntroScreenProps) {
   const { t } = useTranslation();
@@ -73,7 +75,7 @@ export function PaintIntroScreen({
   const heroButtonLeft = scaleValue(126, layoutScale);
   const heroButtonHeight = scaleValue(48, layoutScale);
   const heroButtonRadius = scaleValue(24, layoutScale);
-  const sectionTopGap = scaleValue(24, layoutScale);
+  const sectionTopGap = scaleValue(12, layoutScale);
   const examplesTitleLeft = scaleValue(20, layoutScale);
   const examplesRailLeft = scaleValue(28, layoutScale);
   const examplesRailGap = scaleValue(8, layoutScale);
@@ -185,6 +187,7 @@ export function PaintIntroScreen({
         closeAccessibilityLabel="Close paint flow"
         creditCount={creditCount}
         horizontalInset={sideInset}
+        onCreditsPress={onCreditsPress}
         onClose={onExit}
         step={1}
         totalSteps={4}
@@ -242,7 +245,7 @@ export function PaintIntroScreen({
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={{ marginTop: scaleValue(20, layoutScale) }}
+            style={{ marginTop: scaleValue(12, layoutScale) }}
             contentContainerStyle={{
               paddingLeft: examplesRailLeft,
               paddingRight: examplesRailLeft,
