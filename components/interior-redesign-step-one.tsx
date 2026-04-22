@@ -94,8 +94,8 @@ export function InteriorRedesignStepOne({
   const continueBottom = 64 + scaleValue(24, layoutScale);
   const canContinue = selectedPhotos.length > 0;
   const canAddMore = selectedPhotos.length < 3;
-  const clusterCardSize = Math.min(containerSize * 0.54, scaleValue(198, layoutScale));
-  const clusterPeekOffset = Math.min(containerSize * 0.08, scaleValue(26, layoutScale));
+  const galleryPreviewHeight = Math.max(containerSize - scaleValue(112, layoutScale), scaleValue(282, layoutScale));
+  const railThumbnailSize = scaleValue(70, layoutScale);
   const focusedPhoto = useMemo(
     () => selectedPhotos.find((photo) => photo.uri === focusedPhotoUri) ?? selectedPhotos[0] ?? null,
     [focusedPhotoUri, selectedPhotos],
@@ -247,37 +247,38 @@ export function InteriorRedesignStepOne({
           {focusedPhoto ? (
             <>
               <View style={styles.selectedStateWrap}>
-                <View
-                  style={[
-                    styles.clusterWrap,
-                    {
-                      width: clusterCardSize + clusterPeekOffset * 2,
-                      height: clusterCardSize + clusterPeekOffset * 2,
-                    },
-                  ]}
+                <View style={[styles.primaryPreviewFrame, { height: galleryPreviewHeight }]}>
+                  <Image
+                    source={{ uri: focusedPhoto.uri }}
+                    style={styles.selectedPhoto}
+                    contentFit="cover"
+                    transition={120}
+                    cachePolicy="memory-disk"
+                  />
+                </View>
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.thumbnailRail}
                 >
-                  {[...selectedPhotos].slice(0, 3).reverse().map((photo, reverseIndex, reversedPhotos) => {
-                    const stackIndex = reversedPhotos.length - 1 - reverseIndex;
-                    const isPrimary = stackIndex === 0;
-                    const offset = stackIndex * clusterPeekOffset;
+                  {selectedPhotos.map((photo) => {
+                    const active = photo.uri === focusedPhoto.uri;
 
                     return (
                       <Pressable
                         key={photo.uri}
                         accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
                         accessibilityLabel={photo.label ? `Select ${photo.label}` : "Select photo"}
                         onPress={() => onFocusPhoto(photo.uri)}
                         style={[
-                          styles.clusterCard,
+                          styles.railThumbnailFrame,
                           {
-                            width: clusterCardSize,
-                            height: clusterCardSize,
-                            top: offset,
-                            left: offset,
-                            zIndex: 10 - stackIndex,
-                            transform: [{ scale: isPrimary ? 1 : 1 - stackIndex * 0.05 }],
+                            width: railThumbnailSize,
+                            height: railThumbnailSize,
                           },
-                          photo.uri === focusedPhoto.uri ? styles.clusterCardActive : null,
+                          active ? styles.railThumbnailFrameActive : null,
                         ]}
                       >
                         <Image
@@ -292,21 +293,31 @@ export function InteriorRedesignStepOne({
                           accessibilityLabel="Remove selected photo"
                           onPress={() => onRemovePhoto(photo.uri)}
                           hitSlop={10}
-                          style={styles.clusterRemoveButton}
+                          style={styles.railRemoveButton}
                         >
-                          <Close color="#FFFFFF" size={12} strokeWidth={2.6} />
+                          <Close color="#FFFFFF" size={11} strokeWidth={2.7} />
                         </Pressable>
                       </Pressable>
                     );
                   })}
-                </View>
 
-                {canAddMore ? (
-                  <Pressable accessibilityRole="button" onPress={openMediaSheet} style={styles.addMoreButton}>
-                    <Plus color="#0A0A0A" size={16} strokeWidth={2.6} />
-                    <Text style={styles.addMoreButtonText}>Add More</Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Add more photos"
+                    disabled={!canAddMore}
+                    onPress={openMediaSheet}
+                    style={[
+                      styles.addTile,
+                      {
+                        width: railThumbnailSize,
+                        height: railThumbnailSize,
+                      },
+                      !canAddMore ? styles.addTileDisabled : null,
+                    ]}
+                  >
+                    <Plus color={canAddMore ? "#0A0A0A" : "#A3A3A3"} size={20} strokeWidth={2.8} />
                   </Pressable>
-                ) : null}
+                </ScrollView>
               </View>
             </>
           ) : (
@@ -525,41 +536,22 @@ const styles = StyleSheet.create({
   },
   selectedStateWrap: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 18,
-    paddingHorizontal: 28,
-    paddingVertical: 32,
-    backgroundColor: "#F7F7F8",
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 12,
+    backgroundColor: "#FFFFFF",
   },
-  clusterWrap: {
-    position: "relative",
-  },
-  clusterCard: {
-    position: "absolute",
+  primaryPreviewFrame: {
+    width: "100%",
+    borderRadius: 18,
     overflow: "hidden",
-    borderRadius: 28,
-    backgroundColor: "#EAEAEA",
-    borderWidth: 4,
-    borderColor: "#FFFFFF",
+    backgroundColor: "#EFEFF1",
   },
-  clusterCardActive: {
-    shadowColor: "#2563EB",
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
-  },
-  clusterRemoveButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  thumbnailRail: {
+    paddingTop: 14,
+    paddingBottom: 2,
+    gap: 10,
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(10,10,10,0.82)",
   },
   removeButton: {
     position: "absolute",
@@ -635,22 +627,39 @@ const styles = StyleSheet.create({
   selectedThumbnailFrameActive: {
     borderColor: "#2563EB",
   },
-  addMoreButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#D6D6DB",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+  railThumbnailFrame: {
+    overflow: "hidden",
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: "#D4D4D8",
+    backgroundColor: "#F1F1F3",
   },
-  addMoreButtonText: {
-    color: "#0A0A0A",
-    fontSize: 14,
-    lineHeight: 18,
-    ...fonts.semibold,
+  railThumbnailFrameActive: {
+    borderColor: "#2563EB",
+  },
+  railRemoveButton: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(10,10,10,0.82)",
+  },
+  addTile: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "#C8C8CD",
+    backgroundColor: "#FAFAFA",
+  },
+  addTileDisabled: {
+    borderColor: "#DFDFE3",
+    backgroundColor: "#F6F6F7",
   },
   thumbnailImage: {
     width: "100%",

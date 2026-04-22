@@ -83,6 +83,7 @@ const FIXED_FOOTER_OFFSET = 96;
 const MASK_SCREEN_REFERENCE_WIDTH = 456;
 const MASK_SCREEN_REFERENCE_HEIGHT = 932;
 const FLOOR_PROMPT_OFFSET = 30;
+const AI_CHOICE_PROMPT = "AI's Choice";
 const absoluteFill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
 const AUTO_DETECT_SUCCESS_MESSAGE = "wizard.floorFlow.autoMaskSuccess";
 const AUTO_DETECT_FAILURE_MESSAGE = "wizard.floorFlow.autoMaskFailure";
@@ -167,6 +168,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
+  const [isAiMaterialSuggestionEnabled, setIsAiMaterialSuggestionEnabled] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [processingComplete, setProcessingComplete] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
@@ -219,6 +221,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const floorWizardExamplePhotos = useMemo(() => getFloorWizardExamplePhotos(t), [i18n.language, t]);
   const floorPromptExamples = useMemo(
     () => [
+      AI_CHOICE_PROMPT,
       t("wizard.floorFlow.promptExamples.frenchOak"),
       t("wizard.floorFlow.promptExamples.carraraMarble"),
       t("wizard.floorFlow.promptExamples.microcement"),
@@ -229,7 +232,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   );
   const generationStatusMessages = useGenerationStatusMessages();
   const stickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);
-  const canContinueFromMask = customPrompt.trim().length > 0;
+  const canContinueFromMask = isAiMaterialSuggestionEnabled || customPrompt.trim().length > 0;
   const aspectRatio = useMemo(() => {
     if (!selectedImage) return 1.15;
     const r = selectedImage.width / Math.max(selectedImage.height, 1);
@@ -237,7 +240,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   }, [selectedImage]);
   const materialCardWidth = Math.max((width - 46) / 2, 154);
   const resultFrameWidth = Math.max(width - 32, 320);
-  const canContinueFromMaterials = Boolean(selectedImage && hasMask && selectedMaterial && !isGenerating);
+  const canContinueFromMaterials = Boolean(selectedImage && hasMask && (selectedMaterial || isAiMaterialSuggestionEnabled) && !isGenerating);
   const maskLayoutScale = Math.min(width / MASK_SCREEN_REFERENCE_WIDTH, height / MASK_SCREEN_REFERENCE_HEIGHT, 1);
   const maskTitleTop = stickyHeaderMetrics.contentOffset;
   const maskImageTop = maskTitleTop + scaleMaskValue(60, maskLayoutScale);
@@ -248,7 +251,11 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const maskButtonBottom = Math.max(insets.bottom + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(44, maskLayoutScale));
   const promptModalTitleTop = Math.max(insets.top + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(92, maskLayoutScale));
   const promptModalSaveBottom = Math.max(insets.bottom + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(12, maskLayoutScale));
-  const canSaveCustomPrompt = customPromptDraft.trim().length > 0;
+  const canSaveCustomPrompt = isAiMaterialSuggestionEnabled || customPromptDraft.trim().length > 0;
+  const effectiveFloorMaterialTitle = isAiMaterialSuggestionEnabled ? "AI's Choice" : (selectedMaterial?.title ?? t("wizard.floorFlow.noMaterialSelected"));
+  const effectiveFloorMaterialDescription = isAiMaterialSuggestionEnabled
+    ? "The AI will choose the most fitting floor material and finish for this room based on lighting, furniture, and overall design balance."
+    : (selectedMaterial?.description ?? t("wizard.floorFlow.unlockMaterialBody"));
   const creditsRemainingLabel = t("wizard.floorFlow.creditsRemaining", {
     count: Math.max(availableCredits - 1, 0),
   });
@@ -284,6 +291,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       const matched = FLOOR_MATERIAL_OPTIONS.find((material) => material.title.toLowerCase() === normalized);
       if (matched) {
         setSelectedMaterialId(matched.id);
+        setIsAiMaterialSuggestionEnabled(false);
       }
     }
 
@@ -345,6 +353,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     setIsCancellingGeneration(false);
     setCustomPrompt("");
     setCustomPromptDraft("");
+    setIsAiMaterialSuggestionEnabled(false);
     setIsCustomPromptOpen(false);
     autoMaskAttemptKeyRef.current = null;
     resetMaskDrawing({ resetBrush: true });
@@ -352,9 +361,11 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       const normalized = presetStyle.trim().toLowerCase();
       const matched = FLOOR_MATERIAL_OPTIONS.find((material) => material.title.toLowerCase() === normalized);
       setSelectedMaterialId(matched?.id ?? null);
+      setIsAiMaterialSuggestionEnabled(false);
       return;
     }
     setSelectedMaterialId(null);
+    setIsAiMaterialSuggestionEnabled(false);
     }, [clearContinueTimer, clearDetectTimer, presetStyle, resetMaskDrawing]);
 
   const promptOpenSettings = useCallback((title: string, message: string) => {
@@ -500,6 +511,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     setIsCancellingGeneration(false);
     setCustomPrompt("");
     setCustomPromptDraft("");
+    setIsAiMaterialSuggestionEnabled(false);
     setIsCustomPromptOpen(false);
     autoMaskAttemptKeyRef.current = null;
     resetMaskDrawing({ resetBrush: true });
@@ -570,7 +582,9 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
 
   const handleSelectCustomPromptExample = useCallback((value: string) => {
     triggerHaptic();
-    setCustomPromptDraft(value);
+    const isAiChoice = value === AI_CHOICE_PROMPT;
+    setIsAiMaterialSuggestionEnabled(isAiChoice);
+    setCustomPromptDraft(isAiChoice ? AI_CHOICE_PROMPT : value);
   }, []);
 
   const handleApplyCustomPrompt = useCallback(() => {
@@ -581,10 +595,15 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     }
 
     triggerHaptic();
+    const isAiChoice = trimmed === AI_CHOICE_PROMPT;
+    setIsAiMaterialSuggestionEnabled(isAiChoice);
     setCustomPrompt(trimmed);
     setCustomPromptDraft(trimmed);
+    if (isAiChoice && !selectedMaterialId) {
+      setSelectedMaterialId(FLOOR_MATERIAL_OPTIONS[0]?.id ?? null);
+    }
     setIsCustomPromptOpen(false);
-  }, [customPromptDraft, t]);
+  }, [customPromptDraft, selectedMaterialId, t]);
 
   const handleAutoDetectMask = useCallback(async () => {
     try {
@@ -741,11 +760,11 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       Alert.alert(t("wizard.floorFlow.markFloorTitle"), t("wizard.floorFlow.markFloorBody"));
       return;
     }
-    if (!customPrompt.trim()) {
+    if (!customPrompt.trim() && !isAiMaterialSuggestionEnabled) {
       Alert.alert(t("wizard.floorFlow.addPromptTitle"), t("wizard.floorFlow.generatePromptBody"));
       return;
     }
-    if (!selectedMaterial) {
+    if (!selectedMaterial && !isAiMaterialSuggestionEnabled) {
       Alert.alert(t("wizard.floorFlow.pickMaterialTitle"), t("wizard.floorFlow.pickMaterialBody"));
       return;
     }
@@ -783,12 +802,15 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
             imageStorageId: sourceStorageId,
             maskStorageId,
             serviceType: "floor",
-            selection: selectedMaterial.promptLabel,
+            selection: isAiMaterialSuggestionEnabled ? "AI suggested floor material and finish" : selectedMaterial!.promptLabel,
             roomType: "Room",
-            displayStyle: `${selectedMaterial.title} Floor`,
-            customPrompt: `${customPrompt.trim()}\n\nPreserve perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`,
+            displayStyle: isAiMaterialSuggestionEnabled ? "AI's Choice Floor" : `${selectedMaterial!.title} Floor`,
+            customPrompt: isAiMaterialSuggestionEnabled
+              ? `Identify the room's lighting, furniture, and overall style, then choose the best complementary floor material and finish. Generate the floor redesign without requiring any user-entered prompt. Preserve perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`
+              : `${customPrompt.trim()}\n\nPreserve perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`,
             aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
             speedTier: generationSpeedTier,
+            smartSuggest: isAiMaterialSuggestionEnabled,
           })) as { generationId: string; creditsRemaining?: number };
         },
         showToast,
@@ -816,7 +838,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       }
       showToast(getFriendlyGenerationError(rawMessage));
     }
-  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isGenerating, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, t, uploadBlobToStorage, viewerId, viewerReady]);
+  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isAiMaterialSuggestionEnabled, isGenerating, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, t, uploadBlobToStorage, viewerId, viewerReady]);
 
   const handleCancelGeneration = useCallback(async () => {
     if (!generationId || isCancellingGeneration) {
@@ -1075,7 +1097,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
                   contentContainerStyle={[
                     styles.promptModalContent,
                     {
-                      paddingTop: scaleMaskValue(32, maskLayoutScale),
+                      paddingTop: scaleMaskValue(48, maskLayoutScale),
                       paddingHorizontal: scaleMaskValue(20, maskLayoutScale),
                       paddingBottom: scaleMaskValue(132, maskLayoutScale),
                     },
@@ -1086,6 +1108,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
                       styles.promptModalInputWrap,
                       {
                         minHeight: scaleMaskValue(208, maskLayoutScale),
+                        marginTop: scaleMaskValue(12, maskLayoutScale),
                       },
                     ]}
                   >
@@ -1163,7 +1186,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
           footer={
             <ServiceContinueButton
               active={canContinueFromMaterials}
-              label={selectedMaterial ? t("wizard.floorFlow.generateCta") : t("wizard.floorFlow.selectMaterialCta")}
+              label={selectedMaterial || isAiMaterialSuggestionEnabled ? t("wizard.floorFlow.generateCta") : t("wizard.floorFlow.selectMaterialCta")}
               loading={loadingContinueStep === "materials"}
               onPress={async () => {
                 if (!canContinueFromMaterials) {
@@ -1191,12 +1214,13 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
                   width={materialCardWidth}
                   onPress={() => {
                     setSelectedMaterialId(option.id);
+                    setIsAiMaterialSuggestionEnabled(false);
                     triggerHaptic();
                   }}
                 />
               ))}
             </ServiceSelectionGrid>
-            <View style={styles.summaryCard}><Text style={styles.summaryLabel}>{t("wizard.floorFlow.selectedMaterial")}</Text><Text style={styles.summaryTitle}>{selectedMaterial?.title ?? t("wizard.floorFlow.noMaterialSelected")}</Text><Text style={styles.summaryText}>{selectedMaterial?.description ?? t("wizard.floorFlow.unlockMaterialBody")}</Text></View>
+            <View style={styles.summaryCard}><Text style={styles.summaryLabel}>{t("wizard.floorFlow.selectedMaterial")}</Text><Text style={styles.summaryTitle}>{effectiveFloorMaterialTitle}</Text><Text style={styles.summaryText}>{effectiveFloorMaterialDescription}</Text></View>
           </View>
         </ServiceWizardStepScreen>
       ) : null}
@@ -1268,13 +1292,13 @@ const styles = StyleSheet.create({
   maskPromptLabel: { position: "absolute", color: "#0A0A0A", fontSize: 16, lineHeight: 20, fontWeight: "600" },
   maskPromptCard: { position: "absolute", borderRadius: 12, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#F6F7F8", paddingTop: 28, paddingHorizontal: 20, paddingBottom: 16 },
   maskPromptValue: { color: "#111827", fontSize: 15, lineHeight: 22 },
-  maskContinueButton: { position: "absolute", borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  maskContinueButton: { position: "absolute", borderRadius: 14, alignItems: "center", justifyContent: "center", alignSelf: "center" },
   maskContinueText: { fontSize: 16, lineHeight: 20, fontWeight: "700" },
   promptModalScreen: { ...StyleSheet.absoluteFillObject, backgroundColor: "#FFFFFF", zIndex: 10 },
   promptModalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   promptModalTitle: { position: "absolute", opacity: 0 },
   promptModalBackButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center", marginLeft: -8 },
-  promptModalTitleSlot: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 12 },
+  promptModalTitleSlot: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 20 },
   promptModalTitleCentered: { color: "#0A0A0A", fontSize: 24, lineHeight: 28, fontWeight: "700", textAlign: "center" },
   promptModalCloseButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center", marginRight: -8 },
   promptModalContent: { flexGrow: 1 },

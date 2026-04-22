@@ -13,6 +13,9 @@ const STABILITY_V1_IMAGE_TO_IMAGE_BASE = `${STABILITY_API_BASE}/v1/generation`;
 const STABILITY_V2_INPAINT_ENDPOINT = `${STABILITY_API_BASE}/v2beta/stable-image/edit/inpaint`;
 const STABILITY_OUTPUT_FORMAT = "png";
 const STABILITY_REQUEST_TIMEOUT_MS = 90_000;
+const GEMINI_SUGGEST_REQUEST_TIMEOUT_MS = 25_000;
+const GEMINI_SUGGEST_MAX_DIMENSION = 1152;
+const GEMINI_SUGGEST_MAX_INLINE_BYTES = 3 * 1024 * 1024;
 const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
 const PRO_MIN_DELAY_MS = 4_000;
 const STABILITY_ALLOWED_DIMENSIONS = [
@@ -90,6 +93,29 @@ async function blobToBase64(blob: Blob) {
   }
 
   return btoa(binary);
+}
+
+async function prepareSuggestionImage(blob: Blob) {
+  const originalBytes = new Uint8Array(await blob.arrayBuffer());
+  if (originalBytes.byteLength <= GEMINI_SUGGEST_MAX_INLINE_BYTES) {
+    return {
+      base64: await blobToBase64(blob),
+      mimeType: blob.type || "image/jpeg",
+    };
+  }
+
+  const jimpModule = (await import("jimp-compact")) as any;
+  const Jimp = jimpModule.default ?? jimpModule;
+  const image = await Jimp.read(originalBytes);
+  image.scaleToFit(GEMINI_SUGGEST_MAX_DIMENSION, GEMINI_SUGGEST_MAX_DIMENSION);
+  image.quality(76);
+  const optimizedBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
+  const optimizedBlob = new Blob([optimizedBuffer], { type: "image/jpeg" });
+
+  return {
+    base64: await blobToBase64(optimizedBlob),
+    mimeType: "image/jpeg",
+  };
 }
 
 function normalizeGenerationError(message?: string | null) {
@@ -596,6 +622,20 @@ function buildFallbackSuggestion(args: {
   };
 }
 
+function parseSuggestionResponse(payload: any) {
+  const directText = trimOptional(payload?.text);
+  if (directText) {
+    return directText;
+  }
+
+  const candidateText = payload?.candidates?.[0]?.content?.parts
+    ?.map((part: { text?: string }) => part?.text ?? "")
+    .join("")
+    .trim();
+
+  return trimOptional(candidateText);
+}
+
 export const suggestDesignOptions: any = actionGeneric({
   args: {
     imageStorageId: v.id("_storage"),
@@ -619,22 +659,27 @@ export const suggestDesignOptions: any = actionGeneric({
     }
 
     try {
-      const base64 = await blobToBase64(sourceBlob);
+      const { base64, mimeType } = await prepareSuggestionImage(sourceBlob);
       const prompt = [
         "You are an architectural interior and exterior design selector.",
         `Service type: ${args.serviceType}.`,
         `Room type: ${args.roomType}.`,
         `Available styles: ${args.availableStyles.join(", ")}.`,
         `Available palettes: ${args.availablePalettes.join(", ")}.`,
-        "Automatically pick the best style and best palette based on the room's lighting and structure.",
+        "Analyze the room architecture and automatically pick the most suitable design style.",
+        "Then choose the best matching palette.",
         'Return strict JSON like {"style":"Modern","paletteId":"terracotta","reason":"..."} with no extra text.',
       ].join(" ");
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), GEMINI_SUGGEST_REQUEST_TIMEOUT_MS);
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        signal: controller.signal,
         body: JSON.stringify({
           contents: [
             {
@@ -643,7 +688,7 @@ export const suggestDesignOptions: any = actionGeneric({
                 { text: prompt },
                 {
                   inlineData: {
-                    mimeType: sourceBlob.type || "image/jpeg",
+                    mimeType,
                     data: base64,
                   },
                 },
@@ -655,17 +700,17 @@ export const suggestDesignOptions: any = actionGeneric({
             responseMimeType: "application/json",
           },
         }),
-      });
+      }).finally(() => clearTimeout(timeout));
 
       if (!response.ok) {
+        console.error("suggestDesignOptions: Gemini request failed", response.status, await response.text().catch(() => ""));
         return fallback;
       }
 
-      const payload = await response.json() as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-      };
-      const text = payload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("").trim();
+      const payload = await response.json();
+      const text = parseSuggestionResponse(payload);
       if (!text) {
+        console.error("suggestDesignOptions: Gemini returned no text payload");
         return fallback;
       }
 
@@ -681,7 +726,8 @@ export const suggestDesignOptions: any = actionGeneric({
         reason: trimOptional(parsed.reason) ?? fallback.reason,
         source: "gemini" as const,
       };
-    } catch {
+    } catch (error) {
+      console.error("suggestDesignOptions: falling back after error", error);
       return fallback;
     }
   },

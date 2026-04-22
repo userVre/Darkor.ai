@@ -29,6 +29,7 @@ import {
   LayoutPanelTop,
   Redo2,
   Undo2,
+  Wand2,
   Wallpaper,
   X,
 } from "@/components/material-icons";
@@ -542,6 +543,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const [maskTool, setMaskTool] = useState<MaskTool>("brush");
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
   const [selectedColorValue, setSelectedColorValue] = useState<string | null>(null);
+  const [isAiColorSuggestionEnabled, setIsAiColorSuggestionEnabled] = useState(false);
   const [selectedSurface, setSelectedSurface] = useState<PaintSurfaceOption["value"]>("Auto");
   const [isColorConfirmed, setIsColorConfirmed] = useState(false);
   const [isSurfaceConfirmed, setIsSurfaceConfirmed] = useState(false);
@@ -628,6 +630,10 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const selectedColorDescription =
     selectedColorOption?.description ??
     (selectedColorValue ? t("wizard.paintFlow.customColorDescription") : t("wizard.paintFlow.chooseColorBody"));
+  const effectivePaintSelectionTitle = isAiColorSuggestionEnabled ? "AI Suggested Color" : selectedColorTitle;
+  const effectivePaintSelectionDescription = isAiColorSuggestionEnabled
+    ? "The AI will analyze the room lighting and furniture to choose the most complementary professional wall color."
+    : selectedColorDescription;
   const availableCredits = sharedCredits;
   const generationSpeedTier = useMemo<"standard" | "pro" | "ultra">(() => {
     if (me?.subscriptionType === "yearly") {
@@ -639,7 +645,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     return "standard";
   }, [me?.hasPaidAccess, me?.subscriptionType]);
   const generationAccess = canUserGenerateNow(me);
-  const canGenerate = Boolean(selectedImage && hasMask && selectedColorValue && !isGenerating);
+  const canGenerate = Boolean(selectedImage && hasMask && (selectedColorValue || isAiColorSuggestionEnabled) && !isGenerating);
   const currentStepNumber =
     step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
   const paintWizardExamplePhotos = useMemo(() => getPaintWizardExamplePhotos(t), [i18n.language, t]);
@@ -674,7 +680,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     : "Upload a room photo for precise wall recoloring.";
   void intakeHeading;
   void intakeSubtext;
-  const canContinueFromSelection = Boolean(selectedColorValue && isColorConfirmed && isSurfaceConfirmed);
+  const canContinueFromSelection = Boolean((isAiColorSuggestionEnabled || (selectedColorValue && isColorConfirmed)) && isSurfaceConfirmed);
   const canContinueFromMask = hasMask && !isDetecting && !isAutoDetecting;
   const activeMaskTool = maskTool === "surface" ? "brush" : maskTool;
   const maskWidthLabel =
@@ -690,13 +696,16 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     () => (previewColorButtonValue ? resolveColorCategoryLabel(previewColorButtonValue, localizedColorLabels) : null),
     [localizedColorLabels, previewColorButtonValue],
   );
-  const selectedColorButtonText =
-    previewColorOption?.title
+  const selectedColorButtonText = isAiColorSuggestionEnabled
+    ? "AI Suggest"
+    : (previewColorOption?.title
     ?? previewColorCategory
     ?? previewColorButtonValue
-    ?? t("wizard.paintFlow.choose");
-  const selectedColorButtonBackground = previewColorButtonValue ?? "#0A0A0A";
-  const selectedColorButtonTextColor = previewColorButtonValue ? resolveContrastTextColor(previewColorButtonValue) : "#FFFFFF";
+    ?? t("wizard.paintFlow.choose"));
+  const selectedColorButtonBackground = isAiColorSuggestionEnabled ? "#F4E6B8" : (previewColorButtonValue ?? "#0A0A0A");
+  const selectedColorButtonTextColor = isAiColorSuggestionEnabled
+    ? "#2F2415"
+    : (previewColorButtonValue ? resolveContrastTextColor(previewColorButtonValue) : "#FFFFFF");
   const selectedSurfaceButtonText = isSurfaceConfirmed ? selectedSurfaceOption.label : t("wizard.paintFlow.choose");
   const selectedSurfaceIconColor = isSurfaceConfirmed ? "#FFFFFF" : "#0A0A0A";
 
@@ -718,6 +727,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       if (matched) {
         setSelectedColorValue(matched.value);
         setIsColorConfirmed(true);
+        setIsAiColorSuggestionEnabled(false);
       }
     }
 
@@ -955,6 +965,9 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       clearContinueTimer();
       setMaskTool("brush");
       setSelectedImage(nextImage);
+      setSelectedColorValue(null);
+      setIsColorConfirmed(false);
+      setIsAiColorSuggestionEnabled(false);
       setSelectedSurface("Auto");
       setIsSurfaceConfirmed(false);
       setGeneratedImageUrl(null);
@@ -1040,8 +1053,21 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     triggerHaptic();
     setSelectedColorValue(colorPickerDraft.hex);
     setIsColorConfirmed(true);
+    setIsAiColorSuggestionEnabled(false);
     setIsColorPickerOpen(false);
   }, [colorPickerDraft.hex]);
+
+  const handleAiColorSuggestionPress = useCallback(() => {
+    triggerHaptic();
+    setIsAiColorSuggestionEnabled((current) => {
+      const next = !current;
+      if (next) {
+        setSelectedColorValue(null);
+        setIsColorConfirmed(true);
+      }
+      return next;
+    });
+  }, []);
 
   const handlePresetColorPress = useCallback(
     (hexColor: string) => {
@@ -1247,7 +1273,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       return;
     }
 
-    if (!selectedColorValue) {
+    if (!selectedColorValue && !isAiColorSuggestionEnabled) {
       Alert.alert(t("wizard.paintFlow.pickColorTitle"), t("wizard.paintFlow.pickColorBody"));
       return;
     }
@@ -1296,16 +1322,21 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
             imageStorageId: sourceStorageId,
             maskStorageId,
             serviceType: "paint",
-            selection: `${selectedColorTitle} (${selectedColorRgbLabel}) on the ${selectedSurface.toLowerCase()} surface with a realistic ${selectedFinish.label.toLowerCase()} finish`,
+            selection: isAiColorSuggestionEnabled
+              ? `AI suggested professional wall color on the ${selectedSurface.toLowerCase()} surface with a realistic ${selectedFinish.label.toLowerCase()} finish`
+              : `${selectedColorTitle} (${selectedColorRgbLabel}) on the ${selectedSurface.toLowerCase()} surface with a realistic ${selectedFinish.label.toLowerCase()} finish`,
             roomType: "Room",
-            displayStyle: `${selectedColorTitle} Paint`,
-            customPrompt: `Repaint only the selected ${selectedSurface.toLowerCase()} surface using ${selectedColorTitle} in ${selectedColorRgbLabel}. Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`,
-            targetColor: selectedColorRgbLabel,
-            targetColorHex: selectedColorValue,
-            targetColorCategory: selectedColorCategory ?? selectedColorTitle,
+            displayStyle: isAiColorSuggestionEnabled ? "AI Suggested Paint" : `${selectedColorTitle} Paint`,
+            customPrompt: isAiColorSuggestionEnabled
+              ? `Identify the room's current lighting and furniture, then choose the most complementary professional wall color for the selected ${selectedSurface.toLowerCase()} surface. Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`
+              : `Repaint only the selected ${selectedSurface.toLowerCase()} surface using ${selectedColorTitle} in ${selectedColorRgbLabel}. Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`,
+            targetColor: isAiColorSuggestionEnabled ? undefined : selectedColorRgbLabel,
+            targetColorHex: isAiColorSuggestionEnabled ? undefined : selectedColorValue ?? undefined,
+            targetColorCategory: isAiColorSuggestionEnabled ? "AI Suggested Color" : (selectedColorCategory ?? selectedColorTitle),
             targetSurface: selectedSurface,
             aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
             speedTier: generationSpeedTier,
+            smartSuggest: isAiColorSuggestionEnabled,
           })) as { generationId: string; creditsRemaining?: number };
         },
         showToast,
@@ -1340,6 +1371,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     generationAccess.message,
     generationAccess.reason,
     hasMask,
+    isAiColorSuggestionEnabled,
     isGenerating,
     router,
     selectedColorCategory,
@@ -1558,34 +1590,45 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
             </View>
 
             <View style={[styles.selectionCardsRow, { gap: selectionCardGap, marginTop: scaleSelectionValue(44, selectionLayoutScale) }]}>
-              <View style={[styles.selectionChoiceCard, selectedColorValue ? styles.selectionChoiceCardActive : null, { width: selectionCardWidth, minHeight: selectionCardHeight }]}>
+              <View style={[styles.selectionChoiceCard, (selectedColorValue || isAiColorSuggestionEnabled) ? styles.selectionChoiceCardActive : null, { width: selectionCardWidth, minHeight: selectionCardHeight }]}>
                 <View style={styles.selectionCardIconWrap}>
                   <BrushCleaning color="#0A0A0A" size={18} strokeWidth={2.1} />
                 </View>
-                <Text style={[styles.selectionCardLabel, selectedColorValue ? styles.selectionCardLabelActive : null]}>{t("wizard.paintFlow.colorLabel")}</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={handleOpenColorPicker}
-                  style={[
-                    styles.selectionColorButton,
-                    {
-                      width: Math.min(scaleSelectionValue(164, selectionLayoutScale), selectionCardWidth - scaleSelectionValue(36, selectionLayoutScale)),
-                      backgroundColor: selectedColorButtonBackground,
-                    },
-                  ]}
-                >
-                  <Text
-                    numberOfLines={1}
+                <Text style={[styles.selectionCardLabel, (selectedColorValue || isAiColorSuggestionEnabled) ? styles.selectionCardLabelActive : null]}>{t("wizard.paintFlow.colorLabel")}</Text>
+                <View style={styles.selectionColorActions}>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={handleOpenColorPicker}
                     style={[
-                      styles.selectionColorButtonText,
+                      styles.selectionColorButton,
+                      styles.selectionColorButtonFlexible,
                       {
-                        color: selectedColorButtonTextColor,
+                        width: Math.min(scaleSelectionValue(124, selectionLayoutScale), selectionCardWidth - scaleSelectionValue(88, selectionLayoutScale)),
+                        backgroundColor: selectedColorButtonBackground,
                       },
                     ]}
                   >
-                    {selectedColorButtonText}
-                  </Text>
-                </Pressable>
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.selectionColorButtonText,
+                        {
+                          color: selectedColorButtonTextColor,
+                        },
+                      ]}
+                    >
+                      {selectedColorButtonText}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="AI suggest wall color"
+                    onPress={handleAiColorSuggestionPress}
+                    style={[styles.aiSuggestionButton, isAiColorSuggestionEnabled ? styles.aiSuggestionButtonActive : null]}
+                  >
+                    <Wand2 color={isAiColorSuggestionEnabled ? "#2F2415" : "#FFFFFF"} size={18} strokeWidth={2.1} />
+                  </Pressable>
+                </View>
               </View>
 
               <View style={[styles.selectionChoiceCard, isSurfaceConfirmed ? styles.selectionChoiceCardActive : null, { width: selectionCardWidth, minHeight: selectionCardHeight }]}>
@@ -1681,7 +1724,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                   </Pressable>
 
                   <View style={styles.selectionModalTitleWrap}>
-                    <Text numberOfLines={1} style={styles.colorPickerTitle}>{t("wizard.paintFlow.colorPickerTitle")}</Text>
+                    <Text numberOfLines={2} style={styles.colorPickerTitle}>{t("wizard.paintFlow.colorPickerTitle")}</Text>
                   </View>
 
                   <Pressable accessibilityRole="button" onPress={handleCloseColorPicker} style={styles.selectionModalCloseButton}>
@@ -2152,10 +2195,10 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
               )}
               <View style={styles.summaryCopy}>
                 <Text style={styles.summaryLabel}>{t("wizard.paintFlow.selectedColor")}</Text>
-                <Text style={styles.summaryTitle}>{selectedColorTitle}</Text>
+                <Text style={styles.summaryTitle}>{effectivePaintSelectionTitle}</Text>
                 <Text style={styles.summaryText}>
-                  {selectedColorValue
-                    ? `${selectedColorDescription} ${t("wizard.paintFlow.selectedSurfaceSentence", { surface: selectedSurfaceOption.label })}`
+                  {(selectedColorValue || isAiColorSuggestionEnabled)
+                    ? `${effectivePaintSelectionDescription} ${t("wizard.paintFlow.selectedSurfaceSentence", { surface: selectedSurfaceOption.label })}`
                     : t("wizard.paintFlow.colorLockedBody")}
                 </Text>
               </View>
@@ -2405,6 +2448,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   selectionContinueButton: {
+    width: "100%",
+    alignSelf: "center",
     height: 56,
     borderRadius: 14,
     alignItems: "center",
@@ -2442,11 +2487,13 @@ const styles = StyleSheet.create({
     boxShadow: "0px -18px 48px rgba(15,23,42,0.22)",
   },
   colorPickerTitle: {
-    marginHorizontal: 24,
     color: "#0A0A0A",
     fontSize: 24,
     lineHeight: 30,
     ...fonts.bold,
+    textAlign: "center",
+    flexShrink: 1,
+    width: "100%",
   },
   colorPickerSquare: {
     overflow: "hidden",
@@ -2669,7 +2716,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 8,
+    paddingHorizontal: 20,
   },
   selectionModalCopy: {
     flex: 1,
@@ -3121,6 +3168,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 24,
     right: 24,
+    alignSelf: "center",
     height: 60,
     borderRadius: 14,
     alignItems: "center",
@@ -3419,6 +3467,28 @@ const styles = StyleSheet.create({
   },
   selectionDescriptionActive: {
     color: SERVICE_WIZARD_THEME.colors.accentText,
+  },
+  selectionColorActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  selectionColorButtonFlexible: {
+    flex: 1,
+  },
+  aiSuggestionButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.14)",
+    backgroundColor: "#111113",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiSuggestionButtonActive: {
+    borderColor: "#F4E6B8",
+    backgroundColor: "#F4E6B8",
   },
   paletteCard: {
     borderRadius: 12,
