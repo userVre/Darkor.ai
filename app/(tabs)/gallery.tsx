@@ -223,8 +223,8 @@ export default function GalleryScreen() {
       />
 
       <CreditLimitModal
-        body="You can use Diamonds to unlock more redesigns from Discover, or upgrade now to jump straight into the paywall."
-        title="Credit Balance"
+        body={t("creditLimit.discoverTabBody")}
+        title={t("creditLimit.balanceTitle")}
         visible={isCreditModalVisible}
         onClose={handleCreditModalClose}
         onUpgrade={handleCreditModalUpgrade}

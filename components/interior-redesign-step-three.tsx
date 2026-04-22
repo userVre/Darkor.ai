@@ -30,8 +30,8 @@ type InteriorRedesignStepThreeStyleCard = {
 type InteriorRedesignStepThreeProps = {
   creditCount: number;
   styles: InteriorRedesignStepThreeStyleCard[];
-  selectedStyle: string | null;
-  onSelectStyle: (style: string | null) => void;
+  selectedStyles: string[];
+  onSelectStyle: (style: string) => void;
   onBack: () => void;
   onContinue: () => void;
   onExit: () => void;
@@ -39,8 +39,8 @@ type InteriorRedesignStepThreeProps = {
 
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
-const THUMBNAIL_CROP_OVERFLOW = 30;
-const THUMBNAIL_CROP_SHIFT = -8;
+const THUMBNAIL_CROP_OVERFLOW = 52;
+const THUMBNAIL_CROP_SHIFT = -24;
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -57,7 +57,7 @@ function chunkIntoRows<T>(items: T[], size: number) {
 export function InteriorRedesignStepThree({
   creditCount,
   styles,
-  selectedStyle,
+  selectedStyles,
   onSelectStyle,
   onBack,
   onContinue,
@@ -86,11 +86,11 @@ export function InteriorRedesignStepThree({
   const buttonHeight = scaleValue(60, layoutScale);
   const buttonTop = scaleValue(24, layoutScale);
   const rows = useMemo(() => chunkIntoRows(styles, 3), [styles]);
-  const canContinue = Boolean(selectedStyle);
+  const canContinue = selectedStyles.length > 0;
 
   const handleStylePress = (styleTitle: string) => {
     triggerHaptic();
-    onSelectStyle(selectedStyle === styleTitle ? null : styleTitle);
+    onSelectStyle(styleTitle);
   };
 
   const handleContinuePress = () => {
@@ -140,7 +140,7 @@ export function InteriorRedesignStepThree({
               }}
             >
               {row.map((styleCard, columnIndex) => {
-                const active = selectedStyle === styleCard.title;
+                const active = selectedStyles.includes(styleCard.title);
 
                 return (
                   <Pressable
@@ -298,6 +298,7 @@ const stylesSheet = StyleSheet.create({
     color: DESIGN_WIZARD_TEXT_MUTED,
     fontSize: 15,
     lineHeight: 22,
+    textAlign: "left",
     ...fonts.regular,
   },
   styleCard: {
@@ -321,9 +322,11 @@ const stylesSheet = StyleSheet.create({
   },
   labelText: {
     position: "absolute",
+    left: 20,
     right: 8,
     fontSize: 11,
     lineHeight: 13,
+    textAlign: "left",
     ...fonts.semibold,
   },
   labelTextActive: {

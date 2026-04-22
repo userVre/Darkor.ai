@@ -36,6 +36,7 @@ type InteriorRedesignStepTwoProps = {
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
 const CARD_HEIGHT = 72;
+const CARD_WIDTH = 192;
 const GRID_GAP = 16;
 const ROOM_ICON_SIZE = 24;
 
@@ -75,8 +76,8 @@ export function InteriorRedesignStepTwo({
   const buttonWidth = mainWidth;
   const buttonHeight = scaleValue(60, layoutScale);
   const buttonTop = scaleValue(24, layoutScale);
-  const cardWidth = (mainWidth - GRID_GAP) / 2;
-  const cardHeight = scaleValue(CARD_HEIGHT, layoutScale);
+  const cardWidth = CARD_WIDTH;
+  const cardHeight = CARD_HEIGHT;
   const roomRows = useMemo(() => chunkIntoRows(roomOptions, 2), [roomOptions]);
   const canContinue = Boolean(selectedRoom);
 
@@ -142,7 +143,7 @@ export function InteriorRedesignStepTwo({
                         styles.roomCard,
                         {
                           width: cardWidth,
-                          minHeight: cardHeight,
+                          height: cardHeight,
                           marginRight: columnIndex === 0 && row.length > 1 ? GRID_GAP : 0,
                         },
                         getWizardSelectionCardStyle(active, DESIGN_WIZARD_SURFACE_MUTED),
@@ -211,6 +212,7 @@ const styles = StyleSheet.create({
     color: DESIGN_WIZARD_TEXT_MUTED,
     fontSize: 15,
     lineHeight: 22,
+    textAlign: "left",
     ...fonts.regular,
   },
   grid: {

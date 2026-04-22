@@ -129,6 +129,7 @@ export default function HomeScreen() {
   };
 
   const handleCreditsPress = () => {
+    triggerHaptic();
     setIsCreditModalVisible(true);
   };
 
@@ -192,8 +193,8 @@ export default function HomeScreen() {
       </ScrollView>
 
       <CreditLimitModal
-        body="You can use Diamonds to start new redesigns, and upgrading unlocks more generations with premium output quality."
-        title="Credit Balance"
+        body={t("creditLimit.createTabBody")}
+        title={t("creditLimit.balanceTitle")}
         visible={isCreditModalVisible}
         onClose={handleCreditModalClose}
         onUpgrade={handleCreditModalUpgrade}

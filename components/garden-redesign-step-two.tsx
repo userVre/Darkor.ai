@@ -29,8 +29,8 @@ type GardenRedesignStepTwoStyleCard = {
 
 type GardenRedesignStepTwoProps = {
   styles: GardenRedesignStepTwoStyleCard[];
-  selectedStyle: string | null;
-  onSelectStyle: (style: string | null) => void;
+  selectedStyles: string[];
+  onSelectStyle: (style: string) => void;
   onBack: () => void;
   onContinue: () => void;
   onExit: () => void;
@@ -39,8 +39,8 @@ type GardenRedesignStepTwoProps = {
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
 const GRID_GAP = 16;
-const THUMBNAIL_CROP_OVERFLOW = 30;
-const THUMBNAIL_CROP_SHIFT = -10;
+const THUMBNAIL_CROP_OVERFLOW = 52;
+const THUMBNAIL_CROP_SHIFT = -24;
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -56,7 +56,7 @@ function chunkIntoRows<T>(items: T[], size: number) {
 
 export function GardenRedesignStepTwo({
   styles,
-  selectedStyle,
+  selectedStyles,
   onSelectStyle,
   onBack,
   onContinue,
@@ -81,11 +81,11 @@ export function GardenRedesignStepTwo({
   const cardImageHeight = scaleValue(132, layoutScale);
   const cardLabelHeight = cardHeight - cardImageHeight;
   const rows = useMemo(() => chunkIntoRows(styles, 2), [styles]);
-  const canContinue = Boolean(selectedStyle);
+  const canContinue = selectedStyles.length > 0;
 
   const handleStylePress = (styleTitle: string) => {
     triggerHaptic();
-    onSelectStyle(selectedStyle === styleTitle ? null : styleTitle);
+    onSelectStyle(styleTitle);
   };
 
   const handleContinuePress = () => {
@@ -135,7 +135,7 @@ export function GardenRedesignStepTwo({
               }}
             >
               {row.map((styleCard, columnIndex) => {
-                const active = selectedStyle === styleCard.title;
+                const active = selectedStyles.includes(styleCard.title);
 
                 return (
                   <Pressable
@@ -243,12 +243,14 @@ const stylesSheet = StyleSheet.create({
     color: DESIGN_WIZARD_TEXT,
     fontSize: 24,
     lineHeight: 29,
+    textAlign: "left",
     ...fonts.bold,
   },
   subtitle: {
     color: DESIGN_WIZARD_TEXT_MUTED,
     fontSize: 15,
     lineHeight: 22,
+    textAlign: "left",
     ...fonts.regular,
   },
   grid: {
@@ -276,14 +278,14 @@ const stylesSheet = StyleSheet.create({
   },
   labelBar: {
     width: "100%",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
     paddingHorizontal: 14,
   },
   labelText: {
     fontSize: 15,
     lineHeight: 19,
-    textAlign: "center",
+    textAlign: "left",
     ...fonts.semibold,
   },
   labelTextActive: {

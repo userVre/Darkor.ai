@@ -626,7 +626,7 @@ export const suggestDesignOptions: any = actionGeneric({
         `Room type: ${args.roomType}.`,
         `Available styles: ${args.availableStyles.join(", ")}.`,
         `Available palettes: ${args.availablePalettes.join(", ")}.`,
-        "Choose exactly one best style and one best palette for the uploaded architecture.",
+        "Automatically pick the best style and best palette based on the room's lighting and structure.",
         'Return strict JSON like {"style":"Modern","paletteId":"terracotta","reason":"..."} with no extra text.',
       ].join(" ");
 

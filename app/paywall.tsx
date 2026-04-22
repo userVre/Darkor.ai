@@ -89,8 +89,8 @@ const CLOSE_VISUAL_SIZE = 40;
 const CLOSE_RING_RADIUS = 15;
 const CLOSE_RING_STROKE_WIDTH = 2.5;
 const CLOSE_RING_CIRCUMFERENCE = 2 * Math.PI * CLOSE_RING_RADIUS;
-const HERO_CENTER_SIZE_MAX = 176;
-const HERO_CENTER_SIZE_MIN = 136;
+const HERO_CENTER_SIZE_MAX = 164;
+const HERO_CENTER_SIZE_MIN = 124;
 const HERO_SIDE_SCALE = 0.76;
 const HERO_SIDE_TRANSLATE_Y = 18;
 const HERO_CAROUSEL_REPEAT_MULTIPLIER = 7;
@@ -524,7 +524,7 @@ export default function PaywallScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(5);
-  const heroCenterSize = Math.min(HERO_CENTER_SIZE_MAX, Math.max(HERO_CENTER_SIZE_MIN, width * 0.42));
+  const heroCenterSize = Math.min(HERO_CENTER_SIZE_MAX, Math.max(HERO_CENTER_SIZE_MIN, width * 0.38));
   const heroSnapInterval = width / 2;
   const heroTrackPadding = Math.max((width - heroSnapInterval) / 2, 0);
   const heroRowHeight = heroCenterSize + HERO_SIDE_TRANSLATE_Y + 24;
@@ -1173,17 +1173,17 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   scrollContent: {
-    paddingTop: 4,
+    paddingTop: 8,
   },
   heroClip: {
     width: "100%",
-    height: 198,
+    height: 176,
     overflow: "hidden",
     backgroundColor: SCREEN_BG,
   },
   heroTrack: {
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   heroItemSlot: {
     alignItems: "center",
@@ -1200,12 +1200,14 @@ const styles = StyleSheet.create({
   },
   featuresSection: {
     marginHorizontal: 20,
-    marginBottom: 18,
+    marginTop: 12,
+    marginBottom: 26,
   },
   titleSection: {
     marginHorizontal: 20,
     alignItems: "flex-start",
-    marginBottom: 20,
+    marginTop: 18,
+    marginBottom: 24,
     gap: 6,
   },
   subtitleText: {
@@ -1251,6 +1253,7 @@ const styles = StyleSheet.create({
   trialBar: {
     minHeight: 48,
     marginHorizontal: 20,
+    marginBottom: 18,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 14,
@@ -1289,11 +1292,10 @@ const styles = StyleSheet.create({
     backgroundColor: TEXT_ACCENT,
   },
   yearlyWrapper: {
-    marginTop: 12,
     marginHorizontal: 20,
   },
   weeklyWrapper: {
-    marginTop: 10,
+    marginTop: 18,
     marginHorizontal: 20,
   },
   planCard: {
@@ -1306,7 +1308,9 @@ const styles = StyleSheet.create({
     borderColor: PANEL_BORDER,
     justifyContent: "center",
   },
-  yearlyCard: {},
+  yearlyCard: {
+    paddingTop: 22,
+  },
   weeklyCard: {
     minHeight: 64,
   },
@@ -1320,7 +1324,7 @@ const styles = StyleSheet.create({
   },
   bestOfferBadge: {
     position: "absolute",
-    top: -10,
+    top: -8,
     right: 12,
     borderRadius: 14,
     backgroundColor: RUBY_BADGE,
@@ -1352,7 +1356,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     alignItems: "flex-end",
     justifyContent: "center",
-    marginHorizontal: 12,
+    marginLeft: 12,
   },
   planLabel: {
     color: TEXT_PRIMARY,
@@ -1430,9 +1434,9 @@ const styles = StyleSheet.create({
     ...fonts.medium,
   },
   errorText: {
-    marginTop: 4,
+    marginTop: 12,
     marginHorizontal: 20,
-    marginBottom: 12,
+    marginBottom: 14,
     textAlign: "left",
     color: ERROR_TEXT,
     fontSize: 12,
@@ -1441,6 +1445,7 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     minHeight: 52,
+    marginTop: 6,
     marginHorizontal: 20,
     borderRadius: 14,
     backgroundColor: BRAND_RED,
@@ -1484,7 +1489,7 @@ const styles = StyleSheet.create({
   },
   legalFooter: {
     marginHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 14,
     alignItems: "flex-start",
   },
   legalLinksRow: {

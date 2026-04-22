@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { DS, ambientShadow } from "../lib/design-system";
 import { LuxPressable } from "./lux-pressable";
+import { DIAMOND_PILL_BLUE } from "./diamond-credit-pill";
 
 export type HomeToolCardItem = {
   id: string;
@@ -59,12 +60,12 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderCurve: "continuous",
     ...ambientShadow(0.04, 16, 10),
-    shadowColor: "#64748B",
-    shadowOpacity: 0.08,
+    shadowColor: DIAMOND_PILL_BLUE,
+    shadowOpacity: 0.14,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
     elevation: 4,
-    boxShadow: "0px 10px 24px rgba(100,116,139,0.10), 0px 0px 20px rgba(37,99,235,0.08)",
+    boxShadow: "0px 10px 24px rgba(29,78,216,0.16), 0px 0px 20px rgba(29,78,216,0.12)",
     borderWidth: 1,
     borderColor: DS.colors.border,
   },

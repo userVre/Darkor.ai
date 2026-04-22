@@ -240,6 +240,7 @@ const styles = StyleSheet.create({
     color: DESIGN_WIZARD_TEXT_MUTED,
     fontSize: 15,
     lineHeight: 22,
+    textAlign: "left",
     ...fonts.regular,
   },
   grid: {
@@ -255,14 +256,14 @@ const styles = StyleSheet.create({
   },
   labelBar: {
     width: "100%",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
     paddingHorizontal: 14,
   },
   labelRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     gap: 8,
   },
   labelIconWrap: {
@@ -274,7 +275,7 @@ const styles = StyleSheet.create({
   labelText: {
     fontSize: 15,
     lineHeight: 19,
-    textAlign: "center",
+    textAlign: "left",
     ...fonts.semibold,
   },
   labelTextActive: {

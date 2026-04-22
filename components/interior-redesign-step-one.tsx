@@ -26,15 +26,22 @@ export type InteriorRedesignStepOneExamplePhoto = {
   source: number;
 };
 
+type SelectedPhoto = {
+  uri: string;
+  label?: string;
+};
+
 type InteriorRedesignStepOneProps = {
   creditCount: number;
-  photoUri: string | null;
+  selectedPhotos: SelectedPhoto[];
+  focusedPhotoUri: string | null;
   examplePhotos: InteriorRedesignStepOneExamplePhoto[];
   emptyStateSubtitle?: string;
   loadingExampleId?: string | null;
   onTakePhoto: () => Promise<boolean>;
   onChooseFromGallery: () => Promise<boolean>;
-  onRemovePhoto: () => void;
+  onRemovePhoto: (uri: string) => void;
+  onFocusPhoto: (uri: string) => void;
   onSelectExample: (example: InteriorRedesignStepOneExamplePhoto) => void;
   onContinue: () => void;
   onExit: () => void;
@@ -47,7 +54,7 @@ const REFERENCE_HEIGHT = 932;
 const SHEET_HEIGHT = 336;
 const SWIPE_DISMISS_DISTANCE = 84;
 const SWIPE_DISMISS_VELOCITY = 900;
-const ACTIVE_CONTINUE_COLOR = "#121212";
+const ACTIVE_CONTINUE_COLOR = "#2563EB";
 
 function scaleValue(value: number, scale: number) {
   return value * scale;
@@ -55,13 +62,15 @@ function scaleValue(value: number, scale: number) {
 
 export function InteriorRedesignStepOne({
   creditCount,
-  photoUri,
+  selectedPhotos,
+  focusedPhotoUri,
   examplePhotos,
   emptyStateSubtitle = "Redesign and Beautify your home.",
   loadingExampleId,
   onTakePhoto,
   onChooseFromGallery,
   onRemovePhoto,
+  onFocusPhoto,
   onSelectExample,
   onContinue,
   onExit,
@@ -80,9 +89,14 @@ export function InteriorRedesignStepOne({
   const containerSize = mainWidth;
   const innerScale = containerSize / 416;
   const thumbnailSize = scaleValue(124, layoutScale);
+  const selectedThumbnailSize = scaleValue(78, layoutScale);
   const continueBottom = 64 + scaleValue(24, layoutScale);
-  const canContinue = Boolean(photoUri);
+  const canContinue = selectedPhotos.length > 0;
   const removeOffset = 20;
+  const focusedPhoto = useMemo(
+    () => selectedPhotos.find((photo) => photo.uri === focusedPhotoUri) ?? selectedPhotos[0] ?? null,
+    [focusedPhotoUri, selectedPhotos],
+  );
 
   const [isSheetMounted, setIsSheetMounted] = useState(false);
   const [pendingSource, setPendingSource] = useState<MediaSourceOption | null>(null);
@@ -218,7 +232,7 @@ export function InteriorRedesignStepOne({
         <View
           style={[
             styles.uploadContainer,
-            photoUri ? styles.uploadContainerSelected : null,
+            focusedPhoto ? styles.uploadContainerSelected : null,
             {
               width: containerSize,
               height: containerSize,
@@ -226,10 +240,10 @@ export function InteriorRedesignStepOne({
             },
           ]}
         >
-          {photoUri ? (
+          {focusedPhoto ? (
             <>
               <Image
-                source={{ uri: photoUri }}
+                source={{ uri: focusedPhoto.uri }}
                 style={styles.selectedPhoto}
                 contentFit="cover"
                 transition={120}
@@ -238,7 +252,7 @@ export function InteriorRedesignStepOne({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Remove selected photo"
-                onPress={onRemovePhoto}
+                onPress={() => onRemovePhoto(focusedPhoto.uri)}
                 hitSlop={10}
                 style={[styles.removeButton, { top: removeOffset, right: removeOffset }]}
               >
@@ -273,6 +287,40 @@ export function InteriorRedesignStepOne({
             </>
           )}
         </View>
+
+        {selectedPhotos.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: scaleValue(16, layoutScale) }}
+            contentContainerStyle={{
+              paddingLeft: contentInset,
+              paddingRight: sideInset,
+            }}
+          >
+            {selectedPhotos.map((photo, index) => {
+              const active = photo.uri === (focusedPhoto?.uri ?? null);
+
+              return (
+                <Pressable
+                  key={photo.uri}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  onPress={() => onFocusPhoto(photo.uri)}
+                  style={{
+                    width: selectedThumbnailSize,
+                    height: selectedThumbnailSize,
+                    marginRight: index === selectedPhotos.length - 1 ? 0 : scaleValue(10, layoutScale),
+                  }}
+                >
+                  <View style={[styles.selectedThumbnailFrame, active ? styles.selectedThumbnailFrameActive : null]}>
+                    <Image source={{ uri: photo.uri }} style={styles.thumbnailImage} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        ) : null}
 
         <Text style={[styles.examplesLabel, { marginTop: scaleValue(24, layoutScale), marginLeft: contentInset }]}>
           {t("common.actions.examplePhotos")}
@@ -521,6 +569,17 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderRadius: 12,
     backgroundColor: "#F3F3F3",
+  },
+  selectedThumbnailFrame: {
+    flex: 1,
+    overflow: "hidden",
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: "#D4D4D8",
+    backgroundColor: "#F3F3F3",
+  },
+  selectedThumbnailFrameActive: {
+    borderColor: "#2563EB",
   },
   thumbnailImage: {
     width: "100%",

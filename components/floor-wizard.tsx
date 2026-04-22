@@ -65,6 +65,14 @@ type FloorWizardProps = {
   onProcessingStateChange?: (isProcessing: boolean) => void;
 };
 
+const FLOOR_WIZARD_STEP_ORDER: Record<WizardStep, number> = {
+  intake: 1,
+  mask: 2,
+  materials: 3,
+  processing: 4,
+  result: 4,
+};
+
 const pointerClassName = "cursor-pointer";
 const MASK_ACCENT = "#CC3333";
 const MIN_BRUSH = 10;
@@ -206,8 +214,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     return "standard";
   }, [me?.hasPaidAccess, me?.subscriptionType]);
   const generationAccess = canUserGenerateNow(me);
-  const currentStepNumber =
-    step === "intake" ? 1 : step === "mask" ? 2 : step === "materials" ? 3 : 4;
+  const currentStepNumber = FLOOR_WIZARD_STEP_ORDER[step];
   const floorWizardExamplePhotos = useMemo(() => getFloorWizardExamplePhotos(t), [i18n.language, t]);
   const floorPromptExamples = useMemo(
     () => [

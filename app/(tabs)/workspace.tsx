@@ -545,8 +545,8 @@ const WORKSPACE_GENERATION_PROGRESS_MS = 15_000;
 const WORKSPACE_GENERATION_PROGRESS_MAX = 0.9;
 const ROOM_CARD_MEDIA_HEIGHT = 154;
 const STYLE_CARD_MEDIA_HEIGHT = 136;
-const ROOM_CARD_MEDIA_BOTTOM_CROP = 24;
-const STYLE_CARD_MEDIA_BOTTOM_CROP = 20;
+const ROOM_CARD_MEDIA_BOTTOM_CROP = 44;
+const STYLE_CARD_MEDIA_BOTTOM_CROP = 40;
 
 const INTERIOR_EXAMPLE_PHOTOS: ExamplePhoto[] = [
   {
@@ -1141,6 +1141,10 @@ const STYLE_PREVIEW_OUTPUTS: Record<string, number> = {
 };
 
 function getStyleCardBadge(style: Pick<DisplayStyleCard, "id" | "title" | "isCustom">): StyleCardBadge | null {
+  if (style.title === SMART_SUGGEST_STYLE_LABEL) {
+    return { label: "AI Pick", tone: "amber" };
+  }
+
   if (style.isCustom) {
     return { label: "Bespoke", tone: "violet" };
   }
@@ -1378,7 +1382,7 @@ const POPULAR_PALETTE_IDS = new Set(["surprise", "gray"]);
 const SMART_SUGGEST_STYLE_LABEL = "AI Suggest";
 const SMART_SUGGEST_PALETTE_ID = "smart-suggest";
 const SMART_SUGGEST_WALL_LABEL = "AI Pick";
-const SMART_SUGGEST_FLOOR_LABEL = "Surprise Me";
+const SMART_SUGGEST_FLOOR_LABEL = "AI Pick / Random";
 
 const ASPECT_RATIO_OPTIONS: AspectRatioOption[] = [
   {
@@ -2629,6 +2633,18 @@ export default function WorkspaceScreen() {
       return [];
     }
 
+    const aiSuggestCard: DisplayStyleCard = {
+      id: "ai-suggest",
+      title: SMART_SUGGEST_STYLE_LABEL,
+      description: isAiSuggesting
+        ? "Scanning the room lighting and structure to suggest the strongest direction."
+        : "Let Gemini automatically pick the best style based on the room's lighting and structure.",
+      image: null,
+      icon: Wand2,
+      eyebrow: "Smart",
+      isCustom: false,
+    };
+
     const baseCards = styleCatalogItems.map((style) => ({
       id: style.id,
       title: style.title,
@@ -2639,10 +2655,11 @@ export default function WorkspaceScreen() {
     }));
 
     if (isLeanGenerationService) {
-      return baseCards;
+      return [aiSuggestCard, ...baseCards];
     }
 
     return [
+      aiSuggestCard,
       {
         id: "custom",
         title: "Custom",
@@ -2656,7 +2673,7 @@ export default function WorkspaceScreen() {
       },
       ...baseCards,
     ];
-  }, [customPrompt, isFloorService, isLeanGenerationService, isPaintService, styleCatalogItems]);
+  }, [customPrompt, isAiSuggesting, isFloorService, isLeanGenerationService, isPaintService, styleCatalogItems]);
   const interiorStyleGalleryCards = useMemo(
     () => [
       { id: "modern", title: "Modern", label: t("workspace.localization.styles.modern"), image: STYLE_LIBRARY[0].image },
@@ -4564,12 +4581,21 @@ export default function WorkspaceScreen() {
   }, [handleContinue, selectedExteriorBuildingType, setDraftRoom]);
 
   const handleSetSelectedExteriorStyle = useCallback(
-    (style: string | null) => {
-      setSelectedStyle(style);
-      setSelectedStyles(style ? [style] : []);
-      setDraftStyle(style);
+    (style: string) => {
+      triggerHaptic();
+      setSmartSuggestEnabled(false);
+      setAiSuggestedStyle(null);
+      setAiSuggestedPaletteId(null);
+      startTransition(() => {
+        setSelectedStyles((current) => {
+          const exists = current.includes(style);
+          const next = exists ? current.filter((item) => item !== style) : [...current, style];
+          setSelectedStyle(next[next.length - 1] ?? null);
+          return next;
+        });
+      });
     },
-    [setDraftStyle],
+    [],
   );
 
   const handleContinueFromExteriorStyleStep = useCallback(() => {
@@ -4577,9 +4603,10 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    setDraftStyle(selectedExteriorStyle);
+    setDraftStyle(selectedStyles[0] ?? selectedExteriorStyle);
+    setDraftStyles(selectedStyles);
     handleContinue();
-  }, [handleContinue, selectedExteriorStyle, setDraftStyle]);
+  }, [handleContinue, selectedExteriorStyle, selectedStyles, setDraftStyle, setDraftStyles]);
 
   const handleContinueFromExteriorPaletteStep = useCallback(() => {
     if (!selectedPaletteId && !smartSuggestEnabled) {
@@ -4591,12 +4618,21 @@ export default function WorkspaceScreen() {
   }, [handleContinue, selectedPaletteId, setDraftPalette, smartSuggestEnabled]);
 
   const handleSetSelectedGardenStyle = useCallback(
-    (style: string | null) => {
-      setSelectedStyle(style);
-      setSelectedStyles(style ? [style] : []);
-      setDraftStyle(style);
+    (style: string) => {
+      triggerHaptic();
+      setSmartSuggestEnabled(false);
+      setAiSuggestedStyle(null);
+      setAiSuggestedPaletteId(null);
+      startTransition(() => {
+        setSelectedStyles((current) => {
+          const exists = current.includes(style);
+          const next = exists ? current.filter((item) => item !== style) : [...current, style];
+          setSelectedStyle(next[next.length - 1] ?? null);
+          return next;
+        });
+      });
     },
-    [setDraftStyle],
+    [],
   );
 
   const handleContinueFromGardenStyleStep = useCallback(() => {
@@ -4604,9 +4640,10 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    setDraftStyle(selectedGardenStyle);
+    setDraftStyle(selectedStyles[0] ?? selectedGardenStyle);
+    setDraftStyles(selectedStyles);
     handleContinue();
-  }, [handleContinue, selectedGardenStyle, setDraftStyle]);
+  }, [handleContinue, selectedGardenStyle, selectedStyles, setDraftStyle, setDraftStyles]);
 
   const handleContinueFromGardenPaletteStep = useCallback(() => {
     if (!selectedPaletteId && !smartSuggestEnabled) {
@@ -4618,12 +4655,21 @@ export default function WorkspaceScreen() {
   }, [handleContinue, selectedPaletteId, setDraftPalette, smartSuggestEnabled]);
 
   const handleSetSelectedStyle = useCallback(
-    (style: string | null) => {
-      setSelectedStyle(style);
-      setSelectedStyles(style ? [style] : []);
-      setDraftStyle(style);
+    (style: string) => {
+      triggerHaptic();
+      setSmartSuggestEnabled(false);
+      setAiSuggestedStyle(null);
+      setAiSuggestedPaletteId(null);
+      startTransition(() => {
+        setSelectedStyles((current) => {
+          const exists = current.includes(style);
+          const next = exists ? current.filter((item) => item !== style) : [...current, style];
+          setSelectedStyle(next[next.length - 1] ?? null);
+          return next;
+        });
+      });
     },
-    [setDraftStyle],
+    [],
   );
 
   const handleContinueFromInteriorStyleStep = useCallback(() => {
@@ -4631,9 +4677,10 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    setDraftStyle(selectedInteriorStyle);
+    setDraftStyle(selectedStyles[0] ?? selectedInteriorStyle);
+    setDraftStyles(selectedStyles);
     handleContinue();
-  }, [handleContinue, selectedInteriorStyle, setDraftStyle]);
+  }, [handleContinue, selectedInteriorStyle, selectedStyles, setDraftStyle, setDraftStyles]);
 
   const handleSetSelectedModeId = useCallback((modeId: string | null) => {
     setSelectedModeId((modeId as ModeOption["id"] | null) ?? null);
@@ -4685,6 +4732,10 @@ export default function WorkspaceScreen() {
 
   const handleSelectStyle = useCallback((value: string) => {
     triggerHaptic();
+    if (value === SMART_SUGGEST_STYLE_LABEL) {
+      void handleAiSuggest();
+      return;
+    }
     if (value === "Custom") {
       setCustomPromptDraft(customPrompt);
       setIsCustomPromptViewOpen(true);
@@ -4708,7 +4759,7 @@ export default function WorkspaceScreen() {
         return next;
       });
     });
-  }, [customPrompt, isFloorService, isLeanGenerationService, isPaintService]);
+  }, [customPrompt, handleAiSuggest, isFloorService, isLeanGenerationService, isPaintService]);
 
   const handleChangeCustomPrompt = useCallback((value: string) => {
     setCustomPromptDraft(value);
@@ -4770,7 +4821,9 @@ export default function WorkspaceScreen() {
     }
 
     const availablePalettes = (isGardenService ? GARDEN_PALETTE_OPTIONS : PALETTE_OPTIONS).map((palette) => palette.id);
-    const availableStyles = displayedStyleCards.filter((card) => !card.isCustom).map((card) => card.title);
+    const availableStyles = displayedStyleCards
+      .filter((card) => !card.isCustom && card.title !== SMART_SUGGEST_STYLE_LABEL)
+      .map((card) => card.title);
     if (availableStyles.length === 0 || availablePalettes.length === 0) {
       return;
     }
@@ -4950,12 +5003,14 @@ export default function WorkspaceScreen() {
     return (
       <InteriorRedesignStepOne
         creditCount={creditBalance}
-        photoUri={selectedImage?.uri ?? null}
+        selectedPhotos={selectedImages}
+        focusedPhotoUri={selectedImage?.uri ?? null}
         examplePhotos={interiorExamplePhotos}
         loadingExampleId={isLoadingExample}
         onTakePhoto={handleInteriorTakePhoto}
         onChooseFromGallery={handleInteriorChooseFromGallery}
-        onRemovePhoto={handleClearSelectedImage}
+        onRemovePhoto={removeSelectedImage}
+        onFocusPhoto={focusSelectedImage}
         onSelectExample={(example) => {
           void handleSelectExample(example);
         }}
@@ -4969,13 +5024,15 @@ export default function WorkspaceScreen() {
     return (
       <InteriorRedesignStepOne
         creditCount={creditBalance}
-        photoUri={selectedImage?.uri ?? null}
+        selectedPhotos={selectedImages}
+        focusedPhotoUri={selectedImage?.uri ?? null}
         examplePhotos={exteriorExamplePhotos}
         emptyStateSubtitle={t("workspace.localization.exteriorEmptyStateSubtitle")}
         loadingExampleId={isLoadingExample}
         onTakePhoto={handleInteriorTakePhoto}
         onChooseFromGallery={handleInteriorChooseFromGallery}
-        onRemovePhoto={handleClearSelectedImage}
+        onRemovePhoto={removeSelectedImage}
+        onFocusPhoto={focusSelectedImage}
         onSelectExample={(example) => {
           void handleSelectExample(example);
         }}
@@ -5023,7 +5080,7 @@ export default function WorkspaceScreen() {
         creditCount={creditBalance}
         onBack={handleBack}
         styles={exteriorStyleGalleryCards}
-        selectedStyle={selectedExteriorStyle}
+        selectedStyles={selectedStyles}
         onSelectStyle={handleSetSelectedExteriorStyle}
         onContinue={handleContinueFromExteriorStyleStep}
         onExit={handleCloseWizard}
@@ -5035,7 +5092,7 @@ export default function WorkspaceScreen() {
     return (
       <GardenRedesignStepTwo
         styles={gardenStyleGalleryCards}
-        selectedStyle={selectedGardenStyle}
+        selectedStyles={selectedStyles}
         onSelectStyle={handleSetSelectedGardenStyle}
         onBack={handleBack}
         onContinue={handleContinueFromGardenStyleStep}
@@ -5090,7 +5147,7 @@ export default function WorkspaceScreen() {
       <InteriorRedesignStepThree
         creditCount={creditBalance}
         styles={interiorStyleGalleryCards}
-        selectedStyle={selectedInteriorStyle}
+        selectedStyles={selectedStyles}
         onSelectStyle={handleSetSelectedStyle}
         onBack={handleBack}
         onContinue={handleContinueFromInteriorStyleStep}
@@ -5837,11 +5894,11 @@ export default function WorkspaceScreen() {
                                     ) : null}
                                   </View>
 
-                                  <View style={{ flex: 1, gap: spacing.sm, paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.md, alignItems: isFullWidthRoomCard ? "center" : "flex-start" }}>
-                                    <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", letterSpacing: -0.4, textAlign: isFullWidthRoomCard ? "center" : "left" }}>
+                                  <View style={{ flex: 1, gap: spacing.sm, paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.md, alignItems: "flex-start" }}>
+                                    <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", letterSpacing: -0.4, textAlign: "left" }}>
                                       {item.title}
                                     </Text>
-                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: isFullWidthRoomCard ? "center" : "left", maxWidth: isFullWidthRoomCard ? 320 : undefined }}>
+                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: "left", maxWidth: isFullWidthRoomCard ? 320 : undefined }}>
                                       {item.description}
                                     </Text>
                                   </View>
@@ -6020,11 +6077,11 @@ export default function WorkspaceScreen() {
                                 }}
                               >
                                 <FloorMaterialPreview material={material} active={active} />
-                                <View style={{ gap: spacing.sm, alignItems: isFullWidthMaterialCard ? "center" : "flex-start" }}>
-                                  <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.35, textAlign: isFullWidthMaterialCard ? "center" : "left" }}>
+                                <View style={{ gap: spacing.sm, alignItems: "flex-start" }}>
+                                  <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.35, textAlign: "left" }}>
                                     {material.title}
                                   </Text>
-                                  <Text style={{ color: active ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: isFullWidthMaterialCard ? "center" : "left", maxWidth: isFullWidthMaterialCard ? 360 : undefined }}>
+                                  <Text style={{ color: active ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: "left", maxWidth: isFullWidthMaterialCard ? 360 : undefined }}>
                                     {material.description}
                                   </Text>
                                 </View>
@@ -6063,59 +6120,11 @@ export default function WorkspaceScreen() {
                         </MotiView>
                       ) : null}
 
-                      <MotiView
-                        key={`ai-suggest-style-${aiSuggestionPulseKey}`}
-                        from={{ opacity: 0.9, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={LUX_SPRING}
-                        style={{ width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}
-                      >
-                        <LuxPressable
-                          onPress={() => void handleAiSuggest()}
-                          className="cursor-pointer overflow-hidden rounded-[24px] border"
-                          style={{
-                            borderWidth: 1,
-                            borderColor: "rgba(37,99,235,0.34)",
-                            backgroundColor: "rgba(37,99,235,0.12)",
-                            paddingHorizontal: spacing.md,
-                            paddingVertical: spacing.md,
-                            marginBottom: spacing.sm,
-                          }}
-                        >
-                          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md }}>
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md, flex: 1 }}>
-                              <MotiView
-                                animate={isAiSuggesting ? { rotate: "12deg", scale: [1, 1.08, 1] } : { rotate: "0deg", scale: 1 }}
-                                transition={{ duration: 900, loop: isAiSuggesting }}
-                                style={{
-                                  width: 48,
-                                  height: 48,
-                                  borderRadius: 18,
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  backgroundColor: "rgba(37,99,235,0.22)",
-                                }}
-                              >
-                                <Wand2 color="#dbeafe" size={22} strokeWidth={2.2} />
-                              </MotiView>
-                              <View style={{ flex: 1, gap: spacing.xs }}>
-                                <Text style={{ color: "#eff6ff", fontSize: 17, fontWeight: "700" }}>AI Suggest</Text>
-                                <Text style={{ color: "#bfdbfe", fontSize: 13, lineHeight: 19 }}>
-                                  {isAiSuggesting
-                                    ? "Scanning the room architecture and matching a design direction."
-                                    : "Let Gemini compose a style and palette direction from the room itself."}
-                                </Text>
-                              </View>
-                            </View>
-                            {isAiSuggesting ? <ActivityIndicator size="small" color="#dbeafe" /> : null}
-                          </View>
-                        </LuxPressable>
-                      </MotiView>
-
                       <View style={wizardCenteredGridStyle}>
                         {displayedStyleCards.map((style, index) => {
-                          const active = style.isCustom ? selectedStyle === style.title : selectedStyles.includes(style.title);
-                          const aiActive = aiSuggestedStyle === style.title;
+                          const isAiCard = style.title === SMART_SUGGEST_STYLE_LABEL;
+                          const active = isAiCard ? smartSuggestEnabled : style.isCustom ? selectedStyle === style.title : selectedStyles.includes(style.title);
+                          const aiActive = isAiCard ? smartSuggestEnabled : aiSuggestedStyle === style.title;
                           const isFullWidthStyleCard = shouldSpanFullWidthInTwoColumnGrid(index, displayedStyleCards.length, wizardCardColumns);
                           const StyleIcon = style.icon ?? Sparkles;
                           const styleBadge = getStyleCardBadge(style) ?? (isFullWidthStyleCard ? { label: "Editorial", tone: "violet" as const } : null);
@@ -6148,6 +6157,33 @@ export default function WorkspaceScreen() {
                                       locations={[0, 0.46, 1]}
                                       style={{ position: "absolute", inset: 0 }}
                                     />
+                                  </View>
+                                ) : isAiCard ? (
+                                  <View
+                                    style={{
+                                      height: 136,
+                                      padding: spacing.md,
+                                      justifyContent: "space-between",
+                                      backgroundColor: aiActive || active ? "rgba(37,99,235,0.18)" : "rgba(37,99,235,0.12)",
+                                    }}
+                                  >
+                                    <MotiView
+                                      animate={isAiSuggesting ? { rotate: "12deg", scale: [1, 1.08, 1] } : { rotate: "0deg", scale: 1 }}
+                                      transition={{ duration: 900, loop: isAiSuggesting }}
+                                      style={{
+                                        width: 56,
+                                        height: 56,
+                                        borderRadius: 18,
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        backgroundColor: "rgba(255,255,255,0.08)",
+                                        borderWidth: 1,
+                                        borderColor: "rgba(255,255,255,0.12)",
+                                      }}
+                                    >
+                                      <Wand2 color="#dbeafe" size={24} strokeWidth={2.2} />
+                                    </MotiView>
+                                    {isAiSuggesting ? <ActivityIndicator size="small" color="#dbeafe" /> : null}
                                   </View>
                                 ) : (
                                   <LinearGradient
@@ -6293,10 +6329,10 @@ export default function WorkspaceScreen() {
                                       <StyleIcon color={aiActive || active ? "#dbeafe" : "#ffffff"} size={20} strokeWidth={2} />
                                     </View>
                                   ) : null}
-                                  <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700", lineHeight: 22, letterSpacing: -0.28, textAlign: isFullWidthStyleCard ? "center" : "left" }} numberOfLines={2}>
+                                  <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700", lineHeight: 22, letterSpacing: -0.28, textAlign: "left" }} numberOfLines={2}>
                                     {style.title}
                                   </Text>
-                                  <Text style={{ color: active || aiActive ? "#dbeafe" : wizardMutedTextColor, fontSize: 12, lineHeight: 17.5, textAlign: isFullWidthStyleCard ? "center" : "left", maxWidth: isFullWidthStyleCard ? 360 : undefined }} numberOfLines={3}>
+                                  <Text style={{ color: active || aiActive ? "#dbeafe" : wizardMutedTextColor, fontSize: 12, lineHeight: 17.5, textAlign: "left", maxWidth: isFullWidthStyleCard ? 360 : undefined }} numberOfLines={3}>
                                     {style.description}
                                   </Text>
                                   {isFullWidthStyleCard ? (
@@ -6719,9 +6755,9 @@ export default function WorkspaceScreen() {
                                       </Text>
                                     </View>
                                   ) : null}
-                                  <View style={{ paddingHorizontal: spacing.sm, paddingVertical: spacing.sm, alignItems: isFullWidthPaletteCard ? "center" : "flex-start" }}>
-                                    <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700", textAlign: isFullWidthPaletteCard ? "center" : "left" }} numberOfLines={2}>{palette.label}</Text>
-                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 12, lineHeight: 18, marginTop: spacing.xs, textAlign: isFullWidthPaletteCard ? "center" : "left", maxWidth: isFullWidthPaletteCard ? 320 : undefined }} numberOfLines={2}>
+                                  <View style={{ paddingHorizontal: spacing.sm, paddingVertical: spacing.sm, alignItems: "flex-start" }}>
+                                    <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700", textAlign: "left" }} numberOfLines={2}>{palette.label}</Text>
+                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 12, lineHeight: 18, marginTop: spacing.xs, textAlign: "left", maxWidth: isFullWidthPaletteCard ? 320 : undefined }} numberOfLines={2}>
                                       {palette.description}
                                     </Text>
                                   </View>

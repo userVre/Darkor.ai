@@ -137,6 +137,9 @@
     "beginTrial": "Begin Your Pro Trial"
   },
   "creditLimit": {
+    "balanceTitle": "Credit Balance",
+    "createTabBody": "You can use Diamonds to start new redesigns, and upgrading unlocks more generations with premium output quality.",
+    "discoverTabBody": "You can use Diamonds to unlock more redesigns from Discover, or upgrade now to jump straight into the paywall.",
     "title": "Upgrade to Professional Access.",
     "body": "You've reached your standard rendering limit. Unlock high-res exports and faster processing now."
   },
