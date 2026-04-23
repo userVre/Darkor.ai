@@ -86,6 +86,8 @@ const FLOOR_PROMPT_OFFSET = 30;
 const AI_CHOICE_PROMPT = "AI's Choice";
 const FLOOR_MAGIC_LABEL = "Magic";
 const AI_GENERATED_FLOOR_LABEL = "AI Generated Material";
+const DEFAULT_FINISH_ID = "satin";
+const DEFAULT_FINISH_LABEL = "Satin";
 const absoluteFill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
 const AUTO_DETECT_SUCCESS_MESSAGE = "wizard.floorFlow.autoMaskSuccess";
 const AUTO_DETECT_FAILURE_MESSAGE = "wizard.floorFlow.autoMaskFailure";
@@ -807,13 +809,14 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
             imageStorageId: sourceStorageId,
             maskStorageId,
             serviceType: "floor",
-            selection: isAiMaterialSuggestionEnabled ? "AI suggested floor material and finish" : selectedMaterial!.promptLabel,
+            selection: isAiMaterialSuggestionEnabled ? `AI suggested floor material with a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish` : `${selectedMaterial!.promptLabel} with a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`,
             roomType: "Room",
             displayStyle: isAiMaterialSuggestionEnabled ? "AI's Choice Floor" : `${selectedMaterial!.title} Floor`,
             customPrompt: isAiMaterialSuggestionEnabled
-              ? `Identify the room's lighting, furniture, and overall style, then choose the best complementary floor material and finish. Generate the floor redesign without requiring any user-entered prompt. Preserve perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`
-              : `${customPrompt.trim()}\n\nPreserve perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`,
+              ? `Identify the room's lighting, furniture, and overall style, then choose the best complementary floor material for a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish. Generate the floor redesign without requiring any user-entered prompt. Preserve perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`
+              : `${customPrompt.trim()}\n\nApply a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish while preserving perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`,
             aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
+            finishId: DEFAULT_FINISH_ID,
             speedTier: generationSpeedTier,
             smartSuggest: isAiMaterialSuggestionEnabled,
           })) as { generationId: string; creditsRemaining?: number };

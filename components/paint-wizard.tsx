@@ -64,7 +64,7 @@ import { useMaskDrawing } from "./use-mask-drawing";
 import { useViewerCredits } from "./viewer-credits-context";
 import { useViewerSession } from "./viewer-session-context";
 
-type WizardStep = "intake" | "mask" | "colors" | "finish" | "processing" | "result";
+type WizardStep = "intake" | "mask" | "colors" | "processing" | "result";
 type MaskTool = "brush" | "eraser" | "surface";
 
 type SelectedImage = {
@@ -88,12 +88,6 @@ type ArchiveGeneration = {
   imageUrl?: string | null;
   status?: "processing" | "ready" | "failed";
   errorMessage?: string | null;
-};
-
-type FinishOption = {
-  id: string;
-  label: string;
-  description: string;
 };
 
 type PaintWizardProps = {
@@ -137,23 +131,8 @@ const SELECTION_REFERENCE_WIDTH = 456;
 const SELECTION_REFERENCE_HEIGHT = 932;
 const COLOR_PICKER_DEFAULT_HEX = "#FF69B4";
 
-const FINISH_OPTIONS: FinishOption[] = [
-  {
-    id: "matte",
-    label: "Matte",
-    description: "Soft, gallery-grade color payoff with the least surface glare.",
-  },
-  {
-    id: "satin",
-    label: "Satin",
-    description: "Balanced sheen for modern interiors with a subtle designer glow.",
-  },
-  {
-    id: "glossy",
-    label: "Glossy",
-    description: "A polished reflective finish for bold, high-contrast statement walls.",
-  },
-];
+const DEFAULT_FINISH_ID = "satin";
+const DEFAULT_FINISH_LABEL = "Satin";
 
 const PAINT_SURFACE_OPTIONS: PaintSurfaceOption[] = [
   { value: "Auto", label: "Auto" },
@@ -398,71 +377,6 @@ function logAutoDetectFailure(error: unknown) {
   void error;
 }
 
-const FinishPreview = memo(function FinishPreview({ finishId }: { finishId: FinishOption["id"] }) {
-  if (finishId === "matte") {
-    return <View style={[styles.finishPreviewBase, styles.finishPreviewMatte]} />;
-  }
-
-  if (finishId === "satin") {
-    return (
-      <View style={styles.finishPreviewBase}>
-        <LinearGradient
-          colors={["#ECE8FF", "#B49AFA", "#6D4FD1"]}
-          locations={[0, 0.42, 1]}
-          start={{ x: 0.12, y: 0.1 }}
-          end={{ x: 0.88, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
-        />
-        <View style={styles.finishPreviewSatinGlow} />
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.finishPreviewBase}>
-      <LinearGradient
-        colors={["#FAF8FF", "#C2B4FF", "#5A35CB", "#1E1448"]}
-        locations={[0, 0.18, 0.6, 1]}
-        start={{ x: 0.08, y: 0.06 }}
-        end={{ x: 0.92, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-      />
-      <View style={styles.finishPreviewGlossyHighlight} />
-      <View style={styles.finishPreviewGlossyReflection} />
-    </View>
-  );
-});
-
-const FinishCard = memo(function FinishCard({
-  option,
-  active,
-  onPress,
-}: {
-  option: FinishOption;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-      <LuxPressable
-        onPress={onPress}
-        className={pointerClassName}
-        style={{ width: "100%" }}
-        glowColor={active ? "rgba(37,99,235,0.2)" : "rgba(255,255,255,0.04)"}
-        scale={0.985}
-      >
-      <View style={[styles.finishCard, active ? styles.finishCardActive : null]}>
-        <FinishPreview finishId={option.id} />
-        <View style={styles.finishCopy}>
-          <Text style={[styles.finishTitle, active ? styles.finishTitleActive : null]}>{option.label}</Text>
-          <Text style={styles.finishText}>{option.description}</Text>
-        </View>
-        <View style={[styles.finishCheck, active ? styles.finishCheckActive : null]}>
-          {active ? <Check color="#ffffff" size={16} /> : null}
-        </View>
-      </View>
-    </LuxPressable>
-  );
-});
 
 export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: PaintWizardProps) {
   const { t, i18n } = useTranslation();
@@ -478,26 +392,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const { showToast } = useProSuccess();
   const { credits: sharedCredits, setOptimisticCredits } = useViewerCredits();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
-  const localizedFinishOptions = useMemo<FinishOption[]>(
-    () => [
-      {
-        id: "matte",
-        label: t("wizard.paintFlow.finishes.matte.label"),
-        description: t("wizard.paintFlow.finishes.matte.description"),
-      },
-      {
-        id: "satin",
-        label: t("wizard.paintFlow.finishes.satin.label"),
-        description: t("wizard.paintFlow.finishes.satin.description"),
-      },
-      {
-        id: "glossy",
-        label: t("wizard.paintFlow.finishes.glossy.label"),
-        description: t("wizard.paintFlow.finishes.glossy.description"),
-      },
-    ],
-    [i18n.language, t],
-  );
   const localizedSurfaceOptions = useMemo<PaintSurfaceOption[]>(
     () => [
       { value: "Auto", label: t("wizard.paintFlow.surfaces.auto") },
@@ -558,7 +452,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       rgbLabel: "rgb(255, 105, 180)",
     };
   });
-  const [selectedFinishId, setSelectedFinishId] = useState(FINISH_OPTIONS[0].id);
   const [isDetecting, setIsDetecting] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
@@ -608,10 +501,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const selectedColorOption = useMemo(
     () => localizedWallColorOptions.find((option) => option.value === selectedColorValue) ?? null,
     [localizedWallColorOptions, selectedColorValue],
-  );
-  const selectedFinish = useMemo(
-    () => localizedFinishOptions.find((option) => option.id === selectedFinishId) ?? localizedFinishOptions[0],
-    [localizedFinishOptions, selectedFinishId],
   );
   const selectedColorRgb = useMemo(() => (selectedColorValue ? hexToRgb(selectedColorValue) : null), [selectedColorValue]);
   const selectedColorRgbLabel = useMemo(
@@ -767,7 +656,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       if (generation.errorMessage === CANCELLED_GENERATION_MESSAGE) {
         return;
       }
-      setStep("finish");
+      setStep("colors");
       showToast(getFriendlyGenerationError(generation.errorMessage ?? GENERATION_FAILED_TOAST));
     }
   }, [effectiveSignedIn, generationArchive, generationId, router, showToast]);
@@ -822,7 +711,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       setSelectedColorValue(null);
       setIsColorConfirmed(false);
     }
-    setSelectedFinishId(FINISH_OPTIONS[0].id);
     }, [clearContinueTimer, clearDetectTimer, presetStyle, resetMaskDrawing]);
 
   const promptOpenSettings = useCallback((title: string, message: string) => {
@@ -978,7 +866,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       setIsColorPickerOpen(false);
       setIsSurfacePickerOpen(false);
       resetMaskDrawing({ resetBrush: true });
-      setSelectedFinishId(FINISH_OPTIONS[0].id);
     },
     [clearContinueTimer, clearDetectTimer, resetMaskDrawing],
   );
@@ -1323,8 +1210,8 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
             maskStorageId,
             serviceType: "paint",
             selection: isAiColorSuggestionEnabled
-              ? `AI suggested professional wall color on the ${selectedSurface.toLowerCase()} surface with a realistic ${selectedFinish.label.toLowerCase()} finish`
-              : `${selectedColorTitle} (${selectedColorRgbLabel}) on the ${selectedSurface.toLowerCase()} surface with a realistic ${selectedFinish.label.toLowerCase()} finish`,
+              ? `AI suggested professional wall color on the ${selectedSurface.toLowerCase()} surface with a realistic ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`
+              : `${selectedColorTitle} (${selectedColorRgbLabel}) on the ${selectedSurface.toLowerCase()} surface with a realistic ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`,
             roomType: "Room",
             displayStyle: isAiColorSuggestionEnabled ? "AI Suggested Paint" : `${selectedColorTitle} Paint`,
             customPrompt: isAiColorSuggestionEnabled
@@ -1335,6 +1222,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
             targetColorCategory: isAiColorSuggestionEnabled ? "AI Suggested Color" : (selectedColorCategory ?? selectedColorTitle),
             targetSurface: selectedSurface,
             aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
+            finishId: DEFAULT_FINISH_ID,
             speedTier: generationSpeedTier,
             smartSuggest: isAiColorSuggestionEnabled,
           })) as { generationId: string; creditsRemaining?: number };
@@ -1348,7 +1236,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       setGenerationId(result.generationId);
     } catch (error) {
       setIsGenerating(false);
-      setStep("finish");
+      setStep("colors");
       const rawMessage = error instanceof Error ? error.message : t("common.actions.tryAgain");
       if (rawMessage.toLowerCase().includes("limit reached")) {
         showToast(rawMessage);
@@ -1378,7 +1266,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     selectedColorRgbLabel,
     selectedColorTitle,
     selectedColorValue,
-    selectedFinish.label,
     selectedImage,
     selectedSurface,
     setOptimisticCredits,
@@ -1411,7 +1298,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       setIsGenerating(false);
       setGenerationId(null);
       setGeneratedImageUrl(null);
-      setStep("finish");
+      setStep("colors");
       showToast(t(CANCEL_SUCCESS_TOAST));
     } catch (error) {
       showToast(getFriendlyGenerationError(error instanceof Error ? error.message : t("wizard.paintFlow.cancelUnavailable")));
@@ -1455,9 +1342,8 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     if (step === "intake") return;
     if (step === "mask") return setStep("intake");
     if (step === "colors") return setStep("mask");
-    if (step === "finish") return setStep("colors");
-    if (step === "processing") return setStep("finish");
-    if (step === "result") return setStep("finish");
+    if (step === "processing") return setStep("colors");
+    if (step === "result") return setStep("colors");
   }, [clearContinueTimer, clearDetectTimer, step]);
 
   const colorPickerSquareGesture = useMemo(
@@ -1678,7 +1564,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                 runDeferredContinue("colors", () => {
                   triggerHaptic();
                   resetDetection();
-                  setStep("finish");
+                  void handleGenerate();
                 });
               }}
               style={[
@@ -2172,73 +2058,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
         </View>
       ) : null}
 
-      {step === "finish" ? (
-        <ServiceWizardStepScreen
-          footerOffset={FIXED_FOOTER_OFFSET}
-          contentContainerStyle={{
-            paddingHorizontal: spacing.md,
-            paddingTop: stickyHeaderMetrics.contentOffset,
-            gap: spacing.md,
-          }}
-          footer={
-            <ServiceContinueButton
-              active={canGenerate}
-              label={t("wizard.paintFlow.generateCta")}
-              loading={isGenerating}
-              onPress={() => {
-                if (!canGenerate) {
-                  return;
-                }
-
-                void handleGenerate();
-              }}
-              pulse={canGenerate}
-              supportingText={t("wizard.paintFlow.supportingText", {
-                creditsRemaining: t("wizard.paintFlow.creditsRemaining", { count: Math.max(availableCredits - 1, 0) }),
-              })}
-            />
-          }
-        >
-          <View>
-            <Text style={styles.stepTitle}>{t("wizard.paintFlow.finishTitle")}</Text>
-            <Text style={styles.stepText}>
-              {t("wizard.paintFlow.finishBody")}
-            </Text>
-
-            <View style={[styles.summaryCard, styles.finishSummaryCard]}>
-              {selectedColorOption ? (
-                <Image source={selectedColorOption.image} style={styles.finishSelectionThumb} contentFit="cover" transition={120} />
-              ) : (
-                <View style={[styles.summarySwatch, { backgroundColor: selectedColorValue ?? "#ffffff" }]} />
-              )}
-              <View style={styles.summaryCopy}>
-                <Text style={styles.summaryLabel}>{t("wizard.paintFlow.selectedColor")}</Text>
-                <Text style={styles.summaryTitle}>{effectivePaintSelectionTitle}</Text>
-                <Text style={styles.summaryText}>
-                  {(selectedColorValue || isAiColorSuggestionEnabled)
-                    ? `${effectivePaintSelectionDescription} ${t("wizard.paintFlow.selectedSurfaceSentence", { surface: selectedSurfaceOption.label })}`
-                    : t("wizard.paintFlow.colorLockedBody")}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.finishList}>
-              {localizedFinishOptions.map((option) => (
-                <FinishCard
-                  key={option.id}
-                  option={option}
-                  active={option.id === selectedFinish.id}
-                  onPress={() => {
-                    setSelectedFinishId(option.id);
-                    triggerHaptic();
-                  }}
-                />
-              ))}
-            </View>
-          </View>
-        </ServiceWizardStepScreen>
-      ) : null}
-
       {step === "processing" ? (
         <ServiceProcessingScreen
           imageUri={selectedImage?.uri ?? null}
@@ -2280,7 +2099,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
 
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Applied Finish</Text>
-            <Text style={styles.summaryTitle}>{`${selectedColorTitle} � ${selectedFinish.label}`}</Text>
+            <Text style={styles.summaryTitle}>{`${selectedColorTitle} · ${DEFAULT_FINISH_LABEL}`}</Text>
             <Text style={styles.summaryText}>
               {`Your ${selectedSurface.toLowerCase()} surface was recolored from the mask you painted while preserving the structure, furnishings, trim, and natural light of the room.`}
             </Text>

@@ -30,6 +30,7 @@ type ExteriorRedesignStepThreeProps = {
   creditCount: number;
   styles: ExteriorRedesignStepThreeStyleCard[];
   selectedStyles: string[];
+  smartSuggestEnabled?: boolean;
   onSelectStyle: (style: string) => void;
   onBack: () => void;
   onContinue: () => void;
@@ -57,6 +58,7 @@ export function ExteriorRedesignStepThree({
   creditCount,
   styles,
   selectedStyles,
+  smartSuggestEnabled = false,
   onSelectStyle,
   onBack,
   onContinue,
@@ -139,7 +141,7 @@ export function ExteriorRedesignStepThree({
               }}
             >
               {row.map((styleCard, columnIndex) => {
-                const active = selectedStyles.includes(styleCard.title);
+                const active = styleCard.title === "AI Suggest" ? smartSuggestEnabled : selectedStyles.includes(styleCard.title);
 
                 return (
                   <Pressable

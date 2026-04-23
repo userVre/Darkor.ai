@@ -33,6 +33,8 @@ type InteriorRedesignStepThreeProps = {
   creditCount: number;
   styles: InteriorRedesignStepThreeStyleCard[];
   selectedStyles: string[];
+  smartSuggestEnabled?: boolean;
+  isAiSuggesting?: boolean;
   onSelectStyle: (style: string) => void;
   onBack: () => void;
   onContinue: () => void;
@@ -60,6 +62,8 @@ export function InteriorRedesignStepThree({
   creditCount,
   styles,
   selectedStyles,
+  smartSuggestEnabled = false,
+  isAiSuggesting = false,
   onSelectStyle,
   onBack,
   onContinue,
@@ -142,7 +146,8 @@ export function InteriorRedesignStepThree({
               }}
             >
               {row.map((styleCard, columnIndex) => {
-                const active = selectedStyles.includes(styleCard.title);
+                const isAiSuggestCard = styleCard.title === "AI Suggest";
+                const active = isAiSuggestCard ? smartSuggestEnabled : selectedStyles.includes(styleCard.title);
                 const CardIcon = styleCard.icon ?? Sparkles;
                 const isIconCard = styleCard.image === null;
 
@@ -193,7 +198,9 @@ export function InteriorRedesignStepThree({
                         </Text>
                         {styleCard.description ? (
                           <Text style={[stylesSheet.iconCardDescription, active ? stylesSheet.iconCardDescriptionActive : null]}>
-                            {styleCard.description}
+                            {isAiSuggestCard && isAiSuggesting
+                              ? "Reading the room and selecting the best matching styles."
+                              : styleCard.description}
                           </Text>
                         ) : null}
                       </View>

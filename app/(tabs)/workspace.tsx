@@ -150,6 +150,7 @@ type SelectedImage = {
 
 type AiSuggestionResult = {
   style: string;
+  styles?: string[];
   paletteId: string;
   reason?: string;
   source?: "gemini" | "fallback";
@@ -253,6 +254,13 @@ type BoardRenderItem = {
 
 type FeedbackSentiment = "liked" | "disliked";
 
+function formatMixedStyleLabel(styles: string[]) {
+  const normalized = styles.map((style) => style.trim()).filter(Boolean);
+  if (normalized.length === 0) return null;
+  if (normalized.length === 1) return normalized[0];
+  return `A mix of ${normalized.join(", ")} styles`;
+}
+
 type GenerateRequestOverrides = {
   regenerate?: boolean;
   sourceImage?: SelectedImage | null;
@@ -347,6 +355,8 @@ type FinishOption = {
   promptLabel: string;
   accentColor: string;
 };
+
+const DEFAULT_FINISH_ID: FinishOption["id"] = "satin";
 
 const BoardGridCard = memo(function BoardGridCard({
   item,
@@ -2051,7 +2061,7 @@ export default function WorkspaceScreen() {
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
-  const [selectedFinishId, setSelectedFinishId] = useState<FinishOption["id"] | null>(null);
+  const [selectedFinishId, setSelectedFinishId] = useState<FinishOption["id"] | null>(DEFAULT_FINISH_ID);
   const [selectedModeId, setSelectedModeId] = useState<ModeOption["id"] | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [customPromptDraft, setCustomPromptDraft] = useState("");
@@ -2262,7 +2272,7 @@ export default function WorkspaceScreen() {
       setSelectedRoom(draft.room ?? null);
       setSelectedStyle(hydratedStyles[0] ?? null);
       setSelectedStyles(hydratedStyles);
-      setSelectedFinishId((draft.finishId as FinishOption["id"] | null) ?? null);
+      setSelectedFinishId((draft.finishId as FinishOption["id"] | null) ?? DEFAULT_FINISH_ID);
       setSelectedModeId((draft.modeId as ModeOption["id"] | null) ?? null);
       setCustomPrompt(draft.prompt ?? "");
       setCustomPromptDraft(draft.prompt ?? "");
@@ -3265,9 +3275,6 @@ export default function WorkspaceScreen() {
       return isPaintService || isFloorService ? Boolean(selectedStyle || smartSuggestEnabled) : selectedStyles.length > 0;
     }
     if (workflowStep === 3) {
-      if (isPaintService || isFloorService) {
-        return Boolean(selectedFinishId);
-      }
       if (isExteriorService) {
         return Boolean(selectedPaletteId || smartSuggestEnabled);
       }
@@ -3282,7 +3289,6 @@ export default function WorkspaceScreen() {
     isFloorService,
     isLeanGenerationService,
     isPaintService,
-    selectedFinishId,
     selectedImages.length,
     selectedModeId,
     selectedPaletteId,
@@ -3759,7 +3765,7 @@ export default function WorkspaceScreen() {
       setSelectedRoom(null);
       setSelectedStyle(null);
       setSelectedStyles([]);
-      setSelectedFinishId(null);
+      setSelectedFinishId(DEFAULT_FINISH_ID);
       setSelectedModeId(null);
       setCustomPrompt("");
       setSelectedPaletteId(null);
@@ -4016,12 +4022,15 @@ export default function WorkspaceScreen() {
           : (selectedStyle ? [selectedStyle] : [])
         : selectedStyles
     );
-    const activeStyleLabel = options?.styleLabel ?? activeStyleSelections[activeStyleSelections.length - 1] ?? selectedStyle;
+    const activeMixedStyleLabel = !isPaintService && !isFloorService ? formatMixedStyleLabel(activeStyleSelections) : null;
+    const activeStyleLabel = options?.styleLabel ?? activeMixedStyleLabel ?? activeStyleSelections[activeStyleSelections.length - 1] ?? selectedStyle;
     const activeAiSuggestedStyle = options?.aiSuggestedStyle ?? aiSuggestedStyle;
     const activeAiSuggestedPaletteId = options?.aiSuggestedPaletteId ?? aiSuggestedPaletteId;
     const activeFinishOption =
-      FINISH_OPTIONS.find((option) => option.id === (options?.finishId ?? null)) ??
-      selectedFinishOption;
+      FINISH_OPTIONS.find((option) => option.id === (options?.finishId ?? DEFAULT_FINISH_ID)) ??
+      selectedFinishOption ??
+      FINISH_OPTIONS.find((option) => option.id === DEFAULT_FINISH_ID) ??
+      null;
     const activeModeOption =
       MODE_OPTIONS.find((option) => option.id === (options?.modeId ?? null)) ??
       selectedModeOrDefault;
@@ -4072,7 +4081,7 @@ export default function WorkspaceScreen() {
     }
     const temporaryBoardId = `pending-${requestStartedAt}`;
     const selectedSpaceLabel = activeRoomLabel ?? serviceLabel;
-    const finishLabel = activeFinishOption?.title ?? "Matte";
+    const finishLabel = activeFinishOption?.title ?? "Satin";
     const paintColorLabel = activeSmartSuggest
       ? SMART_SUGGEST_WALL_LABEL
       : activeWallColorOption?.title ?? normalizeStyleDisplayName(activeStyleLabel) ?? "Sage Green";
@@ -4090,8 +4099,8 @@ export default function WorkspaceScreen() {
         ? activeSmartSuggest
           ? `AI-selected wall paint color with a ${finishLabel.toLowerCase()} finish`
           : `${paintColorLabel} (${paintColorValue}) with a ${finishLabel.toLowerCase()} finish`
-        : activeStyleLabel!;
-    const generationDisplayStyle = isFloorService ? floorStyleLabel : isPaintService ? paintStyleLabel : activeStyleLabel!;
+        : activeMixedStyleLabel ?? activeStyleLabel!;
+    const generationDisplayStyle = isFloorService ? floorStyleLabel : isPaintService ? paintStyleLabel : activeMixedStyleLabel ?? activeStyleLabel!;
     const generationCustomPrompt = isFloorService
       ? `Preserve the walls, furniture, decor, cabinetry, windows, doors, ceiling, lighting, shadows, and camera framing exactly while applying a ${finishLabel.toLowerCase()} surface read.`
       : isPaintService
@@ -4863,18 +4872,24 @@ export default function WorkspaceScreen() {
         availablePalettes,
       })) as AiSuggestionResult;
 
-      const suggestedStyle = suggestion?.style ?? null;
+      const suggestedStyles = (suggestion?.styles ?? []).map((style) => style?.trim()).filter(Boolean).slice(0, 3);
+      const suggestedStyle = suggestion?.style ?? suggestedStyles[0] ?? null;
       const suggestedPalette = suggestion?.paletteId ?? null;
-      if (!suggestedStyle || !suggestedPalette) {
+      const nextSuggestedStyles = suggestedStyles.length > 0
+        ? suggestedStyles
+        : suggestedStyle
+          ? [suggestedStyle]
+          : [];
+      if (nextSuggestedStyles.length === 0 || !suggestedPalette) {
         throw new Error("AI suggestion unavailable");
       }
 
       startTransition(() => {
         setSmartSuggestEnabled(true);
-        setSelectedStyle(suggestedStyle);
-        setSelectedStyles([suggestedStyle]);
+        setSelectedStyle(nextSuggestedStyles[0] ?? null);
+        setSelectedStyles(nextSuggestedStyles);
         setSelectedPaletteId(suggestedPalette);
-        setAiSuggestedStyle(suggestedStyle);
+        setAiSuggestedStyle(nextSuggestedStyles[0] ?? suggestedStyle);
         setAiSuggestedPaletteId(suggestedPalette);
         setAiSuggestionPulseKey((current) => current + 1);
       });
@@ -5092,6 +5107,7 @@ export default function WorkspaceScreen() {
         onBack={handleBack}
         styles={exteriorStyleGalleryCards}
         selectedStyles={selectedStyles}
+        smartSuggestEnabled={smartSuggestEnabled}
         onSelectStyle={handleSetSelectedExteriorStyle}
         onContinue={handleContinueFromExteriorStyleStep}
         onExit={handleCloseWizard}
@@ -5159,6 +5175,8 @@ export default function WorkspaceScreen() {
         creditCount={creditBalance}
         styles={interiorStyleGalleryCards}
         selectedStyles={selectedStyles}
+        smartSuggestEnabled={smartSuggestEnabled}
+        isAiSuggesting={isAiSuggesting}
         onSelectStyle={handleSetSelectedStyle}
         onBack={handleBack}
         onContinue={handleContinueFromInteriorStyleStep}
@@ -7203,7 +7221,7 @@ export default function WorkspaceScreen() {
                     return;
                   }
 
-                  if (isStyleStep && !selectedStyle) {
+                  if (isStyleStep && selectedStyles.length === 0) {
                     showToast(t("workspace.style.tapToSelect"));
                     return;
                   }

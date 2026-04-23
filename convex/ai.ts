@@ -69,6 +69,7 @@ type StabilityErrorPayload = {
 
 type DesignOrchestrationResult = {
   style: string;
+  styles?: string[];
   paletteId?: string;
   wallColor?: string;
   floorMaterial?: string;
@@ -187,6 +188,23 @@ function joinNaturalLanguage(values: string[]) {
   if (values.length === 1) return values[0];
   if (values.length === 2) return `${values[0]} and ${values[1]}`;
   return `${values.slice(0, -1).join(", ")}, and ${values[values.length - 1]}`;
+}
+
+function dedupeSuggestions(values: Array<string | undefined>, fallback?: string) {
+  const unique: string[] = [];
+
+  for (const value of values) {
+    const trimmed = trimOptional(value);
+    if (!trimmed) continue;
+    if (unique.some((entry) => entry.toLowerCase() === trimmed.toLowerCase())) continue;
+    unique.push(trimmed);
+  }
+
+  if (unique.length === 0 && fallback) {
+    unique.push(fallback);
+  }
+
+  return unique;
 }
 
 function buildStyleDirection(style: string, styleSelections?: string[]) {
@@ -651,9 +669,11 @@ function buildFallbackSuggestion(args: {
     args.availablePalettes.find((palette) => room.includes("living") && palette.toLowerCase().includes("terracotta")) ??
     args.availablePalettes[0] ??
     "surprise";
+  const companionStyles = args.availableStyles.filter((style) => style.toLowerCase() !== styleFallback.toLowerCase()).slice(0, 2);
 
   return {
     style: styleFallback,
+    styles: dedupeSuggestions([styleFallback, ...companionStyles], styleFallback).slice(0, 3),
     paletteId: paletteFallback,
     reason: `Fallback recommendation tuned to the detected ${args.roomType} context.`,
     source: "fallback" as const,
@@ -702,6 +722,7 @@ function buildFallbackOrchestration(args: {
 
   return {
     style: styleDirection,
+    styles: dedupeSuggestions([args.style, ...(args.styleSelections ?? [])], args.style),
     paletteId: trimOptional(args.colorPalette) ?? "surprise",
     customPrompt: `Resolve the room using a refined ${styleDirection} direction with a premium, cohesive material palette informed by the existing furniture and lighting.`,
     reason: "Fallback style direction selected for a cohesive redesign.",
@@ -754,13 +775,13 @@ async function requestGeminiDesignOrchestration(args: {
       ? '{"style":"...","wallColor":"...","reason":"..."}'
       : args.serviceType === "floor"
         ? '{"style":"...","floorMaterial":"...","reason":"..."}'
-        : '{"style":"...","paletteId":"...","reason":"..."}';
+        : '{"style":"...","styles":["...","..."],"paletteId":"...","reason":"..."}';
   const taskInstruction =
     args.serviceType === "paint"
       ? "Analyze the room's current furniture, lighting, and materials, then choose the best professional wall color for a premium final result."
       : args.serviceType === "floor"
         ? "Analyze the room's current furniture, lighting, and materials, then choose the best professional floor material and finish for a premium final result."
-        : "Analyze the room's current furniture, lighting, and materials, then choose the best design style and palette direction for a premium final result.";
+        : "Analyze the room's current furniture, lighting, and materials, then choose the best 2 or 3 compatible design styles plus the strongest palette direction for a premium final result.";
 
   const prompt = [
     "You are a senior architectural design director.",
@@ -770,6 +791,7 @@ async function requestGeminiDesignOrchestration(args: {
     args.availableStyles?.length ? `Allowed styles: ${args.availableStyles.join(", ")}.` : undefined,
     args.availablePalettes?.length ? `Allowed palettes: ${args.availablePalettes.join(", ")}.` : undefined,
     taskInstruction,
+    args.serviceType === "redesign" ? "For redesign, return 2 or 3 complementary styles in the styles array, ordered from strongest fit to supporting fit." : undefined,
     "If the user selected AI Suggest, Surprise Me, AI Choice, or Random, you must still return a professionally balanced, high-end choice rather than something extreme.",
     `Return strict JSON in the shape ${requestShape} with no markdown and no extra text.`,
   ]
@@ -821,14 +843,22 @@ async function requestGeminiDesignOrchestration(args: {
 
     const parsed = JSON.parse(extractJsonBlock(text)) as {
       style?: string;
+      styles?: string[];
       paletteId?: string;
       wallColor?: string;
       floorMaterial?: string;
       reason?: string;
     };
 
+    const parsedStyles = Array.isArray(parsed.styles) ? parsed.styles : [];
+    const normalizedStyles = dedupeSuggestions(
+      [trimOptional(parsed.style) ?? fallback.style, ...parsedStyles],
+      fallback.style,
+    ).slice(0, 3);
+
     return {
-      style: trimOptional(parsed.style) ?? fallback.style,
+      style: normalizedStyles[0] ?? trimOptional(parsed.style) ?? fallback.style,
+      styles: normalizedStyles,
       paletteId: trimOptional(parsed.paletteId) ?? fallback.paletteId,
       wallColor: trimOptional(parsed.wallColor) ?? fallback.wallColor,
       floorMaterial: trimOptional(parsed.floorMaterial) ?? fallback.floorMaterial,
@@ -870,6 +900,10 @@ export const suggestDesignOptions: any = actionGeneric({
 
       return {
         style: normalizeSuggestionChoice(parsed.style, args.availableStyles, fallback.style),
+        styles: dedupeSuggestions(
+          (parsed.styles ?? []).map((style) => normalizeSuggestionChoice(style, args.availableStyles, fallback.style)),
+          normalizeSuggestionChoice(parsed.style, args.availableStyles, fallback.style),
+        ).slice(0, 3),
         paletteId: normalizeSuggestionChoice(parsed.paletteId, args.availablePalettes, fallback.paletteId),
         reason: trimOptional(parsed.reason) ?? fallback.reason,
         source: parsed.source,
