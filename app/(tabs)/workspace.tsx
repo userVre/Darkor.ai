@@ -2065,7 +2065,7 @@ export default function WorkspaceScreen() {
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
-  const [focusedImageUri, setFocusedImageUri] = useState<string | null>(null);
+  const [currentDisplayIndex, setCurrentDisplayIndex] = useState(0);
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
@@ -2156,8 +2156,8 @@ export default function WorkspaceScreen() {
   const isLeanGenerationService = isExteriorService || isGardenService;
   const isRedesignWizardActive = !isPaintService && !isFloorService && workflowStep <= 3;
   const selectedImage = useMemo(
-    () => selectedImages.find((image) => image.uri === focusedImageUri) ?? selectedImages[0] ?? null,
-    [focusedImageUri, selectedImages],
+    () => selectedImages[currentDisplayIndex] ?? selectedImages[0] ?? null,
+    [currentDisplayIndex, selectedImages],
   );
   const isWizardFlowActive = (isPaintService || isFloorService) ? isServiceStepFlowActive : isRedesignWizardActive;
   const shouldHideNativeTabBar = pathname === "/workspace" && isFocused && isWizardFlowActive;
@@ -2278,7 +2278,7 @@ export default function WorkspaceScreen() {
       const hydratedImages = draft.images ?? (draft.image ? [draft.image] : []);
       const hydratedStyles = draft.styles ?? (draft.style ? [draft.style] : []);
       setSelectedImages(hydratedImages);
-      setFocusedImageUri(hydratedImages[0]?.uri ?? null);
+      setCurrentDisplayIndex(0);
       setSelectedRooms(draft.room ? [draft.room] : []);
       setSelectedStyle(hydratedStyles[0] ?? null);
       setSelectedStyles(hydratedStyles);
@@ -3404,17 +3404,17 @@ export default function WorkspaceScreen() {
     return false;
   }, [showPermissionAlert]);
 
-  const commitSelectedImages = useCallback((images: SelectedImage[], nextFocusedUri?: string | null) => {
+  const commitSelectedImages = useCallback((images: SelectedImage[], nextDisplayIndex?: number | null) => {
     const normalizedImages = images.slice(0, 3);
-    const nextFocused =
-      nextFocusedUri && normalizedImages.some((image) => image.uri === nextFocusedUri)
-        ? nextFocusedUri
-        : normalizedImages[0]?.uri ?? null;
+    const boundedIndex =
+      typeof nextDisplayIndex === "number" && Number.isFinite(nextDisplayIndex)
+        ? Math.max(0, Math.min(nextDisplayIndex, Math.max(normalizedImages.length - 1, 0)))
+        : 0;
 
     startTransition(() => {
       setSelectedImages(normalizedImages);
-      setFocusedImageUri(nextFocused);
-      setDraftImage(normalizedImages[0] ?? null);
+      setCurrentDisplayIndex(normalizedImages.length > 0 ? boundedIndex : 0);
+      setDraftImage(normalizedImages[boundedIndex] ?? normalizedImages[0] ?? null);
       setGeneratedImageUrl(null);
       setGenerationId(null);
     });
@@ -3437,41 +3437,51 @@ export default function WorkspaceScreen() {
         merged.push(image);
       }
 
-      const nextFocused =
-        focusedImageUri && merged.some((image) => image.uri === focusedImageUri)
-          ? focusedImageUri
-          : merged[0]?.uri ?? null;
-      setFocusedImageUri(nextFocused);
-      setDraftImage(merged[0] ?? null);
+      setCurrentDisplayIndex((currentDisplay) => {
+        const nextDisplay = current.length === 0 ? 0 : Math.max(0, Math.min(currentDisplay, merged.length - 1));
+        setDraftImage(merged[nextDisplay] ?? merged[0] ?? null);
+        return nextDisplay;
+      });
       setGeneratedImageUrl(null);
       setGenerationId(null);
       return merged;
     });
-  }, [focusedImageUri, setDraftImage]);
+  }, [setDraftImage]);
 
-  const focusSelectedImage = useCallback((uri: string) => {
-    if (!selectedImages.some((image) => image.uri === uri)) {
+  const focusSelectedImage = useCallback((index: number) => {
+    if (index < 0 || index >= selectedImages.length) {
       return;
     }
 
     triggerHaptic();
-    setFocusedImageUri(uri);
-    const nextFocusedImage = selectedImages.find((image) => image.uri === uri) ?? null;
-    setDraftImage(nextFocusedImage ?? selectedImages[0] ?? null);
+    setCurrentDisplayIndex(index);
+    setDraftImage(selectedImages[index] ?? selectedImages[0] ?? null);
   }, [selectedImages, setDraftImage]);
 
-  const removeSelectedImage = useCallback((uri: string) => {
+  const removeSelectedImage = useCallback((index: number) => {
     triggerHaptic();
     setSelectedImages((current) => {
-      const nextImages = current.filter((image) => image.uri !== uri);
-      const nextFocused = focusedImageUri === uri ? nextImages[0]?.uri ?? null : focusedImageUri;
-      setFocusedImageUri(nextFocused);
-      setDraftImage(nextImages[0] ?? null);
+      const nextImages = current.filter((_, currentIndex) => currentIndex !== index);
+      setCurrentDisplayIndex((currentDisplay) => {
+        if (nextImages.length === 0) {
+          setDraftImage(null);
+          return 0;
+        }
+
+        const nextDisplay =
+          index < currentDisplay
+            ? currentDisplay - 1
+            : index === currentDisplay
+              ? Math.min(currentDisplay, nextImages.length - 1)
+              : currentDisplay;
+        setDraftImage(nextImages[nextDisplay] ?? nextImages[0] ?? null);
+        return nextDisplay;
+      });
       setGeneratedImageUrl(null);
       setGenerationId(null);
       return nextImages;
     });
-  }, [focusedImageUri, setDraftImage]);
+  }, [setDraftImage]);
 
   const applyPickedAsset = useCallback(
     (asset: ImagePicker.ImagePickerAsset, label: string) => {
@@ -3707,13 +3717,13 @@ export default function WorkspaceScreen() {
       if (!uri) {
         throw new Error(t("workspace.media.exampleImageUnavailable"));
       }
-      commitSelectedImages([{ uri, label: example.label }], uri);
+      commitSelectedImages([...selectedImages, { uri, label: example.label }], selectedImages.length);
     } catch (error) {
       Alert.alert(t("workspace.media.exampleUnavailableTitle"), error instanceof Error ? error.message : t("workspace.media.tryAnotherImage"));
     } finally {
       setIsLoadingExample(null);
     }
-  }, [commitSelectedImages, t]);
+  }, [commitSelectedImages, selectedImages, t]);
 
   const handleClosePaintColorPicker = useCallback(() => {
     triggerHaptic();
@@ -3788,7 +3798,7 @@ export default function WorkspaceScreen() {
     startTransition(() => {
       setWorkflowStep(0);
       setSelectedImages([]);
-      setFocusedImageUri(null);
+      setCurrentDisplayIndex(0);
       setSelectedRooms([]);
       setSelectedStyle(null);
       setSelectedStyles([]);
@@ -5066,7 +5076,7 @@ export default function WorkspaceScreen() {
       <InteriorRedesignStepOne
         creditCount={creditBalance}
         selectedPhotos={selectedImages}
-        focusedPhotoUri={selectedImage?.uri ?? null}
+        currentDisplayIndex={currentDisplayIndex}
         examplePhotos={interiorExamplePhotos}
         loadingExampleId={isLoadingExample}
         onTakePhoto={handleInteriorTakePhoto}
@@ -5088,7 +5098,7 @@ export default function WorkspaceScreen() {
       <InteriorRedesignStepOne
         creditCount={creditBalance}
         selectedPhotos={selectedImages}
-        focusedPhotoUri={selectedImage?.uri ?? null}
+        currentDisplayIndex={currentDisplayIndex}
         examplePhotos={exteriorExamplePhotos}
         emptyStateSubtitle={t("workspace.localization.exteriorEmptyStateSubtitle")}
         loadingExampleId={isLoadingExample}
@@ -5586,6 +5596,7 @@ export default function WorkspaceScreen() {
                               style={{ position: "absolute", inset: 0 }}
                             />
                             {selectedImages.slice(1).map((image, index) => {
+                              const imageIndex = index + 1;
                               const offset = index * 54;
                               const isFocusedThumb = displayedSelectedImage?.uri === image.uri;
                               return (
@@ -5601,7 +5612,7 @@ export default function WorkspaceScreen() {
                                   <LuxPressable
                                     onPress={(event) => {
                                       event.stopPropagation();
-                                      focusSelectedImage(image.uri);
+                                      focusSelectedImage(imageIndex);
                                     }}
                                     className="cursor-pointer"
                                     style={{
@@ -5620,7 +5631,7 @@ export default function WorkspaceScreen() {
                                   <LuxPressable
                                     onPress={(event) => {
                                       event.stopPropagation();
-                                      removeSelectedImage(image.uri);
+                                      removeSelectedImage(imageIndex);
                                     }}
                                     className="cursor-pointer"
                                     style={{
@@ -5762,7 +5773,7 @@ export default function WorkspaceScreen() {
                                 onPress={(event) => {
                                   event.stopPropagation();
                                   if (selectedImage) {
-                                    removeSelectedImage(selectedImage.uri);
+                                    removeSelectedImage(currentDisplayIndex);
                                   }
                                 }}
                                 style={{

@@ -34,14 +34,14 @@ type SelectedPhoto = {
 type InteriorRedesignStepOneProps = {
   creditCount: number;
   selectedPhotos: SelectedPhoto[];
-  focusedPhotoUri: string | null;
+  currentDisplayIndex: number;
   examplePhotos: InteriorRedesignStepOneExamplePhoto[];
   emptyStateSubtitle?: string;
   loadingExampleId?: string | null;
   onTakePhoto: () => Promise<boolean>;
   onChooseFromGallery: () => Promise<boolean>;
-  onRemovePhoto: (uri: string) => void;
-  onFocusPhoto: (uri: string) => void;
+  onRemovePhoto: (index: number) => void;
+  onFocusPhoto: (index: number) => void;
   onSelectExample: (example: InteriorRedesignStepOneExamplePhoto) => void;
   onContinue: () => void;
   onCreditsPress?: () => void;
@@ -64,7 +64,7 @@ function scaleValue(value: number, scale: number) {
 export function InteriorRedesignStepOne({
   creditCount,
   selectedPhotos,
-  focusedPhotoUri,
+  currentDisplayIndex,
   examplePhotos,
   emptyStateSubtitle = "Redesign and Beautify your home.",
   loadingExampleId,
@@ -90,19 +90,15 @@ export function InteriorRedesignStepOne({
   const uploadTopSpacing = scaleValue(16, layoutScale);
   const containerSize = mainWidth;
   const innerScale = containerSize / 416;
-  const thumbnailSize = scaleValue(124, layoutScale);
+  const exampleThumbnailSize = scaleValue(124, layoutScale);
+  const previewHeight = Math.max(scaleValue(252, layoutScale), Math.min(containerSize - scaleValue(112, layoutScale), scaleValue(324, layoutScale)));
+  const rowThumbnailSize = 64;
   const continueBottom = 64 + scaleValue(24, layoutScale);
   const canContinue = selectedPhotos.length > 0;
   const canAddMore = selectedPhotos.length < 3;
-  const galleryPreviewHeight = Math.max(containerSize - scaleValue(52, layoutScale), scaleValue(282, layoutScale));
-  const clusterThumbnailSize = scaleValue(76, layoutScale);
   const focusedPhoto = useMemo(
-    () => selectedPhotos.find((photo) => photo.uri === focusedPhotoUri) ?? selectedPhotos[0] ?? null,
-    [focusedPhotoUri, selectedPhotos],
-  );
-  const focusedPhotoIndex = useMemo(
-    () => selectedPhotos.findIndex((photo) => photo.uri === focusedPhoto?.uri),
-    [focusedPhoto?.uri, selectedPhotos],
+    () => selectedPhotos[currentDisplayIndex] ?? selectedPhotos[0] ?? null,
+    [currentDisplayIndex, selectedPhotos],
   );
 
   const [isSheetMounted, setIsSheetMounted] = useState(false);
@@ -249,44 +245,35 @@ export function InteriorRedesignStepOne({
           ]}
         >
           {focusedPhoto ? (
-            <>
-              <View style={styles.selectedStateWrap}>
-                <View style={[styles.primaryPreviewFrame, { height: galleryPreviewHeight }]}>
-                  <Image
-                    source={{ uri: focusedPhoto.uri }}
-                    style={styles.selectedPhoto}
-                    contentFit="cover"
-                    transition={120}
-                    cachePolicy="memory-disk"
-                  />
-                </View>
+            <View style={styles.selectedStateWrap}>
+              <View style={[styles.primaryPreviewFrame, { height: previewHeight }]}>
+                <Image
+                  source={{ uri: focusedPhoto.uri }}
+                  style={styles.selectedPhoto}
+                  contentFit="cover"
+                  transition={120}
+                  cachePolicy="memory-disk"
+                />
+              </View>
 
-                {selectedPhotos.slice(1).map((photo, index) => {
-                  const active = index + 1 === focusedPhotoIndex;
-                  const offset = index * scaleValue(54, layoutScale);
+              <View style={styles.thumbnailRow}>
+                {selectedPhotos.map((photo, index) => {
+                  const active = index === currentDisplayIndex;
 
                   return (
-                    <View
-                      key={photo.uri}
-                      style={{
-                        position: "absolute",
-                        right: scaleValue(18, layoutScale) + offset,
-                        bottom: scaleValue(18, layoutScale) + index * scaleValue(6, layoutScale),
-                        zIndex: 12 - index,
-                      }}
-                    >
+                    <View key={photo.uri} style={styles.thumbnailItem}>
                       <Pressable
                         accessibilityRole="button"
                         accessibilityState={{ selected: active }}
-                        accessibilityLabel={photo.label ? `Select ${photo.label}` : "Select photo"}
-                        onPress={() => onFocusPhoto(photo.uri)}
+                        accessibilityLabel={photo.label ? `Show ${photo.label}` : `Show photo ${index + 1}`}
+                        onPress={() => onFocusPhoto(index)}
                         style={[
-                          styles.clusterThumbnailFrame,
+                          styles.selectedThumbnailFrame,
                           {
-                            width: clusterThumbnailSize,
-                            height: clusterThumbnailSize,
+                            width: rowThumbnailSize,
+                            height: rowThumbnailSize,
                           },
-                          active ? styles.clusterThumbnailFrameActive : null,
+                          active ? styles.selectedThumbnailFrameActive : null,
                         ]}
                       >
                         <Image
@@ -299,36 +286,41 @@ export function InteriorRedesignStepOne({
                       </Pressable>
                       <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel="Remove selected photo"
-                        onPress={() => onRemovePhoto(photo.uri)}
+                        accessibilityLabel={photo.label ? `Remove ${photo.label}` : `Remove photo ${index + 1}`}
+                        onPress={() => onRemovePhoto(index)}
                         hitSlop={10}
-                        style={styles.clusterRemoveButton}
+                        style={styles.thumbnailRemoveButton}
                       >
-                        <Close color="#FFFFFF" size={12} strokeWidth={2.7} />
+                        <Close color="#FFFFFF" size={11} strokeWidth={2.7} />
                       </Pressable>
                     </View>
                   );
                 })}
 
-                <View style={styles.clusterFooterRow}>
-                  <View style={styles.photoCountPill}>
-                    <Text style={styles.photoCountText}>{`${selectedPhotos.length}/3 photos`}</Text>
-                  </View>
+                {canAddMore ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Add more photos"
+                    onPress={openMediaSheet}
+                    style={[
+                      styles.addTile,
+                      {
+                        width: rowThumbnailSize,
+                        height: rowThumbnailSize,
+                      },
+                    ]}
+                  >
+                    <Plus color="#111111" size={20} strokeWidth={2.7} />
+                  </Pressable>
+                ) : null}
+              </View>
 
-                  {canAddMore ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Add more photos"
-                      onPress={openMediaSheet}
-                      style={styles.addMorePill}
-                    >
-                      <Plus color="#DBEAFE" size={16} strokeWidth={2.8} />
-                      <Text style={styles.addMoreText}>Add photo</Text>
-                    </Pressable>
-                  ) : null}
+              <View style={styles.photoMetaRow}>
+                <View style={styles.photoCountPill}>
+                  <Text style={styles.photoCountText}>{`${selectedPhotos.length}/3 photos`}</Text>
                 </View>
               </View>
-            </>
+            </View>
           ) : (
             <>
               <Text style={[styles.emptyTitle, { marginTop: scaleValue(148, innerScale) }]}>{t("wizard.stepOne.emptyTitle")}</Text>
@@ -358,7 +350,7 @@ export function InteriorRedesignStepOne({
           )}
         </View>
 
-        <Text style={[styles.examplesLabel, { marginTop: scaleValue(24, layoutScale), marginLeft: contentInset }]}>
+        <Text style={[styles.examplesLabel, { marginTop: scaleValue(32, layoutScale), marginLeft: contentInset }]}>
           {t("common.actions.examplePhotos")}
         </Text>
 
@@ -377,13 +369,19 @@ export function InteriorRedesignStepOne({
               accessibilityRole="button"
               onPress={() => onSelectExample(example)}
               style={{
-                width: thumbnailSize,
-                height: thumbnailSize,
+                width: exampleThumbnailSize,
+                height: exampleThumbnailSize,
                 marginRight: index === examplePhotos.length - 1 ? 0 : scaleValue(8, layoutScale),
               }}
             >
               <View style={styles.thumbnailFrame}>
-                <Image source={example.source} style={styles.thumbnailImage} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+                <Image
+                  source={example.source}
+                  style={styles.thumbnailImage}
+                  contentFit="cover"
+                  transition={120}
+                  cachePolicy="memory-disk"
+                />
                 {loadingExampleId === example.id ? <View style={styles.thumbnailOverlay} /> : null}
               </View>
             </Pressable>
@@ -547,51 +545,39 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 14,
     paddingTop: 14,
-    paddingBottom: 12,
+    paddingBottom: 14,
     backgroundColor: "#FFFFFF",
+    gap: 12,
   },
   primaryPreviewFrame: {
     width: "100%",
-    borderRadius: 18,
+    borderRadius: 24,
     overflow: "hidden",
     backgroundColor: "#EFEFF1",
   },
-  clusterFooterRow: {
-    position: "absolute",
-    left: 14,
-    right: 14,
-    bottom: 12,
+  thumbnailRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 12,
+    flexWrap: "wrap",
+  },
+  thumbnailItem: {
+    position: "relative",
+  },
+  photoMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   photoCountPill: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.16)",
-    backgroundColor: "rgba(8,9,11,0.76)",
+    borderColor: "rgba(17,24,39,0.08)",
+    backgroundColor: "#111111",
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   photoCountText: {
     color: "#FFFFFF",
-    fontSize: 12,
-    lineHeight: 14,
-    ...fonts.bold,
-  },
-  addMorePill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(37,99,235,0.45)",
-    backgroundColor: "rgba(37,99,235,0.18)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  addMoreText: {
-    color: "#DBEAFE",
     fontSize: 12,
     lineHeight: 14,
     ...fonts.bold,
@@ -662,31 +648,21 @@ const styles = StyleSheet.create({
   selectedThumbnailFrame: {
     flex: 1,
     overflow: "hidden",
-    borderRadius: 14,
-    borderWidth: 2,
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: "#D4D4D8",
     backgroundColor: "#F3F3F3",
   },
   selectedThumbnailFrameActive: {
     borderColor: "#2563EB",
   },
-  clusterThumbnailFrame: {
-    overflow: "hidden",
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.68)",
-    backgroundColor: "#111114",
-  },
-  clusterThumbnailFrameActive: {
-    borderColor: "#2563EB",
-  },
-  clusterRemoveButton: {
+  thumbnailRemoveButton: {
     position: "absolute",
-    top: -8,
-    right: -8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    top: -6,
+    right: -6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -696,11 +672,10 @@ const styles = StyleSheet.create({
   addTile: {
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderStyle: "dashed",
-    borderColor: "#C8C8CD",
-    backgroundColor: "#FAFAFA",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#D4D4D8",
+    backgroundColor: "#FFFFFF",
   },
   addTileDisabled: {
     borderColor: "#DFDFE3",
