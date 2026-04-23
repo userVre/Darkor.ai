@@ -269,6 +269,21 @@ function formatMultiSelectionLabel(values: string[]) {
   return `${normalized.slice(0, -1).join(", ")}, and ${normalized[normalized.length - 1]}`;
 }
 
+function dedupeSelectedImages(images: SelectedImage[]) {
+  const seen = new Set<string>();
+  const unique: SelectedImage[] = [];
+
+  for (const image of images) {
+    if (seen.has(image.uri)) {
+      continue;
+    }
+    seen.add(image.uri);
+    unique.push(image);
+  }
+
+  return unique.slice(0, 3);
+}
+
 type GenerateRequestOverrides = {
   regenerate?: boolean;
   sourceImage?: SelectedImage | null;
@@ -3405,7 +3420,7 @@ export default function WorkspaceScreen() {
   }, [showPermissionAlert]);
 
   const commitSelectedImages = useCallback((images: SelectedImage[], nextDisplayIndex?: number | null) => {
-    const normalizedImages = images.slice(0, 3);
+    const normalizedImages = dedupeSelectedImages(images);
     const boundedIndex =
       typeof nextDisplayIndex === "number" && Number.isFinite(nextDisplayIndex)
         ? Math.max(0, Math.min(nextDisplayIndex, Math.max(normalizedImages.length - 1, 0)))
@@ -3427,18 +3442,29 @@ export default function WorkspaceScreen() {
 
     setSelectedImages((current) => {
       const merged = [...current];
+      let preferredUri: string | null = null;
       for (const image of images) {
-        if (merged.some((item) => item.uri === image.uri)) {
+        const existingIndex = merged.findIndex((item) => item.uri === image.uri);
+        if (existingIndex >= 0) {
+          preferredUri = image.uri;
           continue;
         }
         if (merged.length >= 3) {
           break;
         }
         merged.push(image);
+        preferredUri = image.uri;
       }
 
       setCurrentDisplayIndex((currentDisplay) => {
-        const nextDisplay = current.length === 0 ? 0 : Math.max(0, Math.min(currentDisplay, merged.length - 1));
+        const preferredIndex =
+          preferredUri ? merged.findIndex((image) => image.uri === preferredUri) : -1;
+        const nextDisplay =
+          preferredIndex >= 0
+            ? preferredIndex
+            : current.length === 0
+              ? 0
+              : Math.max(0, Math.min(currentDisplay, merged.length - 1));
         setDraftImage(merged[nextDisplay] ?? merged[0] ?? null);
         return nextDisplay;
       });
@@ -3717,13 +3743,13 @@ export default function WorkspaceScreen() {
       if (!uri) {
         throw new Error(t("workspace.media.exampleImageUnavailable"));
       }
-      commitSelectedImages([...selectedImages, { uri, label: example.label }], selectedImages.length);
+      appendSelectedImages([{ uri, label: example.label }]);
     } catch (error) {
       Alert.alert(t("workspace.media.exampleUnavailableTitle"), error instanceof Error ? error.message : t("workspace.media.tryAnotherImage"));
     } finally {
       setIsLoadingExample(null);
     }
-  }, [commitSelectedImages, selectedImages, t]);
+  }, [appendSelectedImages, t]);
 
   const handleClosePaintColorPicker = useCallback(() => {
     triggerHaptic();
@@ -5120,12 +5146,14 @@ export default function WorkspaceScreen() {
     return (
       <GardenRedesignStepOne
         creditCount={creditBalance}
-        photoUri={selectedImage?.uri ?? null}
+        selectedPhotos={selectedImages}
+        currentDisplayIndex={currentDisplayIndex}
         examplePhotos={gardenExamplePhotos}
         loadingExampleId={isLoadingExample}
         onTakePhoto={handleInteriorTakePhoto}
         onChooseFromGallery={handleInteriorChooseFromGallery}
-        onRemovePhoto={handleClearSelectedImage}
+        onRemovePhoto={removeSelectedImage}
+        onFocusPhoto={focusSelectedImage}
         onSelectExample={(example) => {
           void handleSelectExample(example);
         }}
@@ -5601,7 +5629,7 @@ export default function WorkspaceScreen() {
                               const isFocusedThumb = displayedSelectedImage?.uri === image.uri;
                               return (
                                 <View
-                                  key={image.uri}
+                                  key={`image-${imageIndex}`}
                                   style={{
                                     position: "absolute",
                                     right: 18 + offset,

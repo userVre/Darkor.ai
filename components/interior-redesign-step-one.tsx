@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { blue, slate, slateA } from "@radix-ui/colors";
 import { Camera, Image as GalleryIcon, Plus, X as Close } from "@/components/material-icons";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
@@ -36,6 +37,7 @@ type InteriorRedesignStepOneProps = {
   selectedPhotos: SelectedPhoto[];
   currentDisplayIndex: number;
   examplePhotos: InteriorRedesignStepOneExamplePhoto[];
+  totalSteps?: number;
   emptyStateSubtitle?: string;
   loadingExampleId?: string | null;
   onTakePhoto: () => Promise<boolean>;
@@ -66,6 +68,7 @@ export function InteriorRedesignStepOne({
   selectedPhotos,
   currentDisplayIndex,
   examplePhotos,
+  totalSteps = 4,
   emptyStateSubtitle = "Redesign and Beautify your home.",
   loadingExampleId,
   onTakePhoto,
@@ -227,7 +230,7 @@ export function InteriorRedesignStepOne({
         onCreditsPress={onCreditsPress}
         onClose={onExit}
         step={1}
-        totalSteps={4}
+        totalSteps={totalSteps}
       />
 
       <View style={[styles.content, { paddingTop: contentTop }]}>
@@ -261,7 +264,7 @@ export function InteriorRedesignStepOne({
                   const active = index === currentDisplayIndex;
 
                   return (
-                    <View key={photo.uri} style={styles.thumbnailItem}>
+                    <View key={`image-${index}`} style={styles.thumbnailItem}>
                       <Pressable
                         accessibilityRole="button"
                         accessibilityState={{ selected: active }}
@@ -468,7 +471,7 @@ export function InteriorRedesignStepOne({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: slate.slate1,
   },
   creditBadge: {
     position: "absolute",
@@ -516,7 +519,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    color: "#0A0A0A",
+    color: slate.slate12,
     fontSize: 24,
     lineHeight: 29,
     textAlign: "left",
@@ -527,15 +530,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1.5,
     borderStyle: "dashed",
-    borderColor: "#C0C0C0",
-    backgroundColor: "#FAFAFA",
+    borderColor: slate.slate8,
+    backgroundColor: slate.slate2,
     overflow: "hidden",
   },
   uploadContainerSelected: {
     borderWidth: 0,
     borderColor: "transparent",
     borderStyle: "solid",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: slate.slate1,
   },
   selectedPhoto: {
     width: "100%",
@@ -546,14 +549,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingTop: 14,
     paddingBottom: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: slate.slate1,
     gap: 12,
   },
   primaryPreviewFrame: {
     width: "100%",
     borderRadius: 24,
     overflow: "hidden",
-    backgroundColor: "#EFEFF1",
+    backgroundColor: slate.slate3,
   },
   thumbnailRow: {
     flexDirection: "row",
@@ -571,13 +574,13 @@ const styles = StyleSheet.create({
   photoCountPill: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(17,24,39,0.08)",
-    backgroundColor: "#111111",
+    borderColor: slateA.slateA6,
+    backgroundColor: slate.slate12,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   photoCountText: {
-    color: "#FFFFFF",
+    color: slate.slate1,
     fontSize: 12,
     lineHeight: 14,
     ...fonts.bold,
@@ -599,14 +602,14 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     textAlign: "center",
-    color: "#0A0A0A",
+    color: slate.slate12,
     fontSize: 20,
     lineHeight: 24,
     ...fonts.bold,
   },
   emptySubtitle: {
     textAlign: "center",
-    color: "#808080",
+    color: slate.slate11,
     fontSize: 14,
     lineHeight: 18,
     ...fonts.regular,
@@ -617,7 +620,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: slate.slate12,
   },
   addPhotoButtonIconWrap: {
     width: 34,
@@ -625,16 +628,16 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.12)",
+    backgroundColor: slateA.slateA4,
   },
   addPhotoButtonText: {
-    color: "#FFFFFF",
+    color: slate.slate1,
     fontSize: 15,
     lineHeight: 20,
     ...fonts.semibold,
   },
   examplesLabel: {
-    color: "#0A0A0A",
+    color: slate.slate12,
     fontSize: 16,
     lineHeight: 20,
     ...fonts.bold,
@@ -643,18 +646,18 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: "hidden",
     borderRadius: 12,
-    backgroundColor: "#F3F3F3",
+    backgroundColor: slate.slate3,
   },
   selectedThumbnailFrame: {
     flex: 1,
     overflow: "hidden",
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: "#D4D4D8",
-    backgroundColor: "#F3F3F3",
+    borderColor: slate.slate7,
+    backgroundColor: slate.slate3,
   },
   selectedThumbnailFrameActive: {
-    borderColor: "#2563EB",
+    borderColor: blue.blue9,
   },
   thumbnailRemoveButton: {
     position: "absolute",
@@ -666,16 +669,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(8,9,11,0.92)",
+    borderColor: slateA.slateA5,
+    backgroundColor: slateA.slateA11,
   },
   addTile: {
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#D4D4D8",
-    backgroundColor: "#FFFFFF",
+    borderColor: slate.slate7,
+    backgroundColor: slate.slate1,
   },
   addTileDisabled: {
     borderColor: "#DFDFE3",
@@ -687,7 +690,7 @@ const styles = StyleSheet.create({
   },
   thumbnailOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(10,10,10,0.14)",
+    backgroundColor: slateA.slateA4,
   },
   continueButton: {
     position: "absolute",
@@ -707,7 +710,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: slate.slate1,
   },
   sheetOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -719,7 +722,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: SHEET_HEIGHT,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: slate.slate1,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     overflow: "hidden",
@@ -737,7 +740,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#D0D0D0",
+    backgroundColor: slate.slate8,
   },
   sheetCloseButton: {
     position: "absolute",
@@ -748,10 +751,10 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E8E8E8",
+    backgroundColor: slate.slate4,
   },
   sheetCloseText: {
-    color: "#0A0A0A",
+    color: slate.slate12,
     fontSize: 12,
     lineHeight: 12,
     ...fonts.bold,
@@ -760,7 +763,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 64,
     left: 20,
-    color: "#0A0A0A",
+    color: slate.slate12,
     fontSize: 18,
     lineHeight: 22,
     ...fonts.bold,
@@ -772,7 +775,7 @@ const styles = StyleSheet.create({
     top: 114,
     height: 80,
     borderRadius: 16,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: slate.slate3,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -784,7 +787,7 @@ const styles = StyleSheet.create({
   },
   mediaActionText: {
     marginLeft: 16,
-    color: "#0A0A0A",
+    color: slate.slate12,
     fontSize: 15,
     lineHeight: 18,
     ...fonts.medium,
