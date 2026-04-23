@@ -1,10 +1,10 @@
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
-import { useMemo } from "react";
+import { type ComponentType, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check } from "@/components/material-icons";
+import { Check, Wand2 } from "@/components/material-icons";
 
 import {
   DESIGN_WIZARD_SELECTION_BLUE,
@@ -23,13 +23,17 @@ import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-head
 type GardenRedesignStepTwoStyleCard = {
   id: string;
   title: string;
-  image: number;
+  image: number | null;
   label?: string;
+  description?: string;
+  icon?: ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
 };
 
 type GardenRedesignStepTwoProps = {
   styles: GardenRedesignStepTwoStyleCard[];
   selectedStyles: string[];
+  smartSuggestEnabled?: boolean;
+  isAiSuggesting?: boolean;
   onSelectStyle: (style: string) => void;
   onBack: () => void;
   onContinue: () => void;
@@ -57,6 +61,8 @@ function chunkIntoRows<T>(items: T[], size: number) {
 export function GardenRedesignStepTwo({
   styles,
   selectedStyles,
+  smartSuggestEnabled = false,
+  isAiSuggesting = false,
   onSelectStyle,
   onBack,
   onContinue,
@@ -135,7 +141,10 @@ export function GardenRedesignStepTwo({
               }}
             >
               {row.map((styleCard, columnIndex) => {
-                const active = selectedStyles.includes(styleCard.title);
+                const isAiSuggestCard = styleCard.title === "AI Suggest";
+                const active = isAiSuggestCard ? smartSuggestEnabled : selectedStyles.includes(styleCard.title);
+                const CardIcon = styleCard.icon ?? Wand2;
+                const isIconCard = styleCard.image === null;
 
                 return (
                   <Pressable
@@ -161,19 +170,50 @@ export function GardenRedesignStepTwo({
                           </View>
                         </View>
                       ) : null}
-                      <View style={[stylesSheet.cardImageWrap, { height: cardImageHeight }]}>
-                        <Image
-                          source={styleCard.image}
-                          style={{
-                            width: "100%",
-                            height: cardImageHeight + THUMBNAIL_CROP_OVERFLOW,
-                            transform: [{ translateY: THUMBNAIL_CROP_SHIFT }],
-                          }}
-                          contentFit="cover"
-                          transition={120}
-                          cachePolicy="memory-disk"
-                        />
-                      </View>
+                      {isIconCard ? (
+                        <View
+                          style={[
+                            stylesSheet.iconCardMedia,
+                            {
+                              height: cardImageHeight,
+                              backgroundColor: active ? "#DBEAFE" : "#F4F7FB",
+                            },
+                          ]}
+                        >
+                          <View
+                            style={[
+                              stylesSheet.iconCardBadge,
+                              { backgroundColor: active ? "#2563EB" : "#0F172A" },
+                            ]}
+                          >
+                            <CardIcon color="#FFFFFF" size={28} strokeWidth={2.1} />
+                          </View>
+                          <Text style={[stylesSheet.iconCardTitle, active ? stylesSheet.iconCardTitleActive : null]}>
+                            {styleCard.label ?? styleCard.title}
+                          </Text>
+                          {styleCard.description ? (
+                            <Text style={[stylesSheet.iconCardDescription, active ? stylesSheet.iconCardDescriptionActive : null]}>
+                              {isAiSuggestCard && isAiSuggesting
+                                ? "Analyzing the garden structure and choosing the strongest aesthetic."
+                                : styleCard.description}
+                            </Text>
+                          ) : null}
+                        </View>
+                      ) : (
+                        <View style={[stylesSheet.cardImageWrap, { height: cardImageHeight }]}>
+                          <Image
+                            source={styleCard.image}
+                            style={{
+                              width: "100%",
+                              height: cardImageHeight + THUMBNAIL_CROP_OVERFLOW,
+                              transform: [{ translateY: THUMBNAIL_CROP_SHIFT }],
+                            }}
+                            contentFit="cover"
+                            transition={120}
+                            cachePolicy="memory-disk"
+                          />
+                        </View>
+                      )}
 
                       <View
                         style={[
@@ -275,6 +315,39 @@ const stylesSheet = StyleSheet.create({
     width: "100%",
     overflow: "hidden",
     backgroundColor: "#EFEFEF",
+  },
+  iconCardMedia: {
+    width: "100%",
+    alignItems: "flex-start",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  iconCardBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconCardTitle: {
+    color: "#0F172A",
+    fontSize: 15,
+    lineHeight: 18,
+    ...fonts.bold,
+  },
+  iconCardTitleActive: {
+    color: DESIGN_WIZARD_SELECTION_BLUE,
+  },
+  iconCardDescription: {
+    color: DESIGN_WIZARD_TEXT_MUTED,
+    fontSize: 11,
+    lineHeight: 14,
+    ...fonts.regular,
+  },
+  iconCardDescriptionActive: {
+    color: "#1D4ED8",
   },
   labelBar: {
     width: "100%",

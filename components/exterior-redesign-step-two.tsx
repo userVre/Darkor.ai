@@ -30,8 +30,8 @@ type ExteriorRedesignStepTwoCard = {
 
 type ExteriorRedesignStepTwoProps = {
   cards: ExteriorRedesignStepTwoCard[];
-  selectedBuildingType: string | null;
-  onSelectBuildingType: (buildingType: string | null) => void;
+  selectedBuildingTypes: string[];
+  onToggleBuildingType: (buildingType: string) => void;
   onBack: () => void;
   onContinue: () => void;
   onExit: () => void;
@@ -57,8 +57,8 @@ function chunkIntoRows<T>(items: T[], size: number) {
 
 export function ExteriorRedesignStepTwo({
   cards,
-  selectedBuildingType,
-  onSelectBuildingType,
+  selectedBuildingTypes,
+  onToggleBuildingType,
   onBack,
   onContinue,
   onExit,
@@ -82,11 +82,11 @@ export function ExteriorRedesignStepTwo({
   const cardImageHeight = scaleValue(132, layoutScale);
   const cardLabelHeight = cardHeight - cardImageHeight;
   const rows = useMemo(() => chunkIntoRows(cards, 2), [cards]);
-  const canContinue = Boolean(selectedBuildingType);
+  const canContinue = selectedBuildingTypes.length > 0;
 
   const handleCardPress = (title: string) => {
     triggerHaptic();
-    onSelectBuildingType(selectedBuildingType === title ? null : title);
+    onToggleBuildingType(title);
   };
 
   const handleContinuePress = () => {
@@ -136,7 +136,7 @@ export function ExteriorRedesignStepTwo({
               }}
             >
               {row.map((card, columnIndex) => {
-                const active = selectedBuildingType === card.title;
+                const active = selectedBuildingTypes.includes(card.title);
                 const BuildingIcon = getArchitecturalBuildingIcon(card.title);
                 return (
                   <Pressable

@@ -1,8 +1,9 @@
 import { StatusBar } from "expo-status-bar";
+import { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check } from "@/components/material-icons";
+import { Check, Wand2 } from "@/components/material-icons";
 
 import {
   DESIGN_WIZARD_SELECTION_BLUE,
@@ -21,12 +22,15 @@ type GardenRedesignStepThreePalette = {
   id: string;
   label: string;
   colors: string[];
+  aiCard?: boolean;
 };
 
 type GardenRedesignStepThreeProps = {
   palettes: GardenRedesignStepThreePalette[];
   selectedPaletteId: string | null;
+  useAISelection?: boolean;
   onSelectPalette: (paletteId: string | null) => void;
+  onSelectAIPalette: () => void;
   onBack: () => void;
   onContinue: () => void;
   onExit: () => void;
@@ -51,7 +55,9 @@ function chunkIntoRows<T>(items: T[], size: number) {
 export function GardenRedesignStepThree({
   palettes,
   selectedPaletteId,
+  useAISelection = false,
   onSelectPalette,
+  onSelectAIPalette,
   onBack,
   onContinue,
   onExit,
@@ -79,9 +85,13 @@ export function GardenRedesignStepThree({
   const bottomContainerHeight = scaleValue(116, layoutScale);
   const buttonHeight = scaleValue(60, layoutScale);
   const buttonTop = scaleValue(24, layoutScale);
-  const paletteRows = chunkIntoRows(palettes, 3);
+  const palettesWithAI = useMemo<GardenRedesignStepThreePalette[]>(
+    () => [{ id: "ai-landscape-choice", label: "AI Landscape Choice", colors: [], aiCard: true }, ...palettes],
+    [palettes],
+  );
+  const paletteRows = chunkIntoRows(palettesWithAI, 3);
   const paletteGridWidth = paletteCardWidth * 3 + paletteHorizontalGap * 2;
-  const canContinue = Boolean(selectedPaletteId);
+  const canContinue = Boolean(selectedPaletteId || useAISelection);
 
   const handlePalettePress = (paletteId: string) => {
     triggerHaptic();
@@ -132,7 +142,7 @@ export function GardenRedesignStepThree({
                 }}
               >
                 {row.map((palette, columnIndex) => {
-                  const active = selectedPaletteId === palette.id;
+                  const active = palette.aiCard ? useAISelection : selectedPaletteId === palette.id;
 
                   return (
                     <Pressable
@@ -140,7 +150,7 @@ export function GardenRedesignStepThree({
                       accessibilityRole="button"
                       accessibilityState={{ selected: active }}
                       hitSlop={12}
-                      onPress={() => handlePalettePress(palette.id)}
+                      onPress={() => (palette.aiCard ? onSelectAIPalette() : handlePalettePress(palette.id))}
                       style={[
                         styles.paletteCard,
                         {
@@ -158,11 +168,19 @@ export function GardenRedesignStepThree({
                           </View>
                         </View>
                       ) : null}
-                      <View style={{ height: paletteCardTopHeight, flexDirection: "row" }}>
-                        {palette.colors.slice(0, 4).map((color) => (
-                          <View key={`${palette.id}-${color}`} style={{ flex: 1, backgroundColor: color }} />
-                        ))}
-                      </View>
+                      {palette.aiCard ? (
+                        <View style={[styles.aiPaletteMedia, { height: paletteCardTopHeight, backgroundColor: active ? "#DBEAFE" : "#F4F7FB" }]}>
+                          <View style={[styles.aiPaletteIconWrap, { backgroundColor: active ? "#2563EB" : "#0F172A" }]}>
+                            <Wand2 color="#FFFFFF" size={26} strokeWidth={2.1} />
+                          </View>
+                        </View>
+                      ) : (
+                        <View style={{ height: paletteCardTopHeight, flexDirection: "row" }}>
+                          {palette.colors.slice(0, 4).map((color) => (
+                            <View key={`${palette.id}-${color}`} style={{ flex: 1, backgroundColor: color }} />
+                          ))}
+                        </View>
+                      )}
                       <View
                         style={[
                           styles.paletteLabelBar,
@@ -272,6 +290,17 @@ const styles = StyleSheet.create({
   },
   paletteCard: {
     overflow: "hidden",
+  },
+  aiPaletteMedia: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiPaletteIconWrap: {
+    width: 54,
+    height: 54,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
   },
   selectionBadge: {
     position: "absolute",

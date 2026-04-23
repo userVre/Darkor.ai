@@ -261,6 +261,14 @@ function formatMixedStyleLabel(styles: string[]) {
   return `A mix of ${normalized.join(", ")} styles`;
 }
 
+function formatMultiSelectionLabel(values: string[]) {
+  const normalized = values.map((value) => value.trim()).filter(Boolean);
+  if (normalized.length === 0) return null;
+  if (normalized.length === 1) return normalized[0];
+  if (normalized.length === 2) return `${normalized[0]} and ${normalized[1]}`;
+  return `${normalized.slice(0, -1).join(", ")}, and ${normalized[normalized.length - 1]}`;
+}
+
 type GenerateRequestOverrides = {
   regenerate?: boolean;
   sourceImage?: SelectedImage | null;
@@ -2058,7 +2066,7 @@ export default function WorkspaceScreen() {
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
   const [focusedImageUri, setFocusedImageUri] = useState<string | null>(null);
-  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [selectedFinishId, setSelectedFinishId] = useState<FinishOption["id"] | null>(DEFAULT_FINISH_ID);
@@ -2083,6 +2091,7 @@ export default function WorkspaceScreen() {
   const [isLoadingExample, setIsLoadingExample] = useState<string | null>(null);
   const [isSelectingPhoto, setIsSelectingPhoto] = useState(false);
   const [, setReviewPromptOpen] = useState(false);
+  const selectedRoom = useMemo(() => formatMultiSelectionLabel(selectedRooms), [selectedRooms]);
   const [, setRatePromptOpen] = useState(false);
   const [, setFeedbackOpen] = useState(false);
   const [, setFeedbackMessage] = useState("");
@@ -2116,6 +2125,7 @@ export default function WorkspaceScreen() {
   const [aiSuggestedPaletteId, setAiSuggestedPaletteId] = useState<string | null>(null);
   const [aiSuggestionPulseKey, setAiSuggestionPulseKey] = useState(0);
   const [smartSuggestEnabled, setSmartSuggestEnabled] = useState(false);
+  const [useAISelection, setUseAISelection] = useState(false);
 
   const reviewSheetRef = useRef<BottomSheetModal>(null);
   const imageContainerRef = useRef<View>(null);
@@ -2188,7 +2198,7 @@ export default function WorkspaceScreen() {
   }, [selectedImage, selectedImages, setDraftImage, setDraftImages]);
 
   useEffect(() => {
-    setDraftRoom(selectedRoom ?? null);
+    setDraftRoom(selectedRoom);
   }, [selectedRoom, setDraftRoom]);
 
   useEffect(() => {
@@ -2269,7 +2279,7 @@ export default function WorkspaceScreen() {
       const hydratedStyles = draft.styles ?? (draft.style ? [draft.style] : []);
       setSelectedImages(hydratedImages);
       setFocusedImageUri(hydratedImages[0]?.uri ?? null);
-      setSelectedRoom(draft.room ?? null);
+      setSelectedRooms(draft.room ? [draft.room] : []);
       setSelectedStyle(hydratedStyles[0] ?? null);
       setSelectedStyles(hydratedStyles);
       setSelectedFinishId((draft.finishId as FinishOption["id"] | null) ?? DEFAULT_FINISH_ID);
@@ -2281,6 +2291,7 @@ export default function WorkspaceScreen() {
         setAiSuggestedStyle(draft.aiSuggestedStyle ?? null);
         setAiSuggestedPaletteId(draft.aiSuggestedPaletteId ?? null);
         setSmartSuggestEnabled(Boolean(draft.aiSuggestedStyle || draft.aiSuggestedPaletteId));
+        setUseAISelection(Boolean(draft.aiSuggestedStyle || draft.aiSuggestedPaletteId));
         setSelectedAspectRatioId((draft.aspectRatio as AspectRatioOption["id"] | null) ?? "post");
       setGeneratedImageUrl(null);
       setGenerationId(null);
@@ -2354,7 +2365,7 @@ export default function WorkspaceScreen() {
   }, [presetStyle, selectedStyle, selectedStyles.length, serviceType]);
 
   useEffect(() => {
-    if (!presetRoom || selectedRoom) return;
+    if (!presetRoom || selectedRooms.length > 0) return;
     const normalized = String(presetRoom).trim().toLowerCase();
     const normalizedExteriorValue = serviceType === "exterior" ? EXTERIOR_BUILDING_PRESET_ALIASES[normalized] ?? null : null;
     const normalizedGardenValue = serviceType === "garden" ? GARDEN_AREA_PRESET_ALIASES[normalized] ?? null : null;
@@ -2365,9 +2376,9 @@ export default function WorkspaceScreen() {
         (normalizedGardenValue ? room === normalizedGardenValue : false),
     );
     if (matched) {
-      setSelectedRoom(matched);
+      setSelectedRooms([matched]);
     }
-  }, [presetRoom, presetRoomOptions, selectedRoom, serviceType]);
+  }, [presetRoom, presetRoomOptions, selectedRooms.length, serviceType]);
 
   useEffect(() => {
     if (workflowStep === 5 && generatedImageUrl) {
@@ -2689,8 +2700,8 @@ export default function WorkspaceScreen() {
       {
         id: "ai-suggest",
         title: SMART_SUGGEST_STYLE_LABEL,
-        label: "Surprise Me",
-        description: "Analyze the room architecture and automatically pick the most suitable design style.",
+        label: "AI Suggest",
+        description: "Let AI pick the best aesthetic.",
         image: null,
         icon: Wand2,
       },
@@ -2793,12 +2804,20 @@ export default function WorkspaceScreen() {
     ],
     [i18n.language, t],
   );
-  const selectedExteriorBuildingType = useMemo(
-    () => (selectedRoom ? EXTERIOR_BUILDING_PRESET_ALIASES[selectedRoom.trim().toLowerCase()] ?? selectedRoom : null),
-    [selectedRoom],
+  const selectedExteriorBuildingTypes = useMemo(
+    () => selectedRooms.map((room) => EXTERIOR_BUILDING_PRESET_ALIASES[room.trim().toLowerCase()] ?? room),
+    [selectedRooms],
   );
   const exteriorStyleGalleryCards = useMemo(
     () => [
+      {
+        id: "ai-suggest",
+        title: SMART_SUGGEST_STYLE_LABEL,
+        label: "AI Suggest",
+        description: "Let AI pick the best aesthetic.",
+        image: null,
+        icon: Wand2,
+      },
       {
         id: "custom",
         title: "Custom",
@@ -2886,6 +2905,14 @@ export default function WorkspaceScreen() {
   const gardenStyleGalleryCards = useMemo(
     () => [
       {
+        id: "ai-suggest",
+        title: SMART_SUGGEST_STYLE_LABEL,
+        label: "AI Suggest",
+        description: "Let AI pick the best aesthetic.",
+        image: null,
+        icon: Wand2,
+      },
+      {
         id: "custom",
         title: "Custom",
         label: t("workspace.localization.styles.custom"),
@@ -2968,10 +2995,10 @@ export default function WorkspaceScreen() {
     [primarySelectedStyle, selectedStyles],
   );
   const finalPreviewImage = useMemo(() => {
-    const selectedSpaceCard = spaceCatalogItems.find((card) => card.title === selectedRoom);
+    const selectedSpaceCard = spaceCatalogItems.find((card) => card.title === selectedRooms[0]);
     const fallbackImage = selectedSpaceCard?.image ?? DEFAULT_SPACE_IMAGE;
     return getStylePreviewImage(primarySelectedStyle, fallbackImage);
-  }, [primarySelectedStyle, selectedRoom, spaceCatalogItems]);
+  }, [primarySelectedStyle, selectedRooms, spaceCatalogItems]);
   const previewThumbnailLabel = t("workspace.localization.previewThumbnailLabel", {
     style: selectedStyleDisplayName ?? t("workspace.localization.styles.custom"),
   });
@@ -2981,7 +3008,7 @@ export default function WorkspaceScreen() {
         key: "room",
         title: t("workspace.localization.summary.roomType"),
         value: selectedRoom ?? t("workspace.localization.summary.missing"),
-        missing: !selectedRoom,
+        missing: selectedRooms.length === 0,
       },
       {
         key: "style",
@@ -3267,7 +3294,7 @@ export default function WorkspaceScreen() {
 
   const canContinue = useMemo(() => {
     if (workflowStep === 0) return selectedImages.length > 0;
-    if (workflowStep === 1) return Boolean(selectedRoom);
+    if (workflowStep === 1) return selectedRooms.length > 0;
     if (workflowStep === 2) {
       if (!isPaintService && !isFloorService && !isLeanGenerationService && selectedStyles.includes("Custom")) {
         return customPrompt.trim().length > 0;
@@ -3301,7 +3328,7 @@ export default function WorkspaceScreen() {
   const ensureWorkspaceSelectionsComplete = useCallback(() => {
     const missingSelection = resolveMissingWorkspaceSelectionLabel({
       hasImage: selectedImages.length > 0,
-      hasRoom: Boolean(selectedRoom),
+      hasRoom: selectedRooms.length > 0,
       hasStyle: isPaintService || isFloorService ? Boolean(selectedStyle || smartSuggestEnabled) : selectedStyles.length > 0,
       hasMode: isExteriorService || isGardenService || isPaintService || isFloorService || Boolean(selectedModeId),
       hasPalette: isGardenService || isPaintService || isFloorService || Boolean(selectedPaletteId || smartSuggestEnabled),
@@ -3762,7 +3789,7 @@ export default function WorkspaceScreen() {
       setWorkflowStep(0);
       setSelectedImages([]);
       setFocusedImageUri(null);
-      setSelectedRoom(null);
+      setSelectedRooms([]);
       setSelectedStyle(null);
       setSelectedStyles([]);
       setSelectedFinishId(DEFAULT_FINISH_ID);
@@ -3772,6 +3799,7 @@ export default function WorkspaceScreen() {
       setAiSuggestedStyle(null);
       setAiSuggestedPaletteId(null);
       setSmartSuggestEnabled(false);
+      setUseAISelection(false);
       setSelectedAspectRatioId("post");
       setGeneratedImageUrl(null);
       setGenerationId(null);
@@ -4409,7 +4437,7 @@ export default function WorkspaceScreen() {
     setWizardNavDirection(-1);
     setPendingRegenerateConfirm(true);
     setShowComparisonSlider(false);
-    setSelectedRoom(activeBoardItem.roomLabel ?? selectedRoom ?? null);
+    setSelectedRooms(activeBoardItem.roomLabel ? [activeBoardItem.roomLabel] : selectedRoom ? [selectedRoom] : []);
     const resolvedStyle = resolveBoardStyleSelection(
       activeBoardItem.styleLabel ?? selectedStyle,
       activeBoardItem.serviceType ?? serviceType,
@@ -4550,64 +4578,52 @@ export default function WorkspaceScreen() {
       (selectedImage.label ? GARDEN_AREA_PRESET_ALIASES[selectedImage.label.trim().toLowerCase()] : null) ?? "Backyard";
 
     triggerHaptic();
-    setSelectedRoom(inferredGardenArea);
+    setSelectedRooms([inferredGardenArea]);
     setDraftRoom(inferredGardenArea);
     setWizardNavDirection(1);
     setWorkflowStep(2);
   }, [selectedImage, setDraftRoom, t]);
 
-  const handleSelectRoom = useCallback(
+  const handleToggleRoom = useCallback(
     (value: string) => {
       triggerHaptic();
-      setSelectedRoom((current) => {
-        const nextRoom = current === value ? null : value;
-        setDraftRoom(nextRoom);
-        return nextRoom;
+      setSelectedRooms((current) => {
+        const nextRooms = current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
+        setDraftRoom(formatMultiSelectionLabel(nextRooms));
+        return nextRooms;
       });
     },
     [setDraftRoom],
   );
 
-  const handleSetSelectedRoom = useCallback(
-    (room: string | null) => {
-      setSelectedRoom(room);
-      setDraftRoom(room);
-    },
-    [setDraftRoom],
-  );
-
   const handleContinueFromInteriorRoomStep = useCallback(() => {
-    if (!selectedRoom) {
+    if (selectedRooms.length === 0) {
       return;
     }
 
-    setDraftRoom(selectedRoom);
+    setDraftRoom(formatMultiSelectionLabel(selectedRooms));
     handleContinue();
-  }, [handleContinue, selectedRoom, setDraftRoom]);
-
-  const handleSetSelectedExteriorBuildingType = useCallback(
-    (buildingType: string | null) => {
-      setSelectedRoom(buildingType);
-      setDraftRoom(buildingType);
-    },
-    [setDraftRoom],
-  );
+  }, [handleContinue, selectedRooms, setDraftRoom]);
 
   const handleContinueFromExteriorBuildingStep = useCallback(() => {
-    const normalizedBuildingType = selectedExteriorBuildingType ?? null;
-    if (!normalizedBuildingType) {
+    if (selectedExteriorBuildingTypes.length === 0) {
       return;
     }
 
-    setSelectedRoom(normalizedBuildingType);
-    setDraftRoom(normalizedBuildingType);
+    setDraftRoom(formatMultiSelectionLabel(selectedExteriorBuildingTypes));
     handleContinue();
-  }, [handleContinue, selectedExteriorBuildingType, setDraftRoom]);
+  }, [handleContinue, selectedExteriorBuildingTypes, setDraftRoom]);
 
   const handleSetSelectedExteriorStyle = useCallback(
     (style: string) => {
+      if (style === SMART_SUGGEST_STYLE_LABEL) {
+        void handleAiSuggest();
+        return;
+      }
+
       triggerHaptic();
       setSmartSuggestEnabled(false);
+      setUseAISelection(false);
       setAiSuggestedStyle(null);
       setAiSuggestedPaletteId(null);
       startTransition(() => {
@@ -4619,7 +4635,7 @@ export default function WorkspaceScreen() {
         });
       });
     },
-    [],
+    [handleAiSuggest],
   );
 
   const handleContinueFromExteriorStyleStep = useCallback(() => {
@@ -4643,8 +4659,14 @@ export default function WorkspaceScreen() {
 
   const handleSetSelectedGardenStyle = useCallback(
     (style: string) => {
+      if (style === SMART_SUGGEST_STYLE_LABEL) {
+        void handleAiSuggest();
+        return;
+      }
+
       triggerHaptic();
       setSmartSuggestEnabled(false);
+      setUseAISelection(false);
       setAiSuggestedStyle(null);
       setAiSuggestedPaletteId(null);
       startTransition(() => {
@@ -4656,7 +4678,7 @@ export default function WorkspaceScreen() {
         });
       });
     },
-    [],
+    [handleAiSuggest],
   );
 
   const handleContinueFromGardenStyleStep = useCallback(() => {
@@ -4687,6 +4709,7 @@ export default function WorkspaceScreen() {
 
       triggerHaptic();
       setSmartSuggestEnabled(false);
+      setUseAISelection(false);
       setAiSuggestedStyle(null);
       setAiSuggestedPaletteId(null);
       startTransition(() => {
@@ -4718,10 +4741,20 @@ export default function WorkspaceScreen() {
   const handleSetSelectedPaletteId = useCallback(
     (paletteId: string | null) => {
       setSelectedPaletteId(paletteId);
+      setSmartSuggestEnabled(false);
+      setUseAISelection(false);
       setDraftPalette(paletteId);
     },
     [setDraftPalette],
   );
+
+  const handleEnableAIPaletteSelection = useCallback(() => {
+    triggerHaptic();
+    setSmartSuggestEnabled(true);
+    setUseAISelection(true);
+    setSelectedPaletteId(SMART_SUGGEST_PALETTE_ID);
+    setDraftPalette(SMART_SUGGEST_PALETTE_ID);
+  }, [setDraftPalette]);
 
   const handleContinueFromInteriorFinalStep = useCallback(() => {
     if (!selectedModeId || (!selectedPaletteId && !smartSuggestEnabled)) {
@@ -4772,6 +4805,7 @@ export default function WorkspaceScreen() {
     }
 
     setSmartSuggestEnabled(false);
+    setUseAISelection(false);
     setAiSuggestedStyle(null);
     setAiSuggestedPaletteId((current) => (value === SMART_SUGGEST_WALL_LABEL || value === SMART_SUGGEST_FLOOR_LABEL ? current : null));
     startTransition(() => {
@@ -4802,12 +4836,14 @@ export default function WorkspaceScreen() {
   const handleSelectFinish = useCallback((value: FinishOption["id"]) => {
     triggerHaptic();
     setSmartSuggestEnabled(false);
+    setUseAISelection(false);
     setSelectedFinishId((current) => (current === value ? null : value));
   }, []);
 
   const handleSelectPalette = useCallback((value: string) => {
     triggerHaptic();
     setSmartSuggestEnabled(false);
+    setUseAISelection(false);
     setAiSuggestedPaletteId(null);
     setSelectedPaletteId(value);
   }, []);
@@ -4815,12 +4851,14 @@ export default function WorkspaceScreen() {
   const handleSelectMode = useCallback((value: ModeOption["id"]) => {
     triggerHaptic();
     setSmartSuggestEnabled(false);
+    setUseAISelection(false);
     setSelectedModeId((current) => (current === value ? null : value));
   }, []);
 
   const handleEnableSmartSuggest = useCallback(() => {
     triggerHaptic();
     setSmartSuggestEnabled(true);
+    setUseAISelection(true);
     setAiSuggestedStyle(null);
     setAiSuggestedPaletteId(null);
 
@@ -4886,6 +4924,7 @@ export default function WorkspaceScreen() {
 
       startTransition(() => {
         setSmartSuggestEnabled(true);
+        setUseAISelection(true);
         setSelectedStyle(nextSuggestedStyles[0] ?? null);
         setSelectedStyles(nextSuggestedStyles);
         setSelectedPaletteId(suggestedPalette);
@@ -5091,8 +5130,8 @@ export default function WorkspaceScreen() {
     return (
       <ExteriorRedesignStepTwo
         cards={exteriorBuildingCards}
-        selectedBuildingType={selectedExteriorBuildingType}
-        onSelectBuildingType={handleSetSelectedExteriorBuildingType}
+        selectedBuildingTypes={selectedExteriorBuildingTypes}
+        onToggleBuildingType={handleToggleRoom}
         onBack={handleBack}
         onContinue={handleContinueFromExteriorBuildingStep}
         onExit={handleCloseWizard}
@@ -5108,6 +5147,7 @@ export default function WorkspaceScreen() {
         styles={exteriorStyleGalleryCards}
         selectedStyles={selectedStyles}
         smartSuggestEnabled={smartSuggestEnabled}
+        isAiSuggesting={isAiSuggesting}
         onSelectStyle={handleSetSelectedExteriorStyle}
         onContinue={handleContinueFromExteriorStyleStep}
         onExit={handleCloseWizard}
@@ -5120,6 +5160,8 @@ export default function WorkspaceScreen() {
       <GardenRedesignStepTwo
         styles={gardenStyleGalleryCards}
         selectedStyles={selectedStyles}
+        smartSuggestEnabled={smartSuggestEnabled}
+        isAiSuggesting={isAiSuggesting}
         onSelectStyle={handleSetSelectedGardenStyle}
         onBack={handleBack}
         onContinue={handleContinueFromGardenStyleStep}
@@ -5135,7 +5177,9 @@ export default function WorkspaceScreen() {
         onBack={handleBack}
         palettes={exteriorPaletteCards}
         selectedPaletteId={selectedPaletteId}
+        useAISelection={useAISelection}
         onSelectPalette={handleSetSelectedPaletteId}
+        onSelectAIPalette={handleEnableAIPaletteSelection}
         onContinue={handleContinueFromExteriorPaletteStep}
         onExit={handleCloseWizard}
       />
@@ -5148,7 +5192,9 @@ export default function WorkspaceScreen() {
         onBack={handleBack}
         palettes={gardenPaletteCards}
         selectedPaletteId={selectedPaletteId}
+        useAISelection={useAISelection}
         onSelectPalette={handleSetSelectedPaletteId}
+        onSelectAIPalette={handleEnableAIPaletteSelection}
         onContinue={handleContinueFromGardenPaletteStep}
         onExit={handleCloseWizard}
       />
@@ -5160,8 +5206,8 @@ export default function WorkspaceScreen() {
       <InteriorRedesignStepTwo
         creditCount={creditBalance}
         roomOptions={localizedInteriorRoomOptions}
-        selectedRoom={selectedRoom}
-        onSelectRoom={handleSetSelectedRoom}
+        selectedRooms={selectedRooms}
+        onToggleRoom={handleToggleRoom}
         onBack={handleBack}
         onContinue={handleContinueFromInteriorRoomStep}
         onExit={handleCloseWizard}
@@ -5193,8 +5239,10 @@ export default function WorkspaceScreen() {
         palettes={interiorPaletteCards}
         selectedModeId={selectedModeId}
         selectedPaletteId={selectedPaletteId}
+        useAISelection={useAISelection}
         onSelectMode={handleSetSelectedModeId}
         onSelectPalette={handleSetSelectedPaletteId}
+        onSelectAIPalette={handleEnableAIPaletteSelection}
         onBack={handleBack}
         onContinue={handleContinueFromInteriorFinalStep}
         onExit={handleCloseWizard}
@@ -5855,13 +5903,13 @@ export default function WorkspaceScreen() {
 
                       <View style={wizardCenteredGridStyle}>
                         {spaceCatalogItems.map((item, index) => {
-                          const active = selectedRoom === item.title;
+                          const active = selectedRooms.includes(item.title);
                           const isFullWidthRoomCard = shouldSpanFullWidthInTwoColumnGrid(index, spaceCatalogItems.length, wizardCardColumns);
                           const RoomIcon = item.icon;
                           return (
                             <MotiView key={item.title} {...staggerFadeUp(index, 40)} style={{ width: isFullWidthRoomCard ? "100%" : wizardCardWidth }}>
                               <LuxPressable
-                                onPress={() => handleSelectRoom(item.title)}
+                                onPress={() => handleToggleRoom(item.title)}
                                 className="cursor-pointer overflow-hidden rounded-[32px] border"
                                 style={{
                                   width: "100%",

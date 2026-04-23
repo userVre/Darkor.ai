@@ -1,10 +1,10 @@
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
-import { useMemo } from "react";
+import { type ComponentType, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check } from "@/components/material-icons";
+import { Check, Wand2 } from "@/components/material-icons";
 
 import {
   DESIGN_WIZARD_SELECTION_BLUE,
@@ -23,7 +23,10 @@ import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-head
 type ExteriorRedesignStepThreeStyleCard = {
   id: string;
   title: string;
-  image: number;
+  image: number | null;
+  label?: string;
+  description?: string;
+  icon?: ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
 };
 
 type ExteriorRedesignStepThreeProps = {
@@ -31,6 +34,7 @@ type ExteriorRedesignStepThreeProps = {
   styles: ExteriorRedesignStepThreeStyleCard[];
   selectedStyles: string[];
   smartSuggestEnabled?: boolean;
+  isAiSuggesting?: boolean;
   onSelectStyle: (style: string) => void;
   onBack: () => void;
   onContinue: () => void;
@@ -59,6 +63,7 @@ export function ExteriorRedesignStepThree({
   styles,
   selectedStyles,
   smartSuggestEnabled = false,
+  isAiSuggesting = false,
   onSelectStyle,
   onBack,
   onContinue,
@@ -141,7 +146,10 @@ export function ExteriorRedesignStepThree({
               }}
             >
               {row.map((styleCard, columnIndex) => {
-                const active = styleCard.title === "AI Suggest" ? smartSuggestEnabled : selectedStyles.includes(styleCard.title);
+                const isAiSuggestCard = styleCard.title === "AI Suggest";
+                const active = isAiSuggestCard ? smartSuggestEnabled : selectedStyles.includes(styleCard.title);
+                const CardIcon = styleCard.icon ?? Wand2;
+                const isIconCard = styleCard.image === null;
 
                 return (
                   <Pressable
@@ -159,7 +167,7 @@ export function ExteriorRedesignStepThree({
                       },
                       getWizardSelectionCardStyle(active, DESIGN_WIZARD_SURFACE),
                     ]}
-                  >
+                    >
                     {active ? (
                         <View style={stylesSheet.selectionBadge}>
                           <View style={[stylesSheet.selectionBadgeInner, getWizardSelectedIconContainerStyle(true)]}>
@@ -167,19 +175,50 @@ export function ExteriorRedesignStepThree({
                           </View>
                         </View>
                     ) : null}
-                    <View style={{ width: "100%", height: cardImageHeight, overflow: "hidden" }}>
-                      <Image
-                        source={styleCard.image}
-                        style={{
-                          width: "100%",
-                          height: cardImageHeight + THUMBNAIL_CROP_OVERFLOW,
-                          transform: [{ translateY: THUMBNAIL_CROP_SHIFT }],
-                        }}
-                        contentFit="cover"
-                        transition={120}
-                        cachePolicy="memory-disk"
-                      />
-                    </View>
+                    {isIconCard ? (
+                      <View
+                        style={[
+                          stylesSheet.iconCardMedia,
+                          {
+                            height: cardImageHeight,
+                            backgroundColor: active ? "#DBEAFE" : "#F4F7FB",
+                          },
+                        ]}
+                      >
+                        <View
+                          style={[
+                            stylesSheet.iconCardBadge,
+                            { backgroundColor: active ? "#2563EB" : "#0F172A" },
+                          ]}
+                        >
+                          <CardIcon color="#FFFFFF" size={28} strokeWidth={2.1} />
+                        </View>
+                        <Text style={[stylesSheet.iconCardTitle, active ? stylesSheet.iconCardTitleActive : null]}>
+                          {styleCard.label ?? styleCard.title}
+                        </Text>
+                        {styleCard.description ? (
+                          <Text style={[stylesSheet.iconCardDescription, active ? stylesSheet.iconCardDescriptionActive : null]}>
+                            {isAiSuggestCard && isAiSuggesting
+                              ? "Reading the architecture and selecting the best-matched aesthetic."
+                              : styleCard.description}
+                          </Text>
+                        ) : null}
+                      </View>
+                    ) : (
+                      <View style={{ width: "100%", height: cardImageHeight, overflow: "hidden" }}>
+                        <Image
+                          source={styleCard.image}
+                          style={{
+                            width: "100%",
+                            height: cardImageHeight + THUMBNAIL_CROP_OVERFLOW,
+                            transform: [{ translateY: THUMBNAIL_CROP_SHIFT }],
+                          }}
+                          contentFit="cover"
+                          transition={120}
+                          cachePolicy="memory-disk"
+                        />
+                      </View>
+                    )}
                     <View
                       style={[
                         stylesSheet.labelBar,
@@ -201,7 +240,7 @@ export function ExteriorRedesignStepThree({
                           active ? stylesSheet.labelTextActive : null,
                         ]}
                       >
-                        {styleCard.title}
+                        {styleCard.label ?? styleCard.title}
                       </Text>
                     </View>
                   </Pressable>
@@ -325,6 +364,39 @@ const stylesSheet = StyleSheet.create({
     height: 34,
     alignItems: "center",
     justifyContent: "center",
+  },
+  iconCardMedia: {
+    width: "100%",
+    alignItems: "flex-start",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  iconCardBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconCardTitle: {
+    color: "#0F172A",
+    fontSize: 15,
+    lineHeight: 18,
+    ...fonts.bold,
+  },
+  iconCardTitleActive: {
+    color: DESIGN_WIZARD_SELECTION_BLUE,
+  },
+  iconCardDescription: {
+    color: DESIGN_WIZARD_TEXT_MUTED,
+    fontSize: 11,
+    lineHeight: 14,
+    ...fonts.regular,
+  },
+  iconCardDescriptionActive: {
+    color: "#1D4ED8",
   },
   labelBar: {
     position: "relative",

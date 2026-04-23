@@ -40,8 +40,10 @@ type InteriorRedesignStepFourProps = {
   palettes: InteriorRedesignStepFourPalette[];
   selectedModeId: string | null;
   selectedPaletteId: string | null;
+  useAISelection?: boolean;
   onSelectMode: (modeId: string | null) => void;
   onSelectPalette: (paletteId: string | null) => void;
+  onSelectAIPalette: () => void;
   onBack: () => void;
   onContinue: () => void;
   onExit: () => void;
@@ -146,8 +148,10 @@ export function InteriorRedesignStepFour({
   palettes,
   selectedModeId,
   selectedPaletteId,
+  useAISelection = false,
   onSelectMode,
   onSelectPalette,
+  onSelectAIPalette,
   onBack,
   onContinue,
   onExit,
@@ -181,7 +185,7 @@ export function InteriorRedesignStepFour({
   const buttonHeight = scaleValue(60, layoutScale);
   const buttonTop = scaleValue(24, layoutScale);
   const paletteRows = useMemo(() => chunkIntoRows(palettes, 3), [palettes]);
-  const canContinue = Boolean(selectedModeId && selectedPaletteId);
+  const canContinue = Boolean(selectedModeId && (selectedPaletteId || useAISelection));
   const paletteGridWidth = paletteCardWidth * 3 + paletteHorizontalGap * 2;
 
   const handleModePress = (modeId: string) => {
@@ -254,6 +258,18 @@ export function InteriorRedesignStepFour({
         <Text style={[styles.sectionTitle, { marginLeft: sectionTitleLeft, marginTop: modeSectionToPaletteGap }]}>{t("wizard.interior.stepFourPalette")}</Text>
 
         <View style={{ marginTop: paletteTitleTopGap, paddingHorizontal: paletteMargin }}>
+          <View style={[styles.aiPaletteRow, { width: paletteGridWidth, alignSelf: "center" }]}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: useAISelection }}
+              hitSlop={12}
+              onPress={onSelectAIPalette}
+              style={[styles.aiPaletteCircle, getWizardSelectionCardStyle(useAISelection, DESIGN_WIZARD_SURFACE)]}
+            >
+              <Wand2 color={useAISelection ? DESIGN_WIZARD_SELECTION_BLUE : "#111111"} size={22} strokeWidth={2.1} />
+            </Pressable>
+            <Text style={[styles.aiPaletteLabel, useAISelection ? styles.aiPaletteLabelActive : null]}>Random AI Pick</Text>
+          </View>
           <View style={{ width: paletteGridWidth, alignSelf: "center" }}>
             {paletteRows.map((row, rowIndex) => (
               <View
@@ -459,6 +475,29 @@ const styles = StyleSheet.create({
   },
   paletteCard: {
     overflow: "hidden",
+  },
+  aiPaletteRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 18,
+  },
+  aiPaletteCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiPaletteLabel: {
+    color: DESIGN_WIZARD_TEXT_MUTED,
+    fontSize: 14,
+    lineHeight: 18,
+    ...fonts.semibold,
+  },
+  aiPaletteLabelActive: {
+    color: DESIGN_WIZARD_SELECTION_BLUE,
+    ...fonts.bold,
   },
   paletteSelectionBadge: {
     position: "absolute",

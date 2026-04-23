@@ -74,6 +74,7 @@ type DesignOrchestrationResult = {
   wallColor?: string;
   floorMaterial?: string;
   customPrompt?: string;
+  fusionPrompt?: string;
   reason?: string;
   source: "gemini" | "fallback";
 };
@@ -218,7 +219,12 @@ function buildStyleDirection(style: string, styleSelections?: string[]) {
     return normalizedStyle;
   }
 
-  return `${joinNaturalLanguage([normalizedStyle, ...normalizedSelections])} blend`;
+  return `A fusion of ${joinNaturalLanguage([normalizedStyle, ...normalizedSelections])} styles`;
+}
+
+function hasMultipleDistinctStyles(style: string, styleSelections?: string[]) {
+  const normalized = dedupeSuggestions([style, ...(styleSelections ?? [])], style);
+  return normalized.length > 1;
 }
 
 function compactPromptSegments(parts: Array<string | undefined>) {
@@ -725,6 +731,9 @@ function buildFallbackOrchestration(args: {
     styles: dedupeSuggestions([args.style, ...(args.styleSelections ?? [])], args.style),
     paletteId: trimOptional(args.colorPalette) ?? "surprise",
     customPrompt: `Resolve the room using a refined ${styleDirection} direction with a premium, cohesive material palette informed by the existing furniture and lighting.`,
+    fusionPrompt: hasMultipleDistinctStyles(args.style, args.styleSelections)
+      ? `Blend ${joinNaturalLanguage(dedupeSuggestions([args.style, ...(args.styleSelections ?? [])], args.style))} into one cohesive architectural language with balanced materials, detailing, and color transitions that feel intentional rather than themed.`
+      : undefined,
     reason: "Fallback style direction selected for a cohesive redesign.",
     source: "fallback" as const,
   };
@@ -775,23 +784,23 @@ async function requestGeminiDesignOrchestration(args: {
       ? '{"style":"...","wallColor":"...","reason":"..."}'
       : args.serviceType === "floor"
         ? '{"style":"...","floorMaterial":"...","reason":"..."}'
-        : '{"style":"...","styles":["...","..."],"paletteId":"...","reason":"..."}';
+        : '{"style":"...","styles":["...","..."],"paletteId":"...","fusionPrompt":"...","reason":"..."}';
   const taskInstruction =
     args.serviceType === "paint"
       ? "Analyze the room's current furniture, lighting, and materials, then choose the best professional wall color for a premium final result."
       : args.serviceType === "floor"
         ? "Analyze the room's current furniture, lighting, and materials, then choose the best professional floor material and finish for a premium final result."
-        : "Analyze the room's current furniture, lighting, and materials, then choose the best 2 or 3 compatible design styles plus the strongest palette direction for a premium final result.";
+        : "Analyze this uploaded room, house, facade, or garden image and recommend the single strongest architectural direction plus the strongest palette direction for a premium final result. If multiple styles were provided, resolve them into a refined fusion rather than a list of disconnected themes.";
 
   const prompt = [
-    "You are a senior architectural design director.",
+    "You are a world-class architect. Analyze the provided room or house structure, lighting, and existing furniture. Automatically select the SINGLE best architectural style and color palette that will maximize the room's beauty.",
     `Service type: ${args.serviceType}.`,
     `Room type: ${args.roomType}.`,
     `Current desired direction: ${styleDirection}.`,
     args.availableStyles?.length ? `Allowed styles: ${args.availableStyles.join(", ")}.` : undefined,
     args.availablePalettes?.length ? `Allowed palettes: ${args.availablePalettes.join(", ")}.` : undefined,
     taskInstruction,
-    args.serviceType === "redesign" ? "For redesign, return 2 or 3 complementary styles in the styles array, ordered from strongest fit to supporting fit." : undefined,
+    args.serviceType === "redesign" ? "Return a single best style in style. If the user supplied multiple styles, keep styles limited to the compatible fusion ingredients and write fusionPrompt as a polished architectural direction that blends them seamlessly." : undefined,
     "If the user selected AI Suggest, Surprise Me, AI Choice, or Random, you must still return a professionally balanced, high-end choice rather than something extreme.",
     `Return strict JSON in the shape ${requestShape} with no markdown and no extra text.`,
   ]
@@ -847,6 +856,7 @@ async function requestGeminiDesignOrchestration(args: {
       paletteId?: string;
       wallColor?: string;
       floorMaterial?: string;
+      fusionPrompt?: string;
       reason?: string;
     };
 
@@ -863,6 +873,7 @@ async function requestGeminiDesignOrchestration(args: {
       wallColor: trimOptional(parsed.wallColor) ?? fallback.wallColor,
       floorMaterial: trimOptional(parsed.floorMaterial) ?? fallback.floorMaterial,
       customPrompt: fallback.customPrompt,
+      fusionPrompt: trimOptional(parsed.fusionPrompt) ?? fallback.fusionPrompt,
       reason: trimOptional(parsed.reason) ?? fallback.reason,
       source: "gemini" as const,
     } satisfies DesignOrchestrationResult;
@@ -1026,7 +1037,7 @@ export const generateDesign: any = internalActionGeneric({
       });
 
       const orchestratedDirection =
-        args.smartSuggest
+        (args.smartSuggest || (args.serviceType === "redesign" && hasMultipleDistinctStyles(args.style, args.styleSelections)))
           ? await requestGeminiDesignOrchestration({
               sourceBlob,
               serviceType: args.serviceType,
@@ -1049,17 +1060,28 @@ export const generateDesign: any = internalActionGeneric({
         args.serviceType === "floor" && orchestratedDirection?.floorMaterial
           ? `Primary flooring recommendation: ${orchestratedDirection.floorMaterial}.`
           : undefined,
+        args.serviceType === "redesign" && orchestratedDirection?.fusionPrompt
+          ? `Fusion design brief: ${orchestratedDirection.fusionPrompt}.`
+          : undefined,
         args.serviceType === "redesign" && orchestrationReason
           ? `Design direction rationale: ${orchestrationReason}.`
           : undefined,
         orchestrationPrompt,
       ]);
 
+      const resolvedStyleSelections =
+        args.serviceType === "redesign"
+          ? dedupeSuggestions(
+              [resolvedStyle, ...(orchestratedDirection?.styles ?? args.styleSelections ?? [])],
+              resolvedStyle,
+            )
+          : args.styleSelections;
+
       const optimizedPrompt = buildPrompt({
         serviceType: args.serviceType,
         roomType: args.roomType,
         style: resolvedStyle,
-        styleSelections: args.styleSelections,
+        styleSelections: resolvedStyleSelections,
         colorPalette: resolvedPalette,
         customPrompt: resolvedCustomPrompt,
         targetColor: resolvedTargetColor,

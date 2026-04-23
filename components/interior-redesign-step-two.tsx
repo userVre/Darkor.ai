@@ -26,8 +26,8 @@ type InteriorRedesignStepTwoProps = {
     id: string;
     label: string;
   }[];
-  selectedRoom: string | null;
-  onSelectRoom: (room: string | null) => void;
+  selectedRooms: string[];
+  onToggleRoom: (room: string) => void;
   onBack: () => void;
   onContinue: () => void;
   onExit: () => void;
@@ -55,8 +55,8 @@ function chunkIntoRows<T>(items: T[], size: number) {
 export function InteriorRedesignStepTwo({
   creditCount,
   roomOptions,
-  selectedRoom,
-  onSelectRoom,
+  selectedRooms,
+  onToggleRoom,
   onBack,
   onContinue,
   onExit,
@@ -79,11 +79,11 @@ export function InteriorRedesignStepTwo({
   const cardWidth = CARD_WIDTH;
   const cardHeight = CARD_HEIGHT;
   const roomRows = useMemo(() => chunkIntoRows(roomOptions, 2), [roomOptions]);
-  const canContinue = Boolean(selectedRoom);
+  const canContinue = selectedRooms.length > 0;
 
   const handleRoomPress = (room: string) => {
     triggerHaptic();
-    onSelectRoom(selectedRoom === room ? null : room);
+    onToggleRoom(room);
   };
 
   const handleContinuePress = () => {
@@ -128,7 +128,7 @@ export function InteriorRedesignStepTwo({
             {roomRows.map((row, rowIndex) => (
               <View key={`interior-room-row-${rowIndex}`} style={styles.gridRow}>
                 {row.map((room, columnIndex) => {
-                  const active = selectedRoom === room.id;
+                  const active = selectedRooms.includes(room.id);
                   const RoomIcon = getArchitecturalRoomIcon(room.id);
                   const iconColor = active ? DESIGN_WIZARD_SELECTION_BLUE : DESIGN_WIZARD_TEXT;
 
