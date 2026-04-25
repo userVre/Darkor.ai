@@ -288,6 +288,15 @@ export const startGeneration = mutationGeneric({
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
   },
   handler: async (ctx, args) => {
+    console.log("startGeneration: received request", {
+      anonymousIdPresent: Boolean(args.anonymousId),
+      hasMask: Boolean(args.maskStorageId),
+      hasReferenceImages: Boolean(args.referenceImageStorageIds?.length),
+      roomType: args.roomType,
+      selection: args.selection,
+      serviceType: args.serviceType,
+      speedTier: args.speedTier ?? "standard",
+    });
     const viewer = await ensureGenerationViewer(ctx, args.anonymousId);
 
     const sourceMetadata = await ctx.db.system.get("_storage", args.imageStorageId);
@@ -369,6 +378,12 @@ export const startGeneration = mutationGeneric({
       projectId: undefined,
     });
 
+    console.log("startGeneration: scheduling generateDesign", {
+      generationId,
+      ownerId: viewer.userId,
+      planUsed: allowance.planUsed,
+      serviceType: args.serviceType,
+    });
     await ctx.scheduler.runAfter(0, (internal as any).ai.generateDesign, {
       generationId,
       ownerId: viewer.userId,
@@ -394,6 +409,10 @@ export const startGeneration = mutationGeneric({
       planUsed: allowance.planUsed,
     });
 
+    console.log("startGeneration: scheduled successfully", {
+      generationId,
+      serviceType: args.serviceType,
+    });
     return {
       generationId,
       prompt,

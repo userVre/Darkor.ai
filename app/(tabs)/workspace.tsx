@@ -3429,11 +3429,10 @@ export default function WorkspaceScreen() {
     startTransition(() => {
       setSelectedImages(normalizedImages);
       setCurrentDisplayIndex(normalizedImages.length > 0 ? boundedIndex : 0);
-      setDraftImage(normalizedImages[boundedIndex] ?? normalizedImages[0] ?? null);
       setGeneratedImageUrl(null);
       setGenerationId(null);
     });
-  }, [setDraftImage]);
+  }, []);
 
   const appendSelectedImages = useCallback((images: SelectedImage[]) => {
     if (images.length === 0) {
@@ -3465,14 +3464,13 @@ export default function WorkspaceScreen() {
             : current.length === 0
               ? 0
               : Math.max(0, Math.min(currentDisplay, merged.length - 1));
-        setDraftImage(merged[nextDisplay] ?? merged[0] ?? null);
         return nextDisplay;
       });
       setGeneratedImageUrl(null);
       setGenerationId(null);
       return merged;
     });
-  }, [setDraftImage]);
+  }, []);
 
   const focusSelectedImage = useCallback((index: number) => {
     if (index < 0 || index >= selectedImages.length) {
@@ -3481,8 +3479,7 @@ export default function WorkspaceScreen() {
 
     triggerHaptic();
     setCurrentDisplayIndex(index);
-    setDraftImage(selectedImages[index] ?? selectedImages[0] ?? null);
-  }, [selectedImages, setDraftImage]);
+  }, [selectedImages]);
 
   const removeSelectedImage = useCallback((index: number) => {
     triggerHaptic();
@@ -3490,7 +3487,6 @@ export default function WorkspaceScreen() {
       const nextImages = current.filter((_, currentIndex) => currentIndex !== index);
       setCurrentDisplayIndex((currentDisplay) => {
         if (nextImages.length === 0) {
-          setDraftImage(null);
           return 0;
         }
 
@@ -3500,14 +3496,13 @@ export default function WorkspaceScreen() {
             : index === currentDisplay
               ? Math.min(currentDisplay, nextImages.length - 1)
               : currentDisplay;
-        setDraftImage(nextImages[nextDisplay] ?? nextImages[0] ?? null);
         return nextDisplay;
       });
       setGeneratedImageUrl(null);
       setGenerationId(null);
       return nextImages;
     });
-  }, [setDraftImage]);
+  }, []);
 
   const applyPickedAsset = useCallback(
     (asset: ImagePicker.ImagePickerAsset, label: string) => {

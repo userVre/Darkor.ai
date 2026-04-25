@@ -84,6 +84,19 @@ type AzureRenderProfile = {
   watermarkRequired: boolean;
 };
 
+function redactSecret(value?: string | null) {
+  const normalized = trimOptional(value);
+  if (!normalized) {
+    return null;
+  }
+
+  if (normalized.length <= 8) {
+    return "***";
+  }
+
+  return `${normalized.slice(0, 4)}...${normalized.slice(-4)}`;
+}
+
 function trimOptional(value?: string | null) {
   const trimmed = value?.trim();
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
@@ -322,6 +335,11 @@ async function requestAzureGenerationWithRetry(args: {
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
+      console.log("requestAzureGenerationWithRetry: sending request", {
+        attempt: attempt + 1,
+        endpoint: args.endpoint,
+        payloadKeys: Object.keys(args.payload),
+      });
       const response = await fetchWithTimeout(
         args.endpoint,
         {
@@ -336,7 +354,15 @@ async function requestAzureGenerationWithRetry(args: {
       );
 
       if (!response.ok) {
-        const errorMessage = normalizeGenerationError(await parseAzureError(response));
+        const parsedError = await parseAzureError(response);
+        const errorMessage = normalizeGenerationError(parsedError);
+        console.error("requestAzureGenerationWithRetry: Azure request failed", {
+          attempt: attempt + 1,
+          endpoint: args.endpoint,
+          error: parsedError,
+          friendlyMessage: errorMessage,
+          status: response.status,
+        });
         if (attempt === 0 && shouldRetryStatus(response.status)) {
           await new Promise((resolve) => setTimeout(resolve, 1_500));
           continue;
@@ -350,6 +376,11 @@ async function requestAzureGenerationWithRetry(args: {
       return response;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Azure OpenAI image generation failed.";
+      console.error("requestAzureGenerationWithRetry: request threw", {
+        attempt: attempt + 1,
+        endpoint: args.endpoint,
+        message,
+      });
       lastError = error instanceof Error ? error : new Error(message);
       if (attempt === 0 && shouldRetryMessage(message)) {
         await new Promise((resolve) => setTimeout(resolve, 1_500));
@@ -905,6 +936,8 @@ export const generateDesign: any = internalActionGeneric({
     targetColorCategory: v.optional(v.string()),
     targetSurface: v.optional(v.string()),
     aspectRatio: v.optional(v.string()),
+    aiSuggestedStyle: v.optional(v.string()),
+    aiSuggestedPaletteId: v.optional(v.string()),
     regenerate: v.optional(v.boolean()),
     smartSuggest: v.optional(v.boolean()),
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
@@ -917,6 +950,14 @@ export const generateDesign: any = internalActionGeneric({
     const apiKey = trimOptional(process.env.AZURE_OPENAI_API_KEY);
     const endpoint = trimOptional(process.env.AZURE_OPENAI_ENDPOINT);
     const deploymentName = trimOptional(process.env.AZURE_OPENAI_DEPLOYMENT_NAME);
+    console.log("generateDesign: Azure configuration", {
+      apiKeyPresent: Boolean(apiKey),
+      apiKeyPreview: redactSecret(apiKey),
+      deploymentName: deploymentName ?? null,
+      endpoint: endpoint ? normalizeAzureEndpoint(endpoint) : null,
+      generationId: args.generationId,
+      serviceType: args.serviceType,
+    });
     if (!apiKey || !endpoint || !deploymentName) {
       const missingVariable = !apiKey
         ? "AZURE_OPENAI_API_KEY"
@@ -944,6 +985,14 @@ export const generateDesign: any = internalActionGeneric({
       if (args.serviceType !== "redesign" && !maskBlob) {
         throw new ConvexError("The edit mask could not be loaded from storage.");
       }
+
+      console.log("generateDesign: loaded assets", {
+        generationId: args.generationId,
+        hasMask: Boolean(maskBlob),
+        hasReferenceImages: Boolean(args.referenceImageStorageIds?.length),
+        promptSource: args.smartSuggest ? "smartSuggest" : "manual",
+        serviceType: args.serviceType,
+      });
 
       const normalizedAssets = await normalizeImagesForAzure({
         sourceBlob,
@@ -1038,6 +1087,11 @@ export const generateDesign: any = internalActionGeneric({
         outputBlob = await applyHomeDecorWatermark(outputBlob);
       }
 
+      console.log("generateDesign: Azure generation completed", {
+        generationId: args.generationId,
+        watermarkRequired: renderProfile.watermarkRequired,
+        outputMimeType: outputBlob.type,
+      });
       generatedStorageId = (await ctx.storage.store(outputBlob)) as string;
 
       const saveResult = (await ctx.runMutation((internal as any).ai.saveGeneration, {
@@ -1051,6 +1105,11 @@ export const generateDesign: any = internalActionGeneric({
         imageUrl: saveResult.imageUrl ?? null,
       };
     } catch (error) {
+      console.error("generateDesign: generation failed", {
+        generationId: args.generationId,
+        message: error instanceof Error ? error.message : "Generation failed.",
+        serviceType: args.serviceType,
+      });
       if (generatedStorageId) {
         await ctx.storage.delete(generatedStorageId as any);
       }
