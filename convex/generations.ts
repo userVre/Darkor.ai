@@ -226,6 +226,23 @@ function normalizeGenerationSchedulerError(message?: string | null) {
   return raw;
 }
 
+function validateAzureGenerationEnv() {
+  const endpoint = trimOptional(process.env.AZURE_OPENAI_ENDPOINT);
+  const deploymentName = trimOptional(process.env.AZURE_OPENAI_DEPLOYMENT_NAME);
+  const apiKey = trimOptional(process.env.AZURE_OPENAI_API_KEY);
+
+  if (!endpoint || !deploymentName || !apiKey) {
+    throw new ConvexError("Missing Azure Environment Variables in Convex Dashboard");
+  }
+
+  return {
+    endpoint,
+    deploymentName,
+    apiKey,
+    requestUrl: `${endpoint.replace(/\/+$/, "")}/openai/deployments/${deploymentName}/images/generations?api-version=2024-02-01`,
+  };
+}
+
 function resolveRowStatus(row: { status?: string; imageUrl?: string | null }, imageUrl: string): GenerationStatus {
   return resolveGenerationStatus(row.status, imageUrl);
 }
@@ -311,7 +328,9 @@ export const startGeneration = mutationGeneric({
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
   },
   handler: async (ctx, args) => {
+    const azureConfig = validateAzureGenerationEnv();
     console.log("startGeneration: received request", {
+      azureRequestUrl: azureConfig.requestUrl,
       anonymousIdPresent: Boolean(args.anonymousId),
       hasMask: Boolean(args.maskStorageId),
       hasReferenceImages: Boolean(args.referenceImageStorageIds?.length),

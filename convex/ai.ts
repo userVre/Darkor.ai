@@ -77,7 +77,6 @@ type DesignOrchestrationResult = {
 };
 
 type AzureRenderProfile = {
-  editEndpoint: string;
   generationEndpoint: string;
   deploymentName: string;
   quality: string;
@@ -323,7 +322,6 @@ function resolveAzureRenderProfile(args: { endpoint: string; deploymentName: str
   const isPaidTier = isProPlan || args.speedTier === "pro" || args.speedTier === "ultra";
 
   return {
-    editEndpoint: buildAzureImageEndpoint(args.endpoint, args.deploymentName, "edits"),
     generationEndpoint: buildAzureImageEndpoint(args.endpoint, args.deploymentName, "generations"),
     deploymentName: args.deploymentName,
     quality: isPaidTier ? AZURE_QUALITY_PRO : AZURE_QUALITY_FREE,
@@ -455,30 +453,26 @@ async function runAzureImageGeneration(args: {
   maskBlob?: Blob | null;
   renderProfile: AzureRenderProfile;
 }) {
-  const formData = new FormData();
-  formData.append("model", args.renderProfile.deploymentName);
-  formData.append("prompt", buildAzurePrompt(args.prompt, args.negativePrompt));
-  formData.append("n", "1");
-  formData.append("size", args.renderProfile.size);
-  formData.append("quality", args.renderProfile.quality);
-  formData.append("output_format", AZURE_OUTPUT_FORMAT);
-  formData.append("image", args.sourceBlob, "source.png");
-
-  if (args.maskBlob) {
-    formData.append("mask", args.maskBlob, "mask.png");
-  }
-
-  console.log("runAzureImageGeneration: prepared Azure edit request", {
-    endpoint: args.renderProfile.editEndpoint,
-    hasMask: Boolean(args.maskBlob),
+  const payload = {
+    prompt: buildAzurePrompt(args.prompt, args.negativePrompt),
+    n: 1,
+    size: args.renderProfile.size,
     quality: args.renderProfile.quality,
+  };
+
+  console.log("runAzureImageGeneration: prepared Azure generation request", {
+    endpoint: args.renderProfile.generationEndpoint,
+    hasMask: Boolean(args.maskBlob),
+    payloadKeys: Object.keys(payload),
+    apiKey: args.apiKey,
     size: args.renderProfile.size,
   });
 
   const response = await requestAzureImageWithRetry({
     apiKey: args.apiKey,
-    body: formData,
-    endpoint: args.renderProfile.editEndpoint,
+    body: JSON.stringify(payload),
+    endpoint: args.renderProfile.generationEndpoint,
+    contentType: "application/json",
   });
 
   const body = (await response.json()) as AzureGenerationResponse;
@@ -1017,7 +1011,6 @@ export const generateDesign: any = internalActionGeneric({
         speedTier: (args.speedTier as SpeedTier | undefined) ?? "standard",
       });
       console.log("generateDesign: resolved Azure endpoints", {
-        editEndpoint: renderProfile.editEndpoint,
         generationEndpoint: renderProfile.generationEndpoint,
         generationId: args.generationId,
       });
