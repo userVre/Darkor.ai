@@ -9,7 +9,6 @@ import { internal } from "./_generated/api";
 import {
   compactPromptSegments,
   dedupeSuggestions,
-  hasMultipleDistinctStyles,
   normalizeGenerationError,
   redactSecret,
   requestGeminiDesignOrchestration,
@@ -197,35 +196,81 @@ async function runAzureImageGeneration(args: {
   referenceBlobs: Blob[];
   maskBlob?: Blob | null;
   renderProfile: AzureRenderProfile;
+  targetColor?: string;
+  targetColorHex?: string;
 }) {
-  const azure = createAzureImageProvider({
-    apiKey: args.apiKey,
-    endpoint: args.endpoint,
-  });
   const composedPrompt = buildAzurePrompt(args.prompt, args.negativePrompt);
   const sourceImages = [args.sourceBlob, ...args.referenceBlobs];
   const usesImageEditFlow = sourceImages.length > 0;
-  const imagePrompt = usesImageEditFlow
-    ? {
-        text: composedPrompt,
-        images: await Promise.all(sourceImages.map((blob) => blobToDataUrl(blob))),
-        ...(args.maskBlob ? { mask: await blobToDataUrl(args.maskBlob) } : {}),
-      }
-    : composedPrompt;
 
   console.log("runAzureImageGeneration: prepared Azure SDK image request", {
     baseUrl: buildAzureBaseUrl(args.endpoint),
     deploymentName: args.renderProfile.deploymentName,
     requestUrl: `${buildAzureBaseUrl(args.endpoint)}/deployments/${args.renderProfile.deploymentName}/${usesImageEditFlow ? "images/edits" : "images/generations"}?api-version=${AZURE_IMAGE_API_VERSION}`,
     hasMask: Boolean(args.maskBlob),
+    maskBase64Present: Boolean(args.maskBlob),
     inputImageCount: sourceImages.length,
     size: args.renderProfile.size,
     n: 1,
+    targetColor: trimOptional(args.targetColor) ?? null,
+    targetColorHex: trimOptional(args.targetColorHex) ?? null,
+  });
+
+  if (usesImageEditFlow) {
+    const requestUrl = `${ensureAzureEndpointPrefix(args.endpoint)}openai/deployments/${args.renderProfile.deploymentName}/images/edits?api-version=${AZURE_IMAGE_API_VERSION}`;
+    const body = {
+      prompt: composedPrompt,
+      size: args.renderProfile.size,
+      n: 1,
+      images: await Promise.all(
+        sourceImages.map(async (blob) => ({
+          image_url: await blobToDataUrl(blob),
+        })),
+      ),
+      ...(args.maskBlob
+        ? {
+            mask: {
+              image_url: await blobToDataUrl(args.maskBlob),
+            },
+          }
+        : {}),
+    };
+
+    const response = await fetch(requestUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": args.apiKey,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new ConvexError(await parseAzureError(response));
+    }
+
+    const payload = (await response.json()) as {
+      data?: Array<{ b64_json?: string }>;
+    };
+    const b64Json = trimOptional(payload.data?.[0]?.b64_json);
+    if (!b64Json) {
+      throw new ConvexError("Azure OpenAI returned no image.");
+    }
+
+    return {
+      uint8Array: Uint8Array.from(Buffer.from(b64Json, "base64")),
+      mediaType: "image/png",
+    };
+  }
+
+  const azure = createAzureImageProvider({
+    apiKey: args.apiKey,
+    endpoint: args.endpoint,
   });
 
   const result = await experimental_generateImage({
     model: azure.image(args.renderProfile.deploymentName),
-    prompt: imagePrompt,
+    prompt: composedPrompt,
     size: args.renderProfile.size,
     n: 1,
     maxRetries: 2,
@@ -481,7 +526,10 @@ export const generateDesign: any = internalActionGeneric({
       });
 
       const orchestratedDirection =
-        (args.smartSuggest || (args.serviceType === "redesign" && hasMultipleDistinctStyles(args.style, args.styleSelections)))
+        (args.serviceType === "floor" ||
+          args.serviceType === "redesign" ||
+          args.smartSuggest ||
+          (args.serviceType === "paint" && Boolean(args.maskStorageId)))
           ? await requestGeminiDesignOrchestration({
               sourceBlob,
               serviceType: args.serviceType as ServiceType,
@@ -552,6 +600,8 @@ export const generateDesign: any = internalActionGeneric({
         referenceBlobs,
         maskBlob,
         renderProfile,
+        targetColor: args.targetColor,
+        targetColorHex: args.targetColorHex,
       });
 
       const imageBytes = generatedImage.uint8Array;

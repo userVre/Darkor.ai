@@ -2243,7 +2243,7 @@ export default function WorkspaceScreen() {
     [presetRoom, serviceType],
   );
   const isWizardFlowActive = (isPaintService || isFloorService) ? isServiceStepFlowActive : isRedesignWizardActive;
-  const shouldHideNativeTabBar = pathname === "/workspace" && isFocused && isWizardFlowActive;
+  const shouldHideNativeTabBar = (pathname === "/workspace" || pathname === "/create") && isFocused && isWizardFlowActive;
   const presetRoomOptions =
     serviceType === "exterior"
       ? SPACE_OPTIONS.exterior

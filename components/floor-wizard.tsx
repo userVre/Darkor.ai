@@ -1231,6 +1231,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       {step === "processing" ? (
         <ServiceProcessingScreen
           imageUri={selectedImage?.uri ?? null}
+          resultImageUri={generatedImageUrl}
           subtitlePhrases={generationStatusMessages}
           onCancel={() => {
             void handleCancelGeneration();

@@ -2034,6 +2034,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       {step === "processing" ? (
         <ServiceProcessingScreen
           imageUri={selectedImage?.uri ?? null}
+          resultImageUri={generatedImageUrl}
           subtitlePhrases={generationStatusMessages}
           onCancel={() => {
             void handleCancelGeneration();

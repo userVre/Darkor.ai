@@ -3,7 +3,16 @@ import {Image} from "expo-image";
 import {AnimatePresence, MotiView} from "moti";
 import {memo, useEffect, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {LayoutChangeEvent, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import Animated, {
+  Easing,
+  cancelAnimation,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {DS, GLOBAL_VERTICAL_GAP} from "../lib/design-system";
 import {spacing} from "../styles/spacing";
@@ -22,6 +31,7 @@ const GENERATION_PROGRESS_COLOR = DS.colors.accent;
 
 type ServiceProcessingScreenProps = {
   imageUri?: string | null;
+  resultImageUri?: string | null;
   subtitlePhrases?: readonly string[];
   onCancel: () => void;
   cancelDisabled?: boolean;
@@ -30,6 +40,7 @@ type ServiceProcessingScreenProps = {
 
 export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   imageUri,
+  resultImageUri,
   subtitlePhrases,
   onCancel,
   cancelDisabled = false,
@@ -54,14 +65,27 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   );
   const [subtitleIndex, setSubtitleIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [previewHeight, setPreviewHeight] = useState(0);
   const previewImageUri = draft.image?.uri ?? imageUri ?? null;
+  const revealedImageUri = resultImageUri ?? null;
   const activeSubtitlePhrases = subtitlePhrases ?? defaultSubtitlePhrases;
+  const scanProgress = useSharedValue(0);
+  const scanOpacity = useSharedValue(1);
+  const beforeOpacity = useSharedValue(1);
+  const afterOpacity = useSharedValue(0);
 
   const subtitleSignature = activeSubtitlePhrases.join("|");
   const activeSubtitle = useMemo(
     () => activeSubtitlePhrases[subtitleIndex % Math.max(activeSubtitlePhrases.length, 1)] ?? t("processing.status.renderingFinalLighting"),
     [activeSubtitlePhrases, subtitleIndex, t],
   );
+
+  const handlePreviewLayout = (event: LayoutChangeEvent) => {
+    const nextHeight = Math.round(event.nativeEvent.layout.height);
+    if (nextHeight > 0 && nextHeight !== previewHeight) {
+      setPreviewHeight(nextHeight);
+    }
+  };
 
   useEffect(() => {
     setSubtitleIndex(0);
@@ -90,12 +114,57 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
 
   useEffect(() => {
     if (!complete) {
+      scanOpacity.value = withTiming(1, { duration: 180 });
+      beforeOpacity.value = withTiming(1, { duration: 180 });
+      afterOpacity.value = withTiming(0, { duration: 180 });
       return;
     }
 
     setSubtitleIndex(Math.max(activeSubtitlePhrases.length - 1, 0));
     setProgress(1);
-  }, [activeSubtitlePhrases.length, complete]);
+    scanOpacity.value = withTiming(0, { duration: 320, easing: Easing.out(Easing.cubic) });
+    beforeOpacity.value = withTiming(revealedImageUri ? 0.18 : 1, { duration: 360, easing: Easing.out(Easing.cubic) });
+    afterOpacity.value = withTiming(revealedImageUri ? 1 : 0, { duration: 420, easing: Easing.out(Easing.cubic) });
+  }, [activeSubtitlePhrases.length, afterOpacity, beforeOpacity, complete, revealedImageUri, scanOpacity]);
+
+  useEffect(() => {
+    if (previewHeight <= 0 || complete) {
+      cancelAnimation(scanProgress);
+      return;
+    }
+
+    scanProgress.value = 0;
+    scanProgress.value = withRepeat(
+      withTiming(1, {
+        duration: 1800,
+        easing: Easing.inOut(Easing.quad),
+      }),
+      -1,
+      false,
+    );
+
+    return () => {
+      cancelAnimation(scanProgress);
+    };
+  }, [complete, previewHeight, scanProgress]);
+
+  const scanLineStyle = useAnimatedStyle(() => {
+    const lineTravel = Math.max(previewHeight + 72, 0);
+    const translateY = interpolate(scanProgress.value, [0, 1], [-36, lineTravel]);
+
+    return {
+      opacity: scanOpacity.value,
+      transform: [{ translateY }],
+    };
+  });
+
+  const beforeImageStyle = useAnimatedStyle(() => ({
+    opacity: beforeOpacity.value,
+  }));
+
+  const afterImageStyle = useAnimatedStyle(() => ({
+    opacity: afterOpacity.value,
+  }));
 
   return (
     <View style={styles.screen}>
@@ -119,21 +188,29 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
 
         <View style={styles.previewCard}>
           <Text style={styles.previewLabel}>{t("workspace.editor.sourcePhoto")}</Text>
-          <View style={[styles.previewFrame, { height: Math.min(Math.max(width * 1.02, 320), height * 0.42) }]}>
+          <View
+            style={[styles.previewFrame, { height: Math.min(Math.max(width * 1.02, 320), height * 0.42) }]}
+            onLayout={handlePreviewLayout}
+          >
             {previewImageUri ? (
-              <Image source={{ uri: previewImageUri }} style={styles.previewImage} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+              <Animated.View style={[styles.imageLayer, beforeImageStyle]}>
+                <Image source={{ uri: previewImageUri }} style={styles.previewImage} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+              </Animated.View>
             ) : (
               <View style={styles.photoFallback} />
             )}
 
-            <MotiView
-              animate={{ translateY: ["-18%", "116%"], opacity: [0, 0.88, 0] }}
-              transition={{ duration: SHIMMER_DURATION_MS, loop: true, type: "timing" }}
-              style={styles.scanSweepWrap}
-              pointerEvents="none"
-            >
-              <View style={styles.scanSweep} />
-            </MotiView>
+            {revealedImageUri ? (
+              <Animated.View style={[styles.imageLayer, afterImageStyle]}>
+                <Image source={{ uri: revealedImageUri }} style={styles.previewImage} contentFit="cover" cachePolicy="memory-disk" transition={180} />
+              </Animated.View>
+            ) : null}
+
+            <Animated.View style={[styles.scanSweepWrap, scanLineStyle]} pointerEvents="none">
+              <View style={styles.scanSweepBlur} />
+              <View style={styles.scanSweepGlow} />
+              <View style={styles.scanSweepCore} />
+            </Animated.View>
           </View>
         </View>
 
@@ -185,7 +262,7 @@ function createStyles(colors: Theme) {
   return StyleSheet.create({
     screen: {
       flex: 1,
-      backgroundColor: colors.bg,
+      backgroundColor: "#FFFFFF",
     },
     photoFallback: {
       flex: 1,
@@ -195,19 +272,10 @@ function createStyles(colors: Theme) {
     },
     scanSweepWrap: {
       position: "absolute",
-      left: 18,
-      right: 18,
-      height: 72,
-      borderRadius: 999,
-      backgroundColor: colors.brandSurfaceHigh,
-      shadowColor: colors.brandDark,
-      shadowOpacity: 0.16,
-      shadowRadius: 18,
-      shadowOffset: { width: 0, height: 6 },
-    },
-    scanSweep: {
-      flex: 1,
-      borderRadius: 999,
+      left: 14,
+      right: 14,
+      height: 64,
+      justifyContent: "center",
     },
     content: {
       flex: 1,
@@ -216,22 +284,22 @@ function createStyles(colors: Theme) {
       paddingBottom: spacing.md,
     },
     hero: {
-      alignItems: "center",
+      alignItems: "flex-start",
       gap: spacing.sm,
       paddingTop: GLOBAL_VERTICAL_GAP,
     },
     previewCard: {
       borderRadius: 28,
       borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
+      borderColor: "rgba(12, 32, 74, 0.08)",
+      backgroundColor: "#FFFFFF",
       padding: 16,
       gap: 12,
-      shadowColor: colors.shadow,
-      shadowOpacity: 0.05,
-      shadowRadius: 22,
-      shadowOffset: { width: 0, height: 10 },
-      elevation: 3,
+      shadowColor: "rgba(22, 55, 122, 0.22)",
+      shadowOpacity: 0.1,
+      shadowRadius: 28,
+      shadowOffset: { width: 0, height: 12 },
+      elevation: 4,
     },
     previewLabel: {
       color: colors.textMuted,
@@ -241,16 +309,21 @@ function createStyles(colors: Theme) {
       lineHeight: 14,
       letterSpacing: 1,
       textTransform: "uppercase",
-      textAlign: "center",
+      textAlign: "left",
     },
     previewFrame: {
       borderRadius: 24,
       overflow: "hidden",
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: "#EFF4FF",
+      borderWidth: 1,
+      borderColor: "rgba(37, 99, 235, 0.08)",
     },
     previewImage: {
       width: "100%",
       height: "100%",
+    },
+    imageLayer: {
+      ...StyleSheet.absoluteFillObject,
     },
     bottomContent: {
       gap: spacing.md,
@@ -259,7 +332,7 @@ function createStyles(colors: Theme) {
       height: 3,
       width: "100%",
       borderRadius: 2,
-      backgroundColor: colors.border,
+      backgroundColor: "rgba(37, 99, 235, 0.12)",
       overflow: "hidden",
     },
     progressFill: {
@@ -268,16 +341,16 @@ function createStyles(colors: Theme) {
       backgroundColor: GENERATION_PROGRESS_COLOR,
     },
     copyBlock: {
-      alignItems: "center",
+      alignItems: "flex-start",
     },
     title: {
-      color: colors.textPrimary,
+      color: "#0F172A",
       fontSize: 34,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "800",
       lineHeight: 40,
       letterSpacing: -0.8,
-      textAlign: "center",
+      textAlign: "left",
       maxWidth: 340,
     },
     subtitleWrap: {
@@ -285,34 +358,73 @@ function createStyles(colors: Theme) {
       justifyContent: "center",
     },
     subtitle: {
-      color: colors.textSecondary,
+      color: "#334155",
       fontSize: 17,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "700",
       lineHeight: 24,
-      textAlign: "center",
+      textAlign: "left",
     },
     eta: {
-      color: colors.textSecondary,
+      color: "#475569",
       fontSize: 13,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "600",
       lineHeight: 19,
-      textAlign: "center",
+      textAlign: "left",
     },
     cancelWrap: {
-      alignSelf: "center",
-      paddingHorizontal: spacing.sm,
+      alignSelf: "flex-start",
+      paddingHorizontal: 0,
       paddingTop: spacing.xs,
     },
     cancelText: {
-      color: colors.textSecondary,
+      color: "#64748B",
       fontSize: 12,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "600",
     },
     cancelTextDisabled: {
       color: colors.borderLight,
+    },
+    scanSweepBlur: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      top: 8,
+      height: 44,
+      borderRadius: 999,
+      backgroundColor: "rgba(37, 99, 235, 0.16)",
+      shadowColor: "#2563EB",
+      shadowOpacity: 0.34,
+      shadowRadius: 26,
+      shadowOffset: { width: 0, height: 10 },
+    },
+    scanSweepGlow: {
+      position: "absolute",
+      left: 8,
+      right: 8,
+      top: 20,
+      height: 14,
+      borderRadius: 999,
+      backgroundColor: "rgba(59, 130, 246, 0.38)",
+      shadowColor: "#2563EB",
+      shadowOpacity: 0.55,
+      shadowRadius: 18,
+      shadowOffset: { width: 0, height: 0 },
+    },
+    scanSweepCore: {
+      position: "absolute",
+      left: 18,
+      right: 18,
+      top: 26,
+      height: 4,
+      borderRadius: 999,
+      backgroundColor: "#2563EB",
+      shadowColor: "#60A5FA",
+      shadowOpacity: 0.9,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 0 },
     },
   });
 }

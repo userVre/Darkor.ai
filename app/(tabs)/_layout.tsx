@@ -9,9 +9,11 @@ import {spacing} from "../../styles/spacing";
 import {fonts} from "../../styles/typography";
 
 import {useFlowUI} from "../../components/flow-ui-context";
+import {useWorkspaceDraft} from "../../components/workspace-context";
 import {DS} from "../../lib/design-system";
 import {ENABLE_GUEST_WIZARD_TEST_MODE} from "../../lib/guest-testing";
 import {triggerHaptic} from "../../lib/haptics";
+import {withWorkspaceFlowId} from "../../lib/try-it-flow";
 
 export const DEFAULT_TAB_BAR_STYLE = {
   position: "absolute" as const,
@@ -98,6 +100,7 @@ export default function TabsLayout() {
   const router = useRouter();
   const { t } = useTranslation();
   const { isFlowActive } = useFlowUI();
+  const { clearDraft } = useWorkspaceDraft();
   const { isSignedIn } = useAuth();
   const canOpenCreateTab = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
 
@@ -142,14 +145,18 @@ export default function TabsLayout() {
             <TabBarButton
               {...props}
               onPress={(event) => {
+                triggerHaptic();
+                const nextCreateRoute = withWorkspaceFlowId("/create?service=interior&startStep=1&entrySource=create-tab");
+
                 if (!canOpenCreateTab) {
                   event.preventDefault();
-                  triggerHaptic();
-                  router.push({ pathname: "/sign-in", params: { returnTo: "/create" } });
+                  router.push({ pathname: "/sign-in", params: { returnTo: nextCreateRoute } });
                   return;
                 }
 
-                props.onPress?.(event);
+                event.preventDefault();
+                clearDraft();
+                router.navigate(nextCreateRoute as any);
               }}
             />
           ),
