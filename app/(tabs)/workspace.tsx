@@ -2156,6 +2156,8 @@ export default function WorkspaceScreen() {
   const lastFlowIdRef = useRef<string | null>(null);
   const hydratedDraftFlowIdRef = useRef<string | null>(null);
   const previousWorkflowStepRef = useRef<number | null>(null);
+  const appliedPresetStyleRef = useRef<string | null>(null);
+  const appliedPresetRoomRef = useRef<string | null>(null);
   const sliderX = useSharedValue(0);
   const sliderWidth = useSharedValue(0);
 
@@ -2173,6 +2175,14 @@ export default function WorkspaceScreen() {
   const selectedImage = useMemo(
     () => selectedImages[currentDisplayIndex] ?? selectedImages[0] ?? null,
     [currentDisplayIndex, selectedImages],
+  );
+  const presetStyleKey = useMemo(
+    () => (typeof presetStyle === "string" && presetStyle.trim().length > 0 ? `${serviceType}:${presetStyle.trim().toLowerCase()}` : null),
+    [presetStyle, serviceType],
+  );
+  const presetRoomKey = useMemo(
+    () => (typeof presetRoom === "string" && presetRoom.trim().length > 0 ? `${serviceType}:${presetRoom.trim().toLowerCase()}` : null),
+    [presetRoom, serviceType],
   );
   const isWizardFlowActive = (isPaintService || isFloorService) ? isServiceStepFlowActive : isRedesignWizardActive;
   const shouldHideNativeTabBar = pathname === "/workspace" && isFocused && isWizardFlowActive;
@@ -2360,8 +2370,16 @@ export default function WorkspaceScreen() {
   }, []);
 
   useEffect(() => {
-    if (!presetStyle || selectedStyles.length > 0 || selectedStyle) return;
-    const normalized = String(presetStyle).trim().toLowerCase();
+    if (!presetStyleKey) {
+      appliedPresetStyleRef.current = null;
+      return;
+    }
+
+    if (appliedPresetStyleRef.current === presetStyleKey || selectedStyles.length > 0 || selectedStyle) {
+      return;
+    }
+
+    const normalized = presetStyleKey.split(":").slice(1).join(":");
     const stylePool =
       serviceType === "exterior"
         ? EXTERIOR_STYLE_OPTIONS
@@ -2370,18 +2388,27 @@ export default function WorkspaceScreen() {
           : serviceType === "paint"
             ? WALL_COLOR_OPTIONS.map((option) => option.title)
             : serviceType === "floor"
-              ? FLOOR_MATERIAL_OPTIONS.map((option) => option.title)
+            ? FLOOR_MATERIAL_OPTIONS.map((option) => option.title)
           : STYLE_OPTIONS;
     const matched = stylePool.find((style) => style.toLowerCase() === normalized);
     if (matched) {
       setSelectedStyle(matched);
       setSelectedStyles([matched]);
+      appliedPresetStyleRef.current = presetStyleKey;
     }
-  }, [presetStyle, selectedStyle, selectedStyles.length, serviceType]);
+  }, [presetStyleKey, selectedStyle, selectedStyles.length, serviceType]);
 
   useEffect(() => {
-    if (!presetRoom || selectedRooms.length > 0) return;
-    const normalized = String(presetRoom).trim().toLowerCase();
+    if (!presetRoomKey) {
+      appliedPresetRoomRef.current = null;
+      return;
+    }
+
+    if (appliedPresetRoomRef.current === presetRoomKey || selectedRooms.length > 0) {
+      return;
+    }
+
+    const normalized = presetRoomKey.split(":").slice(1).join(":");
     const normalizedExteriorValue = serviceType === "exterior" ? EXTERIOR_BUILDING_PRESET_ALIASES[normalized] ?? null : null;
     const normalizedGardenValue = serviceType === "garden" ? GARDEN_AREA_PRESET_ALIASES[normalized] ?? null : null;
     const matched = presetRoomOptions.find(
@@ -2392,8 +2419,9 @@ export default function WorkspaceScreen() {
     );
     if (matched) {
       setSelectedRooms([matched]);
+      appliedPresetRoomRef.current = presetRoomKey;
     }
-  }, [presetRoom, presetRoomOptions, selectedRooms.length, serviceType]);
+  }, [presetRoomKey, presetRoomOptions, selectedRooms.length, serviceType]);
 
   useEffect(() => {
     if (workflowStep === 5 && generatedImageUrl) {
@@ -3439,38 +3467,34 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    setSelectedImages((current) => {
-      const merged = [...current];
-      let preferredUri: string | null = null;
-      for (const image of images) {
-        const existingIndex = merged.findIndex((item) => item.uri === image.uri);
-        if (existingIndex >= 0) {
-          preferredUri = image.uri;
-          continue;
-        }
-        if (merged.length >= 3) {
-          break;
-        }
-        merged.push(image);
+    const merged = [...selectedImages];
+    let preferredUri: string | null = null;
+    for (const image of images) {
+      const existingIndex = merged.findIndex((item) => item.uri === image.uri);
+      if (existingIndex >= 0) {
         preferredUri = image.uri;
+        continue;
       }
+      if (merged.length >= 3) {
+        break;
+      }
+      merged.push(image);
+      preferredUri = image.uri;
+    }
 
-      setCurrentDisplayIndex((currentDisplay) => {
-        const preferredIndex =
-          preferredUri ? merged.findIndex((image) => image.uri === preferredUri) : -1;
-        const nextDisplay =
-          preferredIndex >= 0
-            ? preferredIndex
-            : current.length === 0
-              ? 0
-              : Math.max(0, Math.min(currentDisplay, merged.length - 1));
-        return nextDisplay;
-      });
-      setGeneratedImageUrl(null);
-      setGenerationId(null);
-      return merged;
-    });
-  }, []);
+    const preferredIndex = preferredUri ? merged.findIndex((image) => image.uri === preferredUri) : -1;
+    const nextDisplay =
+      preferredIndex >= 0
+        ? preferredIndex
+        : selectedImages.length === 0
+          ? 0
+          : Math.max(0, Math.min(currentDisplayIndex, merged.length - 1));
+
+    setSelectedImages(merged);
+    setCurrentDisplayIndex(nextDisplay);
+    setGeneratedImageUrl(null);
+    setGenerationId(null);
+  }, [currentDisplayIndex, selectedImages]);
 
   const focusSelectedImage = useCallback((index: number) => {
     if (index < 0 || index >= selectedImages.length) {
@@ -3483,26 +3507,21 @@ export default function WorkspaceScreen() {
 
   const removeSelectedImage = useCallback((index: number) => {
     triggerHaptic();
-    setSelectedImages((current) => {
-      const nextImages = current.filter((_, currentIndex) => currentIndex !== index);
-      setCurrentDisplayIndex((currentDisplay) => {
-        if (nextImages.length === 0) {
-          return 0;
-        }
+    const nextImages = selectedImages.filter((_, currentIndex) => currentIndex !== index);
+    const nextDisplay =
+      nextImages.length === 0
+        ? 0
+        : index < currentDisplayIndex
+          ? currentDisplayIndex - 1
+          : index === currentDisplayIndex
+            ? Math.min(currentDisplayIndex, nextImages.length - 1)
+            : currentDisplayIndex;
 
-        const nextDisplay =
-          index < currentDisplay
-            ? currentDisplay - 1
-            : index === currentDisplay
-              ? Math.min(currentDisplay, nextImages.length - 1)
-              : currentDisplay;
-        return nextDisplay;
-      });
-      setGeneratedImageUrl(null);
-      setGenerationId(null);
-      return nextImages;
-    });
-  }, []);
+    setSelectedImages(nextImages);
+    setCurrentDisplayIndex(nextDisplay);
+    setGeneratedImageUrl(null);
+    setGenerationId(null);
+  }, [currentDisplayIndex, selectedImages]);
 
   const applyPickedAsset = useCallback(
     (asset: ImagePicker.ImagePickerAsset, label: string) => {
@@ -4650,16 +4669,15 @@ export default function WorkspaceScreen() {
       setUseAISelection(false);
       setAiSuggestedStyle(null);
       setAiSuggestedPaletteId(null);
+      const nextStyles = selectedStyles.includes(style)
+        ? selectedStyles.filter((item) => item !== style)
+        : [...selectedStyles, style];
       startTransition(() => {
-        setSelectedStyles((current) => {
-          const exists = current.includes(style);
-          const next = exists ? current.filter((item) => item !== style) : [...current, style];
-          setSelectedStyle(next[next.length - 1] ?? null);
-          return next;
-        });
+        setSelectedStyles(nextStyles);
+        setSelectedStyle(nextStyles[nextStyles.length - 1] ?? null);
       });
     },
-    [handleAiSuggest],
+    [handleAiSuggest, selectedStyles],
   );
 
   const handleContinueFromExteriorStyleStep = useCallback(() => {
@@ -4693,16 +4711,15 @@ export default function WorkspaceScreen() {
       setUseAISelection(false);
       setAiSuggestedStyle(null);
       setAiSuggestedPaletteId(null);
+      const nextStyles = selectedStyles.includes(style)
+        ? selectedStyles.filter((item) => item !== style)
+        : [...selectedStyles, style];
       startTransition(() => {
-        setSelectedStyles((current) => {
-          const exists = current.includes(style);
-          const next = exists ? current.filter((item) => item !== style) : [...current, style];
-          setSelectedStyle(next[next.length - 1] ?? null);
-          return next;
-        });
+        setSelectedStyles(nextStyles);
+        setSelectedStyle(nextStyles[nextStyles.length - 1] ?? null);
       });
     },
-    [handleAiSuggest],
+    [handleAiSuggest, selectedStyles],
   );
 
   const handleContinueFromGardenStyleStep = useCallback(() => {
@@ -4736,16 +4753,15 @@ export default function WorkspaceScreen() {
       setUseAISelection(false);
       setAiSuggestedStyle(null);
       setAiSuggestedPaletteId(null);
+      const nextStyles = selectedStyles.includes(style)
+        ? selectedStyles.filter((item) => item !== style)
+        : [...selectedStyles, style];
       startTransition(() => {
-        setSelectedStyles((current) => {
-          const exists = current.includes(style);
-          const next = exists ? current.filter((item) => item !== style) : [...current, style];
-          setSelectedStyle(next[next.length - 1] ?? null);
-          return next;
-        });
+        setSelectedStyles(nextStyles);
+        setSelectedStyle(nextStyles[nextStyles.length - 1] ?? null);
       });
     },
-    [handleAiSuggest],
+    [handleAiSuggest, selectedStyles],
   );
 
   const handleContinueFromInteriorStyleStep = useCallback(() => {
@@ -4834,19 +4850,19 @@ export default function WorkspaceScreen() {
     setAiSuggestedPaletteId((current) => (value === SMART_SUGGEST_WALL_LABEL || value === SMART_SUGGEST_FLOOR_LABEL ? current : null));
     startTransition(() => {
       if (isPaintService || isFloorService || isLeanGenerationService) {
-        setSelectedStyle((current) => (current === value ? null : value));
-        setSelectedStyles((current) => (current[0] === value ? [] : [value]));
+        const nextStyle = selectedStyle === value ? null : value;
+        setSelectedStyle(nextStyle);
+        setSelectedStyles(nextStyle ? [nextStyle] : []);
         return;
       }
 
-      setSelectedStyles((current) => {
-        const exists = current.includes(value);
-        const next = exists ? current.filter((item) => item !== value) : [...current, value];
-        setSelectedStyle(next[next.length - 1] ?? null);
-        return next;
-      });
+      const nextStyles = selectedStyles.includes(value)
+        ? selectedStyles.filter((item) => item !== value)
+        : [...selectedStyles, value];
+      setSelectedStyles(nextStyles);
+      setSelectedStyle(nextStyles[nextStyles.length - 1] ?? null);
     });
-  }, [customPrompt, handleAiSuggest, isFloorService, isLeanGenerationService, isPaintService]);
+  }, [customPrompt, handleAiSuggest, isFloorService, isLeanGenerationService, isPaintService, selectedStyle, selectedStyles]);
 
   const handleChangeCustomPrompt = useCallback((value: string) => {
     setCustomPromptDraft(value);

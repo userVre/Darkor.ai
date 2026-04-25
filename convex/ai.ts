@@ -17,8 +17,8 @@ const AZURE_IMAGE_REQUEST_TIMEOUT_MS = 90_000;
 const AZURE_OUTPUT_SIZE = 1024;
 const AZURE_OUTPUT_FORMAT = "png";
 const FREE_MAX_DIMENSION = 1080;
-const AZURE_QUALITY_FREE = "standard";
-const AZURE_QUALITY_PRO = "hd";
+const AZURE_QUALITY_FREE = "medium";
+const AZURE_QUALITY_PRO = "high";
 
 type ServiceType = "paint" | "floor" | "redesign";
 type SpeedTier = "standard" | "pro" | "ultra";
@@ -77,7 +77,8 @@ type DesignOrchestrationResult = {
 };
 
 type AzureRenderProfile = {
-  endpoint: string;
+  editEndpoint: string;
+  generationEndpoint: string;
   deploymentName: string;
   quality: string;
   size: "1024x1024";
@@ -313,12 +314,17 @@ function normalizeAzureEndpoint(endpoint: string) {
   return endpoint.replace(/\/+$/, "");
 }
 
+function buildAzureImageEndpoint(endpoint: string, deploymentName: string, operation: "edits" | "generations") {
+  return `${normalizeAzureEndpoint(endpoint)}/openai/deployments/${deploymentName}/images/${operation}?api-version=${AZURE_IMAGE_API_VERSION}`;
+}
+
 function resolveAzureRenderProfile(args: { endpoint: string; deploymentName: string; planUsed?: string; speedTier?: SpeedTier }) {
   const isProPlan = args.planUsed === "pro";
   const isPaidTier = isProPlan || args.speedTier === "pro" || args.speedTier === "ultra";
 
   return {
-    endpoint: `${normalizeAzureEndpoint(args.endpoint)}/openai/deployments/${args.deploymentName}/images/generations?api-version=${AZURE_IMAGE_API_VERSION}`,
+    editEndpoint: buildAzureImageEndpoint(args.endpoint, args.deploymentName, "edits"),
+    generationEndpoint: buildAzureImageEndpoint(args.endpoint, args.deploymentName, "generations"),
     deploymentName: args.deploymentName,
     quality: isPaidTier ? AZURE_QUALITY_PRO : AZURE_QUALITY_FREE,
     size: "1024x1024" as const,
@@ -326,41 +332,40 @@ function resolveAzureRenderProfile(args: { endpoint: string; deploymentName: str
   } satisfies AzureRenderProfile;
 }
 
-async function requestAzureGenerationWithRetry(args: {
+async function requestAzureImageWithRetry(args: {
   apiKey: string;
-  payload: Record<string, unknown>;
+  body: BodyInit;
   endpoint: string;
+  contentType?: string;
 }) {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      console.log("requestAzureGenerationWithRetry: sending request", {
+      console.log("requestAzureImageWithRetry: sending request", {
         attempt: attempt + 1,
         endpoint: args.endpoint,
-        payloadKeys: Object.keys(args.payload),
+        contentType: args.contentType ?? "multipart/form-data",
       });
       const response = await fetchWithTimeout(
         args.endpoint,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
             "api-key": args.apiKey,
+            ...(args.contentType ? { "Content-Type": args.contentType } : {}),
           },
-          body: JSON.stringify(args.payload),
+          body: args.body,
         },
         AZURE_IMAGE_REQUEST_TIMEOUT_MS,
       );
 
       if (!response.ok) {
         const parsedError = await parseAzureError(response);
-        const errorMessage = normalizeGenerationError(parsedError);
-        console.error("requestAzureGenerationWithRetry: Azure request failed", {
+        console.error("requestAzureImageWithRetry: Azure request failed", {
           attempt: attempt + 1,
           endpoint: args.endpoint,
           error: parsedError,
-          friendlyMessage: errorMessage,
           status: response.status,
         });
         if (attempt === 0 && shouldRetryStatus(response.status)) {
@@ -370,13 +375,13 @@ async function requestAzureGenerationWithRetry(args: {
         if (shouldRetryStatus(response.status)) {
           throw new ConvexError(AI_PROVIDER_DOWN);
         }
-        throw new ConvexError(errorMessage || `Azure OpenAI image generation failed with status ${response.status}.`);
+        throw new ConvexError(parsedError || `Azure OpenAI image generation failed with status ${response.status}.`);
       }
 
       return response;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Azure OpenAI image generation failed.";
-      console.error("requestAzureGenerationWithRetry: request threw", {
+      console.error("requestAzureImageWithRetry: request threw", {
         attempt: attempt + 1,
         endpoint: args.endpoint,
         message,
@@ -450,24 +455,30 @@ async function runAzureImageGeneration(args: {
   maskBlob?: Blob | null;
   renderProfile: AzureRenderProfile;
 }) {
-  const payload: Record<string, unknown> = {
-    model: args.renderProfile.deploymentName,
-    prompt: buildAzurePrompt(args.prompt, args.negativePrompt),
-    n: 1,
-    size: args.renderProfile.size,
-    quality: args.renderProfile.quality,
-    output_format: AZURE_OUTPUT_FORMAT,
-    image: [await blobToBase64(args.sourceBlob)],
-  };
+  const formData = new FormData();
+  formData.append("model", args.renderProfile.deploymentName);
+  formData.append("prompt", buildAzurePrompt(args.prompt, args.negativePrompt));
+  formData.append("n", "1");
+  formData.append("size", args.renderProfile.size);
+  formData.append("quality", args.renderProfile.quality);
+  formData.append("output_format", AZURE_OUTPUT_FORMAT);
+  formData.append("image", args.sourceBlob, "source.png");
 
   if (args.maskBlob) {
-    payload.mask_base64 = await blobToBase64(args.maskBlob);
+    formData.append("mask", args.maskBlob, "mask.png");
   }
 
-  const response = await requestAzureGenerationWithRetry({
+  console.log("runAzureImageGeneration: prepared Azure edit request", {
+    endpoint: args.renderProfile.editEndpoint,
+    hasMask: Boolean(args.maskBlob),
+    quality: args.renderProfile.quality,
+    size: args.renderProfile.size,
+  });
+
+  const response = await requestAzureImageWithRetry({
     apiKey: args.apiKey,
-    payload,
-    endpoint: args.renderProfile.endpoint,
+    body: formData,
+    endpoint: args.renderProfile.editEndpoint,
   });
 
   const body = (await response.json()) as AzureGenerationResponse;
@@ -1005,6 +1016,11 @@ export const generateDesign: any = internalActionGeneric({
         planUsed: trimOptional(args.planUsed),
         speedTier: (args.speedTier as SpeedTier | undefined) ?? "standard",
       });
+      console.log("generateDesign: resolved Azure endpoints", {
+        editEndpoint: renderProfile.editEndpoint,
+        generationEndpoint: renderProfile.generationEndpoint,
+        generationId: args.generationId,
+      });
 
       const orchestratedDirection =
         (args.smartSuggest || (args.serviceType === "redesign" && hasMultipleDistinctStyles(args.style, args.styleSelections)))
@@ -1105,22 +1121,24 @@ export const generateDesign: any = internalActionGeneric({
         imageUrl: saveResult.imageUrl ?? null,
       };
     } catch (error) {
+      const rawMessage = error instanceof Error ? error.message : "Generation failed.";
+      const friendlyMessage = normalizeGenerationError(rawMessage);
       console.error("generateDesign: generation failed", {
         generationId: args.generationId,
-        message: error instanceof Error ? error.message : "Generation failed.",
+        message: rawMessage,
+        friendlyMessage,
         serviceType: args.serviceType,
       });
       if (generatedStorageId) {
         await ctx.storage.delete(generatedStorageId as any);
       }
 
-      const message = normalizeGenerationError(error instanceof Error ? error.message : "Generation failed.");
       await ctx.runMutation((internal as any).generations.markGenerationFailed, {
         generationId: args.generationId,
         ownerId: args.ownerId,
-        errorMessage: message,
+        errorMessage: rawMessage,
       });
-      throw new ConvexError(message);
+      throw new ConvexError(rawMessage);
     }
   },
 });
