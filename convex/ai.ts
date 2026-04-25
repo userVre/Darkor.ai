@@ -8,30 +8,17 @@ import {
   normalizeAspectRatio,
 } from "../lib/stability-prompt-builder";
 
-const STABILITY_API_BASE = "https://api.stability.ai";
-const STABILITY_V1_IMAGE_TO_IMAGE_BASE = `${STABILITY_API_BASE}/v1/generation`;
-const STABILITY_V2_INPAINT_ENDPOINT = `${STABILITY_API_BASE}/v2beta/stable-image/edit/inpaint`;
-const STABILITY_OUTPUT_FORMAT = "png";
-const STABILITY_REQUEST_TIMEOUT_MS = 90_000;
 const GEMINI_SUGGEST_REQUEST_TIMEOUT_MS = 25_000;
 const GEMINI_SUGGEST_MAX_DIMENSION = 1152;
 const GEMINI_SUGGEST_MAX_INLINE_BYTES = 3 * 1024 * 1024;
 const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
-const PRO_MIN_DELAY_MS = 4_000;
-const STABILITY_ALLOWED_DIMENSIONS = [
-  { width: 1024, height: 1024 },
-  { width: 1152, height: 896 },
-  { width: 1216, height: 832 },
-  { width: 1344, height: 768 },
-  { width: 1536, height: 640 },
-  { width: 640, height: 1536 },
-  { width: 768, height: 1344 },
-  { width: 832, height: 1216 },
-  { width: 896, height: 1152 },
-];
-
-const FREE_ENGINE = "stable-diffusion-xl-1024-v1-0";
-const PRO_ENGINE = "stable-diffusion-xl-1024-v1-0";
+const AZURE_IMAGE_API_VERSION = "2024-02-01";
+const AZURE_IMAGE_REQUEST_TIMEOUT_MS = 90_000;
+const AZURE_OUTPUT_SIZE = 1024;
+const AZURE_OUTPUT_FORMAT = "png";
+const FREE_MAX_DIMENSION = 1080;
+const AZURE_QUALITY_FREE = "standard";
+const AZURE_QUALITY_PRO = "hd";
 
 type ServiceType = "paint" | "floor" | "redesign";
 type SpeedTier = "standard" | "pro" | "ultra";
@@ -47,24 +34,34 @@ type DetectionResponse = {
   reason?: string | null;
 };
 
-type StabilityArtifact = {
-  base64?: string;
-  finishReason?: string;
-  seed?: number;
+type AzureGenerationResponse = {
+  created?: number;
+  data?: Array<{
+    b64_json?: string;
+    revised_prompt?: string;
+  }>;
+  error?: {
+    code?: string;
+    message?: string;
+    inner_error?: {
+      code?: string;
+      content_filter_result?: unknown;
+    };
+  };
+  message?: string;
 };
 
-type StabilityV1Response = {
-  artifacts?: StabilityArtifact[];
+type AzureErrorPayload = {
+  error?: {
+    code?: string;
+    message?: string;
+    inner_error?: {
+      code?: string;
+      content_filter_result?: unknown;
+    };
+  };
   message?: string;
-  name?: string;
-  errors?: string[];
-};
-
-type StabilityErrorPayload = {
-  errors?: string[];
-  message?: string;
-  name?: string;
-  id?: string;
+  details?: Array<{ code?: string; message?: string }>;
 };
 
 type DesignOrchestrationResult = {
@@ -77,6 +74,14 @@ type DesignOrchestrationResult = {
   fusionPrompt?: string;
   reason?: string;
   source: "gemini" | "fallback";
+};
+
+type AzureRenderProfile = {
+  endpoint: string;
+  deploymentName: string;
+  quality: string;
+  size: "1024x1024";
+  watermarkRequired: boolean;
 };
 
 function trimOptional(value?: string | null) {
@@ -139,7 +144,9 @@ function normalizeGenerationError(message?: string | null) {
   }
 
   if (
-    normalized.includes("missing stability_api_key") ||
+    normalized.includes("missing azure_openai_api_key") ||
+    normalized.includes("missing azure_openai_endpoint") ||
+    normalized.includes("missing azure_openai_deployment_name") ||
     normalized.includes("api key missing") ||
     normalized.includes("api key invalid") ||
     normalized.includes("unauthorized") ||
@@ -151,10 +158,13 @@ function normalizeGenerationError(message?: string | null) {
   if (
     normalized.includes("content filtered") ||
     normalized.includes("content_filter") ||
+    normalized.includes("content policy") ||
+    normalized.includes("responsible ai policy") ||
+    normalized.includes("image was filtered") ||
     normalized.includes("safety") ||
     normalized.includes("moderation")
   ) {
-    return "This request could not be processed safely. Try a different photo or prompt.";
+    return "This image request was refused for safety reasons. Try a different photo or prompt.";
   }
 
   if (
@@ -162,6 +172,8 @@ function normalizeGenerationError(message?: string | null) {
     normalized.includes("quota") ||
     normalized.includes("rate limit") ||
     normalized.includes("resource exhausted") ||
+    normalized.includes("insufficient_quota") ||
+    normalized.includes("billing") ||
     normalized.includes("temporarily unavailable")
   ) {
     return "HomeDecor AI is temporarily at capacity. Please try again in a few minutes.";
@@ -234,15 +246,16 @@ function compactPromptSegments(parts: Array<string | undefined>) {
     .join(" ");
 }
 
-async function parseStabilityError(response: Response) {
+async function parseAzureError(response: Response) {
   const raw = await response.text();
   try {
-    const parsed = JSON.parse(raw) as StabilityErrorPayload;
+    const parsed = JSON.parse(raw) as AzureErrorPayload;
     const combined = [
-      ...(Array.isArray(parsed.errors) ? parsed.errors : []),
+      parsed.error?.code,
+      parsed.error?.inner_error?.code,
+      parsed.error?.message,
       parsed.message,
-      parsed.name,
-      parsed.id,
+      ...(Array.isArray(parsed.details) ? parsed.details.flatMap((detail) => [detail.code, detail.message]) : []),
     ]
       .filter(Boolean)
       .join(" | ");
@@ -283,11 +296,27 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   }
 }
 
-async function requestStabilityWithRetry(args: {
+function normalizeAzureEndpoint(endpoint: string) {
+  return endpoint.replace(/\/+$/, "");
+}
+
+function resolveAzureRenderProfile(args: { endpoint: string; deploymentName: string; planUsed?: string; speedTier?: SpeedTier }) {
+  const isProPlan = args.planUsed === "pro";
+  const isPaidTier = isProPlan || args.speedTier === "pro" || args.speedTier === "ultra";
+
+  return {
+    endpoint: `${normalizeAzureEndpoint(args.endpoint)}/openai/deployments/${args.deploymentName}/images/generations?api-version=${AZURE_IMAGE_API_VERSION}`,
+    deploymentName: args.deploymentName,
+    quality: isPaidTier ? AZURE_QUALITY_PRO : AZURE_QUALITY_FREE,
+    size: "1024x1024" as const,
+    watermarkRequired: !isProPlan,
+  } satisfies AzureRenderProfile;
+}
+
+async function requestAzureGenerationWithRetry(args: {
   apiKey: string;
-  body: BodyInit;
+  payload: Record<string, unknown>;
   endpoint: string;
-  providerLabel: string;
 }) {
   let lastError: Error | null = null;
 
@@ -298,16 +327,16 @@ async function requestStabilityWithRetry(args: {
         {
           method: "POST",
           headers: {
-            authorization: `Bearer ${args.apiKey}`,
-            accept: "application/json",
+            "Content-Type": "application/json",
+            "api-key": args.apiKey,
           },
-          body: args.body,
+          body: JSON.stringify(args.payload),
         },
-        STABILITY_REQUEST_TIMEOUT_MS,
+        AZURE_IMAGE_REQUEST_TIMEOUT_MS,
       );
 
       if (!response.ok) {
-        const errorMessage = normalizeGenerationError(await parseStabilityError(response));
+        const errorMessage = normalizeGenerationError(await parseAzureError(response));
         if (attempt === 0 && shouldRetryStatus(response.status)) {
           await new Promise((resolve) => setTimeout(resolve, 1_500));
           continue;
@@ -315,12 +344,12 @@ async function requestStabilityWithRetry(args: {
         if (shouldRetryStatus(response.status)) {
           throw new ConvexError(AI_PROVIDER_DOWN);
         }
-        throw new ConvexError(errorMessage || `${args.providerLabel} request failed with status ${response.status}.`);
+        throw new ConvexError(errorMessage || `Azure OpenAI image generation failed with status ${response.status}.`);
       }
 
       return response;
     } catch (error) {
-      const message = error instanceof Error ? error.message : `${args.providerLabel} request failed.`;
+      const message = error instanceof Error ? error.message : "Azure OpenAI image generation failed.";
       lastError = error instanceof Error ? error : new Error(message);
       if (attempt === 0 && shouldRetryMessage(message)) {
         await new Promise((resolve) => setTimeout(resolve, 1_500));
@@ -333,51 +362,7 @@ async function requestStabilityWithRetry(args: {
     }
   }
 
-  throw lastError ?? new ConvexError(`${args.providerLabel} request failed.`);
-}
-
-function resolveRenderProfile(args: { planUsed?: string; speedTier?: SpeedTier; serviceType: ServiceType }) {
-  const isProPlan = args.planUsed === "pro";
-  const isPaidTier = isProPlan || args.speedTier === "pro" || args.speedTier === "ultra";
-
-  if (args.serviceType === "redesign") {
-    return {
-      engine: isPaidTier ? PRO_ENGINE : FREE_ENGINE,
-      cfgScale: isPaidTier ? 11 : 7,
-      steps: isPaidTier ? 50 : 28,
-      imageStrength: isPaidTier ? 0.42 : 0.36,
-      providerLabel: "Stability image-to-image generator",
-      width: 1024,
-      height: 1024,
-      watermarkRequired: !isProPlan,
-    };
-  }
-
-  return {
-    engine: isPaidTier ? PRO_ENGINE : FREE_ENGINE,
-    cfgScale: isPaidTier ? 10 : 7,
-    steps: isPaidTier ? 45 : 28,
-    imageStrength: undefined,
-    providerLabel: "Stability inpainting generator",
-    width: 1024,
-    height: 1024,
-    watermarkRequired: !isProPlan,
-  };
-}
-
-function extractGeneratedImage(response: StabilityV1Response) {
-  const artifacts = Array.isArray(response.artifacts) ? response.artifacts : [];
-  const successful = artifacts.find((artifact) => artifact.finishReason !== "CONTENT_FILTERED" && artifact.base64);
-  if (successful?.base64) {
-    return successful.base64;
-  }
-
-  if (artifacts.some((artifact) => artifact.finishReason === "CONTENT_FILTERED")) {
-    throw new ConvexError("CONTENT_FILTERED");
-  }
-
-  const errors = Array.isArray(response.errors) ? response.errors.join(" | ") : "";
-  throw new ConvexError(errors || response.message || "Stability returned no image.");
+  throw lastError ?? new ConvexError("Azure OpenAI image generation failed.");
 }
 
 function buildPrompt(args: {
@@ -408,94 +393,54 @@ function buildPrompt(args: {
   });
 }
 
-function appendPromptFields(formData: FormData, args: {
-  prompt: string;
-  negativePrompt: string;
-  cfgScale: number;
-  steps: number;
-  width?: number;
-  height?: number;
-  imageStrength?: number;
-}) {
-  formData.append("text_prompts[0][text]", args.prompt);
-  formData.append("text_prompts[0][weight]", "1");
-  formData.append("text_prompts[1][text]", args.negativePrompt);
-  formData.append("text_prompts[1][weight]", "-1");
-  formData.append("cfg_scale", String(args.cfgScale));
-  formData.append("steps", String(args.steps));
-  formData.append("samples", "1");
-  if (typeof args.width === "number") {
-    formData.append("width", String(args.width));
-  }
-  if (typeof args.height === "number") {
-    formData.append("height", String(args.height));
-  }
-  if (typeof args.imageStrength === "number") {
-    formData.append("init_image_mode", "IMAGE_STRENGTH");
-    formData.append("image_strength", String(args.imageStrength));
-  }
+function buildAzurePrompt(prompt: string, negativePrompt: string) {
+  return `${prompt}\n\nAvoid: ${negativePrompt}`;
 }
 
-async function runRedesignGeneration(args: {
+function extractAzureGeneratedImage(response: AzureGenerationResponse) {
+  const imageBase64 = response.data?.find((item) => trimOptional(item?.b64_json))?.b64_json;
+  if (imageBase64) {
+    return imageBase64;
+  }
+
+  const message =
+    response.error?.message ??
+    response.error?.inner_error?.code ??
+    response.message ??
+    "Azure OpenAI returned no image.";
+  throw new ConvexError(message);
+}
+
+async function runAzureImageGeneration(args: {
   apiKey: string;
   prompt: string;
   negativePrompt: string;
   sourceBlob: Blob;
-  renderProfile: ReturnType<typeof resolveRenderProfile>;
+  maskBlob?: Blob | null;
+  renderProfile: AzureRenderProfile;
 }) {
-  const formData = new FormData();
-  formData.append("init_image", args.sourceBlob, "source.png");
-  appendPromptFields(formData, {
-    prompt: args.prompt,
-    negativePrompt: args.negativePrompt,
-    cfgScale: args.renderProfile.cfgScale,
-    steps: args.renderProfile.steps,
-    imageStrength: args.renderProfile.imageStrength,
-  });
+  const payload: Record<string, unknown> = {
+    model: args.renderProfile.deploymentName,
+    prompt: buildAzurePrompt(args.prompt, args.negativePrompt),
+    n: 1,
+    size: args.renderProfile.size,
+    quality: args.renderProfile.quality,
+    output_format: AZURE_OUTPUT_FORMAT,
+    image: [await blobToBase64(args.sourceBlob)],
+  };
 
-  const response = await requestStabilityWithRetry({
-    apiKey: args.apiKey,
-    body: formData,
-    endpoint: `${STABILITY_V1_IMAGE_TO_IMAGE_BASE}/${args.renderProfile.engine}/image-to-image`,
-    providerLabel: args.renderProfile.providerLabel,
-  });
-
-  const payload = (await response.json()) as StabilityV1Response;
-  return extractGeneratedImage(payload);
-}
-
-async function runMaskedGeneration(args: {
-  apiKey: string;
-  prompt: string;
-  negativePrompt: string;
-  sourceBlob: Blob;
-  maskBlob: Blob;
-  renderProfile: ReturnType<typeof resolveRenderProfile>;
-}) {
-  const formData = new FormData();
-  formData.append("image", args.sourceBlob, "source.png");
-  formData.append("mask", args.maskBlob, "mask.png");
-  formData.append("prompt", args.prompt);
-  formData.append("negative_prompt", args.negativePrompt);
-  formData.append("output_format", STABILITY_OUTPUT_FORMAT);
-  formData.append("strength", String(args.renderProfile.imageStrength ?? 0.35));
-
-  const response = await requestStabilityWithRetry({
-    apiKey: args.apiKey,
-    body: formData,
-    endpoint: STABILITY_V2_INPAINT_ENDPOINT,
-    providerLabel: args.renderProfile.providerLabel,
-  });
-
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    const payload = (await response.json()) as StabilityV1Response & { image?: string };
-    const encoded = payload.image ?? extractGeneratedImage(payload);
-    return encoded;
+  if (args.maskBlob) {
+    payload.mask_base64 = await blobToBase64(args.maskBlob);
   }
 
-  const generatedBlob = await response.blob();
-  return blobToBase64(generatedBlob);
+  const response = await requestAzureGenerationWithRetry({
+    apiKey: args.apiKey,
+    payload,
+    endpoint: args.renderProfile.endpoint,
+  });
+
+  const body = (await response.json()) as AzureGenerationResponse;
+  return extractAzureGeneratedImage(body);
 }
 
 async function applyHomeDecorWatermark(blob: Blob) {
@@ -533,46 +478,20 @@ async function applyHomeDecorWatermark(blob: Blob) {
   return new Blob([watermarked], { type: "image/png" });
 }
 
-function chooseClosestDimension(width: number, height: number, preferLarger: boolean) {
-  const aspectRatio = width / Math.max(height, 1);
-  const sourceArea = width * height;
-
-  return STABILITY_ALLOWED_DIMENSIONS.slice().sort((left, right) => {
-    const leftAspectPenalty = Math.abs(left.width / left.height - aspectRatio);
-    const rightAspectPenalty = Math.abs(right.width / right.height - aspectRatio);
-    if (leftAspectPenalty !== rightAspectPenalty) {
-      return leftAspectPenalty - rightAspectPenalty;
-    }
-
-    const leftAreaPenalty = Math.abs(left.width * left.height - sourceArea);
-    const rightAreaPenalty = Math.abs(right.width * right.height - sourceArea);
-    if (leftAreaPenalty !== rightAreaPenalty) {
-      return leftAreaPenalty - rightAreaPenalty;
-    }
-
-    return preferLarger
-      ? right.width * right.height - left.width * left.height
-      : left.width * left.height - right.width * right.height;
-  })[0]!;
-}
-
-async function normalizeImagesForStability(args: {
+async function normalizeImagesForAzure(args: {
   sourceBlob: Blob;
   maskBlob?: Blob | null;
-  preferLarger: boolean;
 }) {
   const jimpModule = (await import("jimp-compact")) as any;
   const Jimp = jimpModule.default ?? jimpModule;
   const source = await Jimp.read(new Uint8Array(await args.sourceBlob.arrayBuffer()));
-  const dimension = chooseClosestDimension(source.bitmap.width, source.bitmap.height, args.preferLarger);
-
-  source.cover(dimension.width, dimension.height);
+  source.cover(AZURE_OUTPUT_SIZE, AZURE_OUTPUT_SIZE);
   const sourceBuffer = await source.getBufferAsync(Jimp.MIME_PNG);
 
   let normalizedMaskBlob: Blob | null = null;
   if (args.maskBlob) {
     const mask = await Jimp.read(new Uint8Array(await args.maskBlob.arrayBuffer()));
-    mask.cover(dimension.width, dimension.height, Jimp.RESIZE_NEAREST_NEIGHBOR);
+    mask.cover(AZURE_OUTPUT_SIZE, AZURE_OUTPUT_SIZE, Jimp.RESIZE_NEAREST_NEIGHBOR);
     mask.greyscale();
     mask.threshold({ max: 120 });
     const maskBuffer = await mask.getBufferAsync(Jimp.MIME_PNG);
@@ -582,7 +501,6 @@ async function normalizeImagesForStability(args: {
   return {
     sourceBlob: new Blob([sourceBuffer], { type: "image/png" }),
     maskBlob: normalizedMaskBlob,
-    dimension,
   };
 }
 
@@ -601,7 +519,7 @@ function heuristicDetection(target: "paint" | "floor"): DetectionResponse {
         { x: 980, y: 980 },
         { x: 20, y: 980 },
       ]],
-      reason: "Automatic detection is temporarily conservative during the Stability migration.",
+      reason: "Automatic detection is temporarily conservative during the Azure image migration.",
     };
   }
 
@@ -621,20 +539,17 @@ function heuristicDetection(target: "paint" | "floor"): DetectionResponse {
         { x: 530, y: 760 },
       ],
     ],
-    reason: "Automatic detection is temporarily conservative during the Stability migration.",
+    reason: "Automatic detection is temporarily conservative during the Azure image migration.",
   };
 }
 
-async function waitForMinimumDuration(startedAt: number, speedTier?: SpeedTier) {
-  if (speedTier !== "pro" && speedTier !== "ultra") {
-    return;
-  }
-
-  const elapsed = Date.now() - startedAt;
-  const remaining = PRO_MIN_DELAY_MS - elapsed;
-  if (remaining > 0) {
-    await new Promise((resolve) => setTimeout(resolve, remaining));
-  }
+async function limitFreeImageResolution(blob: Blob) {
+  const jimpModule = (await import("jimp-compact")) as any;
+  const Jimp = jimpModule.default ?? jimpModule;
+  const image = await Jimp.read(new Uint8Array(await blob.arrayBuffer()));
+  image.scaleToFit(FREE_MAX_DIMENSION, FREE_MAX_DIMENSION);
+  const buffer = await image.getBufferAsync(Jimp.MIME_PNG);
+  return new Blob([buffer], { type: "image/png" });
 }
 
 function extractJsonBlock(value: string) {
@@ -999,9 +914,16 @@ export const generateDesign: any = internalActionGeneric({
     ctx,
     args,
   ): Promise<{ ok: true; storageId: string; imageUrl: string | null }> => {
-    const apiKey = trimOptional(process.env.STABILITY_API_KEY);
-    if (!apiKey) {
-      const message = normalizeGenerationError("Missing STABILITY_API_KEY in Convex environment variables.");
+    const apiKey = trimOptional(process.env.AZURE_OPENAI_API_KEY);
+    const endpoint = trimOptional(process.env.AZURE_OPENAI_ENDPOINT);
+    const deploymentName = trimOptional(process.env.AZURE_OPENAI_DEPLOYMENT_NAME);
+    if (!apiKey || !endpoint || !deploymentName) {
+      const missingVariable = !apiKey
+        ? "AZURE_OPENAI_API_KEY"
+        : !endpoint
+          ? "AZURE_OPENAI_ENDPOINT"
+          : "AZURE_OPENAI_DEPLOYMENT_NAME";
+      const message = normalizeGenerationError(`Missing ${missingVariable} in Convex environment variables.`);
       await ctx.runMutation((internal as any).generations.markGenerationFailed, {
         generationId: args.generationId,
         ownerId: args.ownerId,
@@ -1010,7 +932,6 @@ export const generateDesign: any = internalActionGeneric({
       throw new ConvexError(message);
     }
 
-    const startedAt = Date.now();
     let generatedStorageId: string | null = null;
 
     try {
@@ -1024,16 +945,16 @@ export const generateDesign: any = internalActionGeneric({
         throw new ConvexError("The edit mask could not be loaded from storage.");
       }
 
-      const normalizedAssets = await normalizeImagesForStability({
+      const normalizedAssets = await normalizeImagesForAzure({
         sourceBlob,
         maskBlob,
-        preferLarger: args.planUsed === "pro" || args.speedTier === "pro" || args.speedTier === "ultra",
       });
 
-      const renderProfile = resolveRenderProfile({
+      const renderProfile = resolveAzureRenderProfile({
+        endpoint,
+        deploymentName,
         planUsed: trimOptional(args.planUsed),
         speedTier: (args.speedTier as SpeedTier | undefined) ?? "standard",
-        serviceType: args.serviceType,
       });
 
       const orchestratedDirection =
@@ -1099,33 +1020,24 @@ export const generateDesign: any = internalActionGeneric({
         prompt: optimizedPrompt,
       });
 
-      const generatedBase64 =
-        args.serviceType === "redesign"
-          ? await runRedesignGeneration({
-              apiKey,
-              prompt: optimizedPrompt,
-              negativePrompt,
-              sourceBlob: normalizedAssets.sourceBlob,
-              renderProfile,
-            })
-          : await runMaskedGeneration({
-              apiKey,
-              prompt: optimizedPrompt,
-              negativePrompt,
-              sourceBlob: normalizedAssets.sourceBlob,
-              maskBlob: normalizedAssets.maskBlob!,
-              renderProfile,
-            });
+      const generatedBase64 = await runAzureImageGeneration({
+        apiKey,
+        prompt: optimizedPrompt,
+        negativePrompt,
+        sourceBlob: normalizedAssets.sourceBlob,
+        maskBlob: args.serviceType === "redesign" ? null : normalizedAssets.maskBlob!,
+        renderProfile,
+      });
 
       const bytes = decodeBase64ToBytes(generatedBase64);
       const imageBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
       let outputBlob = new Blob([imageBuffer], { type: "image/png" });
 
       if (renderProfile.watermarkRequired) {
+        outputBlob = await limitFreeImageResolution(outputBlob);
         outputBlob = await applyHomeDecorWatermark(outputBlob);
       }
 
-      await waitForMinimumDuration(startedAt, (args.speedTier as SpeedTier | undefined) ?? "standard");
       generatedStorageId = (await ctx.storage.store(outputBlob)) as string;
 
       const saveResult = (await ctx.runMutation((internal as any).ai.saveGeneration, {

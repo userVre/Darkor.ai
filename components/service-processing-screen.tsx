@@ -13,8 +13,9 @@ import { LuxPressable } from "./lux-pressable";
 import { useWorkspaceDraft } from "./workspace-context";
 
 const pointerClassName = "cursor-pointer";
-const PROGRESS_DURATION_MS = 15_000;
-const PROGRESS_MAX = 0.9;
+const PROGRESS_INTERVAL_MS = 500;
+const PROGRESS_MAX = 0.94;
+const PROGRESS_EASING = 0.08;
 const STATUS_ROTATION_MS = 3_000;
 const SHIMMER_DURATION_MS = 2_000;
 const GENERATION_PROGRESS_COLOR = DS.colors.accent;
@@ -72,14 +73,17 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   }, [activeSubtitlePhrases.length, subtitleSignature]);
 
   useEffect(() => {
-    const startedAt = Date.now();
     setProgress(0);
 
     const interval = setInterval(() => {
-      const elapsed = Date.now() - startedAt;
-      const nextProgress = Math.min((elapsed / PROGRESS_DURATION_MS) * PROGRESS_MAX, PROGRESS_MAX);
-      setProgress(nextProgress);
-    }, 120);
+      setProgress((current) => {
+        if (current >= PROGRESS_MAX) {
+          return current;
+        }
+        const remaining = PROGRESS_MAX - current;
+        return Math.min(current + remaining * PROGRESS_EASING, PROGRESS_MAX);
+      });
+    }, PROGRESS_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, []);
