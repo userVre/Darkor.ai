@@ -29,7 +29,7 @@ type SpeedTier = "standard" | "pro" | "ultra";
 
 type AzureRenderProfile = {
   deploymentName: string;
-  size: "1024x1024";
+  size: "1024x1024" | "4096x4096";
   watermarkRequired: boolean;
 };
 
@@ -78,13 +78,20 @@ function buildAzurePrompt(prompt: string, negativePrompt: string) {
   return `${prompt}\n\nAvoid: ${negativePrompt}`;
 }
 
-function resolveAzureRenderProfile(args: { deploymentName: string; planUsed?: string; speedTier?: SpeedTier }) {
-  const isProPlan = args.planUsed === "pro";
+function resolveAzureRenderProfile(args: {
+  deploymentName: string;
+  planUsed?: string;
+  speedTier?: SpeedTier;
+  qualityTier?: "free" | "pro";
+  outputResolution?: string;
+}) {
+  const isPaidPlan = args.planUsed === "pro" || args.planUsed === "trial";
+  const wants4k = args.qualityTier === "pro" || args.outputResolution === "4096x4096";
 
   return {
     deploymentName: args.deploymentName,
-    size: "1024x1024" as const,
-    watermarkRequired: !isProPlan,
+    size: (wants4k ? "4096x4096" : "1024x1024") as const,
+    watermarkRequired: !isPaidPlan,
   } satisfies AzureRenderProfile;
 }
 
@@ -405,6 +412,8 @@ export const generateDesign: any = internalActionGeneric({
     aiSuggestedPaletteId: v.optional(v.string()),
     regenerate: v.optional(v.boolean()),
     smartSuggest: v.optional(v.boolean()),
+    qualityTier: v.optional(v.union(v.literal("free"), v.literal("pro"))),
+    outputResolution: v.optional(v.string()),
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
     planUsed: v.optional(v.string()),
   },
@@ -466,6 +475,8 @@ export const generateDesign: any = internalActionGeneric({
       const renderProfile = resolveAzureRenderProfile({
         deploymentName,
         planUsed: trimOptional(args.planUsed),
+        qualityTier: args.qualityTier === "pro" ? "pro" : "free",
+        outputResolution: trimOptional(args.outputResolution),
         speedTier: (args.speedTier as SpeedTier | undefined) ?? "standard",
       });
 

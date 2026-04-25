@@ -55,6 +55,8 @@ export default defineSchema({
     aiSuggestedPaletteId: v.optional(v.string()),
     smartSuggest: v.optional(v.boolean()),
     mode: v.optional(v.string()),
+    qualityTier: v.optional(v.union(v.literal("free"), v.literal("pro"))),
+    outputResolution: v.optional(v.string()),
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
     status: v.optional(v.union(v.literal("processing"), v.literal("ready"), v.literal("failed"))),
     errorMessage: v.optional(v.string()),
@@ -76,8 +78,17 @@ export default defineSchema({
 
   feedback: defineTable({
     userId: v.string(),
-    message: v.string(),
+    kind: v.optional(v.union(v.literal("message"), v.literal("generation_review"))),
+    message: v.optional(v.string()),
+    generationId: v.optional(v.id("generations")),
+    sentiment: v.optional(v.union(v.literal("liked"), v.literal("disliked"))),
+    styleSelected: v.optional(v.string()),
+    serviceType: v.optional(v.string()),
+    roomLabel: v.optional(v.string()),
+    source: v.optional(v.string()),
     createdAt: numberLike,
     generationCount: optionalNumberLike,
-  }).index("by_userId", ["userId"]),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_generationId", ["generationId"]),
 });

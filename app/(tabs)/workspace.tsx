@@ -140,6 +140,10 @@ type MeResponse = {
   hasPaidAccess?: boolean;
   canExport4k?: boolean;
   canRemoveWatermark?: boolean;
+  generationQualityTier?: "free" | "pro";
+  generationOutputResolution?: string;
+  generationSpeedTier?: "standard" | "pro" | "ultra";
+  priorityProcessing?: boolean;
   canVirtualStage?: boolean;
   canEditDesigns?: boolean;
 };
@@ -514,6 +518,57 @@ const BoardGridCard = memo(function BoardGridCard({
   );
 });
 
+const ExportResultImage = memo(function ExportResultImage({
+  imageSource,
+  showWatermark,
+}: {
+  imageSource: { uri: string } | null;
+  showWatermark: boolean;
+}) {
+  return (
+    <View
+      style={{
+        width: 1080,
+        height: 1350,
+        overflow: "hidden",
+        borderRadius: 0,
+        backgroundColor: DS.colors.surfaceHigh,
+      }}
+      collapsable={false}
+    >
+      {imageSource ? (
+        <Image
+          source={imageSource}
+          style={{ width: "100%", height: "100%" }}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={0}
+        />
+      ) : (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <Sparkles color={DS.colors.textMuted} size={32} />
+        </View>
+      )}
+
+      {showWatermark ? (
+        <View
+          style={{
+            position: "absolute",
+            right: 28,
+            bottom: 28,
+            borderRadius: 16,
+            backgroundColor: "rgba(255,255,255,0.92)",
+            paddingHorizontal: 20,
+            paddingVertical: 14,
+          }}
+        >
+          <Text style={{ color: DS.colors.textPrimary, fontSize: 24, lineHeight: 28, ...fonts.semibold }}>HomeDecor.ai</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+});
+
 function resolveBoardStyleSelection(styleLabel: string | null | undefined, serviceType: string | null | undefined, customPrompt?: string | null) {
   const normalizedStyle = normalizeStyleDisplayName(styleLabel) ?? "Custom";
 
@@ -547,11 +602,11 @@ const EditorActionButton = memo(function EditorActionButton({
   loading?: boolean;
   tone?: "dark" | "light" | "accent";
 }) {
-  const backgroundColor = tone === "accent" ? "#CC3333" : tone === "light" ? "#F4F5F7" : "#111827";
+  const backgroundColor = tone === "accent" ? DS.colors.accent : tone === "light" ? "#F4F5F7" : "#111827";
   const borderColor =
-    tone === "accent" ? "rgba(204,51,51,0.2)" : tone === "light" ? "rgba(17,24,39,0.08)" : "rgba(17,24,39,0.14)";
+    tone === "accent" ? "rgba(37,99,235,0.28)" : tone === "light" ? "rgba(17,24,39,0.08)" : "rgba(17,24,39,0.14)";
   const iconColor = tone === "light" ? "#05070A" : "#FFFFFF";
-  const textColor = "#111827";
+  const textColor = tone === "accent" ? DS.colors.accent : "#111827";
 
   return (
     <LuxPressable onPress={onPress} disabled={disabled || loading} className="cursor-pointer" style={{ flex: 1 }}>
@@ -2078,7 +2133,7 @@ export default function WorkspaceScreen() {
   const startGeneration = useMutation("generations:startGeneration" as any);
   const suggestDesignOptions = useAction("ai:suggestDesignOptions" as any);
   const submitGenerationFeedback = useMutation("generations:submitFeedback" as any);
-  const submitFeedbackSignal = useMutation("feedback:submit" as any);
+  const submitGenerationReview = useMutation("feedback:submitGenerationReview" as any);
   const claimThreeDayReward = useMutation("users:claimThreeDayReward" as any);
 
   const [workflowStep, setWorkflowStep] = useState(0);
@@ -3083,8 +3138,12 @@ export default function WorkspaceScreen() {
   const hasPaidAccess = diagnostic ? true : me?.hasPaidAccess ?? false;
   const canExport4k = diagnostic ? true : me?.canExport4k ?? false;
   const canRemoveWatermark = diagnostic ? true : me?.canRemoveWatermark ?? false;
-  const watermarkRequiredForViewer = !diagnostic && (me?.plan ?? "free") !== "pro";
+  const watermarkRequiredForViewer = !diagnostic && !(me?.canRemoveWatermark ?? false);
   const generationSpeedTier = useMemo<GenerationSpeedTier>(() => {
+    const serverTier = me?.generationSpeedTier;
+    if (serverTier === "standard" || serverTier === "pro" || serverTier === "ultra") {
+      return serverTier;
+    }
     if (me?.subscriptionType === "yearly") {
       return "ultra";
     }
@@ -3092,7 +3151,7 @@ export default function WorkspaceScreen() {
       return "pro";
     }
     return "standard";
-  }, [hasPaidAccess, me?.subscriptionType]);
+  }, [hasPaidAccess, me?.generationSpeedTier, me?.subscriptionType]);
   const serverCreditBalance = diagnostic
     ? 999
     : sharedCreditBalance;
@@ -3113,14 +3172,18 @@ export default function WorkspaceScreen() {
   const hasGenerationCredits = generationAccess.allowed;
   const remainingCreditsAfterGenerate = Math.max(creditBalance - 1, 0);
   const generationCreditLabel = hasPaidAccess
-    ? "Unlimited generations \u00b7 4K Ultra-HD"
+    ? `Unlimited generations \u00b7 ${me?.generationOutputResolution === "4096x4096" ? "4K Ultra-HD" : "HD"}`
     : `Uses 1 Diamond \u00b7 ${remainingCreditsAfterGenerate} remaining`;
   const usageBadgeLabel = hasPaidAccess
     ? me?.plan === "trial"
-      ? "Trial Unlimited"
-      : "Pro Unlimited"
-    : `Diamonds ${creditBalance}`;
-  const usageBadgeDetail = hasPaidAccess ? "No watermark" : "Refills to 3 every 72h";
+      ? t("workspace.localization.usageBadge.trialUnlimited")
+      : t("workspace.localization.usageBadge.proUnlimited")
+    : t("workspace.localization.usageBadge.diamonds", { count: creditBalance });
+  const usageBadgeDetail = hasPaidAccess
+    ? me?.priorityProcessing
+      ? t("workspace.localization.usageBadge.priorityNoWatermark")
+      : t("workspace.localization.usageBadge.noWatermark")
+    : t("workspace.localization.usageBadge.refills");
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const showStyleScrollCue = !isPaintService && !isFloorService && displayedStyleCards.length > 6;
   const isDownloadingStandard = isDownloading === "standard";
@@ -3180,6 +3243,7 @@ export default function WorkspaceScreen() {
   const currentImageHasWatermark = Boolean(
     (activeBoardItem?.watermarkRequired ?? watermarkRequiredForViewer) && !canRemoveWatermark,
   );
+  const exportImageSource = activeEditorImageUrl ? ({ uri: activeEditorImageUrl } as const) : null;
   const sliderSpring = useMemo(() => ({ damping: 15, stiffness: 100 }), []);
 
   useEffect(() => {
@@ -3943,40 +4007,19 @@ export default function WorkspaceScreen() {
   }, [promptOpenSettings, t]);
 
   const exportCurrentRender = useCallback(async () => {
-    if (!currentImageHasWatermark) {
-      if (!activeEditorImageUrl) {
-        throw new Error(t("workspace.editor.renderUnavailable"));
-      }
-      const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}homedecor-share-${Date.now()}.jpg`;
-      const download = await FileSystem.downloadAsync(activeEditorImageUrl, targetUri);
-      return download.uri;
-    }
-
     if (!exportCaptureRef.current) {
       throw new Error(t("workspace.editor.previewNotReady"));
     }
 
-    const previousSlider = sliderX.value;
-    if (sliderWidth.value > 0) {
-      sliderX.value = 0;
-    }
     await new Promise((resolve) => setTimeout(resolve, 80));
-    try {
-      const previewWidth = Math.max(width - 32, 320);
-      const fileUri = await captureRef(exportCaptureRef, {
-        format: "png",
-        quality: 1,
-        result: "tmpfile",
-        width: 1080,
-        height: Math.round((460 / previewWidth) * 1080),
-      });
-      return fileUri;
-    } finally {
-      if (sliderWidth.value > 0) {
-        sliderX.value = previousSlider;
-      }
-    }
-  }, [activeEditorImageUrl, currentImageHasWatermark, exportCaptureRef, sliderWidth, sliderX, width]);
+    return await captureRef(exportCaptureRef, {
+      format: currentImageHasWatermark ? "png" : "jpg",
+      quality: 1,
+      result: "tmpfile",
+      width: 1080,
+      height: 1350,
+    });
+  }, [currentImageHasWatermark, exportCaptureRef, t]);
 
   const handleShare = useCallback(async () => {
     triggerHaptic();
@@ -4558,18 +4601,17 @@ export default function WorkspaceScreen() {
         sentiment,
       });
 
-      await submitFeedbackSignal({
+      await submitGenerationReview({
         anonymousId: viewerId ?? undefined,
-        message: JSON.stringify({
-          type: "generation_feedback",
-          source: "workspace_editor",
-          generationId: activeGenerationRecordId,
-          sentiment,
-          serviceType: activeBoardItem?.serviceType ?? serviceType,
-          roomLabel: activeBoardItem?.roomLabel ?? selectedRoom ?? null,
-          styleLabel: activeBoardItem?.styleLabel ?? selectedStyle ?? null,
-          createdAt: new Date().toISOString(),
-        }),
+        generationId: activeGenerationRecordId as any,
+        sentiment,
+        styleSelected: activeBoardItem?.styleLabel ?? selectedStyle ?? "Custom",
+        serviceType:
+          activeBoardItem?.serviceType ??
+          inferBoardServiceType(activeBoardItem?.styleLabel ?? selectedStyle, activeBoardItem?.roomLabel ?? selectedRoom) ??
+          serviceType,
+        roomLabel: activeBoardItem?.roomLabel ?? selectedRoom ?? null,
+        source: "workspace_editor",
       });
 
       setFeedbackState(sentiment);
@@ -4589,7 +4631,7 @@ export default function WorkspaceScreen() {
     selectedStyle,
     serviceType,
     showToast,
-    submitFeedbackSignal,
+    submitGenerationReview,
     submitGenerationFeedback,
     t,
     viewerId,
@@ -7605,8 +7647,9 @@ export default function WorkspaceScreen() {
     const editorServiceType = activeBoardItem?.serviceType ?? inferBoardServiceType(editorStyleLabel, editorRoomLabel) ?? serviceType;
     const hasComparisonImages = Boolean(editorImageUrl && beforeImageUrl);
     const showSliderComparison = hasComparisonImages && showComparisonSlider;
-    const isEditorProcessing = activeBoardItem?.status === "processing";
-    const isEditorFailed = isGenerationFailure(activeBoardItem?.status, activeBoardItem?.imageUrl);
+    const editorResolvedStatus = resolveGenerationStatus(activeBoardItem?.status, editorImageUrl);
+    const isEditorProcessing = editorResolvedStatus === "processing";
+    const isEditorFailed = editorResolvedStatus === "failed";
     const isEditorActionDisabled = !editorImageUrl || isEditorProcessing || isEditorFailed;
     const isSaveBusy = isDownloadingUltra || isDownloadingStandard;
     const isFeedbackBusy = isSubmittingFeedback !== null;
@@ -7693,8 +7736,28 @@ export default function WorkspaceScreen() {
           <View className="px-5" style={{ paddingTop: Math.max(insets.top + 14, 22), zIndex: 2 }}>
             <View style={{ minHeight: 46, alignItems: "center", justifyContent: "center" }}>
               <Text style={{ color: "#111111", fontSize: 19, lineHeight: 25, letterSpacing: -0.45, textAlign: "center", ...fonts.bold }}>
-                AI is crafting your architectural masterpiece...
+                {t("processing.title")}
               </Text>
+            </View>
+            <View style={{ position: "absolute", top: 0, right: 20, alignItems: "flex-end" }}>
+              <View
+                style={{
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: "#D9DEE7",
+                  backgroundColor: "#FFFFFF",
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  maxWidth: Math.min(width * 0.58, 220),
+                }}
+              >
+                <Text style={{ color: "#111111", fontSize: 12, lineHeight: 16, textAlign: "right", ...fonts.semibold }}>
+                  {usageBadgeLabel}
+                </Text>
+                <Text style={{ color: "#687076", fontSize: 11, lineHeight: 15, textAlign: "right", ...fonts.medium }}>
+                  {usageBadgeDetail}
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -7724,7 +7787,7 @@ export default function WorkspaceScreen() {
                   </Text>
                 </View>
                 <Text style={{ color: "#687076", fontSize: 16, lineHeight: 24, textAlign: "center", maxWidth: 360, ...fonts.medium }}>
-                  Your masterpiece will be ready in ~15 seconds.
+                  {t("processing.eta")}
                 </Text>
               </View>
 
@@ -7940,6 +8003,19 @@ export default function WorkspaceScreen() {
           </View>
         </View>
 
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            left: -2000,
+            top: -2000,
+          }}
+        >
+          <View ref={exportCaptureRef} collapsable={false}>
+            <ExportResultImage imageSource={exportImageSource} showWatermark={currentImageHasWatermark} />
+          </View>
+        </View>
+
         <ScrollView
           style={{ flex: 1, backgroundColor: DS.colors.background }}
           contentContainerStyle={{
@@ -7965,7 +8041,6 @@ export default function WorkspaceScreen() {
               }}
             >
               <View
-                ref={exportCaptureRef}
                 style={{
                   position: "relative",
                   width: "100%",
@@ -7988,6 +8063,8 @@ export default function WorkspaceScreen() {
                     <BeforeAfterSlider
                       afterSource={editorImageSource}
                       beforeSource={beforeImageSource}
+                      afterLabel=""
+                      beforeLabel=""
                       containerRef={imageContainerRef}
                       sliderWidth={sliderWidth}
                       sliderX={sliderX}
@@ -8215,10 +8292,10 @@ export default function WorkspaceScreen() {
 
           <View
             style={{
-              marginTop: 6,
+              marginTop: -4,
               alignItems: "center",
               justifyContent: "center",
-              gap: 18,
+              gap: 14,
             }}
           >
             <View
@@ -8238,7 +8315,7 @@ export default function WorkspaceScreen() {
                 onPress={handleOpenRegenerateStep}
                 disabled={isEditorActionDisabled || isGenerating}
                 loading={false}
-                tone="light"
+                tone="accent"
               />
               <EditorActionButton
                 icon={Download}
@@ -8256,7 +8333,7 @@ export default function WorkspaceScreen() {
                 }}
                 disabled={isEditorActionDisabled || isSharingResult}
                 loading={isSharingResult}
-                tone="dark"
+                tone="accent"
               />
             </View>
 
@@ -8264,7 +8341,8 @@ export default function WorkspaceScreen() {
               style={{
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 12,
+                gap: 10,
+                marginTop: -2,
               }}
             >
               <Text style={{ color: "#687076", fontSize: 12, lineHeight: 16, letterSpacing: 0.4, textAlign: "center", ...fonts.medium }}>

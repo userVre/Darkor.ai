@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { AnimatePresence, MotiView } from "moti";
 import { memo, useEffect, useMemo, useState } from "react";
-import { Image as NativeImage, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { fonts } from "../styles/typography";
@@ -99,44 +99,50 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
 
   return (
     <View style={styles.screen}>
-      {previewImageUri ? (
-        <NativeImage source={{ uri: previewImageUri }} style={[styles.photoImage, { width, height }]} resizeMode="cover" />
-      ) : (
-        <View style={styles.photoFallback} />
-      )}
-
-      <View style={styles.photoOverlay} />
-
-      <MotiView
-        animate={{ translateX: [-width * 0.8, width * 0.92] }}
-        transition={{ duration: SHIMMER_DURATION_MS, loop: true, type: "timing" }}
-        style={[styles.scanSweepWrap, { top: -height * 0.12, height: height * 1.18 }]}
-        pointerEvents="none"
-      >
-        <View style={styles.scanSweep} />
-      </MotiView>
-
       <View style={[styles.content, { paddingTop: insets.top + 12 }]}>
+        <View style={styles.hero}>
+          <Text style={styles.title}>{t("processing.title")}</Text>
+          <View style={styles.subtitleWrap}>
+            <AnimatePresence>
+              <MotiView
+                key={activeSubtitle}
+                from={{ opacity: 0, translateY: 12 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                exit={{ opacity: 0, translateY: -12 }}
+                transition={{ duration: 320, type: "timing" }}
+              >
+                <Text style={styles.subtitle}>{activeSubtitle}</Text>
+              </MotiView>
+            </AnimatePresence>
+          </View>
+        </View>
+
+        <View style={styles.previewCard}>
+          <Text style={styles.previewLabel}>{t("workspace.editor.sourcePhoto")}</Text>
+          <View style={[styles.previewFrame, { height: Math.min(Math.max(width * 1.02, 320), height * 0.42) }]}>
+            {previewImageUri ? (
+              <Image source={{ uri: previewImageUri }} style={styles.previewImage} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+            ) : (
+              <View style={styles.photoFallback} />
+            )}
+
+            <MotiView
+              animate={{ translateY: ["-18%", "116%"], opacity: [0, 0.88, 0] }}
+              transition={{ duration: SHIMMER_DURATION_MS, loop: true, type: "timing" }}
+              style={styles.scanSweepWrap}
+              pointerEvents="none"
+            >
+              <View style={styles.scanSweep} />
+            </MotiView>
+          </View>
+        </View>
+
         <View style={styles.bottomContent}>
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${Math.max(progress * 100, 2)}%` }]} />
           </View>
 
           <View style={styles.copyBlock}>
-            <Text style={styles.title}>{t("processing.title")}</Text>
-            <View style={styles.subtitleWrap}>
-              <AnimatePresence>
-                <MotiView
-                  key={activeSubtitle}
-                  from={{ opacity: 0, translateY: 12 }}
-                  animate={{ opacity: 1, translateY: 0 }}
-                  exit={{ opacity: 0, translateY: -12 }}
-                  transition={{ duration: 320, type: "timing" }}
-                >
-                  <Text style={styles.subtitle}>{activeSubtitle}</Text>
-                </MotiView>
-              </AnimatePresence>
-            </View>
             <Text style={styles.eta}>{t("processing.eta")}</Text>
           </View>
         </View>
@@ -179,43 +185,81 @@ function createStyles(colors: Theme) {
   return StyleSheet.create({
     screen: {
       flex: 1,
-      backgroundColor: colors.bg,
-    },
-    photoImage: {
-      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "#FFFFFF",
     },
     photoFallback: {
-      ...StyleSheet.absoluteFillObject,
-      backgroundColor: colors.surface,
-    },
-    photoOverlay: {
-      ...StyleSheet.absoluteFillObject,
-      backgroundColor: colors.surfaceOverlay,
+      flex: 1,
+      backgroundColor: "#F3F4F6",
+      alignItems: "center",
+      justifyContent: "center",
     },
     scanSweepWrap: {
       position: "absolute",
-      width: 220,
-      opacity: 0.75,
-      transform: [{ skewX: "-12deg" }],
+      left: 18,
+      right: 18,
+      height: 72,
+      borderRadius: 999,
+      backgroundColor: "rgba(37, 99, 235, 0.12)",
+      shadowColor: "#2563EB",
+      shadowOpacity: 0.16,
+      shadowRadius: 18,
+      shadowOffset: { width: 0, height: 6 },
     },
     scanSweep: {
       flex: 1,
-      backgroundColor: colors.brandSurface,
+      borderRadius: 999,
     },
     content: {
       flex: 1,
-      justifyContent: "flex-end",
+      justifyContent: "space-between",
       paddingHorizontal: spacing.lg,
+      paddingBottom: spacing.md,
+    },
+    hero: {
+      alignItems: "center",
+      gap: spacing.sm,
+      paddingTop: spacing.lg,
+    },
+    previewCard: {
+      borderRadius: 28,
+      borderWidth: 1,
+      borderColor: "#ECEEF2",
+      backgroundColor: "#FFFFFF",
+      padding: 16,
+      gap: 12,
+      shadowColor: "#111827",
+      shadowOpacity: 0.05,
+      shadowRadius: 22,
+      shadowOffset: { width: 0, height: 10 },
+      elevation: 3,
+    },
+    previewLabel: {
+      color: "#9CA3AF",
+      fontSize: 11,
+      fontFamily: fonts.regular.fontFamily,
+      fontWeight: "700",
+      lineHeight: 14,
+      letterSpacing: 1,
+      textTransform: "uppercase",
+      textAlign: "center",
+    },
+    previewFrame: {
+      borderRadius: 24,
+      overflow: "hidden",
+      backgroundColor: "#ECEEF2",
+    },
+    previewImage: {
+      width: "100%",
+      height: "100%",
     },
     bottomContent: {
       gap: spacing.md,
-      paddingBottom: spacing.lg,
     },
     progressTrack: {
       height: 3,
       width: "100%",
       borderRadius: 2,
-      backgroundColor: colors.borderLight,
+      backgroundColor: "#E5E7EB",
       overflow: "hidden",
     },
     progressFill: {
@@ -224,16 +268,16 @@ function createStyles(colors: Theme) {
       backgroundColor: GENERATION_PROGRESS_COLOR,
     },
     copyBlock: {
-      gap: spacing.sm,
+      alignItems: "center",
     },
     title: {
-      color: colors.textPrimary,
+      color: "#111111",
       fontSize: 34,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "800",
       lineHeight: 40,
       letterSpacing: -0.8,
-      textAlign: "left",
+      textAlign: "center",
       maxWidth: 340,
     },
     subtitleWrap: {
@@ -241,20 +285,20 @@ function createStyles(colors: Theme) {
       justifyContent: "center",
     },
     subtitle: {
-      color: colors.textSecondary,
+      color: "#687076",
       fontSize: 17,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "700",
       lineHeight: 24,
-      textAlign: "left",
+      textAlign: "center",
     },
     eta: {
-      color: colors.textSecondary,
+      color: "#687076",
       fontSize: 13,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "600",
       lineHeight: 19,
-      textAlign: "left",
+      textAlign: "center",
     },
     cancelWrap: {
       alignSelf: "center",
@@ -262,13 +306,13 @@ function createStyles(colors: Theme) {
       paddingTop: spacing.xs,
     },
     cancelText: {
-      color: colors.textSecondary,
+      color: "#687076",
       fontSize: 12,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "600",
     },
     cancelTextDisabled: {
-      color: colors.textMuted,
+      color: "#B0B7C3",
     },
   });
 }

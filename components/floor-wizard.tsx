@@ -1011,14 +1011,6 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
                     ))}
                   </Svg>
                 </View>
-                <AnimatePresence>
-                  {isDetecting || isAutoDetecting ? (
-                    <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.maskDetectOverlay}>
-                      <ActivityIndicator color="#FFFFFF" />
-                      <Text style={styles.maskDetectTitle}>{t("wizard.floorFlow.masking")}</Text>
-                    </MotiView>
-                  ) : null}
-                </AnimatePresence>
               </>
             ) : null}
           </View>
@@ -1047,11 +1039,6 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
             accessibilityRole="button"
             onPress={() => {
               if (!canContinueFromMask) {
-                return;
-              }
-
-              if (!hasMask || isAutoDetecting || isDetecting) {
-                showToast(t("wizard.floorFlow.autoMaskPreparing"));
                 return;
               }
 
@@ -1269,8 +1256,6 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
                 <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="cover" />
                 <View style={[absoluteFill, { width: `${comparisonPosition * 100}%`, overflow: "hidden" }]}><Image source={{ uri: generatedImageUrl }} style={{ width: resultFrameWidth, height: "100%" }} contentFit="cover" /></View>
                 <GestureDetector gesture={comparisonGesture}><View style={{ position: "absolute", top: 0, bottom: 0, left: `${comparisonPosition * 100}%`, marginLeft: -26, width: 52, alignItems: "center", justifyContent: "center" }}><View style={styles.resultDivider} /><View style={styles.resultHandle}><MoveHorizontal color="#ffffff" size={18} /></View></View></GestureDetector>
-                <View style={[styles.badge, { left: 14 }]}><Text style={styles.badgeText}>{t("wizard.floorFlow.result.before")}</Text></View>
-                <View style={[styles.badge, { right: 14 }]}><Text style={styles.badgeText}>{t("wizard.floorFlow.result.after")}</Text></View>
               </View>
             ) : <View style={styles.resultFallback}><ActivityIndicator color="#ffffff" /></View>}
           </View>

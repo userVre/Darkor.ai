@@ -215,13 +215,17 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
 
         {children}
 
-        <Animated.View pointerEvents="none" style={[styles.labelPill, styles.beforeLabel, beforeLabelStyle]}>
-          <Text style={styles.labelText}>{beforeLabel}</Text>
-        </Animated.View>
+        {beforeLabel ? (
+          <Animated.View pointerEvents="none" style={[styles.labelPill, styles.beforeLabel, beforeLabelStyle]}>
+            <Text style={styles.labelText}>{beforeLabel}</Text>
+          </Animated.View>
+        ) : null}
 
-        <Animated.View pointerEvents="none" style={[styles.labelPill, styles.afterLabel, afterLabelStyle]}>
-          <Text style={styles.labelText}>{afterLabel}</Text>
-        </Animated.View>
+        {afterLabel ? (
+          <Animated.View pointerEvents="none" style={[styles.labelPill, styles.afterLabel, afterLabelStyle]}>
+            <Text style={styles.labelText}>{afterLabel}</Text>
+          </Animated.View>
+        ) : null}
 
         <Animated.View pointerEvents="none" style={[styles.handleWrap, handleStyle]}>
           <View style={styles.handleTrack}>

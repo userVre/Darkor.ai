@@ -1925,28 +1925,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                     </View>
                   ) : null}
 
-                  <AnimatePresence>
-                    {isDetecting || isAutoDetecting ? (
-                      <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.detectOverlay}>
-                        <MotiView
-                          animate={{ scale: [0.92, 1.08, 0.92], opacity: [0.14, 0.46, 0.14] }}
-                          transition={{ duration: 1700, loop: true }}
-                          style={styles.detectPulse}
-                        />
-                        <View style={styles.detectCopy}>
-                          <ActivityIndicator color="#ffffff" />
-                          <Text style={styles.detectTitle}>
-                            {isAutoDetecting ? t("wizard.paintFlow.detectTitle") : t("wizard.paintFlow.preparingMaskTitle")}
-                          </Text>
-                          <Text style={styles.detectText}>
-                            {isAutoDetecting
-                              ? t("wizard.paintFlow.detectBody")
-                              : t("wizard.paintFlow.preparingMaskBody")}
-                          </Text>
-                        </View>
-                      </MotiView>
-                    ) : null}
-                  </AnimatePresence>
                 </>
               ) : null}
             </View>
@@ -1970,17 +1948,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                 <Eraser color={maskTool === "eraser" ? "#FFFFFF" : "#0A0A0A"} size={20} strokeWidth={2} />
               </Pressable>
 
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => handleSelectMaskTool("surface")}
-                style={[styles.maskToolButton, maskTool === "surface" || isAutoDetecting ? styles.maskToolButtonActive : null]}
-              >
-                {isAutoDetecting ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Box color={maskTool === "surface" ? "#FFFFFF" : "#0A0A0A"} size={20} strokeWidth={2} />
-                )}
-              </Pressable>
             </View>
 
             <View style={styles.maskToolGroup}>

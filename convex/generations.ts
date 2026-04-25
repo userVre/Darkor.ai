@@ -7,7 +7,13 @@ import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { buildStabilityPrompt as buildAIDesignPrompt, normalizeAspectRatio as normalizeAIAspectRatio } from "../lib/stability-prompt-builder";
-import { canUserGenerateState, deriveSubscriptionState, FREE_IMAGE_LIMIT, toFiniteNumber } from "./subscriptions";
+import {
+  canUserGenerateState,
+  deriveSubscriptionState,
+  FREE_IMAGE_LIMIT,
+  resolveGenerationPolicy,
+  toFiniteNumber,
+} from "./subscriptions";
 import {
   buildDefaultUserFields,
   ensureGuestUser,
@@ -149,6 +155,12 @@ async function reserveGenerationAllowance(ctx: any, ownerId: string, ignoreCoold
     ...(typeof state.patch.lastResetDate === "number" ? { lastResetDate: state.patch.lastResetDate } : {}),
   });
 
+  const generationPolicy = resolveGenerationPolicy({
+    plan: state.plan,
+    hasPaidAccess: state.hasPaidAccess,
+    subscriptionType: state.subscriptionType,
+  });
+
   return {
     count: nextGenerationCount,
     shouldPrompt,
@@ -156,6 +168,7 @@ async function reserveGenerationAllowance(ctx: any, ownerId: string, ignoreCoold
       ? nextCredits
       : Math.max(state.limit - nextImageGenerationCount, 0),
     planUsed: state.plan,
+    generationPolicy,
   };
 }
 
@@ -359,7 +372,8 @@ export const startGeneration = mutationGeneric({
     }
 
     const allowance = await reserveGenerationAllowance(ctx, viewer.userId, args.ignoreReviewCooldown);
-    const watermarkRequired = allowance.planUsed !== "pro";
+    const enforcedGenerationPolicy = allowance.generationPolicy;
+    const watermarkRequired = enforcedGenerationPolicy.watermarkRequired;
     const normalizedSelection = trimOptional(args.selection) ?? "Premium";
     const normalizedAspectRatio = normalizeAIAspectRatio(args.aspectRatio);
     const resolvedStyle =
@@ -407,7 +421,9 @@ export const startGeneration = mutationGeneric({
           : args.serviceType === "floor"
             ? "Floor Restyle"
             : "Complete Redesign",
-      speedTier: args.speedTier ?? "standard",
+      qualityTier: enforcedGenerationPolicy.qualityTier,
+      outputResolution: enforcedGenerationPolicy.outputResolution,
+      speedTier: enforcedGenerationPolicy.speedTier,
       status: "processing",
       errorMessage: undefined,
       planUsed: allowance.planUsed,
@@ -448,7 +464,9 @@ export const startGeneration = mutationGeneric({
         aiSuggestedStyle: trimOptional(args.aiSuggestedStyle),
         aiSuggestedPaletteId: trimOptional(args.aiSuggestedPaletteId),
         smartSuggest: args.smartSuggest === true,
-        speedTier: args.speedTier ?? "standard",
+        qualityTier: enforcedGenerationPolicy.qualityTier,
+        outputResolution: enforcedGenerationPolicy.outputResolution,
+        speedTier: enforcedGenerationPolicy.speedTier,
         planUsed: allowance.planUsed,
       });
     } catch (error) {
@@ -480,6 +498,7 @@ export const startGeneration = mutationGeneric({
       },
       creditsRemaining: allowance.creditsRemaining,
       planUsed: allowance.planUsed,
+      generationPolicy: allowance.generationPolicy,
     };
   },
 });

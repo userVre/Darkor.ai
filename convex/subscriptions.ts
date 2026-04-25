@@ -10,6 +10,8 @@ export const FREE_REFILL_INTERVAL_MS = 72 * 60 * 60 * 1000;
 export type SubscriptionType = "weekly" | "yearly" | "free";
 export type SubscriptionEntitlement = "weekly_pro" | "annual_pro" | "free";
 export type BillingPlan = "free" | "trial" | "pro";
+export type GenerationQualityTier = "free" | "pro";
+export type GenerationSpeedTier = "standard" | "pro" | "ultra";
 
 type SubscriptionLikeUser = {
   plan?: string;
@@ -193,6 +195,29 @@ export function canUserGenerateState(state: {
   };
 }
 
+export function resolveGenerationPolicy(state: {
+  plan: BillingPlan;
+  hasPaidAccess: boolean;
+  subscriptionType: SubscriptionType;
+}) {
+  const isPaid = state.hasPaidAccess && (state.plan === "pro" || state.plan === "trial");
+  const outputResolution: "4096x4096" | "1080x1080" = isPaid ? "4096x4096" : "1080x1080";
+
+  return {
+    qualityTier: (isPaid ? "pro" : "free") as GenerationQualityTier,
+    outputResolution,
+    speedTier: (
+      isPaid
+        ? state.subscriptionType === "yearly"
+          ? "ultra"
+          : "pro"
+        : "standard"
+    ) as GenerationSpeedTier,
+    watermarkRequired: !isPaid,
+    priorityProcessing: isPaid,
+  };
+}
+
 export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number) {
   let plan = normalizePlan(user.plan);
   let subscriptionType = normalizeSubscriptionType(user.subscriptionType);
@@ -313,6 +338,11 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
         canRemoveWatermark: hasPaidAccess,
         canVirtualStage: hasPaidAccess,
         canEditDesigns: hasPaidAccess,
+        generationPolicy: resolveGenerationPolicy({
+          plan,
+          hasPaidAccess,
+          subscriptionType,
+        }),
         patch,
       };
     }
@@ -372,6 +402,11 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
     canRemoveWatermark: false,
     canVirtualStage: false,
     canEditDesigns: false,
+    generationPolicy: resolveGenerationPolicy({
+      plan: "free",
+      hasPaidAccess: false,
+      subscriptionType: "free",
+    }),
     patch,
   };
 }

@@ -897,6 +897,14 @@
         "getMoreCredits": "Get More Credits",
         "generateMyDesign": "Generate My Design"
       },
+      "usageBadge": {
+        "trialUnlimited": "Trial Unlimited",
+        "proUnlimited": "Pro Unlimited",
+        "diamonds": "Diamonds {{count}}",
+        "priorityNoWatermark": "Priority queue · No watermark",
+        "noWatermark": "No watermark",
+        "refills": "Refills to 3 every 72h"
+      },
       "stepFourSticky": "Step 4: Refine Direction",
       "exteriorEmptyStateSubtitle": "Redesign and beautify your home."
     }
