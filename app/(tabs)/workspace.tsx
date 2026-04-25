@@ -7678,60 +7678,42 @@ export default function WorkspaceScreen() {
 
     if (isEditorProcessing) {
       return (
-        <View className="flex-1 bg-black" style={{ backgroundColor: "#050507" }}>
+        <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
           <View
             style={{
               position: "absolute",
               inset: 0,
-              backgroundColor: "#050507",
+              backgroundColor: "#FFFFFF",
             }}
-          >
-            <MotiView
-              animate={{ opacity: [0.18, 0.34, 0.18], scale: [0.96, 1.04, 0.96] }}
-              transition={{ duration: 2600, loop: true }}
-              style={{
-                position: "absolute",
-                top: "10%",
-                left: -40,
-                width: 260,
-                height: 260,
-                borderRadius: 999,
-                backgroundColor: "rgba(217,70,239,0.16)",
-              }}
-            />
-            <MotiView
-              animate={{ opacity: [0.12, 0.26, 0.12], scale: [0.98, 1.02, 0.98] }}
-              transition={{ duration: 2800, loop: true }}
-              style={{
-                position: "absolute",
-                right: -30,
-                bottom: "14%",
-                width: 240,
-                height: 240,
-                borderRadius: 999,
-                backgroundColor: "rgba(79,70,229,0.14)",
-              }}
-            />
-          </View>
+          />
 
           <View className="px-5" style={{ paddingTop: Math.max(insets.top + 10, 20), zIndex: 2 }}>
-            <View style={{ minHeight: 44, alignItems: "center", justifyContent: "center" }}>
+            <View style={{ minHeight: 48, alignItems: "center", justifyContent: "center" }}>
               <View style={{ position: "absolute", left: 0, top: 0, bottom: 0, justifyContent: "center" }}>
-                <View className="rounded-full border border-white/10 bg-zinc-950/90 px-4 py-2" style={{ borderWidth: 0.5 }}>
-                  <Text className="text-sm font-semibold text-white" style={fonts.semibold}>{usageBadgeLabel}</Text>
-                  {usageBadgeDetail ? <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{usageBadgeDetail}</Text> : null}
+                <View
+                  style={{
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: "#E7E8EC",
+                    backgroundColor: "#FFFFFF",
+                    paddingHorizontal: 14,
+                    paddingVertical: 9,
+                  }}
+                >
+                  <Text style={{ color: "#000000", fontSize: 14, lineHeight: 16, ...fonts.semibold }}>{usageBadgeLabel}</Text>
+                  {usageBadgeDetail ? <Text style={{ color: "#6B7280", fontSize: 11, lineHeight: 14, marginTop: 2, ...fonts.regular }}>{usageBadgeDetail}</Text> : null}
                 </View>
               </View>
-              <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.3, textAlign: "left" }}>
+              <Text style={{ color: "#000000", fontSize: 18, lineHeight: 24, letterSpacing: -0.3, textAlign: "left", ...fonts.bold }}>
                 AI is crafting your architectural masterpiece...
               </Text>
               <View style={{ position: "absolute", right: 0, top: 0, bottom: 0, justifyContent: "center" }}>
                 <LuxPressable
                   onPress={handleCloseBoardEditor}
-                  className="cursor-pointer h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5"
-                  style={{ borderWidth: 0.5 }}
+                  className="cursor-pointer h-11 w-11 items-center justify-center rounded-full"
+                  style={{ borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#FFFFFF" }}
                 >
-                  <Close color="#ffffff" size={18} strokeWidth={2.2} />
+                  <Close color="#000000" size={18} strokeWidth={2.2} />
                 </LuxPressable>
               </View>
             </View>
@@ -7748,37 +7730,50 @@ export default function WorkspaceScreen() {
             contentInsetAdjustmentBehavior="never"
             showsVerticalScrollIndicator={false}
           >
-            <View style={{ flex: 1, justifyContent: "center", gap: spacing.lg }}>
-              <View style={{ alignItems: "center", gap: spacing.sm }}>
-                <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(217,70,239,0.24)", backgroundColor: "rgba(217,70,239,0.12)", paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}>
-                  <Text style={{ color: "#f5d0fe", fontSize: 11, fontWeight: "700", letterSpacing: 1.1, textTransform: "uppercase" }}>
+            <View style={{ flex: 1, justifyContent: "center", gap: 32 }}>
+              <View style={{ alignItems: "center", gap: 16 }}>
+                <View
+                  style={{
+                    borderRadius: 999,
+                    backgroundColor: "#F3F4F6",
+                    paddingHorizontal: 14,
+                    paddingVertical: 8,
+                  }}
+                >
+                  <Text style={{ color: "#000000", fontSize: 11, lineHeight: 14, letterSpacing: 0.9, textTransform: "uppercase", ...fonts.semibold }}>
                     Neural Render Pipeline
                   </Text>
                 </View>
-                <Text style={{ color: "#d4d4d8", fontSize: 15, lineHeight: 24, textAlign: "left", maxWidth: 360 }}>
+                <Text style={{ color: "#000000", fontSize: 16, lineHeight: 24, textAlign: "center", maxWidth: 360, ...fonts.medium }}>
                   Your masterpiece will be ready in ~15 seconds.
                 </Text>
               </View>
 
               <View
                 style={{
-                  borderRadius: 36,
-                  borderWidth: 1,
-                  borderColor: "rgba(255,255,255,0.08)",
-                  backgroundColor: "rgba(12,12,16,0.92)",
-                  paddingHorizontal: spacing.md,
-                  paddingVertical: spacing.md,
-                  gap: spacing.md,
+                  borderRadius: 24,
+                  backgroundColor: "#F8F9FB",
+                  paddingHorizontal: 16,
+                  paddingTop: 16,
+                  paddingBottom: 20,
+                  gap: 16,
+                  shadowColor: "#111827",
+                  shadowOpacity: 0.08,
+                  shadowRadius: 22,
+                  shadowOffset: { width: 0, height: 12 },
+                  elevation: 6,
                 }}
               >
+                <Text style={{ color: "#9CA3AF", fontSize: 11, lineHeight: 14, letterSpacing: 1, textTransform: "uppercase", textAlign: "center", ...fonts.medium }}>
+                  HomeDecor AI
+                </Text>
+
                 <View
                   style={{
                     height: Math.min(Math.max(width * 1.08, 340), 430),
-                    borderRadius: 30,
+                    borderRadius: 24,
                     overflow: "hidden",
-                    borderWidth: 1,
-                    borderColor: "rgba(255,255,255,0.08)",
-                    backgroundColor: "#0f0f10",
+                    backgroundColor: "#ECEEF2",
                   }}
                 >
                   {beforeImageUrl ? (
@@ -7788,52 +7783,43 @@ export default function WorkspaceScreen() {
                       <Sparkles color="#71717a" size={30} />
                     </View>
                   )}
-                  <LinearGradient
-                    colors={["rgba(6,6,8,0.08)", "rgba(6,6,8,0.28)", "rgba(6,6,8,0.82)"]}
-                    locations={[0, 0.4, 1]}
-                    style={{ position: "absolute", inset: 0 }}
+                  <MotiView
+                    animate={{ translateY: ["-22%", "116%"], opacity: [0, 0.9, 0] }}
+                    transition={{ duration: 1600, loop: true, type: "timing" }}
+                    style={{
+                      position: "absolute",
+                      left: 22,
+                      right: 22,
+                      height: 72,
+                      borderRadius: 999,
+                      backgroundColor: "rgba(37, 99, 235, 0.14)",
+                      shadowColor: "#2563EB",
+                      shadowOpacity: 0.18,
+                      shadowRadius: 18,
+                      shadowOffset: { width: 0, height: 6 },
+                    }}
                   />
                   <MotiView
-                    animate={{ translateY: ["-28%", "118%"], opacity: [0, 0.55, 0] }}
-                    transition={{ duration: 1800, loop: true }}
+                    animate={{ translateY: ["-14%", "112%"], opacity: [0, 0.65, 0] }}
+                    transition={{ duration: 1600, loop: true, type: "timing" }}
                     style={{
                       position: "absolute",
-                      left: 10,
-                      right: 10,
-                      height: 124,
-                      borderRadius: 30,
-                      overflow: "hidden",
-                    }}
-                  >
-                    <LinearGradient
-                      colors={["rgba(255,255,255,0)", "rgba(217,70,239,0.28)", "rgba(255,255,255,0)"]}
-                      locations={[0, 0.5, 1]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={{ flex: 1 }}
-                    />
-                  </MotiView>
-                  <MotiView
-                    animate={{ translateY: ["-16%", "112%"], opacity: [0, 0.78, 0] }}
-                    transition={{ duration: 1800, loop: true }}
-                    style={{
-                      position: "absolute",
-                      left: 20,
-                      right: 20,
-                      height: 36,
+                      left: 28,
+                      right: 28,
+                      height: 2,
                       borderRadius: 999,
-                      backgroundColor: "rgba(255,255,255,0.18)",
+                      backgroundColor: "#2563EB",
                     }}
                   />
 
                   <View style={{ position: "absolute", left: 16, right: 16, top: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                    <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(0,0,0,0.4)", paddingHorizontal: spacing.sm, paddingVertical: spacing.sm }}>
-                      <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "700", letterSpacing: 0.9, textTransform: "uppercase" }}>
+                    <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "#111111", backgroundColor: "#FFFFFF", paddingHorizontal: spacing.sm, paddingVertical: spacing.sm }}>
+                      <Text style={{ color: "#000000", fontSize: 11, lineHeight: 14, letterSpacing: 0.9, textTransform: "uppercase", ...fonts.semibold }}>
                         {t("workspace.editor.sourcePhoto")}
                       </Text>
                     </View>
-                    <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(217,70,239,0.22)", backgroundColor: "rgba(18,6,26,0.72)", paddingHorizontal: spacing.sm, paddingVertical: spacing.sm }}>
-                      <Text style={{ color: "#f5d0fe", fontSize: 11, fontWeight: "700", letterSpacing: 0.9, textTransform: "uppercase" }}>
+                    <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "#111111", backgroundColor: "#FFFFFF", paddingHorizontal: spacing.sm, paddingVertical: spacing.sm }}>
+                      <Text style={{ color: "#000000", fontSize: 11, lineHeight: 14, letterSpacing: 0.9, textTransform: "uppercase", ...fonts.semibold }}>
                         {editorStyleLabel}
                       </Text>
                     </View>
@@ -7848,25 +7834,25 @@ export default function WorkspaceScreen() {
                         style={{
                           borderRadius: 999,
                           borderWidth: 1,
-                          borderColor: "rgba(255,255,255,0.1)",
-                          backgroundColor: "rgba(0,0,0,0.38)",
+                          borderColor: "#111111",
+                          backgroundColor: "#FFFFFF",
                           paddingHorizontal: spacing.sm,
                           paddingVertical: spacing.sm,
                         }}
                       >
-                        <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "700" }}>{item}</Text>
+                        <Text style={{ color: "#000000", fontSize: 11, lineHeight: 14, ...fonts.semibold }}>{item}</Text>
                       </View>
                     ))}
                   </View>
                 </View>
 
-                <View style={{ gap: spacing.sm }}>
+                <View style={{ gap: 12 }}>
                   <View
                     style={{
-                      height: 3,
+                      height: 2,
                       width: "100%",
                       borderRadius: 2,
-                      backgroundColor: "rgba(255,255,255,0.12)",
+                      backgroundColor: "#E5E7EB",
                       overflow: "hidden",
                     }}
                   >
@@ -7875,14 +7861,14 @@ export default function WorkspaceScreen() {
                         height: "100%",
                         width: `${Math.max(processingProgress * 100, 2)}%`,
                         borderRadius: 2,
-                      backgroundColor: "#CC3333",
+                        backgroundColor: "#2563EB",
                       }}
                     />
                   </View>
 
                   <View
                     style={{
-                      minHeight: 32,
+                      minHeight: 40,
                       justifyContent: "center",
                     }}
                   >
@@ -7894,7 +7880,7 @@ export default function WorkspaceScreen() {
                         exit={{ opacity: 0, translateY: -10 }}
                         transition={{ duration: 280, type: "timing" }}
                       >
-                        <Text style={{ color: "#ffffff", fontSize: 15, lineHeight: 24, fontWeight: "700" }}>
+                        <Text style={{ color: "#6B7280", fontSize: 15, lineHeight: 24, textAlign: "left", ...fonts.medium }}>
                           {processingStatuses[processingStatusIndex] ?? processingStatuses[processingStatuses.length - 1]}
                         </Text>
                       </MotiView>

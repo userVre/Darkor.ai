@@ -232,48 +232,76 @@ async function runAzureImageGeneration(args: {
 }
 
 async function applyHomeDecorWatermark(blob: Blob) {
-  const jimpModule = (await import("jimp-compact")) as any;
-  const Jimp = jimpModule.default ?? jimpModule;
-  const image = await Jimp.read(new Uint8Array(await blob.arrayBuffer()));
-  const font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
-  const width = image.bitmap.width;
-  const height = image.bitmap.height;
-  const margin = Math.max(24, Math.round(Math.min(width, height) * 0.035));
-  const boxHeight = Math.max(52, Math.round(height * 0.075));
-  const overlayTop = height - boxHeight - margin;
+  try {
+    const imageData = new Uint8Array(await blob.arrayBuffer());
+    if (imageData.byteLength === 0) {
+      console.warn("applyHomeDecorWatermark: empty image data, returning original blob");
+      return blob;
+    }
 
-  image.scan(0, overlayTop, width, boxHeight + margin, (_x: number, y: number, index: number) => {
-    if (y < overlayTop) return;
-    image.bitmap.data[index + 0] = Math.round(image.bitmap.data[index + 0] * 0.78);
-    image.bitmap.data[index + 1] = Math.round(image.bitmap.data[index + 1] * 0.78);
-    image.bitmap.data[index + 2] = Math.round(image.bitmap.data[index + 2] * 0.78);
-  });
+    const imageBuffer = Buffer.from(imageData);
+    const jimpModule = (await import("jimp-compact")) as any;
+    const Jimp = jimpModule.default ?? jimpModule;
+    const image = await Jimp.read(imageBuffer);
+    const font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
+    const width = image.bitmap.width;
+    const height = image.bitmap.height;
+    const margin = Math.max(24, Math.round(Math.min(width, height) * 0.035));
+    const boxHeight = Math.max(52, Math.round(height * 0.075));
+    const overlayTop = height - boxHeight - margin;
 
-  image.print(
-    font,
-    margin,
-    overlayTop + Math.max(10, Math.round(boxHeight * 0.2)),
-    {
-      text: "HomeDecor.ai",
-      alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT,
-      alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE,
-    },
-    width - margin * 2,
-    boxHeight,
-  );
+    image.scan(0, overlayTop, width, boxHeight + margin, (_x: number, y: number, index: number) => {
+      if (y < overlayTop) return;
+      image.bitmap.data[index + 0] = Math.round(image.bitmap.data[index + 0] * 0.78);
+      image.bitmap.data[index + 1] = Math.round(image.bitmap.data[index + 1] * 0.78);
+      image.bitmap.data[index + 2] = Math.round(image.bitmap.data[index + 2] * 0.78);
+    });
 
-  const watermarked = await image.getBufferAsync(Jimp.MIME_PNG);
-  return new Blob([watermarked], { type: "image/png" });
+    image.print(
+      font,
+      margin,
+      overlayTop + Math.max(10, Math.round(boxHeight * 0.2)),
+      {
+        text: "HomeDecor.ai",
+        alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT,
+        alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE,
+      },
+      width - margin * 2,
+      boxHeight,
+    );
+
+    const watermarked = await image.getBufferAsync(Jimp.MIME_PNG);
+    return new Blob([watermarked], { type: "image/png" });
+  } catch (error) {
+    console.error("applyHomeDecorWatermark: failed, returning original blob", {
+      message: error instanceof Error ? error.message : "Unknown watermark error",
+    });
+    return blob;
+  }
 }
 
 async function limitFreeImageResolution(blob: Blob) {
-  const FREE_MAX_DIMENSION = 1080;
-  const jimpModule = (await import("jimp-compact")) as any;
-  const Jimp = jimpModule.default ?? jimpModule;
-  const image = await Jimp.read(new Uint8Array(await blob.arrayBuffer()));
-  image.scaleToFit(FREE_MAX_DIMENSION, FREE_MAX_DIMENSION);
-  const buffer = await image.getBufferAsync(Jimp.MIME_PNG);
-  return new Blob([buffer], { type: "image/png" });
+  try {
+    const imageData = new Uint8Array(await blob.arrayBuffer());
+    if (imageData.byteLength === 0) {
+      console.warn("limitFreeImageResolution: empty image data, returning original blob");
+      return blob;
+    }
+
+    const FREE_MAX_DIMENSION = 1080;
+    const imageBuffer = Buffer.from(imageData);
+    const jimpModule = (await import("jimp-compact")) as any;
+    const Jimp = jimpModule.default ?? jimpModule;
+    const image = await Jimp.read(imageBuffer);
+    image.scaleToFit(FREE_MAX_DIMENSION, FREE_MAX_DIMENSION);
+    const buffer = await image.getBufferAsync(Jimp.MIME_PNG);
+    return new Blob([buffer], { type: "image/png" });
+  } catch (error) {
+    console.error("limitFreeImageResolution: failed, returning original blob", {
+      message: error instanceof Error ? error.message : "Unknown resize error",
+    });
+    return blob;
+  }
 }
 
 function getAzureFailureMessage(error: unknown) {
