@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
+import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as MediaLibrary from "expo-media-library";
 import { LayoutPanelTop } from "@/components/material-icons";
@@ -42,6 +43,7 @@ const GRID_GAP = 12;
 const GRID_MAX_CARD_WIDTH = 190;
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -72,7 +74,9 @@ export default function ProfileScreen() {
       mergedItems.set(item.id, item);
     }
 
-    return Array.from(mergedItems.values()).sort((left, right) => right.createdAt - left.createdAt);
+    return Array.from(mergedItems.values())
+      .filter((item) => hasGenerationImage(item.imageUri))
+      .sort((left, right) => right.createdAt - left.createdAt);
   }, [cachedBoardItems, generationArchive]);
   const newBoardItemIdSet = useMemo(() => new Set(newBoardItemIds), [newBoardItemIds]);
   const boardItems = useMemo(
@@ -200,7 +204,14 @@ export default function ProfileScreen() {
       return;
     }
 
-    setPreviewItem(item);
+    router.push({
+      pathname: "/workspace",
+      params: {
+        boardView: "editor",
+        boardItemId: item.generationId ?? item.id,
+        entrySource: "profile",
+      },
+    } as any);
   };
 
   const handleImageLongPress = (item: BoardItem) => {

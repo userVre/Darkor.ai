@@ -145,9 +145,12 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
 
   const gesture = Gesture.Simultaneous(panGesture, doubleTapGesture);
 
-  const afterViewportStyle = useAnimatedStyle(() => ({
-    width: Math.max(sliderX.value, 0),
-  }));
+  const beforeViewportStyle = useAnimatedStyle(() => {
+    const clipWidth = Math.max(sliderX.value, 0);
+    return {
+      width: clipWidth,
+    };
+  });
 
   const handleStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: sliderX.value - HANDLE_TOUCH_WIDTH / 2 }],
@@ -182,23 +185,33 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
   return (
     <GestureDetector gesture={gesture}>
       <View ref={containerRef} collapsable={false} onLayout={handleLayout} style={[styles.container, style]}>
-        <AnimatedExpoImage
-          cachePolicy="memory-disk"
-          contentFit={contentFit}
-          source={beforeSource}
-          style={[styles.image, imageStyle]}
-          transition={120}
-        />
+        <View style={styles.imageStack}>
+          <AnimatedExpoImage
+            cachePolicy="memory-disk"
+            contentFit={contentFit}
+            source={beforeSource}
+            style={[styles.absoluteFill, imageStyle]}
+            transition={120}
+          />
 
-        <Animated.View style={[styles.afterViewport, afterViewportStyle]}>
           <AnimatedExpoImage
             cachePolicy="memory-disk"
             contentFit={contentFit}
             source={afterSource}
-            style={[styles.image, styles.afterImage, imageStyle]}
+            style={[styles.absoluteFill, imageStyle]}
             transition={120}
           />
-        </Animated.View>
+
+          <Animated.View style={[styles.afterViewport, beforeViewportStyle]}>
+            <AnimatedExpoImage
+              cachePolicy="memory-disk"
+              contentFit={contentFit}
+              source={beforeSource}
+              style={[styles.absoluteFill, imageStyle]}
+              transition={120}
+            />
+          </Animated.View>
+        </View>
 
         {children}
 
@@ -232,35 +245,34 @@ const styles = StyleSheet.create({
   container: {
     overflow: "hidden",
   },
-  image: {
+  imageStack: {
     width: "100%",
     height: "100%",
+  },
+  absoluteFill: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   afterViewport: {
     position: "absolute",
     top: 0,
-    right: 0,
     bottom: 0,
     left: 0,
     overflow: "hidden",
   },
-  afterImage: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-  },
   labelPill: {
     position: "absolute",
-    top: 18,
+    top: 14,
     borderRadius: 999,
-    borderWidth: 0.5,
-    borderColor: "rgba(255,255,255,0.18)",
-    backgroundColor: "rgba(12,12,14,0.48)",
-    paddingHorizontal: 13,
-    paddingVertical: 8,
-    boxShadow: "0px 10px 24px rgba(0, 0, 0, 0.18)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.14)",
+    backgroundColor: "rgba(12,12,14,0.58)",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.18)",
   },
   beforeLabel: {
     left: LABEL_EDGE_INSET,
@@ -270,9 +282,9 @@ const styles = StyleSheet.create({
   },
   labelText: {
     color: "#FFFFFF",
-    fontSize: 10,
-    lineHeight: 12,
-    letterSpacing: 1.2,
+    fontSize: 9,
+    lineHeight: 11,
+    letterSpacing: 1.1,
     textTransform: "uppercase",
     fontFamily: fonts.semibold.fontFamily,
     fontWeight: fonts.semibold.fontWeight,

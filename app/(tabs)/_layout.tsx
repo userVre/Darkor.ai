@@ -134,7 +134,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="workspace"
+        name="create"
         options={{
           title: t("tabs.create"),
           tabBarIcon: ({ color, focused }) => <TabIcon Icon={Sparkles} color={color} size={21} focused={focused} />,
@@ -145,7 +145,7 @@ export default function TabsLayout() {
                 if (!canOpenCreateTab) {
                   event.preventDefault();
                   triggerHaptic();
-                  router.push({ pathname: "/sign-in", params: { returnTo: "/workspace" } });
+                  router.push({ pathname: "/sign-in", params: { returnTo: "/create" } });
                   return;
                 }
 
@@ -153,6 +153,12 @@ export default function TabsLayout() {
               }}
             />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="workspace"
+        options={{
+          href: null,
         }}
       />
       <Tabs.Screen

@@ -20,7 +20,7 @@ import {
   buildStabilityPrompt,
 } from "../lib/stability-prompt-builder";
 
-const AZURE_IMAGE_API_VERSION = "2024-02-01";
+const AZURE_IMAGE_API_VERSION = "2025-04-01-preview";
 const AZURE_IMAGE_REQUEST_TIMEOUT_MS = 90_000;
 const AZURE_IMAGE_DEPLOYMENT_NAME = "gpt-image-1";
 
@@ -233,13 +233,11 @@ async function runAzureImageGeneration(args: {
 
 async function applyHomeDecorWatermark(blob: Blob) {
   try {
-    const imageData = new Uint8Array(await blob.arrayBuffer());
-    if (imageData.byteLength === 0) {
-      console.warn("applyHomeDecorWatermark: empty image data, returning original blob");
+    const imageBuffer = await blobToJimpBuffer(blob, "applyHomeDecorWatermark");
+    if (!imageBuffer) {
       return blob;
     }
 
-    const imageBuffer = Buffer.from(imageData);
     const jimpModule = (await import("jimp-compact")) as any;
     const Jimp = jimpModule.default ?? jimpModule;
     const image = await Jimp.read(imageBuffer);
@@ -282,14 +280,11 @@ async function applyHomeDecorWatermark(blob: Blob) {
 
 async function limitFreeImageResolution(blob: Blob) {
   try {
-    const imageData = new Uint8Array(await blob.arrayBuffer());
-    if (imageData.byteLength === 0) {
-      console.warn("limitFreeImageResolution: empty image data, returning original blob");
+    const FREE_MAX_DIMENSION = 1080;
+    const imageBuffer = await blobToJimpBuffer(blob, "limitFreeImageResolution");
+    if (!imageBuffer) {
       return blob;
     }
-
-    const FREE_MAX_DIMENSION = 1080;
-    const imageBuffer = Buffer.from(imageData);
     const jimpModule = (await import("jimp-compact")) as any;
     const Jimp = jimpModule.default ?? jimpModule;
     const image = await Jimp.read(imageBuffer);
@@ -302,6 +297,57 @@ async function limitFreeImageResolution(blob: Blob) {
     });
     return blob;
   }
+}
+
+async function blobToJimpBuffer(blob: Blob, caller: string) {
+  const arrayBuffer = await blob.arrayBuffer();
+  const rawBytes = new Uint8Array(arrayBuffer);
+  if (rawBytes.byteLength === 0) {
+    console.warn(`${caller}: empty image data, returning original blob`);
+    return null;
+  }
+
+  const rawBuffer = Buffer.from(rawBytes);
+  const rawText = rawBuffer.toString("utf8").trim();
+
+  if (rawText.startsWith("data:") || looksLikeBase64(rawText)) {
+    const decoded = decodeBase64ImageBuffer(rawText, caller);
+    if (decoded) {
+      return decoded;
+    }
+  }
+
+  return rawBuffer;
+}
+
+function decodeBase64ImageBuffer(imageData: string, caller: string) {
+  const normalized = imageData.replace(/^data:[^;]+;base64,/, "").replace(/\s+/g, "");
+  if (!normalized) {
+    console.warn(`${caller}: missing base64 image data, returning original blob`);
+    return null;
+  }
+
+  try {
+    const decoded = Buffer.from(normalized, "base64");
+    if (decoded.byteLength > 0) {
+      return decoded;
+    }
+    console.warn(`${caller}: decoded base64 image buffer was empty, returning original blob`);
+    return null;
+  } catch (error) {
+    console.warn(`${caller}: failed to decode base64 image payload, falling back to raw bytes`, {
+      message: error instanceof Error ? error.message : "Unknown base64 decode error",
+    });
+    return null;
+  }
+}
+
+function looksLikeBase64(value: string) {
+  if (value.length < 32 || value.length % 4 !== 0) {
+    return false;
+  }
+
+  return /^[A-Za-z0-9+/=\r\n]+$/.test(value);
 }
 
 function getAzureFailureMessage(error: unknown) {
@@ -369,7 +415,7 @@ export const generateDesign: any = internalActionGeneric({
     const apiKey = trimOptional(process.env.AZURE_OPENAI_API_KEY);
     const endpoint = trimOptional(process.env.AZURE_OPENAI_ENDPOINT);
     const configuredDeploymentName = trimOptional(process.env.AZURE_OPENAI_DEPLOYMENT_NAME);
-    const deploymentName = AZURE_IMAGE_DEPLOYMENT_NAME;
+    const deploymentName = configuredDeploymentName ?? AZURE_IMAGE_DEPLOYMENT_NAME;
 
     console.log("generateDesign: Azure SDK configuration", {
       apiKeyPresent: Boolean(apiKey),
@@ -381,10 +427,12 @@ export const generateDesign: any = internalActionGeneric({
       serviceType: args.serviceType,
     });
 
-    if (!apiKey || !endpoint) {
+    if (!apiKey || !endpoint || !deploymentName) {
       const missingVariable = !apiKey
         ? "AZURE_OPENAI_API_KEY"
-        : "AZURE_OPENAI_ENDPOINT";
+        : !endpoint
+          ? "AZURE_OPENAI_ENDPOINT"
+          : "AZURE_OPENAI_DEPLOYMENT_NAME";
       const message = normalizeGenerationError(`Missing ${missingVariable} in Convex environment variables.`);
       await ctx.runMutation((internal as any).generations.markGenerationFailed, {
         generationId: args.generationId,

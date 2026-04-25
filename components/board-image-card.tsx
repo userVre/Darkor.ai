@@ -69,7 +69,7 @@ export function BoardImageCard({ item, width, onPress, onLongPress }: BoardImage
       ) : null}
 
       <View style={styles.copy}>
-        <Text numberOfLines={1} style={[styles.portfolioLabel, isFailed ? styles.failedText : null]}>
+        <Text numberOfLines={2} style={[styles.portfolioLabel, isFailed ? styles.failedText : null]}>
           {portfolioLabel}
         </Text>
       </View>
@@ -139,16 +139,16 @@ const styles = StyleSheet.create({
     left: 10,
     right: 10,
     bottom: 10,
-    borderRadius: 999,
-    backgroundColor: "rgba(17, 17, 17, 0.88)",
+    borderRadius: 16,
+    backgroundColor: "rgba(17, 17, 17, 0.82)",
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
   },
   portfolioLabel: {
     color: "#FFFFFF",
     fontSize: 12,
-    lineHeight: 14,
-    textAlign: "center",
+    lineHeight: 16,
+    textAlign: "left",
     ...fonts.semibold,
   },
   failedText: {

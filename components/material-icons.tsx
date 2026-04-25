@@ -172,6 +172,7 @@ function createIcon(Icon: MaterialIconComponent, displayName: string) {
 
 export {
   ArrowLeft,
+  ArrowLeftRight,
   BadgeCheck,
   Bath,
   Baby,

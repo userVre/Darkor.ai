@@ -239,7 +239,7 @@ function validateAzureGenerationEnv() {
     endpoint,
     deploymentName,
     apiKey,
-    requestUrl: `${endpoint.endsWith("/") ? endpoint : `${endpoint}/`}openai/deployments/${deploymentName}/images/generations?api-version=2024-02-01`,
+    requestUrl: `${endpoint.endsWith("/") ? endpoint : `${endpoint}/`}openai/deployments/${deploymentName}/images/generations?api-version=2025-04-01-preview`,
   };
 }
 

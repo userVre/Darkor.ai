@@ -33,6 +33,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSharedValue, withSpring } from "react-native-reanimated";
 import {
+  ArrowLeftRight,
   BadgeCheck,
   X as Close,
   Bath,
@@ -51,6 +52,7 @@ import {
   House,
   Monitor,
   Projector,
+  LayoutPanelTop,
   Sofa,
   Sparkles,
   Store,
@@ -545,25 +547,26 @@ const EditorActionButton = memo(function EditorActionButton({
   loading?: boolean;
   tone?: "dark" | "light" | "accent";
 }) {
-  const backgroundColor = tone === "accent" ? "#CC3333" : tone === "light" ? "#F3F4F6" : "#111827";
-  const borderColor = tone === "accent" ? "rgba(204,51,51,0.32)" : "rgba(17,24,39,0.08)";
+  const backgroundColor = tone === "accent" ? "#CC3333" : tone === "light" ? "#F4F5F7" : "#111827";
+  const borderColor =
+    tone === "accent" ? "rgba(204,51,51,0.2)" : tone === "light" ? "rgba(17,24,39,0.08)" : "rgba(17,24,39,0.14)";
   const iconColor = tone === "light" ? "#05070A" : "#FFFFFF";
   const textColor = "#111827";
 
   return (
     <LuxPressable onPress={onPress} disabled={disabled || loading} className="cursor-pointer" style={{ flex: 1 }}>
-      <View style={{ alignItems: "center", gap: 10, opacity: disabled ? 0.55 : 1 }}>
+      <View style={{ alignItems: "center", gap: 12, opacity: disabled ? 0.55 : 1 }}>
         <View
           style={{
-            width: 74,
-            height: 74,
-            borderRadius: 999,
+            width: 76,
+            height: 58,
+            borderRadius: 18,
             borderWidth: 1,
             borderColor,
             backgroundColor,
             alignItems: "center",
             justifyContent: "center",
-            ...ambientShadow(0.08, 12, 8),
+            ...ambientShadow(0.06, 10, 8),
           }}
         >
           {loading ? <ActivityIndicator color={iconColor} /> : <Icon color={iconColor} size={24} strokeWidth={2.1} />}
@@ -3312,8 +3315,8 @@ export default function WorkspaceScreen() {
       }
 
       if (effectiveSignedIn && isGenerating) {
-        router.replace({ pathname: "/workspace", params: { boardView: "board" } });
-        return;
+        setWorkflowStep(5);
+        setActiveBoardItemId(currentGeneration.id);
       }
 
       if (pendingReviewState) {
@@ -4519,7 +4522,7 @@ export default function WorkspaceScreen() {
     setSelectedFinishId((activeBoardItem.finishId as FinishOption["id"] | null) ?? selectedFinishId ?? null);
     setCustomPrompt(activeBoardItem.customPrompt ?? customPrompt);
     setDraftPrompt(activeBoardItem.customPrompt ?? customPrompt);
-    setWorkflowStep(3);
+    setWorkflowStep(1);
   }, [
     activeBoardItem,
     customPrompt,
@@ -7687,35 +7690,11 @@ export default function WorkspaceScreen() {
             }}
           />
 
-          <View className="px-5" style={{ paddingTop: Math.max(insets.top + 10, 20), zIndex: 2 }}>
-            <View style={{ minHeight: 48, alignItems: "center", justifyContent: "center" }}>
-              <View style={{ position: "absolute", left: 0, top: 0, bottom: 0, justifyContent: "center" }}>
-                <View
-                  style={{
-                    borderRadius: 999,
-                    borderWidth: 1,
-                    borderColor: "#E7E8EC",
-                    backgroundColor: "#FFFFFF",
-                    paddingHorizontal: 14,
-                    paddingVertical: 9,
-                  }}
-                >
-                  <Text style={{ color: "#000000", fontSize: 14, lineHeight: 16, ...fonts.semibold }}>{usageBadgeLabel}</Text>
-                  {usageBadgeDetail ? <Text style={{ color: "#6B7280", fontSize: 11, lineHeight: 14, marginTop: 2, ...fonts.regular }}>{usageBadgeDetail}</Text> : null}
-                </View>
-              </View>
-              <Text style={{ color: "#000000", fontSize: 18, lineHeight: 24, letterSpacing: -0.3, textAlign: "left", ...fonts.bold }}>
+          <View className="px-5" style={{ paddingTop: Math.max(insets.top + 14, 22), zIndex: 2 }}>
+            <View style={{ minHeight: 46, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ color: "#111111", fontSize: 19, lineHeight: 25, letterSpacing: -0.45, textAlign: "center", ...fonts.bold }}>
                 AI is crafting your architectural masterpiece...
               </Text>
-              <View style={{ position: "absolute", right: 0, top: 0, bottom: 0, justifyContent: "center" }}>
-                <LuxPressable
-                  onPress={handleCloseBoardEditor}
-                  className="cursor-pointer h-11 w-11 items-center justify-center rounded-full"
-                  style={{ borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#FFFFFF" }}
-                >
-                  <Close color="#000000" size={18} strokeWidth={2.2} />
-                </LuxPressable>
-              </View>
             </View>
           </View>
 
@@ -7724,27 +7703,27 @@ export default function WorkspaceScreen() {
             contentContainerStyle={{
               flexGrow: 1,
               paddingHorizontal: spacing.md,
-              paddingTop: spacing.lg,
+              paddingTop: 8,
               paddingBottom: Math.max(insets.bottom + 34, 42),
             }}
             contentInsetAdjustmentBehavior="never"
             showsVerticalScrollIndicator={false}
           >
-            <View style={{ flex: 1, justifyContent: "center", gap: 32 }}>
-              <View style={{ alignItems: "center", gap: 16 }}>
+            <View style={{ flex: 1, justifyContent: "flex-start", gap: 18, paddingTop: 4, transform: [{ translateY: -52 }] }}>
+              <View style={{ alignItems: "center", gap: 6 }}>
                 <View
                   style={{
                     borderRadius: 999,
-                    backgroundColor: "#F3F4F6",
-                    paddingHorizontal: 14,
+                    backgroundColor: "#F2F4F8",
+                    paddingHorizontal: 16,
                     paddingVertical: 8,
                   }}
                 >
-                  <Text style={{ color: "#000000", fontSize: 11, lineHeight: 14, letterSpacing: 0.9, textTransform: "uppercase", ...fonts.semibold }}>
-                    Neural Render Pipeline
+                  <Text style={{ color: "#4A5562", fontSize: 11, lineHeight: 14, letterSpacing: 1.1, textTransform: "uppercase", ...fonts.bold }}>
+                    NEURAL RENDER PIPELINE
                   </Text>
                 </View>
-                <Text style={{ color: "#000000", fontSize: 16, lineHeight: 24, textAlign: "center", maxWidth: 360, ...fonts.medium }}>
+                <Text style={{ color: "#687076", fontSize: 16, lineHeight: 24, textAlign: "center", maxWidth: 360, ...fonts.medium }}>
                   Your masterpiece will be ready in ~15 seconds.
                 </Text>
               </View>
@@ -7752,16 +7731,18 @@ export default function WorkspaceScreen() {
               <View
                 style={{
                   borderRadius: 24,
-                  backgroundColor: "#F8F9FB",
+                  backgroundColor: "#FFFFFF",
                   paddingHorizontal: 16,
                   paddingTop: 16,
                   paddingBottom: 20,
-                  gap: 16,
+                  gap: 18,
+                  borderWidth: 1,
+                  borderColor: "#ECEEF2",
                   shadowColor: "#111827",
-                  shadowOpacity: 0.08,
+                  shadowOpacity: 0.05,
                   shadowRadius: 22,
-                  shadowOffset: { width: 0, height: 12 },
-                  elevation: 6,
+                  shadowOffset: { width: 0, height: 10 },
+                  elevation: 3,
                 }}
               >
                 <Text style={{ color: "#9CA3AF", fontSize: 11, lineHeight: 14, letterSpacing: 1, textTransform: "uppercase", textAlign: "center", ...fonts.medium }}>
@@ -7846,7 +7827,7 @@ export default function WorkspaceScreen() {
                   </View>
                 </View>
 
-                <View style={{ gap: 12 }}>
+                <View style={{ gap: 14 }}>
                   <View
                     style={{
                       height: 2,
@@ -7868,8 +7849,9 @@ export default function WorkspaceScreen() {
 
                   <View
                     style={{
-                      minHeight: 40,
+                      minHeight: 34,
                       justifyContent: "center",
+                      alignItems: "center",
                     }}
                   >
                     <AnimatePresence>
@@ -7880,7 +7862,7 @@ export default function WorkspaceScreen() {
                         exit={{ opacity: 0, translateY: -10 }}
                         transition={{ duration: 280, type: "timing" }}
                       >
-                        <Text style={{ color: "#6B7280", fontSize: 15, lineHeight: 24, textAlign: "left", ...fonts.medium }}>
+                        <Text style={{ color: "#687076", fontSize: 15, lineHeight: 24, textAlign: "center", ...fonts.medium }}>
                           {processingStatuses[processingStatusIndex] ?? processingStatuses[processingStatuses.length - 1]}
                         </Text>
                       </MotiView>
@@ -7991,6 +7973,8 @@ export default function WorkspaceScreen() {
                   overflow: "hidden",
                   borderRadius: 28,
                   backgroundColor: DS.colors.surfaceHigh,
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 {showSliderComparison && beforeImageSource && editorImageSource ? (
@@ -7999,7 +7983,7 @@ export default function WorkspaceScreen() {
                     from={{ opacity: 0, scale: 0.99 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={LUX_SPRING}
-                    style={{ width: "100%", height: "100%" }}
+                    style={{ width: "100%", height: "100%", alignItems: "center", justifyContent: "center" }}
                   >
                     <BeforeAfterSlider
                       afterSource={editorImageSource}
@@ -8013,7 +7997,7 @@ export default function WorkspaceScreen() {
                 ) : editorImageSource ? (
                   <Image
                     source={editorImageSource}
-                    style={{ width: "100%", height: "100%" }}
+                    style={{ width: "100%", height: "100%", alignSelf: "center" }}
                     contentFit="cover"
                     cachePolicy="memory-disk"
                     transition={120}
@@ -8021,7 +8005,7 @@ export default function WorkspaceScreen() {
                 ) : beforeImageSource ? (
                   <Image
                     source={beforeImageSource}
-                    style={{ width: "100%", height: "100%" }}
+                    style={{ width: "100%", height: "100%", alignSelf: "center" }}
                     contentFit="cover"
                     cachePolicy="memory-disk"
                     transition={120}
@@ -8061,11 +8045,11 @@ export default function WorkspaceScreen() {
                         borderRadius: 999,
                         borderWidth: 1,
                         borderColor: "rgba(255,255,255,0.82)",
-                        backgroundColor: showSliderComparison ? "rgba(214,64,103,0.92)" : "rgba(255,255,255,0.94)",
+                        backgroundColor: showSliderComparison ? "rgba(17,24,39,0.92)" : "rgba(255,255,255,0.94)",
                         opacity: hasComparisonImages ? 1 : 0.45,
                       }}
                     >
-                      <MoveHorizontal color={showSliderComparison ? "#FFFFFF" : "#121212"} size={18} strokeWidth={1.9} />
+                      <LayoutPanelTop color={showSliderComparison ? "#FFFFFF" : "#121212"} size={18} strokeWidth={1.9} />
                     </View>
                   </LuxPressable>
 
@@ -8087,7 +8071,7 @@ export default function WorkspaceScreen() {
                         backgroundColor: "rgba(255,255,255,0.94)",
                       }}
                     >
-                      <Trash2 color="#121212" size={18} strokeWidth={1.8} />
+                      <Trash2 color="#000000" size={18} strokeWidth={2} />
                     </View>
                   </LuxPressable>
                 </View>
@@ -8166,90 +8150,179 @@ export default function WorkspaceScreen() {
                   flexDirection: "row",
                   alignItems: "center",
                   justifyContent: "space-between",
+                  gap: 12,
+                  flexWrap: "wrap",
                   paddingHorizontal: 4,
-                  minHeight: 48,
                 }}
               >
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  {([
-                    { key: "liked", icon: ThumbUp, label: t("workspace.feedback.like") },
-                    { key: "disliked", icon: ThumbDown, label: t("workspace.feedback.dislike") },
-                  ] as const).map((item) => {
-                    const active = editorFeedbackState === item.key;
-                    const busy = isSubmittingFeedback === item.key;
-
-                    return (
-                      <LuxPressable
-                        key={item.key}
-                        onPress={() => {
-                          void handleSubmitEditorFeedback(item.key);
-                        }}
-                        disabled={isEditorActionDisabled || busy || isFeedbackBusy}
-                        className="cursor-pointer"
-                      >
-                        <View
-                          style={{
-                            width: 46,
-                            height: 46,
-                            alignItems: "center",
-                            justifyContent: "center",
-                            borderRadius: 999,
-                            borderWidth: 1,
-                            borderColor: active ? DS.colors.accent : DS.colors.border,
-                            backgroundColor: active ? DS.colors.accentSurface : "#FFFFFF",
-                          }}
-                        >
-                          {busy ? (
-                            <ActivityIndicator size="small" color={DS.colors.accent} />
-                          ) : (
-                            <item.icon color={active ? DS.colors.accent : DS.colors.textPrimary} size={18} strokeWidth={1.9} />
-                          )}
-                        </View>
-                      </LuxPressable>
-                    );
-                  })}
+                <View
+                  style={{
+                    flex: 1,
+                    minWidth: 140,
+                    borderRadius: 18,
+                    backgroundColor: DS.colors.surfaceHigh,
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                  }}
+                >
+                  <Text style={{ color: DS.colors.textMuted, fontSize: 11, lineHeight: 14, ...fonts.medium }}>
+                    Room
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      marginTop: 4,
+                      color: DS.colors.textPrimary,
+                      fontSize: 15,
+                      lineHeight: 20,
+                      ...fonts.semibold,
+                    }}
+                  >
+                    {editorRoomLabel}
+                  </Text>
                 </View>
 
-                <View style={{ minWidth: 44 }} />
+                <View
+                  style={{
+                    flex: 1,
+                    minWidth: 140,
+                    borderRadius: 18,
+                    backgroundColor: DS.colors.surfaceHigh,
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                  }}
+                >
+                  <Text style={{ color: DS.colors.textMuted, fontSize: 11, lineHeight: 14, ...fonts.medium }}>
+                    Style
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      marginTop: 4,
+                      color: DS.colors.textPrimary,
+                      fontSize: 15,
+                      lineHeight: 20,
+                      ...fonts.semibold,
+                    }}
+                  >
+                    {editorStyleLabel}
+                  </Text>
+                </View>
               </View>
+
             </View>
           </MotiView>
 
           <View
             style={{
               marginTop: 6,
-              flexDirection: "row",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 12,
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 18,
             }}
           >
-            <EditorActionButton
-              icon={Redo2}
-              label="Regenerate"
-              onPress={handleOpenRegenerateStep}
-              disabled={isEditorActionDisabled || isGenerating}
-              loading={false}
-              tone="light"
-            />
-            <EditorActionButton
-              icon={Download}
-              label="Save"
-              onPress={handleSaveToGallery}
-              disabled={isEditorActionDisabled || isSaveBusy}
-              loading={isSaveBusy}
-              tone="accent"
-            />
-            <EditorActionButton
-              icon={Share2}
-              label="Share"
-              onPress={() => {
-                void handleShare();
+            <View
+              style={{
+                width: "100%",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 12,
+                alignSelf: "center",
+                maxWidth: 360,
               }}
-              disabled={isEditorActionDisabled || isSharingResult}
-              loading={isSharingResult}
-              tone="dark"
-            />
+            >
+              <EditorActionButton
+                icon={Redo2}
+                label="Regenerate"
+                onPress={handleOpenRegenerateStep}
+                disabled={isEditorActionDisabled || isGenerating}
+                loading={false}
+                tone="light"
+              />
+              <EditorActionButton
+                icon={Download}
+                label="Save"
+                onPress={handleSaveToGallery}
+                disabled={isEditorActionDisabled || isSaveBusy}
+                loading={isSaveBusy}
+                tone="accent"
+              />
+              <EditorActionButton
+                icon={Share2}
+                label="Share"
+                onPress={() => {
+                  void handleShare();
+                }}
+                disabled={isEditorActionDisabled || isSharingResult}
+                loading={isSharingResult}
+                tone="dark"
+              />
+            </View>
+
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 12,
+              }}
+            >
+              <Text style={{ color: "#687076", fontSize: 12, lineHeight: 16, letterSpacing: 0.4, textAlign: "center", ...fonts.medium }}>
+                Rate this result
+              </Text>
+              <View
+                style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 12,
+                }}
+              >
+                {([
+                  { key: "liked", icon: ThumbUp, label: t("workspace.feedback.like") },
+                  { key: "disliked", icon: ThumbDown, label: t("workspace.feedback.dislike") },
+                ] as const).map((item) => {
+                  const active = editorFeedbackState === item.key;
+                  const busy = isSubmittingFeedback === item.key;
+
+                  return (
+                    <LuxPressable
+                      key={item.key}
+                      onPress={() => {
+                        void handleSubmitEditorFeedback(item.key);
+                      }}
+                      disabled={isEditorActionDisabled || busy || isFeedbackBusy}
+                      className="cursor-pointer"
+                    >
+                      <View
+                        style={{
+                          minWidth: 108,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 10,
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: active ? DS.colors.accent : "#E5E7EB",
+                          backgroundColor: active ? DS.colors.accentSurface : "#FFFFFF",
+                          paddingHorizontal: 18,
+                          paddingVertical: 12,
+                        }}
+                      >
+                        {busy ? (
+                          <ActivityIndicator size="small" color={DS.colors.accent} />
+                        ) : (
+                          <item.icon color={active ? DS.colors.accent : DS.colors.textPrimary} size={18} strokeWidth={1.9} />
+                        )}
+                        <Text style={{ color: active ? DS.colors.accent : DS.colors.textPrimary, fontSize: 13, lineHeight: 16, ...fonts.semibold }}>
+                          {item.label}
+                        </Text>
+                      </View>
+                    </LuxPressable>
+                  );
+                })}
+              </View>
+            </View>
           </View>
         </ScrollView>
       </View>

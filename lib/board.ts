@@ -47,8 +47,7 @@ function normalizeText(value?: string | null, fallback?: string) {
 export function mapArchiveToBoardItems(items: GenerationArchiveItem[]) {
   return items
     .filter((item) => {
-      const previewImage = item.imageUrl ?? item.sourceImageUrl ?? null;
-      return hasGenerationImage(previewImage);
+      return hasGenerationImage(item.imageUrl);
     })
     .map<BoardItem>((item) => ({
       id: item._id,
