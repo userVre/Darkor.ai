@@ -1,9 +1,9 @@
-import { MotiView } from "moti";
-import { PropsWithChildren, useMemo, useState } from "react";
-import { Pressable, PressableProps, StyleProp, ViewStyle } from "react-native";
+import {MotiView} from "moti";
+import {PropsWithChildren, useMemo, useState} from "react";
+import {Pressable, PressableProps, StyleProp, ViewStyle} from "react-native";
 
-import { DS, glowShadow } from "../lib/design-system";
-import { LUX_SPRING } from "../lib/motion";
+import {DS, glowShadow} from "../lib/design-system";
+import {LUX_SPRING} from "../lib/motion";
 
 type LuxPressableProps = PressableProps &
   PropsWithChildren<{

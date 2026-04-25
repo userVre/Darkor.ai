@@ -1,19 +1,19 @@
-import { ArrowLeft, X } from "@/components/material-icons";
-import { useState } from "react";
-import { I18nManager, Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ArrowLeft, X} from "@/components/material-icons";
+import {useState} from "react";
+import {useTranslation} from "react-i18next";
+import {I18nManager, Platform, Pressable, StyleSheet, Text, View} from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
-import { DS, floatingButton } from "../lib/design-system";
+import {DS, floatingButton} from "../lib/design-system";
 import {
-  getDirectionalAlignment,
-  getDirectionalArrowScale,
-  getDirectionalOppositeAlignment,
-  getDirectionalRow,
+getDirectionalAlignment,
+getDirectionalArrowScale,
+getDirectionalOppositeAlignment,
+getDirectionalRow,
 } from "../lib/i18n/rtl";
-import { DiamondCreditPill } from "./diamond-credit-pill";
-import { ExitConfirmModal } from "./exit-confirm-modal";
-import { StepProgressSegments } from "./step-progress-segments";
+import {DiamondCreditPill} from "./diamond-credit-pill";
+import {ExitConfirmModal} from "./exit-confirm-modal";
+import {StepProgressSegments} from "./step-progress-segments";
 
 export const STICKY_STEP_HEADER_CONTENT_GAP = 32;
 
@@ -100,7 +100,7 @@ export function StickyStepHeader({
                   style={styles.iconButton}
                 >
                   <ArrowLeft
-                    color="#000000"
+                    color={DS.colors.textPrimary}
                     size={18}
                     strokeWidth={1.9}
                     style={[
@@ -142,7 +142,7 @@ export function StickyStepHeader({
                 }}
                 style={styles.iconButton}
               >
-                <X color="#000000" size={18} strokeWidth={2} />
+                <X color={DS.colors.textPrimary} size={18} strokeWidth={2} />
               </Pressable>
             </View>
           </View>

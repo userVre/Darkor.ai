@@ -1,20 +1,20 @@
-import { StatusBar } from "expo-status-bar";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { ArrowLeft } from "@/components/material-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
+import {ArrowLeft} from "@/components/material-icons";
+import {useLocalSearchParams, useRouter} from "expo-router";
+import {StatusBar} from "expo-status-bar";
+import {useCallback, useMemo, useState} from "react";
+import {useTranslation} from "react-i18next";
+import {FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
-import { DiscoverImageCard } from "../../../components/discover-image-card";
-import { DiscoverPreviewModal } from "../../../components/discover-preview-modal";
-import { DS, floatingButton } from "../../../lib/design-system";
+import {DiscoverImageCard} from "../../../components/discover-image-card";
+import {DiscoverPreviewModal} from "../../../components/discover-preview-modal";
+import {DS, SCREEN_SECTION_GAP, floatingButton} from "../../../lib/design-system";
 import {
-  type DiscoverTabId,
-  type DiscoverTile,
-  useDiscoverGroup,
+type DiscoverTabId,
+type DiscoverTile,
+useDiscoverGroup,
 } from "../../../lib/discover-catalog";
-import { triggerHaptic } from "../../../lib/haptics";
+import {triggerHaptic} from "../../../lib/haptics";
 
 const SCREEN_SIDE_MARGIN = 24;
 const GRID_GAP = 12;
@@ -56,7 +56,12 @@ export default function DiscoverSeeAllScreen() {
 
   const handleBack = useCallback(() => {
     triggerHaptic();
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/gallery");
   }, [router]);
 
   return (
@@ -84,7 +89,7 @@ export default function DiscoverSeeAllScreen() {
           contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{
             paddingHorizontal: SCREEN_SIDE_MARGIN,
-            paddingTop: 24,
+            paddingTop: SCREEN_SECTION_GAP,
             paddingBottom: Math.max(insets.bottom + 120, 132),
           }}
           columnWrapperStyle={styles.gridRow}

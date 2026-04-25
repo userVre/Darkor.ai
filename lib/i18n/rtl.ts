@@ -1,4 +1,4 @@
-import { DevSettings, I18nManager } from "react-native";
+import {DevSettings, I18nManager} from "react-native";
 
 export function isRTLLayout() {
   return I18nManager.isRTL;

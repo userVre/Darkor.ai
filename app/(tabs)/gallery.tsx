@@ -1,26 +1,25 @@
-import { StatusBar } from "expo-status-bar";
-import { FlashList } from "@shopify/flash-list";
-import { useRouter } from "expo-router";
-import { memo, useCallback, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
+import {FlashList} from "@shopify/flash-list";
+import {useRouter} from "expo-router";
+import {StatusBar} from "expo-status-bar";
+import {memo, useCallback, useMemo, useState} from "react";
+import {useTranslation} from "react-i18next";
+import {Pressable, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
-import { DiscoverImageCard } from "../../components/discover-image-card";
-import { DiscoverPreviewModal } from "../../components/discover-preview-modal";
-import { DiamondCreditPill } from "../../components/diamond-credit-pill";
-import { CreditLimitModal } from "../../components/credit-limit-modal";
-import { useViewerCredits } from "../../components/viewer-credits-context";
-import { DS } from "../../lib/design-system";
+import {DiamondCreditPill} from "../../components/diamond-credit-pill";
+import {DiscoverImageCard} from "../../components/discover-image-card";
+import {DiscoverPreviewModal} from "../../components/discover-preview-modal";
+import {useViewerCredits} from "../../components/viewer-credits-context";
+import {DS} from "../../lib/design-system";
 import {
-  type DiscoverCluster,
-  type DiscoverClusterId,
-  type DiscoverGroup,
-  type DiscoverTile,
-  useDiscoverClusters,
+type DiscoverCluster,
+type DiscoverClusterId,
+type DiscoverGroup,
+type DiscoverTile,
+useDiscoverClusters,
 } from "../../lib/discover-catalog";
-import { triggerHaptic } from "../../lib/haptics";
-import { fonts } from "../../styles/typography";
+import {triggerHaptic} from "../../lib/haptics";
+import {fonts} from "../../styles/typography";
 
 const SCREEN_SIDE_MARGIN = 24;
 const CARD_GAP = 12;
@@ -84,7 +83,6 @@ export default function GalleryScreen() {
   const { width } = useWindowDimensions();
   const { credits } = useViewerCredits();
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
-  const [isCreditModalVisible, setIsCreditModalVisible] = useState(false);
   const [selectedClusterId, setSelectedClusterId] = useState<DiscoverClusterId>("interiors");
   const clusters = useDiscoverClusters();
   const cardWidth = useMemo(() => Math.min(Math.round(width * 0.46), 224), [width]);
@@ -128,15 +126,6 @@ export default function GalleryScreen() {
 
   const handleCreditsPress = useCallback(() => {
     triggerHaptic();
-    router.push("/paywall");
-  }, [router]);
-
-  const handleCreditModalClose = useCallback(() => {
-    setIsCreditModalVisible(false);
-  }, []);
-
-  const handleCreditModalUpgrade = useCallback(() => {
-    setIsCreditModalVisible(false);
     router.push("/paywall");
   }, [router]);
 
@@ -220,14 +209,6 @@ export default function GalleryScreen() {
         visible={Boolean(previewItem)}
         topInset={insets.top}
         onClose={handlePreviewClose}
-      />
-
-      <CreditLimitModal
-        body={t("creditLimit.discoverTabBody")}
-        title={t("creditLimit.balanceTitle")}
-        visible={isCreditModalVisible}
-        onClose={handleCreditModalClose}
-        onUpgrade={handleCreditModalUpgrade}
       />
     </View>
   );

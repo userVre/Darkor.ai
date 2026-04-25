@@ -1,22 +1,17 @@
-import { actionGeneric, internalActionGeneric, internalMutationGeneric } from "convex/server";
+import { actionGeneric, internalMutationGeneric } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import {
-  buildStabilityNegativePrompt,
-  buildStabilityPrompt,
-  normalizeAspectRatio,
-} from "../lib/stability-prompt-builder";
+  buildDesignPrompt,
+} from "../lib/design-prompt-builder";
 
 const GEMINI_SUGGEST_REQUEST_TIMEOUT_MS = 25_000;
 const GEMINI_SUGGEST_MAX_DIMENSION = 1152;
 const GEMINI_SUGGEST_MAX_INLINE_BYTES = 3 * 1024 * 1024;
 const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
-const AZURE_IMAGE_API_VERSION = "2025-04-01-preview";
-const AZURE_IMAGE_REQUEST_TIMEOUT_MS = 90_000;
 
 type ServiceType = "paint" | "floor" | "redesign";
-type SpeedTier = "standard" | "pro" | "ultra";
 
 type DetectionPoint = {
   x: number;
@@ -29,36 +24,6 @@ type DetectionResponse = {
   reason?: string | null;
 };
 
-type AzureGenerationResponse = {
-  created?: number;
-  data?: Array<{
-    b64_json?: string;
-    revised_prompt?: string;
-  }>;
-  error?: {
-    code?: string;
-    message?: string;
-    inner_error?: {
-      code?: string;
-      content_filter_result?: unknown;
-    };
-  };
-  message?: string;
-};
-
-type AzureErrorPayload = {
-  error?: {
-    code?: string;
-    message?: string;
-    inner_error?: {
-      code?: string;
-      content_filter_result?: unknown;
-    };
-  };
-  message?: string;
-  details?: Array<{ code?: string; message?: string }>;
-};
-
 type DesignOrchestrationResult = {
   style: string;
   styles?: string[];
@@ -69,13 +34,6 @@ type DesignOrchestrationResult = {
   fusionPrompt?: string;
   reason?: string;
   source: "gemini" | "fallback";
-};
-
-type AzureRenderProfile = {
-  generationEndpoint: string;
-  deploymentName: string;
-  size: "1024x1024";
-  watermarkRequired: boolean;
 };
 
 export function redactSecret(value?: string | null) {
@@ -94,16 +52,6 @@ export function redactSecret(value?: string | null) {
 export function trimOptional(value?: string | null) {
   const trimmed = value?.trim();
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
-}
-
-function decodeBase64ToBytes(base64: string) {
-  const cleaned = base64.replace(/^data:[^;]+;base64,/, "");
-  const binary = atob(cleaned);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-  return bytes;
 }
 
 async function blobToBase64(blob: Blob) {
@@ -246,156 +194,6 @@ export function compactPromptSegments(parts: Array<string | undefined>) {
     .join(" ");
 }
 
-async function parseAzureError(response: Response) {
-  const raw = await response.text();
-  try {
-    const parsed = JSON.parse(raw) as AzureErrorPayload;
-    const combined = [
-      parsed.error?.code,
-      parsed.error?.inner_error?.code,
-      parsed.error?.message,
-      parsed.message,
-      ...(Array.isArray(parsed.details) ? parsed.details.flatMap((detail) => [detail.code, detail.message]) : []),
-    ]
-      .filter(Boolean)
-      .join(" | ");
-    return combined || raw;
-  } catch {
-    return raw;
-  }
-}
-
-function shouldRetryStatus(status: number) {
-  return status === 408 || status === 429 || status >= 500;
-}
-
-function shouldRetryMessage(message: string) {
-  const normalized = message.toLowerCase();
-  return (
-    normalized.includes("network request failed") ||
-    normalized.includes("failed to fetch") ||
-    normalized.includes("fetch failed") ||
-    normalized.includes("network error") ||
-    normalized.includes("timed out")
-  );
-}
-
-async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("The AI request timed out.");
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-function normalizeAzureEndpoint(endpoint: string) {
-  return endpoint.replace(/\/+$/, "");
-}
-
-function ensureAzureEndpointPrefix(endpoint: string) {
-  const trimmed = endpoint.trim();
-  return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
-}
-
-function buildAzureImageEndpoint(endpoint: string, deploymentName: string, operation: "edits" | "generations") {
-  return `${ensureAzureEndpointPrefix(endpoint)}openai/deployments/${deploymentName}/images/${operation}?api-version=${AZURE_IMAGE_API_VERSION}`;
-}
-
-function resolveAzureRenderProfile(args: { endpoint: string; deploymentName: string; planUsed?: string; speedTier?: SpeedTier }) {
-  const isProPlan = args.planUsed === "pro";
-
-  return {
-    generationEndpoint: buildAzureImageEndpoint(args.endpoint, args.deploymentName, "generations"),
-    deploymentName: args.deploymentName,
-    size: "1024x1024" as const,
-    watermarkRequired: !isProPlan,
-  } satisfies AzureRenderProfile;
-}
-
-async function requestAzureImageWithRetry(args: {
-  apiKey: string;
-  body: BodyInit;
-  endpoint: string;
-  contentType?: string;
-}) {
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      console.log("requestAzureImageWithRetry: sending request", {
-        attempt: attempt + 1,
-        endpoint: args.endpoint,
-        contentType: args.contentType ?? "multipart/form-data",
-      });
-      const response = await fetchWithTimeout(
-        args.endpoint,
-        {
-          method: "POST",
-          headers: {
-            "api-key": args.apiKey,
-            ...(args.contentType ? { "Content-Type": args.contentType } : {}),
-          },
-          body: args.body,
-        },
-        AZURE_IMAGE_REQUEST_TIMEOUT_MS,
-      );
-
-      if (!response.ok) {
-        const parsedError = await parseAzureError(response);
-        const failureReason =
-          response.status === 401
-            ? `Azure auth failure: ${parsedError || "Unauthorized"}`
-            : response.status === 429
-              ? `Azure rate limit: ${parsedError || "Too Many Requests"}`
-              : parsedError;
-        console.error("requestAzureImageWithRetry: Azure request failed", {
-          attempt: attempt + 1,
-          endpoint: args.endpoint,
-          error: failureReason,
-          reason: failureReason,
-          status: response.status,
-        });
-        if (attempt === 0 && shouldRetryStatus(response.status)) {
-          await new Promise((resolve) => setTimeout(resolve, 1_500));
-          continue;
-        }
-        if (shouldRetryStatus(response.status)) {
-          throw new ConvexError(AI_PROVIDER_DOWN);
-        }
-        throw new ConvexError(failureReason || `Azure OpenAI image generation failed with status ${response.status}.`);
-      }
-
-      return response;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Azure OpenAI image generation failed.";
-      console.error("requestAzureImageWithRetry: request threw", {
-        attempt: attempt + 1,
-        endpoint: args.endpoint,
-        message,
-      });
-      lastError = error instanceof Error ? error : new Error(message);
-      if (attempt === 0 && shouldRetryMessage(message)) {
-        await new Promise((resolve) => setTimeout(resolve, 1_500));
-        continue;
-      }
-      if (shouldRetryMessage(message)) {
-        throw new ConvexError(AI_PROVIDER_DOWN);
-      }
-      throw error;
-    }
-  }
-
-  throw lastError ?? new ConvexError("Azure OpenAI image generation failed.");
-}
-
 function buildPrompt(args: {
   serviceType: ServiceType;
   roomType: string;
@@ -409,7 +207,7 @@ function buildPrompt(args: {
   regenerate?: boolean;
   smartSuggest?: boolean;
 }) {
-  return buildStabilityPrompt({
+  return buildDesignPrompt({
     serviceType: args.serviceType,
     roomType: args.roomType,
     style: args.style,
@@ -422,53 +220,6 @@ function buildPrompt(args: {
     regenerate: args.regenerate,
     smartSuggest: args.smartSuggest,
   });
-}
-
-function buildAzurePrompt(prompt: string, negativePrompt: string) {
-  return `${prompt}\n\nAvoid: ${negativePrompt}`;
-}
-
-function extractAzureGeneratedImage(response: AzureGenerationResponse) {
-  const imageBase64 = response.data?.find((item) => trimOptional(item?.b64_json))?.b64_json;
-  if (imageBase64) {
-    return imageBase64;
-  }
-
-  const message =
-    response.error?.message ??
-    response.error?.inner_error?.code ??
-    response.message ??
-    "Azure OpenAI returned no image.";
-  throw new ConvexError(message);
-}
-
-async function runAzureImageGeneration(args: {
-  apiKey: string;
-  prompt: string;
-  negativePrompt: string;
-  renderProfile: AzureRenderProfile;
-}) {
-  const payload = {
-    prompt: buildAzurePrompt(args.prompt, args.negativePrompt),
-    n: 1,
-    size: args.renderProfile.size,
-  };
-
-  console.log("runAzureImageGeneration: prepared Azure generation request", {
-    endpoint: args.renderProfile.generationEndpoint,
-    payload,
-    size: args.renderProfile.size,
-  });
-
-  const response = await requestAzureImageWithRetry({
-    apiKey: args.apiKey,
-    body: JSON.stringify(payload),
-    endpoint: args.renderProfile.generationEndpoint,
-    contentType: "application/json",
-  });
-
-  const body = (await response.json()) as AzureGenerationResponse;
-  return extractAzureGeneratedImage(body);
 }
 
 async function applyHomeDecorWatermark(blob: Blob) {
@@ -850,212 +601,6 @@ export const saveOptimizedPrompt = internalMutationGeneric({
     });
 
     return { ok: true };
-  },
-});
-
-export const generateDesign: any = internalActionGeneric({
-  args: {
-    generationId: v.id("generations"),
-    ownerId: v.string(),
-    imageStorageId: v.id("_storage"),
-    referenceImageStorageIds: v.optional(v.array(v.id("_storage"))),
-    maskStorageId: v.optional(v.id("_storage")),
-    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign")),
-    roomType: v.string(),
-    style: v.string(),
-    styleSelections: v.optional(v.array(v.string())),
-    colorPalette: v.string(),
-    customPrompt: v.optional(v.string()),
-    targetColor: v.optional(v.string()),
-    targetColorHex: v.optional(v.string()),
-    targetColorCategory: v.optional(v.string()),
-    targetSurface: v.optional(v.string()),
-    aspectRatio: v.optional(v.string()),
-    aiSuggestedStyle: v.optional(v.string()),
-    aiSuggestedPaletteId: v.optional(v.string()),
-    regenerate: v.optional(v.boolean()),
-    smartSuggest: v.optional(v.boolean()),
-    speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
-    planUsed: v.optional(v.string()),
-  },
-  handler: async (
-    ctx,
-    args,
-  ): Promise<{ ok: true; storageId: string; imageUrl: string | null }> => {
-    const apiKey = trimOptional(process.env.AZURE_OPENAI_API_KEY);
-    const endpoint = trimOptional(process.env.AZURE_OPENAI_ENDPOINT);
-    const deploymentName = trimOptional(process.env.AZURE_OPENAI_DEPLOYMENT_NAME);
-    console.log("generateDesign: Azure configuration", {
-      apiKeyPresent: Boolean(apiKey),
-      apiKeyPreview: redactSecret(apiKey),
-      deploymentName: deploymentName ?? null,
-      endpoint: endpoint ? ensureAzureEndpointPrefix(endpoint) : null,
-      generationId: args.generationId,
-      serviceType: args.serviceType,
-    });
-    if (!apiKey || !endpoint || !deploymentName) {
-      const missingVariable = !apiKey
-        ? "AZURE_OPENAI_API_KEY"
-        : !endpoint
-          ? "AZURE_OPENAI_ENDPOINT"
-          : "AZURE_OPENAI_DEPLOYMENT_NAME";
-      const message = normalizeGenerationError(`Missing ${missingVariable} in Convex environment variables.`);
-      await ctx.runMutation((internal as any).generations.markGenerationFailed, {
-        generationId: args.generationId,
-        ownerId: args.ownerId,
-        errorMessage: message,
-      });
-      throw new ConvexError(message);
-    }
-
-    let generatedStorageId: string | null = null;
-
-    try {
-      const sourceBlob = await ctx.storage.get(args.imageStorageId);
-      if (!sourceBlob) {
-        throw new ConvexError("The source image could not be loaded from storage.");
-      }
-
-      const maskBlob = args.maskStorageId ? await ctx.storage.get(args.maskStorageId) : null;
-      if (args.serviceType !== "redesign" && !maskBlob) {
-        throw new ConvexError("The edit mask could not be loaded from storage.");
-      }
-
-      console.log("generateDesign: loaded assets", {
-        generationId: args.generationId,
-        hasMask: Boolean(maskBlob),
-        hasReferenceImages: Boolean(args.referenceImageStorageIds?.length),
-        promptSource: args.smartSuggest ? "smartSuggest" : "manual",
-        serviceType: args.serviceType,
-      });
-
-      const renderProfile = resolveAzureRenderProfile({
-        endpoint,
-        deploymentName,
-        planUsed: trimOptional(args.planUsed),
-        speedTier: (args.speedTier as SpeedTier | undefined) ?? "standard",
-      });
-      console.log("generateDesign: resolved Azure endpoints", {
-        generationEndpoint: renderProfile.generationEndpoint,
-        generationId: args.generationId,
-      });
-
-      const orchestratedDirection =
-        (args.smartSuggest || (args.serviceType === "redesign" && hasMultipleDistinctStyles(args.style, args.styleSelections)))
-          ? await requestGeminiDesignOrchestration({
-              sourceBlob,
-              serviceType: args.serviceType,
-              roomType: args.roomType,
-              style: args.style,
-              styleSelections: args.styleSelections,
-              colorPalette: args.colorPalette,
-            })
-          : null;
-      const resolvedStyle = trimOptional(orchestratedDirection?.style) ?? args.style;
-      const resolvedPalette = trimOptional(orchestratedDirection?.paletteId) ?? args.colorPalette;
-      const resolvedTargetColor = trimOptional(orchestratedDirection?.wallColor) ?? args.targetColor;
-      const orchestrationPrompt = trimOptional(orchestratedDirection?.customPrompt);
-      const orchestrationReason = trimOptional(orchestratedDirection?.reason);
-      const resolvedCustomPrompt = compactPromptSegments([
-        args.customPrompt,
-        args.serviceType === "paint" && orchestratedDirection?.wallColor
-          ? `Primary wall color recommendation: ${orchestratedDirection.wallColor}.`
-          : undefined,
-        args.serviceType === "floor" && orchestratedDirection?.floorMaterial
-          ? `Primary flooring recommendation: ${orchestratedDirection.floorMaterial}.`
-          : undefined,
-        args.serviceType === "redesign" && orchestratedDirection?.fusionPrompt
-          ? `Fusion design brief: ${orchestratedDirection.fusionPrompt}.`
-          : undefined,
-        args.serviceType === "redesign" && orchestrationReason
-          ? `Design direction rationale: ${orchestrationReason}.`
-          : undefined,
-        orchestrationPrompt,
-      ]);
-
-      const resolvedStyleSelections =
-        args.serviceType === "redesign"
-          ? dedupeSuggestions(
-              [resolvedStyle, ...(orchestratedDirection?.styles ?? args.styleSelections ?? [])],
-              resolvedStyle,
-            )
-          : args.styleSelections;
-
-      const optimizedPrompt = buildPrompt({
-        serviceType: args.serviceType,
-        roomType: args.roomType,
-        style: resolvedStyle,
-        styleSelections: resolvedStyleSelections,
-        colorPalette: resolvedPalette,
-        customPrompt: resolvedCustomPrompt,
-        targetColor: resolvedTargetColor,
-        targetSurface: args.targetSurface,
-        aspectRatio: args.aspectRatio,
-        regenerate: args.regenerate,
-        smartSuggest: args.smartSuggest,
-      });
-      const negativePrompt = buildStabilityNegativePrompt({
-        serviceType: args.serviceType,
-      });
-
-      await ctx.runMutation((internal as any).ai.saveOptimizedPrompt, {
-        generationId: args.generationId,
-        prompt: optimizedPrompt,
-      });
-
-      const generatedBase64 = await runAzureImageGeneration({
-        apiKey,
-        prompt: optimizedPrompt,
-        negativePrompt,
-        renderProfile,
-      });
-
-      const bytes = decodeBase64ToBytes(generatedBase64);
-      const imageBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
-      let outputBlob = new Blob([imageBuffer], { type: "image/png" });
-
-      if (renderProfile.watermarkRequired) {
-        outputBlob = await limitFreeImageResolution(outputBlob);
-        outputBlob = await applyHomeDecorWatermark(outputBlob);
-      }
-
-      console.log("generateDesign: Azure generation completed", {
-        generationId: args.generationId,
-        watermarkRequired: renderProfile.watermarkRequired,
-        outputMimeType: outputBlob.type,
-      });
-      generatedStorageId = (await ctx.storage.store(outputBlob)) as string;
-
-      const saveResult = (await ctx.runMutation((internal as any).ai.saveGeneration, {
-        generationId: args.generationId,
-        storageId: generatedStorageId,
-      })) as { imageUrl?: string | null };
-
-      return {
-        ok: true,
-        storageId: generatedStorageId,
-        imageUrl: saveResult.imageUrl ?? null,
-      };
-    } catch (error) {
-      const rawMessage = error instanceof Error ? error.message : "Generation failed.";
-      const friendlyMessage = normalizeGenerationError(rawMessage);
-      console.error("generateDesign: generation failed", {
-        generationId: args.generationId,
-        message: rawMessage,
-        friendlyMessage,
-        serviceType: args.serviceType,
-      });
-      if (generatedStorageId) {
-        await ctx.storage.delete(generatedStorageId as any);
-      }
-
-      await ctx.runMutation((internal as any).generations.markGenerationFailed, {
-        generationId: args.generationId,
-        ownerId: args.ownerId,
-        errorMessage: rawMessage,
-      });
-      throw new ConvexError(rawMessage);
-    }
   },
 });
 

@@ -1,6 +1,6 @@
-import { NativeModules, Platform } from "react-native";
+import {NativeModules, Platform} from "react-native";
 
-import type { PricingTierId } from "./dynamic-pricing";
+import type {PricingTierId} from "./dynamic-pricing";
 
 export const REVENUECAT_ENTITLEMENT = "pro";
 export const REVENUECAT_WEEKLY_PRO_ENTITLEMENT = "weekly_pro";
@@ -22,6 +22,7 @@ export type RevenueCatTierContext = {
   countryCode: string;
   currencyCode: string;
   offeringHint?: string | null;
+  priceMetadata?: Record<string, string>;
   attributePayload?: Record<string, string>;
 };
 
@@ -275,6 +276,7 @@ export async function syncRevenueCatPricingAttributes(
     darkor_pricing_tier: tierContext.tierId,
     darkor_country_code: tierContext.countryCode,
     darkor_currency_code: tierContext.currencyCode,
+    ...(tierContext.priceMetadata ?? {}),
     ...(tierContext.attributePayload ?? {}),
   });
 }

@@ -1,22 +1,22 @@
-import { Image } from "expo-image";
-import { StatusBar } from "expo-status-bar";
-import { Camera, Image as GalleryIcon } from "@/components/material-icons";
-import { useCallback, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageSourcePropType } from "react-native";
-import { useTranslation } from "react-i18next";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {Camera, Image as GalleryIcon} from "@/components/material-icons";
+import {Image} from "expo-image";
+import {StatusBar} from "expo-status-bar";
+import {useCallback, useMemo, useState} from "react";
+import {useTranslation} from "react-i18next";
+import {Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageSourcePropType} from "react-native";
+import {Gesture, GestureDetector} from "react-native-gesture-handler";
 import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
+runOnJS,
+useAnimatedStyle,
+useSharedValue,
+withSpring,
+withTiming,
 } from "react-native-reanimated";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
-import { triggerHaptic } from "../lib/haptics";
-import { fonts } from "../styles/typography";
-import { StickyStepHeader, getStickyStepHeaderMetrics } from "./sticky-step-header";
+import {triggerHaptic} from "../lib/haptics";
+import {fonts} from "../styles/typography";
+import {StickyStepHeader, getStickyStepHeaderMetrics} from "./sticky-step-header";
 
 export type FloorIntroExamplePhoto = {
   id: string;

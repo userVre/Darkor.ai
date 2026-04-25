@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { type LayoutChangeEvent } from "react-native";
-import { Gesture } from "react-native-gesture-handler";
+import {useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction} from "react";
+import {type LayoutChangeEvent} from "react-native";
+import {Gesture} from "react-native-gesture-handler";
 
 export type MaskPoint = {
   x: number;

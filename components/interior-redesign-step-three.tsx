@@ -1,24 +1,24 @@
-import { Image } from "expo-image";
-import { StatusBar } from "expo-status-bar";
-import { type ComponentType, useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, Sparkles } from "@/components/material-icons";
+import {Check, Sparkles} from "@/components/material-icons";
+import {Image} from "expo-image";
+import {StatusBar} from "expo-status-bar";
+import {type ComponentType, useMemo} from "react";
+import {useTranslation} from "react-i18next";
+import {Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
+import {triggerHaptic} from "../lib/haptics";
+import {fonts} from "../styles/typography";
+import {DesignStepHeader, getDesignStepHeaderMetrics} from "./design-step-header";
 import {
-  DESIGN_WIZARD_SELECTION_BLUE,
-  DESIGN_WIZARD_SURFACE,
-  DESIGN_WIZARD_TEXT,
-  DESIGN_WIZARD_TEXT_MUTED,
-  getWizardFloatingButtonStyle,
-  getWizardSelectedLabelTextStyle,
-  getWizardSelectedIconContainerStyle,
-  getWizardSelectionCardStyle,
+DESIGN_WIZARD_SELECTION_BLUE,
+DESIGN_WIZARD_SURFACE,
+DESIGN_WIZARD_TEXT,
+DESIGN_WIZARD_TEXT_MUTED,
+getWizardFloatingButtonStyle,
+getWizardSelectedIconContainerStyle,
+getWizardSelectedLabelTextStyle,
+getWizardSelectionCardStyle,
 } from "./design-wizard-primitives";
-import { triggerHaptic } from "../lib/haptics";
-import { fonts } from "../styles/typography";
-import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-header";
 
 type InteriorRedesignStepThreeStyleCard = {
   id: string;

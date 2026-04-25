@@ -1,6 +1,6 @@
-import { ConvexReactClient } from "convex/react";
+import {ConvexReactClient} from "convex/react";
 
-import { getEnvReport } from "./env";
+import {getEnvReport} from "./env";
 
 const { values } = getEnvReport();
 const convexUrl = values.convexUrl;

@@ -1,28 +1,28 @@
-import { Image, type ImageSource } from "expo-image";
 import * as Haptics from "expo-haptics";
-import { memo, type ReactNode, type Ref, useCallback } from "react";
+import {Image, type ImageSource} from "expo-image";
+import {memo, useCallback, type ReactNode, type Ref} from "react";
 import {
-  type ImageStyle,
-  type LayoutChangeEvent,
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
+StyleSheet,
+Text,
+View,
+type ImageStyle,
+type LayoutChangeEvent,
+type StyleProp,
+type ViewStyle,
 } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import {Gesture, GestureDetector} from "react-native-gesture-handler";
 import Animated, {
-  Extrapolation,
-  interpolate,
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  type SharedValue,
+Extrapolation,
+interpolate,
+runOnJS,
+useAnimatedStyle,
+useSharedValue,
+withSpring,
+type SharedValue,
 } from "react-native-reanimated";
 
-import { triggerHaptic } from "../lib/haptics";
-import { fonts } from "../styles/typography";
+import {triggerHaptic} from "../lib/haptics";
+import {fonts} from "../styles/typography";
 
 const HANDLE_TOUCH_WIDTH = 72;
 const HANDLE_VISUAL_SIZE = 42;

@@ -1,27 +1,26 @@
-import { Asset } from "expo-asset";
-import { useAuth } from "@clerk/expo";
-import { Settings } from "@/components/material-icons";
-import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, I18nManager, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {Settings} from "@/components/material-icons";
+import {useAuth} from "@clerk/expo";
+import {Asset} from "expo-asset";
+import {useRouter} from "expo-router";
+import {StatusBar} from "expo-status-bar";
+import {useCallback, useEffect, useMemo} from "react";
+import {useTranslation} from "react-i18next";
+import {Alert, I18nManager, Pressable, ScrollView, StyleSheet, Text, View} from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
-import { CreditLimitModal } from "./credit-limit-modal";
-import { DiamondCreditPill } from "./diamond-credit-pill";
-import { HomeToolCard, type HomeToolCardItem } from "./home-tool-card";
-import { useWorkspaceDraft } from "./workspace-context";
-import { useViewerCredits } from "./viewer-credits-context";
-import { DS } from "../lib/design-system";
-import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../lib/guest-testing";
-import { triggerHaptic } from "../lib/haptics";
+import {DS} from "../lib/design-system";
+import {ENABLE_GUEST_WIZARD_TEST_MODE} from "../lib/guest-testing";
+import {triggerHaptic} from "../lib/haptics";
 import {
-  getDirectionalAlignment,
-  getDirectionalOppositeAlignment,
-  getDirectionalRow,
+getDirectionalAlignment,
+getDirectionalOppositeAlignment,
+getDirectionalRow,
 } from "../lib/i18n/rtl";
-import { withWorkspaceFlowId } from "../lib/try-it-flow";
+import {withWorkspaceFlowId} from "../lib/try-it-flow";
+import {DiamondCreditPill} from "./diamond-credit-pill";
+import {HomeToolCard, type HomeToolCardItem} from "./home-tool-card";
+import {useViewerCredits} from "./viewer-credits-context";
+import {useWorkspaceDraft} from "./workspace-context";
 
 export function CreateOptionsScreen() {
   const router = useRouter();
@@ -30,7 +29,6 @@ export function CreateOptionsScreen() {
   const { isSignedIn } = useAuth();
   const { clearDraft } = useWorkspaceDraft();
   const { credits: creditBalance, hasPaidAccess } = useViewerCredits();
-  const [isCreditModalVisible, setIsCreditModalVisible] = useState(false);
   const isRTL = I18nManager.isRTL;
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const sidePadding = 20;
@@ -133,15 +131,6 @@ export function CreateOptionsScreen() {
     router.push("/paywall");
   };
 
-  const handleCreditModalClose = () => {
-    setIsCreditModalVisible(false);
-  };
-
-  const handleCreditModalUpgrade = () => {
-    setIsCreditModalVisible(false);
-    router.push("/paywall");
-  };
-
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
@@ -191,14 +180,6 @@ export function CreateOptionsScreen() {
           ))}
         </View>
       </ScrollView>
-
-      <CreditLimitModal
-        body={t("creditLimit.createTabBody")}
-        title={t("creditLimit.balanceTitle")}
-        visible={isCreditModalVisible}
-        onClose={handleCreditModalClose}
-        onUpgrade={handleCreditModalUpgrade}
-      />
     </View>
   );
 }

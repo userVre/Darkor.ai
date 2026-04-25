@@ -1,25 +1,26 @@
-import { LinearGradient } from "expo-linear-gradient";
+import {Check, Sparkles} from "@/components/material-icons";
 import * as Haptics from "expo-haptics";
-import { MotiView } from "moti";
-import { spacing } from "../styles/spacing";
+import {LinearGradient} from "expo-linear-gradient";
+import {MotiView} from "moti";
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+createContext,
+useCallback,
+useContext,
+useEffect,
+useMemo,
+useRef,
+useState,
 } from "react";
-import { Platform, Text, ToastAndroid, View, useWindowDimensions } from "react-native";
-import { Easing } from "react-native-reanimated";
-import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, Sparkles } from "@/components/material-icons";
+import {useTranslation} from "react-i18next";
+import {Platform, Text, ToastAndroid, View, useWindowDimensions} from "react-native";
+import {Easing} from "react-native-reanimated";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import {spacing} from "../styles/spacing";
 
-import { LUX_SPRING } from "../lib/motion";
-import { fonts } from "../styles/typography";
-import { LuxPressable } from "./lux-pressable";
+import {DS} from "../lib/design-system";
+import {LUX_SPRING} from "../lib/motion";
+import {fonts} from "../styles/typography";
+import {LuxPressable} from "./lux-pressable";
 
 type ProSuccessContextValue = {
   showSuccess: () => void;
@@ -51,7 +52,7 @@ function ProSuccessOverlay({
           transition={{ ...LUX_SPRING, loop: true }}
           className="rounded-[32px]"
           style={{
-            shadowColor: "#d946ef",
+            shadowColor: DS.colors.accentStrong,
             shadowOpacity: 0.28,
             shadowRadius: 22,
             shadowOffset: { width: 0, height: 12 },
@@ -59,14 +60,14 @@ function ProSuccessOverlay({
           }}
         >
           <LinearGradient
-            colors={["#d946ef", "#6366f1"]}
+            colors={[DS.colors.accentStrong, DS.colors.positive]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{ borderRadius: 32, padding: spacing.xs }}
           >
             <View className="rounded-[30px] border border-white/10 bg-black px-6 py-8" style={{ borderWidth: 0.5 }}>
               <View className="flex-row items-center gap-2">
-                <Sparkles color="#f5f3ff" size={20} />
+                <Sparkles color={DS.colors.textInverse} size={20} />
                 <Text className="text-xl font-medium text-white" style={fonts.medium}>{t("proSuccess.title")} {"\u2728"}</Text>
               </View>
               <Text className="mt-3 text-sm text-zinc-400">{t("proSuccess.subtitle")}</Text>
@@ -79,7 +80,7 @@ function ProSuccessOverlay({
                 ].map((item) => (
                   <View key={item} className="flex-row items-center gap-3">
                     <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
-                      <Check color="#f8fafc" size={16} />
+                      <Check color={DS.colors.textInverse} size={16} />
                     </View>
                     <Text className="text-sm font-semibold text-zinc-100" style={fonts.semibold}>{item}</Text>
                   </View>
@@ -88,7 +89,7 @@ function ProSuccessOverlay({
 
               <LuxPressable onPress={onClose} className="mt-8 overflow-hidden rounded-2xl">
                 <LinearGradient
-                  colors={["#f43f5e", "#d946ef"]}
+                  colors={[DS.colors.accent, DS.colors.accentStrong]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={{ paddingVertical: spacing.md, alignItems: "center", borderRadius: 18 }}
@@ -152,8 +153,8 @@ function SparkleCelebration({ visible }: { visible: boolean }) {
             style={{
               flex: 1,
               borderRadius: sparkle.size,
-              backgroundColor: "rgba(244, 63, 94, 0.7)",
-              shadowColor: "#f43f5e",
+              backgroundColor: DS.colors.accentGlowStrong,
+              shadowColor: DS.colors.accent,
               shadowOpacity: 0.35,
               shadowRadius: 10,
               shadowOffset: { width: 0, height: 4 },

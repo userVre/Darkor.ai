@@ -1,4 +1,4 @@
-import { hasGenerationImage, resolveGenerationStatus, type GenerationResultStatus } from "./generation-status";
+import {hasGenerationImage, resolveGenerationStatus, type GenerationResultStatus} from "./generation-status";
 
 export type BoardItemStatus = GenerationResultStatus;
 

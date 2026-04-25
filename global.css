@@ -1,3 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --app-font-family: "Inter", sans-serif;
+  --app-vertical-gap: 32px;
+}
+
+html,
+body,
+#root {
+  font-family: var(--app-font-family);
+}

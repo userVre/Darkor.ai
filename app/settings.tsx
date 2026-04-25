@@ -1,47 +1,47 @@
-import { useAuth, useUser } from "@clerk/expo";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useMutation } from "convex/react";
-import Constants from "expo-constants";
-import * as Clipboard from "expo-clipboard";
-import * as Linking from "expo-linking";
-import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
-import { Alert, I18nManager, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
-import { useTranslation } from "react-i18next";
-import * as SecureStore from "expo-secure-store";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  ChevronRight,
-  Copy,
-  Diamond,
-  FileQuestion,
-  FileText,
-  Mail,
-  RotateCcw,
-  Share2,
-  Shield,
-  Star,
-  Trash2,
-  UserRound,
+ChevronRight,
+Copy,
+Diamond,
+FileQuestion,
+FileText,
+Mail,
+MaterialIcon,
+RotateCcw,
+Share2,
+Shield,
+Star,
+Trash2,
+UserRound,
 } from "@/components/material-icons";
-import { MaterialIcon } from "@/components/material-icons";
+import {useAuth, useUser} from "@clerk/expo";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {useMutation} from "convex/react";
+import * as Clipboard from "expo-clipboard";
+import Constants from "expo-constants";
+import * as Linking from "expo-linking";
+import {useRouter} from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import {StatusBar} from "expo-status-bar";
+import {useState} from "react";
+import {useTranslation} from "react-i18next";
+import {Alert, I18nManager, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View} from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
-import { SettingsRow } from "../components/settings-row";
-import { useProSuccess } from "../components/pro-success-context";
-import { useWorkspaceDraft } from "../components/workspace-context";
-import { useAppLanguagePreference, useLocalizedAppFonts } from "../lib/i18n";
-import { getLanguageNativeLabel } from "../lib/i18n/language";
-import { getDirectionalArrowScale, getDirectionalRow, getDirectionalTextAlign } from "../lib/i18n/rtl";
+import {useProSuccess} from "../components/pro-success-context";
+import {SettingsRow} from "../components/settings-row";
+import {useWorkspaceDraft} from "../components/workspace-context";
+import {useAppLanguagePreference, useLocalizedAppFonts} from "../lib/i18n";
+import {getLanguageNativeLabel} from "../lib/i18n/language";
+import {getDirectionalArrowScale, getDirectionalRow, getDirectionalTextAlign} from "../lib/i18n/rtl";
 import {
-  configureRevenueCat,
-  getRevenueCatClient,
-  hasActiveSubscription,
-  resolveRevenueCatSubscription,
-  type RevenueCatEntitlement,
+configureRevenueCat,
+getRevenueCatClient,
+hasActiveSubscription,
+resolveRevenueCatSubscription,
+type RevenueCatEntitlement,
 } from "../lib/revenuecat";
-import { requestStoreReview } from "../lib/store-review";
-import { fonts } from "../styles/typography";
+import {requestStoreReview} from "../lib/store-review";
+import {fonts} from "../styles/typography";
 
 const SUPPORT_EMAIL = "support@homedecor.ai";
 const APP_URL = Constants.expoConfig?.extra?.publicEnv?.EXPO_PUBLIC_APP_URL ?? "https://homedecor.ai";

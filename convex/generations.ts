@@ -6,7 +6,7 @@ import {
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
-import { buildStabilityPrompt as buildAIDesignPrompt, normalizeAspectRatio as normalizeAIAspectRatio } from "../lib/stability-prompt-builder";
+import { buildDesignPrompt as buildAIDesignPrompt, normalizeAspectRatio as normalizeAIAspectRatio } from "../lib/design-prompt-builder";
 import {
   canUserGenerateState,
   deriveSubscriptionState,

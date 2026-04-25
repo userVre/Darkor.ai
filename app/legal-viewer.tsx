@@ -1,11 +1,11 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft } from "@/components/material-icons";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useTranslation } from "react-i18next";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {ArrowLeft} from "@/components/material-icons";
+import {useLocalSearchParams, useRouter} from "expo-router";
+import {useTranslation} from "react-i18next";
+import {Pressable, ScrollView, StyleSheet, Text, View} from "react-native";
+import {SafeAreaView, useSafeAreaInsets} from "react-native-safe-area-context";
 
-import { DS, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
-import { triggerHaptic } from "../lib/haptics";
+import {DS, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow, surfaceCard} from "../lib/design-system";
+import {triggerHaptic} from "../lib/haptics";
 
 type LegalDocumentKey = "privacy" | "terms";
 
@@ -97,7 +97,12 @@ export default function LegalViewerScreen() {
             hitSlop={10}
             onPress={() => {
               triggerHaptic();
-              router.back();
+              if (router.canGoBack()) {
+                router.back();
+                return;
+              }
+
+              router.replace("/settings");
             }}
             style={styles.backButton}
           >

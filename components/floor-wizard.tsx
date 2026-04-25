@@ -1,53 +1,52 @@
-import { spacing } from "../styles/spacing";
+import {spacing} from "../styles/spacing";
 
-import { useAuth } from "@clerk/expo";
-import { useAction, useMutation, useQuery } from "convex/react";
-import { Image } from "expo-image";
+import {ChevronLeft, MoveHorizontal, X} from "@/components/material-icons";
+import {useAuth} from "@clerk/expo";
+import {useAction, useMutation, useQuery} from "convex/react";
 import * as FileSystem from "expo-file-system/legacy";
+import {Image} from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { AnimatePresence, MotiView } from "moti";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Image as NativeImage, Linking, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
-import Svg, { Path as SvgPath, Rect } from "react-native-svg";
-import { captureRef } from "react-native-view-shot";
-import { ChevronLeft, MoveHorizontal, X } from "@/components/material-icons";
+import {useLocalSearchParams, useRouter} from "expo-router";
+import {AnimatePresence, MotiView} from "moti";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {useTranslation} from "react-i18next";
+import {ActivityIndicator, Alert, Linking, Image as NativeImage, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View, useWindowDimensions} from "react-native";
+import {Gesture, GestureDetector} from "react-native-gesture-handler";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import Svg, {Rect, Path as SvgPath} from "react-native-svg";
+import {captureRef} from "react-native-view-shot";
 
-import { GENERATION_FAILED_TOAST, getFriendlyGenerationError } from "../lib/generation-errors";
-import { canUserGenerate as canUserGenerateNow } from "../lib/generation-access";
-import { triggerHaptic } from "../lib/haptics";
-import { uploadLocalFileToCloud } from "../lib/native-upload";
-import { FLOOR_MATERIAL_OPTIONS } from "../lib/data";
-import { runWithFriendlyRetry } from "../lib/generation-retry";
-import { hasGenerationImage, resolveGenerationStatus } from "../lib/generation-status";
+import {FLOOR_MATERIAL_OPTIONS} from "../lib/data";
+import {canUserGenerate as canUserGenerateNow} from "../lib/generation-access";
+import {GENERATION_FAILED_TOAST, getFriendlyGenerationError} from "../lib/generation-errors";
+import {runWithFriendlyRetry} from "../lib/generation-retry";
+import {hasGenerationImage, resolveGenerationStatus} from "../lib/generation-status";
 import {
-  GUEST_TESTING_STARTER_CREDITS,
-  isGuestWizardTestingSession,
-  resolveGuestWizardViewerId,
+isGuestWizardTestingSession,
+resolveGuestWizardViewerId
 } from "../lib/guest-testing";
-import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
-import { getFloorWizardExamplePhotos } from "../lib/wizard-example-photos";
-import { FloorIntroScreen, type FloorIntroExamplePhoto } from "./floor-intro-screen";
-import { LuxPressable } from "./lux-pressable";
-import { ServiceContinueButton } from "./service-continue-button";
-import { ServiceProcessingScreen, useGenerationStatusMessages } from "./service-processing-screen";
-import { ServiceWizardHeader } from "./service-wizard-header";
-import { getStickyStepHeaderMetrics } from "./sticky-step-header";
+import {triggerHaptic} from "../lib/haptics";
+import {uploadLocalFileToCloud} from "../lib/native-upload";
+import {SERVICE_WIZARD_THEME} from "../lib/service-wizard-theme";
+import {getFloorWizardExamplePhotos} from "../lib/wizard-example-photos";
+import {fonts} from "../styles/typography";
+import {DIAMOND_PILL_BLUE} from "./diamond-credit-pill";
+import {FloorIntroScreen, type FloorIntroExamplePhoto} from "./floor-intro-screen";
+import {LuxPressable} from "./lux-pressable";
+import {useProSuccess} from "./pro-success-context";
+import {ServiceContinueButton} from "./service-continue-button";
+import {ServiceProcessingScreen, useGenerationStatusMessages} from "./service-processing-screen";
+import {ServiceWizardHeader} from "./service-wizard-header";
 import {
-  ServiceSelectionCard,
-  ServiceSelectionGrid,
-  ServiceWizardStepScreen,
+ServiceSelectionCard,
+ServiceSelectionGrid,
+ServiceWizardStepScreen,
 } from "./service-wizard-shared";
-import { useProSuccess } from "./pro-success-context";
-import { useMaskDrawing } from "./use-mask-drawing";
-import { useViewerCredits } from "./viewer-credits-context";
-import { useViewerSession } from "./viewer-session-context";
-import { fonts } from "../styles/typography";
-import { DIAMOND_PILL_BLUE } from "./diamond-credit-pill";
+import {getStickyStepHeaderMetrics} from "./sticky-step-header";
+import {useMaskDrawing} from "./use-mask-drawing";
+import {useViewerCredits} from "./viewer-credits-context";
+import {useViewerSession} from "./viewer-session-context";
 
 type WizardStep = "intake" | "mask" | "materials" | "processing" | "result";
 type SelectedImage = { uri: string; photoUri?: string | null; width: number; height: number };
@@ -902,19 +901,18 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
 
   useEffect(() => {
     onProcessingStateChange?.(step === "processing");
-
-    return () => {
-      onProcessingStateChange?.(false);
-    };
   }, [onProcessingStateChange, step]);
 
   useEffect(() => {
     onFlowActiveChange?.(step !== "processing" && step !== "result");
+  }, [onFlowActiveChange, step]);
 
+  useEffect(() => {
     return () => {
+      onProcessingStateChange?.(false);
       onFlowActiveChange?.(false);
     };
-  }, [onFlowActiveChange, step]);
+  }, [onFlowActiveChange, onProcessingStateChange]);
 
   const handleBack = useCallback(() => {
     triggerHaptic();

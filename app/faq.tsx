@@ -1,13 +1,13 @@
-import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { ChevronLeft, CircleHelp } from "@/components/material-icons";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { useTranslation } from "react-i18next";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {ChevronLeft, CircleHelp} from "@/components/material-icons";
+import {useRouter} from "expo-router";
+import {StatusBar} from "expo-status-bar";
+import {useTranslation} from "react-i18next";
+import {ScrollView, StyleSheet, Text, View} from "react-native";
+import {SafeAreaView, useSafeAreaInsets} from "react-native-safe-area-context";
 
-import { LuxPressable } from "../components/lux-pressable";
-import { DS, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
-import { triggerHaptic } from "../lib/haptics";
+import {LuxPressable} from "../components/lux-pressable";
+import {DS, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow, surfaceCard} from "../lib/design-system";
+import {triggerHaptic} from "../lib/haptics";
 
 export default function FaqScreen() {
   const router = useRouter();
@@ -38,7 +38,12 @@ export default function FaqScreen() {
           <LuxPressable
             onPress={() => {
               triggerHaptic();
-              router.back();
+              if (router.canGoBack()) {
+                router.back();
+                return;
+              }
+
+              router.replace("/settings");
             }}
             style={styles.backButton}
             className="cursor-pointer"

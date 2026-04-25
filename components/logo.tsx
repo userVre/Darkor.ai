@@ -1,5 +1,5 @@
-import type { StyleProp, ImageStyle } from "react-native";
-import { Image } from "expo-image";
+import {Image} from "expo-image";
+import type {ImageStyle, StyleProp} from "react-native";
 
 const logoSource = require("../assets/logo-minimal.png");
 

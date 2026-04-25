@@ -1,10 +1,10 @@
-import NetInfo, { useNetInfo } from "@react-native-community/netinfo";
-import { useEffect, useMemo, useState } from "react";
-import { Modal, Pressable, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Circle, Path } from "react-native-svg";
+import NetInfo, {useNetInfo} from "@react-native-community/netinfo";
+import {useEffect, useMemo, useState} from "react";
+import {Modal, Pressable, Text, View} from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import Svg, {Circle, Path} from "react-native-svg";
 
-import { DS, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
+import {DS, SCREEN_SIDE_PADDING, glowShadow, surfaceCard} from "../lib/design-system";
 
 function WifiAlertIcon({ size = 120 }: { size?: number }) {
   return (

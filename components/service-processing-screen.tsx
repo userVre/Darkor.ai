@@ -1,16 +1,16 @@
-import { Image } from "expo-image";
-import { AnimatePresence, MotiView } from "moti";
-import { memo, useEffect, useMemo, useState } from "react";
-import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
-import { fonts } from "../styles/typography";
-import { spacing } from "../styles/spacing";
-import { type Theme, useTheme } from "@/styles/theme";
-import { DS } from "../lib/design-system";
+import {type Theme, useTheme} from "@/styles/theme";
+import {Image} from "expo-image";
+import {AnimatePresence, MotiView} from "moti";
+import {memo, useEffect, useMemo, useState} from "react";
+import {useTranslation} from "react-i18next";
+import {StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import {DS, GLOBAL_VERTICAL_GAP} from "../lib/design-system";
+import {spacing} from "../styles/spacing";
+import {fonts} from "../styles/typography";
 
-import { LuxPressable } from "./lux-pressable";
-import { useWorkspaceDraft } from "./workspace-context";
+import {LuxPressable} from "./lux-pressable";
+import {useWorkspaceDraft} from "./workspace-context";
 
 const pointerClassName = "cursor-pointer";
 const PROGRESS_INTERVAL_MS = 500;
@@ -185,11 +185,11 @@ function createStyles(colors: Theme) {
   return StyleSheet.create({
     screen: {
       flex: 1,
-      backgroundColor: "#FFFFFF",
+      backgroundColor: colors.bg,
     },
     photoFallback: {
       flex: 1,
-      backgroundColor: "#F3F4F6",
+      backgroundColor: colors.surfaceMuted,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -199,8 +199,8 @@ function createStyles(colors: Theme) {
       right: 18,
       height: 72,
       borderRadius: 999,
-      backgroundColor: "rgba(37, 99, 235, 0.12)",
-      shadowColor: "#2563EB",
+      backgroundColor: colors.brandSurfaceHigh,
+      shadowColor: colors.brandDark,
       shadowOpacity: 0.16,
       shadowRadius: 18,
       shadowOffset: { width: 0, height: 6 },
@@ -218,23 +218,23 @@ function createStyles(colors: Theme) {
     hero: {
       alignItems: "center",
       gap: spacing.sm,
-      paddingTop: spacing.lg,
+      paddingTop: GLOBAL_VERTICAL_GAP,
     },
     previewCard: {
       borderRadius: 28,
       borderWidth: 1,
-      borderColor: "#ECEEF2",
-      backgroundColor: "#FFFFFF",
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
       padding: 16,
       gap: 12,
-      shadowColor: "#111827",
+      shadowColor: colors.shadow,
       shadowOpacity: 0.05,
       shadowRadius: 22,
       shadowOffset: { width: 0, height: 10 },
       elevation: 3,
     },
     previewLabel: {
-      color: "#9CA3AF",
+      color: colors.textMuted,
       fontSize: 11,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "700",
@@ -246,7 +246,7 @@ function createStyles(colors: Theme) {
     previewFrame: {
       borderRadius: 24,
       overflow: "hidden",
-      backgroundColor: "#ECEEF2",
+      backgroundColor: colors.surfaceMuted,
     },
     previewImage: {
       width: "100%",
@@ -259,7 +259,7 @@ function createStyles(colors: Theme) {
       height: 3,
       width: "100%",
       borderRadius: 2,
-      backgroundColor: "#E5E7EB",
+      backgroundColor: colors.border,
       overflow: "hidden",
     },
     progressFill: {
@@ -271,7 +271,7 @@ function createStyles(colors: Theme) {
       alignItems: "center",
     },
     title: {
-      color: "#111111",
+      color: colors.textPrimary,
       fontSize: 34,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "800",
@@ -285,7 +285,7 @@ function createStyles(colors: Theme) {
       justifyContent: "center",
     },
     subtitle: {
-      color: "#687076",
+      color: colors.textSecondary,
       fontSize: 17,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "700",
@@ -293,7 +293,7 @@ function createStyles(colors: Theme) {
       textAlign: "center",
     },
     eta: {
-      color: "#687076",
+      color: colors.textSecondary,
       fontSize: 13,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "600",
@@ -306,13 +306,13 @@ function createStyles(colors: Theme) {
       paddingTop: spacing.xs,
     },
     cancelText: {
-      color: "#687076",
+      color: colors.textSecondary,
       fontSize: 12,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "600",
     },
     cancelTextDisabled: {
-      color: "#B0B7C3",
+      color: colors.borderLight,
     },
   });
 }

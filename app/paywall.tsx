@@ -1,70 +1,70 @@
-import { useAuth, useUser } from "@clerk/expo";
-import { useMutation } from "convex/react";
-import { Image } from "expo-image";
-import { usePricingContext, createLocalizedPrice, type LocalizedPrice } from "../lib/dynamic-pricing";
-import { StatusBar } from "expo-status-bar";
-import { AnimatePresence, MotiView } from "moti";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {Check, Shield, X} from "@/components/material-icons";
+import {useAuth, useUser} from "@clerk/expo";
+import {useMutation} from "convex/react";
+import {Image} from "expo-image";
+import {Stack, useLocalSearchParams, useRouter} from "expo-router";
+import {StatusBar} from "expo-status-bar";
+import {AnimatePresence, MotiView} from "moti";
+import {useCallback, useEffect, useMemo, useRef, useState, type ReactNode} from "react";
+import {useTranslation} from "react-i18next";
 import {
-  ActivityIndicator,
-  Animated as NativeAnimated,
-  Alert,
-  I18nManager,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-  type StyleProp,
-  type ViewStyle,
+ActivityIndicator,
+Alert,
+I18nManager,
+Animated as NativeAnimated,
+Pressable,
+ScrollView,
+StyleSheet,
+Text,
+View,
+useWindowDimensions,
+type NativeScrollEvent,
+type NativeSyntheticEvent,
+type StyleProp,
+type ViewStyle,
 } from "react-native";
-import Svg, { Circle as SvgCircle } from "react-native-svg";
 import Animated, {
-  Easing,
-  type SharedValue,
-  useAnimatedProps,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
+Easing,
+useAnimatedProps,
+useAnimatedStyle,
+useSharedValue,
+withTiming,
+type SharedValue,
 } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, Shield, X } from "@/components/material-icons";
-import { useTranslation } from "react-i18next";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import Svg, {Circle as SvgCircle} from "react-native-svg";
+import {createLocalizedPrice, usePricingContext, type LocalizedPrice} from "../lib/dynamic-pricing";
 
-import { useProSuccess } from "../components/pro-success-context";
-import { useViewerCredits } from "../components/viewer-credits-context";
-import { useViewerSession } from "../components/viewer-session-context";
-import { getGenerationLimit } from "../convex/subscriptions";
-import { triggerHaptic } from "../lib/haptics";
-import { useLocalizedAppFonts } from "../lib/i18n";
+import {useProSuccess} from "../components/pro-success-context";
+import {useViewerCredits} from "../components/viewer-credits-context";
+import {useViewerSession} from "../components/viewer-session-context";
+import {getGenerationLimit} from "../convex/subscriptions";
+import {triggerHaptic} from "../lib/haptics";
+import {useLocalizedAppFonts} from "../lib/i18n";
 import {
-  getDirectionalAlignment,
-  getDirectionalArrowScale,
-  getDirectionalOppositeAlignment,
-  getDirectionalRow,
-  getDirectionalTextAlign,
+getDirectionalAlignment,
+getDirectionalArrowScale,
+getDirectionalOppositeAlignment,
+getDirectionalRow,
+getDirectionalTextAlign,
 } from "../lib/i18n/rtl";
-import { dismissLaunchPaywall } from "../lib/launch-paywall";
+import {dismissLaunchPaywall} from "../lib/launch-paywall";
 import {
-  configureRevenueCat,
-  fetchTieredPackage,
-  findRevenueCatPackage,
-  getCachedTieredPackage,
-  getRevenueCatClient,
-  hasActiveSubscription,
-  resolveRevenueCatSubscription,
-  type BillingDuration,
-  type BillingPlan,
-  type RevenueCatEntitlement,
-  type RevenueCatPackage,
-  type RevenueCatPurchases,
+configureRevenueCat,
+fetchTieredPackage,
+findRevenueCatPackage,
+getCachedTieredPackage,
+getRevenueCatClient,
+hasActiveSubscription,
+resolveRevenueCatSubscription,
+type BillingDuration,
+type BillingPlan,
+type RevenueCatEntitlement,
+type RevenueCatPackage,
+type RevenueCatPurchases,
 } from "../lib/revenuecat";
-import { radix } from "../styles/theme";
-import { fonts } from "../styles/typography";
+import {radix} from "../styles/theme";
+import {fonts} from "../styles/typography";
 
 const SCREEN_BG = "#0D0D0D";
 const PANEL_BG = SCREEN_BG;
@@ -106,6 +106,10 @@ const HERO_CAROUSEL_DATA = Array.from({ length: HERO_IMAGES.length * HERO_CAROUS
 const HERO_CAROUSEL_INITIAL_INDEX = HERO_IMAGES.length * Math.floor(HERO_CAROUSEL_REPEAT_MULTIPLIER / 2);
 const AnimatedSvgCircle = Animated.createAnimatedComponent(SvgCircle);
 const PAYWALL_FORCE_LTR = true;
+const FORCED_LTR_TEXT_STYLE = {
+  textAlign: "left" as const,
+  writingDirection: "ltr" as const,
+};
 
 function FadeSwap({
   children,
@@ -250,17 +254,17 @@ function YearlyPlanCard({
         <Text style={[styles.bestOfferText, localizedFonts.bold]}>{t("paywall.bestOffer").toUpperCase()}</Text>
       </View>
 
-      <View style={[styles.planRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+      <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
         <View style={styles.planCopy}>
           <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("paywall.yearlyAccess").toUpperCase()}</Text>
           <Text style={[styles.planSubtext, localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }]}>{pricePerYearText}</Text>
         </View>
 
-        <View style={[styles.planPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
-          <Text adjustsFontSizeToFit minimumFontScale={0.85} numberOfLines={1} style={[styles.yearlyPrice, localizedFonts.bold]}>
+        <View style={[styles.planPriceColumn, styles.forcedLtrPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
+          <Text adjustsFontSizeToFit minimumFontScale={0.85} numberOfLines={1} style={[styles.yearlyPrice, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>
             {pricePerWeekText}
           </Text>
-          <Text style={[styles.planSubtext, localizedFonts.regular]}>{t("paywall.perWeek")}</Text>
+          <Text style={[styles.planSubtext, localizedFonts.regular, FORCED_LTR_TEXT_STYLE]}>{t("paywall.perWeek")}</Text>
         </View>
       </View>
     </Pressable>
@@ -288,15 +292,15 @@ function WeeklyPlanCard({
       <FadeSwap swapKey="weekly-trial-on">
         <View>
           <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, styles.planCardSelected, styles.weeklyCard]}>
-            <View style={[styles.planRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+            <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
                 <View style={styles.planCopy}>
                   <View style={styles.trialBadge}>
                     <Text style={[styles.trialBadgeText, localizedFonts.bold]}>{t("paywall.freeTrial").toUpperCase()}</Text>
                   </View>
                 </View>
 
-              <View style={[styles.planPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
-                <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={[styles.weeklyTrialPrice, localizedFonts.bold]}>
+              <View style={[styles.planPriceColumn, styles.forcedLtrPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
+                <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={[styles.weeklyTrialPrice, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>
                   {trialThenPriceText}
                 </Text>
               </View>
@@ -316,13 +320,13 @@ function WeeklyPlanCard({
     <FadeSwap swapKey="weekly-trial-off">
       <View>
         <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, selected ? styles.planCardSelected : styles.planCardIdle, styles.weeklyCard]}>
-          <View style={[styles.planRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+          <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
             <View style={styles.planCopy}>
               <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("paywall.weeklyAccess").toUpperCase()}</Text>
             </View>
 
-            <View style={[styles.planPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
-              <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={[styles.weeklyPrice, localizedFonts.bold]}>
+            <View style={[styles.planPriceColumn, styles.forcedLtrPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
+              <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={[styles.weeklyPrice, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>
                 {pricePerWeekText}
               </Text>
             </View>
@@ -419,13 +423,9 @@ function getDisplayedPrice(
   const productPrice = pkg?.product?.price;
   const productCurrencyCode = pkg?.product?.currencyCode;
   const localizedPriceString = String((pkg?.product as { localizedPriceString?: string } | undefined)?.localizedPriceString ?? "").trim();
-  const shouldPreferFallback = preferredCurrencyCode != null && fallbackPrice.currencyCode === preferredCurrencyCode;
+  const storeCurrencyMatches = !preferredCurrencyCode || productCurrencyCode === preferredCurrencyCode;
 
-  if (shouldPreferFallback) {
-    return fallbackPrice;
-  }
-
-  if (localizedPriceString.length > 0) {
+  if (localizedPriceString.length > 0 && storeCurrencyMatches) {
     return {
       amount:
         typeof productPrice === "number" && Number.isFinite(productPrice)
@@ -442,6 +442,7 @@ function getDisplayedPrice(
     typeof productPrice !== "number"
     || !Number.isFinite(productPrice)
     || !productCurrencyCode
+    || (preferredCurrencyCode != null && productCurrencyCode !== preferredCurrencyCode)
   ) {
     return fallbackPrice;
   }
@@ -488,6 +489,10 @@ function filterPackagesByCurrency(
 ) {
   const matchingPackages = packages.filter((pkg) => pkg.product.currencyCode === currencyCode);
   return matchingPackages.length > 0 ? matchingPackages : packages;
+}
+
+function getTrialCtaSubtext(freeTrialEnabled: boolean, trialThenPriceText: string, weeklyPriceText: string) {
+  return freeTrialEnabled ? trialThenPriceText : weeklyPriceText;
 }
 
 export default function PaywallScreen() {
@@ -560,6 +565,10 @@ export default function PaywallScreen() {
   const thenWeeklyPriceText = useMemo(
     () => t("paywall.thenPricePerWeek", { price: displayedWeeklyPrice.formatted }),
     [displayedWeeklyPrice.formatted, i18n.language, t],
+  );
+  const ctaSubtext = useMemo(
+    () => getTrialCtaSubtext(freeTrialEnabled, thenWeeklyPriceText, weeklyPriceText),
+    [freeTrialEnabled, thenWeeklyPriceText, weeklyPriceText],
   );
   const cachedOfferingPackages = useMemo(
     () =>
@@ -1080,18 +1089,22 @@ export default function PaywallScreen() {
               </View>
             ) : (
               <FadeSwap swapKey={freeTrialEnabled ? "cta-trial" : "cta-continue"} style={styles.ctaContent}>
-                <View style={[styles.ctaLabelRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-                  <Text style={[styles.ctaText, localizedFonts.bold]}>{freeTrialEnabled ? t("paywall.tryForFree") : t("paywall.continue")}</Text>
+                <View style={[styles.ctaLabelRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{freeTrialEnabled ? t("paywall.tryForFree") : t("paywall.continue")}</Text>
                   <Text
                     style={[
                       styles.ctaArrow,
                       localizedFonts.bold,
+                      FORCED_LTR_TEXT_STYLE,
                       { transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] },
                     ]}
                   >
-                    {">"}
+                    {"→"}
                   </Text>
                 </View>
+                <Text style={[styles.ctaSubtext, localizedFonts.medium, FORCED_LTR_TEXT_STYLE]}>
+                  {ctaSubtext}
+                </Text>
               </FadeSwap>
             )}
           </Pressable>
@@ -1346,6 +1359,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
   },
+  forcedLtrRow: {
+    direction: "ltr",
+  },
   planCopy: {
     flex: 1,
     minWidth: 0,
@@ -1357,6 +1373,11 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     justifyContent: "center",
     marginLeft: 12,
+  },
+  forcedLtrPriceColumn: {
+    alignItems: "flex-start",
+    marginLeft: 12,
+    direction: "ltr",
   },
   planLabel: {
     color: TEXT_PRIMARY,
@@ -1460,6 +1481,7 @@ const styles = StyleSheet.create({
   ctaContent: {
     alignItems: "flex-start",
     justifyContent: "center",
+    width: "100%",
   },
   ctaLoadingRow: {
     flexDirection: "row",
@@ -1479,6 +1501,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
     ...fonts.bold,
+  },
+  ctaSubtext: {
+    marginTop: 4,
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 12,
+    lineHeight: 16,
+    ...fonts.medium,
   },
   ctaArrow: {
     marginHorizontal: 8,

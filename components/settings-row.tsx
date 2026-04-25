@@ -1,11 +1,11 @@
-import { ActivityIndicator, I18nManager, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import { ChevronRight } from "@/components/material-icons";
-import type { ComponentType, ReactNode } from "react";
+import {ChevronRight} from "@/components/material-icons";
+import type {ComponentType, ReactNode} from "react";
+import {ActivityIndicator, I18nManager, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle} from "react-native";
 
-import { useLocalizedAppFonts } from "../lib/i18n";
-import { DS } from "../lib/design-system";
-import { getDirectionalArrowScale, getDirectionalRow, getDirectionalTextAlign } from "../lib/i18n/rtl";
-import { fonts } from "../styles/typography";
+import {DS} from "../lib/design-system";
+import {useLocalizedAppFonts} from "../lib/i18n";
+import {getDirectionalArrowScale, getDirectionalRow, getDirectionalTextAlign} from "../lib/i18n/rtl";
+import {fonts} from "../styles/typography";
 
 type SettingsRowProps = {
   label: string;

@@ -1,17 +1,17 @@
-import type { ReactNode } from "react";
-import { Pressable, View, type PressableProps } from "react-native";
-import { Tabs, useRouter } from "expo-router";
-import { useAuth } from "@clerk/expo";
-import { Compass, House, Sparkles, UserRound, type LucideIcon } from "lucide-react-native";
-import { useTranslation } from "react-i18next";
-import { fonts } from "../../styles/typography";
-import { spacing } from "../../styles/spacing";
-import { useTheme } from "@/styles/theme";
+import {useTheme} from "@/styles/theme";
+import {useAuth} from "@clerk/expo";
+import {Tabs, useRouter} from "expo-router";
+import {Compass, House, Sparkles, UserRound, type LucideIcon} from "lucide-react-native";
+import type {ReactNode} from "react";
+import {useTranslation} from "react-i18next";
+import {Pressable, View, type PressableProps} from "react-native";
+import {spacing} from "../../styles/spacing";
+import {fonts} from "../../styles/typography";
 
-import { DS } from "../../lib/design-system";
-import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../../lib/guest-testing";
-import { triggerHaptic } from "../../lib/haptics";
-import { useFlowUI } from "../../components/flow-ui-context";
+import {useFlowUI} from "../../components/flow-ui-context";
+import {DS} from "../../lib/design-system";
+import {ENABLE_GUEST_WIZARD_TEST_MODE} from "../../lib/guest-testing";
+import {triggerHaptic} from "../../lib/haptics";
 
 export const DEFAULT_TAB_BAR_STYLE = {
   position: "absolute" as const,

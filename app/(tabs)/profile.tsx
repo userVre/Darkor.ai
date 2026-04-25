@@ -1,24 +1,24 @@
-import { useMutation, useQuery } from "convex/react";
-import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import * as MediaLibrary from "expo-media-library";
-import { LayoutPanelTop } from "@/components/material-icons";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { useTranslation } from "react-i18next";
+import {LayoutPanelTop} from "@/components/material-icons";
+import {useMutation, useQuery} from "convex/react";
 import * as FileSystem from "expo-file-system/legacy";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as MediaLibrary from "expo-media-library";
+import {useRouter} from "expo-router";
+import {StatusBar} from "expo-status-bar";
+import {useEffect, useMemo, useRef, useState} from "react";
+import {useTranslation} from "react-i18next";
+import {Alert, FlatList, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
-import { BoardActionsModal } from "../../components/board-actions-modal";
-import { BoardImageCard } from "../../components/board-image-card";
-import { BoardPreviewModal } from "../../components/board-preview-modal";
-import { useProSuccess } from "../../components/pro-success-context";
-import { useViewerSession } from "../../components/viewer-session-context";
-import { DS } from "../../lib/design-system";
-import { mapArchiveToBoardItems, type BoardItem, type BoardItemStatus } from "../../lib/board";
-import { hasGenerationImage, resolveGenerationStatus } from "../../lib/generation-status";
-import { loadLocalBoardItems, persistLocalBoardItems, type LocalBoardItem } from "../../lib/local-board-cache";
-import { fonts } from "../../styles/typography";
+import {BoardActionsModal} from "../../components/board-actions-modal";
+import {BoardImageCard} from "../../components/board-image-card";
+import {BoardPreviewModal} from "../../components/board-preview-modal";
+import {useProSuccess} from "../../components/pro-success-context";
+import {useViewerSession} from "../../components/viewer-session-context";
+import {mapArchiveToBoardItems, type BoardItem, type BoardItemStatus} from "../../lib/board";
+import {DS} from "../../lib/design-system";
+import {hasGenerationImage, resolveGenerationStatus} from "../../lib/generation-status";
+import {loadLocalBoardItems, persistLocalBoardItems, type LocalBoardItem} from "../../lib/local-board-cache";
+import {fonts} from "../../styles/typography";
 
 type ArchiveGeneration = {
   _id: string;

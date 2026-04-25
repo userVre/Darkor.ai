@@ -897,6 +897,15 @@
         "getMoreCredits": "احصل على المزيد من الأرصدة",
         "generateMyDesign": "أنشئ تصميمي"
       },
+      "usageBadge": {
+        "trialUnlimited": "غير محدود خلال التجربة",
+        "proUnlimited": "برو غير محدود",
+        "diamonds": "{{count}} ألماسات",
+        "refillInHours": "إعادة التعبئة خلال: {{hours}}س",
+        "priorityNoWatermark": "أولوية في المعالجة · بدون علامة مائية",
+        "noWatermark": "بدون علامة مائية",
+        "refills": "تعود إلى 3 كل 72 ساعة"
+      },
       "stepFourSticky": "الخطوة 4: صقل الاتجاه",
       "exteriorEmptyStateSubtitle": "أعد تصميم منزلك وجمّله."
     }

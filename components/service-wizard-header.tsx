@@ -1,6 +1,6 @@
-import { type ReactNode } from "react";
+import {type ReactNode} from "react";
 
-import { StickyStepHeader } from "./sticky-step-header";
+import {StickyStepHeader} from "./sticky-step-header";
 
 type ServiceWizardHeaderProps = {
   title: string;

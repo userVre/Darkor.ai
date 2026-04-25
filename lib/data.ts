@@ -1,5 +1,5 @@
-import type { ImageSourcePropType } from "react-native";
-import { palette } from "@/styles/theme";
+import {palette} from "@/styles/theme";
+import type {ImageSourcePropType} from "react-native";
 
 export type DiscoverSectionId = "home" | "wall" | "floor" | "garden" | "exterior";
 export type DiscoverService = "interior" | "garden" | "exterior" | "floor" | "paint";

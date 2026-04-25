@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { useTranslation } from "react-i18next";
+import {useEffect, useState} from "react";
+import {useTranslation} from "react-i18next";
+import {StyleSheet, Text, View} from "react-native";
 const TYPEWRITER_INTERVAL_MS = 74;
 const HOLD_DURATION_MS = 820;
 

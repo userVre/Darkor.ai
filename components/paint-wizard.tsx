@@ -1,68 +1,65 @@
-import { useAuth } from "@clerk/expo";
-import { useAction, useMutation, useQuery } from "convex/react";
-import { Image } from "expo-image";
-import * as FileSystem from "expo-file-system/legacy";
-import * as ImagePicker from "expo-image-picker";
-import * as MediaLibrary from "expo-media-library";
-import { LinearGradient } from "expo-linear-gradient";
-import { StatusBar } from "expo-status-bar";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { AnimatePresence, MotiView } from "moti";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Image as NativeImage, Linking, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { useTranslation } from "react-i18next";
-import Animated, { runOnJS, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Circle as SvgCircle, Defs, G, Mask as SvgMask, Path as SvgPath, Rect } from "react-native-svg";
-import { captureRef } from "react-native-view-shot";
-import { spacing } from "../styles/spacing";
 import {
-  BrickWall,
-  Box,
-  BrushCleaning,
-  Check,
-  ChevronLeft,
-  DoorOpen,
-  Eraser,
-  House,
-  LayoutPanelTop,
-  Redo2,
-  Undo2,
-  Wand2,
-  Wallpaper,
-  X,
+Box,
+BrickWall,
+BrushCleaning,
+Check,
+ChevronLeft,
+DoorOpen,
+Eraser,
+House,
+LayoutPanelTop,
+Redo2,
+Undo2,
+Wallpaper,
+Wand2,
+X,
 } from "@/components/material-icons";
-import { fonts } from "../styles/typography";
+import {useAuth} from "@clerk/expo";
+import {useAction, useMutation, useQuery} from "convex/react";
+import * as FileSystem from "expo-file-system/legacy";
+import {Image} from "expo-image";
+import * as ImagePicker from "expo-image-picker";
+import {LinearGradient} from "expo-linear-gradient";
+import * as MediaLibrary from "expo-media-library";
+import {useLocalSearchParams, useRouter} from "expo-router";
+import {StatusBar} from "expo-status-bar";
+import {AnimatePresence, MotiView} from "moti";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {useTranslation} from "react-i18next";
+import {ActivityIndicator, Alert, Linking, Image as NativeImage, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {Gesture, GestureDetector} from "react-native-gesture-handler";
+import Animated, {runOnJS, useAnimatedStyle, useSharedValue} from "react-native-reanimated";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import Svg, {Defs, G, Rect, Circle as SvgCircle, Mask as SvgMask, Path as SvgPath} from "react-native-svg";
+import {captureRef} from "react-native-view-shot";
+import {spacing} from "../styles/spacing";
+import {fonts} from "../styles/typography";
 
-import { triggerHaptic } from "../lib/haptics";
-import { LUX_SPRING } from "../lib/motion";
-import { uploadLocalFileToCloud } from "../lib/native-upload";
-import { WALL_COLOR_OPTIONS } from "../lib/data";
-import { GENERATION_FAILED_TOAST, getFriendlyGenerationError } from "../lib/generation-errors";
-import { canUserGenerate as canUserGenerateNow } from "../lib/generation-access";
-import { runWithFriendlyRetry } from "../lib/generation-retry";
-import { hasGenerationImage, resolveGenerationStatus } from "../lib/generation-status";
+import {WALL_COLOR_OPTIONS} from "../lib/data";
+import {canUserGenerate as canUserGenerateNow} from "../lib/generation-access";
+import {GENERATION_FAILED_TOAST, getFriendlyGenerationError} from "../lib/generation-errors";
+import {runWithFriendlyRetry} from "../lib/generation-retry";
+import {hasGenerationImage, resolveGenerationStatus} from "../lib/generation-status";
 import {
-  GUEST_TESTING_STARTER_CREDITS,
-  isGuestWizardTestingSession,
-  resolveGuestWizardViewerId,
+isGuestWizardTestingSession,
+resolveGuestWizardViewerId
 } from "../lib/guest-testing";
-import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
-import { getPaintWizardExamplePhotos } from "../lib/wizard-example-photos";
-import { PaintIntroScreen, type PaintIntroExamplePhoto } from "./paint-intro-screen";
-import { useProSuccess } from "./pro-success-context";
-import { ServiceContinueButton } from "./service-continue-button";
-import { ServiceProcessingScreen, useGenerationStatusMessages } from "./service-processing-screen";
-import { ServiceWizardHeader } from "./service-wizard-header";
-import { ServiceWizardStepScreen } from "./service-wizard-shared";
-import { getStickyStepHeaderMetrics } from "./sticky-step-header";
-import { DESIGN_WIZARD_SELECTION_BLUE, getWizardFloatingButtonStyle } from "./design-wizard-primitives";
-import { DIAMOND_PILL_BLUE } from "./diamond-credit-pill";
-import { LuxPressable } from "./lux-pressable";
-import { useMaskDrawing } from "./use-mask-drawing";
-import { useViewerCredits } from "./viewer-credits-context";
-import { useViewerSession } from "./viewer-session-context";
+import {triggerHaptic} from "../lib/haptics";
+import {LUX_SPRING} from "../lib/motion";
+import {uploadLocalFileToCloud} from "../lib/native-upload";
+import {SERVICE_WIZARD_THEME} from "../lib/service-wizard-theme";
+import {getPaintWizardExamplePhotos} from "../lib/wizard-example-photos";
+import {getWizardFloatingButtonStyle} from "./design-wizard-primitives";
+import {DIAMOND_PILL_BLUE} from "./diamond-credit-pill";
+import {LuxPressable} from "./lux-pressable";
+import {PaintIntroScreen, type PaintIntroExamplePhoto} from "./paint-intro-screen";
+import {useProSuccess} from "./pro-success-context";
+import {ServiceProcessingScreen, useGenerationStatusMessages} from "./service-processing-screen";
+import {ServiceWizardHeader} from "./service-wizard-header";
+import {getStickyStepHeaderMetrics} from "./sticky-step-header";
+import {useMaskDrawing} from "./use-mask-drawing";
+import {useViewerCredits} from "./viewer-credits-context";
+import {useViewerSession} from "./viewer-session-context";
 
 type WizardStep = "intake" | "mask" | "colors" | "processing" | "result";
 type MaskTool = "brush" | "eraser" | "surface";
@@ -1331,19 +1328,18 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
 
   useEffect(() => {
     onProcessingStateChange?.(step === "processing");
-
-    return () => {
-      onProcessingStateChange?.(false);
-    };
   }, [onProcessingStateChange, step]);
 
   useEffect(() => {
     onFlowActiveChange?.(step !== "processing" && step !== "result");
+  }, [onFlowActiveChange, step]);
 
+  useEffect(() => {
     return () => {
+      onProcessingStateChange?.(false);
       onFlowActiveChange?.(false);
     };
-  }, [onFlowActiveChange, step]);
+  }, [onFlowActiveChange, onProcessingStateChange]);
 
   const handleBack = useCallback(() => {
     triggerHaptic();

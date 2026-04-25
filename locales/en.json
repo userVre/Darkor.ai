@@ -901,6 +901,7 @@
         "trialUnlimited": "Trial Unlimited",
         "proUnlimited": "Pro Unlimited",
         "diamonds": "Diamonds {{count}}",
+        "refillInHours": "Refill in: {{hours}}h",
         "priorityNoWatermark": "Priority queue · No watermark",
         "noWatermark": "No watermark",
         "refills": "Refills to 3 every 72h"

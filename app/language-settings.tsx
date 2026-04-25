@@ -1,36 +1,37 @@
-import { Stack, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import {Stack, useRouter} from "expo-router";
+import {useMemo, useState} from "react";
+import {useTranslation} from "react-i18next";
 import {
-  ActivityIndicator,
-  I18nManager,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
+ActivityIndicator,
+I18nManager,
+Pressable,
+ScrollView,
+StyleSheet,
+Switch,
+Text,
+View,
 } from "react-native";
-import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import {DS, GLOBAL_VERTICAL_GAP} from "../lib/design-system";
 
 import {
-  setAppLanguage,
-  setAppLanguageToSystemDefault,
-  useAppLanguagePreference,
-  useLocalizedAppFonts,
+setAppLanguage,
+setAppLanguageToSystemDefault,
+useAppLanguagePreference,
+useLocalizedAppFonts,
 } from "../lib/i18n";
 import {
-  SUPPORTED_LANGUAGE_OPTIONS,
-  getLanguageEnglishLabel,
-  getLanguageNativeLabel,
+SUPPORTED_LANGUAGE_OPTIONS,
+getLanguageEnglishLabel,
+getLanguageNativeLabel,
 } from "../lib/i18n/language";
 import {
-  getDirectionalArrowScale,
-  getDirectionalRow,
-  getDirectionalTextAlign,
-  reloadAppForLayoutDirection,
+getDirectionalArrowScale,
+getDirectionalRow,
+getDirectionalTextAlign,
+reloadAppForLayoutDirection,
 } from "../lib/i18n/rtl";
-import { fonts } from "../styles/typography";
+import {fonts} from "../styles/typography";
 
 function Radio({ selected }: { selected: boolean }) {
   return (
@@ -223,17 +224,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   backText: {
-    color: "#0A0A0A",
+    color: DS.colors.textPrimary,
     fontSize: 34,
     lineHeight: 34,
     ...fonts.medium,
   },
   headerBlock: {
-    marginBottom: 24,
+    marginBottom: GLOBAL_VERTICAL_GAP,
     gap: 10,
   },
   eyebrow: {
-    color: "#6B6B6B",
+    color: DS.colors.textMuted,
     fontSize: 13,
     lineHeight: 16,
     ...fonts.semibold,

@@ -1,8 +1,8 @@
-import { useQuery } from "convex/react";
-import { useEffect } from "react";
+import {useQuery} from "convex/react";
+import {useEffect} from "react";
 
-import { persistGenerationAccessSnapshot } from "../lib/generation-access";
-import { useViewerSession } from "./viewer-session-context";
+import {persistGenerationAccessSnapshot} from "../lib/generation-access";
+import {useViewerSession} from "./viewer-session-context";
 
 type CachedViewerState = {
   credits?: number;

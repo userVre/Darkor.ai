@@ -1,11 +1,11 @@
-import { memo } from "react";
-import type { StyleProp, ViewStyle } from "react-native";
-import { Image } from "expo-image";
-import { StyleSheet, View } from "react-native";
+import {Image} from "expo-image";
+import {memo} from "react";
+import type {StyleProp, ViewStyle} from "react-native";
+import {StyleSheet, View} from "react-native";
 
-import { DS, ambientShadow } from "../lib/design-system";
-import type { DiscoverTile } from "../lib/discover-catalog";
-import { LuxPressable } from "./lux-pressable";
+import {DS, ambientShadow} from "../lib/design-system";
+import type {DiscoverTile} from "../lib/discover-catalog";
+import {LuxPressable} from "./lux-pressable";
 
 type DiscoverImageCardProps = {
   item: DiscoverTile;

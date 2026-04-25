@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {createContext, useCallback, useContext, useEffect, useMemo, useState} from "react";
 
 export type DraftImage = {
   uri: string;
@@ -212,11 +212,20 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
   }, []);
 
   const setDraftAiSuggestion = useCallback((suggestion: { style?: string | null; paletteId?: string | null }) => {
-    setDraft((prev) => ({
-      ...prev,
-      aiSuggestedStyle: suggestion.style ?? null,
-      aiSuggestedPaletteId: suggestion.paletteId ?? null,
-    }));
+    const nextStyle = suggestion.style ?? null;
+    const nextPaletteId = suggestion.paletteId ?? null;
+
+    setDraft((prev) => {
+      if (prev.aiSuggestedStyle === nextStyle && prev.aiSuggestedPaletteId === nextPaletteId) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        aiSuggestedStyle: nextStyle,
+        aiSuggestedPaletteId: nextPaletteId,
+      };
+    });
   }, []);
 
   const clearDraft = useCallback(() => {

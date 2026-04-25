@@ -1,20 +1,20 @@
-import { AnimatePresence, MotiView } from "moti";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { fonts } from "../styles/typography";
-import { spacing } from "../styles/spacing";
-import { createButtonStyles } from "@/styles/buttons";
-import { type Theme, useTheme } from "@/styles/theme";
-import { DS } from "../lib/design-system";
-import { DIAMOND_PILL_BLUE } from "./diamond-credit-pill";
+import {createButtonStyles} from "@/styles/buttons";
+import {type Theme, useTheme} from "@/styles/theme";
+import {AnimatePresence, MotiView} from "moti";
+import {useMemo} from "react";
+import {useTranslation} from "react-i18next";
+import {ActivityIndicator, StyleSheet, Text, View} from "react-native";
+import {DS} from "../lib/design-system";
+import {spacing} from "../styles/spacing";
+import {fonts} from "../styles/typography";
+import {DIAMOND_PILL_BLUE} from "./diamond-credit-pill";
 
-import { LuxPressable } from "./lux-pressable";
+import {LuxPressable} from "./lux-pressable";
 
 const pointerClassName = "cursor-pointer";
 const ACTIVE_BUTTON_COLOR = DIAMOND_PILL_BLUE;
 const INACTIVE_BUTTON_COLOR = DS.colors.surfaceMuted;
-const ACTIVE_BUTTON_GLOW = "rgba(29, 78, 216, 0.28)";
+const ACTIVE_BUTTON_GLOW = DS.colors.accentGlowStrong;
 
 type ServiceContinueButtonProps = {
   active?: boolean;
@@ -145,7 +145,7 @@ function createStyles(colors: Theme) {
       top: 6,
       bottom: 0,
       borderRadius: 14,
-      backgroundColor: "rgba(29, 78, 216, 0.16)",
+      backgroundColor: colors.brandSurface,
     },
     pressable: {
       width: "100%",
@@ -159,10 +159,10 @@ function createStyles(colors: Theme) {
     },
     buttonInactive: {
       backgroundColor: INACTIVE_BUTTON_COLOR,
-      boxShadow: "0px 10px 24px rgba(17, 19, 24, 0.05)",
+      boxShadow: `0px 10px 24px ${colors.shadow}`,
     },
     buttonText: {
-      color: "#FFFFFF",
+      color: DS.colors.textInverse,
       fontSize: 16,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "800",

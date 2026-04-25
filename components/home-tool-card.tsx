@@ -1,10 +1,10 @@
-import { Image } from "expo-image";
-import { StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle } from "react-native";
-import { useTranslation } from "react-i18next";
+import {Image} from "expo-image";
+import {useTranslation} from "react-i18next";
+import {StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle} from "react-native";
 
-import { DS, ambientShadow } from "../lib/design-system";
-import { LuxPressable } from "./lux-pressable";
-import { DIAMOND_PILL_BLUE } from "./diamond-credit-pill";
+import {DS, ambientShadow} from "../lib/design-system";
+import {DIAMOND_PILL_BLUE} from "./diamond-credit-pill";
+import {LuxPressable} from "./lux-pressable";
 
 export type HomeToolCardItem = {
   id: string;

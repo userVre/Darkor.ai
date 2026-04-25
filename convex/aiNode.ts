@@ -16,9 +16,9 @@ import {
   trimOptional,
 } from "./ai";
 import {
-  buildStabilityNegativePrompt,
-  buildStabilityPrompt,
-} from "../lib/stability-prompt-builder";
+  buildDesignNegativePrompt,
+  buildDesignPrompt,
+} from "../lib/design-prompt-builder";
 
 const AZURE_IMAGE_API_VERSION = "2025-04-01-preview";
 const AZURE_IMAGE_REQUEST_TIMEOUT_MS = 90_000;
@@ -59,7 +59,7 @@ function buildPrompt(args: {
   regenerate?: boolean;
   smartSuggest?: boolean;
 }) {
-  return buildStabilityPrompt({
+  return buildDesignPrompt({
     serviceType: args.serviceType,
     roomType: args.roomType,
     style: args.style,
@@ -534,7 +534,7 @@ export const generateDesign: any = internalActionGeneric({
         regenerate: args.regenerate,
         smartSuggest: args.smartSuggest,
       });
-      const negativePrompt = buildStabilityNegativePrompt({
+      const negativePrompt = buildDesignNegativePrompt({
         serviceType: args.serviceType as ServiceType,
       });
 

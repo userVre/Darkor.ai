@@ -1,8 +1,8 @@
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { useTranslation } from "react-i18next";
+import {useTranslation} from "react-i18next";
+import {Modal, Pressable, StyleSheet, Text, View} from "react-native";
 
-import type { BoardItem } from "../lib/board";
-import { fonts } from "../styles/typography";
+import type {BoardItem} from "../lib/board";
+import {fonts} from "../styles/typography";
 
 type BoardActionsModalProps = {
   item: BoardItem | null;

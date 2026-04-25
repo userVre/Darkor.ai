@@ -1,7 +1,7 @@
-import { env as expoEnv } from "expo/virtual/env";
 import Constants from "expo-constants";
+import {env as expoEnv} from "expo/virtual/env";
 
-import { resolvePublicEndpoint } from "./public-endpoints";
+import {resolvePublicEndpoint} from "./public-endpoints";
 
 type EnvSnapshot = {
   clerkPublishableKey?: string;

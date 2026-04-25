@@ -46,7 +46,7 @@ export function normalizeAspectRatio(aspectRatio?: string | null) {
   return /^\d+:\d+$/.test(trimmed) ? trimmed : "1:1";
 }
 
-export function buildStabilityPrompt(args: {
+export function buildDesignPrompt(args: {
   serviceType: ServiceType;
   roomType: string;
   style: string;
@@ -129,7 +129,7 @@ export function buildStabilityPrompt(args: {
   ]);
 }
 
-export function buildStabilityNegativePrompt(args: {
+export function buildDesignNegativePrompt(args: {
   serviceType: ServiceType;
 }) {
   const shared = [

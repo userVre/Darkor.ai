@@ -1,12 +1,12 @@
-import { Image } from "expo-image";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { X } from "@/components/material-icons";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import {X} from "@/components/material-icons";
+import {Image} from "expo-image";
+import {Modal, Pressable, StyleSheet, Text, View} from "react-native";
+import {Gesture, GestureDetector} from "react-native-gesture-handler";
+import Animated, {runOnJS, useAnimatedStyle, useSharedValue, withSpring} from "react-native-reanimated";
 
-import { BeforeAfterSlider } from "./before-after-slider";
-import type { BoardItem } from "../lib/board";
-import { fonts } from "../styles/typography";
+import type {BoardItem} from "../lib/board";
+import {fonts} from "../styles/typography";
+import {BeforeAfterSlider} from "./before-after-slider";
 
 type BoardPreviewModalProps = {
   item: BoardItem | null;

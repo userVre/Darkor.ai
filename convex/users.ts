@@ -91,7 +91,7 @@ function buildViewerResponse(user: any) {
     generationOutputResolution: state.generationPolicy.outputResolution,
     generationSpeedTier: state.generationPolicy.speedTier,
     priorityProcessing: state.generationPolicy.priorityProcessing,
-    lastRefillTimestamp: state.lastResetDate,
+    lastRefillTimestamp: toFiniteNumber(user.lastRewardDate),
     pricingTier: user.pricingTier ?? null,
     pricingCountryCode: user.pricingCountryCode ?? null,
     pricingCurrencyCode: user.pricingCurrencyCode ?? null,

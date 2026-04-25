@@ -1,6 +1,6 @@
-import { type EventSubscription, UnavailabilityError, requireNativeModule } from "expo-modules-core";
-import { useEffect, useId } from "react";
-import { AppState } from "react-native";
+import {type EventSubscription, UnavailabilityError, requireNativeModule} from "expo-modules-core";
+import {useEffect, useId} from "react";
+import {AppState} from "react-native";
 
 export type KeepAwakeEvent = {
   state: KeepAwakeEventState;

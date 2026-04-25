@@ -1,9 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getLocales, useLocales, type Locale } from "expo-localization";
-import { useEffect, useMemo, useState } from "react";
+import {getLocales, useLocales, type Locale} from "expo-localization";
+import {useEffect, useMemo, useState} from "react";
 
-import { useAppLanguagePreference } from "./i18n";
-import { getLanguageLocaleTag, type AppLanguage } from "./i18n/language";
+import {getGeoIntelligenceSnapshot, useGeoIntelligence, type GeoIntelligenceSnapshot} from "./geo-intelligence";
+import {useAppLanguagePreference} from "./i18n";
+import {getLanguageLocaleTag, type AppLanguage} from "./i18n/language";
 
 export type PricingDuration = "weekly" | "yearly";
 export type PricingTierId = "tier_1" | "tier_2" | "tier_3" | "tier_4" | "tier_5";
@@ -49,9 +50,12 @@ export type PricingContext = {
   locale: string;
   countryCode: string;
   regionCode: string;
+  detectedLanguage: AppLanguage;
   currencyCode: string;
   tier: PricingTierDefinition;
   tierId: PricingTierId;
+  tierLabel: PricingTierDefinition["label"];
+  usdReference: Record<PricingDuration, number>;
   usedFallbackTier: boolean;
   prices: Record<PricingDuration, LocalizedPrice>;
   derived: {
@@ -65,6 +69,7 @@ export type PricingContext = {
     countryCode: string;
     currencyCode: string;
     offeringHint: string;
+    priceMetadata: Record<string, string>;
     attributePayload: Record<string, string>;
   };
 };
@@ -111,17 +116,18 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
       "JO", "KZ", "LB", "LY", "MA", "MD", "ME", "MK", "MN", "MS", "MX", "MY", "NA", "PA", "PE", "RS", "RU", "TH",
       "TM", "TN", "UA", "UY", "UZ", "VN", "ZA",
     ],
-    usdPrices: { yearly: 19.99, weekly: 2.99 },
+    usdPrices: { yearly: 19.99, weekly: 1.99 },
   },
   {
     id: "tier_5",
     label: "mass",
     countries: [
-      "AF", "BD", "BJ", "BO", "BW", "CD", "CI", "CM", "EG", "ET", "GH", "GN", "HN", "ID", "IN", "IQ", "KE", "KG",
-      "KH", "LA", "LK", "MM", "MO", "MU", "MW", "NG", "NI", "NP", "PA", "PH", "PK", "PR", "PY", "RW", "SN", "SV",
-      "TZ", "TR", "UG", "ZM", "ZW",
+      "AF", "AO", "BD", "BF", "BJ", "BI", "BO", "BW", "CD", "CF", "CG", "CI", "CM", "CV", "EG", "ER", "ET", "GH",
+      "GM", "GN", "GQ", "GW", "HN", "ID", "IN", "IQ", "KE", "KG", "KH", "KM", "LA", "LK", "LR", "LS", "MG", "ML",
+      "MM", "MO", "MR", "MU", "MW", "MZ", "NE", "NG", "NI", "NP", "PH", "PK", "PR", "PY", "RW", "SD", "SL", "SN",
+      "SO", "SS", "SV", "SZ", "TD", "TG", "TR", "TZ", "UG", "YE", "ZM", "ZW",
     ],
-    usdPrices: { yearly: 9.99, weekly: 0.99 },
+    usdPrices: { yearly: 9.99, weekly: 0.49 },
   },
 ] as const;
 
@@ -369,9 +375,11 @@ export function getPricingContext(
   inputLocales?: readonly Locale[],
   appLanguage: AppLanguage = "en-US",
   liveRateOverride?: LiveRateOverride | null,
+  geoSnapshot?: GeoIntelligenceSnapshot | null,
 ): PricingContext {
   const locale = getPrimaryLocale(inputLocales);
-  const regionCode = resolveRegionFromLocale(locale);
+  const activeGeoSnapshot = geoSnapshot ?? getGeoIntelligenceSnapshot();
+  const regionCode = activeGeoSnapshot?.regionCode || resolveRegionFromLocale(locale);
   const countryCode = regionCode || DEFAULT_PRICING_COUNTRY_CODE;
   const currencyCode = resolveCurrencyCode(countryCode);
   const localeTag = getLanguageLocaleTag(appLanguage, countryCode);
@@ -391,9 +399,12 @@ export function getPricingContext(
     locale: localeTag,
     countryCode,
     regionCode,
+    detectedLanguage: activeGeoSnapshot?.resolvedLanguage ?? appLanguage,
     currencyCode,
     tier,
     tierId: tier.id,
+    tierLabel: tier.label,
+    usdReference: tier.usdPrices,
     usedFallbackTier,
     prices: {
       weekly: localizedPrices.weekly,
@@ -410,6 +421,12 @@ export function getPricingContext(
       countryCode,
       currencyCode,
       offeringHint: `${countryCode.toLowerCase()}_${tier.id}`,
+      priceMetadata: {
+        homedecor_weekly_price_usd: tier.usdPrices.weekly.toFixed(2),
+        homedecor_yearly_price_usd: tier.usdPrices.yearly.toFixed(2),
+        homedecor_fx_rate: fxSnapshot.rate.toFixed(6),
+        homedecor_fx_source: fxSnapshot.source,
+      },
       attributePayload: {
         homedecor_country_code: countryCode,
         homedecor_currency_code: currencyCode,
@@ -417,12 +434,22 @@ export function getPricingContext(
         homedecor_locale: localeTag,
         homedecor_pricing_tier: tier.id,
         homedecor_pricing_fallback: usedFallbackTier ? "true" : "false",
+        homedecor_detected_language: activeGeoSnapshot?.resolvedLanguage ?? appLanguage,
+        homedecor_weekly_price_usd: tier.usdPrices.weekly.toFixed(2),
+        homedecor_yearly_price_usd: tier.usdPrices.yearly.toFixed(2),
+        homedecor_fx_rate: fxSnapshot.rate.toFixed(6),
+        homedecor_fx_source: fxSnapshot.source,
         darkor_country_code: countryCode,
         darkor_currency_code: currencyCode,
         darkor_detected_region_code: regionCode,
         darkor_locale: localeTag,
         darkor_pricing_tier: tier.id,
         darkor_pricing_fallback: usedFallbackTier ? "true" : "false",
+        darkor_detected_language: activeGeoSnapshot?.resolvedLanguage ?? appLanguage,
+        darkor_weekly_price_usd: tier.usdPrices.weekly.toFixed(2),
+        darkor_yearly_price_usd: tier.usdPrices.yearly.toFixed(2),
+        darkor_fx_rate: fxSnapshot.rate.toFixed(6),
+        darkor_fx_source: fxSnapshot.source,
       },
     },
   };
@@ -430,6 +457,7 @@ export function getPricingContext(
 
 export function usePricingContext() {
   const locales = useLocales();
+  const geoSnapshot = useGeoIntelligence();
   const languagePreference = useAppLanguagePreference();
   const localeSignature = locales
     .map((locale) => [
@@ -438,8 +466,8 @@ export function usePricingContext() {
     ].join(":"))
     .join("|");
   const baseContext = useMemo(
-    () => getPricingContext(locales, languagePreference.resolvedLanguage),
-    [languagePreference.resolvedLanguage, localeSignature, locales],
+    () => getPricingContext(locales, languagePreference.resolvedLanguage, null, geoSnapshot),
+    [geoSnapshot, languagePreference.resolvedLanguage, localeSignature, locales],
   );
   const [liveRate, setLiveRate] = useState<LiveRateOverride | null>(null);
 
@@ -493,7 +521,7 @@ export function usePricingContext() {
   }, [baseContext.countryCode, baseContext.currencyCode, baseContext.tierId]);
 
   return useMemo(
-    () => getPricingContext(locales, languagePreference.resolvedLanguage, liveRate),
-    [languagePreference.resolvedLanguage, liveRate, localeSignature, locales],
+    () => getPricingContext(locales, languagePreference.resolvedLanguage, liveRate, geoSnapshot),
+    [geoSnapshot, languagePreference.resolvedLanguage, liveRate, localeSignature, locales],
   );
 }

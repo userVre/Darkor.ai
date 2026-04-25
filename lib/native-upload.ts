@@ -1,6 +1,6 @@
 import * as FileSystem from "expo-file-system/legacy";
 
-import { assertCloudUrl } from "./public-endpoints";
+import {assertCloudUrl} from "./public-endpoints";
 
 type UploadLocalFileOptions = {
   fallbackMimeType?: string;

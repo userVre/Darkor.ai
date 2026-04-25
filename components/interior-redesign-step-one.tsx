@@ -1,25 +1,25 @@
-import { Image } from "expo-image";
-import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { blue, slate, slateA } from "@radix-ui/colors";
-import { Camera, Image as GalleryIcon, Plus, X as Close } from "@/components/material-icons";
-import { useCallback, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { useTranslation } from "react-i18next";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {Camera, X as Close, Image as GalleryIcon, Plus} from "@/components/material-icons";
+import {blue, slate, slateA} from "@radix-ui/colors";
+import {Image} from "expo-image";
+import {useRouter} from "expo-router";
+import {StatusBar} from "expo-status-bar";
+import {useCallback, useMemo, useState} from "react";
+import {useTranslation} from "react-i18next";
+import {Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {Gesture, GestureDetector} from "react-native-gesture-handler";
 import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
+runOnJS,
+useAnimatedStyle,
+useSharedValue,
+withSpring,
+withTiming,
 } from "react-native-reanimated";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
-import { triggerHaptic } from "../lib/haptics";
-import { fonts } from "../styles/typography";
-import { DesignStepHeader, getDesignStepHeaderMetrics } from "./design-step-header";
-import { HomeToolsBottomNav } from "./home-tools-bottom-nav";
+import {triggerHaptic} from "../lib/haptics";
+import {fonts} from "../styles/typography";
+import {DesignStepHeader, getDesignStepHeaderMetrics} from "./design-step-header";
+import {HomeToolsBottomNav} from "./home-tools-bottom-nav";
 
 export type InteriorRedesignStepOneExamplePhoto = {
   id: string;

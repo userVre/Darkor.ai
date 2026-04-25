@@ -1,9 +1,9 @@
-import { Compass, House, Sparkles, UserRound, type LucideIcon } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useTranslation } from "react-i18next";
+import {Compass, House, Sparkles, UserRound, type LucideIcon} from "lucide-react-native";
+import {useTranslation} from "react-i18next";
+import {Pressable, StyleSheet, Text, View} from "react-native";
 
-import { DS } from "../lib/design-system";
-import { fonts } from "../styles/typography";
+import {DS} from "../lib/design-system";
+import {fonts} from "../styles/typography";
 
 type HomeToolsBottomNavProps = {
   activeTab: "tools" | "create" | "discover" | "profile";

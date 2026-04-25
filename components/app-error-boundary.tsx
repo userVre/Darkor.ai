@@ -1,8 +1,8 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
-import { Text, View } from "react-native";
-import { spacing } from "../styles/spacing";
+import {Component, type ErrorInfo, type ReactNode} from "react";
+import {Text, View} from "react-native";
+import {spacing} from "../styles/spacing";
 
-import { LuxPressable } from "./lux-pressable";
+import {LuxPressable} from "./lux-pressable";
 
 type Props = {
   children: ReactNode;

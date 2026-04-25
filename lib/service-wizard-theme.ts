@@ -1,7 +1,7 @@
-import type { TextStyle } from "react-native";
-import { light } from "@/styles/theme";
-import { fonts } from "../styles/typography";
-import { DS } from "./design-system";
+import {light} from "@/styles/theme";
+import type {TextStyle} from "react-native";
+import {fonts} from "../styles/typography";
+import {DS} from "./design-system";
 
 const heroTitle: TextStyle = {
   ...fonts.bold,

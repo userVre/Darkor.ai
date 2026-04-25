@@ -1,123 +1,121 @@
-import { useAuth } from "@clerk/expo";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useAction, useMutation, useQuery } from "convex/react";
-import { Asset } from "expo-asset";
-import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
-import * as MediaLibrary from "expo-media-library";
-import * as FileSystem from "expo-file-system/legacy";
-import * as ImagePicker from "expo-image-picker";
-import * as Sharing from "expo-sharing";
-import { useLocalSearchParams, useNavigation, usePathname, useRouter } from "expo-router";
-import { FlashList } from "@shopify/flash-list";
-import { AnimatePresence, MotiView } from "moti";
-import { memo, startTransition, type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useIsFocused } from "@react-navigation/native";
-import { useTranslation } from "react-i18next";
-import { spacing } from "../../styles/spacing";
 import {
-  ActivityIndicator,
-  ActionSheetIOS,
-  Alert,
-  Image as NativeImage,
-  Linking,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  useWindowDimensions,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useSharedValue, withSpring } from "react-native-reanimated";
-import {
-  ArrowLeftRight,
-  BadgeCheck,
-  X as Close,
-  Bath,
-  Baby,
-  BedDouble,
-  BookOpen,
-  Building2,
-  Camera,
-  Check,
-  CarFront,
-  CookingPot,
-  Download,
-  DoorOpen,
-  Fence,
-  Flower2,
-  House,
-  Monitor,
-  Projector,
-  LayoutPanelTop,
-  Sofa,
-  Sparkles,
-  Store,
-  SunMedium,
-  ThumbDown,
-  ThumbUp,
-  Trees,
-  Trash2,
-  UtensilsCrossed,
-  MoveHorizontal,
-  Redo2,
-  Share2,
-  Wand2,
-  Zap,
+Baby,
+BadgeCheck,
+Bath,
+BedDouble,
+BookOpen,
+Building2,
+Camera,
+CarFront,
+Check,
+X as Close,
+CookingPot,
+DoorOpen,
+Download,
+Fence,
+Flower2,
+House,
+LayoutPanelTop,
+Monitor,
+MoveHorizontal,
+Projector,
+Redo2,
+Share2,
+Sofa,
+Sparkles,
+Store,
+SunMedium,
+ThumbDown,
+ThumbUp,
+Trash2,
+Trees,
+UtensilsCrossed,
+Wand2,
+Zap
 } from "@/components/material-icons";
-import { DIAGNOSTIC_BYPASS } from "../../lib/diagnostics";
-import { GENERATION_FAILED_TOAST, getFriendlyGenerationError } from "../../lib/generation-errors";
-import { triggerHaptic } from "../../lib/haptics";
-import { LUX_SPRING, staggerFadeUp } from "../../lib/motion";
-import { uploadLocalFileToCloud } from "../../lib/native-upload";
-import { loadLocalBoardItems, persistLocalBoardItems, type LocalBoardItem } from "../../lib/local-board-cache";
-import { FloorWizard } from "../../components/floor-wizard";
-import { GardenRedesignStepOne } from "../../components/garden-redesign-step-one";
-import { GardenRedesignStepTwo } from "../../components/garden-redesign-step-two";
-import { GardenRedesignStepThree } from "../../components/garden-redesign-step-three";
-import { InteriorRedesignStepOne } from "../../components/interior-redesign-step-one";
-import { InteriorRedesignStepTwo } from "../../components/interior-redesign-step-two";
-import { InteriorRedesignStepThree } from "../../components/interior-redesign-step-three";
-import { InteriorRedesignStepFour } from "../../components/interior-redesign-step-four";
-import { ExteriorRedesignStepTwo } from "../../components/exterior-redesign-step-two";
-import { ExteriorRedesignStepThree } from "../../components/exterior-redesign-step-three";
-import { ExteriorRedesignStepFour } from "../../components/exterior-redesign-step-four";
-import { LuxPressable } from "../../components/lux-pressable";
-import { PaintWizard } from "../../components/paint-wizard";
-import { ServiceContinueButton } from "../../components/service-continue-button";
-import { useGenerationStatusMessages } from "../../components/service-processing-screen";
-import { ServiceWizardHeader } from "../../components/service-wizard-header";
-import { getStickyStepHeaderMetrics } from "../../components/sticky-step-header";
-import { BeforeAfterSlider } from "../../components/before-after-slider";
-import { RenovationSparkIcon, StructuralDraftIcon } from "../../components/architectural-mode-icons";
-import { DiamondCreditPill } from "../../components/diamond-credit-pill";
+import {useAuth} from "@clerk/expo";
+import {BottomSheetModal} from "@gorhom/bottom-sheet";
+import {useIsFocused} from "@react-navigation/native";
+import {FlashList} from "@shopify/flash-list";
+import {useAction, useMutation, useQuery} from "convex/react";
+import {Asset} from "expo-asset";
+import * as FileSystem from "expo-file-system/legacy";
+import {Image} from "expo-image";
+import * as ImagePicker from "expo-image-picker";
+import {LinearGradient} from "expo-linear-gradient";
+import * as MediaLibrary from "expo-media-library";
+import {useLocalSearchParams, useNavigation, usePathname, useRouter} from "expo-router";
+import * as Sharing from "expo-sharing";
+import {AnimatePresence, MotiView} from "moti";
+import {memo, startTransition, useCallback, useEffect, useMemo, useRef, useState, type ComponentType} from "react";
+import {useTranslation} from "react-i18next";
 import {
-  DESIGN_WIZARD_SELECTION_BLUE,
-  DESIGN_WIZARD_SELECTION_BLUE_GLOW,
-  DESIGN_WIZARD_SELECTION_BLUE_SOFT,
+ActionSheetIOS,
+ActivityIndicator,
+Alert,
+Linking,
+Image as NativeImage,
+ScrollView,
+StyleSheet,
+Text,
+TextInput,
+View,
+useWindowDimensions,
+type NativeScrollEvent,
+type NativeSyntheticEvent,
+} from "react-native";
+import {useSharedValue, withSpring} from "react-native-reanimated";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import {captureRef} from "react-native-view-shot";
+import {RenovationSparkIcon, StructuralDraftIcon} from "../../components/architectural-mode-icons";
+import {BeforeAfterSlider} from "../../components/before-after-slider";
+import {
+DESIGN_WIZARD_SELECTION_BLUE,
+DESIGN_WIZARD_SELECTION_BLUE_GLOW,
+DESIGN_WIZARD_SELECTION_BLUE_SOFT,
 } from "../../components/design-wizard-primitives";
-import { useFlowUI } from "../../components/flow-ui-context";
-import { useViewerCredits } from "../../components/viewer-credits-context";
-import { useWorkspaceDraft } from "../../components/workspace-context";
-import { useViewerSession } from "../../components/viewer-session-context";
-import { useProSuccess } from "../../components/pro-success-context";
-import { captureRef } from "react-native-view-shot";
-import { DS, HAIRLINE, ambientShadow, floatingButton, glowShadow, organicRadii, surfaceCard } from "../../lib/design-system";
-import { SERVICE_WIZARD_THEME } from "../../lib/service-wizard-theme";
-import { getFloorWizardExamplePhotos, getPaintWizardExamplePhotos } from "../../lib/wizard-example-photos";
-import { canUserGenerate as canUserGenerateNow } from "../../lib/generation-access";
-import { hasGenerationImage, isGenerationFailure, resolveGenerationStatus } from "../../lib/generation-status";
-import { getRewardStatus } from "../../lib/rewards";
+import {DiamondCreditPill} from "../../components/diamond-credit-pill";
+import {ExteriorRedesignStepFour} from "../../components/exterior-redesign-step-four";
+import {ExteriorRedesignStepThree} from "../../components/exterior-redesign-step-three";
+import {ExteriorRedesignStepTwo} from "../../components/exterior-redesign-step-two";
+import {FloorWizard} from "../../components/floor-wizard";
+import {useFlowUI} from "../../components/flow-ui-context";
+import {GardenRedesignStepOne} from "../../components/garden-redesign-step-one";
+import {GardenRedesignStepThree} from "../../components/garden-redesign-step-three";
+import {GardenRedesignStepTwo} from "../../components/garden-redesign-step-two";
+import {InteriorRedesignStepFour} from "../../components/interior-redesign-step-four";
+import {InteriorRedesignStepOne} from "../../components/interior-redesign-step-one";
+import {InteriorRedesignStepThree} from "../../components/interior-redesign-step-three";
+import {InteriorRedesignStepTwo} from "../../components/interior-redesign-step-two";
+import {LuxPressable} from "../../components/lux-pressable";
+import {PaintWizard} from "../../components/paint-wizard";
+import {useProSuccess} from "../../components/pro-success-context";
+import {ServiceContinueButton} from "../../components/service-continue-button";
+import {useGenerationStatusMessages} from "../../components/service-processing-screen";
+import {ServiceWizardHeader} from "../../components/service-wizard-header";
+import {getStickyStepHeaderMetrics} from "../../components/sticky-step-header";
+import {useViewerCredits} from "../../components/viewer-credits-context";
+import {useViewerSession} from "../../components/viewer-session-context";
+import {useWorkspaceDraft} from "../../components/workspace-context";
+import {DS, HAIRLINE, ambientShadow, floatingButton, glowShadow, organicRadii, surfaceCard} from "../../lib/design-system";
+import {DIAGNOSTIC_BYPASS} from "../../lib/diagnostics";
+import {canUserGenerate as canUserGenerateNow} from "../../lib/generation-access";
+import {GENERATION_FAILED_TOAST, getFriendlyGenerationError} from "../../lib/generation-errors";
+import {hasGenerationImage, resolveGenerationStatus} from "../../lib/generation-status";
 import {
-  GUEST_TESTING_STARTER_CREDITS,
-  isGuestWizardTestingSession,
-  resolveGuestWizardViewerId,
+isGuestWizardTestingSession,
+resolveGuestWizardViewerId
 } from "../../lib/guest-testing";
-import { DEFAULT_TAB_BAR_STYLE } from "./_layout";
-import { fonts } from "../../styles/typography";
+import {triggerHaptic} from "../../lib/haptics";
+import {loadLocalBoardItems, persistLocalBoardItems, type LocalBoardItem} from "../../lib/local-board-cache";
+import {LUX_SPRING, staggerFadeUp} from "../../lib/motion";
+import {uploadLocalFileToCloud} from "../../lib/native-upload";
+import {getRewardStatus} from "../../lib/rewards";
+import {SERVICE_WIZARD_THEME} from "../../lib/service-wizard-theme";
+import {getFloorWizardExamplePhotos, getPaintWizardExamplePhotos} from "../../lib/wizard-example-photos";
+import {spacing} from "../../styles/spacing";
+import {fonts} from "../../styles/typography";
+import {DEFAULT_TAB_BAR_STYLE} from "./_layout";
 type MeResponse = {
   plan: "free" | "trial" | "pro";
   credits: number;
@@ -146,6 +144,7 @@ type MeResponse = {
   priorityProcessing?: boolean;
   canVirtualStage?: boolean;
   canEditDesigns?: boolean;
+  lastRefillTimestamp?: number;
 };
 
 type SelectedImage = {
@@ -3174,11 +3173,23 @@ export default function WorkspaceScreen() {
   const generationCreditLabel = hasPaidAccess
     ? `Unlimited generations \u00b7 ${me?.generationOutputResolution === "4096x4096" ? "4K Ultra-HD" : "HD"}`
     : `Uses 1 Diamond \u00b7 ${remainingCreditsAfterGenerate} remaining`;
+  const [refillCountdownNow, setRefillCountdownNow] = useState(() => Date.now());
+  const refillStatus = useMemo(
+    () => getRewardStatus(me?.lastRefillTimestamp, refillCountdownNow),
+    [me?.lastRefillTimestamp, refillCountdownNow],
+  );
+  const refillHoursRemaining = Math.max(1, Math.ceil(refillStatus.remainingMs / (60 * 60 * 1000)));
+  const shouldShowRefillCountdown = !hasPaidAccess && creditBalance <= 0 && !refillStatus.isEligible;
   const usageBadgeLabel = hasPaidAccess
     ? me?.plan === "trial"
       ? t("workspace.localization.usageBadge.trialUnlimited")
       : t("workspace.localization.usageBadge.proUnlimited")
-    : t("workspace.localization.usageBadge.diamonds", { count: creditBalance });
+    : shouldShowRefillCountdown
+      ? t("workspace.localization.usageBadge.refillInHours", {
+          hours: refillHoursRemaining,
+          defaultValue: `Refill in: ${refillHoursRemaining}h`,
+        })
+      : t("workspace.localization.usageBadge.diamonds", { count: creditBalance });
   const usageBadgeDetail = hasPaidAccess
     ? me?.priorityProcessing
       ? t("workspace.localization.usageBadge.priorityNoWatermark")
@@ -3193,7 +3204,21 @@ export default function WorkspaceScreen() {
     if (!diagnostic) {
       clearOptimisticCredits();
     }
-  }, [clearOptimisticCredits, diagnostic, me?.credits, viewerId]);
+  }, [clearOptimisticCredits, diagnostic]);
+
+  useEffect(() => {
+    if (!shouldShowRefillCountdown) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setRefillCountdownNow(Date.now());
+    }, 60 * 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [shouldShowRefillCountdown]);
 
   useEffect(() => {
     if (!(workflowStep === 3 && !isPaintService && !isFloorService && !isLeanGenerationService)) {
@@ -4605,6 +4630,8 @@ export default function WorkspaceScreen() {
         anonymousId: viewerId ?? undefined,
         generationId: activeGenerationRecordId as any,
         sentiment,
+        isLike: sentiment === "liked",
+        imageId: activeGenerationRecordId as any,
         styleSelected: activeBoardItem?.styleLabel ?? selectedStyle ?? "Custom",
         serviceType:
           activeBoardItem?.serviceType ??

@@ -1,5 +1,5 @@
-import { getLocales, type Locale } from "expo-localization";
-import { Platform } from "react-native";
+import {getLocales, type Locale} from "expo-localization";
+import {Platform} from "react-native";
 
 export const SUPPORTED_LANGUAGES = [
   "en-US",

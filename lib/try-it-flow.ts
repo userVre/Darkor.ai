@@ -1,9 +1,9 @@
-import { Asset } from "expo-asset";
-import type { ImageSourcePropType } from "react-native";
+import {Asset} from "expo-asset";
+import type {ImageSourcePropType} from "react-native";
 
-import type { DraftImage } from "../components/workspace-context";
-import type { DiscoverTile } from "./data";
-import type { FeaturedTryItExample } from "./featured-try-it";
+import type {DraftImage} from "../components/workspace-context";
+import type {DiscoverTile} from "./data";
+import type {FeaturedTryItExample} from "./featured-try-it";
 
 type TryItExampleInput = {
   serviceParam: "interior" | "facade" | "garden" | "paint" | "floor";

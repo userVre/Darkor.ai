@@ -1,7 +1,7 @@
-import { memo } from "react";
-import { I18nManager, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import {memo} from "react";
+import {I18nManager, StyleSheet, View, type StyleProp, type ViewStyle} from "react-native";
 
-import { DS } from "../lib/design-system";
+import {DS} from "../lib/design-system";
 
 type StepProgressSegmentsProps = {
   step: number;

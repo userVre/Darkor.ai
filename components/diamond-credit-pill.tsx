@@ -1,17 +1,17 @@
 import {
-  I18nManager,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type AccessibilityRole,
-  type StyleProp,
-  type ViewStyle,
+I18nManager,
+Pressable,
+StyleSheet,
+Text,
+View,
+type AccessibilityRole,
+type StyleProp,
+type ViewStyle,
 } from "react-native";
-import Svg, { Path } from "react-native-svg";
+import Svg, {Path} from "react-native-svg";
 
-import { ambientShadow, organicRadii } from "../lib/design-system";
-import { fonts } from "../styles/typography";
+import {ambientShadow, organicRadii} from "../lib/design-system";
+import {fonts} from "../styles/typography";
 
 type DiamondCreditPillProps = {
   count: number;

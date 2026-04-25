@@ -1,9 +1,9 @@
-import { Image } from "expo-image";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import {Image} from "expo-image";
+import {ActivityIndicator, Pressable, StyleSheet, Text, View} from "react-native";
 
-import type { BoardItem } from "../lib/board";
-import { resolveGenerationStatus } from "../lib/generation-status";
-import { fonts } from "../styles/typography";
+import type {BoardItem} from "../lib/board";
+import {resolveGenerationStatus} from "../lib/generation-status";
+import {fonts} from "../styles/typography";
 
 type BoardImageCardProps = {
   item: BoardItem;

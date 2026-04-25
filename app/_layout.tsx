@@ -1,53 +1,53 @@
 import "react-native-gesture-handler";
 import "react-native-reanimated";
 
-import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
-import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { useMutation } from "convex/react";
-import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { useFonts } from "expo-font";
-import { useLocales } from "expo-localization";
+import {ClerkProvider, useAuth, useUser} from "@clerk/expo";
+import {BottomSheetModalProvider} from "@gorhom/bottom-sheet";
+import {useMutation} from "convex/react";
+import {ConvexProviderWithClerk} from "convex/react-clerk";
+import {useFonts} from "expo-font";
 import * as Linking from "expo-linking";
-import { Stack, useGlobalSearchParams, usePathname, useRouter } from "expo-router";
+import {useLocales} from "expo-localization";
+import {Stack, useGlobalSearchParams, usePathname, useRouter} from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Text, TextInput, View, type TextInputProps, type TextProps } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import {useEffect, useMemo, useRef, useState} from "react";
+import {ActivityIndicator, Text, TextInput, View, type TextInputProps, type TextProps} from "react-native";
+import {GestureHandlerRootView} from "react-native-gesture-handler";
+import {SafeAreaProvider} from "react-native-safe-area-context";
 
-import { AppErrorBoundary } from "../components/app-error-boundary";
-import { BrandLaunchScreen } from "../components/brand-launch-screen";
-import { GenerationAccessCacheGate } from "../components/generation-access-cache-gate";
-import { FlowUIProvider } from "../components/flow-ui-context";
-import { OfflineOverlay } from "../components/offline-overlay";
-import { ProSuccessProvider, useProSuccess } from "../components/pro-success-context";
-import { ViewerCreditsProvider } from "../components/viewer-credits-context";
-import { ViewerSessionProvider } from "../components/viewer-session-context";
-import { WorkspaceDraftProvider } from "../components/workspace-context";
-import { convex } from "../lib/convex";
-import { DS, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
-import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
-import { usePricingContext } from "../lib/dynamic-pricing";
-import { getEnvReport, logEnvDiagnostics } from "../lib/env";
-import { ENABLE_GUEST_WIZARD_TEST_MODE } from "../lib/guest-testing";
-import { consumeReferralCode, setReferralCode } from "../lib/referral";
-import {
-  configureRevenueCat,
-  fetchTieredPackage,
-  hasActiveSubscription,
-  resolveRevenueCatSubscription,
-  syncRevenueCatPricingAttributes,
-  type RevenueCatCustomerInfo,
-  type RevenueCatPurchases,
-} from "../lib/revenuecat";
+import {AppErrorBoundary} from "../components/app-error-boundary";
+import {BrandLaunchScreen} from "../components/brand-launch-screen";
+import {FlowUIProvider} from "../components/flow-ui-context";
+import {GenerationAccessCacheGate} from "../components/generation-access-cache-gate";
+import {OfflineOverlay} from "../components/offline-overlay";
+import {ProSuccessProvider, useProSuccess} from "../components/pro-success-context";
+import {ViewerCreditsProvider} from "../components/viewer-credits-context";
+import {ViewerSessionProvider} from "../components/viewer-session-context";
+import {WorkspaceDraftProvider} from "../components/workspace-context";
+import {convex} from "../lib/convex";
+import {DS, SCREEN_SIDE_PADDING, glowShadow, surfaceCard} from "../lib/design-system";
+import {DIAGNOSTIC_BYPASS} from "../lib/diagnostics";
+import {usePricingContext} from "../lib/dynamic-pricing";
+import {getEnvReport, logEnvDiagnostics} from "../lib/env";
+import {ENABLE_GUEST_WIZARD_TEST_MODE} from "../lib/guest-testing";
 import i18n, {
-  initializeI18n,
-  syncAppLanguageWithSystem,
-  useAppLanguagePreference,
-  useLocalizedAppFonts,
+initializeI18n,
+syncAppLanguageWithSystem,
+useAppLanguagePreference,
+useLocalizedAppFonts,
 } from "../lib/i18n";
-import { getDirectionalTextAlign, reloadAppForLayoutDirection } from "../lib/i18n/rtl";
-import { tokenCache } from "../lib/token-cache";
+import {getDirectionalTextAlign, reloadAppForLayoutDirection} from "../lib/i18n/rtl";
+import {consumeReferralCode, setReferralCode} from "../lib/referral";
+import {
+configureRevenueCat,
+fetchTieredPackage,
+hasActiveSubscription,
+resolveRevenueCatSubscription,
+syncRevenueCatPricingAttributes,
+type RevenueCatCustomerInfo,
+type RevenueCatPurchases,
+} from "../lib/revenuecat";
+import {tokenCache} from "../lib/token-cache";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 

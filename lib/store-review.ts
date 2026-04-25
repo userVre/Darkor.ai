@@ -1,5 +1,5 @@
 import * as StoreReview from "expo-store-review";
-import { Alert } from "react-native";
+import {Alert} from "react-native";
 import i18n from "./i18n";
 
 export async function requestStoreReview() {

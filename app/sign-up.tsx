@@ -1,17 +1,17 @@
-import { useOAuth } from "@clerk/expo";
-import { useSignUp } from "@clerk/expo/legacy";
-import { Link, type Href, useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { useTranslation } from "react-i18next";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeft } from "@/components/material-icons";
-import { fonts } from "../styles/typography";
-import { buttonStyles } from "../styles/buttons";
+import {ArrowLeft} from "@/components/material-icons";
+import {useOAuth} from "@clerk/expo";
+import {useSignUp} from "@clerk/expo/legacy";
+import {Link, useLocalSearchParams, useRouter, type Href} from "expo-router";
+import {useState} from "react";
+import {useTranslation} from "react-i18next";
+import {Alert, ScrollView, StyleSheet, Text, TextInput, View} from "react-native";
+import {SafeAreaView, useSafeAreaInsets} from "react-native-safe-area-context";
+import {buttonStyles} from "../styles/buttons";
+import {fonts} from "../styles/typography";
 
-import { LuxPressable } from "../components/lux-pressable";
-import { DS, HAIRLINE, SCREEN_SIDE_PADDING, glowShadow, surfaceCard } from "../lib/design-system";
-import { triggerHaptic } from "../lib/haptics";
+import {LuxPressable} from "../components/lux-pressable";
+import {DS, HAIRLINE, SCREEN_SIDE_PADDING, glowShadow, surfaceCard} from "../lib/design-system";
+import {triggerHaptic} from "../lib/haptics";
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -74,7 +74,12 @@ export default function SignUpScreen() {
         <LuxPressable
           onPress={() => {
             triggerHaptic();
-            router.back();
+            if (router.canGoBack()) {
+              router.back();
+              return;
+            }
+
+            router.replace({ pathname: "/sign-in", params: { returnTo: nextRoute } });
           }}
           style={styles.backButton}
           className="cursor-pointer"

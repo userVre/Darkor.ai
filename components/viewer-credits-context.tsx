@@ -1,9 +1,9 @@
-import { useQuery } from "convex/react";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {useQuery} from "convex/react";
+import {createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode} from "react";
 
-import { loadGenerationAccessSnapshot, persistGenerationAccessSnapshot } from "../lib/generation-access";
-import { GUEST_TESTING_STARTER_CREDITS } from "../lib/guest-testing";
-import { useViewerSession } from "./viewer-session-context";
+import {loadGenerationAccessSnapshot, persistGenerationAccessSnapshot} from "../lib/generation-access";
+import {GUEST_TESTING_STARTER_CREDITS} from "../lib/guest-testing";
+import {useViewerSession} from "./viewer-session-context";
 
 type ViewerCreditsSnapshot = {
   credits?: number;
@@ -21,7 +21,6 @@ type ViewerCreditsContextValue = {
   credits: number;
   hasPaidAccess: boolean;
   isReady: boolean;
-  serverCredits: number;
   subscriptionType?: "free" | "weekly" | "yearly";
   clearOptimisticCredits: () => void;
   setOptimisticCredits: (nextCredits: number | null) => void;
@@ -113,13 +112,12 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
       credits,
       hasPaidAccess,
       isReady: viewerReady,
-      serverCredits,
       subscriptionType,
       clearOptimisticCredits,
       setOptimisticCredits,
       setOptimisticAccess,
     }),
-    [clearOptimisticCredits, credits, hasPaidAccess, serverCredits, setOptimisticAccess, setOptimisticCredits, subscriptionType, viewerReady],
+    [clearOptimisticCredits, credits, hasPaidAccess, setOptimisticAccess, setOptimisticCredits, subscriptionType, viewerReady],
   );
 
   return <ViewerCreditsContext.Provider value={value}>{children}</ViewerCreditsContext.Provider>;

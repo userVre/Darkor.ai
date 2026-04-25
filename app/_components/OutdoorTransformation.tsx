@@ -1,7 +1,7 @@
-import { MotiImage, MotiView } from "moti";
-import { StyleSheet, useWindowDimensions, View, Text } from "react-native";
-import Svg, { Path } from "react-native-svg";
-import { fonts } from "../../styles/typography";
+import {MotiImage, MotiView} from "moti";
+import {StyleSheet, Text, useWindowDimensions, View} from "react-native";
+import Svg, {Path} from "react-native-svg";
+import {fonts} from "../../styles/typography";
 
 const beforeGarden = require("../../assets/media/garden-before.jpg");
 const afterGarden = require("../../assets/media/garden-after.jpg");

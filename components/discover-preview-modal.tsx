@@ -1,10 +1,10 @@
-import { useMemo } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View, Image as RNImage } from "react-native";
-import { ArrowLeft } from "@/components/material-icons";
-import { Image as ExpoImage } from "expo-image";
+import {ArrowLeft} from "@/components/material-icons";
+import {Image as ExpoImage} from "expo-image";
+import {useMemo} from "react";
+import {Modal, Pressable, Image as RNImage, ScrollView, StyleSheet, Text, View} from "react-native";
 
-import type { DiscoverTile } from "../lib/discover-catalog";
-import { fonts } from "../styles/typography";
+import type {DiscoverTile} from "../lib/discover-catalog";
+import {fonts} from "../styles/typography";
 
 type DiscoverPreviewModalProps = {
   item: DiscoverTile | null;

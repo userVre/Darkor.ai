@@ -1,6 +1,6 @@
 import {
-  InteriorRedesignStepOne,
-  type InteriorRedesignStepOneExamplePhoto,
+InteriorRedesignStepOne,
+type InteriorRedesignStepOneExamplePhoto,
 } from "./interior-redesign-step-one";
 
 type SelectedPhoto = {

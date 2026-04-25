@@ -1,7 +1,7 @@
-import { StyleSheet, type TextStyle, type ViewStyle } from "react-native";
-import { light } from "@/styles/theme";
-import { spacing } from "../styles/spacing";
-import { fonts } from "../styles/typography";
+import {light} from "@/styles/theme";
+import {StyleSheet, type TextStyle, type ViewStyle} from "react-native";
+import {spacing} from "../styles/spacing";
+import {fonts} from "../styles/typography";
 
 const SPACING_UNIT = spacing.sm;
 
@@ -113,6 +113,7 @@ export const DS = {
 export const HAIRLINE = Math.max(StyleSheet.hairlineWidth, 1);
 export const SCREEN_SIDE_PADDING = spacing.lg;
 export const SCREEN_SECTION_GAP = spacing.xl;
+export const GLOBAL_VERTICAL_GAP = spacing.xl;
 export const BREATHABLE_SECTION_GAP = DS.spacing[4];
 export const GLASS_HEADER_CONTENT_GAP = DS.spacing[4];
 

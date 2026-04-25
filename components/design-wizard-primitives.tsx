@@ -1,23 +1,23 @@
-import type { TextStyle, ViewStyle } from "react-native";
-import type { Icon, IconProps } from "phosphor-react-native";
+import type {Icon, IconProps} from "phosphor-react-native";
 import {
-  ArmchairIcon,
-  BabyIcon,
-  BathtubIcon,
-  BedIcon,
-  BooksIcon,
-  BriefcaseIcon,
-  CookingPotIcon,
-  DoorOpenIcon,
-  FilmSlateIcon,
-  ForkKnifeIcon,
-  GameControllerIcon,
-  HouseLineIcon,
-  OfficeChairIcon,
-  ProjectorScreenIcon,
-  TelevisionIcon,
-  WashingMachineIcon,
+ArmchairIcon,
+BabyIcon,
+BathtubIcon,
+BedIcon,
+BooksIcon,
+BriefcaseIcon,
+CookingPotIcon,
+DoorOpenIcon,
+FilmSlateIcon,
+ForkKnifeIcon,
+GameControllerIcon,
+HouseLineIcon,
+OfficeChairIcon,
+ProjectorScreenIcon,
+TelevisionIcon,
+WashingMachineIcon,
 } from "phosphor-react-native";
+import type {TextStyle, ViewStyle} from "react-native";
 
 export const DESIGN_WIZARD_ACCENT = "#1D4ED8";
 export const DESIGN_WIZARD_ACCENT_STRONG = "#1E40AF";

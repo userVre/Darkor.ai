@@ -1,17 +1,21 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import i18n, { type Resource } from "i18next";
-import { useMemo, useSyncExternalStore } from "react";
-import { I18nManager } from "react-native";
-import { initReactI18next } from "react-i18next";
+import i18n, {type Resource} from "i18next";
+import {useMemo, useSyncExternalStore} from "react";
+import {initReactI18next} from "react-i18next";
+import {I18nManager} from "react-native";
+import {
+getGeoIntelligenceSnapshot,
+initializeGeoIntelligence,
+syncGeoIntelligenceWithDevice,
+} from "../geo-intelligence";
 
 import {
-  DEFAULT_LANGUAGE,
-  SUPPORTED_LANGUAGES,
-  getDeviceSupportedLanguage,
-  getLocalizedFonts,
-  isRtlLanguage,
-  resolveSupportedLanguage,
-  type AppLanguage,
+DEFAULT_LANGUAGE,
+SUPPORTED_LANGUAGES,
+getLocalizedFonts,
+isRtlLanguage,
+resolveSupportedLanguage,
+type AppLanguage,
 } from "./language";
 
 const LANGUAGE_PREFERENCE_STORAGE_KEY = "homedecor.ai.language.preference.v2";
@@ -119,7 +123,7 @@ function resolveLanguageFromPreference(preference: StoredLanguagePreference) {
     return resolveSupportedLanguage(preference.language);
   }
 
-  return getDeviceSupportedLanguage();
+  return getGeoIntelligenceSnapshot().resolvedLanguage;
 }
 
 function parseStoredPreference(rawValue?: string | null): StoredLanguagePreference | null {
@@ -272,6 +276,7 @@ export async function initializeI18n() {
 
   if (!initPromise) {
     initPromise = (async () => {
+      await initializeGeoIntelligence();
       const storedPreference = await readStoredLanguagePreference();
       currentPreference = storedPreference;
       const language = resolveLanguageFromPreference(storedPreference);
@@ -343,6 +348,8 @@ export async function setAppLanguageToSystemDefault() {
 }
 
 export async function syncAppLanguageWithSystem() {
+  await syncGeoIntelligenceWithDevice();
+
   if (!i18n.isInitialized || currentPreference.mode !== "auto") {
     return {
       resolvedLanguage: getSnapshot().resolvedLanguage,
@@ -372,5 +379,5 @@ export function useLocalizedAppFonts() {
   );
 }
 
-export { LANGUAGE_PREFERENCE_STORAGE_KEY };
+export {LANGUAGE_PREFERENCE_STORAGE_KEY};
 export default i18n;

@@ -1,16 +1,16 @@
-import { Image } from "expo-image";
-import { MotiView } from "moti";
-import { Check, ImagePlus, X } from "@/components/material-icons";
-import { Children, cloneElement, isValidElement, useState, type ComponentProps, type ReactElement, type ReactNode } from "react";
-import { ScrollView, Text, View, StyleSheet, useWindowDimensions, type ImageSourcePropType } from "react-native";
-import { fonts } from "../styles/typography";
-import { spacing } from "../styles/spacing";
-import { light as colors } from "@/styles/theme";
+import {Check, ImagePlus, X} from "@/components/material-icons";
+import {light as colors} from "@/styles/theme";
+import {Image} from "expo-image";
+import {MotiView} from "moti";
+import {Children, cloneElement, isValidElement, useState, type ComponentProps, type ReactElement, type ReactNode} from "react";
+import {ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageSourcePropType} from "react-native";
+import {spacing} from "../styles/spacing";
+import {fonts} from "../styles/typography";
 
-import { DS, ambientShadow, glowShadow } from "../lib/design-system";
-import { SERVICE_WIZARD_THEME } from "../lib/service-wizard-theme";
-import { LuxPressable } from "./lux-pressable";
-import { DESIGN_WIZARD_SELECTION_BLUE, DESIGN_WIZARD_SELECTION_BLUE_GLOW, DESIGN_WIZARD_SELECTION_BLUE_SOFT } from "./design-wizard-primitives";
+import {DS, ambientShadow, glowShadow} from "../lib/design-system";
+import {SERVICE_WIZARD_THEME} from "../lib/service-wizard-theme";
+import {DESIGN_WIZARD_SELECTION_BLUE, DESIGN_WIZARD_SELECTION_BLUE_GLOW, DESIGN_WIZARD_SELECTION_BLUE_SOFT} from "./design-wizard-primitives";
+import {LuxPressable} from "./lux-pressable";
 
 const pointerClassName = "cursor-pointer";
 

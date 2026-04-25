@@ -1,8 +1,8 @@
-import type { ImageSourcePropType } from "react-native";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import {useMemo} from "react";
+import {useTranslation} from "react-i18next";
+import type {ImageSourcePropType} from "react-native";
 
-import { GENERATED_DISCOVER_ASSETS, type GeneratedDiscoverAssetId } from "./generated-discover-assets";
+import {GENERATED_DISCOVER_ASSETS, type GeneratedDiscoverAssetId} from "./generated-discover-assets";
 
 export type DiscoverTabId = "discover";
 export type DiscoverClusterId = "interiors" | "architecture" | "landscapes";

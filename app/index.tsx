@@ -1,13 +1,13 @@
-import { useQuery } from "convex/react";
-import { Redirect } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
-import { useTranslation } from "react-i18next";
-import { spacing } from "../styles/spacing";
+import {useQuery} from "convex/react";
+import {Redirect} from "expo-router";
+import {useEffect, useMemo, useState} from "react";
+import {useTranslation} from "react-i18next";
+import {ActivityIndicator, Text, View} from "react-native";
+import {spacing} from "../styles/spacing";
 
-import { useViewerSession } from "../components/viewer-session-context";
-import { DIAGNOSTIC_BYPASS } from "../lib/diagnostics";
-import { hasDismissedLaunchPaywall } from "../lib/launch-paywall";
+import {useViewerSession} from "../components/viewer-session-context";
+import {DIAGNOSTIC_BYPASS} from "../lib/diagnostics";
+import {hasDismissedLaunchPaywall} from "../lib/launch-paywall";
 
 type MeResponse = {
   plan: "free" | "trial" | "pro";

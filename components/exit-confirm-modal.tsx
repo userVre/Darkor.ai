@@ -1,7 +1,7 @@
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { useTranslation } from "react-i18next";
+import {useTranslation} from "react-i18next";
+import {Modal, Pressable, StyleSheet, Text, View} from "react-native";
 
-import { DS, ambientShadow, organicRadii } from "../lib/design-system";
+import {DS, ambientShadow, organicRadii} from "../lib/design-system";
 
 type ExitConfirmModalProps = {
   visible: boolean;
