@@ -78,7 +78,7 @@ type AzureRenderProfile = {
   watermarkRequired: boolean;
 };
 
-function redactSecret(value?: string | null) {
+export function redactSecret(value?: string | null) {
   const normalized = trimOptional(value);
   if (!normalized) {
     return null;
@@ -91,7 +91,7 @@ function redactSecret(value?: string | null) {
   return `${normalized.slice(0, 4)}...${normalized.slice(-4)}`;
 }
 
-function trimOptional(value?: string | null) {
+export function trimOptional(value?: string | null) {
   const trimmed = value?.trim();
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
 }
@@ -135,7 +135,7 @@ async function prepareSuggestionImage(blob: Blob) {
   };
 }
 
-function normalizeGenerationError(message?: string | null) {
+export function normalizeGenerationError(message?: string | null) {
   const raw = trimOptional(message) ?? "Generation failed.";
   const normalized = raw.toLowerCase();
 
@@ -203,7 +203,7 @@ function joinNaturalLanguage(values: string[]) {
   return `${values.slice(0, -1).join(", ")}, and ${values[values.length - 1]}`;
 }
 
-function dedupeSuggestions(values: Array<string | undefined>, fallback?: string) {
+export function dedupeSuggestions(values: Array<string | undefined>, fallback?: string) {
   const unique: string[] = [];
 
   for (const value of values) {
@@ -234,12 +234,12 @@ function buildStyleDirection(style: string, styleSelections?: string[]) {
   return `A fusion of ${joinNaturalLanguage([normalizedStyle, ...normalizedSelections])} styles`;
 }
 
-function hasMultipleDistinctStyles(style: string, styleSelections?: string[]) {
+export function hasMultipleDistinctStyles(style: string, styleSelections?: string[]) {
   const normalized = dedupeSuggestions([style, ...(styleSelections ?? [])], style);
   return normalized.length > 1;
 }
 
-function compactPromptSegments(parts: Array<string | undefined>) {
+export function compactPromptSegments(parts: Array<string | undefined>) {
   return parts
     .map((part) => trimOptional(part))
     .filter((part): part is string => Boolean(part))
@@ -634,7 +634,7 @@ function parseSuggestionResponse(payload: any) {
   return trimOptional(candidateText);
 }
 
-async function requestGeminiDesignOrchestration(args: {
+export async function requestGeminiDesignOrchestration(args: {
   sourceBlob: Blob;
   serviceType: ServiceType;
   roomType: string;

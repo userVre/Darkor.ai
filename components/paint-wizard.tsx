@@ -463,6 +463,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const [isCancellingGeneration, setIsCancellingGeneration] = useState(false);
   const [loadingContinueStep, setLoadingContinueStep] = useState<"intake" | "mask" | "colors" | null>(null);
   const initialSelectionAppliedRef = useRef(false);
+  const handledGenerationCompletionRef = useRef<string | null>(null);
   const detectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const continueTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sourceCaptureRef = useRef<View>(null);
@@ -633,6 +634,10 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     const hasResultImage = hasGenerationImage(resultImageUrl);
 
     if (generationStatus === "ready" && hasResultImage) {
+      if (handledGenerationCompletionRef.current === generation._id) {
+        return;
+      }
+      handledGenerationCompletionRef.current = generation._id;
       setGenerationId(null);
       setGeneratedImageUrl(resultImageUrl);
       setIsGenerating(false);
@@ -650,6 +655,10 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     }
 
     if (generationStatus === "failed" && !hasResultImage) {
+      if (handledGenerationCompletionRef.current === generation._id) {
+        return;
+      }
+      handledGenerationCompletionRef.current = generation._id;
       setGenerationId(null);
       setIsGenerating(false);
       setIsCancellingGeneration(false);
@@ -1233,6 +1242,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       if (typeof result.creditsRemaining === "number") {
         setOptimisticCredits(result.creditsRemaining);
       }
+      handledGenerationCompletionRef.current = null;
       setGenerationId(result.generationId);
     } catch (error) {
       setIsGenerating(false);

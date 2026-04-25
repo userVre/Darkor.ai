@@ -34,6 +34,7 @@ const SLIDER_SPRING = {
   stiffness: 180,
   mass: 0.8,
 } as const;
+const AnimatedExpoImage = Animated.createAnimatedComponent(Image);
 
 type BeforeAfterSliderProps = {
   afterLabel?: string;
@@ -94,6 +95,7 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
   );
 
   const panGesture = Gesture.Pan()
+    .maxPointers(1)
     .activeOffsetX([-4, 4])
     .failOffsetY([-12, 12])
     .onBegin(() => {
@@ -144,11 +146,7 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
   const gesture = Gesture.Simultaneous(panGesture, doubleTapGesture);
 
   const afterViewportStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: sliderX.value }],
-  }));
-
-  const afterImageStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: -sliderX.value }],
+    width: Math.max(sliderX.value, 0),
   }));
 
   const handleStyle = useAnimatedStyle(() => ({
@@ -184,7 +182,7 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
   return (
     <GestureDetector gesture={gesture}>
       <View ref={containerRef} collapsable={false} onLayout={handleLayout} style={[styles.container, style]}>
-        <Image
+        <AnimatedExpoImage
           cachePolicy="memory-disk"
           contentFit={contentFit}
           source={beforeSource}
@@ -193,11 +191,11 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
         />
 
         <Animated.View style={[styles.afterViewport, afterViewportStyle]}>
-          <Image
+          <AnimatedExpoImage
             cachePolicy="memory-disk"
             contentFit={contentFit}
             source={afterSource}
-            style={[styles.image, styles.afterImage, imageStyle, afterImageStyle]}
+            style={[styles.image, styles.afterImage, imageStyle]}
             transition={120}
           />
         </Animated.View>

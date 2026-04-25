@@ -1,12 +1,12 @@
 export const fonts = {
-  regular: { fontFamily: undefined as string | undefined, fontWeight: "400" as const },
-  medium: { fontFamily: undefined as string | undefined, fontWeight: "500" as const },
-  semibold: { fontFamily: undefined as string | undefined, fontWeight: "600" as const },
-  bold: { fontFamily: undefined as string | undefined, fontWeight: "700" as const },
+  regular: { fontFamily: "Inter" as const, fontWeight: "400" as const },
+  medium: { fontFamily: "Inter" as const, fontWeight: "500" as const },
+  semibold: { fontFamily: "Inter" as const, fontWeight: "600" as const },
+  bold: { fontFamily: "Inter" as const, fontWeight: "700" as const },
   italic: {
-    fontFamily: undefined as string | undefined,
+    fontFamily: "Inter-Italic" as const,
     fontWeight: "400" as const,
-    fontStyle: "italic" as const,
+    fontStyle: "normal" as const,
   },
 };
 

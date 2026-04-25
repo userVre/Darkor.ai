@@ -427,7 +427,7 @@ export const startGeneration = mutationGeneric({
       serviceType: args.serviceType,
     });
     try {
-      await ctx.scheduler.runAfter(0, (internal as any).ai.generateDesign, {
+      await ctx.scheduler.runAfter(0, (internal as any).aiNode.generateDesign, {
         generationId,
         ownerId: viewer.userId,
         imageStorageId: args.imageStorageId,

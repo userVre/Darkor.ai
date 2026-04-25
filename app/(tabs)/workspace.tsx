@@ -7,6 +7,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
+import * as Sharing from "expo-sharing";
 import { useLocalSearchParams, useNavigation, usePathname, useRouter } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
 import { AnimatePresence, MotiView } from "moti";
@@ -23,7 +24,6 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -2152,6 +2152,7 @@ export default function WorkspaceScreen() {
   const reviewHandledRef = useRef(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const generationAlertedFailureRef = useRef<string | null>(null);
+  const handledGenerationTransitionRef = useRef<string | null>(null);
   const paintCurrentStrokeRef = useRef<PaintStroke | null>(null);
   const lastFlowIdRef = useRef<string | null>(null);
   const hydratedDraftFlowIdRef = useRef<string | null>(null);
@@ -3079,6 +3080,7 @@ export default function WorkspaceScreen() {
   const hasPaidAccess = diagnostic ? true : me?.hasPaidAccess ?? false;
   const canExport4k = diagnostic ? true : me?.canExport4k ?? false;
   const canRemoveWatermark = diagnostic ? true : me?.canRemoveWatermark ?? false;
+  const watermarkRequiredForViewer = !diagnostic && (me?.plan ?? "free") !== "pro";
   const generationSpeedTier = useMemo<GenerationSpeedTier>(() => {
     if (me?.subscriptionType === "yearly") {
       return "ultra";
@@ -3173,7 +3175,7 @@ export default function WorkspaceScreen() {
   const activeGenerationRecordId = activeBoardItem?.generationId ?? activeBoardItem?.id ?? generationId ?? null;
   const editorFeedbackState = feedbackState ?? activeBoardItem?.feedback ?? null;
   const currentImageHasWatermark = Boolean(
-    (activeBoardItem?.watermarkRequired ?? (diagnostic ? false : !hasPaidAccess)) && !canRemoveWatermark,
+    (activeBoardItem?.watermarkRequired ?? watermarkRequiredForViewer) && !canRemoveWatermark,
   );
   const sliderSpring = useMemo(() => ({ damping: 15, stiffness: 100 }), []);
 
@@ -3300,6 +3302,10 @@ export default function WorkspaceScreen() {
     const hasResultImage = hasGenerationImage(resultImageUrl);
 
     if (currentGenerationStatus === "ready" && hasResultImage) {
+      if (handledGenerationTransitionRef.current === currentGeneration.id) {
+        return;
+      }
+      handledGenerationTransitionRef.current = currentGeneration.id;
       setIsGenerating(false);
       if (generatedImageUrl !== resultImageUrl) {
         setGeneratedImageUrl(resultImageUrl);
@@ -3330,6 +3336,7 @@ export default function WorkspaceScreen() {
     ) {
       setIsGenerating(false);
       generationAlertedFailureRef.current = currentGeneration.id;
+      handledGenerationTransitionRef.current = currentGeneration.id;
       setPendingReviewState(null);
       showToast(getFriendlyGenerationError(currentGeneration.errorMessage ?? GENERATION_FAILED_TOAST));
     }
@@ -3976,17 +3983,26 @@ export default function WorkspaceScreen() {
     }
 
     let tempUri: string | null = null;
-      try {
-        setIsSharingResult(true);
-        tempUri = await exportCurrentRender();
-        await Share.share({ message: t("workspace.share.message"), url: tempUri });
-      } catch (error) {
-        Alert.alert(t("workspace.share.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
-      } finally {
-        await cleanupTempFile(tempUri);
-        setIsSharingResult(false);
+    try {
+      setIsSharingResult(true);
+      tempUri = await exportCurrentRender();
+
+      if (!(await Sharing.isAvailableAsync())) {
+        throw new Error(t("workspace.share.failedTitle"));
+      }
+
+      await Sharing.shareAsync(tempUri, {
+        dialogTitle: t("workspace.share.message"),
+        mimeType: currentImageHasWatermark ? "image/png" : "image/jpeg",
+        UTI: "public.image",
+      });
+    } catch (error) {
+      Alert.alert(t("workspace.share.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
+    } finally {
+      await cleanupTempFile(tempUri);
+      setIsSharingResult(false);
     }
-  }, [activeEditorImageUrl, cleanupTempFile, exportCurrentRender, t]);
+  }, [activeEditorImageUrl, cleanupTempFile, currentImageHasWatermark, exportCurrentRender, t]);
 
 
   const handleUpgrade = useCallback(() => {
@@ -4189,7 +4205,7 @@ export default function WorkspaceScreen() {
             ? customPrompt.trim()
             : undefined;
     const backendServiceType = isFloorService || isPaintService ? serviceType : "redesign";
-    const watermarkRequired = diagnostic ? false : !hasPaidAccess;
+    const watermarkRequired = watermarkRequiredForViewer;
     const processingBoardItem: BoardRenderItem = {
       id: temporaryBoardId,
       imageUrl: null,
@@ -4217,6 +4233,7 @@ export default function WorkspaceScreen() {
       setGeneratedImageUrl(null);
       setGenerationId(null);
       generationAlertedFailureRef.current = null;
+      handledGenerationTransitionRef.current = null;
       setPendingReviewState(null);
       setIsGenerating(true);
       setActiveBoardItemId(temporaryBoardId);
@@ -4268,6 +4285,7 @@ export default function WorkspaceScreen() {
       );
       setActiveBoardItemId((current) => (current === temporaryBoardId ? startResult.generationId : current));
       setGenerationId(startResult.generationId);
+      handledGenerationTransitionRef.current = null;
       setPendingReviewState(startResult.reviewState ?? null);
       setWorkflowStep(5);
       if (startResult.reviewState) {
@@ -4338,6 +4356,7 @@ export default function WorkspaceScreen() {
     selectedFinishOption,
     selectedFloorMaterialOption,
     hasPaidAccess,
+    watermarkRequiredForViewer,
     selectedImage,
     selectedImages,
     selectedModeOrDefault,

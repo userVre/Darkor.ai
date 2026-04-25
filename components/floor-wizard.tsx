@@ -185,6 +185,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const [customPromptDraft, setCustomPromptDraft] = useState("");
   const [isCustomPromptOpen, setIsCustomPromptOpen] = useState(false);
   const initialSelectionAppliedRef = useRef(false);
+  const handledGenerationCompletionRef = useRef<string | null>(null);
   const autoMaskAttemptKeyRef = useRef<string | null>(null);
 
   const detectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -313,6 +314,10 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     const generationStatus = resolveGenerationStatus(generation.status, resultImageUrl);
     const hasResultImage = hasGenerationImage(resultImageUrl);
     if (generationStatus === "ready" && hasResultImage) {
+      if (handledGenerationCompletionRef.current === generation._id) {
+        return;
+      }
+      handledGenerationCompletionRef.current = generation._id;
       setGenerationId(null);
       setGeneratedImageUrl(resultImageUrl);
       setIsGenerating(false);
@@ -330,6 +335,10 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       return () => clearTimeout(revealTimer);
     }
     if (generationStatus === "failed" && !hasResultImage) {
+      if (handledGenerationCompletionRef.current === generation._id) {
+        return;
+      }
+      handledGenerationCompletionRef.current = generation._id;
       setGenerationId(null);
       setIsGenerating(false);
       setIsCancellingGeneration(false);
@@ -826,6 +835,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       if (typeof result.creditsRemaining === "number") {
         setOptimisticCredits(result.creditsRemaining);
       }
+      handledGenerationCompletionRef.current = null;
       setGenerationId(result.generationId);
     } catch (error) {
       setIsGenerating(false);
