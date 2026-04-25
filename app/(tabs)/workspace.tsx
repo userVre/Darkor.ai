@@ -4610,21 +4610,16 @@ export default function WorkspaceScreen() {
 
     triggerHaptic();
     setSelectedRooms([inferredGardenArea]);
-    setDraftRoom(inferredGardenArea);
     setWizardNavDirection(1);
     setWorkflowStep(2);
-  }, [selectedImage, setDraftRoom, t]);
+  }, [selectedImage, t]);
 
   const handleToggleRoom = useCallback(
     (value: string) => {
       triggerHaptic();
-      setSelectedRooms((current) => {
-        const nextRooms = current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
-        setDraftRoom(formatMultiSelectionLabel(nextRooms));
-        return nextRooms;
-      });
+      setSelectedRooms((current) => (current.includes(value) ? current.filter((item) => item !== value) : [...current, value]));
     },
-    [setDraftRoom],
+    [],
   );
 
   const handleContinueFromInteriorRoomStep = useCallback(() => {
@@ -4632,18 +4627,16 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    setDraftRoom(formatMultiSelectionLabel(selectedRooms));
     handleContinue();
-  }, [handleContinue, selectedRooms, setDraftRoom]);
+  }, [handleContinue, selectedRooms]);
 
   const handleContinueFromExteriorBuildingStep = useCallback(() => {
     if (selectedExteriorBuildingTypes.length === 0) {
       return;
     }
 
-    setDraftRoom(formatMultiSelectionLabel(selectedExteriorBuildingTypes));
     handleContinue();
-  }, [handleContinue, selectedExteriorBuildingTypes, setDraftRoom]);
+  }, [handleContinue, selectedExteriorBuildingTypes]);
 
   const handleSetSelectedExteriorStyle = useCallback(
     (style: string) => {

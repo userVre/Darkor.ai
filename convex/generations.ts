@@ -203,6 +203,29 @@ function trimOptional(value?: string | null) {
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
 }
 
+function normalizeGenerationSchedulerError(message?: string | null) {
+  const raw = trimOptional(message) ?? "Generation failed.";
+  const normalized = raw.toLowerCase();
+
+  if (
+    normalized.includes("azure_openai_api_key") ||
+    normalized.includes("azure_openai_endpoint") ||
+    normalized.includes("azure_openai_deployment_name")
+  ) {
+    return "AI service configuration is unavailable right now. Please try again shortly.";
+  }
+
+  if (normalized.includes("unauthorized") || normalized.includes("401")) {
+    return "Azure OpenAI authentication failed. Please verify the API key.";
+  }
+
+  if (normalized.includes("not found") || normalized.includes("404")) {
+    return "Azure OpenAI deployment was not found. Please verify the deployment name and endpoint.";
+  }
+
+  return raw;
+}
+
 function resolveRowStatus(row: { status?: string; imageUrl?: string | null }, imageUrl: string): GenerationStatus {
   return resolveGenerationStatus(row.status, imageUrl);
 }
@@ -384,30 +407,46 @@ export const startGeneration = mutationGeneric({
       planUsed: allowance.planUsed,
       serviceType: args.serviceType,
     });
-    await ctx.scheduler.runAfter(0, (internal as any).ai.generateDesign, {
-      generationId,
-      ownerId: viewer.userId,
-      imageStorageId: args.imageStorageId,
-      referenceImageStorageIds: args.referenceImageStorageIds,
-      maskStorageId: args.maskStorageId,
-      serviceType: args.serviceType,
-      roomType: args.roomType,
-      style: resolvedStyle,
-      styleSelections: args.styleSelections?.filter(Boolean),
-      colorPalette: normalizedSelection,
-      customPrompt: trimOptional(args.customPrompt),
-      targetColor: trimOptional(args.targetColor),
-      targetColorHex: trimOptional(args.targetColorHex),
-      targetColorCategory: trimOptional(args.targetColorCategory),
-      targetSurface: trimOptional(args.targetSurface),
-      aspectRatio: normalizedAspectRatio,
-      regenerate: args.regenerate,
-      aiSuggestedStyle: trimOptional(args.aiSuggestedStyle),
-      aiSuggestedPaletteId: trimOptional(args.aiSuggestedPaletteId),
-      smartSuggest: args.smartSuggest === true,
-      speedTier: args.speedTier ?? "standard",
-      planUsed: allowance.planUsed,
-    });
+    try {
+      await ctx.scheduler.runAfter(0, (internal as any).ai.generateDesign, {
+        generationId,
+        ownerId: viewer.userId,
+        imageStorageId: args.imageStorageId,
+        referenceImageStorageIds: args.referenceImageStorageIds,
+        maskStorageId: args.maskStorageId,
+        serviceType: args.serviceType,
+        roomType: args.roomType,
+        style: resolvedStyle,
+        styleSelections: args.styleSelections?.filter(Boolean),
+        colorPalette: normalizedSelection,
+        customPrompt: trimOptional(args.customPrompt),
+        targetColor: trimOptional(args.targetColor),
+        targetColorHex: trimOptional(args.targetColorHex),
+        targetColorCategory: trimOptional(args.targetColorCategory),
+        targetSurface: trimOptional(args.targetSurface),
+        aspectRatio: normalizedAspectRatio,
+        regenerate: args.regenerate,
+        aiSuggestedStyle: trimOptional(args.aiSuggestedStyle),
+        aiSuggestedPaletteId: trimOptional(args.aiSuggestedPaletteId),
+        smartSuggest: args.smartSuggest === true,
+        speedTier: args.speedTier ?? "standard",
+        planUsed: allowance.planUsed,
+      });
+    } catch (error) {
+      const rawMessage = error instanceof Error ? error.message : "Failed to schedule Azure image generation.";
+      console.error("startGeneration: failed to schedule generateDesign", {
+        generationId,
+        message: rawMessage,
+        serviceType: args.serviceType,
+      });
+      await ctx.db.patch(generationId, {
+        status: "failed",
+        errorMessage: rawMessage,
+        completedAt: Date.now(),
+      });
+      await releaseGenerationAllowance(ctx, viewer.userId);
+      throw new ConvexError(normalizeGenerationSchedulerError(rawMessage));
+    }
 
     console.log("startGeneration: scheduled successfully", {
       generationId,
