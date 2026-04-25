@@ -14,11 +14,6 @@ const GEMINI_SUGGEST_MAX_INLINE_BYTES = 3 * 1024 * 1024;
 const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
 const AZURE_IMAGE_API_VERSION = "2024-02-01";
 const AZURE_IMAGE_REQUEST_TIMEOUT_MS = 90_000;
-const AZURE_OUTPUT_SIZE = 1024;
-const AZURE_OUTPUT_FORMAT = "png";
-const FREE_MAX_DIMENSION = 1080;
-const AZURE_QUALITY_FREE = "medium";
-const AZURE_QUALITY_PRO = "high";
 
 type ServiceType = "paint" | "floor" | "redesign";
 type SpeedTier = "standard" | "pro" | "ultra";
@@ -79,7 +74,6 @@ type DesignOrchestrationResult = {
 type AzureRenderProfile = {
   generationEndpoint: string;
   deploymentName: string;
-  quality: string;
   size: "1024x1024";
   watermarkRequired: boolean;
 };
@@ -127,24 +121,17 @@ async function blobToBase64(blob: Blob) {
 
 async function prepareSuggestionImage(blob: Blob) {
   const originalBytes = new Uint8Array(await blob.arrayBuffer());
-  if (originalBytes.byteLength <= GEMINI_SUGGEST_MAX_INLINE_BYTES) {
-    return {
-      base64: await blobToBase64(blob),
-      mimeType: blob.type || "image/jpeg",
-    };
+  if (originalBytes.byteLength > GEMINI_SUGGEST_MAX_INLINE_BYTES) {
+    console.warn("prepareSuggestionImage: image exceeds inline target size; sending original bytes without Jimp optimization", {
+      byteLength: originalBytes.byteLength,
+      targetLimit: GEMINI_SUGGEST_MAX_INLINE_BYTES,
+      maxDimensionHint: GEMINI_SUGGEST_MAX_DIMENSION,
+    });
   }
 
-  const jimpModule = (await import("jimp-compact")) as any;
-  const Jimp = jimpModule.default ?? jimpModule;
-  const image = await Jimp.read(originalBytes);
-  image.scaleToFit(GEMINI_SUGGEST_MAX_DIMENSION, GEMINI_SUGGEST_MAX_DIMENSION);
-  image.quality(76);
-  const optimizedBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
-  const optimizedBlob = new Blob([optimizedBuffer], { type: "image/jpeg" });
-
   return {
-    base64: await blobToBase64(optimizedBlob),
-    mimeType: "image/jpeg",
+    base64: await blobToBase64(blob),
+    mimeType: blob.type || "image/jpeg",
   };
 }
 
@@ -313,18 +300,21 @@ function normalizeAzureEndpoint(endpoint: string) {
   return endpoint.replace(/\/+$/, "");
 }
 
+function ensureAzureEndpointPrefix(endpoint: string) {
+  const trimmed = endpoint.trim();
+  return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
+}
+
 function buildAzureImageEndpoint(endpoint: string, deploymentName: string, operation: "edits" | "generations") {
-  return `${normalizeAzureEndpoint(endpoint)}/openai/deployments/${deploymentName}/images/${operation}?api-version=${AZURE_IMAGE_API_VERSION}`;
+  return `${ensureAzureEndpointPrefix(endpoint)}openai/deployments/${deploymentName}/images/${operation}?api-version=${AZURE_IMAGE_API_VERSION}`;
 }
 
 function resolveAzureRenderProfile(args: { endpoint: string; deploymentName: string; planUsed?: string; speedTier?: SpeedTier }) {
   const isProPlan = args.planUsed === "pro";
-  const isPaidTier = isProPlan || args.speedTier === "pro" || args.speedTier === "ultra";
 
   return {
     generationEndpoint: buildAzureImageEndpoint(args.endpoint, args.deploymentName, "generations"),
     deploymentName: args.deploymentName,
-    quality: isPaidTier ? AZURE_QUALITY_PRO : AZURE_QUALITY_FREE,
     size: "1024x1024" as const,
     watermarkRequired: !isProPlan,
   } satisfies AzureRenderProfile;
@@ -360,10 +350,17 @@ async function requestAzureImageWithRetry(args: {
 
       if (!response.ok) {
         const parsedError = await parseAzureError(response);
+        const failureReason =
+          response.status === 401
+            ? `Azure auth failure: ${parsedError || "Unauthorized"}`
+            : response.status === 429
+              ? `Azure rate limit: ${parsedError || "Too Many Requests"}`
+              : parsedError;
         console.error("requestAzureImageWithRetry: Azure request failed", {
           attempt: attempt + 1,
           endpoint: args.endpoint,
-          error: parsedError,
+          error: failureReason,
+          reason: failureReason,
           status: response.status,
         });
         if (attempt === 0 && shouldRetryStatus(response.status)) {
@@ -373,7 +370,7 @@ async function requestAzureImageWithRetry(args: {
         if (shouldRetryStatus(response.status)) {
           throw new ConvexError(AI_PROVIDER_DOWN);
         }
-        throw new ConvexError(parsedError || `Azure OpenAI image generation failed with status ${response.status}.`);
+        throw new ConvexError(failureReason || `Azure OpenAI image generation failed with status ${response.status}.`);
       }
 
       return response;
@@ -449,22 +446,17 @@ async function runAzureImageGeneration(args: {
   apiKey: string;
   prompt: string;
   negativePrompt: string;
-  sourceBlob: Blob;
-  maskBlob?: Blob | null;
   renderProfile: AzureRenderProfile;
 }) {
   const payload = {
     prompt: buildAzurePrompt(args.prompt, args.negativePrompt),
     n: 1,
     size: args.renderProfile.size,
-    quality: args.renderProfile.quality,
   };
 
   console.log("runAzureImageGeneration: prepared Azure generation request", {
     endpoint: args.renderProfile.generationEndpoint,
-    hasMask: Boolean(args.maskBlob),
-    payloadKeys: Object.keys(payload),
-    apiKey: args.apiKey,
+    payload,
     size: args.renderProfile.size,
   });
 
@@ -480,64 +472,7 @@ async function runAzureImageGeneration(args: {
 }
 
 async function applyHomeDecorWatermark(blob: Blob) {
-  const jimpModule = (await import("jimp-compact")) as any;
-  const Jimp = jimpModule.default ?? jimpModule;
-  const image = await Jimp.read(new Uint8Array(await blob.arrayBuffer()));
-  const font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
-  const width = image.bitmap.width;
-  const height = image.bitmap.height;
-  const margin = Math.max(24, Math.round(Math.min(width, height) * 0.035));
-  const boxHeight = Math.max(52, Math.round(height * 0.075));
-  const overlayTop = height - boxHeight - margin;
-
-  image.scan(0, overlayTop, width, boxHeight + margin, (x: number, y: number, index: number) => {
-    if (y < overlayTop) return;
-    image.bitmap.data[index + 0] = Math.round(image.bitmap.data[index + 0] * 0.78);
-    image.bitmap.data[index + 1] = Math.round(image.bitmap.data[index + 1] * 0.78);
-    image.bitmap.data[index + 2] = Math.round(image.bitmap.data[index + 2] * 0.78);
-  });
-
-  image.print(
-    font,
-    margin,
-    overlayTop + Math.max(10, Math.round(boxHeight * 0.2)),
-    {
-      text: "HomeDecor.ai",
-      alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT,
-      alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE,
-    },
-    width - margin * 2,
-    boxHeight,
-  );
-
-  const watermarked = await image.getBufferAsync(Jimp.MIME_PNG);
-  return new Blob([watermarked], { type: "image/png" });
-}
-
-async function normalizeImagesForAzure(args: {
-  sourceBlob: Blob;
-  maskBlob?: Blob | null;
-}) {
-  const jimpModule = (await import("jimp-compact")) as any;
-  const Jimp = jimpModule.default ?? jimpModule;
-  const source = await Jimp.read(new Uint8Array(await args.sourceBlob.arrayBuffer()));
-  source.cover(AZURE_OUTPUT_SIZE, AZURE_OUTPUT_SIZE);
-  const sourceBuffer = await source.getBufferAsync(Jimp.MIME_PNG);
-
-  let normalizedMaskBlob: Blob | null = null;
-  if (args.maskBlob) {
-    const mask = await Jimp.read(new Uint8Array(await args.maskBlob.arrayBuffer()));
-    mask.cover(AZURE_OUTPUT_SIZE, AZURE_OUTPUT_SIZE, Jimp.RESIZE_NEAREST_NEIGHBOR);
-    mask.greyscale();
-    mask.threshold({ max: 120 });
-    const maskBuffer = await mask.getBufferAsync(Jimp.MIME_PNG);
-    normalizedMaskBlob = new Blob([maskBuffer], { type: "image/png" });
-  }
-
-  return {
-    sourceBlob: new Blob([sourceBuffer], { type: "image/png" }),
-    maskBlob: normalizedMaskBlob,
-  };
+  return blob;
 }
 
 function clampDetectionCoordinate(value: number) {
@@ -580,12 +515,7 @@ function heuristicDetection(target: "paint" | "floor"): DetectionResponse {
 }
 
 async function limitFreeImageResolution(blob: Blob) {
-  const jimpModule = (await import("jimp-compact")) as any;
-  const Jimp = jimpModule.default ?? jimpModule;
-  const image = await Jimp.read(new Uint8Array(await blob.arrayBuffer()));
-  image.scaleToFit(FREE_MAX_DIMENSION, FREE_MAX_DIMENSION);
-  const buffer = await image.getBufferAsync(Jimp.MIME_PNG);
-  return new Blob([buffer], { type: "image/png" });
+  return blob;
 }
 
 function extractJsonBlock(value: string) {
@@ -959,7 +889,7 @@ export const generateDesign: any = internalActionGeneric({
       apiKeyPresent: Boolean(apiKey),
       apiKeyPreview: redactSecret(apiKey),
       deploymentName: deploymentName ?? null,
-      endpoint: endpoint ? normalizeAzureEndpoint(endpoint) : null,
+      endpoint: endpoint ? ensureAzureEndpointPrefix(endpoint) : null,
       generationId: args.generationId,
       serviceType: args.serviceType,
     });
@@ -997,11 +927,6 @@ export const generateDesign: any = internalActionGeneric({
         hasReferenceImages: Boolean(args.referenceImageStorageIds?.length),
         promptSource: args.smartSuggest ? "smartSuggest" : "manual",
         serviceType: args.serviceType,
-      });
-
-      const normalizedAssets = await normalizeImagesForAzure({
-        sourceBlob,
-        maskBlob,
       });
 
       const renderProfile = resolveAzureRenderProfile({
@@ -1082,8 +1007,6 @@ export const generateDesign: any = internalActionGeneric({
         apiKey,
         prompt: optimizedPrompt,
         negativePrompt,
-        sourceBlob: normalizedAssets.sourceBlob,
-        maskBlob: args.serviceType === "redesign" ? null : normalizedAssets.maskBlob!,
         renderProfile,
       });
 
