@@ -116,6 +116,8 @@ import {getFloorWizardExamplePhotos, getPaintWizardExamplePhotos} from "../../li
 import {spacing} from "../../styles/spacing";
 import {fonts} from "../../styles/typography";
 import {DEFAULT_TAB_BAR_STYLE} from "./_layout";
+
+const TABS_HOME_ROUTE = "/(tabs)/index";
 type MeResponse = {
   plan: "free" | "trial" | "pro";
   credits: number;
@@ -272,21 +274,6 @@ function formatMultiSelectionLabel(values: string[]) {
   if (normalized.length === 1) return normalized[0];
   if (normalized.length === 2) return `${normalized[0]} and ${normalized[1]}`;
   return `${normalized.slice(0, -1).join(", ")}, and ${normalized[normalized.length - 1]}`;
-}
-
-function dedupeSelectedImages(images: SelectedImage[]) {
-  const seen = new Set<string>();
-  const unique: SelectedImage[] = [];
-
-  for (const image of images) {
-    if (seen.has(image.uri)) {
-      continue;
-    }
-    seen.add(image.uri);
-    unique.push(image);
-  }
-
-  return unique.slice(0, 3);
 }
 
 type GenerateRequestOverrides = {
@@ -2178,7 +2165,7 @@ export default function WorkspaceScreen() {
   const [wizardNavDirection, setWizardNavDirection] = useState<1 | -1>(1);
   const [processingStatusIndex, setProcessingStatusIndex] = useState(0);
   const [processingProgress, setProcessingProgress] = useState(0);
-  const [isServiceProcessing, setIsServiceProcessing] = useState(false);
+  const [, setIsServiceProcessing] = useState(false);
   const [isServiceStepFlowActive, setIsServiceStepFlowActive] = useState(false);
   const [, setPaintTool] = useState<PaintTool>("brush");
   const [, setPaintBrushWidth] = useState(28);
@@ -3546,21 +3533,6 @@ export default function WorkspaceScreen() {
     return false;
   }, [showPermissionAlert]);
 
-  const commitSelectedImages = useCallback((images: SelectedImage[], nextDisplayIndex?: number | null) => {
-    const normalizedImages = dedupeSelectedImages(images);
-    const boundedIndex =
-      typeof nextDisplayIndex === "number" && Number.isFinite(nextDisplayIndex)
-        ? Math.max(0, Math.min(nextDisplayIndex, Math.max(normalizedImages.length - 1, 0)))
-        : 0;
-
-    startTransition(() => {
-      setSelectedImages(normalizedImages);
-      setCurrentDisplayIndex(normalizedImages.length > 0 ? boundedIndex : 0);
-      setGeneratedImageUrl(null);
-      setGenerationId(null);
-    });
-  }, []);
-
   const appendSelectedImages = useCallback((images: SelectedImage[]) => {
     if (images.length === 0) {
       return;
@@ -3835,17 +3807,6 @@ export default function WorkspaceScreen() {
     presentPhotoSourceMenu();
   }, [isSelectingPhoto, presentPhotoSourceMenu]);
 
-  const handleClearSelectedImage = useCallback(() => {
-    triggerHaptic();
-    commitSelectedImages([]);
-    paintCurrentStrokeRef.current = null;
-    setPaintCurrentStroke(null);
-    setPaintStrokes([]);
-    setPaintRedoStrokes([]);
-    setIsLoadingExample(null);
-    setIsSelectingPhoto(false);
-  }, [commitSelectedImages]);
-
   const handleSelectExample = useCallback(async (example: ExamplePhoto) => {
     try {
       triggerHaptic();
@@ -3905,7 +3866,7 @@ export default function WorkspaceScreen() {
         return;
       }
 
-      router.replace("/(tabs)");
+      router.replace(TABS_HOME_ROUTE as any);
       return;
     }
     if (isGardenService && workflowStep === 2) {
@@ -3929,11 +3890,16 @@ export default function WorkspaceScreen() {
     triggerHaptic();
     setWizardNavDirection(-1);
     setDraftImage(null);
+    setDraftImages(null);
     setDraftRoom(null);
     setDraftStyle(null);
+    setDraftStyles(null);
     setDraftPalette(null);
+    setDraftMode(null);
+    setDraftFinish(null);
     setDraftPrompt(null);
     setDraftAspectRatio(null);
+    setDraftAiSuggestion({ style: null, paletteId: null });
     startTransition(() => {
       setWorkflowStep(0);
       setSelectedImages([]);
@@ -3983,17 +3949,24 @@ export default function WorkspaceScreen() {
     setRatePromptOpen(false);
     setFeedbackOpen(false);
     setAwaitingAuth(false);
-  }, [setDraftAspectRatio, setDraftImage, setDraftPalette, setDraftPrompt, setDraftRoom, setDraftStyle]);
+  }, [
+    setDraftAiSuggestion,
+    setDraftAspectRatio,
+    setDraftFinish,
+    setDraftImage,
+    setDraftImages,
+    setDraftMode,
+    setDraftPalette,
+    setDraftPrompt,
+    setDraftRoom,
+    setDraftStyle,
+    setDraftStyles,
+  ]);
 
   const handleCloseWizard = useCallback(() => {
-    if (workflowStep === 0) {
-      handleResetWizard();
-      router.replace("/(tabs)");
-      return;
-    }
     handleResetWizard();
-    router.replace("/(tabs)");
-  }, [handleResetWizard, router, workflowStep]);
+    router.replace(TABS_HOME_ROUTE as any);
+  }, [handleResetWizard, router]);
 
   const cleanupTempFile = useCallback(async (uri: string | null | undefined) => {
     if (!uri) {
@@ -7671,7 +7644,6 @@ export default function WorkspaceScreen() {
         : processingPreviewUri ?? editorImageUrl;
     const editorStyleLabel = normalizeStyleDisplayName(activeBoardItem?.styleLabel ?? selectedStyle) ?? "Custom";
     const editorRoomLabel = activeBoardItem?.roomLabel ?? selectedRoom ?? serviceLabel;
-    const editorServiceType = activeBoardItem?.serviceType ?? inferBoardServiceType(editorStyleLabel, editorRoomLabel) ?? serviceType;
     const hasComparisonImages = Boolean(editorImageUrl && beforeImageUrl);
     const showSliderComparison = hasComparisonImages && showComparisonSlider;
     const editorResolvedStatus = resolveGenerationStatus(activeBoardItem?.status, editorImageUrl);
@@ -7680,18 +7652,6 @@ export default function WorkspaceScreen() {
     const isEditorActionDisabled = !editorImageUrl || isEditorProcessing || isEditorFailed;
     const isSaveBusy = isDownloadingUltra || isDownloadingStandard;
     const isFeedbackBusy = isSubmittingFeedback !== null;
-    const editorTitle = editorServiceType === "floor" ? getServiceLabel(t, "floor") : editorServiceType === "paint" ? getServiceLabel(t, "paint") : editorStyleLabel + " " + editorRoomLabel;
-    const editorSubtitle = editorServiceType === "floor"
-      ? isEditorProcessing
-        ? getProcessingLabel(t)
-        : t("workspace.editor.floorReady")
-      : editorServiceType === "paint"
-        ? isEditorProcessing
-          ? getProcessingLabel(t)
-          : t("workspace.editor.paintReady")
-      : isEditorProcessing
-        ? getProcessingLabel(t)
-        : t("workspace.editor.defaultReady");
     const editorImageSource = editorImageUrl ? { uri: editorImageUrl } : null;
     const beforeImageSource = beforeImageUrl ? { uri: beforeImageUrl } : null;
   const processingStatuses = generationStatusMessages;

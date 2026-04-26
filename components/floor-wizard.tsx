@@ -92,6 +92,7 @@ const AUTO_DETECT_SUCCESS_MESSAGE = "wizard.floorFlow.autoMaskSuccess";
 const AUTO_DETECT_FAILURE_MESSAGE = "wizard.floorFlow.autoMaskFailure";
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 const CANCEL_SUCCESS_TOAST = "wizard.floorFlow.cancelSuccess";
+const TABS_HOME_ROUTE = "/(tabs)/index";
 
 function simplifyRatio(width: number, height: number) {
   const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
@@ -468,25 +469,13 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const handleClose = useCallback(() => {
     triggerHaptic();
     resetProject();
-    router.replace("/(tabs)");
+    router.replace(TABS_HOME_ROUTE as any);
   }, [resetProject, router]);
 
   const handleOpenPaywall = useCallback(() => {
     triggerHaptic();
     router.push("/paywall" as any);
   }, [router]);
-
-  const confirmExitDesignFlow = useCallback(() => {
-    triggerHaptic();
-    Alert.alert(t("common.alerts.exitTitle"), t("common.alerts.progressLost"), [
-      { text: t("common.actions.cancel"), style: "cancel" },
-      {
-        text: t("common.actions.exit"),
-        style: "destructive",
-        onPress: handleClose,
-      },
-    ]);
-  }, [handleClose, t]);
 
   const uploadBlobToStorage = useCallback(async (uri: string) => {
     const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
@@ -804,30 +793,40 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       setStep("processing");
       const result = (await runWithFriendlyRetry(
         async () => {
-          const [sourceUri, maskUri] = await Promise.all([
-            captureRef(sourceCaptureRef, { format: "png", quality: 1, result: "tmpfile" }),
-            captureRef(maskCaptureRef, { format: "png", quality: 1, result: "tmpfile" }),
-          ]);
-          const [sourceStorageId, maskStorageId] = await Promise.all([
-            uploadBlobToStorage(sourceUri),
-            uploadBlobToStorage(maskUri),
-          ]);
-          return (await startGeneration({
-            anonymousId: viewerId,
-            imageStorageId: sourceStorageId,
-            maskStorageId,
-            serviceType: "floor",
-            selection: isAiMaterialSuggestionEnabled ? `AI suggested floor material with a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish` : `${selectedMaterial!.promptLabel} with a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`,
-            roomType: "Room",
-            displayStyle: isAiMaterialSuggestionEnabled ? "AI's Choice Floor" : `${selectedMaterial!.title} Floor`,
-            customPrompt: isAiMaterialSuggestionEnabled
-              ? `Identify the room's lighting, furniture, and overall style, then choose the best complementary floor material for a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish. Generate the floor redesign without requiring any user-entered prompt. Preserve perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`
-              : `${customPrompt.trim()}\n\nApply a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish while preserving perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`,
-            aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
-            finishId: DEFAULT_FINISH_ID,
-            speedTier: generationSpeedTier,
-            smartSuggest: isAiMaterialSuggestionEnabled,
-          })) as { generationId: string; creditsRemaining?: number };
+          let sourceUri: string | null = null;
+          let maskUri: string | null = null;
+
+          try {
+            [sourceUri, maskUri] = await Promise.all([
+              captureRef(sourceCaptureRef, { format: "png", quality: 1, result: "tmpfile" }),
+              captureRef(maskCaptureRef, { format: "png", quality: 1, result: "tmpfile" }),
+            ]);
+            const [sourceStorageId, maskStorageId] = await Promise.all([
+              uploadBlobToStorage(sourceUri),
+              uploadBlobToStorage(maskUri),
+            ]);
+            return (await startGeneration({
+              anonymousId: viewerId,
+              imageStorageId: sourceStorageId,
+              maskStorageId,
+              serviceType: "floor",
+              selection: isAiMaterialSuggestionEnabled ? `AI suggested floor material with a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish` : `${selectedMaterial!.promptLabel} with a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`,
+              roomType: "Room",
+              displayStyle: isAiMaterialSuggestionEnabled ? "AI's Choice Floor" : `${selectedMaterial!.title} Floor`,
+              customPrompt: isAiMaterialSuggestionEnabled
+                ? `Identify the room's lighting, furniture, and overall style, then choose the best complementary floor material for a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish. Generate the floor redesign without requiring any user-entered prompt. Preserve perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`
+                : `${customPrompt.trim()}\n\nApply a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish while preserving perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`,
+              aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
+              finishId: DEFAULT_FINISH_ID,
+              speedTier: generationSpeedTier,
+              smartSuggest: isAiMaterialSuggestionEnabled,
+            })) as { generationId: string; creditsRemaining?: number };
+          } finally {
+            await Promise.all([
+              cleanupTempFile(sourceUri, true),
+              cleanupTempFile(maskUri, true),
+            ]);
+          }
         },
         showToast,
       )) as { generationId: string; creditsRemaining?: number };
@@ -855,7 +854,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       }
       showToast(getFriendlyGenerationError(rawMessage));
     }
-  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isAiMaterialSuggestionEnabled, isGenerating, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, t, uploadBlobToStorage, viewerId, viewerReady]);
+  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isAiMaterialSuggestionEnabled, isGenerating, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, t, uploadBlobToStorage, viewerId, viewerReady, cleanupTempFile]);
 
   const handleCancelGeneration = useCallback(async () => {
     if (!generationId || isCancellingGeneration) {

@@ -124,6 +124,7 @@ export function subtleBorder(color: string = DS.colors.borderSubtle): ViewStyle 
 }
 
 export function ambientShadow(opacity = 0.04, radius = 15, y = 10): ViewStyle {
+  void opacity;
   return {
     boxShadow: `0px ${y}px ${radius * 3}px ${DS.colors.shadow}`,
   };

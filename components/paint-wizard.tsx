@@ -119,9 +119,6 @@ const MASK_CAPTURE_COLOR = "#FFFFFF";
 const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
 const DETECT_DURATION_MS = 1700;
-const FIXED_FOOTER_OFFSET = 96;
-const AUTO_DETECT_SUCCESS_MESSAGE = "wizard.paintFlow.autoDetectSuccess";
-const AUTO_DETECT_FAILURE_MESSAGE = "legacyUnlocalized.paintWizard.autoDetectFailureMessage";
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 const CANCEL_SUCCESS_TOAST = "wizard.paintFlow.cancelSuccess";
 const SELECTION_REFERENCE_WIDTH = 456;
@@ -131,15 +128,6 @@ const COLOR_PICKER_DEFAULT_HEX = "#FF69B4";
 const DEFAULT_FINISH_ID = "satin";
 const DEFAULT_FINISH_LABEL = "Satin";
 
-const PAINT_SURFACE_OPTIONS: PaintSurfaceOption[] = [
-  { value: "Auto", label: "Auto" },
-  { value: "Brick", label: "Brick" },
-  { value: "Cabinet", label: "Cabinet" },
-  { value: "Door", label: "Door" },
-  { value: "Wall", label: "Wall" },
-  { value: "Outside Wall", label: "Outside Wall" },
-];
-
 const COLOR_PICKER_PRESET_SWATCHES = [
   { id: "pink", value: "#FF69B4" },
   { id: "blue", value: "#3B82F6" },
@@ -148,14 +136,7 @@ const COLOR_PICKER_PRESET_SWATCHES = [
   { id: "gray", value: "#9CA3AF" },
   { id: "red", value: "#CC3333" },
 ] as const;
-const COLOR_PICKER_CATEGORY_LABELS: Record<(typeof COLOR_PICKER_PRESET_SWATCHES)[number]["id"], string> = {
-  pink: "Pink",
-  blue: "Blue",
-  green: "Green",
-  yellow: "Yellow",
-  gray: "Gray",
-  red: "Red",
-};
+const TABS_HOME_ROUTE = "/(tabs)/index";
 
 const absoluteFill = StyleSheet.absoluteFillObject;
 
@@ -514,13 +495,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     [localizedSurfaceOptions, selectedSurface],
   );
   const selectedColorTitle = selectedColorOption?.title ?? (selectedColorValue ? selectedColorRgbLabel : t("wizard.paintFlow.noColorSelected"));
-  const selectedColorDescription =
-    selectedColorOption?.description ??
-    (selectedColorValue ? t("wizard.paintFlow.customColorDescription") : t("wizard.paintFlow.chooseColorBody"));
-  const effectivePaintSelectionTitle = isAiColorSuggestionEnabled ? "AI Suggested Color" : selectedColorTitle;
-  const effectivePaintSelectionDescription = isAiColorSuggestionEnabled
-    ? "The AI will analyze the room lighting and furniture to choose the most complementary professional wall color."
-    : selectedColorDescription;
   const availableCredits = sharedCredits;
   const generationSpeedTier = useMemo<"standard" | "pro" | "ultra">(() => {
     if (me?.subscriptionType === "yearly") {
@@ -804,25 +778,13 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const handleClose = useCallback(() => {
     triggerHaptic();
     resetProject();
-    router.replace("/(tabs)");
+    router.replace(TABS_HOME_ROUTE as any);
   }, [resetProject, router]);
 
   const handleOpenPaywall = useCallback(() => {
     triggerHaptic();
     router.push("/paywall" as any);
   }, [router]);
-
-  const confirmExitDesignFlow = useCallback(() => {
-    triggerHaptic();
-    Alert.alert(t("common.alerts.exitTitle"), t("common.alerts.progressLost"), [
-      { text: t("common.actions.cancel"), style: "cancel" },
-      {
-        text: t("common.actions.exit"),
-        style: "destructive",
-        onPress: handleClose,
-      },
-    ]);
-  }, [handleClose, t]);
 
   const uploadBlobToStorage = useCallback(
     async (uri: string) => {
@@ -1194,44 +1156,54 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
 
       const result = (await runWithFriendlyRetry(
         async () => {
-          const sourceUri = await captureRef(sourceCaptureRef, {
-            format: "png",
-            quality: 1,
-            result: "tmpfile",
-          });
-          const maskUri = await captureRef(maskCaptureRef, {
-            format: "png",
-            quality: 1,
-            result: "tmpfile",
-          });
+          let sourceUri: string | null = null;
+          let maskUri: string | null = null;
 
-          const [sourceStorageId, maskStorageId] = await Promise.all([
-            uploadBlobToStorage(sourceUri),
-            uploadBlobToStorage(maskUri),
-          ]);
+          try {
+            sourceUri = await captureRef(sourceCaptureRef, {
+              format: "png",
+              quality: 1,
+              result: "tmpfile",
+            });
+            maskUri = await captureRef(maskCaptureRef, {
+              format: "png",
+              quality: 1,
+              result: "tmpfile",
+            });
 
-          return (await startGeneration({
-            anonymousId: viewerId,
-            imageStorageId: sourceStorageId,
-            maskStorageId,
-            serviceType: "paint",
-            selection: isAiColorSuggestionEnabled
-              ? `AI suggested professional wall color on the ${selectedSurface.toLowerCase()} surface with a realistic ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`
-              : `${selectedColorTitle} (${selectedColorRgbLabel}) on the ${selectedSurface.toLowerCase()} surface with a realistic ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`,
-            roomType: "Room",
-            displayStyle: isAiColorSuggestionEnabled ? "AI Suggested Paint" : `${selectedColorTitle} Paint`,
-            customPrompt: isAiColorSuggestionEnabled
-              ? `Identify the room's current lighting and furniture, then choose the most complementary professional wall color for the selected ${selectedSurface.toLowerCase()} surface. Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`
-              : `Repaint only the selected ${selectedSurface.toLowerCase()} surface using ${selectedColorTitle} in ${selectedColorRgbLabel}. Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`,
-            targetColor: isAiColorSuggestionEnabled ? undefined : selectedColorRgbLabel,
-            targetColorHex: isAiColorSuggestionEnabled ? undefined : selectedColorValue ?? undefined,
-            targetColorCategory: isAiColorSuggestionEnabled ? "AI Suggested Color" : (selectedColorCategory ?? selectedColorTitle),
-            targetSurface: selectedSurface,
-            aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
-            finishId: DEFAULT_FINISH_ID,
-            speedTier: generationSpeedTier,
-            smartSuggest: isAiColorSuggestionEnabled,
-          })) as { generationId: string; creditsRemaining?: number };
+            const [sourceStorageId, maskStorageId] = await Promise.all([
+              uploadBlobToStorage(sourceUri),
+              uploadBlobToStorage(maskUri),
+            ]);
+
+            return (await startGeneration({
+              anonymousId: viewerId,
+              imageStorageId: sourceStorageId,
+              maskStorageId,
+              serviceType: "paint",
+              selection: isAiColorSuggestionEnabled
+                ? `AI suggested professional wall color on the ${selectedSurface.toLowerCase()} surface with a realistic ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`
+                : `${selectedColorTitle} (${selectedColorRgbLabel}) on the ${selectedSurface.toLowerCase()} surface with a realistic ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`,
+              roomType: "Room",
+              displayStyle: isAiColorSuggestionEnabled ? "AI Suggested Paint" : `${selectedColorTitle} Paint`,
+              customPrompt: isAiColorSuggestionEnabled
+                ? `Identify the room's current lighting and furniture, then choose the most complementary professional wall color for the selected ${selectedSurface.toLowerCase()} surface. Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`
+                : `Repaint only the selected ${selectedSurface.toLowerCase()} surface using ${selectedColorTitle} in ${selectedColorRgbLabel}. Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`,
+              targetColor: isAiColorSuggestionEnabled ? undefined : selectedColorRgbLabel,
+              targetColorHex: isAiColorSuggestionEnabled ? undefined : selectedColorValue ?? undefined,
+              targetColorCategory: isAiColorSuggestionEnabled ? "AI Suggested Color" : (selectedColorCategory ?? selectedColorTitle),
+              targetSurface: selectedSurface,
+              aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
+              finishId: DEFAULT_FINISH_ID,
+              speedTier: generationSpeedTier,
+              smartSuggest: isAiColorSuggestionEnabled,
+            })) as { generationId: string; creditsRemaining?: number };
+          } finally {
+            await Promise.all([
+              cleanupTempFile(sourceUri, true),
+              cleanupTempFile(maskUri, true),
+            ]);
+          }
         },
         showToast,
       )) as { generationId: string; creditsRemaining?: number };
@@ -1282,6 +1254,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     uploadBlobToStorage,
     viewerId,
     viewerReady,
+    cleanupTempFile,
   ]);
 
   const handleCancelGeneration = useCallback(async () => {
@@ -1770,9 +1743,8 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                       },
                     ]}
                   >
-                    {localizedSurfaceOptions.map((option, index) => {
+                    {localizedSurfaceOptions.map((option) => {
                       const active = option.value === surfacePickerDraft;
-                      const isAuto = index === 0;
 
                       return (
                         <Pressable

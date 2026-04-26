@@ -26,7 +26,6 @@ const PROGRESS_INTERVAL_MS = 500;
 const PROGRESS_MAX = 0.94;
 const PROGRESS_EASING = 0.08;
 const STATUS_ROTATION_MS = 3_000;
-const SHIMMER_DURATION_MS = 2_000;
 const GENERATION_PROGRESS_COLOR = DS.colors.accent;
 
 type ServiceProcessingScreenProps = {

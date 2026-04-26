@@ -32,6 +32,7 @@ type WorkspaceDraftSetters = {
   setDraftFinish: (finishId: string | null) => void;
   setDraftPrompt: (prompt: string | null) => void;
   setDraftAspectRatio: (aspectRatio: string | null) => void;
+  setDraftAiSuggestion?: (suggestion: { style?: string | null; paletteId?: string | null }) => void;
 };
 
 export type PreparedTryItFlow = {
@@ -149,6 +150,7 @@ export async function prepareTryItFlow(
   setters.setDraftFinish(example.finishId ?? null);
   setters.setDraftPrompt(example.prompt ?? null);
   setters.setDraftAspectRatio(example.aspectRatioId ?? null);
+  setters.setDraftAiSuggestion?.({ style: null, paletteId: null });
 
   return {
     redirectTo: buildTryItRedirectPath(example),

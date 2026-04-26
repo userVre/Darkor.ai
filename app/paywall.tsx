@@ -67,10 +67,8 @@ import {radix} from "../styles/theme";
 import {fonts} from "../styles/typography";
 
 const SCREEN_BG = "#0D0D0D";
-const PANEL_BG = SCREEN_BG;
 const PANEL_BG_ALT = SCREEN_BG;
 const PANEL_BORDER = radix.dark.slate.slate6;
-const ACCENT = "#FFFFFF";
 const BRAND_RED = radix.dark.ruby.ruby9;
 const BRAND_RED_ACTIVE = radix.dark.ruby.ruby10;
 const TOGGLE_OFF = radix.dark.slate.slate5;
@@ -106,6 +104,7 @@ const HERO_CAROUSEL_DATA = Array.from({ length: HERO_IMAGES.length * HERO_CAROUS
 const HERO_CAROUSEL_INITIAL_INDEX = HERO_IMAGES.length * Math.floor(HERO_CAROUSEL_REPEAT_MULTIPLIER / 2);
 const AnimatedSvgCircle = Animated.createAnimatedComponent(SvgCircle);
 const PAYWALL_FORCE_LTR = true;
+const TABS_HOME_ROUTE = "/(tabs)/index";
 const FORCED_LTR_TEXT_STYLE = {
   textAlign: "left" as const,
   writingDirection: "ltr" as const,
@@ -456,7 +455,6 @@ function getDisplayedPrice(
 }
 
 function getDisplayedYearlyPerWeekPrice(
-  fallbackPrice: LocalizedPrice,
   locale: string,
   yearlyPrice: LocalizedPrice,
   preferredCurrencyCode?: string,
@@ -546,7 +544,6 @@ export default function PaywallScreen() {
   const displayedYearlyPerWeekPrice = useMemo(
     () =>
       getDisplayedYearlyPerWeekPrice(
-        pricingContext.derived.yearlyPerWeek,
         pricingContext.locale,
         displayedYearlyPrice,
         pricingContext.currencyCode,
@@ -688,7 +685,7 @@ export default function PaywallScreen() {
         }
 
         const nextPackages = filterPackagesByCurrency(
-          offeringResult.packages,
+          Array.isArray(offeringResult?.packages) ? offeringResult.packages : [],
           pricingContext.currencyCode,
         );
         setPackages(nextPackages);
@@ -744,18 +741,8 @@ export default function PaywallScreen() {
       dismissLaunchPaywall();
     }
 
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-
-    if (typeof redirectTo === "string" && redirectTo.length > 0) {
-      router.replace(redirectTo as any);
-      return;
-    }
-
-    router.replace("/(tabs)");
-  }, [redirectTo, router, source]);
+    router.replace(TABS_HOME_ROUTE as any);
+  }, [router, source]);
 
   const completePaywall = useCallback(() => {
     if (source === "launch") {
@@ -767,12 +754,7 @@ export default function PaywallScreen() {
       return;
     }
 
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-
-    router.replace("/(tabs)");
+    router.replace(TABS_HOME_ROUTE as any);
   }, [redirectTo, router, source]);
 
   const handleClose = useCallback(() => {
@@ -796,7 +778,7 @@ export default function PaywallScreen() {
 
       setIsLoading(true);
       const info = await purchasesRef.current.restorePurchases();
-      if (!hasActiveSubscription(info)) {
+      if (!info || !hasActiveSubscription(info)) {
         Alert.alert(t("paywall.restored"), t("paywall.noActiveSubscriptions"));
         return;
       }
@@ -848,11 +830,12 @@ export default function PaywallScreen() {
 
       setIsLoading(true);
       const result = await purchasesRef.current.purchasePackage(selectedPackage);
-      if (!hasActiveSubscription(result.customerInfo)) {
+      const customerInfo = result?.customerInfo;
+      if (!customerInfo || !hasActiveSubscription(customerInfo)) {
         throw new Error(t("paywall.subscriptionConfirmFailed"));
       }
 
-      const subscriptionState = resolveRevenueCatSubscription(result.customerInfo);
+      const subscriptionState = resolveRevenueCatSubscription(customerInfo);
       if (subscriptionState.plan === "free" || subscriptionState.subscriptionType === "free") {
         throw new Error(t("paywall.subscriptionConfirmFailed"));
       }
