@@ -7,7 +7,6 @@ import {spacing} from "../styles/spacing";
 
 import {useViewerSession} from "../components/viewer-session-context";
 import {DIAGNOSTIC_BYPASS} from "../lib/diagnostics";
-import {hasDismissedLaunchPaywall} from "../lib/launch-paywall";
 
 type MeResponse = {
   plan: "free" | "trial" | "pro";
@@ -42,8 +41,6 @@ export default function Index() {
     DIAGNOSTIC_BYPASS ? "skip" : viewerReady ? viewerArgs : "skip",
   ) as MeResponse | null | undefined;
 
-  const launchPaywallDismissed = hasDismissedLaunchPaywall();
-
   useEffect(() => {
     if (DIAGNOSTIC_BYPASS || gateTimedOut || (viewerReady && me !== undefined)) {
       return;
@@ -63,10 +60,6 @@ export default function Index() {
 
   if (!viewerReady || me === undefined) {
     return <LaunchScreen message={t("boot.checkingPlan")} />;
-  }
-
-  if ((me?.plan ?? "free") === "free" && !launchPaywallDismissed) {
-    return <Redirect href="/paywall" />;
   }
 
   return <Redirect href="/(tabs)" />;
