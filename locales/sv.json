@@ -93,7 +93,11 @@
         "title": "Golv Restyle",
         "description": "Lyft ditt rums grund med förstklassiga material och finish."
       },
-      "cta": "Prova detta"
+      "cta": "Prova detta",
+      "smartSpacePlanning": {
+        "title": "Smart Rumsplanering",
+        "description": "Optimera rummets planl?sning f?r maximal komfort och smidiga g?nglinjer."
+      }
     }
   },
   "paywall": {
@@ -356,7 +360,7 @@
     }
   },
   "processing": {
-    "title": "AI skapar ditt arkitektoniska mästerverk...",
+    "title": "AI formar ditt arkitektoniska m?sterverk...",
     "eta": "Din vision kommer att vara klar inom ~15 sekunder.",
     "cancelKeepCredit": "Avbryt och behåll min kredit",
     "status": {
@@ -382,7 +386,7 @@
       "emptyTitle": "Ladda upp din vision",
       "emptySubtitle": "Börja din förvandling med ett enda foto.",
       "removePhoto": "Ta bort det valda fotot",
-      "cta": "Börja nu"
+      "cta": "Ladda upp referensbild"
     },
     "interior": {
       "stepTwoTitle": "Identifiera ditt utrymme",
@@ -639,6 +643,12 @@
         "stainedPlaster": "Betsad gips",
         "dampStreaks": "Fuktiga ränder"
       }
+    },
+    "smartSpacePlanning": {
+      "title": "Smart Rumsplanering",
+      "description": "F?rfina den ergonomiska planl?sningen och rummets spatiala fluiditet innan du genererar.",
+      "uploadCta": "Ladda upp referensbild",
+      "processing": "AI analyserar r?relsefl?den, m?belbalans och spatial fluiditet f?r att skapa en mer ergonomisk planl?sning."
     }
   },
   "workspace": {
@@ -651,9 +661,10 @@
       "tryAnotherPrompt": "Gå tillbaka och försök med en annan prompt."
     },
     "processing": {
-      "default": "HomeDecor AI bevarar arkitekturen samtidigt som den komponerar en raffinerad omdesign.",
+      "default": "AI optimerar ergonomisk planl?sning och spatial fluiditet medan en f?rfinad redesign komponeras.",
       "floor": "HomeDecor AI läser perspektiv, låser golvplanet och komponerar det nya materialet med förstklassiga detaljer.",
-      "paint": "HomeDecor AI isolerar väggplanen och skiktar din valda finish med gallerikvalitetsrealism."
+      "paint": "HomeDecor AI isolerar väggplanen och skiktar din valda finish med gallerikvalitetsrealism.",
+      "smartSpacePlanning": "AI analyserar r?relsefl?den, m?belbalans och spatial fluiditet f?r att skapa en mer ergonomisk planl?sning."
     },
     "services": {
       "interior": "Redesign av interiör",

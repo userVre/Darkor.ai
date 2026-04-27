@@ -93,7 +93,11 @@
         "title": "تجديد الأرضية",
         "description": "ارفع مستوى أساس الغرفة بمواد وتشطيبات فاخرة."
       },
-      "cta": "جرّب هذا"
+      "cta": "جرّب هذا",
+      "smartSpacePlanning": {
+        "title": "????? ??????? ?????",
+        "description": "???? ????? ?????? ?????? ???? ????? ?????? ????????? ??????."
+      }
     }
   },
   "paywall": {
@@ -359,7 +363,7 @@
     }
   },
   "processing": {
-    "title": "الذكاء الاصطناعي يصوغ تحفتك المعمارية...",
+    "title": "?????? ????????? ???? ????? ?????????...",
     "eta": "ستكون رؤيتك جاهزة خلال حوالي 15 ثانية.",
     "cancelKeepCredit": "إلغاء والاحتفاظ برصيدي",
     "status": {
@@ -385,7 +389,7 @@
       "emptyTitle": "ارفع رؤيتك",
       "emptySubtitle": "أعد تصميم منزلك وجمّله.",
       "removePhoto": "إزالة الصورة المحددة",
-      "cta": "رفع"
+      "cta": "???? ???? ??????"
     },
     "interior": {
       "stepTwoTitle": "حدّد مساحتك",
@@ -642,6 +646,12 @@
         "stainedPlaster": "لياسة ملطخة",
         "dampStreaks": "آثار رطوبة"
       }
+    },
+    "smartSpacePlanning": {
+      "title": "????? ??????? ?????",
+      "description": "??? ??????? ?????? ????????? ??????? ?? ????? ??? ???????.",
+      "uploadCta": "???? ???? ??????",
+      "processing": "???? ?????? ????????? ?????? ?????? ?????? ?????? ????????? ??????? ?????? ????? ???? ???? ???????."
     }
   },
   "workspace": {
@@ -654,9 +664,10 @@
       "tryAnotherPrompt": "يُرجى الرجوع وتجربة وصف آخر."
     },
     "processing": {
-      "default": "يحافظ هوم ديكور AI على البنية المعمارية أثناء صياغة إعادة تصميم راقية.",
+      "default": "???? ?????? ????????? ??? ????? ??????? ?????? ????????? ??????? ?? ????? ????? ????? ?????.",
       "floor": "يقرأ هوم ديكور AI المنظور ويثبت مستوى الأرضية ثم يركّب الخامة الجديدة بتفاصيل فاخرة.",
-      "paint": "يعزل هوم ديكور AI مستويات الجدران ويطبّق التشطيب الذي اخترته بواقعية احترافية."
+      "paint": "يعزل هوم ديكور AI مستويات الجدران ويطبّق التشطيب الذي اخترته بواقعية احترافية.",
+      "smartSpacePlanning": "???? ?????? ????????? ?????? ?????? ?????? ?????? ????????? ??????? ?????? ????? ???? ???? ???????."
     },
     "services": {
       "interior": "إعادة تصميم داخلية",
@@ -981,100 +992,423 @@
         "title": "الديكور الداخلي",
         "description": "مساحات منسقة يقودها المصممون للمعيشة والنوم والطعام والعمل والترفيه.",
         "items": {
-          "sereneLounge": { "title": "صالة هادئة", "subtitle": "غرفة معيشة / بساطة ناعمة", "spaceType": "غرفة معيشة", "style": "بساطة ناعمة" },
-          "moodyClubRoom": { "title": "غرفة نادي مزاجية", "subtitle": "غرفة معيشة / فخامة مزاجية", "spaceType": "غرفة معيشة", "style": "فخامة مزاجية" },
-          "organicLiving": { "title": "معيشة عضوية", "subtitle": "غرفة معيشة / دفء عضوي", "spaceType": "غرفة معيشة", "style": "دفء عضوي" },
-          "grandSalon": { "title": "صالون فخم", "subtitle": "غرفة معيشة / فخامة رخامية", "spaceType": "غرفة معيشة", "style": "فخامة رخامية" },
-          "editorialLounge": { "title": "صالة تحريرية", "subtitle": "غرفة ألعاب / سايبربانك", "spaceType": "غرفة ألعاب", "style": "سايبربانك" }
+          "sereneLounge": {
+            "title": "صالة هادئة",
+            "subtitle": "غرفة معيشة / بساطة ناعمة",
+            "spaceType": "غرفة معيشة",
+            "style": "بساطة ناعمة"
+          },
+          "moodyClubRoom": {
+            "title": "غرفة نادي مزاجية",
+            "subtitle": "غرفة معيشة / فخامة مزاجية",
+            "spaceType": "غرفة معيشة",
+            "style": "فخامة مزاجية"
+          },
+          "organicLiving": {
+            "title": "معيشة عضوية",
+            "subtitle": "غرفة معيشة / دفء عضوي",
+            "spaceType": "غرفة معيشة",
+            "style": "دفء عضوي"
+          },
+          "grandSalon": {
+            "title": "صالون فخم",
+            "subtitle": "غرفة معيشة / فخامة رخامية",
+            "spaceType": "غرفة معيشة",
+            "style": "فخامة رخامية"
+          },
+          "editorialLounge": {
+            "title": "صالة تحريرية",
+            "subtitle": "غرفة ألعاب / سايبربانك",
+            "spaceType": "غرفة ألعاب",
+            "style": "سايبربانك"
+          }
         }
       },
       "exterior": {
         "title": "الواجهات الخارجية",
         "description": "إلهام للواجهات من الفلل الحديثة والمجمعات الحضرية والمكاتب والمساحات التجارية.",
         "items": {
-          "modernHouse": { "title": "منزل حديث", "subtitle": "منزل حديث / بساطة نهارية", "spaceType": "منزل حديث", "style": "بساطة نهارية" },
-          "modernHouseNight": { "title": "منزل حديث ليلاً", "subtitle": "منزل حديث / فخامة مسائية", "spaceType": "منزل حديث", "style": "فخامة مسائية" },
-          "stoneVilla": { "title": "فيلا حجرية", "subtitle": "فيلا / متوسطي", "spaceType": "فيلا", "style": "متوسطي" },
-          "glassOffice": { "title": "مكتب زجاجي", "subtitle": "مبنى مكاتب / مينيمال", "spaceType": "مبنى مكاتب", "style": "مينيمال" },
-          "ecoApartments": { "title": "شقق بيئية", "subtitle": "مجمع شقق / مستقبلية بيئية", "spaceType": "مجمع شقق", "style": "مستقبلية بيئية" }
+          "modernHouse": {
+            "title": "منزل حديث",
+            "subtitle": "منزل حديث / بساطة نهارية",
+            "spaceType": "منزل حديث",
+            "style": "بساطة نهارية"
+          },
+          "modernHouseNight": {
+            "title": "منزل حديث ليلاً",
+            "subtitle": "منزل حديث / فخامة مسائية",
+            "spaceType": "منزل حديث",
+            "style": "فخامة مسائية"
+          },
+          "stoneVilla": {
+            "title": "فيلا حجرية",
+            "subtitle": "فيلا / متوسطي",
+            "spaceType": "فيلا",
+            "style": "متوسطي"
+          },
+          "glassOffice": {
+            "title": "مكتب زجاجي",
+            "subtitle": "مبنى مكاتب / مينيمال",
+            "spaceType": "مبنى مكاتب",
+            "style": "مينيمال"
+          },
+          "ecoApartments": {
+            "title": "شقق بيئية",
+            "subtitle": "مجمع شقق / مستقبلية بيئية",
+            "spaceType": "مجمع شقق",
+            "style": "مستقبلية بيئية"
+          }
         }
       },
       "garden": {
         "title": "الحديقة",
         "description": "صالات خارجية وتراسات ومسابح ومنصات ومشاهد حدائق بطابع منتجعي.",
         "items": {
-          "infinityPool": { "title": "مسبح إنفينيتي", "subtitle": "مسبح إنفينيتي / فخامة ساحلية", "spaceType": "مسبح إنفينيتي", "style": "فخامة ساحلية" },
-          "waterfallCourt": { "title": "فناء الشلال", "subtitle": "حديقة شلال / فخامة زِن", "spaceType": "حديقة شلال", "style": "فخامة زِن" },
-          "sunsetFirePit": { "title": "موقد غروب الشمس", "subtitle": "جلسة موقد / غروب منتجعي", "spaceType": "جلسة موقد", "style": "غروب منتجعي" },
-          "tropicalPoolLounge": { "title": "صالة مسبح استوائية", "subtitle": "صالة مسبح / هروب استوائي", "spaceType": "صالة مسبح", "style": "هروب استوائي" },
-          "luminousGardenWalk": { "title": "ممشى حديقة مضيء", "subtitle": "ممشى حديقة / توهج مسائي", "spaceType": "ممشى حديقة", "style": "توهج مسائي" }
+          "infinityPool": {
+            "title": "مسبح إنفينيتي",
+            "subtitle": "مسبح إنفينيتي / فخامة ساحلية",
+            "spaceType": "مسبح إنفينيتي",
+            "style": "فخامة ساحلية"
+          },
+          "waterfallCourt": {
+            "title": "فناء الشلال",
+            "subtitle": "حديقة شلال / فخامة زِن",
+            "spaceType": "حديقة شلال",
+            "style": "فخامة زِن"
+          },
+          "sunsetFirePit": {
+            "title": "موقد غروب الشمس",
+            "subtitle": "جلسة موقد / غروب منتجعي",
+            "spaceType": "جلسة موقد",
+            "style": "غروب منتجعي"
+          },
+          "tropicalPoolLounge": {
+            "title": "صالة مسبح استوائية",
+            "subtitle": "صالة مسبح / هروب استوائي",
+            "spaceType": "صالة مسبح",
+            "style": "هروب استوائي"
+          },
+          "luminousGardenWalk": {
+            "title": "ممشى حديقة مضيء",
+            "subtitle": "ممشى حديقة / توهج مسائي",
+            "spaceType": "ممشى حديقة",
+            "style": "توهج مسائي"
+          }
         }
       },
       "wall": {
         "title": "إلهام الجدران",
         "description": "مرجعيات طلاء من غرف حقيقية تفتح مباشرة في Smart Wall Paint مع تحديد التشطيب مسبقاً.",
         "items": {
-          "sagePlasterWall": { "title": "جدار لياسة مريمية", "subtitle": "جدار مزخرف / أخضر المريمية", "spaceType": "جدار مزخرف", "style": "أخضر المريمية" },
-          "linearSlatFeature": { "title": "عنصر شرائحي خطي", "subtitle": "جدار شرائحي / فحمي", "spaceType": "جدار شرائحي", "style": "فحمي" },
-          "veinedMarbleWall": { "title": "جدار رخام بعروق", "subtitle": "جدار رخامي / عاجي ناعم", "spaceType": "جدار رخامي", "style": "عاجي ناعم" },
-          "minimalConcreteWall": { "title": "جدار خرساني بسيط", "subtitle": "جدار خرساني / فحمي", "spaceType": "جدار خرساني", "style": "فحمي" },
-          "botanicalMuralWall": { "title": "جدار جداري نباتي", "subtitle": "جدار جداري / زيتوني طحلبي", "spaceType": "جدار جداري", "style": "زيتوني طحلبي" }
+          "sagePlasterWall": {
+            "title": "جدار لياسة مريمية",
+            "subtitle": "جدار مزخرف / أخضر المريمية",
+            "spaceType": "جدار مزخرف",
+            "style": "أخضر المريمية"
+          },
+          "linearSlatFeature": {
+            "title": "عنصر شرائحي خطي",
+            "subtitle": "جدار شرائحي / فحمي",
+            "spaceType": "جدار شرائحي",
+            "style": "فحمي"
+          },
+          "veinedMarbleWall": {
+            "title": "جدار رخام بعروق",
+            "subtitle": "جدار رخامي / عاجي ناعم",
+            "spaceType": "جدار رخامي",
+            "style": "عاجي ناعم"
+          },
+          "minimalConcreteWall": {
+            "title": "جدار خرساني بسيط",
+            "subtitle": "جدار خرساني / فحمي",
+            "spaceType": "جدار خرساني",
+            "style": "فحمي"
+          },
+          "botanicalMuralWall": {
+            "title": "جدار جداري نباتي",
+            "subtitle": "جدار جداري / زيتوني طحلبي",
+            "spaceType": "جدار جداري",
+            "style": "زيتوني طحلبي"
+          }
         }
       },
       "floor": {
         "title": "أنماط الأرضيات",
         "description": "مرجعيات أرضيات فاخرة منسقة من مساحات حقيقية ومربوطة مباشرة بتدفق Floor Restyle.",
         "items": {
-          "heritageHerringbone": { "title": "هيرينغبون كلاسيكي", "subtitle": "أرضية خشبية / خشب الجوز", "spaceType": "أرضية خشبية", "style": "خشب الجوز" },
-          "carraraMarbleFlow": { "title": "انسياب كرارا الرخامي", "subtitle": "أرضية رخامية / رخام كرارا", "spaceType": "أرضية رخامية", "style": "رخام كرارا" },
-          "satinConcrete": { "title": "خرسانة ساتان", "subtitle": "أرضية خرسانية / خرسانة مصقولة", "spaceType": "أرضية خرسانية", "style": "خرسانة مصقولة" },
-          "walnutGloss": { "title": "لمعة الجوز", "subtitle": "خشب لامع / خشب الجوز", "spaceType": "خشب لامع", "style": "خشب الجوز" },
-          "softLimestone": { "title": "حجر جيري ناعم", "subtitle": "أرضية حجرية / خرسانة مصقولة", "spaceType": "أرضية حجرية", "style": "خرسانة مصقولة" }
+          "heritageHerringbone": {
+            "title": "هيرينغبون كلاسيكي",
+            "subtitle": "أرضية خشبية / خشب الجوز",
+            "spaceType": "أرضية خشبية",
+            "style": "خشب الجوز"
+          },
+          "carraraMarbleFlow": {
+            "title": "انسياب كرارا الرخامي",
+            "subtitle": "أرضية رخامية / رخام كرارا",
+            "spaceType": "أرضية رخامية",
+            "style": "رخام كرارا"
+          },
+          "satinConcrete": {
+            "title": "خرسانة ساتان",
+            "subtitle": "أرضية خرسانية / خرسانة مصقولة",
+            "spaceType": "أرضية خرسانية",
+            "style": "خرسانة مصقولة"
+          },
+          "walnutGloss": {
+            "title": "لمعة الجوز",
+            "subtitle": "خشب لامع / خشب الجوز",
+            "spaceType": "خشب لامع",
+            "style": "خشب الجوز"
+          },
+          "softLimestone": {
+            "title": "حجر جيري ناعم",
+            "subtitle": "أرضية حجرية / خرسانة مصقولة",
+            "spaceType": "أرضية حجرية",
+            "style": "خرسانة مصقولة"
+          }
         }
       }
     },
     "wallColors": {
-      "sageGreen": { "title": "أخضر المريمية", "description": "هدوء أخضر ناعم للمساحات المضيئة والمصقولة.", "discoverSubtitle": "جدار / هدوء نباتي" },
-      "midnightNavy": { "title": "كحلي منتصف الليل", "description": "عمق كحلي أنيق مع تباين معماري حاد.", "discoverSubtitle": "جدار / تباين أنيق" },
-      "terracottaGlow": { "title": "وهج التيراكوتا", "description": "لون طيني دافئ بطاقة راسخة وطابع تحريري.", "discoverSubtitle": "جدار / طين دافئ" },
-      "dustyRose": { "title": "وردي غباري", "description": "دفء وردي هادئ بلمسة بوتيكية ناعمة.", "discoverSubtitle": "جدار / وردي بوتيكي" },
-      "galleryCharcoal": { "title": "فحمي المعرض", "description": "فحمي راقٍ للمساحات المزاجية ذات الحس الفني.", "discoverSubtitle": "جدار / معرض مزاجي" },
-      "softIvory": { "title": "عاجي ناعم", "description": "حيادي مضيء يحافظ على إشراق الغرفة دون تسطيح.", "discoverSubtitle": "جدار / حيادي هادئ" },
-      "oliveGrove": { "title": "زيتوني البستان", "description": "عمق زيتوني ترابي بإحساس مصمم ثابت.", "discoverSubtitle": "جدار / عمق ترابي" },
-      "lavenderMist": { "title": "ضباب الخزامى", "description": "بنفسجي ضبابي ناعم للمساحات الباستيلية الراقية.", "discoverSubtitle": "جدار / باستيل ناعم" },
-      "pearlGray": { "title": "رمادي لؤلؤي", "description": "رمادي فاتح بمرونة أنيقة للاستخدام اليومي.", "discoverSubtitle": "جدار / حيادي عصري" }
+      "sageGreen": {
+        "title": "أخضر المريمية",
+        "description": "هدوء أخضر ناعم للمساحات المضيئة والمصقولة.",
+        "discoverSubtitle": "جدار / هدوء نباتي"
+      },
+      "midnightNavy": {
+        "title": "كحلي منتصف الليل",
+        "description": "عمق كحلي أنيق مع تباين معماري حاد.",
+        "discoverSubtitle": "جدار / تباين أنيق"
+      },
+      "terracottaGlow": {
+        "title": "وهج التيراكوتا",
+        "description": "لون طيني دافئ بطاقة راسخة وطابع تحريري.",
+        "discoverSubtitle": "جدار / طين دافئ"
+      },
+      "dustyRose": {
+        "title": "وردي غباري",
+        "description": "دفء وردي هادئ بلمسة بوتيكية ناعمة.",
+        "discoverSubtitle": "جدار / وردي بوتيكي"
+      },
+      "galleryCharcoal": {
+        "title": "فحمي المعرض",
+        "description": "فحمي راقٍ للمساحات المزاجية ذات الحس الفني.",
+        "discoverSubtitle": "جدار / معرض مزاجي"
+      },
+      "softIvory": {
+        "title": "عاجي ناعم",
+        "description": "حيادي مضيء يحافظ على إشراق الغرفة دون تسطيح.",
+        "discoverSubtitle": "جدار / حيادي هادئ"
+      },
+      "oliveGrove": {
+        "title": "زيتوني البستان",
+        "description": "عمق زيتوني ترابي بإحساس مصمم ثابت.",
+        "discoverSubtitle": "جدار / عمق ترابي"
+      },
+      "lavenderMist": {
+        "title": "ضباب الخزامى",
+        "description": "بنفسجي ضبابي ناعم للمساحات الباستيلية الراقية.",
+        "discoverSubtitle": "جدار / باستيل ناعم"
+      },
+      "pearlGray": {
+        "title": "رمادي لؤلؤي",
+        "description": "رمادي فاتح بمرونة أنيقة للاستخدام اليومي.",
+        "discoverSubtitle": "جدار / حيادي عصري"
+      }
     },
     "wallColorCategories": {
-      "calmNeutrals": { "title": "درجات حيادية هادئة", "colors": { "softIvory": "عاجي ناعم", "pearlGray": "رمادي لؤلؤي", "sageGreen": "أخضر المريمية" } },
-      "boutiquePastels": { "title": "باستيلات بوتيكية", "colors": { "dustyRose": "وردي غباري", "lavenderMist": "ضباب الخزامى", "terracottaGlow": "وهج التيراكوتا" } },
-      "architecturalDepth": { "title": "عمق معماري", "colors": { "midnightNavy": "كحلي منتصف الليل", "galleryCharcoal": "فحمي المعرض", "oliveGrove": "زيتوني البستان" } }
+      "calmNeutrals": {
+        "title": "درجات حيادية هادئة",
+        "colors": {
+          "softIvory": "عاجي ناعم",
+          "pearlGray": "رمادي لؤلؤي",
+          "sageGreen": "أخضر المريمية"
+        }
+      },
+      "boutiquePastels": {
+        "title": "باستيلات بوتيكية",
+        "colors": {
+          "dustyRose": "وردي غباري",
+          "lavenderMist": "ضباب الخزامى",
+          "terracottaGlow": "وهج التيراكوتا"
+        }
+      },
+      "architecturalDepth": {
+        "title": "عمق معماري",
+        "colors": {
+          "midnightNavy": "كحلي منتصف الليل",
+          "galleryCharcoal": "فحمي المعرض",
+          "oliveGrove": "زيتوني البستان"
+        }
+      }
     },
     "floorMaterials": {
-      "naturalOak": { "title": "بلوط طبيعي", "description": "ألواح بلوط هوائية بعروق طبيعية ناعمة.", "promptLabel": "أرضية من البلوط الطبيعي الفاتح بعروق عريضة واضحة", "discoverSubtitle": "أرضية / خشب فاتح" },
-      "walnutWood": { "title": "خشب الجوز", "description": "ألواح جوز عميقة بتباين غني ومصقول.", "promptLabel": "أرضية فاخرة من خشب الجوز بعروق عميقة وغنية", "discoverSubtitle": "أرضية / خشب داكن" },
-      "carraraMarble": { "title": "رخام كرارا", "description": "عروق حجرية مشرقة بتشطيب فاخر هادئ.", "promptLabel": "أرضية من رخام كرارا بعروق ناعمة وأنيقة", "discoverSubtitle": "أرضية / حجر مصقول" },
-      "polishedConcrete": { "title": "خرسانة مصقولة", "description": "لمعة خرسانية ناعمة بطابع معرض حضري هادئ.", "promptLabel": "أرضية خرسانية مصقولة بملمس ناعم فاخر", "discoverSubtitle": "أرضية / صناعي مينيمال" },
-      "herringboneOak": { "title": "بلوط هيرينغبون", "description": "نمط بلوط كلاسيكي بحركة اتجاهية دافئة.", "promptLabel": "أرضية باركيه بلوط هيرينغبون بنقشة فاخرة واضحة", "discoverSubtitle": "أرضية / خشب مزخرف" },
-      "terracottaTile": { "title": "بلاط تيراكوتا", "description": "دفء طيني ترابي بطابع يدوي الصنع.", "promptLabel": "أرضية بلاط تيراكوتا بتدرجات طينية دافئة", "discoverSubtitle": "أرضية / طين متوسطي" },
-      "slateTile": { "title": "بلاط أردوازي", "description": "أردواز داكن بتشطيب واسع ومحدد.", "promptLabel": "أرضية من بلاط الأردواز الداكن بألواح حجرية كبيرة", "discoverSubtitle": "أرضية / حجر داكن" },
-      "plushCarpet": { "title": "سجاد فاخر", "description": "سجاد كريمي ناعم بإحساس هادئ ومريح.", "promptLabel": "أرضية سجاد فاخر بدرجة كريمية ناعمة", "discoverSubtitle": "أرضية / ملمس ناعم" },
-      "weatheredOak": { "title": "بلوط معتق", "description": "بلوط متوسط الدرجة بلمسة عمر خفيفة.", "promptLabel": "أرضية من البلوط المعتق بعروق قديمة خفيفة", "discoverSubtitle": "أرضية / دفء ريفي" }
+      "naturalOak": {
+        "title": "بلوط طبيعي",
+        "description": "ألواح بلوط هوائية بعروق طبيعية ناعمة.",
+        "promptLabel": "أرضية من البلوط الطبيعي الفاتح بعروق عريضة واضحة",
+        "discoverSubtitle": "أرضية / خشب فاتح"
+      },
+      "walnutWood": {
+        "title": "خشب الجوز",
+        "description": "ألواح جوز عميقة بتباين غني ومصقول.",
+        "promptLabel": "أرضية فاخرة من خشب الجوز بعروق عميقة وغنية",
+        "discoverSubtitle": "أرضية / خشب داكن"
+      },
+      "carraraMarble": {
+        "title": "رخام كرارا",
+        "description": "عروق حجرية مشرقة بتشطيب فاخر هادئ.",
+        "promptLabel": "أرضية من رخام كرارا بعروق ناعمة وأنيقة",
+        "discoverSubtitle": "أرضية / حجر مصقول"
+      },
+      "polishedConcrete": {
+        "title": "خرسانة مصقولة",
+        "description": "لمعة خرسانية ناعمة بطابع معرض حضري هادئ.",
+        "promptLabel": "أرضية خرسانية مصقولة بملمس ناعم فاخر",
+        "discoverSubtitle": "أرضية / صناعي مينيمال"
+      },
+      "herringboneOak": {
+        "title": "بلوط هيرينغبون",
+        "description": "نمط بلوط كلاسيكي بحركة اتجاهية دافئة.",
+        "promptLabel": "أرضية باركيه بلوط هيرينغبون بنقشة فاخرة واضحة",
+        "discoverSubtitle": "أرضية / خشب مزخرف"
+      },
+      "terracottaTile": {
+        "title": "بلاط تيراكوتا",
+        "description": "دفء طيني ترابي بطابع يدوي الصنع.",
+        "promptLabel": "أرضية بلاط تيراكوتا بتدرجات طينية دافئة",
+        "discoverSubtitle": "أرضية / طين متوسطي"
+      },
+      "slateTile": {
+        "title": "بلاط أردوازي",
+        "description": "أردواز داكن بتشطيب واسع ومحدد.",
+        "promptLabel": "أرضية من بلاط الأردواز الداكن بألواح حجرية كبيرة",
+        "discoverSubtitle": "أرضية / حجر داكن"
+      },
+      "plushCarpet": {
+        "title": "سجاد فاخر",
+        "description": "سجاد كريمي ناعم بإحساس هادئ ومريح.",
+        "promptLabel": "أرضية سجاد فاخر بدرجة كريمية ناعمة",
+        "discoverSubtitle": "أرضية / ملمس ناعم"
+      },
+      "weatheredOak": {
+        "title": "بلوط معتق",
+        "description": "بلوط متوسط الدرجة بلمسة عمر خفيفة.",
+        "promptLabel": "أرضية من البلوط المعتق بعروق قديمة خفيفة",
+        "discoverSubtitle": "أرضية / دفء ريفي"
+      }
     },
     "injectedGallery": {
-      "floorAfterScenes": { "heritageHerringbone": "هيرينغبون كلاسيكي", "carraraMarble": "رخام كرارا", "satinConcrete": "خرسانة ساتان", "walnutGloss": "لمعة الجوز", "limestoneSlab": "لوح حجر جيري" },
-      "wallAfterScenes": { "sagePlaster": "لياسة مريمية", "linearSlats": "شرائح خطية", "veinedMarble": "رخام بعروق", "minimalConcrete": "خرسانة بسيطة", "botanicalMural": "جدارية نباتية" },
-      "interiorExamples": { "kitchen": "المطبخ", "livingRoom": "غرفة المعيشة", "bedroom": "غرفة النوم", "bathroom": "الحمام", "gamingRoom": "غرفة الألعاب", "homeOffice": "المكتب المنزلي" },
-      "exteriorExamples": { "apartment": "شقة", "house": "منزل", "office": "مكتب", "villa": "فيلا", "residential": "سكني", "retail": "تجاري" },
-      "gardenExamples": { "infinityPool": "مسبح إنفينيتي", "waterfallCourt": "فناء الشلال", "firePit": "موقد نار", "tropicalLounge": "صالة استوائية", "resortDeck": "سطح منتجعي", "lagoonFalls": "شلالات البحيرة" },
-      "homeCoreScenes": { "kitchen": "المطبخ", "livingRoom": "غرفة المعيشة", "bedroom": "غرفة النوم", "bathroom": "الحمام", "diningRoom": "غرفة الطعام", "gamingRoom": "غرفة الألعاب", "homeOffice": "المكتب المنزلي" },
-      "homeFlexScenes": { "coffeeShop": "مقهى", "gamingStudio": "استوديو ألعاب", "atticLounge": "صالة علوية", "studyRoom": "غرفة دراسة", "serviceRoom": "غرفة خدمة", "laundryRoom": "غرفة غسيل" },
-      "livingRoomScenes": { "sereneLounge": "صالة هادئة", "moodyLounge": "صالة مزاجية", "organicLiving": "معيشة عضوية", "grandSalon": "صالون فخم", "playfulLounge": "صالة مرحة" },
-      "homeLuxeScenes": { "restaurant": "مطعم", "studyLibrary": "مكتبة دراسة", "atticRetreat": "ملاذ علوي", "toiletSuite": "جناح دورة مياه", "balcony": "شرفة", "hall": "ردهة", "deckDay": "سطح نهاري", "deckNight": "سطح ليلي" },
-      "exteriorPrimaryScenes": { "house": "منزل", "residential": "سكني", "villa": "فيلا", "glassCorner": "زاوية زجاجية", "apartment": "شقة" },
-      "exteriorSecondaryScenes": { "apartmentTower": "برج شقق", "retailPavilion": "جناح تجاري", "officeBuilding": "مبنى مكاتب", "modernVilla": "فيلا حديثة", "residentialTower": "برج سكني" },
-      "gardenPrimaryScenes": { "infinityPool": "مسبح إنفينيتي", "waterfallCourt": "فناء الشلال", "sunsetFirePit": "موقد غروب الشمس", "tropicalLounge": "صالة استوائية", "livingWall": "جدار حي", "lightCourt": "فناء مضيء" },
-      "gardenSecondaryScenes": { "sunsetPool": "مسبح الغروب", "fireCove": "خليج النار", "poolCourt": "فناء المسبح", "waterfallLounge": "صالة الشلال", "resortDeck": "سطح منتجعي", "lagoonFalls": "شلالات البحيرة" },
-      "exteriorBuildingTypes": { "apartment": "شقة", "house": "منزل", "officeBuilding": "مبنى مكاتب", "villa": "فيلا", "residential": "سكني", "retail": "تجاري" }
+      "floorAfterScenes": {
+        "heritageHerringbone": "هيرينغبون كلاسيكي",
+        "carraraMarble": "رخام كرارا",
+        "satinConcrete": "خرسانة ساتان",
+        "walnutGloss": "لمعة الجوز",
+        "limestoneSlab": "لوح حجر جيري"
+      },
+      "wallAfterScenes": {
+        "sagePlaster": "لياسة مريمية",
+        "linearSlats": "شرائح خطية",
+        "veinedMarble": "رخام بعروق",
+        "minimalConcrete": "خرسانة بسيطة",
+        "botanicalMural": "جدارية نباتية"
+      },
+      "interiorExamples": {
+        "kitchen": "المطبخ",
+        "livingRoom": "غرفة المعيشة",
+        "bedroom": "غرفة النوم",
+        "bathroom": "الحمام",
+        "gamingRoom": "غرفة الألعاب",
+        "homeOffice": "المكتب المنزلي"
+      },
+      "exteriorExamples": {
+        "apartment": "شقة",
+        "house": "منزل",
+        "office": "مكتب",
+        "villa": "فيلا",
+        "residential": "سكني",
+        "retail": "تجاري"
+      },
+      "gardenExamples": {
+        "infinityPool": "مسبح إنفينيتي",
+        "waterfallCourt": "فناء الشلال",
+        "firePit": "موقد نار",
+        "tropicalLounge": "صالة استوائية",
+        "resortDeck": "سطح منتجعي",
+        "lagoonFalls": "شلالات البحيرة"
+      },
+      "homeCoreScenes": {
+        "kitchen": "المطبخ",
+        "livingRoom": "غرفة المعيشة",
+        "bedroom": "غرفة النوم",
+        "bathroom": "الحمام",
+        "diningRoom": "غرفة الطعام",
+        "gamingRoom": "غرفة الألعاب",
+        "homeOffice": "المكتب المنزلي"
+      },
+      "homeFlexScenes": {
+        "coffeeShop": "مقهى",
+        "gamingStudio": "استوديو ألعاب",
+        "atticLounge": "صالة علوية",
+        "studyRoom": "غرفة دراسة",
+        "serviceRoom": "غرفة خدمة",
+        "laundryRoom": "غرفة غسيل"
+      },
+      "livingRoomScenes": {
+        "sereneLounge": "صالة هادئة",
+        "moodyLounge": "صالة مزاجية",
+        "organicLiving": "معيشة عضوية",
+        "grandSalon": "صالون فخم",
+        "playfulLounge": "صالة مرحة"
+      },
+      "homeLuxeScenes": {
+        "restaurant": "مطعم",
+        "studyLibrary": "مكتبة دراسة",
+        "atticRetreat": "ملاذ علوي",
+        "toiletSuite": "جناح دورة مياه",
+        "balcony": "شرفة",
+        "hall": "ردهة",
+        "deckDay": "سطح نهاري",
+        "deckNight": "سطح ليلي"
+      },
+      "exteriorPrimaryScenes": {
+        "house": "منزل",
+        "residential": "سكني",
+        "villa": "فيلا",
+        "glassCorner": "زاوية زجاجية",
+        "apartment": "شقة"
+      },
+      "exteriorSecondaryScenes": {
+        "apartmentTower": "برج شقق",
+        "retailPavilion": "جناح تجاري",
+        "officeBuilding": "مبنى مكاتب",
+        "modernVilla": "فيلا حديثة",
+        "residentialTower": "برج سكني"
+      },
+      "gardenPrimaryScenes": {
+        "infinityPool": "مسبح إنفينيتي",
+        "waterfallCourt": "فناء الشلال",
+        "sunsetFirePit": "موقد غروب الشمس",
+        "tropicalLounge": "صالة استوائية",
+        "livingWall": "جدار حي",
+        "lightCourt": "فناء مضيء"
+      },
+      "gardenSecondaryScenes": {
+        "sunsetPool": "مسبح الغروب",
+        "fireCove": "خليج النار",
+        "poolCourt": "فناء المسبح",
+        "waterfallLounge": "صالة الشلال",
+        "resortDeck": "سطح منتجعي",
+        "lagoonFalls": "شلالات البحيرة"
+      },
+      "exteriorBuildingTypes": {
+        "apartment": "شقة",
+        "house": "منزل",
+        "officeBuilding": "مبنى مكاتب",
+        "villa": "فيلا",
+        "residential": "سكني",
+        "retail": "تجاري"
+      }
     }
   },
   "legacyUnlocalized": {

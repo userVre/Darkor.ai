@@ -93,7 +93,11 @@
         "title": "Remodelación del piso",
         "description": "Eleve los cimientos de su habitación con materiales y acabados de primera calidad."
       },
-      "cta": "Prueba esto"
+      "cta": "Prueba esto",
+      "smartSpacePlanning": {
+        "title": "Planificaci?n Inteligente del Espacio",
+        "description": "Optimiza la distribuci?n de tu habitaci?n para lograr el m?ximo confort y una circulaci?n fluida."
+      }
     }
   },
   "paywall": {
@@ -356,7 +360,7 @@
     }
   },
   "processing": {
-    "title": "La IA está creando tu obra maestra arquitectónica...",
+    "title": "La IA est? creando tu obra maestra arquitect?nica...",
     "eta": "Su visión estará lista en ~15 segundos.",
     "cancelKeepCredit": "Cancelar y conservar mi crédito",
     "status": {
@@ -382,7 +386,7 @@
       "emptyTitle": "Sube tu visión",
       "emptySubtitle": "Comienza tu transformación con una sola foto.",
       "removePhoto": "Eliminar foto seleccionada",
-      "cta": "Empezar ahora"
+      "cta": "Subir foto de referencia"
     },
     "interior": {
       "stepTwoTitle": "Identifica tu espacio",
@@ -639,6 +643,12 @@
         "stainedPlaster": "Yeso manchado",
         "dampStreaks": "Rayas de humedad"
       }
+    },
+    "smartSpacePlanning": {
+      "title": "Planificaci?n Inteligente del Espacio",
+      "description": "Refina la distribuci?n ergon?mica y la fluidez espacial de tu estancia antes de generar.",
+      "uploadCta": "Subir foto de referencia",
+      "processing": "La IA analiza la circulaci?n, el equilibrio del mobiliario y la fluidez espacial para componer una distribuci?n m?s ergon?mica."
     }
   },
   "workspace": {
@@ -651,9 +661,10 @@
       "tryAnotherPrompt": "Vuelva atrás e intente con otro mensaje."
     },
     "processing": {
-      "default": "HomeDecor AI preserva la arquitectura mientras compone un rediseño refinado.",
+      "default": "La IA est? optimizando la distribuci?n ergon?mica y la fluidez espacial mientras compone un redise?o refinado.",
       "floor": "HomeDecor AI está leyendo la perspectiva, bloqueando el plano del piso y componiendo el nuevo material con detalles de primera.",
-      "paint": "HomeDecor AI está aislando los planos de las paredes y superponiendo el acabado seleccionado en capas con un realismo de calidad de galería."
+      "paint": "HomeDecor AI está aislando los planos de las paredes y superponiendo el acabado seleccionado en capas con un realismo de calidad de galería.",
+      "smartSpacePlanning": "La IA analiza la circulaci?n, el equilibrio del mobiliario y la fluidez espacial para componer una distribuci?n m?s ergon?mica."
     },
     "services": {
       "interior": "Rediseño de interiores",

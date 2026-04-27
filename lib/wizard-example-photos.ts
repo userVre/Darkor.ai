@@ -70,3 +70,38 @@ export function getPaintWizardExamplePhotos(t: TFunction): WizardExamplePhoto[] 
     },
   ];
 }
+
+export function getLayoutWizardExamplePhotos(_t: TFunction): WizardExamplePhoto[] {
+  return [
+    {
+      id: "layout-before-lounge-blocked",
+      label: "Blocked lounge",
+      source: require("../assets/media/examples/layout/layout-before-lounge-blocked.jpg"),
+    },
+    {
+      id: "layout-before-bedroom-tight",
+      label: "Tight bedroom",
+      source: require("../assets/media/examples/layout/layout-before-bedroom-tight.jpg"),
+    },
+    {
+      id: "layout-before-dining-crowded",
+      label: "Crowded dining",
+      source: require("../assets/media/examples/layout/layout-before-dining-crowded.jpg"),
+    },
+    {
+      id: "layout-before-studio-cluttered",
+      label: "Cluttered studio",
+      source: require("../assets/media/examples/layout/layout-before-studio-cluttered.jpg"),
+    },
+    {
+      id: "layout-before-stair-nook-office",
+      label: "Stair nook office",
+      source: require("../assets/media/examples/layout/layout-before-stair-nook-office.jpg"),
+    },
+    {
+      id: "layout-before-kitchen-compressed",
+      label: "Compressed kitchen",
+      source: require("../assets/media/examples/layout/layout-before-kitchen-compressed.jpg"),
+    },
+  ];
+}

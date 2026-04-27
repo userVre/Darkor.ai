@@ -669,6 +669,15 @@ export const deleteAccountData = mutationGeneric({
       if (generation.storageId) {
         await ctx.storage.delete(generation.storageId);
       }
+      for (const referenceStorageId of generation.referenceImageStorageIds ?? []) {
+        await ctx.storage.delete(referenceStorageId);
+      }
+      if (generation.maskImageStorageId) {
+        await ctx.storage.delete(generation.maskImageStorageId);
+      }
+      if (generation.sourceImageStorageId) {
+        await ctx.storage.delete(generation.sourceImageStorageId);
+      }
       await ctx.db.delete(generation._id);
     }
 

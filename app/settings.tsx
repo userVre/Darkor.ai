@@ -271,6 +271,7 @@ export default function SettingsScreen() {
           },
         },
       ],
+      { cancelable: true },
     );
   };
 

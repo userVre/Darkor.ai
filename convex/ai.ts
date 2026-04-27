@@ -11,7 +11,7 @@ const GEMINI_SUGGEST_MAX_DIMENSION = 1152;
 const GEMINI_SUGGEST_MAX_INLINE_BYTES = 3 * 1024 * 1024;
 const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
 
-type ServiceType = "paint" | "floor" | "redesign";
+type ServiceType = "paint" | "floor" | "redesign" | "layout";
 
 type DetectionPoint = {
   x: number;
@@ -112,7 +112,7 @@ export function normalizeGenerationError(message?: string | null) {
     normalized.includes("safety") ||
     normalized.includes("moderation")
   ) {
-    return "This image request was refused for safety reasons. Try a different photo or prompt.";
+    return "Design could not be generated due to content safety guidelines. Please try a different photo.";
   }
 
   if (
@@ -358,6 +358,15 @@ function buildFallbackOrchestration(args: {
     };
   }
 
+  if (args.serviceType === "layout") {
+    return {
+      style: "Layout Optimization",
+      customPrompt: "Rearrange the existing furniture into a more ergonomic layout with stronger circulation and calmer spatial flow while preserving the architecture.",
+      reason: "Fallback layout optimization selected for stronger comfort and circulation.",
+      source: "fallback" as const,
+    };
+  }
+
   return {
     style: styleDirection,
     styles: dedupeSuggestions([args.style, ...(args.styleSelections ?? [])], args.style),
@@ -416,12 +425,16 @@ export async function requestGeminiDesignOrchestration(args: {
       ? '{"style":"...","wallColor":"...","reason":"..."}'
       : args.serviceType === "floor"
         ? '{"style":"...","floorMaterial":"...","reason":"..."}'
+        : args.serviceType === "layout"
+          ? '{"style":"...","customPrompt":"...","reason":"..."}'
         : '{"style":"...","styles":["...","..."],"paletteId":"...","fusionPrompt":"...","reason":"..."}';
   const taskInstruction =
     args.serviceType === "paint"
       ? "Analyze the room's current furniture, lighting, and materials, then choose the best professional wall color for a premium final result."
       : args.serviceType === "floor"
         ? "Analyze the room's current furniture, lighting, and materials, then choose the best professional floor material and finish for a premium final result."
+        : args.serviceType === "layout"
+          ? "Analyze the room's current furniture, circulation paths, and architectural shell, then propose the best professional furniture rearrangement strategy for a premium final result."
         : "Analyze this uploaded room, house, facade, or garden image and recommend the single strongest architectural direction plus the strongest palette direction for a premium final result. If multiple styles were provided, resolve them into a refined fusion rather than a list of disconnected themes.";
 
   const prompt = [
@@ -488,6 +501,7 @@ export async function requestGeminiDesignOrchestration(args: {
       paletteId?: string;
       wallColor?: string;
       floorMaterial?: string;
+      customPrompt?: string;
       fusionPrompt?: string;
       reason?: string;
     };
@@ -504,7 +518,7 @@ export async function requestGeminiDesignOrchestration(args: {
       paletteId: trimOptional(parsed.paletteId) ?? fallback.paletteId,
       wallColor: trimOptional(parsed.wallColor) ?? fallback.wallColor,
       floorMaterial: trimOptional(parsed.floorMaterial) ?? fallback.floorMaterial,
-      customPrompt: fallback.customPrompt,
+      customPrompt: trimOptional(parsed.customPrompt) ?? fallback.customPrompt,
       fusionPrompt: trimOptional(parsed.fusionPrompt) ?? fallback.fusionPrompt,
       reason: trimOptional(parsed.reason) ?? fallback.reason,
       source: "gemini" as const,

@@ -35,13 +35,10 @@
         "backgroundColor": "#121212"
       },
       "permissions": [
-        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
-        "android.permission.READ_MEDIA_IMAGES",
-        "android.permission.READ_MEDIA_VIDEO",
-        "android.permission.READ_MEDIA_AUDIO"
+        "android.permission.READ_MEDIA_IMAGES"
       ]
     },
     "plugins": [
@@ -59,21 +56,21 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow HomeDecor AI to access your camera to take room photos?",
+          "cameraPermission": "We need camera access so you can snap a photo of your room to redesign it.",
           "microphonePermission": false
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow HomeDecor AI to access your photos to upload room images?",
-          "cameraPermission": "Allow HomeDecor AI to access your camera to take room photos?"
+          "photosPermission": "We need photo access so you can upload room images for AI redesigns.",
+          "cameraPermission": "We need camera access so you can snap a photo of your room to redesign it."
         }
       ],
       [
         "expo-media-library",
         {
-          "photosPermission": "HomeDecor AI needs access to save your redesigned images."
+          "photosPermission": "We need photo library access so you can save your redesigned images to your device."
         }
       ],
       [

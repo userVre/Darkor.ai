@@ -93,7 +93,11 @@
         "title": "Floor Restyle",
         "description": "Elevate your room's foundation with premium materials and finishes."
       },
-      "cta": "Try This"
+      "cta": "Try This",
+      "smartSpacePlanning": {
+        "title": "Smart Space Planning",
+        "description": "AI-driven furniture rearrangement to maximize your room's space and comfort."
+      }
     }
   },
   "paywall": {
@@ -360,11 +364,18 @@
   },
   "processing": {
     "title": "AI is crafting your architectural masterpiece...",
-    "eta": "Your vision will be ready in ~15 seconds.",
+    "eta": "Your vision will be ready shortly.",
+    "etaFree": "Your layout will unlock in ~15 seconds.",
+    "etaPro": "Pro processing is running at high speed.",
     "cancelKeepCredit": "Cancel and keep my credit",
     "status": {
       "analyzingGeometry": "Analyzing architectural geometry...",
+      "analyzingSpatialFlow": "Analyzing spatial flow...",
       "identifyingSurfaces": "Identifying surfaces and structural lines...",
+      "optimizingLayout": "Optimizing layout...",
+      "improvingLightFlow": "Improving natural light flow...",
+      "refiningComfort": "Refining ergonomic comfort...",
+      "finalizingLayout": "Finalizing your optimized layout...",
       "applyingStyle": "Applying your selected design direction...",
       "renderingMaterials": "Rendering materials and lighting...",
       "addingDetails": "Refining the final details...",
@@ -385,7 +396,7 @@
       "emptyTitle": "Upload Your Vision",
       "emptySubtitle": "Redesign and Beautify your home.",
       "removePhoto": "Remove selected photo",
-      "cta": "Upload"
+      "cta": "Upload Reference Photo"
     },
     "interior": {
       "stepTwoTitle": "Identify Your Space",
@@ -642,6 +653,12 @@
         "stainedPlaster": "Stained Plaster",
         "dampStreaks": "Damp Streaks"
       }
+    },
+    "smartSpacePlanning": {
+      "title": "Smart Space Planning",
+      "description": "Upload a room photo to refine furniture placement, circulation, and spatial comfort before generating.",
+      "uploadCta": "Upload Reference Photo",
+      "processing": "AI is analyzing circulation, furniture balance, and spatial fluidity to compose a more ergonomic layout."
     }
   },
   "workspace": {
@@ -654,9 +671,10 @@
       "tryAnotherPrompt": "Please go back and try another prompt."
     },
     "processing": {
-      "default": "HomeDecor AI is preserving the architecture while composing a refined redesign.",
+      "default": "AI is optimizing ergonomic layout and spatial fluidity while composing a refined redesign.",
       "floor": "HomeDecor AI is reading perspective, locking the floor plane, and composing the new material with premium detail.",
-      "paint": "HomeDecor AI is isolating the wall planes and layering your selected finish with gallery-grade realism."
+      "paint": "HomeDecor AI is isolating the wall planes and layering your selected finish with gallery-grade realism.",
+      "smartSpacePlanning": "AI is analyzing circulation, furniture balance, and spatial fluidity to compose a more ergonomic layout."
     },
     "services": {
       "interior": "Interior Redesign",
@@ -837,8 +855,8 @@
       },
       "modes": {
         "preserve": {
-          "title": "Structural Preservation",
-          "description": "Preserve your room's architectural DNA while flawlessly refreshing its aesthetic."
+          "title": "Layout Optimization",
+          "description": "Rework furniture placement and decor to improve openness, daylight flow, and everyday comfort while preserving walls and windows."
         },
         "renovate": {
           "title": "Renovation Design",
@@ -940,7 +958,7 @@
     "tabs": {
       "home": "Interiors",
       "exterior": "Exteriors",
-        "garden": "Landscapes"
+      "garden": "Landscapes"
     },
     "groups": {
       "kitchen": "Kitchen",

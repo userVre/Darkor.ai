@@ -87,6 +87,7 @@ import {InteriorRedesignStepFour} from "../../components/interior-redesign-step-
 import {InteriorRedesignStepOne} from "../../components/interior-redesign-step-one";
 import {InteriorRedesignStepThree} from "../../components/interior-redesign-step-three";
 import {InteriorRedesignStepTwo} from "../../components/interior-redesign-step-two";
+import {LayoutOptimizationWizard} from "../../components/layout-optimization-wizard";
 import {LuxPressable} from "../../components/lux-pressable";
 import {PaintWizard} from "../../components/paint-wizard";
 import {useProSuccess} from "../../components/pro-success-context";
@@ -225,7 +226,7 @@ type ArchiveGeneration = {
   sourceImageUrl?: string | null;
   style?: string | null;
   roomType?: string | null;
-  serviceType?: "paint" | "floor" | "redesign" | null;
+  serviceType?: "paint" | "floor" | "redesign" | "layout" | null;
   watermarkRequired?: boolean | null;
   modeId?: string | null;
   paletteId?: string | null;
@@ -620,6 +621,7 @@ const EditorActionButton = memo(function EditorActionButton({
 
 const WORKSPACE_GENERATION_PROGRESS_MS = 15_000;
 const WORKSPACE_GENERATION_PROGRESS_MAX = 0.9;
+const WORKSPACE_FREE_GENERATION_MIN_WAIT_MS = 15_000;
 const ROOM_CARD_MEDIA_HEIGHT = 154;
 const STYLE_CARD_MEDIA_HEIGHT = 136;
 const ROOM_CARD_MEDIA_BOTTOM_CROP = 44;
@@ -1813,6 +1815,10 @@ function ModeDifferencePreview({ mode, active }: { mode: ModeOption; active: boo
 }
 
 function getServiceLabel(t: ReturnType<typeof useTranslation>["t"], serviceType: string) {
+  if (serviceType === "layout") {
+    return t("home.tools.smartSpacePlanning.title");
+  }
+
   const keyMap: Record<string, string> = {
     interior: "workspace.services.interior",
     exterior: "workspace.services.exterior",
@@ -1828,6 +1834,7 @@ function inferBoardServiceType(styleLabel?: string | null, roomLabel?: string | 
   const combined = `${styleLabel ?? ""} ${roomLabel ?? ""}`.toLowerCase();
   if (combined.includes("paint")) return "paint";
   if (combined.includes("floor")) return "floor";
+  if (combined.includes("layout")) return "layout";
   return null;
 }
 
@@ -1841,6 +1848,9 @@ function getProcessingStatusCopy(t: ReturnType<typeof useTranslation>["t"], serv
   }
   if (serviceType === "floor") {
     return t("workspace.processing.floor");
+  }
+  if (serviceType === "layout") {
+    return "AI is analyzing circulation, furniture balance, and spatial fluidity to compose a more ergonomic layout.";
   }
   return t("workspace.processing.default");
 }
@@ -2004,6 +2014,7 @@ function getServiceType(serviceKey: string) {
   if (serviceKey.includes("garden")) return "garden";
   if (serviceKey.includes("floor")) return "floor";
   if (serviceKey.includes("paint")) return "paint";
+  if (serviceKey.includes("layout")) return "layout";
   return "interior";
 }
 
@@ -2165,6 +2176,9 @@ export default function WorkspaceScreen() {
   const [wizardNavDirection, setWizardNavDirection] = useState<1 | -1>(1);
   const [processingStatusIndex, setProcessingStatusIndex] = useState(0);
   const [processingProgress, setProcessingProgress] = useState(0);
+  const [isProcessingGateActive, setIsProcessingGateActive] = useState(false);
+  const [processingGateStartedAt, setProcessingGateStartedAt] = useState<number | null>(null);
+  const [processingGateUntil, setProcessingGateUntil] = useState<number | null>(null);
   const [, setIsServiceProcessing] = useState(false);
   const [isServiceStepFlowActive, setIsServiceStepFlowActive] = useState(false);
   const [, setPaintTool] = useState<PaintTool>("brush");
@@ -2195,6 +2209,7 @@ export default function WorkspaceScreen() {
   const boardHighlightTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const reviewHandledRef = useRef(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const processingGateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const generationAlertedFailureRef = useRef<string | null>(null);
   const handledGenerationTransitionRef = useRef<string | null>(null);
   const paintCurrentStrokeRef = useRef<PaintStroke | null>(null);
@@ -2215,8 +2230,9 @@ export default function WorkspaceScreen() {
   const isGardenService = serviceType === "garden";
   const isFloorService = serviceType === "floor";
   const isPaintService = serviceType === "paint";
+  const isLayoutService = serviceType === "layout";
   const isLeanGenerationService = isExteriorService || isGardenService;
-  const isRedesignWizardActive = !isPaintService && !isFloorService && workflowStep <= 3;
+  const isRedesignWizardActive = !isPaintService && !isFloorService && !isLayoutService && workflowStep <= 3;
   const selectedImage = useMemo(
     () => selectedImages[currentDisplayIndex] ?? selectedImages[0] ?? null,
     [currentDisplayIndex, selectedImages],
@@ -2229,7 +2245,7 @@ export default function WorkspaceScreen() {
     () => (typeof presetRoom === "string" && presetRoom.trim().length > 0 ? `${serviceType}:${presetRoom.trim().toLowerCase()}` : null),
     [presetRoom, serviceType],
   );
-  const isWizardFlowActive = (isPaintService || isFloorService) ? isServiceStepFlowActive : isRedesignWizardActive;
+  const isWizardFlowActive = (isPaintService || isFloorService || isLayoutService) ? isServiceStepFlowActive : isRedesignWizardActive;
   const shouldHideNativeTabBar = (pathname === "/workspace" || pathname === "/create") && isFocused && isWizardFlowActive;
   const presetRoomOptions =
     serviceType === "exterior"
@@ -2256,11 +2272,11 @@ export default function WorkspaceScreen() {
   }, [setIsFlowActive, shouldHideNativeTabBar]);
 
   useEffect(() => {
-    if (!isPaintService && !isFloorService) {
+    if (!isPaintService && !isFloorService && !isLayoutService) {
       setIsServiceProcessing(false);
       setIsServiceStepFlowActive(false);
     }
-  }, [isFloorService, isPaintService]);
+  }, [isFloorService, isLayoutService, isPaintService]);
 
   useEffect(() => {
     setDraftImage(selectedImage ?? null);
@@ -2410,6 +2426,9 @@ export default function WorkspaceScreen() {
     return () => {
       if (toastTimeoutRef.current) {
         clearTimeout(toastTimeoutRef.current);
+      }
+      if (processingGateTimeoutRef.current) {
+        clearTimeout(processingGateTimeoutRef.current);
       }
     };
   }, []);
@@ -2590,8 +2609,25 @@ export default function WorkspaceScreen() {
     void persistLocalBoardItems(viewerId, snapshot);
   }, [boardItems, viewerId]);
 
+  const activeLoadingModeId = (activeBoardItem?.modeId as ModeOption["id"] | null) ?? selectedModeId ?? null;
+  const isLayoutOptimizationActive = serviceType === "interior" && activeLoadingModeId === "preserve";
+  const processingStatuses = useMemo(
+    () =>
+      isLayoutOptimizationActive
+        ? [
+            t("processing.status.analyzingSpatialFlow"),
+            t("processing.status.optimizingLayout"),
+            t("processing.status.improvingLightFlow"),
+            t("processing.status.refiningComfort"),
+            t("processing.status.finalizingLayout"),
+          ]
+        : generationStatusMessages,
+    [generationStatusMessages, isLayoutOptimizationActive, t],
+  );
+
   useEffect(() => {
-    const isProcessingStep = workflowStep === 5 && activeBoardItem?.status === "processing";
+    const isProcessingStep =
+      workflowStep === 5 && (activeBoardItem?.status === "processing" || isProcessingGateActive);
     if (!isProcessingStep) {
       setProcessingStatusIndex(0);
       setProcessingProgress(0);
@@ -2601,12 +2637,15 @@ export default function WorkspaceScreen() {
     setProcessingStatusIndex(0);
     setProcessingProgress(0);
     const statusInterval = setInterval(() => {
-          setProcessingStatusIndex((current) => Math.min(current + 1, generationStatusMessages.length - 1));
+          setProcessingStatusIndex((current) => Math.min(current + 1, processingStatuses.length - 1));
     }, 3_000);
-    const progressStartedAt = Date.now();
+    const progressStartedAt = processingGateStartedAt ?? Date.now();
+    const progressDuration = isProcessingGateActive && processingGateUntil && processingGateStartedAt
+      ? Math.max(processingGateUntil - processingGateStartedAt, 1)
+      : WORKSPACE_GENERATION_PROGRESS_MS;
     const progressInterval = setInterval(() => {
       const elapsed = Date.now() - progressStartedAt;
-      const nextProgress = Math.min((elapsed / WORKSPACE_GENERATION_PROGRESS_MS) * WORKSPACE_GENERATION_PROGRESS_MAX, WORKSPACE_GENERATION_PROGRESS_MAX);
+      const nextProgress = Math.min((elapsed / progressDuration) * WORKSPACE_GENERATION_PROGRESS_MAX, WORKSPACE_GENERATION_PROGRESS_MAX);
       setProcessingProgress(nextProgress);
     }, 120);
 
@@ -2614,7 +2653,15 @@ export default function WorkspaceScreen() {
       clearInterval(statusInterval);
       clearInterval(progressInterval);
     };
-  }, [activeBoardItem?.id, activeBoardItem?.status, generationStatusMessages.length, workflowStep]);
+  }, [
+    activeBoardItem?.id,
+    activeBoardItem?.status,
+    isProcessingGateActive,
+    processingGateStartedAt,
+    processingGateUntil,
+    processingStatuses.length,
+    workflowStep,
+  ]);
 
   const ratioSpec = useMemo(() => resolveAspectRatio(selectedAspectRatio), [selectedAspectRatio]);
   const wizardColumnGap = 16;
@@ -3381,11 +3428,28 @@ export default function WorkspaceScreen() {
     const hasResultImage = hasGenerationImage(resultImageUrl);
 
     if (currentGenerationStatus === "ready" && hasResultImage) {
+      if (isProcessingGateActive) {
+        const remainingMs = Math.max((processingGateUntil ?? 0) - Date.now(), 0);
+        if (remainingMs > 0) {
+          if (!processingGateTimeoutRef.current) {
+            processingGateTimeoutRef.current = setTimeout(() => {
+              processingGateTimeoutRef.current = null;
+              setIsProcessingGateActive(false);
+            }, remainingMs);
+          }
+          return;
+        }
+
+        setIsProcessingGateActive(false);
+      }
+
       if (handledGenerationTransitionRef.current === currentGeneration.id) {
         return;
       }
       handledGenerationTransitionRef.current = currentGeneration.id;
       setIsGenerating(false);
+      setProcessingGateStartedAt(null);
+      setProcessingGateUntil(null);
       if (generatedImageUrl !== resultImageUrl) {
         setGeneratedImageUrl(resultImageUrl);
       }
@@ -3414,12 +3478,30 @@ export default function WorkspaceScreen() {
       && generationAlertedFailureRef.current !== currentGeneration.id
     ) {
       setIsGenerating(false);
+      setIsProcessingGateActive(false);
+      setProcessingGateStartedAt(null);
+      setProcessingGateUntil(null);
+      if (processingGateTimeoutRef.current) {
+        clearTimeout(processingGateTimeoutRef.current);
+        processingGateTimeoutRef.current = null;
+      }
       generationAlertedFailureRef.current = currentGeneration.id;
       handledGenerationTransitionRef.current = currentGeneration.id;
       setPendingReviewState(null);
       showToast(getFriendlyGenerationError(currentGeneration.errorMessage ?? GENERATION_FAILED_TOAST));
     }
-  }, [boardItems, effectiveSignedIn, generatedImageUrl, generationId, isGenerating, pendingReviewState, router, showToast]);
+  }, [
+    boardItems,
+    effectiveSignedIn,
+    generatedImageUrl,
+    generationId,
+    isGenerating,
+    isProcessingGateActive,
+    pendingReviewState,
+    processingGateUntil,
+    router,
+    showToast,
+  ]);
 
   const canContinue = useMemo(() => {
     if (workflowStep === 0) return selectedImages.length > 0;
@@ -4280,6 +4362,14 @@ export default function WorkspaceScreen() {
       handledGenerationTransitionRef.current = null;
       setPendingReviewState(null);
       setIsGenerating(true);
+      if (processingGateTimeoutRef.current) {
+        clearTimeout(processingGateTimeoutRef.current);
+        processingGateTimeoutRef.current = null;
+      }
+      const minimumWaitMs = hasPaidAccess ? 0 : WORKSPACE_FREE_GENERATION_MIN_WAIT_MS;
+      setIsProcessingGateActive(minimumWaitMs > 0);
+      setProcessingGateStartedAt(requestStartedAt);
+      setProcessingGateUntil(requestStartedAt + minimumWaitMs);
       setActiveBoardItemId(temporaryBoardId);
       setPendingBoardItems((current) => [processingBoardItem, ...current.filter((item) => item.id !== temporaryBoardId)]);
 
@@ -4337,6 +4427,13 @@ export default function WorkspaceScreen() {
       }
     } catch (error) {
       setIsGenerating(false);
+      setIsProcessingGateActive(false);
+      setProcessingGateStartedAt(null);
+      setProcessingGateUntil(null);
+      if (processingGateTimeoutRef.current) {
+        clearTimeout(processingGateTimeoutRef.current);
+        processingGateTimeoutRef.current = null;
+      }
       const rawMessage = error instanceof Error ? error.message : "Please try again.";
       const isPaymentRequired = rawMessage === "Payment Required";
       const isLimitReached = rawMessage.toLowerCase().includes("limit reached");
@@ -5159,6 +5256,15 @@ export default function WorkspaceScreen() {
   if (isFloorService) {
     return (
       <FloorWizard
+        onFlowActiveChange={setIsServiceStepFlowActive}
+        onProcessingStateChange={setIsServiceProcessing}
+      />
+    );
+  }
+
+  if (isLayoutService) {
+    return (
+      <LayoutOptimizationWizard
         onFlowActiveChange={setIsServiceStepFlowActive}
         onProcessingStateChange={setIsServiceProcessing}
       />
@@ -7637,24 +7743,28 @@ export default function WorkspaceScreen() {
 
   if (workflowStep === 5) {
     const boardCardWidth = Math.max((width - 52) / 2, 150);
-    const editorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
+    const rawEditorImageUrl = activeBoardItem?.imageUrl ?? generatedImageUrl;
+    const editorImageUrl = isProcessingGateActive ? null : rawEditorImageUrl;
       const processingPreviewUri = draft.image?.uri ?? selectedImage?.uri ?? null;
       const beforeImageUrl = activeBoardItem
-        ? processingPreviewUri ?? activeBoardItem.originalImageUrl ?? editorImageUrl
-        : processingPreviewUri ?? editorImageUrl;
+        ? processingPreviewUri ?? activeBoardItem.originalImageUrl ?? rawEditorImageUrl
+        : processingPreviewUri ?? rawEditorImageUrl;
     const editorStyleLabel = normalizeStyleDisplayName(activeBoardItem?.styleLabel ?? selectedStyle) ?? "Custom";
     const editorRoomLabel = activeBoardItem?.roomLabel ?? selectedRoom ?? serviceLabel;
     const hasComparisonImages = Boolean(editorImageUrl && beforeImageUrl);
     const showSliderComparison = hasComparisonImages && showComparisonSlider;
-    const editorResolvedStatus = resolveGenerationStatus(activeBoardItem?.status, editorImageUrl);
-    const isEditorProcessing = editorResolvedStatus === "processing";
+    const editorResolvedStatus = resolveGenerationStatus(activeBoardItem?.status, rawEditorImageUrl);
+    const isEditorProcessing = editorResolvedStatus === "processing" || isProcessingGateActive;
     const isEditorFailed = editorResolvedStatus === "failed";
     const isEditorActionDisabled = !editorImageUrl || isEditorProcessing || isEditorFailed;
     const isSaveBusy = isDownloadingUltra || isDownloadingStandard;
     const isFeedbackBusy = isSubmittingFeedback !== null;
     const editorImageSource = editorImageUrl ? { uri: editorImageUrl } : null;
     const beforeImageSource = beforeImageUrl ? { uri: beforeImageUrl } : null;
-  const processingStatuses = generationStatusMessages;
+    const processingEtaLabel = hasPaidAccess ? t("processing.etaPro") : t("processing.etaFree");
+    const processingBadgeLabel = isLayoutOptimizationActive
+      ? t("workspace.localization.modes.preserve.title")
+      : editorStyleLabel;
 
     if (!activeBoardItem) {
       return (
@@ -7774,7 +7884,7 @@ export default function WorkspaceScreen() {
                   </Text>
                 </View>
                 <Text style={{ color: "#687076", fontSize: 16, lineHeight: 24, textAlign: "center", maxWidth: 360, ...fonts.medium }}>
-                  {t("processing.eta")}
+                  {processingEtaLabel}
                 </Text>
               </View>
 
@@ -7823,8 +7933,8 @@ export default function WorkspaceScreen() {
                       right: 22,
                       height: 72,
                       borderRadius: 999,
-                      backgroundColor: "rgba(37, 99, 235, 0.14)",
-                      shadowColor: "#2563EB",
+                      backgroundColor: "rgba(225, 29, 72, 0.10)",
+                      shadowColor: "#E11D48",
                       shadowOpacity: 0.18,
                       shadowRadius: 18,
                       shadowOffset: { width: 0, height: 6 },
@@ -7839,6 +7949,18 @@ export default function WorkspaceScreen() {
                       right: 28,
                       height: 2,
                       borderRadius: 999,
+                      backgroundColor: "#E11D48",
+                    }}
+                  />
+                  <MotiView
+                    animate={{ translateY: ["-18%", "114%"], opacity: [0, 0.72, 0] }}
+                    transition={{ duration: 1600, loop: true, type: "timing", delay: 90 }}
+                    style={{
+                      position: "absolute",
+                      left: 34,
+                      right: 34,
+                      height: 2,
+                      borderRadius: 999,
                       backgroundColor: "#2563EB",
                     }}
                   />
@@ -7851,7 +7973,7 @@ export default function WorkspaceScreen() {
                     </View>
                     <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "#111111", backgroundColor: "#FFFFFF", paddingHorizontal: spacing.sm, paddingVertical: spacing.sm }}>
                       <Text style={{ color: "#000000", fontSize: 11, lineHeight: 14, letterSpacing: 0.9, textTransform: "uppercase", ...fonts.semibold }}>
-                        {editorStyleLabel}
+                        {processingBadgeLabel}
                       </Text>
                     </View>
                   </View>

@@ -1,4 +1,4 @@
-type ServiceType = "paint" | "floor" | "redesign";
+type ServiceType = "paint" | "floor" | "redesign" | "layout";
 
 function trimOptional(value?: string | null) {
   const trimmed = value?.trim();
@@ -113,6 +113,20 @@ export function buildDesignPrompt(args: {
     ]);
   }
 
+  if (args.serviceType === "layout") {
+    return compact([
+      `A photorealistic, highly detailed furniture layout optimization for this ${roomType.toLowerCase()}.`,
+      "Use the uploaded room photo as the exact architectural shell and preserve the room geometry, windows, doors, ceiling, lighting direction, and camera perspective.",
+      "Rearrange only the existing furniture and decor into a calmer, more ergonomic composition with better circulation, clearer spacing, and stronger spatial flow.",
+      "Do not redesign the architecture, do not change the furniture set dramatically, and do not invent a different room type.",
+      "Prioritize balanced furniture placement, comfortable movement paths, clear focal points, and premium editorial realism.",
+      "Architectural photography style, believable furniture scale, natural styling, realistic shadows, refined material continuity.",
+      customPrompt ? `Additional direction: ${customPrompt}.` : undefined,
+      `Output in a ${aspectRatio} composition.`,
+      variationInstruction,
+    ]);
+  }
+
   return compact([
       smartSuggest
         ? `A photorealistic, highly detailed redesign of this ${roomType.toLowerCase()} where you choose the most compatible design style, palette, and materials for the space.`
@@ -149,6 +163,10 @@ export function buildDesignNegativePrompt(args: {
 
   if (args.serviceType === "paint" || args.serviceType === "floor") {
     shared.push("changes outside mask", "edited furniture", "altered lighting layout");
+  }
+
+  if (args.serviceType === "layout") {
+    shared.push("missing furniture", "extra furniture", "floating furniture", "changed architecture", "altered window placement");
   }
 
   return shared.join(", ");

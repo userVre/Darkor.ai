@@ -11,7 +11,8 @@ export type HomeToolCardItem = {
   image: ImageSourcePropType;
   title: string;
   description: string;
-  serviceParam: "interior" | "facade" | "garden" | "paint" | "floor";
+  serviceParam: "interior" | "facade" | "garden" | "paint" | "floor" | "layout";
+  topLeftRadius?: number;
 };
 
 type HomeToolCardProps = {
@@ -22,16 +23,17 @@ type HomeToolCardProps = {
 
 export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
   const { t } = useTranslation();
+  const topLeftRadius = item.topLeftRadius ?? 24;
 
   return (
     <LuxPressable
       accessibilityLabel={`${item.title}. ${item.description}`}
       accessibilityRole="button"
       onPress={() => onPress(item)}
-      style={[styles.card, style]}
+      style={[styles.card, { borderTopLeftRadius: topLeftRadius }, style]}
       scale={0.97}
     >
-      <View style={styles.imageWrap}>
+      <View style={[styles.imageWrap, { borderTopLeftRadius: topLeftRadius }]}>
         <Image source={item.image} style={styles.image} contentFit="cover" transition={0} cachePolicy="memory-disk" />
       </View>
 

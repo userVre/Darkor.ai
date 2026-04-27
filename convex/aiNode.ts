@@ -77,6 +77,17 @@ function buildAzurePrompt(prompt: string, negativePrompt: string) {
   return `${prompt}\n\nAvoid: ${negativePrompt}`;
 }
 
+function buildModeSpecificInstruction(args: {
+  serviceType: ServiceType;
+  modeId?: string;
+}) {
+  if (args.serviceType === "redesign" && args.modeId === "preserve") {
+    return "Analyze the room's current furniture layout. Redesign the space to maximize floor area, improve natural light flow, and create a more comfortable and ergonomic environment. Preserve the walls and windows but optimize the furniture placement and decor.";
+  }
+
+  return undefined;
+}
+
 function resolveAzureRenderProfile(args: {
   deploymentName: string;
   planUsed?: string;
@@ -442,11 +453,12 @@ export const generateDesign: any = internalActionGeneric({
     imageStorageId: v.id("_storage"),
     referenceImageStorageIds: v.optional(v.array(v.id("_storage"))),
     maskStorageId: v.optional(v.id("_storage")),
-    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign")),
+    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout")),
     roomType: v.string(),
     style: v.string(),
     styleSelections: v.optional(v.array(v.string())),
     colorPalette: v.string(),
+    modeId: v.optional(v.string()),
     customPrompt: v.optional(v.string()),
     targetColor: v.optional(v.string()),
     targetColorHex: v.optional(v.string()),
@@ -575,7 +587,13 @@ export const generateDesign: any = internalActionGeneric({
         style: resolvedStyle,
         styleSelections: resolvedStyleSelections,
         colorPalette: resolvedPalette,
-        customPrompt: resolvedCustomPrompt,
+        customPrompt: compactPromptSegments([
+          buildModeSpecificInstruction({
+            serviceType: args.serviceType as ServiceType,
+            modeId: trimOptional(args.modeId),
+          }),
+          resolvedCustomPrompt,
+        ]),
         targetColor: resolvedTargetColor,
         targetSurface: args.targetSurface,
         aspectRatio: args.aspectRatio,

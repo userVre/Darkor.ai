@@ -93,7 +93,11 @@
         "title": "Bodenneugestaltung",
         "description": "Werten Sie das Fundament Ihres Raums mit hochwertigen Materialien und Oberflächen auf."
       },
-      "cta": "Probieren Sie es aus"
+      "cta": "Probieren Sie es aus",
+      "smartSpacePlanning": {
+        "title": "Intelligente Raumplanung",
+        "description": "Optimiere das Layout deines Raums f?r maximalen Komfort und flie?ende Abst?nde."
+      }
     }
   },
   "paywall": {
@@ -356,7 +360,7 @@
     }
   },
   "processing": {
-    "title": "AI fertigt Ihr architektonisches Meisterwerk ...",
+    "title": "Die KI gestaltet Ihr architektonisches Meisterwerk...",
     "eta": "Ihre Vision ist in ~15 Sekunden fertig.",
     "cancelKeepCredit": "Stornieren und mein Guthaben behalten",
     "status": {
@@ -382,7 +386,7 @@
       "emptyTitle": "Laden Sie Ihre Vision hoch",
       "emptySubtitle": "Gestalten und verschönern Sie Ihr Zuhause.",
       "removePhoto": "Ausgewähltes Foto entfernen",
-      "cta": "Begin Your Transformation"
+      "cta": "Referenzfoto hochladen"
     },
     "interior": {
       "stepTwoTitle": "Choose Your Space",
@@ -639,6 +643,12 @@
         "stainedPlaster": "Gefleckter Gips",
         "dampStreaks": "Feuchte Streifen"
       }
+    },
+    "smartSpacePlanning": {
+      "title": "Intelligente Raumplanung",
+      "description": "Verfeinere die ergonomische Raumaufteilung und r?umliche Fluidit?t vor der Generierung.",
+      "uploadCta": "Referenzfoto hochladen",
+      "processing": "Die KI analysiert Bewegungsfl?sse, M?belbalance und r?umliche Fluidit?t, um ein ergonomischeres Layout zu gestalten."
     }
   },
   "workspace": {
@@ -651,9 +661,10 @@
       "tryAnotherPrompt": "Bitte gehen Sie zurück und versuchen Sie es mit einer anderen Eingabeaufforderung."
     },
     "processing": {
-      "default": "HomeDecor AI bewahrt die Architektur und erstellt gleichzeitig ein raffiniertes Redesign.",
+      "default": "Die KI optimiert ergonomische Raumaufteilung und r?umliche Fluidit?t, w?hrend sie ein verfeinertes Redesign komponiert.",
       "floor": "HomeDecor AI liest die Perspektive, fixiert die Bodenebene und komponiert das neue Material mit erstklassigen Details.",
-      "paint": "HomeDecor AI isoliert die Wandebenen und überlagert Ihr ausgewähltes Finish mit galerietauglichem Realismus."
+      "paint": "HomeDecor AI isoliert die Wandebenen und überlagert Ihr ausgewähltes Finish mit galerietauglichem Realismus.",
+      "smartSpacePlanning": "Die KI analysiert Bewegungsfl?sse, M?belbalance und r?umliche Fluidit?t, um ein ergonomischeres Layout zu gestalten."
     },
     "services": {
       "interior": "Neugestaltung des Innenraums",

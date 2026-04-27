@@ -1,14 +1,15 @@
 import {Settings} from "@/components/material-icons";
 import {useAuth} from "@clerk/expo";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {Asset} from "expo-asset";
 import {useRouter} from "expo-router";
 import {StatusBar} from "expo-status-bar";
-import {useCallback, useEffect, useMemo} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {Alert, I18nManager, Pressable, ScrollView, StyleSheet, Text, View} from "react-native";
+import {Alert, I18nManager, Modal, Pressable, ScrollView, StyleSheet, Text, View} from "react-native";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
-import {DS} from "../lib/design-system";
+import {DS, organicRadii, surfaceCard} from "../lib/design-system";
 import {ENABLE_GUEST_WIZARD_TEST_MODE} from "../lib/guest-testing";
 import {triggerHaptic} from "../lib/haptics";
 import {
@@ -22,6 +23,8 @@ import {HomeToolCard, type HomeToolCardItem} from "./home-tool-card";
 import {useViewerCredits} from "./viewer-credits-context";
 import {useWorkspaceDraft} from "./workspace-context";
 
+const FIRST_LAUNCH_DISCLOSURE_KEY = "homedecor:first-launch-disclosure-accepted";
+
 export function CreateOptionsScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
@@ -33,6 +36,7 @@ export function CreateOptionsScreen() {
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const sidePadding = 20;
   const headerHeight = insets.top + 70;
+  const [isDisclosureVisible, setIsDisclosureVisible] = useState(false);
   const toolCards = useMemo<HomeToolCardItem[]>(
     () => [
       {
@@ -70,6 +74,14 @@ export function CreateOptionsScreen() {
         description: t("home.tools.floor.description"),
         serviceParam: "floor",
       },
+      {
+        id: "layout-optimization",
+        image: require("../assets/media/discover/layout/layout-optimization-hero.jpg"),
+        title: t("home.tools.smartSpacePlanning.title"),
+        description: t("home.tools.smartSpacePlanning.description"),
+        serviceParam: "layout",
+        topLeftRadius: 40,
+      },
     ],
     [i18n.language, t],
   );
@@ -77,6 +89,21 @@ export function CreateOptionsScreen() {
   useEffect(() => {
     void Asset.loadAsync(toolCards.map((card) => card.image as number));
   }, [toolCards]);
+
+  useEffect(() => {
+    let active = true;
+
+    void (async () => {
+      const accepted = await AsyncStorage.getItem(FIRST_LAUNCH_DISCLOSURE_KEY);
+      if (active && accepted !== "true") {
+        setIsDisclosureVisible(true);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const openDesignFlowPaywall = useCallback((redirectTo: string) => {
     router.push({
@@ -131,6 +158,22 @@ export function CreateOptionsScreen() {
     router.push("/paywall");
   };
 
+  const handleAcceptDisclosure = useCallback(async () => {
+    triggerHaptic();
+    await AsyncStorage.setItem(FIRST_LAUNCH_DISCLOSURE_KEY, "true");
+    setIsDisclosureVisible(false);
+  }, []);
+
+  const handleOpenPrivacy = useCallback(() => {
+    triggerHaptic();
+    router.push({ pathname: "/legal-viewer", params: { document: "privacy" } } as never);
+  }, [router]);
+
+  const handleOpenTerms = useCallback(() => {
+    triggerHaptic();
+    router.push({ pathname: "/legal-viewer", params: { document: "terms" } } as never);
+  }, [router]);
+
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
@@ -180,6 +223,29 @@ export function CreateOptionsScreen() {
           ))}
         </View>
       </ScrollView>
+
+      <Modal animationType="fade" onRequestClose={() => undefined} transparent visible={isDisclosureVisible}>
+        <View style={styles.disclosureOverlay}>
+          <View style={[styles.disclosureCard, { marginTop: Math.max(insets.top + 24, 40) }]}>
+            <Text style={styles.disclosureEyebrow}>{t("firstLaunchDisclosure.eyebrow")}</Text>
+            <Text style={styles.disclosureTitle}>{t("firstLaunchDisclosure.title")}</Text>
+            <Text style={styles.disclosureBody}>{t("firstLaunchDisclosure.body")}</Text>
+
+            <View style={styles.disclosureLinkRow}>
+              <Pressable accessibilityRole="button" onPress={handleOpenPrivacy} style={styles.disclosureLinkButton}>
+                <Text style={styles.disclosureLinkText}>{t("settings.rows.privacyPolicy")}</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={handleOpenTerms} style={styles.disclosureLinkButton}>
+                <Text style={styles.disclosureLinkText}>{t("settings.rows.termsOfUse")}</Text>
+              </Pressable>
+            </View>
+
+            <Pressable accessibilityRole="button" onPress={() => void handleAcceptDisclosure()} style={styles.disclosurePrimaryButton}>
+              <Text style={styles.disclosurePrimaryButtonText}>{t("firstLaunchDisclosure.cta")}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -255,5 +321,60 @@ const styles = StyleSheet.create({
   },
   toolList: {
     gap: 18,
+  },
+  disclosureOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.2)",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  disclosureCard: {
+    ...surfaceCard("#FFFFFF"),
+    ...organicRadii(44, 18),
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+    gap: 14,
+  },
+  disclosureEyebrow: {
+    color: DS.colors.textTertiary,
+    ...DS.typography.label,
+  },
+  disclosureTitle: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.cardTitle,
+  },
+  disclosureBody: {
+    color: DS.colors.textSecondary,
+    ...DS.typography.body,
+  },
+  disclosureLinkRow: {
+    flexDirection: "row",
+    gap: 12,
+    flexWrap: "wrap",
+  },
+  disclosureLinkButton: {
+    minHeight: 40,
+    paddingHorizontal: 16,
+    justifyContent: "center",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: DS.colors.border,
+    backgroundColor: DS.colors.surfaceHigh,
+  },
+  disclosureLinkText: {
+    color: DS.colors.textPrimary,
+    ...DS.typography.bodySm,
+  },
+  disclosurePrimaryButton: {
+    minHeight: 52,
+    marginTop: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 18,
+    backgroundColor: DS.colors.accent,
+  },
+  disclosurePrimaryButtonText: {
+    color: DS.colors.textInverse,
+    ...DS.typography.button,
   },
 });

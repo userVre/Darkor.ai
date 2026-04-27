@@ -319,7 +319,7 @@ export const startGeneration = mutationGeneric({
     imageStorageId: v.id("_storage"),
     referenceImageStorageIds: v.optional(v.array(v.id("_storage"))),
     maskStorageId: v.optional(v.id("_storage")),
-    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign")),
+    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout")),
     selection: v.string(),
     styleSelections: v.optional(v.array(v.string())),
     roomType: v.string(),
@@ -382,6 +382,8 @@ export const startGeneration = mutationGeneric({
         ? `${normalizedSelection} Paint`
         : args.serviceType === "floor"
           ? `${normalizedSelection} Floor`
+          : args.serviceType === "layout"
+            ? `${normalizedSelection} Layout`
           : normalizedSelection);
     const prompt = buildAIDesignPrompt({
       serviceType: args.serviceType,
@@ -420,6 +422,8 @@ export const startGeneration = mutationGeneric({
           ? "Smart Wall Paint"
           : args.serviceType === "floor"
             ? "Floor Restyle"
+            : args.serviceType === "layout"
+              ? "Layout Optimization"
             : "Complete Redesign",
       qualityTier: enforcedGenerationPolicy.qualityTier,
       outputResolution: enforcedGenerationPolicy.outputResolution,
@@ -460,6 +464,7 @@ export const startGeneration = mutationGeneric({
         targetColorCategory: trimOptional(args.targetColorCategory),
         targetSurface: trimOptional(args.targetSurface),
         aspectRatio: normalizedAspectRatio,
+        modeId: trimOptional(args.modeId),
         regenerate: args.regenerate,
         aiSuggestedStyle: trimOptional(args.aiSuggestedStyle),
         aiSuggestedPaletteId: trimOptional(args.aiSuggestedPaletteId),
@@ -661,6 +666,9 @@ export const deleteGeneration = mutationGeneric({
     }
     if (item.sourceImageStorageId) {
       await ctx.storage.delete(item.sourceImageStorageId);
+    }
+    for (const referenceStorageId of item.referenceImageStorageIds ?? []) {
+      await ctx.storage.delete(referenceStorageId);
     }
 
     await ctx.db.delete(args.id);

@@ -308,7 +308,7 @@ function WeeklyPlanCard({
 
           <View style={[styles.noPaymentRow, { flexDirection: getDirectionalRow(isRTL), justifyContent: getDirectionalAlignment(isRTL) }]}>
             <Shield color={TEXT_MUTED} size={14} strokeWidth={2.1} />
-            <Text style={[styles.noticeText, localizedFonts.medium]}>{t("paywall.noPaymentNow")}</Text>
+            <Text style={[styles.noticeText, localizedFonts.medium]}>{t("paywall.trialTerms", { duration: t("paywall.freeTrial") })}</Text>
           </View>
         </View>
       </FadeSwap>
@@ -566,6 +566,19 @@ export default function PaywallScreen() {
   const ctaSubtext = useMemo(
     () => getTrialCtaSubtext(freeTrialEnabled, thenWeeklyPriceText, weeklyPriceText),
     [freeTrialEnabled, thenWeeklyPriceText, weeklyPriceText],
+  );
+  const priceDisclosure = useMemo(
+    () =>
+      freeTrialEnabled
+        ? t("paywall.priceDisclosureWithTrial", {
+            duration: t("paywall.freeTrial"),
+            trialPrice: t("paywall.zeroPrice"),
+            renewalPrice: weeklyPriceText,
+          })
+        : t("paywall.priceDisclosureNoTrial", {
+            renewalPrice: weeklyPriceText,
+          }),
+    [freeTrialEnabled, t, weeklyPriceText],
   );
   const cachedOfferingPackages = useMemo(
     () =>
@@ -1060,6 +1073,18 @@ export default function PaywallScreen() {
             />
           </View>
 
+          <View style={styles.transparencyCard}>
+            <Text style={[styles.transparencyTitle, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>
+              {t("paywall.billingTransparencyTitle")}
+            </Text>
+            <Text style={[styles.transparencyBody, localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }]}>
+              {priceDisclosure}
+            </Text>
+            <Text style={[styles.transparencyBody, localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }]}>
+              {t("paywall.renewalTerms")}
+            </Text>
+          </View>
+
           {errorMessage ? (
             <Text style={[styles.errorText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{errorMessage}</Text>
           ) : null}
@@ -1073,7 +1098,7 @@ export default function PaywallScreen() {
             ) : (
               <FadeSwap swapKey={freeTrialEnabled ? "cta-trial" : "cta-continue"} style={styles.ctaContent}>
                 <View style={[styles.ctaLabelRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{freeTrialEnabled ? t("paywall.tryForFree") : t("paywall.continue")}</Text>
+                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{freeTrialEnabled ? t("paywall.ctaGooglePlayTrial") : t("paywall.ctaGooglePlayContinue")}</Text>
                   <Text
                     style={[
                       styles.ctaArrow,
@@ -1086,7 +1111,7 @@ export default function PaywallScreen() {
                   </Text>
                 </View>
                 <Text style={[styles.ctaSubtext, localizedFonts.medium, FORCED_LTR_TEXT_STYLE]}>
-                  {ctaSubtext}
+                  {freeTrialEnabled ? t("paywall.googlePlaySheetTrial") : t("paywall.googlePlaySheetStandard", { price: ctaSubtext })}
                 </Text>
               </FadeSwap>
             )}
@@ -1293,6 +1318,29 @@ const styles = StyleSheet.create({
   weeklyWrapper: {
     marginTop: 18,
     marginHorizontal: 20,
+  },
+  transparencyCard: {
+    marginHorizontal: 20,
+    marginBottom: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: PANEL_BORDER,
+    backgroundColor: SCREEN_BG,
+    gap: 6,
+  },
+  transparencyTitle: {
+    color: TEXT_PRIMARY,
+    fontSize: 13,
+    lineHeight: 16,
+    ...fonts.bold,
+  },
+  transparencyBody: {
+    color: TEXT_MUTED,
+    fontSize: 12,
+    lineHeight: 16,
+    ...fonts.regular,
   },
   planCard: {
     minHeight: 68,
