@@ -1,5 +1,6 @@
 import {type Theme, useTheme} from "@/styles/theme";
 import {Image} from "expo-image";
+import {LinearGradient} from "expo-linear-gradient";
 import {AnimatePresence, MotiView} from "moti";
 import {memo, useEffect, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
@@ -27,6 +28,10 @@ const PROGRESS_MAX = 0.94;
 const PROGRESS_EASING = 0.08;
 const STATUS_ROTATION_MS = 3_000;
 const GENERATION_PROGRESS_COLOR = DS.colors.accent;
+const SCAN_DURATION_MS = 2_200;
+const SCAN_LINE_HEIGHT = 72;
+const SCAN_TRACK_INSET = 12;
+const SCAN_LINE_CORE_HEIGHT = 4;
 
 type ServiceProcessingScreenProps = {
   imageUri?: string | null;
@@ -72,6 +77,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   const scanOpacity = useSharedValue(1);
   const beforeOpacity = useSharedValue(1);
   const afterOpacity = useSharedValue(0);
+  const hasRevealedResult = Boolean(revealedImageUri);
 
   const subtitleSignature = activeSubtitlePhrases.join("|");
   const activeSubtitle = useMemo(
@@ -112,7 +118,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   }, []);
 
   useEffect(() => {
-    if (!complete) {
+    if (!hasRevealedResult) {
       scanOpacity.value = withTiming(1, { duration: 180 });
       beforeOpacity.value = withTiming(1, { duration: 180 });
       afterOpacity.value = withTiming(0, { duration: 180 });
@@ -121,13 +127,13 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
 
     setSubtitleIndex(Math.max(activeSubtitlePhrases.length - 1, 0));
     setProgress(1);
-    scanOpacity.value = withTiming(0, { duration: 320, easing: Easing.out(Easing.cubic) });
-    beforeOpacity.value = withTiming(revealedImageUri ? 0.18 : 1, { duration: 360, easing: Easing.out(Easing.cubic) });
-    afterOpacity.value = withTiming(revealedImageUri ? 1 : 0, { duration: 420, easing: Easing.out(Easing.cubic) });
-  }, [activeSubtitlePhrases.length, afterOpacity, beforeOpacity, complete, revealedImageUri, scanOpacity]);
+    scanOpacity.value = withTiming(0, { duration: 360, easing: Easing.out(Easing.cubic) });
+    beforeOpacity.value = withTiming(complete ? 0.08 : 0.22, { duration: 420, easing: Easing.out(Easing.cubic) });
+    afterOpacity.value = withTiming(1, { duration: 440, easing: Easing.out(Easing.cubic) });
+  }, [activeSubtitlePhrases.length, afterOpacity, beforeOpacity, complete, hasRevealedResult, scanOpacity]);
 
   useEffect(() => {
-    if (previewHeight <= 0 || complete) {
+    if (previewHeight <= 0 || hasRevealedResult) {
       cancelAnimation(scanProgress);
       return;
     }
@@ -135,8 +141,8 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
     scanProgress.value = 0;
     scanProgress.value = withRepeat(
       withTiming(1, {
-        duration: 1800,
-        easing: Easing.inOut(Easing.quad),
+        duration: SCAN_DURATION_MS,
+        easing: Easing.linear,
       }),
       -1,
       false,
@@ -145,11 +151,12 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
     return () => {
       cancelAnimation(scanProgress);
     };
-  }, [complete, previewHeight, scanProgress]);
+  }, [hasRevealedResult, previewHeight, scanProgress]);
 
   const scanLineStyle = useAnimatedStyle(() => {
-    const lineTravel = Math.max(previewHeight + 72, 0);
-    const translateY = interpolate(scanProgress.value, [0, 1], [-36, lineTravel]);
+    const topInset = SCAN_LINE_HEIGHT / 2;
+    const bottomInset = Math.max(previewHeight - SCAN_LINE_HEIGHT / 2, 0);
+    const translateY = interpolate(scanProgress.value, [0, 1], [topInset, bottomInset]);
 
     return {
       opacity: scanOpacity.value,
@@ -206,9 +213,21 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
             ) : null}
 
             <Animated.View style={[styles.scanSweepWrap, scanLineStyle]} pointerEvents="none">
-              <View style={styles.scanSweepBlur} />
+              <LinearGradient
+                colors={["rgba(255,255,255,0)", "rgba(59, 130, 246, 0.08)", "rgba(59, 130, 246, 0.22)", "rgba(255,255,255,0)"]}
+                locations={[0, 0.24, 0.7, 1]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={styles.scanTrail}
+              />
               <View style={styles.scanSweepGlow} />
-              <View style={styles.scanSweepCore} />
+              <LinearGradient
+                colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.92)", GENERATION_PROGRESS_COLOR, "rgba(255,255,255,0.96)", "rgba(255,255,255,0)"]}
+                locations={[0, 0.16, 0.5, 0.84, 1]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={styles.scanSweepCore}
+              />
             </Animated.View>
           </View>
         </View>
@@ -271,9 +290,9 @@ function createStyles(colors: Theme) {
     },
     scanSweepWrap: {
       position: "absolute",
-      left: 14,
-      right: 14,
-      height: 64,
+      left: SCAN_TRACK_INSET,
+      right: SCAN_TRACK_INSET,
+      height: SCAN_LINE_HEIGHT,
       justifyContent: "center",
     },
     content: {
@@ -386,43 +405,38 @@ function createStyles(colors: Theme) {
     cancelTextDisabled: {
       color: colors.borderLight,
     },
-    scanSweepBlur: {
+    scanTrail: {
       position: "absolute",
       left: 0,
       right: 0,
-      top: 8,
-      height: 44,
-      borderRadius: 999,
-      backgroundColor: "rgba(37, 99, 235, 0.16)",
-      shadowColor: "#2563EB",
-      shadowOpacity: 0.34,
-      shadowRadius: 26,
-      shadowOffset: { width: 0, height: 10 },
+      bottom: SCAN_LINE_CORE_HEIGHT + 6,
+      height: 52,
+      borderTopLeftRadius: 999,
+      borderTopRightRadius: 999,
     },
     scanSweepGlow: {
       position: "absolute",
-      left: 8,
-      right: 8,
-      top: 20,
-      height: 14,
+      left: 4,
+      right: 4,
+      bottom: SCAN_LINE_CORE_HEIGHT - 2,
+      height: 16,
       borderRadius: 999,
-      backgroundColor: "rgba(59, 130, 246, 0.38)",
-      shadowColor: "#2563EB",
-      shadowOpacity: 0.55,
+      backgroundColor: "rgba(59, 130, 246, 0.32)",
+      shadowColor: "#3B82F6",
+      shadowOpacity: 0.72,
       shadowRadius: 18,
       shadowOffset: { width: 0, height: 0 },
     },
     scanSweepCore: {
       position: "absolute",
-      left: 18,
-      right: 18,
-      top: 26,
-      height: 4,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: SCAN_LINE_CORE_HEIGHT,
       borderRadius: 999,
-      backgroundColor: "#2563EB",
       shadowColor: "#60A5FA",
-      shadowOpacity: 0.9,
-      shadowRadius: 12,
+      shadowOpacity: 1,
+      shadowRadius: 14,
       shadowOffset: { width: 0, height: 0 },
     },
   });
