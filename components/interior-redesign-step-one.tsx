@@ -17,6 +17,7 @@ withTiming,
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {triggerHaptic} from "../lib/haptics";
+import {TOOLS_ROUTE, WORKSPACE_ROUTE} from "../lib/routes";
 import {fonts} from "../styles/typography";
 import {DesignStepHeader, getDesignStepHeaderMetrics} from "./design-step-header";
 import {HomeToolsBottomNav} from "./home-tools-bottom-nav";
@@ -201,12 +202,12 @@ export function InteriorRedesignStepOne({
 
   const handleToolsPress = () => {
     triggerHaptic();
-    router.navigate("/");
+    router.replace(TOOLS_ROUTE as any);
   };
 
   const handleCreatePress = () => {
     triggerHaptic();
-    router.navigate("/workspace");
+    router.replace(WORKSPACE_ROUTE as any);
   };
 
   const handleDiscoverPress = () => {

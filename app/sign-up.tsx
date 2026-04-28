@@ -12,6 +12,7 @@ import {fonts} from "../styles/typography";
 import {LuxPressable} from "../components/lux-pressable";
 import {DS, HAIRLINE, SCREEN_SIDE_PADDING, glowShadow, surfaceCard} from "../lib/design-system";
 import {triggerHaptic} from "../lib/haptics";
+import {resolveSafeRoute, TOOLS_ROUTE} from "../lib/routes";
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
-  const nextRoute = typeof returnTo === "string" && returnTo.startsWith("/") ? returnTo : "/(tabs)";
+  const nextRoute = resolveSafeRoute(typeof returnTo === "string" ? returnTo : null, TOOLS_ROUTE);
 
   const handleSignUp = async () => {
     if (!isLoaded) return;

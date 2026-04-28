@@ -1,4 +1,5 @@
 import {ArrowLeft, X} from "@/components/material-icons";
+import {useRouter} from "expo-router";
 import {useState} from "react";
 import {useTranslation} from "react-i18next";
 import {I18nManager, Platform, Pressable, StyleSheet, Text, View} from "react-native";
@@ -11,9 +12,12 @@ getDirectionalArrowScale,
 getDirectionalOppositeAlignment,
 getDirectionalRow,
 } from "../lib/i18n/rtl";
-import {DiamondCreditPill} from "./diamond-credit-pill";
+import {triggerHaptic} from "../lib/haptics";
+import {CreditsBalanceSheet} from "./credits-balance-sheet";
+import {DiamondCreditPill, ProBadge} from "./diamond-credit-pill";
 import {ExitConfirmModal} from "./exit-confirm-modal";
 import {StepProgressSegments} from "./step-progress-segments";
+import {useViewerCredits} from "./viewer-credits-context";
 
 type DesignStepHeaderProps = {
   title?: string;
@@ -60,13 +64,14 @@ export function DesignStepHeader({
   step,
   totalSteps,
   horizontalInset,
-  onCreditsPress,
+  onCreditsPress: _onCreditsPress,
   onBack,
   onClose,
   backAccessibilityLabel = "Go back",
   closeAccessibilityLabel = "Close",
 }: DesignStepHeaderProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const isRTL = I18nManager.isRTL;
   const metrics = getDesignStepHeaderMetrics(insets.top);
@@ -74,7 +79,20 @@ export function DesignStepHeader({
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
+  const [isCreditsSheetVisible, setIsCreditsSheetVisible] = useState(false);
+  const { credits = 0, hasPaidAccess } = useViewerCredits();
   const resolvedTitle = title ?? t("app.name");
+
+  const handleCreditsTap = () => {
+    triggerHaptic();
+    setIsCreditsSheetVisible(true);
+  };
+
+  const handleUpgrade = () => {
+    triggerHaptic();
+    setIsCreditsSheetVisible(false);
+    router.push("/paywall");
+  };
   return (
     <>
       <View
@@ -114,14 +132,18 @@ export function DesignStepHeader({
                   />
                 </Pressable>
               ) : showCredits ? (
-                <DiamondCreditPill
-                  accessibilityLabel="Credits remaining"
-                  accessibilityRole={onCreditsPress ? "button" : "text"}
-                  count={creditCount ?? 0}
-                  onPress={onCreditsPress}
-                  style={styles.creditPill}
-                  variant="light"
-                />
+                hasPaidAccess ? (
+                  <ProBadge style={styles.proBadge} />
+                ) : (
+                  <DiamondCreditPill
+                    accessibilityLabel="Credits remaining"
+                    accessibilityRole="button"
+                    count={creditCount ?? 0}
+                    onPress={handleCreditsTap}
+                    style={styles.creditPill}
+                    variant="light"
+                  />
+                )
               ) : null}
             </View>
 
@@ -166,6 +188,14 @@ export function DesignStepHeader({
           setIsExitModalVisible(false);
           onClose();
         }}
+      />
+
+      <CreditsBalanceSheet
+        credits={credits}
+        hasPaidAccess={hasPaidAccess}
+        onClose={() => setIsCreditsSheetVisible(false)}
+        onUpgrade={handleUpgrade}
+        visible={isCreditsSheetVisible}
       />
     </>
   );
@@ -227,6 +257,9 @@ const styles = StyleSheet.create({
     minHeight: 40,
     paddingHorizontal: 12,
     paddingVertical: 8,
+  },
+  proBadge: {
+    minHeight: 40,
   },
   titleWrap: {
     flex: 1,

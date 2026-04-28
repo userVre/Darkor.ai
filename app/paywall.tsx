@@ -49,6 +49,7 @@ getDirectionalRow,
 getDirectionalTextAlign,
 } from "../lib/i18n/rtl";
 import {dismissLaunchPaywall} from "../lib/launch-paywall";
+import {resolveSafeRoute, TOOLS_ROUTE} from "../lib/routes";
 import {
 configureRevenueCat,
 fetchTieredPackage,
@@ -104,7 +105,6 @@ const HERO_CAROUSEL_DATA = Array.from({ length: HERO_IMAGES.length * HERO_CAROUS
 const HERO_CAROUSEL_INITIAL_INDEX = HERO_IMAGES.length * Math.floor(HERO_CAROUSEL_REPEAT_MULTIPLIER / 2);
 const AnimatedSvgCircle = Animated.createAnimatedComponent(SvgCircle);
 const PAYWALL_FORCE_LTR = true;
-const TABS_HOME_ROUTE = "/(tabs)/index";
 const FORCED_LTR_TEXT_STYLE = {
   textAlign: "left" as const,
   writingDirection: "ltr" as const,
@@ -422,9 +422,10 @@ function getDisplayedPrice(
   const productPrice = pkg?.product?.price;
   const productCurrencyCode = pkg?.product?.currencyCode;
   const localizedPriceString = String((pkg?.product as { localizedPriceString?: string } | undefined)?.localizedPriceString ?? "").trim();
+  const forcePreferredCurrencyFormatting = preferredCurrencyCode === "MAD";
   const storeCurrencyMatches = !preferredCurrencyCode || productCurrencyCode === preferredCurrencyCode;
 
-  if (localizedPriceString.length > 0 && storeCurrencyMatches) {
+  if (localizedPriceString.length > 0 && storeCurrencyMatches && !forcePreferredCurrencyFormatting) {
     return {
       amount:
         typeof productPrice === "number" && Number.isFinite(productPrice)
@@ -462,7 +463,9 @@ function getDisplayedYearlyPerWeekPrice(
 ) {
   const productPricePerWeek = pkg?.product?.pricePerWeek;
   const productCurrencyCode = pkg?.product?.currencyCode ?? yearlyPrice.currencyCode;
-  const shouldPreferFallback = preferredCurrencyCode != null && yearlyPrice.currencyCode === preferredCurrencyCode;
+  const shouldPreferFallback =
+    (preferredCurrencyCode != null && yearlyPrice.currencyCode === preferredCurrencyCode)
+    || preferredCurrencyCode === "MAD";
 
   if (!shouldPreferFallback && typeof productPricePerWeek === "number" && Number.isFinite(productPricePerWeek) && productCurrencyCode) {
     return createLocalizedPrice({
@@ -754,7 +757,7 @@ export default function PaywallScreen() {
       dismissLaunchPaywall();
     }
 
-    router.replace(TABS_HOME_ROUTE as any);
+    router.replace(TOOLS_ROUTE as any);
   }, [router, source]);
 
   const completePaywall = useCallback(() => {
@@ -763,11 +766,11 @@ export default function PaywallScreen() {
     }
 
     if (typeof redirectTo === "string" && redirectTo.length > 0) {
-      router.replace(redirectTo as any);
+      router.replace(resolveSafeRoute(redirectTo, TOOLS_ROUTE) as any);
       return;
     }
 
-    router.replace(TABS_HOME_ROUTE as any);
+    router.replace(TOOLS_ROUTE as any);
   }, [redirectTo, router, source]);
 
   const handleClose = useCallback(() => {
@@ -1343,17 +1346,17 @@ const styles = StyleSheet.create({
     ...fonts.regular,
   },
   planCard: {
-    minHeight: 68,
+    minHeight: 74,
     borderRadius: 14,
     backgroundColor: SCREEN_BG,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderWidth: 1,
     borderColor: PANEL_BORDER,
     justifyContent: "center",
   },
   yearlyCard: {
-    paddingTop: 22,
+    paddingTop: 24,
   },
   weeklyCard: {
     minHeight: 64,
@@ -1386,9 +1389,9 @@ const styles = StyleSheet.create({
   },
   planRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: 14,
   },
   forcedLtrRow: {
     direction: "ltr",
@@ -1399,8 +1402,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   planPriceColumn: {
-    flexShrink: 1,
-    minWidth: 0,
+    width: 112,
     alignItems: "flex-end",
     justifyContent: "center",
     marginLeft: 12,
@@ -1412,8 +1414,8 @@ const styles = StyleSheet.create({
   },
   planLabel: {
     color: TEXT_PRIMARY,
-    fontSize: 12,
-    lineHeight: 14,
+    fontSize: 13,
+    lineHeight: 16,
     textTransform: "uppercase",
     ...fonts.bold,
   },
@@ -1421,13 +1423,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: TEXT_MUTED,
     fontSize: 11,
-    lineHeight: 14,
+    lineHeight: 15,
     ...fonts.regular,
   },
   yearlyPrice: {
     color: TEXT_PRIMARY,
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 17,
+    lineHeight: 21,
     ...fonts.bold,
   },
   weeklyTrialPrice: {
@@ -1441,7 +1443,6 @@ const styles = StyleSheet.create({
     color: TEXT_PRIMARY,
     fontSize: 15,
     lineHeight: 18,
-    flexShrink: 1,
     ...fonts.bold,
   },
   trialBadge: {

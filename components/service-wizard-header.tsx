@@ -6,6 +6,7 @@ type ServiceWizardHeaderProps = {
   title: string;
   step: number;
   totalSteps?: number;
+  showProgress?: boolean;
   creditCount?: number;
   horizontalInset?: number;
   onCreditsPress?: () => void;
@@ -19,6 +20,7 @@ export function ServiceWizardHeader({
   title: _title,
   step,
   totalSteps = 4,
+  showProgress = true,
   creditCount,
   horizontalInset = 20,
   onCreditsPress,
@@ -40,6 +42,7 @@ export function ServiceWizardHeader({
       step={safeStep}
       totalSteps={totalSteps}
       title={_title}
+      showProgress={showProgress}
     />
   );
 }

@@ -7,6 +7,7 @@ import {SafeAreaView, useSafeAreaInsets} from "react-native-safe-area-context";
 import {LuxPressable} from "../components/lux-pressable";
 import {DS, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow, surfaceCard} from "../lib/design-system";
 import {triggerHaptic} from "../lib/haptics";
+import {SETTINGS_ROUTE} from "../lib/routes";
 
 export default function PrivacyPolicyScreen() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function PrivacyPolicyScreen() {
                 return;
               }
 
-              router.replace("/settings");
+              router.replace(SETTINGS_ROUTE as any);
             }}
             className="cursor-pointer"
             style={styles.backButton}

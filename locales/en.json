@@ -367,6 +367,8 @@
     "eta": "Your vision will be ready shortly.",
     "etaFree": "Your layout will unlock in ~15 seconds.",
     "etaPro": "Pro processing is running at high speed.",
+    "speedUpCta": "Speed Up Generation",
+    "speedUpHint": "Get instant results with PRO.",
     "cancelKeepCredit": "Cancel and keep my credit",
     "status": {
       "analyzingGeometry": "Analyzing architectural geometry...",

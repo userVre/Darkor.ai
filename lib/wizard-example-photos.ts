@@ -74,9 +74,9 @@ export function getPaintWizardExamplePhotos(t: TFunction): WizardExamplePhoto[] 
 export function getLayoutWizardExamplePhotos(_t: TFunction): WizardExamplePhoto[] {
   return [
     {
-      id: "layout-before-lounge-blocked",
-      label: "Blocked lounge",
-      source: require("../assets/media/examples/layout/layout-before-lounge-blocked.jpg"),
+      id: "interior-before-messy-lounge",
+      label: "Messy lounge",
+      source: require("../assets/media/examples/interior/interior-before-messy-lounge.jpg"),
     },
     {
       id: "layout-before-bedroom-tight",
@@ -84,9 +84,9 @@ export function getLayoutWizardExamplePhotos(_t: TFunction): WizardExamplePhoto[
       source: require("../assets/media/examples/layout/layout-before-bedroom-tight.jpg"),
     },
     {
-      id: "layout-before-dining-crowded",
-      label: "Crowded dining",
-      source: require("../assets/media/examples/layout/layout-before-dining-crowded.jpg"),
+      id: "interior-before-damaged-room",
+      label: "Damaged room",
+      source: require("../assets/media/examples/interior/interior-before-damaged-room.jpg"),
     },
     {
       id: "layout-before-studio-cluttered",
@@ -94,14 +94,9 @@ export function getLayoutWizardExamplePhotos(_t: TFunction): WizardExamplePhoto[
       source: require("../assets/media/examples/layout/layout-before-studio-cluttered.jpg"),
     },
     {
-      id: "layout-before-stair-nook-office",
-      label: "Stair nook office",
-      source: require("../assets/media/examples/layout/layout-before-stair-nook-office.jpg"),
-    },
-    {
-      id: "layout-before-kitchen-compressed",
-      label: "Compressed kitchen",
-      source: require("../assets/media/examples/layout/layout-before-kitchen-compressed.jpg"),
+      id: "interior-before-worn-reading-room",
+      label: "Worn reading room",
+      source: require("../assets/media/examples/interior/interior-before-worn-reading-room.jpg"),
     },
   ];
 }

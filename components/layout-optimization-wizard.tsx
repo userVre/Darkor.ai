@@ -1,15 +1,13 @@
 import {Plus, X} from "@/components/material-icons";
 import {useMutation, useQuery} from "convex/react";
 import {Asset} from "expo-asset";
-import * as FileSystem from "expo-file-system/legacy";
 import {Image} from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import * as MediaLibrary from "expo-media-library";
 import {useRouter} from "expo-router";
 import {MotiView} from "moti";
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {ActivityIndicator, Alert, ScrollView, Share, StyleSheet, Text, View} from "react-native";
+import {ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View} from "react-native";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {uploadLocalFileToCloud} from "../lib/native-upload";
@@ -20,15 +18,15 @@ import {DIAMOND_PILL_BLUE} from "./diamond-credit-pill";
 import {LuxPressable} from "./lux-pressable";
 import {useProSuccess} from "./pro-success-context";
 import {ServiceContinueButton} from "./service-continue-button";
-import {ServiceProcessingScreen, useGenerationStatusMessages} from "./service-processing-screen";
+import {ServiceProcessingScreen} from "./service-processing-screen";
 import {ServiceWizardHeader} from "./service-wizard-header";
 import {ServiceWizardStepScreen} from "./service-wizard-shared";
-import {getStickyStepHeaderMetrics} from "./sticky-step-header";
+import {getStickyStepHeaderMetricsWithProgress} from "./sticky-step-header";
 import {useViewerCredits} from "./viewer-credits-context";
 import {useViewerSession} from "./viewer-session-context";
 import {useWorkspaceDraft} from "./workspace-context";
 
-type WizardStep = "intake" | "processing" | "result";
+type WizardStep = "intake" | "processing";
 
 type SelectedImage = {
   uri: string;
@@ -53,14 +51,27 @@ type ArchiveGeneration = {
   errorMessage?: string | null;
 };
 
+type ReadyGeneration = {
+  generationId: string;
+};
+
 type LayoutOptimizationWizardProps = {
   onFlowActiveChange?: (isFlowActive: boolean) => void;
   onProcessingStateChange?: (isProcessing: boolean) => void;
 };
 
 const TABS_HOME_ROUTE = "/(tabs)/index";
+const WORKSPACE_ROUTE = "/(tabs)/workspace";
 const MAX_LAYOUT_PHOTOS = 3;
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
+const FREE_LAYOUT_COOLDOWN_MS = 15_000;
+const SMART_SPACE_PLANNING_TITLE = "Smart Space Planning";
+const SMART_SPACE_PLANNING_PROMPT =
+  "Furniture Rearrangement instructions for Azure GPT-Image-1: You are a professional interior architect specializing in spatial ergonomics. Analyze the provided room photo and rearrange the existing furniture layout to maximize usable floor area, improve circulation flow, and enhance comfort. Create a more breathable, spacious, and logical design while preserving the room's core structure, walls, windows, doors, lighting conditions, and overall realism. Keep the output photorealistic and polished, with a premium designer feel.";
+const SMART_SPACE_PROCESSING_STATUSES = [
+  "Analyzing spatial flow...",
+  "Optimizing furniture placement...",
+] as const;
 
 async function resolveExampleAsset(example: WizardExamplePhoto) {
   const asset = Asset.fromModule(example.source);
@@ -123,16 +134,33 @@ export function LayoutOptimizationWizard({
   const [isPickingImage, setIsPickingImage] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
-  const [processingComplete, setProcessingComplete] = useState(false);
   const [isCancellingGeneration, setIsCancellingGeneration] = useState(false);
-  const generationStatusMessages = useGenerationStatusMessages();
+  const [processingStartedAt, setProcessingStartedAt] = useState<number | null>(null);
+  const [cooldownRemainingMs, setCooldownRemainingMs] = useState(0);
+  const [readyGeneration, setReadyGeneration] = useState<ReadyGeneration | null>(null);
   const layoutExamples = useMemo(() => getLayoutWizardExamplePhotos(t), [i18n.language, t]);
-  const localizedTitle = t("home.tools.smartSpacePlanning.title");
-  const headerMetrics = useMemo(() => getStickyStepHeaderMetrics(insets.top), [insets.top]);
+  const headerMetrics = useMemo(() => getStickyStepHeaderMetricsWithProgress(insets.top, false), [insets.top]);
+  const isProViewer = Boolean(me?.hasPaidAccess || (me?.subscriptionType && me.subscriptionType !== "free"));
+  const processingStatusMessages = useMemo(
+    () => SMART_SPACE_PROCESSING_STATUSES.map((status) => status),
+    [],
+  );
 
   const activeImage = selectedImages[activeIndex] ?? selectedImages[0] ?? null;
   const canContinue = selectedImages.length > 0 && !isGenerating;
+
+  const navigateToPortfolioEditor = useCallback((nextGenerationId: string) => {
+    clearDraft();
+    router.replace({
+      pathname: WORKSPACE_ROUTE as any,
+      params: {
+        service: "layout",
+        boardView: "editor",
+        boardItemId: nextGenerationId,
+        entrySource: "smart-space-planning",
+      },
+    });
+  }, [clearDraft, router]);
 
   useEffect(() => {
     setDraftImages(selectedImages.length > 0 ? selectedImages.map((image) => ({ uri: image.uri, label: image.label })) : null);
@@ -159,12 +187,11 @@ export function LayoutOptimizationWizard({
     }
 
     if (generation.status === "ready" && generation.imageUrl) {
-      setGeneratedImageUrl(generation.imageUrl);
-      setGenerationId(null);
       setIsGenerating(false);
       setIsCancellingGeneration(false);
-      setProcessingComplete(true);
-      setStep("result");
+      setReadyGeneration({
+        generationId: generation._id,
+      });
       return;
     }
 
@@ -174,14 +201,59 @@ export function LayoutOptimizationWizard({
       setIsCancellingGeneration(false);
 
       if (generation.errorMessage === CANCELLED_GENERATION_MESSAGE) {
+        setProcessingStartedAt(null);
+        setCooldownRemainingMs(0);
+        setReadyGeneration(null);
         setStep("intake");
         return;
       }
 
+      setProcessingStartedAt(null);
+      setCooldownRemainingMs(0);
+      setReadyGeneration(null);
       setStep("intake");
       showToast(generation.errorMessage ?? "Unable to optimize the layout right now.");
     }
   }, [generationArchive, generationId, showToast]);
+
+  useEffect(() => {
+    if (step !== "processing" || !processingStartedAt || isProViewer) {
+      setCooldownRemainingMs(0);
+      return;
+    }
+
+    const syncRemaining = () => {
+      setCooldownRemainingMs(Math.max(processingStartedAt + FREE_LAYOUT_COOLDOWN_MS - Date.now(), 0));
+    };
+
+    syncRemaining();
+    const interval = setInterval(syncRemaining, 250);
+
+    return () => clearInterval(interval);
+  }, [isProViewer, processingStartedAt, step]);
+
+  useEffect(() => {
+    if (!readyGeneration) {
+      return;
+    }
+
+    const remainingMs = isProViewer || !processingStartedAt
+      ? 0
+      : Math.max(processingStartedAt + FREE_LAYOUT_COOLDOWN_MS - Date.now(), 0);
+
+    if (remainingMs <= 0) {
+      setGenerationId(null);
+      navigateToPortfolioEditor(readyGeneration.generationId);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setGenerationId(null);
+      navigateToPortfolioEditor(readyGeneration.generationId);
+    }, remainingMs);
+
+    return () => clearTimeout(timeout);
+  }, [isProViewer, navigateToPortfolioEditor, processingStartedAt, readyGeneration]);
 
   const syncSelectedImages = useCallback((updater: (current: SelectedImage[]) => SelectedImage[]) => {
     setSelectedImages((current) => {
@@ -320,8 +392,9 @@ export function LayoutOptimizationWizard({
     }
 
     setIsGenerating(true);
-    setProcessingComplete(false);
-    setGeneratedImageUrl(null);
+    setReadyGeneration(null);
+    setProcessingStartedAt(Date.now());
+    setCooldownRemainingMs(isProViewer ? 0 : FREE_LAYOUT_COOLDOWN_MS);
 
     try {
       const sourceUploadUrl = await createSourceUploadUrl({ anonymousId: anonymousId ?? undefined });
@@ -345,14 +418,14 @@ export function LayoutOptimizationWizard({
         imageStorageId: sourceImageStorageId,
         referenceImageStorageIds: referenceImageStorageIds.length > 0 ? referenceImageStorageIds : undefined,
         serviceType: "layout",
-        selection: "Furniture Rearrangement",
+        selection: "Smart Space Planning",
         roomType: "Room",
-        displayStyle: "Layout Optimization",
+        displayStyle: SMART_SPACE_PLANNING_TITLE,
         customPrompt: [
-          "Optimize the furniture arrangement for maximum comfort, ergonomic spacing, and spatial fluidity.",
-          "Preserve the same room architecture, window placement, lighting direction, and overall furniture inventory.",
-          "Improve circulation paths, reduce visual clutter, create a stronger focal point, and keep the result believable and premium.",
-          referenceImageStorageIds.length > 0 ? "Use the additional reference photos to understand adjacency, proportions, and circulation around the same room." : undefined,
+          SMART_SPACE_PLANNING_PROMPT,
+          referenceImageStorageIds.length > 0
+            ? "Use the additional reference photos to understand adjacency, proportions, and circulation around the same room."
+            : undefined,
         ].filter(Boolean).join(" "),
         aspectRatio: simplifyRatio(activeImage.width, activeImage.height),
         smartSuggest: true,
@@ -363,6 +436,8 @@ export function LayoutOptimizationWizard({
       setStep("processing");
     } catch (error) {
       setIsGenerating(false);
+      setProcessingStartedAt(null);
+      setCooldownRemainingMs(0);
       Alert.alert("Generation unavailable", error instanceof Error ? error.message : "Unable to optimize the layout right now.");
     }
   }, [
@@ -370,6 +445,7 @@ export function LayoutOptimizationWizard({
     anonymousId,
     createSourceUploadUrl,
     credits,
+    isProViewer,
     isGenerating,
     selectedImages,
     setOptimisticCredits,
@@ -377,188 +453,43 @@ export function LayoutOptimizationWizard({
     viewerReady,
   ]);
 
-  const handleSaveResult = useCallback(async () => {
-    if (!generatedImageUrl) {
-      return;
-    }
-
-    let tempUri: string | null = null;
-    try {
-      const permission = await MediaLibrary.requestPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert("Photo access needed", "Allow photo library access to save your render to the device.");
-        return;
-      }
-
-      if (generatedImageUrl.startsWith("file://")) {
-        await MediaLibrary.saveToLibraryAsync(generatedImageUrl);
-        showToast(t("common.states.savedToGallery"));
-        return;
-      }
-
-      const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}layout-optimization-${Date.now()}.jpg`;
-      const download = await FileSystem.downloadAsync(generatedImageUrl, targetUri);
-      tempUri = download.uri;
-      await MediaLibrary.saveToLibraryAsync(download.uri);
-      showToast(t("common.states.savedToGallery"));
-    } catch (error) {
-      Alert.alert("Save unavailable", error instanceof Error ? error.message : "Unable to save the result.");
-    } finally {
-      if (tempUri) {
-        await FileSystem.deleteAsync(tempUri, { idempotent: true }).catch(() => undefined);
-      }
-    }
-  }, [generatedImageUrl, showToast, t]);
-
-  const handleShareResult = useCallback(async () => {
-    if (!generatedImageUrl) {
-      return;
-    }
-
-    let tempUri: string | null = null;
-    try {
-      let shareUri = generatedImageUrl;
-      if (!generatedImageUrl.startsWith("file://")) {
-        const targetUri = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ""}layout-optimization-share-${Date.now()}.jpg`;
-        const download = await FileSystem.downloadAsync(generatedImageUrl, targetUri);
-        tempUri = download.uri;
-        shareUri = download.uri;
-      }
-
-      await Share.share({
-        url: shareUri,
-        message: "Layout Optimization result",
-      });
-    } catch (error) {
-      Alert.alert("Share unavailable", error instanceof Error ? error.message : "Unable to share the result.");
-    } finally {
-      if (tempUri) {
-        await FileSystem.deleteAsync(tempUri, { idempotent: true }).catch(() => undefined);
-      }
-    }
-  }, [generatedImageUrl]);
-
-  const handleReset = useCallback(() => {
-    setStep("intake");
-    setSelectedImages([]);
-    setActiveIndex(0);
-    setGeneratedImageUrl(null);
-    setGenerationId(null);
-    setIsGenerating(false);
-    setProcessingComplete(false);
-    setIsCancellingGeneration(false);
-    clearDraft();
-  }, [clearDraft]);
-
   const handleClose = useCallback(() => {
     clearDraft();
     router.replace(TABS_HOME_ROUTE as any);
   }, [clearDraft, router]);
 
   if (step === "processing") {
+    const cooldownSeconds = Math.ceil(cooldownRemainingMs / 1000);
+    const processingEtaLabel = isProViewer
+      ? "Pro render unlocked instantly."
+      : readyGeneration
+        ? `Finalizing your free render${cooldownSeconds > 0 ? ` in ${cooldownSeconds}s` : "..." }`
+        : `Free render unlocks in ${Math.max(cooldownSeconds, 1)}s`;
+
     return (
       <ServiceProcessingScreen
         imageUri={activeImage?.uri ?? null}
-        resultImageUri={generatedImageUrl}
-        subtitlePhrases={generationStatusMessages}
+        resultImageUri={null}
+        subtitlePhrases={processingStatusMessages}
+        title="AI is crafting your architectural masterpiece..."
+        etaLabel={processingEtaLabel}
+        previewLabel="Before"
         onCancel={() => {
           void handleCancelGeneration();
         }}
         cancelDisabled={!generationId || isCancellingGeneration}
-        complete={processingComplete}
+        complete={Boolean(readyGeneration)}
       />
-    );
-  }
-
-  if (step === "result") {
-    return (
-      <View style={styles.screen}>
-        <ServiceWizardHeader
-          title={localizedTitle}
-          step={1}
-          totalSteps={1}
-          creditCount={me?.credits ?? credits}
-          onClose={handleClose}
-        />
-
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          contentContainerStyle={{
-            paddingHorizontal: spacing.md,
-            paddingTop: headerMetrics.contentOffset,
-            paddingBottom: Math.max(insets.bottom + 32, 48),
-            gap: spacing.md,
-          }}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.resultIntro}>
-            <Text style={styles.resultTitle}>{localizedTitle}</Text>
-            <Text style={styles.resultBody}>
-              Your room has been rearranged for better circulation, stronger balance, and more comfortable spacing.
-            </Text>
-          </View>
-
-          <View style={styles.resultFrame}>
-            {generatedImageUrl ? (
-              <Image source={{ uri: generatedImageUrl }} style={styles.resultImage} contentFit="cover" cachePolicy="memory-disk" transition={180} />
-            ) : (
-              <View style={styles.resultFallback}>
-                <ActivityIndicator color={DIAMOND_PILL_BLUE} />
-              </View>
-            )}
-          </View>
-
-          {activeImage ? (
-            <View style={styles.sourceCard}>
-              <Text style={styles.sourceLabel}>Source Photo</Text>
-              <View style={styles.sourcePreview}>
-                <Image source={{ uri: activeImage.uri }} style={styles.sourcePreviewImage} contentFit="cover" cachePolicy="memory-disk" />
-              </View>
-            </View>
-          ) : null}
-
-          <View style={styles.resultActions}>
-            <View style={styles.resultActionRow}>
-              <View style={styles.resultActionButton}>
-                <ServiceContinueButton
-                  active
-                  label={t("profile.saveToGallery")}
-                  onPress={() => {
-                    void handleSaveResult();
-                  }}
-                />
-              </View>
-              <View style={styles.resultActionButton}>
-                <ServiceContinueButton
-                  active
-                  label={t("wizard.floorFlow.result.share")}
-                  onPress={() => {
-                    void handleShareResult();
-                  }}
-                />
-              </View>
-            </View>
-            <View style={styles.retryButtonWrap}>
-              <View style={styles.resultActionButton}>
-                <ServiceContinueButton
-                  active
-                  label={t("wizard.floorFlow.result.tryAgain")}
-                  onPress={handleReset}
-                />
-              </View>
-            </View>
-          </View>
-        </ScrollView>
-      </View>
     );
   }
 
   return (
     <View style={styles.screen}>
       <ServiceWizardHeader
-        title={localizedTitle}
+        title={SMART_SPACE_PLANNING_TITLE}
         step={1}
         totalSteps={1}
+        showProgress={false}
         creditCount={me?.credits ?? credits}
         onClose={handleClose}
       />
@@ -585,13 +516,13 @@ export function LayoutOptimizationWizard({
           paddingHorizontal: spacing.md,
           paddingTop: headerMetrics.contentOffset,
           paddingBottom: spacing.xl,
-          gap: spacing.md,
+          gap: spacing.xl,
         }}
       >
         <View style={styles.introCopy}>
-          <Text style={styles.introTitle}>{t("wizard.stepOne.title")}</Text>
+          <Text style={styles.introTitle}>{SMART_SPACE_PLANNING_TITLE}</Text>
           <Text style={styles.introBody}>
-            Upload a photo to optimize your furniture layout and flow.
+            Upload a room photo to maximize circulation, usable floor area, and everyday comfort.
           </Text>
         </View>
 
@@ -641,21 +572,26 @@ export function LayoutOptimizationWizard({
             {selectedImages.map((image, index) => {
               const active = index === activeIndex;
               return (
-                <LuxPressable
-                  key={`${image.uri}-${index}`}
-                  onPress={() => setActiveIndex(index)}
-                  style={styles.thumbPressable}
-                  scale={0.98}
-                >
-                  <View style={[styles.thumbFrame, active ? styles.thumbFrameActive : null]}>
-                    <Image source={{ uri: image.uri }} style={styles.thumbImage} contentFit="cover" cachePolicy="memory-disk" transition={120} />
-                    {index === 0 ? (
-                      <View style={styles.sourceTag}>
-                        <Text style={styles.sourceTagText}>Source</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                </LuxPressable>
+                <View key={`${image.uri}-${index}`} style={styles.thumbItem}>
+                  <LuxPressable
+                    onPress={() => setActiveIndex(index)}
+                    style={styles.thumbPressable}
+                    scale={0.98}
+                  >
+                    <View style={[styles.thumbFrame, active ? styles.thumbFrameActive : null]}>
+                      <Image source={{ uri: image.uri }} style={styles.thumbImage} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+                    </View>
+                  </LuxPressable>
+                  <LuxPressable
+                    onPress={() => handleRemovePhoto(index)}
+                    style={styles.thumbRemoveButton}
+                    scale={0.96}
+                  >
+                    <View style={styles.thumbRemoveButtonInner}>
+                      <X color="#FFFFFF" size={10} strokeWidth={2.6} />
+                    </View>
+                  </LuxPressable>
+                </View>
               );
             })}
 
@@ -665,10 +601,7 @@ export function LayoutOptimizationWizard({
                   {isPickingImage ? (
                     <ActivityIndicator color={DIAMOND_PILL_BLUE} />
                   ) : (
-                    <>
-                      <Plus color={DIAMOND_PILL_BLUE} size={26} strokeWidth={2.1} />
-                      <Text style={styles.addThumbLabel}>Add</Text>
-                    </>
+                    <Plus color={DIAMOND_PILL_BLUE} size={26} strokeWidth={2.1} />
                   )}
                 </View>
               </LuxPressable>
@@ -700,16 +633,23 @@ export function LayoutOptimizationWizard({
                 >
                   <View style={styles.exampleCard}>
                     <Image source={example.source} style={styles.exampleImage} contentFit="cover" cachePolicy="memory-disk" transition={120} />
-                    <View style={styles.exampleOverlay} />
-                    <View style={styles.exampleCaption}>
-                      <Text style={styles.exampleLabel}>{example.label}</Text>
-                    </View>
                     {isLoadingExample === example.id ? (
                       <View style={styles.exampleLoading}>
                         <ActivityIndicator color="#FFFFFF" />
                       </View>
                     ) : null}
                   </View>
+                  <LuxPressable
+                    onPress={() => {
+                      void handleExamplePress(example);
+                    }}
+                    style={styles.exampleAddButton}
+                    scale={0.96}
+                  >
+                    <View style={styles.exampleAddButtonInner}>
+                      <Plus color="#FFFFFF" size={14} strokeWidth={2.5} />
+                    </View>
+                  </LuxPressable>
                 </LuxPressable>
               </MotiView>
             ))}
@@ -727,7 +667,6 @@ const styles = StyleSheet.create({
   },
   introCopy: {
     gap: spacing.sm,
-    paddingTop: spacing.sm,
   },
   introTitle: {
     color: "#0F172A",
@@ -748,7 +687,7 @@ const styles = StyleSheet.create({
   mainPreview: {
     width: "100%",
     aspectRatio: 1.05,
-    borderRadius: 28,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(15, 23, 42, 0.08)",
     backgroundColor: "#F8FAFC",
@@ -792,8 +731,8 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     position: "absolute",
-    top: 16,
-    right: 16,
+    top: 14,
+    right: 14,
   },
   removeButtonInner: {
     width: 40,
@@ -810,13 +749,17 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingRight: 4,
   },
-  thumbPressable: {
+  thumbItem: {
     width: 88,
     height: 88,
   },
+  thumbPressable: {
+    width: "100%",
+    height: "100%",
+  },
   thumbFrame: {
     flex: 1,
-    borderRadius: 22,
+    borderRadius: 20,
     overflow: "hidden",
     borderWidth: 1.5,
     borderColor: "rgba(148, 163, 184, 0.3)",
@@ -830,20 +773,20 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  sourceTag: {
+  thumbRemoveButton: {
     position: "absolute",
-    left: 8,
-    bottom: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: "rgba(15,23,42,0.82)",
+    top: -5,
+    right: -5,
   },
-  sourceTagText: {
-    color: "#FFFFFF",
-    fontSize: 10,
-    lineHeight: 12,
-    ...fonts.semibold,
+  thumbRemoveButtonInner: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(15,23,42,0.92)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.92)",
   },
   addThumbFrame: {
     flex: 1,
@@ -854,17 +797,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(37,99,235,0.05)",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-  },
-  addThumbLabel: {
-    color: DIAMOND_PILL_BLUE,
-    fontSize: 12,
-    lineHeight: 16,
-    ...fonts.semibold,
   },
   examplesBlock: {
-    gap: spacing.sm,
-    paddingTop: spacing.sm,
+    gap: spacing.md,
   },
   examplesTitle: {
     color: "#0F172A",
@@ -882,29 +817,13 @@ const styles = StyleSheet.create({
   },
   exampleCard: {
     flex: 1,
-    borderRadius: 24,
     overflow: "hidden",
     backgroundColor: "#E2E8F0",
+    borderRadius: 20,
   },
   exampleImage: {
     width: "100%",
     height: "100%",
-  },
-  exampleOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(15,23,42,0.08)",
-  },
-  exampleCaption: {
-    position: "absolute",
-    left: 12,
-    right: 12,
-    bottom: 12,
-  },
-  exampleLabel: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    lineHeight: 18,
-    ...fonts.semibold,
   },
   exampleLoading: {
     ...StyleSheet.absoluteFillObject,
@@ -912,84 +831,26 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(15,23,42,0.22)",
   },
+  exampleAddButton: {
+    position: "absolute",
+    right: 10,
+    bottom: 10,
+  },
+  exampleAddButtonInner: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(15,23,42,0.78)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.9)",
+  },
   footerWrap: {
     alignItems: "center",
   },
   centeredButton: {
     width: "100%",
     maxWidth: 280,
-  },
-  resultIntro: {
-    gap: spacing.sm,
-  },
-  resultTitle: {
-    color: "#0F172A",
-    fontSize: 30,
-    lineHeight: 36,
-    ...fonts.bold,
-  },
-  resultBody: {
-    color: "#475569",
-    fontSize: 15,
-    lineHeight: 22,
-    maxWidth: 340,
-  },
-  resultFrame: {
-    width: "100%",
-    aspectRatio: 1.05,
-    borderRadius: 28,
-    overflow: "hidden",
-    backgroundColor: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "rgba(15, 23, 42, 0.08)",
-  },
-  resultImage: {
-    width: "100%",
-    height: "100%",
-  },
-  resultFallback: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sourceCard: {
-    gap: spacing.sm,
-  },
-  sourceLabel: {
-    color: "#334155",
-    fontSize: 13,
-    lineHeight: 18,
-    ...fonts.semibold,
-  },
-  sourcePreview: {
-    width: 112,
-    height: 112,
-    borderRadius: 24,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(15, 23, 42, 0.08)",
-  },
-  sourcePreviewImage: {
-    width: "100%",
-    height: "100%",
-  },
-  resultActions: {
-    gap: spacing.md,
-    paddingTop: spacing.sm,
-    alignItems: "center",
-  },
-  resultActionRow: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: spacing.md,
-  },
-  resultActionButton: {
-    flex: 1,
-    maxWidth: 180,
-  },
-  retryButtonWrap: {
-    width: "100%",
-    alignItems: "center",
   },
 });

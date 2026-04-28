@@ -123,6 +123,19 @@ export function DiamondCreditPill({
   return <View style={pillStyle}>{content}</View>;
 }
 
+export function ProBadge({
+  style,
+}: {
+  style?: StyleProp<ViewStyle>;
+}) {
+  return (
+    <View style={[styles.proBadge, style]}>
+      <View style={styles.proGlow} />
+      <Text style={styles.proText}>PRO</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   pill: {
     minHeight: 40,
@@ -150,5 +163,30 @@ const styles = StyleSheet.create({
   creditIconWrap: {
     alignItems: "center",
     justifyContent: "center",
+  },
+  proBadge: {
+    minHeight: 40,
+    minWidth: 72,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "rgba(56, 189, 248, 0.45)",
+    backgroundColor: "#082F49",
+    ...organicRadii(20, 14),
+    ...ambientShadow(0.16, 16, 12),
+    overflow: "hidden",
+  },
+  proGlow: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(34, 211, 238, 0.16)",
+  },
+  proText: {
+    color: "#BAE6FD",
+    fontSize: 14,
+    lineHeight: 16,
+    letterSpacing: 1.2,
+    ...fonts.bold,
   },
 });

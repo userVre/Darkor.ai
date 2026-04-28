@@ -18,7 +18,8 @@ getDirectionalOppositeAlignment,
 getDirectionalRow,
 } from "../lib/i18n/rtl";
 import {withWorkspaceFlowId} from "../lib/try-it-flow";
-import {DiamondCreditPill} from "./diamond-credit-pill";
+import {CreditsBalanceSheet} from "./credits-balance-sheet";
+import {DiamondCreditPill, ProBadge} from "./diamond-credit-pill";
 import {HomeToolCard, type HomeToolCardItem} from "./home-tool-card";
 import {useViewerCredits} from "./viewer-credits-context";
 import {useWorkspaceDraft} from "./workspace-context";
@@ -37,6 +38,7 @@ export function CreateOptionsScreen() {
   const sidePadding = 20;
   const headerHeight = insets.top + 70;
   const [isDisclosureVisible, setIsDisclosureVisible] = useState(false);
+  const [isCreditsSheetVisible, setIsCreditsSheetVisible] = useState(false);
   const toolCards = useMemo<HomeToolCardItem[]>(
     () => [
       {
@@ -155,8 +157,14 @@ export function CreateOptionsScreen() {
 
   const handleCreditsPress = () => {
     triggerHaptic();
-    router.push("/paywall");
+    setIsCreditsSheetVisible(true);
   };
+
+  const handleUpgradeFromCredits = useCallback(() => {
+    triggerHaptic();
+    setIsCreditsSheetVisible(false);
+    router.push("/paywall");
+  }, [router]);
 
   const handleAcceptDisclosure = useCallback(async () => {
     triggerHaptic();
@@ -181,13 +189,17 @@ export function CreateOptionsScreen() {
       <View style={[styles.headerShell, { paddingTop: insets.top + 10 }]}>
         <View style={[styles.headerRow, { flexDirection: getDirectionalRow(isRTL) }]}>
           <View style={[styles.sideSlot, { alignItems: getDirectionalAlignment(isRTL) }]}>
-            <DiamondCreditPill
-              accessibilityLabel={t("home.accessibility.openCredits")}
-              count={creditBalance}
-              onPress={handleCreditsPress}
-              style={styles.creditPill}
-              variant="light"
-            />
+            {hasPaidAccess ? (
+              <ProBadge style={styles.proBadge} />
+            ) : (
+              <DiamondCreditPill
+                accessibilityLabel={t("home.accessibility.openCredits")}
+                count={creditBalance}
+                onPress={handleCreditsPress}
+                style={styles.creditPill}
+                variant="light"
+              />
+            )}
           </View>
 
           <View pointerEvents="none" style={styles.centerBrand}>
@@ -246,6 +258,14 @@ export function CreateOptionsScreen() {
           </View>
         </View>
       </Modal>
+
+      <CreditsBalanceSheet
+        credits={creditBalance}
+        hasPaidAccess={hasPaidAccess}
+        onClose={() => setIsCreditsSheetVisible(false)}
+        onUpgrade={handleUpgradeFromCredits}
+        visible={isCreditsSheetVisible}
+      />
     </View>
   );
 }
@@ -300,6 +320,9 @@ const styles = StyleSheet.create({
   creditPill: {
     minHeight: 42,
     paddingHorizontal: 12,
+  },
+  proBadge: {
+    minHeight: 42,
   },
   settingsButton: {
     width: 44,

@@ -1,6 +1,7 @@
 import {type Theme, useTheme} from "@/styles/theme";
 import {Image} from "expo-image";
 import {LinearGradient} from "expo-linear-gradient";
+import {useRouter} from "expo-router";
 import {AnimatePresence, MotiView} from "moti";
 import {memo, useEffect, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
@@ -37,6 +38,9 @@ type ServiceProcessingScreenProps = {
   imageUri?: string | null;
   resultImageUri?: string | null;
   subtitlePhrases?: readonly string[];
+  title?: string;
+  etaLabel?: string | null;
+  previewLabel?: string;
   onCancel: () => void;
   cancelDisabled?: boolean;
   complete?: boolean;
@@ -46,11 +50,15 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   imageUri,
   resultImageUri,
   subtitlePhrases,
+  title,
+  etaLabel,
+  previewLabel,
   onCancel,
   cancelDisabled = false,
   complete = false,
 }: ServiceProcessingScreenProps) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const colors = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
@@ -84,6 +92,16 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
     () => activeSubtitlePhrases[subtitleIndex % Math.max(activeSubtitlePhrases.length, 1)] ?? t("processing.status.renderingFinalLighting"),
     [activeSubtitlePhrases, subtitleIndex, t],
   );
+  const resolvedTitle = title?.trim() || t("processing.title");
+  const resolvedPreviewLabel = previewLabel?.trim() || t("workspace.editor.sourcePhoto");
+  const handleSpeedUp = () => {
+    router.push({
+      pathname: "/paywall",
+      params: {
+        source: "generation-speed-up",
+      },
+    } as any);
+  };
 
   const handlePreviewLayout = (event: LayoutChangeEvent) => {
     const nextHeight = Math.round(event.nativeEvent.layout.height);
@@ -176,7 +194,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
     <View style={styles.screen}>
       <View style={[styles.content, { paddingTop: insets.top + 12 }]}>
         <View style={styles.hero}>
-          <Text style={styles.title}>{t("processing.title")}</Text>
+          <Text style={styles.title}>{resolvedTitle}</Text>
           <View style={styles.subtitleWrap}>
             <AnimatePresence>
               <MotiView
@@ -193,7 +211,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
         </View>
 
         <View style={styles.previewCard}>
-          <Text style={styles.previewLabel}>{t("workspace.editor.sourcePhoto")}</Text>
+          <Text style={styles.previewLabel}>{resolvedPreviewLabel}</Text>
           <View
             style={[styles.previewFrame, { height: Math.min(Math.max(width * 1.02, 320), height * 0.42) }]}
             onLayout={handlePreviewLayout}
@@ -238,8 +256,34 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
           </View>
 
           <View style={styles.copyBlock}>
-            <Text style={styles.eta}>{t("processing.eta")}</Text>
+            <Text style={styles.eta}>{etaLabel?.trim() || t("processing.eta")}</Text>
           </View>
+
+          {!hasRevealedResult ? (
+            <LuxPressable
+              onPress={handleSpeedUp}
+              className={pointerClassName}
+              pressableClassName={pointerClassName}
+              style={styles.speedUpCta}
+              glowColor="#3B82F6"
+              scale={0.985}
+            >
+              <LinearGradient
+                colors={["#0F172A", "#1D4ED8"]}
+                start={{ x: 0, y: 0.2 }}
+                end={{ x: 1, y: 0.8 }}
+                style={styles.speedUpGradient}
+              >
+                <View style={styles.speedUpIconWrap}>
+                  <Text style={styles.speedUpIcon}>🚀</Text>
+                </View>
+                <View style={styles.speedUpCopy}>
+                  <Text style={styles.speedUpTitle}>{t("processing.speedUpCta")}</Text>
+                  <Text style={styles.speedUpSubtitle}>{t("processing.speedUpHint")}</Text>
+                </View>
+              </LinearGradient>
+            </LuxPressable>
+          ) : null}
         </View>
 
         <LuxPressable
@@ -360,6 +404,57 @@ function createStyles(colors: Theme) {
     },
     copyBlock: {
       alignItems: "flex-start",
+    },
+    speedUpCta: {
+      borderRadius: 999,
+      shadowColor: "#2563EB",
+      shadowOpacity: 0.28,
+      shadowRadius: 18,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 8,
+    },
+    speedUpGradient: {
+      minHeight: 64,
+      borderRadius: 999,
+      paddingHorizontal: 18,
+      paddingVertical: 14,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      borderWidth: 1,
+      borderColor: "rgba(191, 219, 254, 0.28)",
+    },
+    speedUpIconWrap: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(255,255,255,0.16)",
+    },
+    speedUpIcon: {
+      fontSize: 18,
+      lineHeight: 22,
+    },
+    speedUpCopy: {
+      flex: 1,
+      gap: 2,
+    },
+    speedUpTitle: {
+      color: "#FFFFFF",
+      fontSize: 15,
+      fontFamily: fonts.regular.fontFamily,
+      fontWeight: "800",
+      lineHeight: 20,
+      textAlign: "left",
+    },
+    speedUpSubtitle: {
+      color: "rgba(255,255,255,0.82)",
+      fontSize: 12,
+      fontFamily: fonts.regular.fontFamily,
+      fontWeight: "600",
+      lineHeight: 17,
+      textAlign: "left",
     },
     title: {
       color: "#0F172A",

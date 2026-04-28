@@ -6,6 +6,7 @@ import {SafeAreaView, useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {DS, SCREEN_SECTION_GAP, SCREEN_SIDE_PADDING, glowShadow, surfaceCard} from "../lib/design-system";
 import {triggerHaptic} from "../lib/haptics";
+import {SETTINGS_ROUTE} from "../lib/routes";
 
 type LegalDocumentKey = "privacy" | "terms";
 
@@ -102,7 +103,7 @@ export default function LegalViewerScreen() {
                 return;
               }
 
-              router.replace("/settings");
+              router.replace(SETTINGS_ROUTE as any);
             }}
             style={styles.backButton}
           >

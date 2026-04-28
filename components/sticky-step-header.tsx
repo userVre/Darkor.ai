@@ -1,4 +1,5 @@
 import {ArrowLeft, X} from "@/components/material-icons";
+import {useRouter} from "expo-router";
 import {useState} from "react";
 import {useTranslation} from "react-i18next";
 import {I18nManager, Platform, Pressable, StyleSheet, Text, View} from "react-native";
@@ -11,9 +12,12 @@ getDirectionalArrowScale,
 getDirectionalOppositeAlignment,
 getDirectionalRow,
 } from "../lib/i18n/rtl";
-import {DiamondCreditPill} from "./diamond-credit-pill";
+import {triggerHaptic} from "../lib/haptics";
+import {CreditsBalanceSheet} from "./credits-balance-sheet";
+import {DiamondCreditPill, ProBadge} from "./diamond-credit-pill";
 import {ExitConfirmModal} from "./exit-confirm-modal";
 import {StepProgressSegments} from "./step-progress-segments";
+import {useViewerCredits} from "./viewer-credits-context";
 
 export const STICKY_STEP_HEADER_CONTENT_GAP = 32;
 
@@ -30,6 +34,7 @@ type StickyStepHeaderProps = {
   creditCount?: number;
   step: number;
   totalSteps: number;
+  showProgress?: boolean;
   horizontalInset?: number;
   onCreditsPress?: () => void;
   onBack?: () => void;
@@ -39,13 +44,16 @@ type StickyStepHeaderProps = {
 };
 
 export function getStickyStepHeaderMetrics(topInset: number) {
+  return getStickyStepHeaderMetricsWithProgress(topInset, true);
+}
+
+export function getStickyStepHeaderMetricsWithProgress(topInset: number, showProgress: boolean) {
   const safeTop = Platform.OS === "android" ? Math.max(topInset, 12) : Math.max(topInset, 16);
   const height =
     safeTop +
     HEADER_TOP_PADDING +
     HEADER_ROW_HEIGHT +
-    HEADER_PROGRESS_GAP +
-    HEADER_PROGRESS_HEIGHT +
+    (showProgress ? HEADER_PROGRESS_GAP + HEADER_PROGRESS_HEIGHT : 0) +
     HEADER_BOTTOM_PADDING;
 
   return {
@@ -60,22 +68,37 @@ export function StickyStepHeader({
   creditCount = 0,
   step,
   totalSteps,
+  showProgress = true,
   horizontalInset = 20,
-  onCreditsPress,
+  onCreditsPress: _onCreditsPress,
   onBack,
   onClose,
   backAccessibilityLabel = "Go back",
   closeAccessibilityLabel = "Close",
 }: StickyStepHeaderProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const isRTL = I18nManager.isRTL;
-  const metrics = getStickyStepHeaderMetrics(insets.top);
+  const metrics = getStickyStepHeaderMetricsWithProgress(insets.top, showProgress);
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
+  const [isCreditsSheetVisible, setIsCreditsSheetVisible] = useState(false);
+  const { credits, hasPaidAccess } = useViewerCredits();
   const resolvedTitle = title ?? t("app.name");
+
+  const handleCreditsTap = () => {
+    triggerHaptic();
+    setIsCreditsSheetVisible(true);
+  };
+
+  const handleUpgrade = () => {
+    triggerHaptic();
+    setIsCreditsSheetVisible(false);
+    router.push("/paywall");
+  };
   return (
     <>
       <View
@@ -115,14 +138,18 @@ export function StickyStepHeader({
                   />
                 </Pressable>
               ) : showCredits ? (
-                <DiamondCreditPill
-                  accessibilityLabel="Credits remaining"
-                  accessibilityRole={onCreditsPress ? "button" : "text"}
-                  count={creditCount}
-                  onPress={onCreditsPress}
-                  style={styles.creditPill}
-                  variant="light"
-                />
+                hasPaidAccess ? (
+                  <ProBadge style={styles.proBadge} />
+                ) : (
+                  <DiamondCreditPill
+                    accessibilityLabel="Credits remaining"
+                    accessibilityRole="button"
+                    count={creditCount}
+                    onPress={handleCreditsTap}
+                    style={styles.creditPill}
+                    variant="light"
+                  />
+                )
               ) : null}
             </View>
 
@@ -147,14 +174,16 @@ export function StickyStepHeader({
             </View>
           </View>
 
-          <View style={styles.progressWrap}>
-            <StepProgressSegments
-              key={`sticky-step-progress-${safeStep}-${totalSteps}`}
-              step={safeStep}
-              totalSteps={totalSteps}
-              style={styles.progressRail}
-            />
-          </View>
+          {showProgress ? (
+            <View style={styles.progressWrap}>
+              <StepProgressSegments
+                key={`sticky-step-progress-${safeStep}-${totalSteps}`}
+                step={safeStep}
+                totalSteps={totalSteps}
+                style={styles.progressRail}
+              />
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -167,6 +196,14 @@ export function StickyStepHeader({
           setIsExitModalVisible(false);
           onClose();
         }}
+      />
+
+      <CreditsBalanceSheet
+        credits={credits}
+        hasPaidAccess={hasPaidAccess}
+        onClose={() => setIsCreditsSheetVisible(false)}
+        onUpgrade={handleUpgrade}
+        visible={isCreditsSheetVisible}
       />
     </>
   );
@@ -228,6 +265,9 @@ const styles = StyleSheet.create({
     minHeight: 40,
     paddingHorizontal: 12,
     paddingVertical: 8,
+  },
+  proBadge: {
+    minHeight: 40,
   },
   titleWrap: {
     flex: 1,

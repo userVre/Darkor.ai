@@ -31,6 +31,7 @@ getDirectionalRow,
 getDirectionalTextAlign,
 reloadAppForLayoutDirection,
 } from "../lib/i18n/rtl";
+import {SETTINGS_ROUTE} from "../lib/routes";
 import {fonts} from "../styles/typography";
 
 function Radio({ selected }: { selected: boolean }) {
@@ -68,7 +69,7 @@ export default function LanguageSettingsScreen() {
       return;
     }
 
-    router.replace("/settings");
+    router.replace(SETTINGS_ROUTE as any);
   };
 
   const handleToggleAuto = (value: boolean) => {

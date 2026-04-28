@@ -33,6 +33,7 @@ import {useWorkspaceDraft} from "../components/workspace-context";
 import {useAppLanguagePreference, useLocalizedAppFonts} from "../lib/i18n";
 import {getLanguageNativeLabel} from "../lib/i18n/language";
 import {getDirectionalArrowScale, getDirectionalRow, getDirectionalTextAlign} from "../lib/i18n/rtl";
+import {TOOLS_ROUTE} from "../lib/routes";
 import {
 configureRevenueCat,
 getRevenueCatClient,
@@ -88,7 +89,7 @@ export default function SettingsScreen() {
       return;
     }
 
-    router.replace("/");
+    router.replace(TOOLS_ROUTE as any);
   };
 
   const openExternalUrl = async (url: string) => {
