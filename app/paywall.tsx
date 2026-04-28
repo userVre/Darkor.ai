@@ -1077,9 +1077,6 @@ export default function PaywallScreen() {
           </View>
 
           <View style={styles.transparencyCard}>
-            <Text style={[styles.transparencyTitle, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>
-              {t("paywall.billingTransparencyTitle")}
-            </Text>
             <Text style={[styles.transparencyBody, localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }]}>
               {priceDisclosure}
             </Text>
@@ -1101,7 +1098,7 @@ export default function PaywallScreen() {
             ) : (
               <FadeSwap swapKey={freeTrialEnabled ? "cta-trial" : "cta-continue"} style={styles.ctaContent}>
                 <View style={[styles.ctaLabelRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{freeTrialEnabled ? t("paywall.ctaGooglePlayTrial") : t("paywall.ctaGooglePlayContinue")}</Text>
+                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{freeTrialEnabled ? "Try for 0" : t("paywall.ctaGooglePlayContinue")}</Text>
                   <Text
                     style={[
                       styles.ctaArrow,
@@ -1545,7 +1542,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     color: CTA_TEXT,
     fontSize: 18,
-    lineHeight: 20,
+    lineHeight: 18,
+    alignSelf: "center",
     ...fonts.bold,
   },
   legalFooter: {

@@ -14,6 +14,7 @@ import {uploadLocalFileToCloud} from "../lib/native-upload";
 import {getLayoutWizardExamplePhotos, type WizardExamplePhoto} from "../lib/wizard-example-photos";
 import {spacing} from "../styles/spacing";
 import {fonts} from "../styles/typography";
+import {DiamondCreditIcon} from "./diamond-credit-pill";
 import {DIAMOND_PILL_BLUE} from "./diamond-credit-pill";
 import {LuxPressable} from "./lux-pressable";
 import {useProSuccess} from "./pro-success-context";
@@ -64,10 +65,10 @@ const TABS_HOME_ROUTE = "/(tabs)/index";
 const WORKSPACE_ROUTE = "/(tabs)/workspace";
 const MAX_LAYOUT_PHOTOS = 3;
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
-const FREE_LAYOUT_COOLDOWN_MS = 15_000;
+const FREE_LAYOUT_COOLDOWN_MS = 5_000;
 const SMART_SPACE_PLANNING_TITLE = "Smart Space Planning";
 const SMART_SPACE_PLANNING_PROMPT =
-  "Furniture Rearrangement instructions for Azure GPT-Image-1: You are a professional interior architect specializing in spatial ergonomics. Analyze the provided room photo and rearrange the existing furniture layout to maximize usable floor area, improve circulation flow, and enhance comfort. Create a more breathable, spacious, and logical design while preserving the room's core structure, walls, windows, doors, lighting conditions, and overall realism. Keep the output photorealistic and polished, with a premium designer feel.";
+  "Furniture Rearrangement instructions for Azure GPT-Image-1: Rearrange the furniture layout to maximize usable floor area and everyday comfort while preserving the core architecture. Keep walls, windows, doors, and the room structure intact. Improve circulation flow and spatial balance while maintaining a realistic, high-end photorealistic result.";
 const SMART_SPACE_PROCESSING_STATUSES = [
   "Analyzing spatial flow...",
   "Optimizing furniture placement...",
@@ -491,6 +492,11 @@ export function LayoutOptimizationWizard({
         totalSteps={1}
         showProgress={false}
         creditCount={me?.credits ?? credits}
+        leftAccessory={(
+          <View style={styles.headerDiamondWrap}>
+            <DiamondCreditIcon primaryColor={DIAMOND_PILL_BLUE} size={20} />
+          </View>
+        )}
         onClose={handleClose}
       />
 
@@ -516,16 +522,9 @@ export function LayoutOptimizationWizard({
           paddingHorizontal: spacing.md,
           paddingTop: headerMetrics.contentOffset,
           paddingBottom: spacing.xl,
-          gap: spacing.xl,
+          gap: spacing.lg,
         }}
       >
-        <View style={styles.introCopy}>
-          <Text style={styles.introTitle}>{SMART_SPACE_PLANNING_TITLE}</Text>
-          <Text style={styles.introBody}>
-            Upload a room photo to maximize circulation, usable floor area, and everyday comfort.
-          </Text>
-        </View>
-
         <LuxPressable
           onPress={() => {
             if (!activeImage) {
@@ -555,8 +554,11 @@ export function LayoutOptimizationWizard({
                 <View style={styles.emptyPlusBadge}>
                   <Plus color={DIAMOND_PILL_BLUE} size={28} strokeWidth={2.1} />
                 </View>
-                <Text style={styles.emptyPreviewTitle}>Add your room photo</Text>
-                <Text style={styles.emptyPreviewBody}>Use one main image and up to two extra references.</Text>
+                <Text style={styles.emptyPreviewTitle}>Begin Your Transformation</Text>
+                <Text style={styles.emptyPreviewBody}>Gain More Space</Text>
+                <View style={styles.uploadCta}>
+                  <Text style={styles.uploadCtaText}>+ Upload</Text>
+                </View>
               </View>
             )}
           </View>
@@ -665,21 +667,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
-  introCopy: {
-    gap: spacing.sm,
-  },
-  introTitle: {
-    color: "#0F172A",
-    fontSize: 30,
-    lineHeight: 36,
-    letterSpacing: -0.8,
-    ...fonts.bold,
-  },
-  introBody: {
-    color: "#475569",
-    fontSize: 15,
-    lineHeight: 22,
-    maxWidth: 340,
+  headerDiamondWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.08)",
   },
   mainPreviewPressable: {
     width: "100%",
@@ -701,7 +697,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: spacing.md,
+    gap: spacing.sm,
     paddingHorizontal: spacing.lg,
   },
   emptyPlusBadge: {
@@ -717,17 +713,33 @@ const styles = StyleSheet.create({
   },
   emptyPreviewTitle: {
     color: "#0F172A",
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 24,
+    lineHeight: 30,
     textAlign: "center",
     ...fonts.semibold,
   },
   emptyPreviewBody: {
     color: "#64748B",
-    fontSize: 14,
+    fontSize: 15,
     lineHeight: 20,
     textAlign: "center",
     maxWidth: 260,
+  },
+  uploadCta: {
+    marginTop: spacing.sm,
+    minHeight: 48,
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0F172A",
+  },
+  uploadCtaText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    lineHeight: 18,
+    ...fonts.semibold,
   },
   removeButton: {
     position: "absolute",

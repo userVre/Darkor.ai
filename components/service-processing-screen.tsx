@@ -30,9 +30,9 @@ const PROGRESS_EASING = 0.08;
 const STATUS_ROTATION_MS = 3_000;
 const GENERATION_PROGRESS_COLOR = DS.colors.accent;
 const SCAN_DURATION_MS = 2_200;
-const SCAN_LINE_HEIGHT = 72;
+const SCAN_LINE_HEIGHT = 92;
 const SCAN_TRACK_INSET = 12;
-const SCAN_LINE_CORE_HEIGHT = 4;
+const SCAN_LINE_CORE_HEIGHT = 5;
 
 type ServiceProcessingScreenProps = {
   imageUri?: string | null;
@@ -275,11 +275,11 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
                 style={styles.speedUpGradient}
               >
                 <View style={styles.speedUpIconWrap}>
-                  <Text style={styles.speedUpIcon}>🚀</Text>
+                  <Text style={styles.speedUpIcon}>{"\uD83D\uDE80"}</Text>
                 </View>
                 <View style={styles.speedUpCopy}>
-                  <Text style={styles.speedUpTitle}>{t("processing.speedUpCta")}</Text>
-                  <Text style={styles.speedUpSubtitle}>{t("processing.speedUpHint")}</Text>
+                  <Text style={styles.speedUpTitle}>Speed Up</Text>
+                  <Text style={styles.speedUpSubtitle}>Upgrade now for faster future renders</Text>
                 </View>
               </LinearGradient>
             </LuxPressable>
@@ -346,7 +346,7 @@ function createStyles(colors: Theme) {
       paddingBottom: spacing.md,
     },
     hero: {
-      alignItems: "flex-start",
+      alignItems: "center",
       gap: spacing.sm,
       paddingTop: GLOBAL_VERTICAL_GAP,
     },
@@ -362,6 +362,9 @@ function createStyles(colors: Theme) {
       shadowRadius: 28,
       shadowOffset: { width: 0, height: 12 },
       elevation: 4,
+      alignSelf: "center",
+      width: "100%",
+      maxWidth: 420,
     },
     previewLabel: {
       color: colors.textMuted,
@@ -371,7 +374,7 @@ function createStyles(colors: Theme) {
       lineHeight: 14,
       letterSpacing: 1,
       textTransform: "uppercase",
-      textAlign: "left",
+      textAlign: "center",
     },
     previewFrame: {
       borderRadius: 24,
@@ -403,18 +406,18 @@ function createStyles(colors: Theme) {
       backgroundColor: GENERATION_PROGRESS_COLOR,
     },
     copyBlock: {
-      alignItems: "flex-start",
+      alignItems: "center",
     },
     speedUpCta: {
       borderRadius: 999,
       shadowColor: "#2563EB",
-      shadowOpacity: 0.28,
-      shadowRadius: 18,
+      shadowOpacity: 0.36,
+      shadowRadius: 22,
       shadowOffset: { width: 0, height: 8 },
-      elevation: 8,
+      elevation: 10,
     },
     speedUpGradient: {
-      minHeight: 64,
+      minHeight: 70,
       borderRadius: 999,
       paddingHorizontal: 18,
       paddingVertical: 14,
@@ -458,33 +461,34 @@ function createStyles(colors: Theme) {
     },
     title: {
       color: "#0F172A",
-      fontSize: 34,
+      fontSize: 30,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "800",
-      lineHeight: 40,
+      lineHeight: 36,
       letterSpacing: -0.8,
-      textAlign: "left",
-      maxWidth: 340,
+      textAlign: "center",
+      maxWidth: 360,
     },
     subtitleWrap: {
       minHeight: 48,
       justifyContent: "center",
+      alignItems: "center",
     },
     subtitle: {
       color: "#334155",
-      fontSize: 17,
+      fontSize: 15,
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "700",
-      lineHeight: 24,
-      textAlign: "left",
+      lineHeight: 22,
+      textAlign: "center",
     },
     eta: {
       color: "#475569",
       fontSize: 13,
       fontFamily: fonts.regular.fontFamily,
-      fontWeight: "600",
+      fontWeight: "700",
       lineHeight: 19,
-      textAlign: "left",
+      textAlign: "center",
     },
     cancelWrap: {
       alignSelf: "flex-start",
@@ -504,8 +508,8 @@ function createStyles(colors: Theme) {
       position: "absolute",
       left: 0,
       right: 0,
-      bottom: SCAN_LINE_CORE_HEIGHT + 6,
-      height: 52,
+      bottom: SCAN_LINE_CORE_HEIGHT + 10,
+      height: 64,
       borderTopLeftRadius: 999,
       borderTopRightRadius: 999,
     },
@@ -513,13 +517,13 @@ function createStyles(colors: Theme) {
       position: "absolute",
       left: 4,
       right: 4,
-      bottom: SCAN_LINE_CORE_HEIGHT - 2,
-      height: 16,
+      bottom: SCAN_LINE_CORE_HEIGHT - 4,
+      height: 22,
       borderRadius: 999,
-      backgroundColor: "rgba(59, 130, 246, 0.32)",
+      backgroundColor: "rgba(56, 189, 248, 0.42)",
       shadowColor: "#3B82F6",
-      shadowOpacity: 0.72,
-      shadowRadius: 18,
+      shadowOpacity: 0.92,
+      shadowRadius: 22,
       shadowOffset: { width: 0, height: 0 },
     },
     scanSweepCore: {
@@ -529,9 +533,9 @@ function createStyles(colors: Theme) {
       bottom: 0,
       height: SCAN_LINE_CORE_HEIGHT,
       borderRadius: 999,
-      shadowColor: "#60A5FA",
+      shadowColor: "#67E8F9",
       shadowOpacity: 1,
-      shadowRadius: 14,
+      shadowRadius: 18,
       shadowOffset: { width: 0, height: 0 },
     },
   });

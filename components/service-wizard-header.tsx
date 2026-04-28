@@ -25,7 +25,7 @@ export function ServiceWizardHeader({
   horizontalInset = 20,
   onCreditsPress,
   canGoBack = false,
-  leftAccessory: _leftAccessory,
+  leftAccessory,
   onBack,
   onClose,
 }: ServiceWizardHeaderProps) {
@@ -39,6 +39,7 @@ export function ServiceWizardHeader({
       onCreditsPress={onCreditsPress}
       onBack={showBack ? onBack : undefined}
       onClose={onClose}
+      leftAccessory={leftAccessory}
       step={safeStep}
       totalSteps={totalSteps}
       title={_title}

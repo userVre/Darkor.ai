@@ -1,6 +1,6 @@
 import {ArrowLeft, X} from "@/components/material-icons";
 import {useRouter} from "expo-router";
-import {useState} from "react";
+import {type ReactNode, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {I18nManager, Platform, Pressable, StyleSheet, Text, View} from "react-native";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
@@ -35,6 +35,7 @@ type StickyStepHeaderProps = {
   step: number;
   totalSteps: number;
   showProgress?: boolean;
+  leftAccessory?: ReactNode;
   horizontalInset?: number;
   onCreditsPress?: () => void;
   onBack?: () => void;
@@ -69,6 +70,7 @@ export function StickyStepHeader({
   step,
   totalSteps,
   showProgress = true,
+  leftAccessory,
   horizontalInset = 20,
   onCreditsPress: _onCreditsPress,
   onBack,
@@ -137,6 +139,8 @@ export function StickyStepHeader({
                     ]}
                   />
                 </Pressable>
+              ) : leftAccessory ? (
+                leftAccessory
               ) : showCredits ? (
                 hasPaidAccess ? (
                   <ProBadge style={styles.proBadge} />

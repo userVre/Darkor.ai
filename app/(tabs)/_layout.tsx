@@ -137,6 +137,12 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="tools"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="create"
         options={{
           title: t("tabs.create"),
@@ -163,12 +169,6 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="workspace"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
         name="gallery"
         options={{
           title: t("tabs.discover"),
@@ -180,6 +180,12 @@ export default function TabsLayout() {
         options={{
           title: t("tabs.profile"),
           tabBarIcon: ({ color, focused }) => <TabIcon Icon={UserRound} color={color} size={21} focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="workspace"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
