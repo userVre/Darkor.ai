@@ -42,6 +42,10 @@ const GRID_HORIZONTAL_PADDING = 24;
 const GRID_GAP = 12;
 const GRID_MAX_CARD_WIDTH = 190;
 
+function getBoardItemKey(item: BoardItem) {
+  return `${item.generationId ?? item.id}:${item.createdAt}`;
+}
+
 export default function ProfileScreen() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -247,7 +251,7 @@ export default function ProfileScreen() {
     />
   );
 
-  const keyExtractor = (item: BoardItem) => item.id;
+  const keyExtractor = (item: BoardItem) => getBoardItemKey(item);
 
   const handleSaveToGallery = async () => {
     if (!actionItem?.imageUri) {

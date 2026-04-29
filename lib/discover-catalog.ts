@@ -21,6 +21,7 @@ export type DiscoverGroup = {
   title: string;
   clusterId: DiscoverClusterId;
   service: DiscoverService;
+  renderKey: string;
   items: DiscoverTile[];
 };
 
@@ -77,19 +78,24 @@ const DISCOVER_GROUP_DEFINITIONS: DiscoverGroupDefinition[] = [
   { id: "garden", titleKey: "gallery.groups.garden", clusterId: "landscapes", service: "garden" },
 ];
 
-const DISCOVER_CLUSTER_TITLE_KEYS: Record<DiscoverClusterId, string> = {
-  interiors: "discover.tabs.home",
-  architecture: "discover.tabs.exterior",
-  landscapes: "discover.tabs.garden",
+const DISCOVER_CLUSTER_TITLES: Record<DiscoverClusterId, string> = {
+  interiors: "Interior",
+  architecture: "Exterior",
+  landscapes: "Garden",
 };
+
+function createDiscoverTileId(groupId: GeneratedDiscoverAssetId, clusterId: DiscoverClusterId, index: number) {
+  return `${clusterId}:${groupId}:${index + 1}`;
+}
 
 function buildTiles(
   groupId: GeneratedDiscoverAssetId,
+  clusterId: DiscoverClusterId,
   title: string,
   t: ReturnType<typeof useTranslation>["t"],
 ): DiscoverTile[] {
   return GENERATED_DISCOVER_ASSETS[groupId].map((image, index) => ({
-    id: `${groupId}-${index + 1}`,
+    id: createDiscoverTileId(groupId, clusterId, index),
     title: t("gallery.imageTitleTemplate", { title, index: index + 1 }),
     previewTitle: title,
     categoryId: groupId,
@@ -106,26 +112,27 @@ function buildDiscoverGroups(t: ReturnType<typeof useTranslation>["t"]) {
       title,
       clusterId: group.clusterId,
       service: group.service,
-      items: buildTiles(group.id, title, t),
+      renderKey: `${group.clusterId}:${group.id}`,
+      items: buildTiles(group.id, group.clusterId, title, t),
     };
   });
 }
 
-function buildDiscoverClusters(groups: DiscoverGroup[], t: ReturnType<typeof useTranslation>["t"]) {
+function buildDiscoverClusters(groups: DiscoverGroup[]) {
   return [
     {
       id: "interiors" as const,
-      title: t(DISCOVER_CLUSTER_TITLE_KEYS.interiors),
+      title: DISCOVER_CLUSTER_TITLES.interiors,
       groups: groups.filter((group) => group.clusterId === "interiors"),
     },
     {
       id: "architecture" as const,
-      title: t(DISCOVER_CLUSTER_TITLE_KEYS.architecture),
+      title: DISCOVER_CLUSTER_TITLES.architecture,
       groups: groups.filter((group) => group.clusterId === "architecture"),
     },
     {
       id: "landscapes" as const,
-      title: t(DISCOVER_CLUSTER_TITLE_KEYS.landscapes),
+      title: DISCOVER_CLUSTER_TITLES.landscapes,
       groups: groups.filter(
         (group) =>
           group.clusterId === "landscapes"
@@ -166,7 +173,7 @@ export function useDiscoverClusters(_tabId: DiscoverTabId = "discover") {
 
   return useMemo(() => {
     const groups = buildDiscoverGroups(t);
-    return buildDiscoverClusters(groups, t);
+    return buildDiscoverClusters(groups);
   }, [i18n.language, t]);
 }
 
@@ -175,7 +182,7 @@ export function useDiscoverFeedRows(_tabId: DiscoverTabId = "discover") {
 
   return useMemo(() => {
     const groups = buildDiscoverGroups(t);
-    const clusters = buildDiscoverClusters(groups, t);
+    const clusters = buildDiscoverClusters(groups);
     return buildDiscoverFeedRows(clusters);
   }, [i18n.language, t]);
 }

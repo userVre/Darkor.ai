@@ -7,6 +7,8 @@ import {spacing} from "../styles/spacing";
 
 import {useViewerSession} from "../components/viewer-session-context";
 import {DIAGNOSTIC_BYPASS} from "../lib/diagnostics";
+import {hasDismissedLaunchPaywall} from "../lib/launch-paywall";
+import {getRevenueCatClient, hasActiveSubscription} from "../lib/revenuecat";
 
 type MeResponse = {
   plan: "free" | "trial" | "pro";
@@ -34,7 +36,8 @@ export default function Index() {
   const { t } = useTranslation();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
-  const [gateTimedOut, setGateTimedOut] = useState(false);
+  const [hasCheckedRevenueCat, setHasCheckedRevenueCat] = useState(false);
+  const [revenueCatHasAccess, setRevenueCatHasAccess] = useState(false);
 
   const me = useQuery(
     "users:me" as any,
@@ -42,26 +45,60 @@ export default function Index() {
   ) as MeResponse | null | undefined;
 
   useEffect(() => {
-    if (DIAGNOSTIC_BYPASS || gateTimedOut || (viewerReady && me !== undefined)) {
+    if (DIAGNOSTIC_BYPASS) {
+      setHasCheckedRevenueCat(true);
       return;
     }
 
-    const timer = setTimeout(() => {
-      console.warn("[Index] Plan lookup timed out after 2000ms. Continuing into tabs.");
-      setGateTimedOut(true);
-    }, 2000);
+    let active = true;
 
-    return () => clearTimeout(timer);
-  }, [gateTimedOut, me, viewerReady]);
+    const checkRevenueCat = async () => {
+      const client = getRevenueCatClient();
+      if (!client) {
+        if (active) {
+          setHasCheckedRevenueCat(true);
+        }
+        return;
+      }
 
-  if (DIAGNOSTIC_BYPASS || gateTimedOut) {
+      try {
+        const info = await client.getCustomerInfo();
+        if (!active) {
+          return;
+        }
+
+        setRevenueCatHasAccess(hasActiveSubscription(info));
+      } catch (error) {
+        console.warn("[Index] RevenueCat access check failed", error);
+      } finally {
+        if (active) {
+          setHasCheckedRevenueCat(true);
+        }
+      }
+    };
+
+    void checkRevenueCat();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (DIAGNOSTIC_BYPASS) {
     return <Redirect href="/(tabs)" />;
   }
 
-  if (!viewerReady || me === undefined) {
+  if (!viewerReady || me === undefined || !hasCheckedRevenueCat) {
     return <LaunchScreen message={t("boot.checkingPlan")} />;
   }
 
-  return <Redirect href="/(tabs)" />;
+  if (hasDismissedLaunchPaywall()) {
+    return <Redirect href="/(tabs)" />;
+  }
+
+  if (Boolean(me?.hasPaidAccess) || revenueCatHasAccess) {
+    return <Redirect href="/(tabs)" />;
+  }
+
+  return <Redirect href="/paywall?source=launch" />;
 }
 

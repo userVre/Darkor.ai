@@ -19,6 +19,10 @@ import {triggerHaptic} from "../../../lib/haptics";
 const SCREEN_SIDE_MARGIN = 24;
 const GRID_GAP = 12;
 
+function getDiscoverGridKey(item: DiscoverTile) {
+  return `${item.categoryId}:${item.id}`;
+}
+
 function readRouteParam(value: string | string[] | undefined) {
   if (Array.isArray(value)) {
     return value[0];
@@ -84,7 +88,7 @@ export default function DiscoverSeeAllScreen() {
         <FlatList
           data={group.items}
           numColumns={2}
-          keyExtractor={(item) => item.id}
+          keyExtractor={getDiscoverGridKey}
           showsVerticalScrollIndicator={false}
           contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{

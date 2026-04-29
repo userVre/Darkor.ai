@@ -10,6 +10,7 @@ type SelectedPhoto = {
 
 type GardenRedesignStepOneProps = {
   creditCount: number;
+  headerTitle?: string;
   selectedPhotos: SelectedPhoto[];
   currentDisplayIndex: number;
   examplePhotos: InteriorRedesignStepOneExamplePhoto[];
@@ -28,6 +29,7 @@ export function GardenRedesignStepOne(props: GardenRedesignStepOneProps) {
   return (
     <InteriorRedesignStepOne
       {...props}
+      headerTitle={props.headerTitle ?? "Garden"}
       totalSteps={3}
       emptyStateSubtitle="Upload an outdoor scene so HomeDecor AI can elevate the landscape with a composed, architectural point of view."
     />

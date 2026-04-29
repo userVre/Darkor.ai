@@ -3,7 +3,7 @@ import "react-native-reanimated";
 
 import {ClerkProvider, useAuth, useUser} from "@clerk/expo";
 import {BottomSheetModalProvider} from "@gorhom/bottom-sheet";
-import {useMutation} from "convex/react";
+import {useMutation, useQuery} from "convex/react";
 import {ConvexProviderWithClerk} from "convex/react-clerk";
 import {useFonts} from "expo-font";
 import * as Linking from "expo-linking";
@@ -22,6 +22,7 @@ import {GenerationAccessCacheGate} from "../components/generation-access-cache-g
 import {OfflineOverlay} from "../components/offline-overlay";
 import {ProSuccessProvider, useProSuccess} from "../components/pro-success-context";
 import {ViewerCreditsProvider} from "../components/viewer-credits-context";
+import {useViewerSession} from "../components/viewer-session-context";
 import {ViewerSessionProvider} from "../components/viewer-session-context";
 import {WorkspaceDraftProvider} from "../components/workspace-context";
 import {convex} from "../lib/convex";
@@ -41,6 +42,7 @@ import {consumeReferralCode, setReferralCode} from "../lib/referral";
 import {
 configureRevenueCat,
 fetchTieredPackage,
+getRevenueCatClient,
 hasActiveSubscription,
 resolveRevenueCatSubscription,
 syncRevenueCatPricingAttributes,
@@ -48,6 +50,7 @@ type RevenueCatCustomerInfo,
 type RevenueCatPurchases,
 } from "../lib/revenuecat";
 import {tokenCache} from "../lib/token-cache";
+import {hasDismissedLaunchPaywall} from "../lib/launch-paywall";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -386,6 +389,91 @@ function CreateAccessGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function LaunchPaywallGate({ children }: { children: React.ReactNode }) {
+  const { isLoaded } = useAuth();
+  const { anonymousId, isReady: viewerReady } = useViewerSession();
+  const router = useRouter();
+  const pathname = usePathname();
+  const me = useQuery(
+    "users:me" as any,
+    viewerReady ? (anonymousId ? { anonymousId } : {}) : "skip",
+  ) as { hasPaidAccess?: boolean } | null | undefined;
+  const [hasCheckedRevenueCat, setHasCheckedRevenueCat] = useState(false);
+  const [revenueCatHasAccess, setRevenueCatHasAccess] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const checkRevenueCat = async () => {
+      const client = getRevenueCatClient();
+      if (!client) {
+        if (active) {
+          setHasCheckedRevenueCat(true);
+        }
+        return;
+      }
+
+      try {
+        const info = await client.getCustomerInfo();
+        if (!active) {
+          return;
+        }
+
+        setRevenueCatHasAccess(hasActiveSubscription(info));
+      } catch (error) {
+        console.warn("[Boot] RevenueCat launch gate check failed", error);
+      } finally {
+        if (active) {
+          setHasCheckedRevenueCat(true);
+        }
+      }
+    };
+
+    void checkRevenueCat();
+    return () => {
+      active = false;
+    };
+  }, [isLoaded]);
+
+  useEffect(() => {
+    if (!isLoaded || !viewerReady || me === undefined) {
+      return;
+    }
+
+    const hasDismissedPaywall = hasDismissedLaunchPaywall();
+    if (hasDismissedPaywall) {
+      return;
+    }
+
+    if (pathname === "/paywall") {
+      return;
+    }
+
+    const hasAccess = Boolean(me?.hasPaidAccess) || revenueCatHasAccess;
+    if (hasAccess) {
+      return;
+    }
+
+    if (!hasCheckedRevenueCat) {
+      return;
+    }
+
+    router.replace({ pathname: "/paywall", params: { source: "launch" } });
+  }, [hasCheckedRevenueCat, isLoaded, me, pathname, revenueCatHasAccess, router, viewerReady]);
+
+  const isProtectedRoute = pathname !== "/paywall";
+  const shouldBlockForGate =
+    isProtectedRoute
+    && !hasDismissedLaunchPaywall()
+    && (!isLoaded || !viewerReady || me === undefined || !hasCheckedRevenueCat);
+
+  if (shouldBlockForGate) {
+    return <BootScreen message={i18n.t("boot.checkingPlan")} />;
+  }
+
+  return <>{children}</>;
+}
+
 function AppShell() {
   const languagePreference = useAppLanguagePreference();
 
@@ -507,9 +595,11 @@ export default function RootLayout() {
                         <BottomSheetModalProvider>
                           <LocalizationSyncGate />
                           <GenerationAccessCacheGate />
-                          <CreateAccessGate>
-                            <AppShell />
-                          </CreateAccessGate>
+                          <LaunchPaywallGate>
+                            <CreateAccessGate>
+                              <AppShell />
+                            </CreateAccessGate>
+                          </LaunchPaywallGate>
                           <OfflineOverlay />
                         </BottomSheetModalProvider>
                       </WorkspaceDraftProvider>

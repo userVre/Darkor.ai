@@ -67,6 +67,9 @@ const MAX_LAYOUT_PHOTOS = 3;
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 const FREE_LAYOUT_COOLDOWN_MS = 5_000;
 const SMART_SPACE_PLANNING_TITLE = "Smart Space Planning";
+const SMART_SPACE_PLANNING_UPLOAD_TITLE = "Smart Space Planning";
+const SMART_SPACE_PLANNING_UPLOAD_BODY =
+  "Upload up to 3 room photos from different angles for a more precise Smart Space Planning result.";
 const SMART_SPACE_PLANNING_PROMPT =
   "Furniture Rearrangement instructions for Azure GPT-Image-1: Rearrange the furniture layout to maximize usable floor area and everyday comfort while preserving the core architecture. Keep walls, windows, doors, and the room structure intact. Improve circulation flow and spatial balance while maintaining a realistic, high-end photorealistic result.";
 const SMART_SPACE_PROCESSING_STATUSES = [
@@ -525,6 +528,11 @@ export function LayoutOptimizationWizard({
           gap: spacing.lg,
         }}
       >
+        <View style={styles.introBlock}>
+          <Text style={styles.introTitle}>{SMART_SPACE_PLANNING_UPLOAD_TITLE}</Text>
+          <Text style={styles.introBody}>{SMART_SPACE_PLANNING_UPLOAD_BODY}</Text>
+        </View>
+
         <LuxPressable
           onPress={() => {
             if (!activeImage) {
@@ -554,8 +562,8 @@ export function LayoutOptimizationWizard({
                 <View style={styles.emptyPlusBadge}>
                   <Plus color={DIAMOND_PILL_BLUE} size={28} strokeWidth={2.1} />
                 </View>
-                <Text style={styles.emptyPreviewTitle}>Begin Your Transformation</Text>
-                <Text style={styles.emptyPreviewBody}>Gain More Space</Text>
+                <Text style={styles.emptyPreviewTitle}>Gain Your Space</Text>
+                <Text style={styles.emptyPreviewBody}>Maximize Your Room</Text>
                 <View style={styles.uploadCta}>
                   <Text style={styles.uploadCtaText}>+ Upload</Text>
                 </View>
@@ -564,17 +572,19 @@ export function LayoutOptimizationWizard({
           </View>
         </LuxPressable>
 
-        <View style={styles.thumbnailRailWrap}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.thumbnailRail}
-            decelerationRate="fast"
-          >
+        <View style={styles.clusterSection}>
+          <View style={styles.clusterWrap}>
             {selectedImages.map((image, index) => {
               const active = index === activeIndex;
               return (
-                <View key={`${image.uri}-${index}`} style={styles.thumbItem}>
+                <View
+                  key={`${image.uri}-${index}`}
+                  style={[
+                    styles.clusterItem,
+                    index > 0 ? styles.clusterItemOverlap : null,
+                    { zIndex: selectedImages.length - index },
+                  ]}
+                >
                   <LuxPressable
                     onPress={() => setActiveIndex(index)}
                     style={styles.thumbPressable}
@@ -598,7 +608,11 @@ export function LayoutOptimizationWizard({
             })}
 
             {selectedImages.length < MAX_LAYOUT_PHOTOS ? (
-              <LuxPressable onPress={handleAddPhoto} style={styles.thumbPressable} scale={0.98}>
+              <LuxPressable
+                onPress={handleAddPhoto}
+                style={[styles.clusterItem, selectedImages.length > 0 ? styles.clusterItemOverlap : null]}
+                scale={0.98}
+              >
                 <View style={styles.addThumbFrame}>
                   {isPickingImage ? (
                     <ActivityIndicator color={DIAMOND_PILL_BLUE} />
@@ -608,7 +622,8 @@ export function LayoutOptimizationWizard({
                 </View>
               </LuxPressable>
             ) : null}
-          </ScrollView>
+          </View>
+          <Text style={styles.clusterCaption}>{`${selectedImages.length}/3 photos`}</Text>
         </View>
 
         <View style={styles.examplesBlock}>
@@ -679,6 +694,21 @@ const styles = StyleSheet.create({
   },
   mainPreviewPressable: {
     width: "100%",
+  },
+  introBlock: {
+    gap: spacing.sm,
+  },
+  introTitle: {
+    color: "#0F172A",
+    fontSize: 28,
+    lineHeight: 34,
+    ...fonts.semibold,
+  },
+  introBody: {
+    color: "#64748B",
+    fontSize: 15,
+    lineHeight: 22,
+    maxWidth: 332,
   },
   mainPreview: {
     width: "100%",
@@ -754,16 +784,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.92)",
   },
-  thumbnailRailWrap: {
-    marginTop: 2,
+  clusterSection: {
+    gap: spacing.sm,
+    alignItems: "flex-start",
   },
-  thumbnailRail: {
-    gap: 12,
-    paddingRight: 4,
+  clusterWrap: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  thumbItem: {
+  clusterItem: {
     width: 88,
     height: 88,
+  },
+  clusterItemOverlap: {
+    marginLeft: -18,
   },
   thumbPressable: {
     width: "100%",
@@ -801,7 +835,8 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.92)",
   },
   addThumbFrame: {
-    flex: 1,
+    width: 88,
+    height: 88,
     borderRadius: 22,
     borderWidth: 1.5,
     borderStyle: "dashed",
@@ -809,6 +844,12 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(37,99,235,0.05)",
     alignItems: "center",
     justifyContent: "center",
+  },
+  clusterCaption: {
+    color: "#64748B",
+    fontSize: 13,
+    lineHeight: 18,
+    ...fonts.medium,
   },
   examplesBlock: {
     gap: spacing.md,

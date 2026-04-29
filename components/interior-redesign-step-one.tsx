@@ -38,6 +38,7 @@ type InteriorRedesignStepOneProps = {
   selectedPhotos: SelectedPhoto[];
   currentDisplayIndex: number;
   examplePhotos: InteriorRedesignStepOneExamplePhoto[];
+  headerTitle?: string;
   totalSteps?: number;
   emptyStateSubtitle?: string;
   loadingExampleId?: string | null;
@@ -69,6 +70,7 @@ export function InteriorRedesignStepOne({
   selectedPhotos,
   currentDisplayIndex,
   examplePhotos,
+  headerTitle = "Interior",
   totalSteps = 4,
   emptyStateSubtitle = "Redesign and Beautify your home.",
   loadingExampleId,
@@ -225,6 +227,7 @@ export function InteriorRedesignStepOne({
       <StatusBar style="dark" />
 
       <DesignStepHeader
+        title={headerTitle}
         closeAccessibilityLabel={t("wizard.headers.close")}
         creditCount={creditCount}
         horizontalInset={sideInset}
@@ -235,7 +238,7 @@ export function InteriorRedesignStepOne({
       />
 
       <View style={[styles.content, { paddingTop: contentTop }]}>
-        <Text style={[styles.header, { marginLeft: contentInset }]}>{t("wizard.stepOne.title")}</Text>
+        <Text style={[styles.header, { marginLeft: contentInset }]}>{headerTitle}</Text>
 
         <View
           style={[

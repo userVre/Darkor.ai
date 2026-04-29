@@ -24,6 +24,10 @@ import {fonts} from "../../styles/typography";
 const SCREEN_SIDE_MARGIN = 24;
 const CARD_GAP = 12;
 
+function getDiscoverTileKey(group: DiscoverGroup, item: DiscoverTile) {
+  return `${group.renderKey}:${item.id}`;
+}
+
 const DiscoverSection = memo(function DiscoverSection({
   group,
   cardWidth,
@@ -56,7 +60,7 @@ const DiscoverSection = memo(function DiscoverSection({
       <FlashList
         horizontal
         data={group.items}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => getDiscoverTileKey(group, item)}
         decelerationRate="fast"
         showsHorizontalScrollIndicator={false}
         snapToAlignment="start"
@@ -129,7 +133,7 @@ export default function GalleryScreen() {
     router.push("/paywall");
   }, [router]);
 
-  const keyExtractor = useCallback((item: DiscoverGroup) => item.id, []);
+  const keyExtractor = useCallback((item: DiscoverGroup) => item.renderKey, []);
 
   const renderSection = useCallback(
     ({ item }: { item: DiscoverGroup }) => {
@@ -162,7 +166,7 @@ export default function GalleryScreen() {
             />
           </View>
 
-          <View pointerEvents="none" style={styles.titleWrap}>
+          <View pointerEvents="none" style={styles.titleSlot}>
             <Text style={styles.headerTitle}>{t("tabs.discover")}</Text>
           </View>
 
@@ -230,24 +234,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    position: "relative",
   },
   creditSlot: {
     minWidth: 88,
+    flex: 1,
     alignItems: "flex-start",
     justifyContent: "center",
   },
   creditPill: {
     minHeight: 42,
   },
-  titleWrap: {
-    position: "absolute",
-    left: 88,
-    right: 88,
-    top: 0,
-    bottom: 0,
+  titleSlot: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 12,
   },
   headerTitle: {
     color: DS.colors.textPrimary,
@@ -257,7 +258,8 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   rightSpacer: {
-    width: 88,
+    minWidth: 88,
+    flex: 1,
   },
   categoryTabs: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,

@@ -189,20 +189,12 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
           <AnimatedExpoImage
             cachePolicy="memory-disk"
             contentFit={contentFit}
-            source={beforeSource}
-            style={[styles.absoluteFill, imageStyle]}
-            transition={120}
-          />
-
-          <AnimatedExpoImage
-            cachePolicy="memory-disk"
-            contentFit={contentFit}
             source={afterSource}
             style={[styles.absoluteFill, imageStyle]}
             transition={120}
           />
 
-          <Animated.View style={[styles.afterViewport, beforeViewportStyle]}>
+          <Animated.View style={[styles.beforeViewport, beforeViewportStyle]}>
             <AnimatedExpoImage
               cachePolicy="memory-disk"
               contentFit={contentFit}
@@ -260,7 +252,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
   },
-  afterViewport: {
+  beforeViewport: {
     position: "absolute",
     top: 0,
     bottom: 0,

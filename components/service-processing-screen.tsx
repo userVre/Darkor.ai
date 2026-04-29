@@ -29,10 +29,11 @@ const PROGRESS_MAX = 0.94;
 const PROGRESS_EASING = 0.08;
 const STATUS_ROTATION_MS = 3_000;
 const GENERATION_PROGRESS_COLOR = DS.colors.accent;
-const SCAN_DURATION_MS = 2_200;
-const SCAN_LINE_HEIGHT = 92;
+const SCAN_DURATION_MS = 1_700;
+const SCAN_LINE_HEIGHT = 44;
 const SCAN_TRACK_INSET = 12;
-const SCAN_LINE_CORE_HEIGHT = 5;
+const SCAN_LINE_CORE_HEIGHT = 3;
+const SCAN_STATUS_FALLBACK = "Analyzing spatial geometry...";
 
 type ServiceProcessingScreenProps = {
   imageUri?: string | null;
@@ -94,6 +95,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   );
   const resolvedTitle = title?.trim() || t("processing.title");
   const resolvedPreviewLabel = previewLabel?.trim() || t("workspace.editor.sourcePhoto");
+  const scanStatusMessage = activeSubtitle?.trim() || SCAN_STATUS_FALLBACK;
   const handleSpeedUp = () => {
     router.push({
       pathname: "/paywall",
@@ -163,7 +165,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
         easing: Easing.linear,
       }),
       -1,
-      false,
+      true,
     );
 
     return () => {
@@ -232,8 +234,8 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
 
             <Animated.View style={[styles.scanSweepWrap, scanLineStyle]} pointerEvents="none">
               <LinearGradient
-                colors={["rgba(255,255,255,0)", "rgba(59, 130, 246, 0.08)", "rgba(59, 130, 246, 0.22)", "rgba(255,255,255,0)"]}
-                locations={[0, 0.24, 0.7, 1]}
+                colors={["rgba(255,255,255,0)", "rgba(34, 211, 238, 0.04)", "rgba(59, 130, 246, 0.12)", "rgba(255,255,255,0)"]}
+                locations={[0, 0.2, 0.65, 1]}
                 start={{ x: 0.5, y: 0 }}
                 end={{ x: 0.5, y: 1 }}
                 style={styles.scanTrail}
@@ -248,6 +250,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
               />
             </Animated.View>
           </View>
+          <Text style={styles.scanStatus}>{scanStatusMessage}</Text>
         </View>
 
         <View style={styles.bottomContent}>
@@ -346,7 +349,7 @@ function createStyles(colors: Theme) {
       paddingBottom: spacing.md,
     },
     hero: {
-      alignItems: "center",
+      alignItems: "flex-start",
       gap: spacing.sm,
       paddingTop: GLOBAL_VERTICAL_GAP,
     },
@@ -365,16 +368,17 @@ function createStyles(colors: Theme) {
       alignSelf: "center",
       width: "100%",
       maxWidth: 420,
+      alignItems: "flex-start",
     },
     previewLabel: {
       color: colors.textMuted,
       fontSize: 11,
-      fontFamily: fonts.regular.fontFamily,
-      fontWeight: "700",
+      fontFamily: fonts.bold.fontFamily,
+      fontWeight: fonts.bold.fontWeight,
       lineHeight: 14,
       letterSpacing: 1,
       textTransform: "uppercase",
-      textAlign: "center",
+      textAlign: "left",
     },
     previewFrame: {
       borderRadius: 24,
@@ -382,6 +386,15 @@ function createStyles(colors: Theme) {
       backgroundColor: "#EFF4FF",
       borderWidth: 1,
       borderColor: "rgba(37, 99, 235, 0.08)",
+      width: "100%",
+    },
+    scanStatus: {
+      color: "#475569",
+      fontSize: 13,
+      fontFamily: fonts.bold.fontFamily,
+      fontWeight: fonts.bold.fontWeight,
+      lineHeight: 18,
+      textAlign: "left",
     },
     previewImage: {
       width: "100%",
@@ -406,7 +419,7 @@ function createStyles(colors: Theme) {
       backgroundColor: GENERATION_PROGRESS_COLOR,
     },
     copyBlock: {
-      alignItems: "center",
+      alignItems: "flex-start",
     },
     speedUpCta: {
       borderRadius: 999,
@@ -446,49 +459,49 @@ function createStyles(colors: Theme) {
     speedUpTitle: {
       color: "#FFFFFF",
       fontSize: 15,
-      fontFamily: fonts.regular.fontFamily,
-      fontWeight: "800",
+      fontFamily: fonts.bold.fontFamily,
+      fontWeight: fonts.bold.fontWeight,
       lineHeight: 20,
       textAlign: "left",
     },
     speedUpSubtitle: {
       color: "rgba(255,255,255,0.82)",
       fontSize: 12,
-      fontFamily: fonts.regular.fontFamily,
-      fontWeight: "600",
+      fontFamily: fonts.bold.fontFamily,
+      fontWeight: fonts.bold.fontWeight,
       lineHeight: 17,
       textAlign: "left",
     },
     title: {
       color: "#0F172A",
       fontSize: 30,
-      fontFamily: fonts.regular.fontFamily,
-      fontWeight: "800",
+      fontFamily: fonts.bold.fontFamily,
+      fontWeight: fonts.bold.fontWeight,
       lineHeight: 36,
       letterSpacing: -0.8,
-      textAlign: "center",
+      textAlign: "left",
       maxWidth: 360,
     },
     subtitleWrap: {
       minHeight: 48,
       justifyContent: "center",
-      alignItems: "center",
+      alignItems: "flex-start",
     },
     subtitle: {
       color: "#334155",
       fontSize: 15,
-      fontFamily: fonts.regular.fontFamily,
-      fontWeight: "700",
+      fontFamily: fonts.bold.fontFamily,
+      fontWeight: fonts.bold.fontWeight,
       lineHeight: 22,
-      textAlign: "center",
+      textAlign: "left",
     },
     eta: {
       color: "#475569",
       fontSize: 13,
-      fontFamily: fonts.regular.fontFamily,
-      fontWeight: "700",
+      fontFamily: fonts.bold.fontFamily,
+      fontWeight: fonts.bold.fontWeight,
       lineHeight: 19,
-      textAlign: "center",
+      textAlign: "left",
     },
     cancelWrap: {
       alignSelf: "flex-start",
@@ -498,8 +511,8 @@ function createStyles(colors: Theme) {
     cancelText: {
       color: "#64748B",
       fontSize: 12,
-      fontFamily: fonts.regular.fontFamily,
-      fontWeight: "600",
+      fontFamily: fonts.bold.fontFamily,
+      fontWeight: fonts.bold.fontWeight,
     },
     cancelTextDisabled: {
       color: colors.borderLight,
@@ -509,7 +522,7 @@ function createStyles(colors: Theme) {
       left: 0,
       right: 0,
       bottom: SCAN_LINE_CORE_HEIGHT + 10,
-      height: 64,
+      height: 28,
       borderTopLeftRadius: 999,
       borderTopRightRadius: 999,
     },
@@ -517,13 +530,13 @@ function createStyles(colors: Theme) {
       position: "absolute",
       left: 4,
       right: 4,
-      bottom: SCAN_LINE_CORE_HEIGHT - 4,
-      height: 22,
+      bottom: SCAN_LINE_CORE_HEIGHT - 3,
+      height: 12,
       borderRadius: 999,
-      backgroundColor: "rgba(56, 189, 248, 0.42)",
-      shadowColor: "#3B82F6",
-      shadowOpacity: 0.92,
-      shadowRadius: 22,
+      backgroundColor: "rgba(56, 189, 248, 0.28)",
+      shadowColor: "#22D3EE",
+      shadowOpacity: 0.88,
+      shadowRadius: 16,
       shadowOffset: { width: 0, height: 0 },
     },
     scanSweepCore: {
@@ -534,8 +547,8 @@ function createStyles(colors: Theme) {
       height: SCAN_LINE_CORE_HEIGHT,
       borderRadius: 999,
       shadowColor: "#67E8F9",
-      shadowOpacity: 1,
-      shadowRadius: 18,
+      shadowOpacity: 0.96,
+      shadowRadius: 12,
       shadowOffset: { width: 0, height: 0 },
     },
   });

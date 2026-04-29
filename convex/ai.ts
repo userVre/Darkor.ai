@@ -591,6 +591,9 @@ export const saveGeneration = internalMutationGeneric({
       errorMessage: undefined,
       completedAt: Date.now(),
     });
+    await ctx.runMutation((internal as any).generations.finalizeGenerationSuccess, {
+      ownerId: generation.userId,
+    });
 
     return {
       ok: true,

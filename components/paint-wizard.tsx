@@ -1412,7 +1412,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
 
       {step !== "processing" && step !== "result" && step !== "intake" ? (
         <ServiceWizardHeader
-          title={t("wizard.paintFlow.title")}
+          title="Wall"
           step={currentStepNumber}
           creditCount={availableCredits}
           onCreditsPress={handleOpenPaywall}

@@ -133,16 +133,34 @@ async function reserveGenerationAllowance(ctx: any, ownerId: string, ignoreCoold
     throw new ConvexError(getLimitExceededMessage(state));
   }
 
+  const processingGenerations = state.subscriptionType === "free"
+    ? await ctx.db
+        .query("generations")
+        .withIndex("by_userId", (q: any) => q.eq("userId", ownerId))
+        .collect()
+    : [];
+  const pendingFreeGenerationCount = state.subscriptionType === "free"
+    ? processingGenerations.filter((generation: any) => generation.status === "processing").length
+    : 0;
+  if (state.subscriptionType === "free" && pendingFreeGenerationCount >= state.credits) {
+    throw new ConvexError(getLimitExceededMessage({
+      ...state,
+      blocked: true,
+      reachedLimit: true,
+      remaining: 0,
+    }));
+  }
+
   const currentCount = toFiniteNumber(user.generationCount);
   const nextGenerationCount = currentCount + 1;
   const lastPromptAt = toFiniteNumber(user.lastReviewPromptAt);
   const shouldPrompt = computeReviewPrompt(nextGenerationCount, lastPromptAt, ignoreCooldown);
-  const nextCredits = state.subscriptionType === "free" ? Math.max(state.credits - 1, 0) : state.credits;
+  const nextCredits = state.credits;
   const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : state.imageGenerationCount + 1;
 
   await ctx.db.patch(user._id as any, {
     generationCount: nextGenerationCount,
-    credits: nextCredits,
+    credits: state.subscriptionType === "free" ? state.credits : nextCredits,
     imageLimit: state.limit,
     imageGenerationCount: nextImageGenerationCount,
     lastResetDate: state.subscriptionType === "free" ? 0 : state.lastResetDate,
@@ -165,7 +183,7 @@ async function reserveGenerationAllowance(ctx: any, ownerId: string, ignoreCoold
     count: nextGenerationCount,
     shouldPrompt,
     creditsRemaining: state.subscriptionType === "free"
-      ? nextCredits
+      ? state.credits
       : Math.max(state.limit - nextImageGenerationCount, 0),
     planUsed: state.plan,
     generationPolicy,
@@ -185,7 +203,7 @@ async function releaseGenerationAllowance(ctx: any, ownerId: string) {
   const state = await syncDerivedSubscriptionState(ctx, user, Date.now());
   const currentCount = toFiniteNumber(user.generationCount);
   const nextGenerationCount = Math.max(currentCount - 1, 0);
-  const nextCredits = state.subscriptionType === "free" ? Math.min(state.credits + 1, FREE_IMAGE_LIMIT) : state.credits;
+  const nextCredits = state.credits;
   const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : Math.max(state.imageGenerationCount - 1, 0);
 
   await ctx.db.patch(user._id as any, {
@@ -206,8 +224,44 @@ async function releaseGenerationAllowance(ctx: any, ownerId: string) {
     ok: true,
     generationCount: nextGenerationCount,
     credits: state.subscriptionType === "free"
-      ? nextCredits
+      ? state.credits
       : Math.max(state.limit - nextImageGenerationCount, 0),
+  };
+}
+
+async function finalizeGenerationAllowance(ctx: any, ownerId: string) {
+  const user = await getUserByOwnerId(ctx, ownerId);
+  if (!user) {
+    return {
+      ok: false,
+      credits: 0,
+    };
+  }
+
+  const state = await syncDerivedSubscriptionState(ctx, user, Date.now());
+  if (state.subscriptionType !== "free") {
+    return {
+      ok: true,
+      credits: Math.max(state.limit - state.imageGenerationCount, 0),
+    };
+  }
+
+  const nextCredits = Math.max(state.credits - 1, 0);
+  await ctx.db.patch(user._id as any, {
+    credits: nextCredits,
+    imageLimit: state.limit,
+    ...(state.patch.plan ? { plan: state.patch.plan } : {}),
+    ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
+    ...(state.patch.subscriptionEntitlement ? { subscriptionEntitlement: state.patch.subscriptionEntitlement } : {}),
+    ...(typeof state.patch.subscriptionStartedAt === "number" ? { subscriptionStartedAt: state.patch.subscriptionStartedAt } : {}),
+    ...(typeof state.patch.subscriptionEnd === "number" ? { subscriptionEnd: state.patch.subscriptionEnd } : {}),
+    ...(typeof state.patch.imageLimit === "number" ? { imageLimit: state.patch.imageLimit } : {}),
+    ...(typeof state.patch.lastResetDate === "number" ? { lastResetDate: state.patch.lastResetDate } : {}),
+  });
+
+  return {
+    ok: true,
+    credits: nextCredits,
   };
 }
 
@@ -532,6 +586,15 @@ export const markGenerationFailed = internalMutationGeneric({
 
     await releaseGenerationAllowance(ctx, args.ownerId);
     return { ok: true };
+  },
+});
+
+export const finalizeGenerationSuccess = internalMutationGeneric({
+  args: {
+    ownerId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await finalizeGenerationAllowance(ctx, args.ownerId);
   },
 });
 

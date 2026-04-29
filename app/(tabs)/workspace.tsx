@@ -5275,6 +5275,7 @@ export default function WorkspaceScreen() {
     return (
       <InteriorRedesignStepOne
         creditCount={creditBalance}
+        headerTitle="Interior"
         selectedPhotos={selectedImages}
         currentDisplayIndex={currentDisplayIndex}
         examplePhotos={interiorExamplePhotos}
@@ -5297,6 +5298,7 @@ export default function WorkspaceScreen() {
     return (
       <InteriorRedesignStepOne
         creditCount={creditBalance}
+        headerTitle="Exterior"
         selectedPhotos={selectedImages}
         currentDisplayIndex={currentDisplayIndex}
         examplePhotos={exteriorExamplePhotos}
@@ -5320,6 +5322,7 @@ export default function WorkspaceScreen() {
     return (
       <GardenRedesignStepOne
         creditCount={creditBalance}
+        headerTitle="Garden"
         selectedPhotos={selectedImages}
         currentDisplayIndex={currentDisplayIndex}
         examplePhotos={gardenExamplePhotos}
