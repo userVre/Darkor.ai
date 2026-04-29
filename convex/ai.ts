@@ -532,7 +532,7 @@ export async function requestGeminiDesignOrchestration(args: {
 export const suggestDesignOptions: any = actionGeneric({
   args: {
     imageStorageId: v.id("_storage"),
-    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign")),
+    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout")),
     roomType: v.string(),
     availableStyles: v.array(v.string()),
     availablePalettes: v.array(v.string()),

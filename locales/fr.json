@@ -311,7 +311,7 @@
       },
       "contactUs": {
         "title": "Contactez-nous",
-        "body": "Pour toute question ou demande relative à la confidentialité, contactez-nous au support@homedecor.ai."
+        "body": "Pour toute question ou demande relative à la confidentialité, contactez-nous au support@HomeDecor AI."
       }
     }
   },
@@ -355,7 +355,7 @@
       },
       "contact": {
         "title": "Contacter",
-        "body": "Les questions concernant ces conditions peuvent être envoyées à support@homedecor.ai."
+        "body": "Les questions concernant ces conditions peuvent être envoyées à support@HomeDecor AI."
       }
     }
   },
@@ -717,7 +717,7 @@
       "nothingTitle": "Rien à partager",
       "generateFirst": "Générez d’abord un design.",
       "failedTitle": "Échec du partage",
-      "message": "Conçu avec HomeDecor.ai"
+      "message": "Conçu avec HomeDecor AI"
     },
     "download": {
       "nothingTitle": "Rien à télécharger",

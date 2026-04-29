@@ -1,7 +1,6 @@
 import {Camera, X as Close, Image as GalleryIcon, Plus} from "@/components/material-icons";
 import {blue, slate, slateA} from "@radix-ui/colors";
 import {Image} from "expo-image";
-import {useRouter} from "expo-router";
 import {StatusBar} from "expo-status-bar";
 import {useCallback, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
@@ -17,10 +16,8 @@ withTiming,
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {triggerHaptic} from "../lib/haptics";
-import {TOOLS_ROUTE, WORKSPACE_ROUTE} from "../lib/routes";
 import {fonts} from "../styles/typography";
 import {DesignStepHeader, getDesignStepHeaderMetrics} from "./design-step-header";
-import {HomeToolsBottomNav} from "./home-tools-bottom-nav";
 
 export type InteriorRedesignStepOneExamplePhoto = {
   id: string;
@@ -51,6 +48,7 @@ type InteriorRedesignStepOneProps = {
   onCreditsPress?: () => void;
   onExit: () => void;
   showPhotoCount?: boolean;
+  maxPhotos?: number;
 };
 
 type MediaSourceOption = "camera" | "gallery";
@@ -84,8 +82,8 @@ export function InteriorRedesignStepOne({
   onCreditsPress,
   onExit,
   showPhotoCount = true,
+  maxPhotos = 3,
 }: InteriorRedesignStepOneProps) {
-  const router = useRouter();
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -103,7 +101,7 @@ export function InteriorRedesignStepOne({
   const rowThumbnailSize = 64;
   const continueBottom = 64 + scaleValue(24, layoutScale);
   const canContinue = selectedPhotos.length > 0;
-  const canAddMore = selectedPhotos.length < 3;
+  const canAddMore = selectedPhotos.length < maxPhotos;
   const focusedPhoto = useMemo(
     () => selectedPhotos[currentDisplayIndex] ?? selectedPhotos[0] ?? null,
     [currentDisplayIndex, selectedPhotos],
@@ -203,26 +201,6 @@ export function InteriorRedesignStepOne({
         }),
     [finishClose, overlayOpacity, sheetTranslateY],
   );
-
-  const handleToolsPress = () => {
-    triggerHaptic();
-    router.replace(TOOLS_ROUTE as any);
-  };
-
-  const handleCreatePress = () => {
-    triggerHaptic();
-    router.replace(WORKSPACE_ROUTE as any);
-  };
-
-  const handleDiscoverPress = () => {
-    triggerHaptic();
-    router.navigate("/gallery");
-  };
-
-  const handleProfilePress = () => {
-    triggerHaptic();
-    router.push("/profile");
-  };
 
   return (
     <View style={styles.screen}>
@@ -327,7 +305,7 @@ export function InteriorRedesignStepOne({
               {showPhotoCount ? (
                 <View style={styles.photoMetaRow}>
                   <View style={styles.photoCountPill}>
-                    <Text style={styles.photoCountText}>{`${selectedPhotos.length}/3 photos`}</Text>
+                    <Text style={styles.photoCountText}>{`${selectedPhotos.length}/${maxPhotos} photos`}</Text>
                   </View>
                 </View>
               ) : null}
@@ -413,16 +391,6 @@ export function InteriorRedesignStepOne({
       >
         <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#A0A0A0" }]}>{t("common.actions.continue")}</Text>
       </Pressable>
-
-      <View style={styles.bottomNavWrap}>
-        <HomeToolsBottomNav
-          activeTab="create"
-          onToolsPress={handleToolsPress}
-          onCreatePress={handleCreatePress}
-          onDiscoverPress={handleDiscoverPress}
-          onProfilePress={handleProfilePress}
-        />
-      </View>
 
       {isSheetMounted ? (
         <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
@@ -709,13 +677,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
     ...fonts.semibold,
-  },
-  bottomNavWrap: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: slate.slate1,
   },
   sheetOverlay: {
     ...StyleSheet.absoluteFillObject,

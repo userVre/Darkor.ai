@@ -51,7 +51,7 @@ type LayoutOptimizationWizardProps = {
 
 const TABS_HOME_ROUTE = "/(tabs)/index";
 const WORKSPACE_ROUTE = "/(tabs)/workspace";
-const MAX_LAYOUT_PHOTOS = 3;
+const MAX_LAYOUT_PHOTOS = 6;
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 const SMART_SPACE_SCAN_MS = 5_000;
 const SMART_SPACE_PLANNING_TITLE = "Smart Space Planning";
@@ -484,6 +484,7 @@ export function LayoutOptimizationWizard({
       }}
       onTakePhoto={handleTakePhoto}
       selectedPhotos={selectedImages}
+      maxPhotos={MAX_LAYOUT_PHOTOS}
       showPhotoCount={false}
       totalSteps={4}
     />

@@ -8,7 +8,6 @@ import {Pressable, View, type PressableProps} from "react-native";
 import {spacing} from "../../styles/spacing";
 import {fonts} from "../../styles/typography";
 
-import {useFlowUI} from "../../components/flow-ui-context";
 import {useWorkspaceDraft} from "../../components/workspace-context";
 import {DS} from "../../lib/design-system";
 import {ENABLE_GUEST_WIZARD_TEST_MODE} from "../../lib/guest-testing";
@@ -99,7 +98,6 @@ function TabIcon({
 export default function TabsLayout() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { isFlowActive } = useFlowUI();
   const { clearDraft } = useWorkspaceDraft();
   const { isSignedIn } = useAuth();
   const canOpenCreateTab = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
@@ -123,7 +121,7 @@ export default function TabsLayout() {
           lineHeight: 14,
           ...fonts.medium,
         },
-        tabBarStyle: isFlowActive ? { display: "none" } : DEFAULT_TAB_BAR_STYLE,
+        tabBarStyle: DEFAULT_TAB_BAR_STYLE,
         sceneStyle: {
           backgroundColor: DS.colors.background,
         },

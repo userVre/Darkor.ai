@@ -273,9 +273,6 @@ export async function syncRevenueCatPricingAttributes(
     homedecor_pricing_tier: tierContext.tierId,
     homedecor_country_code: tierContext.countryCode,
     homedecor_currency_code: tierContext.currencyCode,
-    darkor_pricing_tier: tierContext.tierId,
-    darkor_country_code: tierContext.countryCode,
-    darkor_currency_code: tierContext.currencyCode,
     ...(tierContext.priceMetadata ?? {}),
     ...(tierContext.attributePayload ?? {}),
   });
@@ -374,7 +371,7 @@ export function findRevenueCatPackage(packages: RevenueCatPackage[], duration: B
       if (inferBillingDurationFromPackage(pkg) === duration) score += 6;
       if (duration === "yearly" && matchesAny(haystack, ["annual", "year", "yearly", "best offer"])) score += 3;
       if (duration === "weekly" && matchesAny(haystack, ["week", "weekly", "trial"])) score += 3;
-      if (matchesAny(haystack, ["pro", "studio", "premium", "darkor"])) score += 1;
+      if (matchesAny(haystack, ["pro", "studio", "premium", "homedecor"])) score += 1;
 
       return { pkg, score };
     })

@@ -307,7 +307,7 @@
       },
       "contactUs": {
         "title": "聯絡我們",
-        "body": "如有隱私問題或請求，請透過 support@homedecor.ai 與我們聯絡。"
+        "body": "如有隱私問題或請求，請透過 support@HomeDecor AI 與我們聯絡。"
       }
     }
   },
@@ -351,7 +351,7 @@
       },
       "contact": {
         "title": "接觸",
-        "body": "有關這些條款的問題可以發送至 support@homedecor.ai。"
+        "body": "有關這些條款的問題可以發送至 support@HomeDecor AI。"
       }
     }
   },
@@ -706,7 +706,7 @@
       "nothingTitle": "沒有什麼好分享的",
       "generateFirst": "首先生成設計。",
       "failedTitle": "分享失敗",
-      "message": "使用 HomeDecor.ai 設計"
+      "message": "使用 HomeDecor AI 設計"
     },
     "download": {
       "nothingTitle": "沒什麼好下載的",

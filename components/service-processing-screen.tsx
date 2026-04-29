@@ -2,6 +2,7 @@ import {type Theme, useTheme} from "@/styles/theme";
 import {Image} from "expo-image";
 import {LinearGradient} from "expo-linear-gradient";
 import {useRouter} from "expo-router";
+import {Rocket} from "lucide-react-native";
 import {AnimatePresence, MotiView} from "moti";
 import {memo, useEffect, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
@@ -116,15 +117,23 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
 
   useEffect(() => {
     setSubtitleIndex(0);
+    if (hasRevealedResult) {
+      return;
+    }
+
     const interval = setInterval(() => {
       setSubtitleIndex((current) => Math.min(current + 1, Math.max(activeSubtitlePhrases.length - 1, 0)));
     }, STATUS_ROTATION_MS);
 
     return () => clearInterval(interval);
-  }, [activeSubtitlePhrases.length, subtitleSignature]);
+  }, [activeSubtitlePhrases.length, hasRevealedResult, subtitleSignature]);
 
   useEffect(() => {
     setProgress(0);
+    if (hasRevealedResult) {
+      setProgress(1);
+      return;
+    }
 
     const interval = setInterval(() => {
       setProgress((current) => {
@@ -137,7 +146,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
     }, PROGRESS_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [hasRevealedResult]);
 
   useEffect(() => {
     if (!hasRevealedResult) {
@@ -176,9 +185,10 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   }, [hasRevealedResult, previewHeight, scanDurationMs, scanProgress]);
 
   const scanLineStyle = useAnimatedStyle(() => {
-    const topInset = SCAN_LINE_HEIGHT / 2;
-    const bottomInset = Math.max(previewHeight - SCAN_LINE_HEIGHT / 2, 0);
-    const translateY = interpolate(scanProgress.value, [0, 1], [topInset, bottomInset]);
+    const halfLine = SCAN_LINE_HEIGHT / 2;
+    const topEdge = -halfLine;
+    const bottomEdge = Math.max(previewHeight - halfLine, topEdge);
+    const translateY = interpolate(scanProgress.value, [0, 1], [topEdge, bottomEdge]);
 
     return {
       opacity: scanOpacity.value,
@@ -222,7 +232,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
           >
             {previewImageUri ? (
               <Animated.View style={[styles.imageLayer, beforeImageStyle]}>
-                <Image source={{ uri: previewImageUri }} style={styles.previewImage} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+                <Image source={{ uri: previewImageUri }} style={styles.previewImage} contentFit="contain" cachePolicy="memory-disk" transition={120} />
               </Animated.View>
             ) : (
               <View style={styles.photoFallback} />
@@ -280,7 +290,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
                 style={styles.speedUpGradient}
               >
                 <View style={styles.speedUpIconWrap}>
-                  <Text style={styles.speedUpIcon}>{"\uD83D\uDE80"}</Text>
+                  <Rocket color="#FFFFFF" size={18} strokeWidth={2.4} />
                 </View>
                 <View style={styles.speedUpCopy}>
                   <Text style={styles.speedUpTitle}>Speed Up</Text>
@@ -385,7 +395,7 @@ function createStyles(colors: Theme) {
     previewFrame: {
       borderRadius: 24,
       overflow: "hidden",
-      backgroundColor: "#EFF4FF",
+      backgroundColor: "#0B1220",
       borderWidth: 1,
       borderColor: "rgba(37, 99, 235, 0.08)",
       width: "100%",
@@ -449,10 +459,6 @@ function createStyles(colors: Theme) {
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: "rgba(255,255,255,0.16)",
-    },
-    speedUpIcon: {
-      fontSize: 18,
-      lineHeight: 22,
     },
     speedUpCopy: {
       flex: 1,
@@ -523,8 +529,8 @@ function createStyles(colors: Theme) {
       position: "absolute",
       left: 0,
       right: 0,
-      bottom: SCAN_LINE_CORE_HEIGHT + 10,
-      height: 28,
+      top: 0,
+      height: SCAN_LINE_HEIGHT,
       borderTopLeftRadius: 999,
       borderTopRightRadius: 999,
     },
@@ -532,7 +538,7 @@ function createStyles(colors: Theme) {
       position: "absolute",
       left: 4,
       right: 4,
-      bottom: SCAN_LINE_CORE_HEIGHT - 3,
+      top: (SCAN_LINE_HEIGHT - 12) / 2,
       height: 12,
       borderRadius: 999,
       backgroundColor: "rgba(56, 189, 248, 0.28)",
@@ -545,7 +551,7 @@ function createStyles(colors: Theme) {
       position: "absolute",
       left: 0,
       right: 0,
-      bottom: 0,
+      top: (SCAN_LINE_HEIGHT - SCAN_LINE_CORE_HEIGHT) / 2,
       height: SCAN_LINE_CORE_HEIGHT,
       borderRadius: 999,
       shadowColor: "#67E8F9",

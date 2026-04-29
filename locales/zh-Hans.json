@@ -311,7 +311,7 @@
       },
       "contactUs": {
         "title": "联系我们",
-        "body": "如有隐私问题或请求，请通过 support@homedecor.ai 联系我们。"
+        "body": "如有隐私问题或请求，请通过 support@HomeDecor AI 联系我们。"
       }
     }
   },
@@ -355,7 +355,7 @@
       },
       "contact": {
         "title": "接触",
-        "body": "有关这些条款的问题可以发送至 support@homedecor.ai。"
+        "body": "有关这些条款的问题可以发送至 support@HomeDecor AI。"
       }
     }
   },
@@ -717,7 +717,7 @@
       "nothingTitle": "没有什么可分享的",
       "generateFirst": "首先生成设计。",
       "failedTitle": "分享失败",
-      "message": "使用 HomeDecor.ai 设计"
+      "message": "使用 HomeDecor AI 设计"
     },
     "download": {
       "nothingTitle": "没有什么可下载的",

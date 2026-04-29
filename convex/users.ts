@@ -7,6 +7,7 @@ import {
   canUserGenerateState,
   deriveSubscriptionState,
   FREE_IMAGE_LIMIT,
+  FREE_REFILL_INTERVAL_MS,
   SubscriptionEntitlement,
   SubscriptionType,
   toFiniteNumber,
@@ -55,8 +56,6 @@ function computeReviewPrompt(nextCount: number, lastPromptAt: number, ignoreCool
   return ignoreCooldown ? nextCount >= 2 : !cooldownActive && (nextCount === 2 || nextCount === 3);
 }
 
-const THREE_DAY_REWARD_MS = 72 * 60 * 60 * 1000;
-
 function buildViewerResponse(user: any) {
   if (!user) {
     return null;
@@ -91,7 +90,7 @@ function buildViewerResponse(user: any) {
     generationOutputResolution: state.generationPolicy.outputResolution,
     generationSpeedTier: state.generationPolicy.speedTier,
     priorityProcessing: state.generationPolicy.priorityProcessing,
-    lastRefillTimestamp: toFiniteNumber(user.lastRewardDate),
+    lastRefillTimestamp: state.lastResetDate,
     pricingTier: user.pricingTier ?? null,
     pricingCountryCode: user.pricingCountryCode ?? null,
     pricingCurrencyCode: user.pricingCurrencyCode ?? null,
@@ -443,24 +442,25 @@ async function consumeAllowance(ctx: any, anonymousId?: string, ignoreCooldown?:
   const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : state.imageGenerationCount + 1;
   const lastPromptAt = toFiniteNumber(user.lastReviewPromptAt);
   const shouldPrompt = computeReviewPrompt(nextGenerationCount, lastPromptAt, ignoreCooldown);
+  const nextCredits = state.subscriptionType === "free" ? Math.max(state.credits - 1, 0) : state.credits;
+  const nextLastResetDate = state.subscriptionType === "free" ? now : state.lastResetDate;
 
   await ctx.db.patch(user._id, {
     generationCount: nextGenerationCount,
-    credits: state.subscriptionType === "free" ? Math.max(state.credits - 1, 0) : state.credits,
+    credits: nextCredits,
     imageLimit: state.limit,
     imageGenerationCount: nextImageGenerationCount,
-    lastResetDate: state.subscriptionType === "free" ? 0 : state.lastResetDate,
+    lastResetDate: nextLastResetDate,
     ...(state.patch.plan ? { plan: state.patch.plan } : {}),
     ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
     ...(state.patch.subscriptionEntitlement ? { subscriptionEntitlement: state.patch.subscriptionEntitlement } : {}),
     ...(typeof state.patch.subscriptionStartedAt === "number" ? { subscriptionStartedAt: state.patch.subscriptionStartedAt } : {}),
     ...(typeof state.patch.subscriptionEnd === "number" ? { subscriptionEnd: state.patch.subscriptionEnd } : {}),
     ...(typeof state.patch.imageLimit === "number" ? { imageLimit: state.patch.imageLimit } : {}),
-    ...(typeof state.patch.lastResetDate === "number" ? { lastResetDate: state.patch.lastResetDate } : {}),
   });
 
   const remaining =
-    state.subscriptionType === "free" ? Math.max(state.credits - 1, 0) : Math.max(state.limit - nextImageGenerationCount, 0);
+    state.subscriptionType === "free" ? nextCredits : Math.max(state.limit - nextImageGenerationCount, 0);
   const statusLabel =
     state.subscriptionType === "free"
       ? `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`
@@ -613,8 +613,8 @@ export const claimThreeDayReward = mutationGeneric({
     const viewer = await ensureViewerUser(ctx, args.anonymousId);
     const user = viewer.user;
     const now = Date.now();
-    const lastRewardDate = toFiniteNumber(user.lastRewardDate);
-    const nextEligibleAt = lastRewardDate > 0 ? lastRewardDate + THREE_DAY_REWARD_MS : now;
+    const lastRewardDate = toFiniteNumber(user.lastResetDate) || toFiniteNumber(user.lastRewardDate);
+    const nextEligibleAt = lastRewardDate > 0 ? lastRewardDate + FREE_REFILL_INTERVAL_MS : now;
 
     if (user.plan !== "free") {
       return {
@@ -641,13 +641,14 @@ export const claimThreeDayReward = mutationGeneric({
     await ctx.db.patch(user._id, {
       credits: nextCredits,
       lastRewardDate: now,
+      lastResetDate: now,
     });
 
     return {
       granted: creditsAdded > 0,
       creditsAdded,
       credits: nextCredits,
-      nextEligibleAt: now + THREE_DAY_REWARD_MS,
+      nextEligibleAt: now + FREE_REFILL_INTERVAL_MS,
     };
   },
 });

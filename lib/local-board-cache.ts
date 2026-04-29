@@ -19,6 +19,10 @@ export type LocalBoardItem = {
 };
 
 function getBoardCacheKey(viewerId: string) {
+  return `homedecor:board:${viewerId}`;
+}
+
+function getLegacyBoardCacheKey(viewerId: string) {
   return `darkor:board:${viewerId}`;
 }
 
@@ -43,10 +47,12 @@ export async function loadLocalBoardItems(viewerId: string | null | undefined) {
   }
 
   try {
-    const stored = await AsyncStorage.getItem(getBoardCacheKey(viewerId));
+    const cacheKey = getBoardCacheKey(viewerId);
+    const stored = await AsyncStorage.getItem(cacheKey) ?? await AsyncStorage.getItem(getLegacyBoardCacheKey(viewerId));
     if (!stored) {
       return [];
     }
+    await AsyncStorage.setItem(cacheKey, stored);
 
     const parsed = JSON.parse(stored) as unknown;
     if (!Array.isArray(parsed)) {

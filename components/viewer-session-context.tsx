@@ -4,7 +4,8 @@ import {useMutation} from "convex/react";
 import * as Crypto from "expo-crypto";
 import {createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode} from "react";
 
-const ANONYMOUS_ID_STORAGE_KEY = "darkor.ai.anonymous-id";
+const ANONYMOUS_ID_STORAGE_KEY = "homedecor.ai.anonymous-id";
+const LEGACY_ANONYMOUS_ID_STORAGE_KEY = "darkor.ai.anonymous-id";
 
 type ViewerSessionContextValue = {
   anonymousId: string | null;
@@ -19,6 +20,12 @@ async function readOrCreateAnonymousId() {
   const existing = await AsyncStorage.getItem(ANONYMOUS_ID_STORAGE_KEY);
   if (existing && existing.trim().length > 0) {
     return existing;
+  }
+
+  const legacy = await AsyncStorage.getItem(LEGACY_ANONYMOUS_ID_STORAGE_KEY);
+  if (legacy && legacy.trim().length > 0) {
+    await AsyncStorage.setItem(ANONYMOUS_ID_STORAGE_KEY, legacy);
+    return legacy;
   }
 
   const nextAnonymousId = Crypto.randomUUID();

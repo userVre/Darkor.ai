@@ -5,7 +5,7 @@ export const MONTHLY_RESET_MS = 30 * DAY_MS;
 export const FREE_IMAGE_LIMIT = 3;
 export const WEEKLY_IMAGE_LIMIT = Number.MAX_SAFE_INTEGER;
 export const YEARLY_MONTHLY_IMAGE_LIMIT = Number.MAX_SAFE_INTEGER;
-export const FREE_REFILL_INTERVAL_MS = 72 * 60 * 60 * 1000;
+export const FREE_REFILL_INTERVAL_MS = DAY_MS;
 
 export type SubscriptionType = "weekly" | "yearly" | "free";
 export type SubscriptionEntitlement = "weekly_pro" | "annual_pro" | "free";
@@ -365,7 +365,7 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
     }
   }
 
-  const refillEligible = credits < FREE_IMAGE_LIMIT && (lastResetDate <= 0 || now - lastResetDate >= FREE_REFILL_INTERVAL_MS);
+  const refillEligible = credits < FREE_IMAGE_LIMIT && lastResetDate > 0 && now - lastResetDate >= FREE_REFILL_INTERVAL_MS;
   if (refillEligible) {
     credits = FREE_IMAGE_LIMIT;
     lastResetDate = now;

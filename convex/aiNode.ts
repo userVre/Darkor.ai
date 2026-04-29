@@ -22,8 +22,10 @@ import {
 const AZURE_IMAGE_API_VERSION = "2025-04-01-preview";
 const AZURE_IMAGE_REQUEST_TIMEOUT_MS = 90_000;
 const AZURE_IMAGE_DEPLOYMENT_NAME = "gpt-image-1";
+const AZURE_GEOMETRIC_ADHERENCE_SYSTEM_PROMPT =
+  "ABSOLUTE GEOMETRIC ADHERENCE: You must maintain the exact camera angle, focal length, and structural perspective of the source image. If the house in the source is slanted or at an angle, the redesigned version MUST remain at the same angle. Do not straighten walls or change ceiling heights. Redesign only textures and furniture within the existing pixel-grid boundaries.";
 
-type ServiceType = "paint" | "floor" | "redesign";
+type ServiceType = "paint" | "floor" | "redesign" | "layout";
 type SpeedTier = "standard" | "pro" | "ultra";
 
 type AzureRenderProfile = {
@@ -74,7 +76,7 @@ function buildPrompt(args: {
 }
 
 function buildAzurePrompt(prompt: string, negativePrompt: string) {
-  return `${prompt}\n\nAvoid: ${negativePrompt}`;
+  return `${AZURE_GEOMETRIC_ADHERENCE_SYSTEM_PROMPT}\n\n${prompt}\n\nAvoid: ${negativePrompt}`;
 }
 
 function buildModeSpecificInstruction(args: {
@@ -97,10 +99,11 @@ function resolveAzureRenderProfile(args: {
 }) {
   const isPaidPlan = args.planUsed === "pro" || args.planUsed === "trial";
   const wants4k = args.qualityTier === "pro" || args.outputResolution === "4096x4096";
+  const size: AzureRenderProfile["size"] = wants4k ? "4096x4096" : "1024x1024";
 
   return {
     deploymentName: args.deploymentName,
-    size: (wants4k ? "4096x4096" : "1024x1024") as const,
+    size,
     watermarkRequired: !isPaidPlan,
   } satisfies AzureRenderProfile;
 }
@@ -323,7 +326,7 @@ async function applyHomeDecorWatermark(blob: Blob) {
       margin,
       overlayTop + Math.max(10, Math.round(boxHeight * 0.2)),
       {
-        text: "HomeDecor.ai",
+        text: "HomeDecor AI",
         alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT,
         alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE,
       },

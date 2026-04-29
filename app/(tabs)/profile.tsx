@@ -93,28 +93,36 @@ export default function ProfileScreen() {
   );
 
   useEffect(() => {
+    let active = true;
+
     void (async () => {
       const localItems = await loadLocalBoardItems(anonymousId);
-      setCachedBoardItems(
-        localItems.map((item) => ({
-          id: item.id,
-          imageUri: item.imageUrl ?? null,
-          originalImageUri: item.originalImageUrl ?? null,
-          styleName: item.styleLabel,
-          roomType: item.roomLabel,
-          serviceType: item.serviceType ?? null,
-          generationId: item.generationId ?? null,
-          watermarkRequired: item.watermarkRequired ?? false,
-          modeId: item.modeId ?? null,
-          paletteId: item.paletteId ?? null,
-          finishId: item.finishId ?? null,
-          aspectRatio: item.aspectRatio ?? null,
-          createdAt: item.createdAt,
-          status: item.status,
-          errorMessage: item.errorMessage ?? null,
-        })),
-      );
+      if (active) {
+        setCachedBoardItems(
+          localItems.map((item) => ({
+            id: item.id,
+            imageUri: item.imageUrl ?? null,
+            originalImageUri: item.originalImageUrl ?? null,
+            styleName: item.styleLabel,
+            roomType: item.roomLabel,
+            serviceType: item.serviceType ?? null,
+            generationId: item.generationId ?? null,
+            watermarkRequired: item.watermarkRequired ?? false,
+            modeId: item.modeId ?? null,
+            paletteId: item.paletteId ?? null,
+            finishId: item.finishId ?? null,
+            aspectRatio: item.aspectRatio ?? null,
+            createdAt: item.createdAt,
+            status: item.status,
+            errorMessage: item.errorMessage ?? null,
+          })),
+        );
+      }
     })();
+
+    return () => {
+      active = false;
+    };
   }, [anonymousId]);
 
   useEffect(() => {

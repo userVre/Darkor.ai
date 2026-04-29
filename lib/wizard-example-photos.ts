@@ -74,19 +74,34 @@ export function getPaintWizardExamplePhotos(t: TFunction): WizardExamplePhoto[] 
 export function getLayoutWizardExamplePhotos(_t: TFunction): WizardExamplePhoto[] {
   return [
     {
-      id: "smart-space-planning-lounge",
+      id: "layout-before-lounge-blocked",
       label: "Lounge circulation",
-      source: require("../assets/media/examples/smart-space/smart-space-planning-lounge.jpg"),
+      source: require("../assets/media/examples/layout/layout-before-lounge-blocked.jpg"),
     },
     {
-      id: "smart-space-planning-studio",
+      id: "layout-before-studio-cluttered",
       label: "Studio flow",
-      source: require("../assets/media/examples/smart-space/smart-space-planning-studio.jpg"),
+      source: require("../assets/media/examples/layout/layout-before-studio-cluttered.jpg"),
     },
     {
-      id: "smart-space-planning-kitchen",
+      id: "layout-before-kitchen-compressed",
       label: "Kitchen clearance",
-      source: require("../assets/media/examples/smart-space/smart-space-planning-kitchen.jpg"),
+      source: require("../assets/media/examples/layout/layout-before-kitchen-compressed.jpg"),
+    },
+    {
+      id: "layout-before-dining-crowded",
+      label: "Dining flow",
+      source: require("../assets/media/examples/layout/layout-before-dining-crowded.jpg"),
+    },
+    {
+      id: "layout-before-bedroom-tight",
+      label: "Bedroom clearance",
+      source: require("../assets/media/examples/layout/layout-before-bedroom-tight.jpg"),
+    },
+    {
+      id: "layout-before-stair-nook-office",
+      label: "Nook planning",
+      source: require("../assets/media/examples/layout/layout-before-stair-nook-office.jpg"),
     },
   ];
 }

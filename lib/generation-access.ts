@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const GENERATION_ACCESS_CACHE_KEY = "darkor:generation-access";
+export const GENERATION_ACCESS_CACHE_KEY = "homedecor:generation-access";
 
 export type GenerationAccessState = {
   credits?: number | null;

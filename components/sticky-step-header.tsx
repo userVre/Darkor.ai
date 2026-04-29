@@ -270,12 +270,12 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -1 }],
   },
   creditPill: {
-    minHeight: 40,
+    minHeight: HEADER_ACTION_SIZE,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   proBadge: {
-    minHeight: 40,
+    minHeight: HEADER_ACTION_SIZE,
   },
   titleWrap: {
     flex: 1,

@@ -155,15 +155,14 @@ async function reserveGenerationAllowance(ctx: any, ownerId: string, ignoreCoold
   const nextGenerationCount = currentCount + 1;
   const lastPromptAt = toFiniteNumber(user.lastReviewPromptAt);
   const shouldPrompt = computeReviewPrompt(nextGenerationCount, lastPromptAt, ignoreCooldown);
-  const nextCredits = state.credits;
   const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : state.imageGenerationCount + 1;
 
   await ctx.db.patch(user._id as any, {
     generationCount: nextGenerationCount,
-    credits: state.subscriptionType === "free" ? state.credits : nextCredits,
+    credits: state.credits,
     imageLimit: state.limit,
     imageGenerationCount: nextImageGenerationCount,
-    lastResetDate: state.subscriptionType === "free" ? 0 : state.lastResetDate,
+    lastResetDate: state.lastResetDate,
     ...(state.patch.plan ? { plan: state.patch.plan } : {}),
     ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
     ...(state.patch.subscriptionEntitlement ? { subscriptionEntitlement: state.patch.subscriptionEntitlement } : {}),
@@ -246,17 +245,18 @@ async function finalizeGenerationAllowance(ctx: any, ownerId: string) {
     };
   }
 
+  const now = Date.now();
   const nextCredits = Math.max(state.credits - 1, 0);
   await ctx.db.patch(user._id as any, {
     credits: nextCredits,
     imageLimit: state.limit,
+    lastResetDate: now,
     ...(state.patch.plan ? { plan: state.patch.plan } : {}),
     ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
     ...(state.patch.subscriptionEntitlement ? { subscriptionEntitlement: state.patch.subscriptionEntitlement } : {}),
     ...(typeof state.patch.subscriptionStartedAt === "number" ? { subscriptionStartedAt: state.patch.subscriptionStartedAt } : {}),
     ...(typeof state.patch.subscriptionEnd === "number" ? { subscriptionEnd: state.patch.subscriptionEnd } : {}),
     ...(typeof state.patch.imageLimit === "number" ? { imageLimit: state.patch.imageLimit } : {}),
-    ...(typeof state.patch.lastResetDate === "number" ? { lastResetDate: state.patch.lastResetDate } : {}),
   });
 
   return {

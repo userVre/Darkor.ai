@@ -311,7 +311,7 @@
       },
       "contactUs": {
         "title": "Свяжитесь с нами",
-        "body": "По вопросам конфиденциальности или запросам свяжитесь с нами по адресу support@homedecor.ai."
+        "body": "По вопросам конфиденциальности или запросам свяжитесь с нами по адресу support@HomeDecor AI."
       }
     }
   },
@@ -355,7 +355,7 @@
       },
       "contact": {
         "title": "Контакт",
-        "body": "Вопросы об этих условиях можно отправлять по адресу support@homedecor.ai."
+        "body": "Вопросы об этих условиях можно отправлять по адресу support@HomeDecor AI."
       }
     }
   },
@@ -717,7 +717,7 @@
       "nothingTitle": "Нечем поделиться",
       "generateFirst": "Сначала создайте дизайн.",
       "failedTitle": "Не удалось поделиться",
-      "message": "Создано в HomeDecor.ai"
+      "message": "Создано в HomeDecor AI"
     },
     "download": {
       "nothingTitle": "Нечего скачивать",

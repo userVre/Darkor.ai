@@ -39,7 +39,8 @@ type WorkspaceDraftContextValue = {
 };
 
 const WorkspaceDraftContext = createContext<WorkspaceDraftContextValue | null>(null);
-const STORAGE_KEY = "darkor_workspace_draft_v1";
+const STORAGE_KEY = "homedecor_workspace_draft_v1";
+const LEGACY_STORAGE_KEY = "darkor_workspace_draft_v1";
 const PERSIST_DELAY_MS = 180;
 
 function sameDraftImage(left?: DraftImage | null, right?: DraftImage | null) {
@@ -86,9 +87,10 @@ export function WorkspaceDraftProvider({ children }: { children: React.ReactNode
     let isMounted = true;
     const loadDraft = async () => {
       try {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        const stored = await AsyncStorage.getItem(STORAGE_KEY) ?? await AsyncStorage.getItem(LEGACY_STORAGE_KEY);
         if (!stored) return;
         const parsed = JSON.parse(stored) as WorkspaceDraft;
+        await AsyncStorage.setItem(STORAGE_KEY, stored);
         if (isMounted) {
           setDraft({
             image: parsed.image ?? null,

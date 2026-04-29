@@ -311,7 +311,7 @@
       },
       "contactUs": {
         "title": "문의하기",
-        "body": "개인정보 보호 관련 질문이나 요청이 있는 경우 support@homedecor.ai로 문의하세요."
+        "body": "개인정보 보호 관련 질문이나 요청이 있는 경우 support@HomeDecor AI로 문의하세요."
       }
     }
   },
@@ -355,7 +355,7 @@
       },
       "contact": {
         "title": "연락처",
-        "body": "이 용어에 대한 질문은 support@homedecor.ai로 보낼 수 있습니다."
+        "body": "이 용어에 대한 질문은 support@HomeDecor AI로 보낼 수 있습니다."
       }
     }
   },
@@ -717,7 +717,7 @@
       "nothingTitle": "공유할 내용 없음",
       "generateFirst": "먼저 디자인을 생성하십시오.",
       "failedTitle": "공유 실패",
-      "message": "HomeDecor.ai로 디자인함"
+      "message": "HomeDecor AI로 디자인함"
     },
     "download": {
       "nothingTitle": "다운로드할 항목이 없습니다.",

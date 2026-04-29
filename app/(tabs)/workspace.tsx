@@ -499,7 +499,7 @@ const BoardGridCard = memo(function BoardGridCard({
             className="absolute bg-black px-3 py-1.5"
             style={{ right: 14, bottom: 58, ...organicRadii(16, 12) }}
           >
-            <Text style={{ color: "#FFFFFF", fontSize: 11, lineHeight: 13, ...fonts.semibold }}>HomeDecor.ai</Text>
+            <Text style={{ color: "#FFFFFF", fontSize: 11, lineHeight: 13, ...fonts.semibold }}>HomeDecor AI</Text>
           </View>
         ) : null}
 
@@ -567,7 +567,7 @@ const ExportResultImage = memo(function ExportResultImage({
             paddingVertical: 14,
           }}
         >
-          <Text style={{ color: DS.colors.textPrimary, fontSize: 24, lineHeight: 28, ...fonts.semibold }}>HomeDecor.ai</Text>
+          <Text style={{ color: DS.colors.textPrimary, fontSize: 24, lineHeight: 28, ...fonts.semibold }}>HomeDecor AI</Text>
         </View>
       ) : null}
     </View>
@@ -2264,7 +2264,7 @@ export default function WorkspaceScreen() {
     [presetRoom, serviceType],
   );
   const isWizardFlowActive = (isPaintService || isFloorService || isLayoutService) ? isServiceStepFlowActive : isRedesignWizardActive;
-  const shouldHideNativeTabBar = (pathname === "/workspace" || pathname === "/create") && isFocused && isWizardFlowActive;
+  const shouldHideNativeTabBar = false;
   const presetRoomOptions =
     serviceType === "exterior"
       ? SPACE_OPTIONS.exterior
@@ -2600,10 +2600,18 @@ export default function WorkspaceScreen() {
   );
 
   useEffect(() => {
+    let active = true;
+
     void (async () => {
       const localItems = await loadLocalBoardItems(viewerId);
-      setCachedBoardItems(localItems as BoardRenderItem[]);
+      if (active) {
+        setCachedBoardItems(localItems as BoardRenderItem[]);
+      }
     })();
+
+    return () => {
+      active = false;
+    };
   }, [viewerId]);
 
   useEffect(() => {
@@ -8318,7 +8326,7 @@ export default function WorkspaceScreen() {
                       paddingVertical: 8,
                     }}
                   >
-                    <Text style={{ color: DS.colors.textPrimary, fontSize: 12, lineHeight: 14, ...fonts.semibold }}>HomeDecor.ai</Text>
+                    <Text style={{ color: DS.colors.textPrimary, fontSize: 12, lineHeight: 14, ...fonts.semibold }}>HomeDecor AI</Text>
                   </View>
                 ) : null}
 
