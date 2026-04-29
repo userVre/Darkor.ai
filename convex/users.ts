@@ -56,6 +56,12 @@ function computeReviewPrompt(nextCount: number, lastPromptAt: number, ignoreCool
   return ignoreCooldown ? nextCount >= 2 : !cooldownActive && (nextCount === 2 || nextCount === 3);
 }
 
+const DIAMOND_PACK_COUNTS = {
+  starter: 10,
+  designer: 30,
+  architect: 100,
+} as const;
+
 function buildViewerResponse(user: any) {
   if (!user) {
     return null;
@@ -326,6 +332,70 @@ export const setViewerPlanFromRevenueCat = mutationGeneric({
   },
 });
 
+export const fulfillDiamondPurchase = mutationGeneric({
+  args: {
+    anonymousId: v.optional(v.string()),
+    transactionId: v.string(),
+    productIdentifier: v.string(),
+    packageIdentifier: v.optional(v.string()),
+    packId: v.union(v.literal("starter"), v.literal("designer"), v.literal("architect")),
+    purchasedAt: v.optional(v.number()),
+    amount: v.number(),
+    currencyCode: v.string(),
+    pricingTier: v.optional(v.string()),
+    countryCode: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await ensureViewerUser(ctx, args.anonymousId);
+    const existingPurchase = await ctx.db
+      .query("diamondPurchases")
+      .withIndex("by_transactionId", (q: any) => q.eq("transactionId", args.transactionId))
+      .unique();
+
+    if (existingPurchase) {
+      const refreshedUser = await ctx.db.get(viewer.user._id);
+      return {
+        ok: true,
+        duplicated: true,
+        credits: Math.max(toFiniteNumber(refreshedUser?.credits, FREE_IMAGE_LIMIT), 0),
+        diamondsAdded: 0,
+      };
+    }
+
+    const diamondsAdded = DIAMOND_PACK_COUNTS[args.packId];
+    const nextCredits = Math.max(toFiniteNumber(viewer.user.credits, FREE_IMAGE_LIMIT), 0) + diamondsAdded;
+
+    await ctx.db.patch(viewer.user._id, {
+      credits: nextCredits,
+      pricingTier: args.pricingTier ?? viewer.user.pricingTier,
+      pricingCountryCode: args.countryCode ?? viewer.user.pricingCountryCode,
+      pricingCurrencyCode: args.currencyCode || viewer.user.pricingCurrencyCode,
+    });
+
+    await ctx.db.insert("diamondPurchases", {
+      transactionId: args.transactionId,
+      userId: viewer.userId,
+      productIdentifier: args.productIdentifier,
+      packageIdentifier: args.packageIdentifier,
+      packId: args.packId,
+      diamonds: diamondsAdded,
+      amount: args.amount,
+      currencyCode: args.currencyCode,
+      countryCode: args.countryCode,
+      pricingTier: args.pricingTier,
+      purchasedAt: args.purchasedAt ?? Date.now(),
+      createdAt: Date.now(),
+    });
+
+    return {
+      ok: true,
+      duplicated: false,
+      credits: nextCredits,
+      diamondsAdded,
+    };
+  },
+});
+
 export const syncRevenueCatSubscriptionInternal = mutationGeneric({
   args: {
     clerkId: v.string(),
@@ -418,7 +488,7 @@ export const canUserGenerate = queryGeneric({
         reason: "paywall" as const,
         shouldTriggerPaywall: true,
         shouldShowLimitReached: false,
-        message: "Free limit reached. Upgrade to continue.",
+        message: "No Diamonds left. Buy more to continue.",
       };
     }
 
@@ -463,7 +533,7 @@ async function consumeAllowance(ctx: any, anonymousId?: string, ignoreCooldown?:
     state.subscriptionType === "free" ? nextCredits : Math.max(state.limit - nextImageGenerationCount, 0);
   const statusLabel =
     state.subscriptionType === "free"
-      ? `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`
+      ? `${remaining} Diamonds left`
       : state.plan === "trial"
         ? "Unlimited generations during your active trial"
         : "Unlimited generations";
@@ -506,7 +576,7 @@ export const releaseGenerationAllowance = mutationGeneric({
     const nextGenerationCount = Math.max(currentCount - 1, 0);
 
   await ctx.db.patch(user._id, {
-    credits: state.subscriptionType === "free" ? Math.min(state.credits + 1, FREE_IMAGE_LIMIT) : state.credits,
+    credits: state.subscriptionType === "free" ? state.credits + 1 : state.credits,
     imageLimit: state.limit,
     imageGenerationCount: nextImageGenerationCount,
     generationCount: nextGenerationCount,
@@ -520,7 +590,7 @@ export const releaseGenerationAllowance = mutationGeneric({
   });
 
     const remaining =
-      state.subscriptionType === "free" ? Math.min(state.credits + 1, FREE_IMAGE_LIMIT) : Math.max(state.limit - nextImageGenerationCount, 0);
+      state.subscriptionType === "free" ? state.credits + 1 : Math.max(state.limit - nextImageGenerationCount, 0);
     return {
       ok: true,
       credits: remaining,
@@ -528,7 +598,7 @@ export const releaseGenerationAllowance = mutationGeneric({
       imagesRemaining: remaining,
       generationStatusLabel:
         state.subscriptionType === "free"
-          ? `${remaining} / ${FREE_IMAGE_LIMIT} gifts left`
+          ? `${remaining} Diamonds left`
           : state.plan === "trial"
             ? "Unlimited generations during your active trial"
             : "Unlimited generations",
@@ -629,13 +699,13 @@ export const claimThreeDayReward = mutationGeneric({
       return {
         granted: false,
         creditsAdded: 0,
-        credits: Math.min(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), FREE_IMAGE_LIMIT),
+        credits: Math.max(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), 0),
         nextEligibleAt,
       };
     }
 
-    const currentCredits = Math.min(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), FREE_IMAGE_LIMIT);
-    const nextCredits = FREE_IMAGE_LIMIT;
+    const currentCredits = Math.max(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), 0);
+    const nextCredits = currentCredits >= FREE_IMAGE_LIMIT ? currentCredits : FREE_IMAGE_LIMIT;
     const creditsAdded = Math.max(nextCredits - currentCredits, 0);
 
     await ctx.db.patch(user._id, {

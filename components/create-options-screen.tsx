@@ -18,7 +18,7 @@ getDirectionalOppositeAlignment,
 getDirectionalRow,
 } from "../lib/i18n/rtl";
 import {withWorkspaceFlowId} from "../lib/try-it-flow";
-import {CreditsBalanceSheet} from "./credits-balance-sheet";
+import {useDiamondStore} from "./diamond-store-context";
 import {DiamondCreditPill, ProBadge} from "./diamond-credit-pill";
 import {HomeToolCard, type HomeToolCardItem} from "./home-tool-card";
 import {useViewerCredits} from "./viewer-credits-context";
@@ -33,12 +33,12 @@ export function CreateOptionsScreen() {
   const { isSignedIn } = useAuth();
   const { clearDraft } = useWorkspaceDraft();
   const { credits: creditBalance, hasPaidAccess } = useViewerCredits();
+  const { openStore } = useDiamondStore();
   const isRTL = I18nManager.isRTL;
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const sidePadding = 20;
   const headerHeight = insets.top + 70;
   const [isDisclosureVisible, setIsDisclosureVisible] = useState(false);
-  const [isCreditsSheetVisible, setIsCreditsSheetVisible] = useState(false);
   const toolCards = useMemo<HomeToolCardItem[]>(
     () => [
       {
@@ -84,6 +84,22 @@ export function CreateOptionsScreen() {
         serviceParam: "layout",
         topLeftRadius: 40,
       },
+      {
+        id: "replace-objects",
+        image: require("../assets/media/discover/injected/home/living-room.png"),
+        title: t("home.tools.replace.title"),
+        description: t("home.tools.replace.description"),
+        serviceParam: "replace",
+        topLeftRadius: 40,
+      },
+      {
+        id: "reference-style",
+        image: require("../assets/media/discover/collages/living-rooms.png"),
+        title: "Reference Style",
+        description: "Show AI what you like and let it apply it to your room!",
+        href: "/workspace?service=interior&entrySource=reference-style",
+        topLeftRadius: 40,
+      },
     ],
     [i18n.language, t],
   );
@@ -107,16 +123,6 @@ export function CreateOptionsScreen() {
     };
   }, []);
 
-  const openDesignFlowPaywall = useCallback((redirectTo: string) => {
-    router.push({
-      pathname: "/paywall",
-      params: {
-        source: "design-flow",
-        redirectTo,
-      },
-    } as any);
-  }, [router]);
-
   const routeToToolFlow = useCallback(
     (redirectTo: string) => {
       if (hasPaidAccess || creditBalance > 0) {
@@ -124,13 +130,22 @@ export function CreateOptionsScreen() {
         return;
       }
 
-      openDesignFlowPaywall(redirectTo);
+      openStore("empty_balance");
     },
-    [creditBalance, hasPaidAccess, openDesignFlowPaywall, router],
+    [creditBalance, hasPaidAccess, openStore, router],
   );
 
   const handleTryIt = useCallback((item: HomeToolCardItem) => {
     clearDraft();
+
+    if (item.href) {
+      return withWorkspaceFlowId(item.href);
+    }
+
+    if (!item.serviceParam) {
+      throw new Error("This tool is not available yet.");
+    }
+
     return withWorkspaceFlowId(`/workspace?service=${item.serviceParam}`);
   }, [clearDraft]);
 
@@ -157,14 +172,8 @@ export function CreateOptionsScreen() {
 
   const handleCreditsPress = () => {
     triggerHaptic();
-    setIsCreditsSheetVisible(true);
+    openStore();
   };
-
-  const handleUpgradeFromCredits = useCallback(() => {
-    triggerHaptic();
-    setIsCreditsSheetVisible(false);
-    router.push("/paywall");
-  }, [router]);
 
   const handleAcceptDisclosure = useCallback(async () => {
     triggerHaptic();
@@ -258,14 +267,6 @@ export function CreateOptionsScreen() {
           </View>
         </View>
       </Modal>
-
-      <CreditsBalanceSheet
-        credits={creditBalance}
-        hasPaidAccess={hasPaidAccess}
-        onClose={() => setIsCreditsSheetVisible(false)}
-        onUpgrade={handleUpgradeFromCredits}
-        visible={isCreditsSheetVisible}
-      />
     </View>
   );
 }

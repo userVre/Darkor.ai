@@ -105,3 +105,33 @@ export function getLayoutWizardExamplePhotos(_t: TFunction): WizardExamplePhoto[
     },
   ];
 }
+
+export function getReplaceWizardExamplePhotos(t: TFunction): WizardExamplePhoto[] {
+  return [
+    {
+      id: "replace-before-messy-lounge",
+      label: t("workspace.localization.examples.interior.messyLounge"),
+      source: require("../assets/media/examples/interior/interior-before-messy-lounge.jpg"),
+    },
+    {
+      id: "replace-before-worn-reading-room",
+      label: t("workspace.localization.examples.interior.wornRoom"),
+      source: require("../assets/media/examples/interior/interior-before-worn-reading-room.jpg"),
+    },
+    {
+      id: "replace-before-outdated-kitchen",
+      label: t("workspace.localization.examples.interior.outdatedKitchen"),
+      source: require("../assets/media/examples/interior/interior-before-outdated-kitchen.jpg"),
+    },
+    {
+      id: "replace-before-damaged-room",
+      label: t("workspace.localization.examples.interior.damagedRoom"),
+      source: require("../assets/media/examples/interior/interior-before-damaged-room.jpg"),
+    },
+    {
+      id: "replace-before-empty-room",
+      label: t("workspace.localization.examples.interior.emptyRoom"),
+      source: require("../assets/media/examples/interior/interior-before-empty-room.jpg"),
+    },
+  ];
+}

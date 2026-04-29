@@ -17,6 +17,7 @@ import {SafeAreaProvider} from "react-native-safe-area-context";
 
 import {AppErrorBoundary} from "../components/app-error-boundary";
 import {BrandLaunchScreen} from "../components/brand-launch-screen";
+import {DiamondStoreProvider} from "../components/diamond-store-context";
 import {FlowUIProvider} from "../components/flow-ui-context";
 import {GenerationAccessCacheGate} from "../components/generation-access-cache-gate";
 import {OfflineOverlay} from "../components/offline-overlay";
@@ -590,20 +591,22 @@ export default function RootLayout() {
               <Providers>
                 <ViewerSessionProvider>
                   <ViewerCreditsProvider>
-                    <FlowUIProvider>
-                      <WorkspaceDraftProvider>
-                        <BottomSheetModalProvider>
-                          <LocalizationSyncGate />
-                          <GenerationAccessCacheGate />
-                          <LaunchPaywallGate>
-                            <CreateAccessGate>
-                              <AppShell />
-                            </CreateAccessGate>
-                          </LaunchPaywallGate>
-                          <OfflineOverlay />
-                        </BottomSheetModalProvider>
-                      </WorkspaceDraftProvider>
-                    </FlowUIProvider>
+                    <DiamondStoreProvider>
+                      <FlowUIProvider>
+                        <WorkspaceDraftProvider>
+                          <BottomSheetModalProvider>
+                            <LocalizationSyncGate />
+                            <GenerationAccessCacheGate />
+                            <LaunchPaywallGate>
+                              <CreateAccessGate>
+                                <AppShell />
+                              </CreateAccessGate>
+                            </LaunchPaywallGate>
+                            <OfflineOverlay />
+                          </BottomSheetModalProvider>
+                        </WorkspaceDraftProvider>
+                      </FlowUIProvider>
+                    </DiamondStoreProvider>
                   </ViewerCreditsProvider>
                 </ViewerSessionProvider>
               </Providers>

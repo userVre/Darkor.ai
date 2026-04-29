@@ -11,7 +11,8 @@ export type HomeToolCardItem = {
   image: ImageSourcePropType;
   title: string;
   description: string;
-  serviceParam: "interior" | "facade" | "garden" | "paint" | "floor" | "layout";
+  serviceParam?: "interior" | "facade" | "garden" | "paint" | "floor" | "layout" | "replace";
+  href?: string;
   topLeftRadius?: number;
 };
 

@@ -26,7 +26,7 @@ import {StatusBar} from "expo-status-bar";
 import {AnimatePresence, MotiView} from "moti";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {ActivityIndicator, Alert, Linking, Image as NativeImage, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {ActivityIndicator, Alert, Linking, Image as NativeImage, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View, useWindowDimensions} from "react-native";
 import {Gesture, GestureDetector} from "react-native-gesture-handler";
 import Animated, {runOnJS, useAnimatedStyle, useSharedValue} from "react-native-reanimated";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
@@ -50,6 +50,7 @@ import {uploadLocalFileToCloud} from "../lib/native-upload";
 import {SERVICE_WIZARD_THEME} from "../lib/service-wizard-theme";
 import {getPaintWizardExamplePhotos} from "../lib/wizard-example-photos";
 import {getWizardFloatingButtonStyle} from "./design-wizard-primitives";
+import {useDiamondStore} from "./diamond-store-context";
 import {DIAMOND_PILL_BLUE} from "./diamond-credit-pill";
 import {LuxPressable} from "./lux-pressable";
 import {PaintIntroScreen, type PaintIntroExamplePhoto} from "./paint-intro-screen";
@@ -369,6 +370,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const { showToast } = useProSuccess();
   const { credits: sharedCredits, setOptimisticCredits } = useViewerCredits();
+  const { openStore } = useDiamondStore();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
   const localizedSurfaceOptions = useMemo<PaintSurfaceOption[]>(
     () => [
@@ -417,6 +419,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const [selectedColorValue, setSelectedColorValue] = useState<string | null>(null);
   const [isAiColorSuggestionEnabled, setIsAiColorSuggestionEnabled] = useState(false);
   const [selectedSurface, setSelectedSurface] = useState<PaintSurfaceOption["value"]>("Auto");
+  const [visionPrompt, setVisionPrompt] = useState("");
   const [isColorConfirmed, setIsColorConfirmed] = useState(false);
   const [isSurfaceConfirmed, setIsSurfaceConfirmed] = useState(false);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
@@ -445,7 +448,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const detectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const continueTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sourceCaptureRef = useRef<View>(null);
-  const maskCaptureRef = useRef<View>(null);
   const colorPickerHue = useSharedValue(colorPickerDraft.hue);
   const colorPickerSaturation = useSharedValue(colorPickerDraft.saturation);
   const colorPickerValue = useSharedValue(colorPickerDraft.value);
@@ -494,7 +496,9 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     () => localizedSurfaceOptions.find((option) => option.value === selectedSurface) ?? localizedSurfaceOptions[0],
     [localizedSurfaceOptions, selectedSurface],
   );
+  const selectedSurfacePromptLabel = selectedSurface === "Auto" ? "main painted surface" : selectedSurface.toLowerCase();
   const selectedColorTitle = selectedColorOption?.title ?? (selectedColorValue ? selectedColorRgbLabel : t("wizard.paintFlow.noColorSelected"));
+  const trimmedVisionPrompt = visionPrompt.trim();
   const availableCredits = sharedCredits;
   const generationSpeedTier = useMemo<"standard" | "pro" | "ultra">(() => {
     if (me?.subscriptionType === "yearly") {
@@ -506,9 +510,9 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     return "standard";
   }, [me?.hasPaidAccess, me?.subscriptionType]);
   const generationAccess = canUserGenerateNow(me);
-  const canGenerate = Boolean(selectedImage && hasMask && (selectedColorValue || isAiColorSuggestionEnabled) && !isGenerating);
+  const canGenerate = Boolean(selectedImage && (selectedColorValue || isAiColorSuggestionEnabled) && !isGenerating);
   const currentStepNumber =
-    step === "intake" ? 1 : step === "mask" ? 2 : step === "colors" ? 3 : 4;
+    step === "intake" ? 1 : step === "colors" ? 2 : 3;
   const paintWizardExamplePhotos = useMemo(() => getPaintWizardExamplePhotos(t), [i18n.language, t]);
   const generationStatusMessages = useGenerationStatusMessages();
   const stickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);
@@ -523,6 +527,26 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   );
   const selectionCardHeight = scaleSelectionValue(116, selectionLayoutScale);
   const selectionFooterHeight = scaleSelectionValue(132, selectionLayoutScale) + insets.bottom;
+  const sourceCaptureSize = useMemo(() => {
+    if (!selectedImage) {
+      return null;
+    }
+
+    const maxDimension = 1440;
+    if (selectedImage.width >= selectedImage.height) {
+      const scale = maxDimension / Math.max(selectedImage.width, 1);
+      return {
+        width: maxDimension,
+        height: Math.max(1, Math.round(selectedImage.height * scale)),
+      };
+    }
+
+    const scale = maxDimension / Math.max(selectedImage.height, 1);
+    return {
+      width: Math.max(1, Math.round(selectedImage.width * scale)),
+      height: maxDimension,
+    };
+  }, [selectedImage]);
   const colorPickerSheetHeight = Math.min(
     scaleSelectionValue(824, selectionLayoutScale) + insets.bottom,
     height - Math.max(insets.top - scaleSelectionValue(24, selectionLayoutScale), 0),
@@ -672,6 +696,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     setMaskTool("brush");
     setSelectedImage(null);
     setSelectedSurface("Auto");
+    setVisionPrompt("");
     setIsSurfaceConfirmed(false);
     setGeneratedImageUrl(null);
     setGenerationId(null);
@@ -783,8 +808,8 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
 
   const handleOpenPaywall = useCallback(() => {
     triggerHaptic();
-    router.push("/paywall" as any);
-  }, [router]);
+    openStore();
+  }, [openStore]);
 
   const uploadBlobToStorage = useCallback(
     async (uri: string) => {
@@ -825,6 +850,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       setIsColorConfirmed(false);
       setIsAiColorSuggestionEnabled(false);
       setSelectedSurface("Auto");
+      setVisionPrompt("");
       setIsSurfaceConfirmed(false);
       setGeneratedImageUrl(null);
       setGenerationId(null);
@@ -838,9 +864,9 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     [clearContinueTimer, clearDetectTimer, resetMaskDrawing],
   );
 
-  const advanceToMaskStep = useCallback(() => {
+  const advanceToSelectionStep = useCallback(() => {
     triggerHaptic();
-    setStep("mask");
+    setStep("colors");
   }, []);
 
   const runDeferredContinue = useCallback(
@@ -1084,14 +1110,14 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
           width: asset.width ?? 1080,
           height: asset.height ?? 1440,
         });
-        advanceToMaskStep();
+        advanceToSelectionStep();
         return true;
       } catch (error) {
         Alert.alert(t("wizard.paintFlow.mediaUnavailableTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
         return false;
       }
     },
-    [advanceToMaskStep, applySelectedImage, t],
+    [advanceToSelectionStep, applySelectedImage, t],
   );
 
   const handleSelectExample = useCallback(
@@ -1108,9 +1134,9 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
         width: resolved.width ?? 1080,
         height: resolved.height ?? 1440,
       });
-      advanceToMaskStep();
+      advanceToSelectionStep();
     },
-    [advanceToMaskStep, applySelectedImage, t],
+    [advanceToSelectionStep, applySelectedImage, t],
   );
 
   const handleGenerate = useCallback(async () => {
@@ -1123,8 +1149,8 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       return;
     }
 
-    if (!selectedImage || !hasMask || !sourceCaptureRef.current || !maskCaptureRef.current) {
-      Alert.alert(t("wizard.paintFlow.markWallsTitle"), t("wizard.paintFlow.markWallsBody"));
+    if (!selectedImage || !sourceCaptureRef.current) {
+      Alert.alert("Select a room photo", "Choose or capture a room photo before continuing.");
       return;
     }
 
@@ -1141,7 +1167,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       }
 
       if (generationAccess.reason === "paywall") {
-        router.push({ pathname: "/paywall", params: { source: "generate" } } as any);
+        openStore("empty_balance");
         return;
       }
 
@@ -1157,7 +1183,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       const result = (await runWithFriendlyRetry(
         async () => {
           let sourceUri: string | null = null;
-          let maskUri: string | null = null;
 
           try {
             sourceUri = await captureRef(sourceCaptureRef, {
@@ -1165,30 +1190,23 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
               quality: 1,
               result: "tmpfile",
             });
-            maskUri = await captureRef(maskCaptureRef, {
-              format: "png",
-              quality: 1,
-              result: "tmpfile",
-            });
-
-            const [sourceStorageId, maskStorageId] = await Promise.all([
-              uploadBlobToStorage(sourceUri),
-              uploadBlobToStorage(maskUri),
-            ]);
+            const sourceStorageId = await uploadBlobToStorage(sourceUri);
+            const visionDirection = trimmedVisionPrompt
+              ? ` Apply this requested texture or material direction on the selected ${selectedSurfacePromptLabel}: ${trimmedVisionPrompt}.`
+              : "";
 
             return (await startGeneration({
               anonymousId: viewerId,
               imageStorageId: sourceStorageId,
-              maskStorageId,
               serviceType: "paint",
               selection: isAiColorSuggestionEnabled
-                ? `AI suggested professional wall color on the ${selectedSurface.toLowerCase()} surface with a realistic ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`
-                : `${selectedColorTitle} (${selectedColorRgbLabel}) on the ${selectedSurface.toLowerCase()} surface with a realistic ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`,
+                ? `AI suggested professional wall color on the ${selectedSurfacePromptLabel} with a realistic ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`
+                : `${selectedColorTitle} (${selectedColorRgbLabel}) on the ${selectedSurfacePromptLabel} with a realistic ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`,
               roomType: "Room",
               displayStyle: isAiColorSuggestionEnabled ? "AI Suggested Paint" : `${selectedColorTitle} Paint`,
               customPrompt: isAiColorSuggestionEnabled
-                ? `Identify the room's current lighting and furniture, then choose the most complementary professional wall color for the selected ${selectedSurface.toLowerCase()} surface. Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`
-                : `Repaint only the selected ${selectedSurface.toLowerCase()} surface using ${selectedColorTitle} in ${selectedColorRgbLabel}. Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`,
+                ? `Identify the room's current lighting and furniture, then choose the most complementary professional wall color for the selected ${selectedSurfacePromptLabel}.${visionDirection} Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`
+                : `Redesign only the selected ${selectedSurfacePromptLabel} using ${selectedColorTitle} in ${selectedColorRgbLabel}.${visionDirection} Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`,
               targetColor: isAiColorSuggestionEnabled ? undefined : selectedColorRgbLabel,
               targetColorHex: isAiColorSuggestionEnabled ? undefined : selectedColorValue ?? undefined,
               targetColorCategory: isAiColorSuggestionEnabled ? "AI Suggested Color" : (selectedColorCategory ?? selectedColorTitle),
@@ -1199,10 +1217,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
               smartSuggest: isAiColorSuggestionEnabled,
             })) as { generationId: string; creditsRemaining?: number };
           } finally {
-            await Promise.all([
-              cleanupTempFile(sourceUri, true),
-              cleanupTempFile(maskUri, true),
-            ]);
+            await cleanupTempFile(sourceUri, true);
           }
         },
         showToast,
@@ -1227,7 +1242,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
           router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=paint" } });
           return;
         }
-        router.push({ pathname: "/paywall", params: { source: "generate" } } as any);
+        openStore("empty_balance");
         return;
       }
       showToast(getFriendlyGenerationError(rawMessage));
@@ -1237,9 +1252,9 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     generationAccess.allowed,
     generationAccess.message,
     generationAccess.reason,
-    hasMask,
     isAiColorSuggestionEnabled,
     isGenerating,
+    openStore,
     router,
     selectedColorCategory,
     selectedColorRgbLabel,
@@ -1247,10 +1262,12 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     selectedColorValue,
     selectedImage,
     selectedSurface,
+    selectedSurfacePromptLabel,
     setOptimisticCredits,
     showToast,
     startGeneration,
     t,
+    trimmedVisionPrompt,
     uploadBlobToStorage,
     viewerId,
     viewerReady,
@@ -1320,7 +1337,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     clearContinueTimer();
     if (step === "intake") return;
     if (step === "mask") return setStep("intake");
-    if (step === "colors") return setStep("mask");
+    if (step === "colors") return setStep("intake");
     if (step === "processing") return setStep("colors");
     if (step === "result") return setStep("colors");
   }, [clearContinueTimer, clearDetectTimer, step]);
@@ -1378,34 +1395,14 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
 
   return (
     <View style={styles.screen}>
-      {selectedImage && canvasSize.width > 0 && canvasSize.height > 0 ? (
+      {selectedImage && sourceCaptureSize ? (
         <View pointerEvents="none" style={styles.captureStage}>
           <View
             ref={sourceCaptureRef}
             collapsable={false}
-            style={{ width: canvasSize.width, height: canvasSize.height, backgroundColor: OLED_BLACK }}
+            style={{ width: sourceCaptureSize.width, height: sourceCaptureSize.height, backgroundColor: OLED_BLACK }}
           >
             <Image source={{ uri: selectedImage.uri }} style={styles.captureImage} contentFit="contain" />
-          </View>
-          <View
-            ref={maskCaptureRef}
-            collapsable={false}
-            style={{ width: canvasSize.width, height: canvasSize.height, marginTop: spacing.sm, backgroundColor: OLED_BLACK }}
-          >
-            <Svg width={canvasSize.width} height={canvasSize.height}>
-              <Rect x={0} y={0} width={canvasSize.width} height={canvasSize.height} fill={OLED_BLACK} />
-              {renderedStrokes.map((stroke) => (
-                <SvgPath
-                  key={`mask-${stroke.id}`}
-                  d={stroke.path}
-                  stroke={stroke.kind === "region" ? "none" : stroke.tool === "eraser" ? OLED_BLACK : MASK_CAPTURE_COLOR}
-                  strokeWidth={stroke.kind === "region" ? 0 : stroke.width}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill={stroke.kind === "region" ? MASK_CAPTURE_COLOR : stroke.tool === "eraser" ? OLED_BLACK : "none"}
-                />
-              ))}
-            </Svg>
           </View>
         </View>
       ) : null}
@@ -1414,6 +1411,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
         <ServiceWizardHeader
           title="Wall"
           step={currentStepNumber}
+          totalSteps={3}
           creditCount={availableCredits}
           onCreditsPress={handleOpenPaywall}
           canGoBack={currentStepNumber > 1}
@@ -1439,14 +1437,17 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
           <StatusBar style="dark" />
           <Text style={[styles.selectionHeaderTitle, { top: selectionTitleTop }]}>{t("wizard.paintFlow.selectionTitle")}</Text>
 
-          <View
-            style={[
+          <ScrollView
+            style={styles.selectionStepScroll}
+            contentContainerStyle={[
               styles.selectionStepContent,
               {
                 paddingTop: selectionTitleTop + scaleSelectionValue(56, selectionLayoutScale),
                 paddingBottom: selectionFooterHeight + scaleSelectionValue(24, selectionLayoutScale),
               },
             ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
             <View style={[styles.selectionPreviewFrame, { width: selectionPreviewWidth, height: selectionPreviewHeight }]}>
               {selectedImage ? (
@@ -1521,7 +1522,20 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                 </Pressable>
               </View>
             </View>
-          </View>
+
+            <View style={[styles.selectionVisionCard, { width: selectionPreviewWidth, marginTop: scaleSelectionValue(18, selectionLayoutScale) }]}>
+              <Text style={styles.selectionVisionLabel}>Describe Vision</Text>
+              <Text style={styles.selectionVisionHelper}>Optional texture or wall treatment</Text>
+              <TextInput
+                value={visionPrompt}
+                onChangeText={setVisionPrompt}
+                placeholder="White brick wall"
+                placeholderTextColor="#94A3B8"
+                style={styles.selectionVisionInput}
+                maxLength={160}
+              />
+            </View>
+          </ScrollView>
 
           <View
             style={[
@@ -2047,7 +2061,9 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
             <Text style={styles.summaryLabel}>Applied Finish</Text>
             <Text style={styles.summaryTitle}>{`${selectedColorTitle} · ${DEFAULT_FINISH_LABEL}`}</Text>
             <Text style={styles.summaryText}>
-              {`Your ${selectedSurface.toLowerCase()} surface was recolored from the mask you painted while preserving the structure, furnishings, trim, and natural light of the room.`}
+              {trimmedVisionPrompt
+                ? `Your ${selectedSurfacePromptLabel} was redesigned with ${trimmedVisionPrompt} while preserving the room's structure, furnishings, trim, and natural light.`
+                : `Your ${selectedSurfacePromptLabel} was recolored with a realistic finish while preserving the room's structure, furnishings, trim, and natural light.`}
             </Text>
           </View>
 
@@ -2095,6 +2111,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
+  selectionStepScroll: {
+    flex: 1,
+  },
   selectionHeaderButton: {
     position: "absolute",
     zIndex: 4,
@@ -2115,7 +2134,6 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   selectionStepContent: {
-    flex: 1,
     alignItems: "center",
   },
   selectionPreviewFrame: {
@@ -2254,6 +2272,40 @@ const styles = StyleSheet.create({
   },
   selectionContinueButtonTextDisabled: {
     color: "#A0A0A0",
+  },
+  selectionVisionCard: {
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 18,
+    gap: 10,
+  },
+  selectionVisionLabel: {
+    color: "#0F172A",
+    fontSize: 16,
+    lineHeight: 20,
+    ...fonts.semibold,
+  },
+  selectionVisionHelper: {
+    color: "#64748B",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  selectionVisionInput: {
+    minHeight: 54,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    color: "#0F172A",
+    fontSize: 15,
+    lineHeight: 20,
+    ...fonts.medium,
   },
   colorPickerOverlay: {
     ...absoluteFill,

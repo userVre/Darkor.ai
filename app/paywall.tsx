@@ -170,7 +170,7 @@ function LegalLink({
   const localizedFonts = useLocalizedAppFonts();
   return (
     <Pressable
-      accessibilityRole="button"
+      accessibilityRole="link"
       hitSlop={10}
       onPress={onPress}
       style={styles.legalLinkButton}
@@ -305,11 +305,6 @@ function WeeklyPlanCard({
               </View>
             </View>
           </Pressable>
-
-          <View style={[styles.noPaymentRow, { flexDirection: getDirectionalRow(isRTL), justifyContent: getDirectionalAlignment(isRTL) }]}>
-            <Shield color={TEXT_MUTED} size={14} strokeWidth={2.1} />
-            <Text style={[styles.noticeText, localizedFonts.medium]}>{t("paywall.trialTerms", { duration: t("paywall.freeTrial") })}</Text>
-          </View>
         </View>
       </FadeSwap>
     );
@@ -1166,6 +1161,7 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingTop: 8,
   },
   heroClip: {
@@ -1446,6 +1442,7 @@ const styles = StyleSheet.create({
     minHeight: 52,
     marginTop: 6,
     marginHorizontal: 20,
+    marginBottom: 16,
     borderRadius: 14,
     backgroundColor: BRAND_RED,
     justifyContent: "center",
@@ -1500,22 +1497,22 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   legalFooter: {
+    marginTop: "auto",
     marginHorizontal: 20,
-    paddingTop: 18,
-    alignItems: "center",
+    paddingTop: 4,
+    alignItems: "flex-start",
   },
   legalLinksRow: {
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     gap: 18,
   },
   legalLinkButton: {
-    minWidth: 72,
     minHeight: 34,
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   legalLinkText: {
     color: TEXT_PRIMARY,

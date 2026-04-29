@@ -29,6 +29,7 @@ resolveGuestWizardViewerId
 import {triggerHaptic} from "../lib/haptics";
 import {uploadLocalFileToCloud} from "../lib/native-upload";
 import {SERVICE_WIZARD_THEME} from "../lib/service-wizard-theme";
+import {useDiamondStore} from "./diamond-store-context";
 import {getFloorWizardExamplePhotos} from "../lib/wizard-example-photos";
 import {fonts} from "../styles/typography";
 import {DIAMOND_PILL_BLUE} from "./diamond-credit-pill";
@@ -146,6 +147,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const { showToast } = useProSuccess();
   const { credits: sharedCredits, setOptimisticCredits } = useViewerCredits();
+  const { openStore } = useDiamondStore();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
   const localizedFloorMaterials = useMemo(
     () =>
@@ -474,8 +476,8 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
 
   const handleOpenPaywall = useCallback(() => {
     triggerHaptic();
-    router.push("/paywall" as any);
-  }, [router]);
+    openStore();
+  }, [openStore]);
 
   const uploadBlobToStorage = useCallback(async (uri: string) => {
     const uploadUrl = (await createSourceUploadUrl(viewerArgs)) as string;
@@ -780,7 +782,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       }
 
       if (generationAccess.reason === "paywall") {
-        router.push({ pathname: "/paywall", params: { source: "generate" } } as any);
+        openStore("empty_balance");
         return;
       }
 
@@ -849,12 +851,12 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
           router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=floor" } });
           return;
         }
-        router.push({ pathname: "/paywall", params: { source: "generate" } } as any);
+        openStore("empty_balance");
         return;
       }
       showToast(getFriendlyGenerationError(rawMessage));
     }
-  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isAiMaterialSuggestionEnabled, isGenerating, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, t, uploadBlobToStorage, viewerId, viewerReady, cleanupTempFile]);
+  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isAiMaterialSuggestionEnabled, isGenerating, openStore, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, t, uploadBlobToStorage, viewerId, viewerReady, cleanupTempFile]);
 
   const handleCancelGeneration = useCallback(async () => {
     if (!generationId || isCancellingGeneration) {

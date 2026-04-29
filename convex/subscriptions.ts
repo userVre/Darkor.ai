@@ -182,7 +182,7 @@ export function canUserGenerateState(state: {
       reason: "paywall" as const,
       shouldTriggerPaywall: true,
       shouldShowLimitReached: false,
-      message: state.remaining <= 0 ? "Free limit reached. Upgrade to continue." : state.statusMessage,
+      message: state.remaining <= 0 ? "No Diamonds left. Buy more to continue." : state.statusMessage,
     };
   }
 
@@ -359,10 +359,6 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
     if (toFiniteNumber(user.subscriptionStartedAt) !== 0) {
       patch.subscriptionStartedAt = 0;
     }
-    if (credits > FREE_IMAGE_LIMIT) {
-      credits = FREE_IMAGE_LIMIT;
-      patch.credits = FREE_IMAGE_LIMIT;
-    }
   }
 
   const refillEligible = credits < FREE_IMAGE_LIMIT && lastResetDate > 0 && now - lastResetDate >= FREE_REFILL_INTERVAL_MS;
@@ -375,8 +371,8 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
 
   const remaining = Math.max(credits, 0);
   const reachedLimit = remaining <= 0;
-  const statusLabel = `${remaining} / ${FREE_IMAGE_LIMIT} Diamonds left`;
-  const statusMessage = reachedLimit ? "Free limit reached. Upgrade to continue." : statusLabel;
+  const statusLabel = `${remaining} Diamonds left`;
+  const statusMessage = reachedLimit ? "No Diamonds left. Buy more to continue." : statusLabel;
 
   return {
     plan,

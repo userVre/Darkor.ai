@@ -7,6 +7,7 @@ import {Pressable, StyleSheet, Text, View, useWindowDimensions} from "react-nati
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {DiamondCreditPill} from "../../components/diamond-credit-pill";
+import {useDiamondStore} from "../../components/diamond-store-context";
 import {DiscoverImageCard} from "../../components/discover-image-card";
 import {DiscoverPreviewModal} from "../../components/discover-preview-modal";
 import {useViewerCredits} from "../../components/viewer-credits-context";
@@ -86,6 +87,7 @@ export default function GalleryScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { credits } = useViewerCredits();
+  const { openStore } = useDiamondStore();
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
   const [selectedClusterId, setSelectedClusterId] = useState<DiscoverClusterId>("interiors");
   const clusters = useDiscoverClusters();
@@ -130,8 +132,8 @@ export default function GalleryScreen() {
 
   const handleCreditsPress = useCallback(() => {
     triggerHaptic();
-    router.push("/paywall");
-  }, [router]);
+    openStore();
+  }, [openStore]);
 
   const keyExtractor = useCallback((item: DiscoverGroup) => item.renderKey, []);
 

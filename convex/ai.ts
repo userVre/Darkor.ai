@@ -11,7 +11,7 @@ const GEMINI_SUGGEST_MAX_DIMENSION = 1152;
 const GEMINI_SUGGEST_MAX_INLINE_BYTES = 3 * 1024 * 1024;
 const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
 
-type ServiceType = "paint" | "floor" | "redesign" | "layout";
+type ServiceType = "paint" | "floor" | "redesign" | "layout" | "replace";
 
 type DetectionPoint = {
   x: number;
@@ -367,6 +367,15 @@ function buildFallbackOrchestration(args: {
     };
   }
 
+  if (args.serviceType === "replace") {
+    return {
+      style: "Object Replacement",
+      customPrompt: "Replace the masked object with a refined alternative that matches the room's perspective, light, and scale while preserving everything outside the mask.",
+      reason: "Fallback object replacement selected for a seamless masked edit.",
+      source: "fallback" as const,
+    };
+  }
+
   return {
     style: styleDirection,
     styles: dedupeSuggestions([args.style, ...(args.styleSelections ?? [])], args.style),
@@ -427,6 +436,8 @@ export async function requestGeminiDesignOrchestration(args: {
         ? '{"style":"...","floorMaterial":"...","reason":"..."}'
         : args.serviceType === "layout"
           ? '{"style":"...","customPrompt":"...","reason":"..."}'
+        : args.serviceType === "replace"
+          ? '{"style":"...","customPrompt":"...","reason":"..."}'
         : '{"style":"...","styles":["...","..."],"paletteId":"...","fusionPrompt":"...","reason":"..."}';
   const taskInstruction =
     args.serviceType === "paint"
@@ -435,6 +446,8 @@ export async function requestGeminiDesignOrchestration(args: {
         ? "Analyze the room's current furniture, lighting, and materials, then choose the best professional floor material and finish for a premium final result."
         : args.serviceType === "layout"
           ? "Analyze the room's current furniture, circulation paths, and architectural shell, then propose the best professional furniture rearrangement strategy for a premium final result."
+        : args.serviceType === "replace"
+          ? "Analyze the room's perspective, lighting, and surrounding furniture, then propose the most seamless professional replacement object strategy for the masked area."
         : "Analyze this uploaded room, house, facade, or garden image and recommend the single strongest architectural direction plus the strongest palette direction for a premium final result. If multiple styles were provided, resolve them into a refined fusion rather than a list of disconnected themes.";
 
   const prompt = [
@@ -532,7 +545,7 @@ export async function requestGeminiDesignOrchestration(args: {
 export const suggestDesignOptions: any = actionGeneric({
   args: {
     imageStorageId: v.id("_storage"),
-    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout")),
+    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"), v.literal("replace")),
     roomType: v.string(),
     availableStyles: v.array(v.string()),
     availablePalettes: v.array(v.string()),

@@ -24,13 +24,27 @@ const AZURE_IMAGE_REQUEST_TIMEOUT_MS = 90_000;
 const AZURE_IMAGE_DEPLOYMENT_NAME = "gpt-image-1";
 const AZURE_GEOMETRIC_ADHERENCE_SYSTEM_PROMPT =
   "ABSOLUTE GEOMETRIC ADHERENCE: You must maintain the exact camera angle, focal length, and structural perspective of the source image. If the house in the source is slanted or at an angle, the redesigned version MUST remain at the same angle. Do not straighten walls or change ceiling heights. Redesign only textures and furniture within the existing pixel-grid boundaries.";
+const AZURE_EXTERIOR_PERSPECTIVE_LOCK_PROMPT =
+  "EXTERIOR PERSPECTIVE LOCK: Process the entire property frame, including the facade, driveway, entry, and foreground landscape, but keep the building massing, rooflines, openings, site placement, horizon line, and lens perspective locked exactly to the source image so the after image overlays cleanly against the before state.";
+const EXTERIOR_ROOM_TYPE_KEYWORDS = [
+  "apartment",
+  "house",
+  "office building",
+  "office",
+  "villa",
+  "residential",
+  "retail",
+  "facade",
+  "façade",
+] as const;
 
-type ServiceType = "paint" | "floor" | "redesign" | "layout";
+type ServiceType = "paint" | "floor" | "redesign" | "layout" | "replace";
 type SpeedTier = "standard" | "pro" | "ultra";
+type AzureRenderSize = "1024x1024" | "1080x1080" | "4096x4096";
 
 type AzureRenderProfile = {
   deploymentName: string;
-  size: "1024x1024" | "4096x4096";
+  size: AzureRenderSize;
   watermarkRequired: boolean;
 };
 
@@ -75,8 +89,30 @@ function buildPrompt(args: {
   });
 }
 
-function buildAzurePrompt(prompt: string, negativePrompt: string) {
-  return `${AZURE_GEOMETRIC_ADHERENCE_SYSTEM_PROMPT}\n\n${prompt}\n\nAvoid: ${negativePrompt}`;
+function isExteriorRedesignContext(args: { serviceType: ServiceType; roomType: string }) {
+  if (args.serviceType !== "redesign") {
+    return false;
+  }
+
+  const normalizedRoomType = args.roomType.toLowerCase();
+  return EXTERIOR_ROOM_TYPE_KEYWORDS.some((keyword) => normalizedRoomType.includes(keyword));
+}
+
+function buildAzurePrompt(args: {
+  prompt: string;
+  negativePrompt: string;
+  serviceType: ServiceType;
+  roomType: string;
+  flowInstruction?: string;
+}) {
+  const exteriorPerspectiveLock = isExteriorRedesignContext({
+    serviceType: args.serviceType,
+    roomType: args.roomType,
+  })
+    ? `\n\n${AZURE_EXTERIOR_PERSPECTIVE_LOCK_PROMPT}`
+    : "";
+
+  return `${AZURE_GEOMETRIC_ADHERENCE_SYSTEM_PROMPT}${exteriorPerspectiveLock}\n\n${args.flowInstruction ? `${args.flowInstruction}\n\n` : ""}${args.prompt}\n\nAvoid: ${args.negativePrompt}`;
 }
 
 function buildModeSpecificInstruction(args: {
@@ -90,6 +126,44 @@ function buildModeSpecificInstruction(args: {
   return undefined;
 }
 
+function buildAzureFlowInstruction(args: {
+  serviceType: ServiceType;
+  customPrompt?: string;
+  referenceImageCount: number;
+}) {
+  if (args.serviceType === "paint") {
+    return "Automatically detect all wall planes. Apply the user's selected color and texture prompt while strictly preserving the furniture and lighting of the original photo.";
+  }
+
+  if (args.serviceType === "replace") {
+    const requestedReplacement = trimOptional(args.customPrompt) ?? "a new object that matches the user's prompt";
+    return `The area marked in the mask needs to be replaced. Change it to ${requestedReplacement}. Ensure the new object blends perfectly with the room's perspective and shadows.`;
+  }
+
+  if (args.serviceType === "redesign" && args.referenceImageCount > 0) {
+    const extraReferenceNote =
+      args.referenceImageCount > 1
+        ? " Any additional uploaded reference images should be treated as extra Inspiration Images."
+        : "";
+    return `The first uploaded image is the 'Source Image'. The second uploaded image is the 'Inspiration Image'. Analyze the aesthetic, lighting, and materials of the 'Inspiration Image'. Apply this exact style to the 'Source Image' room without changing the room's structural layout.${extraReferenceNote}`;
+  }
+
+  return undefined;
+}
+
+function resolveAzureImageSize(args: {
+  qualityTier?: "free" | "pro";
+  outputResolution?: string;
+}) {
+  const requestedSize = trimOptional(args.outputResolution);
+
+  if (requestedSize === "4096x4096" || requestedSize === "1080x1080" || requestedSize === "1024x1024") {
+    return requestedSize as AzureRenderSize;
+  }
+
+  return args.qualityTier === "pro" ? "4096x4096" : "1080x1080";
+}
+
 function resolveAzureRenderProfile(args: {
   deploymentName: string;
   planUsed?: string;
@@ -98,8 +172,10 @@ function resolveAzureRenderProfile(args: {
   outputResolution?: string;
 }) {
   const isPaidPlan = args.planUsed === "pro" || args.planUsed === "trial";
-  const wants4k = args.qualityTier === "pro" || args.outputResolution === "4096x4096";
-  const size: AzureRenderProfile["size"] = wants4k ? "4096x4096" : "1024x1024";
+  const size = resolveAzureImageSize({
+    qualityTier: args.qualityTier,
+    outputResolution: args.outputResolution,
+  });
 
   return {
     deploymentName: args.deploymentName,
@@ -135,18 +211,23 @@ async function parseAzureError(response: Response) {
   }
 }
 
-async function blobToDataUrl(blob: Blob) {
-  const bytes = new Uint8Array(await blob.arrayBuffer());
-  const chunkSize = 0x8000;
-  let binary = "";
-
-  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
-    const chunk = bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length));
-    binary += String.fromCharCode(...chunk);
+function getAzureImageMimeType(blob: Blob) {
+  const mimeType = trimOptional(blob.type)?.toLowerCase();
+  if (mimeType === "image/png" || mimeType === "image/jpeg" || mimeType === "image/jpg" || mimeType === "image/webp") {
+    return mimeType === "image/jpg" ? "image/jpeg" : mimeType;
   }
+  return "image/png";
+}
 
-  const mimeType = trimOptional(blob.type) ?? "image/png";
-  return `data:${mimeType};base64,${btoa(binary)}`;
+function getAzureImageFilename(blob: Blob, index: number, prefix: string) {
+  const mimeType = getAzureImageMimeType(blob);
+  const extension = mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
+  return `${prefix}-${index}.${extension}`;
+}
+
+function normalizeAzureImageBlob(blob: Blob) {
+  const mimeType = getAzureImageMimeType(blob);
+  return blob.type === mimeType ? blob : new Blob([blob], { type: mimeType });
 }
 
 function createAzureImageProvider(args: { apiKey: string; endpoint: string }) {
@@ -206,14 +287,28 @@ async function runAzureImageGeneration(args: {
   endpoint: string;
   prompt: string;
   negativePrompt: string;
+  serviceType: ServiceType;
+  roomType: string;
   sourceBlob: Blob;
   referenceBlobs: Blob[];
   maskBlob?: Blob | null;
   renderProfile: AzureRenderProfile;
   targetColor?: string;
   targetColorHex?: string;
+  customPrompt?: string;
 }) {
-  const composedPrompt = buildAzurePrompt(args.prompt, args.negativePrompt);
+  const flowInstruction = buildAzureFlowInstruction({
+    serviceType: args.serviceType,
+    customPrompt: args.customPrompt,
+    referenceImageCount: args.referenceBlobs.length,
+  });
+  const composedPrompt = buildAzurePrompt({
+    prompt: args.prompt,
+    negativePrompt: args.negativePrompt,
+    serviceType: args.serviceType,
+    roomType: args.roomType,
+    flowInstruction,
+  });
   const sourceImages = [args.sourceBlob, ...args.referenceBlobs];
   const usesImageEditFlow = sourceImages.length > 0;
 
@@ -224,6 +319,7 @@ async function runAzureImageGeneration(args: {
     hasMask: Boolean(args.maskBlob),
     maskBase64Present: Boolean(args.maskBlob),
     inputImageCount: sourceImages.length,
+    flowInstruction: flowInstruction ?? null,
     size: args.renderProfile.size,
     n: 1,
     targetColor: trimOptional(args.targetColor) ?? null,
@@ -232,31 +328,27 @@ async function runAzureImageGeneration(args: {
 
   if (usesImageEditFlow) {
     const requestUrl = `${ensureAzureEndpointPrefix(args.endpoint)}openai/deployments/${args.renderProfile.deploymentName}/images/edits?api-version=${AZURE_IMAGE_API_VERSION}`;
-    const body = {
-      prompt: composedPrompt,
-      size: args.renderProfile.size,
-      n: 1,
-      images: await Promise.all(
-        sourceImages.map(async (blob) => ({
-          image_url: await blobToDataUrl(blob),
-        })),
-      ),
-      ...(args.maskBlob
-        ? {
-            mask: {
-              image_url: await blobToDataUrl(args.maskBlob),
-            },
-          }
-        : {}),
-    };
+    const formData = new FormData();
+    formData.append("prompt", composedPrompt);
+    formData.append("size", args.renderProfile.size);
+    formData.append("n", "1");
+
+    sourceImages.forEach((blob, index) => {
+      const normalizedBlob = normalizeAzureImageBlob(blob);
+      formData.append("image", normalizedBlob, getAzureImageFilename(normalizedBlob, index, "image"));
+    });
+
+    if (args.maskBlob) {
+      const normalizedMaskBlob = normalizeAzureImageBlob(args.maskBlob);
+      formData.append("mask", normalizedMaskBlob, getAzureImageFilename(normalizedMaskBlob, 0, "mask"));
+    }
 
     const response = await fetch(requestUrl, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         "api-key": args.apiKey,
       },
-      body: JSON.stringify(body),
+      body: formData,
     });
 
     if (!response.ok) {
@@ -456,7 +548,7 @@ export const generateDesign: any = internalActionGeneric({
     imageStorageId: v.id("_storage"),
     referenceImageStorageIds: v.optional(v.array(v.id("_storage"))),
     maskStorageId: v.optional(v.id("_storage")),
-    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout")),
+    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"), v.literal("replace")),
     roomType: v.string(),
     style: v.string(),
     styleSelections: v.optional(v.array(v.string())),
@@ -605,6 +697,7 @@ export const generateDesign: any = internalActionGeneric({
       });
       const negativePrompt = buildDesignNegativePrompt({
         serviceType: args.serviceType as ServiceType,
+        roomType: args.roomType,
       });
 
       await ctx.runMutation((internal as any).ai.saveOptimizedPrompt, {
@@ -617,12 +710,15 @@ export const generateDesign: any = internalActionGeneric({
         endpoint,
         prompt: optimizedPrompt,
         negativePrompt,
+        serviceType: args.serviceType as ServiceType,
+        roomType: args.roomType,
         sourceBlob,
         referenceBlobs,
         maskBlob,
         renderProfile,
         targetColor: args.targetColor,
         targetColorHex: args.targetColorHex,
+        customPrompt: args.customPrompt,
       });
 
       const imageBytes = generatedImage.uint8Array;

@@ -25,6 +25,7 @@ import {LuxPressable} from "./lux-pressable";
 type ProSuccessContextValue = {
   showSuccess: () => void;
   showToast: (message: string) => void;
+  showCelebration: (message: string) => void;
 };
 
 const ProSuccessContext = createContext<ProSuccessContextValue | null>(null);
@@ -233,6 +234,14 @@ export function ProSuccessProvider({ children }: { children: React.ReactNode }) 
     }
   }, [showToast, t]);
 
+  const showCelebration = useCallback((message: string) => {
+    setShowSparkles(true);
+    showToast(message);
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+    }
+  }, [showToast]);
+
   useEffect(() => {
     if (!showSparkles) return;
     if (sparkleTimeout.current) {
@@ -251,8 +260,9 @@ export function ProSuccessProvider({ children }: { children: React.ReactNode }) 
     () => ({
       showSuccess,
       showToast,
+      showCelebration,
     }),
-    [showSuccess, showToast],
+    [showCelebration, showSuccess, showToast],
   );
 
   return (

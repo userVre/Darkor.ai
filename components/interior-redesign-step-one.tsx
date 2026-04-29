@@ -36,7 +36,10 @@ type InteriorRedesignStepOneProps = {
   currentDisplayIndex: number;
   examplePhotos: InteriorRedesignStepOneExamplePhoto[];
   headerTitle?: string;
+  bodyTitle?: string;
   totalSteps?: number;
+  progress?: number;
+  progressVariant?: "segmented" | "continuous";
   emptyStateSubtitle?: string;
   loadingExampleId?: string | null;
   onTakePhoto: () => Promise<boolean>;
@@ -49,6 +52,7 @@ type InteriorRedesignStepOneProps = {
   onExit: () => void;
   showPhotoCount?: boolean;
   maxPhotos?: number;
+  layoutVariant?: "default" | "smart-space";
 };
 
 type MediaSourceOption = "camera" | "gallery";
@@ -70,7 +74,10 @@ export function InteriorRedesignStepOne({
   currentDisplayIndex,
   examplePhotos,
   headerTitle = "Interior",
+  bodyTitle,
   totalSteps = 4,
+  progress,
+  progressVariant = "segmented",
   emptyStateSubtitle = "Redesign and Beautify your home.",
   loadingExampleId,
   onTakePhoto,
@@ -83,25 +90,32 @@ export function InteriorRedesignStepOne({
   onExit,
   showPhotoCount = true,
   maxPhotos = 3,
+  layoutVariant = "default",
 }: InteriorRedesignStepOneProps) {
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const isSmartSpaceVariant = layoutVariant === "smart-space";
   const headerMetrics = getDesignStepHeaderMetrics(insets.top);
   const layoutScale = Math.min(width / REFERENCE_WIDTH, height / REFERENCE_HEIGHT, 1);
   const sideInset = scaleValue(20, layoutScale);
   const contentInset = 24;
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const contentTop = headerMetrics.contentOffset;
-  const uploadTopSpacing = scaleValue(16, layoutScale);
+  const contentTop = headerMetrics.contentOffset + (isSmartSpaceVariant ? 32 : 0);
+  const uploadTopSpacing = scaleValue(isSmartSpaceVariant ? 14 : 16, layoutScale);
   const containerSize = mainWidth;
   const innerScale = containerSize / 416;
   const exampleThumbnailSize = scaleValue(124, layoutScale);
-  const previewHeight = Math.max(scaleValue(252, layoutScale), Math.min(containerSize - scaleValue(112, layoutScale), scaleValue(324, layoutScale)));
-  const rowThumbnailSize = 64;
+  const previewHeight = isSmartSpaceVariant
+    ? Math.max(scaleValue(264, layoutScale), Math.min(containerSize - scaleValue(108, layoutScale), scaleValue(340, layoutScale)))
+    : Math.max(scaleValue(252, layoutScale), Math.min(containerSize - scaleValue(112, layoutScale), scaleValue(324, layoutScale)));
+  const rowThumbnailSize = isSmartSpaceVariant ? 68 : 64;
+  const examplesTitleTopSpacing = isSmartSpaceVariant ? scaleValue(18, layoutScale) : scaleValue(32, layoutScale);
+  const examplesRailTopSpacing = isSmartSpaceVariant ? scaleValue(12, layoutScale) : scaleValue(24, layoutScale);
   const continueBottom = 64 + scaleValue(24, layoutScale);
   const canContinue = selectedPhotos.length > 0;
   const canAddMore = selectedPhotos.length < maxPhotos;
+  const resolvedBodyTitle = bodyTitle ?? headerTitle;
   const focusedPhoto = useMemo(
     () => selectedPhotos[currentDisplayIndex] ?? selectedPhotos[0] ?? null,
     [currentDisplayIndex, selectedPhotos],
@@ -213,12 +227,14 @@ export function InteriorRedesignStepOne({
         horizontalInset={sideInset}
         onCreditsPress={onCreditsPress}
         onClose={onExit}
+        progress={progress}
+        progressVariant={progressVariant}
         step={1}
         totalSteps={totalSteps}
       />
 
       <View style={[styles.content, { paddingTop: contentTop }]}>
-        <Text style={[styles.header, { marginLeft: contentInset }]}>{headerTitle}</Text>
+        <Text style={[styles.header, { marginLeft: contentInset }]}>{resolvedBodyTitle}</Text>
 
         <View
           style={[
@@ -232,8 +248,14 @@ export function InteriorRedesignStepOne({
           ]}
         >
           {focusedPhoto ? (
-            <View style={styles.selectedStateWrap}>
-              <View style={[styles.primaryPreviewFrame, { height: previewHeight }]}>
+            <View style={[styles.selectedStateWrap, isSmartSpaceVariant ? styles.selectedStateWrapSmartSpace : null]}>
+              <View
+                style={[
+                  styles.primaryPreviewFrame,
+                  { height: previewHeight },
+                  isSmartSpaceVariant ? styles.primaryPreviewFrameSmartSpace : null,
+                ]}
+              >
                 <Image
                   source={{ uri: focusedPhoto.uri }}
                   style={styles.selectedPhoto}
@@ -243,64 +265,132 @@ export function InteriorRedesignStepOne({
                 />
               </View>
 
-              <View style={styles.thumbnailRow}>
-                {selectedPhotos.map((photo, index) => {
-                  const active = index === currentDisplayIndex;
+              {isSmartSpaceVariant ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  bounces={false}
+                  contentContainerStyle={styles.thumbnailRailContent}
+                >
+                  {selectedPhotos.map((photo, index) => {
+                    const active = index === currentDisplayIndex;
 
-                  return (
-                    <View key={`image-${index}`} style={styles.thumbnailItem}>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: active }}
-                        accessibilityLabel={photo.label ? `Show ${photo.label}` : `Show photo ${index + 1}`}
-                        onPress={() => onFocusPhoto(index)}
-                        style={[
-                          styles.selectedThumbnailFrame,
-                          {
-                            width: rowThumbnailSize,
-                            height: rowThumbnailSize,
-                          },
-                          active ? styles.selectedThumbnailFrameActive : null,
-                        ]}
-                      >
-                        <Image
-                          source={{ uri: photo.uri }}
-                          style={styles.thumbnailImage}
-                          contentFit="cover"
-                          transition={120}
-                          cachePolicy="memory-disk"
-                        />
-                      </Pressable>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={photo.label ? `Remove ${photo.label}` : `Remove photo ${index + 1}`}
-                        onPress={() => onRemovePhoto(index)}
-                        hitSlop={10}
-                        style={styles.thumbnailRemoveButton}
-                      >
-                        <Close color="#FFFFFF" size={11} strokeWidth={2.7} />
-                      </Pressable>
-                    </View>
-                  );
-                })}
+                    return (
+                      <View key={`image-${index}`} style={styles.thumbnailItem}>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: active }}
+                          accessibilityLabel={photo.label ? `Show ${photo.label}` : `Show photo ${index + 1}`}
+                          onPress={() => onFocusPhoto(index)}
+                          style={[
+                            styles.selectedThumbnailFrame,
+                            styles.selectedThumbnailFrameSmartSpace,
+                            {
+                              width: rowThumbnailSize,
+                              height: rowThumbnailSize,
+                            },
+                            active ? styles.selectedThumbnailFrameActive : null,
+                          ]}
+                        >
+                          <Image
+                            source={{ uri: photo.uri }}
+                            style={styles.thumbnailImage}
+                            contentFit="cover"
+                            transition={120}
+                            cachePolicy="memory-disk"
+                          />
+                        </Pressable>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={photo.label ? `Remove ${photo.label}` : `Remove photo ${index + 1}`}
+                          onPress={() => onRemovePhoto(index)}
+                          hitSlop={10}
+                          style={styles.thumbnailRemoveButton}
+                        >
+                          <Close color="#FFFFFF" size={11} strokeWidth={2.7} />
+                        </Pressable>
+                      </View>
+                    );
+                  })}
 
-                {canAddMore ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Add more photos"
-                    onPress={openMediaSheet}
-                    style={[
-                      styles.addTile,
-                      {
-                        width: rowThumbnailSize,
-                        height: rowThumbnailSize,
-                      },
-                    ]}
-                  >
-                    <Plus color="#111111" size={20} strokeWidth={2.7} />
-                  </Pressable>
-                ) : null}
-              </View>
+                  {canAddMore ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Add more photos"
+                      onPress={openMediaSheet}
+                      style={[
+                        styles.addTile,
+                        styles.addTileSmartSpace,
+                        {
+                          width: rowThumbnailSize,
+                          height: rowThumbnailSize,
+                        },
+                      ]}
+                    >
+                      <Plus color="#111111" size={20} strokeWidth={2.7} />
+                    </Pressable>
+                  ) : null}
+                </ScrollView>
+              ) : (
+                <View style={styles.thumbnailRow}>
+                  {selectedPhotos.map((photo, index) => {
+                    const active = index === currentDisplayIndex;
+
+                    return (
+                      <View key={`image-${index}`} style={styles.thumbnailItem}>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: active }}
+                          accessibilityLabel={photo.label ? `Show ${photo.label}` : `Show photo ${index + 1}`}
+                          onPress={() => onFocusPhoto(index)}
+                          style={[
+                            styles.selectedThumbnailFrame,
+                            {
+                              width: rowThumbnailSize,
+                              height: rowThumbnailSize,
+                            },
+                            active ? styles.selectedThumbnailFrameActive : null,
+                          ]}
+                        >
+                          <Image
+                            source={{ uri: photo.uri }}
+                            style={styles.thumbnailImage}
+                            contentFit="cover"
+                            transition={120}
+                            cachePolicy="memory-disk"
+                          />
+                        </Pressable>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={photo.label ? `Remove ${photo.label}` : `Remove photo ${index + 1}`}
+                          onPress={() => onRemovePhoto(index)}
+                          hitSlop={10}
+                          style={styles.thumbnailRemoveButton}
+                        >
+                          <Close color="#FFFFFF" size={11} strokeWidth={2.7} />
+                        </Pressable>
+                      </View>
+                    );
+                  })}
+
+                  {canAddMore ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Add more photos"
+                      onPress={openMediaSheet}
+                      style={[
+                        styles.addTile,
+                        {
+                          width: rowThumbnailSize,
+                          height: rowThumbnailSize,
+                        },
+                      ]}
+                    >
+                      <Plus color="#111111" size={20} strokeWidth={2.7} />
+                    </Pressable>
+                  ) : null}
+                </View>
+              )}
 
               {showPhotoCount ? (
                 <View style={styles.photoMetaRow}>
@@ -336,14 +426,14 @@ export function InteriorRedesignStepOne({
           )}
         </View>
 
-        <Text style={[styles.examplesLabel, { marginTop: scaleValue(32, layoutScale), marginLeft: contentInset }]}>
+        <Text style={[styles.examplesLabel, { marginTop: examplesTitleTopSpacing, marginLeft: contentInset }]}>
           {t("common.actions.examplePhotos")}
         </Text>
 
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={{ marginTop: scaleValue(24, layoutScale) }}
+          style={{ marginTop: examplesRailTopSpacing }}
           contentContainerStyle={{
             paddingLeft: scaleValue(16, layoutScale),
             paddingRight: sideInset,
@@ -525,17 +615,32 @@ const styles = StyleSheet.create({
     backgroundColor: slate.slate1,
     gap: 12,
   },
+  selectedStateWrapSmartSpace: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 12,
+    gap: 10,
+  },
   primaryPreviewFrame: {
     width: "100%",
     borderRadius: 24,
     overflow: "hidden",
     backgroundColor: slate.slate3,
   },
+  primaryPreviewFrameSmartSpace: {
+    borderRadius: 18,
+  },
   thumbnailRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     flexWrap: "wrap",
+  },
+  thumbnailRailContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingRight: 2,
   },
   thumbnailItem: {
     position: "relative",
@@ -629,6 +734,10 @@ const styles = StyleSheet.create({
     borderColor: slate.slate7,
     backgroundColor: slate.slate3,
   },
+  selectedThumbnailFrameSmartSpace: {
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+  },
   selectedThumbnailFrameActive: {
     borderColor: blue.blue9,
   },
@@ -652,6 +761,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: slate.slate7,
     backgroundColor: slate.slate1,
+  },
+  addTileSmartSpace: {
+    borderRadius: 14,
+    borderStyle: "dashed",
+    backgroundColor: "#FFFFFF",
   },
   addTileDisabled: {
     borderColor: "#DFDFE3",

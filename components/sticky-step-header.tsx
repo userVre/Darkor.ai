@@ -1,5 +1,4 @@
 import {ArrowLeft, X} from "@/components/material-icons";
-import {useRouter} from "expo-router";
 import {type ReactNode, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {I18nManager, Platform, Pressable, StyleSheet, Text, View} from "react-native";
@@ -13,7 +12,7 @@ getDirectionalOppositeAlignment,
 getDirectionalRow,
 } from "../lib/i18n/rtl";
 import {triggerHaptic} from "../lib/haptics";
-import {CreditsBalanceSheet} from "./credits-balance-sheet";
+import {useDiamondStore} from "./diamond-store-context";
 import {DiamondCreditPill, ProBadge} from "./diamond-credit-pill";
 import {ExitConfirmModal} from "./exit-confirm-modal";
 import {StepProgressSegments} from "./step-progress-segments";
@@ -83,7 +82,6 @@ export function StickyStepHeader({
   closeAccessibilityLabel = "Close",
 }: StickyStepHeaderProps) {
   const { t } = useTranslation();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const isRTL = I18nManager.isRTL;
   const metrics = getStickyStepHeaderMetricsWithProgress(insets.top, showProgress);
@@ -91,20 +89,15 @@ export function StickyStepHeader({
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
-  const [isCreditsSheetVisible, setIsCreditsSheetVisible] = useState(false);
   const { credits, hasPaidAccess } = useViewerCredits();
+  const { openStore } = useDiamondStore();
   const resolvedTitle = title ?? t("app.name");
 
   const handleCreditsTap = () => {
     triggerHaptic();
-    setIsCreditsSheetVisible(true);
+    openStore();
   };
 
-  const handleUpgrade = () => {
-    triggerHaptic();
-    setIsCreditsSheetVisible(false);
-    router.push("/paywall");
-  };
   return (
     <>
       <View
@@ -206,14 +199,6 @@ export function StickyStepHeader({
           setIsExitModalVisible(false);
           onClose();
         }}
-      />
-
-      <CreditsBalanceSheet
-        credits={credits}
-        hasPaidAccess={hasPaidAccess}
-        onClose={() => setIsCreditsSheetVisible(false)}
-        onUpgrade={handleUpgrade}
-        visible={isCreditsSheetVisible}
       />
     </>
   );

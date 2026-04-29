@@ -22,6 +22,7 @@ import {spacing} from "../styles/spacing";
 import {fonts} from "../styles/typography";
 
 import {LuxPressable} from "./lux-pressable";
+import {StepProgressSegments} from "./step-progress-segments";
 import {useWorkspaceDraft} from "./workspace-context";
 
 const pointerClassName = "cursor-pointer";
@@ -44,6 +45,10 @@ type ServiceProcessingScreenProps = {
   etaLabel?: string | null;
   previewLabel?: string;
   scanDurationMs?: number;
+  progressStep?: number | null;
+  progressTotalSteps?: number;
+  progressVariant?: "segmented" | "continuous";
+  progressValue?: number;
   onCancel: () => void;
   cancelDisabled?: boolean;
   complete?: boolean;
@@ -57,6 +62,10 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   etaLabel,
   previewLabel,
   scanDurationMs = SCAN_DURATION_MS,
+  progressStep = null,
+  progressTotalSteps = 2,
+  progressVariant = "segmented",
+  progressValue,
   onCancel,
   cancelDisabled = false,
   complete = false,
@@ -208,6 +217,15 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
     <View style={styles.screen}>
       <View style={[styles.content, { paddingTop: insets.top + 12 }]}>
         <View style={styles.hero}>
+          {progressStep ? (
+            <StepProgressSegments
+              step={progressStep}
+              totalSteps={progressTotalSteps}
+              variant={progressVariant}
+              progress={progressValue}
+              style={styles.stepProgress}
+            />
+          ) : null}
           <Text style={styles.title}>{resolvedTitle}</Text>
           <View style={styles.subtitleWrap}>
             <AnimatePresence>
@@ -364,6 +382,12 @@ function createStyles(colors: Theme) {
       alignItems: "flex-start",
       gap: spacing.sm,
       paddingTop: GLOBAL_VERTICAL_GAP,
+    },
+    stepProgress: {
+      width: "100%",
+      maxWidth: 188,
+      alignSelf: "center",
+      marginBottom: spacing.xs,
     },
     previewCard: {
       borderRadius: 28,

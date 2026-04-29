@@ -24,6 +24,8 @@ import {
 import { resolveGenerationStatus } from "../lib/generation-status";
 
 type GenerationStatus = "processing" | "ready" | "failed";
+type CanonicalServiceType = "paint" | "floor" | "redesign" | "layout" | "replace";
+type RequestedServiceType = CanonicalServiceType | "wall" | "transfer" | "reference";
 
 type GenerationUser = {
   _id: string;
@@ -314,6 +316,18 @@ function resolveRowStatus(row: { status?: string; imageUrl?: string | null }, im
   return resolveGenerationStatus(row.status, imageUrl);
 }
 
+function canonicalizeServiceType(serviceType: RequestedServiceType): CanonicalServiceType {
+  if (serviceType === "wall") {
+    return "paint";
+  }
+
+  if (serviceType === "transfer" || serviceType === "reference") {
+    return "redesign";
+  }
+
+  return serviceType;
+}
+
 export const getUserArchive = queryGeneric({
   args: {
     anonymousId: v.optional(v.string()),
@@ -373,7 +387,16 @@ export const startGeneration = mutationGeneric({
     imageStorageId: v.id("_storage"),
     referenceImageStorageIds: v.optional(v.array(v.id("_storage"))),
     maskStorageId: v.optional(v.id("_storage")),
-    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout")),
+    serviceType: v.union(
+      v.literal("paint"),
+      v.literal("floor"),
+      v.literal("redesign"),
+      v.literal("layout"),
+      v.literal("replace"),
+      v.literal("wall"),
+      v.literal("transfer"),
+      v.literal("reference"),
+    ),
     selection: v.string(),
     styleSelections: v.optional(v.array(v.string())),
     roomType: v.string(),
@@ -396,6 +419,8 @@ export const startGeneration = mutationGeneric({
   },
   handler: async (ctx, args) => {
     const azureConfig = validateAzureGenerationEnv();
+    const requestedServiceType = args.serviceType as RequestedServiceType;
+    const canonicalServiceType = canonicalizeServiceType(requestedServiceType);
     console.log("startGeneration: received request", {
       azureRequestUrl: azureConfig.requestUrl,
       anonymousIdPresent: Boolean(args.anonymousId),
@@ -403,7 +428,8 @@ export const startGeneration = mutationGeneric({
       hasReferenceImages: Boolean(args.referenceImageStorageIds?.length),
       roomType: args.roomType,
       selection: args.selection,
-      serviceType: args.serviceType,
+      requestedServiceType,
+      serviceType: canonicalServiceType,
       speedTier: args.speedTier ?? "standard",
     });
     const viewer = await ensureGenerationViewer(ctx, args.anonymousId);
@@ -432,15 +458,17 @@ export const startGeneration = mutationGeneric({
     const normalizedAspectRatio = normalizeAIAspectRatio(args.aspectRatio);
     const resolvedStyle =
       trimOptional(args.displayStyle) ??
-      (args.serviceType === "paint"
+      (canonicalServiceType === "paint"
         ? `${normalizedSelection} Paint`
-        : args.serviceType === "floor"
+        : canonicalServiceType === "floor"
           ? `${normalizedSelection} Floor`
-          : args.serviceType === "layout"
+          : canonicalServiceType === "layout"
             ? `${normalizedSelection} Layout`
+            : canonicalServiceType === "replace"
+              ? `${normalizedSelection} Replace`
           : normalizedSelection);
     const prompt = buildAIDesignPrompt({
-      serviceType: args.serviceType,
+      serviceType: canonicalServiceType,
       roomType: args.roomType,
       style: resolvedStyle,
       customPrompt: args.customPrompt,
@@ -464,7 +492,7 @@ export const startGeneration = mutationGeneric({
       customPrompt: trimOptional(args.customPrompt),
       colorPalette: normalizedSelection,
       aspectRatio: normalizedAspectRatio,
-      serviceType: args.serviceType,
+      serviceType: canonicalServiceType,
       modeId: trimOptional(args.modeId),
       paletteId: trimOptional(args.paletteId),
       finishId: trimOptional(args.finishId),
@@ -472,12 +500,14 @@ export const startGeneration = mutationGeneric({
       aiSuggestedPaletteId: trimOptional(args.aiSuggestedPaletteId),
       smartSuggest: args.smartSuggest === true,
       mode:
-        args.serviceType === "paint"
+        canonicalServiceType === "paint"
           ? "Smart Wall Paint"
-          : args.serviceType === "floor"
+          : canonicalServiceType === "floor"
             ? "Floor Restyle"
-            : args.serviceType === "layout"
+            : canonicalServiceType === "layout"
               ? "Spatial Optimization"
+              : canonicalServiceType === "replace"
+                ? "Replace Objects"
               : "Complete Redesign",
       qualityTier: enforcedGenerationPolicy.qualityTier,
       outputResolution: enforcedGenerationPolicy.outputResolution,
@@ -498,7 +528,8 @@ export const startGeneration = mutationGeneric({
       generationId,
       ownerId: viewer.userId,
       planUsed: allowance.planUsed,
-      serviceType: args.serviceType,
+      requestedServiceType,
+      serviceType: canonicalServiceType,
     });
     try {
       await ctx.scheduler.runAfter(0, (internal as any).aiNode.generateDesign, {
@@ -507,7 +538,7 @@ export const startGeneration = mutationGeneric({
         imageStorageId: args.imageStorageId,
         referenceImageStorageIds: args.referenceImageStorageIds,
         maskStorageId: args.maskStorageId,
-        serviceType: args.serviceType,
+        serviceType: canonicalServiceType,
         roomType: args.roomType,
         style: resolvedStyle,
         styleSelections: args.styleSelections?.filter(Boolean),
@@ -533,7 +564,8 @@ export const startGeneration = mutationGeneric({
       console.error("startGeneration: failed to schedule generateDesign", {
         generationId,
         message: rawMessage,
-        serviceType: args.serviceType,
+        requestedServiceType,
+        serviceType: canonicalServiceType,
       });
       await ctx.db.patch(generationId, {
         status: "failed",
@@ -546,7 +578,8 @@ export const startGeneration = mutationGeneric({
 
     console.log("startGeneration: scheduled successfully", {
       generationId,
-      serviceType: args.serviceType,
+      requestedServiceType,
+      serviceType: canonicalServiceType,
     });
     return {
       generationId,

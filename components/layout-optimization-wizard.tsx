@@ -51,7 +51,7 @@ type LayoutOptimizationWizardProps = {
 
 const TABS_HOME_ROUTE = "/(tabs)/index";
 const WORKSPACE_ROUTE = "/(tabs)/workspace";
-const MAX_LAYOUT_PHOTOS = 6;
+const MAX_LAYOUT_PHOTOS = 3;
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 const SMART_SPACE_SCAN_MS = 5_000;
 const SMART_SPACE_PLANNING_TITLE = "Smart Space Planning";
@@ -125,6 +125,7 @@ export function LayoutOptimizationWizard({
   const [isLoadingExample, setIsLoadingExample] = useState<string | null>(null);
   const [, setIsPickingImage] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasActivatedProgress, setHasActivatedProgress] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [isCancellingGeneration, setIsCancellingGeneration] = useState(false);
   const [processingStartedAt, setProcessingStartedAt] = useState<number | null>(null);
@@ -136,7 +137,8 @@ export function LayoutOptimizationWizard({
     [],
   );
 
-  const activeImage = selectedImages[activeIndex] ?? selectedImages[0] ?? null;
+  const sourceImage = selectedImages[0] ?? null;
+  const activeImage = selectedImages[activeIndex] ?? sourceImage;
   const navigateToPortfolioEditor = useCallback((nextGenerationId: string) => {
     clearDraft();
     router.replace({
@@ -152,8 +154,8 @@ export function LayoutOptimizationWizard({
 
   useEffect(() => {
     setDraftImages(selectedImages.length > 0 ? selectedImages.map((image) => ({ uri: image.uri, label: image.label })) : null);
-    setDraftImage(activeImage ? { uri: activeImage.uri, label: activeImage.label } : null);
-  }, [activeImage, selectedImages, setDraftImage, setDraftImages]);
+    setDraftImage(sourceImage ? { uri: sourceImage.uri, label: sourceImage.label } : null);
+  }, [selectedImages, setDraftImage, setDraftImages, sourceImage]);
 
   useEffect(() => {
     onFlowActiveChange?.(true);
@@ -163,6 +165,12 @@ export function LayoutOptimizationWizard({
   useEffect(() => {
     onProcessingStateChange?.(step === "processing");
   }, [onProcessingStateChange, step]);
+
+  useEffect(() => {
+    if (step === "intake") {
+      setHasActivatedProgress(false);
+    }
+  }, [selectedImages, step]);
 
   useEffect(() => {
     if (!generationId || !generationArchive) {
@@ -189,6 +197,7 @@ export function LayoutOptimizationWizard({
       setIsCancellingGeneration(false);
 
       if (generation.errorMessage === CANCELLED_GENERATION_MESSAGE) {
+        setHasActivatedProgress(false);
         setProcessingStartedAt(null);
         setCooldownRemainingMs(0);
         setReadyGeneration(null);
@@ -196,6 +205,7 @@ export function LayoutOptimizationWizard({
         return;
       }
 
+      setHasActivatedProgress(false);
       setProcessingStartedAt(null);
       setCooldownRemainingMs(0);
       setReadyGeneration(null);
@@ -369,10 +379,11 @@ export function LayoutOptimizationWizard({
   }, [anonymousId, cancelGeneration, credits, generationId, isCancellingGeneration, setOptimisticCredits, showToast]);
 
   const handleGenerate = useCallback(async () => {
-    if (!viewerReady || !activeImage || selectedImages.length === 0 || isGenerating) {
+    if (!viewerReady || !sourceImage || selectedImages.length === 0 || isGenerating) {
       return;
     }
 
+    setHasActivatedProgress(true);
     setIsGenerating(true);
     setReadyGeneration(null);
     setProcessingStartedAt(Date.now());
@@ -381,7 +392,7 @@ export function LayoutOptimizationWizard({
 
     try {
       const sourceUploadUrl = await createSourceUploadUrl({ anonymousId: anonymousId ?? undefined });
-      const sourceImageStorageId = await uploadLocalFileToCloud(sourceUploadUrl, selectedImages[0]!.uri, {
+      const sourceImageStorageId = await uploadLocalFileToCloud(sourceUploadUrl, sourceImage.uri, {
         fallbackMimeType: "image/jpeg",
         errorLabel: "source image",
       });
@@ -410,13 +421,14 @@ export function LayoutOptimizationWizard({
             ? "Use the additional reference photos to understand adjacency, proportions, and circulation around the same room."
             : undefined,
         ].filter(Boolean).join(" "),
-        aspectRatio: simplifyRatio(activeImage.width, activeImage.height),
+        aspectRatio: simplifyRatio(sourceImage.width, sourceImage.height),
         smartSuggest: true,
       });
 
       setGenerationId(response.generationId);
       setOptimisticCredits(response.creditsRemaining ?? Math.max(credits - 1, 0));
     } catch (error) {
+      setHasActivatedProgress(false);
       setIsGenerating(false);
       setProcessingStartedAt(null);
       setCooldownRemainingMs(0);
@@ -424,13 +436,13 @@ export function LayoutOptimizationWizard({
       Alert.alert("Generation unavailable", error instanceof Error ? error.message : "Unable to optimize the layout right now.");
     }
   }, [
-    activeImage,
     anonymousId,
     createSourceUploadUrl,
     credits,
     isGenerating,
     selectedImages,
     setOptimisticCredits,
+    sourceImage,
     startGeneration,
     viewerReady,
   ]);
@@ -448,7 +460,7 @@ export function LayoutOptimizationWizard({
 
     return (
       <ServiceProcessingScreen
-        imageUri={activeImage?.uri ?? null}
+        imageUri={sourceImage?.uri ?? activeImage?.uri ?? null}
         resultImageUri={null}
         subtitlePhrases={processingStatusMessages}
         title="Neural Render Pipeline"
@@ -471,6 +483,7 @@ export function LayoutOptimizationWizard({
       emptyStateSubtitle={SMART_SPACE_PLANNING_UPLOAD_BODY}
       examplePhotos={layoutExamples}
       headerTitle={SMART_SPACE_PLANNING_TITLE}
+      layoutVariant="smart-space"
       loadingExampleId={isLoadingExample}
       onChooseFromGallery={handleAddLibraryPhotos}
       onContinue={() => {
@@ -483,6 +496,8 @@ export function LayoutOptimizationWizard({
         void handleExamplePress(example);
       }}
       onTakePhoto={handleTakePhoto}
+      progress={hasActivatedProgress ? 1 : 0}
+      progressVariant="continuous"
       selectedPhotos={selectedImages}
       maxPhotos={MAX_LAYOUT_PHOTOS}
       showPhotoCount={false}

@@ -47,7 +47,7 @@ export default defineSchema({
     customPrompt: v.optional(v.string()),
     colorPalette: v.optional(v.string()),
     aspectRatio: v.optional(v.string()),
-    serviceType: v.optional(v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"))),
+    serviceType: v.optional(v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"), v.literal("replace"))),
     modeId: v.optional(v.string()),
     paletteId: v.optional(v.string()),
     finishId: v.optional(v.string()),
@@ -93,4 +93,21 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_generationId", ["generationId"]),
+
+  diamondPurchases: defineTable({
+    transactionId: v.string(),
+    userId: v.string(),
+    productIdentifier: v.string(),
+    packageIdentifier: v.optional(v.string()),
+    packId: v.string(),
+    diamonds: numberLike,
+    amount: numberLike,
+    currencyCode: v.string(),
+    countryCode: v.optional(v.string()),
+    pricingTier: v.optional(v.string()),
+    purchasedAt: numberLike,
+    createdAt: numberLike,
+  })
+    .index("by_transactionId", ["transactionId"])
+    .index("by_userId", ["userId"]),
 });

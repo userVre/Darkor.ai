@@ -75,6 +75,7 @@ DESIGN_WIZARD_SELECTION_BLUE_GLOW,
 DESIGN_WIZARD_SELECTION_BLUE_SOFT,
 } from "../../components/design-wizard-primitives";
 import {DiamondCreditPill} from "../../components/diamond-credit-pill";
+import {useDiamondStore} from "../../components/diamond-store-context";
 import {ExteriorRedesignStepFour} from "../../components/exterior-redesign-step-four";
 import {ExteriorRedesignStepThree} from "../../components/exterior-redesign-step-three";
 import {ExteriorRedesignStepTwo} from "../../components/exterior-redesign-step-two";
@@ -91,6 +92,8 @@ import {LayoutOptimizationWizard} from "../../components/layout-optimization-wiz
 import {LuxPressable} from "../../components/lux-pressable";
 import {PaintWizard} from "../../components/paint-wizard";
 import {useProSuccess} from "../../components/pro-success-context";
+import {ReferenceStyleWizard} from "../../components/reference-style-wizard";
+import {ReplaceObjectsWizard} from "../../components/replace-objects-wizard";
 import {ServiceContinueButton} from "../../components/service-continue-button";
 import {useGenerationStatusMessages} from "../../components/service-processing-screen";
 import {ServiceWizardHeader} from "../../components/service-wizard-header";
@@ -244,7 +247,7 @@ type ArchiveGeneration = {
   sourceImageUrl?: string | null;
   style?: string | null;
   roomType?: string | null;
-  serviceType?: "paint" | "floor" | "redesign" | "layout" | null;
+  serviceType?: "paint" | "floor" | "redesign" | "layout" | "replace" | null;
   watermarkRequired?: boolean | null;
   modeId?: string | null;
   paletteId?: string | null;
@@ -1837,6 +1840,10 @@ function getServiceLabel(t: ReturnType<typeof useTranslation>["t"], serviceType:
     return t("home.tools.smartSpacePlanning.title");
   }
 
+  if (serviceType === "replace") {
+    return t("home.tools.replace.title");
+  }
+
   const keyMap: Record<string, string> = {
     interior: "workspace.services.interior",
     exterior: "workspace.services.exterior",
@@ -1853,6 +1860,7 @@ function inferBoardServiceType(styleLabel?: string | null, roomLabel?: string | 
   if (combined.includes("paint")) return "paint";
   if (combined.includes("floor")) return "floor";
   if (combined.includes("layout")) return "layout";
+  if (combined.includes("replace")) return "replace";
   return null;
 }
 
@@ -1869,6 +1877,9 @@ function getProcessingStatusCopy(t: ReturnType<typeof useTranslation>["t"], serv
   }
   if (serviceType === "layout") {
     return "AI is analyzing circulation, furniture balance, and spatial fluidity to compose a more ergonomic layout.";
+  }
+  if (serviceType === "replace") {
+    return t("workspace.processing.replace");
   }
   return t("workspace.processing.default");
 }
@@ -2033,6 +2044,7 @@ function getServiceType(serviceKey: string) {
   if (serviceKey.includes("floor")) return "floor";
   if (serviceKey.includes("paint")) return "paint";
   if (serviceKey.includes("layout")) return "layout";
+  if (serviceKey.includes("replace")) return "replace";
   return "interior";
 }
 
@@ -2110,6 +2122,7 @@ export default function WorkspaceScreen() {
   const { isSignedIn } = useAuth();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const { credits: sharedCreditBalance, clearOptimisticCredits, setOptimisticCredits } = useViewerCredits();
+  const { openStore } = useDiamondStore();
   const guestWizardTestingSession = isGuestWizardTestingSession(isSignedIn);
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const diagnostic = DIAGNOSTIC_BYPASS;
@@ -2249,8 +2262,10 @@ export default function WorkspaceScreen() {
   const isFloorService = serviceType === "floor";
   const isPaintService = serviceType === "paint";
   const isLayoutService = serviceType === "layout";
+  const isReplaceService = serviceType === "replace";
+  const isReferenceStyleWizard = isInteriorService && entrySource === "reference-style";
   const isLeanGenerationService = isExteriorService || isGardenService;
-  const isRedesignWizardActive = !isPaintService && !isFloorService && !isLayoutService && workflowStep <= 3;
+  const isRedesignWizardActive = !isReferenceStyleWizard && !isPaintService && !isFloorService && !isLayoutService && !isReplaceService && workflowStep <= 3;
   const selectedImage = useMemo(
     () => selectedImages[currentDisplayIndex] ?? selectedImages[0] ?? null,
     [currentDisplayIndex, selectedImages],
@@ -2263,8 +2278,10 @@ export default function WorkspaceScreen() {
     () => (typeof presetRoom === "string" && presetRoom.trim().length > 0 ? `${serviceType}:${presetRoom.trim().toLowerCase()}` : null),
     [presetRoom, serviceType],
   );
-  const isWizardFlowActive = (isPaintService || isFloorService || isLayoutService) ? isServiceStepFlowActive : isRedesignWizardActive;
-  const shouldHideNativeTabBar = false;
+  const isWizardFlowActive = (isPaintService || isFloorService || isLayoutService || isReplaceService || isReferenceStyleWizard)
+    ? isServiceStepFlowActive
+    : isRedesignWizardActive;
+  const shouldHideNativeTabBar = isWizardFlowActive && workflowStep <= 3;
   const presetRoomOptions =
     serviceType === "exterior"
       ? SPACE_OPTIONS.exterior
@@ -2290,11 +2307,11 @@ export default function WorkspaceScreen() {
   }, [setIsFlowActive, shouldHideNativeTabBar]);
 
   useEffect(() => {
-    if (!isPaintService && !isFloorService && !isLayoutService) {
+    if (!isPaintService && !isFloorService && !isLayoutService && !isReplaceService && !isReferenceStyleWizard) {
       setIsServiceProcessing(false);
       setIsServiceStepFlowActive(false);
     }
-  }, [isFloorService, isLayoutService, isPaintService]);
+  }, [isFloorService, isLayoutService, isPaintService, isReferenceStyleWizard, isReplaceService]);
 
   useEffect(() => {
     setDraftImage(selectedImage ?? null);
@@ -2306,12 +2323,12 @@ export default function WorkspaceScreen() {
   }, [selectedRoom, setDraftRoom]);
 
   useEffect(() => {
-    if (isPaintService || isFloorService || isLeanGenerationService) {
+    if (isPaintService || isFloorService || isReplaceService || isLeanGenerationService) {
       return;
     }
 
     setDraftStyles(selectedStyles);
-  }, [isFloorService, isLeanGenerationService, isPaintService, selectedStyles, setDraftStyles]);
+  }, [isFloorService, isLeanGenerationService, isPaintService, isReplaceService, selectedStyles, setDraftStyles]);
 
   useEffect(() => {
     setDraftStyle(selectedStyle ?? null);
@@ -2811,7 +2828,7 @@ export default function WorkspaceScreen() {
     return STYLE_LIBRARY;
   }, [isExteriorService, isGardenService]);
   const displayedStyleCards = useMemo<DisplayStyleCard[]>(() => {
-    if (isPaintService || isFloorService) {
+    if (isPaintService || isFloorService || isReplaceService) {
       return [];
     }
 
@@ -3536,7 +3553,7 @@ export default function WorkspaceScreen() {
       if (!isPaintService && !isFloorService && !isLeanGenerationService && selectedStyles.includes("Custom")) {
         return customPrompt.trim().length > 0;
       }
-      return isPaintService || isFloorService ? Boolean(selectedStyle || smartSuggestEnabled) : selectedStyles.length > 0;
+      return isPaintService || isFloorService || isReplaceService ? Boolean(selectedStyle || smartSuggestEnabled) : selectedStyles.length > 0;
     }
     if (workflowStep === 3) {
       if (isExteriorService) {
@@ -3566,9 +3583,9 @@ export default function WorkspaceScreen() {
     const missingSelection = resolveMissingWorkspaceSelectionLabel({
       hasImage: selectedImages.length > 0,
       hasRoom: selectedRooms.length > 0,
-      hasStyle: isPaintService || isFloorService ? Boolean(selectedStyle || smartSuggestEnabled) : selectedStyles.length > 0,
-      hasMode: isExteriorService || isGardenService || isPaintService || isFloorService || Boolean(selectedModeId),
-      hasPalette: isGardenService || isPaintService || isFloorService || Boolean(selectedPaletteId || smartSuggestEnabled),
+      hasStyle: isPaintService || isFloorService || isReplaceService ? Boolean(selectedStyle || smartSuggestEnabled) : selectedStyles.length > 0,
+      hasMode: isExteriorService || isGardenService || isPaintService || isFloorService || isReplaceService || Boolean(selectedModeId),
+      hasPalette: isGardenService || isPaintService || isFloorService || isReplaceService || Boolean(selectedPaletteId || smartSuggestEnabled),
     });
 
     if (!missingSelection) {
@@ -4159,17 +4176,12 @@ export default function WorkspaceScreen() {
 
   const handleUpgrade = useCallback(() => {
     triggerHaptic();
-    router.push("/paywall");
-  }, [router]);
+    openStore();
+  }, [openStore]);
 
   const openGenerationPaywall = useCallback(() => {
-    router.push({
-      pathname: "/paywall",
-      params: {
-        source: "generate",
-      },
-    } as any);
-  }, [router]);
+    openStore("empty_balance");
+  }, [openStore]);
 
   const handleDownloadStandard = useCallback(async () => {
     triggerHaptic();
@@ -5036,7 +5048,7 @@ export default function WorkspaceScreen() {
     setAiSuggestedStyle(null);
     setAiSuggestedPaletteId((current) => (value === SMART_SUGGEST_WALL_LABEL || value === SMART_SUGGEST_FLOOR_LABEL ? current : null));
     startTransition(() => {
-      if (isPaintService || isFloorService || isLeanGenerationService) {
+      if (isPaintService || isFloorService || isReplaceService || isLeanGenerationService) {
         const nextStyle = selectedStyle === value ? null : value;
         setSelectedStyle(nextStyle);
         setSelectedStyles(nextStyle ? [nextStyle] : []);
@@ -5109,7 +5121,7 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    if (isPaintService || isFloorService) {
+    if (isPaintService || isFloorService || isReplaceService) {
       handleEnableSmartSuggest();
       return;
     }
@@ -5270,6 +5282,15 @@ export default function WorkspaceScreen() {
   const stepTransition = LUX_SPRING;
   const isPhotoPreviewBusy = isSelectingPhoto || isLoadingExample !== null;
 
+  if (isReferenceStyleWizard) {
+    return (
+      <ReferenceStyleWizard
+        onFlowActiveChange={setIsServiceStepFlowActive}
+        onProcessingStateChange={setIsServiceProcessing}
+      />
+    );
+  }
+
   if (isPaintService) {
     return (
       <PaintWizard
@@ -5291,6 +5312,15 @@ export default function WorkspaceScreen() {
   if (isLayoutService) {
     return (
       <LayoutOptimizationWizard
+        onFlowActiveChange={setIsServiceStepFlowActive}
+        onProcessingStateChange={setIsServiceProcessing}
+      />
+    );
+  }
+
+  if (isReplaceService) {
+    return (
+      <ReplaceObjectsWizard
         onFlowActiveChange={setIsServiceStepFlowActive}
         onProcessingStateChange={setIsServiceProcessing}
       />
@@ -5648,14 +5678,14 @@ export default function WorkspaceScreen() {
       : isSpaceStep
         ? Boolean(selectedRoom)
         : isStyleStep
-          ? (isPaintService || isFloorService ? Boolean(selectedStyle) : selectedStyles.length > 0)
+          ? (isPaintService || isFloorService || isReplaceService ? Boolean(selectedStyle) : selectedStyles.length > 0)
           : isContinueActive;
     const stepButtonAttention = isPhotoStep
       ? selectedImages.length > 0
       : isSpaceStep
         ? Boolean(selectedRoom)
         : isStyleStep
-          ? (isPaintService || isFloorService ? Boolean(selectedStyle) : selectedStyles.length > 0)
+          ? (isPaintService || isFloorService || isReplaceService ? Boolean(selectedStyle) : selectedStyles.length > 0)
           : false;
     const stepButtonSupportingText = isGenerationReviewStep ? generationCreditLabel : null;
 

@@ -93,6 +93,10 @@
         "title": "Floor Restyle",
         "description": "Elevate your room's foundation with premium materials and finishes."
       },
+      "replace": {
+        "title": "Replace Objects",
+        "description": "Mask any object in your photo and swap it for something new with precise AI edits."
+      },
       "cta": "Try This",
       "smartSpacePlanning": {
         "title": "Smart Space Planning",
@@ -661,6 +665,48 @@
       "description": "Gain more space and optimize your room's flow.",
       "uploadCta": "Upload +",
       "processing": "AI is analyzing circulation, furniture balance, and spatial fluidity to compose a more ergonomic layout."
+    },
+    "replaceFlow": {
+      "title": "Replace Objects",
+      "intakeTitle": "Upload Image",
+      "intakeBody": "Mark and swap any object in your room.",
+      "maskTitle": "Mask the Object",
+      "maskBody": "Use the brush and eraser to trace the exact object you want to replace.",
+      "maskInstruction": "Trace the object you wish to change.",
+      "maskSupportingText": "Brush over the object you want to change",
+      "brushWidth": "Brush Width",
+      "eraserWidth": "Eraser Width",
+      "promptTitle": "Describe Change",
+      "promptBody": "Tell HomeDecor AI what should appear in the masked area.",
+      "promptInputLabel": "What would you like to see here?",
+      "promptPlaceholder": "e.g., A modern velvet armchair or a large indoor plant.",
+      "generateCta": "Generate",
+      "supportingText": "Uses 1 credit · {{creditsRemaining}}",
+      "creditsRemaining": "{{count}} remaining",
+      "markObjectTitle": "Mask the object first",
+      "markObjectBody": "Brush over the object you want to replace before generating.",
+      "addPromptTitle": "Describe the replacement",
+      "addPromptBody": "Tell HomeDecor AI what should appear in the masked area before generating.",
+      "cameraAccessTitle": "Camera access needed",
+      "cameraAccessBody": "Enable camera access to capture a room photo.",
+      "photoAccessTitle": "Photo access needed",
+      "photoAccessBody": "Enable photo library access to upload a room photo.",
+      "mediaUnavailableTitle": "Unable to open media",
+      "exampleUnavailableBody": "This example photo could not be opened.",
+      "savePermissionTitle": "Photo access needed",
+      "savePermissionBody": "Allow photo library access to save your render to the device.",
+      "renderFinishing": "This render is already finishing up.",
+      "cancelSuccess": "Generation canceled. Your credit was kept.",
+      "cancelUnavailable": "Unable to cancel right now.",
+      "result": {
+        "heading": "Your replacement is ready",
+        "subheading": "A masked object swap designed to preserve the room's lighting, perspective, and surrounding details.",
+        "summaryLabel": "Replacement Request",
+        "summary": "Only the masked object was replaced while the rest of the room stayed grounded to the original photo.",
+        "saveToGallery": "Save to Gallery",
+        "share": "Share",
+        "tryAgain": "Try Again"
+      }
     }
   },
   "workspace": {
@@ -676,6 +722,7 @@
       "default": "AI is optimizing ergonomic layout and spatial fluidity while composing a refined redesign.",
       "floor": "HomeDecor AI is reading perspective, locking the floor plane, and composing the new material with premium detail.",
       "paint": "HomeDecor AI is isolating the wall planes and layering your selected finish with gallery-grade realism.",
+      "replace": "HomeDecor AI is preserving the room while compositing a seamless new object into the masked area.",
       "smartSpacePlanning": "Gain more space and optimize your room's flow."
     },
     "services": {
@@ -683,7 +730,8 @@
       "exterior": "Exterior Redesign",
       "garden": "Garden Redesign",
       "floor": "Floor Restyle",
-      "paint": "Smart Wall Paint"
+      "paint": "Smart Wall Paint",
+      "replace": "Replace Objects"
     },
     "editor": {
       "title": "Your Professional Concept",

@@ -29,7 +29,7 @@
       "icon": "./assets/logo.png"
     },
     "android": {
-      "package": "com.homedecor.ai",
+      "package": "com.darkor.ai",
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#121212"

@@ -48,7 +48,7 @@ export function canUserGenerate(state?: GenerationAccessState | null): Generatio
     typeof state?.imagesRemaining === "number"
       ? Math.max(state.imagesRemaining, 0)
       : Math.max(toSafeNumber(state?.credits), 0);
-  const fallbackMessage = hasPaidAccess || hasSubscriptionQuota ? "Limit Reached" : "Free limit reached. Upgrade to continue.";
+  const fallbackMessage = hasPaidAccess || hasSubscriptionQuota ? "Limit Reached" : "No Diamonds left. Buy more to continue.";
   const message = String(state?.generationStatusMessage ?? fallbackMessage).trim() || fallbackMessage;
 
   if (remaining > 0 && state?.canGenerateNow !== false) {

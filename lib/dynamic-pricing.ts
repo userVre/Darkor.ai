@@ -8,14 +8,17 @@ import {getLanguageLocaleTag, type AppLanguage} from "./i18n/language";
 
 export type PricingDuration = "weekly" | "yearly";
 export type PricingTierId = "tier_1" | "tier_2" | "tier_3" | "tier_4" | "tier_5";
+export type DiamondPackId = "starter" | "designer" | "architect";
 
 type PriceBook = Record<PricingDuration, number>;
+type DiamondPackPriceBook = Record<DiamondPackId, number>;
 
 type PricingTierDefinition = {
   id: PricingTierId;
   label: "vip" | "core" | "rich" | "middle" | "mass";
   countries: readonly string[];
   usdPrices: PriceBook;
+  diamondPackUsdPrices: DiamondPackPriceBook;
 };
 
 type FxSnapshot = {
@@ -43,7 +46,15 @@ export type LocalizedPrice = {
   currencyCode: string;
   formatted: string;
   fractionDigits: number;
-  source: "fx_snapshot" | "store";
+  source: "fx_snapshot" | "store" | "tier_override";
+};
+
+export type DiamondPackPricing = {
+  id: DiamondPackId;
+  diamonds: number;
+  title: string;
+  price: LocalizedPrice;
+  usdReference: number;
 };
 
 export type PricingContext = {
@@ -56,6 +67,7 @@ export type PricingContext = {
   tierId: PricingTierId;
   tierLabel: PricingTierDefinition["label"];
   usdReference: Record<PricingDuration, number>;
+  diamondPacks: Record<DiamondPackId, DiamondPackPricing>;
   usedFallbackTier: boolean;
   prices: Record<PricingDuration, LocalizedPrice>;
   derived: {
@@ -91,6 +103,7 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
       "AD", "AT", "AU", "BE", "CH", "DK", "FI", "HK", "IE", "IS", "LI", "LU", "MC", "NL", "NO", "NZ", "SE", "SG",
     ],
     usdPrices: { yearly: 59.99, weekly: 9.99 },
+    diamondPackUsdPrices: { starter: 4.99, designer: 9.99, architect: 24.99 },
   },
   {
     id: "tier_2",
@@ -99,6 +112,7 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
       "CA", "CY", "DE", "EE", "ES", "FR", "GB", "IL", "IT", "JP", "KR", "MT", "PT", "SI", "SK", "TW", "US",
     ],
     usdPrices: { yearly: 39.99, weekly: 6.99 },
+    diamondPackUsdPrices: { starter: 2.99, designer: 7.99, architect: 19.99 },
   },
   {
     id: "tier_3",
@@ -107,6 +121,7 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
       "AE", "BH", "BN", "CZ", "GR", "HR", "HU", "KW", "LT", "LV", "OM", "PL", "QA", "RO", "SA", "SC", "TT", "UY",
     ],
     usdPrices: { yearly: 34.99, weekly: 5.99 },
+    diamondPackUsdPrices: { starter: 1.99, designer: 5.99, architect: 14.99 },
   },
   {
     id: "tier_4",
@@ -117,6 +132,7 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
       "TM", "TN", "UA", "UY", "UZ", "VN", "ZA",
     ],
     usdPrices: { yearly: 19.99, weekly: 1.99 },
+    diamondPackUsdPrices: { starter: 0.99, designer: 2.99, architect: 7.99 },
   },
   {
     id: "tier_5",
@@ -128,8 +144,23 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
       "SO", "SS", "SV", "SZ", "TD", "TG", "TR", "TZ", "UG", "YE", "ZM", "ZW",
     ],
     usdPrices: { yearly: 9.99, weekly: 0.49 },
+    diamondPackUsdPrices: { starter: 0.49, designer: 1.49, architect: 4.49 },
   },
 ] as const;
+
+const DIAMOND_PACK_METADATA: Record<DiamondPackId, { diamonds: number; title: string }> = {
+  starter: { diamonds: 10, title: "Starter Pack" },
+  designer: { diamonds: 30, title: "Designer Pack" },
+  architect: { diamonds: 100, title: "Architect Pack" },
+};
+
+const DIAMOND_PACK_LOCAL_PRICE_OVERRIDES: Partial<Record<string, Partial<Record<DiamondPackId, number>>>> = {
+  MA: {
+    starter: 9.99,
+    designer: 29.99,
+    architect: 79.99,
+  },
+};
 
 const COUNTRY_TO_CURRENCY: Record<string, string> = {
   AD: "EUR", AE: "AED", AF: "AFN", AG: "XCD", AI: "XCD", AL: "ALL", AM: "AMD", AO: "AOA", AR: "ARS", AS: "USD",
@@ -314,6 +345,43 @@ function buildLocalizedTierPrices(args: {
   };
 }
 
+function buildLocalizedDiamondPackPrices(args: {
+  locale: string;
+  countryCode: string;
+  currencyCode: string;
+  tier: PricingTierDefinition;
+  exchangeRate: number;
+}) {
+  const countryOverrides = DIAMOND_PACK_LOCAL_PRICE_OVERRIDES[args.countryCode] ?? {};
+
+  return (Object.keys(DIAMOND_PACK_METADATA) as DiamondPackId[]).reduce<Record<DiamondPackId, DiamondPackPricing>>(
+    (accumulator, packId) => {
+      const metadata = DIAMOND_PACK_METADATA[packId];
+      const overrideAmount = countryOverrides[packId];
+      const amount =
+        typeof overrideAmount === "number"
+          ? overrideAmount
+          : args.tier.diamondPackUsdPrices[packId] * args.exchangeRate;
+
+      accumulator[packId] = {
+        id: packId,
+        diamonds: metadata.diamonds,
+        title: metadata.title,
+        usdReference: args.tier.diamondPackUsdPrices[packId],
+        price: createLocalizedPrice({
+          amount,
+          currencyCode: args.currencyCode,
+          locale: args.locale,
+          source: typeof overrideAmount === "number" ? "tier_override" : "fx_snapshot",
+        }),
+      };
+
+      return accumulator;
+    },
+    {} as Record<DiamondPackId, DiamondPackPricing>,
+  );
+}
+
 function parseEcbXmlRateMap(xml: string) {
   const matches = Array.from(xml.matchAll(/currency=['"]([A-Z]{3})['"]\s+rate=['"]([0-9.]+)['"]/g));
   return new Map(matches.map(([, currency, rate]) => [currency, Number(rate)]));
@@ -394,6 +462,13 @@ export function getPricingContext(
     tier,
     exchangeRate: fxSnapshot.rate,
   });
+  const localizedDiamondPackPrices = buildLocalizedDiamondPackPrices({
+    locale: localeTag,
+    countryCode,
+    currencyCode,
+    tier,
+    exchangeRate: fxSnapshot.rate,
+  });
 
   return {
     locale: localeTag,
@@ -405,6 +480,7 @@ export function getPricingContext(
     tierId: tier.id,
     tierLabel: tier.label,
     usdReference: tier.usdPrices,
+    diamondPacks: localizedDiamondPackPrices,
     usedFallbackTier,
     prices: {
       weekly: localizedPrices.weekly,
@@ -424,6 +500,9 @@ export function getPricingContext(
       priceMetadata: {
         homedecor_weekly_price_usd: tier.usdPrices.weekly.toFixed(2),
         homedecor_yearly_price_usd: tier.usdPrices.yearly.toFixed(2),
+        homedecor_diamond_10_usd: tier.diamondPackUsdPrices.starter.toFixed(2),
+        homedecor_diamond_30_usd: tier.diamondPackUsdPrices.designer.toFixed(2),
+        homedecor_diamond_100_usd: tier.diamondPackUsdPrices.architect.toFixed(2),
         homedecor_fx_rate: fxSnapshot.rate.toFixed(6),
         homedecor_fx_source: fxSnapshot.source,
       },
@@ -437,6 +516,9 @@ export function getPricingContext(
         homedecor_detected_language: activeGeoSnapshot?.resolvedLanguage ?? appLanguage,
         homedecor_weekly_price_usd: tier.usdPrices.weekly.toFixed(2),
         homedecor_yearly_price_usd: tier.usdPrices.yearly.toFixed(2),
+        homedecor_diamond_10_usd: tier.diamondPackUsdPrices.starter.toFixed(2),
+        homedecor_diamond_30_usd: tier.diamondPackUsdPrices.designer.toFixed(2),
+        homedecor_diamond_100_usd: tier.diamondPackUsdPrices.architect.toFixed(2),
         homedecor_fx_rate: fxSnapshot.rate.toFixed(6),
         homedecor_fx_source: fxSnapshot.source,
       },

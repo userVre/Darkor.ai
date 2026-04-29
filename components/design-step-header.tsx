@@ -1,5 +1,4 @@
 import {ArrowLeft, X} from "@/components/material-icons";
-import {useRouter} from "expo-router";
 import {useState} from "react";
 import {useTranslation} from "react-i18next";
 import {I18nManager, Platform, Pressable, StyleSheet, Text, View} from "react-native";
@@ -13,7 +12,7 @@ getDirectionalOppositeAlignment,
 getDirectionalRow,
 } from "../lib/i18n/rtl";
 import {triggerHaptic} from "../lib/haptics";
-import {CreditsBalanceSheet} from "./credits-balance-sheet";
+import {useDiamondStore} from "./diamond-store-context";
 import {DiamondCreditPill, ProBadge} from "./diamond-credit-pill";
 import {ExitConfirmModal} from "./exit-confirm-modal";
 import {StepProgressSegments} from "./step-progress-segments";
@@ -24,6 +23,8 @@ type DesignStepHeaderProps = {
   creditCount?: number;
   step: number;
   totalSteps: number;
+  progress?: number;
+  progressVariant?: "segmented" | "continuous";
   horizontalInset: number;
   onCreditsPress?: () => void;
   onBack?: () => void;
@@ -63,6 +64,8 @@ export function DesignStepHeader({
   creditCount,
   step,
   totalSteps,
+  progress,
+  progressVariant = "segmented",
   horizontalInset,
   onCreditsPress: _onCreditsPress,
   onBack,
@@ -71,7 +74,6 @@ export function DesignStepHeader({
   closeAccessibilityLabel = "Close",
 }: DesignStepHeaderProps) {
   const { t } = useTranslation();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const isRTL = I18nManager.isRTL;
   const metrics = getDesignStepHeaderMetrics(insets.top);
@@ -79,19 +81,13 @@ export function DesignStepHeader({
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
   const [isExitModalVisible, setIsExitModalVisible] = useState(false);
-  const [isCreditsSheetVisible, setIsCreditsSheetVisible] = useState(false);
   const { credits = 0, hasPaidAccess } = useViewerCredits();
+  const { openStore } = useDiamondStore();
   const resolvedTitle = title ?? t("app.name");
 
   const handleCreditsTap = () => {
     triggerHaptic();
-    setIsCreditsSheetVisible(true);
-  };
-
-  const handleUpgrade = () => {
-    triggerHaptic();
-    setIsCreditsSheetVisible(false);
-    router.push("/paywall");
+    openStore();
   };
   return (
     <>
@@ -171,9 +167,11 @@ export function DesignStepHeader({
           <View style={styles.progressWrap}>
             <StepProgressSegments
               key={`design-step-progress-${safeStep}-${totalSteps}`}
+              progress={progress}
+              variant={progressVariant}
               step={safeStep}
               totalSteps={totalSteps}
-              style={styles.progressRail}
+              style={progressVariant === "continuous" ? styles.progressRailContinuous : styles.progressRail}
             />
           </View>
         </View>
@@ -188,14 +186,6 @@ export function DesignStepHeader({
           setIsExitModalVisible(false);
           onClose();
         }}
-      />
-
-      <CreditsBalanceSheet
-        credits={credits}
-        hasPaidAccess={hasPaidAccess}
-        onClose={() => setIsCreditsSheetVisible(false)}
-        onUpgrade={handleUpgrade}
-        visible={isCreditsSheetVisible}
       />
     </>
   );
@@ -237,6 +227,10 @@ const styles = StyleSheet.create({
   progressRail: {
     width: "100%",
     maxWidth: 168,
+  },
+  progressRailContinuous: {
+    width: "100%",
+    maxWidth: "100%",
   },
   iconButton: {
     width: DESIGN_HEADER_ACTION_SIZE,

@@ -1,6 +1,6 @@
 import {NativeModules, Platform} from "react-native";
 
-import type {PricingTierId} from "./dynamic-pricing";
+import type {DiamondPackId, PricingTierId} from "./dynamic-pricing";
 
 export const REVENUECAT_ENTITLEMENT = "pro";
 export const REVENUECAT_WEEKLY_PRO_ENTITLEMENT = "weekly_pro";
@@ -29,6 +29,12 @@ export type RevenueCatTierContext = {
 type CachedTieredOfferings = {
   offering: Awaited<ReturnType<RevenueCatPurchases["getCurrentOfferingForPlacement"]>> | null;
   packages: RevenueCatPackage[];
+};
+
+const DIAMOND_PACK_MATCHERS: Record<DiamondPackId, string[]> = {
+  starter: ["starter", "10", "10diamond", "10_diamond", "diamond10", "credit10"],
+  designer: ["designer", "30", "30diamond", "30_diamond", "diamond30", "credit30"],
+  architect: ["architect", "100", "100diamond", "100_diamond", "diamond100", "credit100"],
 };
 
 let purchasesClient: RevenueCatPurchases | null = null;
@@ -80,6 +86,20 @@ function getPackageHaystack(pkg?: RevenueCatPackage | null) {
 
 function matchesAny(haystack: string, needles: string[]) {
   return needles.some((needle) => haystack.includes(needle));
+}
+
+function getAllPackagesFromOfferings(
+  offerings: Awaited<ReturnType<RevenueCatPurchases["getOfferings"]>>,
+) {
+  const allPackages = Object.values(offerings.all ?? {}).flatMap((offering) => offering?.availablePackages ?? []);
+  const currentPackages = offerings.current?.availablePackages ?? [];
+  const uniquePackages = new Map<string, RevenueCatPackage>();
+
+  for (const pkg of [...allPackages, ...currentPackages]) {
+    uniquePackages.set(pkg.identifier, pkg);
+  }
+
+  return Array.from(uniquePackages.values());
 }
 
 function getOfferingAliases(tierContext?: RevenueCatTierContext | null) {
@@ -306,6 +326,21 @@ export async function fetchTieredPackage(
   return result;
 }
 
+export async function fetchRevenueCatPackages(
+  purchases: RevenueCatPurchases,
+  tierContext: RevenueCatTierContext,
+) {
+  await syncRevenueCatPricingAttributes(purchases, tierContext).catch((error) => {
+    console.warn("[RevenueCat] Failed to sync pricing attributes", error);
+  });
+
+  const offerings = await purchases
+    .syncAttributesAndOfferingsIfNeeded()
+    .catch(() => purchases.getOfferings());
+
+  return getAllPackagesFromOfferings(offerings);
+}
+
 export function getCachedTieredPackage(tierContext: RevenueCatTierContext) {
   return tieredOfferingsCache.get(getTierContextCacheKey(tierContext)) ?? null;
 }
@@ -384,6 +419,28 @@ export function findRevenueCatPackage(packages: RevenueCatPackage[], duration: B
 
   if (packages.length === 1) {
     return packages[0];
+  }
+
+  return null;
+}
+
+export function findRevenueCatDiamondPackage(packages: RevenueCatPackage[], packId: DiamondPackId) {
+  const ranked = packages
+    .map((pkg) => {
+      const haystack = getPackageHaystack(pkg);
+      let score = 0;
+
+      if (matchesAny(haystack, DIAMOND_PACK_MATCHERS[packId])) score += 8;
+      if (matchesAny(haystack, ["diamond", "diamonds", "credit", "credits", "pack"])) score += 4;
+      if (matchesAny(haystack, ["weekly", "yearly", "annual", "trial", "subscription"])) score -= 6;
+
+      return { pkg, score };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  if (ranked.length > 0) {
+    return ranked[0]?.pkg ?? null;
   }
 
   return null;
