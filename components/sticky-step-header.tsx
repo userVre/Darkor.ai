@@ -19,7 +19,7 @@ import {ExitConfirmModal} from "./exit-confirm-modal";
 import {StepProgressSegments} from "./step-progress-segments";
 import {useViewerCredits} from "./viewer-credits-context";
 
-export const STICKY_STEP_HEADER_CONTENT_GAP = 32;
+export const STICKY_STEP_HEADER_CONTENT_GAP = 0;
 
 const HEADER_TOP_PADDING = 8;
 const HEADER_BOTTOM_PADDING = 12;
@@ -34,6 +34,8 @@ type StickyStepHeaderProps = {
   creditCount?: number;
   step: number;
   totalSteps: number;
+  progress?: number;
+  progressVariant?: "segmented" | "continuous";
   showProgress?: boolean;
   leftAccessory?: ReactNode;
   horizontalInset?: number;
@@ -69,6 +71,8 @@ export function StickyStepHeader({
   creditCount = 0,
   step,
   totalSteps,
+  progress,
+  progressVariant = "segmented",
   showProgress = true,
   leftAccessory,
   horizontalInset = 20,
@@ -182,6 +186,8 @@ export function StickyStepHeader({
             <View style={styles.progressWrap}>
               <StepProgressSegments
                 key={`sticky-step-progress-${safeStep}-${totalSteps}`}
+                progress={progress}
+                variant={progressVariant}
                 step={safeStep}
                 totalSteps={totalSteps}
                 style={styles.progressRail}
@@ -221,8 +227,6 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 40,
     backgroundColor: DS.colors.background,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: DS.colors.border,
   },
   inner: {
     gap: HEADER_PROGRESS_GAP,
@@ -284,7 +288,7 @@ const styles = StyleSheet.create({
     ...DS.typography.button,
     fontSize: 19,
     lineHeight: 24,
-    letterSpacing: -0.35,
+    letterSpacing: 0,
     textAlign: "center",
   },
 });

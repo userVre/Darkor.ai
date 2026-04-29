@@ -477,8 +477,8 @@ export const startGeneration = mutationGeneric({
           : args.serviceType === "floor"
             ? "Floor Restyle"
             : args.serviceType === "layout"
-              ? "Layout Optimization"
-            : "Complete Redesign",
+              ? "Spatial Optimization"
+              : "Complete Redesign",
       qualityTier: enforcedGenerationPolicy.qualityTier,
       outputResolution: enforcedGenerationPolicy.outputResolution,
       speedTier: enforcedGenerationPolicy.speedTier,

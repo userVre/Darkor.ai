@@ -36,7 +36,7 @@ const DESIGN_HEADER_TOP_PADDING = 8;
 const DESIGN_HEADER_BOTTOM_PADDING = 12;
 const DESIGN_HEADER_ROW_HEIGHT = 44;
 const DESIGN_HEADER_ACTION_SIZE = 44;
-const DESIGN_HEADER_CONTENT_GAP = 32;
+const DESIGN_HEADER_CONTENT_GAP = 0;
 const DESIGN_HEADER_PROGRESS_GAP = 12;
 const DESIGN_HEADER_PROGRESS_HEIGHT = 12;
 const DESIGN_HEADER_SIDE_WIDTH = 116;
@@ -209,8 +209,6 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 40,
     backgroundColor: DS.colors.background,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: DS.colors.border,
   },
   inner: {
     gap: DESIGN_HEADER_PROGRESS_GAP,
@@ -272,7 +270,7 @@ const styles = StyleSheet.create({
     ...DS.typography.button,
     fontSize: 19,
     lineHeight: 24,
-    letterSpacing: -0.35,
+    letterSpacing: 0,
     textAlign: "center",
   },
 });

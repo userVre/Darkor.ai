@@ -74,29 +74,19 @@ export function getPaintWizardExamplePhotos(t: TFunction): WizardExamplePhoto[] 
 export function getLayoutWizardExamplePhotos(_t: TFunction): WizardExamplePhoto[] {
   return [
     {
-      id: "interior-before-messy-lounge",
-      label: "Messy lounge",
-      source: require("../assets/media/examples/interior/interior-before-messy-lounge.jpg"),
+      id: "smart-space-planning-lounge",
+      label: "Lounge circulation",
+      source: require("../assets/media/examples/smart-space/smart-space-planning-lounge.jpg"),
     },
     {
-      id: "layout-before-bedroom-tight",
-      label: "Tight bedroom",
-      source: require("../assets/media/examples/layout/layout-before-bedroom-tight.jpg"),
+      id: "smart-space-planning-studio",
+      label: "Studio flow",
+      source: require("../assets/media/examples/smart-space/smart-space-planning-studio.jpg"),
     },
     {
-      id: "interior-before-damaged-room",
-      label: "Damaged room",
-      source: require("../assets/media/examples/interior/interior-before-damaged-room.jpg"),
-    },
-    {
-      id: "layout-before-studio-cluttered",
-      label: "Cluttered studio",
-      source: require("../assets/media/examples/layout/layout-before-studio-cluttered.jpg"),
-    },
-    {
-      id: "interior-before-worn-reading-room",
-      label: "Worn reading room",
-      source: require("../assets/media/examples/interior/interior-before-worn-reading-room.jpg"),
+      id: "smart-space-planning-kitchen",
+      label: "Kitchen clearance",
+      source: require("../assets/media/examples/smart-space/smart-space-planning-kitchen.jpg"),
     },
   ];
 }

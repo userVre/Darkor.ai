@@ -4,18 +4,36 @@ import {I18nManager, StyleSheet, View, type StyleProp, type ViewStyle} from "rea
 import {DS} from "../lib/design-system";
 
 type StepProgressSegmentsProps = {
+  progress?: number;
   step: number;
   totalSteps: number;
+  variant?: "segmented" | "continuous";
   style?: StyleProp<ViewStyle>;
 };
 
 export const StepProgressSegments = memo(function StepProgressSegments({
+  progress,
   step,
   totalSteps,
+  variant = "segmented",
   style,
 }: StepProgressSegmentsProps) {
   const safeTotalSteps = Math.max(totalSteps, 1);
   const safeStep = Math.max(1, Math.min(step, safeTotalSteps));
+  const continuousProgress = Math.max(0, Math.min(progress ?? safeStep / safeTotalSteps, 1));
+
+  if (variant === "continuous") {
+    return (
+      <View
+        accessibilityLabel={`Progress ${Math.round(continuousProgress * 100)} percent`}
+        accessibilityRole="progressbar"
+        accessibilityValue={{ min: 0, max: 100, now: Math.round(continuousProgress * 100) }}
+        style={[styles.continuousTrack, style]}
+      >
+        <View style={[styles.continuousFill, { width: `${continuousProgress * 100}%` }]} />
+      </View>
+    );
+  }
 
   return (
     <View
@@ -52,5 +70,17 @@ const styles = StyleSheet.create({
   },
   segmentInactive: {
     backgroundColor: DS.colors.border,
+  },
+  continuousTrack: {
+    width: "100%",
+    height: 4,
+    borderRadius: 999,
+    overflow: "hidden",
+    backgroundColor: DS.colors.border,
+  },
+  continuousFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: "#2563EB",
   },
 });

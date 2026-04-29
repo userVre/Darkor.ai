@@ -492,10 +492,6 @@ function filterPackagesByCurrency(
   return matchingPackages.length > 0 ? matchingPackages : packages;
 }
 
-function getTrialCtaSubtext(freeTrialEnabled: boolean, trialThenPriceText: string, weeklyPriceText: string) {
-  return freeTrialEnabled ? trialThenPriceText : weeklyPriceText;
-}
-
 export default function PaywallScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
@@ -533,7 +529,7 @@ export default function PaywallScreen() {
   const heroCenterSize = Math.min(HERO_CENTER_SIZE_MAX, Math.max(HERO_CENTER_SIZE_MIN, width * 0.38));
   const heroSnapInterval = width / 2;
   const heroTrackPadding = Math.max((width - heroSnapInterval) / 2, 0);
-  const heroRowHeight = heroCenterSize + HERO_SIDE_TRANSLATE_Y + 24;
+  const heroRowHeight = heroCenterSize + HERO_SIDE_TRANSLATE_Y + 36;
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly"), [packages]);
   const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly"), [packages]);
   const displayedYearlyPrice = useMemo(
@@ -565,10 +561,6 @@ export default function PaywallScreen() {
   const thenWeeklyPriceText = useMemo(
     () => t("paywall.thenPricePerWeek", { price: displayedWeeklyPrice.formatted }),
     [displayedWeeklyPrice.formatted, i18n.language, t],
-  );
-  const ctaSubtext = useMemo(
-    () => getTrialCtaSubtext(freeTrialEnabled, thenWeeklyPriceText, weeklyPriceText),
-    [freeTrialEnabled, thenWeeklyPriceText, weeklyPriceText],
   );
   const cachedOfferingPackages = useMemo(
     () =>
@@ -1072,7 +1064,7 @@ export default function PaywallScreen() {
             ) : (
               <FadeSwap swapKey={freeTrialEnabled ? "cta-trial" : "cta-continue"} style={styles.ctaContent}>
                 <View style={[styles.ctaLabelRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{freeTrialEnabled ? "Try for 0 dollar" : t("paywall.ctaGooglePlayContinue")}</Text>
+                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{freeTrialEnabled ? "Try for $0" : t("paywall.ctaGooglePlayContinue")}</Text>
                   <Text
                     style={[
                       styles.ctaArrow,
@@ -1094,17 +1086,13 @@ export default function PaywallScreen() {
                     {String.fromCharCode(8594)}
                   </Text>
                 </View>
-                <Text style={[styles.ctaSubtext, localizedFonts.medium, FORCED_LTR_TEXT_STYLE]}>
-                  {freeTrialEnabled ? t("paywall.googlePlaySheetTrial") : t("paywall.googlePlaySheetStandard", { price: ctaSubtext })}
-                </Text>
               </FadeSwap>
             )}
           </Pressable>
 
           <View style={[styles.legalFooter, { paddingBottom: Math.max(insets.bottom + 12, 12) }]}>
-            <View style={[styles.legalLinksRow, { flexDirection: getDirectionalRow(isRTL), justifyContent: getDirectionalAlignment(isRTL) }]}>
+            <View style={[styles.legalLinksRow, { flexDirection: getDirectionalRow(isRTL) }]}>
               <LegalLink label={t("paywall.terms")} onPress={handleOpenTerms} />
-              <Text style={[styles.legalDivider, localizedFonts.regular]}>|</Text>
               <LegalLink label={t("paywall.privacy")} onPress={handleOpenPrivacy} />
             </View>
           </View>
@@ -1188,7 +1176,7 @@ const styles = StyleSheet.create({
   },
   heroTrack: {
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: 14,
   },
   heroItemSlot: {
     alignItems: "center",
@@ -1205,15 +1193,15 @@ const styles = StyleSheet.create({
   },
   featuresSection: {
     marginHorizontal: 20,
-    marginTop: 12,
-    marginBottom: 26,
+    marginTop: 16,
+    marginBottom: 30,
   },
   titleSection: {
     marginHorizontal: 20,
     alignItems: "flex-start",
-    marginTop: 18,
-    marginBottom: 24,
-    gap: 6,
+    marginTop: 20,
+    marginBottom: 26,
+    gap: 8,
   },
   subtitleText: {
     maxWidth: 360,
@@ -1237,7 +1225,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   featureRowGap: {
-    marginBottom: 12,
+    marginBottom: 14,
   },
   featureIcon: {
     width: 20,
@@ -1461,7 +1449,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: BRAND_RED,
     justifyContent: "center",
-    alignItems: "flex-start",
+    alignItems: "center",
     paddingHorizontal: 18,
     paddingVertical: 12,
   },
@@ -1469,21 +1457,21 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   ctaContent: {
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "center",
     width: "100%",
   },
   ctaLoadingRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "center",
     gap: 8,
     width: "100%",
   },
   ctaLabelRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "center",
     width: "100%",
   },
   ctaText: {
@@ -1491,13 +1479,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
     ...fonts.bold,
-  },
-  ctaSubtext: {
-    marginTop: 4,
-    color: "rgba(255,255,255,0.82)",
-    fontSize: 12,
-    lineHeight: 16,
-    ...fonts.medium,
   },
   ctaArrow: {
     marginHorizontal: 8,
@@ -1520,32 +1501,28 @@ const styles = StyleSheet.create({
   },
   legalFooter: {
     marginHorizontal: 20,
-    paddingTop: 14,
-    alignItems: "flex-start",
+    paddingTop: 18,
+    alignItems: "center",
   },
   legalLinksRow: {
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
-    justifyContent: "flex-start",
+    justifyContent: "center",
+    gap: 18,
   },
   legalLinkButton: {
-    minWidth: 40,
-    minHeight: 24,
+    minWidth: 72,
+    minHeight: 34,
     justifyContent: "center",
+    alignItems: "center",
   },
   legalLinkText: {
-    color: TEXT_MUTED,
-    fontSize: 11,
-    lineHeight: 14,
-    ...fonts.regular,
-  },
-  legalDivider: {
-    marginHorizontal: 6,
-    color: TEXT_MUTED,
-    fontSize: 12,
-    lineHeight: 14,
-    ...fonts.regular,
+    color: TEXT_PRIMARY,
+    fontSize: 13,
+    lineHeight: 17,
+    textDecorationLine: "underline",
+    ...fonts.medium,
   },
 });
 

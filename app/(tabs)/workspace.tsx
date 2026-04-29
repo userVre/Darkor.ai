@@ -119,6 +119,24 @@ import {fonts} from "../../styles/typography";
 import {DEFAULT_TAB_BAR_STYLE} from "./_layout";
 
 const TABS_HOME_ROUTE = "/(tabs)/index";
+
+function breakLongWizardDescription(description: string) {
+  const sentences = description.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((part) => part.trim()).filter(Boolean) ?? [description];
+
+  if (sentences.length > 1) {
+    return sentences.join("\n");
+  }
+
+  if (description.length < 86) {
+    return description;
+  }
+
+  const midpoint = Math.floor(description.length / 2);
+  const breakIndex = description.indexOf(" ", midpoint);
+
+  return breakIndex > 0 ? `${description.slice(0, breakIndex)}\n${description.slice(breakIndex + 1)}` : description;
+}
+
 type MeResponse = {
   plan: "free" | "trial" | "pro";
   credits: number;
@@ -5526,13 +5544,13 @@ export default function WorkspaceScreen() {
     const stepOneTitle = isFloorService ? getServiceLabel(t, "floor") : isPaintService ? t("common.actions.addPhoto") : isGardenService ? t("workspace.stepOne.gardenPhotoTitle") : isExteriorService ? t("workspace.stepOne.exteriorPhotoTitle") : t("common.actions.addPhoto");
     const emptyUploadTitle = isFloorService ? t("workspace.stepOne.floorPhotoTitle") : isPaintService ? t("common.actions.addPhoto") : isGardenService ? t("workspace.stepOne.gardenEmptyTitle") : isExteriorService ? t("workspace.stepOne.exteriorEmptyTitle") : t("wizard.stepOne.emptyTitle");
     const stepOneDescription = isGardenService
-      ? "Upload an outdoor scene so HomeDecor AI can elevate the landscape with a composed, architectural point of view."
+      ? "Transform your outdoors into a luxury retreat."
       : isFloorService
         ? "Upload a room image so HomeDecor AI can read the floor plane and stage a premium material transformation."
       : isPaintService
         ? "Upload a room photo and HomeDecor AI will prepare it for a precise, designer-led wall recoloring."
       : isExteriorService
-        ? "Upload a building photo so HomeDecor AI can reimagine the facade with a polished architectural language."
+        ? "Reimagine your home's facade with professional styling."
         : "Upload a room photo so HomeDecor AI can compose a coherent, elevated redesign.";
     const stepTwoTitle = "Select your space type";
     const stepTwoDescription = isExteriorService
@@ -5577,6 +5595,7 @@ export default function WorkspaceScreen() {
     const wizardSectionHeaderStyle = { gap: DS.spacing[1.5], alignItems: "center" as const };
     const wizardSectionBodyStyle = {
       color: wizardMutedTextColor,
+      ...fonts.regular,
       fontSize: 15,
       lineHeight: 24,
       maxWidth: Math.min(wizardGridMaxWidth, 720),
@@ -5758,7 +5777,7 @@ export default function WorkspaceScreen() {
                           maxWidth: 320,
                         }}
                       >
-                        {stepOneBody}
+                        {breakLongWizardDescription(stepOneBody)}
                       </Text>
                     </View>
 
@@ -6113,7 +6132,7 @@ export default function WorkspaceScreen() {
                           {stepTwoTitle}
                         </Text>
                         <Text style={wizardSectionBodyStyle}>
-                          {stepTwoDescription}
+                          {breakLongWizardDescription(stepTwoDescription)}
                         </Text>
                       </View>
 
@@ -6213,7 +6232,7 @@ export default function WorkspaceScreen() {
                           {stepThreeTitle}
                         </Text>
                         <Text style={wizardSectionBodyStyle}>
-                          {stepThreeDescription}
+                          {breakLongWizardDescription(stepThreeDescription)}
                         </Text>
                       </View>
 
@@ -6320,7 +6339,7 @@ export default function WorkspaceScreen() {
                           {stepThreeTitle}
                         </Text>
                         <Text style={wizardSectionBodyStyle}>
-                          {stepThreeDescription}
+                          {breakLongWizardDescription(stepThreeDescription)}
                         </Text>
                       </View>
 
@@ -6406,7 +6425,7 @@ export default function WorkspaceScreen() {
                           {stepThreeTitle}
                         </Text>
                         <Text style={wizardSectionBodyStyle}>
-                          {stepThreeDescription}
+                          {breakLongWizardDescription(stepThreeDescription)}
                         </Text>
                       </View>
 
@@ -6661,7 +6680,7 @@ export default function WorkspaceScreen() {
                           {stepFourTitle}
                         </Text>
                         <Text style={wizardSectionBodyStyle}>
-                          {stepFourDescription}
+                          {breakLongWizardDescription(stepFourDescription)}
                         </Text>
                       </View>
 
@@ -6783,11 +6802,11 @@ export default function WorkspaceScreen() {
                         <Text style={wizardSectionBodyStyle}>
                           {isGardenService
                             ? effectiveSignedIn
-      ? "Review your garden selections, then generate a polished concept and save it to My Design Portfolio."
-      : "Review your garden selections, then generate instantly. Sign in later to preserve it in My Design Portfolio."
+      ? breakLongWizardDescription("Review your garden selections, then generate a polished concept and save it to My Design Portfolio.")
+      : breakLongWizardDescription("Review your garden selections, then generate instantly. Sign in later to preserve it in My Design Portfolio.")
                             : effectiveSignedIn
-      ? "Review your exterior selections, then generate a polished concept and save it to My Design Portfolio."
-      : "Review your exterior selections, then generate instantly. Sign in later to preserve it in My Design Portfolio."}
+      ? breakLongWizardDescription("Review your exterior selections, then generate a polished concept and save it to My Design Portfolio.")
+      : breakLongWizardDescription("Review your exterior selections, then generate instantly. Sign in later to preserve it in My Design Portfolio.")}
                         </Text>
                       </View>
 
@@ -6912,7 +6931,7 @@ export default function WorkspaceScreen() {
                           {stepFourTitle}
                         </Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 15, lineHeight: 24, maxWidth: Math.min(wizardGridMaxWidth, 720) }}>
-                          {stepFourDescription}
+                          {breakLongWizardDescription(stepFourDescription)}
                         </Text>
                       </View>
 

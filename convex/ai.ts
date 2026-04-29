@@ -360,9 +360,9 @@ function buildFallbackOrchestration(args: {
 
   if (args.serviceType === "layout") {
     return {
-      style: "Layout Optimization",
-      customPrompt: "Rearrange the existing furniture into a more ergonomic layout with stronger circulation and calmer spatial flow while preserving the architecture.",
-      reason: "Fallback layout optimization selected for stronger comfort and circulation.",
+      style: "Spatial Optimization",
+      customPrompt: "Re-arrange furniture to gain more space and fluid circulation while preserving the architecture, fixed openings, and room structure.",
+      reason: "Fallback spatial optimization selected for stronger comfort and circulation.",
       source: "fallback" as const,
     };
   }

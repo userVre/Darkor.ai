@@ -96,7 +96,7 @@
       "cta": "Try This",
       "smartSpacePlanning": {
         "title": "Smart Space Planning",
-        "description": "AI-driven furniture rearrangement to maximize your room's space and comfort."
+        "description": "Gain more space and optimize your room's flow."
       }
     }
   },
@@ -398,7 +398,7 @@
       "emptyTitle": "Upload Your Vision",
       "emptySubtitle": "Redesign and Beautify your home.",
       "removePhoto": "Remove selected photo",
-      "cta": "Upload Reference Photo"
+      "cta": "Upload +"
     },
     "interior": {
       "stepTwoTitle": "Identify Your Space",
@@ -417,7 +417,7 @@
     },
     "garden": {
       "stepOneEmptyTitle": "Upload Your Vision",
-      "stepOneEmptySubtitle": "Redesign and Beautify your home.",
+      "stepOneEmptySubtitle": "Transform your outdoors into a luxury retreat.",
       "stepTwoTitle": "Define Your Aesthetic",
       "stepTwoSubtitle": "Choose a signature style to shape your design vision.",
       "stepThreeTitle": "Color Harmony"
@@ -658,8 +658,8 @@
     },
     "smartSpacePlanning": {
       "title": "Smart Space Planning",
-      "description": "Upload a room photo to refine furniture placement, circulation, and spatial comfort before generating.",
-      "uploadCta": "Upload Reference Photo",
+      "description": "Gain more space and optimize your room's flow.",
+      "uploadCta": "Upload +",
       "processing": "AI is analyzing circulation, furniture balance, and spatial fluidity to compose a more ergonomic layout."
     }
   },
@@ -676,7 +676,7 @@
       "default": "AI is optimizing ergonomic layout and spatial fluidity while composing a refined redesign.",
       "floor": "HomeDecor AI is reading perspective, locking the floor plane, and composing the new material with premium detail.",
       "paint": "HomeDecor AI is isolating the wall planes and layering your selected finish with gallery-grade realism.",
-      "smartSpacePlanning": "AI is analyzing circulation, furniture balance, and spatial fluidity to compose a more ergonomic layout."
+      "smartSpacePlanning": "Gain more space and optimize your room's flow."
     },
     "services": {
       "interior": "Interior Redesign",
@@ -927,7 +927,7 @@
         "refills": "Refills to 3 every 72h"
       },
       "stepFourSticky": "Step 4: Refine Direction",
-      "exteriorEmptyStateSubtitle": "Redesign and beautify your home."
+      "exteriorEmptyStateSubtitle": "Reimagine your home's facade with professional styling."
     }
   },
   "proSuccess": {

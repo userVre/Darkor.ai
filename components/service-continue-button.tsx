@@ -18,6 +18,7 @@ const ACTIVE_BUTTON_GLOW = DS.colors.accentGlowStrong;
 
 type ServiceContinueButtonProps = {
   active?: boolean;
+  activeColor?: string;
   label?: string;
   loading?: boolean;
   onPress: () => void | Promise<void>;
@@ -31,6 +32,7 @@ type ServiceContinueButtonProps = {
 
 export function ServiceContinueButton({
   active = true,
+  activeColor = ACTIVE_BUTTON_COLOR,
   label,
   loading = false,
   onPress,
@@ -94,7 +96,7 @@ export function ServiceContinueButton({
               glowColor={ACTIVE_BUTTON_GLOW}
               scale={0.99}
             >
-              <View style={[styles.button, active ? styles.buttonActive : styles.buttonInactive]}>
+              <View style={[styles.button, active ? [styles.buttonActive, { backgroundColor: activeColor }] : styles.buttonInactive]}>
                 {loading ? (
                   <View style={styles.loadingRow}>
                     <ActivityIndicator size="small" color={DS.colors.textInverse} />

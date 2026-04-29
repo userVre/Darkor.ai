@@ -1,28 +1,16 @@
-import {Plus, X} from "@/components/material-icons";
 import {useMutation, useQuery} from "convex/react";
 import {Asset} from "expo-asset";
-import {Image} from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import {useRouter} from "expo-router";
-import {MotiView} from "moti";
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View} from "react-native";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import {Alert} from "react-native";
 
 import {uploadLocalFileToCloud} from "../lib/native-upload";
 import {getLayoutWizardExamplePhotos, type WizardExamplePhoto} from "../lib/wizard-example-photos";
-import {spacing} from "../styles/spacing";
-import {fonts} from "../styles/typography";
-import {DiamondCreditIcon} from "./diamond-credit-pill";
-import {DIAMOND_PILL_BLUE} from "./diamond-credit-pill";
-import {LuxPressable} from "./lux-pressable";
+import {InteriorRedesignStepOne} from "./interior-redesign-step-one";
 import {useProSuccess} from "./pro-success-context";
-import {ServiceContinueButton} from "./service-continue-button";
 import {ServiceProcessingScreen} from "./service-processing-screen";
-import {ServiceWizardHeader} from "./service-wizard-header";
-import {ServiceWizardStepScreen} from "./service-wizard-shared";
-import {getStickyStepHeaderMetricsWithProgress} from "./sticky-step-header";
 import {useViewerCredits} from "./viewer-credits-context";
 import {useViewerSession} from "./viewer-session-context";
 import {useWorkspaceDraft} from "./workspace-context";
@@ -65,16 +53,17 @@ const TABS_HOME_ROUTE = "/(tabs)/index";
 const WORKSPACE_ROUTE = "/(tabs)/workspace";
 const MAX_LAYOUT_PHOTOS = 3;
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
-const FREE_LAYOUT_COOLDOWN_MS = 5_000;
+const SMART_SPACE_SCAN_MS = 5_000;
 const SMART_SPACE_PLANNING_TITLE = "Smart Space Planning";
-const SMART_SPACE_PLANNING_UPLOAD_TITLE = "Smart Space Planning";
 const SMART_SPACE_PLANNING_UPLOAD_BODY =
-  "Upload up to 3 room photos from different angles for a more precise Smart Space Planning result.";
+  "Gain more space and optimize your room's flow.";
 const SMART_SPACE_PLANNING_PROMPT =
-  "Furniture Rearrangement instructions for Azure GPT-Image-1: Rearrange the furniture layout to maximize usable floor area and everyday comfort while preserving the core architecture. Keep walls, windows, doors, and the room structure intact. Improve circulation flow and spatial balance while maintaining a realistic, high-end photorealistic result.";
+  "Spatial Optimization prompt for Azure GPT-Image-1: Re-arrange furniture to gain more space and fluid circulation. Maximize usable floor area and everyday comfort while preserving the exact architectural shell. Keep walls, windows, doors, fixed cabinetry, lighting direction, and room structure intact. Improve circulation paths, clearance around furniture, spatial balance, and visual calm while maintaining a realistic, high-end photorealistic result.";
 const SMART_SPACE_PROCESSING_STATUSES = [
+  "Launching neural render pipeline...",
   "Analyzing spatial flow...",
   "Optimizing furniture placement...",
+  "Checking circulation clearance...",
 ] as const;
 
 async function resolveExampleAsset(example: WizardExamplePhoto) {
@@ -112,7 +101,6 @@ export function LayoutOptimizationWizard({
 }: LayoutOptimizationWizardProps) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const { credits, setOptimisticCredits } = useViewerCredits();
   const { showToast } = useProSuccess();
@@ -135,7 +123,7 @@ export function LayoutOptimizationWizard({
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLoadingExample, setIsLoadingExample] = useState<string | null>(null);
-  const [isPickingImage, setIsPickingImage] = useState(false);
+  const [, setIsPickingImage] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [isCancellingGeneration, setIsCancellingGeneration] = useState(false);
@@ -143,16 +131,12 @@ export function LayoutOptimizationWizard({
   const [cooldownRemainingMs, setCooldownRemainingMs] = useState(0);
   const [readyGeneration, setReadyGeneration] = useState<ReadyGeneration | null>(null);
   const layoutExamples = useMemo(() => getLayoutWizardExamplePhotos(t), [i18n.language, t]);
-  const headerMetrics = useMemo(() => getStickyStepHeaderMetricsWithProgress(insets.top, false), [insets.top]);
-  const isProViewer = Boolean(me?.hasPaidAccess || (me?.subscriptionType && me.subscriptionType !== "free"));
   const processingStatusMessages = useMemo(
     () => SMART_SPACE_PROCESSING_STATUSES.map((status) => status),
     [],
   );
 
   const activeImage = selectedImages[activeIndex] ?? selectedImages[0] ?? null;
-  const canContinue = selectedImages.length > 0 && !isGenerating;
-
   const navigateToPortfolioEditor = useCallback((nextGenerationId: string) => {
     clearDraft();
     router.replace({
@@ -221,29 +205,29 @@ export function LayoutOptimizationWizard({
   }, [generationArchive, generationId, showToast]);
 
   useEffect(() => {
-    if (step !== "processing" || !processingStartedAt || isProViewer) {
+    if (step !== "processing" || !processingStartedAt) {
       setCooldownRemainingMs(0);
       return;
     }
 
     const syncRemaining = () => {
-      setCooldownRemainingMs(Math.max(processingStartedAt + FREE_LAYOUT_COOLDOWN_MS - Date.now(), 0));
+      setCooldownRemainingMs(Math.max(processingStartedAt + SMART_SPACE_SCAN_MS - Date.now(), 0));
     };
 
     syncRemaining();
     const interval = setInterval(syncRemaining, 250);
 
     return () => clearInterval(interval);
-  }, [isProViewer, processingStartedAt, step]);
+  }, [processingStartedAt, step]);
 
   useEffect(() => {
     if (!readyGeneration) {
       return;
     }
 
-    const remainingMs = isProViewer || !processingStartedAt
+    const remainingMs = !processingStartedAt
       ? 0
-      : Math.max(processingStartedAt + FREE_LAYOUT_COOLDOWN_MS - Date.now(), 0);
+      : Math.max(processingStartedAt + SMART_SPACE_SCAN_MS - Date.now(), 0);
 
     if (remainingMs <= 0) {
       setGenerationId(null);
@@ -257,7 +241,7 @@ export function LayoutOptimizationWizard({
     }, remainingMs);
 
     return () => clearTimeout(timeout);
-  }, [isProViewer, navigateToPortfolioEditor, processingStartedAt, readyGeneration]);
+  }, [navigateToPortfolioEditor, processingStartedAt, readyGeneration]);
 
   const syncSelectedImages = useCallback((updater: (current: SelectedImage[]) => SelectedImage[]) => {
     setSelectedImages((current) => {
@@ -275,7 +259,7 @@ export function LayoutOptimizationWizard({
   const handleAddLibraryPhotos = useCallback(async () => {
     const remainingSlots = MAX_LAYOUT_PHOTOS - selectedImages.length;
     if (remainingSlots <= 0) {
-      return;
+      return false;
     }
 
     setIsPickingImage(true);
@@ -283,7 +267,7 @@ export function LayoutOptimizationWizard({
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         Alert.alert("Photo access needed", "Enable photo library access to upload room photos.");
-        return;
+        return false;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -295,7 +279,7 @@ export function LayoutOptimizationWizard({
       });
 
       if (result.canceled || result.assets.length === 0) {
-        return;
+        return false;
       }
 
       const nextImages = result.assets.slice(0, remainingSlots).map((asset, index) => ({
@@ -306,6 +290,7 @@ export function LayoutOptimizationWizard({
       }));
 
       syncSelectedImages((current) => [...current, ...nextImages].slice(0, MAX_LAYOUT_PHOTOS));
+      return true;
     } finally {
       setIsPickingImage(false);
     }
@@ -313,7 +298,7 @@ export function LayoutOptimizationWizard({
 
   const handleTakePhoto = useCallback(async () => {
     if (selectedImages.length >= MAX_LAYOUT_PHOTOS) {
-      return;
+      return false;
     }
 
     setIsPickingImage(true);
@@ -321,7 +306,7 @@ export function LayoutOptimizationWizard({
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
         Alert.alert("Camera access needed", "Enable camera access to capture a room photo.");
-        return;
+        return false;
       }
 
       const result = await ImagePicker.launchCameraAsync({
@@ -331,7 +316,7 @@ export function LayoutOptimizationWizard({
       });
 
       if (result.canceled || result.assets.length === 0) {
-        return;
+        return false;
       }
 
       const asset = result.assets[0];
@@ -344,18 +329,11 @@ export function LayoutOptimizationWizard({
           label: current.length === 0 ? "Source Photo" : `Reference ${current.length}`,
         },
       ].slice(0, MAX_LAYOUT_PHOTOS));
+      return true;
     } finally {
       setIsPickingImage(false);
     }
   }, [selectedImages.length, syncSelectedImages]);
-
-  const handleAddPhoto = useCallback(() => {
-    Alert.alert("Add photo", "Choose how to add a room photo.", [
-      { text: t("common.actions.cancel"), style: "cancel" },
-      { text: t("common.actions.takePhoto"), onPress: () => void handleTakePhoto() },
-      { text: "Photo Library", onPress: () => void handleAddLibraryPhotos() },
-    ]);
-  }, [handleAddLibraryPhotos, handleTakePhoto, t]);
 
   const handleExamplePress = useCallback(async (example: WizardExamplePhoto) => {
     setIsLoadingExample(example.id);
@@ -398,7 +376,8 @@ export function LayoutOptimizationWizard({
     setIsGenerating(true);
     setReadyGeneration(null);
     setProcessingStartedAt(Date.now());
-    setCooldownRemainingMs(isProViewer ? 0 : FREE_LAYOUT_COOLDOWN_MS);
+    setCooldownRemainingMs(SMART_SPACE_SCAN_MS);
+    setStep("processing");
 
     try {
       const sourceUploadUrl = await createSourceUploadUrl({ anonymousId: anonymousId ?? undefined });
@@ -422,9 +401,9 @@ export function LayoutOptimizationWizard({
         imageStorageId: sourceImageStorageId,
         referenceImageStorageIds: referenceImageStorageIds.length > 0 ? referenceImageStorageIds : undefined,
         serviceType: "layout",
-        selection: "Smart Space Planning",
+        selection: "Spatial Optimization",
         roomType: "Room",
-        displayStyle: SMART_SPACE_PLANNING_TITLE,
+        displayStyle: "Spatial Optimization",
         customPrompt: [
           SMART_SPACE_PLANNING_PROMPT,
           referenceImageStorageIds.length > 0
@@ -437,11 +416,11 @@ export function LayoutOptimizationWizard({
 
       setGenerationId(response.generationId);
       setOptimisticCredits(response.creditsRemaining ?? Math.max(credits - 1, 0));
-      setStep("processing");
     } catch (error) {
       setIsGenerating(false);
       setProcessingStartedAt(null);
       setCooldownRemainingMs(0);
+      setStep("intake");
       Alert.alert("Generation unavailable", error instanceof Error ? error.message : "Unable to optimize the layout right now.");
     }
   }, [
@@ -449,7 +428,6 @@ export function LayoutOptimizationWizard({
     anonymousId,
     createSourceUploadUrl,
     credits,
-    isProViewer,
     isGenerating,
     selectedImages,
     setOptimisticCredits,
@@ -464,20 +442,19 @@ export function LayoutOptimizationWizard({
 
   if (step === "processing") {
     const cooldownSeconds = Math.ceil(cooldownRemainingMs / 1000);
-    const processingEtaLabel = isProViewer
-      ? "Pro render unlocked instantly."
-      : readyGeneration
-        ? `Finalizing your free render${cooldownSeconds > 0 ? ` in ${cooldownSeconds}s` : "..." }`
-        : `Free render unlocks in ${Math.max(cooldownSeconds, 1)}s`;
+    const processingEtaLabel = readyGeneration
+      ? `Finalizing spatial optimization${cooldownSeconds > 0 ? ` in ${cooldownSeconds}s` : "..." }`
+      : `Neural scan completes in ${Math.max(cooldownSeconds, 1)}s`;
 
     return (
       <ServiceProcessingScreen
         imageUri={activeImage?.uri ?? null}
         resultImageUri={null}
         subtitlePhrases={processingStatusMessages}
-        title="AI is crafting your architectural masterpiece..."
+        title="Neural Render Pipeline"
         etaLabel={processingEtaLabel}
         previewLabel="Before"
+        scanDurationMs={SMART_SPACE_SCAN_MS}
         onCancel={() => {
           void handleCancelGeneration();
         }}
@@ -488,422 +465,27 @@ export function LayoutOptimizationWizard({
   }
 
   return (
-    <View style={styles.screen}>
-      <ServiceWizardHeader
-        title={SMART_SPACE_PLANNING_TITLE}
-        step={1}
-        totalSteps={1}
-        showProgress={false}
-        creditCount={me?.credits ?? credits}
-        leftAccessory={(
-          <View style={styles.headerDiamondWrap}>
-            <DiamondCreditIcon primaryColor={DIAMOND_PILL_BLUE} size={20} />
-          </View>
-        )}
-        onClose={handleClose}
-      />
-
-      <ServiceWizardStepScreen
-        footer={
-          <View style={styles.footerWrap}>
-            <View style={styles.centeredButton}>
-              <ServiceContinueButton
-                active={canContinue}
-                attention={canContinue}
-                pulse={canContinue}
-                loading={isGenerating}
-                label={t("common.actions.continue")}
-                onPress={() => {
-                  void handleGenerate();
-                }}
-              />
-            </View>
-          </View>
-        }
-        footerOffset={Math.max(insets.bottom + 8, 18)}
-        contentContainerStyle={{
-          paddingHorizontal: spacing.md,
-          paddingTop: headerMetrics.contentOffset,
-          paddingBottom: spacing.xl,
-          gap: spacing.lg,
-        }}
-      >
-        <View style={styles.introBlock}>
-          <Text style={styles.introTitle}>{SMART_SPACE_PLANNING_UPLOAD_TITLE}</Text>
-          <Text style={styles.introBody}>{SMART_SPACE_PLANNING_UPLOAD_BODY}</Text>
-        </View>
-
-        <LuxPressable
-          onPress={() => {
-            if (!activeImage) {
-              handleAddPhoto();
-            }
-          }}
-          disabled={Boolean(activeImage)}
-          style={styles.mainPreviewPressable}
-          scale={activeImage ? 1 : 0.985}
-        >
-          <View style={styles.mainPreview}>
-            {activeImage ? (
-              <>
-                <Image source={{ uri: activeImage.uri }} style={styles.mainPreviewImage} contentFit="cover" cachePolicy="memory-disk" transition={140} />
-                <LuxPressable
-                  onPress={() => handleRemovePhoto(activeIndex)}
-                  style={styles.removeButton}
-                  scale={0.96}
-                >
-                  <View style={styles.removeButtonInner}>
-                    <X color="#0F172A" size={16} strokeWidth={2.2} />
-                  </View>
-                </LuxPressable>
-              </>
-            ) : (
-              <View style={styles.emptyPreviewState}>
-                <View style={styles.emptyPlusBadge}>
-                  <Plus color={DIAMOND_PILL_BLUE} size={28} strokeWidth={2.1} />
-                </View>
-                <Text style={styles.emptyPreviewTitle}>Gain Your Space</Text>
-                <Text style={styles.emptyPreviewBody}>Maximize Your Room</Text>
-                <View style={styles.uploadCta}>
-                  <Text style={styles.uploadCtaText}>+ Upload</Text>
-                </View>
-              </View>
-            )}
-          </View>
-        </LuxPressable>
-
-        <View style={styles.clusterSection}>
-          <View style={styles.clusterWrap}>
-            {selectedImages.map((image, index) => {
-              const active = index === activeIndex;
-              return (
-                <View
-                  key={`${image.uri}-${index}`}
-                  style={[
-                    styles.clusterItem,
-                    index > 0 ? styles.clusterItemOverlap : null,
-                    { zIndex: selectedImages.length - index },
-                  ]}
-                >
-                  <LuxPressable
-                    onPress={() => setActiveIndex(index)}
-                    style={styles.thumbPressable}
-                    scale={0.98}
-                  >
-                    <View style={[styles.thumbFrame, active ? styles.thumbFrameActive : null]}>
-                      <Image source={{ uri: image.uri }} style={styles.thumbImage} contentFit="cover" cachePolicy="memory-disk" transition={120} />
-                    </View>
-                  </LuxPressable>
-                  <LuxPressable
-                    onPress={() => handleRemovePhoto(index)}
-                    style={styles.thumbRemoveButton}
-                    scale={0.96}
-                  >
-                    <View style={styles.thumbRemoveButtonInner}>
-                      <X color="#FFFFFF" size={10} strokeWidth={2.6} />
-                    </View>
-                  </LuxPressable>
-                </View>
-              );
-            })}
-
-            {selectedImages.length < MAX_LAYOUT_PHOTOS ? (
-              <LuxPressable
-                onPress={handleAddPhoto}
-                style={[styles.clusterItem, selectedImages.length > 0 ? styles.clusterItemOverlap : null]}
-                scale={0.98}
-              >
-                <View style={styles.addThumbFrame}>
-                  {isPickingImage ? (
-                    <ActivityIndicator color={DIAMOND_PILL_BLUE} />
-                  ) : (
-                    <Plus color={DIAMOND_PILL_BLUE} size={26} strokeWidth={2.1} />
-                  )}
-                </View>
-              </LuxPressable>
-            ) : null}
-          </View>
-          <Text style={styles.clusterCaption}>{`${selectedImages.length}/3 photos`}</Text>
-        </View>
-
-        <View style={styles.examplesBlock}>
-          <Text style={styles.examplesTitle}>Example Photos</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            decelerationRate="fast"
-            contentContainerStyle={styles.examplesRail}
-          >
-            {layoutExamples.map((example, index) => (
-              <MotiView
-                key={example.id}
-                from={{ opacity: 0, translateX: 12 }}
-                animate={{ opacity: 1, translateX: 0 }}
-                transition={{ duration: 280, delay: index * 40, type: "timing" }}
-              >
-                <LuxPressable
-                  onPress={() => {
-                    void handleExamplePress(example);
-                  }}
-                  style={styles.examplePressable}
-                  scale={0.985}
-                >
-                  <View style={styles.exampleCard}>
-                    <Image source={example.source} style={styles.exampleImage} contentFit="cover" cachePolicy="memory-disk" transition={120} />
-                    {isLoadingExample === example.id ? (
-                      <View style={styles.exampleLoading}>
-                        <ActivityIndicator color="#FFFFFF" />
-                      </View>
-                    ) : null}
-                  </View>
-                  <LuxPressable
-                    onPress={() => {
-                      void handleExamplePress(example);
-                    }}
-                    style={styles.exampleAddButton}
-                    scale={0.96}
-                  >
-                    <View style={styles.exampleAddButtonInner}>
-                      <Plus color="#FFFFFF" size={14} strokeWidth={2.5} />
-                    </View>
-                  </LuxPressable>
-                </LuxPressable>
-              </MotiView>
-            ))}
-          </ScrollView>
-        </View>
-      </ServiceWizardStepScreen>
-    </View>
+    <InteriorRedesignStepOne
+      creditCount={me?.credits ?? credits}
+      currentDisplayIndex={activeIndex}
+      emptyStateSubtitle={SMART_SPACE_PLANNING_UPLOAD_BODY}
+      examplePhotos={layoutExamples}
+      headerTitle={SMART_SPACE_PLANNING_TITLE}
+      loadingExampleId={isLoadingExample}
+      onChooseFromGallery={handleAddLibraryPhotos}
+      onContinue={() => {
+        void handleGenerate();
+      }}
+      onExit={handleClose}
+      onFocusPhoto={setActiveIndex}
+      onRemovePhoto={handleRemovePhoto}
+      onSelectExample={(example) => {
+        void handleExamplePress(example);
+      }}
+      onTakePhoto={handleTakePhoto}
+      selectedPhotos={selectedImages}
+      showPhotoCount={false}
+      totalSteps={4}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  headerDiamondWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "rgba(15, 23, 42, 0.08)",
-  },
-  mainPreviewPressable: {
-    width: "100%",
-  },
-  introBlock: {
-    gap: spacing.sm,
-  },
-  introTitle: {
-    color: "#0F172A",
-    fontSize: 28,
-    lineHeight: 34,
-    ...fonts.semibold,
-  },
-  introBody: {
-    color: "#64748B",
-    fontSize: 15,
-    lineHeight: 22,
-    maxWidth: 332,
-  },
-  mainPreview: {
-    width: "100%",
-    aspectRatio: 1.05,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "rgba(15, 23, 42, 0.08)",
-    backgroundColor: "#F8FAFC",
-    overflow: "hidden",
-  },
-  mainPreviewImage: {
-    width: "100%",
-    height: "100%",
-  },
-  emptyPreviewState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  emptyPlusBadge: {
-    width: 84,
-    height: 84,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(37, 99, 235, 0.08)",
-    borderWidth: 1.5,
-    borderStyle: "dashed",
-    borderColor: "rgba(37, 99, 235, 0.42)",
-  },
-  emptyPreviewTitle: {
-    color: "#0F172A",
-    fontSize: 24,
-    lineHeight: 30,
-    textAlign: "center",
-    ...fonts.semibold,
-  },
-  emptyPreviewBody: {
-    color: "#64748B",
-    fontSize: 15,
-    lineHeight: 20,
-    textAlign: "center",
-    maxWidth: 260,
-  },
-  uploadCta: {
-    marginTop: spacing.sm,
-    minHeight: 48,
-    paddingHorizontal: 22,
-    paddingVertical: 12,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#0F172A",
-  },
-  uploadCtaText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    lineHeight: 18,
-    ...fonts.semibold,
-  },
-  removeButton: {
-    position: "absolute",
-    top: 14,
-    right: 14,
-  },
-  removeButtonInner: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.92)",
-  },
-  clusterSection: {
-    gap: spacing.sm,
-    alignItems: "flex-start",
-  },
-  clusterWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  clusterItem: {
-    width: 88,
-    height: 88,
-  },
-  clusterItemOverlap: {
-    marginLeft: -18,
-  },
-  thumbPressable: {
-    width: "100%",
-    height: "100%",
-  },
-  thumbFrame: {
-    flex: 1,
-    borderRadius: 20,
-    overflow: "hidden",
-    borderWidth: 1.5,
-    borderColor: "rgba(148, 163, 184, 0.3)",
-    backgroundColor: "#F8FAFC",
-  },
-  thumbFrameActive: {
-    borderColor: DIAMOND_PILL_BLUE,
-    boxShadow: "0px 0px 0px 1px rgba(37,99,235,0.14), 0px 14px 28px rgba(37,99,235,0.18)",
-  },
-  thumbImage: {
-    width: "100%",
-    height: "100%",
-  },
-  thumbRemoveButton: {
-    position: "absolute",
-    top: -5,
-    right: -5,
-  },
-  thumbRemoveButtonInner: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(15,23,42,0.92)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.92)",
-  },
-  addThumbFrame: {
-    width: 88,
-    height: 88,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    borderStyle: "dashed",
-    borderColor: "rgba(37,99,235,0.42)",
-    backgroundColor: "rgba(37,99,235,0.05)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  clusterCaption: {
-    color: "#64748B",
-    fontSize: 13,
-    lineHeight: 18,
-    ...fonts.medium,
-  },
-  examplesBlock: {
-    gap: spacing.md,
-  },
-  examplesTitle: {
-    color: "#0F172A",
-    fontSize: 18,
-    lineHeight: 22,
-    ...fonts.bold,
-  },
-  examplesRail: {
-    gap: 14,
-    paddingRight: 6,
-  },
-  examplePressable: {
-    width: 176,
-    height: 208,
-  },
-  exampleCard: {
-    flex: 1,
-    overflow: "hidden",
-    backgroundColor: "#E2E8F0",
-    borderRadius: 20,
-  },
-  exampleImage: {
-    width: "100%",
-    height: "100%",
-  },
-  exampleLoading: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(15,23,42,0.22)",
-  },
-  exampleAddButton: {
-    position: "absolute",
-    right: 10,
-    bottom: 10,
-  },
-  exampleAddButtonInner: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(15,23,42,0.78)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.9)",
-  },
-  footerWrap: {
-    alignItems: "center",
-  },
-  centeredButton: {
-    width: "100%",
-    maxWidth: 280,
-  },
-});

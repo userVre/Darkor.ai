@@ -31,7 +31,7 @@ export function GardenRedesignStepOne(props: GardenRedesignStepOneProps) {
       {...props}
       headerTitle={props.headerTitle ?? "Garden"}
       totalSteps={3}
-      emptyStateSubtitle="Upload an outdoor scene so HomeDecor AI can elevate the landscape with a composed, architectural point of view."
+      emptyStateSubtitle="Transform your outdoors into a luxury retreat."
     />
   );
 }

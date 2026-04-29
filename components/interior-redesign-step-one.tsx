@@ -50,6 +50,7 @@ type InteriorRedesignStepOneProps = {
   onContinue: () => void;
   onCreditsPress?: () => void;
   onExit: () => void;
+  showPhotoCount?: boolean;
 };
 
 type MediaSourceOption = "camera" | "gallery";
@@ -82,6 +83,7 @@ export function InteriorRedesignStepOne({
   onContinue,
   onCreditsPress,
   onExit,
+  showPhotoCount = true,
 }: InteriorRedesignStepOneProps) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -322,11 +324,13 @@ export function InteriorRedesignStepOne({
                 ) : null}
               </View>
 
-              <View style={styles.photoMetaRow}>
-                <View style={styles.photoCountPill}>
-                  <Text style={styles.photoCountText}>{`${selectedPhotos.length}/3 photos`}</Text>
+              {showPhotoCount ? (
+                <View style={styles.photoMetaRow}>
+                  <View style={styles.photoCountPill}>
+                    <Text style={styles.photoCountText}>{`${selectedPhotos.length}/3 photos`}</Text>
+                  </View>
                 </View>
-              </View>
+              ) : null}
             </View>
           ) : (
             <>
@@ -348,10 +352,7 @@ export function InteriorRedesignStepOne({
                   },
                 ]}
               >
-                <View style={styles.addPhotoButtonIconWrap}>
-                  <Plus color="#FFFFFF" size={28} strokeWidth={3.2} />
-                </View>
-                <Text style={styles.addPhotoButtonText}>{t("wizard.stepOne.cta")}</Text>
+                <Text style={styles.addPhotoButtonText}>{t("common.actions.uploadPlus")}</Text>
               </Pressable>
             </>
           )}

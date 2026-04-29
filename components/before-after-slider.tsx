@@ -12,8 +12,6 @@ type ViewStyle,
 } from "react-native";
 import {Gesture, GestureDetector} from "react-native-gesture-handler";
 import Animated, {
-Extrapolation,
-interpolate,
 runOnJS,
 useAnimatedStyle,
 useSharedValue,
@@ -27,7 +25,6 @@ import {fonts} from "../styles/typography";
 const HANDLE_TOUCH_WIDTH = 72;
 const HANDLE_VISUAL_SIZE = 42;
 const LABEL_EDGE_INSET = 18;
-const LABEL_FADE_DISTANCE = 96;
 const CENTER_HIT_THRESHOLD = 10;
 const SLIDER_SPRING = {
   damping: 18,
@@ -73,7 +70,7 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
   }, [onInteractionStart]);
 
   const notifyCenterHit = useCallback(() => {
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
   }, []);
 
   const handleLayout = useCallback(
@@ -145,42 +142,27 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
 
   const gesture = Gesture.Simultaneous(panGesture, doubleTapGesture);
 
-  const beforeViewportStyle = useAnimatedStyle(() => {
-    const clipWidth = Math.max(sliderX.value, 0);
+  const afterMaskStyle = useAnimatedStyle(() => {
+    const width = sliderWidth.value || 1;
+    const left = Math.max(0, Math.min(sliderX.value, width));
     return {
-      width: clipWidth,
+      left,
+      width: Math.max(width - left, 0),
+    };
+  });
+
+  const afterImageAlignmentStyle = useAnimatedStyle(() => {
+    const width = sliderWidth.value || 1;
+    const left = Math.max(0, Math.min(sliderX.value, width));
+    return {
+      width,
+      transform: [{ translateX: -left }],
     };
   });
 
   const handleStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: sliderX.value - HANDLE_TOUCH_WIDTH / 2 }],
   }));
-
-  const beforeLabelStyle = useAnimatedStyle(() => {
-    const proximity = interpolate(sliderX.value, [0, LABEL_FADE_DISTANCE], [0, 1], Extrapolation.CLAMP);
-    return {
-      opacity: proximity,
-      transform: [
-        {
-          translateY: interpolate(proximity, [0, 1], [8, 0], Extrapolation.CLAMP),
-        },
-      ],
-    };
-  });
-
-  const afterLabelStyle = useAnimatedStyle(() => {
-    const width = sliderWidth.value || 1;
-    const distanceFromRight = width - sliderX.value;
-    const proximity = interpolate(distanceFromRight, [0, LABEL_FADE_DISTANCE], [0, 1], Extrapolation.CLAMP);
-    return {
-      opacity: proximity,
-      transform: [
-        {
-          translateY: interpolate(proximity, [0, 1], [8, 0], Extrapolation.CLAMP),
-        },
-      ],
-    };
-  });
 
   return (
     <GestureDetector gesture={gesture}>
@@ -189,17 +171,17 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
           <AnimatedExpoImage
             cachePolicy="memory-disk"
             contentFit={contentFit}
-            source={afterSource}
-            style={[styles.absoluteFill, imageStyle]}
+            source={beforeSource}
+            style={[styles.baseImage, imageStyle]}
             transition={120}
           />
 
-          <Animated.View style={[styles.beforeViewport, beforeViewportStyle]}>
+          <Animated.View pointerEvents="none" style={[styles.afterMask, afterMaskStyle]}>
             <AnimatedExpoImage
               cachePolicy="memory-disk"
               contentFit={contentFit}
-              source={beforeSource}
-              style={[styles.absoluteFill, imageStyle]}
+              source={afterSource}
+              style={[styles.afterImage, imageStyle, afterImageAlignmentStyle]}
               transition={120}
             />
           </Animated.View>
@@ -208,15 +190,15 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
         {children}
 
         {beforeLabel ? (
-          <Animated.View pointerEvents="none" style={[styles.labelPill, styles.beforeLabel, beforeLabelStyle]}>
+          <View pointerEvents="none" style={[styles.labelPill, styles.beforeLabel]}>
             <Text style={styles.labelText}>{beforeLabel}</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         {afterLabel ? (
-          <Animated.View pointerEvents="none" style={[styles.labelPill, styles.afterLabel, afterLabelStyle]}>
+          <View pointerEvents="none" style={[styles.labelPill, styles.afterLabel]}>
             <Text style={styles.labelText}>{afterLabel}</Text>
-          </Animated.View>
+          </View>
         ) : null}
 
         <Animated.View pointerEvents="none" style={[styles.handleWrap, handleStyle]}>
@@ -245,23 +227,29 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  absoluteFill: {
+  baseImage: {
     position: "absolute",
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
   },
-  beforeViewport: {
+  afterMask: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    overflow: "hidden",
+  },
+  afterImage: {
     position: "absolute",
     top: 0,
     bottom: 0,
     left: 0,
-    overflow: "hidden",
   },
   labelPill: {
     position: "absolute",
     top: 14,
+    zIndex: 8,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.14)",
@@ -289,6 +277,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     bottom: 0,
+    zIndex: 6,
     width: HANDLE_TOUCH_WIDTH,
     alignItems: "center",
     justifyContent: "center",

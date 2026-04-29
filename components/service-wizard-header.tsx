@@ -6,6 +6,8 @@ type ServiceWizardHeaderProps = {
   title: string;
   step: number;
   totalSteps?: number;
+  progress?: number;
+  progressVariant?: "segmented" | "continuous";
   showProgress?: boolean;
   creditCount?: number;
   horizontalInset?: number;
@@ -20,6 +22,8 @@ export function ServiceWizardHeader({
   title: _title,
   step,
   totalSteps = 4,
+  progress,
+  progressVariant,
   showProgress = true,
   creditCount,
   horizontalInset = 20,
@@ -42,6 +46,8 @@ export function ServiceWizardHeader({
       leftAccessory={leftAccessory}
       step={safeStep}
       totalSteps={totalSteps}
+      progress={progress}
+      progressVariant={progressVariant}
       title={_title}
       showProgress={showProgress}
     />

@@ -42,6 +42,7 @@ type ServiceProcessingScreenProps = {
   title?: string;
   etaLabel?: string | null;
   previewLabel?: string;
+  scanDurationMs?: number;
   onCancel: () => void;
   cancelDisabled?: boolean;
   complete?: boolean;
@@ -54,6 +55,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   title,
   etaLabel,
   previewLabel,
+  scanDurationMs = SCAN_DURATION_MS,
   onCancel,
   cancelDisabled = false,
   complete = false,
@@ -161,7 +163,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
     scanProgress.value = 0;
     scanProgress.value = withRepeat(
       withTiming(1, {
-        duration: SCAN_DURATION_MS,
+        duration: scanDurationMs,
         easing: Easing.linear,
       }),
       -1,
@@ -171,7 +173,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
     return () => {
       cancelAnimation(scanProgress);
     };
-  }, [hasRevealedResult, previewHeight, scanProgress]);
+  }, [hasRevealedResult, previewHeight, scanDurationMs, scanProgress]);
 
   const scanLineStyle = useAnimatedStyle(() => {
     const topInset = SCAN_LINE_HEIGHT / 2;

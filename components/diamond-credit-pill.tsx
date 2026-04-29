@@ -27,12 +27,14 @@ export const DIAMOND_PILL_BLUE = "#1D4ED8";
 const VARIANT_STYLES = {
   dark: {
     backgroundColor: "#09090B",
+    borderColor: "rgba(255,255,255,0.08)",
     textColor: "#FFFFFF",
     prismPrimary: DIAMOND_PILL_BLUE,
   },
   light: {
-    backgroundColor: "#09090B",
-    textColor: "#FFFFFF",
+    backgroundColor: "#FFFFFF",
+    borderColor: "rgba(29,78,216,0.1)",
+    textColor: DIAMOND_PILL_BLUE,
     prismPrimary: DIAMOND_PILL_BLUE,
   },
 } as const;
@@ -102,6 +104,7 @@ export function DiamondCreditPill({
     isRTL ? styles.pillRtl : null,
     {
       backgroundColor: palette.backgroundColor,
+      borderColor: palette.borderColor,
     },
     style,
   ];
@@ -138,15 +141,15 @@ export function ProBadge({
 
 const styles = StyleSheet.create({
   pill: {
+    minWidth: 76,
     minHeight: 40,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
+    gap: 8,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
     ...organicRadii(20, 14),
     ...ambientShadow(0.06, 12, 8),
   },
@@ -158,6 +161,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontVariant: ["tabular-nums"],
     includeFontPadding: false,
+    textAlign: "center",
     ...fonts.bold,
   },
   creditIconWrap: {
