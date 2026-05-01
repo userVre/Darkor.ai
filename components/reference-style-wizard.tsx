@@ -2,6 +2,7 @@ import {Check, ImagePlus, X} from "@/components/material-icons";
 import {light as colors} from "@/styles/theme";
 import {useMutation, useQuery} from "convex/react";
 import {Asset} from "expo-asset";
+import {BlurView} from "expo-blur";
 import * as ImagePicker from "expo-image-picker";
 import {Image} from "expo-image";
 import {StatusBar} from "expo-status-bar";
@@ -25,7 +26,11 @@ import {uploadLocalFileToCloud} from "../lib/native-upload";
 import {SERVICE_WIZARD_THEME} from "../lib/service-wizard-theme";
 import {spacing} from "../styles/spacing";
 import {fonts} from "../styles/typography";
-import {DESIGN_WIZARD_SELECTION_BLUE, DESIGN_WIZARD_SELECTION_BLUE_GLOW} from "./design-wizard-primitives";
+import {
+  DESIGN_WIZARD_SELECTION_BLUE,
+  DESIGN_WIZARD_SELECTION_BLUE_GLOW,
+  DESIGN_WIZARD_SELECTION_BLUE_SOFT,
+} from "./design-wizard-primitives";
 import {LuxPressable} from "./lux-pressable";
 import {ServiceContinueButton} from "./service-continue-button";
 import {ServiceProcessingScreen} from "./service-processing-screen";
@@ -49,6 +54,8 @@ type SelectedImage = {
 
 type MeResponse = {
   credits: number;
+  hasPaidAccess?: boolean;
+  hasProAccess?: boolean;
 };
 
 type ArchiveGeneration = {
@@ -75,7 +82,7 @@ const REFERENCE_STYLE_SCAN_MS = 6_000;
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 const REFERENCE_STYLE_TITLE = "Reference Style";
 const REFERENCE_STYLE_PROMPT =
-  "Use the uploaded inspiration image as the primary style reference. Reimagine the source room with the same design language, palette, materials, furniture mood, lighting character, and styling cues while preserving the source room's architecture, perspective, windows, doors, and overall realism.";
+  "Analyze the lighting, materials, and color palette of 'Image B' and apply them strictly to the architectural structure of 'Image A'. Do not change the wall positions.";
 const REFERENCE_STYLE_PROCESSING_STATUSES = [
   "Analyzing your room geometry...",
   "Reading the inspiration style cues...",
@@ -149,7 +156,7 @@ function UploadCard({
         ) : null}
       </View>
 
-      <View style={styles.uploadFrame}>
+      <View style={[styles.uploadFrame, image ? styles.uploadFrameFilled : null]}>
         {image ? (
           <>
             <Image
@@ -176,65 +183,86 @@ function UploadCard({
                 <X color={colors.textPrimary} size={16} strokeWidth={2.4} />
               </LuxPressable>
             </View>
-            <View style={styles.previewBottomRow}>
-              <Text selectable numberOfLines={1} style={styles.previewLabel}>{image.label}</Text>
-            </View>
           </>
         ) : null}
 
-        <View style={[styles.dashedUploadFrame, image ? styles.dashedUploadFrameFilled : null]}>
-          {!image ? (
-            <>
-              <View style={styles.uploadIconWrap}>
-                <View style={styles.uploadIconBadge}>
-                  <ImagePlus color={colors.textPrimary} size={28} strokeWidth={1.9} />
-                </View>
+        {!image ? (
+          <View style={styles.dashedUploadFrame}>
+            <View style={styles.uploadIconWrap}>
+              <View style={styles.uploadIconBadge}>
+                <ImagePlus color={colors.textPrimary} size={28} strokeWidth={1.9} />
               </View>
-              <View style={styles.uploadEmptyCopy}>
-                <Text selectable style={styles.uploadEmptyTitle}>Drop your image</Text>
-                <Text selectable style={styles.uploadEmptyText}>Clean, front-facing photos give the best transfer.</Text>
-              </View>
-            </>
-          ) : null}
-        </View>
-
-        <LuxPressable
-          onPress={onUpload}
-          className={pointerClassName}
-          pressableClassName={pointerClassName}
-          style={styles.uploadButtonPressable}
-          glowColor={SERVICE_WIZARD_THEME.colors.accentGlowSoft}
-          scale={0.985}
-        >
-          <View style={styles.uploadButton}>
-            <Text selectable style={styles.uploadButtonText}>{busy ? "Uploading..." : "+ Upload"}</Text>
+            </View>
+            <View style={styles.uploadEmptyCopy}>
+              <Text selectable style={styles.uploadEmptyTitle}>Drop your image</Text>
+              <Text selectable style={styles.uploadEmptyText}>Clean, front-facing photos give the best transfer.</Text>
+            </View>
           </View>
-        </LuxPressable>
+        ) : null}
+
+        {!image ? (
+          <LuxPressable
+            onPress={onUpload}
+            className={pointerClassName}
+            pressableClassName={pointerClassName}
+            style={styles.uploadButtonPressable}
+            glowColor={SERVICE_WIZARD_THEME.colors.accentGlowSoft}
+            scale={0.985}
+          >
+            <View style={styles.uploadButton}>
+              <Text selectable style={styles.uploadButtonText}>{busy ? "Uploading..." : "+ Upload"}</Text>
+            </View>
+          </LuxPressable>
+        ) : null}
       </View>
     </View>
   );
 }
 
-type DiscoverMiniGalleryProps = {
+type PickFromDiscoverModalProps = {
   visible: boolean;
   items: DiscoverTile[];
   selectedImageUri?: string | null;
   selectedImageLabel?: string | null;
-  onSelect: (item: DiscoverTile) => void;
+  selecting?: boolean;
+  onSelect: (item: DiscoverTile) => Promise<boolean>;
   onClose: () => void;
 };
 
-function DiscoverMiniGallery({
+function PickFromDiscoverModal({
   visible,
   items,
   selectedImageUri,
   selectedImageLabel,
+  selecting = false,
   onSelect,
   onClose,
-}: DiscoverMiniGalleryProps) {
+}: PickFromDiscoverModalProps) {
   const { width, height } = useWindowDimensions();
   const sheetWidth = Math.min(width - spacing.lg * 2, DISCOVER_SHEET_MAX_WIDTH);
-  const tileWidth = Math.floor((sheetWidth - spacing.lg * 2 - spacing.sm) / 2);
+  const tileWidth = Math.floor((sheetWidth - spacing.md * 2 - spacing.sm * 2) / 3);
+  const selectedDiscoverItem = useMemo(
+    () =>
+      items.find((item) => {
+        const resolved = RNImage.resolveAssetSource(item.image);
+        return Boolean(
+          (selectedImageUri && resolved?.uri === selectedImageUri)
+          || (selectedImageLabel && selectedImageLabel === item.title),
+        );
+      }) ?? null,
+    [items, selectedImageLabel, selectedImageUri],
+  );
+
+  const handleSelectTile = useCallback(async (item: DiscoverTile) => {
+    if (selecting) {
+      return;
+    }
+
+    const didApply = await onSelect(item);
+    if (didApply) {
+      onClose();
+    }
+  }, [onClose, onSelect, selecting]);
 
   return (
     <Modal
@@ -247,65 +275,65 @@ function DiscoverMiniGallery({
       <View style={styles.discoverModalRoot}>
         <Pressable onPress={onClose} style={styles.discoverBackdrop} />
         <View pointerEvents="box-none" style={styles.discoverSheetWrap}>
-          <View style={[styles.discoverSheet, { width: sheetWidth, maxHeight: height * 0.72 }]}>
-            <View style={styles.discoverHandle} />
-            <View style={styles.discoverSheetHeader}>
-              <View style={styles.discoverHeaderCopy}>
-                <Text selectable style={styles.discoverSheetTitle}>Pick from Discover</Text>
-                <Text selectable style={styles.discoverSheetSubtitle}>Use any Discover image as your inspiration reference.</Text>
+          <View style={[styles.discoverSheet, { width: sheetWidth, maxHeight: height * 0.84 }]}>
+            <BlurView intensity={56} tint="light" style={styles.discoverHeaderBlur}>
+              <View style={styles.discoverSheetHeader}>
+                <View style={styles.discoverHeaderSpacer} />
+                <View style={styles.discoverHeaderCopy}>
+                  <Text selectable style={styles.discoverSheetTitle}>Pick from Discover</Text>
+                  <Text selectable style={styles.discoverSheetSubtitle}>Use any Discover image as your inspiration reference.</Text>
+                </View>
+                <Pressable accessibilityRole="button" hitSlop={12} onPress={onClose} style={styles.discoverCloseButton}>
+                  <X color={colors.textPrimary} size={22} strokeWidth={2.4} />
+                </Pressable>
               </View>
-              <Pressable accessibilityRole="button" hitSlop={10} onPress={onClose} style={styles.discoverCloseButton}>
-                <X color={colors.textPrimary} size={18} strokeWidth={2.2} />
-              </Pressable>
-            </View>
+            </BlurView>
 
             <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.discoverGrid}
             >
-              {items.map((item) => {
-                const resolved = RNImage.resolveAssetSource(item.image);
-                const isSelected = Boolean(
-                  (selectedImageUri && resolved?.uri === selectedImageUri)
-                  || (selectedImageLabel && selectedImageLabel === item.title),
-                );
+              <View style={styles.discoverGridWrap}>
+                {items.map((item) => {
+                  const isSelected = selectedDiscoverItem?.id === item.id;
 
-                return (
-                  <LuxPressable
-                    key={item.id}
-                    onPress={() => {
-                      onSelect(item);
-                    }}
-                    className={pointerClassName}
-                    pressableClassName={pointerClassName}
-                    style={[
-                      styles.discoverTile,
-                      { width: tileWidth },
-                      isSelected ? styles.discoverTileActive : null,
-                    ]}
-                    glowColor={DESIGN_WIZARD_SELECTION_BLUE_GLOW}
-                    scale={0.985}
-                  >
-                    <View>
-                      <View style={styles.discoverTileImageWrap}>
-                        <Image
-                          source={item.image}
-                          style={[styles.discoverTileImage, { height: Math.round(tileWidth * 1.15) }]}
-                          contentFit="cover"
-                          transition={120}
-                          cachePolicy="memory-disk"
-                        />
-                        {isSelected ? (
-                          <View style={styles.discoverTileBadge}>
-                            <Check color="#FFFFFF" size={14} strokeWidth={2.6} />
-                          </View>
-                        ) : null}
+                  return (
+                    <LuxPressable
+                      key={item.id}
+                      onPress={() => {
+                        void handleSelectTile(item);
+                      }}
+                      className={pointerClassName}
+                      pressableClassName={pointerClassName}
+                      style={[
+                        styles.discoverTile,
+                        { width: tileWidth },
+                        isSelected ? styles.discoverTileActive : null,
+                      ]}
+                      glowColor={DESIGN_WIZARD_SELECTION_BLUE_GLOW}
+                      scale={0.985}
+                    >
+                      <View>
+                        <View style={styles.discoverTileImageWrap}>
+                          <Image
+                            source={item.image}
+                            style={[styles.discoverTileImage, { height: Math.round(tileWidth * 1.24) }]}
+                            contentFit="cover"
+                            transition={120}
+                            cachePolicy="memory-disk"
+                          />
+                          {isSelected ? (
+                            <View style={styles.discoverTileBadge}>
+                              <Check color="#FFFFFF" size={14} strokeWidth={2.6} />
+                            </View>
+                          ) : null}
+                        </View>
+                        <Text selectable numberOfLines={1} style={styles.discoverTileLabel}>{item.title}</Text>
                       </View>
-                      <Text selectable numberOfLines={1} style={styles.discoverTileLabel}>{item.title}</Text>
-                    </View>
-                  </LuxPressable>
-                );
-              })}
+                    </LuxPressable>
+                  );
+                })}
+              </View>
             </ScrollView>
           </View>
         </View>
@@ -327,6 +355,7 @@ export function ReferenceStyleWizard({
   const discoverGroups = useDiscoverGroups();
   const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
   const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as MeResponse | null | undefined;
+  const hasProAccess = me?.hasProAccess ?? me?.hasPaidAccess ?? false;
   const generationArchive = useQuery("generations:getUserArchive" as any, viewerReady ? viewerArgs : "skip") as
     | ArchiveGeneration[]
     | undefined;
@@ -352,13 +381,19 @@ export function ReferenceStyleWizard({
   const discoverTiles = useMemo(() => discoverGroups.flatMap((group) => group.items), [discoverGroups]);
 
   useEffect(() => {
-    onFlowActiveChange?.(true);
-    return () => onFlowActiveChange?.(false);
-  }, [onFlowActiveChange]);
-
-  useEffect(() => {
     onProcessingStateChange?.(step === "processing");
   }, [onProcessingStateChange, step]);
+
+  useEffect(() => {
+    onFlowActiveChange?.(step !== "processing");
+  }, [onFlowActiveChange, step]);
+
+  useEffect(() => {
+    return () => {
+      onProcessingStateChange?.(false);
+      onFlowActiveChange?.(false);
+    };
+  }, [onFlowActiveChange, onProcessingStateChange]);
 
   useEffect(() => {
     const images = [roomImage, inspirationImage]
@@ -573,12 +608,13 @@ export function ReferenceStyleWizard({
         height: asset.height ?? resolved?.height ?? 1200,
         label: item.title,
       });
-      setIsDiscoverPickerVisible(false);
+      return true;
     } catch (error) {
       Alert.alert(
         "Discover image unavailable",
         error instanceof Error ? error.message : "Unable to use this Discover image right now.",
       );
+      return false;
     } finally {
       setBusyTarget((current) => (current === "inspiration" ? null : current));
     }
@@ -586,6 +622,11 @@ export function ReferenceStyleWizard({
 
   const handleGenerate = useCallback(async () => {
     if (!viewerReady || !roomImage || !inspirationImage || isGenerating) {
+      return;
+    }
+
+    if (!hasProAccess && Math.max(me?.credits ?? credits, 0) <= 0) {
+      router.push({ pathname: "/paywall", params: { source: "second-design" } } as any);
       return;
     }
 
@@ -616,7 +657,7 @@ export function ReferenceStyleWizard({
         serviceType: "redesign",
         selection: "Reference Style",
         roomType: "Room",
-        displayStyle: "Designer-Inspired Redesign",
+        displayStyle: "Reference Style Transfer",
         customPrompt: REFERENCE_STYLE_PROMPT,
         aspectRatio: simplifyRatio(roomImage.width, roomImage.height),
       });
@@ -628,6 +669,10 @@ export function ReferenceStyleWizard({
       setProcessingStartedAt(null);
       setCooldownRemainingMs(0);
       setStep("intake");
+      if (error instanceof Error && error.message === "Payment Required") {
+        router.push({ pathname: "/paywall", params: { source: "second-design" } } as any);
+        return;
+      }
       Alert.alert(
         "Generation unavailable",
         error instanceof Error ? error.message : "Unable to generate your reference-style redesign right now.",
@@ -639,7 +684,10 @@ export function ReferenceStyleWizard({
     credits,
     inspirationImage,
     isGenerating,
+    me?.credits,
+    hasProAccess,
     roomImage,
+    router,
     setOptimisticCredits,
     startGeneration,
     viewerReady,
@@ -705,7 +753,7 @@ export function ReferenceStyleWizard({
       />
 
       <ServiceWizardStepScreen
-        footerOffset={24}
+        footerOffset={0}
         contentContainerStyle={styles.stepContent}
         footer={canGenerate ? (
           <ServiceContinueButton
@@ -758,17 +806,16 @@ export function ReferenceStyleWizard({
         </View>
       </ServiceWizardStepScreen>
 
-      <DiscoverMiniGallery
+      <PickFromDiscoverModal
         visible={isDiscoverPickerVisible}
         items={discoverTiles}
         selectedImageUri={inspirationImage?.uri ?? null}
         selectedImageLabel={inspirationImage?.label ?? null}
+        selecting={busyTarget === "inspiration"}
         onClose={() => {
           setIsDiscoverPickerVisible(false);
         }}
-        onSelect={(item) => {
-          void handleSelectDiscoverImage(item);
-        }}
+        onSelect={handleSelectDiscoverImage}
       />
     </View>
   );
@@ -840,7 +887,7 @@ const styles = StyleSheet.create({
     minHeight: 34,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(37,99,235,0.22)",
+    borderColor: "rgba(0,122,255,0.22)",
     backgroundColor: "#FFFFFF",
     paddingHorizontal: spacing.sm,
     alignItems: "center",
@@ -848,10 +895,10 @@ const styles = StyleSheet.create({
   },
   secondaryActionButtonActive: {
     borderColor: DESIGN_WIZARD_SELECTION_BLUE,
-    backgroundColor: "rgba(37,99,235,0.08)",
+    backgroundColor: "rgba(0,122,255,0.08)",
   },
   secondaryActionText: {
-    color: "#1D4ED8",
+    color: DESIGN_WIZARD_SELECTION_BLUE,
     fontSize: 12,
     lineHeight: 16,
     ...fonts.semibold,
@@ -870,8 +917,17 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     ...ambientShadow(),
   },
+  uploadFrameFilled: {
+    borderWidth: 0,
+    borderColor: "transparent",
+    backgroundColor: "transparent",
+    padding: 0,
+    gap: 0,
+    ...ambientShadow(0.08, 18, 12),
+  },
   uploadPreview: {
     ...StyleSheet.absoluteFillObject,
+    borderRadius: DS.radius.lg,
   },
   previewOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -885,18 +941,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  previewBottomRow: {
-    position: "absolute",
-    left: spacing.md,
-    right: spacing.md,
-    bottom: spacing.xxl + 56,
-  },
-  previewLabel: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    lineHeight: 20,
-    ...fonts.semibold,
   },
   readyBadge: {
     minHeight: 34,
@@ -938,10 +982,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     minHeight: 196,
     ...glowShadow(DESIGN_WIZARD_SELECTION_BLUE_GLOW, 18),
-  },
-  dashedUploadFrameFilled: {
-    backgroundColor: "transparent",
-    borderColor: "rgba(255,255,255,0.72)",
   },
   uploadIconWrap: {
     alignItems: "center",
@@ -1007,70 +1047,94 @@ const styles = StyleSheet.create({
   discoverSheet: {
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: "rgba(37,99,235,0.16)",
-    backgroundColor: "#FFFFFF",
+    borderColor: "rgba(0,122,255,0.14)",
+    backgroundColor: "rgba(255,255,255,0.9)",
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
     paddingBottom: spacing.md,
     gap: spacing.md,
-    ...ambientShadow(0.08, 18, 12),
+    shadowColor: DESIGN_WIZARD_SELECTION_BLUE,
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 8,
+    boxShadow: "0px 18px 42px rgba(0,122,255,0.18)",
   },
-  discoverHandle: {
-    width: 48,
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(148, 163, 184, 0.4)",
-    alignSelf: "center",
+  discoverHeaderBlur: {
+    overflow: "hidden",
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.58)",
+    backgroundColor: "rgba(255,255,255,0.48)",
   },
   discoverSheetHeader: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.lg,
+  },
+  discoverHeaderSpacer: {
+    width: 48,
+    height: 48,
   },
   discoverHeaderCopy: {
     flex: 1,
     gap: spacing.xs,
+    alignItems: "center",
   },
   discoverSheetTitle: {
     color: SERVICE_WIZARD_THEME.colors.textPrimary,
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 28,
+    lineHeight: 34,
+    textAlign: "center",
     ...fonts.bold,
   },
   discoverSheetSubtitle: {
     color: SERVICE_WIZARD_THEME.colors.textMuted,
     fontSize: 14,
     lineHeight: 20,
+    textAlign: "center",
     ...fonts.regular,
   },
   discoverCloseButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.surfaceHigh,
+    backgroundColor: "rgba(255,255,255,0.78)",
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(0,122,255,0.16)",
   },
   discoverGrid: {
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
+  },
+  discoverGridWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm,
-    paddingBottom: spacing.xs,
   },
   discoverTile: {
     borderRadius: DS.radius.lg,
     borderWidth: 1,
-    borderColor: "rgba(148, 163, 184, 0.2)",
-    backgroundColor: "#FFFFFF",
+    borderColor: "rgba(148, 163, 184, 0.16)",
+    backgroundColor: "rgba(255,255,255,0.92)",
     padding: 8,
     gap: spacing.xs,
+    ...ambientShadow(0.06, 12, 8),
   },
   discoverTileActive: {
     borderColor: DESIGN_WIZARD_SELECTION_BLUE,
-    backgroundColor: "rgba(37,99,235,0.04)",
+    backgroundColor: "rgba(0,122,255,0.06)",
+    shadowColor: DESIGN_WIZARD_SELECTION_BLUE,
+    shadowOpacity: 0.2,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+    boxShadow: `0px 0px 0px 1px ${DESIGN_WIZARD_SELECTION_BLUE_SOFT}, 0px 16px 32px ${DESIGN_WIZARD_SELECTION_BLUE_GLOW}`,
   },
   discoverTileImageWrap: {
     borderRadius: 14,

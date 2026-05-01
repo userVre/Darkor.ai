@@ -28,6 +28,7 @@ type MeResponse = {
   credits: number;
   imagesRemaining?: number;
   hasPaidAccess?: boolean;
+  hasProAccess?: boolean;
   subscriptionType?: "free" | "weekly" | "yearly";
   generationStatusMessage?: string;
   canGenerateNow?: boolean;
@@ -138,6 +139,7 @@ export function LayoutOptimizationWizard({
   );
 
   const sourceImage = selectedImages[0] ?? null;
+  const hasProAccess = me?.hasProAccess ?? me?.hasPaidAccess ?? false;
   const activeImage = selectedImages[activeIndex] ?? sourceImage;
   const navigateToPortfolioEditor = useCallback((nextGenerationId: string) => {
     clearDraft();
@@ -158,13 +160,19 @@ export function LayoutOptimizationWizard({
   }, [selectedImages, setDraftImage, setDraftImages, sourceImage]);
 
   useEffect(() => {
-    onFlowActiveChange?.(true);
-    return () => onFlowActiveChange?.(false);
-  }, [onFlowActiveChange]);
-
-  useEffect(() => {
     onProcessingStateChange?.(step === "processing");
   }, [onProcessingStateChange, step]);
+
+  useEffect(() => {
+    onFlowActiveChange?.(step !== "processing");
+  }, [onFlowActiveChange, step]);
+
+  useEffect(() => {
+    return () => {
+      onProcessingStateChange?.(false);
+      onFlowActiveChange?.(false);
+    };
+  }, [onFlowActiveChange, onProcessingStateChange]);
 
   useEffect(() => {
     if (step === "intake") {
@@ -383,6 +391,11 @@ export function LayoutOptimizationWizard({
       return;
     }
 
+    if (!hasProAccess && Math.max(me?.credits ?? credits, 0) <= 0) {
+      router.push({ pathname: "/paywall", params: { source: "second-design" } } as any);
+      return;
+    }
+
     setHasActivatedProgress(true);
     setIsGenerating(true);
     setReadyGeneration(null);
@@ -433,6 +446,10 @@ export function LayoutOptimizationWizard({
       setProcessingStartedAt(null);
       setCooldownRemainingMs(0);
       setStep("intake");
+      if (error instanceof Error && error.message === "Payment Required") {
+        router.push({ pathname: "/paywall", params: { source: "second-design" } } as any);
+        return;
+      }
       Alert.alert("Generation unavailable", error instanceof Error ? error.message : "Unable to optimize the layout right now.");
     }
   }, [
@@ -440,6 +457,9 @@ export function LayoutOptimizationWizard({
     createSourceUploadUrl,
     credits,
     isGenerating,
+    me?.credits,
+    hasProAccess,
+    router,
     selectedImages,
     setOptimisticCredits,
     sourceImage,

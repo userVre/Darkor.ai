@@ -14,8 +14,16 @@ export type GenerationAccessState = {
   generationStatusLabel?: string | null;
   generationStatusMessage?: string | null;
   hasPaidAccess?: boolean | null;
+  hasProAccess?: boolean | null;
   canGenerateNow?: boolean | null;
   lastRefillTimestamp?: number | null;
+  nextRefillTimestamp?: number | null;
+  streakCount?: number | null;
+  lastLoginDate?: number | null;
+  lastClaimDate?: number | null;
+  nextDiamondClaimAt?: number | null;
+  canClaimDiamond?: boolean | null;
+  eliteProUntil?: number | null;
   pricingTier?: string | null;
 };
 
@@ -33,7 +41,8 @@ function toSafeNumber(value: unknown) {
 
 export function canUserGenerate(state?: GenerationAccessState | null): GenerationAccessDecision {
   const hasPaidAccess = Boolean(state?.hasPaidAccess);
-  if (hasPaidAccess) {
+  const hasProAccess = Boolean(state?.hasProAccess ?? state?.hasPaidAccess);
+  if (hasProAccess) {
     return {
       allowed: true,
       reason: "ok",
@@ -48,7 +57,7 @@ export function canUserGenerate(state?: GenerationAccessState | null): Generatio
     typeof state?.imagesRemaining === "number"
       ? Math.max(state.imagesRemaining, 0)
       : Math.max(toSafeNumber(state?.credits), 0);
-  const fallbackMessage = hasPaidAccess || hasSubscriptionQuota ? "Limit Reached" : "No Diamonds left. Buy more to continue.";
+  const fallbackMessage = hasProAccess || hasSubscriptionQuota ? "Limit Reached" : "No Diamonds left. Buy more to continue.";
   const message = String(state?.generationStatusMessage ?? fallbackMessage).trim() || fallbackMessage;
 
   if (remaining > 0 && state?.canGenerateNow !== false) {
@@ -63,7 +72,7 @@ export function canUserGenerate(state?: GenerationAccessState | null): Generatio
 
   return {
     allowed: false,
-    reason: hasPaidAccess || hasSubscriptionQuota ? "limit_reached" : "paywall",
+    reason: hasProAccess || hasSubscriptionQuota ? "limit_reached" : "paywall",
     remaining,
     hasPaidAccess,
     message,
@@ -90,8 +99,16 @@ export async function persistGenerationAccessSnapshot(snapshot: GenerationAccess
       generationStatusLabel: snapshot.generationStatusLabel ?? null,
       generationStatusMessage: snapshot.generationStatusMessage ?? null,
       hasPaidAccess: Boolean(snapshot.hasPaidAccess),
+      hasProAccess: Boolean(snapshot.hasProAccess ?? snapshot.hasPaidAccess),
       canGenerateNow: snapshot.canGenerateNow ?? null,
       lastRefillTimestamp: snapshot.lastRefillTimestamp ?? 0,
+      nextRefillTimestamp: snapshot.nextRefillTimestamp ?? snapshot.nextDiamondClaimAt ?? 0,
+      streakCount: snapshot.streakCount ?? 1,
+      lastLoginDate: snapshot.lastLoginDate ?? 0,
+      lastClaimDate: snapshot.lastClaimDate ?? 0,
+      nextDiamondClaimAt: snapshot.nextDiamondClaimAt ?? snapshot.nextRefillTimestamp ?? 0,
+      canClaimDiamond: Boolean(snapshot.canClaimDiamond),
+      eliteProUntil: snapshot.eliteProUntil ?? 0,
       pricingTier: snapshot.pricingTier ?? null,
       cachedAt: Date.now(),
     }),

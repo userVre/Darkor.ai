@@ -86,7 +86,7 @@ export default function GalleryScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { credits } = useViewerCredits();
+  const { credits, streakCount } = useViewerCredits();
   const { openStore } = useDiamondStore();
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
   const [selectedClusterId, setSelectedClusterId] = useState<DiscoverClusterId>("interiors");
@@ -163,6 +163,7 @@ export default function GalleryScreen() {
               accessibilityRole="button"
               count={credits}
               onPress={handleCreditsPress}
+              streakCount={streakCount}
               style={styles.creditPill}
               variant="dark"
             />
@@ -193,7 +194,7 @@ export default function GalleryScreen() {
         </View>
       </View>
     ),
-    [clusters, credits, handleClusterPress, handleCreditsPress, insets.top, selectedCluster?.id, selectedClusterId, t],
+    [clusters, credits, handleClusterPress, handleCreditsPress, insets.top, selectedCluster?.id, selectedClusterId, streakCount, t],
   );
 
   return (

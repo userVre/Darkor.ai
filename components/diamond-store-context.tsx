@@ -1,7 +1,6 @@
-import {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode} from "react";
+import {createContext, useCallback, useContext, useMemo, useState, type ReactNode} from "react";
 
 import {CreditsBalanceSheet} from "./credits-balance-sheet";
-import {useViewerCredits} from "./viewer-credits-context";
 
 type DiamondStoreContextValue = {
   closeStore: () => void;
@@ -13,8 +12,6 @@ const DiamondStoreContext = createContext<DiamondStoreContextValue | null>(null)
 
 export function DiamondStoreProvider({ children }: { children: ReactNode }) {
   const [visible, setVisible] = useState(false);
-  const { credits, hasPaidAccess, isReady } = useViewerCredits();
-  const previousCreditsRef = useRef<number | null>(null);
 
   const openStore = useCallback((_reason: "manual" | "empty_balance" = "manual") => {
     setVisible(true);
@@ -23,20 +20,6 @@ export function DiamondStoreProvider({ children }: { children: ReactNode }) {
   const closeStore = useCallback(() => {
     setVisible(false);
   }, []);
-
-  useEffect(() => {
-    if (!isReady || hasPaidAccess) {
-      previousCreditsRef.current = credits;
-      return;
-    }
-
-    const previousCredits = previousCreditsRef.current;
-    if (!visible && typeof previousCredits === "number" && previousCredits > 0 && credits <= 0) {
-      setVisible(true);
-    }
-
-    previousCreditsRef.current = credits;
-  }, [credits, hasPaidAccess, isReady, visible]);
 
   const value = useMemo(
     () => ({

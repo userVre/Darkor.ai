@@ -10,7 +10,7 @@ import { buildDesignPrompt as buildAIDesignPrompt, normalizeAspectRatio as norma
 import {
   canUserGenerateState,
   deriveSubscriptionState,
-  FREE_IMAGE_LIMIT,
+  FREE_REFILL_INTERVAL_MS,
   resolveGenerationPolicy,
   toFiniteNumber,
 } from "./subscriptions";
@@ -26,6 +26,7 @@ import { resolveGenerationStatus } from "../lib/generation-status";
 type GenerationStatus = "processing" | "ready" | "failed";
 type CanonicalServiceType = "paint" | "floor" | "redesign" | "layout" | "replace";
 type RequestedServiceType = CanonicalServiceType | "wall" | "transfer" | "reference";
+type StoredServiceType = CanonicalServiceType | "reference";
 
 type GenerationUser = {
   _id: string;
@@ -33,6 +34,7 @@ type GenerationUser = {
   anonymousId?: string;
   mergedIntoClerkId?: string;
   credits: number;
+  premiumCredits?: number;
   generationCount: number;
   reviewPrompted: boolean;
   lastReviewPromptAt?: number;
@@ -48,7 +50,15 @@ type GenerationUser = {
   imageLimit?: number;
   imageGenerationCount?: number;
   lastResetDate?: number;
+  streakCount?: number;
+  lastLoginDate?: number;
+  lastClaimDate?: number;
+  nextDiamondClaimAt?: number;
+  canClaimDiamond?: boolean;
+  eliteProUntil?: number;
 };
+
+const PRO_TOOL_LOCK_MESSAGE = "This tool is reserved for PRO members or Day 7 Streak winners.";
 
 async function getUserByOwnerId(ctx: any, ownerId: string) {
   if (ownerId.startsWith("guest:")) {
@@ -124,13 +134,25 @@ function computeReviewPrompt(nextCount: number, lastPromptAt: number, ignoreCool
   return ignoreCooldown ? nextCount >= 2 : !cooldownActive && (nextCount === 2 || nextCount === 3);
 }
 
-async function reserveGenerationAllowance(ctx: any, ownerId: string, ignoreCooldown?: boolean) {
+function isRestrictedServiceType(serviceType: RequestedServiceType | StoredServiceType) {
+  return serviceType === "layout" || serviceType === "replace" || serviceType === "reference";
+}
+
+async function reserveGenerationAllowance(
+  ctx: any,
+  ownerId: string,
+  requestedServiceType: RequestedServiceType | StoredServiceType,
+  ignoreCooldown?: boolean,
+) {
   const user = await getUserByOwnerId(ctx, ownerId);
   if (!user) {
     throw new ConvexError("No billing profile found. Please subscribe to continue.");
   }
 
   const state = await syncDerivedSubscriptionState(ctx, user, Date.now());
+  if (isRestrictedServiceType(requestedServiceType) && !state.hasProAccess) {
+    throw new ConvexError(PRO_TOOL_LOCK_MESSAGE);
+  }
   if (state.blocked) {
     throw new ConvexError(getLimitExceededMessage(state));
   }
@@ -158,6 +180,12 @@ async function reserveGenerationAllowance(ctx: any, ownerId: string, ignoreCoold
   const lastPromptAt = toFiniteNumber(user.lastReviewPromptAt);
   const shouldPrompt = computeReviewPrompt(nextGenerationCount, lastPromptAt, ignoreCooldown);
   const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : state.imageGenerationCount + 1;
+  const pendingPremiumGenerationCount = state.subscriptionType === "free"
+    ? processingGenerations.filter((generation: any) => generation.status === "processing" && generation.qualityTier === "premium").length
+    : 0;
+  const usesPremiumDiamond =
+    state.subscriptionType === "free"
+    && state.premiumCredits > pendingPremiumGenerationCount;
 
   await ctx.db.patch(user._id as any, {
     generationCount: nextGenerationCount,
@@ -177,7 +205,9 @@ async function reserveGenerationAllowance(ctx: any, ownerId: string, ignoreCoold
   const generationPolicy = resolveGenerationPolicy({
     plan: state.plan,
     hasPaidAccess: state.hasPaidAccess,
+    hasProAccess: state.hasProAccess,
     subscriptionType: state.subscriptionType,
+    usesPremiumDiamond,
   });
 
   return {
@@ -186,7 +216,7 @@ async function reserveGenerationAllowance(ctx: any, ownerId: string, ignoreCoold
     creditsRemaining: state.subscriptionType === "free"
       ? state.credits
       : Math.max(state.limit - nextImageGenerationCount, 0),
-    planUsed: state.plan,
+    planUsed: usesPremiumDiamond ? "diamond" : state.plan,
     generationPolicy,
   };
 }
@@ -230,7 +260,7 @@ async function releaseGenerationAllowance(ctx: any, ownerId: string) {
   };
 }
 
-async function finalizeGenerationAllowance(ctx: any, ownerId: string) {
+async function finalizeGenerationAllowance(ctx: any, ownerId: string, generationId?: string) {
   const user = await getUserByOwnerId(ctx, ownerId);
   if (!user) {
     return {
@@ -249,10 +279,17 @@ async function finalizeGenerationAllowance(ctx: any, ownerId: string) {
 
   const now = Date.now();
   const nextCredits = Math.max(state.credits - 1, 0);
+  const generation = generationId ? await ctx.db.get(generationId as any) : null;
+  const usedPremiumDiamond = generation?.qualityTier === "premium";
+  const nextPremiumCredits = usedPremiumDiamond ? Math.max(state.premiumCredits - 1, 0) : state.premiumCredits;
+  const nextDiamondClaimAt = nextCredits <= 0 ? now + FREE_REFILL_INTERVAL_MS : 0;
   await ctx.db.patch(user._id as any, {
     credits: nextCredits,
+    premiumCredits: nextPremiumCredits,
     imageLimit: state.limit,
     lastResetDate: now,
+    nextDiamondClaimAt,
+    canClaimDiamond: false,
     ...(state.patch.plan ? { plan: state.patch.plan } : {}),
     ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
     ...(state.patch.subscriptionEntitlement ? { subscriptionEntitlement: state.patch.subscriptionEntitlement } : {}),
@@ -264,6 +301,7 @@ async function finalizeGenerationAllowance(ctx: any, ownerId: string) {
   return {
     ok: true,
     credits: nextCredits,
+    premiumCredits: nextPremiumCredits,
   };
 }
 
@@ -326,6 +364,35 @@ function canonicalizeServiceType(serviceType: RequestedServiceType): CanonicalSe
   }
 
   return serviceType;
+}
+
+function inferRequestedServiceType(args: {
+  serviceType: RequestedServiceType;
+  displayStyle?: string;
+  referenceImageStorageIds?: unknown[];
+  maskStorageId?: unknown;
+}) {
+  if (args.serviceType !== "redesign") {
+    return args.serviceType;
+  }
+
+  const displayStyle = trimOptional(args.displayStyle)?.toLowerCase() ?? "";
+  if (displayStyle.includes("reference") && (args.referenceImageStorageIds?.length ?? 0) > 0) {
+    return "reference";
+  }
+
+  if (displayStyle.includes("object replacement") && args.maskStorageId) {
+    return "replace";
+  }
+
+  return args.serviceType;
+}
+
+function resolveStoredServiceType(
+  requestedServiceType: RequestedServiceType,
+  canonicalServiceType: CanonicalServiceType,
+): StoredServiceType {
+  return requestedServiceType === "reference" ? "reference" : canonicalServiceType;
 }
 
 export const getUserArchive = queryGeneric({
@@ -419,8 +486,9 @@ export const startGeneration = mutationGeneric({
   },
   handler: async (ctx, args) => {
     const azureConfig = validateAzureGenerationEnv();
-    const requestedServiceType = args.serviceType as RequestedServiceType;
+    const requestedServiceType = inferRequestedServiceType(args as typeof args & { serviceType: RequestedServiceType });
     const canonicalServiceType = canonicalizeServiceType(requestedServiceType);
+    const storedServiceType = resolveStoredServiceType(requestedServiceType, canonicalServiceType);
     console.log("startGeneration: received request", {
       azureRequestUrl: azureConfig.requestUrl,
       anonymousIdPresent: Boolean(args.anonymousId),
@@ -431,6 +499,15 @@ export const startGeneration = mutationGeneric({
       requestedServiceType,
       serviceType: canonicalServiceType,
       speedTier: args.speedTier ?? "standard",
+    });
+    console.log("startGeneration: incoming payload debug", {
+      keys: Object.keys(args).sort(),
+      imageStorageIdPresent: Boolean(args.imageStorageId),
+      referenceImageStorageIdCount: args.referenceImageStorageIds?.length ?? 0,
+      maskStorageIdPresent: Boolean(args.maskStorageId),
+      requestedServiceType,
+      canonicalServiceType,
+      storedServiceType,
     });
     const viewer = await ensureGenerationViewer(ctx, args.anonymousId);
 
@@ -451,7 +528,7 @@ export const startGeneration = mutationGeneric({
       }
     }
 
-    const allowance = await reserveGenerationAllowance(ctx, viewer.userId, args.ignoreReviewCooldown);
+    const allowance = await reserveGenerationAllowance(ctx, viewer.userId, requestedServiceType, args.ignoreReviewCooldown);
     const enforcedGenerationPolicy = allowance.generationPolicy;
     const watermarkRequired = enforcedGenerationPolicy.watermarkRequired;
     const normalizedSelection = trimOptional(args.selection) ?? "Premium";
@@ -472,6 +549,9 @@ export const startGeneration = mutationGeneric({
       roomType: args.roomType,
       style: resolvedStyle,
       customPrompt: args.customPrompt,
+      targetColor: trimOptional(args.targetColor),
+      targetColorCategory: trimOptional(args.targetColorCategory),
+      targetSurface: trimOptional(args.targetSurface),
       aspectRatio: normalizedAspectRatio,
       colorPalette: normalizedSelection,
       regenerate: args.regenerate,
@@ -492,7 +572,7 @@ export const startGeneration = mutationGeneric({
       customPrompt: trimOptional(args.customPrompt),
       colorPalette: normalizedSelection,
       aspectRatio: normalizedAspectRatio,
-      serviceType: canonicalServiceType,
+      serviceType: storedServiceType,
       modeId: trimOptional(args.modeId),
       paletteId: trimOptional(args.paletteId),
       finishId: trimOptional(args.finishId),
@@ -538,6 +618,7 @@ export const startGeneration = mutationGeneric({
         imageStorageId: args.imageStorageId,
         referenceImageStorageIds: args.referenceImageStorageIds,
         maskStorageId: args.maskStorageId,
+        requestedServiceType,
         serviceType: canonicalServiceType,
         roomType: args.roomType,
         style: resolvedStyle,
@@ -625,9 +706,10 @@ export const markGenerationFailed = internalMutationGeneric({
 export const finalizeGenerationSuccess = internalMutationGeneric({
   args: {
     ownerId: v.string(),
+    generationId: v.optional(v.id("generations")),
   },
   handler: async (ctx, args) => {
-    return await finalizeGenerationAllowance(ctx, args.ownerId);
+    return await finalizeGenerationAllowance(ctx, args.ownerId, args.generationId);
   },
 });
 

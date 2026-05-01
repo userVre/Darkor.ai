@@ -83,6 +83,7 @@ type MeResponse = {
   credits: number;
   imagesRemaining?: number;
   hasPaidAccess?: boolean;
+  hasProAccess?: boolean;
   subscriptionType?: "free" | "weekly" | "yearly";
   generationStatusMessage?: string;
   canGenerateNow?: boolean;
@@ -103,7 +104,7 @@ type ReplaceObjectsWizardProps = {
 const TABS_HOME_ROUTE = "/(tabs)/index";
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 const pointerClassName = "cursor-pointer";
-const MASK_TINT = "rgba(255,59,48,0.42)";
+const MASK_TINT = "rgba(0,122,255,0.42)";
 const MASK_CAPTURE_COLOR = "#FFFFFF";
 const MASK_BACKGROUND = "#000000";
 const BRUSH_MIN = 14;
@@ -140,6 +141,7 @@ export function ReplaceObjectsWizard({
   const viewerArgs = useMemo(() => (viewerId ? {anonymousId: viewerId} : {}), [viewerId]);
 
   const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as MeResponse | null | undefined;
+  const hasProAccess = me?.hasProAccess ?? me?.hasPaidAccess ?? false;
   const generationArchive = useQuery("generations:getUserArchive" as any, viewerReady ? viewerArgs : "skip") as
     | ArchiveGeneration[]
     | undefined;
@@ -197,11 +199,11 @@ export function ReplaceObjectsWizard({
     if (me?.subscriptionType === "yearly") {
       return "ultra";
     }
-    if (me?.hasPaidAccess) {
+    if (hasProAccess) {
       return "pro";
     }
     return "standard";
-  }, [me?.hasPaidAccess, me?.subscriptionType]);
+  }, [hasProAccess, me?.subscriptionType]);
   const currentStepNumber = step === "intake" ? 1 : step === "mask" ? 2 : 3;
   const stepLabel = t("wizard.headers.stepProgress", {
     current: currentStepNumber,
@@ -336,11 +338,6 @@ export function ReplaceObjectsWizard({
     router.replace(TABS_HOME_ROUTE as any);
   }, [router]);
 
-  const handleMaskClose = useCallback(() => {
-    triggerHaptic();
-    setStep("intake");
-  }, []);
-
   const applySelectedImage = useCallback((image: SelectedImage) => {
     handledGenerationCompletionRef.current = null;
     setSelectedImage(image);
@@ -470,6 +467,11 @@ export function ReplaceObjectsWizard({
   const handleSaveResult = useCallback(async () => {
     triggerHaptic();
 
+    if (!hasProAccess) {
+      router.push({pathname: "/paywall", params: {source: "download", lastImageUrl: generatedImageUrl}} as any);
+      return;
+    }
+
     let tempUri: string | null = null;
     let temporary = false;
     try {
@@ -497,10 +499,15 @@ export function ReplaceObjectsWizard({
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, prepareGeneratedImageFile, showToast, t]);
+  }, [cleanupTempFile, generatedImageUrl, hasProAccess, prepareGeneratedImageFile, router, showToast, t]);
 
   const handleShareResult = useCallback(async () => {
     triggerHaptic();
+
+    if (!hasProAccess) {
+      router.push({pathname: "/paywall", params: {source: "share", lastImageUrl: generatedImageUrl}} as any);
+      return;
+    }
 
     let tempUri: string | null = null;
     let temporary = false;
@@ -517,7 +524,7 @@ export function ReplaceObjectsWizard({
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, prepareGeneratedImageFile, t]);
+  }, [cleanupTempFile, generatedImageUrl, hasProAccess, prepareGeneratedImageFile, router, t]);
 
   const handleGenerate = useCallback(async () => {
     if (isGenerating) {
@@ -547,7 +554,7 @@ export function ReplaceObjectsWizard({
       }
 
       if (generationAccess.reason === "paywall") {
-        openStore("empty_balance");
+        router.push({pathname: "/paywall", params: {source: "second-design"}} as any);
         return;
       }
 
@@ -580,11 +587,11 @@ export function ReplaceObjectsWizard({
               anonymousId: viewerId,
               imageStorageId: sourceStorageId,
               maskStorageId,
-              serviceType: "replace",
+              serviceType: "redesign",
               selection: prompt.trim(),
               roomType: "Room",
               displayStyle: "Object Replacement",
-              customPrompt: prompt.trim(),
+              customPrompt: `Replace only the object inside the marked mask with: ${prompt.trim()}. Preserve everything outside the masked area exactly.`,
               aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
               speedTier: generationSpeedTier,
             })) as {generationId: string; creditsRemaining?: number};
@@ -618,7 +625,7 @@ export function ReplaceObjectsWizard({
           router.push({pathname: "/sign-in", params: {returnTo: "/workspace?service=replace"}} as any);
           return;
         }
-        openStore("empty_balance");
+        router.push({pathname: "/paywall", params: {source: "second-design"}} as any);
         return;
       }
       showToast(getFriendlyGenerationError(rawMessage));
@@ -632,7 +639,6 @@ export function ReplaceObjectsWizard({
     generationSpeedTier,
     hasMask,
     isGenerating,
-    openStore,
     prompt,
     router,
     selectedImage,
@@ -730,7 +736,7 @@ export function ReplaceObjectsWizard({
           onCreditsPress={handleOpenPaywall}
           canGoBack={currentStepNumber > 1}
           onBack={handleBack}
-          onClose={step === "mask" ? handleMaskClose : handleClose}
+          onClose={handleClose}
         />
       ) : null}
 
@@ -764,7 +770,7 @@ export function ReplaceObjectsWizard({
 
       {step === "mask" ? (
         <ServiceWizardStepScreen
-          footerOffset={96}
+          footerOffset={0}
           scrollEnabled={false}
           contentContainerStyle={{
             paddingHorizontal: spacing.md,
@@ -1005,7 +1011,7 @@ export function ReplaceObjectsWizard({
 
       {step === "prompt" ? (
         <ServiceWizardStepScreen
-          footerOffset={96}
+          footerOffset={0}
           contentContainerStyle={{
             paddingHorizontal: spacing.md,
             paddingTop: stickyHeaderMetrics.contentOffset,

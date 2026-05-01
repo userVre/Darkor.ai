@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import type {Calendar, Locale} from "expo-localization";
 import i18n, {type Resource} from "i18next";
 import {useMemo, useSyncExternalStore} from "react";
 import {initReactI18next} from "react-i18next";
@@ -347,8 +348,11 @@ export async function setAppLanguageToSystemDefault() {
   });
 }
 
-export async function syncAppLanguageWithSystem() {
-  await syncGeoIntelligenceWithDevice();
+export async function syncAppLanguageWithSystem(
+  locales?: readonly Locale[],
+  calendars?: readonly Calendar[],
+) {
+  await syncGeoIntelligenceWithDevice(locales, calendars);
 
   if (!i18n.isInitialized || currentPreference.mode !== "auto") {
     return {

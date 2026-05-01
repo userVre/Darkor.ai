@@ -8,23 +8,41 @@ import {useViewerSession} from "./viewer-session-context";
 type ViewerCreditsSnapshot = {
   credits?: number;
   hasPaidAccess?: boolean;
+  hasProAccess?: boolean;
   subscriptionType?: "free" | "weekly" | "yearly";
+  streakCount?: number;
+  streak_count?: number;
+  canClaimDiamond?: boolean;
+  nextDiamondClaimAt?: number;
+  nextRefillTimestamp?: number;
+  eliteProUntil?: number;
 } | null | undefined;
 
 type OptimisticViewerCreditsState = {
   credits?: number;
   hasPaidAccess?: boolean;
+  hasProAccess?: boolean;
   subscriptionType?: "free" | "weekly" | "yearly";
+  streakCount?: number;
+  canClaimDiamond?: boolean;
+  nextDiamondClaimAt?: number;
+  eliteProUntil?: number;
 } | null;
 
 type ViewerCreditsContextValue = {
   credits: number;
   hasPaidAccess: boolean;
+  hasProAccess: boolean;
   isReady: boolean;
   subscriptionType?: "free" | "weekly" | "yearly";
+  streakCount: number;
+  canClaimDiamond: boolean;
+  nextDiamondClaimAt: number;
+  eliteProUntil: number;
   clearOptimisticCredits: () => void;
   setOptimisticCredits: (nextCredits: number | null) => void;
   setOptimisticAccess: (nextState: OptimisticViewerCreditsState) => void;
+  setOptimisticRewardState: (nextState: OptimisticViewerCreditsState) => void;
 };
 
 const ViewerCreditsContext = createContext<ViewerCreditsContextValue | null>(null);
@@ -44,8 +62,33 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
       ? me?.credits ?? cachedState?.credits ?? GUEST_TESTING_STARTER_CREDITS
       : cachedState?.credits ?? GUEST_TESTING_STARTER_CREDITS;
   const credits = typeof optimisticState?.credits === "number" ? optimisticState.credits : serverCredits;
-  const hasPaidAccess = optimisticState?.hasPaidAccess ?? me?.hasPaidAccess ?? cachedState?.hasPaidAccess ?? false;
+  const hasProAccess =
+    optimisticState?.hasProAccess
+    ?? optimisticState?.hasPaidAccess
+    ?? me?.hasProAccess
+    ?? me?.hasPaidAccess
+    ?? cachedState?.hasProAccess
+    ?? cachedState?.hasPaidAccess
+    ?? false;
+  const hasPaidAccess =
+    optimisticState?.hasPaidAccess
+    ?? me?.hasProAccess
+    ?? me?.hasPaidAccess
+    ?? cachedState?.hasProAccess
+    ?? cachedState?.hasPaidAccess
+    ?? false;
   const subscriptionType = optimisticState?.subscriptionType ?? me?.subscriptionType ?? cachedState?.subscriptionType;
+  const serverStreakCount = me?.streakCount ?? me?.streak_count ?? cachedState?.streakCount ?? cachedState?.streak_count ?? 1;
+  const streakCount = Math.max(1, Math.floor(optimisticState?.streakCount ?? serverStreakCount));
+  const canClaimDiamond = optimisticState?.canClaimDiamond ?? me?.canClaimDiamond ?? cachedState?.canClaimDiamond ?? false;
+  const nextDiamondClaimAt =
+    optimisticState?.nextDiamondClaimAt
+    ?? me?.nextDiamondClaimAt
+    ?? me?.nextRefillTimestamp
+    ?? cachedState?.nextDiamondClaimAt
+    ?? cachedState?.nextRefillTimestamp
+    ?? 0;
+  const eliteProUntil = optimisticState?.eliteProUntil ?? me?.eliteProUntil ?? cachedState?.eliteProUntil ?? 0;
   const clearOptimisticCredits = useCallback(() => {
     setOptimisticState(null);
   }, []);
@@ -87,6 +130,16 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
           ? {
               credits: typeof cached.credits === "number" ? cached.credits : undefined,
               hasPaidAccess: typeof cached.hasPaidAccess === "boolean" ? cached.hasPaidAccess : undefined,
+              hasProAccess: typeof cached.hasProAccess === "boolean" ? cached.hasProAccess : undefined,
+              canClaimDiamond: typeof cached.canClaimDiamond === "boolean" ? cached.canClaimDiamond : undefined,
+              nextDiamondClaimAt:
+                typeof cached.nextDiamondClaimAt === "number"
+                  ? cached.nextDiamondClaimAt
+                  : typeof cached.nextRefillTimestamp === "number"
+                    ? cached.nextRefillTimestamp
+                    : undefined,
+              streakCount: typeof cached.streakCount === "number" ? cached.streakCount : undefined,
+              eliteProUntil: typeof cached.eliteProUntil === "number" ? cached.eliteProUntil : undefined,
               subscriptionType: cached.subscriptionType ?? undefined,
             }
           : null,
@@ -96,28 +149,79 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setOptimisticState(null);
-  }, [anonymousId, me?.credits, me?.hasPaidAccess, me?.subscriptionType, viewerReady]);
+  }, [
+    anonymousId,
+    me?.canClaimDiamond,
+    me?.credits,
+    me?.eliteProUntil,
+    me?.hasPaidAccess,
+    me?.hasProAccess,
+    me?.nextDiamondClaimAt,
+    me?.nextRefillTimestamp,
+    me?.streakCount,
+    me?.streak_count,
+    me?.subscriptionType,
+    viewerReady,
+  ]);
 
   useEffect(() => {
     const snapshot = {
       credits,
       hasPaidAccess,
+      hasProAccess,
       subscriptionType,
+      streakCount,
+      canClaimDiamond,
+      nextDiamondClaimAt,
+      eliteProUntil,
     };
     void persistGenerationAccessSnapshot(snapshot);
-  }, [credits, hasPaidAccess, subscriptionType]);
+  }, [canClaimDiamond, credits, eliteProUntil, hasPaidAccess, hasProAccess, nextDiamondClaimAt, streakCount, subscriptionType]);
+
+  const setOptimisticRewardState = useCallback((nextState: OptimisticViewerCreditsState) => {
+    setOptimisticState((current) => {
+      if (!nextState) {
+        return current;
+      }
+
+      return {
+        ...(current ?? {}),
+        ...nextState,
+      };
+    });
+  }, []);
 
   const value = useMemo<ViewerCreditsContextValue>(
     () => ({
       credits,
       hasPaidAccess,
+      hasProAccess,
       isReady: viewerReady,
       subscriptionType,
+      streakCount,
+      canClaimDiamond,
+      nextDiamondClaimAt,
+      eliteProUntil,
       clearOptimisticCredits,
       setOptimisticCredits,
       setOptimisticAccess,
+      setOptimisticRewardState,
     }),
-    [clearOptimisticCredits, credits, hasPaidAccess, setOptimisticAccess, setOptimisticCredits, subscriptionType, viewerReady],
+    [
+      canClaimDiamond,
+      clearOptimisticCredits,
+      credits,
+      eliteProUntil,
+      hasPaidAccess,
+      hasProAccess,
+      nextDiamondClaimAt,
+      setOptimisticAccess,
+      setOptimisticCredits,
+      setOptimisticRewardState,
+      streakCount,
+      subscriptionType,
+      viewerReady,
+    ],
   );
 
   return <ViewerCreditsContext.Provider value={value}>{children}</ViewerCreditsContext.Provider>;

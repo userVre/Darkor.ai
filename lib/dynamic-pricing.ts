@@ -8,10 +8,11 @@ import {getLanguageLocaleTag, type AppLanguage} from "./i18n/language";
 
 export type PricingDuration = "weekly" | "yearly";
 export type PricingTierId = "tier_1" | "tier_2" | "tier_3" | "tier_4" | "tier_5";
-export type DiamondPackId = "starter" | "designer" | "architect";
+export type DiamondPackId = "starter" | "designer" | "architect" | "estate";
+export type GenerationQualitySource = "subscription_standard_hd" | "diamond_premium";
 
 type PriceBook = Record<PricingDuration, number>;
-type DiamondPackPriceBook = Record<DiamondPackId, number>;
+type DiamondPackPriceBook = Record<DiamondPackId, number | null>;
 
 type PricingTierDefinition = {
   id: PricingTierId;
@@ -55,6 +56,13 @@ export type DiamondPackPricing = {
   title: string;
   price: LocalizedPrice;
   usdReference: number;
+  visible: boolean;
+  revenueCatProductId: string;
+  generationQuality: {
+    source: Extract<GenerationQualitySource, "diamond_premium">;
+    label: "Premium 4K/2K";
+    outputResolution: "1536x1024";
+  };
 };
 
 export type PricingContext = {
@@ -67,11 +75,24 @@ export type PricingContext = {
   tierId: PricingTierId;
   tierLabel: PricingTierDefinition["label"];
   usdReference: Record<PricingDuration, number>;
-  diamondPacks: Record<DiamondPackId, DiamondPackPricing>;
+  diamondPacks: Partial<Record<DiamondPackId, DiamondPackPricing>>;
+  visibleDiamondPacks: DiamondPackPricing[];
   usedFallbackTier: boolean;
   prices: Record<PricingDuration, LocalizedPrice>;
   derived: {
     yearlyPerWeek: LocalizedPrice;
+  };
+  generationQuality: {
+    subscriptions: {
+      source: Extract<GenerationQualitySource, "subscription_standard_hd">;
+      label: "Standard HD";
+      outputResolution: "1024x1024";
+    };
+    diamondPacks: {
+      source: Extract<GenerationQualitySource, "diamond_premium">;
+      label: "Premium 4K/2K";
+      outputResolution: "1536x1024";
+    };
   };
   exchangeRate: number;
   exchangeRateSource: string;
@@ -83,6 +104,10 @@ export type PricingContext = {
     offeringHint: string;
     priceMetadata: Record<string, string>;
     attributePayload: Record<string, string>;
+    productIdentifiers: {
+      subscriptions: Record<PricingDuration, string>;
+      diamondPacks: Partial<Record<DiamondPackId, string>>;
+    };
   };
 };
 
@@ -102,8 +127,8 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
     countries: [
       "AD", "AT", "AU", "BE", "CH", "DK", "FI", "HK", "IE", "IS", "LI", "LU", "MC", "NL", "NO", "NZ", "SE", "SG",
     ],
-    usdPrices: { yearly: 59.99, weekly: 9.99 },
-    diamondPackUsdPrices: { starter: 4.99, designer: 9.99, architect: 24.99 },
+    usdPrices: { yearly: 79.99, weekly: 12.99 },
+    diamondPackUsdPrices: { starter: 5.99, designer: 14.99, architect: 39.99, estate: 109.99 },
   },
   {
     id: "tier_2",
@@ -111,8 +136,8 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
     countries: [
       "CA", "CY", "DE", "EE", "ES", "FR", "GB", "IL", "IT", "JP", "KR", "MT", "PT", "SI", "SK", "TW", "US",
     ],
-    usdPrices: { yearly: 39.99, weekly: 6.99 },
-    diamondPackUsdPrices: { starter: 2.99, designer: 7.99, architect: 19.99 },
+    usdPrices: { yearly: 59.99, weekly: 9.99 },
+    diamondPackUsdPrices: { starter: 4.99, designer: 11.99, architect: 32.99, estate: 94.99 },
   },
   {
     id: "tier_3",
@@ -120,8 +145,8 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
     countries: [
       "AE", "BH", "BN", "CZ", "GR", "HR", "HU", "KW", "LT", "LV", "OM", "PL", "QA", "RO", "SA", "SC", "TT", "UY",
     ],
-    usdPrices: { yearly: 34.99, weekly: 5.99 },
-    diamondPackUsdPrices: { starter: 1.99, designer: 5.99, architect: 14.99 },
+    usdPrices: { yearly: 44.99, weekly: 7.99 },
+    diamondPackUsdPrices: { starter: 3.49, designer: 8.49, architect: 21.99, estate: 64.99 },
   },
   {
     id: "tier_4",
@@ -131,8 +156,8 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
       "JO", "KZ", "LB", "LY", "MA", "MD", "ME", "MK", "MN", "MS", "MX", "MY", "NA", "PA", "PE", "RS", "RU", "TH",
       "TM", "TN", "UA", "UY", "UZ", "VN", "ZA",
     ],
-    usdPrices: { yearly: 19.99, weekly: 1.99 },
-    diamondPackUsdPrices: { starter: 0.99, designer: 2.99, architect: 7.99 },
+    usdPrices: { yearly: 24.99, weekly: 4.49 },
+    diamondPackUsdPrices: { starter: 1.99, designer: 4.99, architect: 12.99, estate: null },
   },
   {
     id: "tier_5",
@@ -143,8 +168,8 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
       "MM", "MO", "MR", "MU", "MW", "MZ", "NE", "NG", "NI", "NP", "PH", "PK", "PR", "PY", "RW", "SD", "SL", "SN",
       "SO", "SS", "SV", "SZ", "TD", "TG", "TR", "TZ", "UG", "YE", "ZM", "ZW",
     ],
-    usdPrices: { yearly: 9.99, weekly: 0.49 },
-    diamondPackUsdPrices: { starter: 0.49, designer: 1.49, architect: 4.49 },
+    usdPrices: { yearly: 11.99, weekly: 2.29 },
+    diamondPackUsdPrices: { starter: 1.49, designer: 3.49, architect: 9.99, estate: null },
   },
 ] as const;
 
@@ -152,15 +177,20 @@ const DIAMOND_PACK_METADATA: Record<DiamondPackId, { diamonds: number; title: st
   starter: { diamonds: 10, title: "Starter Pack" },
   designer: { diamonds: 30, title: "Designer Pack" },
   architect: { diamonds: 100, title: "Architect Pack" },
+  estate: { diamonds: 300, title: "Estate Pack" },
 };
 
-const DIAMOND_PACK_LOCAL_PRICE_OVERRIDES: Partial<Record<string, Partial<Record<DiamondPackId, number>>>> = {
-  MA: {
-    starter: 9.99,
-    designer: 29.99,
-    architect: 79.99,
-  },
-};
+const SUBSCRIPTION_QUALITY = {
+  source: "subscription_standard_hd",
+  label: "Standard HD",
+  outputResolution: "1024x1024",
+} as const;
+
+const DIAMOND_PACK_QUALITY = {
+  source: "diamond_premium",
+  label: "Premium 4K/2K",
+  outputResolution: "1536x1024",
+} as const;
 
 const COUNTRY_TO_CURRENCY: Record<string, string> = {
   AD: "EUR", AE: "AED", AF: "AFN", AG: "XCD", AI: "XCD", AL: "ALL", AM: "AMD", AO: "AOA", AR: "ARS", AS: "USD",
@@ -345,6 +375,15 @@ function buildLocalizedTierPrices(args: {
   };
 }
 
+function buildRevenueCatSubscriptionProductId(tierId: PricingTierId, duration: PricingDuration) {
+  return `homedecor_${duration}_${tierId}`;
+}
+
+function buildRevenueCatDiamondProductId(tierId: PricingTierId, packId: DiamondPackId) {
+  const diamonds = DIAMOND_PACK_METADATA[packId].diamonds;
+  return `homedecor_diamond_${diamonds}_${tierId}`;
+}
+
 function buildLocalizedDiamondPackPrices(args: {
   locale: string;
   countryCode: string;
@@ -352,33 +391,74 @@ function buildLocalizedDiamondPackPrices(args: {
   tier: PricingTierDefinition;
   exchangeRate: number;
 }) {
-  const countryOverrides = DIAMOND_PACK_LOCAL_PRICE_OVERRIDES[args.countryCode] ?? {};
-
-  return (Object.keys(DIAMOND_PACK_METADATA) as DiamondPackId[]).reduce<Record<DiamondPackId, DiamondPackPricing>>(
+  return (Object.keys(DIAMOND_PACK_METADATA) as DiamondPackId[]).reduce<Partial<Record<DiamondPackId, DiamondPackPricing>>>(
     (accumulator, packId) => {
       const metadata = DIAMOND_PACK_METADATA[packId];
-      const overrideAmount = countryOverrides[packId];
-      const amount =
-        typeof overrideAmount === "number"
-          ? overrideAmount
-          : args.tier.diamondPackUsdPrices[packId] * args.exchangeRate;
+      const usdReference = args.tier.diamondPackUsdPrices[packId];
+
+      if (typeof usdReference !== "number") {
+        return accumulator;
+      }
 
       accumulator[packId] = {
         id: packId,
         diamonds: metadata.diamonds,
         title: metadata.title,
-        usdReference: args.tier.diamondPackUsdPrices[packId],
+        usdReference,
+        visible: true,
+        revenueCatProductId: buildRevenueCatDiamondProductId(args.tier.id, packId),
+        generationQuality: DIAMOND_PACK_QUALITY,
         price: createLocalizedPrice({
-          amount,
+          amount: usdReference * args.exchangeRate,
           currencyCode: args.currencyCode,
           locale: args.locale,
-          source: typeof overrideAmount === "number" ? "tier_override" : "fx_snapshot",
+          source: "fx_snapshot",
         }),
       };
 
       return accumulator;
     },
-    {} as Record<DiamondPackId, DiamondPackPricing>,
+    {},
+  );
+}
+
+function getVisibleDiamondPacks(diamondPacks: Partial<Record<DiamondPackId, DiamondPackPricing>>) {
+  return (Object.keys(DIAMOND_PACK_METADATA) as DiamondPackId[])
+    .map((packId) => diamondPacks[packId])
+    .filter((pack): pack is DiamondPackPricing => Boolean(pack?.visible));
+}
+
+function buildRevenueCatProductIdentifiers(tier: PricingTierDefinition) {
+  const diamondPacks = (Object.keys(DIAMOND_PACK_METADATA) as DiamondPackId[])
+    .reduce<Partial<Record<DiamondPackId, string>>>((accumulator, packId) => {
+      if (typeof tier.diamondPackUsdPrices[packId] === "number") {
+        accumulator[packId] = buildRevenueCatDiamondProductId(tier.id, packId);
+      }
+      return accumulator;
+    }, {});
+
+  return {
+    subscriptions: {
+      weekly: buildRevenueCatSubscriptionProductId(tier.id, "weekly"),
+      yearly: buildRevenueCatSubscriptionProductId(tier.id, "yearly"),
+    },
+    diamondPacks,
+  };
+}
+
+function buildDiamondPackPriceMetadata(prefix: string, tier: PricingTierDefinition) {
+  return (Object.keys(DIAMOND_PACK_METADATA) as DiamondPackId[]).reduce<Record<string, string>>(
+    (metadata, packId) => {
+      const diamonds = DIAMOND_PACK_METADATA[packId].diamonds;
+      const usdReference = tier.diamondPackUsdPrices[packId];
+      metadata[`${prefix}_diamond_${diamonds}_visible`] = typeof usdReference === "number" ? "true" : "false";
+      if (typeof usdReference === "number") {
+        metadata[`${prefix}_diamond_${diamonds}_usd`] = usdReference.toFixed(2);
+        metadata[`${prefix}_diamond_${diamonds}_product_id`] = buildRevenueCatDiamondProductId(tier.id, packId);
+      }
+      return metadata;
+    },
+    {},
   );
 }
 
@@ -469,6 +549,9 @@ export function getPricingContext(
     tier,
     exchangeRate: fxSnapshot.rate,
   });
+  const visibleDiamondPacks = getVisibleDiamondPacks(localizedDiamondPackPrices);
+  const revenueCatProductIdentifiers = buildRevenueCatProductIdentifiers(tier);
+  const diamondPackPriceMetadata = buildDiamondPackPriceMetadata("homedecor", tier);
 
   return {
     locale: localeTag,
@@ -481,6 +564,7 @@ export function getPricingContext(
     tierLabel: tier.label,
     usdReference: tier.usdPrices,
     diamondPacks: localizedDiamondPackPrices,
+    visibleDiamondPacks,
     usedFallbackTier,
     prices: {
       weekly: localizedPrices.weekly,
@@ -488,6 +572,10 @@ export function getPricingContext(
     },
     derived: {
       yearlyPerWeek: localizedPrices.yearlyPerWeek,
+    },
+    generationQuality: {
+      subscriptions: SUBSCRIPTION_QUALITY,
+      diamondPacks: DIAMOND_PACK_QUALITY,
     },
     exchangeRate: fxSnapshot.rate,
     exchangeRateSource: fxSnapshot.source,
@@ -500,9 +588,9 @@ export function getPricingContext(
       priceMetadata: {
         homedecor_weekly_price_usd: tier.usdPrices.weekly.toFixed(2),
         homedecor_yearly_price_usd: tier.usdPrices.yearly.toFixed(2),
-        homedecor_diamond_10_usd: tier.diamondPackUsdPrices.starter.toFixed(2),
-        homedecor_diamond_30_usd: tier.diamondPackUsdPrices.designer.toFixed(2),
-        homedecor_diamond_100_usd: tier.diamondPackUsdPrices.architect.toFixed(2),
+        homedecor_weekly_product_id: revenueCatProductIdentifiers.subscriptions.weekly,
+        homedecor_yearly_product_id: revenueCatProductIdentifiers.subscriptions.yearly,
+        ...diamondPackPriceMetadata,
         homedecor_fx_rate: fxSnapshot.rate.toFixed(6),
         homedecor_fx_source: fxSnapshot.source,
       },
@@ -516,12 +604,15 @@ export function getPricingContext(
         homedecor_detected_language: activeGeoSnapshot?.resolvedLanguage ?? appLanguage,
         homedecor_weekly_price_usd: tier.usdPrices.weekly.toFixed(2),
         homedecor_yearly_price_usd: tier.usdPrices.yearly.toFixed(2),
-        homedecor_diamond_10_usd: tier.diamondPackUsdPrices.starter.toFixed(2),
-        homedecor_diamond_30_usd: tier.diamondPackUsdPrices.designer.toFixed(2),
-        homedecor_diamond_100_usd: tier.diamondPackUsdPrices.architect.toFixed(2),
+        homedecor_weekly_product_id: revenueCatProductIdentifiers.subscriptions.weekly,
+        homedecor_yearly_product_id: revenueCatProductIdentifiers.subscriptions.yearly,
+        homedecor_subscription_quality: SUBSCRIPTION_QUALITY.label,
+        homedecor_diamond_generation_quality: DIAMOND_PACK_QUALITY.label,
+        ...diamondPackPriceMetadata,
         homedecor_fx_rate: fxSnapshot.rate.toFixed(6),
         homedecor_fx_source: fxSnapshot.source,
       },
+      productIdentifiers: revenueCatProductIdentifiers,
     },
   };
 }

@@ -1,4 +1,5 @@
 import {Image} from "expo-image";
+import {LockKeyhole} from "lucide-react-native";
 import {useTranslation} from "react-i18next";
 import {StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle} from "react-native";
 
@@ -14,6 +15,8 @@ export type HomeToolCardItem = {
   serviceParam?: "interior" | "facade" | "garden" | "paint" | "floor" | "layout" | "replace";
   href?: string;
   topLeftRadius?: number;
+  requiresPro?: boolean;
+  locked?: boolean;
 };
 
 type HomeToolCardProps = {
@@ -25,10 +28,11 @@ type HomeToolCardProps = {
 export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
   const { t } = useTranslation();
   const topLeftRadius = item.topLeftRadius ?? 24;
+  const isLocked = item.locked === true;
 
   return (
     <LuxPressable
-      accessibilityLabel={`${item.title}. ${item.description}`}
+      accessibilityLabel={`${item.title}. ${item.description}${isLocked ? ". Locked" : ""}`}
       accessibilityRole="button"
       onPress={() => onPress(item)}
       style={[styles.card, { borderTopLeftRadius: topLeftRadius }, style]}
@@ -36,6 +40,11 @@ export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
     >
       <View style={[styles.imageWrap, { borderTopLeftRadius: topLeftRadius }]}>
         <Image source={item.image} style={styles.image} contentFit="cover" transition={0} cachePolicy="memory-disk" />
+        {isLocked ? (
+          <View pointerEvents="none" style={styles.lockBadge}>
+            <LockKeyhole color="#475569" size={15} strokeWidth={2.2} />
+          </View>
+        ) : null}
       </View>
 
       <View style={styles.copyBlock}>
@@ -79,6 +88,21 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     borderCurve: "continuous",
     backgroundColor: DS.colors.surfaceMuted,
+  },
+  lockBadge: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(248, 250, 252, 0.86)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(100, 116, 139, 0.28)",
+    boxShadow: "0px 10px 22px rgba(15, 23, 42, 0.14)",
   },
   image: {
     width: "100%",

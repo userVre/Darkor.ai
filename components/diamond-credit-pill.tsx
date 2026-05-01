@@ -15,6 +15,7 @@ import {fonts} from "../styles/typography";
 
 type DiamondCreditPillProps = {
   count: number;
+  streakCount?: number;
   variant?: "dark" | "light";
   accessibilityLabel?: string;
   accessibilityRole?: AccessibilityRole;
@@ -22,7 +23,7 @@ type DiamondCreditPillProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-export const DIAMOND_PILL_BLUE = "#1D4ED8";
+export const DIAMOND_PILL_BLUE = "#007AFF";
 
 const VARIANT_STYLES = {
   dark: {
@@ -33,7 +34,7 @@ const VARIANT_STYLES = {
   },
   light: {
     backgroundColor: "#FFFFFF",
-    borderColor: "rgba(29,78,216,0.1)",
+    borderColor: "rgba(0,122,255,0.12)",
     textColor: DIAMOND_PILL_BLUE,
     prismPrimary: DIAMOND_PILL_BLUE,
   },
@@ -58,20 +59,20 @@ export function DiamondCreditIcon({
         />
         <Path
           d="M5.108 2.25 9 6.32l3.892-4.07"
-          stroke="#60A5FA"
+          stroke="#7DCBFF"
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={1}
         />
         <Path
           d="M1.999 6.32h14.001"
-          stroke="#1E40AF"
+          stroke="#005BBB"
           strokeLinecap="round"
           strokeWidth={1}
         />
         <Path
           d="M5.108 2.25 9 15.75 12.892 2.25"
-          stroke="#BFDBFE"
+          stroke="#D8EEFF"
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={0.9}
@@ -84,6 +85,7 @@ export function DiamondCreditIcon({
 
 export function DiamondCreditPill({
   count,
+  streakCount,
   variant = "dark",
   accessibilityLabel = "Credits",
   accessibilityRole = "button",
@@ -92,10 +94,19 @@ export function DiamondCreditPill({
 }: DiamondCreditPillProps) {
   const isRTL = I18nManager.isRTL;
   const palette = VARIANT_STYLES[variant];
+  const normalizedStreakCount = typeof streakCount === "number" && streakCount > 0 ? Math.floor(streakCount) : 0;
   const content = (
     <>
       <DiamondCreditIcon primaryColor={palette.prismPrimary} />
       <Text style={[styles.countText, { color: palette.textColor }]}>{count}</Text>
+      {normalizedStreakCount > 0 ? (
+        <View style={styles.streakWrap}>
+          <Text accessibilityElementsHidden style={styles.flameIcon}>
+            🔥
+          </Text>
+          <Text style={[styles.streakText, { color: palette.textColor }]}>{normalizedStreakCount}</Text>
+        </View>
+      ) : null}
     </>
   );
 
@@ -146,7 +157,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 7,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderWidth: 1,
@@ -159,6 +170,29 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 15,
     lineHeight: 18,
+    fontVariant: ["tabular-nums"],
+    includeFontPadding: false,
+    textAlign: "center",
+    ...fonts.bold,
+  },
+  streakWrap: {
+    minHeight: 22,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+    paddingLeft: 6,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: "rgba(100, 116, 139, 0.22)",
+  },
+  flameIcon: {
+    fontSize: 14,
+    lineHeight: 17,
+    includeFontPadding: false,
+  },
+  streakText: {
+    fontSize: 13,
+    lineHeight: 16,
     fontVariant: ["tabular-nums"],
     includeFontPadding: false,
     textAlign: "center",

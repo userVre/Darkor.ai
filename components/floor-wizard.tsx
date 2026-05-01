@@ -79,7 +79,7 @@ const MASK_ACCENT = DIAMOND_PILL_BLUE;
 const MIN_BRUSH = 10;
 const MAX_BRUSH = 54;
 const DETECT_MS = 1500;
-const FIXED_FOOTER_OFFSET = 96;
+const FIXED_FOOTER_OFFSET = 0;
 const MASK_SCREEN_REFERENCE_WIDTH = 456;
 const MASK_SCREEN_REFERENCE_HEIGHT = 932;
 const FLOOR_PROMPT_OFFSET = 30;
@@ -427,6 +427,11 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const handleSaveResult = useCallback(async () => {
     triggerHaptic();
 
+    if (!me?.hasPaidAccess) {
+      router.push({ pathname: "/paywall", params: { source: "download", lastImageUrl: generatedImageUrl } } as any);
+      return;
+    }
+
     let tempUri: string | null = null;
     let temporary = false;
     try {
@@ -446,10 +451,15 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, prepareGeneratedImageFile, promptOpenSettings, showToast, t]);
+  }, [cleanupTempFile, generatedImageUrl, me?.hasPaidAccess, prepareGeneratedImageFile, promptOpenSettings, router, showToast, t]);
 
   const handleShareResult = useCallback(async () => {
     triggerHaptic();
+
+    if (!me?.hasPaidAccess) {
+      router.push({ pathname: "/paywall", params: { source: "share", lastImageUrl: generatedImageUrl } } as any);
+      return;
+    }
 
     let tempUri: string | null = null;
     let temporary = false;
@@ -466,13 +476,12 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, prepareGeneratedImageFile, t]);
+  }, [cleanupTempFile, generatedImageUrl, me?.hasPaidAccess, prepareGeneratedImageFile, router, t]);
 
   const handleClose = useCallback(() => {
     triggerHaptic();
-    resetProject();
     router.replace(TABS_HOME_ROUTE as any);
-  }, [resetProject, router]);
+  }, [router]);
 
   const handleOpenPaywall = useCallback(() => {
     triggerHaptic();
@@ -782,7 +791,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       }
 
       if (generationAccess.reason === "paywall") {
-        openStore("empty_balance");
+        router.push({ pathname: "/paywall", params: { source: "second-design" } } as any);
         return;
       }
 
@@ -851,12 +860,12 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
           router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=floor" } });
           return;
         }
-        openStore("empty_balance");
+        router.push({ pathname: "/paywall", params: { source: "second-design" } } as any);
         return;
       }
       showToast(getFriendlyGenerationError(rawMessage));
     }
-  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isAiMaterialSuggestionEnabled, isGenerating, openStore, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, t, uploadBlobToStorage, viewerId, viewerReady, cleanupTempFile]);
+  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isAiMaterialSuggestionEnabled, isGenerating, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, t, uploadBlobToStorage, viewerId, viewerReady, cleanupTempFile]);
 
   const handleCancelGeneration = useCallback(async () => {
     if (!generationId || isCancellingGeneration) {

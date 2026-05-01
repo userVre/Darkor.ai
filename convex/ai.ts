@@ -4,6 +4,8 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import {
   buildDesignPrompt,
+  GLOBAL_MASTERPIECE_QUALITY_INSTRUCTION,
+  GLOBAL_PERSPECTIVE_LOCK_INSTRUCTION,
 } from "../lib/design-prompt-builder";
 
 const GEMINI_SUGGEST_REQUEST_TIMEOUT_MS = 25_000;
@@ -202,6 +204,7 @@ function buildPrompt(args: {
   colorPalette: string;
   customPrompt?: string;
   targetColor?: string;
+  targetColorCategory?: string;
   targetSurface?: string;
   aspectRatio?: string;
   regenerate?: boolean;
@@ -215,6 +218,7 @@ function buildPrompt(args: {
     colorPalette: args.colorPalette,
     customPrompt: args.customPrompt,
     targetColor: args.targetColor,
+    targetColorCategory: args.targetColorCategory,
     targetSurface: args.targetSurface,
     aspectRatio: args.aspectRatio,
     regenerate: args.regenerate,
@@ -342,7 +346,7 @@ function buildFallbackOrchestration(args: {
     return {
       style: styleDirection,
       wallColor: balancedWallColor,
-      customPrompt: `Use ${balancedWallColor} as the professionally balanced wall color choice after analyzing the room's current furniture, lighting, and materials.`,
+      customPrompt: `Use ${balancedWallColor} as the professionally balanced specific wall shade within a warm neutral color family after analyzing the room's current furniture, window-light direction, shadows, and materials. Preserve furniture shadows on the wall and keep all non-wall surfaces unchanged.`,
       reason: "Fallback balanced wall color selected for a high-end result.",
       source: "fallback" as const,
     };
@@ -352,7 +356,7 @@ function buildFallbackOrchestration(args: {
     return {
       style: styleDirection,
       floorMaterial: balancedFloorMaterial,
-      customPrompt: `Use ${balancedFloorMaterial} as the professionally balanced flooring material after analyzing the room's furniture, lighting, and overall design language.`,
+      customPrompt: `Use ${balancedFloorMaterial} as the professionally balanced flooring material after analyzing the room's furniture, lighting, and perspective. Align grain, seams, or stone veining with the source vanishing lines and preserve furniture grounding and contact shadows.`,
       reason: "Fallback balanced floor material selected for a high-end result.",
       source: "fallback" as const,
     };
@@ -361,7 +365,7 @@ function buildFallbackOrchestration(args: {
   if (args.serviceType === "layout") {
     return {
       style: "Spatial Optimization",
-      customPrompt: "Re-arrange furniture to gain more space and fluid circulation while preserving the architecture, fixed openings, and room structure.",
+      customPrompt: "Analyze current furniture placement. Rearrange to maximize floor area and circulation. The result must feel spacious, ergonomic, and breathable while keeping windows, doors, fixed openings, floor level, ceiling height, and room structure in their original places.",
       reason: "Fallback spatial optimization selected for stronger comfort and circulation.",
       source: "fallback" as const,
     };
@@ -370,7 +374,7 @@ function buildFallbackOrchestration(args: {
   if (args.serviceType === "replace") {
     return {
       style: "Object Replacement",
-      customPrompt: "Replace the masked object with a refined alternative that matches the room's perspective, light, and scale while preserving everything outside the mask.",
+      customPrompt: "Replace the masked object with a refined alternative that matches the room's perspective, light, scale, contact shadows, ambient occlusion, and surface reflections while preserving everything outside the mask.",
       reason: "Fallback object replacement selected for a seamless masked edit.",
       source: "fallback" as const,
     };
@@ -380,7 +384,7 @@ function buildFallbackOrchestration(args: {
     style: styleDirection,
     styles: dedupeSuggestions([args.style, ...(args.styleSelections ?? [])], args.style),
     paletteId: trimOptional(args.colorPalette) ?? "surprise",
-    customPrompt: `Resolve the room using a refined ${styleDirection} direction with a premium, cohesive material palette informed by the existing furniture and lighting.`,
+    customPrompt: `Resolve the space using a refined ${styleDirection} architectural direction with a premium, cohesive material palette informed by the existing furniture, source window-light direction, circulation, and structural boundaries.`,
     fusionPrompt: hasMultipleDistinctStyles(args.style, args.styleSelections)
       ? `Blend ${joinNaturalLanguage(dedupeSuggestions([args.style, ...(args.styleSelections ?? [])], args.style))} into one cohesive architectural language with balanced materials, detailing, and color transitions that feel intentional rather than themed.`
       : undefined,
@@ -431,27 +435,29 @@ export async function requestGeminiDesignOrchestration(args: {
   const styleDirection = buildStyleDirection(args.style, args.styleSelections);
   const requestShape =
     args.serviceType === "paint"
-      ? '{"style":"...","wallColor":"...","reason":"..."}'
+      ? '{"style":"...","wallColor":"...","customPrompt":"...","reason":"..."}'
       : args.serviceType === "floor"
-        ? '{"style":"...","floorMaterial":"...","reason":"..."}'
+        ? '{"style":"...","floorMaterial":"...","customPrompt":"...","reason":"..."}'
         : args.serviceType === "layout"
           ? '{"style":"...","customPrompt":"...","reason":"..."}'
         : args.serviceType === "replace"
           ? '{"style":"...","customPrompt":"...","reason":"..."}'
-        : '{"style":"...","styles":["...","..."],"paletteId":"...","fusionPrompt":"...","reason":"..."}';
+        : '{"style":"...","styles":["...","..."],"paletteId":"...","fusionPrompt":"...","customPrompt":"...","reason":"..."}';
   const taskInstruction =
     args.serviceType === "paint"
-      ? "Analyze the room's current furniture, lighting, and materials, then choose the best professional wall color for a premium final result."
+      ? "Analyze the room's current furniture, lighting direction, wall planes, and materials, then choose the best professional wall color. In customPrompt, distinguish the broad color family from the exact shade and require preserved furniture shadows on the wall."
       : args.serviceType === "floor"
-        ? "Analyze the room's current furniture, lighting, and materials, then choose the best professional floor material and finish for a premium final result."
+        ? "Analyze the room's current furniture, lighting, perspective lines, and materials, then choose the best professional floor material and finish. In customPrompt, specify material depth and how grain, veins, seams, or plank direction follow the source perspective."
         : args.serviceType === "layout"
-          ? "Analyze the room's current furniture, circulation paths, and architectural shell, then propose the best professional furniture rearrangement strategy for a premium final result."
+          ? "Analyze current furniture placement, circulation paths, and architectural shell. In customPrompt, produce a spacious, ergonomic, breathable rearrangement strategy that maximizes usable floor area while keeping windows and doors in their original places."
         : args.serviceType === "replace"
-          ? "Analyze the room's perspective, lighting, and surrounding furniture, then propose the most seamless professional replacement object strategy for the masked area."
-        : "Analyze this uploaded room, house, facade, or garden image and recommend the single strongest architectural direction plus the strongest palette direction for a premium final result. If multiple styles were provided, resolve them into a refined fusion rather than a list of disconnected themes.";
+          ? "Analyze the room's perspective, lighting, contact shadows, and surrounding furniture. In customPrompt, describe the most seamless replacement object strategy so the new object inherits shadows, reflections, scale, and color temperature."
+        : "Analyze this uploaded room, house, facade, or garden image and recommend the strongest architectural direction plus the strongest palette direction for a premium final result. Translate user style words into architectural language, for example Modern becomes contemporary minimalist with warm oak accents, layered indirect lighting, and clean floor-to-ceiling surfaces. If multiple styles were provided, resolve them into a refined fusion rather than a list of disconnected themes.";
 
   const prompt = [
-    "You are a world-class architect. Analyze the provided room or house structure, lighting, and existing furniture. Automatically select the SINGLE best architectural style and color palette that will maximize the room's beauty.",
+    "You are a world-class architect and architectural rendering director. Analyze the provided room, facade, garden, structure, lighting, and existing furniture. Select the SINGLE strongest professional design direction and translate simple user choices into precise architectural language.",
+    GLOBAL_PERSPECTIVE_LOCK_INSTRUCTION,
+    GLOBAL_MASTERPIECE_QUALITY_INSTRUCTION,
     `Service type: ${args.serviceType}.`,
     `Room type: ${args.roomType}.`,
     `Current desired direction: ${styleDirection}.`,
@@ -459,7 +465,10 @@ export async function requestGeminiDesignOrchestration(args: {
     args.availablePalettes?.length ? `Allowed palettes: ${args.availablePalettes.join(", ")}.` : undefined,
     taskInstruction,
     args.serviceType === "redesign" ? "Return a single best style in style. If the user supplied multiple styles, keep styles limited to the compatible fusion ingredients and write fusionPrompt as a polished architectural direction that blends them seamlessly." : undefined,
+    args.serviceType === "redesign" ? "For interiors, focus customPrompt on lighting harmony, furniture flow, spatial gain, high-fidelity textures, and preserving source window light direction. For exteriors, require a clean sweep of debris, trash, foreground clutter, and messy overgrowth, then replace with luxury landscaping and a polished facade. For gardens, require resort-level landscaping with lush tropical flora, integrated LED garden lighting, and ambient twilight atmosphere where appropriate. If the photo includes both facade and garden, treat them as one unified project." : undefined,
     "If the user selected AI Suggest, Surprise Me, AI Choice, or Random, you must still return a professionally balanced, high-end choice rather than something extreme.",
+    "Do not include any instructions to add visible text, labels, captions, watermarks, comparison labels, or split layouts in the generated image.",
+    "Every customPrompt must be a final descriptive architectural rendering prompt, not a repetition of the user's short choice.",
     `Return strict JSON in the shape ${requestShape} with no markdown and no extra text.`,
   ]
     .filter(Boolean)
@@ -606,6 +615,7 @@ export const saveGeneration = internalMutationGeneric({
     });
     await ctx.runMutation((internal as any).generations.finalizeGenerationSuccess, {
       ownerId: generation.userId,
+      generationId: args.generationId,
     });
 
     return {

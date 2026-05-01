@@ -16,7 +16,9 @@ UserRound,
 import {useAuth, useUser} from "@clerk/expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {useMutation} from "convex/react";
+import {BlurView} from "expo-blur";
 import * as Clipboard from "expo-clipboard";
+import {Image} from "expo-image";
 import Constants from "expo-constants";
 import * as Linking from "expo-linking";
 import {useRouter} from "expo-router";
@@ -29,6 +31,7 @@ import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {useProSuccess} from "../components/pro-success-context";
 import {SettingsRow} from "../components/settings-row";
+import {useViewerCredits} from "../components/viewer-credits-context";
 import {useWorkspaceDraft} from "../components/workspace-context";
 import {useAppLanguagePreference, useLocalizedAppFonts} from "../lib/i18n";
 import {getLanguageNativeLabel} from "../lib/i18n/language";
@@ -42,12 +45,19 @@ resolveRevenueCatSubscription,
 type RevenueCatEntitlement,
 } from "../lib/revenuecat";
 import {requestStoreReview} from "../lib/store-review";
+import {radix} from "../styles/theme";
 import {fonts} from "../styles/typography";
 
 const SUPPORT_EMAIL = "support@homedecor.ai";
 const APP_URL = Constants.expoConfig?.extra?.publicEnv?.EXPO_PUBLIC_APP_URL ?? "https://homedecor.ai";
 const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
 const ANDROID_PACKAGE = Constants.expoConfig?.android?.package ?? "com.homedecor.ai";
+const SETTINGS_HERO_IMAGE = require("../assets/media/settings/professional-workspace.png");
+const SCREEN_BG = radix.light.slate.slate1;
+const SURFACE_BG = radix.light.slate.slate2;
+const TEXT_PRIMARY = radix.light.slate.slate12;
+const TEXT_SECONDARY = radix.light.slate.slate11;
+const RUBY_ACCENT = radix.light.ruby.ruby9;
 
 function truncateUserId(value: string) {
   if (value.length <= 18) {
@@ -67,6 +77,7 @@ export default function SettingsScreen() {
   const { user } = useUser();
   const { clearDraft } = useWorkspaceDraft();
   const { showSuccess, showToast } = useProSuccess();
+  const { hasPaidAccess, setOptimisticAccess } = useViewerCredits();
   const deleteAccountData = useMutation("users:deleteAccountData" as any);
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
 
@@ -102,6 +113,11 @@ export default function SettingsScreen() {
   };
 
   const handleUpgrade = () => {
+    if (hasPaidAccess) {
+      showSuccess();
+      return;
+    }
+
     router.push("/paywall");
   };
 
@@ -205,6 +221,13 @@ export default function SettingsScreen() {
         );
       }
 
+      if (subscriptionState.subscriptionType === "weekly" || subscriptionState.subscriptionType === "yearly") {
+        setOptimisticAccess({
+          hasPaidAccess: true,
+          subscriptionType: subscriptionState.subscriptionType,
+        });
+      }
+
       showSuccess();
     } catch (error) {
       showToast(error instanceof Error ? error.message : t("settings.messages.restoreFailed"));
@@ -299,7 +322,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.screen}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -308,6 +331,9 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.heroSection}>
+          <Image contentFit="cover" source={SETTINGS_HERO_IMAGE} style={styles.heroImage} transition={250} />
+          <View style={styles.heroImageOverlay} />
+
           <Pressable
             accessibilityRole="button"
             onPress={handleBack}
@@ -316,16 +342,22 @@ export default function SettingsScreen() {
             <Text style={[styles.backArrowText, { transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] }]}>{"\u2039"}</Text>
           </Pressable>
 
-          <View style={[styles.heroContent, { paddingTop: heroTopInset + 48 }]}>
-            <Text style={[styles.headerTitle, localizedFonts.semibold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("settings.title")}</Text>
-            <Text style={[styles.heroTitle, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("settings.heroTitle")}</Text>
+          <View style={[styles.heroContent, { paddingTop: heroTopInset }]}>
+            <BlurView intensity={28} tint="light" style={styles.heroGlassPanel}>
+              <Text style={[styles.headerTitle, localizedFonts.semibold, { textAlign: "center" }]}>{t("settings.title")}</Text>
+              <Text style={[styles.heroTitle, localizedFonts.bold, { textAlign: "center" }]}>{t("settings.heroTitle")}</Text>
+            </BlurView>
+          </View>
+        </View>
 
+        {hasPaidAccess ? null : (
+          <View style={styles.planSection}>
             <View style={styles.featureList}>
               {featureItems.map((item) => (
                 <View key={item} style={[styles.featureRow, { flexDirection: getDirectionalRow(isRTL) }]}>
                   <View style={styles.featureIconBox}>
                     <ChevronRight
-                      color="#0A0A0A"
+                      color={TEXT_PRIMARY}
                       size={14}
                       strokeWidth={2.4}
                       style={{ transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] }}
@@ -338,12 +370,12 @@ export default function SettingsScreen() {
 
             <Pressable accessibilityRole="button" onPress={handleUpgrade} style={styles.upgradeButton}>
               <View style={[styles.upgradeButtonContent, { flexDirection: getDirectionalRow(isRTL) }]}>
-                <Diamond color="#FFFFFF" size={16} strokeWidth={2.2} />
+                <Diamond color={radix.light.slate.slate1} size={16} strokeWidth={2.2} />
                 <Text style={[styles.upgradeButtonText, localizedFonts.semibold]}>{t("settings.upgradePro")}</Text>
               </View>
             </Pressable>
           </View>
-        </View>
+        )}
 
         <View style={styles.rowsSection}>
           {firstGroupRows.map((row) => (
@@ -377,7 +409,7 @@ export default function SettingsScreen() {
                 </Text>
                 {shouldShowCopy ? (
                   <Pressable accessibilityRole="button" onPress={handleCopyUserId} style={styles.copyButton}>
-                    <Copy color="#A0A0A0" size={16} strokeWidth={2.2} />
+                    <Copy color={TEXT_SECONDARY} size={16} strokeWidth={2.2} />
                   </Pressable>
                 ) : null}
               </View>
@@ -387,12 +419,12 @@ export default function SettingsScreen() {
           <SettingsRow
             label={t("settings.rows.deleteInformation")}
             icon={Trash2}
-            iconColor="#EF4444"
-            textColor="#EF4444"
+            iconColor={RUBY_ACCENT}
+            textColor={RUBY_ACCENT}
             showChevron={false}
             onPress={handleDeleteInformation}
             loading={isDeleting}
-            loadingColor="#EF4444"
+            loadingColor={RUBY_ACCENT}
           />
         </View>
 
@@ -405,11 +437,11 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: SCREEN_BG,
   },
   scrollView: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: SCREEN_BG,
   },
   scrollContent: {
     paddingBottom: 32,
@@ -420,10 +452,13 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: 22,
+    overflow: "hidden",
+    backgroundColor: "rgba(248, 249, 250, 0.72)",
     zIndex: 3,
   },
   backArrowText: {
-    color: "#FFFFFF",
+    color: TEXT_PRIMARY,
     fontSize: 34,
     lineHeight: 34,
     ...fonts.medium,
@@ -431,31 +466,64 @@ const styles = StyleSheet.create({
   heroSection: {
     position: "relative",
     width: "100%",
-    minHeight: 312,
-    backgroundColor: "#F5F5F5",
+    minHeight: 320,
+    overflow: "hidden",
+    backgroundColor: SURFACE_BG,
+  },
+  heroImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
+  },
+  heroImageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(248, 249, 250, 0.18)",
   },
   heroContent: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingBottom: 24,
-    justifyContent: "flex-end",
+    paddingBottom: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroGlassPanel: {
+    width: "100%",
+    maxWidth: 300,
+    minHeight: 116,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 24,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(248, 249, 250, 0.7)",
+    backgroundColor: "rgba(248, 249, 250, 0.56)",
+    paddingHorizontal: 28,
+    paddingVertical: 22,
   },
   headerTitle: {
-    marginBottom: 12,
-    color: "#6B6B6B",
+    marginBottom: 8,
+    color: TEXT_SECONDARY,
     fontSize: 16,
     lineHeight: 18,
     ...fonts.semibold,
   },
   heroTitle: {
-    color: "#0A0A0A",
+    color: TEXT_PRIMARY,
     fontSize: 28,
     lineHeight: 32,
     ...fonts.bold,
   },
+  planSection: {
+    marginTop: 16,
+    marginHorizontal: 16,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: radix.light.slate.slate6,
+    backgroundColor: SURFACE_BG,
+    padding: 18,
+  },
   featureList: {
-    marginTop: 22,
-    marginBottom: 22,
+    marginBottom: 18,
     gap: 16,
   },
   featureRow: {
@@ -467,14 +535,14 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 4,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: radix.light.slate.slate1,
     alignItems: "center",
     justifyContent: "center",
   },
   featureText: {
     flex: 1,
     flexShrink: 1,
-    color: "#0A0A0A",
+    color: TEXT_PRIMARY,
     fontSize: 15,
     lineHeight: 18,
     ...fonts.medium,
@@ -483,7 +551,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     minHeight: 48,
     borderRadius: 999,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: RUBY_ACCENT,
     justifyContent: "center",
     paddingHorizontal: 18,
     paddingVertical: 12,
@@ -495,7 +563,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   upgradeButtonText: {
-    color: "#FFFFFF",
+    color: radix.light.slate.slate1,
     fontSize: 15,
     lineHeight: 18,
     ...fonts.semibold,
@@ -514,14 +582,14 @@ const styles = StyleSheet.create({
   },
   userIdText: {
     flexShrink: 1,
-    color: "#A0A0A0",
+    color: TEXT_SECONDARY,
     fontSize: 12,
     lineHeight: 14,
     ...fonts.regular,
   },
   languageValue: {
     maxWidth: 150,
-    color: "#6B6B6B",
+    color: TEXT_SECONDARY,
     fontSize: 12,
     lineHeight: 16,
     textAlign: "auto",
@@ -533,12 +601,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 14,
-    backgroundColor: "#F0F0F0",
+    backgroundColor: SURFACE_BG,
   },
   versionLabel: {
     marginTop: 20,
     marginBottom: 32,
-    color: "#A0A0A0",
+    color: TEXT_SECONDARY,
     textAlign: "auto",
     marginHorizontal: 24,
     fontSize: 12,

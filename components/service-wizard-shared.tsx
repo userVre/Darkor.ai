@@ -4,6 +4,7 @@ import {Image} from "expo-image";
 import {MotiView} from "moti";
 import {Children, cloneElement, isValidElement, useState, type ComponentProps, type ReactElement, type ReactNode} from "react";
 import {ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageSourcePropType} from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {spacing} from "../styles/spacing";
 import {fonts} from "../styles/typography";
 
@@ -253,6 +254,7 @@ export function ServiceWizardStepScreen({
   showsVerticalScrollIndicator = false,
   contentContainerStyle,
 }: ServiceWizardStepScreenProps) {
+  const insets = useSafeAreaInsets();
   const [footerHeight, setFooterHeight] = useState(0);
   const flattenedContentStyle = StyleSheet.flatten(contentContainerStyle);
   const existingPaddingBottom =
@@ -278,7 +280,7 @@ export function ServiceWizardStepScreen({
             setFooterHeight((current) => (current === nextHeight ? current : nextHeight));
           }}
           pointerEvents="box-none"
-          style={[styles.fixedFooterWrap, { paddingBottom: footerOffset }]}
+          style={[styles.fixedFooterWrap, { paddingBottom: Math.max(insets.bottom, spacing.sm) + footerOffset }]}
         >
           <View style={styles.fixedFooterContent}>{footer}</View>
         </View>
@@ -557,6 +559,9 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   fixedFooterContent: {
+    width: "100%",
+    maxWidth: 560,
+    alignSelf: "center",
     gap: spacing.sm,
   },
 });

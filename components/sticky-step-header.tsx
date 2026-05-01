@@ -1,5 +1,5 @@
 import {ArrowLeft, X} from "@/components/material-icons";
-import {type ReactNode, useState} from "react";
+import {type ReactNode} from "react";
 import {useTranslation} from "react-i18next";
 import {I18nManager, Platform, Pressable, StyleSheet, Text, View} from "react-native";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
@@ -14,7 +14,6 @@ getDirectionalRow,
 import {triggerHaptic} from "../lib/haptics";
 import {useDiamondStore} from "./diamond-store-context";
 import {DiamondCreditPill, ProBadge} from "./diamond-credit-pill";
-import {ExitConfirmModal} from "./exit-confirm-modal";
 import {StepProgressSegments} from "./step-progress-segments";
 import {useViewerCredits} from "./viewer-credits-context";
 
@@ -88,8 +87,7 @@ export function StickyStepHeader({
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
-  const [isExitModalVisible, setIsExitModalVisible] = useState(false);
-  const { credits, hasPaidAccess } = useViewerCredits();
+  const { credits, hasPaidAccess, streakCount } = useViewerCredits();
   const { openStore } = useDiamondStore();
   const resolvedTitle = title ?? t("app.name");
 
@@ -99,108 +97,94 @@ export function StickyStepHeader({
   };
 
   return (
-    <>
-      <View
-        pointerEvents="box-none"
-        style={[
-          styles.shell,
-          {
-            height: metrics.height,
-            paddingTop: metrics.safeTop + HEADER_TOP_PADDING,
-          },
-        ]}
-      >
-        <View style={[styles.inner, { marginHorizontal: horizontalInset }]}>
-          <View style={[styles.topRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-            <View style={[styles.sideSlot, { alignItems: getDirectionalAlignment(isRTL) }]}>
-              {showBack ? (
-                <Pressable
-                  accessibilityLabel={backAccessibilityLabel}
-                  accessibilityRole="button"
-                  hitSlop={10}
-                  onPress={onBack}
-                  style={styles.iconButton}
-                >
-                  <ArrowLeft
-                    color={DS.colors.textPrimary}
-                    size={18}
-                    strokeWidth={1.9}
-                    style={[
-                      styles.backIcon,
-                      {
-                        transform: [
-                          { scaleX: getDirectionalArrowScale(isRTL) },
-                          { translateX: isRTL ? 1 : -1 },
-                        ],
-                      },
-                    ]}
-                  />
-                </Pressable>
-              ) : leftAccessory ? (
-                leftAccessory
-              ) : showCredits ? (
-                hasPaidAccess ? (
-                  <ProBadge style={styles.proBadge} />
-                ) : (
-                  <DiamondCreditPill
-                    accessibilityLabel="Credits remaining"
-                    accessibilityRole="button"
-                    count={creditCount}
-                    onPress={handleCreditsTap}
-                    style={styles.creditPill}
-                    variant="light"
-                  />
-                )
-              ) : null}
-            </View>
-
-            <View pointerEvents="none" style={styles.titleWrap}>
-              <Text numberOfLines={1} style={styles.titleText}>
-                {resolvedTitle}
-              </Text>
-            </View>
-
-            <View style={[styles.sideSlot, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
+    <View
+      pointerEvents="box-none"
+      style={[
+        styles.shell,
+        {
+          height: metrics.height,
+          paddingTop: metrics.safeTop + HEADER_TOP_PADDING,
+        },
+      ]}
+    >
+      <View style={[styles.inner, { marginHorizontal: horizontalInset }]}>
+        <View style={[styles.topRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+          <View style={[styles.sideSlot, { alignItems: getDirectionalAlignment(isRTL) }]}>
+            {showBack ? (
               <Pressable
-                accessibilityLabel={closeAccessibilityLabel}
+                accessibilityLabel={backAccessibilityLabel}
                 accessibilityRole="button"
                 hitSlop={10}
-                onPress={() => {
-                  setIsExitModalVisible(true);
-                }}
+                onPress={onBack}
                 style={styles.iconButton}
               >
-                <X color={DS.colors.textPrimary} size={18} strokeWidth={2} />
+                <ArrowLeft
+                  color="#000000"
+                  size={18}
+                  strokeWidth={1.9}
+                  style={[
+                    styles.backIcon,
+                    {
+                      transform: [
+                        { scaleX: getDirectionalArrowScale(isRTL) },
+                        { translateX: isRTL ? 1 : -1 },
+                      ],
+                    },
+                  ]}
+                />
               </Pressable>
-            </View>
+            ) : leftAccessory ? (
+              leftAccessory
+            ) : showCredits ? (
+              hasPaidAccess ? (
+                <ProBadge style={styles.proBadge} />
+              ) : (
+                <DiamondCreditPill
+                  accessibilityLabel="Credits remaining"
+                  accessibilityRole="button"
+                  count={creditCount}
+                  onPress={handleCreditsTap}
+                  streakCount={streakCount}
+                  style={styles.creditPill}
+                  variant="light"
+                />
+              )
+            ) : null}
           </View>
 
-          {showProgress ? (
-            <View style={styles.progressWrap}>
-              <StepProgressSegments
-                key={`sticky-step-progress-${safeStep}-${totalSteps}`}
-                progress={progress}
-                variant={progressVariant}
-                step={safeStep}
-                totalSteps={totalSteps}
-                style={styles.progressRail}
-              />
-            </View>
-          ) : null}
-        </View>
-      </View>
+          <View pointerEvents="none" style={styles.titleWrap}>
+            <Text numberOfLines={1} style={styles.titleText}>
+              {resolvedTitle}
+            </Text>
+          </View>
 
-      <ExitConfirmModal
-        visible={isExitModalVisible}
-        onCancel={() => {
-          setIsExitModalVisible(false);
-        }}
-        onExit={() => {
-          setIsExitModalVisible(false);
-          onClose();
-        }}
-      />
-    </>
+          <View style={[styles.sideSlot, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
+            <Pressable
+              accessibilityLabel={closeAccessibilityLabel}
+              accessibilityRole="button"
+              hitSlop={10}
+              onPress={onClose}
+              style={styles.iconButton}
+            >
+              <X color={DS.colors.textPrimary} size={18} strokeWidth={2} />
+            </Pressable>
+          </View>
+        </View>
+
+        {showProgress ? (
+          <View style={styles.progressWrap}>
+            <StepProgressSegments
+              key={`sticky-step-progress-${safeStep}-${totalSteps}`}
+              progress={progress}
+              variant={progressVariant}
+              step={safeStep}
+              totalSteps={totalSteps}
+              style={styles.progressRail}
+            />
+          </View>
+        ) : null}
+      </View>
+    </View>
   );
 }
 

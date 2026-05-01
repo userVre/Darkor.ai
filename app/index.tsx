@@ -1,19 +1,11 @@
-import {useQuery} from "convex/react";
+import {useAuth} from "@clerk/expo";
 import {Redirect} from "expo-router";
-import {useEffect, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {ActivityIndicator, Text, View} from "react-native";
 import {spacing} from "../styles/spacing";
 
 import {useViewerSession} from "../components/viewer-session-context";
 import {DIAGNOSTIC_BYPASS} from "../lib/diagnostics";
-import {hasDismissedLaunchPaywall} from "../lib/launch-paywall";
-import {getRevenueCatClient, hasActiveSubscription} from "../lib/revenuecat";
-
-type MeResponse = {
-  plan: "free" | "trial" | "pro";
-  hasPaidAccess?: boolean;
-};
 
 function LaunchScreen({ message }: { message: string }) {
   return (
@@ -34,71 +26,17 @@ function LaunchScreen({ message }: { message: string }) {
 
 export default function Index() {
   const { t } = useTranslation();
-  const { anonymousId, isReady: viewerReady } = useViewerSession();
-  const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
-  const [hasCheckedRevenueCat, setHasCheckedRevenueCat] = useState(false);
-  const [revenueCatHasAccess, setRevenueCatHasAccess] = useState(false);
-
-  const me = useQuery(
-    "users:me" as any,
-    DIAGNOSTIC_BYPASS ? "skip" : viewerReady ? viewerArgs : "skip",
-  ) as MeResponse | null | undefined;
-
-  useEffect(() => {
-    if (DIAGNOSTIC_BYPASS) {
-      setHasCheckedRevenueCat(true);
-      return;
-    }
-
-    let active = true;
-
-    const checkRevenueCat = async () => {
-      const client = getRevenueCatClient();
-      if (!client) {
-        if (active) {
-          setHasCheckedRevenueCat(true);
-        }
-        return;
-      }
-
-      try {
-        const info = await client.getCustomerInfo();
-        if (!active) {
-          return;
-        }
-
-        setRevenueCatHasAccess(hasActiveSubscription(info));
-      } catch (error) {
-        console.warn("[Index] RevenueCat access check failed", error);
-      } finally {
-        if (active) {
-          setHasCheckedRevenueCat(true);
-        }
-      }
-    };
-
-    void checkRevenueCat();
-    return () => {
-      active = false;
-    };
-  }, []);
+  const { isLoaded } = useAuth();
+  const { isReady: viewerReady } = useViewerSession();
 
   if (DIAGNOSTIC_BYPASS) {
     return <Redirect href="/(tabs)" />;
   }
 
-  if (!viewerReady || me === undefined || !hasCheckedRevenueCat) {
+  if (!isLoaded || !viewerReady) {
     return <LaunchScreen message={t("boot.checkingPlan")} />;
   }
 
-  if (hasDismissedLaunchPaywall()) {
-    return <Redirect href="/(tabs)" />;
-  }
-
-  if (Boolean(me?.hasPaidAccess) || revenueCatHasAccess) {
-    return <Redirect href="/(tabs)" />;
-  }
-
-  return <Redirect href="/paywall?source=launch" />;
+  return <Redirect href="/(tabs)" />;
 }
 

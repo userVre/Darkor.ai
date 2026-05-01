@@ -25,6 +25,7 @@ import {useViewerCredits} from "./viewer-credits-context";
 import {useWorkspaceDraft} from "./workspace-context";
 
 const FIRST_LAUNCH_DISCLOSURE_KEY = "homedecor:first-launch-disclosure-accepted";
+const PRO_TOOL_LOCK_MESSAGE = "This tool is reserved for PRO members or Day 7 Streak winners.";
 
 export function CreateOptionsScreen() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export function CreateOptionsScreen() {
   const insets = useSafeAreaInsets();
   const { isSignedIn } = useAuth();
   const { clearDraft } = useWorkspaceDraft();
-  const { credits: creditBalance, hasPaidAccess } = useViewerCredits();
+  const { credits: creditBalance, hasPaidAccess, hasProAccess, streakCount } = useViewerCredits();
   const { openStore } = useDiamondStore();
   const isRTL = I18nManager.isRTL;
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
@@ -83,6 +84,8 @@ export function CreateOptionsScreen() {
         description: t("home.tools.smartSpacePlanning.description"),
         serviceParam: "layout",
         topLeftRadius: 40,
+        requiresPro: true,
+        locked: !hasProAccess,
       },
       {
         id: "replace-objects",
@@ -91,6 +94,8 @@ export function CreateOptionsScreen() {
         description: t("home.tools.replace.description"),
         serviceParam: "replace",
         topLeftRadius: 40,
+        requiresPro: true,
+        locked: !hasProAccess,
       },
       {
         id: "reference-style",
@@ -99,9 +104,11 @@ export function CreateOptionsScreen() {
         description: "Show AI what you like and let it apply it to your room!",
         href: "/workspace?service=interior&entrySource=reference-style",
         topLeftRadius: 40,
+        requiresPro: true,
+        locked: !hasProAccess,
       },
     ],
-    [i18n.language, t],
+    [hasProAccess, i18n.language, t],
   );
 
   useEffect(() => {
@@ -130,9 +137,12 @@ export function CreateOptionsScreen() {
         return;
       }
 
-      openStore("empty_balance");
+      router.push({
+        pathname: "/paywall",
+        params: { source: "second-design", redirectTo },
+      } as any);
     },
-    [creditBalance, hasPaidAccess, openStore, router],
+    [creditBalance, hasPaidAccess, router],
   );
 
   const handleTryIt = useCallback((item: HomeToolCardItem) => {
@@ -156,6 +166,11 @@ export function CreateOptionsScreen() {
 
       if (!canCreateAsGuest) {
         router.push({ pathname: "/sign-in", params: { returnTo: redirectTo } });
+        return;
+      }
+
+      if (item.requiresPro && !hasProAccess) {
+        Alert.alert(PRO_TOOL_LOCK_MESSAGE);
         return;
       }
 
@@ -205,6 +220,7 @@ export function CreateOptionsScreen() {
                 accessibilityLabel={t("home.accessibility.openCredits")}
                 count={creditBalance}
                 onPress={handleCreditsPress}
+                streakCount={streakCount}
                 style={styles.creditPill}
                 variant="light"
               />

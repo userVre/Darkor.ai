@@ -14,6 +14,7 @@ export const REVENUECAT_PAYWALL_PLACEMENT = "paywall";
 export type RevenueCatCustomerInfo = import("react-native-purchases").CustomerInfo;
 export type RevenueCatPackage = import("react-native-purchases").PurchasesPackage;
 export type RevenueCatPurchases = (typeof import("react-native-purchases"))["default"];
+export type RevenueCatPurchaseResult = Awaited<ReturnType<RevenueCatPurchases["purchasePackage"]>>;
 export type BillingPlan = "pro" | "trial";
 export type BillingDuration = "weekly" | "yearly";
 export type RevenueCatEntitlement = (typeof REVENUECAT_ENTITLEMENTS)[number] | "free";
@@ -24,6 +25,10 @@ export type RevenueCatTierContext = {
   offeringHint?: string | null;
   priceMetadata?: Record<string, string>;
   attributePayload?: Record<string, string>;
+  productIdentifiers?: {
+    subscriptions?: Partial<Record<BillingDuration, string>>;
+    diamondPacks?: Partial<Record<DiamondPackId, string>>;
+  };
 };
 
 type CachedTieredOfferings = {
@@ -35,11 +40,18 @@ const DIAMOND_PACK_MATCHERS: Record<DiamondPackId, string[]> = {
   starter: ["starter", "10", "10diamond", "10_diamond", "diamond10", "credit10"],
   designer: ["designer", "30", "30diamond", "30_diamond", "diamond30", "credit30"],
   architect: ["architect", "100", "100diamond", "100_diamond", "diamond100", "credit100"],
+  estate: ["estate", "300", "300diamond", "300_diamond", "diamond300", "credit300", "bestvalue", "best_value"],
 };
 
 let purchasesClient: RevenueCatPurchases | null = null;
 let purchasesModulePromise: Promise<typeof import("react-native-purchases")> | null = null;
 const tieredOfferingsCache = new Map<string, CachedTieredOfferings>();
+const REVENUECAT_ATTRIBUTE_KEY_MAX_LENGTH = 40;
+const REVENUECAT_ATTRIBUTE_VALUE_MAX_LENGTH = 500;
+const REVENUECAT_ATTRIBUTE_KEY_PATTERN = /^[A-Za-z0-9_]+$/;
+const REVENUECAT_ATTRIBUTE_KEY_ALIASES: Record<string, string> = {
+  homedecor_subscription_generation_quality: "homedecor_subscription_quality",
+};
 
 function hasRevenueCatNativeModule() {
   return Boolean((NativeModules as { RNPurchases?: unknown }).RNPurchases);
@@ -73,6 +85,31 @@ function normalizeToken(value?: string | null) {
   return String(value ?? "").trim().toLowerCase();
 }
 
+function sanitizeRevenueCatAttributes(attributes: Record<string, string | number | boolean | null | undefined>) {
+  const sanitized: Record<string, string> = {};
+
+  for (const [rawKey, rawValue] of Object.entries(attributes)) {
+    const key = REVENUECAT_ATTRIBUTE_KEY_ALIASES[rawKey] ?? rawKey;
+    if (
+      key.length === 0
+      || key.length > REVENUECAT_ATTRIBUTE_KEY_MAX_LENGTH
+      || !REVENUECAT_ATTRIBUTE_KEY_PATTERN.test(key)
+    ) {
+      console.warn("[RevenueCat] Dropping invalid subscriber attribute key", rawKey);
+      continue;
+    }
+
+    if (rawValue === null || rawValue === undefined) {
+      continue;
+    }
+
+    const value = String(rawValue).slice(0, REVENUECAT_ATTRIBUTE_VALUE_MAX_LENGTH);
+    sanitized[key] = value;
+  }
+
+  return sanitized;
+}
+
 function getPackageHaystack(pkg?: RevenueCatPackage | null) {
   if (!pkg) return "";
   return normalizeHaystack([
@@ -85,7 +122,59 @@ function getPackageHaystack(pkg?: RevenueCatPackage | null) {
 }
 
 function matchesAny(haystack: string, needles: string[]) {
-  return needles.some((needle) => haystack.includes(needle));
+  return needles.some((needle) => needle.length > 0 && haystack.includes(needle));
+}
+
+function getExpectedSubscriptionProductIds(
+  tierContext: RevenueCatTierContext | null | undefined,
+  duration: BillingDuration,
+) {
+  return [
+    tierContext?.productIdentifiers?.subscriptions?.[duration],
+    tierContext?.priceMetadata?.[`homedecor_${duration}_product_id`],
+    tierContext?.attributePayload?.[`homedecor_${duration}_product_id`],
+  ]
+    .map(normalizeToken)
+    .filter((value, index, values) => value.length > 0 && values.indexOf(value) === index);
+}
+
+function getExpectedDiamondProductIds(
+  tierContext: RevenueCatTierContext | null | undefined,
+  packId: DiamondPackId,
+) {
+  const diamondCount = packId === "starter" ? 10 : packId === "designer" ? 30 : packId === "architect" ? 100 : 300;
+  const metadataKey = `homedecor_diamond_${diamondCount}_product_id`;
+  return [
+    tierContext?.productIdentifiers?.diamondPacks?.[packId],
+    tierContext?.priceMetadata?.[metadataKey],
+    tierContext?.attributePayload?.[metadataKey],
+  ]
+    .map(normalizeToken)
+    .filter((value, index, values) => value.length > 0 && values.indexOf(value) === index);
+}
+
+function packageMatchesExpectedProductId(pkg: RevenueCatPackage, expectedProductIds: string[]) {
+  if (expectedProductIds.length === 0) {
+    return false;
+  }
+
+  const normalizedProductIdentifier = normalizeToken(pkg.product.identifier);
+  const normalizedPackageIdentifier = normalizeToken(pkg.identifier);
+  return expectedProductIds.some(
+    (productId) => normalizedProductIdentifier === productId || normalizedPackageIdentifier === productId,
+  );
+}
+
+function inferDiamondPackIdFromHaystack(haystack: string): DiamondPackId | null {
+  const ranked = (Object.entries(DIAMOND_PACK_MATCHERS) as Array<[DiamondPackId, string[]]>)
+    .map(([packId, needles]) => ({
+      packId,
+      score: needles.reduce((total, needle) => total + (haystack.includes(needle) ? 1 : 0), 0),
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => right.score - left.score);
+
+  return ranked[0]?.packId ?? null;
 }
 
 function getAllPackagesFromOfferings(
@@ -289,13 +378,19 @@ export async function syncRevenueCatPricingAttributes(
   purchases: RevenueCatPurchases,
   tierContext: RevenueCatTierContext,
 ) {
-  await purchases.setAttributes({
+  const attributes = sanitizeRevenueCatAttributes({
     homedecor_pricing_tier: tierContext.tierId,
     homedecor_country_code: tierContext.countryCode,
     homedecor_currency_code: tierContext.currencyCode,
     ...(tierContext.priceMetadata ?? {}),
     ...(tierContext.attributePayload ?? {}),
   });
+
+  if (Object.keys(attributes).length === 0) {
+    return;
+  }
+
+  await purchases.setAttributes(attributes);
 }
 
 export async function fetchTieredPackage(
@@ -397,15 +492,22 @@ export function inferPurchaseDateFromCustomerInfo(info?: RevenueCatCustomerInfo 
   return resolveRevenueCatSubscription(info).purchasedAt;
 }
 
-export function findRevenueCatPackage(packages: RevenueCatPackage[], duration: BillingDuration) {
+export function findRevenueCatPackage(
+  packages: RevenueCatPackage[],
+  duration: BillingDuration,
+  tierContext?: RevenueCatTierContext | null,
+) {
+  const expectedProductIds = getExpectedSubscriptionProductIds(tierContext, duration);
   const ranked = packages
     .map((pkg) => {
       const haystack = getPackageHaystack(pkg);
       let score = 0;
 
+      if (packageMatchesExpectedProductId(pkg, expectedProductIds)) score += 20;
       if (inferBillingDurationFromPackage(pkg) === duration) score += 6;
       if (duration === "yearly" && matchesAny(haystack, ["annual", "year", "yearly", "best offer"])) score += 3;
       if (duration === "weekly" && matchesAny(haystack, ["week", "weekly", "trial"])) score += 3;
+      if (matchesAny(haystack, [normalizeToken(tierContext?.tierId), normalizeToken(tierContext?.countryCode)])) score += 2;
       if (matchesAny(haystack, ["pro", "studio", "premium", "homedecor"])) score += 1;
 
       return { pkg, score };
@@ -424,14 +526,21 @@ export function findRevenueCatPackage(packages: RevenueCatPackage[], duration: B
   return null;
 }
 
-export function findRevenueCatDiamondPackage(packages: RevenueCatPackage[], packId: DiamondPackId) {
+export function findRevenueCatDiamondPackage(
+  packages: RevenueCatPackage[],
+  packId: DiamondPackId,
+  tierContext?: RevenueCatTierContext | null,
+) {
+  const expectedProductIds = getExpectedDiamondProductIds(tierContext, packId);
   const ranked = packages
     .map((pkg) => {
       const haystack = getPackageHaystack(pkg);
       let score = 0;
 
+      if (packageMatchesExpectedProductId(pkg, expectedProductIds)) score += 20;
       if (matchesAny(haystack, DIAMOND_PACK_MATCHERS[packId])) score += 8;
       if (matchesAny(haystack, ["diamond", "diamonds", "credit", "credits", "pack"])) score += 4;
+      if (matchesAny(haystack, [normalizeToken(tierContext?.tierId), normalizeToken(tierContext?.countryCode)])) score += 2;
       if (matchesAny(haystack, ["weekly", "yearly", "annual", "trial", "subscription"])) score -= 6;
 
       return { pkg, score };
@@ -444,4 +553,35 @@ export function findRevenueCatDiamondPackage(packages: RevenueCatPackage[], pack
   }
 
   return null;
+}
+
+export function inferRevenueCatDiamondPackId(input?: {
+  packageIdentifier?: string | null;
+  productIdentifier?: string | null;
+  title?: string | null;
+  description?: string | null;
+}) {
+  const haystack = normalizeHaystack([
+    input?.packageIdentifier,
+    input?.productIdentifier,
+    input?.title,
+    input?.description,
+  ]);
+
+  if (!matchesAny(haystack, ["diamond", "diamonds", "credit", "credits", "pack", "starter_pack", "designer_pack", "architect_pack", "estate_pack"])) {
+    return null;
+  }
+
+  return inferDiamondPackIdFromHaystack(haystack);
+}
+
+export function getLatestRevenueCatTransaction(
+  customerInfo: RevenueCatCustomerInfo | null | undefined,
+  productIdentifier: string,
+) {
+  const matchingTransactions = (customerInfo?.nonSubscriptionTransactions ?? [])
+    .filter((transaction) => transaction.productIdentifier === productIdentifier)
+    .sort((left, right) => Date.parse(right.purchaseDate) - Date.parse(left.purchaseDate));
+
+  return matchingTransactions[0] ?? null;
 }

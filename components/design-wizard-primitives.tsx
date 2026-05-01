@@ -19,19 +19,19 @@ WashingMachineIcon,
 } from "phosphor-react-native";
 import type {TextStyle, ViewStyle} from "react-native";
 
-export const DESIGN_WIZARD_ACCENT = "#1D4ED8";
-export const DESIGN_WIZARD_ACCENT_STRONG = "#1E40AF";
-export const DESIGN_WIZARD_DEPTH_SHADOW = "rgba(29,78,216,0.22)";
+export const DESIGN_WIZARD_ACCENT = "#007AFF";
+export const DESIGN_WIZARD_ACCENT_STRONG = "#0062CC";
+export const DESIGN_WIZARD_DEPTH_SHADOW = "rgba(0,122,255,0.22)";
 export const DESIGN_WIZARD_SURFACE = "#FFFFFF";
 export const DESIGN_WIZARD_SURFACE_MUTED = "#F5F5F5";
 export const DESIGN_WIZARD_BORDER = "#E3E3E3";
 export const DESIGN_WIZARD_TEXT = "#0A0A0A";
 export const DESIGN_WIZARD_TEXT_MUTED = "#686868";
 export const DESIGN_WIZARD_TEXT_ON_DARK = "#FFFFFF";
-export const DESIGN_WIZARD_RUBY = "#E53935";
-export const DESIGN_WIZARD_SELECTION_BLUE = "#2563EB";
-export const DESIGN_WIZARD_SELECTION_BLUE_SOFT = "rgba(37,99,235,0.14)";
-export const DESIGN_WIZARD_SELECTION_BLUE_GLOW = "rgba(37,99,235,0.2)";
+export const DESIGN_WIZARD_RUBY = "#3B5BDB";
+export const DESIGN_WIZARD_SELECTION_BLUE = "#007AFF";
+export const DESIGN_WIZARD_SELECTION_BLUE_SOFT = "rgba(0,122,255,0.14)";
+export const DESIGN_WIZARD_SELECTION_BLUE_GLOW = "rgba(0,122,255,0.2)";
 
 type RoomIconName =
   | "Bathroom"
@@ -119,7 +119,7 @@ export function getWizardFloatingButtonStyle(active: boolean): ViewStyle {
     borderCurve: "continuous",
     backgroundColor: active ? DESIGN_WIZARD_ACCENT : "#ECECEC",
     boxShadow: active
-      ? "0px 18px 30px rgba(29,78,216,0.24)"
+      ? "0px 18px 30px rgba(0,122,255,0.24)"
       : "0px 14px 28px rgba(15,23,42,0.12)",
   };
 }

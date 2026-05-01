@@ -1,8 +1,8 @@
 import { ConvexError } from "convex/values";
 
-import { FREE_IMAGE_LIMIT } from "./subscriptions";
+import { FREE_IMAGE_LIMIT, INITIAL_FREE_DIAMONDS } from "./subscriptions";
 
-export const GUEST_STARTER_CREDITS = 3;
+export const GUEST_STARTER_CREDITS = INITIAL_FREE_DIAMONDS;
 
 export function normalizeAnonymousId(value?: string | null) {
   const normalized = value?.trim();
@@ -11,6 +11,16 @@ export function normalizeAnonymousId(value?: string | null) {
 
 export function toGuestUserId(anonymousId: string) {
   return `guest:${anonymousId}`;
+}
+
+export function createReferralCode(seed?: string | null) {
+  const input = String(seed ?? `guest-${Date.now()}`).trim().toLowerCase();
+  let hash = 5381;
+  for (let index = 0; index < input.length; index += 1) {
+    hash = ((hash << 5) + hash + input.charCodeAt(index)) >>> 0;
+  }
+
+  return `HD${hash.toString(36).toUpperCase().padStart(7, "0").slice(0, 7)}`;
 }
 
 export function buildDefaultUserFields(args: {
@@ -22,20 +32,31 @@ export function buildDefaultUserFields(args: {
 }) {
   const now = Date.now();
   const guestId = args.anonymousId ? toGuestUserId(args.anonymousId) : undefined;
+  const referralSeed = args.clerkId ?? args.anonymousId ?? guestId ?? String(now);
 
   return {
     clerkId: args.clerkId,
     anonymousId: args.anonymousId,
     mergedIntoClerkId: undefined,
     credits: args.credits ?? GUEST_STARTER_CREDITS,
+    premiumCredits: 0,
     plan: "free",
     generationCount: args.generationCount ?? 0,
     reviewPrompted: false,
     lastReviewPromptAt: 0,
     lastRewardDate: now,
-    referralCode: args.referralCode ?? args.clerkId ?? guestId ?? `guest-${now}`,
+    streakCount: 1,
+    lastLoginDate: now,
+    lastClaimDate: 0,
+    nextDiamondClaimAt: 0,
+    canClaimDiamond: false,
+    eliteProUntil: 0,
+    referralCode: args.referralCode ?? createReferralCode(referralSeed),
     referralCount: 0,
+    referralProCount: 0,
     referredBy: undefined,
+    referralInstallRewardedAt: undefined,
+    referralProRewardedAt: undefined,
     subscriptionType: "free" as const,
     subscriptionEntitlement: "free" as const,
     subscriptionStartedAt: 0,
@@ -75,7 +96,6 @@ export async function ensureGuestUser(ctx: any, anonymousId: string) {
     "users",
     buildDefaultUserFields({
       anonymousId: normalizedAnonymousId,
-      referralCode: toGuestUserId(normalizedAnonymousId),
     }),
   );
 

@@ -1,6 +1,6 @@
 import {useTheme} from "@/styles/theme";
 import {useAuth} from "@clerk/expo";
-import {Tabs, useRouter} from "expo-router";
+import {Tabs, usePathname, useRouter} from "expo-router";
 import {Compass, House, Sparkles, UserRound, type LucideIcon} from "lucide-react-native";
 import type {ReactNode} from "react";
 import {useTranslation} from "react-i18next";
@@ -8,6 +8,7 @@ import {Pressable, View, type PressableProps} from "react-native";
 import {spacing} from "../../styles/spacing";
 import {fonts} from "../../styles/typography";
 
+import {useFlowUI} from "../../components/flow-ui-context";
 import {useWorkspaceDraft} from "../../components/workspace-context";
 import {DS} from "../../lib/design-system";
 import {ENABLE_GUEST_WIZARD_TEST_MODE} from "../../lib/guest-testing";
@@ -16,18 +17,18 @@ import {withWorkspaceFlowId} from "../../lib/try-it-flow";
 
 export const DEFAULT_TAB_BAR_STYLE = {
   position: "absolute" as const,
-  left: 20,
-  right: 20,
-  bottom: 18,
+  left: 0,
+  right: 0,
+  bottom: 0,
   backgroundColor: DS.colors.surface,
-  height: 86,
-  paddingTop: 12,
-  paddingBottom: 12,
+  height: 74,
+  paddingTop: 8,
+  paddingBottom: 8,
   paddingHorizontal: spacing.sm,
-  borderRadius: 32,
-  borderWidth: 1,
-  borderColor: DS.colors.border,
-  boxShadow: `0px 10px 30px ${DS.colors.shadow}`,
+  borderTopWidth: 1,
+  borderTopColor: DS.colors.border,
+  borderRadius: 0,
+  boxShadow: `0px -8px 24px ${DS.colors.shadow}`,
 };
 
 type TabButtonProps = PressableProps & {
@@ -97,10 +98,13 @@ function TabIcon({
 
 export default function TabsLayout() {
   const router = useRouter();
+  const pathname = usePathname();
   const { t } = useTranslation();
   const { clearDraft } = useWorkspaceDraft();
+  const { isFlowActive } = useFlowUI();
   const { isSignedIn } = useAuth();
   const canOpenCreateTab = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
+  const shouldHideTabBar = pathname === "/workspace" && isFlowActive;
 
   return (
     <Tabs
@@ -121,7 +125,7 @@ export default function TabsLayout() {
           lineHeight: 14,
           ...fonts.medium,
         },
-        tabBarStyle: DEFAULT_TAB_BAR_STYLE,
+        tabBarStyle: shouldHideTabBar ? { display: "none" } : DEFAULT_TAB_BAR_STYLE,
         sceneStyle: {
           backgroundColor: DS.colors.background,
         },

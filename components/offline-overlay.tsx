@@ -23,29 +23,29 @@ function WifiAlertIcon({ size = 120 }: { size?: number }) {
           borderRadius: size / 2,
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#FDE8EE",
+          backgroundColor: "#E0E7FF",
         }}
       >
         <Svg width={size * 0.66} height={size * 0.66} viewBox="0 0 64 64" fill="none">
           <Path
             d="M10 25C22.3 14.7 41.7 14.7 54 25"
-            stroke="#D64067"
+            stroke="#3B5BDB"
             strokeWidth={4}
             strokeLinecap="round"
           />
           <Path
             d="M18 34C26 27.8 38 27.8 46 34"
-            stroke="#D64067"
+            stroke="#3B5BDB"
             strokeWidth={4}
             strokeLinecap="round"
           />
           <Path
             d="M26.5 43.5C29.8 41.1 34.2 41.1 37.5 43.5"
-            stroke="#D64067"
+            stroke="#3B5BDB"
             strokeWidth={4}
             strokeLinecap="round"
           />
-          <Circle cx="32" cy="50" r="3.4" fill="#D64067" />
+          <Circle cx="32" cy="50" r="3.4" fill="#3B5BDB" />
         </Svg>
       </View>
 
@@ -57,7 +57,7 @@ function WifiAlertIcon({ size = 120 }: { size?: number }) {
           width: size * 0.34,
           height: size * 0.34,
           borderRadius: (size * 0.34) / 2,
-          backgroundColor: "#D64067",
+          backgroundColor: "#3B5BDB",
           alignItems: "center",
           justifyContent: "center",
           borderWidth: 4,
@@ -138,7 +138,7 @@ export function OfflineOverlay() {
         <View
           style={{
             ...surfaceCard("#FFFFFF"),
-            ...glowShadow("rgba(214,64,103,0.16)", 22),
+            ...glowShadow("rgba(59,91,219,0.18)", 22),
             width: "100%",
             maxWidth: 420,
             alignSelf: "center",

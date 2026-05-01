@@ -114,8 +114,8 @@ const pointerClassName = "cursor-pointer";
 const OLED_BLACK = "#000000";
 const CARD_BLACK = SERVICE_WIZARD_THEME.colors.surfaceRaised;
 const CARD_BLACK_SOFT = SERVICE_WIZARD_THEME.colors.surfaceSoft;
-const MASK_COLOR = "rgba(255,59,48,0.42)";
-const MASK_ACCENT = "#121212";
+const MASK_COLOR = "rgba(0,122,255,0.42)";
+const MASK_ACCENT = DIAMOND_PILL_BLUE;
 const MASK_CAPTURE_COLOR = "#FFFFFF";
 const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
@@ -131,7 +131,7 @@ const DEFAULT_FINISH_LABEL = "Satin";
 
 const COLOR_PICKER_PRESET_SWATCHES = [
   { id: "pink", value: "#FF69B4" },
-  { id: "blue", value: "#3B82F6" },
+  { id: "blue", value: "#007AFF" },
   { id: "green", value: "#34C759" },
   { id: "yellow", value: "#FACC15" },
   { id: "gray", value: "#9CA3AF" },
@@ -759,6 +759,11 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const handleSaveResult = useCallback(async () => {
     triggerHaptic();
 
+    if (!me?.hasPaidAccess) {
+      router.push({ pathname: "/paywall", params: { source: "download", lastImageUrl: generatedImageUrl } } as any);
+      return;
+    }
+
     let tempUri: string | null = null;
     let temporary = false;
     try {
@@ -778,10 +783,15 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, prepareGeneratedImageFile, promptOpenSettings, showToast, t]);
+  }, [cleanupTempFile, generatedImageUrl, me?.hasPaidAccess, prepareGeneratedImageFile, promptOpenSettings, router, showToast, t]);
 
   const handleShareResult = useCallback(async () => {
     triggerHaptic();
+
+    if (!me?.hasPaidAccess) {
+      router.push({ pathname: "/paywall", params: { source: "share", lastImageUrl: generatedImageUrl } } as any);
+      return;
+    }
 
     let tempUri: string | null = null;
     let temporary = false;
@@ -798,13 +808,12 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, prepareGeneratedImageFile, t]);
+  }, [cleanupTempFile, generatedImageUrl, me?.hasPaidAccess, prepareGeneratedImageFile, router, t]);
 
   const handleClose = useCallback(() => {
     triggerHaptic();
-    resetProject();
     router.replace(TABS_HOME_ROUTE as any);
-  }, [resetProject, router]);
+  }, [router]);
 
   const handleOpenPaywall = useCallback(() => {
     triggerHaptic();
@@ -1167,7 +1176,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       }
 
       if (generationAccess.reason === "paywall") {
-        openStore("empty_balance");
+        router.push({ pathname: "/paywall", params: { source: "second-design" } } as any);
         return;
       }
 
@@ -1242,7 +1251,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
           router.push({ pathname: "/sign-in", params: { returnTo: "/workspace?service=paint" } });
           return;
         }
-        openStore("empty_balance");
+        router.push({ pathname: "/paywall", params: { source: "second-design" } } as any);
         return;
       }
       showToast(getFriendlyGenerationError(rawMessage));
@@ -1254,7 +1263,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     generationAccess.reason,
     isAiColorSuggestionEnabled,
     isGenerating,
-    openStore,
     router,
     selectedColorCategory,
     selectedColorRgbLabel,
@@ -2159,13 +2167,13 @@ const styles = StyleSheet.create({
   },
   selectionChoiceCardActive: {
     borderWidth: 2,
-    borderColor: "#2563EB",
-    shadowColor: "#2563EB",
+    borderColor: DIAMOND_PILL_BLUE,
+    shadowColor: DIAMOND_PILL_BLUE,
     shadowOpacity: 0.2,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
-    boxShadow: "0px 0px 0px 1px rgba(37,99,235,0.14), 0px 12px 28px rgba(37,99,235,0.2)",
+    boxShadow: "0px 0px 0px 1px rgba(0,122,255,0.14), 0px 12px 28px rgba(0,122,255,0.2)",
   },
   selectionCardIconWrap: {
     width: 40,
@@ -2186,7 +2194,7 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
   selectionCardLabelActive: {
-    color: "#2563EB",
+    color: DIAMOND_PILL_BLUE,
     ...fonts.bold,
   },
   selectionSurfaceCardLabel: {
@@ -2456,14 +2464,14 @@ const styles = StyleSheet.create({
   },
   surfacePickerRowActive: {
       borderWidth: 2,
-      borderColor: "#2563EB",
+      borderColor: DIAMOND_PILL_BLUE,
       backgroundColor: "#FFFFFF",
-      shadowColor: "#2563EB",
+      shadowColor: DIAMOND_PILL_BLUE,
       shadowOpacity: 0.2,
       shadowRadius: 16,
       shadowOffset: { width: 0, height: 8 },
       elevation: 8,
-      boxShadow: "0px 0px 0px 1px rgba(37,99,235,0.14), 0px 12px 28px rgba(37,99,235,0.2)",
+      boxShadow: "0px 0px 0px 1px rgba(0,122,255,0.14), 0px 12px 28px rgba(0,122,255,0.2)",
     },
   surfacePickerRowLeading: {
     flexDirection: "row",
@@ -2483,7 +2491,7 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
   surfacePickerRowTextActive: {
-      color: "#2563EB",
+      color: DIAMOND_PILL_BLUE,
       ...fonts.bold,
     },
   surfacePickerCheckCircle: {
@@ -2497,8 +2505,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   surfacePickerCheckCircleActive: {
-        borderColor: "#2563EB",
-        backgroundColor: "#2563EB",
+        borderColor: DIAMOND_PILL_BLUE,
+        backgroundColor: DIAMOND_PILL_BLUE,
     },
   surfacePickerApplyButton: {
     position: "absolute",
@@ -3113,7 +3121,7 @@ const styles = StyleSheet.create({
     width: 230,
     height: 230,
     borderRadius: 14,
-    backgroundColor: "rgba(204,51,51,0.18)",
+    backgroundColor: "rgba(0,122,255,0.18)",
   },
   detectCopy: {
     alignItems: "center",
@@ -3371,9 +3379,9 @@ const styles = StyleSheet.create({
   },
   swatchOuterActive: {
       borderWidth: 2,
-      borderColor: "#2563EB",
+      borderColor: DIAMOND_PILL_BLUE,
       backgroundColor: CARD_BLACK_SOFT,
-      shadowColor: "#2563EB",
+      shadowColor: DIAMOND_PILL_BLUE,
       shadowOpacity: 0.2,
       shadowRadius: 16,
       shadowOffset: { width: 0, height: 6 },
@@ -3393,7 +3401,7 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   swatchLabelActive: {
-      color: "#2563EB",
+      color: DIAMOND_PILL_BLUE,
       ...fonts.bold,
     },
   finishSummaryCard: {
@@ -3459,14 +3467,14 @@ const styles = StyleSheet.create({
   },
   finishCardActive: {
       borderWidth: 2,
-      borderColor: "#2563EB",
+      borderColor: DIAMOND_PILL_BLUE,
       backgroundColor: CARD_BLACK_SOFT,
-      shadowColor: "#2563EB",
+      shadowColor: DIAMOND_PILL_BLUE,
       shadowOpacity: 0.2,
       shadowRadius: 16,
       shadowOffset: { width: 0, height: 8 },
       elevation: 8,
-      boxShadow: "0px 0px 0px 1px rgba(37,99,235,0.14), 0px 12px 28px rgba(37,99,235,0.2)",
+      boxShadow: "0px 0px 0px 1px rgba(0,122,255,0.14), 0px 12px 28px rgba(0,122,255,0.2)",
     },
   finishPreviewBase: {
     width: 40,
@@ -3520,7 +3528,7 @@ const styles = StyleSheet.create({
       fontWeight: "600",
     },
   finishTitleActive: {
-      color: "#2563EB",
+      color: DIAMOND_PILL_BLUE,
       fontWeight: "700",
     },
   finishText: {
@@ -3587,9 +3595,9 @@ const styles = StyleSheet.create({
     right: 10,
     height: 72,
     borderRadius: 12,
-    backgroundColor: "rgba(204,51,51,0.12)",
+    backgroundColor: "rgba(0,122,255,0.12)",
     borderWidth: 1,
-    borderColor: "rgba(217,70,239,0.24)",
+    borderColor: "rgba(0,122,255,0.24)",
   },
   processingChip: {
     height: 40,

@@ -36,6 +36,7 @@ import Svg, {Circle as SvgCircle} from "react-native-svg";
 import {createLocalizedPrice, usePricingContext, type LocalizedPrice} from "../lib/dynamic-pricing";
 
 import {useProSuccess} from "../components/pro-success-context";
+import {useDiamondStore} from "../components/diamond-store-context";
 import {useViewerCredits} from "../components/viewer-credits-context";
 import {useViewerSession} from "../components/viewer-session-context";
 import {getGenerationLimit} from "../convex/subscriptions";
@@ -67,36 +68,40 @@ type RevenueCatPurchases,
 import {radix} from "../styles/theme";
 import {fonts} from "../styles/typography";
 
-const SCREEN_BG = "#0D0D0D";
-const PANEL_BG_ALT = SCREEN_BG;
-const PANEL_BORDER = radix.dark.slate.slate6;
-const BRAND_RED = radix.dark.ruby.ruby9;
-const BRAND_RED_ACTIVE = radix.dark.ruby.ruby10;
-const TOGGLE_OFF = radix.dark.slate.slate5;
-const TEXT_PRIMARY = "#FFFFFF";
-const TEXT_MUTED = "rgba(255,255,255,0.72)";
-const TEXT_RESTORE = "#FFFFFF";
-const TEXT_ACCENT = "#FFFFFF";
-const CTA_TEXT = "#FFFFFF";
-const ERROR_TEXT = radix.dark.ruby.ruby11;
-const RUBY_BADGE = radix.dark.ruby.ruby9;
-const RUBY_BADGE_BORDER = radix.dark.ruby.ruby10;
+const SCREEN_BG = radix.light.slate.slate1;
+const PANEL_BG_ALT = radix.light.slate.slate2;
+const PANEL_BORDER = radix.light.slate.slate6;
+const BRAND_RED = radix.light.ruby.ruby9;
+const BRAND_RED_ACTIVE = radix.light.ruby.ruby9;
+const TOGGLE_OFF = radix.light.slate.slate6;
+const TEXT_PRIMARY = radix.light.slate.slate12;
+const TEXT_MUTED = radix.light.slate.slate11;
+const TEXT_RESTORE = radix.light.slate.slate12;
+const TEXT_ACCENT = radix.light.slate.slate1;
+const CTA_TEXT = radix.light.slate.slate1;
+const ERROR_TEXT = radix.light.ruby.ruby11;
+const RUBY_BADGE = radix.light.ruby.ruby9;
+const RUBY_BADGE_BORDER = radix.light.ruby.ruby9;
 const TRANSITION_DURATION_MS = 200;
-const CAROUSEL_INTERVAL_MS = 2500;
+const CAROUSEL_INTERVAL_MS = 2000;
 const CLOSE_DELAY_MS = 5000;
 const CLOSE_VISUAL_SIZE = 40;
 const CLOSE_RING_RADIUS = 15;
 const CLOSE_RING_STROKE_WIDTH = 2.5;
 const CLOSE_RING_CIRCUMFERENCE = 2 * Math.PI * CLOSE_RING_RADIUS;
-const HERO_CENTER_SIZE_MAX = 164;
-const HERO_CENTER_SIZE_MIN = 124;
-const HERO_SIDE_SCALE = 0.76;
+const HERO_CENTER_WIDTH_MAX = 236;
+const HERO_CENTER_WIDTH_MIN = 184;
+const HERO_IMAGE_ASPECT_RATIO = 1.34;
+const HERO_SIDE_SCALE = 0.8;
 const HERO_SIDE_TRANSLATE_Y = 18;
 const HERO_CAROUSEL_REPEAT_MULTIPLIER = 7;
 const HERO_IMAGES = [
-  require("../assets/media/paywall/paywall-soft-lounge.png"),
-  require("../assets/media/paywall/paywall-luxury-lounge.png"),
-  require("../assets/media/paywall/paywall-marble-kitchen.png"),
+  require("../assets/media/paywall/carousel-gaming-led.png"),
+  require("../assets/media/paywall/carousel-luxury-marble.png"),
+  require("../assets/media/paywall/carousel-japandi-bedroom.png"),
+  require("../assets/media/paywall/carousel-led-villa.png"),
+  require("../assets/media/paywall/carousel-tropical-pool.png"),
+  require("../assets/media/paywall/carousel-industrial-loft.png"),
 ] as const;
 const HERO_CAROUSEL_DATA = Array.from({ length: HERO_IMAGES.length * HERO_CAROUSEL_REPEAT_MULTIPLIER }, (_, index) => ({
   id: `hero-${index}`,
@@ -184,14 +189,16 @@ function HeroCarouselItem({
   image,
   index,
   scrollX,
-  centerSize,
+  centerWidth,
+  centerHeight,
   sideScale,
   snapInterval,
 }: {
   image: (typeof HERO_IMAGES)[number];
   index: number;
   scrollX: NativeAnimated.Value;
-  centerSize: number;
+  centerWidth: number;
+  centerHeight: number;
   sideScale: number;
   snapInterval: number;
 }) {
@@ -225,8 +232,8 @@ function HeroCarouselItem({
   };
 
   return (
-    <View style={[styles.heroItemSlot, { width: snapInterval, height: centerSize + HERO_SIDE_TRANSLATE_Y }]}>
-      <NativeAnimated.View style={[styles.heroImageWrap, { width: centerSize, height: centerSize }, animatedStyle]}>
+    <View style={[styles.heroItemSlot, { width: snapInterval, height: centerHeight + HERO_SIDE_TRANSLATE_Y }]}>
+      <NativeAnimated.View style={[styles.heroImageWrap, { width: centerWidth, height: centerHeight }, animatedStyle]}>
         <Image contentFit="cover" source={image} style={styles.heroImage} transition={0} />
       </NativeAnimated.View>
     </View>
@@ -495,14 +502,16 @@ export default function PaywallScreen() {
   const pricingContext = usePricingContext();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { source, redirectTo } = useLocalSearchParams<{
-    source?: "launch" | "design-flow" | "generate";
+  const { source, redirectTo, lastImageUrl } = useLocalSearchParams<{
+    source?: "launch" | "design-flow" | "generate" | "download" | "share" | "second-design" | "generation-speed-up";
     redirectTo?: string;
+    lastImageUrl?: string;
   }>();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const { anonymousId } = useViewerSession();
-  const { setOptimisticAccess } = useViewerCredits();
+  const { credits, hasPaidAccess, setOptimisticAccess } = useViewerCredits();
+  const { openStore } = useDiamondStore();
   const setPlan = useMutation("users:setViewerPlanFromRevenueCat" as any);
   const { showSuccess } = useProSuccess();
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
@@ -521,12 +530,18 @@ export default function PaywallScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(5);
-  const heroCenterSize = Math.min(HERO_CENTER_SIZE_MAX, Math.max(HERO_CENTER_SIZE_MIN, width * 0.38));
+  const personalizedImageUrl = typeof lastImageUrl === "string" && lastImageUrl.length > 0 ? lastImageUrl : null;
+  const hasPersonalizedBackground = Boolean(personalizedImageUrl);
+  const paywallSubtitle = hasPersonalizedBackground
+    ? "Your room is ready for the next level. Continue designing this space in 4K."
+    : t("paywall.subtitle");
+  const heroCenterWidth = Math.min(HERO_CENTER_WIDTH_MAX, Math.max(HERO_CENTER_WIDTH_MIN, width * 0.56));
+  const heroCenterHeight = heroCenterWidth / HERO_IMAGE_ASPECT_RATIO;
   const heroSnapInterval = width / 2;
   const heroTrackPadding = Math.max((width - heroSnapInterval) / 2, 0);
-  const heroRowHeight = heroCenterSize + HERO_SIDE_TRANSLATE_Y + 36;
-  const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly"), [packages]);
-  const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly"), [packages]);
+  const heroRowHeight = heroCenterHeight + HERO_SIDE_TRANSLATE_Y + 36;
+  const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
+  const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
   const displayedYearlyPrice = useMemo(
     () => getDisplayedPrice(pricingContext.prices.yearly, pricingContext.locale, pricingContext.currencyCode, yearlyPackage),
     [pricingContext.currencyCode, pricingContext.locale, pricingContext.prices.yearly, yearlyPackage],
@@ -556,6 +571,16 @@ export default function PaywallScreen() {
   const thenWeeklyPriceText = useMemo(
     () => t("paywall.thenPricePerWeek", { price: displayedWeeklyPrice.formatted }),
     [displayedWeeklyPrice.formatted, i18n.language, t],
+  );
+  const displayedFreeTrialPrice = useMemo(
+    () =>
+      createLocalizedPrice({
+        amount: 0,
+        currencyCode: pricingContext.currencyCode,
+        locale: pricingContext.locale,
+        source: "fx_snapshot",
+      }),
+    [pricingContext.currencyCode, pricingContext.locale],
   );
   const cachedOfferingPackages = useMemo(
     () =>
@@ -749,8 +774,12 @@ export default function PaywallScreen() {
     }
 
     triggerHaptic();
+    const shouldOpenDownsell = source === "launch" && !hasPaidAccess && credits <= 0;
     closePaywall();
-  }, [canClose, closePaywall, isLoading]);
+    if (shouldOpenDownsell) {
+      setTimeout(() => openStore("empty_balance"), 250);
+    }
+  }, [canClose, closePaywall, credits, hasPaidAccess, isLoading, openStore, source]);
 
   const handleRestore = useCallback(async () => {
     triggerHaptic();
@@ -936,10 +965,24 @@ export default function PaywallScreen() {
           gestureEnabled: false,
         }}
       />
-      <StatusBar style="light" />
-      <Animated.View pointerEvents="none" style={[styles.overlay, overlayAnimatedStyle]} />
+      <StatusBar style="dark" />
+      {personalizedImageUrl ? (
+        <>
+          <Image
+            blurRadius={28}
+            contentFit="cover"
+            source={{ uri: personalizedImageUrl }}
+            style={styles.personalizedBackgroundImage}
+          />
+          <View pointerEvents="none" style={styles.personalizedBackgroundOverlay} />
+        </>
+      ) : null}
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.overlay, hasPersonalizedBackground ? styles.personalizedAnimatedOverlay : null, overlayAnimatedStyle]}
+      />
 
-      <Animated.View style={[styles.sheet, { minHeight: sheetHeight }, sheetAnimatedStyle]}>
+      <Animated.View style={[styles.sheet, hasPersonalizedBackground ? styles.personalizedSheet : null, { minHeight: sheetHeight }, sheetAnimatedStyle]}>
         <Pressable
           accessibilityRole="button"
           disabled={isLoading}
@@ -989,7 +1032,8 @@ export default function PaywallScreen() {
               {HERO_CAROUSEL_DATA.map((item, index) => (
                 <HeroCarouselItem
                   key={item.id}
-                  centerSize={heroCenterSize}
+                  centerHeight={heroCenterHeight}
+                  centerWidth={heroCenterWidth}
                   image={item.image}
                   index={index}
                   scrollX={carouselScrollX}
@@ -1002,7 +1046,7 @@ export default function PaywallScreen() {
 
           <View style={[styles.titleSection, { alignItems: getDirectionalAlignment(isRTL) }]}>
             <Text style={[styles.titleText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("paywall.title")}</Text>
-            <Text style={[styles.subtitleText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("paywall.subtitle")}</Text>
+            <Text style={[styles.subtitleText, hasPersonalizedBackground ? styles.personalizedSubtitleText : null, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{paywallSubtitle}</Text>
           </View>
 
           <View style={styles.featuresSection}>
@@ -1059,7 +1103,7 @@ export default function PaywallScreen() {
             ) : (
               <FadeSwap swapKey={freeTrialEnabled ? "cta-trial" : "cta-continue"} style={styles.ctaContent}>
                 <View style={[styles.ctaLabelRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{freeTrialEnabled ? "Try for $0" : t("paywall.ctaGooglePlayContinue")}</Text>
+                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{freeTrialEnabled ? `Try for ${displayedFreeTrialPrice.formatted}` : t("paywall.ctaGooglePlayContinue")}</Text>
                   <Text
                     style={[
                       styles.ctaArrow,
@@ -1102,14 +1146,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: SCREEN_BG,
   },
+  personalizedBackgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  personalizedBackgroundOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.74)",
+  },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: SCREEN_BG,
+  },
+  personalizedAnimatedOverlay: {
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
   sheet: {
     flex: 1,
     position: "relative",
     backgroundColor: SCREEN_BG,
+  },
+  personalizedSheet: {
+    backgroundColor: "transparent",
   },
   restoreButton: {
     position: "absolute",
@@ -1208,6 +1265,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     ...fonts.medium,
   },
+  personalizedSubtitleText: {
+    maxWidth: 390,
+    color: TEXT_PRIMARY,
+    fontSize: 14,
+    lineHeight: 20,
+  },
   titleText: {
     color: TEXT_PRIMARY,
     fontSize: 25,
@@ -1285,6 +1348,7 @@ const styles = StyleSheet.create({
   },
   weeklyWrapper: {
     marginTop: 18,
+    marginBottom: 10,
     marginHorizontal: 20,
   },
   planCard: {
@@ -1353,6 +1417,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginLeft: 12,
     direction: "ltr",
+    width: 132,
   },
   planLabel: {
     color: TEXT_PRIMARY,
@@ -1376,8 +1441,8 @@ const styles = StyleSheet.create({
   },
   weeklyTrialPrice: {
     color: TEXT_PRIMARY,
-    fontSize: 15,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 17,
     flexShrink: 1,
     ...fonts.bold,
   },
@@ -1439,16 +1504,22 @@ const styles = StyleSheet.create({
     ...fonts.medium,
   },
   ctaButton: {
-    minHeight: 52,
-    marginTop: 6,
+    minHeight: 58,
+    marginTop: 22,
     marginHorizontal: 20,
     marginBottom: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     backgroundColor: BRAND_RED,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 18,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    shadowColor: BRAND_RED,
+    shadowOpacity: 0.34,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 8,
+    boxShadow: "0px 14px 28px rgba(229,57,53,0.28)",
   },
   ctaButtonDisabled: {
     opacity: 0.7,
@@ -1473,8 +1544,8 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     color: CTA_TEXT,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 18,
+    lineHeight: 23,
     ...fonts.bold,
   },
   ctaArrow: {

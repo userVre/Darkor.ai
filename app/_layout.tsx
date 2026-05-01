@@ -3,12 +3,12 @@ import "react-native-reanimated";
 
 import {ClerkProvider, useAuth, useUser} from "@clerk/expo";
 import {BottomSheetModalProvider} from "@gorhom/bottom-sheet";
-import {useMutation, useQuery} from "convex/react";
+import {useMutation} from "convex/react";
 import {ConvexProviderWithClerk} from "convex/react-clerk";
 import {useFonts} from "expo-font";
 import * as Linking from "expo-linking";
-import {useLocales} from "expo-localization";
-import {Stack, useGlobalSearchParams, usePathname, useRouter} from "expo-router";
+import {useCalendars, useLocales} from "expo-localization";
+import {Stack} from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {ActivityIndicator, Text, TextInput, View, type TextInputProps, type TextProps} from "react-native";
@@ -17,12 +17,13 @@ import {SafeAreaProvider} from "react-native-safe-area-context";
 
 import {AppErrorBoundary} from "../components/app-error-boundary";
 import {BrandLaunchScreen} from "../components/brand-launch-screen";
+import {DailyRewardModal} from "../components/daily-reward-modal";
 import {DiamondStoreProvider} from "../components/diamond-store-context";
 import {FlowUIProvider} from "../components/flow-ui-context";
 import {GenerationAccessCacheGate} from "../components/generation-access-cache-gate";
 import {OfflineOverlay} from "../components/offline-overlay";
 import {ProSuccessProvider, useProSuccess} from "../components/pro-success-context";
-import {ViewerCreditsProvider} from "../components/viewer-credits-context";
+import {ViewerCreditsProvider, useViewerCredits} from "../components/viewer-credits-context";
 import {useViewerSession} from "../components/viewer-session-context";
 import {ViewerSessionProvider} from "../components/viewer-session-context";
 import {WorkspaceDraftProvider} from "../components/workspace-context";
@@ -31,7 +32,6 @@ import {DS, SCREEN_SIDE_PADDING, glowShadow, surfaceCard} from "../lib/design-sy
 import {DIAGNOSTIC_BYPASS} from "../lib/diagnostics";
 import {usePricingContext} from "../lib/dynamic-pricing";
 import {getEnvReport, logEnvDiagnostics} from "../lib/env";
-import {ENABLE_GUEST_WIZARD_TEST_MODE} from "../lib/guest-testing";
 import i18n, {
 initializeI18n,
 syncAppLanguageWithSystem,
@@ -41,17 +41,17 @@ useLocalizedAppFonts,
 import {getDirectionalTextAlign, reloadAppForLayoutDirection} from "../lib/i18n/rtl";
 import {consumeReferralCode, setReferralCode} from "../lib/referral";
 import {
-configureRevenueCat,
-fetchTieredPackage,
-getRevenueCatClient,
-hasActiveSubscription,
-resolveRevenueCatSubscription,
-syncRevenueCatPricingAttributes,
-type RevenueCatCustomerInfo,
+  configureRevenueCat,
+  fetchTieredPackage,
+  getLatestRevenueCatTransaction,
+  hasActiveSubscription,
+  inferRevenueCatDiamondPackId,
+  resolveRevenueCatSubscription,
+  syncRevenueCatPricingAttributes,
+  type RevenueCatCustomerInfo,
 type RevenueCatPurchases,
 } from "../lib/revenuecat";
 import {tokenCache} from "../lib/token-cache";
-import {hasDismissedLaunchPaywall} from "../lib/launch-paywall";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -92,12 +92,16 @@ function RevenueCatGate() {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
+  const fulfillDiamondPurchase = useMutation("users:fulfillDiamondPurchase" as any);
   const { showSuccess, showToast } = useProSuccess();
+  const { setOptimisticAccess, setOptimisticCredits } = useViewerCredits();
+  const { anonymousId } = useViewerSession();
   const pricingContext = usePricingContext();
 
   const configuredRef = useRef(false);
   const listenerAddedRef = useRef(false);
   const hasSubscriptionRef = useRef<boolean | null>(null);
+  const processedDiamondTransactionIdsRef = useRef(new Set<string>());
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
   const [revenueCatReady, setRevenueCatReady] = useState(false);
   const syncRef = useRef<(info?: RevenueCatCustomerInfo) => void>(() => undefined);
@@ -175,6 +179,14 @@ function RevenueCatGate() {
         const customerInfo = info ?? (await purchases.getCustomerInfo());
         const subscriptionState = resolveRevenueCatSubscription(customerInfo);
         const hasSubscription = hasActiveSubscription(customerInfo);
+        setOptimisticAccess({
+          hasPaidAccess: hasSubscription,
+          hasProAccess: hasSubscription,
+          subscriptionType:
+            subscriptionState.subscriptionType === "weekly" || subscriptionState.subscriptionType === "yearly"
+              ? subscriptionState.subscriptionType
+              : "free",
+        });
 
         if (isSignedIn) {
           await setPlan({
@@ -184,6 +196,53 @@ function RevenueCatGate() {
             purchasedAt: subscriptionState.purchasedAt ?? undefined,
             subscriptionEnd: hasSubscription ? subscriptionState.subscriptionEnd ?? undefined : 0,
           });
+        }
+
+        for (const transaction of customerInfo?.nonSubscriptionTransactions ?? []) {
+          const productIdentifier = transaction.productIdentifier;
+          const packId = inferRevenueCatDiamondPackId({ productIdentifier });
+          if (!packId) {
+            continue;
+          }
+
+          const purchasedAt = Date.parse(transaction.purchaseDate);
+          const transactionId =
+            transaction.transactionIdentifier
+            ?? `${productIdentifier}:${Number.isFinite(purchasedAt) ? purchasedAt : 0}:${packId}`;
+
+          if (processedDiamondTransactionIdsRef.current.has(transactionId)) {
+            continue;
+          }
+
+          const latestTransaction = getLatestRevenueCatTransaction(customerInfo, productIdentifier);
+          const transactionTimestamp = Number.isFinite(purchasedAt) ? purchasedAt : Date.now();
+          const priceSnapshot = pricingContext.diamondPacks[packId]?.price;
+          const fulfillment = await fulfillDiamondPurchase({
+            anonymousId: anonymousId ?? undefined,
+            transactionId,
+            productIdentifier,
+            packageIdentifier: undefined,
+            packId,
+            purchasedAt: Number.isFinite(transactionTimestamp) ? transactionTimestamp : Date.now(),
+            amount: priceSnapshot?.amount ?? 0,
+            currencyCode: priceSnapshot?.currencyCode ?? pricingContext.currencyCode,
+            pricingTier: pricingContext.tierId,
+            countryCode: pricingContext.countryCode,
+          }) as { credits?: number };
+
+          processedDiamondTransactionIdsRef.current.add(transactionId);
+
+          if (typeof fulfillment?.credits === "number") {
+            setOptimisticCredits(fulfillment.credits);
+          }
+
+          if (latestTransaction?.transactionIdentifier === transaction.transactionIdentifier) {
+            console.log("[RevenueCat] Diamond pack fulfilled", {
+              packId,
+              productIdentifier,
+              transactionId,
+            });
+          }
         }
 
         if (hasSubscriptionRef.current === null) {
@@ -198,7 +257,21 @@ function RevenueCatGate() {
         console.warn("RevenueCat sync failed", error);
       }
     };
-  }, [isSignedIn, revenueCatReady, setPlan, showSuccess, showToast]);
+  }, [
+    anonymousId,
+    fulfillDiamondPurchase,
+    isSignedIn,
+    pricingContext.countryCode,
+    pricingContext.currencyCode,
+    pricingContext.diamondPacks,
+    pricingContext.tierId,
+    revenueCatReady,
+    setOptimisticAccess,
+    setOptimisticCredits,
+    setPlan,
+    showSuccess,
+    showToast,
+  ]);
 
   useEffect(() => {
     const purchases = purchasesRef.current;
@@ -220,8 +293,8 @@ function RevenueCatGate() {
 }
 
 function ReferralGate() {
-  const { isLoaded, isSignedIn } = useAuth();
   const applyReferral = useMutation("users:applyReferral" as any);
+  const { anonymousId, isReady: viewerReady } = useViewerSession();
 
   useEffect(() => {
     const handleUrl = (url: string | null) => {
@@ -239,15 +312,15 @@ function ReferralGate() {
   }, []);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
+    if (!viewerReady) return;
     const run = async () => {
       const code = await consumeReferralCode();
       if (code) {
-        await applyReferral({ referralCode: code });
+        await applyReferral({ referralCode: code, anonymousId: anonymousId ?? undefined });
       }
     };
     void run();
-  }, [applyReferral, isLoaded, isSignedIn]);
+  }, [anonymousId, applyReferral, viewerReady]);
 
   return null;
 }
@@ -256,8 +329,6 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       <ProSuccessProvider>
-        {DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
-        {DIAGNOSTIC_BYPASS ? null : <ReferralGate />}
         {children}
       </ProSuccessProvider>
     </ConvexProviderWithClerk>
@@ -278,17 +349,21 @@ function BootScreen({ message }: { message: string }) {
 
 function LocalizationSyncGate() {
   const locales = useLocales();
+  const calendars = useCalendars();
   const localeSignature = locales
     .map((locale) => locale.languageTag ?? locale.languageCode ?? "")
     .join("|");
+  const calendarSignature = calendars
+    .map((calendar) => calendar.timeZone ?? "")
+    .join("|");
 
   useEffect(() => {
-    void syncAppLanguageWithSystem().then((result) => {
+    void syncAppLanguageWithSystem(locales, calendars).then((result) => {
       if (result.layoutDirectionChanged) {
         void reloadAppForLayoutDirection();
       }
     });
-  }, [localeSignature]);
+  }, [calendarSignature, localeSignature]);
 
   return null;
 }
@@ -336,142 +411,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function buildReturnToPath(pathname: string, params: Record<string, string | string[] | undefined>) {
-  const searchParams = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(params)) {
-    if (typeof value === "string" && value.length > 0) {
-      searchParams.set(key, value);
-      continue;
-    }
-
-    if (Array.isArray(value)) {
-      for (const entry of value) {
-        if (entry.length > 0) {
-          searchParams.append(key, entry);
-        }
-      }
-    }
-  }
-
-  const query = searchParams.toString();
-  return query.length > 0 ? `${pathname}?${query}` : pathname;
-}
-
 function CreateAccessGate({ children }: { children: React.ReactNode }) {
-  const { isLoaded, isSignedIn } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useGlobalSearchParams();
-  const allowGuestCreateAccess =
-    ENABLE_GUEST_WIZARD_TEST_MODE && (pathname === "/workspace" || pathname === "/wizard");
-
-  useEffect(() => {
-    if (allowGuestCreateAccess || !isLoaded || isSignedIn) {
-      return;
-    }
-
-    if (pathname !== "/workspace" && pathname !== "/wizard") {
-      return;
-    }
-
-    const returnTo = buildReturnToPath(pathname, params);
-    router.replace({ pathname: "/sign-in", params: { returnTo } });
-  }, [allowGuestCreateAccess, isLoaded, isSignedIn, params, pathname, router]);
-
-  if (!isLoaded || allowGuestCreateAccess) {
-    return <>{children}</>;
-  }
-
-  if (!isSignedIn && (pathname === "/workspace" || pathname === "/wizard")) {
-    return <BootScreen message={i18n.t("boot.secureAccount")} />;
-  }
-
-  return <>{children}</>;
-}
-
-function LaunchPaywallGate({ children }: { children: React.ReactNode }) {
-  const { isLoaded } = useAuth();
-  const { anonymousId, isReady: viewerReady } = useViewerSession();
-  const router = useRouter();
-  const pathname = usePathname();
-  const me = useQuery(
-    "users:me" as any,
-    viewerReady ? (anonymousId ? { anonymousId } : {}) : "skip",
-  ) as { hasPaidAccess?: boolean } | null | undefined;
-  const [hasCheckedRevenueCat, setHasCheckedRevenueCat] = useState(false);
-  const [revenueCatHasAccess, setRevenueCatHasAccess] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    const checkRevenueCat = async () => {
-      const client = getRevenueCatClient();
-      if (!client) {
-        if (active) {
-          setHasCheckedRevenueCat(true);
-        }
-        return;
-      }
-
-      try {
-        const info = await client.getCustomerInfo();
-        if (!active) {
-          return;
-        }
-
-        setRevenueCatHasAccess(hasActiveSubscription(info));
-      } catch (error) {
-        console.warn("[Boot] RevenueCat launch gate check failed", error);
-      } finally {
-        if (active) {
-          setHasCheckedRevenueCat(true);
-        }
-      }
-    };
-
-    void checkRevenueCat();
-    return () => {
-      active = false;
-    };
-  }, [isLoaded]);
-
-  useEffect(() => {
-    if (!isLoaded || !viewerReady || me === undefined) {
-      return;
-    }
-
-    const hasDismissedPaywall = hasDismissedLaunchPaywall();
-    if (hasDismissedPaywall) {
-      return;
-    }
-
-    if (pathname === "/paywall") {
-      return;
-    }
-
-    const hasAccess = Boolean(me?.hasPaidAccess) || revenueCatHasAccess;
-    if (hasAccess) {
-      return;
-    }
-
-    if (!hasCheckedRevenueCat) {
-      return;
-    }
-
-    router.replace({ pathname: "/paywall", params: { source: "launch" } });
-  }, [hasCheckedRevenueCat, isLoaded, me, pathname, revenueCatHasAccess, router, viewerReady]);
-
-  const isProtectedRoute = pathname !== "/paywall";
-  const shouldBlockForGate =
-    isProtectedRoute
-    && !hasDismissedLaunchPaywall()
-    && (!isLoaded || !viewerReady || me === undefined || !hasCheckedRevenueCat);
-
-  if (shouldBlockForGate) {
-    return <BootScreen message={i18n.t("boot.checkingPlan")} />;
-  }
-
   return <>{children}</>;
 }
 
@@ -590,18 +530,19 @@ export default function RootLayout() {
             <AuthGate>
               <Providers>
                 <ViewerSessionProvider>
+                  {DIAGNOSTIC_BYPASS ? null : <ReferralGate />}
                   <ViewerCreditsProvider>
                     <DiamondStoreProvider>
                       <FlowUIProvider>
                         <WorkspaceDraftProvider>
                           <BottomSheetModalProvider>
+                            {DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
                             <LocalizationSyncGate />
                             <GenerationAccessCacheGate />
-                            <LaunchPaywallGate>
-                              <CreateAccessGate>
-                                <AppShell />
-                              </CreateAccessGate>
-                            </LaunchPaywallGate>
+                            <CreateAccessGate>
+                              <AppShell />
+                            </CreateAccessGate>
+                            <DailyRewardModal />
                             <OfflineOverlay />
                           </BottomSheetModalProvider>
                         </WorkspaceDraftProvider>

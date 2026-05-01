@@ -17,15 +17,17 @@ import {
 import {
   buildDesignNegativePrompt,
   buildDesignPrompt,
+  GLOBAL_MASTERPIECE_QUALITY_INSTRUCTION,
+  GLOBAL_PERSPECTIVE_LOCK_INSTRUCTION,
 } from "../lib/design-prompt-builder";
 
 const AZURE_IMAGE_API_VERSION = "2025-04-01-preview";
 const AZURE_IMAGE_REQUEST_TIMEOUT_MS = 90_000;
 const AZURE_IMAGE_DEPLOYMENT_NAME = "gpt-image-1";
 const AZURE_GEOMETRIC_ADHERENCE_SYSTEM_PROMPT =
-  "ABSOLUTE GEOMETRIC ADHERENCE: You must maintain the exact camera angle, focal length, and structural perspective of the source image. If the house in the source is slanted or at an angle, the redesigned version MUST remain at the same angle. Do not straighten walls or change ceiling heights. Redesign only textures and furniture within the existing pixel-grid boundaries.";
+  `${GLOBAL_PERSPECTIVE_LOCK_INSTRUCTION} STRICT PERSPECTIVE LOCK: You are an AI Architect. The output image MUST align pixel-for-pixel with the source image's structural boundaries. Do not change the horizon line, the floor level, the ceiling height, the camera angle, or the focal length. Redesign furniture, textures, lighting, landscaping, and decor only inside the existing pixel-grid boundaries. Generate one clean full-frame design image only: no text overlays, no captions, no labels, no watermarks, no comparison layout. ${GLOBAL_MASTERPIECE_QUALITY_INSTRUCTION}`;
 const AZURE_EXTERIOR_PERSPECTIVE_LOCK_PROMPT =
-  "EXTERIOR PERSPECTIVE LOCK: Process the entire property frame, including the facade, driveway, entry, and foreground landscape, but keep the building massing, rooflines, openings, site placement, horizon line, and lens perspective locked exactly to the source image so the after image overlays cleanly against the before state.";
+  "EXTERIOR AND GARDEN PERSPECTIVE LOCK: Process the entire property frame, including the facade, driveway, entry, garden, and foreground landscape, but keep the building massing, rooflines, openings, site placement, horizon line, grade, and lens perspective locked exactly to the source image so the generated image overlays cleanly in the slider.";
 const EXTERIOR_ROOM_TYPE_KEYWORDS = [
   "apartment",
   "house",
@@ -38,9 +40,26 @@ const EXTERIOR_ROOM_TYPE_KEYWORDS = [
   "façade",
 ] as const;
 
+const GARDEN_ROOM_TYPE_KEYWORDS = [
+  "garden",
+  "backyard",
+  "front yard",
+  "yard",
+  "patio",
+  "pool",
+  "terrace",
+  "deck",
+  "courtyard",
+  "landscape",
+  "lawn",
+  "outdoor",
+] as const;
+
 type ServiceType = "paint" | "floor" | "redesign" | "layout" | "replace";
+type RequestedServiceType = ServiceType | "wall" | "transfer" | "reference";
 type SpeedTier = "standard" | "pro" | "ultra";
-type AzureRenderSize = "1024x1024" | "1080x1080" | "4096x4096";
+type AzureRenderSize = "1024x1024" | "1024x1536" | "1536x1024";
+type GenerationQualityTier = "free" | "standard_hd" | "premium";
 
 type AzureRenderProfile = {
   deploymentName: string;
@@ -69,6 +88,7 @@ function buildPrompt(args: {
   colorPalette: string;
   customPrompt?: string;
   targetColor?: string;
+  targetColorCategory?: string;
   targetSurface?: string;
   aspectRatio?: string;
   regenerate?: boolean;
@@ -82,6 +102,7 @@ function buildPrompt(args: {
     colorPalette: args.colorPalette,
     customPrompt: args.customPrompt,
     targetColor: args.targetColor,
+    targetColorCategory: args.targetColorCategory,
     targetSurface: args.targetSurface,
     aspectRatio: args.aspectRatio,
     regenerate: args.regenerate,
@@ -95,7 +116,10 @@ function isExteriorRedesignContext(args: { serviceType: ServiceType; roomType: s
   }
 
   const normalizedRoomType = args.roomType.toLowerCase();
-  return EXTERIOR_ROOM_TYPE_KEYWORDS.some((keyword) => normalizedRoomType.includes(keyword));
+  return (
+    EXTERIOR_ROOM_TYPE_KEYWORDS.some((keyword) => normalizedRoomType.includes(keyword)) ||
+    GARDEN_ROOM_TYPE_KEYWORDS.some((keyword) => normalizedRoomType.includes(keyword))
+  );
 }
 
 function buildAzurePrompt(args: {
@@ -120,61 +144,104 @@ function buildModeSpecificInstruction(args: {
   modeId?: string;
 }) {
   if (args.serviceType === "redesign" && args.modeId === "preserve") {
-    return "Analyze the room's current furniture layout. Redesign the space to maximize floor area, improve natural light flow, and create a more comfortable and ergonomic environment. Preserve the walls and windows but optimize the furniture placement and decor.";
+    return "Analyze current furniture placement. Rearrange to maximize floor area and circulation. The result must feel spacious, ergonomic, and breathable while keeping the windows, doors, fixed openings, floor level, ceiling height, and camera geometry in their original places.";
   }
 
   return undefined;
 }
 
 function buildAzureFlowInstruction(args: {
+  requestedServiceType?: RequestedServiceType;
   serviceType: ServiceType;
   customPrompt?: string;
   referenceImageCount: number;
 }) {
   if (args.serviceType === "paint") {
-    return "Automatically detect all wall planes. Apply the user's selected color and texture prompt while strictly preserving the furniture and lighting of the original photo.";
+    return "Automatically detect all wall planes. Apply the user's selected color family and specific shade exactly, preserving furniture shadows on the wall, original window light direction, trim, decor, and all non-wall areas.";
+  }
+
+  if (args.serviceType === "floor") {
+    return "Automatically detect the floor plane. Replace only the floor finish, making wood grain, marble veins, tile seams, and material scale follow the original room's perspective lines, while preserving furniture grounding and contact shadows.";
   }
 
   if (args.serviceType === "replace") {
-    const requestedReplacement = trimOptional(args.customPrompt) ?? "a new object that matches the user's prompt";
-    return `The area marked in the mask needs to be replaced. Change it to ${requestedReplacement}. Ensure the new object blends perfectly with the room's perspective and shadows.`;
+    const requestedReplacement = trimOptional(args.customPrompt) ?? "a refined replacement object";
+    return `Identify the object within the marked mask and replace it with ${requestedReplacement}. The new object must inherit the original shadows, contact grounding, ambient occlusion, light reflections, scale, and perspective for a seamless blend.`;
+  }
+
+  if (
+    (args.requestedServiceType === "reference" || args.requestedServiceType === "transfer")
+    && args.referenceImageCount > 0
+  ) {
+    return "Deconstruct the aesthetic DNA of the reference image: lighting, material palette, furniture language, surface finishes, color temperature, and detailing. Re-map that aesthetic onto the source image's bones while preserving the source wall positions, openings, floor level, ceiling height, camera angle, and focal length.";
   }
 
   if (args.serviceType === "redesign" && args.referenceImageCount > 0) {
     const extraReferenceNote =
       args.referenceImageCount > 1
-        ? " Any additional uploaded reference images should be treated as extra Inspiration Images."
+        ? " Any additional uploaded reference images should be treated as secondary inspiration references."
         : "";
-    return `The first uploaded image is the 'Source Image'. The second uploaded image is the 'Inspiration Image'. Analyze the aesthetic, lighting, and materials of the 'Inspiration Image'. Apply this exact style to the 'Source Image' room without changing the room's structural layout.${extraReferenceNote}`;
+    return `Use the first uploaded image as the source and the second uploaded image as the primary inspiration reference. Deconstruct the reference aesthetic DNA, including lighting, materials, color palette, furniture language, and detailing. Apply that exact style to the source room without changing the source structural layout, wall positions, openings, floor level, ceiling height, camera angle, or focal length.${extraReferenceNote}`;
   }
 
   return undefined;
 }
 
+function parseAspectRatio(value?: string) {
+  const normalized = trimOptional(value)?.toLowerCase().replace(/\s+/g, "");
+  if (!normalized) {
+    return null;
+  }
+
+  const match = normalized.match(/^(\d+(?:\.\d+)?)(?::|x|\/)(\d+(?:\.\d+)?)$/);
+  if (!match) {
+    return null;
+  }
+
+  const width = Number(match[1]);
+  const height = Number(match[2]);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return null;
+  }
+
+  return width / height;
+}
+
 function resolveAzureImageSize(args: {
-  qualityTier?: "free" | "pro";
+  qualityTier?: GenerationQualityTier;
   outputResolution?: string;
+  aspectRatio?: string;
 }) {
   const requestedSize = trimOptional(args.outputResolution);
 
-  if (requestedSize === "4096x4096" || requestedSize === "1080x1080" || requestedSize === "1024x1024") {
+  if (requestedSize === "1024x1024" || requestedSize === "1024x1536" || requestedSize === "1536x1024") {
     return requestedSize as AzureRenderSize;
   }
 
-  return args.qualityTier === "pro" ? "4096x4096" : "1080x1080";
+  const ratio = parseAspectRatio(args.aspectRatio);
+  if (ratio && ratio >= 1.2) {
+    return "1536x1024";
+  }
+  if (ratio && ratio <= 0.83) {
+    return "1024x1536";
+  }
+
+  return "1024x1024";
 }
 
 function resolveAzureRenderProfile(args: {
   deploymentName: string;
   planUsed?: string;
   speedTier?: SpeedTier;
-  qualityTier?: "free" | "pro";
+  qualityTier?: GenerationQualityTier;
   outputResolution?: string;
+  aspectRatio?: string;
 }) {
   const isPaidPlan = args.planUsed === "pro" || args.planUsed === "trial";
   const size = resolveAzureImageSize({
     qualityTier: args.qualityTier,
     outputResolution: args.outputResolution,
+    aspectRatio: args.aspectRatio,
   });
 
   return {
@@ -228,6 +295,15 @@ function getAzureImageFilename(blob: Blob, index: number, prefix: string) {
 function normalizeAzureImageBlob(blob: Blob) {
   const mimeType = getAzureImageMimeType(blob);
   return blob.type === mimeType ? blob : new Blob([blob], { type: mimeType });
+}
+
+function createAzureMultipartFile(blob: Blob, filename: string) {
+  const FileCtor = (globalThis as any).File;
+  if (typeof FileCtor === "function") {
+    return new FileCtor([blob], filename, { type: getAzureImageMimeType(blob) }) as Blob;
+  }
+
+  return blob;
 }
 
 function createAzureImageProvider(args: { apiKey: string; endpoint: string }) {
@@ -288,6 +364,7 @@ async function runAzureImageGeneration(args: {
   prompt: string;
   negativePrompt: string;
   serviceType: ServiceType;
+  requestedServiceType?: RequestedServiceType;
   roomType: string;
   sourceBlob: Blob;
   referenceBlobs: Blob[];
@@ -298,6 +375,7 @@ async function runAzureImageGeneration(args: {
   customPrompt?: string;
 }) {
   const flowInstruction = buildAzureFlowInstruction({
+    requestedServiceType: args.requestedServiceType,
     serviceType: args.serviceType,
     customPrompt: args.customPrompt,
     referenceImageCount: args.referenceBlobs.length,
@@ -333,15 +411,35 @@ async function runAzureImageGeneration(args: {
     formData.append("size", args.renderProfile.size);
     formData.append("n", "1");
 
+    const azureEditMode = args.maskBlob ? "inpainting" : "image-to-image";
+    let imageFieldCount = 0;
     sourceImages.forEach((blob, index) => {
       const normalizedBlob = normalizeAzureImageBlob(blob);
-      formData.append("image", normalizedBlob, getAzureImageFilename(normalizedBlob, index, "image"));
+      const filename = getAzureImageFilename(normalizedBlob, index, "image");
+      formData.append("image", createAzureMultipartFile(normalizedBlob, filename), filename);
+      imageFieldCount += 1;
     });
+
+    if (imageFieldCount === 0) {
+      throw new ConvexError("The source image could not be prepared for generation.");
+    }
 
     if (args.maskBlob) {
       const normalizedMaskBlob = normalizeAzureImageBlob(args.maskBlob);
-      formData.append("mask", normalizedMaskBlob, getAzureImageFilename(normalizedMaskBlob, 0, "mask"));
+      const maskFilename = getAzureImageFilename(normalizedMaskBlob, 0, "mask");
+      formData.append("mask", createAzureMultipartFile(normalizedMaskBlob, maskFilename), maskFilename);
     }
+
+    console.log("runAzureImageGeneration: Azure edit multipart payload debug", {
+      providerMode: azureEditMode,
+      primaryImageFieldName: "image",
+      imageFieldCount,
+      maskFieldName: args.maskBlob ? "mask" : null,
+      promptPresent: composedPrompt.length > 0,
+      requestUrl,
+      requestedServiceType: args.requestedServiceType ?? args.serviceType,
+      serviceType: args.serviceType,
+    });
 
     const response = await fetch(requestUrl, {
       method: "POST",
@@ -418,7 +516,7 @@ async function applyHomeDecorWatermark(blob: Blob) {
       margin,
       overlayTop + Math.max(10, Math.round(boxHeight * 0.2)),
       {
-        text: "HomeDecor AI",
+        text: "HomeDecor.ai",
         alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT,
         alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE,
       },
@@ -548,6 +646,7 @@ export const generateDesign: any = internalActionGeneric({
     imageStorageId: v.id("_storage"),
     referenceImageStorageIds: v.optional(v.array(v.id("_storage"))),
     maskStorageId: v.optional(v.id("_storage")),
+    requestedServiceType: v.optional(v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"), v.literal("replace"), v.literal("wall"), v.literal("transfer"), v.literal("reference"))),
     serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"), v.literal("replace")),
     roomType: v.string(),
     style: v.string(),
@@ -564,7 +663,7 @@ export const generateDesign: any = internalActionGeneric({
     aiSuggestedPaletteId: v.optional(v.string()),
     regenerate: v.optional(v.boolean()),
     smartSuggest: v.optional(v.boolean()),
-    qualityTier: v.optional(v.union(v.literal("free"), v.literal("pro"))),
+    qualityTier: v.optional(v.union(v.literal("free"), v.literal("standard_hd"), v.literal("premium"))),
     outputResolution: v.optional(v.string()),
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
     planUsed: v.optional(v.string()),
@@ -585,6 +684,7 @@ export const generateDesign: any = internalActionGeneric({
       deploymentName,
       endpoint: endpoint ? ensureAzureEndpointPrefix(endpoint) : null,
       generationId: args.generationId,
+      requestedServiceType: args.requestedServiceType ?? args.serviceType,
       serviceType: args.serviceType,
     });
 
@@ -627,25 +727,25 @@ export const generateDesign: any = internalActionGeneric({
       const renderProfile = resolveAzureRenderProfile({
         deploymentName,
         planUsed: trimOptional(args.planUsed),
-        qualityTier: args.qualityTier === "pro" ? "pro" : "free",
+        qualityTier:
+          args.qualityTier === "premium"
+            ? "premium"
+            : args.qualityTier === "standard_hd"
+              ? "standard_hd"
+              : "free",
         outputResolution: trimOptional(args.outputResolution),
+        aspectRatio: trimOptional(args.aspectRatio),
         speedTier: (args.speedTier as SpeedTier | undefined) ?? "standard",
       });
 
-      const orchestratedDirection =
-        (args.serviceType === "floor" ||
-          args.serviceType === "redesign" ||
-          args.smartSuggest ||
-          (args.serviceType === "paint" && Boolean(args.maskStorageId)))
-          ? await requestGeminiDesignOrchestration({
-              sourceBlob,
-              serviceType: args.serviceType as ServiceType,
-              roomType: args.roomType,
-              style: args.style,
-              styleSelections: args.styleSelections,
-              colorPalette: args.colorPalette,
-            })
-          : null;
+      const orchestratedDirection = await requestGeminiDesignOrchestration({
+        sourceBlob,
+        serviceType: args.serviceType as ServiceType,
+        roomType: args.roomType,
+        style: args.style,
+        styleSelections: args.styleSelections,
+        colorPalette: args.colorPalette,
+      });
       const resolvedStyle = trimOptional(orchestratedDirection?.style) ?? args.style;
       const resolvedPalette = trimOptional(orchestratedDirection?.paletteId) ?? args.colorPalette;
       const resolvedTargetColor = trimOptional(orchestratedDirection?.wallColor) ?? args.targetColor;
@@ -690,6 +790,7 @@ export const generateDesign: any = internalActionGeneric({
           resolvedCustomPrompt,
         ]),
         targetColor: resolvedTargetColor,
+        targetColorCategory: args.targetColorCategory,
         targetSurface: args.targetSurface,
         aspectRatio: args.aspectRatio,
         regenerate: args.regenerate,
@@ -719,6 +820,7 @@ export const generateDesign: any = internalActionGeneric({
         targetColor: args.targetColor,
         targetColorHex: args.targetColorHex,
         customPrompt: args.customPrompt,
+        requestedServiceType: args.requestedServiceType,
       });
 
       const imageBytes = generatedImage.uint8Array;

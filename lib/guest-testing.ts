@@ -1,4 +1,4 @@
-// Flip this off before launch to restore the Clerk-only create flow.
+// Guests get starter diamonds up front, then the daily claim loop is capped at 1.
 export const ENABLE_GUEST_WIZARD_TEST_MODE = true;
 export const GUEST_TESTING_STARTER_CREDITS = 3;
 export const GUEST_TESTING_TEMP_ID = "temp_guest_id";

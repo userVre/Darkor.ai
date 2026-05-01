@@ -16,8 +16,16 @@ type CachedViewerState = {
   generationStatusLabel?: string;
   generationStatusMessage?: string;
   hasPaidAccess?: boolean;
+  hasProAccess?: boolean;
   canGenerateNow?: boolean;
   lastRefillTimestamp?: number;
+  nextRefillTimestamp?: number;
+  streakCount?: number;
+  lastLoginDate?: number;
+  lastClaimDate?: number;
+  nextDiamondClaimAt?: number;
+  canClaimDiamond?: boolean;
+  eliteProUntil?: number;
   pricingTier?: string | null;
 } | null;
 

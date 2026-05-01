@@ -11,8 +11,8 @@ import {
   configureRevenueCat,
   fetchRevenueCatPackages,
   findRevenueCatDiamondPackage,
+  getLatestRevenueCatTransaction,
   getRevenueCatClient,
-  type RevenueCatCustomerInfo,
   type RevenueCatPackage,
 } from "../lib/revenuecat";
 import {fonts} from "../styles/typography";
@@ -28,39 +28,27 @@ type CreditsBalanceSheetProps = {
 
 type CreditPack = {
   badge?: string;
-  id: DiamondPackId;
   pile: "small" | "medium" | "large";
 };
 
 const BUY_NOW_RUBY = "#E53935";
 
-const CREDIT_PACKS: CreditPack[] = [
-  {
-    id: "starter",
+const CREDIT_PACK_UI: Record<DiamondPackId, CreditPack> = {
+  starter: {
     pile: "small",
   },
-  {
-    id: "designer",
+  designer: {
     badge: "MOST POPULAR",
     pile: "medium",
   },
-  {
-    id: "architect",
+  architect: {
+    pile: "large",
+  },
+  estate: {
     badge: "BEST VALUE",
     pile: "large",
   },
-];
-
-function getLatestTransaction(
-  customerInfo: RevenueCatCustomerInfo | null | undefined,
-  productIdentifier: string,
-) {
-  const matchingTransactions = (customerInfo?.nonSubscriptionTransactions ?? [])
-    .filter((transaction) => transaction.productIdentifier === productIdentifier)
-    .sort((left, right) => Date.parse(right.purchaseDate) - Date.parse(left.purchaseDate));
-
-  return matchingTransactions[0] ?? null;
-}
+};
 
 export function CreditsBalanceSheet({ visible, onClose }: CreditsBalanceSheetProps) {
   const { isSignedIn } = useAuth();
@@ -126,13 +114,31 @@ export function CreditsBalanceSheet({ visible, onClose }: CreditsBalanceSheetPro
     [pricingContext.diamondPacks, selectedPackId],
   );
   const selectedRevenueCatPackage = useMemo(
-    () => findRevenueCatDiamondPackage(packages, selectedPackId),
-    [packages, selectedPackId],
+    () => findRevenueCatDiamondPackage(packages, selectedPackId, pricingContext.revenueCat),
+    [packages, pricingContext.revenueCat, selectedPackId],
   );
+
+  useEffect(() => {
+    if (!visible || selectedPack) {
+      return;
+    }
+
+    const fallbackPackId = pricingContext.visibleDiamondPacks[0]?.id;
+    if (fallbackPackId) {
+      setSelectedPackId(fallbackPackId);
+    }
+  }, [pricingContext.visibleDiamondPacks, selectedPack, visible]);
 
   const handlePurchase = async () => {
     triggerHaptic();
     setErrorMessage(null);
+
+    if (!selectedPack) {
+      const message = "This Diamond pack is not available in your region.";
+      setErrorMessage(message);
+      showToast(message);
+      return;
+    }
 
     if (!selectedRevenueCatPackage) {
       const message = "This Diamond pack is not available in RevenueCat yet.";
@@ -153,7 +159,7 @@ export function CreditsBalanceSheet({ visible, onClose }: CreditsBalanceSheetPro
       setIsPurchasing(true);
       const result = await purchases.purchasePackage(selectedRevenueCatPackage);
       const productIdentifier = result.productIdentifier || selectedRevenueCatPackage.product.identifier;
-      const transaction = getLatestTransaction(result.customerInfo, productIdentifier);
+      const transaction = getLatestRevenueCatTransaction(result.customerInfo, productIdentifier);
       const purchasedAt = transaction ? Date.parse(transaction.purchaseDate) : Date.now();
       const transactionId =
         transaction?.transactionIdentifier
@@ -216,18 +222,18 @@ export function CreditsBalanceSheet({ visible, onClose }: CreditsBalanceSheetPro
           <Text style={styles.sectionTitle}>Get More Credits</Text>
 
           <View style={styles.cardsStack}>
-            {CREDIT_PACKS.map((pack) => {
-              const packPricing = pricingContext.diamondPacks[pack.id];
-              const isSelected = pack.id === selectedPackId;
+            {pricingContext.visibleDiamondPacks.map((packPricing) => {
+              const pack = CREDIT_PACK_UI[packPricing.id];
+              const isSelected = packPricing.id === selectedPackId;
 
               return (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityState={{ selected: isSelected }}
-                  key={pack.id}
+                  key={packPricing.id}
                   onPress={() => {
                     triggerHaptic();
-                    setSelectedPackId(pack.id);
+                    setSelectedPackId(packPricing.id);
                   }}
                   style={[styles.offerCard, isSelected ? styles.offerCardSelected : null]}
                 >

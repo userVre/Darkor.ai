@@ -5,15 +5,19 @@ import {
   BillingPlan,
   buildSubscriptionPatch,
   canUserGenerateState,
+  DAY_MS,
   deriveSubscriptionState,
+  ELITE_PASS_PRO_MS,
   FREE_IMAGE_LIMIT,
   FREE_REFILL_INTERVAL_MS,
+  INITIAL_FREE_DIAMONDS,
   SubscriptionEntitlement,
   SubscriptionType,
   toFiniteNumber,
 } from "./subscriptions";
 import {
   buildDefaultUserFields,
+  createReferralCode,
   ensureGuestUser,
   getUserByAnonymousId,
   getUserByClerkId,
@@ -46,6 +50,36 @@ async function syncDerivedSubscriptionState(ctx: any, user: any, now: number) {
   return state;
 }
 
+async function syncDailyStreakState(ctx: any, user: any, now: number) {
+  const currentStreak = Math.max(toFiniteNumber(user?.streakCount, 1), 1);
+  const lastLoginDate = toFiniteNumber(user?.lastLoginDate);
+  const nextStreakCount = resolveStreakCount(currentStreak, lastLoginDate, now);
+  const canClaimDiamond = resolveClaimFlag(user, now);
+  const nextEliteProUntil = Math.max(toFiniteNumber(user?.eliteProUntil), 0);
+  const normalizedEliteProUntil = nextEliteProUntil > 0 && nextEliteProUntil <= now ? 0 : nextEliteProUntil;
+
+  const patch = omitUndefined({
+    streakCount: nextStreakCount,
+    lastLoginDate: startOfUtcDay(lastLoginDate) === startOfUtcDay(now) ? lastLoginDate || now : now,
+    lastClaimDate: typeof user?.lastClaimDate === "number" ? undefined : 0,
+    nextDiamondClaimAt: typeof user?.nextDiamondClaimAt === "number" ? undefined : 0,
+    canClaimDiamond,
+    eliteProUntil: normalizedEliteProUntil !== nextEliteProUntil || typeof user?.eliteProUntil !== "number"
+      ? normalizedEliteProUntil
+      : undefined,
+  });
+
+  if (Object.keys(patch).length > 0) {
+    await ctx.db.patch(user._id, patch);
+    return {
+      ...user,
+      ...patch,
+    };
+  }
+
+  return user;
+}
+
 function getLimitExceededMessage(state: ReturnType<typeof deriveSubscriptionState>) {
   return state.statusMessage;
 }
@@ -60,7 +94,127 @@ const DIAMOND_PACK_COUNTS = {
   starter: 10,
   designer: 30,
   architect: 100,
+  estate: 300,
 } as const;
+const REFERRAL_INSTALL_REWARD_DIAMONDS = 1;
+const REFERRAL_PRO_REWARD_DIAMONDS = 5;
+const ELITE_MILESTONE_REWARDS: Record<number, number> = {
+  7: 3,
+  14: 5,
+  21: 7,
+};
+
+function startOfUtcDay(timestamp: number) {
+  const date = new Date(timestamp);
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+}
+
+function resolveStreakCount(currentStreak: number, lastLoginDate: number, now: number) {
+  if (lastLoginDate <= 0) {
+    return 1;
+  }
+
+  const lastLoginDay = startOfUtcDay(lastLoginDate);
+  const today = startOfUtcDay(now);
+  const elapsedDays = Math.floor((today - lastLoginDay) / DAY_MS);
+
+  if (elapsedDays <= 0) {
+    return Math.max(currentStreak, 1);
+  }
+  if (elapsedDays === 1) {
+    return Math.max(currentStreak, 1) + 1;
+  }
+  return 1;
+}
+
+function getElitePassReward(streakCount: number) {
+  return ELITE_MILESTONE_REWARDS[streakCount] ?? FREE_IMAGE_LIMIT;
+}
+
+function isEliteMilestoneDay(streakCount: number) {
+  return Object.prototype.hasOwnProperty.call(ELITE_MILESTONE_REWARDS, streakCount);
+}
+
+function resolveClaimFlag(user: any, now: number) {
+  const credits = Math.max(toFiniteNumber(user?.credits), 0);
+  const nextDiamondClaimAt = toFiniteNumber(user?.nextDiamondClaimAt);
+  return credits <= 0 && nextDiamondClaimAt > 0 && now >= nextDiamondClaimAt;
+}
+
+function normalizeReferralCode(value?: string | null) {
+  const normalized = String(value ?? "").trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+async function getUserByReferralCode(ctx: any, referralCode?: string | null) {
+  const normalizedCode = normalizeReferralCode(referralCode);
+  if (!normalizedCode) {
+    return null;
+  }
+
+  const exact = await ctx.db
+    .query("users")
+    .withIndex("by_referralCode", (q: any) => q.eq("referralCode", normalizedCode))
+    .unique();
+  if (exact) {
+    return exact;
+  }
+
+  const uppercaseCode = normalizedCode.toUpperCase();
+  if (uppercaseCode === normalizedCode) {
+    return null;
+  }
+
+  return await ctx.db
+    .query("users")
+    .withIndex("by_referralCode", (q: any) => q.eq("referralCode", uppercaseCode))
+    .unique();
+}
+
+async function findReferrerByCode(ctx: any, referralCode?: string | null) {
+  const normalizedCode = normalizeReferralCode(referralCode);
+  if (!normalizedCode) {
+    return null;
+  }
+
+  return (
+    await getUserByReferralCode(ctx, normalizedCode)
+    ?? await getUserByClerkId(ctx, normalizedCode)
+    ?? await getUserByAnonymousId(ctx, normalizedCode)
+  );
+}
+
+async function createUniqueReferralCode(ctx: any, seed: string) {
+  const baseCode = createReferralCode(seed);
+  for (let suffix = 0; suffix < 36; suffix += 1) {
+    const candidate = suffix === 0 ? baseCode : `${baseCode}${suffix.toString(36).toUpperCase()}`;
+    const existing = await getUserByReferralCode(ctx, candidate);
+    if (!existing) {
+      return candidate;
+    }
+  }
+
+  return `${baseCode}${Date.now().toString(36).toUpperCase().slice(-4)}`;
+}
+
+async function ensureUserReferralCode(ctx: any, user: any, seed: string) {
+  const existingCode = normalizeReferralCode(user?.referralCode);
+  if (existingCode) {
+    return existingCode;
+  }
+
+  const referralCode = await createUniqueReferralCode(ctx, seed);
+  await ctx.db.patch(user._id, { referralCode });
+  return referralCode;
+}
+
+async function grantReferralDiamonds(ctx: any, user: any, diamonds: number, patch?: Record<string, unknown>) {
+  const currentCredits = Math.max(toFiniteNumber(user?.credits, FREE_IMAGE_LIMIT), 0);
+  await ctx.db.patch(user._id, omitUndefined({
+    credits: currentCredits + diamonds,
+    ...(patch ?? {}),
+  }));
+}
 
 function buildViewerResponse(user: any) {
   if (!user) {
@@ -71,6 +225,7 @@ function buildViewerResponse(user: any) {
   return {
     ...user,
     credits: state.remaining,
+    premiumCredits: state.premiumCredits,
     plan: state.plan,
     subscriptionType: state.subscriptionType,
     subscriptionEntitlement: state.subscriptionEntitlement,
@@ -79,6 +234,13 @@ function buildViewerResponse(user: any) {
     imageLimit: state.limit,
     imageGenerationCount: state.imageGenerationCount,
     lastResetDate: state.lastResetDate,
+    streakCount: state.streakCount,
+    streak_count: state.streakCount,
+    lastLoginDate: state.lastLoginDate,
+    lastClaimDate: state.lastClaimDate,
+    nextDiamondClaimAt: state.nextDiamondClaimAt,
+    canClaimDiamond: state.canClaimDiamond,
+    eliteProUntil: state.eliteProUntil,
     generationResetAt: state.nextResetDate,
     imageGenerationLimit: state.limit,
     imagesRemaining: state.remaining,
@@ -87,7 +249,8 @@ function buildViewerResponse(user: any) {
     canGenerateNow: !state.blocked,
     generationStatusLabel: state.statusLabel,
     generationStatusMessage: state.statusMessage,
-    hasPaidAccess: state.hasPaidAccess,
+    hasPaidAccess: state.hasProAccess,
+    hasProAccess: state.hasProAccess,
     canExport4k: state.canExport4k,
     canRemoveWatermark: state.canRemoveWatermark,
     canVirtualStage: state.canVirtualStage,
@@ -97,6 +260,7 @@ function buildViewerResponse(user: any) {
     generationSpeedTier: state.generationPolicy.speedTier,
     priorityProcessing: state.generationPolicy.priorityProcessing,
     lastRefillTimestamp: state.lastResetDate,
+    nextRefillTimestamp: state.nextDiamondClaimAt,
     pricingTier: user.pricingTier ?? null,
     pricingCountryCode: user.pricingCountryCode ?? null,
     pricingCurrencyCode: user.pricingCurrencyCode ?? null,
@@ -104,29 +268,89 @@ function buildViewerResponse(user: any) {
   };
 }
 
+export const claimDailyDiamondReward = mutationGeneric({
+  args: {
+    anonymousId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await ensureViewerUser(ctx, args.anonymousId);
+    const now = Date.now();
+    const user = await syncDailyStreakState(ctx, viewer.user, now);
+    const state = deriveSubscriptionState(user, now);
+    const nextEligibleAt = state.nextDiamondClaimAt > 0 ? state.nextDiamondClaimAt : now + FREE_REFILL_INTERVAL_MS;
+
+    if (!state.canClaimDiamond) {
+      return {
+        granted: false,
+        creditsAdded: 0,
+        credits: Math.max(state.credits, 0),
+        streakCount: state.streakCount,
+        streak_count: state.streakCount,
+        nextEligibleAt: state.nextDiamondClaimAt || nextEligibleAt,
+        elitePassActivated: false,
+        eliteProUntil: state.eliteProUntil,
+      };
+    }
+
+    const elitePassActivated = isEliteMilestoneDay(state.streakCount);
+    const reward = getElitePassReward(state.streakCount);
+    const currentCredits = Math.max(state.credits, 0);
+    const nextCredits = elitePassActivated
+      ? currentCredits + reward
+      : Math.min(currentCredits + reward, FREE_IMAGE_LIMIT);
+    const creditsAdded = Math.max(nextCredits - currentCredits, 0);
+    const eliteProUntil = elitePassActivated
+      ? Math.max(state.eliteProUntil, now + ELITE_PASS_PRO_MS)
+      : state.eliteProUntil;
+
+    await ctx.db.patch(user._id, {
+      credits: nextCredits,
+      lastClaimDate: now,
+      nextDiamondClaimAt: 0,
+      canClaimDiamond: false,
+      eliteProUntil,
+    });
+
+    return {
+      granted: true,
+      creditsAdded,
+      credits: nextCredits,
+      streakCount: state.streakCount,
+      streak_count: state.streakCount,
+      nextEligibleAt: 0,
+      elitePassActivated,
+      eliteProUntil,
+      hasProAccess: eliteProUntil > now || state.hasProAccess,
+    };
+  },
+});
+
 async function getOrCreateClerkUser(ctx: any, clerkId: string) {
   const existing = await getUserByClerkId(ctx, clerkId);
   if (existing) {
     const now = Date.now();
-      const state = deriveSubscriptionState(existing, now);
-      const patch = omitUndefined({
-      credits: toFiniteNumber(existing.credits, 3),
-        referralCode: existing.referralCode ?? clerkId,
-        referralCount: toFiniteNumber(existing.referralCount),
+    const streakSynced = await syncDailyStreakState(ctx, existing, now);
+    const state = deriveSubscriptionState(streakSynced, now);
+    const referralCode = normalizeReferralCode(streakSynced.referralCode) ?? await createUniqueReferralCode(ctx, clerkId);
+    const patch = omitUndefined({
+      credits: toFiniteNumber(streakSynced.credits, INITIAL_FREE_DIAMONDS),
+      referralCode,
+      referralCount: toFiniteNumber(streakSynced.referralCount),
+      referralProCount: toFiniteNumber(streakSynced.referralProCount),
       lastRewardDate: toFiniteNumber(existing.lastRewardDate, now),
-        ...state.patch,
-      });
+      ...state.patch,
+    });
     if (Object.keys(patch).length > 0) {
       await ctx.db.patch(existing._id, patch);
     }
-    return (await ctx.db.get(existing._id)) ?? existing;
+    return (await ctx.db.get(existing._id)) ?? streakSynced;
   }
 
   const id = await ctx.db.insert(
     "users",
     buildDefaultUserFields({
       clerkId,
-      referralCode: clerkId,
+      referralCode: await createUniqueReferralCode(ctx, clerkId),
     }),
   );
 
@@ -135,7 +359,7 @@ async function getOrCreateClerkUser(ctx: any, clerkId: string) {
     throw new Error("Failed to create user");
   }
 
-  return created;
+  return await syncDailyStreakState(ctx, created, Date.now());
 }
 
 async function ensureViewerUser(ctx: any, anonymousId?: string) {
@@ -149,11 +373,13 @@ async function ensureViewerUser(ctx: any, anonymousId?: string) {
   }
 
   if (viewer.kind === "account") {
-    const user = viewer.user ?? (await getOrCreateClerkUser(ctx, viewer.clerkId));
+    const rawUser = viewer.user ?? (await getOrCreateClerkUser(ctx, viewer.clerkId));
+    const user = await syncDailyStreakState(ctx, rawUser, Date.now());
     return { ...viewer, user };
   }
 
-  const user = viewer.user ?? (await ensureGuestUser(ctx, viewer.anonymousId));
+  const rawUser = viewer.user ?? (await ensureGuestUser(ctx, viewer.anonymousId));
+  const user = await syncDailyStreakState(ctx, rawUser, Date.now());
   return { ...viewer, user };
 }
 
@@ -172,27 +398,53 @@ async function mergeAnonymousUserIntoClerkUser(ctx: any, clerkId: string, anonym
 
   const guestOwnerId = toGuestUserId(normalizedAnonymousId);
   const guestCredits = toFiniteNumber(guestUser.credits);
+  const guestPremiumCredits = toFiniteNumber(guestUser.premiumCredits);
   const guestGenerationCount = toFiniteNumber(guestUser.generationCount);
   const guestImageGenerationCount = toFiniteNumber(guestUser.imageGenerationCount);
   const guestReferralCount = toFiniteNumber(guestUser.referralCount);
+  const guestReferralProCount = toFiniteNumber(guestUser.referralProCount);
+  const mergedStreakCount = Math.max(
+    toFiniteNumber(accountUser.streakCount, 1),
+    toFiniteNumber(guestUser.streakCount, 1),
+  );
+  const nextClaimCandidates = [
+    toFiniteNumber(accountUser.nextDiamondClaimAt),
+    toFiniteNumber(guestUser.nextDiamondClaimAt),
+  ].filter((value) => value > 0);
 
   await transferOwnedDocuments(ctx, guestOwnerId, clerkId);
 
   await ctx.db.patch(accountUser._id, omitUndefined({
     credits: toFiniteNumber(accountUser.credits) + guestCredits,
+    premiumCredits: toFiniteNumber(accountUser.premiumCredits) + guestPremiumCredits,
     generationCount: toFiniteNumber(accountUser.generationCount) + guestGenerationCount,
     imageGenerationCount:
       toFiniteNumber(accountUser.imageGenerationCount) + guestImageGenerationCount,
     referralCount: toFiniteNumber(accountUser.referralCount) + guestReferralCount,
+    referralProCount: toFiniteNumber(accountUser.referralProCount) + guestReferralProCount,
     referredBy: accountUser.referredBy ?? guestUser.referredBy,
+    referralInstallRewardedAt:
+      toFiniteNumber(accountUser.referralInstallRewardedAt) || toFiniteNumber(guestUser.referralInstallRewardedAt) || undefined,
+    referralProRewardedAt:
+      toFiniteNumber(accountUser.referralProRewardedAt) || toFiniteNumber(guestUser.referralProRewardedAt) || undefined,
+    streakCount: mergedStreakCount,
+    lastLoginDate: Math.max(toFiniteNumber(accountUser.lastLoginDate), toFiniteNumber(guestUser.lastLoginDate)),
+    lastClaimDate: Math.max(toFiniteNumber(accountUser.lastClaimDate), toFiniteNumber(guestUser.lastClaimDate)),
+    nextDiamondClaimAt: nextClaimCandidates.length > 0 ? Math.min(...nextClaimCandidates) : 0,
+    canClaimDiamond: Boolean(accountUser.canClaimDiamond || guestUser.canClaimDiamond),
+    eliteProUntil: Math.max(toFiniteNumber(accountUser.eliteProUntil), toFiniteNumber(guestUser.eliteProUntil)),
     lastRewardDate: Math.max(toFiniteNumber(accountUser.lastRewardDate), toFiniteNumber(guestUser.lastRewardDate)),
     lastReviewPromptAt: Math.max(toFiniteNumber(accountUser.lastReviewPromptAt), toFiniteNumber(guestUser.lastReviewPromptAt)),
   }));
 
   await ctx.db.patch(guestUser._id, {
     credits: 0,
+    premiumCredits: 0,
     generationCount: 0,
     imageGenerationCount: 0,
+    canClaimDiamond: false,
+    nextDiamondClaimAt: 0,
+    eliteProUntil: 0,
     reviewPrompted: false,
     mergedIntoClerkId: clerkId,
   });
@@ -215,7 +467,7 @@ export const getOrCreateCurrentUser = mutationGeneric({
       throw new Error("Failed to create guest user");
     }
 
-    return guestUser;
+    return await syncDailyStreakState(ctx, guestUser, Date.now());
   },
 });
 
@@ -289,6 +541,19 @@ async function persistRevenueCatPlanForUser(
     lastResetDate: subscriptionPatch.lastResetDate,
   }));
 
+  if ((nextPlan === "pro" || nextPlan === "trial") && !user.referralProRewardedAt) {
+    const referrer = await findReferrerByCode(ctx, user.referredBy);
+    if (referrer && referrer._id !== user._id) {
+      const now = Date.now();
+      await grantReferralDiamonds(ctx, referrer, REFERRAL_PRO_REWARD_DIAMONDS, {
+        referralProCount: toFiniteNumber(referrer.referralProCount) + 1,
+      });
+      await ctx.db.patch(user._id, {
+        referralProRewardedAt: now,
+      });
+    }
+  }
+
   return subscriptionPatch;
 }
 
@@ -338,7 +603,7 @@ export const fulfillDiamondPurchase = mutationGeneric({
     transactionId: v.string(),
     productIdentifier: v.string(),
     packageIdentifier: v.optional(v.string()),
-    packId: v.union(v.literal("starter"), v.literal("designer"), v.literal("architect")),
+    packId: v.union(v.literal("starter"), v.literal("designer"), v.literal("architect"), v.literal("estate")),
     purchasedAt: v.optional(v.number()),
     amount: v.number(),
     currencyCode: v.string(),
@@ -364,9 +629,11 @@ export const fulfillDiamondPurchase = mutationGeneric({
 
     const diamondsAdded = DIAMOND_PACK_COUNTS[args.packId];
     const nextCredits = Math.max(toFiniteNumber(viewer.user.credits, FREE_IMAGE_LIMIT), 0) + diamondsAdded;
+    const nextPremiumCredits = Math.max(toFiniteNumber(viewer.user.premiumCredits), 0) + diamondsAdded;
 
     await ctx.db.patch(viewer.user._id, {
       credits: nextCredits,
+      premiumCredits: nextPremiumCredits,
       pricingTier: args.pricingTier ?? viewer.user.pricingTier,
       pricingCountryCode: args.countryCode ?? viewer.user.pricingCountryCode,
       pricingCurrencyCode: args.currencyCode || viewer.user.pricingCurrencyCode,
@@ -391,6 +658,7 @@ export const fulfillDiamondPurchase = mutationGeneric({
       ok: true,
       duplicated: false,
       credits: nextCredits,
+      premiumCredits: nextPremiumCredits,
       diamondsAdded,
     };
   },
@@ -428,7 +696,7 @@ export const syncRevenueCatSubscriptionInternal = mutationGeneric({
       await ctx.db.insert("users", {
         ...buildDefaultUserFields({
           clerkId: args.clerkId,
-          referralCode: args.clerkId,
+          referralCode: await createUniqueReferralCode(ctx, args.clerkId),
         }),
         plan: initialSubscription.plan,
         subscriptionType: initialSubscription.subscriptionType,
@@ -513,14 +781,27 @@ async function consumeAllowance(ctx: any, anonymousId?: string, ignoreCooldown?:
   const lastPromptAt = toFiniteNumber(user.lastReviewPromptAt);
   const shouldPrompt = computeReviewPrompt(nextGenerationCount, lastPromptAt, ignoreCooldown);
   const nextCredits = state.subscriptionType === "free" ? Math.max(state.credits - 1, 0) : state.credits;
+  const nextPremiumCredits =
+    state.subscriptionType === "free" && state.premiumCredits > 0
+      ? Math.max(state.premiumCredits - 1, 0)
+      : state.premiumCredits;
   const nextLastResetDate = state.subscriptionType === "free" ? now : state.lastResetDate;
+  const nextDiamondClaimAt =
+    state.subscriptionType === "free" && nextCredits <= 0
+      ? now + FREE_REFILL_INTERVAL_MS
+      : state.subscriptionType === "free" && nextCredits > 0
+        ? 0
+        : state.nextDiamondClaimAt;
 
   await ctx.db.patch(user._id, {
     generationCount: nextGenerationCount,
     credits: nextCredits,
+    premiumCredits: nextPremiumCredits,
     imageLimit: state.limit,
     imageGenerationCount: nextImageGenerationCount,
     lastResetDate: nextLastResetDate,
+    nextDiamondClaimAt,
+    canClaimDiamond: false,
     ...(state.patch.plan ? { plan: state.patch.plan } : {}),
     ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
     ...(state.patch.subscriptionEntitlement ? { subscriptionEntitlement: state.patch.subscriptionEntitlement } : {}),
@@ -575,11 +856,14 @@ export const releaseGenerationAllowance = mutationGeneric({
     const currentCount = toFiniteNumber(user.generationCount);
     const nextGenerationCount = Math.max(currentCount - 1, 0);
 
+  const restoredCredits = state.subscriptionType === "free" ? state.credits + 1 : state.credits;
   await ctx.db.patch(user._id, {
-    credits: state.subscriptionType === "free" ? state.credits + 1 : state.credits,
+    credits: restoredCredits,
+    premiumCredits: state.premiumCredits,
     imageLimit: state.limit,
     imageGenerationCount: nextImageGenerationCount,
     generationCount: nextGenerationCount,
+    ...(state.subscriptionType === "free" && restoredCredits > 0 ? { nextDiamondClaimAt: 0, canClaimDiamond: false } : {}),
     ...(state.patch.plan ? { plan: state.patch.plan } : {}),
     ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
     ...(state.patch.subscriptionEntitlement ? { subscriptionEntitlement: state.patch.subscriptionEntitlement } : {}),
@@ -636,14 +920,16 @@ export const markReviewPrompted = mutationGeneric({
 export const applyReferral = mutationGeneric({
   args: {
     referralCode: v.string(),
+    anonymousId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { user: current } = await getCurrentUser(ctx);
+    const viewer = await ensureViewerUser(ctx, args.anonymousId);
+    const current = viewer.user;
     if (!current) {
       throw new Error("No billing profile found.");
     }
 
-    const normalizedCode = args.referralCode.trim();
+    const normalizedCode = normalizeReferralCode(args.referralCode);
     if (!normalizedCode) {
       return { ok: false, reason: "invalid_referral" };
     }
@@ -652,26 +938,48 @@ export const applyReferral = mutationGeneric({
       return { ok: false, reason: "already_referred" };
     }
 
-    if (normalizedCode === current.clerkId) {
+    const currentReferralCode = await ensureUserReferralCode(
+      ctx,
+      current,
+      current.clerkId ?? current.anonymousId ?? viewer.userId,
+    );
+    if (
+      normalizedCode === currentReferralCode
+      || normalizedCode === current.clerkId
+      || normalizedCode === current.anonymousId
+      || normalizedCode === viewer.userId
+    ) {
       return { ok: false, reason: "self_referral" };
     }
 
-    const referrer = await getUserByClerkId(ctx, normalizedCode);
+    const referrer = await findReferrerByCode(ctx, normalizedCode);
     if (!referrer) {
       return { ok: false, reason: "invalid_referral" };
     }
+    if (referrer._id === current._id) {
+      return { ok: false, reason: "self_referral" };
+    }
 
-    const nextReferralCount = (referrer.referralCount ?? 0) + 1;
+    const referrerCode = await ensureUserReferralCode(
+      ctx,
+      referrer,
+      referrer.clerkId ?? referrer.anonymousId ?? referrer._id,
+    );
+    const now = Date.now();
 
-    await ctx.db.patch(referrer._id, {
-      referralCount: nextReferralCount,
+    await grantReferralDiamonds(ctx, referrer, REFERRAL_INSTALL_REWARD_DIAMONDS, {
+      referralCount: toFiniteNumber(referrer.referralCount) + 1,
     });
 
     await ctx.db.patch(current._id, {
-      referredBy: referrer.clerkId,
+      referredBy: referrerCode,
+      referralInstallRewardedAt: now,
     });
 
-    return { ok: true };
+    return {
+      ok: true,
+      referrerRewarded: REFERRAL_INSTALL_REWARD_DIAMONDS,
+    };
   },
 });
 
@@ -683,42 +991,63 @@ export const claimThreeDayReward = mutationGeneric({
     const viewer = await ensureViewerUser(ctx, args.anonymousId);
     const user = viewer.user;
     const now = Date.now();
-    const lastRewardDate = toFiniteNumber(user.lastResetDate) || toFiniteNumber(user.lastRewardDate);
-    const nextEligibleAt = lastRewardDate > 0 ? lastRewardDate + FREE_REFILL_INTERVAL_MS : now;
+    const state = await syncDerivedSubscriptionState(ctx, user, now);
+    const nextEligibleAt = state.nextDiamondClaimAt > 0 ? state.nextDiamondClaimAt : now + FREE_REFILL_INTERVAL_MS;
 
-    if (user.plan !== "free") {
+    if (state.hasPaidAccess) {
       return {
         granted: false,
         creditsAdded: 0,
-        credits: 0,
+        credits: state.remaining,
+        canClaimDiamond: false,
+        streakCount: state.streakCount,
+        eliteProUntil: state.eliteProUntil,
         nextEligibleAt,
       };
     }
 
-    if (nextEligibleAt > now) {
+    if (!state.canClaimDiamond) {
       return {
         granted: false,
         creditsAdded: 0,
-        credits: Math.max(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), 0),
+        credits: state.remaining,
+        canClaimDiamond: state.canClaimDiamond,
+        streakCount: state.streakCount,
+        eliteProUntil: state.eliteProUntil,
         nextEligibleAt,
       };
     }
 
-    const currentCredits = Math.max(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), 0);
-    const nextCredits = currentCredits >= FREE_IMAGE_LIMIT ? currentCredits : FREE_IMAGE_LIMIT;
+    const streakCount = Math.max(toFiniteNumber(user.streakCount, state.streakCount), 1);
+    const milestone = isEliteMilestoneDay(streakCount);
+    const reward = getElitePassReward(streakCount);
+    const currentCredits = Math.max(toFiniteNumber(user.credits), 0);
+    const nextCredits = milestone
+      ? currentCredits + reward
+      : Math.min(currentCredits + reward, FREE_IMAGE_LIMIT);
     const creditsAdded = Math.max(nextCredits - currentCredits, 0);
+    const eliteProUntil = milestone
+      ? Math.max(toFiniteNumber(user.eliteProUntil), now + ELITE_PASS_PRO_MS)
+      : Math.max(toFiniteNumber(user.eliteProUntil), 0);
 
     await ctx.db.patch(user._id, {
       credits: nextCredits,
+      eliteProUntil,
+      canClaimDiamond: false,
+      nextDiamondClaimAt: 0,
+      lastClaimDate: now,
       lastRewardDate: now,
-      lastResetDate: now,
     });
 
     return {
       granted: creditsAdded > 0,
       creditsAdded,
       credits: nextCredits,
-      nextEligibleAt: now + FREE_REFILL_INTERVAL_MS,
+      canClaimDiamond: false,
+      streakCount,
+      eliteProUntil,
+      hasProAccess: eliteProUntil > now || state.hasProAccess,
+      nextEligibleAt: 0,
     };
   },
 });

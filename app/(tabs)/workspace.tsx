@@ -44,7 +44,7 @@ import {Image} from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import {LinearGradient} from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
-import {useLocalSearchParams, useNavigation, usePathname, useRouter} from "expo-router";
+import {useLocalSearchParams, usePathname, useRouter} from "expo-router";
 import * as Sharing from "expo-sharing";
 import {AnimatePresence, MotiView} from "moti";
 import {memo, startTransition, useCallback, useEffect, useMemo, useRef, useState, type ComponentType} from "react";
@@ -119,7 +119,6 @@ import {SERVICE_WIZARD_THEME} from "../../lib/service-wizard-theme";
 import {getFloorWizardExamplePhotos, getPaintWizardExamplePhotos} from "../../lib/wizard-example-photos";
 import {spacing} from "../../styles/spacing";
 import {fonts} from "../../styles/typography";
-import {DEFAULT_TAB_BAR_STYLE} from "./_layout";
 
 const TABS_HOME_ROUTE = "/(tabs)/index";
 
@@ -160,15 +159,21 @@ type MeResponse = {
   generationStatusMessage?: string;
   canGenerateNow?: boolean;
   hasPaidAccess?: boolean;
+  hasProAccess?: boolean;
   canExport4k?: boolean;
   canRemoveWatermark?: boolean;
-  generationQualityTier?: "free" | "pro";
+  generationQualityTier?: "free" | "standard_hd" | "premium";
   generationOutputResolution?: string;
   generationSpeedTier?: "standard" | "pro" | "ultra";
   priorityProcessing?: boolean;
   canVirtualStage?: boolean;
   canEditDesigns?: boolean;
   lastRefillTimestamp?: number;
+  nextRefillTimestamp?: number;
+  nextDiamondClaimAt?: number;
+  canClaimDiamond?: boolean;
+  streakCount?: number;
+  eliteProUntil?: number;
 };
 
 type SelectedImage = {
@@ -247,7 +252,7 @@ type ArchiveGeneration = {
   sourceImageUrl?: string | null;
   style?: string | null;
   roomType?: string | null;
-  serviceType?: "paint" | "floor" | "redesign" | "layout" | "replace" | null;
+  serviceType?: "paint" | "floor" | "redesign" | "layout" | "reference" | "replace" | null;
   watermarkRequired?: boolean | null;
   modeId?: string | null;
   paletteId?: string | null;
@@ -502,7 +507,7 @@ const BoardGridCard = memo(function BoardGridCard({
             className="absolute bg-black px-3 py-1.5"
             style={{ right: 14, bottom: 58, ...organicRadii(16, 12) }}
           >
-            <Text style={{ color: "#FFFFFF", fontSize: 11, lineHeight: 13, ...fonts.semibold }}>HomeDecor AI</Text>
+            <Text style={{ color: "#FFFFFF", fontSize: 11, lineHeight: 13, ...fonts.semibold }}>HomeDecor.ai</Text>
           </View>
         ) : null}
 
@@ -570,7 +575,7 @@ const ExportResultImage = memo(function ExportResultImage({
             paddingVertical: 14,
           }}
         >
-          <Text style={{ color: DS.colors.textPrimary, fontSize: 24, lineHeight: 28, ...fonts.semibold }}>HomeDecor AI</Text>
+          <Text style={{ color: DS.colors.textPrimary, fontSize: 24, lineHeight: 28, ...fonts.semibold }}>HomeDecor.ai</Text>
         </View>
       ) : null}
     </View>
@@ -2107,7 +2112,6 @@ export default function WorkspaceScreen() {
   const floorExamplePhotos = useMemo(() => getFloorWizardExamplePhotos(t), [i18n.language, t]);
   const paintExamplePhotos = useMemo(() => getPaintWizardExamplePhotos(t), [i18n.language, t]);
   const router = useRouter();
-  const navigation = useNavigation();
   const pathname = usePathname();
   const { service, presetStyle, presetRoom, startStep, boardView, boardItemId, entrySource, flowId } = useLocalSearchParams<{
     service?: string;
@@ -2121,7 +2125,7 @@ export default function WorkspaceScreen() {
   }>();
   const { isSignedIn } = useAuth();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
-  const { credits: sharedCreditBalance, clearOptimisticCredits, setOptimisticCredits } = useViewerCredits();
+  const { credits: sharedCreditBalance, clearOptimisticCredits, setOptimisticCredits, streakCount } = useViewerCredits();
   const { openStore } = useDiamondStore();
   const guestWizardTestingSession = isGuestWizardTestingSession(isSignedIn);
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
@@ -2162,7 +2166,6 @@ export default function WorkspaceScreen() {
   const suggestDesignOptions = useAction("ai:suggestDesignOptions" as any);
   const submitGenerationFeedback = useMutation("generations:submitFeedback" as any);
   const submitGenerationReview = useMutation("feedback:submitGenerationReview" as any);
-  const claimThreeDayReward = useMutation("users:claimThreeDayReward" as any);
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
@@ -2211,7 +2214,7 @@ export default function WorkspaceScreen() {
   const [processingGateStartedAt, setProcessingGateStartedAt] = useState<number | null>(null);
   const [processingGateUntil, setProcessingGateUntil] = useState<number | null>(null);
   const [, setIsServiceProcessing] = useState(false);
-  const [isServiceStepFlowActive, setIsServiceStepFlowActive] = useState(false);
+  const [, setIsServiceStepFlowActive] = useState(false);
   const [, setPaintTool] = useState<PaintTool>("brush");
   const [, setPaintBrushWidth] = useState(28);
   const [paintColor, setPaintColor] = useState("#D946EF");
@@ -2265,7 +2268,6 @@ export default function WorkspaceScreen() {
   const isReplaceService = serviceType === "replace";
   const isReferenceStyleWizard = isInteriorService && entrySource === "reference-style";
   const isLeanGenerationService = isExteriorService || isGardenService;
-  const isRedesignWizardActive = !isReferenceStyleWizard && !isPaintService && !isFloorService && !isLayoutService && !isReplaceService && workflowStep <= 3;
   const selectedImage = useMemo(
     () => selectedImages[currentDisplayIndex] ?? selectedImages[0] ?? null,
     [currentDisplayIndex, selectedImages],
@@ -2278,33 +2280,12 @@ export default function WorkspaceScreen() {
     () => (typeof presetRoom === "string" && presetRoom.trim().length > 0 ? `${serviceType}:${presetRoom.trim().toLowerCase()}` : null),
     [presetRoom, serviceType],
   );
-  const isWizardFlowActive = (isPaintService || isFloorService || isLayoutService || isReplaceService || isReferenceStyleWizard)
-    ? isServiceStepFlowActive
-    : isRedesignWizardActive;
-  const shouldHideNativeTabBar = isWizardFlowActive && workflowStep <= 3;
   const presetRoomOptions =
     serviceType === "exterior"
       ? SPACE_OPTIONS.exterior
       : serviceType === "garden"
         ? SPACE_OPTIONS.garden
         : SPACE_OPTIONS.interior;
-
-  useEffect(() => {
-    navigation.setOptions({
-      tabBarStyle: shouldHideNativeTabBar ? { display: "none" } : DEFAULT_TAB_BAR_STYLE,
-    });
-
-    return () => {
-      navigation.setOptions({ tabBarStyle: DEFAULT_TAB_BAR_STYLE });
-    };
-  }, [navigation, shouldHideNativeTabBar]);
-
-  useEffect(() => {
-    setIsFlowActive(shouldHideNativeTabBar);
-    return () => {
-      setIsFlowActive(false);
-    };
-  }, [setIsFlowActive, shouldHideNativeTabBar]);
 
   useEffect(() => {
     if (!isPaintService && !isFloorService && !isLayoutService && !isReplaceService && !isReferenceStyleWizard) {
@@ -2615,6 +2596,19 @@ export default function WorkspaceScreen() {
     () => boardItems.find((item) => item.id === activeBoardItemId) ?? null,
     [activeBoardItemId, boardItems],
   );
+  const isWorkspaceResultScreen =
+    workflowStep === 5
+    && Boolean(activeBoardItem)
+    && activeBoardItem?.status !== "processing"
+    && !isProcessingGateActive;
+  const shouldHideNativeTabBar = pathname === "/workspace" && !isWorkspaceResultScreen;
+
+  useEffect(() => {
+    setIsFlowActive(shouldHideNativeTabBar);
+    return () => {
+      setIsFlowActive(false);
+    };
+  }, [setIsFlowActive, shouldHideNativeTabBar]);
 
   useEffect(() => {
     let active = true;
@@ -3211,7 +3205,7 @@ export default function WorkspaceScreen() {
   );
   const hasBrokenGenerateSummary = confirmationSummaryChips.some((item) => item.missing);
 
-  const hasPaidAccess = diagnostic ? true : me?.hasPaidAccess ?? false;
+  const hasPaidAccess = diagnostic ? true : me?.hasProAccess ?? me?.hasPaidAccess ?? false;
   const canExport4k = diagnostic ? true : me?.canExport4k ?? false;
   const canRemoveWatermark = diagnostic ? true : me?.canRemoveWatermark ?? false;
   const watermarkRequiredForViewer = !diagnostic && !(me?.canRemoveWatermark ?? false);
@@ -3252,8 +3246,10 @@ export default function WorkspaceScreen() {
     : `Uses 1 Diamond \u00b7 ${remainingCreditsAfterGenerate} remaining`;
   const [refillCountdownNow, setRefillCountdownNow] = useState(() => Date.now());
   const refillStatus = useMemo(
-    () => getRewardStatus(me?.lastRefillTimestamp, refillCountdownNow),
-    [me?.lastRefillTimestamp, refillCountdownNow],
+    () => me?.canClaimDiamond
+      ? getRewardStatus(undefined, refillCountdownNow)
+      : getRewardStatus(me?.nextDiamondClaimAt ?? me?.nextRefillTimestamp ?? me?.lastRefillTimestamp, refillCountdownNow),
+    [me?.canClaimDiamond, me?.lastRefillTimestamp, me?.nextDiamondClaimAt, me?.nextRefillTimestamp, refillCountdownNow],
   );
   const refillHoursRemaining = Math.max(1, Math.ceil(refillStatus.remainingMs / (60 * 60 * 1000)));
   const shouldShowRefillCountdown = !hasPaidAccess && creditBalance <= 0 && !refillStatus.isEligible;
@@ -4151,6 +4147,11 @@ export default function WorkspaceScreen() {
       return;
     }
 
+    if (!hasPaidAccess) {
+      router.push({ pathname: "/paywall", params: { source: "share", lastImageUrl: activeEditorImageUrl } } as any);
+      return;
+    }
+
     let tempUri: string | null = null;
     try {
       setIsSharingResult(true);
@@ -4171,7 +4172,7 @@ export default function WorkspaceScreen() {
       await cleanupTempFile(tempUri);
       setIsSharingResult(false);
     }
-  }, [activeEditorImageUrl, cleanupTempFile, currentImageHasWatermark, exportCurrentRender, t]);
+  }, [activeEditorImageUrl, cleanupTempFile, currentImageHasWatermark, exportCurrentRender, hasPaidAccess, router, t]);
 
 
   const handleUpgrade = useCallback(() => {
@@ -4180,13 +4181,21 @@ export default function WorkspaceScreen() {
   }, [openStore]);
 
   const openGenerationPaywall = useCallback(() => {
-    openStore("empty_balance");
-  }, [openStore]);
+    router.push({
+      pathname: "/paywall",
+      params: { source: "second-design", ...(activeEditorImageUrl ? { lastImageUrl: activeEditorImageUrl } : {}) },
+    } as any);
+  }, [activeEditorImageUrl, router]);
 
   const handleDownloadStandard = useCallback(async () => {
     triggerHaptic();
     if (!activeEditorImageUrl) {
       Alert.alert(t("workspace.download.nothingTitle"), t("workspace.download.generateFirst"));
+      return;
+    }
+
+    if (!hasPaidAccess) {
+      router.push({ pathname: "/paywall", params: { source: "download", lastImageUrl: activeEditorImageUrl } } as any);
       return;
     }
 
@@ -4207,12 +4216,17 @@ export default function WorkspaceScreen() {
       await cleanupTempFile(tempUri);
       setIsDownloading(null);
     }
-  }, [activeEditorImageUrl, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, showToast, t]);
+  }, [activeEditorImageUrl, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, hasPaidAccess, router, showToast, t]);
 
   const handleDownloadUltra = useCallback(async () => {
     triggerHaptic();
     if (!activeEditorImageUrl) {
       Alert.alert(t("workspace.download.nothingTitle"), t("workspace.download.generateFirst"));
+      return;
+    }
+
+    if (!hasPaidAccess) {
+      router.push({ pathname: "/paywall", params: { source: "download", lastImageUrl: activeEditorImageUrl } } as any);
       return;
     }
 
@@ -4238,7 +4252,7 @@ export default function WorkspaceScreen() {
       await cleanupTempFile(tempUri);
       setIsDownloading(null);
     }
-  }, [activeEditorImageUrl, canExport4k, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, handleUpgrade, showToast, t]);
+  }, [activeEditorImageUrl, canExport4k, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, handleUpgrade, hasPaidAccess, router, showToast, t]);
 
   const handleSaveToGallery = useCallback(() => {
     if (canExport4k) {
@@ -4583,29 +4597,6 @@ export default function WorkspaceScreen() {
     }
 
     if (!diagnostic && !generationAccess.allowed) {
-      const refillEligible =
-        generationAccess.reason === "paywall"
-        && me?.plan === "free"
-        && getRewardStatus(me?.lastRewardDate).isEligible;
-      let refillGranted = false;
-
-      if (refillEligible) {
-        try {
-          const rewardResult = await claimThreeDayReward({ anonymousId: viewerId ?? undefined }) as {
-            granted: boolean;
-            credits: number;
-          };
-
-          if (rewardResult?.granted) {
-            setOptimisticCredits(rewardResult.credits);
-            refillGranted = true;
-          }
-        } catch {
-          // If the refill claim fails, fall back to the normal generation gate below.
-        }
-      }
-
-      if (!refillGranted) {
       if (generationAccess.reason === "paywall" && !effectiveSignedIn) {
         openAuthWall("/workspace", true);
         return;
@@ -4618,7 +4609,6 @@ export default function WorkspaceScreen() {
 
       showToast(generationAccess.message || t("workspace.generation.limitReached"));
       return;
-      }
     }
 
     triggerHaptic();
@@ -4650,7 +4640,6 @@ export default function WorkspaceScreen() {
     }
   }, [
     activeBoardItem,
-    claimThreeDayReward,
     cleanupTempFile,
     diagnostic,
     effectiveSignedIn,
@@ -4658,8 +4647,6 @@ export default function WorkspaceScreen() {
     generationAccess.message,
     generationAccess.reason,
     handleGenerate,
-    me?.lastRewardDate,
-    me?.plan,
     openAuthWall,
     openGenerationPaywall,
     prepareRegenerateSourceImage,
@@ -4670,10 +4657,8 @@ export default function WorkspaceScreen() {
     selectedStyle,
     selectedFinishId,
     serviceType,
-    setOptimisticCredits,
     showToast,
     t,
-    viewerId,
   ]);
 
   const handleOpenRegenerateStep = useCallback(() => {
@@ -8140,8 +8125,9 @@ export default function WorkspaceScreen() {
               <View style={{ minWidth: 88, alignItems: "flex-start" }}>
                 <DiamondCreditPill
                   count={creditBalance}
-                  style={{ minHeight: 42 }}
-                  variant="dark"
+                  streakCount={streakCount}
+                  style={{ height: 42, minHeight: 42 }}
+                  variant="light"
                 />
               </View>
 
@@ -8356,7 +8342,7 @@ export default function WorkspaceScreen() {
                       paddingVertical: 8,
                     }}
                   >
-                    <Text style={{ color: DS.colors.textPrimary, fontSize: 12, lineHeight: 14, ...fonts.semibold }}>HomeDecor AI</Text>
+                    <Text style={{ color: DS.colors.textPrimary, fontSize: 12, lineHeight: 14, ...fonts.semibold }}>HomeDecor.ai</Text>
                   </View>
                 ) : null}
 
