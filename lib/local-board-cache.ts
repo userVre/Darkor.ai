@@ -9,6 +9,8 @@ export type LocalBoardItem = {
   serviceType?: string | null;
   generationId?: string | null;
   watermarkRequired?: boolean | null;
+  isWatermarked?: boolean | null;
+  quality?: "medium" | "high" | null;
   modeId?: string | null;
   paletteId?: string | null;
   finishId?: string | null;

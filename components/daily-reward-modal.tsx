@@ -7,6 +7,7 @@ import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {DS} from "../lib/design-system";
 import {triggerHaptic} from "../lib/haptics";
+import {scheduleOrUpdateDiamondReminder} from "../lib/notifications";
 import {fonts} from "../styles/typography";
 import {DiamondCreditIcon, ElitePassFlameIcon, RADIX_BLUE_9} from "./diamond-credit-pill";
 import {useElitePassModal} from "./elite-pass-context";
@@ -35,6 +36,7 @@ type ClaimRewardResult = {
   granted?: boolean;
   credits?: number;
   creditsAdded?: number;
+  diamondBalance?: number;
   streakCount?: number;
   streak_count?: number;
   elitePassActivated?: boolean;
@@ -188,6 +190,7 @@ export function DailyRewardModal() {
       setClaimResult(result);
       setOptimisticRewardState({
         credits: typeof result.credits === "number" ? result.credits : credits,
+        diamondBalance: typeof result.diamondBalance === "number" ? result.diamondBalance : undefined,
         streakCount: nextStreakCount,
         canClaimDiamond: false,
         nextDiamondClaimAt: result.nextDiamondClaimAt ?? result.nextEligibleAt ?? 0,
@@ -197,6 +200,11 @@ export function DailyRewardModal() {
       });
 
       if (result.granted) {
+        void scheduleOrUpdateDiamondReminder({
+          diamondBalance: result.diamondBalance,
+          lastDiamondClaimAt: Date.now(),
+          nextDiamondClaimAt: result.nextDiamondClaimAt ?? result.nextEligibleAt ?? 0,
+        });
         setSuccessKey((current) => current + 1);
         setSuccessVisible(true);
         setIsClaiming(false);

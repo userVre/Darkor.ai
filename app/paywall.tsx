@@ -39,11 +39,13 @@ import {ANALYTICS_EVENTS, captureAnalytics} from "../lib/analytics";
 
 import {useProSuccess} from "../components/pro-success-context";
 import {useDiamondStore} from "../components/diamond-store-context";
+import {useElitePassModal} from "../components/elite-pass-context";
 import {useViewerCredits} from "../components/viewer-credits-context";
 import {useViewerSession} from "../components/viewer-session-context";
 import {getGenerationLimit} from "../convex/subscriptions";
 import {triggerHaptic} from "../lib/haptics";
 import {useLocalizedAppFonts} from "../lib/i18n";
+import {scheduleOrUpdateProTip} from "../lib/notifications";
 import {
 getDirectionalAlignment,
 getDirectionalArrowScale,
@@ -513,17 +515,20 @@ export default function PaywallScreen() {
   const pricingContext = usePricingContext();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { source, redirectTo, lastImageUrl } = useLocalSearchParams<{
-    source?: "launch" | "design-flow" | "generate" | "download" | "share" | "second-design" | "generation-speed-up";
+  const { source, redirectTo, lastImageUrl, variant } = useLocalSearchParams<{
+    source?: "launch" | "design-flow" | "generate" | "download" | "share" | "second-design" | "generation-speed-up" | "post_wow";
     redirectTo?: string;
     lastImageUrl?: string;
+    variant?: "soft";
   }>();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const { anonymousId } = useViewerSession();
-  const { credits, hasPaidAccess, setOptimisticAccess } = useViewerCredits();
+  const { credits, hasPaidAccess, notificationsDeclined, proTipNotificationIndex, setOptimisticAccess } = useViewerCredits();
   const { openStore } = useDiamondStore();
+  const { openElitePass } = useElitePassModal();
   const setPlan = useMutation("users:setViewerPlanFromRevenueCat" as any);
+  const setProTipNotificationIndex = useMutation("users:setProTipNotificationIndex" as any);
   const { showSuccess } = useProSuccess();
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
   const carouselRef = useRef<ScrollView | null>(null);
@@ -543,6 +548,7 @@ export default function PaywallScreen() {
   const [secondsLeft, setSecondsLeft] = useState(5);
   const personalizedImageUrl = typeof lastImageUrl === "string" && lastImageUrl.length > 0 ? lastImageUrl : null;
   const hasPersonalizedBackground = Boolean(personalizedImageUrl);
+  const isPostWowPaywall = source === "post_wow" || variant === "soft";
   const paywallSubtitle = hasPersonalizedBackground
     ? "Your room is ready for the next level. Continue designing this space in 4K."
     : t("paywall.subtitle");
@@ -606,13 +612,18 @@ export default function PaywallScreen() {
     ],
   );
   const selectedPackage = useMemo(() => {
+    if (isPostWowPaywall) {
+      const nextPackage = selectedDuration === "yearly" ? yearlyPackage : weeklyPackage;
+      return nextPackage ?? yearlyPackage ?? weeklyPackage ?? packages[0] ?? null;
+    }
+
     if (freeTrialEnabled) {
       return weeklyPackage ?? yearlyPackage ?? packages[0] ?? null;
     }
 
     const nextPackage = selectedDuration === "yearly" ? yearlyPackage : weeklyPackage;
     return nextPackage ?? yearlyPackage ?? weeklyPackage ?? packages[0] ?? null;
-  }, [freeTrialEnabled, packages, selectedDuration, weeklyPackage, yearlyPackage]);
+  }, [freeTrialEnabled, isPostWowPaywall, packages, selectedDuration, weeklyPackage, yearlyPackage]);
 
   const ctaDisabled = isLoading || !selectedPackage;
   const isYearlySelected = !freeTrialEnabled && selectedDuration === "yearly";
@@ -621,10 +632,11 @@ export default function PaywallScreen() {
 
   useEffect(() => {
     captureAnalytics(posthog, ANALYTICS_EVENTS.paywallViewed, {
+      paywall_source: isPostWowPaywall ? "post_wow" : source ?? "unknown",
       source: source ?? "unknown",
       personalized: hasPersonalizedBackground,
     });
-  }, [hasPersonalizedBackground, posthog, source]);
+  }, [hasPersonalizedBackground, isPostWowPaywall, posthog, source]);
 
   useEffect(() => {
     entranceProgress.value = withTiming(1, {
@@ -767,6 +779,16 @@ export default function PaywallScreen() {
     [anonymousId, pricingContext.countryCode, pricingContext.currencyCode, pricingContext.tierId, setPlan],
   );
 
+  const schedulePurchasedProTip = useCallback(() => {
+    void scheduleOrUpdateProTip({
+      notificationsDeclined,
+      proTipNotificationIndex,
+      persistNextTipIndex: async (nextIndex) => {
+        await setProTipNotificationIndex({ anonymousId: anonymousId ?? undefined, nextIndex });
+      },
+    });
+  }, [anonymousId, notificationsDeclined, proTipNotificationIndex, setProTipNotificationIndex]);
+
   const closePaywall = useCallback(() => {
     if (source === "launch") {
       dismissLaunchPaywall();
@@ -840,19 +862,25 @@ export default function PaywallScreen() {
         });
       }
       showSuccess();
+      schedulePurchasedProTip();
       completePaywall();
     } catch (error) {
       Alert.alert(t("paywall.restoreFailed"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       setIsLoading(false);
     }
-  }, [completePaywall, persistPurchasedPlan, setOptimisticAccess, showSuccess]);
+  }, [completePaywall, persistPurchasedPlan, schedulePurchasedProTip, setOptimisticAccess, showSuccess]);
 
-  const handlePurchase = useCallback(async () => {
+  const handlePurchase = useCallback(async (
+    packageOverride?: RevenueCatPackage | null,
+    durationOverride?: BillingDuration,
+  ) => {
     triggerHaptic();
     setErrorMessage(null);
 
-    if (!selectedPackage) {
+    const packageToPurchase = packageOverride ?? selectedPackage;
+
+    if (!packageToPurchase) {
       const message = t("paywall.planUnavailable");
       setErrorMessage(message);
       Alert.alert(t("paywall.purchaseError"), message);
@@ -866,7 +894,7 @@ export default function PaywallScreen() {
       }
 
       setIsLoading(true);
-      const result = await purchasesRef.current.purchasePackage(selectedPackage);
+      const result = await purchasesRef.current.purchasePackage(packageToPurchase);
       const customerInfo = result?.customerInfo;
       if (!customerInfo || !hasActiveSubscription(customerInfo)) {
         throw new Error(t("paywall.subscriptionConfirmFailed"));
@@ -889,7 +917,13 @@ export default function PaywallScreen() {
         hasPaidAccess: subscriptionState.plan === "pro" || subscriptionState.plan === "trial",
         subscriptionType: subscriptionState.subscriptionType,
       });
+      captureAnalytics(posthog, ANALYTICS_EVENTS.planSelected, {
+        type: durationOverride ?? subscriptionState.subscriptionType,
+        packageIdentifier: packageToPurchase.identifier,
+        paywall_source: isPostWowPaywall ? "post_wow" : source ?? "unknown",
+      });
       showSuccess();
+      schedulePurchasedProTip();
       completePaywall();
     } catch (error) {
       const message = error instanceof Error ? error.message : t("paywall.purchaseCancelled");
@@ -898,7 +932,7 @@ export default function PaywallScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [completePaywall, persistPurchasedPlan, posthog, selectedPackage, setOptimisticAccess, showSuccess, t]);
+  }, [completePaywall, isPostWowPaywall, persistPurchasedPlan, posthog, schedulePurchasedProTip, selectedPackage, setOptimisticAccess, showSuccess, source, t]);
 
   const handleToggleTrial = useCallback(() => {
     if (isLoading) {
@@ -925,8 +959,14 @@ export default function PaywallScreen() {
 
     triggerHaptic();
     setSelectedDuration("yearly");
-    captureAnalytics(posthog, ANALYTICS_EVENTS.planSelected, { type: "yearly" });
-  }, [isLoading, posthog]);
+    captureAnalytics(posthog, ANALYTICS_EVENTS.planSelected, {
+      type: "yearly",
+      paywall_source: isPostWowPaywall ? "post_wow" : source ?? "unknown",
+    });
+    if (isPostWowPaywall) {
+      void handlePurchase(yearlyPackage ?? selectedPackage, "yearly");
+    }
+  }, [handlePurchase, isLoading, isPostWowPaywall, posthog, selectedPackage, source, yearlyPackage]);
 
   const handleSelectWeekly = useCallback(() => {
     if (isLoading) {
@@ -935,8 +975,23 @@ export default function PaywallScreen() {
 
     triggerHaptic();
     setSelectedDuration("weekly");
-    captureAnalytics(posthog, ANALYTICS_EVENTS.planSelected, { type: freeTrialEnabled ? "weekly_trial" : "weekly" });
-  }, [freeTrialEnabled, isLoading, posthog]);
+    captureAnalytics(posthog, ANALYTICS_EVENTS.planSelected, {
+      type: freeTrialEnabled && !isPostWowPaywall ? "weekly_trial" : "weekly",
+      paywall_source: isPostWowPaywall ? "post_wow" : source ?? "unknown",
+    });
+    if (isPostWowPaywall) {
+      void handlePurchase(weeklyPackage ?? selectedPackage, "weekly");
+    }
+  }, [freeTrialEnabled, handlePurchase, isLoading, isPostWowPaywall, posthog, selectedPackage, source, weeklyPackage]);
+
+  const handleSkipPostWowPaywall = useCallback(() => {
+    triggerHaptic();
+    captureAnalytics(posthog, "paywall_skipped", {
+      paywall_source: "post_wow",
+    });
+    router.replace("/(tabs)" as any);
+    setTimeout(() => openElitePass(), 250);
+  }, [openElitePass, posthog, router]);
 
   const handleOpenTerms = useCallback(() => {
     triggerHaptic();
@@ -981,6 +1036,68 @@ export default function PaywallScreen() {
       ),
     [carouselScrollX],
   );
+
+  if (isPostWowPaywall) {
+    return (
+      <View style={styles.softScreen}>
+        <Stack.Screen
+          options={{
+            presentation: "transparentModal",
+            animation: "slide_from_bottom",
+            contentStyle: { backgroundColor: "transparent" },
+            gestureEnabled: true,
+          }}
+        />
+        <StatusBar style="light" />
+        <View style={styles.softBackdrop} />
+        <Animated.View style={[styles.softSheet, { paddingBottom: Math.max(insets.bottom + 12, 20) }, sheetAnimatedStyle]}>
+          <View style={styles.softHandle} />
+          <Text style={[styles.softEyebrow, localizedFonts.bold]}>Best value</Text>
+          <Text style={[styles.softTitle, localizedFonts.bold]}>Unlock unlimited room designs</Text>
+          <Text style={[styles.softSubtitle, localizedFonts.medium]}>
+            Keep going with premium renders, faster creation, and export-ready results.
+          </Text>
+
+          <View style={styles.softPlanStack}>
+            <YearlyPlanCard
+              onPress={handleSelectYearly}
+              pricePerWeekText={displayedYearlyPerWeekPrice.formatted}
+              pricePerYearText={yearlyPriceText}
+              selected={selectedDuration === "yearly"}
+            />
+            <WeeklyPlanCard
+              freeTrialEnabled={false}
+              onPress={handleSelectWeekly}
+              pricePerWeekText={weeklyPriceText}
+              selected={selectedDuration === "weekly"}
+              trialThenPriceText={thenWeeklyPriceText}
+            />
+          </View>
+
+          {isLoading ? (
+            <View style={styles.softLoadingRow}>
+              <ActivityIndicator color={TEXT_PRIMARY} />
+              <Text style={[styles.softLoadingText, localizedFonts.medium]}>{t("paywall.processing")}</Text>
+            </View>
+          ) : null}
+
+          {errorMessage ? (
+            <Text style={[styles.errorText, localizedFonts.medium, { textAlign: "center" }]}>{errorMessage}</Text>
+          ) : null}
+
+          <Pressable
+            accessibilityRole="button"
+            disabled={isLoading}
+            hitSlop={12}
+            onPress={handleSkipPostWowPaywall}
+            style={styles.softSkipLink}
+          >
+            <Text style={[styles.softSkipText, localizedFonts.medium]}>Skip — claim my free Diamond instead</Text>
+          </Pressable>
+        </Animated.View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -1159,6 +1276,83 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: SCREEN_BG,
+  },
+  softScreen: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "transparent",
+  },
+  softBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.48)",
+  },
+  softSheet: {
+    width: "100%",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.13)",
+    backgroundColor: SCREEN_BG,
+    paddingTop: 10,
+    paddingHorizontal: 18,
+    gap: 12,
+  },
+  softHandle: {
+    alignSelf: "center",
+    width: 42,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "rgba(255, 255, 255, 0.22)",
+    marginBottom: 6,
+  },
+  softEyebrow: {
+    alignSelf: "center",
+    color: "#FFFFFF",
+    fontSize: 12,
+    lineHeight: 16,
+    textTransform: "uppercase",
+    letterSpacing: 0,
+  },
+  softTitle: {
+    color: TEXT_PRIMARY,
+    fontSize: 26,
+    lineHeight: 31,
+    textAlign: "center",
+    letterSpacing: 0,
+  },
+  softSubtitle: {
+    color: TEXT_MUTED,
+    fontSize: 15,
+    lineHeight: 21,
+    textAlign: "center",
+  },
+  softPlanStack: {
+    gap: 10,
+    paddingTop: 4,
+  },
+  softLoadingRow: {
+    minHeight: 28,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  softLoadingText: {
+    color: TEXT_PRIMARY,
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  softSkipLink: {
+    minHeight: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  softSkipText: {
+    color: "rgba(255, 255, 255, 0.54)",
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: "center",
   },
   personalizedBackgroundImage: {
     ...StyleSheet.absoluteFillObject,

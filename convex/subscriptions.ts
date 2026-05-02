@@ -4,12 +4,14 @@ export const YEAR_MS = 365 * DAY_MS;
 export const MONTHLY_RESET_MS = 30 * DAY_MS;
 export const FREE_IMAGE_LIMIT = 1;
 export const INITIAL_FREE_DIAMONDS = 1;
+export const FREE_DAILY_DIAMOND_CAP = 2;
 export const WEEKLY_IMAGE_LIMIT = Number.MAX_SAFE_INTEGER;
 export const YEARLY_MONTHLY_IMAGE_LIMIT = Number.MAX_SAFE_INTEGER;
 export const FREE_REFILL_INTERVAL_MS = DAY_MS;
-export const ELITE_PASS_PRO_MS = DAY_MS;
+export const ELITE_PASS_GRACE_MS = 26 * 60 * 60 * 1000;
+export const ELITE_PASS_PRO_MS = 2 * DAY_MS;
 export const ELITE_PASS_MILESTONE_DAY = 7;
-export const ELITE_PASS_REWARD_DIAMONDS = 3;
+export const ELITE_PASS_REWARD_DIAMONDS = 1;
 
 export type SubscriptionType = "weekly" | "yearly" | "free";
 export type SubscriptionEntitlement = "weekly_pro" | "annual_pro" | "free";
@@ -25,6 +27,7 @@ type SubscriptionLikeUser = {
   subscriptionStartedAt?: number | bigint;
   subscriptionEnd?: number | bigint;
   credits?: number | bigint;
+  diamondBalance?: number | bigint;
   premiumCredits?: number | bigint;
   imageLimit?: number | bigint;
   imageGenerationCount?: number | bigint;
@@ -32,9 +35,12 @@ type SubscriptionLikeUser = {
   streakCount?: number | bigint;
   lastLoginDate?: number | bigint;
   lastClaimDate?: number | bigint;
+  lastClaimAt?: number | bigint;
   nextDiamondClaimAt?: number | bigint;
   canClaimDiamond?: boolean;
   eliteProUntil?: number | bigint;
+  proTrialExpiresAt?: number | bigint | null;
+  proTrialEndedPaywallPending?: boolean;
 };
 
 type PeriodWindow = {
@@ -248,6 +254,16 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
   let subscriptionStartedAt = getSubscriptionAnchor(user, now);
   let subscriptionEnd = toFiniteNumber(user.subscriptionEnd);
   let credits = Math.max(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), 0);
+  let diamondBalance = Math.min(
+    Math.max(
+      toFiniteNumber(
+        user.diamondBalance,
+        Math.min(credits, FREE_DAILY_DIAMOND_CAP),
+      ),
+      0,
+    ),
+    FREE_DAILY_DIAMOND_CAP,
+  );
   let premiumCredits = Math.min(Math.max(toFiniteNumber(user.premiumCredits), 0), credits);
   let imageLimit = toFiniteNumber(user.imageLimit, getGenerationLimit(subscriptionType));
   let imageGenerationCount = toFiniteNumber(user.imageGenerationCount);
@@ -255,11 +271,13 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
   let streakCount = Math.max(toFiniteNumber(user.streakCount, 1), 1);
   let lastLoginDate = toFiniteNumber(user.lastLoginDate, now);
   let lastClaimDate = toFiniteNumber(user.lastClaimDate);
+  let lastClaimAt = toFiniteNumber(user.lastClaimAt, lastClaimDate);
   let nextDiamondClaimAt = toFiniteNumber(user.nextDiamondClaimAt);
   let canClaimDiamond = Boolean(user.canClaimDiamond);
   let eliteProUntil = toFiniteNumber(user.eliteProUntil);
+  let proTrialExpiresAt = toFiniteNumber(user.proTrialExpiresAt);
 
-  const patch: Record<string, number | string | boolean> = {};
+  const patch: Record<string, number | string | boolean | null> = {};
 
   if (user.subscriptionType !== subscriptionType) {
     patch.subscriptionType = subscriptionType;
@@ -275,6 +293,9 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
   }
   if (typeof user.credits !== "number") {
     patch.credits = credits;
+  }
+  if (typeof user.diamondBalance !== "number" || user.diamondBalance !== diamondBalance) {
+    patch.diamondBalance = diamondBalance;
   }
   if (typeof user.premiumCredits !== "number") {
     patch.premiumCredits = premiumCredits;
@@ -297,6 +318,9 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
   if (typeof user.lastClaimDate !== "number") {
     patch.lastClaimDate = lastClaimDate;
   }
+  if (typeof user.lastClaimAt !== "number") {
+    patch.lastClaimAt = lastClaimAt;
+  }
   if (typeof user.nextDiamondClaimAt !== "number") {
     patch.nextDiamondClaimAt = nextDiamondClaimAt;
   }
@@ -306,10 +330,24 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
   if (typeof user.eliteProUntil !== "number") {
     patch.eliteProUntil = eliteProUntil;
   }
+  if (user.proTrialExpiresAt !== null && typeof user.proTrialExpiresAt !== "number") {
+    patch.proTrialExpiresAt = proTrialExpiresAt > 0 ? proTrialExpiresAt : null;
+  }
   if (eliteProUntil > 0 && eliteProUntil <= now) {
     eliteProUntil = 0;
     patch.eliteProUntil = 0;
   }
+  if (proTrialExpiresAt > 0 && proTrialExpiresAt <= now) {
+    const hasActivePaidSubscription =
+      (subscriptionType === "weekly" || subscriptionType === "yearly")
+      && subscriptionEnd > now;
+    proTrialExpiresAt = 0;
+    patch.proTrialExpiresAt = null;
+    patch.proTrialEndedPaywallPending = !hasActivePaidSubscription;
+  }
+
+  const activeProTrialExpiresAt = Math.max(proTrialExpiresAt, eliteProUntil);
+  const hasActiveProTrial = activeProTrialExpiresAt > now;
 
   const expired = subscriptionType !== "free" && subscriptionEnd > 0 && now >= subscriptionEnd;
   if (expired) {
@@ -368,7 +406,7 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
         ? "Plan expired. Upgrade or renew to continue."
         : statusLabel;
       const hasPaidAccess = active && (plan === "pro" || plan === "trial");
-      const hasProAccess = hasPaidAccess || eliteProUntil > now;
+      const hasProAccess = hasPaidAccess || hasActiveProTrial;
       if (canClaimDiamond) {
         canClaimDiamond = false;
         patch.canClaimDiamond = false;
@@ -377,6 +415,7 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
       return {
         plan,
         credits,
+        diamondBalance,
         premiumCredits,
         subscriptionType,
         subscriptionEntitlement,
@@ -388,9 +427,11 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
         streakCount,
         lastLoginDate,
         lastClaimDate,
+        lastClaimAt,
         nextDiamondClaimAt,
         canClaimDiamond: false,
         eliteProUntil,
+        proTrialExpiresAt: proTrialExpiresAt > 0 ? proTrialExpiresAt : null,
         nextResetDate,
         limit: imageLimit,
         remaining,
@@ -431,8 +472,8 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
     }
   }
 
-  const effectiveNextClaimAt = getNextDailyClaimAt(lastClaimDate, nextDiamondClaimAt);
-  if (credits <= 0 && (effectiveNextClaimAt <= 0 || now >= effectiveNextClaimAt)) {
+  const effectiveNextClaimAt = getNextDailyClaimAt(Math.max(lastClaimDate, lastClaimAt), nextDiamondClaimAt);
+  if (diamondBalance < FREE_DAILY_DIAMOND_CAP && (effectiveNextClaimAt <= 0 || now >= effectiveNextClaimAt)) {
     canClaimDiamond = true;
     if (user.canClaimDiamond !== true) {
       patch.canClaimDiamond = true;
@@ -445,13 +486,18 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
   const remaining = Math.max(credits, 0);
   premiumCredits = Math.min(premiumCredits, remaining);
   const reachedLimit = remaining <= 0;
-  const statusLabel = `${remaining} Diamonds left`;
-  const statusMessage = reachedLimit ? "No Diamonds left. Buy more to continue." : statusLabel;
-  const hasProAccess = eliteProUntil > now;
+  const statusLabel = hasActiveProTrial ? "Unlimited generations during your active trial" : `${remaining} Diamonds left`;
+  const statusMessage = hasActiveProTrial
+    ? statusLabel
+    : reachedLimit
+      ? "No Diamonds left. Buy more to continue."
+      : statusLabel;
+  const hasProAccess = hasActiveProTrial;
 
   return {
-    plan,
+    plan: hasActiveProTrial ? ("trial" as const) : plan,
     credits,
+    diamondBalance,
     premiumCredits,
     subscriptionType: "free" as const,
     subscriptionEntitlement: "free" as const,
@@ -463,19 +509,21 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
     streakCount,
     lastLoginDate,
     lastClaimDate,
+    lastClaimAt,
     nextDiamondClaimAt,
     canClaimDiamond,
     eliteProUntil,
+    proTrialExpiresAt: proTrialExpiresAt > 0 ? proTrialExpiresAt : null,
     nextResetDate: effectiveNextClaimAt > 0 ? effectiveNextClaimAt : lastResetDate > 0 ? lastResetDate + FREE_REFILL_INTERVAL_MS : now + FREE_REFILL_INTERVAL_MS,
     limit: imageLimit,
-    remaining,
-    active: false,
+    remaining: hasActiveProTrial ? Number.MAX_SAFE_INTEGER : remaining,
+    active: hasActiveProTrial,
     expired,
     reachedLimit,
-    blocked: reachedLimit,
+    blocked: hasActiveProTrial ? false : reachedLimit,
     statusLabel,
     statusMessage,
-    hasPaidAccess: false,
+    hasPaidAccess: hasActiveProTrial,
     hasProAccess,
     canExport4k: premiumCredits > 0,
     canRemoveWatermark: hasProAccess,
@@ -483,7 +531,7 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
     canEditDesigns: hasProAccess,
     generationPolicy: resolveGenerationPolicy({
       plan: "free",
-      hasPaidAccess: false,
+      hasPaidAccess: hasActiveProTrial,
       hasProAccess,
       subscriptionType: "free",
       usesPremiumDiamond: premiumCredits > 0,

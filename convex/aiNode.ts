@@ -2,7 +2,7 @@
 
 import { experimental_generateImage, APICallError } from "ai";
 import { createAzure } from "@ai-sdk/azure";
-import { internalActionGeneric } from "convex/server";
+import { actionGeneric, internalActionGeneric } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
@@ -60,13 +60,18 @@ type ServiceType = "paint" | "floor" | "redesign" | "layout" | "replace";
 type RequestedServiceType = ServiceType | "wall" | "transfer" | "reference";
 type SpeedTier = "standard" | "pro" | "ultra";
 type AzureRenderSize = "1024x1024" | "1024x1536" | "1536x1024";
+type AzureRenderQuality = "medium" | "high";
 type GenerationQualityTier = "free" | "standard_hd" | "premium";
 
 type AzureRenderProfile = {
   deploymentName: string;
   size: AzureRenderSize;
+  quality: AzureRenderQuality;
   watermarkRequired: boolean;
 };
+
+const FREE_MAX_IMAGE_DIMENSION = 1080;
+const WATERMARK_TEXT = "HomeDecor AI";
 
 function ensureAzureEndpointPrefix(endpoint: string) {
   const trimmed = endpoint.trim();
@@ -209,10 +214,18 @@ function parseAspectRatio(value?: string) {
 }
 
 function resolveAzureImageSize(args: {
+  quality?: AzureRenderQuality;
   qualityTier?: GenerationQualityTier;
   outputResolution?: string;
   aspectRatio?: string;
 }) {
+  if (args.quality === "high") {
+    return "1024x1536";
+  }
+  if (args.quality === "medium") {
+    return "1024x1024";
+  }
+
   const requestedSize = trimOptional(args.outputResolution);
 
   if (requestedSize === "1024x1024" || requestedSize === "1024x1536" || requestedSize === "1536x1024") {
@@ -235,11 +248,16 @@ function resolveAzureRenderProfile(args: {
   planUsed?: string;
   speedTier?: SpeedTier;
   qualityTier?: GenerationQualityTier;
+  renderQuality?: AzureRenderQuality;
+  applyWatermark?: boolean;
   outputResolution?: string;
   aspectRatio?: string;
 }) {
-  const isPaidPlan = args.planUsed === "pro" || args.planUsed === "trial";
+  const quality: AzureRenderQuality = args.renderQuality === "high" && args.qualityTier === "premium"
+    ? "high"
+    : "medium";
   const size = resolveAzureImageSize({
+    quality,
     qualityTier: args.qualityTier,
     outputResolution: args.outputResolution,
     aspectRatio: args.aspectRatio,
@@ -248,7 +266,8 @@ function resolveAzureRenderProfile(args: {
   return {
     deploymentName: args.deploymentName,
     size,
-    watermarkRequired: !isPaidPlan,
+    quality,
+    watermarkRequired: args.applyWatermark ?? quality !== "high",
   } satisfies AzureRenderProfile;
 }
 
@@ -400,6 +419,7 @@ async function runAzureImageGeneration(args: {
     inputImageCount: sourceImages.length,
     flowInstruction: flowInstruction ?? null,
     size: args.renderProfile.size,
+    quality: args.renderProfile.quality,
     n: 1,
     targetColor: trimOptional(args.targetColor) ?? null,
     targetColorHex: trimOptional(args.targetColorHex) ?? null,
@@ -410,6 +430,7 @@ async function runAzureImageGeneration(args: {
     const formData = new FormData();
     formData.append("prompt", composedPrompt);
     formData.append("size", args.renderProfile.size);
+    formData.append("quality", args.renderProfile.quality);
     formData.append("n", "1");
 
     const azureEditMode = args.maskBlob ? "inpainting" : "image-to-image";
@@ -477,6 +498,11 @@ async function runAzureImageGeneration(args: {
     model: azure.image(args.renderProfile.deploymentName),
     prompt: composedPrompt,
     size: args.renderProfile.size,
+    providerOptions: {
+      openai: {
+        quality: args.renderProfile.quality,
+      },
+    },
     n: 1,
     maxRetries: 2,
   });
@@ -488,79 +514,93 @@ async function runAzureImageGeneration(args: {
   return result.image;
 }
 
-async function applyHomeDecorWatermark(blob: Blob) {
-  try {
-    const imageBuffer = await blobToJimpBuffer(blob, "applyHomeDecorWatermark");
-    if (!imageBuffer) {
-      return blob;
-    }
-
-    const jimpModule = (await import("jimp-compact")) as any;
-    const Jimp = jimpModule.default ?? jimpModule;
-    const image = await Jimp.read(imageBuffer);
-    const font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
-    const width = image.bitmap.width;
-    const height = image.bitmap.height;
-    const margin = Math.max(24, Math.round(Math.min(width, height) * 0.035));
-    const boxHeight = Math.max(52, Math.round(height * 0.075));
-    const overlayTop = height - boxHeight - margin;
-
-    image.scan(0, overlayTop, width, boxHeight + margin, (_x: number, y: number, index: number) => {
-      if (y < overlayTop) return;
-      image.bitmap.data[index + 0] = Math.round(image.bitmap.data[index + 0] * 0.78);
-      image.bitmap.data[index + 1] = Math.round(image.bitmap.data[index + 1] * 0.78);
-      image.bitmap.data[index + 2] = Math.round(image.bitmap.data[index + 2] * 0.78);
-    });
-
-    image.print(
-      font,
-      margin,
-      overlayTop + Math.max(10, Math.round(boxHeight * 0.2)),
-      {
-        text: "HomeDecor.ai",
-        alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT,
-        alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE,
-      },
-      width - margin * 2,
-      boxHeight,
-    );
-
-    const watermarked = await image.getBufferAsync(Jimp.MIME_PNG);
-    return new Blob([watermarked], { type: "image/png" });
-  } catch (error) {
-    console.error("applyHomeDecorWatermark: failed, returning original blob", {
-      message: error instanceof Error ? error.message : "Unknown watermark error",
-    });
-    return blob;
-  }
-}
-
 async function limitFreeImageResolution(blob: Blob) {
   try {
-    const FREE_MAX_DIMENSION = 1080;
-    const imageBuffer = await blobToJimpBuffer(blob, "limitFreeImageResolution");
+    const imageBuffer = await blobToImageBuffer(blob, "limitFreeImageResolution");
     if (!imageBuffer) {
-      return blob;
+      throw new ConvexError("Unable to read generated image bytes for free-tier processing.");
     }
-    const jimpModule = (await import("jimp-compact")) as any;
-    const Jimp = jimpModule.default ?? jimpModule;
-    const image = await Jimp.read(imageBuffer);
-    image.scaleToFit(FREE_MAX_DIMENSION, FREE_MAX_DIMENSION);
-    const buffer = await image.getBufferAsync(Jimp.MIME_PNG);
-    return new Blob([buffer], { type: "image/png" });
+
+    const sharpModule = (await import("sharp")) as any;
+    const sharp = sharpModule.default ?? sharpModule;
+    const resized = await sharp(imageBuffer, { failOn: "none" })
+      .rotate()
+      .resize({
+        width: FREE_MAX_IMAGE_DIMENSION,
+        height: FREE_MAX_IMAGE_DIMENSION,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: 92, mozjpeg: true })
+      .toBuffer();
+
+    return new Blob([resized], { type: "image/jpeg" });
   } catch (error) {
-    console.error("limitFreeImageResolution: failed, returning original blob", {
+    console.error("limitFreeImageResolution: failed", {
       message: error instanceof Error ? error.message : "Unknown resize error",
     });
-    return blob;
+    throw new ConvexError("Unable to prepare free-tier image safely.");
   }
 }
 
-async function blobToJimpBuffer(blob: Blob, caller: string) {
+async function applyHomeDecorWatermark(blob: Blob) {
+  try {
+    const imageBuffer = await blobToImageBuffer(blob, "applyHomeDecorWatermark");
+    if (!imageBuffer) {
+      throw new ConvexError("Unable to read generated image bytes for watermarking.");
+    }
+
+    const sharpModule = (await import("sharp")) as any;
+    const sharp = sharpModule.default ?? sharpModule;
+    const metadata = await sharp(imageBuffer, { failOn: "none" }).metadata();
+    const width = Math.max(Math.round(metadata.width ?? FREE_MAX_IMAGE_DIMENSION), 1);
+    const height = Math.max(Math.round(metadata.height ?? FREE_MAX_IMAGE_DIMENSION), 1);
+    const watermarkSvg = buildDiagonalWatermarkSvg(width, height);
+    const watermarked = await sharp(imageBuffer, { failOn: "none" })
+      .composite([{ input: Buffer.from(watermarkSvg), blend: "over" }])
+      .jpeg({ quality: 90, mozjpeg: true })
+      .toBuffer();
+
+    return new Blob([watermarked], { type: "image/jpeg" });
+  } catch (error) {
+    console.error("applyHomeDecorWatermark: failed", {
+      message: error instanceof Error ? error.message : "Unknown watermark error",
+    });
+    throw new ConvexError("Unable to watermark free-tier image safely.");
+  }
+}
+
+function buildDiagonalWatermarkSvg(width: number, height: number) {
+  const fontSize = Math.max(24, Math.round(width * 0.04));
+  const xStep = Math.max(fontSize * 8, 180);
+  const yStep = Math.max(fontSize * 3, 90);
+  const diagonal = Math.ceil(Math.sqrt(width * width + height * height));
+  const startX = -diagonal;
+  const endX = width + diagonal;
+  const startY = -diagonal;
+  const endY = height + diagonal;
+  const textNodes: string[] = [];
+
+  for (let y = startY; y <= endY; y += yStep) {
+    for (let x = startX; x <= endX; x += xStep) {
+      textNodes.push(`<text x="${x}" y="${y}">${WATERMARK_TEXT}</text>`);
+    }
+  }
+
+  return [
+    `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`,
+    `<g transform="rotate(-35 ${width / 2} ${height / 2})" opacity="0.3" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="700">`,
+    textNodes.join(""),
+    "</g>",
+    "</svg>",
+  ].join("");
+}
+
+async function blobToImageBuffer(blob: Blob, caller: string) {
   const arrayBuffer = await blob.arrayBuffer();
   const rawBytes = new Uint8Array(arrayBuffer);
   if (rawBytes.byteLength === 0) {
-    console.warn(`${caller}: empty image data, returning original blob`);
+    console.warn(`${caller}: empty image data`);
     return null;
   }
 
@@ -580,7 +620,7 @@ async function blobToJimpBuffer(blob: Blob, caller: string) {
 function decodeBase64ImageBuffer(imageData: string, caller: string) {
   const normalized = imageData.replace(/^data:[^;]+;base64,/, "").replace(/\s+/g, "");
   if (!normalized) {
-    console.warn(`${caller}: missing base64 image data, returning original blob`);
+    console.warn(`${caller}: missing base64 image data`);
     return null;
   }
 
@@ -640,6 +680,98 @@ function getAzureFailureMessage(error: unknown) {
   return message;
 }
 
+export const renderOnboardingDemo: any = actionGeneric({
+  args: {
+    imageStorageId: v.id("_storage"),
+  },
+  handler: async (ctx, args): Promise<{ ok: true; storageId: string; imageUrl: string | null }> => {
+    const apiKey = trimOptional(process.env.AZURE_OPENAI_API_KEY);
+    const endpoint = trimOptional(process.env.AZURE_OPENAI_ENDPOINT);
+    const configuredDeploymentName = trimOptional(process.env.AZURE_OPENAI_DEPLOYMENT_NAME);
+    const deploymentName = configuredDeploymentName ?? AZURE_IMAGE_DEPLOYMENT_NAME;
+
+    if (!apiKey || !endpoint || !deploymentName) {
+      const missingVariable = !apiKey
+        ? "AZURE_OPENAI_API_KEY"
+        : !endpoint
+          ? "AZURE_OPENAI_ENDPOINT"
+          : "AZURE_OPENAI_DEPLOYMENT_NAME";
+      throw new ConvexError(normalizeGenerationError(`Missing ${missingVariable} in Convex environment variables.`));
+    }
+
+    try {
+      const sourceBlob = await ctx.storage.get(args.imageStorageId);
+      if (!sourceBlob) {
+        throw new ConvexError("The demo source image could not be loaded from storage.");
+      }
+
+      const roomType = "living room";
+      const style = "Warm modern luxury";
+      const prompt = buildPrompt({
+        serviceType: "redesign",
+        roomType,
+        style,
+        styleSelections: [style],
+        colorPalette: "warm neutrals, walnut, travertine, soft linen, matte black accents",
+        customPrompt:
+          "Transform this sample empty room into a polished, photorealistic interior design concept with premium furniture, layered lighting, natural materials, and a finished magazine-quality composition. Preserve the exact camera angle, walls, windows, floor plane, and room geometry.",
+        aspectRatio: "1:1",
+      });
+      const negativePrompt = buildDesignNegativePrompt({
+        serviceType: "redesign",
+        roomType,
+      });
+      const renderProfile: AzureRenderProfile = {
+        deploymentName,
+        size: "1024x1024",
+        quality: "medium",
+        watermarkRequired: false,
+      };
+
+      await ctx.runMutation((internal as any).generations.logRender, {
+        userId: "onboarding_demo",
+        quality: "medium",
+        costUsd: 0.042,
+        userTier: "free",
+      });
+
+      const generatedImage = await runAzureImageGeneration({
+        apiKey,
+        endpoint,
+        prompt,
+        negativePrompt,
+        serviceType: "redesign",
+        roomType,
+        sourceBlob,
+        referenceBlobs: [],
+        maskBlob: null,
+        renderProfile,
+        customPrompt: "Warm modern luxury onboarding demo render.",
+        requestedServiceType: "redesign",
+      });
+
+      const imageBytes = generatedImage.uint8Array;
+      const imageBuffer = imageBytes.buffer.slice(
+        imageBytes.byteOffset,
+        imageBytes.byteOffset + imageBytes.byteLength,
+      ) as ArrayBuffer;
+      const outputBlob = new Blob([imageBuffer], {
+        type: generatedImage.mediaType || "image/png",
+      });
+      const storageId = (await ctx.storage.store(outputBlob)) as string;
+      const imageUrl = await ctx.storage.getUrl(storageId as any);
+
+      return {
+        ok: true,
+        storageId,
+        imageUrl,
+      };
+    } catch (error) {
+      throw new ConvexError(getAzureFailureMessage(error));
+    }
+  },
+});
+
 export const generateDesign: any = internalActionGeneric({
   args: {
     generationId: v.id("generations"),
@@ -665,6 +797,10 @@ export const generateDesign: any = internalActionGeneric({
     regenerate: v.optional(v.boolean()),
     smartSuggest: v.optional(v.boolean()),
     qualityTier: v.optional(v.union(v.literal("free"), v.literal("standard_hd"), v.literal("premium"))),
+    renderQuality: v.optional(v.union(v.literal("medium"), v.literal("high"))),
+    applyWatermark: v.optional(v.boolean()),
+    estimatedCostUsd: v.optional(v.number()),
+    renderUserTier: v.optional(v.union(v.literal("free"), v.literal("paid"))),
     outputResolution: v.optional(v.string()),
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
     planUsed: v.optional(v.string()),
@@ -672,7 +808,7 @@ export const generateDesign: any = internalActionGeneric({
   handler: async (
     ctx,
     args,
-  ): Promise<{ ok: true; storageId: string; imageUrl: string | null }> => {
+  ): Promise<{ ok: true; storageId: string; imageUrl: string; isWatermarked: boolean; quality: AzureRenderQuality }> => {
     const apiKey = trimOptional(process.env.AZURE_OPENAI_API_KEY);
     const endpoint = trimOptional(process.env.AZURE_OPENAI_ENDPOINT);
     const configuredDeploymentName = trimOptional(process.env.AZURE_OPENAI_DEPLOYMENT_NAME);
@@ -734,6 +870,8 @@ export const generateDesign: any = internalActionGeneric({
             : args.qualityTier === "standard_hd"
               ? "standard_hd"
               : "free",
+        renderQuality: args.renderQuality === "high" ? "high" : "medium",
+        applyWatermark: args.applyWatermark,
         outputResolution: trimOptional(args.outputResolution),
         aspectRatio: trimOptional(args.aspectRatio),
         speedTier: (args.speedTier as SpeedTier | undefined) ?? "standard",
@@ -807,6 +945,13 @@ export const generateDesign: any = internalActionGeneric({
         prompt: optimizedPrompt,
       });
 
+      await ctx.runMutation((internal as any).generations.logRender, {
+        userId: args.ownerId,
+        quality: renderProfile.quality,
+        costUsd: args.estimatedCostUsd ?? (renderProfile.quality === "high" ? 0.25 : 0.042),
+        userTier: args.renderUserTier ?? (renderProfile.quality === "high" ? "paid" : "free"),
+      });
+
       const generatedImage = await runAzureImageGeneration({
         apiKey,
         endpoint,
@@ -841,6 +986,8 @@ export const generateDesign: any = internalActionGeneric({
       console.log("generateDesign: Azure SDK generation completed", {
         generationId: args.generationId,
         watermarkRequired: renderProfile.watermarkRequired,
+        quality: renderProfile.quality,
+        size: renderProfile.size,
         outputMimeType: outputBlob.type,
       });
 
@@ -849,12 +996,14 @@ export const generateDesign: any = internalActionGeneric({
       const saveResult = (await ctx.runMutation((internal as any).ai.saveGeneration, {
         generationId: args.generationId,
         storageId: generatedStorageId,
-      })) as { imageUrl?: string | null };
+      })) as { imageUrl: string };
 
       return {
         ok: true,
         storageId: generatedStorageId,
-        imageUrl: saveResult.imageUrl ?? null,
+        imageUrl: saveResult.imageUrl,
+        isWatermarked: renderProfile.watermarkRequired,
+        quality: renderProfile.quality,
       };
     } catch (error) {
       const rawMessage = getAzureFailureMessage(error);

@@ -14,6 +14,10 @@ type ViewerCreditsSnapshot = {
   streak_count?: number;
   canClaimDiamond?: boolean;
   nextDiamondClaimAt?: number;
+  diamondBalance?: number;
+  lastClaimAt?: number;
+  notificationsDeclined?: boolean;
+  proTipNotificationIndex?: number;
   nextRefillTimestamp?: number;
   eliteProUntil?: number;
 } | null | undefined;
@@ -26,6 +30,10 @@ type OptimisticViewerCreditsState = {
   streakCount?: number;
   canClaimDiamond?: boolean;
   nextDiamondClaimAt?: number;
+  diamondBalance?: number;
+  lastClaimAt?: number;
+  notificationsDeclined?: boolean;
+  proTipNotificationIndex?: number;
   eliteProUntil?: number;
 } | null;
 
@@ -38,6 +46,10 @@ type ViewerCreditsContextValue = {
   streakCount: number;
   canClaimDiamond: boolean;
   nextDiamondClaimAt: number;
+  diamondBalance: number;
+  lastClaimAt: number;
+  notificationsDeclined: boolean;
+  proTipNotificationIndex: number;
   eliteProUntil: number;
   clearOptimisticCredits: () => void;
   setOptimisticCredits: (nextCredits: number | null) => void;
@@ -88,6 +100,24 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
     ?? cachedState?.nextDiamondClaimAt
     ?? cachedState?.nextRefillTimestamp
     ?? 0;
+  const diamondBalance = Math.max(0, Math.floor(
+    optimisticState?.diamondBalance
+    ?? me?.diamondBalance
+    ?? cachedState?.diamondBalance
+    ?? credits,
+  ));
+  const lastClaimAt = optimisticState?.lastClaimAt ?? me?.lastClaimAt ?? cachedState?.lastClaimAt ?? 0;
+  const notificationsDeclined =
+    optimisticState?.notificationsDeclined
+    ?? me?.notificationsDeclined
+    ?? cachedState?.notificationsDeclined
+    ?? false;
+  const proTipNotificationIndex = Math.max(0, Math.floor(
+    optimisticState?.proTipNotificationIndex
+    ?? me?.proTipNotificationIndex
+    ?? cachedState?.proTipNotificationIndex
+    ?? 0,
+  ));
   const eliteProUntil = optimisticState?.eliteProUntil ?? me?.eliteProUntil ?? cachedState?.eliteProUntil ?? 0;
   const clearOptimisticCredits = useCallback(() => {
     setOptimisticState(null);
@@ -138,6 +168,10 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
                   : typeof cached.nextRefillTimestamp === "number"
                     ? cached.nextRefillTimestamp
                     : undefined,
+              diamondBalance: typeof cached.diamondBalance === "number" ? cached.diamondBalance : undefined,
+              lastClaimAt: typeof cached.lastClaimAt === "number" ? cached.lastClaimAt : undefined,
+              notificationsDeclined: typeof cached.notificationsDeclined === "boolean" ? cached.notificationsDeclined : undefined,
+              proTipNotificationIndex: typeof cached.proTipNotificationIndex === "number" ? cached.proTipNotificationIndex : undefined,
               streakCount: typeof cached.streakCount === "number" ? cached.streakCount : undefined,
               eliteProUntil: typeof cached.eliteProUntil === "number" ? cached.eliteProUntil : undefined,
               subscriptionType: cached.subscriptionType ?? undefined,
@@ -153,11 +187,15 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
     anonymousId,
     me?.canClaimDiamond,
     me?.credits,
+    me?.diamondBalance,
     me?.eliteProUntil,
     me?.hasPaidAccess,
     me?.hasProAccess,
+    me?.lastClaimAt,
     me?.nextDiamondClaimAt,
     me?.nextRefillTimestamp,
+    me?.notificationsDeclined,
+    me?.proTipNotificationIndex,
     me?.streakCount,
     me?.streak_count,
     me?.subscriptionType,
@@ -173,10 +211,14 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
       streakCount,
       canClaimDiamond,
       nextDiamondClaimAt,
+      diamondBalance,
+      lastClaimAt,
+      notificationsDeclined,
+      proTipNotificationIndex,
       eliteProUntil,
     };
     void persistGenerationAccessSnapshot(snapshot);
-  }, [canClaimDiamond, credits, eliteProUntil, hasPaidAccess, hasProAccess, nextDiamondClaimAt, streakCount, subscriptionType]);
+  }, [canClaimDiamond, credits, diamondBalance, eliteProUntil, hasPaidAccess, hasProAccess, lastClaimAt, nextDiamondClaimAt, notificationsDeclined, proTipNotificationIndex, streakCount, subscriptionType]);
 
   const setOptimisticRewardState = useCallback((nextState: OptimisticViewerCreditsState) => {
     setOptimisticState((current) => {
@@ -201,6 +243,10 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
       streakCount,
       canClaimDiamond,
       nextDiamondClaimAt,
+      diamondBalance,
+      lastClaimAt,
+      notificationsDeclined,
+      proTipNotificationIndex,
       eliteProUntil,
       clearOptimisticCredits,
       setOptimisticCredits,
@@ -211,10 +257,14 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
       canClaimDiamond,
       clearOptimisticCredits,
       credits,
+      diamondBalance,
       eliteProUntil,
       hasPaidAccess,
       hasProAccess,
+      lastClaimAt,
       nextDiamondClaimAt,
+      notificationsDeclined,
+      proTipNotificationIndex,
       setOptimisticAccess,
       setOptimisticCredits,
       setOptimisticRewardState,

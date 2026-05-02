@@ -11,7 +11,7 @@ import {useCalendars, useLocales} from "expo-localization";
 import {Stack, usePathname, useRouter} from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import {useEffect, useMemo, useRef, useState} from "react";
-import {ActivityIndicator, StyleSheet, Text, TextInput, View, type TextInputProps, type TextProps} from "react-native";
+import {ActivityIndicator, AppState, StyleSheet, Text, TextInput, View, type TextInputProps, type TextProps} from "react-native";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
 import {SafeAreaProvider} from "react-native-safe-area-context";
 import {PostHogProvider} from "posthog-react-native";
@@ -24,6 +24,7 @@ import {ElitePassProvider} from "../components/elite-pass-context";
 import {FlowUIProvider} from "../components/flow-ui-context";
 import {GenerationAccessCacheGate} from "../components/generation-access-cache-gate";
 import {OfflineOverlay} from "../components/offline-overlay";
+import {OnboardingDemoRenderProvider} from "../components/onboarding-demo-render-context";
 import {ProSuccessProvider, useProSuccess} from "../components/pro-success-context";
 import {ViewerCreditsProvider, useViewerCredits} from "../components/viewer-credits-context";
 import {useViewerSession} from "../components/viewer-session-context";
@@ -40,8 +41,7 @@ syncAppLanguageWithSystem,
 useAppLanguagePreference,
 useLocalizedAppFonts,
 } from "../lib/i18n";
-import {syncTieredNotifications} from "../lib/notifications";
-import {readHasFinishedOnboarding} from "../lib/onboarding-storage";
+import {scheduleOrUpdateProTip, syncTieredNotifications} from "../lib/notifications";
 import {getDirectionalTextAlign, reloadAppForLayoutDirection} from "../lib/i18n/rtl";
 import {consumeReferralCode, setReferralCode} from "../lib/referral";
 import {
@@ -100,8 +100,9 @@ function RevenueCatGate() {
   const { user } = useUser();
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
   const fulfillDiamondPurchase = useMutation("users:fulfillDiamondPurchase" as any);
+  const setProTipNotificationIndex = useMutation("users:setProTipNotificationIndex" as any);
   const { showSuccess, showToast } = useProSuccess();
-  const { setOptimisticAccess, setOptimisticCredits } = useViewerCredits();
+  const { notificationsDeclined, proTipNotificationIndex, setOptimisticAccess, setOptimisticCredits } = useViewerCredits();
   const { anonymousId } = useViewerSession();
   const pricingContext = usePricingContext();
 
@@ -256,6 +257,13 @@ function RevenueCatGate() {
           hasSubscriptionRef.current = hasSubscription;
         } else if (hasSubscription && !hasSubscriptionRef.current) {
           showSuccess();
+          void scheduleOrUpdateProTip({
+            notificationsDeclined,
+            proTipNotificationIndex,
+            persistNextTipIndex: async (nextIndex) => {
+              await setProTipNotificationIndex({ anonymousId: anonymousId ?? undefined, nextIndex });
+            },
+          });
           hasSubscriptionRef.current = true;
         } else {
           hasSubscriptionRef.current = hasSubscription;
@@ -272,10 +280,13 @@ function RevenueCatGate() {
     pricingContext.currencyCode,
     pricingContext.diamondPacks,
     pricingContext.tierId,
+    notificationsDeclined,
+    proTipNotificationIndex,
     revenueCatReady,
     setOptimisticAccess,
     setOptimisticCredits,
     setPlan,
+    setProTipNotificationIndex,
     showSuccess,
     showToast,
   ]);
@@ -376,13 +387,30 @@ function LocalizationSyncGate() {
 }
 
 function NotificationScheduleGate() {
+  const { anonymousId } = useViewerSession();
+  const setProTipNotificationIndex = useMutation("users:setProTipNotificationIndex" as any);
+  const [scheduleTick, setScheduleTick] = useState(0);
   const {
+    diamondBalance,
     hasPaidAccess,
     hasProAccess,
     isReady,
+    lastClaimAt,
     nextDiamondClaimAt,
+    notificationsDeclined,
+    proTipNotificationIndex,
     subscriptionType,
   } = useViewerCredits();
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active") {
+        setScheduleTick((current) => current + 1);
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     if (DIAGNOSTIC_BYPASS || !isReady) {
@@ -393,10 +421,80 @@ function NotificationScheduleGate() {
       isReady,
       hasPaidAccess,
       hasProAccess,
+      diamondBalance,
+      lastDiamondClaimAt: lastClaimAt,
       nextDiamondClaimAt,
+      notificationsDeclined,
+      proTipNotificationIndex,
+      persistNextTipIndex: async (nextIndex) => {
+        await setProTipNotificationIndex({ anonymousId: anonymousId ?? undefined, nextIndex });
+      },
       subscriptionType,
     });
-  }, [hasPaidAccess, hasProAccess, isReady, nextDiamondClaimAt, subscriptionType]);
+  }, [
+    anonymousId,
+    diamondBalance,
+    hasPaidAccess,
+    hasProAccess,
+    isReady,
+    lastClaimAt,
+    nextDiamondClaimAt,
+    notificationsDeclined,
+    proTipNotificationIndex,
+    scheduleTick,
+    setProTipNotificationIndex,
+    subscriptionType,
+  ]);
+
+  return null;
+}
+
+function NotificationResponseGate() {
+  const router = useRouter();
+  const handledResponseRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (DIAGNOSTIC_BYPASS) {
+      return;
+    }
+
+    let mounted = true;
+    let subscription: { remove: () => void } | null = null;
+
+    const handleRoute = (response: any) => {
+      const request = response?.notification?.request;
+      const identifier = request?.identifier;
+      const route = request?.content?.data?.route;
+      if (typeof identifier === "string" && handledResponseRef.current === identifier) {
+        return;
+      }
+      if (typeof route !== "string" || route.length === 0) {
+        return;
+      }
+
+      handledResponseRef.current = typeof identifier === "string" ? identifier : route;
+      router.push(route as any);
+    };
+
+    void import("expo-notifications")
+      .then(async (Notifications) => {
+        if (!mounted) {
+          return;
+        }
+
+        subscription = Notifications.addNotificationResponseReceivedListener(handleRoute);
+        const lastResponse = await Notifications.getLastNotificationResponseAsync();
+        if (mounted && lastResponse) {
+          handleRoute(lastResponse);
+        }
+      })
+      .catch((error) => console.warn("[Notifications] Response listener unavailable", error));
+
+    return () => {
+      mounted = false;
+      subscription?.remove();
+    };
+  }, [router]);
 
   return null;
 }
@@ -451,73 +549,26 @@ function CreateAccessGate({ children }: { children: React.ReactNode }) {
 function OnboardingBootGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const lastRedirectRef = useRef<string | null>(null);
-  const [hasCheckedOnboarding, setHasCheckedOnboarding] = useState(false);
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
+  const hasPresentedOnboardingRef = useRef(false);
+  const isRedirectingToOnboardingRef = useRef(false);
 
   useEffect(() => {
-    let mounted = true;
-
-    void readHasFinishedOnboarding()
-      .then((hasFinishedOnboarding) => {
-        if (!mounted) {
-          return;
-        }
-
-        setHasCompletedOnboarding(hasFinishedOnboarding);
-      })
-      .finally(() => {
-        if (mounted) {
-          setHasCheckedOnboarding(true);
-        }
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!hasCheckedOnboarding || DIAGNOSTIC_BYPASS) {
+    if (hasPresentedOnboardingRef.current) {
       return;
     }
 
-    let active = true;
     const isOnboardingRoute = pathname === "/onboarding";
-    const isRootRoute = pathname === "/";
-
-    if (!hasCompletedOnboarding && !isOnboardingRoute) {
-      void readHasFinishedOnboarding().then((hasFinishedOnboarding) => {
-        if (!active) {
-          return;
-        }
-
-        if (hasFinishedOnboarding) {
-          setHasCompletedOnboarding(true);
-          return;
-        }
-
-        const redirectKey = `${pathname}->/onboarding`;
-        if (lastRedirectRef.current !== redirectKey) {
-          lastRedirectRef.current = redirectKey;
-          router.replace("/onboarding" as any);
-        }
-      });
-    } else if (hasCompletedOnboarding && (isOnboardingRoute || isRootRoute)) {
-      lastRedirectRef.current = `${pathname}->/(tabs)`;
-      router.replace("/(tabs)" as any);
-    } else {
-      lastRedirectRef.current = null;
+    if (isOnboardingRoute) {
+      hasPresentedOnboardingRef.current = true;
+      isRedirectingToOnboardingRef.current = false;
+      return;
     }
 
-    return () => {
-      active = false;
-    };
-  }, [hasCheckedOnboarding, hasCompletedOnboarding, pathname, router]);
-
-  if (!hasCheckedOnboarding) {
-    return <BootScreen message={i18n.t("boot.checkingOnboarding")} />;
-  }
+    if (!isRedirectingToOnboardingRef.current) {
+      isRedirectingToOnboardingRef.current = true;
+      router.replace("/onboarding" as any);
+    }
+  }, [pathname, router]);
 
   return <>{children}</>;
 }
@@ -527,7 +578,7 @@ function AppShell() {
 
   return (
     <Stack
-      initialRouteName="index"
+      initialRouteName="onboarding"
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: "#FFFFFF" },
@@ -537,6 +588,7 @@ function AppShell() {
     >
       <Stack.Screen name="index" />
       <Stack.Screen name="onboarding" />
+      <Stack.Screen name="(onboarding)/wow-reveal" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen
         name="paywall"
@@ -639,29 +691,32 @@ export default function RootLayout() {
               <Providers>
                 <ViewerSessionProvider>
                   {DIAGNOSTIC_BYPASS ? null : <ReferralGate />}
-                  <ViewerCreditsProvider>
-                    <ElitePassProvider>
-                      <DiamondStoreProvider>
-                        <FlowUIProvider>
-                          <WorkspaceDraftProvider>
-                            <BottomSheetModalProvider>
-                              {DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
+                  <OnboardingDemoRenderProvider>
+                    <ViewerCreditsProvider>
+                      <ElitePassProvider>
+                        <DiamondStoreProvider>
+                          <FlowUIProvider>
+                            <WorkspaceDraftProvider>
+                              <BottomSheetModalProvider>
+                                {DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
                               <LocalizationSyncGate />
                               <GenerationAccessCacheGate />
                               <NotificationScheduleGate />
+                              <NotificationResponseGate />
                               <CreateAccessGate>
-                                <OnboardingBootGate>
-                                  <AppShell />
-                                </OnboardingBootGate>
-                              </CreateAccessGate>
-                              <DailyRewardModal />
-                              <OfflineOverlay />
-                            </BottomSheetModalProvider>
-                          </WorkspaceDraftProvider>
-                        </FlowUIProvider>
-                      </DiamondStoreProvider>
-                    </ElitePassProvider>
-                  </ViewerCreditsProvider>
+                                  <OnboardingBootGate>
+                                    <AppShell />
+                                  </OnboardingBootGate>
+                                </CreateAccessGate>
+                                <DailyRewardModal />
+                                <OfflineOverlay />
+                              </BottomSheetModalProvider>
+                            </WorkspaceDraftProvider>
+                          </FlowUIProvider>
+                        </DiamondStoreProvider>
+                      </ElitePassProvider>
+                    </ViewerCreditsProvider>
+                  </OnboardingDemoRenderProvider>
                 </ViewerSessionProvider>
               </Providers>
             </AuthGate>

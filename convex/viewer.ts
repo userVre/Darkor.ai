@@ -1,6 +1,6 @@
 import { ConvexError } from "convex/values";
 
-import { FREE_IMAGE_LIMIT, INITIAL_FREE_DIAMONDS } from "./subscriptions";
+import { FREE_DAILY_DIAMOND_CAP, FREE_IMAGE_LIMIT, INITIAL_FREE_DIAMONDS } from "./subscriptions";
 
 export const GUEST_STARTER_CREDITS = INITIAL_FREE_DIAMONDS;
 
@@ -33,12 +33,15 @@ export function buildDefaultUserFields(args: {
   const now = Date.now();
   const guestId = args.anonymousId ? toGuestUserId(args.anonymousId) : undefined;
   const referralSeed = args.clerkId ?? args.anonymousId ?? guestId ?? String(now);
+  const startingCredits = Math.max(args.credits ?? GUEST_STARTER_CREDITS, 0);
 
   return {
     clerkId: args.clerkId,
     anonymousId: args.anonymousId,
     mergedIntoClerkId: undefined,
-    credits: args.credits ?? GUEST_STARTER_CREDITS,
+    credits: startingCredits,
+    diamondBalance: Math.min(startingCredits, FREE_DAILY_DIAMOND_CAP),
+    diamondSources: Array.from({ length: startingCredits }, () => "daily_free" as const),
     premiumCredits: 0,
     plan: "free",
     generationCount: args.generationCount ?? 0,
@@ -48,9 +51,13 @@ export function buildDefaultUserFields(args: {
     streakCount: 1,
     lastLoginDate: now,
     lastClaimDate: 0,
+    lastClaimAt: 0,
     nextDiamondClaimAt: 0,
     canClaimDiamond: false,
     eliteProUntil: 0,
+    proTrialExpiresAt: null,
+    proTrialEndedPaywallPending: false,
+    proTrialEndedPaywallShownAt: 0,
     onboardingDiamondClaimedAt: 0,
     referralCode: args.referralCode ?? createReferralCode(referralSeed),
     referralCount: 0,
@@ -65,6 +72,13 @@ export function buildDefaultUserFields(args: {
     imageLimit: FREE_IMAGE_LIMIT,
     imageGenerationCount: 0,
     lastResetDate: 0,
+    expoPushToken: undefined,
+    devicePushToken: undefined,
+    notificationPlatform: undefined,
+    notificationsDeclined: false,
+    notificationsPermissionRequestedAt: 0,
+    notificationsPermissionGrantedAt: 0,
+    proTipNotificationIndex: 0,
   };
 }
 

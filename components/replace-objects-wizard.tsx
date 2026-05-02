@@ -52,6 +52,7 @@ import {
   resolveGuestWizardViewerId,
 } from "../lib/guest-testing";
 import {triggerHaptic} from "../lib/haptics";
+import {requestPermissionsGracefully} from "../lib/notifications";
 import {uploadLocalFileToCloud} from "../lib/native-upload";
 import {SERVICE_WIZARD_THEME} from "../lib/service-wizard-theme";
 import {getReplaceWizardExamplePhotos} from "../lib/wizard-example-photos";
@@ -139,7 +140,7 @@ export function ReplaceObjectsWizard({
   const effectiveSignedIn = isSignedIn || guestWizardTestingSession;
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const {showToast} = useProSuccess();
-  const {credits: sharedCredits, setOptimisticCredits} = useViewerCredits();
+  const {credits: sharedCredits, notificationsDeclined, setOptimisticCredits} = useViewerCredits();
   const {openStore} = useDiamondStore();
   const viewerArgs = useMemo(() => (viewerId ? {anonymousId: viewerId} : {}), [viewerId]);
 
@@ -151,6 +152,7 @@ export function ReplaceObjectsWizard({
   const createSourceUploadUrl = useMutation("generations:createSourceUploadUrl" as any);
   const startGeneration = useMutation("generations:startGeneration" as any);
   const cancelGeneration = useMutation("generations:cancelGeneration" as any);
+  const updateNotificationPreferences = useMutation("users:updateNotificationPreferences" as any);
 
   const [step, setStep] = useState<WizardStep>("intake");
   const [maskTool, setMaskTool] = useState<MaskTool>("brush");
@@ -194,6 +196,15 @@ export function ReplaceObjectsWizard({
   });
 
   const generationStatusMessages = useGenerationStatusMessages();
+  const requestNotificationsAfterReveal = useCallback(() => {
+    void requestPermissionsGracefully({
+      anonymousId: anonymousId ?? undefined,
+      notificationsDeclined,
+      savePreferences: async (args) => {
+        await updateNotificationPreferences(args);
+      },
+    });
+  }, [anonymousId, notificationsDeclined, updateNotificationPreferences]);
   const replaceExamplePhotos = useMemo(() => getReplaceWizardExamplePhotos(t), [i18n.language, t]);
   const stickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);
   const availableCredits = sharedCredits;
@@ -254,6 +265,7 @@ export function ReplaceObjectsWizard({
 
       const revealTimer = setTimeout(() => {
         triggerHaptic();
+        requestNotificationsAfterReveal();
         if (effectiveSignedIn) {
           router.replace({pathname: "/workspace", params: {boardView: "board"}});
           return;
@@ -281,7 +293,7 @@ export function ReplaceObjectsWizard({
       setStep("prompt");
       showToast(getFriendlyGenerationError(generation.errorMessage ?? GENERATION_FAILED_TOAST));
     }
-  }, [effectiveSignedIn, generationArchive, generationId, router, showToast]);
+  }, [effectiveSignedIn, generationArchive, generationId, requestNotificationsAfterReveal, router, showToast]);
 
   useEffect(() => {
     onProcessingStateChange?.(step === "processing");

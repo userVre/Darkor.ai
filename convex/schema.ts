@@ -10,7 +10,9 @@ export default defineSchema({
     anonymousId: v.optional(v.string()),
     mergedIntoClerkId: v.optional(v.string()),
     credits: numberLike,
+    diamondBalance: optionalNumberLike,
     premiumCredits: optionalNumberLike,
+    diamondSources: v.optional(v.array(v.union(v.literal("daily_free"), v.literal("purchased_pack"), v.literal("referral")))),
     plan: v.string(),
     generationCount: numberLike,
     reviewPrompted: v.boolean(),
@@ -19,9 +21,13 @@ export default defineSchema({
     streakCount: optionalNumberLike,
     lastLoginDate: optionalNumberLike,
     lastClaimDate: optionalNumberLike,
+    lastClaimAt: optionalNumberLike,
     nextDiamondClaimAt: optionalNumberLike,
     canClaimDiamond: v.optional(v.boolean()),
     eliteProUntil: optionalNumberLike,
+    proTrialExpiresAt: v.optional(v.union(numberLike, v.null())),
+    proTrialEndedPaywallPending: v.optional(v.boolean()),
+    proTrialEndedPaywallShownAt: optionalNumberLike,
     onboardingDiamondClaimedAt: optionalNumberLike,
     referralCode: v.optional(v.string()),
     referralCount: optionalNumberLike,
@@ -39,10 +45,18 @@ export default defineSchema({
     pricingTier: v.optional(v.string()),
     pricingCountryCode: v.optional(v.string()),
     pricingCurrencyCode: v.optional(v.string()),
+    expoPushToken: v.optional(v.string()),
+    devicePushToken: v.optional(v.string()),
+    notificationPlatform: v.optional(v.string()),
+    notificationsDeclined: v.optional(v.boolean()),
+    notificationsPermissionRequestedAt: optionalNumberLike,
+    notificationsPermissionGrantedAt: optionalNumberLike,
+    proTipNotificationIndex: optionalNumberLike,
   })
     .index("by_clerkId", ["clerkId"])
     .index("by_anonymousId", ["anonymousId"])
-    .index("by_referralCode", ["referralCode"]),
+    .index("by_referralCode", ["referralCode"])
+    .index("by_proTrialExpiresAt", ["proTrialExpiresAt"]),
 
   generations: defineTable({
     userId: v.string(),
@@ -68,6 +82,12 @@ export default defineSchema({
     smartSuggest: v.optional(v.boolean()),
     mode: v.optional(v.string()),
     qualityTier: v.optional(v.union(v.literal("free"), v.literal("standard_hd"), v.literal("premium"))),
+    renderQuality: v.optional(v.union(v.literal("medium"), v.literal("high"))),
+    renderCostUsd: optionalNumberLike,
+    estimatedCostUsd: optionalNumberLike,
+    applyWatermark: v.optional(v.boolean()),
+    renderUserTier: v.optional(v.union(v.literal("free"), v.literal("paid"))),
+    diamondSource: v.optional(v.union(v.literal("daily_free"), v.literal("purchased_pack"), v.literal("referral"))),
     outputResolution: v.optional(v.string()),
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
     status: v.optional(v.union(v.literal("processing"), v.literal("ready"), v.literal("failed"))),
@@ -122,4 +142,14 @@ export default defineSchema({
   })
     .index("by_transactionId", ["transactionId"])
     .index("by_userId", ["userId"]),
+
+  renders: defineTable({
+    userId: v.string(),
+    quality: v.union(v.literal("medium"), v.literal("high")),
+    costUsd: numberLike,
+    timestamp: numberLike,
+    userTier: v.union(v.literal("free"), v.literal("paid")),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_timestamp", ["timestamp"]),
 });

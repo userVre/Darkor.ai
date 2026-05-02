@@ -11,7 +11,6 @@ import {
   canUserGenerateState,
   deriveSubscriptionState,
   FREE_REFILL_INTERVAL_MS,
-  resolveGenerationPolicy,
   toFiniteNumber,
 } from "./subscriptions";
 import {
@@ -34,6 +33,7 @@ type GenerationUser = {
   anonymousId?: string;
   mergedIntoClerkId?: string;
   credits: number;
+  diamondSources?: string[];
   premiumCredits?: number;
   generationCount: number;
   reviewPrompted: boolean;
@@ -47,6 +47,7 @@ type GenerationUser = {
   subscriptionEntitlement?: string;
   subscriptionStartedAt?: number;
   subscriptionEnd?: number;
+  proTrialExpiresAt?: number | null;
   imageLimit?: number;
   imageGenerationCount?: number;
   lastResetDate?: number;
@@ -56,9 +57,166 @@ type GenerationUser = {
   nextDiamondClaimAt?: number;
   canClaimDiamond?: boolean;
   eliteProUntil?: number;
+  diamondBalance?: number;
+  lastClaimAt?: number;
 };
 
 const PRO_TOOL_LOCK_MESSAGE = "This tool is reserved for PRO members or Day 7 Streak winners.";
+type DiamondSource = "daily_free" | "purchased_pack" | "referral";
+type RenderQuality = "medium" | "high";
+type RenderUserTier = "free" | "paid";
+type RenderConfig = {
+  quality: RenderQuality;
+  resolution: "1024x1024" | "1024x1536";
+  applyWatermark: boolean;
+  estimatedCostUsd: number;
+  userTier: RenderUserTier;
+  diamondSource?: DiamondSource;
+  apiModel: "gpt-image-1";
+  label: "Standard HD" | "Premium 4K";
+};
+const DIAMOND_SOURCE_SET = new Set<DiamondSource>(["daily_free", "purchased_pack", "referral"]);
+const FREE_RENDER_COST_USD = 0.042;
+const PAID_RENDER_COST_USD = 0.25;
+
+function isDiamondSource(value: unknown): value is DiamondSource {
+  return typeof value === "string" && DIAMOND_SOURCE_SET.has(value as DiamondSource);
+}
+
+function normalizeDiamondSourcesForBalance(user: GenerationUser, creditsOverride?: number) {
+  const credits = Math.max(toFiniteNumber(creditsOverride ?? user.credits), 0);
+  const existing = Array.isArray(user.diamondSources)
+    ? user.diamondSources.filter(isDiamondSource)
+    : [];
+
+  if (existing.length === credits) {
+    return existing;
+  }
+  if (existing.length > credits) {
+    return existing.slice(existing.length - credits);
+  }
+
+  if (existing.length > 0) {
+    return [
+      ...existing,
+      ...Array.from({ length: credits - existing.length }, () => "daily_free" as const),
+    ];
+  }
+
+  const purchasedCount = Math.min(Math.max(toFiniteNumber(user.premiumCredits), 0), credits);
+  const freeCount = Math.max(credits - purchasedCount, 0);
+  return [
+    ...Array.from({ length: freeCount }, () => "daily_free" as const),
+    ...Array.from({ length: purchasedCount }, () => "purchased_pack" as const),
+  ];
+}
+
+function removeOneDiamondSource(sources: DiamondSource[], source: DiamondSource) {
+  const next = [...sources];
+  const index = next.lastIndexOf(source);
+  if (index >= 0) {
+    next.splice(index, 1);
+  }
+  return next;
+}
+
+function getAvailableDiamondSources(args: {
+  user: GenerationUser;
+  credits: number;
+  processingGenerations: Array<{ diamondSource?: string; qualityTier?: string }>;
+}) {
+  let available = normalizeDiamondSourcesForBalance(args.user, args.credits);
+  for (const generation of args.processingGenerations) {
+    if (isDiamondSource(generation.diamondSource)) {
+      available = removeOneDiamondSource(available, generation.diamondSource);
+    } else if (generation.qualityTier === "premium") {
+      available = removeOneDiamondSource(available, "purchased_pack");
+    } else {
+      let fallback = available[available.length - 1];
+      for (let index = available.length - 1; index >= 0; index -= 1) {
+        if (available[index] !== "purchased_pack") {
+          fallback = available[index];
+          break;
+        }
+      }
+      if (fallback) {
+        available = removeOneDiamondSource(available, fallback);
+      }
+    }
+  }
+  return available;
+}
+
+function selectDiamondSourceForRender(availableSources: DiamondSource[]) {
+  if (availableSources.includes("purchased_pack")) {
+    return "purchased_pack" as const;
+  }
+  return availableSources[availableSources.length - 1] ?? "daily_free";
+}
+
+function hasActivePaidRenderAccess(user: GenerationUser, state: ReturnType<typeof deriveSubscriptionState>, now: number) {
+  const activeSubscription =
+    (state.subscriptionType === "weekly" || state.subscriptionType === "yearly")
+    && toFiniteNumber(state.subscriptionEnd) > now;
+  const activeProTrial =
+    toFiniteNumber(user.proTrialExpiresAt) > now
+    || (state.plan === "trial" && toFiniteNumber(state.subscriptionEnd) > now);
+  return activeSubscription || activeProTrial;
+}
+
+async function getRenderConfig(
+  ctx: any,
+  userId: string,
+  diamondSource?: DiamondSource,
+): Promise<RenderConfig> {
+  const user = await getUserByOwnerId(ctx, userId);
+  if (!user) {
+    throw new ConvexError("No billing profile found. Please subscribe to continue.");
+  }
+
+  const now = Date.now();
+  const state = await syncDerivedSubscriptionState(ctx, user, now);
+  const paidAccess = hasActivePaidRenderAccess(user, state, now) || diamondSource === "purchased_pack";
+  if (paidAccess) {
+    return {
+      quality: "high",
+      resolution: "1024x1536",
+      applyWatermark: false,
+      estimatedCostUsd: PAID_RENDER_COST_USD,
+      userTier: "paid",
+      diamondSource,
+      apiModel: "gpt-image-1",
+      label: "Premium 4K",
+    };
+  }
+
+  return {
+    quality: "medium",
+    resolution: "1024x1024",
+    applyWatermark: true,
+    estimatedCostUsd: FREE_RENDER_COST_USD,
+    userTier: "free",
+    diamondSource,
+    apiModel: "gpt-image-1",
+    label: "Standard HD",
+  };
+}
+
+function buildGenerationPolicyFromRenderConfig(renderConfig: RenderConfig, subscriptionType: string) {
+  const isPaid = renderConfig.userTier === "paid";
+  const qualityTier = isPaid ? "premium" : "standard_hd";
+  const speedTier = isPaid ? (subscriptionType === "yearly" ? "ultra" : "pro") : "standard";
+  return {
+    qualityTier: qualityTier as "premium" | "standard_hd",
+    outputResolution: renderConfig.resolution,
+    speedTier: speedTier as "ultra" | "pro" | "standard",
+    watermarkRequired: renderConfig.applyWatermark,
+    priorityProcessing: isPaid,
+    renderQuality: renderConfig.quality,
+    estimatedCostUsd: renderConfig.estimatedCostUsd,
+    label: renderConfig.label,
+  };
+}
 
 async function getUserByOwnerId(ctx: any, ownerId: string) {
   if (ownerId.startsWith("guest:")) {
@@ -149,7 +307,9 @@ async function reserveGenerationAllowance(
     throw new ConvexError("No billing profile found. Please subscribe to continue.");
   }
 
-  const state = await syncDerivedSubscriptionState(ctx, user, Date.now());
+  const now = Date.now();
+  const state = await syncDerivedSubscriptionState(ctx, user, now);
+  const hasPaidRenderAccess = hasActivePaidRenderAccess(user, state, now);
   if (isRestrictedServiceType(requestedServiceType) && !state.hasProAccess) {
     throw new ConvexError(PRO_TOOL_LOCK_MESSAGE);
   }
@@ -157,16 +317,17 @@ async function reserveGenerationAllowance(
     throw new ConvexError(getLimitExceededMessage(state));
   }
 
-  const processingGenerations = state.subscriptionType === "free"
+  const usesDiamondAllowance = state.subscriptionType === "free" && !hasPaidRenderAccess;
+  const processingGenerations = usesDiamondAllowance
     ? await ctx.db
         .query("generations")
         .withIndex("by_userId", (q: any) => q.eq("userId", ownerId))
         .collect()
     : [];
-  const pendingFreeGenerationCount = state.subscriptionType === "free"
+  const pendingFreeGenerationCount = usesDiamondAllowance
     ? processingGenerations.filter((generation: any) => generation.status === "processing").length
     : 0;
-  if (state.subscriptionType === "free" && pendingFreeGenerationCount >= state.credits) {
+  if (usesDiamondAllowance && pendingFreeGenerationCount >= state.credits) {
     throw new ConvexError(getLimitExceededMessage({
       ...state,
       blocked: true,
@@ -179,17 +340,23 @@ async function reserveGenerationAllowance(
   const nextGenerationCount = currentCount + 1;
   const lastPromptAt = toFiniteNumber(user.lastReviewPromptAt);
   const shouldPrompt = computeReviewPrompt(nextGenerationCount, lastPromptAt, ignoreCooldown);
-  const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : state.imageGenerationCount + 1;
-  const pendingPremiumGenerationCount = state.subscriptionType === "free"
-    ? processingGenerations.filter((generation: any) => generation.status === "processing" && generation.qualityTier === "premium").length
-    : 0;
-  const usesPremiumDiamond =
-    state.subscriptionType === "free"
-    && state.premiumCredits > pendingPremiumGenerationCount;
+  const nextImageGenerationCount = usesDiamondAllowance ? state.imageGenerationCount : state.imageGenerationCount + 1;
+  const availableDiamondSources = usesDiamondAllowance
+    ? getAvailableDiamondSources({
+        user,
+        credits: state.credits,
+        processingGenerations: processingGenerations.filter((generation: any) => generation.status === "processing"),
+      })
+    : [];
+  const diamondSource = usesDiamondAllowance ? selectDiamondSourceForRender(availableDiamondSources) : undefined;
+  const renderConfig = await getRenderConfig(ctx, ownerId, diamondSource);
+  const generationPolicy = buildGenerationPolicyFromRenderConfig(renderConfig, state.subscriptionType);
 
   await ctx.db.patch(user._id as any, {
     generationCount: nextGenerationCount,
     credits: state.credits,
+    diamondBalance: state.diamondBalance,
+    diamondSources: normalizeDiamondSourcesForBalance(user, state.credits),
     imageLimit: state.limit,
     imageGenerationCount: nextImageGenerationCount,
     lastResetDate: state.lastResetDate,
@@ -202,22 +369,16 @@ async function reserveGenerationAllowance(
     ...(typeof state.patch.lastResetDate === "number" ? { lastResetDate: state.patch.lastResetDate } : {}),
   });
 
-  const generationPolicy = resolveGenerationPolicy({
-    plan: state.plan,
-    hasPaidAccess: state.hasPaidAccess,
-    hasProAccess: state.hasProAccess,
-    subscriptionType: state.subscriptionType,
-    usesPremiumDiamond,
-  });
-
   return {
     count: nextGenerationCount,
     shouldPrompt,
-    creditsRemaining: state.subscriptionType === "free"
+    creditsRemaining: usesDiamondAllowance
       ? state.credits
       : Math.max(state.limit - nextImageGenerationCount, 0),
-    planUsed: usesPremiumDiamond ? "diamond" : state.plan,
+    planUsed: diamondSource === "purchased_pack" ? "diamond" : state.plan,
     generationPolicy,
+    renderConfig,
+    diamondSource,
   };
 }
 
@@ -231,14 +392,18 @@ async function releaseGenerationAllowance(ctx: any, ownerId: string) {
     };
   }
 
-  const state = await syncDerivedSubscriptionState(ctx, user, Date.now());
+  const now = Date.now();
+  const state = await syncDerivedSubscriptionState(ctx, user, now);
   const currentCount = toFiniteNumber(user.generationCount);
   const nextGenerationCount = Math.max(currentCount - 1, 0);
   const nextCredits = state.credits;
-  const nextImageGenerationCount = state.subscriptionType === "free" ? state.imageGenerationCount : Math.max(state.imageGenerationCount - 1, 0);
+  const usesDiamondAllowance = state.subscriptionType === "free" && !hasActivePaidRenderAccess(user, state, now);
+  const nextImageGenerationCount = usesDiamondAllowance ? state.imageGenerationCount : Math.max(state.imageGenerationCount - 1, 0);
 
   await ctx.db.patch(user._id as any, {
     credits: nextCredits,
+    diamondBalance: state.diamondBalance,
+    diamondSources: normalizeDiamondSourcesForBalance(user, nextCredits),
     imageLimit: state.limit,
     imageGenerationCount: nextImageGenerationCount,
     generationCount: nextGenerationCount,
@@ -254,7 +419,7 @@ async function releaseGenerationAllowance(ctx: any, ownerId: string) {
   return {
     ok: true,
     generationCount: nextGenerationCount,
-    credits: state.subscriptionType === "free"
+    credits: usesDiamondAllowance
       ? state.credits
       : Math.max(state.limit - nextImageGenerationCount, 0),
   };
@@ -270,7 +435,8 @@ async function finalizeGenerationAllowance(ctx: any, ownerId: string, generation
   }
 
   const state = await syncDerivedSubscriptionState(ctx, user, Date.now());
-  if (state.subscriptionType !== "free") {
+  const usesDiamondAllowance = state.subscriptionType === "free" && !hasActivePaidRenderAccess(user, state, Date.now());
+  if (!usesDiamondAllowance) {
     return {
       ok: true,
       credits: Math.max(state.limit - state.imageGenerationCount, 0),
@@ -280,11 +446,27 @@ async function finalizeGenerationAllowance(ctx: any, ownerId: string, generation
   const now = Date.now();
   const nextCredits = Math.max(state.credits - 1, 0);
   const generation = generationId ? await ctx.db.get(generationId as any) : null;
-  const usedPremiumDiamond = generation?.qualityTier === "premium";
-  const nextPremiumCredits = usedPremiumDiamond ? Math.max(state.premiumCredits - 1, 0) : state.premiumCredits;
+  const usedDiamondSource = isDiamondSource(generation?.diamondSource)
+    ? generation.diamondSource
+    : generation?.qualityTier === "premium"
+      ? "purchased_pack"
+      : "daily_free";
+  const nextPremiumCredits = usedDiamondSource === "purchased_pack" ? Math.max(state.premiumCredits - 1, 0) : state.premiumCredits;
+  const nextDiamondBalance = usedDiamondSource === "daily_free"
+    ? Math.max(state.diamondBalance - 1, 0)
+    : state.diamondBalance;
+  const spentDiamondSources = removeOneDiamondSource(
+    normalizeDiamondSourcesForBalance(user, state.credits),
+    usedDiamondSource,
+  );
+  const nextDiamondSources = spentDiamondSources.length > nextCredits
+    ? spentDiamondSources.slice(spentDiamondSources.length - nextCredits)
+    : spentDiamondSources;
   const nextDiamondClaimAt = nextCredits <= 0 ? now + FREE_REFILL_INTERVAL_MS : 0;
   await ctx.db.patch(user._id as any, {
     credits: nextCredits,
+    diamondBalance: nextDiamondBalance,
+    diamondSources: nextDiamondSources,
     premiumCredits: nextPremiumCredits,
     imageLimit: state.limit,
     lastResetDate: now,
@@ -425,6 +607,8 @@ export const getUserArchive = queryGeneric({
           imageUrl,
           sourceImageUrl,
           watermarkRequired: row.watermarkRequired ?? false,
+          isWatermarked: row.watermarkRequired ?? false,
+          quality: row.renderQuality === "high" ? "high" : "medium",
           serviceType: row.serviceType ?? undefined,
           modeId: row.modeId ?? undefined,
           paletteId: row.paletteId ?? undefined,
@@ -590,6 +774,10 @@ export const startGeneration = mutationGeneric({
                 ? "Replace Objects"
               : "Complete Redesign",
       qualityTier: enforcedGenerationPolicy.qualityTier,
+      renderQuality: allowance.renderConfig.quality,
+      renderCostUsd: allowance.renderConfig.estimatedCostUsd,
+      renderUserTier: allowance.renderConfig.userTier,
+      diamondSource: allowance.diamondSource,
       outputResolution: enforcedGenerationPolicy.outputResolution,
       speedTier: enforcedGenerationPolicy.speedTier,
       status: "processing",
@@ -636,6 +824,10 @@ export const startGeneration = mutationGeneric({
         aiSuggestedPaletteId: trimOptional(args.aiSuggestedPaletteId),
         smartSuggest: args.smartSuggest === true,
         qualityTier: enforcedGenerationPolicy.qualityTier,
+        renderQuality: allowance.renderConfig.quality,
+        applyWatermark: allowance.renderConfig.applyWatermark,
+        estimatedCostUsd: allowance.renderConfig.estimatedCostUsd,
+        renderUserTier: allowance.renderConfig.userTier,
         outputResolution: enforcedGenerationPolicy.outputResolution,
         speedTier: enforcedGenerationPolicy.speedTier,
         planUsed: allowance.planUsed,
@@ -672,6 +864,11 @@ export const startGeneration = mutationGeneric({
       creditsRemaining: allowance.creditsRemaining,
       planUsed: allowance.planUsed,
       generationPolicy: allowance.generationPolicy,
+      imageUrl: null,
+      isWatermarked: watermarkRequired,
+      quality: allowance.renderConfig.quality,
+      renderLabel: allowance.renderConfig.label,
+      renderConfig: allowance.renderConfig,
     };
   },
 });
@@ -699,6 +896,25 @@ export const markGenerationFailed = internalMutationGeneric({
     });
 
     await releaseGenerationAllowance(ctx, args.ownerId);
+    return { ok: true };
+  },
+});
+
+export const logRender = internalMutationGeneric({
+  args: {
+    userId: v.string(),
+    quality: v.union(v.literal("medium"), v.literal("high")),
+    costUsd: v.number(),
+    userTier: v.union(v.literal("free"), v.literal("paid")),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("renders", {
+      userId: args.userId,
+      quality: args.quality,
+      costUsd: args.costUsd,
+      timestamp: Date.now(),
+      userTier: args.userTier,
+    });
     return { ok: true };
   },
 });

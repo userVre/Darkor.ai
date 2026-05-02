@@ -1,13 +1,13 @@
 import {Image} from "expo-image";
+import * as Haptics from "expo-haptics";
 import {LinearGradient} from "expo-linear-gradient";
 import {useRouter} from "expo-router";
 import {StatusBar} from "expo-status-bar";
-import {MotiView} from "moti";
 import {Home, PenTool, Sparkles} from "lucide-react-native";
 import {usePostHog} from "posthog-react-native";
-import {useCallback, useEffect, useMemo, useRef, useState, type ComponentType} from "react";
+import {useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode} from "react";
 import {useTranslation} from "react-i18next";
-import {Pressable, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {Pressable, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle} from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -15,7 +15,9 @@ import Animated, {
   withDelay,
   withRepeat,
   withSequence,
+  withSpring,
   withTiming,
+  type SharedValue,
 } from "react-native-reanimated";
 import Svg, {Circle, Defs, Line, LinearGradient as SvgLinearGradient, Polygon, Stop} from "react-native-svg";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
@@ -26,10 +28,8 @@ import {
   identifyAnalytics,
 } from "../lib/analytics";
 import {persistHasFinishedOnboarding, readHasFinishedOnboarding} from "../lib/onboarding-storage";
-import {triggerHaptic} from "../lib/haptics";
 import {fonts} from "../styles/typography";
-import {DiamondCreditIcon} from "./diamond-credit-pill";
-import {useViewerCredits} from "./viewer-credits-context";
+import {useOnboardingDemoRender} from "./onboarding-demo-render-context";
 import {useViewerSession} from "./viewer-session-context";
 
 const INTRO_IMAGE = require("../assets/media/onboarding/intro-diamond.png");
@@ -37,10 +37,10 @@ const ROLE_IMAGE = require("../assets/media/onboarding/role-neon-scan.png");
 const DEMO_IMAGE = require("../assets/media/onboarding/demo-render.png");
 const FINAL_IMAGE = require("../assets/media/onboarding/final-villa.png");
 
-const NEON_BLUE = "#00A3FF";
+const NEON_BLUE = "#00B4FF";
 const NEON_BLUE_LIGHT = "#7DD3FF";
-const GOLD = "#F5B544";
 const STEP_COUNT = 4;
+const PROGRESS_EASING = Easing.bezier(0.25, 0.46, 0.45, 0.94);
 
 type SegmentId = "renovating_home" | "interior_designer";
 
@@ -61,7 +61,7 @@ const ROLE_OPTIONS: RoleOption[] = [
   {
     id: "interior_designer",
     labelKey: "onboarding.step2.options.designer",
-    fallback: "Designer",
+    fallback: "Interior Designer",
     Icon: PenTool,
   },
 ];
@@ -75,15 +75,37 @@ function FadeInUpHeadline({
   children: string;
   variant?: "headline" | "question";
 }) {
+  const reveal = useSharedValue(0);
+
+  useEffect(() => {
+    reveal.value = withTiming(1, {duration: 360, easing: Easing.out(Easing.cubic)});
+  }, [reveal]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: reveal.value,
+    transform: [{translateY: 18 - reveal.value * 18}],
+  }));
+
   return (
-    <MotiView
-      from={{opacity: 0, translateY: 18}}
-      animate={{opacity: 1, translateY: 0}}
-      transition={{type: "timing", duration: 360, delay: 80}}
-    >
+    <Animated.View style={animatedStyle}>
       <Text style={variant === "question" ? styles.question : styles.headline}>{children}</Text>
-    </MotiView>
+    </Animated.View>
   );
+}
+
+function FadeInUpBlock({children, style}: {children: ReactNode; style?: StyleProp<ViewStyle>}) {
+  const reveal = useSharedValue(0);
+
+  useEffect(() => {
+    reveal.value = withTiming(1, {duration: 280, easing: Easing.out(Easing.cubic)});
+  }, [reveal]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: reveal.value,
+    transform: [{translateY: 18 - reveal.value * 18}],
+  }));
+
+  return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
 }
 
 function NeonArrowGuide({visible}: {visible: boolean}) {
@@ -149,6 +171,198 @@ function NeonArrowGuide({visible}: {visible: boolean}) {
   );
 }
 
+function LiquidProgressBar({step, totalSteps}: {step: number; totalSteps: number}) {
+  const [trackWidth, setTrackWidth] = useState(0);
+  const mountedRef = useRef(false);
+  const progress = useSharedValue(step / totalSteps);
+  const shimmer = useSharedValue(0);
+
+  useEffect(() => {
+    const nextProgress = Math.max(0, Math.min(step / totalSteps, 1));
+
+    if (!mountedRef.current) {
+      progress.value = nextProgress;
+      mountedRef.current = true;
+      return;
+    }
+
+    shimmer.value = 0;
+    progress.value = withTiming(
+      nextProgress,
+      {duration: 600, easing: PROGRESS_EASING},
+      (finished) => {
+        if (finished) {
+          shimmer.value = 0;
+          shimmer.value = withTiming(1, {duration: 400, easing: Easing.out(Easing.cubic)});
+        }
+      },
+    );
+  }, [progress, shimmer, step, totalSteps]);
+
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${progress.value * 100}%`,
+  }));
+
+  const shimmerStyle = useAnimatedStyle(() => ({
+    opacity: shimmer.value === 0 ? 0 : 1,
+    transform: [{translateX: -trackWidth * 0.2 + shimmer.value * trackWidth * 1.2}],
+  }));
+
+  return (
+    <View
+      accessibilityLabel={`Progress ${Math.round((step / totalSteps) * 100)} percent`}
+      accessibilityRole="progressbar"
+      accessibilityValue={{min: 0, max: 100, now: Math.round((step / totalSteps) * 100)}}
+      onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
+      style={styles.liquidProgressTrack}
+    >
+      <Animated.View style={[styles.liquidProgressFill, fillStyle]} />
+      {trackWidth > 0 ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.liquidProgressShimmer, {width: Math.max(trackWidth * 0.2, 1)}, shimmerStyle]}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+function ParallaxBackgroundImage({
+  index,
+  source,
+  stepProgress,
+  width,
+}: {
+  index: number;
+  source: number;
+  stepProgress: SharedValue<number>;
+  width: number;
+}) {
+  const imageOpacityStyle = useAnimatedStyle(() => {
+    const distance = Math.abs(stepProgress.value - index);
+    return {
+      opacity: Math.max(0, 1 - distance),
+    };
+  });
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.parallaxImageWrap,
+        {
+          left: index * width * 0.3 - width * 0.05,
+          width: width * 1.1,
+        },
+        imageOpacityStyle,
+      ]}
+    >
+      <Image source={source} style={styles.backgroundImage} contentFit="cover" />
+    </Animated.View>
+  );
+}
+
+function ParallaxBackground({
+  stepIndex,
+  screenHeight,
+  width,
+}: {
+  stepIndex: number;
+  screenHeight: number;
+  width: number;
+}) {
+  const stepProgress = useSharedValue(stepIndex);
+
+  useEffect(() => {
+    stepProgress.value = withSpring(stepIndex, {
+      damping: 20,
+      stiffness: 95,
+      mass: 0.9,
+    });
+  }, [stepIndex, stepProgress]);
+
+  const parallaxStyle = useAnimatedStyle(() => ({
+    transform: [{translateX: stepProgress.value * width * -0.3}],
+  }));
+
+  return (
+    <View style={styles.backgroundLayer}>
+      <Animated.View pointerEvents="none" style={[styles.parallaxStrip, parallaxStyle]}>
+        {STEP_IMAGES.map((source, index) => (
+          <ParallaxBackgroundImage
+            index={index}
+            key={`onboarding-background-${index}`}
+            source={source}
+            stepProgress={stepProgress}
+            width={width}
+          />
+        ))}
+      </Animated.View>
+      <LinearGradient
+        colors={["rgba(0,0,0,0.16)", "rgba(0,0,0,0.42)", "rgba(0,0,0,0.88)"]}
+        locations={[0, 0.48, 1]}
+        style={styles.darkOverlay}
+      />
+      <DemoRenderOverlay stepIndex={stepIndex} screenHeight={screenHeight} />
+    </View>
+  );
+}
+
+function RoleOptionCard({
+  Icon,
+  label,
+  onPress,
+  selected,
+  shouldDim,
+}: {
+  Icon: RoleOption["Icon"];
+  label: string;
+  onPress: () => void;
+  selected: boolean;
+  shouldDim: boolean;
+}) {
+  const selectProgress = useSharedValue(selected ? 1 : 0);
+  const opacity = useSharedValue(shouldDim ? 0.6 : 1);
+
+  useEffect(() => {
+    selectProgress.value = withSpring(selected ? 1 : 0, {
+      damping: 14,
+      stiffness: 180,
+      mass: 0.75,
+    });
+  }, [selectProgress, selected]);
+
+  useEffect(() => {
+    opacity.value = withTiming(shouldDim ? 0.6 : 1, {duration: 300, easing: Easing.out(Easing.cubic)});
+  }, [opacity, shouldDim]);
+
+  const cardStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    borderWidth: selectProgress.value * 1.5,
+    borderColor: NEON_BLUE,
+    transform: [{scale: 1 + selectProgress.value * 0.02}],
+  }));
+
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: selectProgress.value * 0.32,
+    transform: [{scale: 0.96 + selectProgress.value * 0.1}],
+  }));
+
+  return (
+    <View style={styles.optionCardShell}>
+      <Animated.View pointerEvents="none" style={[styles.optionGlow, glowStyle]} />
+      <Animated.View style={[styles.optionButton, cardStyle]}>
+        <Pressable accessibilityRole="button" onPress={onPress} style={styles.optionPressable}>
+          <View style={[styles.optionIcon, selected ? styles.optionIconSelected : null]}>
+            <Icon color={selected ? "#FFFFFF" : NEON_BLUE_LIGHT} size={21} strokeWidth={2.3} />
+          </View>
+          <Text style={[styles.optionText, selected ? styles.optionTextSelected : null]}>{label}</Text>
+        </Pressable>
+      </Animated.View>
+    </View>
+  );
+}
+
 function DemoRenderOverlay({
   stepIndex,
   screenHeight,
@@ -207,6 +421,48 @@ function DemoRenderOverlay({
   );
 }
 
+function DemoRenderProgressScreen() {
+  const pulse = useSharedValue(0);
+  const shimmer = useSharedValue(0);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1, {duration: 900, easing: Easing.out(Easing.cubic)}),
+        withTiming(0, {duration: 820, easing: Easing.in(Easing.cubic)}),
+      ),
+      -1,
+      false,
+    );
+    shimmer.value = withRepeat(
+      withTiming(1, {duration: 1400, easing: Easing.inOut(Easing.cubic)}),
+      -1,
+      false,
+    );
+  }, [pulse, shimmer]);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    opacity: 0.72 + pulse.value * 0.28,
+    transform: [{scale: 0.985 + pulse.value * 0.03}],
+  }));
+
+  const shimmerStyle = useAnimatedStyle(() => ({
+    transform: [{translateX: -160 + shimmer.value * 320}],
+  }));
+
+  return (
+    <View style={styles.renderProgressBlock}>
+      <Animated.View style={[styles.renderProgressOrb, pulseStyle]}>
+        <Sparkles color="#FFFFFF" size={32} strokeWidth={2.2} />
+      </Animated.View>
+      <Text style={styles.renderProgressTitle}>AI is designing your room...</Text>
+      <View style={styles.shimmerTrack}>
+        <Animated.View style={[styles.shimmerFill, shimmerStyle]} />
+      </View>
+    </View>
+  );
+}
+
 type PremiumOnboardingProps = {
   forceVisible?: boolean;
 };
@@ -218,7 +474,7 @@ export function PremiumOnboarding({forceVisible = false}: PremiumOnboardingProps
   const {height, width} = useWindowDimensions();
   const posthog = usePostHog();
   const {anonymousId, isReady: viewerReady} = useViewerSession();
-  const {credits, setOptimisticCredits} = useViewerCredits();
+  const {imageUrl: demoImageUrl, startDemoRender, status: demoRenderStatus} = useOnboardingDemoRender();
   const [isCheckingStorage, setIsCheckingStorage] = useState(true);
   const [visible, setVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
@@ -227,11 +483,12 @@ export function PremiumOnboarding({forceVisible = false}: PremiumOnboardingProps
   const startedRef = useRef(false);
   const previousStepIndexRef = useRef(stepIndex);
   const overlayOpacity = useSharedValue(1);
+  const continueReveal = useSharedValue(1);
 
   const stepNumber = stepIndex + 1;
   const isLastStep = stepIndex === STEP_COUNT - 1;
   const isCompact = height < 740;
-  const canContinue = (stepIndex !== 1 || Boolean(segment)) && (!isLastStep || viewerReady);
+  const canContinue = (stepIndex !== 1 || Boolean(segment)) && !isLastStep;
 
   useEffect(() => {
     let active = true;
@@ -280,16 +537,28 @@ export function PremiumOnboarding({forceVisible = false}: PremiumOnboardingProps
     }
 
     previousStepIndexRef.current = stepIndex;
-    triggerHaptic();
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
   }, [stepIndex, visible]);
+
+  useEffect(() => {
+    const shouldShowContinue = stepIndex !== 1 || Boolean(segment);
+    continueReveal.value = shouldShowContinue
+      ? withSpring(1, {stiffness: 100, damping: 16, mass: 0.85})
+      : withTiming(0, {duration: 180, easing: Easing.out(Easing.cubic)});
+  }, [continueReveal, segment, stepIndex]);
 
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,
   }));
 
+  const continueButtonAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: continueReveal.value,
+    transform: [{translateY: (1 - continueReveal.value) * 60}],
+  }));
+
   const handleSelectSegment = useCallback(
     (nextSegment: SegmentId) => {
-      triggerHaptic();
+      void Haptics.selectionAsync().catch(() => undefined);
       setSegment(nextSegment);
       identifyAnalytics(posthog, anonymousId, {
         onboarding_use_case: nextSegment,
@@ -319,36 +588,73 @@ export function PremiumOnboarding({forceVisible = false}: PremiumOnboardingProps
     }, 360);
   }, [overlayOpacity]);
 
-  const finishOnboarding = useCallback(async (skipped: boolean) => {
+  useEffect(() => {
+    if (!visible || !viewerReady) {
+      return;
+    }
+
+    void startDemoRender();
+  }, [startDemoRender, viewerReady, visible]);
+
+  const finishOnboarding = useCallback(async (
+    skipped: boolean,
+    destination: "tabs" | "wow" | "paywall",
+  ) => {
     if (isExiting) {
       return;
     }
 
-    triggerHaptic();
+    if (skipped) {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+    }
     setIsExiting(true);
     try {
-      if (!skipped) {
-        setOptimisticCredits(Math.max(credits, 1));
-      }
       await persistHasFinishedOnboarding();
       captureAnalytics(posthog, ANALYTICS_EVENTS.onboardingCompleted, {
         onboarding_use_case: segment,
         skipped,
       });
-      router.replace("/(tabs)" as any);
+
+      if (destination === "wow") {
+        router.replace("/wow-reveal" as any);
+      } else if (destination === "paywall") {
+        router.replace({
+          pathname: "/paywall",
+          params: {
+            source: "post_wow",
+            variant: "soft",
+            redirectTo: "/(tabs)",
+          },
+        } as never);
+      } else {
+        router.replace("/(tabs)" as any);
+      }
       dismissOnboarding();
     } catch {
       setIsExiting(false);
     }
   }, [
-    credits,
     dismissOnboarding,
     isExiting,
     posthog,
     router,
     segment,
-    setOptimisticCredits,
   ]);
+
+  useEffect(() => {
+    if (!visible || stepIndex !== STEP_COUNT - 1 || isExiting) {
+      return;
+    }
+
+    if (demoRenderStatus === "success" && demoImageUrl) {
+      void finishOnboarding(false, "wow");
+      return;
+    }
+
+    if (demoRenderStatus === "failed") {
+      void finishOnboarding(false, "paywall");
+    }
+  }, [demoImageUrl, demoRenderStatus, finishOnboarding, isExiting, stepIndex, visible]);
 
   const handleContinue = useCallback(async () => {
     if (!canContinue || isExiting) {
@@ -359,16 +665,14 @@ export function PremiumOnboarding({forceVisible = false}: PremiumOnboardingProps
       setStepIndex((current) => Math.min(current + 1, STEP_COUNT - 1));
       return;
     }
-
-    await finishOnboarding(false);
-  }, [canContinue, finishOnboarding, isExiting, isLastStep]);
+  }, [canContinue, isExiting, isLastStep]);
 
   const primaryLabel = stepIndex === 0
     ? t("onboarding.actions.tryThis", {defaultValue: "Try This"})
     : stepIndex === 2
       ? t("onboarding.actions.generate", {defaultValue: "Generate"})
       : isLastStep
-        ? t("onboarding.step4.button", {defaultValue: "Claim My Diamond"})
+        ? t("onboarding.step4.button", {defaultValue: "Designing..."})
         : t("onboarding.actions.continue", {defaultValue: "Continue"});
 
   const body = useMemo(() => {
@@ -396,21 +700,15 @@ export function PremiumOnboarding({forceVisible = false}: PremiumOnboardingProps
           <View style={styles.optionStack}>
             {ROLE_OPTIONS.map((option) => {
               const selected = segment === option.id;
-              const Icon = option.Icon;
               return (
-                <Pressable
-                  accessibilityRole="button"
+                <RoleOptionCard
+                  Icon={option.Icon}
                   key={option.id}
                   onPress={() => handleSelectSegment(option.id)}
-                  style={[styles.optionButton, selected ? styles.optionButtonSelected : null]}
-                >
-                  <View style={[styles.optionIcon, selected ? styles.optionIconSelected : null]}>
-                    <Icon color={selected ? "#FFFFFF" : NEON_BLUE_LIGHT} size={21} strokeWidth={2.3} />
-                  </View>
-                  <Text style={[styles.optionText, selected ? styles.optionTextSelected : null]}>
-                    {t(option.labelKey, {defaultValue: option.fallback})}
-                  </Text>
-                </Pressable>
+                  label={t(option.labelKey, {defaultValue: option.fallback})}
+                  selected={selected}
+                  shouldDim={Boolean(segment) && !selected}
+                />
               );
             })}
           </View>
@@ -434,21 +732,7 @@ export function PremiumOnboarding({forceVisible = false}: PremiumOnboardingProps
       );
     }
 
-    return (
-      <View style={styles.copyBlock}>
-        <Text style={styles.eyebrow}>{t("onboarding.stepLabel", {current: stepNumber})}</Text>
-        <View style={styles.claimBadge}>
-          <DiamondCreditIcon primaryColor={GOLD} size={22} />
-          <Text style={styles.claimBadgeText}>Daily Diamond</Text>
-        </View>
-        <FadeInUpHeadline>{t("onboarding.step4.headline", {defaultValue: "Claim 1 Diamond every 24h."})}</FadeInUpHeadline>
-        <Text style={styles.subtext}>
-          {t("onboarding.step4.body", {
-            defaultValue: "You can claim 1 free Diamond every 24h. Each premium generation uses 1 Diamond, and your next one unlocks after the timer resets.",
-          })}
-        </Text>
-      </View>
-    );
+    return <DemoRenderProgressScreen />;
   }, [handleSelectSegment, segment, stepIndex, stepNumber, t]);
 
   if (isCheckingStorage || !visible) {
@@ -467,60 +751,44 @@ export function PremiumOnboarding({forceVisible = false}: PremiumOnboardingProps
           },
         ]}
       >
-        <View style={styles.backgroundLayer}>
-          <Image source={STEP_IMAGES[stepIndex]} style={styles.backgroundImage} contentFit="cover" transition={280} />
-          <LinearGradient
-            colors={["rgba(0,0,0,0.16)", "rgba(0,0,0,0.42)", "rgba(0,0,0,0.88)"]}
-            locations={[0, 0.48, 1]}
-            style={styles.darkOverlay}
-          />
-          <DemoRenderOverlay stepIndex={stepIndex} screenHeight={height} />
-        </View>
+        <ParallaxBackground stepIndex={stepIndex} screenHeight={height} width={width} />
 
         <Pressable
           accessibilityRole="button"
           disabled={isExiting}
-          onPress={() => void finishOnboarding(true)}
+          onPress={() => void finishOnboarding(true, "tabs")}
           style={[styles.skipButton, {top: insets.top + 16}, isExiting ? styles.skipButtonDisabled : null]}
         >
           <Text style={styles.skipButtonText}>{t("onboarding.actions.skip", {defaultValue: "Skip"})}</Text>
         </Pressable>
 
         <View style={styles.topBar}>
-          <View style={styles.progressRow}>
-            {[0, 1, 2, 3].map((index) => (
-              <View
-                key={index}
-                style={[
-                  styles.progressDot,
-                  {width: Math.max((width - 108) / STEP_COUNT, 42)},
-                  index <= stepIndex ? styles.progressDotActive : null,
-                ]}
-              />
-            ))}
-          </View>
+          <LiquidProgressBar step={stepNumber} totalSteps={STEP_COUNT} />
         </View>
 
-        <MotiView
+        <FadeInUpBlock
           key={stepIndex}
-          from={{opacity: 0, translateY: 18}}
-          animate={{opacity: 1, translateY: 0}}
-          transition={{type: "timing", duration: 280}}
           style={[styles.content, isCompact ? styles.contentCompact : null]}
         >
           {body}
-        </MotiView>
+        </FadeInUpBlock>
 
         <View style={styles.footer}>
-          <NeonArrowGuide visible={canContinue && !isExiting} />
-          <Pressable
-            accessibilityRole="button"
-            disabled={!canContinue || isExiting}
-            onPress={() => void handleContinue()}
-            style={[styles.primaryButton, !canContinue || isExiting ? styles.primaryButtonDisabled : null]}
-          >
-            <Text style={styles.primaryButtonText}>{primaryLabel}</Text>
-          </Pressable>
+          {!isLastStep ? (
+            <>
+              <NeonArrowGuide visible={canContinue && !isExiting} />
+              <Animated.View style={[styles.primaryButtonWrap, continueButtonAnimatedStyle]}>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={!canContinue || isExiting}
+                  onPress={() => void handleContinue()}
+                  style={[styles.primaryButton, !canContinue || isExiting ? styles.primaryButtonDisabled : null]}
+                >
+                  <Text style={styles.primaryButtonText}>{primaryLabel}</Text>
+                </Pressable>
+              </Animated.View>
+            </>
+          ) : null}
         </View>
       </View>
     </Animated.View>
@@ -542,6 +810,15 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 0,
     backgroundColor: "#000000",
+    overflow: "hidden",
+  },
+  parallaxStrip: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  parallaxImageWrap: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
   },
   backgroundImage: {
     width: "100%",
@@ -574,20 +851,27 @@ const styles = StyleSheet.create({
   },
   topBar: {
     zIndex: 2,
-    paddingRight: 68,
+    paddingRight: 0,
   },
-  progressRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-  },
-  progressDot: {
-    height: 4,
+  liquidProgressTrack: {
+    width: "100%",
+    height: 3,
     borderRadius: 999,
-    backgroundColor: "rgba(255, 255, 255, 0.24)",
+    overflow: "hidden",
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
   },
-  progressDotActive: {
-    backgroundColor: NEON_BLUE_LIGHT,
+  liquidProgressFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: NEON_BLUE,
+  },
+  liquidProgressShimmer: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 999,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   content: {
     zIndex: 2,
@@ -652,22 +936,30 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: 12,
   },
+  optionCardShell: {
+    minHeight: 68,
+    justifyContent: "center",
+  },
+  optionGlow: {
+    position: "absolute",
+    left: 8,
+    right: 8,
+    top: 8,
+    bottom: 8,
+    borderRadius: 22,
+    backgroundColor: NEON_BLUE,
+  },
   optionButton: {
+    minHeight: 68,
+    borderRadius: 18,
+    backgroundColor: "rgba(2, 12, 24, 0.58)",
+  },
+  optionPressable: {
     minHeight: 68,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(125, 211, 255, 0.28)",
-    backgroundColor: "rgba(2, 12, 24, 0.58)",
     paddingHorizontal: 16,
-    boxShadow: "0px 0px 18px rgba(0, 163, 255, 0.1)",
-  },
-  optionButtonSelected: {
-    borderColor: "rgba(125, 211, 255, 0.96)",
-    backgroundColor: "rgba(0, 122, 255, 0.32)",
-    boxShadow: "0px 0px 28px rgba(0, 163, 255, 0.34)",
   },
   optionIcon: {
     width: 40,
@@ -697,18 +989,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 0,
   },
-  primaryButton: {
-    minHeight: 62,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: NEON_BLUE,
+  primaryButtonWrap: {
     alignSelf: "center",
     width: "100%",
     maxWidth: 390,
+  },
+  primaryButton: {
+    minHeight: 62,
+    borderRadius: 22,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 9,
+    backgroundColor: NEON_BLUE,
+    alignSelf: "center",
+    width: "100%",
     borderWidth: 1,
     borderColor: "rgba(221, 246, 255, 0.76)",
     boxShadow: "0px 0px 28px rgba(0, 163, 255, 0.45)",
+    position: "relative",
   },
   primaryButtonDisabled: {
     opacity: 0.42,
@@ -719,6 +1018,12 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     fontFamily: fonts.bold.fontFamily,
     fontWeight: fonts.bold.fontWeight,
+  },
+  primaryButtonIcon: {
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
   },
   neonGuide: {
     width: 82,
@@ -792,6 +1097,46 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     fontFamily: fonts.bold.fontFamily,
     fontWeight: fonts.bold.fontWeight,
+  },
+  renderProgressBlock: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 18,
+  },
+  renderProgressOrb: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(125, 211, 255, 0.56)",
+    backgroundColor: "rgba(0, 163, 255, 0.18)",
+    boxShadow: "0px 0px 36px rgba(0, 180, 255, 0.38)",
+  },
+  renderProgressTitle: {
+    color: "#FFFFFF",
+    fontSize: 25,
+    lineHeight: 31,
+    textAlign: "center",
+    letterSpacing: 0,
+    ...fonts.bold,
+  },
+  shimmerTrack: {
+    width: "82%",
+    maxWidth: 320,
+    height: 8,
+    borderRadius: 999,
+    overflow: "hidden",
+    backgroundColor: "rgba(255, 255, 255, 0.14)",
+  },
+  shimmerFill: {
+    width: 132,
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: "rgba(255, 255, 255, 0.78)",
+    boxShadow: "0px 0px 18px rgba(125, 211, 255, 0.68)",
   },
   claimBadge: {
     minHeight: 38,

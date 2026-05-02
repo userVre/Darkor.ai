@@ -48,6 +48,7 @@ resolveGuestWizardViewerId
 } from "../lib/guest-testing";
 import {triggerHaptic} from "../lib/haptics";
 import {LUX_SPRING} from "../lib/motion";
+import {requestPermissionsGracefully} from "../lib/notifications";
 import {uploadLocalFileToCloud} from "../lib/native-upload";
 import {SERVICE_WIZARD_THEME} from "../lib/service-wizard-theme";
 import {getPaintWizardExamplePhotos} from "../lib/wizard-example-photos";
@@ -372,7 +373,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const effectiveSignedIn = isSignedIn || guestWizardTestingSession;
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const { showToast } = useProSuccess();
-  const { credits: sharedCredits, setOptimisticCredits } = useViewerCredits();
+  const { credits: sharedCredits, notificationsDeclined, setOptimisticCredits } = useViewerCredits();
   const { openStore } = useDiamondStore();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
   const localizedSurfaceOptions = useMemo<PaintSurfaceOption[]>(
@@ -415,6 +416,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const createSourceUploadUrl = useMutation("generations:createSourceUploadUrl" as any);
   const cancelGeneration = useMutation("generations:cancelGeneration" as any);
   const startGeneration = useMutation("generations:startGeneration" as any);
+  const updateNotificationPreferences = useMutation("users:updateNotificationPreferences" as any);
 
   const [step, setStep] = useState<WizardStep>("intake");
   const [maskTool, setMaskTool] = useState<MaskTool>("brush");
@@ -518,6 +520,15 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     step === "intake" ? 1 : step === "colors" ? 2 : 3;
   const paintWizardExamplePhotos = useMemo(() => getPaintWizardExamplePhotos(t), [i18n.language, t]);
   const generationStatusMessages = useGenerationStatusMessages();
+  const requestNotificationsAfterReveal = useCallback(() => {
+    void requestPermissionsGracefully({
+      anonymousId: anonymousId ?? undefined,
+      notificationsDeclined,
+      savePreferences: async (args) => {
+        await updateNotificationPreferences(args);
+      },
+    });
+  }, [anonymousId, notificationsDeclined, updateNotificationPreferences]);
   const stickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);
   const selectionLayoutScale = Math.min(width / SELECTION_REFERENCE_WIDTH, height / SELECTION_REFERENCE_HEIGHT, 1);
   const selectionTitleTop = stickyHeaderMetrics.contentOffset;
@@ -643,6 +654,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       setProcessingComplete(true);
       const revealTimer = setTimeout(() => {
         triggerHaptic();
+        requestNotificationsAfterReveal();
         if (effectiveSignedIn) {
           router.replace({ pathname: "/workspace", params: { boardView: "board" } });
           return;
@@ -666,7 +678,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       setStep("colors");
       showToast(getFriendlyGenerationError(generation.errorMessage ?? GENERATION_FAILED_TOAST));
     }
-  }, [effectiveSignedIn, generationArchive, generationId, router, showToast]);
+  }, [effectiveSignedIn, generationArchive, generationId, requestNotificationsAfterReveal, router, showToast]);
 
   const resetDetection = useCallback(() => {
     if (detectTimerRef.current) clearTimeout(detectTimerRef.current);

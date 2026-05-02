@@ -1,58 +1,113 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import {Platform} from "react-native";
 
-const CHANNEL_ID = "daily-engagement";
-const SCHEDULE_STATE_KEY = "homedecor:tiered-notification-schedule:v1";
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+import type * as ExpoNotifications from "expo-notifications";
 
-const DAILY_DIAMOND_BODY = "✨ Your Daily Diamond is ready! Come back and claim your 4K design credit.";
+const CHANNEL_ID = "tiered-engagement";
+const STATE_KEY = "homedecor:tiered-notifications:v2";
+const DECLINED_KEY = "homedecor:notifications-declined:v1";
+const IOS_PROVISIONAL_KEY = "homedecor:ios-provisional-notifications-at:v1";
+const DAY_MS = 24 * 60 * 60 * 1000;
+const WEEK_MS = 7 * DAY_MS;
+const FREE_DAILY_DIAMOND_CAP = 2;
 
-const ARCHITECTURE_TIPS = [
-  "Pro Tip: Use 'Japandi' style for small rooms to create a sense of space.",
-  "Pro Tip: Keep one dominant material per room, then repeat it twice for a calmer composition.",
-  "Pro Tip: Use warm indirect lighting near textured walls to make compact spaces feel deeper.",
-  "Pro Tip: Place the tallest visual element opposite the room entry to pull the eye through the space.",
-  "Pro Tip: Pair matte finishes with one reflective accent to add depth without visual noise.",
-  "Pro Tip: Leave negative space around statement furniture so the layout feels intentional.",
-  "Pro Tip: Use low-profile storage in narrow rooms to keep sightlines open and spacious.",
-  "Pro Tip: Match curtain color to the wall when you want a room to feel taller and softer.",
-];
+export const DAILY_DIAMOND_REMINDER_ID = "daily-diamond-reminder";
+export const WEEKLY_PRO_TIP_ID = "weekly-pro-tip";
+
+const DAILY_DIAMOND_TITLE = "Your Diamond is ready ✦";
+const DAILY_DIAMOND_BODY = "Come back and claim your daily design credit before your streak breaks.";
+const DIAMOND_CAP_MESSAGE = "You have 2 Diamonds saved. Time to design something!";
+
+export const ARCHITECTURE_TIPS = [
+  "Try Japandi style for small rooms — less furniture, more breathing space.",
+  "Layer lighting: ambient + task + accent. One source = flat, three sources = luxury.",
+  "60-30-10 color rule: 60% dominant, 30% secondary, 10% accent. Never break it.",
+  "Mirrors opposite windows double natural light and visual space instantly.",
+  "Odd numbers win: group décor in 3s or 5s, never 2s or 4s.",
+  "Wabi-sabi: embrace imperfect natural textures — linen, clay, raw wood. It feels expensive.",
+  "Raise your curtains to ceiling height, even with short windows. It makes ceilings feel higher.",
+  "Biophilic design: one large plant per room increases perceived quality more than any furniture.",
+] as const;
 
 type SubscriptionType = "free" | "weekly" | "yearly";
 
-type TieredNotificationArgs = {
+type ScheduleState = {
+  dailyDiamondTargetAt?: number;
+  weeklyProTipTargetAt?: number;
+};
+
+type SaveNotificationPreferencesArgs = {
+  anonymousId?: string;
+  expoPushToken?: string;
+  devicePushToken?: string;
+  notificationsDeclined?: boolean;
+  notificationsPermissionRequestedAt?: number;
+  notificationsPermissionGrantedAt?: number;
+  notificationPlatform?: string;
+};
+
+type ScheduleDiamondArgs = {
+  diamondBalance?: number | null;
+  lastDiamondClaimAt?: number | null;
+  lastClaimAt?: number | null;
+  nextDiamondClaimAt?: number | null;
+  notificationsDeclined?: boolean | null;
+};
+
+type ScheduleProTipArgs = {
+  forceReschedule?: boolean;
+  notificationsDeclined?: boolean | null;
+  proTipNotificationIndex?: number | null;
+  persistNextTipIndex?: (nextIndex: number) => Promise<unknown>;
+};
+
+type RequestPermissionArgs = {
+  anonymousId?: string | null;
+  notificationsDeclined?: boolean | null;
+  savePreferences?: (args: SaveNotificationPreferencesArgs) => Promise<unknown>;
+};
+
+type TieredNotificationArgs = ScheduleDiamondArgs & ScheduleProTipArgs & {
   isReady: boolean;
   hasProAccess: boolean;
   hasPaidAccess?: boolean;
   subscriptionType?: SubscriptionType;
-  nextDiamondClaimAt?: number | null;
 };
 
-type ScheduledItem = {
-  id: string;
-  targetAt: number;
-};
+let notificationsModulePromise: Promise<typeof ExpoNotifications | null> | null = null;
+let notificationHandlerConfigured = false;
 
-type ScheduledNotificationState = {
-  free?: ScheduledItem;
-  pro?: ScheduledItem & {
-    weekday: number;
-    hour: number;
-    minute: number;
-  };
-};
+async function getNotificationsModule() {
+  if (!notificationsModulePromise) {
+    notificationsModulePromise = import("expo-notifications")
+      .then((module) => module)
+      .catch((error) => {
+        console.warn("[Notifications] expo-notifications native module unavailable", error);
+        return null;
+      });
+  }
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+  return notificationsModulePromise;
+}
 
-function isPermissionGranted(status: Notifications.NotificationPermissionsStatus) {
+function configureNotificationHandler(Notifications: typeof ExpoNotifications) {
+  if (notificationHandlerConfigured) {
+    return;
+  }
+
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+  notificationHandlerConfigured = true;
+}
+
+function isPermissionGranted(status: ExpoNotifications.NotificationPermissionsStatus, Notifications: typeof ExpoNotifications) {
   return (
     status.granted ||
     status.status === "granted" ||
@@ -61,186 +116,283 @@ function isPermissionGranted(status: Notifications.NotificationPermissionsStatus
   );
 }
 
-async function ensureNotificationSetup() {
-  if (Platform.OS === "web") {
+function isFullPermissionGranted(status: ExpoNotifications.NotificationPermissionsStatus, Notifications: typeof ExpoNotifications) {
+  if (Platform.OS === "ios" && status.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL) {
     return false;
   }
 
-  try {
-    if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-        name: "Daily engagement",
-        importance: Notifications.AndroidImportance.DEFAULT,
-        sound: "default",
-        vibrationPattern: [0, 180, 120, 180],
-        lightColor: "#4F7BFF",
-      });
-    }
+  return status.granted || status.status === "granted";
+}
 
-    const current = await Notifications.getPermissionsAsync();
-    if (isPermissionGranted(current)) {
-      return true;
-    }
+async function setupNotificationChannel(Notifications: typeof ExpoNotifications) {
+  configureNotificationHandler(Notifications);
 
-    if (!current.canAskAgain) {
-      return false;
-    }
-
-    const requested = await Notifications.requestPermissionsAsync({
-      ios: {
-        allowAlert: true,
-        allowBadge: false,
-        allowSound: true,
-        allowProvisional: true,
-      },
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+      name: "Design reminders",
+      importance: Notifications.AndroidImportance.DEFAULT,
+      sound: "default",
+      vibrationPattern: [0, 180, 120, 180],
+      lightColor: "#4F7BFF",
     });
+  }
+}
 
-    return isPermissionGranted(requested);
-  } catch (error) {
-    console.warn("[Notifications] Unable to configure notifications", error);
+async function getLocalDeclined() {
+  try {
+    return await AsyncStorage.getItem(DECLINED_KEY) === "true";
+  } catch {
     return false;
   }
 }
 
-async function readScheduleState(): Promise<ScheduledNotificationState> {
+async function markLocalDeclined() {
   try {
-    const raw = await AsyncStorage.getItem(SCHEDULE_STATE_KEY);
+    await AsyncStorage.setItem(DECLINED_KEY, "true");
+  } catch {
+    // Local decline state is best-effort; the server profile is also updated.
+  }
+}
+
+async function readState(): Promise<ScheduleState> {
+  try {
+    const raw = await AsyncStorage.getItem(STATE_KEY);
     if (!raw) {
       return {};
     }
 
-    const parsed = JSON.parse(raw) as ScheduledNotificationState;
+    const parsed = JSON.parse(raw) as ScheduleState;
     return parsed && typeof parsed === "object" ? parsed : {};
   } catch (error) {
-    console.warn("[Notifications] Unable to read notification schedule", error);
+    console.warn("[Notifications] Unable to read schedule state", error);
     return {};
   }
 }
 
-async function writeScheduleState(state: ScheduledNotificationState) {
+async function writeState(state: ScheduleState) {
   try {
-    await AsyncStorage.setItem(SCHEDULE_STATE_KEY, JSON.stringify(state));
+    await AsyncStorage.setItem(STATE_KEY, JSON.stringify(state));
   } catch (error) {
-    console.warn("[Notifications] Unable to persist notification schedule", error);
+    console.warn("[Notifications] Unable to write schedule state", error);
   }
 }
 
-async function cancelScheduledItem(item?: ScheduledItem) {
-  if (!item?.id) {
-    return;
-  }
-
-  try {
-    await Notifications.cancelScheduledNotificationAsync(item.id);
-  } catch (error) {
-    console.warn("[Notifications] Unable to cancel notification", error);
-  }
+function finiteTimestamp(value?: number | null) {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : 0;
 }
 
-async function hasScheduledItem(item?: ScheduledItem) {
-  if (!item?.id) {
+async function canScheduleWithoutPrompt(notificationsDeclined?: boolean | null) {
+  if (Platform.OS === "web" || notificationsDeclined || await getLocalDeclined()) {
     return false;
   }
 
   try {
-    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-    return scheduled.some((request) => request.identifier === item.id);
+    const Notifications = await getNotificationsModule();
+    if (!Notifications) {
+      return false;
+    }
+
+    await setupNotificationChannel(Notifications);
+    const current = await Notifications.getPermissionsAsync();
+    return isPermissionGranted(current, Notifications);
   } catch (error) {
-    console.warn("[Notifications] Unable to inspect scheduled notifications", error);
-    return true;
+    console.warn("[Notifications] Unable to inspect notification permission", error);
+    return false;
   }
 }
 
-function pickArchitectureTip() {
-  return ARCHITECTURE_TIPS[Math.floor(Math.random() * ARCHITECTURE_TIPS.length)] ?? ARCHITECTURE_TIPS[0];
+async function cancelByIdentifier(identifier: string) {
+  try {
+    const Notifications = await getNotificationsModule();
+    if (!Notifications) {
+      return;
+    }
+
+    await Notifications.cancelScheduledNotificationAsync(identifier);
+  } catch (error) {
+    console.warn("[Notifications] Unable to cancel scheduled notification", error);
+  }
+}
+
+async function hasScheduledIdentifier(identifier: string) {
+  try {
+    const Notifications = await getNotificationsModule();
+    if (!Notifications) {
+      return false;
+    }
+
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    return scheduled.some((request) => request.identifier === identifier);
+  } catch (error) {
+    console.warn("[Notifications] Unable to inspect scheduled notifications", error);
+    return false;
+  }
+}
+
+function getProjectId() {
+  return (
+    Constants.easConfig?.projectId ??
+    Constants.expoConfig?.extra?.eas?.projectId ??
+    Constants.manifest2?.extra?.eas?.projectId ??
+    undefined
+  );
+}
+
+async function saveGrantedPushToken(
+  Notifications: typeof ExpoNotifications,
+  savePreferences?: (args: SaveNotificationPreferencesArgs) => Promise<unknown>,
+  anonymousId?: string | null,
+) {
+  if (!savePreferences) {
+    return;
+  }
+
+  let expoPushToken: string | undefined;
+  let devicePushToken: string | undefined;
+
+  try {
+    const projectId = getProjectId();
+    const token = await Notifications.getExpoPushTokenAsync(projectId ? {projectId} : undefined);
+    expoPushToken = token.data;
+  } catch (error) {
+    console.warn("[Notifications] Unable to fetch Expo push token", error);
+  }
+
+  try {
+    const token = await Notifications.getDevicePushTokenAsync();
+    devicePushToken = typeof token.data === "string" ? token.data : JSON.stringify(token.data);
+  } catch (error) {
+    console.warn("[Notifications] Unable to fetch device push token", error);
+  }
+
+  await savePreferences({
+    anonymousId: anonymousId ?? undefined,
+    expoPushToken,
+    devicePushToken,
+    notificationsDeclined: false,
+    notificationsPermissionRequestedAt: Date.now(),
+    notificationsPermissionGrantedAt: Date.now(),
+    notificationPlatform: Platform.OS,
+  });
+}
+
+async function persistDenied(
+  savePreferences?: (args: SaveNotificationPreferencesArgs) => Promise<unknown>,
+  anonymousId?: string | null,
+) {
+  await markLocalDeclined();
+  await savePreferences?.({
+    anonymousId: anonymousId ?? undefined,
+    notificationsDeclined: true,
+    notificationsPermissionRequestedAt: Date.now(),
+    notificationPlatform: Platform.OS,
+  }).catch((error) => console.warn("[Notifications] Unable to persist declined permission", error));
+}
+
+function getDiamondTargetAt(args: ScheduleDiamondArgs) {
+  const lastClaimAt = finiteTimestamp(args.lastDiamondClaimAt ?? args.lastClaimAt);
+  if (lastClaimAt > 0) {
+    return lastClaimAt + DAY_MS;
+  }
+
+  return finiteTimestamp(args.nextDiamondClaimAt);
 }
 
 function getRandomWeeklySlot() {
-  const weekday = Math.floor(Math.random() * 7) + 1;
-  const hour = Math.floor(Math.random() * 10) + 9;
-  const minute = [0, 15, 30, 45][Math.floor(Math.random() * 4)] ?? 0;
-
-  return {weekday, hour, minute};
+  const now = Date.now();
+  const offsetMs = Math.max(60 * 1000, Math.floor(Math.random() * WEEK_MS));
+  const target = new Date(now + offsetMs);
+  return {
+    targetAt: target.getTime(),
+    weekday: target.getDay() + 1,
+    hour: target.getHours(),
+    minute: target.getMinutes(),
+  };
 }
 
-function getNextWeeklyTargetAt({weekday, hour, minute}: {weekday: number; hour: number; minute: number}) {
-  const now = new Date();
-  const target = new Date(now);
-  const currentExpoWeekday = now.getDay() + 1;
-  const dayOffset = (weekday - currentExpoWeekday + 7) % 7;
+export async function scheduleOrUpdateDiamondReminder(args: ScheduleDiamondArgs = {}) {
+  await cancelByIdentifier(DAILY_DIAMOND_REMINDER_ID);
 
-  target.setDate(now.getDate() + dayOffset);
-  target.setHours(hour, minute, 0, 0);
+  const state = await readState();
+  delete state.dailyDiamondTargetAt;
+  await writeState(state);
 
-  if (target.getTime() <= now.getTime()) {
-    target.setTime(target.getTime() + WEEK_MS);
+  if (finiteTimestamp(args.diamondBalance) >= FREE_DAILY_DIAMOND_CAP) {
+    return {scheduled: false, reason: "diamond-cap" as const, message: DIAMOND_CAP_MESSAGE};
   }
 
-  return target.getTime();
-}
-
-export async function scheduleFreeDailyDiamondNotification(nextDiamondClaimAt?: number | null) {
-  const state = await readScheduleState();
-  const targetAt = typeof nextDiamondClaimAt === "number" ? nextDiamondClaimAt : 0;
-
-  if (!Number.isFinite(targetAt) || targetAt <= Date.now()) {
-    await cancelScheduledItem(state.free);
-    delete state.free;
-    await writeScheduleState(state);
-    return {scheduled: false, reason: "missing-target" as const};
+  const targetAt = getDiamondTargetAt(args);
+  if (targetAt <= Date.now()) {
+    return {scheduled: false, reason: "missing-or-expired-target" as const};
   }
 
-  if (state.free?.targetAt === targetAt && await hasScheduledItem(state.free)) {
-    return {scheduled: true, id: state.free.id};
-  }
-
-  const canSchedule = await ensureNotificationSetup();
+  const canSchedule = await canScheduleWithoutPrompt(args.notificationsDeclined);
   if (!canSchedule) {
-    return {scheduled: false, reason: "permission-denied" as const};
+    return {scheduled: false, reason: "permission-not-granted" as const};
   }
 
-  await cancelScheduledItem(state.free);
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) {
+    return {scheduled: false, reason: "native-module-unavailable" as const};
+  }
 
-  const id = await Notifications.scheduleNotificationAsync({
+  await Notifications.scheduleNotificationAsync({
+    identifier: DAILY_DIAMOND_REMINDER_ID,
     content: {
-      title: "Daily Diamond ready",
+      title: DAILY_DIAMOND_TITLE,
       body: DAILY_DIAMOND_BODY,
       sound: "default",
-      data: {kind: "daily-diamond"},
+      data: {
+        kind: "daily-diamond",
+        route: "/(tabs)/index",
+      },
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: new Date(targetAt),
       channelId: CHANNEL_ID,
-    },
+    } as ExpoNotifications.NotificationTriggerInput,
   });
 
-  state.free = {id, targetAt};
-  await writeScheduleState(state);
-
-  return {scheduled: true, id};
+  await writeState({...state, dailyDiamondTargetAt: targetAt});
+  return {scheduled: true, id: DAILY_DIAMOND_REMINDER_ID, targetAt};
 }
 
-export async function scheduleWeeklyArchitectureTipNotification() {
-  const state = await readScheduleState();
-
-  if (state.pro?.id && await hasScheduledItem(state.pro)) {
-    return {scheduled: true, id: state.pro.id};
+export async function scheduleOrUpdateProTip(args: ScheduleProTipArgs = {}) {
+  if (args.forceReschedule === false && await hasScheduledIdentifier(WEEKLY_PRO_TIP_ID)) {
+    return {scheduled: true, id: WEEKLY_PRO_TIP_ID, reason: "already-scheduled" as const};
   }
 
-  const canSchedule = await ensureNotificationSetup();
+  await cancelByIdentifier(WEEKLY_PRO_TIP_ID);
+
+  const state = await readState();
+  delete state.weeklyProTipTargetAt;
+  await writeState(state);
+
+  const canSchedule = await canScheduleWithoutPrompt(args.notificationsDeclined);
   if (!canSchedule) {
-    return {scheduled: false, reason: "permission-denied" as const};
+    return {scheduled: false, reason: "permission-not-granted" as const};
   }
 
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) {
+    return {scheduled: false, reason: "native-module-unavailable" as const};
+  }
+
+  const currentTipIndex = Math.max(0, Math.floor(args.proTipNotificationIndex ?? 0));
+  const tip = ARCHITECTURE_TIPS[currentTipIndex % ARCHITECTURE_TIPS.length] ?? ARCHITECTURE_TIPS[0];
   const slot = getRandomWeeklySlot();
-  const targetAt = getNextWeeklyTargetAt(slot);
-  const id = await Notifications.scheduleNotificationAsync({
+
+  await Notifications.scheduleNotificationAsync({
+    identifier: WEEKLY_PRO_TIP_ID,
     content: {
       title: "Architecture Tip",
-      body: pickArchitectureTip(),
+      body: tip,
       sound: "default",
-      data: {kind: "architecture-tip"},
+      data: {
+        kind: "weekly-pro-tip",
+        route: "/(tabs)/create?service=interior&startStep=1&entrySource=pro-tip-notification",
+      },
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
@@ -248,13 +400,85 @@ export async function scheduleWeeklyArchitectureTipNotification() {
       hour: slot.hour,
       minute: slot.minute,
       channelId: CHANNEL_ID,
-    },
+    } as ExpoNotifications.NotificationTriggerInput,
   });
 
-  state.pro = {...slot, id, targetAt};
-  await writeScheduleState(state);
+  await args.persistNextTipIndex?.((currentTipIndex + 1) % ARCHITECTURE_TIPS.length);
+  await writeState({...state, weeklyProTipTargetAt: slot.targetAt});
 
-  return {scheduled: true, id};
+  return {scheduled: true, id: WEEKLY_PRO_TIP_ID, targetAt: slot.targetAt, tipIndex: currentTipIndex};
+}
+
+export async function cancelAll() {
+  await Promise.all([
+    cancelByIdentifier(DAILY_DIAMOND_REMINDER_ID),
+    cancelByIdentifier(WEEKLY_PRO_TIP_ID),
+  ]);
+  await writeState({});
+}
+
+export async function requestPermissionsGracefully(args: RequestPermissionArgs = {}) {
+  if (Platform.OS === "web" || args.notificationsDeclined || await getLocalDeclined()) {
+    return {granted: false, reason: "declined" as const};
+  }
+
+  try {
+    const Notifications = await getNotificationsModule();
+    if (!Notifications) {
+      return {granted: false, reason: "native-module-unavailable" as const};
+    }
+
+    await setupNotificationChannel(Notifications);
+
+    const current = await Notifications.getPermissionsAsync();
+    if (isFullPermissionGranted(current, Notifications)) {
+      await saveGrantedPushToken(Notifications, args.savePreferences, args.anonymousId);
+      return {granted: true, status: current.status};
+    }
+
+    if (Platform.OS === "ios" && current.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL) {
+      const provisionalAtRaw = await AsyncStorage.getItem(IOS_PROVISIONAL_KEY).catch(() => null);
+      const provisionalAt = Number(provisionalAtRaw ?? 0);
+      if (!Number.isFinite(provisionalAt) || provisionalAt <= 0) {
+        await AsyncStorage.setItem(IOS_PROVISIONAL_KEY, String(Date.now())).catch(() => undefined);
+        await saveGrantedPushToken(Notifications, args.savePreferences, args.anonymousId);
+        return {granted: true, status: current.status};
+      }
+
+      if (Date.now() - provisionalAt < 3 * DAY_MS) {
+        await saveGrantedPushToken(Notifications, args.savePreferences, args.anonymousId);
+        return {granted: true, status: current.status};
+      }
+    }
+
+    if (!current.canAskAgain) {
+      await persistDenied(args.savePreferences, args.anonymousId);
+      return {granted: false, reason: "cannot-ask-again" as const};
+    }
+
+    const requested = await Notifications.requestPermissionsAsync({
+      ios: {
+        allowAlert: true,
+        allowBadge: false,
+        allowSound: true,
+        allowProvisional: Platform.OS === "ios" && current.status === "undetermined",
+      },
+    });
+
+    if (isPermissionGranted(requested, Notifications)) {
+      if (Platform.OS === "ios" && requested.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL) {
+        await AsyncStorage.setItem(IOS_PROVISIONAL_KEY, String(Date.now())).catch(() => undefined);
+      }
+      await saveGrantedPushToken(Notifications, args.savePreferences, args.anonymousId);
+      return {granted: true, status: requested.status};
+    }
+
+    await persistDenied(args.savePreferences, args.anonymousId);
+    return {granted: false, reason: "denied" as const};
+  } catch (error) {
+    console.warn("[Notifications] Permission request failed", error);
+    return {granted: false, reason: "request-failed" as const};
+  }
 }
 
 export async function syncTieredNotifications({
@@ -262,25 +486,19 @@ export async function syncTieredNotifications({
   hasProAccess,
   hasPaidAccess = false,
   subscriptionType,
-  nextDiamondClaimAt,
+  ...scheduleArgs
 }: TieredNotificationArgs) {
   if (!isReady) {
     return;
   }
 
   const isProTier = hasProAccess || hasPaidAccess || subscriptionType === "weekly" || subscriptionType === "yearly";
-  const state = await readScheduleState();
-
   if (isProTier) {
-    await cancelScheduledItem(state.free);
-    delete state.free;
-    await writeScheduleState(state);
-    await scheduleWeeklyArchitectureTipNotification();
+    await cancelByIdentifier(DAILY_DIAMOND_REMINDER_ID);
+    await scheduleOrUpdateProTip({...scheduleArgs, forceReschedule: false});
     return;
   }
 
-  await cancelScheduledItem(state.pro);
-  delete state.pro;
-  await writeScheduleState(state);
-  await scheduleFreeDailyDiamondNotification(nextDiamondClaimAt);
+  await cancelByIdentifier(WEEKLY_PRO_TIP_ID);
+  await scheduleOrUpdateDiamondReminder(scheduleArgs);
 }

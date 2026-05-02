@@ -29,6 +29,7 @@ isGuestWizardTestingSession,
 resolveGuestWizardViewerId
 } from "../lib/guest-testing";
 import {triggerHaptic} from "../lib/haptics";
+import {requestPermissionsGracefully} from "../lib/notifications";
 import {uploadLocalFileToCloud} from "../lib/native-upload";
 import {SERVICE_WIZARD_THEME} from "../lib/service-wizard-theme";
 import {useDiamondStore} from "./diamond-store-context";
@@ -149,7 +150,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const effectiveSignedIn = isSignedIn || guestWizardTestingSession;
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const { showToast } = useProSuccess();
-  const { credits: sharedCredits, setOptimisticCredits } = useViewerCredits();
+  const { credits: sharedCredits, notificationsDeclined, setOptimisticCredits } = useViewerCredits();
   const { openStore } = useDiamondStore();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
   const localizedFloorMaterials = useMemo(
@@ -170,6 +171,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const createSourceUploadUrl = useMutation("generations:createSourceUploadUrl" as any);
   const cancelGeneration = useMutation("generations:cancelGeneration" as any);
   const startGeneration = useMutation("generations:startGeneration" as any);
+  const updateNotificationPreferences = useMutation("users:updateNotificationPreferences" as any);
 
   const [step, setStep] = useState<WizardStep>("intake");
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
@@ -241,6 +243,15 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     [i18n.language, t],
   );
   const generationStatusMessages = useGenerationStatusMessages();
+  const requestNotificationsAfterReveal = useCallback(() => {
+    void requestPermissionsGracefully({
+      anonymousId: anonymousId ?? undefined,
+      notificationsDeclined,
+      savePreferences: async (args) => {
+        await updateNotificationPreferences(args);
+      },
+    });
+  }, [anonymousId, notificationsDeclined, updateNotificationPreferences]);
   const stickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);
   const canContinueFromMask = isAiMaterialSuggestionEnabled || customPrompt.trim().length > 0;
   const aspectRatio = useMemo(() => {
@@ -331,6 +342,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       setProcessingComplete(true);
       const revealTimer = setTimeout(() => {
         triggerHaptic();
+        requestNotificationsAfterReveal();
         if (effectiveSignedIn) {
           router.replace({ pathname: "/workspace", params: { boardView: "board" } });
           return;
@@ -353,7 +365,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       setStep("materials");
       showToast(getFriendlyGenerationError(generation.errorMessage ?? GENERATION_FAILED_TOAST));
     }
-  }, [effectiveSignedIn, generationArchive, generationId, router, showToast]);
+  }, [effectiveSignedIn, generationArchive, generationId, requestNotificationsAfterReveal, router, showToast]);
 
   const resetDetection = useCallback(() => {
     if (detectTimerRef.current) clearTimeout(detectTimerRef.current);

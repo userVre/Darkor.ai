@@ -608,9 +608,13 @@ export const saveGeneration = internalMutationGeneric({
     }
 
     const imageUrl = await ctx.storage.getUrl(args.storageId);
+    if (!imageUrl) {
+      throw new ConvexError("Generated image URL could not be resolved.");
+    }
+
     await ctx.db.patch(args.generationId, {
       storageId: args.storageId,
-      imageUrl: imageUrl ?? undefined,
+      imageUrl,
       status: "ready",
       errorMessage: undefined,
       completedAt: Date.now(),

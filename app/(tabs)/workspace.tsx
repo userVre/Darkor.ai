@@ -30,8 +30,7 @@ ThumbUp,
 Trash2,
 Trees,
 UtensilsCrossed,
-Wand2,
-Zap
+Wand2
 } from "@/components/material-icons";
 import {useAuth} from "@clerk/expo";
 import {BottomSheetModal} from "@gorhom/bottom-sheet";
@@ -76,6 +75,7 @@ DESIGN_WIZARD_SELECTION_BLUE_GLOW,
 DESIGN_WIZARD_SELECTION_BLUE_SOFT,
 } from "../../components/design-wizard-primitives";
 import {DiamondCreditPill} from "../../components/diamond-credit-pill";
+import {HdLockOverlay} from "../../components/HdLockOverlay";
 import {useDiamondStore} from "../../components/diamond-store-context";
 import {useElitePassModal} from "../../components/elite-pass-context";
 import {ExteriorRedesignStepFour} from "../../components/exterior-redesign-step-four";
@@ -116,6 +116,7 @@ resolveGuestWizardViewerId
 import {triggerHaptic} from "../../lib/haptics";
 import {loadLocalBoardItems, persistLocalBoardItems, type LocalBoardItem} from "../../lib/local-board-cache";
 import {LUX_SPRING, staggerFadeUp} from "../../lib/motion";
+import {requestPermissionsGracefully} from "../../lib/notifications";
 import {uploadLocalFileToCloud} from "../../lib/native-upload";
 import {getRewardStatus} from "../../lib/rewards";
 import {SERVICE_WIZARD_THEME} from "../../lib/service-wizard-theme";
@@ -258,6 +259,8 @@ type ArchiveGeneration = {
   roomType?: string | null;
   serviceType?: "paint" | "floor" | "redesign" | "layout" | "reference" | "replace" | null;
   watermarkRequired?: boolean | null;
+  isWatermarked?: boolean | null;
+  quality?: "medium" | "high" | null;
   modeId?: string | null;
   paletteId?: string | null;
   finishId?: string | null;
@@ -278,6 +281,8 @@ type BoardRenderItem = {
   serviceType?: string | null;
   generationId?: string | null;
   watermarkRequired?: boolean | null;
+  isWatermarked?: boolean | null;
+  quality?: "medium" | "high" | null;
   modeId?: string | null;
   paletteId?: string | null;
   finishId?: string | null;
@@ -409,13 +414,11 @@ const BoardGridCard = memo(function BoardGridCard({
   width,
   index,
   onPress,
-  showWatermark,
 }: {
   item: BoardRenderItem;
   width: number;
   index: number;
   onPress: (item: BoardRenderItem) => void;
-  showWatermark: boolean;
 }) {
   const { t } = useTranslation();
   const previewImage = item.imageUrl ?? item.originalImageUrl ?? null;
@@ -506,15 +509,6 @@ const BoardGridCard = memo(function BoardGridCard({
           </View>
         ) : null}
 
-        {showWatermark && previewImage ? (
-          <View
-            className="absolute bg-black px-3 py-1.5"
-            style={{ right: 14, bottom: 58, ...organicRadii(16, 12) }}
-          >
-            <Text style={{ color: "#FFFFFF", fontSize: 11, lineHeight: 13, ...fonts.semibold }}>HomeDecor.ai</Text>
-          </View>
-        ) : null}
-
         <View
           style={{
             position: "absolute",
@@ -537,10 +531,8 @@ const BoardGridCard = memo(function BoardGridCard({
 
 const ExportResultImage = memo(function ExportResultImage({
   imageSource,
-  showWatermark,
 }: {
   imageSource: { uri: string } | null;
-  showWatermark: boolean;
 }) {
   return (
     <View
@@ -567,21 +559,6 @@ const ExportResultImage = memo(function ExportResultImage({
         </View>
       )}
 
-      {showWatermark ? (
-        <View
-          style={{
-            position: "absolute",
-            right: 28,
-            bottom: 28,
-            borderRadius: 16,
-            backgroundColor: "rgba(255,255,255,0.92)",
-            paddingHorizontal: 20,
-            paddingVertical: 14,
-          }}
-        >
-          <Text style={{ color: DS.colors.textPrimary, fontSize: 24, lineHeight: 28, ...fonts.semibold }}>HomeDecor.ai</Text>
-        </View>
-      ) : null}
     </View>
   );
 });
@@ -2130,7 +2107,7 @@ export default function WorkspaceScreen() {
   }>();
   const { isSignedIn } = useAuth();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
-  const { credits: sharedCreditBalance, clearOptimisticCredits, setOptimisticCredits, streakCount } = useViewerCredits();
+  const { credits: sharedCreditBalance, clearOptimisticCredits, notificationsDeclined, setOptimisticCredits, streakCount } = useViewerCredits();
   const { openStore } = useDiamondStore();
   const { openElitePass } = useElitePassModal();
   const guestWizardTestingSession = isGuestWizardTestingSession(isSignedIn);
@@ -2169,9 +2146,20 @@ export default function WorkspaceScreen() {
   const createSourceUploadUrl = useMutation("generations:createSourceUploadUrl" as any);
   const deleteGeneration = useMutation("generations:deleteGeneration" as any);
   const startGeneration = useMutation("generations:startGeneration" as any);
+  const updateNotificationPreferences = useMutation("users:updateNotificationPreferences" as any);
   const suggestDesignOptions = useAction("ai:suggestDesignOptions" as any);
   const submitGenerationFeedback = useMutation("generations:submitFeedback" as any);
   const submitGenerationReview = useMutation("feedback:submitGenerationReview" as any);
+
+  const requestNotificationsAfterReveal = useCallback(() => {
+    void requestPermissionsGracefully({
+      anonymousId: anonymousId ?? undefined,
+      notificationsDeclined,
+      savePreferences: async (args) => {
+        await updateNotificationPreferences(args);
+      },
+    });
+  }, [anonymousId, notificationsDeclined, updateNotificationPreferences]);
 
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
@@ -2560,6 +2548,8 @@ export default function WorkspaceScreen() {
       serviceType: generation.serviceType ?? inferBoardServiceType(generation.style, generation.roomType),
       generationId: generation._id,
       watermarkRequired: generation.watermarkRequired ?? false,
+      isWatermarked: generation.isWatermarked ?? generation.watermarkRequired ?? false,
+      quality: generation.quality ?? null,
       modeId: generation.modeId ?? null,
       paletteId: generation.paletteId ?? null,
       finishId: generation.finishId ?? null,
@@ -2647,6 +2637,8 @@ export default function WorkspaceScreen() {
       serviceType: item.serviceType ?? null,
       generationId: item.generationId ?? null,
       watermarkRequired: item.watermarkRequired ?? false,
+      isWatermarked: item.isWatermarked ?? item.watermarkRequired ?? false,
+      quality: item.quality ?? null,
       modeId: item.modeId ?? null,
       paletteId: item.paletteId ?? null,
       finishId: item.finishId ?? null,
@@ -3361,7 +3353,7 @@ export default function WorkspaceScreen() {
   const activeGenerationRecordId = activeBoardItem?.generationId ?? activeBoardItem?.id ?? generationId ?? null;
   const editorFeedbackState = feedbackState ?? activeBoardItem?.feedback ?? null;
   const currentImageHasWatermark = Boolean(
-    (activeBoardItem?.watermarkRequired ?? watermarkRequiredForViewer) && !canRemoveWatermark,
+    (activeBoardItem?.isWatermarked ?? activeBoardItem?.watermarkRequired ?? watermarkRequiredForViewer) && !canRemoveWatermark,
   );
   const exportImageSource = activeEditorImageUrl ? ({ uri: activeEditorImageUrl } as const) : null;
   const sliderSpring = useMemo(() => ({ damping: 15, stiffness: 100 }), []);
@@ -3520,6 +3512,8 @@ export default function WorkspaceScreen() {
         setActiveBoardItemId(currentGeneration.id);
       }
 
+      requestNotificationsAfterReveal();
+
       if (pendingReviewState) {
         setLastGenerationCount(pendingReviewState.count);
         if (pendingReviewState.shouldPrompt) {
@@ -3566,6 +3560,7 @@ export default function WorkspaceScreen() {
     pendingReviewState,
     posthog,
     processingGateUntil,
+    requestNotificationsAfterReveal,
     router,
     serviceType,
     showToast,
@@ -4165,13 +4160,13 @@ export default function WorkspaceScreen() {
 
     await new Promise((resolve) => setTimeout(resolve, 80));
     return await captureRef(exportCaptureRef, {
-      format: currentImageHasWatermark ? "png" : "jpg",
+      format: "jpg",
       quality: 1,
       result: "tmpfile",
       width: 1080,
       height: 1350,
     });
-  }, [currentImageHasWatermark, exportCaptureRef, t]);
+  }, [exportCaptureRef, t]);
 
   const handleShare = useCallback(async () => {
     triggerHaptic();
@@ -4196,7 +4191,7 @@ export default function WorkspaceScreen() {
 
       await Sharing.shareAsync(tempUri, {
         dialogTitle: t("workspace.share.message"),
-        mimeType: currentImageHasWatermark ? "image/png" : "image/jpeg",
+        mimeType: "image/jpeg",
         UTI: "public.image",
       });
       captureAnalytics(posthog, ANALYTICS_EVENTS.imageShared, {
@@ -4209,7 +4204,7 @@ export default function WorkspaceScreen() {
       await cleanupTempFile(tempUri);
       setIsSharingResult(false);
     }
-  }, [activeBoardItem?.generationId, activeBoardItem?.serviceType, activeEditorImageUrl, cleanupTempFile, currentImageHasWatermark, exportCurrentRender, generationId, hasPaidAccess, posthog, router, serviceType, t]);
+  }, [activeBoardItem?.generationId, activeBoardItem?.serviceType, activeEditorImageUrl, cleanupTempFile, exportCurrentRender, generationId, hasPaidAccess, posthog, router, serviceType, t]);
 
 
   const handleUpgrade = useCallback(() => {
@@ -4446,6 +4441,8 @@ export default function WorkspaceScreen() {
       serviceType,
       generationId: null,
       watermarkRequired,
+      isWatermarked: watermarkRequired,
+      quality: watermarkRequired ? "medium" : "high",
       modeId: activeModeOption?.id ?? null,
       paletteId: activePaletteOption?.id ?? null,
       finishId: activeFinishOption?.id ?? null,
@@ -4505,6 +4502,8 @@ export default function WorkspaceScreen() {
         generationId: string;
         reviewState?: { count: number; shouldPrompt: boolean };
         creditsRemaining?: number;
+        isWatermarked?: boolean;
+        quality?: "medium" | "high";
       };
 
       if (!diagnostic && typeof startResult.creditsRemaining === "number") {
@@ -4518,6 +4517,8 @@ export default function WorkspaceScreen() {
                 ...item,
                 id: startResult.generationId,
                 generationId: startResult.generationId,
+                isWatermarked: startResult.isWatermarked ?? item.isWatermarked,
+                quality: startResult.quality ?? item.quality,
               }
             : item,
         ),
@@ -4759,14 +4760,6 @@ export default function WorkspaceScreen() {
     serviceType,
     setDraftPrompt,
   ]);
-
-  const handleRemoveWatermark = useCallback(() => {
-    triggerHaptic();
-    router.push({
-      pathname: "/paywall",
-      params: { source: "remove-watermark" },
-    } as any);
-  }, [router]);
 
   const handleSubmitEditorFeedback = useCallback(async (sentiment: FeedbackSentiment) => {
     if (!activeGenerationRecordId) {
@@ -7845,7 +7838,6 @@ export default function WorkspaceScreen() {
               width={boardCardWidth}
               index={index}
               onPress={handleOpenBoardItem}
-              showWatermark={Boolean(item.watermarkRequired) && !canRemoveWatermark}
             />
           )}
           numColumns={2}
@@ -7923,7 +7915,6 @@ export default function WorkspaceScreen() {
                 width={boardCardWidth}
                 index={index}
                 onPress={handleOpenBoardItem}
-                showWatermark={Boolean(item.watermarkRequired) && !canRemoveWatermark}
               />
             )}
             numColumns={2}
@@ -8269,7 +8260,7 @@ export default function WorkspaceScreen() {
           }}
         >
           <View ref={exportCaptureRef} collapsable={false}>
-            <ExportResultImage imageSource={exportImageSource} showWatermark={currentImageHasWatermark} />
+            <ExportResultImage imageSource={exportImageSource} />
           </View>
         </View>
 
@@ -8434,51 +8425,7 @@ export default function WorkspaceScreen() {
                   </View>
                 ) : null}
 
-                {!isEditorProcessing && !isEditorFailed && currentImageHasWatermark && editorImageUrl ? (
-                  <View
-                    style={{
-                      position: "absolute",
-                      right: 14,
-                      bottom: 74,
-                      borderRadius: 14,
-                      backgroundColor: "rgba(255,255,255,0.92)",
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                    }}
-                  >
-                    <Text style={{ color: DS.colors.textPrimary, fontSize: 12, lineHeight: 14, ...fonts.semibold }}>HomeDecor.ai</Text>
-                  </View>
-                ) : null}
-
-                {!isEditorProcessing && !isEditorFailed && currentImageHasWatermark ? (
-                  <View
-                    style={{
-                      position: "absolute",
-                      right: 14,
-                      bottom: 14,
-                    }}
-                  >
-                    <LuxPressable onPress={handleRemoveWatermark} className="cursor-pointer">
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: 8,
-                          borderRadius: 16,
-                          backgroundColor: "rgba(214,64,103,0.96)",
-                          paddingHorizontal: 14,
-                          paddingVertical: 10,
-                          ...ambientShadow(0.12, 12, 8),
-                        }}
-                      >
-                        <Zap color="#FFFFFF" size={15} strokeWidth={2.1} />
-                        <Text style={{ color: "#FFFFFF", ...DS.typography.button }}>
-                          Remove Watermark
-                        </Text>
-                      </View>
-                    </LuxPressable>
-                  </View>
-                ) : null}
+                <HdLockOverlay visible={!isEditorProcessing && !isEditorFailed && currentImageHasWatermark} />
               </View>
 
               <View
