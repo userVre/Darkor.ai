@@ -93,7 +93,15 @@
         "title": "Golv Restyle",
         "description": "Lyft ditt rums grund med förstklassiga material och finish."
       },
-      "cta": "Prova detta",
+        "replace": {
+          "title": "Byt ut objekt",
+          "description": "Maskera ett objekt i bilden och byt ut det med precisa AI-redigeringar."
+        },
+        "referenceStyle": {
+          "title": "Referensstilöverföring",
+          "description": "Ladda upp en stilreferens och applicera uttrycket på ditt eget rum."
+        },
+        "cta": "Prova detta",
       "smartSpacePlanning": {
         "title": "Smart Rumsplanering",
         "description": "Optimera rummets planl?sning f?r maximal komfort och smidiga g?nglinjer."

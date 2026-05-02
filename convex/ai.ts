@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import {
   buildDesignPrompt,
+  GEMINI_MATERIAL_REFLECTION_INSTRUCTION,
   GLOBAL_MASTERPIECE_QUALITY_INSTRUCTION,
   GLOBAL_PERSPECTIVE_LOCK_INSTRUCTION,
 } from "../lib/design-prompt-builder";
@@ -464,6 +465,7 @@ export async function requestGeminiDesignOrchestration(args: {
     args.availableStyles?.length ? `Allowed styles: ${args.availableStyles.join(", ")}.` : undefined,
     args.availablePalettes?.length ? `Allowed palettes: ${args.availablePalettes.join(", ")}.` : undefined,
     taskInstruction,
+    GEMINI_MATERIAL_REFLECTION_INSTRUCTION,
     args.serviceType === "redesign" ? "Return a single best style in style. If the user supplied multiple styles, keep styles limited to the compatible fusion ingredients and write fusionPrompt as a polished architectural direction that blends them seamlessly." : undefined,
     args.serviceType === "redesign" ? "For interiors, focus customPrompt on lighting harmony, furniture flow, spatial gain, high-fidelity textures, and preserving source window light direction. For exteriors, require a clean sweep of debris, trash, foreground clutter, and messy overgrowth, then replace with luxury landscaping and a polished facade. For gardens, require resort-level landscaping with lush tropical flora, integrated LED garden lighting, and ambient twilight atmosphere where appropriate. If the photo includes both facade and garden, treat them as one unified project." : undefined,
     "If the user selected AI Suggest, Surprise Me, AI Choice, or Random, you must still return a professionally balanced, high-end choice rather than something extreme.",

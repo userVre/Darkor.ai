@@ -3,11 +3,13 @@ export const WEEK_MS = 7 * DAY_MS;
 export const YEAR_MS = 365 * DAY_MS;
 export const MONTHLY_RESET_MS = 30 * DAY_MS;
 export const FREE_IMAGE_LIMIT = 1;
-export const INITIAL_FREE_DIAMONDS = 3;
+export const INITIAL_FREE_DIAMONDS = 1;
 export const WEEKLY_IMAGE_LIMIT = Number.MAX_SAFE_INTEGER;
 export const YEARLY_MONTHLY_IMAGE_LIMIT = Number.MAX_SAFE_INTEGER;
 export const FREE_REFILL_INTERVAL_MS = DAY_MS;
 export const ELITE_PASS_PRO_MS = DAY_MS;
+export const ELITE_PASS_MILESTONE_DAY = 7;
+export const ELITE_PASS_REWARD_DIAMONDS = 3;
 
 export type SubscriptionType = "weekly" | "yearly" | "free";
 export type SubscriptionEntitlement = "weekly_pro" | "annual_pro" | "free";
@@ -203,6 +205,11 @@ export function canUserGenerateState(state: {
     shouldShowLimitReached: true,
     message: state.statusMessage,
   };
+}
+
+function getNextDailyClaimAt(lastClaimDate: number, nextDiamondClaimAt: number) {
+  const lastClaimEligibleAt = lastClaimDate > 0 ? lastClaimDate + FREE_REFILL_INTERVAL_MS : 0;
+  return Math.max(lastClaimEligibleAt, nextDiamondClaimAt);
 }
 
 export function resolveGenerationPolicy(state: {
@@ -424,7 +431,8 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
     }
   }
 
-  if (credits <= 0 && nextDiamondClaimAt > 0 && now >= nextDiamondClaimAt) {
+  const effectiveNextClaimAt = getNextDailyClaimAt(lastClaimDate, nextDiamondClaimAt);
+  if (credits <= 0 && (effectiveNextClaimAt <= 0 || now >= effectiveNextClaimAt)) {
     canClaimDiamond = true;
     if (user.canClaimDiamond !== true) {
       patch.canClaimDiamond = true;
@@ -458,7 +466,7 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
     nextDiamondClaimAt,
     canClaimDiamond,
     eliteProUntil,
-    nextResetDate: nextDiamondClaimAt > 0 ? nextDiamondClaimAt : lastResetDate > 0 ? lastResetDate + FREE_REFILL_INTERVAL_MS : now + FREE_REFILL_INTERVAL_MS,
+    nextResetDate: effectiveNextClaimAt > 0 ? effectiveNextClaimAt : lastResetDate > 0 ? lastResetDate + FREE_REFILL_INTERVAL_MS : now + FREE_REFILL_INTERVAL_MS,
     limit: imageLimit,
     remaining,
     active: false,

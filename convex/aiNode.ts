@@ -19,6 +19,7 @@ import {
   buildDesignPrompt,
   GLOBAL_MASTERPIECE_QUALITY_INSTRUCTION,
   GLOBAL_PERSPECTIVE_LOCK_INSTRUCTION,
+  GLOBAL_REALISM_TOKEN_INJECTION,
 } from "../lib/design-prompt-builder";
 
 const AZURE_IMAGE_API_VERSION = "2025-04-01-preview";
@@ -136,7 +137,7 @@ function buildAzurePrompt(args: {
     ? `\n\n${AZURE_EXTERIOR_PERSPECTIVE_LOCK_PROMPT}`
     : "";
 
-  return `${AZURE_GEOMETRIC_ADHERENCE_SYSTEM_PROMPT}${exteriorPerspectiveLock}\n\n${args.flowInstruction ? `${args.flowInstruction}\n\n` : ""}${args.prompt}\n\nAvoid: ${args.negativePrompt}`;
+  return `${AZURE_GEOMETRIC_ADHERENCE_SYSTEM_PROMPT}${exteriorPerspectiveLock}\n\n${args.flowInstruction ? `${args.flowInstruction}\n\n` : ""}${args.prompt}\n\nRealism Tokens: ${GLOBAL_REALISM_TOKEN_INJECTION}\n\nAvoid: ${args.negativePrompt}`;
 }
 
 function buildModeSpecificInstruction(args: {

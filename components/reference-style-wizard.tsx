@@ -7,6 +7,7 @@ import * as ImagePicker from "expo-image-picker";
 import {Image} from "expo-image";
 import {StatusBar} from "expo-status-bar";
 import {useRouter} from "expo-router";
+import {usePostHog} from "posthog-react-native";
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {
   Alert,
@@ -20,6 +21,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 
+import {ANALYTICS_EVENTS, captureAnalytics, captureGenerationFailure} from "../lib/analytics";
 import {DS, ambientShadow, glowShadow} from "../lib/design-system";
 import {type DiscoverTile, useDiscoverGroups} from "../lib/discover-catalog";
 import {uploadLocalFileToCloud} from "../lib/native-upload";
@@ -347,6 +349,7 @@ export function ReferenceStyleWizard({
   onProcessingStateChange,
 }: ReferenceStyleWizardProps) {
   const router = useRouter();
+  const posthog = usePostHog();
   const { width } = useWindowDimensions();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const { credits, setOptimisticCredits } = useViewerCredits();
@@ -625,6 +628,10 @@ export function ReferenceStyleWizard({
       return;
     }
 
+    captureAnalytics(posthog, ANALYTICS_EVENTS.generateClicked, {
+      service_type: "reference_style",
+    });
+
     if (!hasProAccess && Math.max(me?.credits ?? credits, 0) <= 0) {
       router.push({ pathname: "/paywall", params: { source: "second-design" } } as any);
       return;
@@ -669,6 +676,7 @@ export function ReferenceStyleWizard({
       setProcessingStartedAt(null);
       setCooldownRemainingMs(0);
       setStep("intake");
+      captureGenerationFailure(posthog, error, { service_type: "reference_style" });
       if (error instanceof Error && error.message === "Payment Required") {
         router.push({ pathname: "/paywall", params: { source: "second-design" } } as any);
         return;
@@ -686,6 +694,7 @@ export function ReferenceStyleWizard({
     isGenerating,
     me?.credits,
     hasProAccess,
+    posthog,
     roomImage,
     router,
     setOptimisticCredits,

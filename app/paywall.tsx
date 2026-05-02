@@ -5,6 +5,7 @@ import {Image} from "expo-image";
 import {Stack, useLocalSearchParams, useRouter} from "expo-router";
 import {StatusBar} from "expo-status-bar";
 import {AnimatePresence, MotiView} from "moti";
+import {usePostHog} from "posthog-react-native";
 import {useCallback, useEffect, useMemo, useRef, useState, type ReactNode} from "react";
 import {useTranslation} from "react-i18next";
 import {
@@ -34,6 +35,7 @@ type SharedValue,
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import Svg, {Circle as SvgCircle} from "react-native-svg";
 import {createLocalizedPrice, usePricingContext, type LocalizedPrice} from "../lib/dynamic-pricing";
+import {ANALYTICS_EVENTS, captureAnalytics} from "../lib/analytics";
 
 import {useProSuccess} from "../components/pro-success-context";
 import {useDiamondStore} from "../components/diamond-store-context";
@@ -65,23 +67,22 @@ type RevenueCatEntitlement,
 type RevenueCatPackage,
 type RevenueCatPurchases,
 } from "../lib/revenuecat";
-import {radix} from "../styles/theme";
 import {fonts} from "../styles/typography";
 
-const SCREEN_BG = radix.light.slate.slate1;
-const PANEL_BG_ALT = radix.light.slate.slate2;
-const PANEL_BORDER = radix.light.slate.slate6;
-const BRAND_RED = radix.light.ruby.ruby9;
-const BRAND_RED_ACTIVE = radix.light.ruby.ruby9;
-const TOGGLE_OFF = radix.light.slate.slate6;
-const TEXT_PRIMARY = radix.light.slate.slate12;
-const TEXT_MUTED = radix.light.slate.slate11;
-const TEXT_RESTORE = radix.light.slate.slate12;
-const TEXT_ACCENT = radix.light.slate.slate1;
-const CTA_TEXT = radix.light.slate.slate1;
-const ERROR_TEXT = radix.light.ruby.ruby11;
-const RUBY_BADGE = radix.light.ruby.ruby9;
-const RUBY_BADGE_BORDER = radix.light.ruby.ruby9;
+const SCREEN_BG = "#0D0D0D";
+const PANEL_BG_ALT = "#1C1C1C";
+const PANEL_BORDER = "#323232";
+const BRAND_RED = "#E53935";
+const BRAND_RED_ACTIVE = "#E53935";
+const TOGGLE_OFF = "#3A3A3A";
+const TEXT_PRIMARY = "#FFFFFF";
+const TEXT_MUTED = "rgba(255,255,255,0.72)";
+const TEXT_RESTORE = "rgba(255,255,255,0.88)";
+const TEXT_ACCENT = "#FFFFFF";
+const CTA_TEXT = "#FFFFFF";
+const ERROR_TEXT = "#FF6B66";
+const RUBY_BADGE = "#E53935";
+const RUBY_BADGE_BORDER = "#E53935";
 const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 2000;
 const CLOSE_DELAY_MS = 5000;
@@ -89,11 +90,14 @@ const CLOSE_VISUAL_SIZE = 40;
 const CLOSE_RING_RADIUS = 15;
 const CLOSE_RING_STROKE_WIDTH = 2.5;
 const CLOSE_RING_CIRCUMFERENCE = 2 * Math.PI * CLOSE_RING_RADIUS;
-const HERO_CENTER_WIDTH_MAX = 236;
-const HERO_CENTER_WIDTH_MIN = 184;
-const HERO_IMAGE_ASPECT_RATIO = 1.34;
+const HERO_CENTER_SIZE = 188;
+const HERO_SIDE_WIDTH = 162.5;
+const HERO_SIDE_HEIGHT = 200;
+const HERO_SIDE_RENDERED_WIDTH = 130;
+const HERO_IMAGE_GAP = 12;
 const HERO_SIDE_SCALE = 0.8;
-const HERO_SIDE_TRANSLATE_Y = 18;
+const HERO_SIDE_TRANSLATE_Y = 14;
+const HERO_SNAP_INTERVAL = HERO_CENTER_SIZE / 2 + HERO_IMAGE_GAP + HERO_SIDE_RENDERED_WIDTH / 2;
 const HERO_CAROUSEL_REPEAT_MULTIPLIER = 7;
 const HERO_IMAGES = [
   require("../assets/media/paywall/carousel-gaming-led.png"),
@@ -189,16 +193,12 @@ function HeroCarouselItem({
   image,
   index,
   scrollX,
-  centerWidth,
-  centerHeight,
   sideScale,
   snapInterval,
 }: {
   image: (typeof HERO_IMAGES)[number];
   index: number;
   scrollX: NativeAnimated.Value;
-  centerWidth: number;
-  centerHeight: number;
   sideScale: number;
   snapInterval: number;
 }) {
@@ -208,9 +208,19 @@ function HeroCarouselItem({
     (index + 1) * snapInterval,
   ];
   const animatedStyle = {
+    width: scrollX.interpolate({
+      inputRange,
+      outputRange: [HERO_SIDE_WIDTH, HERO_CENTER_SIZE, HERO_SIDE_WIDTH],
+      extrapolate: "clamp",
+    }),
+    height: scrollX.interpolate({
+      inputRange,
+      outputRange: [HERO_SIDE_HEIGHT, HERO_CENTER_SIZE, HERO_SIDE_HEIGHT],
+      extrapolate: "clamp",
+    }),
     opacity: scrollX.interpolate({
       inputRange,
-      outputRange: [0.52, 1, 0.52],
+      outputRange: [0.68, 1, 0.68],
       extrapolate: "clamp",
     }),
     transform: [
@@ -232,8 +242,8 @@ function HeroCarouselItem({
   };
 
   return (
-    <View style={[styles.heroItemSlot, { width: snapInterval, height: centerHeight + HERO_SIDE_TRANSLATE_Y }]}>
-      <NativeAnimated.View style={[styles.heroImageWrap, { width: centerWidth, height: centerHeight }, animatedStyle]}>
+    <View style={[styles.heroItemSlot, { width: snapInterval, height: HERO_SIDE_HEIGHT + HERO_SIDE_TRANSLATE_Y }]}>
+      <NativeAnimated.View style={[styles.heroImageWrap, animatedStyle]}>
         <Image contentFit="cover" source={image} style={styles.heroImage} transition={0} />
       </NativeAnimated.View>
     </View>
@@ -496,6 +506,7 @@ function filterPackagesByCurrency(
 
 export default function PaywallScreen() {
   const router = useRouter();
+  const posthog = usePostHog();
   const { t, i18n } = useTranslation();
   const localizedFonts = useLocalizedAppFonts();
   const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
@@ -535,11 +546,9 @@ export default function PaywallScreen() {
   const paywallSubtitle = hasPersonalizedBackground
     ? "Your room is ready for the next level. Continue designing this space in 4K."
     : t("paywall.subtitle");
-  const heroCenterWidth = Math.min(HERO_CENTER_WIDTH_MAX, Math.max(HERO_CENTER_WIDTH_MIN, width * 0.56));
-  const heroCenterHeight = heroCenterWidth / HERO_IMAGE_ASPECT_RATIO;
-  const heroSnapInterval = width / 2;
+  const heroSnapInterval = HERO_SNAP_INTERVAL;
   const heroTrackPadding = Math.max((width - heroSnapInterval) / 2, 0);
-  const heroRowHeight = heroCenterHeight + HERO_SIDE_TRANSLATE_Y + 36;
+  const heroRowHeight = HERO_SIDE_HEIGHT + HERO_SIDE_TRANSLATE_Y + 28;
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
   const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
   const displayedYearlyPrice = useMemo(
@@ -609,6 +618,13 @@ export default function PaywallScreen() {
   const isYearlySelected = !freeTrialEnabled && selectedDuration === "yearly";
   const isWeeklySelected = freeTrialEnabled || selectedDuration === "weekly";
   const sheetHeight = Math.max(height - 12, 0);
+
+  useEffect(() => {
+    captureAnalytics(posthog, ANALYTICS_EVENTS.paywallViewed, {
+      source: source ?? "unknown",
+      personalized: hasPersonalizedBackground,
+    });
+  }, [hasPersonalizedBackground, posthog, source]);
 
   useEffect(() => {
     entranceProgress.value = withTiming(1, {
@@ -817,6 +833,12 @@ export default function PaywallScreen() {
         hasPaidAccess: subscriptionState.plan === "pro" || subscriptionState.plan === "trial",
         subscriptionType: subscriptionState.subscriptionType,
       });
+      if (subscriptionState.plan === "trial") {
+        captureAnalytics(posthog, ANALYTICS_EVENTS.trialStarted, {
+          type: subscriptionState.subscriptionType,
+          packageIdentifier: selectedPackage.identifier,
+        });
+      }
       showSuccess();
       completePaywall();
     } catch (error) {
@@ -876,7 +898,7 @@ export default function PaywallScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [completePaywall, persistPurchasedPlan, selectedPackage, setOptimisticAccess, showSuccess, t]);
+  }, [completePaywall, persistPurchasedPlan, posthog, selectedPackage, setOptimisticAccess, showSuccess, t]);
 
   const handleToggleTrial = useCallback(() => {
     if (isLoading) {
@@ -888,10 +910,13 @@ export default function PaywallScreen() {
       const next = !current;
       if (!next) {
         setSelectedDuration("yearly");
+        captureAnalytics(posthog, ANALYTICS_EVENTS.planSelected, { type: "yearly" });
+      } else {
+        captureAnalytics(posthog, ANALYTICS_EVENTS.planSelected, { type: "weekly_trial" });
       }
       return next;
     });
-  }, [isLoading]);
+  }, [isLoading, posthog]);
 
   const handleSelectYearly = useCallback(() => {
     if (isLoading) {
@@ -900,7 +925,8 @@ export default function PaywallScreen() {
 
     triggerHaptic();
     setSelectedDuration("yearly");
-  }, [isLoading]);
+    captureAnalytics(posthog, ANALYTICS_EVENTS.planSelected, { type: "yearly" });
+  }, [isLoading, posthog]);
 
   const handleSelectWeekly = useCallback(() => {
     if (isLoading) {
@@ -909,7 +935,8 @@ export default function PaywallScreen() {
 
     triggerHaptic();
     setSelectedDuration("weekly");
-  }, [isLoading]);
+    captureAnalytics(posthog, ANALYTICS_EVENTS.planSelected, { type: freeTrialEnabled ? "weekly_trial" : "weekly" });
+  }, [freeTrialEnabled, isLoading, posthog]);
 
   const handleOpenTerms = useCallback(() => {
     triggerHaptic();
@@ -950,7 +977,7 @@ export default function PaywallScreen() {
     () =>
       NativeAnimated.event(
         [{ nativeEvent: { contentOffset: { x: carouselScrollX } } }],
-        { useNativeDriver: true },
+        { useNativeDriver: false },
       ),
     [carouselScrollX],
   );
@@ -965,24 +992,13 @@ export default function PaywallScreen() {
           gestureEnabled: false,
         }}
       />
-      <StatusBar style="dark" />
-      {personalizedImageUrl ? (
-        <>
-          <Image
-            blurRadius={28}
-            contentFit="cover"
-            source={{ uri: personalizedImageUrl }}
-            style={styles.personalizedBackgroundImage}
-          />
-          <View pointerEvents="none" style={styles.personalizedBackgroundOverlay} />
-        </>
-      ) : null}
+      <StatusBar style="light" />
       <Animated.View
         pointerEvents="none"
-        style={[styles.overlay, hasPersonalizedBackground ? styles.personalizedAnimatedOverlay : null, overlayAnimatedStyle]}
+        style={[styles.overlay, overlayAnimatedStyle]}
       />
 
-      <Animated.View style={[styles.sheet, hasPersonalizedBackground ? styles.personalizedSheet : null, { minHeight: sheetHeight }, sheetAnimatedStyle]}>
+      <Animated.View style={[styles.sheet, { minHeight: sheetHeight }, sheetAnimatedStyle]}>
         <Pressable
           accessibilityRole="button"
           disabled={isLoading}
@@ -1032,8 +1048,6 @@ export default function PaywallScreen() {
               {HERO_CAROUSEL_DATA.map((item, index) => (
                 <HeroCarouselItem
                   key={item.id}
-                  centerHeight={heroCenterHeight}
-                  centerWidth={heroCenterWidth}
                   image={item.image}
                   index={index}
                   scrollX={carouselScrollX}
@@ -1151,14 +1165,14 @@ const styles = StyleSheet.create({
   },
   personalizedBackgroundOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255,255,255,0.74)",
+    backgroundColor: SCREEN_BG,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: SCREEN_BG,
   },
   personalizedAnimatedOverlay: {
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: SCREEN_BG,
   },
   sheet: {
     flex: 1,
@@ -1166,7 +1180,7 @@ const styles = StyleSheet.create({
     backgroundColor: SCREEN_BG,
   },
   personalizedSheet: {
-    backgroundColor: "transparent",
+    backgroundColor: SCREEN_BG,
   },
   restoreButton: {
     position: "absolute",
@@ -1223,7 +1237,6 @@ const styles = StyleSheet.create({
   },
   heroClip: {
     width: "100%",
-    height: 176,
     overflow: "hidden",
     backgroundColor: SCREEN_BG,
   },
@@ -1309,7 +1322,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 14,
-    backgroundColor: SCREEN_BG,
+    backgroundColor: PANEL_BG_ALT,
     borderWidth: 1,
     borderColor: PANEL_BORDER,
     flexDirection: "row",
@@ -1354,7 +1367,7 @@ const styles = StyleSheet.create({
   planCard: {
     minHeight: 74,
     borderRadius: 14,
-    backgroundColor: SCREEN_BG,
+    backgroundColor: PANEL_BG_ALT,
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderWidth: 1,

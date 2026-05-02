@@ -42,6 +42,7 @@ type BeforeAfterSliderProps = {
   containerRef?: Ref<View>;
   contentFit?: "contain" | "cover";
   imageStyle?: StyleProp<ImageStyle>;
+  onInteractionEnd?: () => void;
   onInteractionStart?: () => void;
   sliderWidth: SharedValue<number>;
   sliderX: SharedValue<number>;
@@ -57,6 +58,7 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
   containerRef,
   contentFit = "cover",
   imageStyle,
+  onInteractionEnd,
   onInteractionStart,
   sliderWidth,
   sliderX,
@@ -68,6 +70,10 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
   const notifyInteractionStart = useCallback(() => {
     onInteractionStart?.();
   }, [onInteractionStart]);
+
+  const notifyInteractionEnd = useCallback(() => {
+    onInteractionEnd?.();
+  }, [onInteractionEnd]);
 
   const notifyCenterHit = useCallback(() => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
@@ -117,6 +123,11 @@ export const BeforeAfterSlider = memo(function BeforeAfterSlider({
       }
 
       sliderX.value = clamped;
+    })
+    .onFinalize(() => {
+      if (onInteractionEnd) {
+        runOnJS(notifyInteractionEnd)();
+      }
     });
 
   const doubleTapGesture = Gesture.Tap()

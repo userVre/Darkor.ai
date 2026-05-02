@@ -1,24 +1,35 @@
 import {useMutation} from "convex/react";
-import {LinearGradient} from "expo-linear-gradient";
+import {Check} from "@/components/material-icons";
 import {AnimatePresence, MotiView} from "moti";
 import {useEffect, useMemo, useState} from "react";
-import {Modal, Pressable, StyleSheet, Text, View} from "react-native";
+import {Modal, Pressable, StyleSheet, Text, View, useWindowDimensions} from "react-native";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {DS} from "../lib/design-system";
 import {triggerHaptic} from "../lib/haptics";
-import {radix} from "../styles/theme";
 import {fonts} from "../styles/typography";
-import {DiamondCreditIcon, DIAMOND_PILL_BLUE} from "./diamond-credit-pill";
+import {DiamondCreditIcon, ElitePassFlameIcon, RADIX_BLUE_9} from "./diamond-credit-pill";
+import {useElitePassModal} from "./elite-pass-context";
 import {useViewerCredits} from "./viewer-credits-context";
 import {useViewerSession} from "./viewer-session-context";
 
-const ELITE_MILESTONE_DAYS = new Set([7, 14, 21]);
-const ELITE_MILESTONE_REWARDS: Record<number, number> = {
-  7: 3,
-  14: 5,
-  21: 7,
-};
+const ELITE_PASS_DAYS = 7;
+const STANDARD_REWARD_DIAMONDS = 1;
+const DAY_SEVEN_REWARD_DIAMONDS = 3;
+const CONFETTI_COLORS = [RADIX_BLUE_9, "#000000", "#FFFFFF"];
+const CONFETTI_PIECES = Array.from({ length: 76 }, (_, index) => {
+  const angle = (index / 76) * Math.PI * 2;
+  const distance = 150 + (index % 8) * 24;
+
+  return {
+    color: CONFETTI_COLORS[index % CONFETTI_COLORS.length],
+    delay: (index % 12) * 28,
+    rotate: index % 2 === 0 ? "174deg" : "-138deg",
+    size: 7 + (index % 4) * 2,
+    x: Math.cos(angle) * distance,
+    y: Math.sin(angle) * distance + 170,
+  };
+});
 
 type ClaimRewardResult = {
   granted?: boolean;
@@ -28,46 +39,88 @@ type ClaimRewardResult = {
   streak_count?: number;
   elitePassActivated?: boolean;
   eliteProUntil?: number;
+  hasProAccess?: boolean;
+  nextDiamondClaimAt?: number;
+  nextEligibleAt?: number;
 };
 
 function getCycleProgress(streakCount: number) {
-  return ((Math.max(1, streakCount) - 1) % 7) + 1;
+  return ((Math.max(1, streakCount) - 1) % ELITE_PASS_DAYS) + 1;
 }
 
-function SparkleBurst({ burstKey, elite }: { burstKey: number; elite: boolean }) {
-  if (burstKey <= 0) {
-    return null;
+function getDayReward(day: number) {
+  if (day === ELITE_PASS_DAYS) {
+    return {
+      diamonds: DAY_SEVEN_REWARD_DIAMONDS,
+      label: "3 Diamonds + Pro Access",
+    };
   }
 
-  const sparkles = [
-    { x: -98, y: -52, delay: 0 },
-    { x: -58, y: -92, delay: 60 },
-    { x: 4, y: -112, delay: 120 },
-    { x: 70, y: -84, delay: 180 },
-    { x: 104, y: -28, delay: 240 },
-    { x: -88, y: 28, delay: 300 },
-    { x: 76, y: 44, delay: 360 },
-  ];
-  const color = elite ? "#FACC15" : "#7DD3FC";
+  return {
+    diamonds: STANDARD_REWARD_DIAMONDS,
+    label: "1 Diamond",
+  };
+}
+
+function ClaimSuccessAnimation({ burstKey, visible }: { burstKey: number; visible: boolean }) {
+  const { width, height } = useWindowDimensions();
 
   return (
-    <View pointerEvents="none" style={styles.sparkleLayer}>
-      {sparkles.map((sparkle, index) => (
+    <AnimatePresence>
+      {visible ? (
         <MotiView
-          key={`${burstKey}-${index}`}
-          from={{ opacity: 1, scale: 0.3, translateX: 0, translateY: 0, rotate: "0deg" }}
-          animate={{
-            opacity: 0,
-            scale: 1.1,
-            translateX: sparkle.x,
-            translateY: sparkle.y,
-            rotate: "28deg",
-          }}
-          transition={{ type: "timing", duration: 980, delay: sparkle.delay }}
-          style={[styles.sparkle, { backgroundColor: color }]}
-        />
-      ))}
-    </View>
+          key={`claim-success-${burstKey}`}
+          from={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ type: "timing", duration: 180 }}
+          pointerEvents="none"
+          style={styles.successOverlay}
+        >
+          <View style={styles.successMessageWrap}>
+            <MotiView
+              from={{ opacity: 0, scale: 0.88, translateY: 12 }}
+              animate={{ opacity: 1, scale: 1, translateY: 0 }}
+              transition={{ type: "spring", damping: 16, stiffness: 190 }}
+              style={styles.successMessage}
+            >
+              <Text style={styles.successTitle}>Congrats!</Text>
+            </MotiView>
+          </View>
+
+          {CONFETTI_PIECES.map((piece, index) => (
+            <MotiView
+              key={`${burstKey}-${index}`}
+              from={{
+                opacity: 0,
+                scale: 0.5,
+                translateX: 0,
+                translateY: 0,
+                rotate: "0deg",
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                translateX: piece.x,
+                translateY: piece.y,
+                rotate: piece.rotate,
+              }}
+              transition={{ type: "timing", duration: 1450, delay: piece.delay }}
+              style={[
+                styles.confettiPiece,
+                {
+                  backgroundColor: piece.color,
+                  height: piece.size * 1.7,
+                  left: width / 2,
+                  top: height * 0.36,
+                  width: piece.size,
+                },
+              ]}
+            />
+          ))}
+        </MotiView>
+      ) : null}
+    </AnimatePresence>
   );
 }
 
@@ -82,46 +135,44 @@ export function DailyRewardModal() {
     setOptimisticRewardState,
     streakCount,
   } = useViewerCredits();
-  const claimDailyDiamondReward = useMutation("users:claimDailyDiamondReward" as any);
-  const [visible, setVisible] = useState(false);
+  const { closeElitePass, openElitePass, visible } = useElitePassModal();
+  const claimDailyDiamond = useMutation("users:claimDailyDiamond" as any);
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimResult, setClaimResult] = useState<ClaimRewardResult | null>(null);
-  const [sparkleKey, setSparkleKey] = useState(0);
+  const [successVisible, setSuccessVisible] = useState(false);
+  const [successKey, setSuccessKey] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const resolvedStreakCount = claimResult?.streakCount ?? claimResult?.streak_count ?? streakCount;
-  const isEliteDay = ELITE_MILESTONE_DAYS.has(resolvedStreakCount);
-  const isEliteTheme = isEliteDay || claimResult?.elitePassActivated === true;
-  const progress = getCycleProgress(resolvedStreakCount);
-  const rewardDiamonds = claimResult?.creditsAdded ?? ELITE_MILESTONE_REWARDS[resolvedStreakCount] ?? 1;
-  const displayedCredits = claimResult?.credits ?? credits + rewardDiamonds;
+  const currentDay = getCycleProgress(resolvedStreakCount);
+  const rewardDiamonds = claimResult?.creditsAdded ?? getDayReward(currentDay).diamonds;
+  const displayedCredits = claimResult?.credits ?? credits;
+  const hasVerifiedClaim = claimResult?.granted === true;
+  const canClaimNow = canClaimDiamond && !hasVerifiedClaim;
 
-  const theme = useMemo(
-    () => ({
-      overlay: isEliteTheme ? "rgba(2, 6, 23, 0.68)" : "rgba(15, 23, 42, 0.36)",
-      cardStart: isEliteTheme ? "#020617" : radix.light.slate.slate1,
-      cardEnd: isEliteTheme ? "#0F172A" : "#FFFFFF",
-      border: isEliteTheme ? "rgba(250, 204, 21, 0.42)" : "rgba(0, 122, 255, 0.18)",
-      title: isEliteTheme ? "#F8FAFC" : radix.light.slate.slate12,
-      body: isEliteTheme ? "#CBD5E1" : radix.light.slate.slate11,
-      muted: isEliteTheme ? "#94A3B8" : radix.light.slate.slate10,
-      rail: isEliteTheme ? "rgba(148, 163, 184, 0.24)" : radix.light.slate.slate4,
-      active: isEliteTheme ? "#38BDF8" : DIAMOND_PILL_BLUE,
-      activeAlt: isEliteTheme ? "#FACC15" : "#7DD3FC",
-    }),
-    [isEliteTheme],
+  const days = useMemo(
+    () => Array.from({ length: ELITE_PASS_DAYS }, (_, index) => index + 1),
+    [],
   );
 
   useEffect(() => {
     if (viewerReady && isReady && canClaimDiamond) {
-      setVisible(true);
       setClaimResult(null);
       setErrorMessage(null);
+      openElitePass();
     }
-  }, [canClaimDiamond, isReady, viewerReady]);
+  }, [canClaimDiamond, isReady, openElitePass, viewerReady]);
+
+  const handleClose = () => {
+    if (isClaiming || successVisible) {
+      return;
+    }
+
+    closeElitePass();
+  };
 
   const handleClaim = async () => {
-    if (isClaiming) {
+    if (isClaiming || !canClaimNow) {
       return;
     }
 
@@ -130,24 +181,34 @@ export function DailyRewardModal() {
     triggerHaptic();
 
     try {
-      const result = await claimDailyDiamondReward({ anonymousId: anonymousId ?? undefined }) as ClaimRewardResult;
+      const result = await claimDailyDiamond({ anonymousId: anonymousId ?? undefined }) as ClaimRewardResult;
       const nextStreakCount = result.streakCount ?? result.streak_count ?? resolvedStreakCount;
       const nextEliteProUntil = result.eliteProUntil ?? eliteProUntil;
+
       setClaimResult(result);
       setOptimisticRewardState({
         credits: typeof result.credits === "number" ? result.credits : credits,
         streakCount: nextStreakCount,
         canClaimDiamond: false,
-        hasProAccess: result.elitePassActivated ? true : undefined,
-        hasPaidAccess: result.elitePassActivated ? true : undefined,
+        nextDiamondClaimAt: result.nextDiamondClaimAt ?? result.nextEligibleAt ?? 0,
+        hasProAccess: result.elitePassActivated || result.hasProAccess ? true : undefined,
+        hasPaidAccess: result.elitePassActivated || result.hasProAccess ? true : undefined,
         eliteProUntil: nextEliteProUntil,
       });
-      setSparkleKey((current) => current + 1);
 
-      setTimeout(() => {
-        setVisible(false);
+      if (result.granted) {
+        setSuccessKey((current) => current + 1);
+        setSuccessVisible(true);
         setIsClaiming(false);
-      }, result.granted ? 1500 : 650);
+        setTimeout(() => {
+          setSuccessVisible(false);
+          closeElitePass();
+        }, 1900);
+        return;
+      }
+
+      setErrorMessage("This Elite Pass reward has already been claimed.");
+      setIsClaiming(false);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Unable to claim your reward right now.");
       setIsClaiming(false);
@@ -155,93 +216,103 @@ export function DailyRewardModal() {
   };
 
   return (
-    <Modal animationType="fade" onRequestClose={() => undefined} transparent visible={visible}>
-      <View style={[styles.overlay, { backgroundColor: theme.overlay, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}>
-        <AnimatePresence>
-          {visible ? (
-            <MotiView
-              from={{ opacity: 0, scale: 0.94, translateY: 18 }}
-              animate={{ opacity: 1, scale: 1, translateY: 0 }}
-              exit={{ opacity: 0, scale: 0.98, translateY: 8 }}
-              transition={{ type: "timing", duration: 260 }}
-              style={styles.cardWrap}
-            >
-              <LinearGradient
-                colors={[theme.cardStart, theme.cardEnd]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.card, { borderColor: theme.border }]}
-              >
-                <SparkleBurst burstKey={sparkleKey} elite={isEliteTheme} />
+    <Modal animationType="fade" onRequestClose={handleClose} transparent visible={visible}>
+      <View style={[styles.overlay, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 18 }]}>
+        <MotiView
+          from={{ opacity: 0, scale: 0.96, translateY: 16 }}
+          animate={{ opacity: 1, scale: 1, translateY: 0 }}
+          transition={{ type: "timing", duration: 230 }}
+          style={styles.sheet}
+        >
+          <View style={styles.headerRow}>
+            <View style={styles.titleLockup}>
+              <View style={styles.flameBadge}>
+                <ElitePassFlameIcon color="#000000" size={18} />
+              </View>
+              <View style={styles.titleCopy}>
+                <Text style={styles.eyebrow}>Elite Pass</Text>
+                <Text style={styles.title}>7 Day Progress Path</Text>
+              </View>
+            </View>
 
-                <View style={styles.rewardHalo}>
-                  <LinearGradient
-                    colors={isEliteTheme ? ["#38BDF8", "#FACC15"] : ["#7DD3FC", DIAMOND_PILL_BLUE]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.rewardIcon}
-                  >
-                    <DiamondCreditIcon primaryColor="#FFFFFF" size={34} />
-                  </LinearGradient>
-                </View>
+            <Pressable accessibilityLabel="Close Elite Pass" accessibilityRole="button" onPress={handleClose} style={styles.closeButton}>
+              <Text style={styles.closeText}>x</Text>
+            </Pressable>
+          </View>
 
-                <View style={styles.copy}>
-                  <Text style={[styles.eyebrow, { color: theme.muted }]}>Daily Reward</Text>
-                  <Text style={[styles.title, { color: theme.title }]}>
-                    {isEliteTheme ? "ELITE PASS ACTIVATED!" : "Congratulations"}
-                  </Text>
-                  <Text style={[styles.body, { color: theme.body }]}>
-                    {isEliteTheme
-                      ? `You have 24 hours of PRO access and ${displayedCredits} Diamonds.`
-                      : `Congrats on reaching Day ${resolvedStreakCount}! 🔥`}
-                  </Text>
-                </View>
+          <View style={styles.balanceRow}>
+            <View style={styles.balanceIcon}>
+              <DiamondCreditIcon monochrome primaryColor="#000000" size={20} />
+            </View>
+            <Text style={styles.balanceText}>{displayedCredits} Diamonds</Text>
+            <View style={styles.dayBadge}>
+              <Text style={styles.dayBadgeText}>Day {currentDay}</Text>
+            </View>
+          </View>
 
-                <View style={styles.pathRow}>
-                  {Array.from({ length: 7 }).map((_, index) => {
-                    const active = index + 1 <= progress;
-                    return (
-                      <View
-                        key={index}
-                        style={[
-                          styles.pathDot,
-                          {
-                            backgroundColor: active ? theme.active : theme.rail,
-                            borderColor: active ? theme.activeAlt : "rgba(148, 163, 184, 0.2)",
-                          },
-                        ]}
-                      >
-                        {index === 6 ? <Text style={styles.pathDotText}>★</Text> : null}
-                      </View>
-                    );
-                  })}
-                </View>
+          <View style={styles.path}>
+            {days.map((day) => {
+              const isCurrent = day === currentDay;
+              const isPast = day < currentDay;
+              const reward = getDayReward(day);
 
-                <View style={styles.rewardLine}>
-                  <Text style={[styles.rewardLineText, { color: theme.body }]}>
-                    +{rewardDiamonds} Diamond{rewardDiamonds === 1 ? "" : "s"} today
-                  </Text>
-                </View>
-
-                {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-
-                <Pressable
-                  accessibilityRole="button"
-                  disabled={isClaiming}
-                  onPress={() => void handleClaim()}
-                  style={({ pressed }) => [
-                    styles.claimButton,
-                    pressed || isClaiming ? styles.claimButtonPressed : null,
+              return (
+                <View
+                  key={day}
+                  style={[
+                    styles.dayCard,
+                    isCurrent ? styles.dayCardCurrent : null,
+                    isPast ? styles.dayCardPast : null,
                   ]}
                 >
-                  <Text style={styles.claimButtonText}>
-                    {isClaiming ? "Claiming..." : "Claim My Diamond"}
+                  <View style={styles.dayCardTop}>
+                    <Text style={[styles.dayLabel, isCurrent ? styles.dayLabelCurrent : null]}>Day {day}</Text>
+                    <View style={[styles.dayDot, isCurrent ? styles.dayDotCurrent : null]} />
+                  </View>
+
+                  <Text style={styles.rewardLabel}>{reward.label}</Text>
+                  <Text style={styles.statusLabel}>
+                    {isPast ? "Claimed" : isCurrent ? (canClaimNow ? "Ready" : "Current") : "Upcoming"}
                   </Text>
-                </Pressable>
-              </LinearGradient>
-            </MotiView>
-          ) : null}
-        </AnimatePresence>
+                </View>
+              );
+            })}
+          </View>
+
+          <View style={styles.claimSummary}>
+            <DiamondCreditIcon monochrome primaryColor="#000000" size={18} />
+            <Text style={styles.claimSummaryText}>
+              {canClaimNow
+                ? `Claim +${rewardDiamonds} Diamond${rewardDiamonds === 1 ? "" : "s"} now`
+                : hasVerifiedClaim
+                  ? "Verified for today"
+                : "Your next Elite Pass reward is waiting on the path"}
+            </Text>
+          </View>
+
+          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+          <Pressable
+            accessibilityRole="button"
+            disabled={isClaiming || !canClaimNow || hasVerifiedClaim}
+            onPress={() => void handleClaim()}
+            style={({ pressed }) => [
+              styles.claimButton,
+              hasVerifiedClaim ? styles.claimButtonVerified : null,
+              !canClaimNow && !hasVerifiedClaim ? styles.claimButtonDisabled : null,
+              pressed || isClaiming ? styles.claimButtonPressed : null,
+            ]}
+          >
+            <View style={styles.claimButtonContent}>
+              {hasVerifiedClaim ? <Check color="#FFFFFF" size={18} strokeWidth={2.5} /> : null}
+              <Text style={styles.claimButtonText}>
+                {hasVerifiedClaim ? "Verified" : isClaiming ? "Claiming..." : "Claim"}
+              </Text>
+            </View>
+          </Pressable>
+        </MotiView>
+
+        <ClaimSuccessAnimation burstKey={successKey} visible={successVisible} />
       </View>
     </Modal>
   );
@@ -252,129 +323,264 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
+    backgroundColor: "#FFFFFF",
   },
-  cardWrap: {
+  sheet: {
     width: "100%",
-    maxWidth: 420,
-  },
-  card: {
-    minHeight: 460,
-    overflow: "hidden",
+    maxWidth: 430,
     borderRadius: 28,
     borderCurve: "continuous",
     borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 28,
-    gap: 20,
-    boxShadow: "0px 28px 70px rgba(15, 23, 42, 0.3)",
+    borderColor: "#000000",
+    backgroundColor: "#FFFFFF",
+    padding: 18,
+    gap: 16,
+    boxShadow: "0px 24px 68px rgba(0, 0, 0, 0.14)",
   },
-  rewardHalo: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(125, 211, 252, 0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(125, 211, 252, 0.22)",
-  },
-  rewardIcon: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  copy: {
-    width: "100%",
-    alignItems: "center",
-    gap: 8,
-  },
-  eyebrow: {
-    ...DS.typography.label,
-    letterSpacing: 1.4,
-  },
-  title: {
-    ...fonts.bold,
-    fontSize: 28,
-    lineHeight: 34,
-    textAlign: "center",
-  },
-  body: {
-    ...DS.typography.body,
-    textAlign: "center",
-  },
-  pathRow: {
-    width: "100%",
-    maxWidth: 284,
+  headerRow: {
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
+    gap: 12,
   },
-  pathDot: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  titleLockup: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  flameBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1,
+    borderColor: RADIX_BLUE_9,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    boxShadow: `0px 0px 18px ${RADIX_BLUE_9}45`,
   },
-  pathDotText: {
-    color: "#FFFFFF",
+  titleCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  eyebrow: {
+    color: RADIX_BLUE_9,
     fontSize: 12,
-    lineHeight: 14,
+    lineHeight: 15,
+    textTransform: "uppercase",
     ...fonts.bold,
   },
-  rewardLine: {
-    minHeight: 36,
-    paddingHorizontal: 16,
-    borderRadius: 18,
+  title: {
+    color: "#000000",
+    fontSize: 20,
+    lineHeight: 24,
+    ...fonts.bold,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(125, 211, 252, 0.12)",
+    borderWidth: 1,
+    borderColor: "#000000",
+    backgroundColor: "#FFFFFF",
   },
-  rewardLineText: {
-    ...DS.typography.button,
+  closeText: {
+    color: "#000000",
+    fontSize: 20,
+    lineHeight: 20,
+    ...fonts.bold,
+  },
+  balanceRow: {
+    minHeight: 54,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    borderRadius: 18,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: "#000000",
+    backgroundColor: "#FFFFFF",
+  },
+  balanceIcon: {
+    width: 30,
+    height: 30,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  balanceText: {
+    flex: 1,
+    color: "#000000",
+    fontSize: 16,
+    lineHeight: 20,
+    fontVariant: ["tabular-nums"],
+    ...fonts.bold,
+  },
+  dayBadge: {
+    minHeight: 30,
+    justifyContent: "center",
+    borderRadius: 15,
+    paddingHorizontal: 10,
+    backgroundColor: RADIX_BLUE_9,
+  },
+  dayBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    lineHeight: 15,
+    ...fonts.bold,
+  },
+  path: {
+    gap: 8,
+  },
+  dayCard: {
+    minHeight: 66,
+    borderRadius: 18,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: "#000000",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 6,
+  },
+  dayCardCurrent: {
+    borderColor: RADIX_BLUE_9,
+    borderWidth: 2,
+    boxShadow: `0px 0px 18px ${RADIX_BLUE_9}55`,
+  },
+  dayCardPast: {
+    opacity: 0.7,
+  },
+  dayCardTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  dayLabel: {
+    color: "#000000",
+    fontSize: 15,
+    lineHeight: 18,
+    ...fonts.bold,
+  },
+  dayLabelCurrent: {
+    color: RADIX_BLUE_9,
+  },
+  dayDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#000000",
+  },
+  dayDotCurrent: {
+    backgroundColor: RADIX_BLUE_9,
+  },
+  rewardLabel: {
+    color: "#000000",
+    fontSize: 13,
+    lineHeight: 16,
+    ...fonts.bold,
+  },
+  statusLabel: {
+    color: "#000000",
+    fontSize: 12,
+    lineHeight: 14,
+    opacity: 0.58,
+    ...fonts.regular,
+  },
+  claimSummary: {
+    minHeight: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: RADIX_BLUE_9,
+    backgroundColor: "#FFFFFF",
+  },
+  claimSummaryText: {
+    flex: 1,
+    color: "#000000",
+    fontSize: 13,
+    lineHeight: 17,
+    ...fonts.bold,
   },
   errorText: {
-    color: "#DC2626",
+    color: "#000000",
     ...DS.typography.bodySm,
     textAlign: "center",
   },
   claimButton: {
-    width: "100%",
-    minHeight: 58,
+    minHeight: 56,
     borderRadius: 20,
     borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: DIAMOND_PILL_BLUE,
-    boxShadow: "0px 16px 30px rgba(0, 122, 255, 0.32)",
+    backgroundColor: RADIX_BLUE_9,
+    boxShadow: `0px 14px 30px ${RADIX_BLUE_9}42`,
+  },
+  claimButtonDisabled: {
+    backgroundColor: "#000000",
+    opacity: 0.28,
+    boxShadow: "0px 0px 0px rgba(0, 0, 0, 0)",
+  },
+  claimButtonVerified: {
+    backgroundColor: "#64748B",
+    boxShadow: "0px 12px 24px rgba(100, 116, 139, 0.24)",
   },
   claimButtonPressed: {
-    opacity: 0.86,
+    opacity: 0.82,
     transform: [{ scale: 0.99 }],
+  },
+  claimButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
   claimButtonText: {
     color: "#FFFFFF",
-    ...fonts.bold,
     fontSize: 17,
     lineHeight: 22,
+    ...fonts.bold,
   },
-  sparkleLayer: {
+  successOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+    backgroundColor: "transparent",
+  },
+  successMessageWrap: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
   },
-  sparkle: {
+  successMessage: {
+    minHeight: 78,
+    minWidth: 210,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 28,
+    borderCurve: "continuous",
+    borderWidth: 2,
+    borderColor: RADIX_BLUE_9,
+    backgroundColor: "#FFFFFF",
+    boxShadow: `0px 0px 28px ${RADIX_BLUE_9}50`,
+  },
+  successTitle: {
+    color: "#000000",
+    fontSize: 34,
+    lineHeight: 40,
+    textAlign: "center",
+    ...fonts.bold,
+  },
+  confettiPiece: {
     position: "absolute",
-    width: 10,
-    height: 10,
     borderRadius: 2,
-    transform: [{ rotate: "45deg" }],
   },
 });

@@ -51,6 +51,7 @@ export function buildDefaultUserFields(args: {
     nextDiamondClaimAt: 0,
     canClaimDiamond: false,
     eliteProUntil: 0,
+    onboardingDiamondClaimedAt: 0,
     referralCode: args.referralCode ?? createReferralCode(referralSeed),
     referralCount: 0,
     referralProCount: 0,

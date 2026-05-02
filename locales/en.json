@@ -54,9 +54,44 @@
     "loadingApp": "Loading HomeDecor AI",
     "loadingAccount": "Loading your account...",
     "checkingPlan": "Reviewing your plan...",
+    "checkingOnboarding": "Checking your studio setup...",
+    "preparingStudio": "Preparing your onboarding...",
     "secureAccount": "Secure your account to begin designing...",
     "missingEnvTitle": "Missing Environment Variables",
     "missingEnvBody": "The following values are required before HomeDecor AI can launch:"
+  },
+  "onboarding": {
+    "stepLabel": "Step {{current}} of 4",
+    "actions": {
+      "begin": "Begin Transformation",
+      "continue": "Continue",
+      "generate": "Generate",
+      "next": "Next",
+      "skip": "Skip",
+      "tryThis": "Try This"
+    },
+    "step1": {
+      "headline": "Design faster than imagination.",
+      "body": "Turn rooms, gardens, facades, and concepts into premium AI renders with one guided flow."
+    },
+    "step2": {
+      "question": "Which studio mode fits you?",
+      "options": {
+        "homeowner": "Homeowner",
+        "renovating": "Renovating my home",
+        "realEstate": "Real Estate Professional",
+        "designer": "Interior Designer"
+      }
+    },
+    "step3": {
+      "headline": "Preview a fast premium render.",
+      "body": "Tap Generate to watch the guided render flow and move into your first claim."
+    },
+    "step4": {
+      "headline": "Claim 1 Diamond every 24h.",
+      "body": "You can claim 1 free Diamond every 24h. Each premium generation uses 1 Diamond, and your next one unlocks after the timer resets.",
+      "button": "Claim My Diamond"
+    }
   },
   "tabs": {
     "tools": "Tools",
@@ -84,20 +119,24 @@
       "garden": {
         "title": "Garden Design",
         "description": "Design stunning gardens and outdoor spaces effortlessly."
-      },
-      "paint": {
-        "title": "Paint (Wall)",
-        "description": "Refine your walls with bespoke color palettes and designer textures."
-      },
+        },
+        "paint": {
+          "title": "Smart Wall Paint",
+          "description": "Refine your walls with bespoke color palettes and designer textures."
+        },
       "floor": {
         "title": "Floor Restyle",
         "description": "Elevate your room's foundation with premium materials and finishes."
       },
-      "replace": {
-        "title": "Replace Objects",
-        "description": "Mask any object in your photo and swap it for something new with precise AI edits."
-      },
-      "cta": "Try This",
+        "replace": {
+          "title": "Replace Objects",
+          "description": "Mask any object in your photo and swap it for something new with precise AI edits."
+        },
+        "referenceStyle": {
+          "title": "Reference Style Transfer",
+          "description": "Upload a style reference and apply its look to your own room."
+        },
+        "cta": "Try This",
       "smartSpacePlanning": {
         "title": "Smart Space Planning",
         "description": "Gain more space and optimize your room's flow."
@@ -163,10 +202,11 @@
     "rows": {
       "language": "Language",
       "feedback": "Feedback",
-      "faq": "FAQ",
-      "rateUs": "Rate Us",
-      "shareWithFriends": "Share with Friends",
-      "termsOfUse": "Terms of Use",
+        "faq": "FAQ",
+        "rateUs": "Rate Us",
+        "shareWithFriends": "Share with Friends",
+        "resetOnboarding": "Reset Onboarding",
+        "termsOfUse": "Terms of Use",
       "privacyPolicy": "Privacy Policy",
       "restorePurchase": "Restore Purchase",
       "userId": "User ID",
@@ -190,8 +230,9 @@
       "shareUnavailable": "Unable to open the share sheet.",
       "subscriptionsUnavailable": "Subscriptions are unavailable right now.",
       "noActiveSubscriptions": "No active subscriptions were found.",
-      "restoreFailed": "Restore failed. Please try again.",
-      "noUserId": "No authenticated user ID is available.",
+        "restoreFailed": "Restore failed. Please try again.",
+        "onboardingReset": "Onboarding reset. Launching the flow...",
+        "noUserId": "No authenticated user ID is available.",
       "userIdCopied": "User ID copied",
       "deleteFailed": "Unable to delete your account right now."
     },

@@ -22,6 +22,7 @@ export default defineSchema({
     nextDiamondClaimAt: optionalNumberLike,
     canClaimDiamond: v.optional(v.boolean()),
     eliteProUntil: optionalNumberLike,
+    onboardingDiamondClaimedAt: optionalNumberLike,
     referralCode: v.optional(v.string()),
     referralCount: optionalNumberLike,
     referralProCount: optionalNumberLike,

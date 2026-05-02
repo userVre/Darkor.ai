@@ -20,12 +20,13 @@ getDirectionalRow,
 import {withWorkspaceFlowId} from "../lib/try-it-flow";
 import {useDiamondStore} from "./diamond-store-context";
 import {DiamondCreditPill, ProBadge} from "./diamond-credit-pill";
+import {useElitePassModal} from "./elite-pass-context";
 import {HomeToolCard, type HomeToolCardItem} from "./home-tool-card";
 import {useViewerCredits} from "./viewer-credits-context";
 import {useWorkspaceDraft} from "./workspace-context";
 
 const FIRST_LAUNCH_DISCLOSURE_KEY = "homedecor:first-launch-disclosure-accepted";
-const PRO_TOOL_LOCK_MESSAGE = "This tool is reserved for PRO members or Day 7 Streak winners.";
+const PRO_TOOL_LOCK_MESSAGE = "Unlock this with PRO or reach Day 7 of your Streak! 🔥";
 
 export function CreateOptionsScreen() {
   const router = useRouter();
@@ -35,6 +36,7 @@ export function CreateOptionsScreen() {
   const { clearDraft } = useWorkspaceDraft();
   const { credits: creditBalance, hasPaidAccess, hasProAccess, streakCount } = useViewerCredits();
   const { openStore } = useDiamondStore();
+  const { openElitePass } = useElitePassModal();
   const isRTL = I18nManager.isRTL;
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const sidePadding = 20;
@@ -48,6 +50,7 @@ export function CreateOptionsScreen() {
         title: t("home.tools.interior.title"),
         description: t("home.tools.interior.description"),
         serviceParam: "interior",
+        topLeftRadius: 40,
       },
       {
         id: "exterior-design",
@@ -55,6 +58,7 @@ export function CreateOptionsScreen() {
         title: t("home.tools.exterior.title"),
         description: t("home.tools.exterior.description"),
         serviceParam: "facade",
+        topLeftRadius: 40,
       },
       {
         id: "garden-design",
@@ -62,6 +66,7 @@ export function CreateOptionsScreen() {
         title: t("home.tools.garden.title"),
         description: t("home.tools.garden.description"),
         serviceParam: "garden",
+        topLeftRadius: 40,
       },
       {
         id: "paint",
@@ -69,6 +74,7 @@ export function CreateOptionsScreen() {
         title: t("home.tools.paint.title"),
         description: t("home.tools.paint.description"),
         serviceParam: "paint",
+        topLeftRadius: 40,
       },
       {
         id: "floor-restyle",
@@ -76,6 +82,7 @@ export function CreateOptionsScreen() {
         title: t("home.tools.floor.title"),
         description: t("home.tools.floor.description"),
         serviceParam: "floor",
+        topLeftRadius: 40,
       },
       {
         id: "layout-optimization",
@@ -100,8 +107,8 @@ export function CreateOptionsScreen() {
       {
         id: "reference-style",
         image: require("../assets/media/discover/collages/living-rooms.png"),
-        title: "Reference Style",
-        description: "Show AI what you like and let it apply it to your room!",
+        title: t("home.tools.referenceStyle.title"),
+        description: t("home.tools.referenceStyle.description"),
         href: "/workspace?service=interior&entrySource=reference-style",
         topLeftRadius: 40,
         requiresPro: true,
@@ -219,6 +226,7 @@ export function CreateOptionsScreen() {
               <DiamondCreditPill
                 accessibilityLabel={t("home.accessibility.openCredits")}
                 count={creditBalance}
+                onElitePassPress={openElitePass}
                 onPress={handleCreditsPress}
                 streakCount={streakCount}
                 style={styles.creditPill}
@@ -228,7 +236,7 @@ export function CreateOptionsScreen() {
           </View>
 
           <View pointerEvents="none" style={styles.centerBrand}>
-            <Text style={styles.brandTitle}>
+            <Text adjustsFontSizeToFit minimumFontScale={0.78} numberOfLines={1} style={styles.brandTitle}>
               {t("app.name")}
             </Text>
           </View>
@@ -318,9 +326,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   centerBrand: {
-    position: "absolute",
-    left: 0,
-    right: 0,
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     minHeight: 48,
@@ -330,7 +336,7 @@ const styles = StyleSheet.create({
     ...DS.typography.button,
     fontSize: 19,
     lineHeight: 24,
-    letterSpacing: -0.35,
+    letterSpacing: 0,
     flexShrink: 0,
     textAlign: "center",
   },

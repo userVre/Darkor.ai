@@ -2,10 +2,12 @@ import {useMutation, useQuery} from "convex/react";
 import {Asset} from "expo-asset";
 import * as ImagePicker from "expo-image-picker";
 import {useRouter} from "expo-router";
+import {usePostHog} from "posthog-react-native";
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {Alert} from "react-native";
 
+import {ANALYTICS_EVENTS, captureAnalytics, captureGenerationFailure} from "../lib/analytics";
 import {uploadLocalFileToCloud} from "../lib/native-upload";
 import {getLayoutWizardExamplePhotos, type WizardExamplePhoto} from "../lib/wizard-example-photos";
 import {InteriorRedesignStepOne} from "./interior-redesign-step-one";
@@ -102,6 +104,7 @@ export function LayoutOptimizationWizard({
 }: LayoutOptimizationWizardProps) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const posthog = usePostHog();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const { credits, setOptimisticCredits } = useViewerCredits();
   const { showToast } = useProSuccess();
@@ -391,6 +394,12 @@ export function LayoutOptimizationWizard({
       return;
     }
 
+    captureAnalytics(posthog, ANALYTICS_EVENTS.generateClicked, {
+      photo_count: selectedImages.length,
+      service_type: "smart_space_planning",
+      smart_suggest: true,
+    });
+
     if (!hasProAccess && Math.max(me?.credits ?? credits, 0) <= 0) {
       router.push({ pathname: "/paywall", params: { source: "second-design" } } as any);
       return;
@@ -446,6 +455,7 @@ export function LayoutOptimizationWizard({
       setProcessingStartedAt(null);
       setCooldownRemainingMs(0);
       setStep("intake");
+      captureGenerationFailure(posthog, error, { service_type: "smart_space_planning" });
       if (error instanceof Error && error.message === "Payment Required") {
         router.push({ pathname: "/paywall", params: { source: "second-design" } } as any);
         return;
@@ -459,6 +469,7 @@ export function LayoutOptimizationWizard({
     isGenerating,
     me?.credits,
     hasProAccess,
+    posthog,
     router,
     selectedImages,
     setOptimisticCredits,

@@ -14,6 +14,7 @@ getDirectionalRow,
 import {triggerHaptic} from "../lib/haptics";
 import {useDiamondStore} from "./diamond-store-context";
 import {DiamondCreditPill, ProBadge} from "./diamond-credit-pill";
+import {useElitePassModal} from "./elite-pass-context";
 import {StepProgressSegments} from "./step-progress-segments";
 import {useViewerCredits} from "./viewer-credits-context";
 
@@ -89,6 +90,7 @@ export function StickyStepHeader({
   const showBack = safeStep > 1 && Boolean(onBack);
   const { credits, hasPaidAccess, streakCount } = useViewerCredits();
   const { openStore } = useDiamondStore();
+  const { openElitePass } = useElitePassModal();
   const resolvedTitle = title ?? t("app.name");
 
   const handleCreditsTap = () => {
@@ -143,6 +145,7 @@ export function StickyStepHeader({
                   accessibilityLabel="Credits remaining"
                   accessibilityRole="button"
                   count={creditCount}
+                  onElitePassPress={openElitePass}
                   onPress={handleCreditsTap}
                   streakCount={streakCount}
                   style={styles.creditPill}
@@ -202,14 +205,14 @@ const styles = StyleSheet.create({
     paddingBottom: HEADER_BOTTOM_PADDING,
   },
   topRow: {
-    minHeight: HEADER_ROW_HEIGHT,
+    height: HEADER_ROW_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   sideSlot: {
     width: HEADER_SIDE_WIDTH,
-    minHeight: HEADER_ACTION_SIZE,
+    height: HEADER_ACTION_SIZE,
     justifyContent: "center",
     alignItems: "flex-start",
   },
@@ -239,12 +242,12 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -1 }],
   },
   creditPill: {
-    minHeight: HEADER_ACTION_SIZE,
+    height: HEADER_ACTION_SIZE,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   proBadge: {
-    minHeight: HEADER_ACTION_SIZE,
+    height: HEADER_ACTION_SIZE,
   },
   titleWrap: {
     flex: 1,

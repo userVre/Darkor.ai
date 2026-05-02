@@ -24,6 +24,7 @@ import * as MediaLibrary from "expo-media-library";
 import {useLocalSearchParams, useRouter} from "expo-router";
 import {StatusBar} from "expo-status-bar";
 import {AnimatePresence, MotiView} from "moti";
+import {usePostHog} from "posthog-react-native";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {ActivityIndicator, Alert, Linking, Image as NativeImage, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View, useWindowDimensions} from "react-native";
@@ -36,6 +37,7 @@ import {spacing} from "../styles/spacing";
 import {fonts} from "../styles/typography";
 
 import {WALL_COLOR_OPTIONS} from "../lib/data";
+import {ANALYTICS_EVENTS, captureAnalytics, captureGenerationFailure} from "../lib/analytics";
 import {canUserGenerate as canUserGenerateNow} from "../lib/generation-access";
 import {GENERATION_FAILED_TOAST, getFriendlyGenerationError} from "../lib/generation-errors";
 import {runWithFriendlyRetry} from "../lib/generation-retry";
@@ -360,6 +362,7 @@ function logAutoDetectFailure(error: unknown) {
 export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: PaintWizardProps) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const posthog = usePostHog();
   const { presetStyle, startStep } = useLocalSearchParams<{ presetStyle?: string; startStep?: string }>();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -777,13 +780,18 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       tempUri = prepared.uri;
       temporary = prepared.temporary;
       await MediaLibrary.saveToLibraryAsync(prepared.uri);
+      captureAnalytics(posthog, ANALYTICS_EVENTS.imageSaved, {
+        generation_id: generationId,
+        quality: "standard",
+        service_type: "paint",
+      });
       showToast(t("common.states.savedToGallery"));
     } catch (error) {
       Alert.alert(t("workspace.download.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, generatedImageUrl, me?.hasPaidAccess, prepareGeneratedImageFile, promptOpenSettings, router, showToast, t]);
+  }, [cleanupTempFile, generatedImageUrl, generationId, me?.hasPaidAccess, posthog, prepareGeneratedImageFile, promptOpenSettings, router, showToast, t]);
 
   const handleShareResult = useCallback(async () => {
     triggerHaptic();
@@ -803,12 +811,16 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
         message: t("workspace.share.message"),
         url: prepared.uri,
       });
+      captureAnalytics(posthog, ANALYTICS_EVENTS.imageShared, {
+        generation_id: generationId,
+        service_type: "paint",
+      });
     } catch (error) {
       Alert.alert(t("workspace.share.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, generatedImageUrl, me?.hasPaidAccess, prepareGeneratedImageFile, router, t]);
+  }, [cleanupTempFile, generatedImageUrl, generationId, me?.hasPaidAccess, posthog, prepareGeneratedImageFile, router, t]);
 
   const handleClose = useCallback(() => {
     triggerHaptic();
@@ -1153,6 +1165,11 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       return;
     }
 
+    captureAnalytics(posthog, ANALYTICS_EVENTS.generateClicked, {
+      service_type: "paint",
+      smart_suggest: isAiColorSuggestionEnabled,
+    });
+
     if (!viewerReady) {
       Alert.alert(t("workspace.generation.preparingSessionTitle"), t("workspace.generation.preparingSessionBody"));
       return;
@@ -1240,6 +1257,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     } catch (error) {
       setIsGenerating(false);
       setStep("colors");
+      captureGenerationFailure(posthog, error, { service_type: "paint" });
       const rawMessage = error instanceof Error ? error.message : t("common.actions.tryAgain");
       if (rawMessage.toLowerCase().includes("limit reached")) {
         showToast(rawMessage);
@@ -1263,6 +1281,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     generationAccess.reason,
     isAiColorSuggestionEnabled,
     isGenerating,
+    posthog,
     router,
     selectedColorCategory,
     selectedColorRgbLabel,

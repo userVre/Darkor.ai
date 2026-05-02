@@ -47,6 +47,7 @@ import * as MediaLibrary from "expo-media-library";
 import {useLocalSearchParams, usePathname, useRouter} from "expo-router";
 import * as Sharing from "expo-sharing";
 import {AnimatePresence, MotiView} from "moti";
+import {usePostHog} from "posthog-react-native";
 import {memo, startTransition, useCallback, useEffect, useMemo, useRef, useState, type ComponentType} from "react";
 import {useTranslation} from "react-i18next";
 import {
@@ -76,6 +77,7 @@ DESIGN_WIZARD_SELECTION_BLUE_SOFT,
 } from "../../components/design-wizard-primitives";
 import {DiamondCreditPill} from "../../components/diamond-credit-pill";
 import {useDiamondStore} from "../../components/diamond-store-context";
+import {useElitePassModal} from "../../components/elite-pass-context";
 import {ExteriorRedesignStepFour} from "../../components/exterior-redesign-step-four";
 import {ExteriorRedesignStepThree} from "../../components/exterior-redesign-step-three";
 import {ExteriorRedesignStepTwo} from "../../components/exterior-redesign-step-two";
@@ -102,6 +104,7 @@ import {useViewerCredits} from "../../components/viewer-credits-context";
 import {useViewerSession} from "../../components/viewer-session-context";
 import {useWorkspaceDraft} from "../../components/workspace-context";
 import {DS, HAIRLINE, ambientShadow, floatingButton, glowShadow, organicRadii, surfaceCard} from "../../lib/design-system";
+import {ANALYTICS_EVENTS, captureAnalytics} from "../../lib/analytics";
 import {DIAGNOSTIC_BYPASS} from "../../lib/diagnostics";
 import {canUserGenerate as canUserGenerateNow} from "../../lib/generation-access";
 import {GENERATION_FAILED_TOAST, getFriendlyGenerationError} from "../../lib/generation-errors";
@@ -121,6 +124,7 @@ import {spacing} from "../../styles/spacing";
 import {fonts} from "../../styles/typography";
 
 const TABS_HOME_ROUTE = "/(tabs)/index";
+const PRO_TOOL_LOCK_MESSAGE = "Unlock this with PRO or reach Day 7 of your Streak! 🔥";
 
 function breakLongWizardDescription(description: string) {
   const sentences = description.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((part) => part.trim()).filter(Boolean) ?? [description];
@@ -2107,6 +2111,7 @@ function hasDraftFlowData(draft: {
 const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 
 export default function WorkspaceScreen() {
+  const posthog = usePostHog();
   const { t, i18n } = useTranslation();
   const generationStatusMessages = useGenerationStatusMessages();
   const floorExamplePhotos = useMemo(() => getFloorWizardExamplePhotos(t), [i18n.language, t]);
@@ -2127,6 +2132,7 @@ export default function WorkspaceScreen() {
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const { credits: sharedCreditBalance, clearOptimisticCredits, setOptimisticCredits, streakCount } = useViewerCredits();
   const { openStore } = useDiamondStore();
+  const { openElitePass } = useElitePassModal();
   const guestWizardTestingSession = isGuestWizardTestingSession(isSignedIn);
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const diagnostic = DIAGNOSTIC_BYPASS;
@@ -2252,6 +2258,8 @@ export default function WorkspaceScreen() {
   const previousWorkflowStepRef = useRef<number | null>(null);
   const appliedPresetStyleRef = useRef<string | null>(null);
   const appliedPresetRoomRef = useRef<string | null>(null);
+  const sliderInteractionStartedAtRef = useRef<number | null>(null);
+  const sliderIntensityTrackedRef = useRef(false);
   const sliderX = useSharedValue(0);
   const sliderWidth = useSharedValue(0);
 
@@ -2596,6 +2604,10 @@ export default function WorkspaceScreen() {
     () => boardItems.find((item) => item.id === activeBoardItemId) ?? null,
     [activeBoardItemId, boardItems],
   );
+  useEffect(() => {
+    sliderInteractionStartedAtRef.current = null;
+    sliderIntensityTrackedRef.current = false;
+  }, [activeBoardItemId]);
   const isWorkspaceResultScreen =
     workflowStep === 5
     && Boolean(activeBoardItem)
@@ -3206,6 +3218,7 @@ export default function WorkspaceScreen() {
   const hasBrokenGenerateSummary = confirmationSummaryChips.some((item) => item.missing);
 
   const hasPaidAccess = diagnostic ? true : me?.hasProAccess ?? me?.hasPaidAccess ?? false;
+  const isLockedProService = (isLayoutService || isReplaceService || isReferenceStyleWizard) && !hasPaidAccess;
   const canExport4k = diagnostic ? true : me?.canExport4k ?? false;
   const canRemoveWatermark = diagnostic ? true : me?.canRemoveWatermark ?? false;
   const watermarkRequiredForViewer = !diagnostic && !(me?.canRemoveWatermark ?? false);
@@ -3225,6 +3238,15 @@ export default function WorkspaceScreen() {
   const serverCreditBalance = diagnostic
     ? 999
     : sharedCreditBalance;
+
+  useEffect(() => {
+    if (!isLockedProService) {
+      return;
+    }
+
+    Alert.alert(PRO_TOOL_LOCK_MESSAGE);
+    router.replace(TABS_HOME_ROUTE as any);
+  }, [isLockedProService, router]);
   const creditBalance = serverCreditBalance;
   const effectiveGenerationState = diagnostic
     ? me
@@ -3527,6 +3549,11 @@ export default function WorkspaceScreen() {
       generationAlertedFailureRef.current = currentGeneration.id;
       handledGenerationTransitionRef.current = currentGeneration.id;
       setPendingReviewState(null);
+      captureAnalytics(posthog, ANALYTICS_EVENTS.generationFailed, {
+        error: currentGeneration.errorMessage ?? GENERATION_FAILED_TOAST,
+        generation_id: currentGeneration.id,
+        service_type: currentGeneration.serviceType ?? serviceType,
+      });
       showToast(getFriendlyGenerationError(currentGeneration.errorMessage ?? GENERATION_FAILED_TOAST));
     }
   }, [
@@ -3537,8 +3564,10 @@ export default function WorkspaceScreen() {
     isGenerating,
     isProcessingGateActive,
     pendingReviewState,
+    posthog,
     processingGateUntil,
     router,
+    serviceType,
     showToast,
   ]);
 
@@ -3718,8 +3747,12 @@ export default function WorkspaceScreen() {
   const applyPickedAsset = useCallback(
     (asset: ImagePicker.ImagePickerAsset, label: string) => {
       appendSelectedImages([{ uri: asset.uri, label }]);
+      captureAnalytics(posthog, ANALYTICS_EVENTS.step1UploadSuccess, {
+        source_label: label,
+        service_type: serviceType,
+      });
     },
-    [appendSelectedImages],
+    [appendSelectedImages, posthog, serviceType],
   );
 
   const showSettingsPermissionAlert = useCallback(
@@ -4166,13 +4199,17 @@ export default function WorkspaceScreen() {
         mimeType: currentImageHasWatermark ? "image/png" : "image/jpeg",
         UTI: "public.image",
       });
+      captureAnalytics(posthog, ANALYTICS_EVENTS.imageShared, {
+        service_type: activeBoardItem?.serviceType ?? serviceType,
+        generation_id: activeBoardItem?.generationId ?? generationId,
+      });
     } catch (error) {
       Alert.alert(t("workspace.share.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri);
       setIsSharingResult(false);
     }
-  }, [activeEditorImageUrl, cleanupTempFile, currentImageHasWatermark, exportCurrentRender, hasPaidAccess, router, t]);
+  }, [activeBoardItem?.generationId, activeBoardItem?.serviceType, activeEditorImageUrl, cleanupTempFile, currentImageHasWatermark, exportCurrentRender, generationId, hasPaidAccess, posthog, router, serviceType, t]);
 
 
   const handleUpgrade = useCallback(() => {
@@ -4210,13 +4247,18 @@ export default function WorkspaceScreen() {
         tempUri = await exportCurrentRender();
         await MediaLibrary.saveToLibraryAsync(tempUri);
         showToast(t("common.states.savedToGallery"));
+        captureAnalytics(posthog, ANALYTICS_EVENTS.imageSaved, {
+          quality: "standard",
+          service_type: activeBoardItem?.serviceType ?? serviceType,
+          generation_id: activeBoardItem?.generationId ?? generationId,
+        });
     } catch (error) {
       Alert.alert(t("workspace.download.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri);
       setIsDownloading(null);
     }
-  }, [activeEditorImageUrl, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, hasPaidAccess, router, showToast, t]);
+  }, [activeBoardItem?.generationId, activeBoardItem?.serviceType, activeEditorImageUrl, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, generationId, hasPaidAccess, posthog, router, serviceType, showToast, t]);
 
   const handleDownloadUltra = useCallback(async () => {
     triggerHaptic();
@@ -4246,13 +4288,18 @@ export default function WorkspaceScreen() {
         tempUri = await exportCurrentRender();
         await MediaLibrary.saveToLibraryAsync(tempUri);
         showToast(t("common.states.savedToGallery"));
+        captureAnalytics(posthog, ANALYTICS_EVENTS.imageSaved, {
+          quality: "ultra",
+          service_type: activeBoardItem?.serviceType ?? serviceType,
+          generation_id: activeBoardItem?.generationId ?? generationId,
+        });
     } catch (error) {
       Alert.alert(t("workspace.download.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri);
       setIsDownloading(null);
     }
-  }, [activeEditorImageUrl, canExport4k, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, handleUpgrade, hasPaidAccess, router, showToast, t]);
+  }, [activeBoardItem?.generationId, activeBoardItem?.serviceType, activeEditorImageUrl, canExport4k, cleanupTempFile, ensureGallerySavePermission, exportCurrentRender, generationId, handleUpgrade, hasPaidAccess, posthog, router, serviceType, showToast, t]);
 
   const handleSaveToGallery = useCallback(() => {
     if (canExport4k) {
@@ -4277,6 +4324,12 @@ export default function WorkspaceScreen() {
     if (isGenerating) {
       return;
     }
+
+    captureAnalytics(posthog, ANALYTICS_EVENTS.generateClicked, {
+      service_type: serviceType,
+      regenerate: options?.regenerate === true,
+      smart_suggest: smartSuggestEnabled,
+    });
 
     if (!diagnostic && !viewerReady) {
       Alert.alert(t("workspace.generation.preparingSessionTitle"), t("workspace.generation.preparingSessionBody"));
@@ -4487,6 +4540,16 @@ export default function WorkspaceScreen() {
         processingGateTimeoutRef.current = null;
       }
       const rawMessage = error instanceof Error ? error.message : "Please try again.";
+      captureAnalytics(posthog, ANALYTICS_EVENTS.generationFailed, {
+        error: rawMessage,
+        service_type: serviceType,
+      });
+      if (rawMessage.toLowerCase().includes("timeout") || rawMessage.toLowerCase().includes("timed out")) {
+        captureAnalytics(posthog, ANALYTICS_EVENTS.apiTimeout, {
+          error: rawMessage,
+          service_type: serviceType,
+        });
+      }
       const isPaymentRequired = rawMessage === "Payment Required";
       const isLimitReached = rawMessage.toLowerCase().includes("limit reached");
       if (!diagnostic && generationAccess.reason === "paywall") {
@@ -4544,6 +4607,7 @@ export default function WorkspaceScreen() {
     isPaintService,
     openAuthWall,
     openGenerationPaywall,
+    posthog,
     ratioSpec.ratioLabel,
     ensureWorkspaceSelectionsComplete,
     selectedFinishOption,
@@ -5214,6 +5278,32 @@ export default function WorkspaceScreen() {
     }
   }, [activeBoardItem?.imageUrl, showComparisonSlider, sliderSpring, sliderWidth, sliderX]);
 
+  const handleSliderInteractionStart = useCallback(() => {
+    if (sliderIntensityTrackedRef.current) {
+      return;
+    }
+    sliderInteractionStartedAtRef.current = Date.now();
+  }, []);
+
+  const handleSliderInteractionEnd = useCallback(() => {
+    if (sliderIntensityTrackedRef.current || !sliderInteractionStartedAtRef.current) {
+      return;
+    }
+
+    const durationMs = Date.now() - sliderInteractionStartedAtRef.current;
+    sliderInteractionStartedAtRef.current = null;
+    if (durationMs < 3000) {
+      return;
+    }
+
+    sliderIntensityTrackedRef.current = true;
+    captureAnalytics(posthog, ANALYTICS_EVENTS.sliderMovedIntensity, {
+      duration_ms: durationMs,
+      service_type: activeBoardItem?.serviceType ?? serviceType,
+      generation_id: activeBoardItem?.generationId ?? generationId,
+    });
+  }, [activeBoardItem?.generationId, activeBoardItem?.serviceType, generationId, posthog, serviceType]);
+
   const handleCloseBoardEditor = useCallback(() => {
     triggerHaptic();
     if (entrySource === "gallery") {
@@ -5266,6 +5356,16 @@ export default function WorkspaceScreen() {
 
   const stepTransition = LUX_SPRING;
   const isPhotoPreviewBusy = isSelectingPhoto || isLoadingExample !== null;
+
+  if (isLockedProService) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: DS.colors.background, paddingHorizontal: 24 }}>
+        <Text style={{ color: DS.colors.textSecondary, ...DS.typography.body, textAlign: "center" }}>
+          {PRO_TOOL_LOCK_MESSAGE}
+        </Text>
+      </View>
+    );
+  }
 
   if (isReferenceStyleWizard) {
     return (
@@ -8125,6 +8225,8 @@ export default function WorkspaceScreen() {
               <View style={{ minWidth: 88, alignItems: "flex-start" }}>
                 <DiamondCreditPill
                   count={creditBalance}
+                  onElitePassPress={openElitePass}
+                  onPress={handleUpgrade}
                   streakCount={streakCount}
                   style={{ height: 42, minHeight: 42 }}
                   variant="light"
@@ -8221,6 +8323,8 @@ export default function WorkspaceScreen() {
                       afterLabel=""
                       beforeLabel=""
                       containerRef={imageContainerRef}
+                      onInteractionEnd={handleSliderInteractionEnd}
+                      onInteractionStart={handleSliderInteractionStart}
                       sliderWidth={sliderWidth}
                       sliderX={sliderX}
                       style={{ width: "100%", height: "100%" }}

@@ -13,6 +13,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
 import {useRouter} from "expo-router";
 import {StatusBar} from "expo-status-bar";
+import {usePostHog} from "posthog-react-native";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {
@@ -41,6 +42,7 @@ import Svg, {
 } from "react-native-svg";
 import {captureRef} from "react-native-view-shot";
 
+import {ANALYTICS_EVENTS, captureAnalytics, captureGenerationFailure} from "../lib/analytics";
 import {canUserGenerate as canUserGenerateNow} from "../lib/generation-access";
 import {GENERATION_FAILED_TOAST, getFriendlyGenerationError} from "../lib/generation-errors";
 import {runWithFriendlyRetry} from "../lib/generation-retry";
@@ -128,6 +130,7 @@ export function ReplaceObjectsWizard({
 }: ReplaceObjectsWizardProps) {
   const {t, i18n} = useTranslation();
   const router = useRouter();
+  const posthog = usePostHog();
   const insets = useSafeAreaInsets();
   const {width, height} = useWindowDimensions();
   const {isSignedIn} = useAuth();
@@ -493,13 +496,18 @@ export function ReplaceObjectsWizard({
       tempUri = prepared.uri;
       temporary = prepared.temporary;
       await MediaLibrary.saveToLibraryAsync(prepared.uri);
+      captureAnalytics(posthog, ANALYTICS_EVENTS.imageSaved, {
+        generation_id: generationId,
+        quality: "standard",
+        service_type: "replace_objects",
+      });
       showToast(t("common.states.savedToGallery"));
     } catch (error) {
       Alert.alert(t("workspace.download.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, generatedImageUrl, hasProAccess, prepareGeneratedImageFile, router, showToast, t]);
+  }, [cleanupTempFile, generatedImageUrl, generationId, hasProAccess, posthog, prepareGeneratedImageFile, router, showToast, t]);
 
   const handleShareResult = useCallback(async () => {
     triggerHaptic();
@@ -519,17 +527,25 @@ export function ReplaceObjectsWizard({
         url: prepared.uri,
         message: t("workspace.share.message"),
       });
+      captureAnalytics(posthog, ANALYTICS_EVENTS.imageShared, {
+        generation_id: generationId,
+        service_type: "replace_objects",
+      });
     } catch (error) {
       Alert.alert(t("workspace.share.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, generatedImageUrl, hasProAccess, prepareGeneratedImageFile, router, t]);
+  }, [cleanupTempFile, generatedImageUrl, generationId, hasProAccess, posthog, prepareGeneratedImageFile, router, t]);
 
   const handleGenerate = useCallback(async () => {
     if (isGenerating) {
       return;
     }
+
+    captureAnalytics(posthog, ANALYTICS_EVENTS.generateClicked, {
+      service_type: "replace_objects",
+    });
 
     if (!viewerReady) {
       Alert.alert(t("workspace.generation.preparingSessionTitle"), t("workspace.generation.preparingSessionBody"));
@@ -614,6 +630,7 @@ export function ReplaceObjectsWizard({
     } catch (error) {
       setIsGenerating(false);
       setStep("prompt");
+      captureGenerationFailure(posthog, error, { service_type: "replace_objects" });
       const rawMessage = error instanceof Error ? error.message : t("common.actions.tryAgain");
       if (rawMessage.toLowerCase().includes("limit reached")) {
         showToast(rawMessage);
@@ -639,6 +656,7 @@ export function ReplaceObjectsWizard({
     generationSpeedTier,
     hasMask,
     isGenerating,
+    posthog,
     prompt,
     router,
     selectedImage,

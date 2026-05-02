@@ -10,6 +10,7 @@ import {DiamondCreditPill} from "../../components/diamond-credit-pill";
 import {useDiamondStore} from "../../components/diamond-store-context";
 import {DiscoverImageCard} from "../../components/discover-image-card";
 import {DiscoverPreviewModal} from "../../components/discover-preview-modal";
+import {useElitePassModal} from "../../components/elite-pass-context";
 import {useViewerCredits} from "../../components/viewer-credits-context";
 import {DS} from "../../lib/design-system";
 import {
@@ -88,6 +89,7 @@ export default function GalleryScreen() {
   const { width } = useWindowDimensions();
   const { credits, streakCount } = useViewerCredits();
   const { openStore } = useDiamondStore();
+  const { openElitePass } = useElitePassModal();
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
   const [selectedClusterId, setSelectedClusterId] = useState<DiscoverClusterId>("interiors");
   const clusters = useDiscoverClusters();
@@ -162,6 +164,7 @@ export default function GalleryScreen() {
               accessibilityLabel={t("home.accessibility.openCredits")}
               accessibilityRole="button"
               count={credits}
+              onElitePassPress={openElitePass}
               onPress={handleCreditsPress}
               streakCount={streakCount}
               style={styles.creditPill}

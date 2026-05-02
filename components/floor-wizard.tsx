@@ -9,6 +9,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
 import {useLocalSearchParams, useRouter} from "expo-router";
 import {AnimatePresence, MotiView} from "moti";
+import {usePostHog} from "posthog-react-native";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {ActivityIndicator, Alert, Linking, Image as NativeImage, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View, useWindowDimensions} from "react-native";
@@ -18,6 +19,7 @@ import Svg, {Rect, Path as SvgPath} from "react-native-svg";
 import {captureRef} from "react-native-view-shot";
 
 import {FLOOR_MATERIAL_OPTIONS} from "../lib/data";
+import {ANALYTICS_EVENTS, captureAnalytics, captureGenerationFailure} from "../lib/analytics";
 import {canUserGenerate as canUserGenerateNow} from "../lib/generation-access";
 import {GENERATION_FAILED_TOAST, getFriendlyGenerationError} from "../lib/generation-errors";
 import {runWithFriendlyRetry} from "../lib/generation-retry";
@@ -137,6 +139,7 @@ function scaleMaskValue(value: number, scale: number) {
 export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: FloorWizardProps) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const posthog = usePostHog();
   const { presetStyle, startStep } = useLocalSearchParams<{ presetStyle?: string; startStep?: string }>();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -445,13 +448,18 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       tempUri = prepared.uri;
       temporary = prepared.temporary;
       await MediaLibrary.saveToLibraryAsync(prepared.uri);
+      captureAnalytics(posthog, ANALYTICS_EVENTS.imageSaved, {
+        generation_id: generationId,
+        quality: "standard",
+        service_type: "floor",
+      });
       showToast(t("common.states.savedToGallery"));
     } catch (error) {
       Alert.alert(t("workspace.download.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, generatedImageUrl, me?.hasPaidAccess, prepareGeneratedImageFile, promptOpenSettings, router, showToast, t]);
+  }, [cleanupTempFile, generatedImageUrl, generationId, me?.hasPaidAccess, posthog, prepareGeneratedImageFile, promptOpenSettings, router, showToast, t]);
 
   const handleShareResult = useCallback(async () => {
     triggerHaptic();
@@ -471,12 +479,16 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
         message: t("workspace.share.message"),
         url: prepared.uri,
       });
+      captureAnalytics(posthog, ANALYTICS_EVENTS.imageShared, {
+        generation_id: generationId,
+        service_type: "floor",
+      });
     } catch (error) {
       Alert.alert(t("workspace.share.failedTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
     } finally {
       await cleanupTempFile(tempUri, temporary);
     }
-  }, [cleanupTempFile, generatedImageUrl, me?.hasPaidAccess, prepareGeneratedImageFile, router, t]);
+  }, [cleanupTempFile, generatedImageUrl, generationId, me?.hasPaidAccess, posthog, prepareGeneratedImageFile, router, t]);
 
   const handleClose = useCallback(() => {
     triggerHaptic();
@@ -766,6 +778,11 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       return;
     }
 
+    captureAnalytics(posthog, ANALYTICS_EVENTS.generateClicked, {
+      service_type: "floor",
+      smart_suggest: isAiMaterialSuggestionEnabled,
+    });
+
     if (!viewerReady) {
       Alert.alert(t("workspace.generation.preparingSessionTitle"), t("workspace.generation.preparingSessionBody"));
       return;
@@ -849,6 +866,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     } catch (error) {
       setIsGenerating(false);
       setStep("materials");
+      captureGenerationFailure(posthog, error, { service_type: "floor" });
       const rawMessage = error instanceof Error ? error.message : t("common.actions.tryAgain");
       if (rawMessage.toLowerCase().includes("limit reached")) {
         showToast(rawMessage);
@@ -865,7 +883,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       }
       showToast(getFriendlyGenerationError(rawMessage));
     }
-  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isAiMaterialSuggestionEnabled, isGenerating, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, t, uploadBlobToStorage, viewerId, viewerReady, cleanupTempFile]);
+  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isAiMaterialSuggestionEnabled, isGenerating, posthog, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, t, uploadBlobToStorage, viewerId, viewerReady, cleanupTempFile]);
 
   const handleCancelGeneration = useCallback(async () => {
     if (!generationId || isCancellingGeneration) {

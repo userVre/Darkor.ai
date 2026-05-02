@@ -33,6 +33,8 @@ import {useProSuccess} from "../components/pro-success-context";
 import {SettingsRow} from "../components/settings-row";
 import {useViewerCredits} from "../components/viewer-credits-context";
 import {useWorkspaceDraft} from "../components/workspace-context";
+import {GENERATION_ACCESS_CACHE_KEY} from "../lib/generation-access";
+import {LEGACY_ONBOARDING_STORAGE_KEY, ONBOARDING_STORAGE_KEY, PREVIOUS_ONBOARDING_STORAGE_KEY} from "../lib/analytics";
 import {useAppLanguagePreference, useLocalizedAppFonts} from "../lib/i18n";
 import {getLanguageNativeLabel} from "../lib/i18n/language";
 import {getDirectionalArrowScale, getDirectionalRow, getDirectionalTextAlign} from "../lib/i18n/rtl";
@@ -58,6 +60,9 @@ const SURFACE_BG = radix.light.slate.slate2;
 const TEXT_PRIMARY = radix.light.slate.slate12;
 const TEXT_SECONDARY = radix.light.slate.slate11;
 const RUBY_ACCENT = radix.light.ruby.ruby9;
+const RADIX_BLUE_3 = "#E6F4FE";
+const RADIX_BLUE_7 = "#8EC8F6";
+const RADIX_BLUE_11 = "#006ADC";
 
 function truncateUserId(value: string) {
   if (value.length <= 18) {
@@ -77,7 +82,7 @@ export default function SettingsScreen() {
   const { user } = useUser();
   const { clearDraft } = useWorkspaceDraft();
   const { showSuccess, showToast } = useProSuccess();
-  const { hasPaidAccess, setOptimisticAccess } = useViewerCredits();
+  const { hasPaidAccess, setOptimisticAccess, setOptimisticCredits, setOptimisticRewardState } = useViewerCredits();
   const deleteAccountData = useMutation("users:deleteAccountData" as any);
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
 
@@ -171,6 +176,30 @@ export default function SettingsScreen() {
 
   const handleLanguageSettings = () => {
     router.push("/language-settings" as any);
+  };
+
+  const handleResetOnboarding = async () => {
+    try {
+      await AsyncStorage.multiRemove([
+        ONBOARDING_STORAGE_KEY,
+        PREVIOUS_ONBOARDING_STORAGE_KEY,
+        LEGACY_ONBOARDING_STORAGE_KEY,
+        "diamond_count",
+        "streak_count",
+        GENERATION_ACCESS_CACHE_KEY,
+      ]);
+      setOptimisticCredits(0);
+      setOptimisticRewardState({
+        canClaimDiamond: false,
+        credits: 0,
+        nextDiamondClaimAt: 0,
+        streakCount: 1,
+      });
+      showToast(t("settings.messages.onboardingReset"));
+      router.replace("/" as any);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : t("common.actions.tryAgain"));
+    }
   };
 
   const persistPurchasedPlan = async (
@@ -428,6 +457,12 @@ export default function SettingsScreen() {
           />
         </View>
 
+        <Pressable accessibilityRole="button" onPress={handleResetOnboarding} style={styles.debugResetButton}>
+          <Text style={[styles.debugResetButtonText, localizedFonts.semibold]}>
+            Reset App Onboarding (Debug)
+          </Text>
+        </Pressable>
+
         <Text style={[styles.versionLabel, localizedFonts.regular]}>{t("common.labels.version", { version: APP_VERSION })}</Text>
       </ScrollView>
     </View>
@@ -570,6 +605,23 @@ const styles = StyleSheet.create({
   },
   rowsSection: {
     marginTop: 20,
+  },
+  debugResetButton: {
+    minHeight: 50,
+    marginTop: 20,
+    marginHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: RADIX_BLUE_7,
+    backgroundColor: RADIX_BLUE_3,
+  },
+  debugResetButtonText: {
+    color: RADIX_BLUE_11,
+    fontSize: 14,
+    lineHeight: 18,
+    ...fonts.semibold,
   },
   restoreRow: {
     marginTop: 20,

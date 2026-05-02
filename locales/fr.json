@@ -93,7 +93,15 @@
         "title": "Relookage du sol",
         "description": "Élevez les fondations de votre pièce avec des matériaux et des finitions haut de gamme."
       },
-      "cta": "Essayez ceci",
+        "replace": {
+          "title": "Remplacer des objets",
+          "description": "Masquez un objet dans votre photo et remplacez-le avec des retouches AI prÃ©cises."
+        },
+        "referenceStyle": {
+          "title": "Transfert de style de rÃ©fÃ©rence",
+          "description": "Importez une rÃ©fÃ©rence visuelle et appliquez son style Ã  votre piÃ¨ce."
+        },
+        "cta": "Essayez ceci",
       "smartSpacePlanning": {
         "title": "Agencement Intelligent",
         "description": "Optimisez l'agencement pour un confort maximal."

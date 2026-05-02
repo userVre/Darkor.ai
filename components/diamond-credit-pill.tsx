@@ -20,10 +20,12 @@ type DiamondCreditPillProps = {
   accessibilityLabel?: string;
   accessibilityRole?: AccessibilityRole;
   onPress?: () => void;
+  onElitePassPress?: () => void;
   style?: StyleProp<ViewStyle>;
 };
 
 export const DIAMOND_PILL_BLUE = "#007AFF";
+export const RADIX_BLUE_9 = "#0090FF";
 
 const VARIANT_STYLES = {
   dark: {
@@ -42,9 +44,11 @@ const VARIANT_STYLES = {
 
 export function DiamondCreditIcon({
   primaryColor,
+  monochrome = false,
   size = 18,
 }: {
   primaryColor: string;
+  monochrome?: boolean;
   size?: number;
 }) {
   const width = size;
@@ -59,20 +63,20 @@ export function DiamondCreditIcon({
         />
         <Path
           d="M5.108 2.25 9 6.32l3.892-4.07"
-          stroke="#7DCBFF"
+          stroke={monochrome ? primaryColor : "#7DCBFF"}
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={1}
         />
         <Path
           d="M1.999 6.32h14.001"
-          stroke="#005BBB"
+          stroke={monochrome ? primaryColor : "#005BBB"}
           strokeLinecap="round"
           strokeWidth={1}
         />
         <Path
           d="M5.108 2.25 9 15.75 12.892 2.25"
-          stroke="#D8EEFF"
+          stroke={monochrome ? primaryColor : "#D8EEFF"}
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={0.9}
@@ -83,6 +87,28 @@ export function DiamondCreditIcon({
   );
 }
 
+export function ElitePassFlameIcon({
+  color = RADIX_BLUE_9,
+  size = 18,
+}: {
+  color?: string;
+  size?: number;
+}) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M12.12 22c-3.92 0-6.95-2.82-6.95-6.61 0-2.46 1.25-4.49 3.48-6.37 1.78-1.5 2.72-3.18 2.82-5.02.01-.29.34-.46.58-.29 2.93 2.08 4.24 4.35 3.93 6.8 1.02-.61 1.74-1.48 2.15-2.61.1-.28.47-.35.66-.11 1.37 1.68 2.06 3.44 2.06 5.28 0 5.21-3.9 8.93-8.73 8.93Z"
+        fill={color}
+      />
+      <Path
+        d="M12.34 20.28c-2.02 0-3.54-1.43-3.54-3.32 0-1.25.63-2.29 1.75-3.24.9-.76 1.38-1.61 1.43-2.55.01-.22.27-.34.45-.21 1.52 1.08 2.19 2.26 2 3.54.51-.31.87-.75 1.08-1.32.08-.2.34-.25.48-.08.7.86 1.05 1.76 1.05 2.7 0 2.75-2.09 4.48-4.7 4.48Z"
+        fill="#FFFFFF"
+        opacity={0.82}
+      />
+    </Svg>
+  );
+}
+
 export function DiamondCreditPill({
   count,
   streakCount,
@@ -90,6 +116,7 @@ export function DiamondCreditPill({
   accessibilityLabel = "Credits",
   accessibilityRole = "button",
   onPress,
+  onElitePassPress,
   style,
 }: DiamondCreditPillProps) {
   const isRTL = I18nManager.isRTL;
@@ -99,7 +126,7 @@ export function DiamondCreditPill({
     <>
       <DiamondCreditIcon primaryColor={palette.prismPrimary} />
       <Text style={[styles.countText, { color: palette.textColor }]}>{count}</Text>
-      {normalizedStreakCount > 0 ? (
+      {normalizedStreakCount > 0 && !onElitePassPress ? (
         <View style={styles.streakWrap}>
           <Text accessibilityElementsHidden style={styles.flameIcon}>
             🔥
@@ -119,6 +146,36 @@ export function DiamondCreditPill({
     },
     style,
   ];
+
+  if (onElitePassPress) {
+    return (
+      <View style={pillStyle}>
+        <Pressable
+          accessibilityLabel={accessibilityLabel}
+          accessibilityRole={accessibilityRole}
+          disabled={!onPress}
+          hitSlop={10}
+          onPress={onPress}
+          style={styles.creditAction}
+        >
+          {content}
+        </Pressable>
+
+        <Pressable
+          accessibilityLabel="Open Elite Pass"
+          accessibilityRole="button"
+          hitSlop={10}
+          onPress={onElitePassPress}
+          style={({ pressed }) => [
+            styles.elitePassButton,
+            pressed ? styles.elitePassButtonPressed : null,
+          ]}
+        >
+          <ElitePassFlameIcon color={RADIX_BLUE_9} size={18} />
+        </Pressable>
+      </View>
+    );
+  }
 
   if (onPress) {
     return (
@@ -166,6 +223,29 @@ const styles = StyleSheet.create({
   },
   pillRtl: {
     flexDirection: "row-reverse",
+  },
+  creditAction: {
+    minHeight: 38,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+  },
+  elitePassButton: {
+    width: 32,
+    height: 32,
+    marginLeft: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: RADIX_BLUE_9,
+    backgroundColor: "#FFFFFF",
+    boxShadow: `0px 0px 16px ${RADIX_BLUE_9}40`,
+  },
+  elitePassButtonPressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.96 }],
   },
   countText: {
     fontSize: 15,

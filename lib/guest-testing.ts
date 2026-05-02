@@ -1,6 +1,6 @@
-// Guests get starter diamonds up front, then the daily claim loop is capped at 1.
+// Guests get one starter diamond up front, then the daily claim loop is capped at 1.
 export const ENABLE_GUEST_WIZARD_TEST_MODE = true;
-export const GUEST_TESTING_STARTER_CREDITS = 3;
+export const GUEST_TESTING_STARTER_CREDITS = 1;
 export const GUEST_TESTING_TEMP_ID = "temp_guest_id";
 
 export function isGuestWizardTestingSession(isSignedIn: boolean | null | undefined) {

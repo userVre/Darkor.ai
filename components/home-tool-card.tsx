@@ -1,5 +1,4 @@
 import {Image} from "expo-image";
-import {LockKeyhole} from "lucide-react-native";
 import {useTranslation} from "react-i18next";
 import {StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle} from "react-native";
 
@@ -27,7 +26,7 @@ type HomeToolCardProps = {
 
 export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
   const { t } = useTranslation();
-  const topLeftRadius = item.topLeftRadius ?? 24;
+  const topLeftRadius = item.topLeftRadius ?? 40;
   const isLocked = item.locked === true;
 
   return (
@@ -42,7 +41,7 @@ export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
         <Image source={item.image} style={styles.image} contentFit="cover" transition={0} cachePolicy="memory-disk" />
         {isLocked ? (
           <View pointerEvents="none" style={styles.lockBadge}>
-            <LockKeyhole color="#475569" size={15} strokeWidth={2.2} />
+            <Text accessibilityElementsHidden style={styles.lockBadgeText}>🔒</Text>
           </View>
         ) : null}
       </View>
@@ -77,7 +76,7 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
     elevation: 4,
-    boxShadow: "0px 10px 24px rgba(29,78,216,0.16), 0px 0px 20px rgba(29,78,216,0.12)",
+    boxShadow: "0px 10px 24px rgba(0,122,255,0.12), 0px 0px 18px rgba(0,122,255,0.1)",
     borderWidth: 1,
     borderColor: DS.colors.border,
   },
@@ -103,6 +102,11 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(100, 116, 139, 0.28)",
     boxShadow: "0px 10px 22px rgba(15, 23, 42, 0.14)",
+  },
+  lockBadgeText: {
+    fontSize: 16,
+    lineHeight: 20,
+    textAlign: "center",
   },
   image: {
     width: "100%",

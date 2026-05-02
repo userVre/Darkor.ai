@@ -8,17 +8,19 @@ import {ConvexProviderWithClerk} from "convex/react-clerk";
 import {useFonts} from "expo-font";
 import * as Linking from "expo-linking";
 import {useCalendars, useLocales} from "expo-localization";
-import {Stack} from "expo-router";
+import {Stack, usePathname, useRouter} from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import {useEffect, useMemo, useRef, useState} from "react";
-import {ActivityIndicator, Text, TextInput, View, type TextInputProps, type TextProps} from "react-native";
+import {ActivityIndicator, StyleSheet, Text, TextInput, View, type TextInputProps, type TextProps} from "react-native";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
 import {SafeAreaProvider} from "react-native-safe-area-context";
+import {PostHogProvider} from "posthog-react-native";
 
 import {AppErrorBoundary} from "../components/app-error-boundary";
 import {BrandLaunchScreen} from "../components/brand-launch-screen";
 import {DailyRewardModal} from "../components/daily-reward-modal";
 import {DiamondStoreProvider} from "../components/diamond-store-context";
+import {ElitePassProvider} from "../components/elite-pass-context";
 import {FlowUIProvider} from "../components/flow-ui-context";
 import {GenerationAccessCacheGate} from "../components/generation-access-cache-gate";
 import {OfflineOverlay} from "../components/offline-overlay";
@@ -38,6 +40,8 @@ syncAppLanguageWithSystem,
 useAppLanguagePreference,
 useLocalizedAppFonts,
 } from "../lib/i18n";
+import {syncTieredNotifications} from "../lib/notifications";
+import {readHasFinishedOnboarding} from "../lib/onboarding-storage";
 import {getDirectionalTextAlign, reloadAppForLayoutDirection} from "../lib/i18n/rtl";
 import {consumeReferralCode, setReferralCode} from "../lib/referral";
 import {
@@ -54,6 +58,9 @@ type RevenueCatPurchases,
 import {tokenCache} from "../lib/token-cache";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
+
+const POSTHOG_API_KEY = process.env.EXPO_PUBLIC_POSTHOG_API_KEY;
+const POSTHOG_HOST = process.env.EXPO_PUBLIC_POSTHOG_HOST;
 
 const TextWithDefaults = Text as typeof Text & { defaultProps?: TextProps };
 const TextInputWithDefaults = TextInput as typeof TextInput & { defaultProps?: TextInputProps };
@@ -368,6 +375,32 @@ function LocalizationSyncGate() {
   return null;
 }
 
+function NotificationScheduleGate() {
+  const {
+    hasPaidAccess,
+    hasProAccess,
+    isReady,
+    nextDiamondClaimAt,
+    subscriptionType,
+  } = useViewerCredits();
+
+  useEffect(() => {
+    if (DIAGNOSTIC_BYPASS || !isReady) {
+      return;
+    }
+
+    void syncTieredNotifications({
+      isReady,
+      hasPaidAccess,
+      hasProAccess,
+      nextDiamondClaimAt,
+      subscriptionType,
+    });
+  }, [hasPaidAccess, hasProAccess, isReady, nextDiamondClaimAt, subscriptionType]);
+
+  return null;
+}
+
 function MissingEnv({ missing }: { missing: string[] }) {
   return (
     <View style={bootStyles.screen}>
@@ -415,6 +448,80 @@ function CreateAccessGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function OnboardingBootGate({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const lastRedirectRef = useRef<string | null>(null);
+  const [hasCheckedOnboarding, setHasCheckedOnboarding] = useState(false);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    void readHasFinishedOnboarding()
+      .then((hasFinishedOnboarding) => {
+        if (!mounted) {
+          return;
+        }
+
+        setHasCompletedOnboarding(hasFinishedOnboarding);
+      })
+      .finally(() => {
+        if (mounted) {
+          setHasCheckedOnboarding(true);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasCheckedOnboarding || DIAGNOSTIC_BYPASS) {
+      return;
+    }
+
+    let active = true;
+    const isOnboardingRoute = pathname === "/onboarding";
+    const isRootRoute = pathname === "/";
+
+    if (!hasCompletedOnboarding && !isOnboardingRoute) {
+      void readHasFinishedOnboarding().then((hasFinishedOnboarding) => {
+        if (!active) {
+          return;
+        }
+
+        if (hasFinishedOnboarding) {
+          setHasCompletedOnboarding(true);
+          return;
+        }
+
+        const redirectKey = `${pathname}->/onboarding`;
+        if (lastRedirectRef.current !== redirectKey) {
+          lastRedirectRef.current = redirectKey;
+          router.replace("/onboarding" as any);
+        }
+      });
+    } else if (hasCompletedOnboarding && (isOnboardingRoute || isRootRoute)) {
+      lastRedirectRef.current = `${pathname}->/(tabs)`;
+      router.replace("/(tabs)" as any);
+    } else {
+      lastRedirectRef.current = null;
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [hasCheckedOnboarding, hasCompletedOnboarding, pathname, router]);
+
+  if (!hasCheckedOnboarding) {
+    return <BootScreen message={i18n.t("boot.checkingOnboarding")} />;
+  }
+
+  return <>{children}</>;
+}
+
 function AppShell() {
   const languagePreference = useAppLanguagePreference();
 
@@ -429,6 +536,7 @@ function AppShell() {
       }}
     >
       <Stack.Screen name="index" />
+      <Stack.Screen name="onboarding" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen
         name="paywall"
@@ -519,7 +627,7 @@ export default function RootLayout() {
     return <MissingEnv missing={envReport.missing} />;
   }
 
-  return (
+  const appTree = (
     <GestureHandlerRootView
       key={languagePreference.isRTL ? "rtl" : "ltr"}
       style={{ flex: 1, direction: languagePreference.isRTL ? "rtl" : "ltr" }}
@@ -532,22 +640,27 @@ export default function RootLayout() {
                 <ViewerSessionProvider>
                   {DIAGNOSTIC_BYPASS ? null : <ReferralGate />}
                   <ViewerCreditsProvider>
-                    <DiamondStoreProvider>
-                      <FlowUIProvider>
-                        <WorkspaceDraftProvider>
-                          <BottomSheetModalProvider>
-                            {DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
-                            <LocalizationSyncGate />
-                            <GenerationAccessCacheGate />
-                            <CreateAccessGate>
-                              <AppShell />
-                            </CreateAccessGate>
-                            <DailyRewardModal />
-                            <OfflineOverlay />
-                          </BottomSheetModalProvider>
-                        </WorkspaceDraftProvider>
-                      </FlowUIProvider>
-                    </DiamondStoreProvider>
+                    <ElitePassProvider>
+                      <DiamondStoreProvider>
+                        <FlowUIProvider>
+                          <WorkspaceDraftProvider>
+                            <BottomSheetModalProvider>
+                              {DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
+                              <LocalizationSyncGate />
+                              <GenerationAccessCacheGate />
+                              <NotificationScheduleGate />
+                              <CreateAccessGate>
+                                <OnboardingBootGate>
+                                  <AppShell />
+                                </OnboardingBootGate>
+                              </CreateAccessGate>
+                              <DailyRewardModal />
+                              <OfflineOverlay />
+                            </BottomSheetModalProvider>
+                          </WorkspaceDraftProvider>
+                        </FlowUIProvider>
+                      </DiamondStoreProvider>
+                    </ElitePassProvider>
                   </ViewerCreditsProvider>
                 </ViewerSessionProvider>
               </Providers>
@@ -557,11 +670,42 @@ export default function RootLayout() {
       </AppErrorBoundary>
     </GestureHandlerRootView>
   );
+
+  if (!POSTHOG_API_KEY) {
+    return appTree;
+  }
+
+  return (
+    <PostHogProvider
+      apiKey={POSTHOG_API_KEY}
+      autocapture={{
+        captureScreens: true,
+        captureTouches: false,
+      }}
+      options={{
+        host: POSTHOG_HOST,
+        enableSessionReplay: true,
+        sessionReplayConfig: {
+          maskAllTextInputs: true,
+        },
+      }}
+    >
+      {appTree}
+    </PostHogProvider>
+  );
 }
 
 const bootStyles = {
   screen: {
     flex: 1,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    backgroundColor: DS.colors.background,
+    paddingHorizontal: SCREEN_SIDE_PADDING,
+  },
+  blockingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 2000,
     alignItems: "center" as const,
     justifyContent: "center" as const,
     backgroundColor: DS.colors.background,
