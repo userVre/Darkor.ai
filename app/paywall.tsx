@@ -1,5 +1,6 @@
 import {Check, X} from "@/components/material-icons";
 import {useAuth, useUser} from "@clerk/expo";
+import {CommonActions, useNavigation} from "@react-navigation/native";
 import {useMutation} from "convex/react";
 import {Image} from "expo-image";
 import {LinearGradient} from "expo-linear-gradient";
@@ -27,14 +28,11 @@ type ViewStyle,
 } from "react-native";
 import Animated, {
 Easing,
-useAnimatedProps,
 useAnimatedStyle,
 useSharedValue,
 withTiming,
-type SharedValue,
 } from "react-native-reanimated";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
-import Svg, {Circle as SvgCircle} from "react-native-svg";
 import {createLocalizedPrice, usePricingContext, type LocalizedPrice} from "../lib/dynamic-pricing";
 import {ANALYTICS_EVENTS, captureAnalytics} from "../lib/analytics";
 
@@ -90,9 +88,6 @@ const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 3000;
 const CLOSE_DELAY_MS = 5000;
 const CLOSE_VISUAL_SIZE = 40;
-const CLOSE_RING_RADIUS = 15;
-const CLOSE_RING_STROKE_WIDTH = 2.5;
-const CLOSE_RING_CIRCUMFERENCE = 2 * Math.PI * CLOSE_RING_RADIUS;
 const HERO_CENTER_SIZE = 196;
 const HERO_SIDE_WIDTH = 184;
 const HERO_SIDE_HEIGHT = 188;
@@ -113,7 +108,6 @@ const HERO_CAROUSEL_DATA = Array.from({ length: HERO_IMAGES.length * HERO_CAROUS
   image: HERO_IMAGES[index % HERO_IMAGES.length],
 }));
 const HERO_CAROUSEL_INITIAL_INDEX = HERO_IMAGES.length * Math.floor(HERO_CAROUSEL_REPEAT_MULTIPLIER / 2);
-const AnimatedSvgCircle = Animated.createAnimatedComponent(SvgCircle);
 const PAYWALL_FORCE_LTR = true;
 const FORCED_LTR_TEXT_STYLE = {
   textAlign: "left" as const,
@@ -318,65 +312,28 @@ function WeeklyPlanCard({
 function CountdownCloseButton({
   canClose,
   onPress,
-  progress,
-  secondsLeft,
 }: {
   canClose: boolean;
   onPress: () => void;
-  progress: SharedValue<number>;
-  secondsLeft: number;
 }) {
   const { t } = useTranslation();
-  const localizedFonts = useLocalizedAppFonts();
-  const animatedRingProps = useAnimatedProps(() => ({
-    strokeDashoffset: CLOSE_RING_CIRCUMFERENCE * progress.value,
-  }));
 
   return (
     <View pointerEvents="box-none" style={styles.closeSlot}>
-      <AnimatePresence exitBeforeEnter>
-        <MotiView
-          key={canClose ? "close-ready" : "close-countdown"}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          from={{ opacity: 0 }}
-          style={styles.closeBubble}
-          transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
-        >
-          {canClose ? (
+      <AnimatePresence>
+        {canClose ? (
+          <MotiView
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            from={{ opacity: 0 }}
+            style={styles.closeBubble}
+            transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
+          >
             <Pressable accessibilityLabel={t("paywall.closeA11y")} accessibilityRole="button" hitSlop={10} onPress={onPress} style={styles.closeButtonInner}>
               <X color={TEXT_PRIMARY} size={20} strokeWidth={2.4} />
             </Pressable>
-          ) : (
-            <View pointerEvents="none" style={styles.countdownWrap}>
-              <Svg height={CLOSE_VISUAL_SIZE} style={styles.countdownRing} width={CLOSE_VISUAL_SIZE}>
-                <SvgCircle
-                  cx={CLOSE_VISUAL_SIZE / 2}
-                  cy={CLOSE_VISUAL_SIZE / 2}
-                  fill="none"
-                  r={CLOSE_RING_RADIUS}
-                  stroke={PANEL_BORDER}
-                  strokeWidth={CLOSE_RING_STROKE_WIDTH}
-                />
-                <AnimatedSvgCircle
-                  animatedProps={animatedRingProps}
-                  cx={CLOSE_VISUAL_SIZE / 2}
-                  cy={CLOSE_VISUAL_SIZE / 2}
-                  fill="none"
-                  r={CLOSE_RING_RADIUS}
-                  rotation="-90"
-                  originX={CLOSE_VISUAL_SIZE / 2}
-                  originY={CLOSE_VISUAL_SIZE / 2}
-                  stroke={TEXT_PRIMARY}
-                  strokeDasharray={CLOSE_RING_CIRCUMFERENCE}
-                  strokeLinecap="round"
-                  strokeWidth={CLOSE_RING_STROKE_WIDTH}
-                />
-              </Svg>
-              <Text style={[styles.countdownText, localizedFonts.bold]}>{Math.max(secondsLeft, 1)}</Text>
-            </View>
-          )}
-        </MotiView>
+          </MotiView>
+        ) : null}
       </AnimatePresence>
     </View>
   );
@@ -468,8 +425,9 @@ function filterPackagesByCurrency(
 
 export default function PaywallScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const posthog = usePostHog();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const localizedFonts = useLocalizedAppFonts();
   const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   const pricingContext = usePricingContext();
@@ -496,8 +454,6 @@ export default function PaywallScreen() {
   const isCarouselDraggingRef = useRef(false);
   const entranceProgress = useSharedValue(0);
   const carouselScrollX = useRef(new NativeAnimated.Value(0)).current;
-  const closeCountdownProgress = useSharedValue(0);
-  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [canClose, setCanClose] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("yearly");
@@ -505,12 +461,16 @@ export default function PaywallScreen() {
   const [packages, setPackages] = useState<RevenueCatPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [secondsLeft, setSecondsLeft] = useState(5);
   const personalizedImageUrl = typeof lastImageUrl === "string" && lastImageUrl.length > 0 ? lastImageUrl : null;
   const hasPersonalizedBackground = Boolean(personalizedImageUrl);
-  const isPostWowPaywall = source === "post_wow" || variant === "soft";
-  const paywallTitle = "Unlock Infinite Magic! ✨";
-  const paywallSubtitle = "Experience the full power of AI. Limitless creations, 4K precision, and zero wait times.";
+  const isPostWowPaywall = source === "post_wow";
+  const isSoftPaywall = variant === "soft" && !isPostWowPaywall;
+  const paywallTitle = i18n.language.toLowerCase().startsWith("fr")
+    ? "Concevez comme un pro. Creativite illimitee."
+    : "Design like a pro. Unlimited creativity.";
+  const paywallSubtitle = hasPersonalizedBackground
+    ? "Your room is ready for the next level. Continue designing this space in 4K."
+    : t("paywall.subtitle");
   const heroSnapInterval = HERO_SNAP_INTERVAL;
   const heroTrackPadding = Math.max((width - heroSnapInterval) / 2, 0);
   const heroRowHeight = 220;
@@ -561,7 +521,7 @@ export default function PaywallScreen() {
     ],
   );
   const selectedPackage = useMemo(() => {
-    if (isPostWowPaywall) {
+    if (isSoftPaywall) {
       const nextPackage = selectedDuration === "yearly" ? yearlyPackage : weeklyPackage;
       return nextPackage ?? yearlyPackage ?? weeklyPackage ?? packages[0] ?? null;
     }
@@ -572,11 +532,11 @@ export default function PaywallScreen() {
 
     const nextPackage = selectedDuration === "yearly" ? yearlyPackage : weeklyPackage;
     return nextPackage ?? yearlyPackage ?? weeklyPackage ?? packages[0] ?? null;
-  }, [freeTrialEnabled, isPostWowPaywall, packages, selectedDuration, weeklyPackage, yearlyPackage]);
+  }, [freeTrialEnabled, isSoftPaywall, packages, selectedDuration, weeklyPackage, yearlyPackage]);
 
   const ctaDisabled = isLoading || !selectedPackage;
-  const isYearlySelected = selectedDuration === "yearly";
-  const isWeeklySelected = selectedDuration === "weekly";
+  const isYearlySelected = !freeTrialEnabled && selectedDuration === "yearly";
+  const isWeeklySelected = freeTrialEnabled || selectedDuration === "weekly";
   const sheetHeight = Math.max(height - 12, 0);
 
   useEffect(() => {
@@ -596,33 +556,12 @@ export default function PaywallScreen() {
 
   useEffect(() => {
     setCanClose(false);
-    setSecondsLeft(5);
-    closeCountdownProgress.value = 0;
-    closeCountdownProgress.value = withTiming(1, {
-      duration: CLOSE_DELAY_MS,
-      easing: Easing.linear,
-    });
-
-    countdownIntervalRef.current = setInterval(() => {
-      setSecondsLeft((current) => {
-        if (current <= 1) {
-          if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-            countdownIntervalRef.current = null;
-          }
-          setCanClose(true);
-          return 0;
-        }
-
-        return current - 1;
-      });
-    }, 1000);
+    const closeTimer = setTimeout(() => {
+      setCanClose(true);
+    }, CLOSE_DELAY_MS);
 
     return () => {
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-        countdownIntervalRef.current = null;
-      }
+      clearTimeout(closeTimer);
     };
   }, []);
 
@@ -761,12 +700,24 @@ export default function PaywallScreen() {
     }
 
     triggerHaptic();
+    if (source === "post_wow") {
+      captureAnalytics(posthog, "paywall_declined", {
+        paywall_source: "post_wow",
+      });
+      navigation.dispatch(CommonActions.reset({
+        index: 0,
+        routes: [{name: "(tabs)"}],
+      }));
+      setTimeout(() => openElitePass(), 250);
+      return;
+    }
+
     const shouldOpenDownsell = source === "launch" && !hasPaidAccess && credits <= 0;
     closePaywall();
     if (shouldOpenDownsell) {
       setTimeout(() => openStore("empty_balance"), 250);
     }
-  }, [canClose, closePaywall, credits, hasPaidAccess, isLoading, openStore, source]);
+  }, [canClose, closePaywall, credits, hasPaidAccess, isLoading, navigation, openElitePass, openStore, posthog, source]);
 
   const handleRestore = useCallback(async () => {
     triggerHaptic();
@@ -912,10 +863,10 @@ export default function PaywallScreen() {
       type: "yearly",
       paywall_source: isPostWowPaywall ? "post_wow" : source ?? "unknown",
     });
-    if (isPostWowPaywall) {
+    if (isSoftPaywall) {
       void handlePurchase(yearlyPackage ?? selectedPackage, "yearly");
     }
-  }, [handlePurchase, isLoading, isPostWowPaywall, posthog, selectedPackage, source, yearlyPackage]);
+  }, [handlePurchase, isLoading, isPostWowPaywall, isSoftPaywall, posthog, selectedPackage, source, yearlyPackage]);
 
   const handleSelectWeekly = useCallback(() => {
     if (isLoading) {
@@ -928,10 +879,10 @@ export default function PaywallScreen() {
       type: freeTrialEnabled && !isPostWowPaywall ? "weekly_trial" : "weekly",
       paywall_source: isPostWowPaywall ? "post_wow" : source ?? "unknown",
     });
-    if (isPostWowPaywall) {
+    if (isSoftPaywall) {
       void handlePurchase(weeklyPackage ?? selectedPackage, "weekly");
     }
-  }, [freeTrialEnabled, handlePurchase, isLoading, isPostWowPaywall, posthog, selectedPackage, source, weeklyPackage]);
+  }, [freeTrialEnabled, handlePurchase, isLoading, isPostWowPaywall, isSoftPaywall, posthog, selectedPackage, source, weeklyPackage]);
 
   const handleSkipPostWowPaywall = useCallback(() => {
     triggerHaptic();
@@ -986,7 +937,7 @@ export default function PaywallScreen() {
     [carouselScrollX],
   );
 
-  if (isPostWowPaywall) {
+  if (isSoftPaywall) {
     return (
       <View style={styles.softScreen}>
         <Stack.Screen
@@ -1074,8 +1025,6 @@ export default function PaywallScreen() {
         <CountdownCloseButton
           canClose={canClose}
           onPress={handleClose}
-          progress={closeCountdownProgress}
-          secondsLeft={secondsLeft}
         />
 
         <ScrollView
@@ -1127,7 +1076,7 @@ export default function PaywallScreen() {
           </View>
 
           <View style={styles.featuresSection}>
-            {["Instant Magical Renders", "Ultra-HD 4K Quality", "Unlimited Designs, Always"].map((feature, index) => (
+            {["Faster Results", "Ultra-HD", "Unlimited"].map((feature, index) => (
               <FeatureRow
                 key={feature}
                 isLast={index === 2}

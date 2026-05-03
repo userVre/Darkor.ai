@@ -1,4 +1,3 @@
-import {LinearGradient as ExpoLinearGradient} from "expo-linear-gradient";
 import {memo, useEffect, useId} from "react";
 import {Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle} from "react-native";
 import Animated, {
@@ -25,10 +24,9 @@ type DayNodeProps = {
 };
 
 const BLUE = "#00B4FF";
-const PINK = "#FF4FD8";
 const GOLD = "#FFD700";
 const GREEN = "#2ECC71";
-const LOCKED = "rgba(255,255,255,0.2)";
+const LOCKED = "rgba(255,255,255,0.12)";
 
 export function DiamondRewardIcon({
   dimmed = false,
@@ -74,9 +72,9 @@ export function DiamondRewardIcon({
   );
 }
 
-function Checkmark() {
+function Checkmark({size = 28}: {size?: number}) {
   return (
-    <Svg height={28} width={28} viewBox="0 0 28 28">
+    <Svg height={size} width={size} viewBox="0 0 28 28">
       <Path
         d="M6.7 14.2 11.7 19.2 21.8 8.8"
         fill="transparent"
@@ -92,9 +90,9 @@ function Checkmark() {
 function LockIcon() {
   return (
     <Svg height={27} width={27} viewBox="0 0 27 27">
-      <Path d="M8.2 12.1V9.8a5.3 5.3 0 0 1 10.6 0v2.3" fill="transparent" stroke="#A0A3B8" strokeLinecap="round" strokeWidth={2.2} />
-      <Path d="M7.2 12h12.6a1.9 1.9 0 0 1 1.9 1.9v6.9a1.9 1.9 0 0 1-1.9 1.9H7.2a1.9 1.9 0 0 1-1.9-1.9v-6.9A1.9 1.9 0 0 1 7.2 12Z" fill="#2A2A4A" stroke="#A0A3B8" strokeOpacity={0.5} />
-      <Circle cx={13.5} cy={17.1} fill="#A0A3B8" r={1.2} />
+      <Path d="M8.2 12.1V9.8a5.3 5.3 0 0 1 10.6 0v2.3" fill="transparent" stroke="#9093AA" strokeLinecap="round" strokeWidth={2.2} />
+      <Path d="M7.2 12h12.6a1.9 1.9 0 0 1 1.9 1.9v6.9a1.9 1.9 0 0 1-1.9 1.9H7.2a1.9 1.9 0 0 1-1.9-1.9v-6.9A1.9 1.9 0 0 1 7.2 12Z" fill="#171821" stroke="#9093AA" strokeOpacity={0.38} />
+      <Circle cx={13.5} cy={17.1} fill="#9093AA" r={1.2} />
     </Svg>
   );
 }
@@ -112,14 +110,14 @@ export const DayNode = memo(function DayNode({
   const isCurrent = state === "current";
   const isCompleted = state === "completed";
   const isLocked = state === "locked";
-  const rewardAmount = isJackpot ? 3 : 1;
   const canClaim = Boolean(isCurrent && onPress);
+  const isWaiting = isLocked || (isCurrent && !canClaim);
   const accentColor = isJackpot ? GOLD : isCompleted ? GREEN : BLUE;
-  const rewardLabel = isJackpot ? "3 Diamonds + Pro Access" : `${rewardAmount} Diamond`;
-  const statusLabel = isCompleted ? "Claimed" : isCurrent ? (canClaim ? "Ready to claim" : "In progress") : "Locked";
+  const rewardLabel = isJackpot ? "Pro Access" : isWaiting ? "Unlocks tomorrow" : "1 Diamond";
+  const statePillLabel = isCompleted ? "Claimed" : canClaim ? "Claim" : isJackpot ? "Elite" : "";
 
   useEffect(() => {
-    if (!isCurrent) {
+    if (!canClaim) {
       cancelAnimation(pulse);
       cancelAnimation(pulseOpacity);
       pulse.value = 1;
@@ -127,9 +125,9 @@ export const DayNode = memo(function DayNode({
       return;
     }
 
-    pulse.value = withRepeat(withTiming(1.28, {duration: 980, easing: Easing.inOut(Easing.quad)}), -1, true);
-    pulseOpacity.value = withRepeat(withTiming(0.14, {duration: 980, easing: Easing.inOut(Easing.quad)}), -1, true);
-  }, [isCurrent, pulse, pulseOpacity]);
+    pulse.value = withRepeat(withTiming(1.2, {duration: 1100, easing: Easing.inOut(Easing.quad)}), -1, true);
+    pulseOpacity.value = withRepeat(withTiming(0.12, {duration: 1100, easing: Easing.inOut(Easing.quad)}), -1, true);
+  }, [canClaim, pulse, pulseOpacity]);
 
   const pulseRingStyle = useAnimatedStyle(() => ({
     opacity: pulseOpacity.value,
@@ -137,14 +135,14 @@ export const DayNode = memo(function DayNode({
   }));
 
   const diamondStyle = useAnimatedStyle(() => ({
-    transform: [{scale: isCurrent ? 1 + (pulse.value - 1) * 0.22 : 1}],
+    transform: [{scale: canClaim ? 1 + (pulse.value - 1) * 0.18 : 1}],
   }));
 
   const content = (
     <View
       style={[
         styles.wrap,
-        isLocked ? styles.wrapLocked : null,
+        isWaiting ? styles.wrapLocked : null,
         isJackpot ? styles.wrapJackpot : null,
         style,
       ]}
@@ -154,12 +152,12 @@ export const DayNode = memo(function DayNode({
           style={[
             styles.node,
             isCompleted ? styles.nodeCompleted : null,
-            isCurrent ? styles.nodeCurrent : null,
+            canClaim ? styles.nodeCurrent : null,
             isJackpot && !isLocked ? styles.nodeJackpot : null,
-            isLocked ? styles.nodeLocked : null,
+            isWaiting ? styles.nodeLocked : null,
           ]}
         >
-          {isCurrent ? (
+          {canClaim ? (
             <Animated.View
               pointerEvents="none"
               style={[
@@ -170,13 +168,20 @@ export const DayNode = memo(function DayNode({
             />
           ) : null}
 
-          {isCompleted ? <Checkmark /> : null}
-          {isCurrent ? (
+          {isCompleted ? (
+            <View style={styles.claimedIconStack}>
+              <DiamondRewardIcon premium={isJackpot} size={isJackpot ? 38 : 42} />
+              <View style={[styles.checkBadge, isJackpot ? styles.checkBadgeJackpot : null]}>
+                <Checkmark size={15} />
+              </View>
+            </View>
+          ) : null}
+          {canClaim ? (
             <Animated.View style={diamondStyle}>
-              <DiamondRewardIcon premium={isJackpot} size={32} />
+              <DiamondRewardIcon premium={isJackpot} size={isJackpot ? 38 : 42} />
             </Animated.View>
           ) : null}
-          {isLocked ? <LockIcon /> : null}
+          {!isCompleted && !canClaim ? <LockIcon /> : null}
         </View>
       </View>
 
@@ -184,65 +189,63 @@ export const DayNode = memo(function DayNode({
         style={[
           styles.card,
           isCompleted ? styles.cardCompleted : null,
-          isCurrent ? styles.cardCurrent : null,
-          isLocked ? styles.cardLocked : null,
+          canClaim ? styles.cardCurrent : null,
+          isWaiting ? styles.cardLocked : null,
           isJackpot ? styles.cardJackpot : null,
-          isCurrent && isJackpot ? styles.cardCurrentJackpot : null,
+          canClaim && isJackpot ? styles.cardCurrentJackpot : null,
         ]}
       >
-        {isCurrent ? (
+        {canClaim ? (
           <View pointerEvents="none" style={styles.glassHighlight} />
         ) : null}
 
         <View style={styles.cardTopRow}>
           <View style={styles.dayCopy}>
-            <Text style={[styles.dayLabel, isLocked ? styles.dayLabelLocked : null]}>Day {day}</Text>
-            <Text style={[styles.statusLabel, {color: isLocked ? "#8C8FA8" : accentColor}]}>{statusLabel}</Text>
-          </View>
-
-          <View
-            style={[
-              styles.statePill,
-              isCompleted ? styles.statePillCompleted : null,
-              isCurrent ? styles.statePillCurrent : null,
-              isLocked ? styles.statePillLocked : null,
-              isJackpot ? styles.statePillJackpot : null,
-            ]}
-          >
-            <Text style={[styles.statePillText, isLocked ? styles.statePillTextLocked : null]}>
-              {isJackpot ? "Final" : `+${rewardAmount}`}
+            <Text style={[styles.dayLabel, isWaiting ? styles.dayLabelLocked : null]}>Day {day}</Text>
+            <Text
+              style={[
+                styles.rewardText,
+                isCompleted ? styles.rewardTextCompleted : null,
+                canClaim ? styles.rewardTextCurrent : null,
+                isWaiting ? styles.rewardTextLocked : null,
+                isJackpot ? styles.rewardTextJackpot : null,
+              ]}
+            >
+              {rewardLabel}
             </Text>
           </View>
+
+          {statePillLabel ? (
+            <View
+              style={[
+                styles.statePill,
+                isCompleted ? styles.statePillCompleted : null,
+                canClaim ? styles.statePillCurrent : null,
+                isWaiting ? styles.statePillLocked : null,
+                isJackpot ? styles.statePillJackpot : null,
+              ]}
+            >
+              {isCompleted ? <Checkmark size={13} /> : null}
+              <Text style={[styles.statePillText, isWaiting ? styles.statePillTextLocked : null, {color: isJackpot && !isCompleted ? GOLD : undefined}]}>
+                {statePillLabel}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
-        <View style={styles.rewardRow}>
-          <DiamondRewardIcon dimmed={isLocked} premium={isJackpot} size={isJackpot ? 28 : 24} />
-          <Text
-            style={[
-              styles.rewardText,
-              isCompleted ? styles.rewardTextCompleted : null,
-              isCurrent ? styles.rewardTextCurrent : null,
-              isLocked ? styles.rewardTextLocked : null,
-              isJackpot ? styles.rewardTextJackpot : null,
-            ]}
-          >
-            {rewardLabel}
-          </Text>
-        </View>
-
-        {isJackpot ? (
-          <Text style={[styles.proText, isLocked ? styles.proTextLocked : null]}>Ultimate milestone reward</Text>
+        {!isJackpot && isCompleted ? (
+          <View style={styles.glowLine} />
         ) : null}
 
-        {isCurrent ? (
-          <ExpoLinearGradient
-            colors={canClaim ? [PINK, BLUE] : ["rgba(255,255,255,0.14)", "rgba(255,255,255,0.08)"]}
-            end={{x: 1, y: 1}}
-            start={{x: 0, y: 0}}
-            style={[styles.claimButton, canClaim ? styles.claimButtonActive : styles.claimButtonMuted]}
+        {isJackpot ? (
+          <View
+            style={[
+              styles.goldRule,
+              {backgroundColor: isWaiting ? "rgba(255, 215, 0, 0.22)" : "rgba(255, 215, 0, 0.5)"},
+            ]}
           >
-            <Text style={styles.claimButtonText}>{canClaim ? "Claim Reward" : `${Math.round(progress)}% Ready`}</Text>
-          </ExpoLinearGradient>
+            <View style={[styles.goldRuleDot, {backgroundColor: accentColor}]} />
+          </View>
         ) : null}
       </View>
     </View>
@@ -274,16 +277,16 @@ const styles = StyleSheet.create({
   },
   wrap: {
     width: "100%",
-    minHeight: 116,
+    minHeight: 98,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
   wrapLocked: {
-    opacity: 0.5,
+    opacity: 0.78,
   },
   wrapJackpot: {
-    minHeight: 132,
+    minHeight: 108,
   },
   nodeColumn: {
     width: 68,
@@ -291,83 +294,104 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   node: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2,
-    backgroundColor: "#10111D",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#11121A",
   },
   nodeCompleted: {
-    borderColor: "rgba(46, 204, 113, 0.92)",
-    backgroundColor: GREEN,
-    boxShadow: "0px 0px 22px rgba(46, 204, 113, 0.56)",
+    borderColor: "rgba(0, 180, 255, 0.5)",
+    backgroundColor: "rgba(0, 180, 255, 0.1)",
+    boxShadow: "0px 0px 30px rgba(0, 180, 255, 0.35)",
   },
   nodeCurrent: {
-    width: 66,
-    height: 66,
-    borderRadius: 33,
-    borderColor: BLUE,
+    borderColor: "rgba(0, 180, 255, 0.76)",
     backgroundColor: "rgba(8, 19, 38, 0.94)",
-    boxShadow: `0px 0px 30px ${BLUE}90`,
+    boxShadow: `0px 0px 32px ${BLUE}70`,
   },
   nodeJackpot: {
-    borderColor: GOLD,
-    boxShadow: "0px 0px 28px rgba(255, 215, 0, 0.58)",
+    borderColor: "rgba(255, 215, 0, 0.72)",
+    backgroundColor: "rgba(52, 38, 11, 0.72)",
+    boxShadow: "0px 0px 28px rgba(255, 215, 0, 0.35)",
   },
   nodeLocked: {
     borderColor: LOCKED,
-    backgroundColor: "#17182A",
+    backgroundColor: "#12131A",
+    boxShadow: "0px 10px 22px rgba(0, 0, 0, 0.2)",
   },
   pulseRing: {
     position: "absolute",
-    width: 78,
-    height: 78,
-    borderRadius: 39,
+    width: 74,
+    height: 74,
+    borderRadius: 37,
     borderWidth: 2,
+  },
+  claimedIconStack: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  checkBadge: {
+    position: "absolute",
+    right: -5,
+    bottom: -4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.74)",
+    backgroundColor: GREEN,
+    boxShadow: "0px 6px 14px rgba(46, 204, 113, 0.36)",
+  },
+  checkBadgeJackpot: {
+    backgroundColor: "#B98200",
+    boxShadow: "0px 6px 14px rgba(255, 215, 0, 0.3)",
   },
   card: {
     flex: 1,
-    minHeight: 100,
+    minHeight: 84,
     justifyContent: "center",
-    gap: 10,
+    gap: 8,
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 22,
+    paddingVertical: 13,
+    borderRadius: 16,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
-    backgroundColor: "rgba(14, 15, 28, 0.82)",
+    backgroundColor: "rgba(16, 17, 24, 0.9)",
+    boxShadow: "0px 16px 34px rgba(0, 0, 0, 0.26)",
   },
   cardCompleted: {
-    borderColor: "rgba(46, 204, 113, 0.4)",
-    backgroundColor: "rgba(16, 38, 30, 0.78)",
-    boxShadow: "0px 0px 22px rgba(46, 204, 113, 0.22)",
+    borderColor: "rgba(0, 180, 255, 0.32)",
+    backgroundColor: "rgba(11, 22, 31, 0.9)",
+    boxShadow: "0px 18px 36px rgba(0, 180, 255, 0.18)",
   },
   cardCurrent: {
-    minHeight: 124,
-    borderColor: "rgba(0, 180, 255, 0.72)",
-    backgroundColor: "rgba(13, 31, 60, 0.72)",
-    boxShadow: `0px 18px 38px ${BLUE}38`,
+    borderColor: "rgba(0, 180, 255, 0.58)",
+    backgroundColor: "rgba(10, 27, 46, 0.92)",
+    boxShadow: `0px 18px 38px ${BLUE}30`,
   },
   cardCurrentJackpot: {
-    borderColor: "rgba(255, 215, 0, 0.86)",
-    boxShadow: "0px 18px 42px rgba(255, 215, 0, 0.32)",
+    borderColor: "rgba(255, 215, 0, 0.76)",
+    boxShadow: "0px 18px 42px rgba(255, 215, 0, 0.24)",
   },
   cardLocked: {
-    borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "rgba(22, 23, 39, 0.62)",
+    borderColor: "rgba(255,255,255,0.07)",
+    backgroundColor: "rgba(16, 17, 24, 0.72)",
   },
   cardJackpot: {
-    minHeight: 120,
     borderWidth: 1.5,
-    borderColor: "rgba(255, 215, 0, 0.72)",
-    backgroundColor: "rgba(42, 31, 9, 0.64)",
+    borderColor: "rgba(255, 215, 0, 0.5)",
+    backgroundColor: "rgba(36, 28, 12, 0.86)",
   },
   glassHighlight: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 22,
+    borderRadius: 16,
     borderCurve: "continuous",
     backgroundColor: "rgba(255,255,255,0.09)",
     opacity: 0.9,
@@ -381,27 +405,24 @@ const styles = StyleSheet.create({
   dayCopy: {
     flex: 1,
     minWidth: 0,
-    gap: 2,
+    gap: 4,
   },
   dayLabel: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    lineHeight: 23,
+    color: "rgba(255, 255, 255, 0.64)",
+    fontSize: 12,
+    lineHeight: 15,
+    textTransform: "uppercase",
     ...fonts.bold,
   },
   dayLabelLocked: {
-    color: "#C5C7D8",
-  },
-  statusLabel: {
-    fontSize: 11,
-    lineHeight: 14,
-    textTransform: "uppercase",
-    letterSpacing: 0,
-    ...fonts.bold,
+    color: "rgba(255, 255, 255, 0.4)",
   },
   statePill: {
     minHeight: 28,
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "center",
+    gap: 5,
     paddingHorizontal: 10,
     borderRadius: 14,
     borderWidth: 1,
@@ -409,16 +430,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.08)",
   },
   statePillCompleted: {
-    borderColor: "rgba(46, 204, 113, 0.44)",
-    backgroundColor: "rgba(46, 204, 113, 0.14)",
+    borderColor: "rgba(46, 204, 113, 0.38)",
+    backgroundColor: "rgba(46, 204, 113, 0.16)",
   },
   statePillCurrent: {
     borderColor: "rgba(0, 180, 255, 0.55)",
     backgroundColor: "rgba(0, 180, 255, 0.16)",
   },
   statePillLocked: {
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(255,255,255,0.05)",
+    borderColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(255,255,255,0.04)",
   },
   statePillJackpot: {
     borderColor: "rgba(255, 215, 0, 0.72)",
@@ -433,65 +454,50 @@ const styles = StyleSheet.create({
   statePillTextLocked: {
     color: "#B7B9CA",
   },
-  rewardRow: {
-    minHeight: 30,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
   diamondIconWrap: {
     alignItems: "center",
     justifyContent: "center",
   },
   rewardText: {
-    flex: 1,
-    color: "#DCEEFF",
-    fontSize: 15,
-    lineHeight: 20,
+    color: "#F7FAFF",
+    fontSize: 21,
+    lineHeight: 26,
     ...fonts.bold,
   },
   rewardTextCompleted: {
-    color: "#D9FFE9",
+    color: "#FFFFFF",
   },
   rewardTextCurrent: {
     color: "#FFFFFF",
-    fontSize: 16,
-    lineHeight: 21,
   },
   rewardTextLocked: {
-    color: "#B4B7CC",
+    color: "#B9BCCB",
+    fontSize: 17,
+    lineHeight: 22,
   },
   rewardTextJackpot: {
     color: "#FFF2A8",
+    fontSize: 22,
+    lineHeight: 27,
   },
-  proText: {
-    color: "rgba(255, 242, 168, 0.86)",
-    fontSize: 12,
-    lineHeight: 16,
-    ...fonts.medium,
+  glowLine: {
+    width: 52,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: "rgba(0, 180, 255, 0.74)",
+    boxShadow: `0px 0px 12px ${BLUE}80`,
   },
-  proTextLocked: {
-    color: "#B4B7CC",
+  goldRule: {
+    width: 72,
+    height: 2,
+    borderRadius: 1,
   },
-  claimButton: {
-    minHeight: 42,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 16,
-    borderCurve: "continuous",
-    borderWidth: 1,
-  },
-  claimButtonActive: {
-    borderColor: "rgba(255,255,255,0.34)",
-    boxShadow: `0px 10px 24px ${PINK}40`,
-  },
-  claimButtonMuted: {
-    borderColor: "rgba(255,255,255,0.12)",
-  },
-  claimButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    lineHeight: 18,
-    ...fonts.bold,
+  goldRuleDot: {
+    position: "absolute",
+    right: -3,
+    top: -2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
 });

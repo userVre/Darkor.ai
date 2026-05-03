@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
-import * as Device from "expo-device";
 import {Platform} from "react-native";
 
 import type * as ExpoNotifications from "expo-notifications";
@@ -346,7 +345,7 @@ async function saveGrantedPushToken(
     let expoPushToken: string | undefined;
     let devicePushToken: string | undefined;
 
-    if (!Device.isDevice) {
+    if (Platform.OS === "web") {
       await savePreferences({
         anonymousId: anonymousId ?? undefined,
         expoPushToken,

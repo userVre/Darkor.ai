@@ -28,7 +28,7 @@ const STANDARD_REWARD_DIAMONDS = 1;
 const DAY_SEVEN_REWARD_DIAMONDS = 3;
 const BLUE = "#00B4FF";
 const GOLD = "#FFD700";
-const PATH_SLOT_HEIGHT = 176;
+const PATH_SLOT_HEIGHT = 124;
 const NODE_OFFSETS = [0, 0, 0, 0, 0, 0, 0];
 const CLAIM_CONFETTI_COLORS = [BLUE, GOLD, "#2ECC71", "#FFFFFF"];
 const REVEAL_CONFETTI_COLORS = [GOLD, "#FFF4A3", BLUE, "#FFFFFF"];
@@ -427,7 +427,7 @@ export function DailyRewardModal() {
                 </View>
                 <View style={styles.titleCopy}>
                   <Text style={styles.title}>ELITE PASS</Text>
-                  <Text style={styles.subtitle}>7-Day Streak Reward Path</Text>
+                  <Text style={styles.subtitle}>Daily rewards</Text>
                 </View>
               </View>
 
@@ -474,10 +474,10 @@ export function DailyRewardModal() {
               <DiamondRewardIcon size={20} />
               <Text style={styles.claimSummaryText}>
                 {canClaimNow
-                  ? `Claim +${rewardDiamonds} Diamond${rewardDiamonds === 1 ? "" : "s"} now`
+                  ? `+${rewardDiamonds} Diamond${rewardDiamonds === 1 ? "" : "s"} today`
                   : hasVerifiedClaim
-                    ? "Verified for today"
-                    : "Your next Elite Pass reward is waiting on the path"}
+                    ? "Claimed today"
+                    : "Come back tomorrow"}
               </Text>
             </View>
 
@@ -497,7 +497,7 @@ export function DailyRewardModal() {
               <View style={styles.claimButtonContent}>
                 {hasVerifiedClaim ? <Check color="#FFFFFF" size={18} strokeWidth={2.5} /> : null}
                 <Text style={styles.claimButtonText}>
-                  {hasVerifiedClaim ? "Verified" : isClaiming ? "Claiming..." : "Claim Reward"}
+                  {hasVerifiedClaim ? "Claimed" : isClaiming ? "Claiming..." : "Claim"}
                 </Text>
               </View>
             </Pressable>
