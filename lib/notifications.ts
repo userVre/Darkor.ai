@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
+import * as Device from "expo-device";
 import {Platform} from "react-native";
 
 import type * as ExpoNotifications from "expo-notifications";
@@ -10,14 +11,14 @@ const DECLINED_KEY = "homedecor:notifications-declined:v1";
 const IOS_PROVISIONAL_KEY = "homedecor:ios-provisional-notifications-at:v1";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
-const FREE_DAILY_DIAMOND_CAP = 2;
+const FREE_DAILY_DIAMOND_CAP = 3;
 
 export const DAILY_DIAMOND_REMINDER_ID = "daily-diamond-reminder";
 export const WEEKLY_PRO_TIP_ID = "weekly-pro-tip";
 
 const DAILY_DIAMOND_TITLE = "Your Diamond is ready ✦";
 const DAILY_DIAMOND_BODY = "Come back and claim your daily design credit before your streak breaks.";
-const DIAMOND_CAP_MESSAGE = "You have 2 Diamonds saved. Time to design something!";
+const DIAMOND_CAP_MESSAGE = "You have 3 Diamonds saved. Time to design something!";
 
 export const ARCHITECTURE_TIPS = [
   "Try Japandi style for small rooms — less furniture, more breathing space.",
@@ -77,13 +78,38 @@ type TieredNotificationArgs = ScheduleDiamondArgs & ScheduleProTipArgs & {
 
 let notificationsModulePromise: Promise<typeof ExpoNotifications | null> | null = null;
 let notificationHandlerConfigured = false;
+let unavailableWarningShown = false;
+
+function shouldUseNativeNotifications() {
+  return Platform.OS !== "web" && Constants.appOwnership !== "expo";
+}
+
+function warnNotificationsUnavailable(error?: unknown) {
+  if (!__DEV__ || unavailableWarningShown) {
+    return;
+  }
+
+  unavailableWarningShown = true;
+  console.warn("[Notifications] expo-notifications native module unavailable; using no-op fallback", error);
+}
 
 async function getNotificationsModule() {
+  if (!shouldUseNativeNotifications()) {
+    warnNotificationsUnavailable();
+    return null;
+  }
+
   if (!notificationsModulePromise) {
-    notificationsModulePromise = import("expo-notifications")
-      .then((module) => module)
+    notificationsModulePromise = (async () => {
+      try {
+        return await import("expo-notifications");
+      } catch (error) {
+        warnNotificationsUnavailable(error);
+        return null;
+      }
+    })()
       .catch((error) => {
-        console.warn("[Notifications] expo-notifications native module unavailable", error);
+        warnNotificationsUnavailable(error);
         return null;
       });
   }
@@ -137,6 +163,84 @@ async function setupNotificationChannel(Notifications: typeof ExpoNotifications)
     });
   }
 }
+
+export const safeNotifications = {
+  async scheduleLocalNotification(
+    request: ExpoNotifications.NotificationRequestInput,
+  ): Promise<string | undefined> {
+    try {
+      const Notifications = await getNotificationsModule();
+      if (!Notifications) {
+        return undefined;
+      }
+
+      return await Notifications.scheduleNotificationAsync(request);
+    } catch (error) {
+      console.warn("[Notifications] Unable to schedule local notification", error);
+      return undefined;
+    }
+  },
+
+  async cancelNotification(identifier: string): Promise<void> {
+    try {
+      const Notifications = await getNotificationsModule();
+      if (!Notifications) {
+        return;
+      }
+
+      await Notifications.cancelScheduledNotificationAsync(identifier);
+    } catch (error) {
+      console.warn("[Notifications] Unable to cancel notification", error);
+    }
+  },
+
+  async requestPermissions(
+    options?: ExpoNotifications.NotificationPermissionsRequest,
+  ): Promise<{granted: boolean; status?: ExpoNotifications.PermissionStatus}> {
+    try {
+      const Notifications = await getNotificationsModule();
+      if (!Notifications) {
+        return {granted: false};
+      }
+
+      const result = await Notifications.requestPermissionsAsync(options);
+      return {granted: isPermissionGranted(result, Notifications), status: result.status};
+    } catch (error) {
+      console.warn("[Notifications] Unable to request notification permissions", error);
+      return {granted: false};
+    }
+  },
+
+  async addNotificationResponseReceivedListener(
+    listener: (response: ExpoNotifications.NotificationResponse) => void,
+  ): Promise<{remove: () => void} | null> {
+    try {
+      const Notifications = await getNotificationsModule();
+      if (!Notifications) {
+        return null;
+      }
+
+      return Notifications.addNotificationResponseReceivedListener(listener);
+    } catch (error) {
+      console.warn("[Notifications] Response listener unavailable", error);
+      return null;
+    }
+  },
+
+  async getLastNotificationResponseAsync(): Promise<ExpoNotifications.NotificationResponse | null> {
+    try {
+      const Notifications = await getNotificationsModule();
+      if (!Notifications) {
+        return null;
+      }
+
+      return await Notifications.getLastNotificationResponseAsync();
+    } catch (error) {
+      console.warn("[Notifications] Last response unavailable", error);
+      return null;
+    }
+  },
+};
 
 async function getLocalDeclined() {
   try {
@@ -202,16 +306,7 @@ async function canScheduleWithoutPrompt(notificationsDeclined?: boolean | null) 
 }
 
 async function cancelByIdentifier(identifier: string) {
-  try {
-    const Notifications = await getNotificationsModule();
-    if (!Notifications) {
-      return;
-    }
-
-    await Notifications.cancelScheduledNotificationAsync(identifier);
-  } catch (error) {
-    console.warn("[Notifications] Unable to cancel scheduled notification", error);
-  }
+  await safeNotifications.cancelNotification(identifier);
 }
 
 async function hasScheduledIdentifier(identifier: string) {
@@ -247,33 +342,50 @@ async function saveGrantedPushToken(
     return;
   }
 
-  let expoPushToken: string | undefined;
-  let devicePushToken: string | undefined;
-
   try {
-    const projectId = getProjectId();
-    const token = await Notifications.getExpoPushTokenAsync(projectId ? {projectId} : undefined);
-    expoPushToken = token.data;
-  } catch (error) {
-    console.warn("[Notifications] Unable to fetch Expo push token", error);
-  }
+    let expoPushToken: string | undefined;
+    let devicePushToken: string | undefined;
 
-  try {
-    const token = await Notifications.getDevicePushTokenAsync();
-    devicePushToken = typeof token.data === "string" ? token.data : JSON.stringify(token.data);
-  } catch (error) {
-    console.warn("[Notifications] Unable to fetch device push token", error);
-  }
+    if (!Device.isDevice) {
+      await savePreferences({
+        anonymousId: anonymousId ?? undefined,
+        expoPushToken,
+        devicePushToken,
+        notificationsDeclined: false,
+        notificationsPermissionRequestedAt: Date.now(),
+        notificationsPermissionGrantedAt: Date.now(),
+        notificationPlatform: Platform.OS,
+      });
+      return;
+    }
 
-  await savePreferences({
-    anonymousId: anonymousId ?? undefined,
-    expoPushToken,
-    devicePushToken,
-    notificationsDeclined: false,
-    notificationsPermissionRequestedAt: Date.now(),
-    notificationsPermissionGrantedAt: Date.now(),
-    notificationPlatform: Platform.OS,
-  });
+    try {
+      const projectId = getProjectId();
+      const token = await Notifications.getExpoPushTokenAsync(projectId ? {projectId} : undefined);
+      expoPushToken = token.data;
+    } catch (error) {
+      console.warn("[Notifications] Unable to fetch Expo push token", error);
+    }
+
+    try {
+      const token = await Notifications.getDevicePushTokenAsync();
+      devicePushToken = typeof token.data === "string" ? token.data : JSON.stringify(token.data);
+    } catch (error) {
+      console.warn("[Notifications] Unable to fetch device push token", error);
+    }
+
+    await savePreferences({
+      anonymousId: anonymousId ?? undefined,
+      expoPushToken,
+      devicePushToken,
+      notificationsDeclined: false,
+      notificationsPermissionRequestedAt: Date.now(),
+      notificationsPermissionGrantedAt: Date.now(),
+      notificationPlatform: Platform.OS,
+    });
+  } catch (error) {
+    console.warn("[Notifications] Unable to save granted push token", error);
+  }
 }
 
 async function persistDenied(
@@ -336,7 +448,7 @@ export async function scheduleOrUpdateDiamondReminder(args: ScheduleDiamondArgs 
     return {scheduled: false, reason: "native-module-unavailable" as const};
   }
 
-  await Notifications.scheduleNotificationAsync({
+  await safeNotifications.scheduleLocalNotification({
     identifier: DAILY_DIAMOND_REMINDER_ID,
     content: {
       title: DAILY_DIAMOND_TITLE,
@@ -383,7 +495,7 @@ export async function scheduleOrUpdateProTip(args: ScheduleProTipArgs = {}) {
   const tip = ARCHITECTURE_TIPS[currentTipIndex % ARCHITECTURE_TIPS.length] ?? ARCHITECTURE_TIPS[0];
   const slot = getRandomWeeklySlot();
 
-  await Notifications.scheduleNotificationAsync({
+  await safeNotifications.scheduleLocalNotification({
     identifier: WEEKLY_PRO_TIP_ID,
     content: {
       title: "Architecture Tip",

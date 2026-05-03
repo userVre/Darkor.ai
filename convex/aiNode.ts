@@ -555,7 +555,7 @@ async function applyHomeDecorWatermark(blob: Blob) {
     const metadata = await sharp(imageBuffer, { failOn: "none" }).metadata();
     const width = Math.max(Math.round(metadata.width ?? FREE_MAX_IMAGE_DIMENSION), 1);
     const height = Math.max(Math.round(metadata.height ?? FREE_MAX_IMAGE_DIMENSION), 1);
-    const watermarkSvg = buildDiagonalWatermarkSvg(width, height);
+    const watermarkSvg = buildCornerWatermarkBadgeSvg(width, height);
     const watermarked = await sharp(imageBuffer, { failOn: "none" })
       .composite([{ input: Buffer.from(watermarkSvg), blend: "over" }])
       .jpeg({ quality: 90, mozjpeg: true })
@@ -570,28 +570,25 @@ async function applyHomeDecorWatermark(blob: Blob) {
   }
 }
 
-function buildDiagonalWatermarkSvg(width: number, height: number) {
-  const fontSize = Math.max(24, Math.round(width * 0.04));
-  const xStep = Math.max(fontSize * 8, 180);
-  const yStep = Math.max(fontSize * 3, 90);
-  const diagonal = Math.ceil(Math.sqrt(width * width + height * height));
-  const startX = -diagonal;
-  const endX = width + diagonal;
-  const startY = -diagonal;
-  const endY = height + diagonal;
-  const textNodes: string[] = [];
-
-  for (let y = startY; y <= endY; y += yStep) {
-    for (let x = startX; x <= endX; x += xStep) {
-      textNodes.push(`<text x="${x}" y="${y}">${WATERMARK_TEXT}</text>`);
-    }
-  }
+function buildCornerWatermarkBadgeSvg(width: number, height: number) {
+  const shortSide = Math.min(width, height);
+  const fontSize = Math.max(14, Math.min(22, Math.round(shortSide * 0.018)));
+  const paddingX = Math.round(fontSize * 0.8);
+  const paddingY = Math.round(fontSize * 0.48);
+  const badgeWidth = Math.round(WATERMARK_TEXT.length * fontSize * 0.62 + paddingX * 2);
+  const badgeHeight = fontSize + paddingY * 2;
+  const margin = Math.max(14, Math.round(shortSide * 0.024));
+  const radius = Math.max(6, Math.round(fontSize * 0.45));
+  const x = Math.max(margin, width - badgeWidth - margin);
+  const y = Math.max(margin, height - badgeHeight - margin);
+  const textX = x + paddingX;
+  const textY = y + badgeHeight / 2;
 
   return [
     `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`,
-    `<g transform="rotate(-35 ${width / 2} ${height / 2})" opacity="0.3" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="700">`,
-    textNodes.join(""),
-    "</g>",
+    `<rect x="${x}" y="${y}" width="${badgeWidth}" height="${badgeHeight}" rx="${radius}" fill="#05070A" opacity="0.72"/>`,
+    `<rect x="${x + 0.5}" y="${y + 0.5}" width="${badgeWidth - 1}" height="${badgeHeight - 1}" rx="${radius}" fill="none" stroke="#FFFFFF" stroke-opacity="0.18"/>`,
+    `<text x="${textX}" y="${textY}" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="600" dominant-baseline="middle">${WATERMARK_TEXT}</text>`,
     "</svg>",
   ].join("");
 }

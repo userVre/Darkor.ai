@@ -41,7 +41,7 @@ syncAppLanguageWithSystem,
 useAppLanguagePreference,
 useLocalizedAppFonts,
 } from "../lib/i18n";
-import {scheduleOrUpdateProTip, syncTieredNotifications} from "../lib/notifications";
+import {safeNotifications, scheduleOrUpdateProTip, syncTieredNotifications} from "../lib/notifications";
 import {getDirectionalTextAlign, reloadAppForLayoutDirection} from "../lib/i18n/rtl";
 import {consumeReferralCode, setReferralCode} from "../lib/referral";
 import {
@@ -476,19 +476,13 @@ function NotificationResponseGate() {
       router.push(route as any);
     };
 
-    void import("expo-notifications")
-      .then(async (Notifications) => {
-        if (!mounted) {
-          return;
-        }
-
-        subscription = Notifications.addNotificationResponseReceivedListener(handleRoute);
-        const lastResponse = await Notifications.getLastNotificationResponseAsync();
-        if (mounted && lastResponse) {
-          handleRoute(lastResponse);
-        }
-      })
-      .catch((error) => console.warn("[Notifications] Response listener unavailable", error));
+    void (async () => {
+      subscription = await safeNotifications.addNotificationResponseReceivedListener(handleRoute);
+      const lastResponse = await safeNotifications.getLastNotificationResponseAsync();
+      if (mounted && lastResponse) {
+        handleRoute(lastResponse);
+      }
+    })();
 
     return () => {
       mounted = false;

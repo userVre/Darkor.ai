@@ -98,6 +98,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   const scanOpacity = useSharedValue(1);
   const beforeOpacity = useSharedValue(1);
   const afterOpacity = useSharedValue(0);
+  const liquidProgress = useSharedValue(0.02);
   const hasRevealedResult = Boolean(revealedImageUri);
 
   const subtitleSignature = activeSubtitlePhrases.join("|");
@@ -158,6 +159,13 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   }, [hasRevealedResult]);
 
   useEffect(() => {
+    liquidProgress.value = withTiming(Math.max(progress, 0.02), {
+      duration: 520,
+      easing: Easing.bezier(0.25, 0.46, 0.45, 0.94),
+    });
+  }, [liquidProgress, progress]);
+
+  useEffect(() => {
     if (!hasRevealedResult) {
       scanOpacity.value = withTiming(1, { duration: 180 });
       beforeOpacity.value = withTiming(1, { duration: 180 });
@@ -211,6 +219,10 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
 
   const afterImageStyle = useAnimatedStyle(() => ({
     opacity: afterOpacity.value,
+  }));
+
+  const liquidProgressStyle = useAnimatedStyle(() => ({
+    width: `${liquidProgress.value * 100}%`,
   }));
 
   return (
@@ -285,7 +297,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
 
         <View style={styles.bottomContent}>
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${Math.max(progress * 100, 2)}%` }]} />
+            <Animated.View style={[styles.progressFill, liquidProgressStyle]} />
           </View>
 
           <View style={styles.copyBlock}>

@@ -4,14 +4,14 @@ export const YEAR_MS = 365 * DAY_MS;
 export const MONTHLY_RESET_MS = 30 * DAY_MS;
 export const FREE_IMAGE_LIMIT = 1;
 export const INITIAL_FREE_DIAMONDS = 1;
-export const FREE_DAILY_DIAMOND_CAP = 2;
+export const FREE_DAILY_DIAMOND_CAP = 3;
 export const WEEKLY_IMAGE_LIMIT = Number.MAX_SAFE_INTEGER;
 export const YEARLY_MONTHLY_IMAGE_LIMIT = Number.MAX_SAFE_INTEGER;
 export const FREE_REFILL_INTERVAL_MS = DAY_MS;
 export const ELITE_PASS_GRACE_MS = 26 * 60 * 60 * 1000;
 export const ELITE_PASS_PRO_MS = 2 * DAY_MS;
 export const ELITE_PASS_MILESTONE_DAY = 7;
-export const ELITE_PASS_REWARD_DIAMONDS = 1;
+export const ELITE_PASS_REWARD_DIAMONDS = 3;
 
 export type SubscriptionType = "weekly" | "yearly" | "free";
 export type SubscriptionEntitlement = "weekly_pro" | "annual_pro" | "free";

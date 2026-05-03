@@ -464,7 +464,8 @@ async function claimDailyDiamondHandler(ctx: any, args: { anonymousId?: string }
   const streakWasBroken = lastClaimAt > 0 && elapsedSinceClaim > ELITE_PASS_GRACE_MS;
   const nextStreakCount = resolveClaimStreakCount(state.streakCount, lastClaimAt, now);
   const elitePassActivated = isEliteMilestoneDay(nextStreakCount);
-  const creditsAdded = 1;
+  const rewardDiamonds = ELITE_MILESTONE_REWARDS[nextStreakCount] ?? 1;
+  const creditsAdded = Math.min(rewardDiamonds, FREE_DAILY_DIAMOND_CAP - currentDiamondBalance);
   const nextDiamondBalance = Math.min(currentDiamondBalance + creditsAdded, FREE_DAILY_DIAMOND_CAP);
   const nextCredits = currentCredits + creditsAdded;
   const proTrialExpiresAt = elitePassActivated

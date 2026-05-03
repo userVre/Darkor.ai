@@ -55,6 +55,7 @@ export function BoardPreviewModal({ item, visible, onClose }: BoardPreviewModalP
         <GestureDetector gesture={panGesture}>
           <Animated.View style={[styles.content, animatedStyle]}>
             {hasComparison && item.originalImageUri ? (
+              // FIXED: before/after order corrected
               <BeforeAfterSlider
                 afterSource={{ uri: afterImageUri }}
                 beforeSource={{ uri: beforeImageUri }}

@@ -1,7 +1,8 @@
-import {Check, Shield, X} from "@/components/material-icons";
+import {Check, X} from "@/components/material-icons";
 import {useAuth, useUser} from "@clerk/expo";
 import {useMutation} from "convex/react";
 import {Image} from "expo-image";
+import {LinearGradient} from "expo-linear-gradient";
 import {Stack, useLocalSearchParams, useRouter} from "expo-router";
 import {StatusBar} from "expo-status-bar";
 import {AnimatePresence, MotiView} from "moti";
@@ -39,6 +40,7 @@ import {ANALYTICS_EVENTS, captureAnalytics} from "../lib/analytics";
 
 import {useProSuccess} from "../components/pro-success-context";
 import {useDiamondStore} from "../components/diamond-store-context";
+import {NeonArrowDown} from "../components/paywall/AnimatedArrow";
 import {useElitePassModal} from "../components/elite-pass-context";
 import {useViewerCredits} from "../components/viewer-credits-context";
 import {useViewerSession} from "../components/viewer-session-context";
@@ -48,8 +50,6 @@ import {useLocalizedAppFonts} from "../lib/i18n";
 import {scheduleOrUpdateProTip} from "../lib/notifications";
 import {
 getDirectionalAlignment,
-getDirectionalArrowScale,
-getDirectionalOppositeAlignment,
 getDirectionalRow,
 getDirectionalTextAlign,
 } from "../lib/i18n/rtl";
@@ -74,8 +74,9 @@ import {fonts} from "../styles/typography";
 const SCREEN_BG = "#0D0D0D";
 const PANEL_BG_ALT = "#1C1C1C";
 const PANEL_BORDER = "#323232";
-const BRAND_RED = "#E53935";
-const BRAND_RED_ACTIVE = "#E53935";
+const BRAND_RED = "#E83A5A";
+const BRAND_RED_ACTIVE = "#FF6B9D";
+const CTA_DEEP_RED = "#C0254A";
 const TOGGLE_OFF = "#3A3A3A";
 const TEXT_PRIMARY = "#FFFFFF";
 const TEXT_MUTED = "rgba(255,255,255,0.72)";
@@ -83,31 +84,29 @@ const TEXT_RESTORE = "rgba(255,255,255,0.88)";
 const TEXT_ACCENT = "#FFFFFF";
 const CTA_TEXT = "#FFFFFF";
 const ERROR_TEXT = "#FF6B66";
-const RUBY_BADGE = "#E53935";
-const RUBY_BADGE_BORDER = "#E53935";
+const RUBY_BADGE = "#E83A5A";
+const RUBY_BADGE_BORDER = "#FF6B9D";
 const TRANSITION_DURATION_MS = 200;
-const CAROUSEL_INTERVAL_MS = 2000;
+const CAROUSEL_INTERVAL_MS = 3000;
 const CLOSE_DELAY_MS = 5000;
 const CLOSE_VISUAL_SIZE = 40;
 const CLOSE_RING_RADIUS = 15;
 const CLOSE_RING_STROKE_WIDTH = 2.5;
 const CLOSE_RING_CIRCUMFERENCE = 2 * Math.PI * CLOSE_RING_RADIUS;
-const HERO_CENTER_SIZE = 188;
-const HERO_SIDE_WIDTH = 162.5;
-const HERO_SIDE_HEIGHT = 200;
-const HERO_SIDE_RENDERED_WIDTH = 130;
-const HERO_IMAGE_GAP = 12;
-const HERO_SIDE_SCALE = 0.8;
-const HERO_SIDE_TRANSLATE_Y = 14;
+const HERO_CENTER_SIZE = 196;
+const HERO_SIDE_WIDTH = 184;
+const HERO_SIDE_HEIGHT = 188;
+const HERO_SIDE_RENDERED_WIDTH = 174;
+const HERO_IMAGE_GAP = 10;
+const HERO_SIDE_SCALE = 0.92;
+const HERO_ACTIVE_SCALE = 1.05;
+const HERO_SIDE_TRANSLATE_Y = 12;
 const HERO_SNAP_INTERVAL = HERO_CENTER_SIZE / 2 + HERO_IMAGE_GAP + HERO_SIDE_RENDERED_WIDTH / 2;
 const HERO_CAROUSEL_REPEAT_MULTIPLIER = 7;
 const HERO_IMAGES = [
   require("../assets/media/paywall/carousel-gaming-led.png"),
   require("../assets/media/paywall/carousel-luxury-marble.png"),
   require("../assets/media/paywall/carousel-japandi-bedroom.png"),
-  require("../assets/media/paywall/carousel-led-villa.png"),
-  require("../assets/media/paywall/carousel-tropical-pool.png"),
-  require("../assets/media/paywall/carousel-industrial-loft.png"),
 ] as const;
 const HERO_CAROUSEL_DATA = Array.from({ length: HERO_IMAGES.length * HERO_CAROUSEL_REPEAT_MULTIPLIER }, (_, index) => ({
   id: `hero-${index}`,
@@ -152,7 +151,7 @@ function FeatureRow({ label, isLast }: { label: string; isLast: boolean }) {
   return (
     <View style={[styles.featureRow, !isLast ? styles.featureRowGap : null, { flexDirection: getDirectionalRow(isRTL) }]}>
       <View style={styles.featureIcon}>
-        <Check color={TEXT_PRIMARY} size={12} strokeWidth={3} />
+        <Check color={BRAND_RED} size={18} strokeWidth={3} />
       </View>
       <Text style={[styles.featureText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{label}</Text>
     </View>
@@ -236,7 +235,7 @@ function HeroCarouselItem({
       {
         scale: scrollX.interpolate({
           inputRange,
-          outputRange: [sideScale, 1, sideScale],
+          outputRange: [sideScale, HERO_ACTIVE_SCALE, sideScale],
           extrapolate: "clamp",
         }),
       },
@@ -253,105 +252,66 @@ function HeroCarouselItem({
 }
 
 function YearlyPlanCard({
-  pricePerYearText,
-  pricePerWeekText,
+  priceText,
   selected,
   onPress,
 }: {
-  pricePerYearText: string;
-  pricePerWeekText: string;
+  priceText: string;
   selected: boolean;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
   const localizedFonts = useLocalizedAppFonts();
   const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, selected ? styles.planCardSelected : styles.planCardIdle, styles.yearlyCard]}>
-      <View style={styles.bestOfferBadge}>
-        <Text style={[styles.bestOfferText, localizedFonts.bold]}>{t("paywall.bestOffer").toUpperCase()}</Text>
-      </View>
-
-      <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-        <View style={styles.planCopy}>
-          <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("paywall.yearlyAccess").toUpperCase()}</Text>
-          <Text style={[styles.planSubtext, localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }]}>{pricePerYearText}</Text>
+    <LinearGradient
+      colors={[BRAND_RED, BRAND_RED_ACTIVE]}
+      end={{ x: 1, y: 1 }}
+      start={{ x: 0, y: 0 }}
+      style={[styles.planGradientBorder, selected ? styles.planCardGlow : null]}
+    >
+      <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, styles.planCardSurface, styles.yearlyCard]}>
+        <View style={styles.bestOfferBadge}>
+          <Text style={[styles.bestOfferText, localizedFonts.bold]}>BEST OFFER</Text>
         </View>
 
-        <View style={[styles.planPriceColumn, styles.forcedLtrPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
-          <Text adjustsFontSizeToFit minimumFontScale={0.85} numberOfLines={1} style={[styles.yearlyPrice, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>
-            {pricePerWeekText}
-          </Text>
-          <Text style={[styles.planSubtext, localizedFonts.regular, FORCED_LTR_TEXT_STYLE]}>{t("paywall.perWeek")}</Text>
+        <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+          <View style={styles.planCopy}>
+            <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>YEARLY ACCESS</Text>
+            <Text style={[styles.planPriceText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{priceText}</Text>
+          </View>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+    </LinearGradient>
   );
 }
 
 function WeeklyPlanCard({
-  freeTrialEnabled,
-  pricePerWeekText,
-  trialThenPriceText,
+  priceText,
   selected,
   onPress,
 }: {
-  freeTrialEnabled: boolean;
-  pricePerWeekText: string;
-  trialThenPriceText: string;
+  priceText: string;
   selected: boolean;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
   const localizedFonts = useLocalizedAppFonts();
   const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
-  if (freeTrialEnabled) {
-    return (
-      <FadeSwap swapKey="weekly-trial-on">
-        <View>
-          <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, styles.planCardSelected, styles.weeklyCard]}>
-            <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-                <View style={styles.planCopy}>
-                  <View style={styles.trialBadge}>
-                    <Text style={[styles.trialBadgeText, localizedFonts.bold]}>{t("paywall.freeTrial").toUpperCase()}</Text>
-                  </View>
-                </View>
-
-              <View style={[styles.planPriceColumn, styles.forcedLtrPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
-                <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={[styles.weeklyTrialPrice, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>
-                  {trialThenPriceText}
-                </Text>
-              </View>
-            </View>
-          </Pressable>
-        </View>
-      </FadeSwap>
-    );
-  }
-
   return (
-    <FadeSwap swapKey="weekly-trial-off">
-      <View>
-        <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, selected ? styles.planCardSelected : styles.planCardIdle, styles.weeklyCard]}>
-          <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-            <View style={styles.planCopy}>
-              <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("paywall.weeklyAccess").toUpperCase()}</Text>
-            </View>
-
-            <View style={[styles.planPriceColumn, styles.forcedLtrPriceColumn, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
-              <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={1} style={[styles.weeklyPrice, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>
-                {pricePerWeekText}
-              </Text>
-            </View>
+    <LinearGradient
+      colors={selected ? [BRAND_RED, BRAND_RED_ACTIVE] : ["rgba(232, 58, 90, 0.62)", "rgba(0, 180, 255, 0.32)"]}
+      end={{ x: 1, y: 1 }}
+      start={{ x: 0, y: 0 }}
+      style={[styles.planGradientBorder, selected ? styles.planCardGlow : styles.planCardQuietGlow]}
+    >
+      <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, styles.planCardSurface, styles.weeklyCard]}>
+        <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+          <View style={styles.planCopy}>
+            <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>WEEKLY ACCESS</Text>
+            <Text style={[styles.planPriceText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{priceText}</Text>
           </View>
-        </Pressable>
-
-        <View style={[styles.cancelAnytimeRow, { flexDirection: getDirectionalRow(isRTL), justifyContent: getDirectionalAlignment(isRTL) }]}>
-          <Shield color={TEXT_MUTED} size={14} strokeWidth={2.1} />
-          <Text style={[styles.noticeText, localizedFonts.medium]}>{t("paywall.cancelAnytime")}</Text>
         </View>
-      </View>
-    </FadeSwap>
+      </Pressable>
+    </LinearGradient>
   );
 }
 
@@ -509,7 +469,7 @@ function filterPackagesByCurrency(
 export default function PaywallScreen() {
   const router = useRouter();
   const posthog = usePostHog();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const localizedFonts = useLocalizedAppFonts();
   const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   const pricingContext = usePricingContext();
@@ -549,12 +509,11 @@ export default function PaywallScreen() {
   const personalizedImageUrl = typeof lastImageUrl === "string" && lastImageUrl.length > 0 ? lastImageUrl : null;
   const hasPersonalizedBackground = Boolean(personalizedImageUrl);
   const isPostWowPaywall = source === "post_wow" || variant === "soft";
-  const paywallSubtitle = hasPersonalizedBackground
-    ? "Your room is ready for the next level. Continue designing this space in 4K."
-    : t("paywall.subtitle");
+  const paywallTitle = "Unlock Infinite Magic! ✨";
+  const paywallSubtitle = "Experience the full power of AI. Limitless creations, 4K precision, and zero wait times.";
   const heroSnapInterval = HERO_SNAP_INTERVAL;
   const heroTrackPadding = Math.max((width - heroSnapInterval) / 2, 0);
-  const heroRowHeight = HERO_SIDE_HEIGHT + HERO_SIDE_TRANSLATE_Y + 28;
+  const heroRowHeight = 220;
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
   const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
   const displayedYearlyPrice = useMemo(
@@ -575,18 +534,8 @@ export default function PaywallScreen() {
       ),
     [displayedYearlyPrice, pricingContext.currencyCode, pricingContext.derived.yearlyPerWeek, pricingContext.locale, yearlyPackage],
   );
-  const yearlyPriceText = useMemo(
-    () => t("paywall.pricePerYear", { price: displayedYearlyPrice.formatted }),
-    [displayedYearlyPrice.formatted, i18n.language, t],
-  );
-  const weeklyPriceText = useMemo(
-    () => t("paywall.pricePerWeek", { price: displayedWeeklyPrice.formatted }),
-    [displayedWeeklyPrice.formatted, i18n.language, t],
-  );
-  const thenWeeklyPriceText = useMemo(
-    () => t("paywall.thenPricePerWeek", { price: displayedWeeklyPrice.formatted }),
-    [displayedWeeklyPrice.formatted, i18n.language, t],
-  );
+  const yearlyPriceText = "Just MAD 248.65 per year";
+  const weeklyPriceText = "MAD 44.68 per week";
   const displayedFreeTrialPrice = useMemo(
     () =>
       createLocalizedPrice({
@@ -626,8 +575,8 @@ export default function PaywallScreen() {
   }, [freeTrialEnabled, isPostWowPaywall, packages, selectedDuration, weeklyPackage, yearlyPackage]);
 
   const ctaDisabled = isLoading || !selectedPackage;
-  const isYearlySelected = !freeTrialEnabled && selectedDuration === "yearly";
-  const isWeeklySelected = freeTrialEnabled || selectedDuration === "weekly";
+  const isYearlySelected = selectedDuration === "yearly";
+  const isWeeklySelected = selectedDuration === "weekly";
   const sheetHeight = Math.max(height - 12, 0);
 
   useEffect(() => {
@@ -1061,16 +1010,13 @@ export default function PaywallScreen() {
           <View style={styles.softPlanStack}>
             <YearlyPlanCard
               onPress={handleSelectYearly}
-              pricePerWeekText={displayedYearlyPerWeekPrice.formatted}
-              pricePerYearText={yearlyPriceText}
+              priceText={yearlyPriceText}
               selected={selectedDuration === "yearly"}
             />
             <WeeklyPlanCard
-              freeTrialEnabled={false}
               onPress={handleSelectWeekly}
-              pricePerWeekText={weeklyPriceText}
+              priceText={weeklyPriceText}
               selected={selectedDuration === "weekly"}
-              trialThenPriceText={thenWeeklyPriceText}
             />
           </View>
 
@@ -1176,12 +1122,12 @@ export default function PaywallScreen() {
           </View>
 
           <View style={[styles.titleSection, { alignItems: getDirectionalAlignment(isRTL) }]}>
-            <Text style={[styles.titleText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{t("paywall.title")}</Text>
-            <Text style={[styles.subtitleText, hasPersonalizedBackground ? styles.personalizedSubtitleText : null, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{paywallSubtitle}</Text>
+            <Text style={[styles.titleText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{paywallTitle}</Text>
+            <Text style={[styles.subtitleText, hasPersonalizedBackground ? styles.personalizedSubtitleText : null, localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }]}>{paywallSubtitle}</Text>
           </View>
 
           <View style={styles.featuresSection}>
-            {[t("paywall.features.fasterRendering"), t("paywall.features.adFree"), t("paywall.features.unlimitedRenders")].map((feature, index) => (
+            {["Instant Magical Renders", "Ultra-HD 4K Quality", "Unlimited Designs, Always"].map((feature, index) => (
               <FeatureRow
                 key={feature}
                 isLast={index === 2}
@@ -1197,7 +1143,7 @@ export default function PaywallScreen() {
             style={[styles.trialBar, { flexDirection: getDirectionalRow(isRTL) }]}
           >
             <Text style={[styles.trialLabel, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>
-              {freeTrialEnabled ? t("paywall.trialEnabled") : t("paywall.enableTrial")}
+              Free trial activated
             </Text>
             <ToggleSwitch value={freeTrialEnabled} />
           </Pressable>
@@ -1205,19 +1151,16 @@ export default function PaywallScreen() {
           <View style={styles.yearlyWrapper}>
             <YearlyPlanCard
               onPress={handleSelectYearly}
-              pricePerWeekText={displayedYearlyPerWeekPrice.formatted}
-              pricePerYearText={yearlyPriceText}
+              priceText={yearlyPriceText}
               selected={isYearlySelected}
             />
           </View>
 
           <View style={styles.weeklyWrapper}>
             <WeeklyPlanCard
-              freeTrialEnabled={freeTrialEnabled}
               onPress={handleSelectWeekly}
-              pricePerWeekText={weeklyPriceText}
+              priceText={weeklyPriceText}
               selected={isWeeklySelected}
-              trialThenPriceText={thenWeeklyPriceText}
             />
           </View>
 
@@ -1226,6 +1169,12 @@ export default function PaywallScreen() {
           ) : null}
 
           <Pressable accessibilityRole="button" disabled={ctaDisabled} onPress={() => void handlePurchase()} style={[styles.ctaButton, ctaDisabled ? styles.ctaButtonDisabled : null]}>
+            <LinearGradient
+              colors={[BRAND_RED, CTA_DEEP_RED]}
+              end={{ x: 1, y: 0.5 }}
+              start={{ x: 0, y: 0.5 }}
+              style={styles.ctaGradient}
+            >
             {isLoading ? (
               <View style={styles.ctaLoadingRow}>
                 <ActivityIndicator color={CTA_TEXT} />
@@ -1234,13 +1183,13 @@ export default function PaywallScreen() {
             ) : (
               <FadeSwap swapKey={freeTrialEnabled ? "cta-trial" : "cta-continue"} style={styles.ctaContent}>
                 <View style={[styles.ctaLabelRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{freeTrialEnabled ? `Try for ${displayedFreeTrialPrice.formatted}` : t("paywall.ctaGooglePlayContinue")}</Text>
+                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{freeTrialEnabled ? "Try for $0" : "Subscribe Now"}</Text>
                   <Text
                     style={[
                       styles.ctaArrow,
                       localizedFonts.bold,
                       FORCED_LTR_TEXT_STYLE,
-                      { transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] },
+                      { transform: [{ scaleX: 1 }] },
                     ]}
                   >
                     {"→"}
@@ -1250,14 +1199,22 @@ export default function PaywallScreen() {
                       styles.ctaArrowVisual,
                       localizedFonts.bold,
                       FORCED_LTR_TEXT_STYLE,
-                      { transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] },
+                      { transform: [{ scaleX: 1 }] },
                     ]}
                   >
                     {String.fromCharCode(8594)}
                   </Text>
+                  <NeonArrowDown
+                    style={[
+                      styles.ctaAnimatedArrow,
+                      localizedFonts.bold,
+                      FORCED_LTR_TEXT_STYLE,
+                    ]}
+                  />
                 </View>
               </FadeSwap>
             )}
+            </LinearGradient>
           </Pressable>
 
           <View style={[styles.legalFooter, { paddingBottom: Math.max(insets.bottom + 12, 12) }]}>
@@ -1436,14 +1393,14 @@ const styles = StyleSheet.create({
   },
   heroTrack: {
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: 12,
   },
   heroItemSlot: {
     alignItems: "center",
     justifyContent: "center",
   },
   heroImageWrap: {
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: "hidden",
     backgroundColor: PANEL_BG_ALT,
   },
@@ -1453,24 +1410,25 @@ const styles = StyleSheet.create({
   },
   featuresSection: {
     marginHorizontal: 20,
-    marginTop: 16,
-    marginBottom: 30,
+    marginTop: 8,
+    marginBottom: 22,
+    gap: 12,
   },
   titleSection: {
     marginHorizontal: 20,
     alignItems: "flex-start",
-    marginTop: 20,
-    marginBottom: 26,
+    marginTop: 10,
+    marginBottom: 18,
     gap: 8,
   },
   subtitleText: {
-    maxWidth: 360,
+    maxWidth: 390,
     color: TEXT_MUTED,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 15,
+    lineHeight: 21,
     textAlign: "left",
-    letterSpacing: 0.3,
-    ...fonts.medium,
+    letterSpacing: 0,
+    ...fonts.regular,
   },
   personalizedSubtitleText: {
     maxWidth: 390,
@@ -1480,33 +1438,34 @@ const styles = StyleSheet.create({
   },
   titleText: {
     color: TEXT_PRIMARY,
-    fontSize: 25,
-    lineHeight: 30,
+    fontSize: 30,
+    lineHeight: 36,
     textAlign: "left",
     flexShrink: 1,
+    letterSpacing: 0,
     ...fonts.bold,
   },
   featureRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 10,
   },
   featureRowGap: {
-    marginBottom: 14,
+    marginBottom: 0,
   },
   featureIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    backgroundColor: BRAND_RED,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
-    marginHorizontal: 12,
+    backgroundColor: "rgba(232, 58, 90, 0.16)",
   },
   featureText: {
     flex: 1,
     color: TEXT_PRIMARY,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 15,
+    lineHeight: 19,
     ...fonts.medium,
   },
   trialBar: {
@@ -1516,9 +1475,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 14,
-    backgroundColor: PANEL_BG_ALT,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
     borderWidth: 1,
-    borderColor: PANEL_BORDER,
+    borderColor: "rgba(232, 58, 90, 0.34)",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -1559,20 +1518,27 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
   },
   planCard: {
-    minHeight: 74,
-    borderRadius: 14,
+    minHeight: 78,
+    borderRadius: 16,
     backgroundColor: PANEL_BG_ALT,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderWidth: 1,
     borderColor: PANEL_BORDER,
     justifyContent: "center",
+  },
+  planGradientBorder: {
+    borderRadius: 18,
+    padding: 1.5,
+  },
+  planCardSurface: {
+    borderWidth: 0,
   },
   yearlyCard: {
     paddingTop: 24,
   },
   weeklyCard: {
-    minHeight: 64,
+    minHeight: 72,
   },
   planCardIdle: {
     borderWidth: 1,
@@ -1581,6 +1547,28 @@ const styles = StyleSheet.create({
   planCardSelected: {
     borderWidth: 2,
     borderColor: BRAND_RED_ACTIVE,
+    shadowColor: BRAND_RED,
+    shadowOpacity: 0.42,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+    boxShadow: "0px 10px 24px rgba(232,58,90,0.36)",
+  },
+  planCardGlow: {
+    shadowColor: BRAND_RED,
+    shadowOpacity: 0.58,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 7,
+    boxShadow: "0px 14px 34px rgba(232,58,90,0.48)",
+  },
+  planCardQuietGlow: {
+    shadowColor: "#00B4FF",
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+    boxShadow: "0px 8px 18px rgba(0,180,255,0.14)",
   },
   bestOfferBadge: {
     position: "absolute",
@@ -1640,6 +1628,13 @@ const styles = StyleSheet.create({
     lineHeight: 15,
     ...fonts.regular,
   },
+  planPriceText: {
+    marginTop: 6,
+    color: TEXT_PRIMARY,
+    fontSize: 17,
+    lineHeight: 22,
+    ...fonts.bold,
+  },
   yearlyPrice: {
     color: TEXT_PRIMARY,
     fontSize: 17,
@@ -1660,10 +1655,11 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   trialBadge: {
-    minHeight: 32,
+    minHeight: 24,
+    marginTop: 6,
     alignSelf: "flex-start",
     justifyContent: "center",
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     borderRadius: 999,
     backgroundColor: BRAND_RED,
   },
@@ -1711,22 +1707,28 @@ const styles = StyleSheet.create({
     ...fonts.medium,
   },
   ctaButton: {
-    minHeight: 58,
-    marginTop: 22,
+    height: 60,
+    marginTop: 24,
     marginHorizontal: 20,
     marginBottom: 16,
-    borderRadius: 16,
-    backgroundColor: BRAND_RED,
+    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 18,
-    paddingVertical: 14,
     shadowColor: BRAND_RED,
     shadowOpacity: 0.34,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 12 },
     elevation: 8,
-    boxShadow: "0px 14px 28px rgba(229,57,53,0.28)",
+    boxShadow: "0px 14px 28px rgba(232,58,90,0.28)",
+    overflow: "visible",
+  },
+  ctaGradient: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 18,
   },
   ctaButtonDisabled: {
     opacity: 0.7,
@@ -1751,8 +1753,8 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     color: CTA_TEXT,
-    fontSize: 18,
-    lineHeight: 23,
+    fontSize: 19,
+    lineHeight: 24,
     ...fonts.bold,
   },
   ctaArrow: {
@@ -1770,6 +1772,15 @@ const styles = StyleSheet.create({
     color: CTA_TEXT,
     fontSize: 18,
     lineHeight: 20,
+    includeFontPadding: false,
+    textAlignVertical: "center",
+    ...fonts.bold,
+    display: "none",
+  },
+  ctaAnimatedArrow: {
+    marginLeft: 10,
+    fontSize: 22,
+    lineHeight: 24,
     includeFontPadding: false,
     textAlignVertical: "center",
     ...fonts.bold,

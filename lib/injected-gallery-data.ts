@@ -113,12 +113,13 @@ export const GARDEN_SECONDARY_AFTER_SCENES: InjectedGalleryImage[] = [
 ];
 
 export const INTERIOR_WIZARD_EXAMPLE_PHOTOS: WizardExamplePhoto[] = [
-  makePhoto("interior-kitchen", "Kitchen", HOME_CORE_AFTER_SCENES[0].source),
-  makePhoto("interior-living-room", "Living Room", HOME_CORE_AFTER_SCENES[1].source),
-  makePhoto("interior-bedroom", "Bedroom", HOME_CORE_AFTER_SCENES[2].source),
-  makePhoto("interior-bathroom", "Bathroom", HOME_CORE_AFTER_SCENES[3].source),
-  makePhoto("interior-gaming-room", "Gaming Room", HOME_FLEX_AFTER_SCENES[1].source),
-  makePhoto("interior-home-office", "Home Office", HOME_CORE_AFTER_SCENES[6].source),
+  // FIXED: before/after order corrected
+  makePhoto("interior-empty-room", "Empty Room", require("../assets/media/examples/interior/interior-before-empty-room.jpg")),
+  makePhoto("interior-messy-lounge", "Living Room", require("../assets/media/examples/interior/interior-before-messy-lounge.jpg")),
+  makePhoto("interior-worn-reading-room", "Bedroom", require("../assets/media/examples/interior/interior-before-worn-reading-room.jpg")),
+  makePhoto("interior-empty-kitchen", "Kitchen", require("../assets/media/examples/interior/interior-before-empty-kitchen.jpg")),
+  makePhoto("interior-damaged-room", "Bathroom", require("../assets/media/examples/interior/interior-before-damaged-room.jpg")),
+  makePhoto("interior-outdated-kitchen", "Home Office", require("../assets/media/examples/interior/interior-before-outdated-kitchen.jpg")),
 ];
 
 export const EXTERIOR_WIZARD_EXAMPLE_PHOTOS: WizardExamplePhoto[] = [

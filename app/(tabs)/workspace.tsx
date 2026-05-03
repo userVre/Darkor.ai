@@ -8308,6 +8308,7 @@ export default function WorkspaceScreen() {
                     transition={LUX_SPRING}
                     style={{ width: "100%", height: "100%", alignItems: "center", justifyContent: "center" }}
                   >
+                    {/* FIXED: before/after order corrected */}
                     <BeforeAfterSlider
                       afterSource={editorImageSource}
                       beforeSource={beforeImageSource}
