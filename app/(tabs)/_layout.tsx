@@ -112,7 +112,7 @@ export default function TabsLayout() {
         headerShown: false,
         lazy: true,
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: DS.colors.textPrimary,
+        tabBarActiveTintColor: DS.colors.accent,
         tabBarInactiveTintColor: DS.colors.textSecondary,
         tabBarButton: (props) => <TabBarButton {...props} />,
         tabBarItemStyle: {

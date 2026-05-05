@@ -1,7 +1,9 @@
 import {useMutation} from "convex/react";
 import {X} from "@/components/material-icons";
 import * as Haptics from "expo-haptics";
+import {LinearGradient} from "expo-linear-gradient";
 import {type ReactNode, useEffect, useMemo, useRef, useState} from "react";
+import {useTranslation} from "react-i18next";
 import {Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions} from "react-native";
 import Animated, {
   Easing,
@@ -15,22 +17,24 @@ import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {scheduleOrUpdateDiamondReminder} from "../lib/notifications";
 import {fonts} from "../styles/typography";
-import {DiamondRewardIcon, DayNode, type DayNodeState} from "./elitepass/DayNode";
+import {DayNode, type DayNodeState} from "./elitepass/DayNode";
 import {ProgressPath} from "./elitepass/ProgressPath";
-import {ElitePassFlameIcon} from "./diamond-credit-pill";
+import {ElitePassLineIcon} from "./diamond-credit-pill";
 import {useElitePassModal} from "./elite-pass-context";
 import {useViewerCredits} from "./viewer-credits-context";
 import {useViewerSession} from "./viewer-session-context";
 
 const ELITE_PASS_DAYS = 7;
-const BLUE = "#2F80FF";
-const BLUE_LIGHT = "#8FD3FF";
-const RED = "#FF4D5E";
-const STANDARD_SLOT_HEIGHT = 64;
-const JACKPOT_SLOT_HEIGHT = 118;
+const WHITE = "#FFFFFF";
+const TEXT = "#000000";
+const SECONDARY = "#6B7280";
+const ACCENT_PURPLE = "#7B61FF";
+const ACCENT_BLUE = "#5AC8FA";
+const STANDARD_SLOT_HEIGHT = 82;
+const JACKPOT_SLOT_HEIGHT = 100;
 const NODE_OFFSETS = [0, 0, 0, 0, 0, 0, 0];
-const CLAIM_CONFETTI_COLORS = [BLUE_LIGHT, BLUE, "#2ECC71", "#FFFFFF"];
-const REVEAL_CONFETTI_COLORS = [RED, BLUE, BLUE_LIGHT, "#FFFFFF"];
+const CLAIM_CONFETTI_COLORS = [ACCENT_PURPLE, ACCENT_BLUE, WHITE, "#EEF0F4"];
+const REVEAL_CONFETTI_COLORS = [ACCENT_PURPLE, ACCENT_BLUE, "#C7D2FE", WHITE];
 
 const CLAIM_CONFETTI_PIECES = Array.from({length: 76}, (_, index) => {
   const angle = (index / 76) * Math.PI * 2;
@@ -98,12 +102,42 @@ function BattlePassBackdrop() {
       pointerEvents="none"
       style={styles.backdrop}
     >
-      <View style={[styles.archPanel, styles.archPanelTop]} />
-      <View style={[styles.archPanel, styles.archPanelMid]} />
-      <View style={[styles.archPanel, styles.archPanelBottom]} />
-      <View style={styles.blueWash} />
-      <View style={styles.gridLineA} />
-      <View style={styles.gridLineB} />
+      <View style={StyleSheet.absoluteFill} />
+    </View>
+  );
+}
+
+function ElitePassProgressHeader({currentDay}: {currentDay: number}) {
+  const {t} = useTranslation();
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = withTiming(currentDay / ELITE_PASS_DAYS, {
+      duration: 620,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [currentDay, progress]);
+
+  const fillStyle = useAnimatedStyle(() => ({
+    transform: [{scaleX: progress.value}],
+  }));
+
+  return (
+    <View style={styles.progressPanel}>
+      <View style={styles.progressMetaRow}>
+        <Text style={styles.progressTitle}>PROGRESSION QUOTIDIENNE</Text>
+        <Text style={styles.progressCount}>{t("elitePass.progressCount", {current: currentDay, total: ELITE_PASS_DAYS})}</Text>
+      </View>
+      <View accessibilityLabel={t("elitePass.progressA11y", {current: currentDay, total: ELITE_PASS_DAYS})} style={styles.progressTrack}>
+        <Animated.View style={[styles.progressFill, fillStyle]}>
+          <LinearGradient
+            colors={[ACCENT_PURPLE, ACCENT_BLUE]}
+            start={{x: 0, y: 0.5}}
+            end={{x: 1, y: 0.5}}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      </View>
     </View>
   );
 }
@@ -174,6 +208,7 @@ function ClaimParticle({
 }
 
 function ClaimSuccessAnimation({burstKey, isJackpot, visible}: {burstKey: number; isJackpot: boolean; visible: boolean}) {
+  const {t} = useTranslation();
   const opacity = useSharedValue(0);
   const messageScale = useSharedValue(0.88);
   const messageY = useSharedValue(12);
@@ -211,7 +246,7 @@ function ClaimSuccessAnimation({burstKey, isJackpot, visible}: {burstKey: number
     <Animated.View pointerEvents="none" style={[styles.successOverlay, overlayStyle]}>
       <View style={styles.successMessageWrap}>
         <Animated.View style={[styles.successMessage, messageStyle]}>
-          <Text style={styles.successTitle}>{isJackpot ? "Pro Access Unlocked!" : "Claimed!"}</Text>
+          <Text style={styles.successTitle}>{isJackpot ? t("elitePass.success.unlocked") : t("elitePass.success.claimed")}</Text>
         </Animated.View>
       </View>
 
@@ -252,11 +287,45 @@ function getNodeState(day: number, currentDay: number, currentDayClaimed: boolea
   return "locked";
 }
 
-function AnimatedDaySlot({children, height, isFocused}: {children: ReactNode; height: number; isFocused: boolean}) {
+function AnimatedDaySlot({
+  children,
+  height,
+  index,
+  isFocused,
+  visible,
+}: {
+  children: ReactNode;
+  height: number;
+  index: number;
+  isFocused: boolean;
+  visible: boolean;
+}) {
+  const entrance = useSharedValue(0);
+  const focus = useSharedValue(isFocused ? 1 : 0);
+
+  useEffect(() => {
+    if (!visible) {
+      entrance.value = 0;
+      return;
+    }
+
+    entrance.value = withDelay(
+      index * 74,
+      withTiming(1, {duration: 430, easing: Easing.out(Easing.cubic)}),
+    );
+  }, [entrance, index, visible]);
+
+  useEffect(() => {
+    focus.value = withTiming(isFocused ? 1 : 0, {duration: 240, easing: Easing.out(Easing.cubic)});
+  }, [focus, isFocused]);
+
   const slotStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(isFocused ? 1 : 0.68, {duration: 240}),
-    transform: [{scale: withTiming(isFocused ? 1 : 0.94, {duration: 240})}],
-  }), [isFocused]);
+    opacity: entrance.value * (0.7 + focus.value * 0.3),
+    transform: [
+      {translateY: (1 - entrance.value) * 26},
+      {scale: 0.95 + focus.value * 0.05},
+    ],
+  }));
 
   return (
     <Animated.View style={[styles.nodeSlot, {height}, slotStyle]}>
@@ -266,8 +335,9 @@ function AnimatedDaySlot({children, height, isFocused}: {children: ReactNode; he
 }
 
 export function DailyRewardModal() {
+  const {t} = useTranslation();
   const insets = useSafeAreaInsets();
-  const {width} = useWindowDimensions();
+  const {height, width} = useWindowDimensions();
   const {anonymousId} = useViewerSession();
   const {
     canClaimDiamond,
@@ -293,7 +363,6 @@ export function DailyRewardModal() {
 
   const resolvedStreakCount = claimResult?.streakCount ?? claimResult?.streak_count ?? streakCount;
   const currentDay = getCycleProgress(resolvedStreakCount);
-  const displayedCredits = claimResult?.credits ?? credits;
   const hasVerifiedClaim = claimResult?.granted === true;
   const canClaimNow = canClaimDiamond && !hasVerifiedClaim;
   const hasClaimedCurrentDay = hasVerifiedClaim || (!canClaimDiamond && lastClaimAt > 0);
@@ -302,12 +371,14 @@ export function DailyRewardModal() {
     () => Array.from({length: ELITE_PASS_DAYS}, (_, index) => index + 1),
     [],
   );
+  const standardSlotHeight = height < 700 ? 78 : STANDARD_SLOT_HEIGHT;
+  const jackpotSlotHeight = height < 700 ? 96 : JACKPOT_SLOT_HEIGHT;
   const slotHeights = useMemo(
-    () => days.map((day) => day === ELITE_PASS_DAYS ? JACKPOT_SLOT_HEIGHT : STANDARD_SLOT_HEIGHT),
-    [days],
+    () => days.map((day) => day === ELITE_PASS_DAYS ? jackpotSlotHeight : standardSlotHeight),
+    [days, jackpotSlotHeight, standardSlotHeight],
   );
   const pathHeight = slotHeights.reduce((total, next) => total + next, 0);
-  const pathWidth = Math.min(Math.max(width - 32, 288), 430);
+  const pathWidth = Math.min(Math.max(width - 48, 240), 312);
 
   useEffect(() => {
     if (!visible) {
@@ -388,10 +459,10 @@ export function DailyRewardModal() {
         return;
       }
 
-      setErrorMessage("This Elite Pass reward has already been claimed.");
+      setErrorMessage(t("elitePass.errors.alreadyClaimed"));
       setIsClaiming(false);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Unable to claim your reward right now.");
+      setErrorMessage(error instanceof Error ? error.message : t("elitePass.errors.claimUnavailable"));
       setIsClaiming(false);
     }
   };
@@ -414,37 +485,40 @@ export function DailyRewardModal() {
           <Animated.View style={[styles.content, sheetStyle]}>
             <View style={styles.headerRow}>
               <View style={styles.titleLockup}>
-                <View style={styles.flameBadge}>
-                  <ElitePassFlameIcon color={BLUE_LIGHT} size={23} />
-                </View>
+                <LinearGradient
+                  colors={[ACCENT_PURPLE, ACCENT_BLUE]}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}
+                  style={styles.passBadge}
+                >
+                  <ElitePassLineIcon color={WHITE} size={25} />
+                </LinearGradient>
                 <View style={styles.titleCopy}>
-                  <Text style={styles.title}>BATTLE PASS</Text>
-                  <Text style={styles.subtitle}>Elite daily track</Text>
+                  <Text style={styles.title}>PASS ELITE</Text>
+                  <Text style={styles.subtitle}>Récompense quotidienne</Text>
                 </View>
               </View>
 
-              <View style={styles.headerActions}>
-                <View style={styles.balancePill}>
-                  <DiamondRewardIcon size={18} />
-                  <Text style={styles.balanceText}>{displayedCredits} Diamonds</Text>
-                </View>
-                <Pressable accessibilityLabel="Close Elite Pass" accessibilityRole="button" onPress={handleClose} style={styles.closeButton}>
-                  <X color="#FFFFFF" size={17} strokeWidth={2.2} />
-                </Pressable>
-              </View>
+              <Pressable accessibilityLabel={t("elitePass.closeA11y")} accessibilityRole="button" onPress={handleClose} style={styles.closeButton}>
+                <X color={TEXT} size={21} strokeWidth={2.2} />
+              </Pressable>
             </View>
 
+            <ElitePassProgressHeader currentDay={currentDay} />
+
             <View style={[styles.pathWrap, {height: pathHeight, width: pathWidth}]}>
-              <ProgressPath currentDay={currentDay} nodeOffsets={NODE_OFFSETS} slotHeight={STANDARD_SLOT_HEIGHT} slotHeights={slotHeights} width={pathWidth} />
-              {days.map((day) => {
+              <ProgressPath currentDay={currentDay} nodeOffsets={NODE_OFFSETS} slotHeight={standardSlotHeight} slotHeights={slotHeights} width={pathWidth} />
+              {days.map((day, index) => {
                 const state = getNodeState(day, currentDay, hasClaimedCurrentDay);
                 const isFocused = day === currentDay || day === ELITE_PASS_DAYS;
 
                 return (
                   <AnimatedDaySlot
                     height={slotHeights[day - 1]}
+                    index={index}
                     key={day}
                     isFocused={isFocused}
+                    visible={visible}
                   >
                     <DayNode
                       day={day}
@@ -471,12 +545,12 @@ export function DailyRewardModal() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#05070B",
+    backgroundColor: WHITE,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     overflow: "hidden",
-    backgroundColor: "#05070B",
+    backgroundColor: WHITE,
   },
   archPanel: {
     position: "absolute",
@@ -484,8 +558,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderCurve: "continuous",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.05)",
-    backgroundColor: "rgba(255, 255, 255, 0.035)",
+    borderColor: "rgba(123, 97, 255, 0.11)",
+    backgroundColor: "rgba(17, 24, 39, 0.026)",
     transform: [{rotate: "-14deg"}],
   },
   archPanelTop: {
@@ -505,14 +579,47 @@ const styles = StyleSheet.create({
     right: 36,
     opacity: 0.55,
   },
-  blueWash: {
+  archGlassA: {
+    position: "absolute",
+    top: 92,
+    right: -70,
+    width: 230,
+    height: 420,
+    borderRadius: 8,
+    borderCurve: "continuous",
+    backgroundColor: "rgba(17, 24, 39, 0.032)",
+    opacity: 0.58,
+    transform: [{rotate: "18deg"}],
+  },
+  archGlassB: {
+    position: "absolute",
+    left: -88,
+    bottom: 18,
+    width: 260,
+    height: 360,
+    borderRadius: 8,
+    borderCurve: "continuous",
+    backgroundColor: "rgba(90, 200, 250, 0.08)",
+    opacity: 0.44,
+    transform: [{rotate: "18deg"}],
+  },
+  accentWash: {
     position: "absolute",
     top: -40,
     left: 0,
     right: 0,
     height: 280,
-    backgroundColor: "rgba(47, 128, 255, 0.1)",
-    opacity: 0.68,
+    backgroundColor: "rgba(123, 97, 255, 0.08)",
+    opacity: 0.66,
+  },
+  softWash: {
+    position: "absolute",
+    left: -20,
+    right: -20,
+    bottom: 0,
+    height: 270,
+    backgroundColor: "rgba(17, 24, 39, 0.04)",
+    opacity: 0.58,
   },
   gridLineA: {
     position: "absolute",
@@ -520,7 +627,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: "rgba(143, 211, 255, 0.08)",
+    backgroundColor: "rgba(123, 97, 255, 0.12)",
   },
   gridLineB: {
     position: "absolute",
@@ -528,25 +635,25 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    backgroundColor: "rgba(17, 24, 39, 0.06)",
   },
   scrollContent: {
     minHeight: "100%",
     alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 14,
+    justifyContent: "flex-start",
+    paddingHorizontal: 24,
   },
   content: {
     width: "100%",
-    maxWidth: 430,
+    maxWidth: 312,
     alignItems: "center",
-    gap: 12,
+    gap: 16,
   },
   headerRow: {
     width: "100%",
-    minHeight: 62,
+    height: 100,
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
   },
@@ -555,18 +662,15 @@ const styles = StyleSheet.create({
     minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
   },
-  flameBadge: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+  passBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(47, 128, 255, 0.44)",
-    backgroundColor: "rgba(47, 128, 255, 0.12)",
-    boxShadow: "0px 0px 18px rgba(47, 128, 255, 0.18)",
+    boxShadow: "0px 10px 20px rgba(123, 97, 255, 0.22)",
   },
   titleCopy: {
     flex: 1,
@@ -574,50 +678,75 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   title: {
-    color: "#FFFFFF",
+    color: TEXT,
     fontSize: 24,
     lineHeight: 29,
+    letterSpacing: 0,
     ...fonts.bold,
   },
   subtitle: {
-    color: "rgba(143, 211, 255, 0.78)",
-    fontSize: 12,
-    lineHeight: 15,
+    color: SECONDARY,
+    fontSize: 13,
+    lineHeight: 17,
     ...fonts.medium,
   },
-  headerActions: {
-    alignItems: "flex-end",
-    gap: 8,
-  },
-  balancePill: {
-    minHeight: 36,
-    flexDirection: "row",
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
-    paddingHorizontal: 12,
-    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(47, 128, 255, 0.3)",
-    backgroundColor: "rgba(10, 18, 31, 0.86)",
-    boxShadow: "0px 8px 18px rgba(0, 0, 0, 0.18)",
+    borderColor: "#E5E7EB",
+    backgroundColor: "#F9FAFB",
   },
-  balanceText: {
-    color: "#FFFFFF",
+  progressPanel: {
+    width: "100%",
+    height: 100,
+    justifyContent: "center",
+    gap: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderRadius: 20,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
+    overflow: "hidden",
+    boxShadow: "0px 12px 24px rgba(17, 24, 39, 0.08)",
+  },
+  progressMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  progressTitle: {
+    flex: 1,
+    color: TEXT,
     fontSize: 12,
     lineHeight: 15,
+    textTransform: "uppercase",
+    ...fonts.bold,
+  },
+  progressCount: {
+    color: TEXT,
+    fontSize: 20,
+    lineHeight: 24,
     fontVariant: ["tabular-nums"],
     ...fonts.bold,
   },
-  closeButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.16)",
-    backgroundColor: "rgba(255, 255, 255, 0.07)",
+  progressTrack: {
+    height: 6,
+    overflow: "hidden",
+    borderRadius: 3,
+    backgroundColor: "#EEF0F4",
+  },
+  progressFill: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 3,
+    overflow: "hidden",
+    transformOrigin: "left center",
   },
   pathWrap: {
     alignSelf: "center",
@@ -650,19 +779,19 @@ const styles = StyleSheet.create({
     minWidth: 210,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 28,
+    borderRadius: 12,
     borderCurve: "continuous",
-    borderWidth: 2,
-    borderColor: "rgba(47, 128, 255, 0.56)",
-    backgroundColor: "rgba(8, 12, 20, 0.96)",
-    boxShadow: "0px 16px 28px rgba(0, 0, 0, 0.34)",
+    borderWidth: 1,
+    borderColor: "rgba(123, 97, 255, 0.28)",
+    backgroundColor: "#FFFFFF",
+    boxShadow: "0px 16px 28px rgba(17, 24, 39, 0.16)",
   },
   successTitle: {
-    color: "#FFFFFF",
+    color: TEXT,
     fontSize: 34,
     lineHeight: 40,
     textAlign: "center",
-    ...fonts.bold,
+    ...fonts.premiumSerif,
   },
   confettiPiece: {
     position: "absolute",

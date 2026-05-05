@@ -1,5 +1,6 @@
 import {useMutation} from "convex/react";
-import {useCallback, useEffect, useState} from "react";
+import * as Haptics from "expo-haptics";
+import {useCallback, useEffect, useRef, useState} from "react";
 import {ActivityIndicator, AppState, Pressable, StyleSheet, Text, View} from "react-native";
 import Animated, {
   Easing,
@@ -9,12 +10,13 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-import {scheduleOrUpdateDiamondReminder} from "../lib/notifications";
 import {readHasDismissedPaywall} from "../lib/launch-paywall";
+import {scheduleOrUpdateDiamondReminder} from "../lib/notifications";
 import {readHasFinishedOnboarding} from "../lib/onboarding-storage";
 import {fonts} from "../styles/typography";
 import {DiamondCreditIcon} from "./diamond-credit-pill";
 import {useElitePassModal} from "./elite-pass-context";
+import {DiamondParticleBurst, type DiamondParticleBurstHandle} from "./onboarding/DiamondParticleBurst";
 import {useViewerCredits} from "./viewer-credits-context";
 import {useViewerSession} from "./viewer-session-context";
 
@@ -31,10 +33,14 @@ type ClaimResult = {
   nextEligibleAt?: number;
 };
 
+const REWARD_BAR_HEADLINE = "C'est parti ! R\u00e9clamez votre 1er diamant gratuit \u2728";
+const REWARD_BAR_CTA = "R\u00c9CUP\u00c9RER";
+
 export function PostPaywallRewardBar() {
   const {anonymousId} = useViewerSession();
   const {rewardBarVisible, closeRewardBar} = useElitePassModal();
   const {
+    canClaimDiamond,
     credits,
     diamondBalance,
     lastClaimAt,
@@ -47,9 +53,12 @@ export function PostPaywallRewardBar() {
 
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimed, setClaimed] = useState(false);
+  const [isCelebrating, setIsCelebrating] = useState(false);
   const [hasFinishedOnboarding, setHasFinishedOnboarding] = useState(false);
   const [hasFinishedPaywall, setHasFinishedPaywall] = useState(false);
   const [isRendered, setIsRendered] = useState(false);
+  const burstRef = useRef<DiamondParticleBurstHandle | null>(null);
+  const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(-8);
@@ -85,13 +94,23 @@ export function PostPaywallRewardBar() {
     };
   }, [rewardBarVisible]);
 
+  useEffect(() => {
+    return () => {
+      if (celebrationTimerRef.current) {
+        clearTimeout(celebrationTimerRef.current);
+      }
+    };
+  }, []);
+
   const dayOneClaimed = claimed || onboardingDiamondClaimedAt > 0 || lastClaimAt > 0;
   const hasZeroBalance = credits <= 0 && diamondBalance <= 0;
-  const shouldShow =
+  const isEligible =
     hasFinishedOnboarding
     && hasFinishedPaywall
+    && canClaimDiamond
     && hasZeroBalance
     && !dayOneClaimed;
+  const shouldShow = isEligible || isCelebrating;
 
   useEffect(() => {
     if (shouldShow) {
@@ -125,6 +144,7 @@ export function PostPaywallRewardBar() {
 
     try {
       setClaimed(true);
+      setIsCelebrating(true);
 
       const result = await claimOnboardingDiamond({anonymousId: anonymousId ?? undefined}) as ClaimResult;
       const creditsAdded = result.creditsAdded ?? (result.granted ? 1 : 0);
@@ -150,12 +170,23 @@ export function PostPaywallRewardBar() {
         });
       }
 
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+      burstRef.current?.burst();
       scale.value = withSequence(
         withTiming(1.015, {duration: 90}),
         withTiming(1, {duration: 130}),
       );
+
+      if (celebrationTimerRef.current) {
+        clearTimeout(celebrationTimerRef.current);
+      }
+      celebrationTimerRef.current = setTimeout(() => {
+        setIsCelebrating(false);
+        setIsClaiming(false);
+      }, 720);
     } catch {
       setClaimed(false);
+      setIsCelebrating(false);
       setIsClaiming(false);
     }
   }, [
@@ -187,33 +218,33 @@ export function PostPaywallRewardBar() {
     <Animated.View style={[styles.wrap, animatedStyle]}>
       <View style={styles.bar}>
         <View style={styles.copyColumn}>
-          <Text numberOfLines={2} style={styles.headline}>
-            Ready for your first magic design? ✨
-          </Text>
-          <Text numberOfLines={2} style={styles.subtitle}>
-            Claim your Day 1 Reward to start generating now.
+          <Text adjustsFontSizeToFit minimumFontScale={0.84} numberOfLines={2} style={styles.headline}>
+            {REWARD_BAR_HEADLINE}
           </Text>
         </View>
 
-        <Pressable
-          accessibilityLabel="Claim 1 Free Diamond"
-          accessibilityRole="button"
-          disabled={isClaiming || claimed}
-          onPress={() => void handleClaim()}
-          style={({pressed}) => [
-            styles.actionButton,
-            pressed && !isClaiming && !claimed ? styles.actionButtonPressed : null,
-          ]}
-        >
-          {isClaiming ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <View style={styles.actionContent}>
-              <DiamondCreditIcon primaryColor="#FFFFFF" size={15} />
-              <Text numberOfLines={1} style={styles.actionText}>Claim 1 Free Diamond</Text>
-            </View>
-          )}
-        </Pressable>
+        <View style={styles.actionWrap}>
+          <Pressable
+            accessibilityLabel={REWARD_BAR_CTA}
+            accessibilityRole="button"
+            disabled={isClaiming || claimed}
+            onPress={() => void handleClaim()}
+            style={({pressed}) => [
+              styles.actionButton,
+              pressed && !isClaiming && !claimed ? styles.actionButtonPressed : null,
+            ]}
+          >
+            {isClaiming ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <View style={styles.actionContent}>
+                <DiamondCreditIcon primaryColor="#FFFFFF" size={15} />
+                <Text numberOfLines={1} style={styles.actionText}>{REWARD_BAR_CTA}</Text>
+              </View>
+            )}
+          </Pressable>
+          <DiamondParticleBurst ref={burstRef} />
+        </View>
       </View>
     </Animated.View>
   );
@@ -224,45 +255,47 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   bar: {
-    minHeight: 92,
+    minHeight: 66,
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 14,
+    gap: 12,
     paddingHorizontal: 16,
-    paddingVertical: 15,
-    borderRadius: 12,
+    paddingVertical: 12,
+    borderRadius: 14,
     borderCurve: "continuous",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.72)",
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    boxShadow: "0px 8px 18px rgba(15, 23, 42, 0.06)",
+    borderColor: "rgba(0, 122, 255, 0.24)",
+    backgroundColor: "rgba(255, 255, 255, 0.82)",
+    boxShadow: "0px 12px 30px rgba(15, 23, 42, 0.1)",
+    overflow: "visible",
   },
   copyColumn: {
     minWidth: 0,
     flex: 1,
-    gap: 5,
   },
   headline: {
     color: "#0F172A",
-    fontSize: 16,
-    lineHeight: 21,
+    fontSize: 15,
+    lineHeight: 20,
     ...fonts.bold,
   },
-  subtitle: {
-    color: "rgba(15, 23, 42, 0.62)",
-    fontSize: 12,
-    lineHeight: 17,
-    ...fonts.medium,
+  actionWrap: {
+    minWidth: 112,
+    minHeight: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "visible",
+    position: "relative",
   },
   actionButton: {
-    minWidth: 144,
+    minWidth: 112,
     minHeight: 42,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 13,
-    borderRadius: 12,
+    borderRadius: 13,
     borderCurve: "continuous",
     backgroundColor: "#007AFF",
     borderWidth: 1,
@@ -282,7 +315,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     color: "#FFFFFF",
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 16,
     ...fonts.bold,
   },

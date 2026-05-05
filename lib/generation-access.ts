@@ -29,6 +29,7 @@ export type GenerationAccessState = {
   proTipNotificationIndex?: number | null;
   eliteProUntil?: number | null;
   onboardingDiamondClaimedAt?: number | null;
+  firstEntryRewardDismissedAt?: number | null;
   pricingTier?: string | null;
 };
 
@@ -119,6 +120,7 @@ export async function persistGenerationAccessSnapshot(snapshot: GenerationAccess
       proTipNotificationIndex: snapshot.proTipNotificationIndex ?? 0,
       eliteProUntil: snapshot.eliteProUntil ?? 0,
       onboardingDiamondClaimedAt: snapshot.onboardingDiamondClaimedAt ?? 0,
+      firstEntryRewardDismissedAt: snapshot.firstEntryRewardDismissedAt ?? 0,
       pricingTier: snapshot.pricingTier ?? null,
       cachedAt: Date.now(),
     }),

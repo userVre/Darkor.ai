@@ -91,7 +91,35 @@
       "headline": "Claim 1 Diamond every 24h.",
       "body": "You can claim 1 free Diamond every 24h. Each premium generation uses 1 Diamond, and your next one unlocks after the timer resets.",
       "button": "Claim My Diamond"
+    },
+    "premium": {
+      "step1": {
+        "headline": "Design in seconds",
+        "body": "Upload a photo. Pick a direction. Get a polished concept fast."
+      },
+      "step2": {
+        "headline": "Select your role"
+      },
+      "step3": {
+        "headline": "Start creating"
+      },
+      "roles": {
+        "renovating_home": "Homeowner",
+        "interior_designer": "Interior Designer"
+      },
+      "diamondReward": "1 Free Diamond",
+      "diamondProgressA11y": "1 Free Diamond progress",
+      "actions": {
+        "claiming": "Claiming...",
+        "claimFreeDiamond": "Claim 1 Free Diamond"
+      }
     }
+  },
+  "firstLaunchDisclosure": {
+    "eyebrow": "Before you continue",
+    "title": "AI-generated concepts, not professional advice",
+    "body": "HomeDecor AI creates visual concepts for inspiration. Always verify measurements, structural changes, permits, pricing, and product availability before you build or buy.",
+    "cta": "I understand"
   },
   "tabs": {
     "tools": "Tools",
@@ -168,6 +196,9 @@
     "tryForFree": "Begin Your Pro Trial",
     "continue": "Begin Your Pro Trial",
     "subtitle": "Experience unlimited architectural AI with instant 4K precision and clean exports.",
+    "personalizedSubtitle": "Your room is ready for the next level. Continue designing this space in 4K.",
+    "softTitle": "Unlock unlimited room designs",
+    "softSubtitle": "Keep going with premium renders, faster creation, and export-ready results.",
     "terms": "Terms",
     "privacy": "Privacy",
     "subscriptionsUnavailable": "Subscriptions are temporarily unavailable.",
@@ -181,7 +212,46 @@
     "purchaseCancelled": "Purchase cancelled.",
     "closeA11y": "Close paywall",
     "title": "Design Like a Pro. Unrestricted Creative Freedom.",
-    "beginTrial": "Begin Your Pro Trial"
+    "beginTrial": "Begin Your Pro Trial",
+    "subscribeNow": "Subscribe Now",
+    "skipClaimFreeDiamond": "Skip - claim my free Diamond instead"
+  },
+  "elitePass": {
+    "title": "PASS ELITE",
+    "subtitle": "DAILY REWARD",
+    "closeA11y": "Close Elite Pass",
+    "balance": "{{count}} Diamonds",
+    "progressTitle": "DAILY REWARD",
+    "progressCount": "{{current}}/{{total}}",
+    "progressA11y": "Elite Pass progress {{current}} of {{total}}",
+    "rewardBar": {
+      "headline": "C'est parti ! R\u00e9clamez votre 1er diamant gratuit \u2728",
+      "cta": "R\u00c9CUP\u00c9RER"
+    },
+    "success": {
+      "unlocked": "Pro Access Unlocked!",
+      "claimed": "Claimed!"
+    },
+    "errors": {
+      "alreadyClaimed": "This Elite Pass reward has already been claimed.",
+      "claimUnavailable": "Unable to claim your reward right now."
+    },
+    "dayNode": {
+      "proAccess": "24h Unlimited PRO Access",
+      "renderCredits": "50 Render Credits",
+      "texturePack": "Luxury Texture Pack",
+      "claimed": "Claimed",
+      "oneDiamond": "1 Diamond",
+      "unlocksTomorrow": "Unlocks Tomorrow",
+      "locked": "Locked",
+      "tap": "TAP",
+      "tapToClaim": "Tap to claim",
+      "claimNow": "CLAIM NOW",
+      "limited": "LIMITED",
+      "elite": "ELITE",
+      "day": "Day {{day}}",
+      "claimA11y": "Claim Day {{day}} Elite Pass reward"
+    }
   },
   "creditLimit": {
     "balanceTitle": "Credit Balance",

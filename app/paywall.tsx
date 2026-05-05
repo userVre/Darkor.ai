@@ -1,6 +1,5 @@
 import {Check, X} from "@/components/material-icons";
 import {useAuth, useUser} from "@clerk/expo";
-import {CommonActions, useNavigation} from "@react-navigation/native";
 import {useMutation} from "convex/react";
 import {Image} from "expo-image";
 import {LinearGradient} from "expo-linear-gradient";
@@ -105,9 +104,9 @@ const HERO_SNAP_INTERVAL = HERO_CENTER_SIZE / 2 + HERO_IMAGE_GAP + HERO_SIDE_REN
 const HERO_CAROUSEL_REPEAT_MULTIPLIER = 7;
 const RIGHT_ARROW = String.fromCharCode(8594);
 const HERO_IMAGES = [
-  require("../assets/media/paywall/carousel-gaming-led.png"),
-  require("../assets/media/paywall/carousel-luxury-marble.png"),
-  require("../assets/media/paywall/carousel-japandi-bedroom.png"),
+  require("../assets/media/paywall/carousel-gaming-led.webp"),
+  require("../assets/media/paywall/carousel-luxury-marble.webp"),
+  require("../assets/media/paywall/carousel-japandi-bedroom.webp"),
 ] as const;
 const HERO_CAROUSEL_DATA = Array.from({ length: HERO_IMAGES.length * HERO_CAROUSEL_REPEAT_MULTIPLIER }, (_, index) => ({
   id: `hero-${index}`,
@@ -253,10 +252,14 @@ function HeroCarouselItem({
 }
 
 function YearlyPlanCard({
+  badgeText,
+  label,
   priceText,
   selected,
   onPress,
 }: {
+  badgeText: string;
+  label: string;
   priceText: string;
   selected: boolean;
   onPress: () => void;
@@ -274,12 +277,12 @@ function YearlyPlanCard({
       ]}
     >
       <View style={styles.bestOfferBadge}>
-        <Text style={[styles.bestOfferText, localizedFonts.bold]}>BEST OFFER</Text>
+        <Text style={[styles.bestOfferText, localizedFonts.bold]}>{badgeText}</Text>
       </View>
 
       <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
         <View style={styles.planCopy}>
-          <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>YEARLY ACCESS</Text>
+          <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{label}</Text>
           <Text style={[styles.planPriceText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{priceText}</Text>
         </View>
       </View>
@@ -288,14 +291,16 @@ function YearlyPlanCard({
 }
 
 function WeeklyPlanCard({
+  label,
   priceText,
   selected,
-  showTrialBadge,
+  trialBadgeText,
   onPress,
 }: {
+  label: string;
   priceText: string;
   selected: boolean;
-  showTrialBadge: boolean;
+  trialBadgeText?: string | null;
   onPress: () => void;
 }) {
   const localizedFonts = fonts;
@@ -312,10 +317,10 @@ function WeeklyPlanCard({
     >
       <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
         <View style={styles.planCopy}>
-          <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>WEEKLY ACCESS</Text>
+          <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{label}</Text>
           <Text style={[styles.planPriceText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{priceText}</Text>
-          {showTrialBadge ? (
-            <Text style={[styles.weeklyTrialText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>3 Days Free Trial</Text>
+          {trialBadgeText ? (
+            <Text style={[styles.weeklyTrialText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{trialBadgeText}</Text>
           ) : null}
         </View>
       </View>
@@ -511,9 +516,8 @@ function filterPackagesByCurrency(
 
 export default function PaywallScreen() {
   const router = useRouter();
-  const navigation = useNavigation();
   const posthog = usePostHog();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const localizedFonts = fonts;
   const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   const pricingContext = usePricingContext();
@@ -528,11 +532,19 @@ export default function PaywallScreen() {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const { anonymousId } = useViewerSession();
-  const { credits, hasPaidAccess, notificationsDeclined, proTipNotificationIndex, setOptimisticAccess } = useViewerCredits();
+  const {
+    credits,
+    hasPaidAccess,
+    notificationsDeclined,
+    proTipNotificationIndex,
+    setOptimisticAccess,
+    setOptimisticRewardState,
+  } = useViewerCredits();
   const { openStore } = useDiamondStore();
   const { openRewardBar } = useElitePassModal();
   const setPlan = useMutation("users:setViewerPlanFromRevenueCat" as any);
   const setProTipNotificationIndex = useMutation("users:setProTipNotificationIndex" as any);
+  const preparePostPaywallDiamondClaim = useMutation("users:preparePostPaywallDiamondClaim" as any);
   const { showSuccess } = useProSuccess();
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
   const carouselRef = useRef<ScrollView | null>(null);
@@ -551,11 +563,9 @@ export default function PaywallScreen() {
   const hasPersonalizedBackground = Boolean(personalizedImageUrl);
   const isPostWowPaywall = source === "post_wow";
   const isSoftPaywall = variant === "soft" && !isPostWowPaywall;
-  const paywallTitle = i18n.language.toLowerCase().startsWith("fr")
-    ? "Concevez comme un pro. Creativite illimitee."
-    : "Design like a pro. Unlimited creativity.";
+  const paywallTitle = t("paywall.title");
   const paywallSubtitle = hasPersonalizedBackground
-    ? "Your room is ready for the next level. Continue designing this space in 4K."
+    ? t("paywall.personalizedSubtitle")
     : t("paywall.subtitle");
   const heroSnapInterval = HERO_SNAP_INTERVAL;
   const heroTrackPadding = Math.max((width - heroSnapInterval) / 2, 0);
@@ -580,8 +590,8 @@ export default function PaywallScreen() {
       ),
     [displayedYearlyPrice, pricingContext.currencyCode, pricingContext.derived.yearlyPerWeek, pricingContext.locale, yearlyPackage],
   );
-  const yearlyPriceText = "Just MAD 248.65 per year";
-  const weeklyPriceText = "MAD 44.68 per week";
+  const yearlyPriceText = t("paywall.pricePerYear", {price: displayedYearlyPrice.formatted});
+  const weeklyPriceText = t("paywall.pricePerWeek", {price: displayedWeeklyPrice.formatted});
   const displayedFreeTrialPrice = useMemo(
     () =>
       createLocalizedPrice({
@@ -770,6 +780,48 @@ export default function PaywallScreen() {
     });
   }, [anonymousId, notificationsDeclined, proTipNotificationIndex, setProTipNotificationIndex]);
 
+  const prepareSkippedPaywallClaim = useCallback(async () => {
+    if (hasPaidAccess) {
+      return;
+    }
+
+    setOptimisticRewardState({
+      credits: 0,
+      diamondBalance: 0,
+      canClaimDiamond: true,
+      nextDiamondClaimAt: 0,
+      onboardingDiamondClaimedAt: 0,
+    });
+
+    try {
+      const result = await preparePostPaywallDiamondClaim({ anonymousId: anonymousId ?? undefined }) as {
+        credits?: number;
+        diamondBalance?: number;
+        canClaimDiamond?: boolean;
+        nextDiamondClaimAt?: number;
+        onboardingDiamondClaimedAt?: number;
+        streakCount?: number;
+        streak_count?: number;
+      };
+
+      setOptimisticRewardState({
+        credits: typeof result.credits === "number" ? result.credits : 0,
+        diamondBalance: typeof result.diamondBalance === "number" ? result.diamondBalance : 0,
+        canClaimDiamond: result.canClaimDiamond ?? true,
+        nextDiamondClaimAt: result.nextDiamondClaimAt ?? 0,
+        onboardingDiamondClaimedAt: result.onboardingDiamondClaimedAt ?? 0,
+        streakCount: result.streakCount ?? result.streak_count,
+      });
+    } catch (error) {
+      console.warn("[Paywall] Failed to prepare post-paywall diamond claim", error);
+    }
+  }, [
+    anonymousId,
+    hasPaidAccess,
+    preparePostPaywallDiamondClaim,
+    setOptimisticRewardState,
+  ]);
+
   const closePaywall = useCallback(() => {
     if (source === "launch") {
       dismissLaunchPaywall();
@@ -793,21 +845,19 @@ export default function PaywallScreen() {
     setTimeout(() => openRewardBar(), 250);
   }, [openRewardBar, redirectTo, router]);
 
-  const handleClose = useCallback(() => {
+  const handleClose = useCallback(async () => {
     if (!canClose || isLoading) {
       return;
     }
 
     triggerHaptic();
     void persistHasDismissedPaywall();
+    await prepareSkippedPaywallClaim();
     if (source === "post_wow") {
       captureAnalytics(posthog, "paywall_declined", {
         paywall_source: "post_wow",
       });
-      navigation.dispatch(CommonActions.reset({
-        index: 0,
-        routes: [{name: "(tabs)"}],
-      }));
+      router.replace(TOOLS_ROUTE as any);
       setTimeout(() => {
         openRewardBar();
       }, 250);
@@ -823,7 +873,7 @@ export default function PaywallScreen() {
     if (source === "launch" && credits <= 0) {
       setTimeout(() => openStore("empty_balance"), 250);
     }
-  }, [canClose, closePaywall, credits, hasPaidAccess, isLoading, navigation, openRewardBar, openStore, posthog, source]);
+  }, [canClose, closePaywall, credits, hasPaidAccess, isLoading, openRewardBar, openStore, posthog, prepareSkippedPaywallClaim, router, source]);
 
   const handleRestore = useCallback(async () => {
     triggerHaptic();
@@ -997,17 +1047,18 @@ export default function PaywallScreen() {
   }, [handlePurchase, isLoading, isPostWowPaywall, isSoftPaywall, posthog, selectedPackage, source, weeklyPackage]);
 
   const showFreeTrialPricing = isWeeklySelected && freeTrialEnabled;
-  const ctaButtonText = `${showFreeTrialPricing ? "Try for $0" : "Subscribe Now"} ${RIGHT_ARROW}`;
+  const ctaButtonText = `${showFreeTrialPricing ? t("paywall.tryForFree") : t("paywall.subscribeNow")} ${RIGHT_ARROW}`;
 
-  const handleSkipPostWowPaywall = useCallback(() => {
+  const handleSkipPostWowPaywall = useCallback(async () => {
     triggerHaptic();
     void persistHasDismissedPaywall();
     captureAnalytics(posthog, "paywall_skipped", {
       paywall_source: "post_wow",
     });
+    await prepareSkippedPaywallClaim();
     router.replace("/(tabs)" as any);
     setTimeout(() => openRewardBar(), 250);
-  }, [openRewardBar, posthog, router]);
+  }, [openRewardBar, posthog, prepareSkippedPaywallClaim, router]);
 
   const handleOpenTerms = useCallback(() => {
     triggerHaptic();
@@ -1068,23 +1119,26 @@ export default function PaywallScreen() {
         <View style={styles.softBackdrop} />
         <Animated.View style={[styles.softSheet, { paddingBottom: Math.max(insets.bottom + 12, 20) }, sheetAnimatedStyle]}>
           <View style={styles.softHandle} />
-          <Text style={[styles.softEyebrow, localizedFonts.bold]}>Best value</Text>
-          <Text style={[styles.softTitle, localizedFonts.bold]}>Unlock unlimited room designs</Text>
+          <Text style={[styles.softEyebrow, localizedFonts.bold]}>{t("paywall.bestOffer")}</Text>
+          <Text style={[styles.softTitle, localizedFonts.bold]}>{t("paywall.softTitle")}</Text>
           <Text style={[styles.softSubtitle, localizedFonts.medium]}>
-            Keep going with premium renders, faster creation, and export-ready results.
+            {t("paywall.softSubtitle")}
           </Text>
 
           <View style={styles.softPlanStack}>
             <YearlyPlanCard
+              badgeText={t("paywall.bestOffer")}
+              label={t("paywall.yearlyAccess")}
               onPress={handleSelectYearly}
               priceText={yearlyPriceText}
               selected={selectedDuration === "yearly"}
             />
             <WeeklyPlanCard
+              label={t("paywall.weeklyAccess")}
               onPress={handleSelectWeekly}
               priceText={weeklyPriceText}
               selected={selectedDuration === "weekly"}
-              showTrialBadge={selectedDuration === "weekly" && freeTrialEnabled}
+              trialBadgeText={selectedDuration === "weekly" && freeTrialEnabled ? t("paywall.freeTrial") : null}
             />
           </View>
 
@@ -1106,7 +1160,7 @@ export default function PaywallScreen() {
             onPress={handleSkipPostWowPaywall}
             style={styles.softSkipLink}
           >
-            <Text style={[styles.softSkipText, localizedFonts.medium]}>Skip — claim my free Diamond instead</Text>
+            <Text style={[styles.softSkipText, localizedFonts.medium]}>{t("paywall.skipClaimFreeDiamond")}</Text>
           </Pressable>
         </Animated.View>
       </View>
@@ -1193,7 +1247,11 @@ export default function PaywallScreen() {
           </View>
 
           <View style={styles.featuresSection}>
-            {["Faster Results", "Ultra-HD", "Unlimited"].map((feature, index) => (
+            {[
+              t("paywall.features.fasterRendering"),
+              t("paywall.features.adFree"),
+              t("paywall.features.unlimitedRenders"),
+            ].map((feature, index) => (
               <FeatureRow
                 key={feature}
                 isLast={index === 2}
@@ -1209,13 +1267,15 @@ export default function PaywallScreen() {
             style={[styles.trialBar, { flexDirection: getDirectionalRow(isRTL) }]}
           >
             <Text style={[styles.trialLabel, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>
-              {freeTrialEnabled ? "Free trial activated" : "Free trial off"}
+              {freeTrialEnabled ? t("paywall.trialEnabled") : t("paywall.enableTrial")}
             </Text>
             <ToggleSwitch value={freeTrialEnabled} />
           </Pressable>
 
           <View style={styles.yearlyWrapper}>
             <YearlyPlanCard
+              badgeText={t("paywall.bestOffer")}
+              label={t("paywall.yearlyAccess")}
               onPress={handleSelectYearly}
               priceText={yearlyPriceText}
               selected={isYearlySelected}
@@ -1224,10 +1284,11 @@ export default function PaywallScreen() {
 
           <View style={styles.weeklyWrapper}>
             <WeeklyPlanCard
+              label={t("paywall.weeklyAccess")}
               onPress={handleSelectWeekly}
               priceText={weeklyPriceText}
               selected={isWeeklySelected}
-              showTrialBadge={showFreeTrialPricing}
+              trialBadgeText={showFreeTrialPricing ? t("paywall.freeTrial") : null}
             />
           </View>
 

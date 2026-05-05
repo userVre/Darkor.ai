@@ -41,7 +41,7 @@ const REFERENCE_HEIGHT = 932;
 const SHEET_HEIGHT = 336;
 const SWIPE_DISMISS_DISTANCE = 84;
 const SWIPE_DISMISS_VELOCITY = 900;
-const HERO_IMAGE = require("../assets/media/discover/floor-scenes/polished-carrara-marble.jpg");
+const HERO_IMAGE = require("../assets/media/discover/floor-scenes/polished-carrara-marble.webp");
 
 function scaleValue(value: number, scale: number) {
   return value * scale;

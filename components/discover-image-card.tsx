@@ -33,7 +33,7 @@ export const DiscoverImageCard = memo(function DiscoverImageCard({
       <View style={styles.innerFrame}>
         <Image
           source={item.image}
-          transition={120}
+          transition={280}
           cachePolicy="memory-disk"
           recyclingKey={item.id}
           style={styles.image}

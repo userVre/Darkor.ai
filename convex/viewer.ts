@@ -60,6 +60,7 @@ export function buildDefaultUserFields(args: {
     proTrialEndedPaywallPending: false,
     proTrialEndedPaywallShownAt: 0,
     onboardingDiamondClaimedAt: 0,
+    firstEntryRewardDismissedAt: 0,
     referralCode: args.referralCode ?? createReferralCode(referralSeed),
     referralCount: 0,
     referralProCount: 0,

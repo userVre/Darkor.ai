@@ -25,7 +25,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
     title: "Sage Green",
     value: palette.sageGreen,
     description: "Soft green calm for bright, polished living spaces.",
-    image: require("../assets/media/discover/wall-scenes/sage-green-suite.jpg"),
+    image: require("../assets/media/discover/wall-scenes/sage-green-suite.webp"),
     discoverSubtitle: "Wall / Botanical Calm",
   },
   {
@@ -33,7 +33,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
     title: "Midnight Navy",
     value: palette.midnightNavy,
     description: "Tailored navy depth with crisp architectural contrast.",
-    image: require("../assets/media/discover/wall-scenes/midnight-navy-bedroom.jpg"),
+    image: require("../assets/media/discover/wall-scenes/midnight-navy-bedroom.webp"),
     discoverSubtitle: "Wall / Tailored Contrast",
   },
   {
@@ -41,7 +41,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
     title: "Terracotta Glow",
     value: palette.terracottaGlow,
     description: "Warm clay color with grounded, editorial energy.",
-    image: require("../assets/media/discover/wall-scenes/terracotta-dining.jpg"),
+    image: require("../assets/media/discover/wall-scenes/terracotta-dining.webp"),
     discoverSubtitle: "Wall / Warm Clay",
   },
   {
@@ -49,7 +49,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
     title: "Dusty Rose",
     value: palette.dustyRose,
     description: "Muted blush warmth with soft boutique appeal.",
-    image: require("../assets/media/discover/wall-scenes/dusty-rose-retreat.jpg"),
+    image: require("../assets/media/discover/wall-scenes/dusty-rose-retreat.webp"),
     discoverSubtitle: "Wall / Boutique Blush",
   },
   {
@@ -57,7 +57,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
     title: "Gallery Charcoal",
     value: palette.galleryCharcoal,
     description: "Refined charcoal for moody, art-forward rooms.",
-    image: require("../assets/media/discover/wall-scenes/gallery-charcoal-lounge.jpg"),
+    image: require("../assets/media/discover/wall-scenes/gallery-charcoal-lounge.webp"),
     discoverSubtitle: "Wall / Moody Gallery",
   },
   {
@@ -65,7 +65,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
     title: "Soft Ivory",
     value: palette.softIvory,
     description: "Luminous neutral that keeps rooms light, never flat.",
-    image: require("../assets/media/discover/wall-scenes/soft-ivory-kitchen.jpg"),
+    image: require("../assets/media/discover/wall-scenes/soft-ivory-kitchen.webp"),
     discoverSubtitle: "Wall / Quiet Neutral",
   },
   {
@@ -73,7 +73,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
     title: "Olive Grove",
     value: palette.oliveGrove,
     description: "Earthy olive depth with a grounded designer mood.",
-    image: require("../assets/media/discover/wall-scenes/deep-olive-study.jpg"),
+    image: require("../assets/media/discover/wall-scenes/deep-olive-study.webp"),
     discoverSubtitle: "Wall / Earthy Depth",
   },
   {
@@ -81,7 +81,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
     title: "Lavender Mist",
     value: palette.lavenderMist,
     description: "Soft violet haze for elevated pastel rooms.",
-    image: require("../assets/media/discover/wall-scenes/lavender-mist-bath.jpg"),
+    image: require("../assets/media/discover/wall-scenes/lavender-mist-bath.webp"),
     discoverSubtitle: "Wall / Soft Pastel",
   },
   {
@@ -89,7 +89,7 @@ export const WALL_COLOR_OPTIONS: WallColorOption[] = [
     title: "Pearl Gray",
     value: palette.pearlGray,
     description: "Light tonal gray with polished everyday flexibility.",
-    image: require("../assets/media/discover/wall-scenes/pearl-gray-salon.jpg"),
+    image: require("../assets/media/discover/wall-scenes/pearl-gray-salon.webp"),
     discoverSubtitle: "Wall / Modern Neutral",
   },
 ];
@@ -100,7 +100,7 @@ export const FLOOR_MATERIAL_OPTIONS: FloorMaterialOption[] = [
     title: "Natural Oak",
     description: "Airy oak planks with soft natural grain.",
     promptLabel: "light natural oak flooring with wide-plank grain detail",
-    image: require("../assets/media/discover/floor-scenes/natural-oak-parquet.jpg"),
+    image: require("../assets/media/discover/floor-scenes/natural-oak-parquet.webp"),
     discoverSubtitle: "Floor / Light Wood",
   },
   {
@@ -108,7 +108,7 @@ export const FLOOR_MATERIAL_OPTIONS: FloorMaterialOption[] = [
     title: "Walnut Wood",
     description: "Deep walnut planks with rich tailored contrast.",
     promptLabel: "luxury walnut wood flooring with rich deep grain",
-    image: require("../assets/media/discover/floor-scenes/heritage-walnut-plank.jpg"),
+    image: require("../assets/media/discover/floor-scenes/heritage-walnut-plank.webp"),
     discoverSubtitle: "Floor / Dark Wood",
   },
   {
@@ -116,7 +116,7 @@ export const FLOOR_MATERIAL_OPTIONS: FloorMaterialOption[] = [
     title: "Carrara Marble",
     description: "Bright stone veining with a calm luxe finish.",
     promptLabel: "carrara marble flooring with elegant soft veining",
-    image: require("../assets/media/discover/floor-scenes/polished-carrara-marble.jpg"),
+    image: require("../assets/media/discover/floor-scenes/polished-carrara-marble.webp"),
     discoverSubtitle: "Floor / Polished Stone",
   },
   {
@@ -124,7 +124,7 @@ export const FLOOR_MATERIAL_OPTIONS: FloorMaterialOption[] = [
     title: "Polished Concrete",
     description: "Smooth concrete sheen with urban gallery calm.",
     promptLabel: "polished concrete flooring with premium smooth texture",
-    image: require("../assets/media/discover/floor-scenes/industrial-gray-concrete.jpg"),
+    image: require("../assets/media/discover/floor-scenes/industrial-gray-concrete.webp"),
     discoverSubtitle: "Floor / Industrial Minimal",
   },
   {
@@ -132,7 +132,7 @@ export const FLOOR_MATERIAL_OPTIONS: FloorMaterialOption[] = [
     title: "Herringbone Oak",
     description: "Classic oak pattern with warm directional movement.",
     promptLabel: "herringbone oak parquet flooring with premium pattern definition",
-    image: require("../assets/media/discover/floor-scenes/walnut-chevron.jpg"),
+    image: require("../assets/media/discover/floor-scenes/walnut-chevron.webp"),
     discoverSubtitle: "Floor / Patterned Wood",
   },
   {
@@ -140,7 +140,7 @@ export const FLOOR_MATERIAL_OPTIONS: FloorMaterialOption[] = [
     title: "Terracotta Tile",
     description: "Earthy clay warmth with handcrafted character.",
     promptLabel: "terracotta tile flooring with warm clay color variation",
-    image: require("../assets/media/discover/floor-scenes/terracotta-atelier-tile.jpg"),
+    image: require("../assets/media/discover/floor-scenes/terracotta-atelier-tile.webp"),
     discoverSubtitle: "Floor / Mediterranean Clay",
   },
   {
@@ -148,7 +148,7 @@ export const FLOOR_MATERIAL_OPTIONS: FloorMaterialOption[] = [
     title: "Slate Tile",
     description: "Dark slate with a crisp large-format finish.",
     promptLabel: "dark slate tile flooring with large format stone slabs",
-    image: require("../assets/media/discover/floor-scenes/modern-slate-tile.jpg"),
+    image: require("../assets/media/discover/floor-scenes/modern-slate-tile.webp"),
     discoverSubtitle: "Floor / Dark Stone",
   },
   {
@@ -156,7 +156,7 @@ export const FLOOR_MATERIAL_OPTIONS: FloorMaterialOption[] = [
     title: "Plush Carpet",
     description: "Soft cream carpet with a quiet, cozy feel.",
     promptLabel: "luxury plush carpet flooring in a soft cream tone",
-    image: require("../assets/media/discover/floor-scenes/plush-ivory-carpet.jpg"),
+    image: require("../assets/media/discover/floor-scenes/plush-ivory-carpet.webp"),
     discoverSubtitle: "Floor / Soft Texture",
   },
   {
@@ -164,7 +164,7 @@ export const FLOOR_MATERIAL_OPTIONS: FloorMaterialOption[] = [
     title: "Weathered Oak",
     description: "Mid-tone oak with a gently aged finish.",
     promptLabel: "weathered oak flooring with subtle aged grain",
-    image: require("../assets/media/discover/floor-scenes/weathered-oak-studio.jpg"),
+    image: require("../assets/media/discover/floor-scenes/weathered-oak-studio.webp"),
     discoverSubtitle: "Floor / Rustic Warmth",
   },
 ];

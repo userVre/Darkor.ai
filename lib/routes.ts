@@ -1,4 +1,4 @@
-export const TOOLS_ROUTE = "/";
+export const TOOLS_ROUTE = "/(tabs)";
 export const SETTINGS_ROUTE = "/settings";
 export const WORKSPACE_ROUTE = "/workspace";
 

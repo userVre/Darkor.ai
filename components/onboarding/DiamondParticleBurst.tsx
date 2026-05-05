@@ -66,7 +66,11 @@ const Particle = memo(function Particle({translateX, translateY}: ParticleConfig
     ],
   }));
 
-  return <Animated.View pointerEvents="none" style={[styles.particle, particleStyle]} />;
+  return (
+    <Animated.View pointerEvents="none" style={[styles.particle, particleStyle]}>
+      <View style={styles.particleFacet} />
+    </Animated.View>
+  );
 });
 
 export const DiamondParticleBurst = forwardRef<DiamondParticleBurstHandle>(function DiamondParticleBurst(_, ref) {
@@ -113,7 +117,14 @@ const styles = StyleSheet.create({
     height: PARTICLE_SIZE,
     marginLeft: -PARTICLE_SIZE / 2,
     marginTop: -PARTICLE_SIZE / 2,
-    borderRadius: PARTICLE_SIZE / 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  particleFacet: {
+    width: PARTICLE_SIZE,
+    height: PARTICLE_SIZE,
+    borderRadius: 1,
     backgroundColor: PREMIUM_BLUE,
+    transform: [{rotate: "45deg"}],
   },
 });

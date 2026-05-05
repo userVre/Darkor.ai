@@ -41,7 +41,7 @@ const REFERENCE_HEIGHT = 932;
 const SHEET_HEIGHT = 336;
 const SWIPE_DISMISS_DISTANCE = 84;
 const SWIPE_DISMISS_VELOCITY = 900;
-const HERO_IMAGE = require("../assets/media/paywall/paint-intro-black-marble-salon.png");
+const HERO_IMAGE = require("../assets/media/paywall/paint-intro-black-marble-salon.webp");
 
 function scaleValue(value: number, scale: number) {
   return value * scale;

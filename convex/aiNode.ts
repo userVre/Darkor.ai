@@ -2,15 +2,15 @@
 
 import { experimental_generateImage, APICallError } from "ai";
 import { createAzure } from "@ai-sdk/azure";
-import { actionGeneric, internalActionGeneric } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
+import { action, internalAction } from "./_generated/server";
 import {
   compactPromptSegments,
   dedupeSuggestions,
   normalizeGenerationError,
-  requestGeminiDesignOrchestration,
+  requestAzureDesignOrchestration,
   trimOptional,
 } from "./ai";
 import {
@@ -649,7 +649,19 @@ function getAzureFailureMessage(error: unknown) {
   return message;
 }
 
-export const renderOnboardingDemo: any = actionGeneric({
+async function getOnboardingDemoFallback(
+  ctx: any,
+  imageStorageId: string,
+): Promise<{ ok: true; storageId: string; imageUrl: string | null }> {
+  const imageUrl = await ctx.storage.getUrl(imageStorageId as any);
+  return {
+    ok: true,
+    storageId: imageStorageId,
+    imageUrl,
+  };
+}
+
+export const renderOnboardingDemo: any = action({
   args: {
     imageStorageId: v.id("_storage"),
   },
@@ -659,19 +671,14 @@ export const renderOnboardingDemo: any = actionGeneric({
     const configuredDeploymentName = trimOptional(process.env.AZURE_OPENAI_DEPLOYMENT_NAME);
     const deploymentName = configuredDeploymentName ?? AZURE_IMAGE_DEPLOYMENT_NAME;
 
-    if (!apiKey || !endpoint || !deploymentName) {
-      const missingVariable = !apiKey
-        ? "AZURE_OPENAI_API_KEY"
-        : !endpoint
-          ? "AZURE_OPENAI_ENDPOINT"
-          : "AZURE_OPENAI_DEPLOYMENT_NAME";
-      throw new ConvexError(normalizeGenerationError(`Missing ${missingVariable} in Convex environment variables.`));
-    }
-
     try {
       const sourceBlob = await ctx.storage.get(args.imageStorageId);
       if (!sourceBlob) {
         throw new ConvexError("The demo source image could not be loaded from storage.");
+      }
+
+      if (!apiKey || !endpoint || !deploymentName) {
+        return await getOnboardingDemoFallback(ctx, args.imageStorageId);
       }
 
       const roomType = "living room";
@@ -736,12 +743,16 @@ export const renderOnboardingDemo: any = actionGeneric({
         imageUrl,
       };
     } catch (error) {
-      throw new ConvexError(getAzureFailureMessage(error));
+      if (error instanceof ConvexError) {
+        throw error;
+      }
+
+      return await getOnboardingDemoFallback(ctx, args.imageStorageId);
     }
   },
 });
 
-export const generateDesign: any = internalActionGeneric({
+export const generateDesign: any = internalAction({
   args: {
     generationId: v.id("generations"),
     ownerId: v.string(),
@@ -835,7 +846,7 @@ export const generateDesign: any = internalActionGeneric({
         speedTier: (args.speedTier as SpeedTier | undefined) ?? "standard",
       });
 
-      const orchestratedDirection = await requestGeminiDesignOrchestration({
+      const orchestratedDirection = await requestAzureDesignOrchestration({
         sourceBlob,
         serviceType: args.serviceType as ServiceType,
         roomType: args.roomType,

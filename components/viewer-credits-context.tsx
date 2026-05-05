@@ -21,6 +21,7 @@ type ViewerCreditsSnapshot = {
   nextRefillTimestamp?: number;
   eliteProUntil?: number;
   onboardingDiamondClaimedAt?: number;
+  firstEntryRewardDismissedAt?: number;
 } | null | undefined;
 
 type OptimisticViewerCreditsState = {
@@ -37,6 +38,7 @@ type OptimisticViewerCreditsState = {
   proTipNotificationIndex?: number;
   eliteProUntil?: number;
   onboardingDiamondClaimedAt?: number;
+  firstEntryRewardDismissedAt?: number;
 } | null;
 
 type ViewerCreditsContextValue = {
@@ -54,6 +56,7 @@ type ViewerCreditsContextValue = {
   proTipNotificationIndex: number;
   eliteProUntil: number;
   onboardingDiamondClaimedAt: number;
+  firstEntryRewardDismissedAt: number;
   clearOptimisticCredits: () => void;
   setOptimisticCredits: (nextCredits: number | null) => void;
   setOptimisticAccess: (nextState: OptimisticViewerCreditsState) => void;
@@ -127,6 +130,11 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
     ?? me?.onboardingDiamondClaimedAt
     ?? cachedState?.onboardingDiamondClaimedAt
     ?? 0;
+  const firstEntryRewardDismissedAt =
+    optimisticState?.firstEntryRewardDismissedAt
+    ?? me?.firstEntryRewardDismissedAt
+    ?? cachedState?.firstEntryRewardDismissedAt
+    ?? 0;
   const clearOptimisticCredits = useCallback(() => {
     setOptimisticState(null);
   }, []);
@@ -183,6 +191,7 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
               streakCount: typeof cached.streakCount === "number" ? cached.streakCount : undefined,
               eliteProUntil: typeof cached.eliteProUntil === "number" ? cached.eliteProUntil : undefined,
               onboardingDiamondClaimedAt: typeof cached.onboardingDiamondClaimedAt === "number" ? cached.onboardingDiamondClaimedAt : undefined,
+              firstEntryRewardDismissedAt: typeof cached.firstEntryRewardDismissedAt === "number" ? cached.firstEntryRewardDismissedAt : undefined,
               subscriptionType: cached.subscriptionType ?? undefined,
             }
           : null,
@@ -205,6 +214,7 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
     me?.nextRefillTimestamp,
     me?.notificationsDeclined,
     me?.onboardingDiamondClaimedAt,
+    me?.firstEntryRewardDismissedAt,
     me?.proTipNotificationIndex,
     me?.streakCount,
     me?.streak_count,
@@ -227,9 +237,10 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
       proTipNotificationIndex,
       eliteProUntil,
       onboardingDiamondClaimedAt,
+      firstEntryRewardDismissedAt,
     };
     void persistGenerationAccessSnapshot(snapshot);
-  }, [canClaimDiamond, credits, diamondBalance, eliteProUntil, hasPaidAccess, hasProAccess, lastClaimAt, nextDiamondClaimAt, notificationsDeclined, onboardingDiamondClaimedAt, proTipNotificationIndex, streakCount, subscriptionType]);
+  }, [canClaimDiamond, credits, diamondBalance, eliteProUntil, firstEntryRewardDismissedAt, hasPaidAccess, hasProAccess, lastClaimAt, nextDiamondClaimAt, notificationsDeclined, onboardingDiamondClaimedAt, proTipNotificationIndex, streakCount, subscriptionType]);
 
   const setOptimisticRewardState = useCallback((nextState: OptimisticViewerCreditsState) => {
     setOptimisticState((current) => {
@@ -260,6 +271,7 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
       proTipNotificationIndex,
       eliteProUntil,
       onboardingDiamondClaimedAt,
+      firstEntryRewardDismissedAt,
       clearOptimisticCredits,
       setOptimisticCredits,
       setOptimisticAccess,
@@ -271,6 +283,7 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
       credits,
       diamondBalance,
       eliteProUntil,
+      firstEntryRewardDismissedAt,
       hasPaidAccess,
       hasProAccess,
       lastClaimAt,

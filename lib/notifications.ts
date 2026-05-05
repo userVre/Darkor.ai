@@ -161,7 +161,6 @@ async function setupNotificationChannel(Notifications: typeof ExpoNotifications)
     await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
       name: "Design reminders",
       importance: Notifications.AndroidImportance.DEFAULT,
-      sound: "default",
       vibrationPattern: [0, 180, 120, 180],
       lightColor: "#4F7BFF",
     });
@@ -457,7 +456,6 @@ export async function scheduleOrUpdateDiamondReminder(args: ScheduleDiamondArgs 
     content: {
       title: DAILY_DIAMOND_TITLE,
       body: DAILY_DIAMOND_BODY,
-      sound: "default",
       data: {
         kind: "daily-diamond",
         route: "/(tabs)/index",
@@ -504,7 +502,6 @@ export async function scheduleOrUpdateProTip(args: ScheduleProTipArgs = {}) {
     content: {
       title: "Architecture Tip",
       body: tip,
-      sound: "default",
       data: {
         kind: "weekly-pro-tip",
         route: "/(tabs)/create?service=interior&startStep=1&entrySource=pro-tip-notification",

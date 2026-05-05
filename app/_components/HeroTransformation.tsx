@@ -75,7 +75,7 @@ export default function HeroTransformation({ compact = false }: HeroTransformati
       <View className="rounded-3xl border border-white/10 bg-zinc-900/60 px-3 py-4" style={[styles.heroShell, compact && styles.heroShellCompact]}>
         <View className="flex-row items-center justify-between">
           <MotiImage
-            source={require("../../assets/media/empty-room.jpg")}
+            source={require("../../assets/media/empty-room.webp")}
             resizeMode="cover"
             className="rounded-2xl border border-white/20"
             style={{ width: beforeWidth, height: beforeHeight }}
@@ -105,7 +105,7 @@ export default function HeroTransformation({ compact = false }: HeroTransformati
 
           <View style={{ width: stackWrapWidth, height: stackWrapHeight }}>
             <StackCard
-              source={require("../../assets/media/after-luxury.jpg")}
+              source={require("../../assets/media/after-luxury.webp")}
               entered={entered}
               finalRotate="12deg"
               zIndex={10}
@@ -116,7 +116,7 @@ export default function HeroTransformation({ compact = false }: HeroTransformati
               height={stackHeight}
             />
             <StackCard
-              source={require("../../assets/media/after-cyberpunk.jpg")}
+              source={require("../../assets/media/after-cyberpunk.webp")}
               entered={entered}
               finalRotate="2deg"
               zIndex={20}
@@ -127,7 +127,7 @@ export default function HeroTransformation({ compact = false }: HeroTransformati
               height={stackHeight}
             />
             <StackCard
-              source={require("../../assets/media/after-boho.jpg")}
+              source={require("../../assets/media/after-boho.webp")}
               entered={entered}
               finalRotate="-6deg"
               zIndex={30}

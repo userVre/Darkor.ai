@@ -5,19 +5,19 @@
     "scheme": "homedecorai",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo.png",
+    "icon": "./assets/logo.webp",
     "splash": {
-      "image": "./assets/logo.png",
+      "image": "./assets/logo.webp",
       "resizeMode": "contain",
-      "backgroundColor": "#121212"
+      "backgroundColor": "#FFFFFF"
     },
     "androidStatusBar": {
-      "backgroundColor": "#121212",
-      "barStyle": "light-content"
+      "backgroundColor": "#FFFFFF",
+      "barStyle": "dark-content"
     },
     "androidNavigationBar": {
-      "backgroundColor": "#121212",
-      "barStyle": "light-content"
+      "backgroundColor": "#FFFFFF",
+      "barStyle": "dark-content"
     },
     "platforms": [
       "ios",
@@ -26,13 +26,13 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.homedecor.ai",
-      "icon": "./assets/logo.png"
+      "icon": "./assets/logo.webp"
     },
     "android": {
       "package": "com.ismail.homedecorai",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo.png",
-        "backgroundColor": "#121212"
+        "foregroundImage": "./assets/logo.webp",
+        "backgroundColor": "#FFFFFF"
       },
       "permissions": [
         "android.permission.CAMERA",
@@ -48,8 +48,7 @@
         "expo-font",
         {
           "fonts": [
-            "./assets/Fonts/InterVariable.ttf",
-            "./assets/Fonts/InterVariable-Italic.ttf"
+            "./assets/Fonts/InterVariable.ttf"
           ]
         }
       ],

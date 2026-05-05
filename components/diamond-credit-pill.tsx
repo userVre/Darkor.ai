@@ -10,7 +10,7 @@ type ViewStyle,
 } from "react-native";
 import Svg, {Path} from "react-native-svg";
 
-import {ambientShadow, organicRadii} from "../lib/design-system";
+import {ambientShadow} from "../lib/design-system";
 import {fonts} from "../styles/typography";
 
 type DiamondCreditPillProps = {
@@ -25,24 +25,26 @@ type DiamondCreditPillProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-const PREMIUM_ELECTRIC_BLUE = "#007AFF";
-const PREMIUM_AQUA = "#2DD4BF";
-const PREMIUM_BLUE_DEEP = "#0056D6";
-export const DIAMOND_PILL_BLUE = PREMIUM_ELECTRIC_BLUE;
-export const RADIX_BLUE_9 = PREMIUM_ELECTRIC_BLUE;
+const PRIMARY_PURPLE = "#7B61FF";
+const PRIMARY_BLUE = "#5AC8FA";
+const WHITE = "#FFFFFF";
+const TEXT_DARK = "#111827";
+const PREMIUM_BLUE_DEEP = "#2563EB";
+export const DIAMOND_PILL_BLUE = PRIMARY_BLUE;
+export const RADIX_BLUE_9 = PRIMARY_PURPLE;
 
 const VARIANT_STYLES = {
   dark: {
-    backgroundColor: "#09090B",
-    borderColor: "rgba(255,255,255,0.08)",
-    textColor: "#FFFFFF",
-    prismPrimary: PREMIUM_ELECTRIC_BLUE,
+    backgroundColor: WHITE,
+    borderColor: "rgba(123, 97, 255, 0.22)",
+    textColor: TEXT_DARK,
+    prismPrimary: PRIMARY_PURPLE,
   },
   light: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "rgba(17, 19, 24, 0.1)",
-    textColor: "#111318",
-    prismPrimary: PREMIUM_ELECTRIC_BLUE,
+    backgroundColor: WHITE,
+    borderColor: "rgba(17, 24, 39, 0.1)",
+    textColor: TEXT_DARK,
+    prismPrimary: PRIMARY_BLUE,
   },
 } as const;
 
@@ -67,7 +69,7 @@ export function DiamondCreditIcon({
         />
         <Path
           d="M5.108 2.25 9 6.32l3.892-4.07"
-          stroke={monochrome ? primaryColor : PREMIUM_AQUA}
+          stroke={monochrome ? primaryColor : PRIMARY_BLUE}
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={1}
@@ -80,7 +82,7 @@ export function DiamondCreditIcon({
         />
         <Path
           d="M5.108 2.25 9 15.75 12.892 2.25"
-          stroke={monochrome ? primaryColor : "#FFFFFF"}
+          stroke={monochrome ? primaryColor : WHITE}
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={0.9}
@@ -91,8 +93,8 @@ export function DiamondCreditIcon({
   );
 }
 
-export function ElitePassFlameIcon({
-  color = PREMIUM_ELECTRIC_BLUE,
+export function ElitePassLineIcon({
+  color = PRIMARY_PURPLE,
   size = 18,
 }: {
   color?: string;
@@ -101,13 +103,12 @@ export function ElitePassFlameIcon({
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Path
-        d="M12.12 22c-3.92 0-6.95-2.82-6.95-6.61 0-2.46 1.25-4.49 3.48-6.37 1.78-1.5 2.72-3.18 2.82-5.02.01-.29.34-.46.58-.29 2.93 2.08 4.24 4.35 3.93 6.8 1.02-.61 1.74-1.48 2.15-2.61.1-.28.47-.35.66-.11 1.37 1.68 2.06 3.44 2.06 5.28 0 5.21-3.9 8.93-8.73 8.93Z"
-        fill={color}
-      />
-      <Path
-        d="M12.34 20.28c-2.02 0-3.54-1.43-3.54-3.32 0-1.25.63-2.29 1.75-3.24.9-.76 1.38-1.61 1.43-2.55.01-.22.27-.34.45-.21 1.52 1.08 2.19 2.26 2 3.54.51-.31.87-.75 1.08-1.32.08-.2.34-.25.48-.08.7.86 1.05 1.76 1.05 2.7 0 2.75-2.09 4.48-4.7 4.48Z"
-        fill="#FFFFFF"
-        opacity={0.82}
+        d="M6.5 19.5h11M8.2 19.5V8.9L12 4.5l3.8 4.4v10.6M9.9 10.2h4.2M9.9 13.2h4.2M9.9 16.2h4.2"
+        fill="transparent"
+        stroke={color}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.25}
       />
     </Svg>
   );
@@ -133,6 +134,7 @@ export function DiamondCreditPill({
       {iconOnly ? null : <Text style={[styles.countText, { color: palette.textColor }]}>{count}</Text>}
       {!iconOnly && normalizedStreakCount > 0 && !onElitePassPress ? (
         <View style={styles.streakWrap}>
+          <ElitePassLineIcon color={palette.prismPrimary} size={14} />
           <Text accessibilityElementsHidden style={styles.flameIcon}>
             🔥
           </Text>
@@ -180,7 +182,7 @@ export function DiamondCreditPill({
             pressed ? styles.elitePassButtonPressed : null,
           ]}
         >
-          <ElitePassFlameIcon color={PREMIUM_ELECTRIC_BLUE} size={18} />
+          <ElitePassLineIcon color={PRIMARY_PURPLE} size={18} />
         </Pressable>
       </View>
     );
@@ -227,7 +229,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderWidth: 1,
-    ...organicRadii(20, 14),
+    borderRadius: 12,
+    borderCurve: "continuous",
     ...ambientShadow(0.06, 12, 8),
   },
   iconOnlyPill: {
@@ -243,7 +246,7 @@ const styles = StyleSheet.create({
     flexDirection: "row-reverse",
   },
   pillWithElitePass: {
-    gap: 0,
+    gap: 15,
   },
   creditAction: {
     minHeight: 38,
@@ -257,16 +260,16 @@ const styles = StyleSheet.create({
     height: 32,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 16,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "rgba(0, 122, 255, 0.34)",
-    backgroundColor: "#111318",
+    borderColor: "rgba(123, 97, 255, 0.26)",
+    backgroundColor: "rgba(123, 97, 255, 0.08)",
   },
   headerDivider: {
     width: StyleSheet.hairlineWidth,
     height: 24,
-    marginHorizontal: 15,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    marginHorizontal: 0,
+    backgroundColor: "rgba(123, 97, 255, 0.22)",
   },
   elitePassButtonPressed: {
     opacity: 0.78,
@@ -291,8 +294,10 @@ const styles = StyleSheet.create({
     borderLeftColor: "rgba(100, 116, 139, 0.22)",
   },
   flameIcon: {
-    fontSize: 14,
-    lineHeight: 17,
+    width: 0,
+    opacity: 0,
+    fontSize: 0,
+    lineHeight: 0,
     includeFontPadding: false,
   },
   streakText: {
@@ -315,18 +320,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: "rgba(0, 122, 255, 0.45)",
-    backgroundColor: "#111318",
-    ...organicRadii(20, 14),
+    borderColor: "rgba(123, 97, 255, 0.28)",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    borderCurve: "continuous",
     ...ambientShadow(0.08, 14, 10),
     overflow: "hidden",
   },
   proGlow: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 122, 255, 0.1)",
+    backgroundColor: "rgba(90, 200, 250, 0.12)",
   },
   proText: {
-    color: PREMIUM_AQUA,
+    color: PRIMARY_PURPLE,
     fontSize: 14,
     lineHeight: 16,
     letterSpacing: 0.3,

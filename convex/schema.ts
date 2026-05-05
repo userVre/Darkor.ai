@@ -30,6 +30,7 @@ export default defineSchema({
     proTrialEndedPaywallPending: v.optional(v.boolean()),
     proTrialEndedPaywallShownAt: optionalNumberLike,
     onboardingDiamondClaimedAt: optionalNumberLike,
+    firstEntryRewardDismissedAt: optionalNumberLike,
     referralCode: v.optional(v.string()),
     referralCount: optionalNumberLike,
     referralProCount: optionalNumberLike,

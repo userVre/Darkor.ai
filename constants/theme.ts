@@ -1,17 +1,17 @@
 export const theme = {
   colors: {
-    primary: "#00B4FF",
-    primaryDark: "#0066FF",
-    accent: "#E83A5A",
-    accentDark: "#C0254A",
-    premiumBlue: "#007AFF",
+    primary: "#7B61FF",
+    primaryDark: "#5B46E8",
+    accent: "#5AC8FA",
+    accentDark: "#1BA7E8",
+    premiumBlue: "#5AC8FA",
     success: "#2ECC71",
-    background: "#0A0A0F",
-    surface: "rgba(255,255,255,0.08)",
-    surfaceBorder: "rgba(255,255,255,0.15)",
-    textPrimary: "#FFFFFF",
-    textSecondary: "rgba(255,255,255,0.72)",
-    textMuted: "rgba(255,255,255,0.40)",
+    background: "#FFFFFF",
+    surface: "#F9F9F9",
+    surfaceBorder: "rgba(123,97,255,0.18)",
+    textPrimary: "#111827",
+    textSecondary: "#4B5563",
+    textMuted: "#9CA3AF",
   },
   spacing: {
     xs: 4,
@@ -32,13 +32,13 @@ export const theme = {
     hero: {
       fontSize: 32,
       fontWeight: "800",
-      letterSpacing: 0.3,
+      letterSpacing: 0,
       lineHeight: 38,
     },
     title: {
       fontSize: 22,
       fontWeight: "700",
-      letterSpacing: 0.3,
+      letterSpacing: 0,
       lineHeight: 28,
     },
     subtitle: {
@@ -66,14 +66,14 @@ export const theme = {
   },
   shadows: {
     blue: {
-      shadowColor: "#00B4FF",
+      shadowColor: "#5AC8FA",
       shadowOffset: { width: 0, height: 0 },
       shadowRadius: 12,
       shadowOpacity: 0.6,
       elevation: 8,
     },
     premiumBlue: {
-      shadowColor: "#007AFF",
+      shadowColor: "#7B61FF",
       shadowOffset: { width: 0, height: 0 },
       shadowRadius: 12,
       shadowOpacity: 0.6,

@@ -346,8 +346,6 @@ export function getLocalizedFonts(language?: string | null) {
           default: "sans-serif",
         }) ?? "sans-serif"
     : "Inter";
-  const italicFontFamily = fontFamily === "Inter" ? "Inter-Italic" : fontFamily;
-
   return {
     regular: {
       fontFamily,
@@ -364,11 +362,6 @@ export function getLocalizedFonts(language?: string | null) {
     bold: {
       fontFamily,
       fontWeight: getFontWeight("bold"),
-    },
-    italic: {
-      fontFamily: italicFontFamily,
-      fontWeight: getFontWeight("regular"),
-      fontStyle: fontFamily === "Inter" ? ("normal" as const) : ("italic" as const),
     },
   };
 }

@@ -1,7 +1,7 @@
 import {Image} from "expo-image";
 import type {ImageStyle, StyleProp} from "react-native";
 
-const logoSource = require("../assets/logo-minimal.png");
+const logoSource = require("../assets/logo-minimal.webp");
 
 type LogoProps = {
   size?: number;

@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#121212",
+    backgroundColor: "#FFFFFF",
   },
   grid: {
     position: "absolute",
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     opacity: 0.24,
-    backgroundColor: "#121212",
+    backgroundColor: "#F9F9F9",
   },
   wordmarkWrap: {
     alignItems: "flex-start",
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     minHeight: 52,
-    color: "#F5F1EA",
+    color: "#111827",
     fontFamily: "Inter",
     fontWeight: "800",
     fontSize: 34,
@@ -93,13 +93,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   cursor: {
-    color: "#C86B33",
+    color: "#7B61FF",
   },
   cursorHidden: {
     opacity: 0.16,
   },
   caption: {
-    color: "rgba(245,241,234,0.48)",
+    color: "rgba(17,24,39,0.48)",
     fontFamily: "Inter",
     fontWeight: "700",
     fontSize: 11,

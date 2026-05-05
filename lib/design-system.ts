@@ -24,7 +24,7 @@ export const DS = {
     textInverse: light.textInverse,
     accent: light.brand,
     accentStrong: light.brandDark,
-    accentSecondary: light.brand,
+    accentSecondary: "#5AC8FA",
     accentGlow: light.brandSoft,
     accentGlowStrong: light.brand,
     accentSurface: light.brandSurface,

@@ -8,7 +8,7 @@ import {useViewerSession} from "./viewer-session-context";
 
 const DEMO_STARTED_KEY = "onboardingDemoRenderStarted";
 const DEMO_RESULT_KEY = "onboardingDemoRenderUrl";
-const DEMO_SAMPLE_ROOM = require("../assets/media/before-empty-room.png");
+const DEMO_SAMPLE_ROOM = require("../assets/media/before-empty-room.webp");
 
 type DemoRenderStatus = "idle" | "loading" | "success" | "failed";
 

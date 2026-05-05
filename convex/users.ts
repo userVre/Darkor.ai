@@ -1,6 +1,7 @@
 import { internalMutationGeneric, mutationGeneric, queryGeneric } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
+import { mutation } from "./_generated/server";
 import {
   BillingPlan,
   buildSubscriptionPatch,
@@ -360,6 +361,7 @@ function buildViewerResponse(user: any) {
     proTipNotificationIndex: toFiniteNumber(user.proTipNotificationIndex),
     firstDiamondRatingPromptedAt: toFiniteNumber(user.firstDiamondRatingPromptedAt),
     onboardingDiamondClaimedAt: toFiniteNumber(user.onboardingDiamondClaimedAt),
+    firstEntryRewardDismissedAt: toFiniteNumber(user.firstEntryRewardDismissedAt),
     isGuest: !user.clerkId,
   };
 }
@@ -529,6 +531,51 @@ export const claimDailyDiamondReward = mutationGeneric({
   },
 });
 
+export const preparePostPaywallDiamondClaim = mutation({
+  args: {
+    anonymousId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await ensureViewerUser(ctx, args.anonymousId);
+    const user = viewer.user;
+    const now = Date.now();
+    const state = deriveSubscriptionState(user, now);
+    const alreadyClaimedAt = Math.max(
+      toFiniteNumber(user.onboardingDiamondClaimedAt),
+      getLastClaimAt(user),
+    );
+    const sources = normalizeDiamondSourcesForBalance(user, state.credits);
+    const hasPurchasedDiamonds = state.premiumCredits > 0 || sources.includes("purchased_pack");
+
+    const shouldResetForFirstClaim = !state.hasPaidAccess && alreadyClaimedAt <= 0 && !hasPurchasedDiamonds;
+
+    if (shouldResetForFirstClaim) {
+      await ctx.db.patch(user._id, {
+        credits: 0,
+        diamondBalance: 0,
+        diamondSources: [],
+        premiumCredits: 0,
+        imageLimit: FREE_IMAGE_LIMIT,
+        imageGenerationCount: 0,
+        canClaimDiamond: true,
+        nextDiamondClaimAt: 0,
+      });
+    }
+
+    const streakCount = Math.max(toFiniteNumber(user.streakCount, 1), 1);
+
+    return {
+      credits: shouldResetForFirstClaim ? 0 : state.credits,
+      diamondBalance: shouldResetForFirstClaim ? 0 : state.diamondBalance,
+      canClaimDiamond: !state.hasPaidAccess && alreadyClaimedAt <= 0,
+      nextDiamondClaimAt: shouldResetForFirstClaim ? 0 : state.nextDiamondClaimAt,
+      onboardingDiamondClaimedAt: toFiniteNumber(user.onboardingDiamondClaimedAt),
+      streakCount,
+      streak_count: streakCount,
+    };
+  },
+});
+
 export const claimOnboardingDiamond = mutationGeneric({
   args: {
     anonymousId: v.optional(v.string()),
@@ -537,7 +584,10 @@ export const claimOnboardingDiamond = mutationGeneric({
     const viewer = await ensureViewerUser(ctx, args.anonymousId);
     const user = viewer.user;
     const now = Date.now();
-    const alreadyClaimedAt = toFiniteNumber(user.onboardingDiamondClaimedAt);
+    const alreadyClaimedAt = Math.max(
+      toFiniteNumber(user.onboardingDiamondClaimedAt),
+      getLastClaimAt(user),
+    );
     const currentCredits = Math.max(toFiniteNumber(user.credits), 0);
     const currentDiamondBalance = getDailyDiamondBalance(user);
 
@@ -548,8 +598,12 @@ export const claimOnboardingDiamond = mutationGeneric({
         credits: currentCredits,
         diamondBalance: currentDiamondBalance,
         canClaimDiamond: false,
+        nextDiamondClaimAt: toFiniteNumber(user.nextDiamondClaimAt),
         claimedAt: alreadyClaimedAt,
         onboardingDiamondClaimedAt: alreadyClaimedAt,
+        firstEntryRewardDismissedAt: toFiniteNumber(user.firstEntryRewardDismissedAt) || alreadyClaimedAt,
+        streakCount: Math.max(toFiniteNumber(user.streakCount, 1), 1),
+        streak_count: Math.max(toFiniteNumber(user.streakCount, 1), 1),
       };
     }
 
@@ -566,10 +620,12 @@ export const claimOnboardingDiamond = mutationGeneric({
         ? appendDiamondSources(user, nextCredits, "daily_free", creditsAdded)
         : normalizeDiamondSourcesForBalance(user, nextCredits),
       onboardingDiamondClaimedAt: now,
+      firstEntryRewardDismissedAt: now,
       canClaimDiamond: false,
       nextDiamondClaimAt: 0,
       lastClaimDate: now,
       lastClaimAt: now,
+      streakCount: Math.max(toFiniteNumber(user.streakCount, 1), 1),
     });
 
     return {
@@ -578,8 +634,36 @@ export const claimOnboardingDiamond = mutationGeneric({
       credits: nextCredits,
       diamondBalance: nextDiamondBalance,
       canClaimDiamond: false,
+      nextDiamondClaimAt: 0,
       claimedAt: now,
       onboardingDiamondClaimedAt: now,
+      firstEntryRewardDismissedAt: now,
+      streakCount: Math.max(toFiniteNumber(user.streakCount, 1), 1),
+      streak_count: Math.max(toFiniteNumber(user.streakCount, 1), 1),
+    };
+  },
+});
+
+export const dismissFirstEntryReward = mutationGeneric({
+  args: {
+    anonymousId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await ensureViewerUser(ctx, args.anonymousId);
+    const existingDismissedAt = toFiniteNumber(viewer.user.firstEntryRewardDismissedAt);
+    const dismissedAt = existingDismissedAt > 0 ? existingDismissedAt : Date.now();
+
+    if (existingDismissedAt <= 0) {
+      await ctx.db.patch(viewer.user._id, {
+        firstEntryRewardDismissedAt: dismissedAt,
+      });
+    }
+
+    return {
+      ok: true,
+      dismissedAt,
+      firstEntryRewardDismissedAt: dismissedAt,
+      onboardingDiamondClaimedAt: toFiniteNumber(viewer.user.onboardingDiamondClaimedAt),
     };
   },
 });
@@ -709,6 +793,10 @@ async function mergeAnonymousUserIntoClerkUser(ctx: any, clerkId: string, anonym
     proTrialExpiresAt: Math.max(toFiniteNumber(accountUser.proTrialExpiresAt), toFiniteNumber(guestUser.proTrialExpiresAt)) || null,
     proTrialEndedPaywallPending: Boolean(accountUser.proTrialEndedPaywallPending || guestUser.proTrialEndedPaywallPending),
     lastRewardDate: Math.max(toFiniteNumber(accountUser.lastRewardDate), toFiniteNumber(guestUser.lastRewardDate)),
+    firstEntryRewardDismissedAt: Math.max(
+      toFiniteNumber(accountUser.firstEntryRewardDismissedAt),
+      toFiniteNumber(guestUser.firstEntryRewardDismissedAt),
+    ),
     lastReviewPromptAt: Math.max(toFiniteNumber(accountUser.lastReviewPromptAt), toFiniteNumber(guestUser.lastReviewPromptAt)),
     firstDiamondRatingPromptedAt: Math.max(
       toFiniteNumber(accountUser.firstDiamondRatingPromptedAt),
@@ -737,6 +825,7 @@ async function mergeAnonymousUserIntoClerkUser(ctx: any, clerkId: string, anonym
     proTrialEndedPaywallPending: false,
     reviewPrompted: false,
     firstDiamondRatingPromptedAt: 0,
+    firstEntryRewardDismissedAt: 0,
     notificationsDeclined: false,
     notificationsPermissionRequestedAt: 0,
     notificationsPermissionGrantedAt: 0,

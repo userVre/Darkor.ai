@@ -624,7 +624,6 @@ export default function RootLayout() {
   const localizedFonts = useLocalizedAppFonts();
   const [fontsLoaded] = useFonts({
     Inter: require("../assets/Fonts/InterVariable.ttf"),
-    "Inter-Italic": require("../assets/Fonts/InterVariable-Italic.ttf"),
   });
   const [i18nReady, setI18nReady] = useState(i18n.isInitialized);
   const [showBrandLaunch, setShowBrandLaunch] = useState(true);

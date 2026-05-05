@@ -13,49 +13,65 @@ const darkPalette = {
   indigo: indigoDark,
 } as const;
 
+const appPalette = {
+  background: "#FFFFFF",
+  surface: "#F9F9F9",
+  surfaceHigh: "#F3F4F6",
+  purple: "#7B61FF",
+  purpleDark: "#5B46E8",
+  purpleSoft: "rgba(123, 97, 255, 0.12)",
+  purpleSurface: "rgba(123, 97, 255, 0.08)",
+  textPrimary: "#111827",
+  textSecondary: "#4B5563",
+  textMuted: "#9CA3AF",
+  border: "rgba(17, 24, 39, 0.1)",
+  borderStrong: "rgba(123, 97, 255, 0.26)",
+  shadow: "rgba(17, 24, 39, 0.12)",
+} as const;
+
 function createTheme(palette: typeof lightPalette) {
   return {
-    bg: palette.slate.slate1,
-    surface: palette.slate.slate2,
-    surfaceHigh: palette.slate.slate3,
-    surfaceMuted: palette.slate.slate4,
-    surfaceOverlay: palette.slate.slate2,
-    surfaceOverlayHigh: palette.slate.slate3,
-    surfaceCard: palette.slate.slate3,
-    surfaceCardHigh: palette.slate.slate2,
-    surfaceSelected: palette.indigo.indigo3,
-    surfaceDisabled: palette.slate.slate5,
+    bg: appPalette.background,
+    surface: appPalette.surface,
+    surfaceHigh: appPalette.surfaceHigh,
+    surfaceMuted: "rgba(17, 24, 39, 0.04)",
+    surfaceOverlay: "rgba(255, 255, 255, 0.96)",
+    surfaceOverlayHigh: "#FFFFFF",
+    surfaceCard: appPalette.background,
+    surfaceCardHigh: appPalette.surface,
+    surfaceSelected: appPalette.purpleSurface,
+    surfaceDisabled: "rgba(17, 24, 39, 0.05)",
 
-    textPrimary: palette.slate.slate12,
-    textSecondary: palette.slate.slate11,
-    textMuted: palette.slate.slate10,
-    textInverse: palette.slate.slate1,
-    textBrand: palette.slate.slate1,
-    textSuccess: palette.indigo.indigo11,
+    textPrimary: appPalette.textPrimary,
+    textSecondary: appPalette.textSecondary,
+    textMuted: appPalette.textMuted,
+    textInverse: "#FFFFFF",
+    textBrand: appPalette.purple,
+    textSuccess: "#16A34A",
     textWarning: palette.ruby.ruby11,
     textError: palette.ruby.ruby11,
 
-    brand: palette.indigo.indigo9,
-    brandDark: palette.indigo.indigo10,
-    brandSoft: palette.indigo.indigo4,
-    brandSurface: palette.indigo.indigo3,
-    brandSurfaceHigh: palette.indigo.indigo4,
-    brandBorder: palette.indigo.indigo9,
-    brandBorderStrong: palette.indigo.indigo10,
+    brand: appPalette.purple,
+    brandDark: appPalette.purpleDark,
+    brandSoft: appPalette.purpleSoft,
+    brandSurface: appPalette.purpleSurface,
+    brandSurfaceHigh: "rgba(123, 97, 255, 0.16)",
+    brandBorder: "rgba(123, 97, 255, 0.18)",
+    brandBorderStrong: appPalette.borderStrong,
 
-    success: palette.indigo.indigo9,
+    success: "#22C55E",
     warning: palette.ruby.ruby9,
     error: palette.ruby.ruby11,
-    successSurface: palette.indigo.indigo3,
-    successSurfaceHigh: palette.indigo.indigo4,
+    successSurface: "rgba(34, 197, 94, 0.1)",
+    successSurfaceHigh: "rgba(34, 197, 94, 0.16)",
     warningSurface: palette.ruby.ruby3,
     warningSurfaceHigh: palette.ruby.ruby4,
     errorSurface: palette.ruby.ruby3,
     errorSurfaceHigh: palette.ruby.ruby4,
 
-    border: palette.slate.slate7,
-    borderLight: palette.slate.slate8,
-    shadow: palette.slate.slate8,
+    border: appPalette.border,
+    borderLight: appPalette.borderStrong,
+    shadow: appPalette.shadow,
   } as const;
 }
 
@@ -119,6 +135,6 @@ export const radix = {
 export type Theme = typeof dark;
 
 export function useTheme(): Theme {
-  const scheme = useColorScheme();
-  return (scheme === "dark" ? dark : light) as Theme;
+  useColorScheme();
+  return light as Theme;
 }

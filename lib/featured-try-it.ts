@@ -15,7 +15,7 @@ export const FEATURED_TRY_IT_EXAMPLES: FeaturedTryItExample[] = [
   {
     id: "interior-design",
     serviceParam: "interior",
-    imageSource: require("../assets/media/discover/home/home-dining-room.jpg"),
+    imageSource: require("../assets/media/discover/home/home-dining-room.webp"),
     room: "Dining Room",
     style: "Luxury",
     paletteId: "terracotta",
@@ -27,7 +27,7 @@ export const FEATURED_TRY_IT_EXAMPLES: FeaturedTryItExample[] = [
   {
     id: "exterior-design",
     serviceParam: "facade",
-    imageSource: require("../assets/media/discover/exterior/exterior-modern-villa.jpg"),
+    imageSource: require("../assets/media/discover/exterior/exterior-modern-villa.webp"),
     room: "House",
     style: "Modern",
     paletteId: "gray",
@@ -38,7 +38,7 @@ export const FEATURED_TRY_IT_EXAMPLES: FeaturedTryItExample[] = [
   {
     id: "garden-design",
     serviceParam: "garden",
-    imageSource: require("../assets/media/discover/garden/garden-fireside-patio.jpg"),
+    imageSource: require("../assets/media/discover/garden/garden-fireside-patio.webp"),
     room: "Patio",
     style: "Mediterranean",
     paletteId: "garden-terracotta",
@@ -49,7 +49,7 @@ export const FEATURED_TRY_IT_EXAMPLES: FeaturedTryItExample[] = [
   {
     id: "paint",
     serviceParam: "paint",
-    imageSource: require("../assets/media/discover/wall-scenes/sage-green-suite.jpg"),
+    imageSource: require("../assets/media/discover/wall-scenes/sage-green-suite.webp"),
     room: "Bedroom",
     style: "Sage Green",
     finishId: "satin",
@@ -60,7 +60,7 @@ export const FEATURED_TRY_IT_EXAMPLES: FeaturedTryItExample[] = [
   {
     id: "floor-restyle",
     serviceParam: "floor",
-    imageSource: require("../assets/media/discover/floor-scenes/polished-carrara-marble.jpg"),
+    imageSource: require("../assets/media/discover/floor-scenes/polished-carrara-marble.webp"),
     room: "Living Room",
     style: "Marble",
     finishId: "glossy",

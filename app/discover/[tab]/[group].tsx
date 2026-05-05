@@ -15,9 +15,10 @@ type DiscoverTile,
 useDiscoverGroup,
 } from "../../../lib/discover-catalog";
 import {triggerHaptic} from "../../../lib/haptics";
+import {fonts} from "../../../styles/typography";
 
-const SCREEN_SIDE_MARGIN = 24;
-const GRID_GAP = 12;
+const SCREEN_SIDE_MARGIN = 26;
+const GRID_GAP = 14;
 
 function getDiscoverGridKey(item: DiscoverTile) {
   return `${item.categoryId}:${item.id}`;
@@ -77,7 +78,7 @@ export default function DiscoverSeeAllScreen() {
           <ArrowLeft color={DS.colors.textPrimary} size={22} strokeWidth={2.25} />
         </Pressable>
 
-        <Text numberOfLines={1} style={styles.headerTitle}>
+        <Text adjustsFontSizeToFit minimumFontScale={0.9} numberOfLines={1} style={styles.headerTitle}>
           {group?.title ?? t("discover.title")}
         </Text>
 
@@ -146,11 +147,12 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    color: "#111111",
+    color: DS.colors.textPrimary,
     fontSize: 18,
     lineHeight: 24,
+    letterSpacing: 0,
     textAlign: "center",
-    fontWeight: "700",
+    ...fonts.bold,
   },
   headerSpacer: {
     width: 48,

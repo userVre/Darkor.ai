@@ -58,6 +58,45 @@
     "missingEnvTitle": "Variables d'environnement manquantes",
     "missingEnvBody": "Les valeurs suivantes sont requises avant que HomeDecor AI puisse être lancé :"
   },
+  "onboarding": {
+    "stepLabel": "\u00c9tape {{current}} sur 4",
+    "actions": {
+      "begin": "Commencer la transformation",
+      "continue": "Continuer",
+      "generate": "G\u00e9n\u00e9rer",
+      "next": "Suivant",
+      "skip": "Ignorer",
+      "tryThis": "Essayer"
+    },
+    "premium": {
+      "step1": {
+        "headline": "Concevez en quelques secondes",
+        "body": "Importez une photo. Choisissez une direction. Obtenez rapidement un concept soign\u00e9."
+      },
+      "step2": {
+        "headline": "Choisissez votre profil"
+      },
+      "step3": {
+        "headline": "Commencez \u00e0 cr\u00e9er"
+      },
+      "roles": {
+        "renovating_home": "Propri\u00e9taire",
+        "interior_designer": "Architecte d'int\u00e9rieur"
+      },
+      "diamondReward": "1 diamant gratuit",
+      "diamondProgressA11y": "Progression du diamant gratuit",
+      "actions": {
+        "claiming": "R\u00e9clamation...",
+        "claimFreeDiamond": "R\u00e9clamer 1 diamant gratuit"
+      }
+    }
+  },
+  "firstLaunchDisclosure": {
+    "eyebrow": "Avant de continuer",
+    "title": "Concepts g\u00e9n\u00e9r\u00e9s par l'IA, pas des conseils professionnels",
+    "body": "HomeDecor AI g\u00e9n\u00e8re des visuels d'inspiration. V\u00e9rifiez toujours les mesures, les modifications structurelles, les permis, les prix et la disponibilit\u00e9 des produits avant de construire ou d'acheter.",
+    "cta": "J'ai compris"
+  },
   "tabs": {
     "tools": "Outils",
     "create": "Créer",
@@ -110,9 +149,9 @@
   },
   "paywall": {
     "features": {
-      "fasterRendering": "Faster Results, Every Time",
-      "adFree": "Ultra-HD Quality Renders",
-      "unlimitedRenders": "Unlimited Designs, Always"
+      "fasterRendering": "Rendus prioritaires",
+      "adFree": "Rendus Ultra HD (4K)",
+      "unlimitedRenders": "G\u00e9n\u00e9rations illimit\u00e9es sans filigrane"
     },
     "restore": "Restaurer",
     "bestOffer": "Meilleure offre",
@@ -132,6 +171,9 @@
     "processing": "Traitement...",
     "tryForFree": "Commencez votre essai Pro",
     "continue": "Commencez votre essai Pro",
+    "personalizedSubtitle": "Votre pi\u00e8ce est pr\u00eate pour le niveau sup\u00e9rieur. Continuez \u00e0 concevoir cet espace en 4K.",
+    "softTitle": "D\u00e9bloquez des designs de pi\u00e8ces illimit\u00e9s",
+    "softSubtitle": "Poursuivez avec des rendus premium, une cr\u00e9ation plus rapide et des r\u00e9sultats pr\u00eats \u00e0 exporter.",
     "subtitle": "Découvrez toute la puissance du AI architectural avec des limites plus élevées et une précision 4K.",
     "terms": "Conditions",
     "privacy": "Confidentialité",
@@ -146,7 +188,46 @@
     "purchaseCancelled": "Achat annulé.",
     "closeA11y": "Fermer le paywall",
     "title": "Concevez comme un pro. Liberté de création illimitée.",
-    "beginTrial": "Commencez votre essai Pro"
+    "beginTrial": "Commencez votre essai Pro",
+    "subscribeNow": "S'abonner",
+    "skipClaimFreeDiamond": "Ignorer - r\u00e9clamer mon diamant gratuit"
+  },
+  "elitePass": {
+    "title": "PASS ELITE",
+    "subtitle": "R\u00c9COMPENSE QUOTIDIENNE",
+    "closeA11y": "Fermer le Pass Elite",
+    "balance": "{{count}} diamants",
+    "progressTitle": "R\u00c9COMPENSE QUOTIDIENNE",
+    "progressCount": "{{current}}/{{total}}",
+    "progressA11y": "Progression du Pass Elite {{current}} sur {{total}}",
+    "rewardBar": {
+      "headline": "C'est parti ! R\u00e9clamez votre 1er diamant gratuit \u2728",
+      "cta": "R\u00c9CUP\u00c9RER"
+    },
+    "success": {
+      "unlocked": "Acc\u00e8s Pro d\u00e9bloqu\u00e9 !",
+      "claimed": "R\u00e9clam\u00e9 !"
+    },
+    "errors": {
+      "alreadyClaimed": "Cette r\u00e9compense du Pass Elite a d\u00e9j\u00e0 \u00e9t\u00e9 r\u00e9clam\u00e9e.",
+      "claimUnavailable": "Impossible de r\u00e9clamer votre r\u00e9compense pour le moment."
+    },
+    "dayNode": {
+      "proAccess": "24h d'acc\u00e8s PRO illimit\u00e9",
+      "renderCredits": "50 cr\u00e9dits de rendu",
+      "texturePack": "Pack de textures luxe",
+      "claimed": "R\u00e9clam\u00e9",
+      "oneDiamond": "1 diamant",
+      "unlocksTomorrow": "D\u00c9BLOQU\u00c9 DEMAIN",
+      "locked": "Verrouill\u00e9",
+      "tap": "R\u00c9CUP\u00c9RER",
+      "tapToClaim": "Toucher pour r\u00e9clamer",
+      "claimNow": "R\u00c9CUP\u00c9RER MAINTENANT",
+      "limited": "LIMIT\u00c9",
+      "elite": "ELITE",
+      "day": "Jour {{day}}",
+      "claimA11y": "R\u00e9clamer la r\u00e9compense du jour {{day}} du Pass Elite"
+    }
   },
   "creditLimit": {
     "title": "Passez à l'accès professionnel.",

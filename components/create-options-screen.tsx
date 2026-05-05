@@ -19,10 +19,10 @@ getDirectionalRow,
 } from "../lib/i18n/rtl";
 import {withWorkspaceFlowId} from "../lib/try-it-flow";
 import {useDiamondStore} from "./diamond-store-context";
-import {DiamondCreditPill, ProBadge} from "./diamond-credit-pill";
+import {DiamondCreditPill} from "./diamond-credit-pill";
 import {useElitePassModal} from "./elite-pass-context";
+import {FirstEntryRewardModal} from "./first-entry-reward-modal";
 import {HomeToolCard, type HomeToolCardItem} from "./home-tool-card";
-import {PostPaywallRewardBar} from "./post-paywall-reward-bar";
 import {useViewerCredits} from "./viewer-credits-context";
 import {useWorkspaceDraft} from "./workspace-context";
 
@@ -36,16 +36,17 @@ export function CreateOptionsScreen() {
   const { isSignedIn } = useAuth();
   const { clearDraft } = useWorkspaceDraft();
   const {
-    canClaimDiamond,
     credits: creditBalance,
     diamondBalance,
     hasPaidAccess,
     hasProAccess,
     isReady: creditsReady,
+    lastClaimAt,
+    onboardingDiamondClaimedAt,
     streakCount,
   } = useViewerCredits();
   const { openStore } = useDiamondStore();
-  const { openRewardBar } = useElitePassModal();
+  const { openElitePass } = useElitePassModal();
   const isRTL = I18nManager.isRTL;
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const sidePadding = 20;
@@ -55,7 +56,7 @@ export function CreateOptionsScreen() {
     () => [
       {
         id: "interior-design",
-        image: require("../assets/media/discover/home/home-dining-room.jpg"),
+        image: require("../assets/media/discover/home/home-dining-room.webp"),
         title: t("home.tools.interior.title"),
         description: t("home.tools.interior.description"),
         serviceParam: "interior",
@@ -63,7 +64,7 @@ export function CreateOptionsScreen() {
       },
       {
         id: "exterior-design",
-        image: require("../assets/media/discover/exterior/exterior-modern-villa.jpg"),
+        image: require("../assets/media/discover/exterior/exterior-modern-villa.webp"),
         title: t("home.tools.exterior.title"),
         description: t("home.tools.exterior.description"),
         serviceParam: "facade",
@@ -71,7 +72,7 @@ export function CreateOptionsScreen() {
       },
       {
         id: "garden-design",
-        image: require("../assets/media/discover/garden/garden-fireside-patio.jpg"),
+        image: require("../assets/media/discover/garden/garden-fireside-patio.webp"),
         title: t("home.tools.garden.title"),
         description: t("home.tools.garden.description"),
         serviceParam: "garden",
@@ -79,7 +80,7 @@ export function CreateOptionsScreen() {
       },
       {
         id: "paint",
-        image: require("../assets/media/discover/wall-scenes/sage-green-suite.jpg"),
+        image: require("../assets/media/discover/wall-scenes/sage-green-suite.webp"),
         title: t("home.tools.paint.title"),
         description: t("home.tools.paint.description"),
         serviceParam: "paint",
@@ -87,7 +88,7 @@ export function CreateOptionsScreen() {
       },
       {
         id: "floor-restyle",
-        image: require("../assets/media/discover/floor-scenes/polished-carrara-marble.jpg"),
+        image: require("../assets/media/discover/floor-scenes/polished-carrara-marble.webp"),
         title: t("home.tools.floor.title"),
         description: t("home.tools.floor.description"),
         serviceParam: "floor",
@@ -95,7 +96,7 @@ export function CreateOptionsScreen() {
       },
       {
         id: "layout-optimization",
-        image: require("../assets/media/discover/layout/layout-optimization-hero.jpg"),
+        image: require("../assets/media/discover/layout/layout-optimization-hero.webp"),
         title: t("home.tools.smartSpacePlanning.title"),
         description: t("home.tools.smartSpacePlanning.description"),
         serviceParam: "layout",
@@ -105,7 +106,7 @@ export function CreateOptionsScreen() {
       },
       {
         id: "replace-objects",
-        image: require("../assets/media/discover/injected/home/living-room.png"),
+        image: require("../assets/media/discover/injected/home/living-room.webp"),
         title: t("home.tools.replace.title"),
         description: t("home.tools.replace.description"),
         serviceParam: "replace",
@@ -115,7 +116,7 @@ export function CreateOptionsScreen() {
       },
       {
         id: "reference-style",
-        image: require("../assets/media/discover/collages/living-rooms.png"),
+        image: require("../assets/media/discover/collages/living-rooms.webp"),
         title: t("home.tools.referenceStyle.title"),
         description: t("home.tools.referenceStyle.description"),
         href: "/workspace?service=interior&entrySource=reference-style",
@@ -130,12 +131,6 @@ export function CreateOptionsScreen() {
   useEffect(() => {
     void Asset.loadAsync(toolCards.map((card) => card.image as number));
   }, [toolCards]);
-
-  useEffect(() => {
-    if (creditsReady && canClaimDiamond && creditBalance <= 0 && diamondBalance <= 0) {
-      openRewardBar();
-    }
-  }, [canClaimDiamond, creditBalance, creditsReady, diamondBalance, openRewardBar]);
 
   useEffect(() => {
     let active = true;
@@ -212,6 +207,11 @@ export function CreateOptionsScreen() {
     openStore();
   };
 
+  const handleElitePassPress = () => {
+    triggerHaptic();
+    openElitePass();
+  };
+
   const handleAcceptDisclosure = useCallback(async () => {
     triggerHaptic();
     await AsyncStorage.setItem(FIRST_LAUNCH_DISCLOSURE_KEY, "true");
@@ -228,6 +228,12 @@ export function CreateOptionsScreen() {
     router.push({ pathname: "/legal-viewer", params: { document: "terms" } } as never);
   }, [router]);
 
+  const shouldShowFirstEntryReward =
+    creditsReady
+    && diamondBalance <= 0
+    && onboardingDiamondClaimedAt <= 0
+    && lastClaimAt <= 0;
+
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
@@ -235,19 +241,15 @@ export function CreateOptionsScreen() {
       <View style={[styles.headerShell, { paddingTop: insets.top + 10 }]}>
         <View style={[styles.headerRow, { flexDirection: getDirectionalRow(isRTL) }]}>
           <View style={[styles.sideSlot, { alignItems: getDirectionalAlignment(isRTL) }]}>
-            {hasPaidAccess ? (
-              <ProBadge style={styles.proBadge} />
-            ) : (
-              <DiamondCreditPill
-                accessibilityLabel={t("home.accessibility.openCredits")}
-                count={creditBalance}
-                iconOnly
-                onPress={handleCreditsPress}
-                streakCount={streakCount}
-                style={styles.creditPill}
-                variant="light"
-              />
-            )}
+            <DiamondCreditPill
+              accessibilityLabel={t("home.accessibility.openCredits")}
+              count={creditBalance}
+              onElitePassPress={handleElitePassPress}
+              onPress={handleCreditsPress}
+              streakCount={streakCount}
+              style={styles.creditPill}
+              variant="light"
+            />
           </View>
 
           <View pointerEvents="none" style={styles.centerBrand}>
@@ -281,7 +283,6 @@ export function CreateOptionsScreen() {
           {toolCards.map((card, index) => (
             <View key={card.id} style={styles.toolListItem}>
               <HomeToolCard item={card} onPress={handleToolPress} />
-              {index === 1 ? <PostPaywallRewardBar /> : null}
             </View>
           ))}
         </View>
@@ -309,6 +310,8 @@ export function CreateOptionsScreen() {
           </View>
         </View>
       </Modal>
+
+      <FirstEntryRewardModal visible={shouldShowFirstEntryReward} />
     </View>
   );
 }
@@ -338,7 +341,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   sideSlot: {
-    width: 120,
+    width: 132,
     minHeight: 44,
     justifyContent: "center",
     alignItems: "flex-start",
@@ -360,10 +363,7 @@ const styles = StyleSheet.create({
   },
   creditPill: {
     minHeight: 42,
-    paddingHorizontal: 12,
-  },
-  proBadge: {
-    minHeight: 42,
+    paddingHorizontal: 10,
   },
   settingsButton: {
     width: 44,

@@ -9,7 +9,7 @@ export const GLOBAL_MASTERPIECE_QUALITY_INSTRUCTION =
 export const GLOBAL_REALISM_TOKEN_INJECTION =
   "8k resolution, photorealistic architectural photography, ray tracing, cinematic natural lighting, high-fidelity textures, shot on 35mm lens, global illumination, intricate details, trending on ArchDaily.";
 
-export const GEMINI_MATERIAL_REFLECTION_INSTRUCTION =
+export const ARCHITECTURAL_MATERIAL_REFLECTION_INSTRUCTION =
   "In customPrompt, describe shadow behavior and material reflections in concrete detail: contact shadows, cast shadow softness, ambient occlusion, marble veining with subtle polished reflection, oak grain with warm directional highlights, and glass reflections/refractions matching the original window light and camera angle.";
 
 const EXTERIOR_ROOM_TYPE_KEYWORDS = [

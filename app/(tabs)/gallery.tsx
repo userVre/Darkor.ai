@@ -22,8 +22,8 @@ useDiscoverClusters,
 import {triggerHaptic} from "../../lib/haptics";
 import {fonts} from "../../styles/typography";
 
-const SCREEN_SIDE_MARGIN = 24;
-const CARD_GAP = 12;
+const SCREEN_SIDE_MARGIN = 26;
+const CARD_GAP = 14;
 
 function getDiscoverTileKey(group: DiscoverGroup, item: DiscoverTile) {
   return `${group.renderKey}:${item.id}`;
@@ -52,7 +52,9 @@ const DiscoverSection = memo(function DiscoverSection({
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{group.title}</Text>
+        <Text ellipsizeMode="tail" numberOfLines={1} style={styles.sectionTitle}>
+          {group.title}
+        </Text>
         <Pressable accessibilityRole="button" hitSlop={8} onPress={() => onExploreGroup(group)} style={styles.sectionAction}>
           <Text style={styles.sectionActionText}>{seeAllLabel}</Text>
         </Pressable>
@@ -171,7 +173,9 @@ export default function GalleryScreen() {
           </View>
 
           <View pointerEvents="none" style={styles.titleSlot}>
-            <Text style={styles.headerTitle}>{t("tabs.discover")}</Text>
+            <Text adjustsFontSizeToFit minimumFontScale={0.86} numberOfLines={1} style={styles.headerTitle}>
+              {t("tabs.discover")}
+            </Text>
           </View>
 
           <View style={styles.rightSpacer} />
@@ -188,7 +192,9 @@ export default function GalleryScreen() {
                 onPress={() => handleClusterPress(cluster.id)}
                 style={[styles.categoryTab, active ? styles.categoryTabActive : null]}
               >
-                <Text style={[styles.categoryTabText, active ? styles.categoryTabTextActive : null]}>{cluster.title}</Text>
+                <Text numberOfLines={1} style={[styles.categoryTabText, active ? styles.categoryTabTextActive : null]}>
+                  {cluster.title}
+                </Text>
               </Pressable>
             );
           })}
@@ -232,6 +238,7 @@ const styles = StyleSheet.create({
     backgroundColor: DS.colors.surface,
   },
   topRow: {
+    position: "relative",
     minHeight: 48,
     marginBottom: 18,
     paddingHorizontal: SCREEN_SIDE_MARGIN,
@@ -240,62 +247,68 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   creditSlot: {
-    minWidth: 88,
-    flex: 1,
+    width: 92,
     alignItems: "flex-start",
     justifyContent: "center",
+    zIndex: 1,
   },
   creditPill: {
     minHeight: 42,
   },
   titleSlot: {
-    flex: 1,
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 12,
+    paddingHorizontal: 104,
   },
   headerTitle: {
     color: DS.colors.textPrimary,
     fontSize: 24,
     lineHeight: 30,
+    letterSpacing: 0,
     textAlign: "center",
     ...fonts.bold,
   },
   rightSpacer: {
-    minWidth: 88,
-    flex: 1,
+    width: 92,
   },
   categoryTabs: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 10,
+    gap: 8,
   },
   categoryTab: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 42,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: DS.colors.border,
-    backgroundColor: DS.colors.surface,
-    paddingHorizontal: 12,
+    borderColor: DS.colors.borderSubtle,
+    backgroundColor: DS.colors.surfaceRaised,
+    paddingHorizontal: 10,
   },
   categoryTabActive: {
-    backgroundColor: DS.colors.textPrimary,
-    borderColor: DS.colors.textPrimary,
+    backgroundColor: DS.colors.accentSurface,
+    borderColor: DS.colors.accent,
+    boxShadow: `0px 8px 22px ${DS.colors.accentGlow}`,
   },
   categoryTabText: {
     color: DS.colors.textSecondary,
     fontSize: 13,
     lineHeight: 18,
+    letterSpacing: 0,
     textAlign: "center",
     ...fonts.semibold,
   },
   categoryTabTextActive: {
-    color: DS.colors.textInverse,
+    color: DS.colors.accentStrong,
   },
   section: {
     marginBottom: 32,
@@ -313,6 +326,7 @@ const styles = StyleSheet.create({
     color: DS.colors.textPrimary,
     fontSize: 18,
     lineHeight: 24,
+    letterSpacing: 0,
     ...fonts.bold,
   },
   sectionAction: {

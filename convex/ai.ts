@@ -3,15 +3,18 @@ import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import {
+  ARCHITECTURAL_MATERIAL_REFLECTION_INSTRUCTION,
   buildDesignPrompt,
-  GEMINI_MATERIAL_REFLECTION_INSTRUCTION,
   GLOBAL_MASTERPIECE_QUALITY_INSTRUCTION,
   GLOBAL_PERSPECTIVE_LOCK_INSTRUCTION,
 } from "../lib/design-prompt-builder";
 
-const GEMINI_SUGGEST_REQUEST_TIMEOUT_MS = 25_000;
-const GEMINI_SUGGEST_MAX_DIMENSION = 1152;
-const GEMINI_SUGGEST_MAX_INLINE_BYTES = 3 * 1024 * 1024;
+const AZURE_BRAIN_REQUEST_TIMEOUT_MS = 25_000;
+const AZURE_BRAIN_MAX_DIMENSION = 1152;
+const AZURE_BRAIN_MAX_INLINE_BYTES = 3 * 1024 * 1024;
+const AZURE_BRAIN_API_VERSION = "2024-10-21";
+const AZURE_BRAIN_DEFAULT_ENDPOINT = "https://abism-moec40fn-eastus2.cognitiveservices.azure.com/";
+const AZURE_BRAIN_DEFAULT_DEPLOYMENT_NAME = "gpt-image-2";
 const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
 
 type ServiceType = "paint" | "floor" | "redesign" | "layout" | "replace";
@@ -36,7 +39,7 @@ type DesignOrchestrationResult = {
   customPrompt?: string;
   fusionPrompt?: string;
   reason?: string;
-  source: "gemini" | "fallback";
+  source: "azure" | "fallback";
 };
 
 export function redactSecret(value?: string | null) {
@@ -72,11 +75,11 @@ async function blobToBase64(blob: Blob) {
 
 async function prepareSuggestionImage(blob: Blob) {
   const originalBytes = new Uint8Array(await blob.arrayBuffer());
-  if (originalBytes.byteLength > GEMINI_SUGGEST_MAX_INLINE_BYTES) {
+  if (originalBytes.byteLength > AZURE_BRAIN_MAX_INLINE_BYTES) {
     console.warn("prepareSuggestionImage: image exceeds inline target size; sending original bytes without Jimp optimization", {
       byteLength: originalBytes.byteLength,
-      targetLimit: GEMINI_SUGGEST_MAX_INLINE_BYTES,
-      maxDimensionHint: GEMINI_SUGGEST_MAX_DIMENSION,
+      targetLimit: AZURE_BRAIN_MAX_INLINE_BYTES,
+      maxDimensionHint: AZURE_BRAIN_MAX_DIMENSION,
     });
   }
 
@@ -236,6 +239,11 @@ function clampDetectionCoordinate(value: number) {
   return Math.max(0, Math.min(1000, Math.round(value)));
 }
 
+function clampDetectionConfidence(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
 function heuristicDetection(target: "paint" | "floor"): DetectionResponse {
   if (target === "floor") {
     return {
@@ -268,6 +276,65 @@ function heuristicDetection(target: "paint" | "floor"): DetectionResponse {
     ],
     reason: "Automatic detection is temporarily conservative during the Azure image migration.",
   };
+}
+
+function normalizeDetectionResponse(value: any, fallback: DetectionResponse): DetectionResponse {
+  const rawPolygons = Array.isArray(value?.polygons) ? value.polygons : [];
+  const polygons = rawPolygons
+    .map((polygon: any) => {
+      if (!Array.isArray(polygon)) {
+        return [];
+      }
+
+      return polygon
+        .map((point: any) => ({
+          x: clampDetectionCoordinate(Number(point?.x)),
+          y: clampDetectionCoordinate(Number(point?.y)),
+        }))
+        .filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y));
+    })
+    .filter((polygon: DetectionPoint[]) => polygon.length >= 3);
+
+  if (polygons.length === 0) {
+    return fallback;
+  }
+
+  return {
+    confidence: clampDetectionConfidence(Number(value?.confidence ?? fallback.confidence)),
+    polygons,
+    reason: trimOptional(value?.reason) ?? fallback.reason ?? null,
+  };
+}
+
+async function requestAzureVisionDetection(args: {
+  sourceBlob: Blob;
+  target: "paint" | "floor";
+}) {
+  const fallback = heuristicDetection(args.target);
+  const targetInstruction = args.target === "paint"
+    ? "Detect the visible paintable wall planes. Exclude windows, doors, art, mirrors, furniture, decor, ceiling, floor, and trim unless trim is visibly part of the wall paint area."
+    : "Detect the visible floor plane. Exclude rugs, furniture, walls, steps above floor level, decor, and any vertical surfaces.";
+  const systemPrompt = [
+    "You are GPT-4o acting as an architectural vision detector for precise interior image editing.",
+    "Return normalized polygon coordinates on a 0-1000 coordinate grid, where x=0 is the left edge, x=1000 is the right edge, y=0 is the top edge, and y=1000 is the bottom edge.",
+    "Use simple polygons that follow the actual visible perspective boundaries. Favor conservative polygons over bleeding into furniture or unrelated surfaces.",
+    "Return only strict JSON.",
+  ].join(" ");
+  const userPrompt = [
+    targetInstruction,
+    "Analyze lighting, perspective, occlusion, wall-floor intersections, furniture contact points, and visible material boundaries.",
+    "Return JSON exactly in this shape: {\"confidence\":0-100,\"polygons\":[[{\"x\":0,\"y\":0},{\"x\":0,\"y\":0},{\"x\":0,\"y\":0}]],\"reason\":\"brief visual rationale\"}.",
+  ].join(" ");
+
+  const parsed = await requestAzureBrainJson({
+    sourceBlob: args.sourceBlob,
+    systemPrompt,
+    userPrompt,
+    maxTokens: 900,
+    temperature: 0.1,
+  });
+
+  return parsed ? normalizeDetectionResponse(parsed, fallback) : fallback;
 }
 
 async function limitFreeImageResolution(blob: Blob) {
@@ -394,21 +461,149 @@ function buildFallbackOrchestration(args: {
   };
 }
 
-function parseSuggestionResponse(payload: any) {
-  const directText = trimOptional(payload?.text);
-  if (directText) {
-    return directText;
-  }
-
-  const candidateText = payload?.candidates?.[0]?.content?.parts
-    ?.map((part: { text?: string }) => part?.text ?? "")
-    .join("")
-    .trim();
-
-  return trimOptional(candidateText);
+function ensureAzureEndpointPrefix(endpoint: string) {
+  const trimmed = endpoint.trim();
+  return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
 }
 
-export async function requestGeminiDesignOrchestration(args: {
+function getAzureBrainConfig() {
+  const apiKey = trimOptional(process.env.AZURE_OPENAI_API_KEY);
+  const endpoint = trimOptional(process.env.AZURE_OPENAI_ENDPOINT) ?? AZURE_BRAIN_DEFAULT_ENDPOINT;
+  const deploymentName =
+    trimOptional(process.env.AZURE_OPENAI_BRAIN_DEPLOYMENT_NAME) ??
+    trimOptional(process.env.AZURE_OPENAI_CHAT_DEPLOYMENT_NAME) ??
+    trimOptional(process.env.AZURE_OPENAI_GPT4O_DEPLOYMENT_NAME) ??
+    AZURE_BRAIN_DEFAULT_DEPLOYMENT_NAME;
+  const apiVersion = trimOptional(process.env.AZURE_OPENAI_CHAT_API_VERSION) ?? AZURE_BRAIN_API_VERSION;
+
+  return apiKey
+    ? {
+        apiKey,
+        endpoint,
+        deploymentName,
+        apiVersion,
+      }
+    : null;
+}
+
+async function parseAzureBrainError(response: Response) {
+  const raw = await response.text();
+  try {
+    const parsed = JSON.parse(raw) as {
+      error?: {
+        code?: string;
+        message?: string;
+        inner_error?: { code?: string };
+      };
+      message?: string;
+    };
+
+    return [
+      parsed.error?.code,
+      parsed.error?.inner_error?.code,
+      parsed.error?.message,
+      parsed.message,
+    ]
+      .filter(Boolean)
+      .join(" | ") || raw;
+  } catch {
+    return raw;
+  }
+}
+
+function parseAzureBrainText(payload: any) {
+  const content = payload?.choices?.[0]?.message?.content;
+  if (typeof content === "string") {
+    return trimOptional(content);
+  }
+
+  if (Array.isArray(content)) {
+    return trimOptional(
+      content
+        .map((part) => {
+          if (typeof part === "string") return part;
+          if (typeof part?.text === "string") return part.text;
+          return "";
+        })
+        .join(""),
+    );
+  }
+
+  return undefined;
+}
+
+async function requestAzureBrainJson(args: {
+  sourceBlob: Blob;
+  systemPrompt: string;
+  userPrompt: string;
+  maxTokens: number;
+  temperature?: number;
+}) {
+  const config = getAzureBrainConfig();
+  if (!config) {
+    return null;
+  }
+
+  const { base64, mimeType } = await prepareSuggestionImage(args.sourceBlob);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AZURE_BRAIN_REQUEST_TIMEOUT_MS);
+  const requestUrl =
+    `${ensureAzureEndpointPrefix(config.endpoint)}openai/deployments/${config.deploymentName}/chat/completions?api-version=${config.apiVersion}`;
+
+  try {
+    const response = await fetch(requestUrl, {
+      method: "POST",
+      headers: {
+        "api-key": config.apiKey,
+        "Content-Type": "application/json",
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        messages: [
+          {
+            role: "system",
+            content: args.systemPrompt,
+          },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: args.userPrompt },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:${mimeType};base64,${base64}`,
+                },
+              },
+            ],
+          },
+        ],
+        temperature: args.temperature ?? 0.25,
+        max_tokens: args.maxTokens,
+        response_format: { type: "json_object" },
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("requestAzureBrainJson: Azure GPT-4o request failed", response.status, await parseAzureBrainError(response));
+      return null;
+    }
+
+    const payload = await response.json();
+    const text = parseAzureBrainText(payload);
+    if (!text) {
+      return null;
+    }
+
+    return JSON.parse(extractJsonBlock(text));
+  } catch (error) {
+    console.error("requestAzureBrainJson: falling back after error", error);
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function requestAzureDesignOrchestration(args: {
   sourceBlob: Blob;
   serviceType: ServiceType;
   roomType: string;
@@ -425,14 +620,6 @@ export async function requestGeminiDesignOrchestration(args: {
     styleSelections: args.styleSelections,
     colorPalette: args.colorPalette,
   });
-  const apiKey = trimOptional(process.env.GEMINI_API_KEY);
-  const model = trimOptional(process.env.GEMINI_TEXT_MODEL) ?? "gemini-3.1-pro-preview";
-
-  if (!apiKey) {
-    return fallback;
-  }
-
-  const { base64, mimeType } = await prepareSuggestionImage(args.sourceBlob);
   const styleDirection = buildStyleDirection(args.style, args.styleSelections);
   const requestShape =
     args.serviceType === "paint"
@@ -455,8 +642,14 @@ export async function requestGeminiDesignOrchestration(args: {
           ? "Analyze the room's perspective, lighting, contact shadows, and surrounding furniture. In customPrompt, describe the most seamless replacement object strategy so the new object inherits shadows, reflections, scale, and color temperature."
         : "Analyze this uploaded room, house, facade, or garden image and recommend the strongest architectural direction plus the strongest palette direction for a premium final result. Translate user style words into architectural language, for example Modern becomes contemporary minimalist with warm oak accents, layered indirect lighting, and clean floor-to-ceiling surfaces. If multiple styles were provided, resolve them into a refined fusion rather than a list of disconnected themes.";
 
+  const systemPrompt = [
+    "You are GPT-4o acting as the unified HomeDecor AI brain: architectural vision analyst, interior design director, and technical prompt engineer.",
+    "Analyze the uploaded room photo before making any recommendation. Prioritize architectural precision over generic decoration.",
+    "Ground every decision in the visible camera angle, room geometry, natural light direction, surface materials, furniture scale, and luxury finish quality.",
+    "Return only strict JSON. Do not include markdown, prose outside JSON, visible text instructions, labels, captions, watermarks, or split layouts.",
+  ].join(" ");
   const prompt = [
-    "You are a world-class architect and architectural rendering director. Analyze the provided room, facade, garden, structure, lighting, and existing furniture. Select the SINGLE strongest professional design direction and translate simple user choices into precise architectural language.",
+    "Analyze the provided room, facade, garden, structure, lighting, and existing furniture. Select the SINGLE strongest professional design direction and translate simple user choices into precise architectural language.",
     GLOBAL_PERSPECTIVE_LOCK_INSTRUCTION,
     GLOBAL_MASTERPIECE_QUALITY_INSTRUCTION,
     `Service type: ${args.serviceType}.`,
@@ -465,7 +658,8 @@ export async function requestGeminiDesignOrchestration(args: {
     args.availableStyles?.length ? `Allowed styles: ${args.availableStyles.join(", ")}.` : undefined,
     args.availablePalettes?.length ? `Allowed palettes: ${args.availablePalettes.join(", ")}.` : undefined,
     taskInstruction,
-    GEMINI_MATERIAL_REFLECTION_INSTRUCTION,
+    ARCHITECTURAL_MATERIAL_REFLECTION_INSTRUCTION,
+    "Architectural precision requirements: describe exact lighting behavior, color temperature, shadow softness, surface reflectivity, material grain direction, stone veining, metal finish, glass reflections, textile weight, joinery lines, and luxury detailing.",
     args.serviceType === "redesign" ? "Return a single best style in style. If the user supplied multiple styles, keep styles limited to the compatible fusion ingredients and write fusionPrompt as a polished architectural direction that blends them seamlessly." : undefined,
     args.serviceType === "redesign" ? "For interiors, focus customPrompt on lighting harmony, furniture flow, spatial gain, high-fidelity textures, and preserving source window light direction. For exteriors, require a clean sweep of debris, trash, foreground clutter, and messy overgrowth, then replace with luxury landscaping and a polished facade. For gardens, require resort-level landscaping with lush tropical flora, integrated LED garden lighting, and ambient twilight atmosphere where appropriate. If the photo includes both facade and garden, treat them as one unified project." : undefined,
     "If the user selected AI Suggest, Surprise Me, AI Choice, or Random, you must still return a professionally balanced, high-end choice rather than something extreme.",
@@ -477,49 +671,13 @@ export async function requestGeminiDesignOrchestration(args: {
     .join(" ");
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), GEMINI_SUGGEST_REQUEST_TIMEOUT_MS);
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      signal: controller.signal,
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [
-              { text: prompt },
-              {
-                inlineData: {
-                  mimeType,
-                  data: base64,
-                },
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.35,
-          responseMimeType: "application/json",
-        },
-      }),
-    }).finally(() => clearTimeout(timeout));
-
-    if (!response.ok) {
-      console.error("requestGeminiDesignOrchestration: Gemini request failed", response.status, await response.text().catch(() => ""));
-      return fallback;
-    }
-
-    const payload = await response.json();
-    const text = parseSuggestionResponse(payload);
-    if (!text) {
-      return fallback;
-    }
-
-    const parsed = JSON.parse(extractJsonBlock(text)) as {
+    const parsed = await requestAzureBrainJson({
+      sourceBlob: args.sourceBlob,
+      systemPrompt,
+      userPrompt: prompt,
+      maxTokens: 1300,
+      temperature: 0.25,
+    }) as {
       style?: string;
       styles?: string[];
       paletteId?: string;
@@ -528,7 +686,11 @@ export async function requestGeminiDesignOrchestration(args: {
       customPrompt?: string;
       fusionPrompt?: string;
       reason?: string;
-    };
+    } | null;
+
+    if (!parsed) {
+      return fallback;
+    }
 
     const parsedStyles = Array.isArray(parsed.styles) ? parsed.styles : [];
     const normalizedStyles = dedupeSuggestions(
@@ -545,10 +707,10 @@ export async function requestGeminiDesignOrchestration(args: {
       customPrompt: trimOptional(parsed.customPrompt) ?? fallback.customPrompt,
       fusionPrompt: trimOptional(parsed.fusionPrompt) ?? fallback.fusionPrompt,
       reason: trimOptional(parsed.reason) ?? fallback.reason,
-      source: "gemini" as const,
+      source: "azure" as const,
     } satisfies DesignOrchestrationResult;
   } catch (error) {
-    console.error("requestGeminiDesignOrchestration: falling back after error", error);
+    console.error("requestAzureDesignOrchestration: falling back after error", error);
     return fallback;
   }
 }
@@ -569,7 +731,7 @@ export const suggestDesignOptions: any = actionGeneric({
     }
 
     try {
-      const parsed = await requestGeminiDesignOrchestration({
+      const parsed = await requestAzureDesignOrchestration({
         sourceBlob,
         serviceType: args.serviceType,
         roomType: args.roomType,
@@ -655,17 +817,25 @@ export const detectEditMask: any = actionGeneric({
     imageStorageId: v.id("_storage"),
     target: v.union(v.literal("paint"), v.literal("floor")),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
     const fallback = heuristicDetection(args.target);
+    const sourceBlob = await ctx.storage.get(args.imageStorageId);
+    const detection = sourceBlob
+      ? await requestAzureVisionDetection({
+          sourceBlob,
+          target: args.target,
+        })
+      : fallback;
+
     return {
-      confidence: clampDetectionCoordinate(fallback.confidence),
-      polygons: fallback.polygons.map((polygon) =>
+      confidence: clampDetectionConfidence(detection.confidence),
+      polygons: detection.polygons.map((polygon) =>
         polygon.map((point) => ({
           x: clampDetectionCoordinate(point.x),
           y: clampDetectionCoordinate(point.y),
         })),
       ),
-      reason: trimOptional(fallback.reason) ?? null,
+      reason: trimOptional(detection.reason) ?? null,
     };
   },
 });
