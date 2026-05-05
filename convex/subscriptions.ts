@@ -3,7 +3,7 @@ export const WEEK_MS = 7 * DAY_MS;
 export const YEAR_MS = 365 * DAY_MS;
 export const MONTHLY_RESET_MS = 30 * DAY_MS;
 export const FREE_IMAGE_LIMIT = 1;
-export const INITIAL_FREE_DIAMONDS = 1;
+export const INITIAL_FREE_DIAMONDS = 0;
 export const FREE_DAILY_DIAMOND_CAP = 3;
 export const WEEKLY_IMAGE_LIMIT = Number.MAX_SAFE_INTEGER;
 export const YEARLY_MONTHLY_IMAGE_LIMIT = Number.MAX_SAFE_INTEGER;
@@ -253,7 +253,7 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
   let subscriptionEntitlement = normalizeSubscriptionEntitlement(user.subscriptionEntitlement);
   let subscriptionStartedAt = getSubscriptionAnchor(user, now);
   let subscriptionEnd = toFiniteNumber(user.subscriptionEnd);
-  let credits = Math.max(toFiniteNumber(user.credits, FREE_IMAGE_LIMIT), 0);
+  let credits = Math.max(toFiniteNumber(user.credits, INITIAL_FREE_DIAMONDS), 0);
   let diamondBalance = Math.min(
     Math.max(
       toFiniteNumber(

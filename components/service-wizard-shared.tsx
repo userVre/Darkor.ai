@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
     lineHeight: 36,
-    letterSpacing: -0.8,
+    letterSpacing: 0.3,
   },
   intakeText: {
     color: SERVICE_WIZARD_THEME.colors.textMuted,
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: -0.1,
+    letterSpacing: 0.3,
   },
   clearSelectionButton: {
     position: "absolute",
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: -0.35,
+    letterSpacing: 0.3,
   },
   uploadEmptyText: {
     color: colors.textSecondary,
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: -0.3,
+    letterSpacing: 0.3,
   },
   examplesRailContent: {
     gap: spacing.sm,
@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: 0.1,
+    letterSpacing: 0.3,
   },
   selectionCopy: {
     position: "absolute",
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "600",
     lineHeight: 22,
-    letterSpacing: -0.35,
+    letterSpacing: 0.3,
   },
   selectionTitleActive: {
     color: DESIGN_WIZARD_SELECTION_BLUE,

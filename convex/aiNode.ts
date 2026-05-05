@@ -10,7 +10,6 @@ import {
   compactPromptSegments,
   dedupeSuggestions,
   normalizeGenerationError,
-  redactSecret,
   requestGeminiDesignOrchestration,
   trimOptional,
 } from "./ai";
@@ -410,21 +409,6 @@ async function runAzureImageGeneration(args: {
   const sourceImages = [args.sourceBlob, ...args.referenceBlobs];
   const usesImageEditFlow = sourceImages.length > 0;
 
-  console.log("runAzureImageGeneration: prepared Azure SDK image request", {
-    baseUrl: buildAzureBaseUrl(args.endpoint),
-    deploymentName: args.renderProfile.deploymentName,
-    requestUrl: `${buildAzureBaseUrl(args.endpoint)}/deployments/${args.renderProfile.deploymentName}/${usesImageEditFlow ? "images/edits" : "images/generations"}?api-version=${AZURE_IMAGE_API_VERSION}`,
-    hasMask: Boolean(args.maskBlob),
-    maskBase64Present: Boolean(args.maskBlob),
-    inputImageCount: sourceImages.length,
-    flowInstruction: flowInstruction ?? null,
-    size: args.renderProfile.size,
-    quality: args.renderProfile.quality,
-    n: 1,
-    targetColor: trimOptional(args.targetColor) ?? null,
-    targetColorHex: trimOptional(args.targetColorHex) ?? null,
-  });
-
   if (usesImageEditFlow) {
     const requestUrl = `${ensureAzureEndpointPrefix(args.endpoint)}openai/deployments/${args.renderProfile.deploymentName}/images/edits?api-version=${AZURE_IMAGE_API_VERSION}`;
     const formData = new FormData();
@@ -433,7 +417,6 @@ async function runAzureImageGeneration(args: {
     formData.append("quality", args.renderProfile.quality);
     formData.append("n", "1");
 
-    const azureEditMode = args.maskBlob ? "inpainting" : "image-to-image";
     let imageFieldCount = 0;
     sourceImages.forEach((blob, index) => {
       const normalizedBlob = normalizeAzureImageBlob(blob);
@@ -451,17 +434,6 @@ async function runAzureImageGeneration(args: {
       const maskFilename = getAzureImageFilename(normalizedMaskBlob, 0, "mask");
       formData.append("mask", createAzureMultipartFile(normalizedMaskBlob, maskFilename), maskFilename);
     }
-
-    console.log("runAzureImageGeneration: Azure edit multipart payload debug", {
-      providerMode: azureEditMode,
-      primaryImageFieldName: "image",
-      imageFieldCount,
-      maskFieldName: args.maskBlob ? "mask" : null,
-      promptPresent: composedPrompt.length > 0,
-      requestUrl,
-      requestedServiceType: args.requestedServiceType ?? args.serviceType,
-      serviceType: args.serviceType,
-    });
 
     const response = await fetch(requestUrl, {
       method: "POST",
@@ -811,17 +783,6 @@ export const generateDesign: any = internalActionGeneric({
     const configuredDeploymentName = trimOptional(process.env.AZURE_OPENAI_DEPLOYMENT_NAME);
     const deploymentName = configuredDeploymentName ?? AZURE_IMAGE_DEPLOYMENT_NAME;
 
-    console.log("generateDesign: Azure SDK configuration", {
-      apiKeyPresent: Boolean(apiKey),
-      apiKeyPreview: redactSecret(apiKey),
-      configuredDeploymentName: configuredDeploymentName ?? null,
-      deploymentName,
-      endpoint: endpoint ? ensureAzureEndpointPrefix(endpoint) : null,
-      generationId: args.generationId,
-      requestedServiceType: args.requestedServiceType ?? args.serviceType,
-      serviceType: args.serviceType,
-    });
-
     if (!apiKey || !endpoint || !deploymentName) {
       const missingVariable = !apiKey
         ? "AZURE_OPENAI_API_KEY"
@@ -979,14 +940,6 @@ export const generateDesign: any = internalActionGeneric({
         outputBlob = await limitFreeImageResolution(outputBlob);
         outputBlob = await applyHomeDecorWatermark(outputBlob);
       }
-
-      console.log("generateDesign: Azure SDK generation completed", {
-        generationId: args.generationId,
-        watermarkRequired: renderProfile.watermarkRequired,
-        quality: renderProfile.quality,
-        size: renderProfile.size,
-        outputMimeType: outputBlob.type,
-      });
 
       generatedStorageId = (await ctx.storage.store(outputBlob)) as string;
 

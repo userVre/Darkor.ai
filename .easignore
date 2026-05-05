@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+**/node_modules
+
+# local/generated folders
+.git
+.expo/
+.codex
+.codex-temp
+.tmp
+dist/
+build
+coverage
+
+# accidental nested starter app
+homedecor-ai
+
+# local secrets and logs
+.env
+.env.*
+*.log
+*.mp4

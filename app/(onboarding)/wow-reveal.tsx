@@ -1,17 +1,20 @@
-import {Image} from "expo-image";
 import {CommonActions, useNavigation} from "@react-navigation/native";
 import {Stack} from "expo-router";
 import {StatusBar} from "expo-status-bar";
 import {usePostHog} from "posthog-react-native";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {Modal, Pressable, StyleSheet, Text, View} from "react-native";
-import Animated, {useAnimatedStyle, useSharedValue, withSpring, withTiming} from "react-native-reanimated";
+import Animated, {useAnimatedStyle, useSharedValue, withTiming} from "react-native-reanimated";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {useOnboardingDemoRender} from "../../components/onboarding-demo-render-context";
 import {captureAnalytics} from "../../lib/analytics";
 import {triggerHaptic} from "../../lib/haptics";
 import {fonts} from "../../styles/typography";
+
+const PURE_WHITE = "#FFFFFF";
+const BLACK = "#000000";
+const DARK_GRAY = "#3A3A3A";
 
 export default function WowRevealScreen() {
   const navigation = useNavigation();
@@ -22,7 +25,6 @@ export default function WowRevealScreen() {
   const didShowRatingRef = useRef(false);
   const didCompleteRatingRef = useRef(false);
   const [ratingVisible, setRatingVisible] = useState(false);
-  const imageProgress = useSharedValue(0);
   const copyProgress = useSharedValue(0);
 
   const openPostWowPaywall = useCallback(() => {
@@ -88,24 +90,11 @@ export default function WowRevealScreen() {
       paywall_source: "post_wow",
     });
 
-    imageProgress.value = withSpring(1, {
-      damping: 18,
-      mass: 0.9,
-      stiffness: 120,
-    });
     copyProgress.value = withTiming(1, {duration: 420});
 
     const timer = setTimeout(showRatingPrompt, 650);
     return () => clearTimeout(timer);
-  }, [copyProgress, imageProgress, imageUrl, navigation, posthog, showRatingPrompt, status]);
-
-  const imageAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: imageProgress.value,
-    transform: [
-      {translateY: (1 - imageProgress.value) * 220},
-      {scale: 0.96 + imageProgress.value * 0.04},
-    ],
-  }));
+  }, [copyProgress, imageUrl, navigation, posthog, showRatingPrompt, status]);
 
   const copyAnimatedStyle = useAnimatedStyle(() => ({
     opacity: copyProgress.value,
@@ -116,7 +105,7 @@ export default function WowRevealScreen() {
     return (
       <View style={styles.screen}>
         <Stack.Screen options={{headerShown: false}} />
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
       </View>
     );
   }
@@ -124,23 +113,19 @@ export default function WowRevealScreen() {
   return (
     <View style={styles.screen}>
       <Stack.Screen options={{headerShown: false}} />
-      <StatusBar style="light" />
-      <Animated.View style={[styles.imageWrap, imageAnimatedStyle]}>
-        <Image contentFit="cover" source={{uri: imageUrl}} style={styles.image} transition={0} />
-      </Animated.View>
-
-      <View pointerEvents="none" style={styles.scrim} />
+      <StatusBar style="dark" />
 
       <Animated.View style={[styles.copy, {paddingTop: insets.top + 34}, copyAnimatedStyle]}>
-        <Text style={styles.title}>Your room, transformed in seconds.</Text>
+        <Text style={styles.title}>Design ready</Text>
+        <Text style={styles.subtitle}>Your first render is ready.</Text>
       </Animated.View>
 
       <View style={[styles.footer, {paddingBottom: Math.max(insets.bottom + 18, 28)}]}>
         <Pressable accessibilityRole="button" onPress={showRatingPrompt} style={styles.primaryButton}>
-          <Text style={styles.primaryText}>Start Designing</Text>
+          <Text style={styles.primaryText}>Continue</Text>
         </Pressable>
         <Pressable accessibilityRole="button" hitSlop={12} onPress={showRatingPrompt} style={styles.secondaryButton}>
-          <Text style={styles.secondaryText}>See Plans</Text>
+          <Text style={styles.secondaryText}>Plans</Text>
         </Pressable>
       </View>
 
@@ -153,14 +138,14 @@ export default function WowRevealScreen() {
         <View style={styles.ratingOverlay}>
           <View style={styles.ratingCard}>
             <Text style={styles.ratingStars}>5 stars</Text>
-            <Text style={styles.ratingTitle}>Love your design?</Text>
-            <Text style={styles.ratingBody}>Rate us!</Text>
+            <Text style={styles.ratingTitle}>Enjoying it?</Text>
+            <Text style={styles.ratingBody}>Rate Darkor.</Text>
             <Pressable
               accessibilityRole="button"
               onPress={() => completeRatingPrompt("submitted")}
               style={styles.ratingPrimaryButton}
             >
-              <Text style={styles.ratingPrimaryText}>Rate 5 Stars</Text>
+              <Text style={styles.ratingPrimaryText}>Rate Darkor</Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -168,7 +153,7 @@ export default function WowRevealScreen() {
               onPress={() => completeRatingPrompt("dismissed")}
               style={styles.ratingSecondaryButton}
             >
-              <Text style={styles.ratingSecondaryText}>Not Now</Text>
+              <Text style={styles.ratingSecondaryText}>Later</Text>
             </Pressable>
           </View>
         </View>
@@ -180,34 +165,29 @@ export default function WowRevealScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#050505",
-  },
-  imageWrap: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-  },
-  scrim: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    backgroundColor: PURE_WHITE,
   },
   copy: {
     position: "absolute",
     left: 24,
     right: 24,
+    gap: 12,
   },
   title: {
-    color: "#FFFFFF",
-    fontSize: 40,
-    lineHeight: 45,
-    letterSpacing: 0,
+    color: BLACK,
+    fontSize: 42,
+    lineHeight: 48,
+    letterSpacing: 0.3,
     textAlign: "left",
-    textShadowColor: "rgba(0, 0, 0, 0.56)",
-    textShadowOffset: {width: 0, height: 2},
-    textShadowRadius: 18,
     ...fonts.bold,
+  },
+  subtitle: {
+    color: DARK_GRAY,
+    fontSize: 18,
+    lineHeight: 26,
+    letterSpacing: 0.3,
+    textAlign: "left",
+    ...fonts.regular,
   },
   footer: {
     position: "absolute",
@@ -220,12 +200,12 @@ const styles = StyleSheet.create({
     minHeight: 58,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 18,
+    borderRadius: 999,
     borderCurve: "continuous",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: BLACK,
   },
   primaryText: {
-    color: "#000000",
+    color: PURE_WHITE,
     fontSize: 17,
     lineHeight: 22,
     ...fonts.bold,
@@ -236,7 +216,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   secondaryText: {
-    color: "rgba(255, 255, 255, 0.86)",
+    color: DARK_GRAY,
     fontSize: 15,
     lineHeight: 20,
     ...fonts.bold,
@@ -245,37 +225,37 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.58)",
+    backgroundColor: PURE_WHITE,
     paddingHorizontal: 24,
   },
   ratingCard: {
     width: "100%",
     maxWidth: 360,
     alignItems: "center",
-    borderRadius: 24,
+    borderRadius: 0,
     borderCurve: "continuous",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: PURE_WHITE,
     paddingHorizontal: 22,
     paddingVertical: 24,
     gap: 12,
   },
   ratingStars: {
-    color: "#FFB800",
+    color: DARK_GRAY,
     fontSize: 27,
     lineHeight: 32,
-    letterSpacing: 0,
+    letterSpacing: 0.3,
     ...fonts.bold,
   },
   ratingTitle: {
-    color: "#000000",
+    color: BLACK,
     fontSize: 24,
     lineHeight: 30,
     textAlign: "center",
-    letterSpacing: 0,
+    letterSpacing: 0.3,
     ...fonts.bold,
   },
   ratingBody: {
-    color: "rgba(0, 0, 0, 0.66)",
+    color: DARK_GRAY,
     fontSize: 17,
     lineHeight: 22,
     textAlign: "center",
@@ -286,13 +266,13 @@ const styles = StyleSheet.create({
     minHeight: 52,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 16,
+    borderRadius: 999,
     borderCurve: "continuous",
-    backgroundColor: "#000000",
+    backgroundColor: BLACK,
     marginTop: 6,
   },
   ratingPrimaryText: {
-    color: "#FFFFFF",
+    color: PURE_WHITE,
     fontSize: 16,
     lineHeight: 22,
     ...fonts.bold,
@@ -303,7 +283,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   ratingSecondaryText: {
-    color: "rgba(0, 0, 0, 0.62)",
+    color: DARK_GRAY,
     fontSize: 14,
     lineHeight: 18,
     ...fonts.medium,

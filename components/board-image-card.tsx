@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 12,
     textTransform: "uppercase",
-    letterSpacing: 0.8,
+    letterSpacing: 0.3,
     ...fonts.bold,
   },
   processingOverlay: {

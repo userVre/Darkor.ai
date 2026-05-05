@@ -1,4 +1,5 @@
 import {Image} from "expo-image";
+import {Lock} from "lucide-react-native";
 import {useTranslation} from "react-i18next";
 import {StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle} from "react-native";
 
@@ -41,7 +42,7 @@ export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
         <Image source={item.image} style={styles.image} contentFit="cover" transition={0} cachePolicy="memory-disk" />
         {isLocked ? (
           <View pointerEvents="none" style={styles.lockBadge}>
-            <Text accessibilityElementsHidden style={styles.lockBadgeText}>🔒</Text>
+            <Lock color="#111318" size={16} strokeWidth={2.2} />
           </View>
         ) : null}
       </View>
@@ -102,11 +103,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(100, 116, 139, 0.28)",
     boxShadow: "0px 10px 22px rgba(15, 23, 42, 0.14)",
-  },
-  lockBadgeText: {
-    fontSize: 16,
-    lineHeight: 20,
-    textAlign: "center",
   },
   image: {
     width: "100%",

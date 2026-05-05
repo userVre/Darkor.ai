@@ -169,7 +169,7 @@ function createStyles(colors: Theme) {
       fontFamily: fonts.regular.fontFamily,
       fontWeight: "800",
       textAlign: "center",
-      letterSpacing: -0.2,
+      letterSpacing: 0.3,
     },
     buttonTextInactive: {
       color: DS.colors.textMuted,

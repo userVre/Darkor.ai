@@ -10,6 +10,7 @@
 
 import type * as ai from "../ai.js";
 import type * as aiNode from "../aiNode.js";
+import type * as crons from "../crons.js";
 import type * as feedback from "../feedback.js";
 import type * as generations from "../generations.js";
 import type * as http from "../http.js";
@@ -27,6 +28,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   aiNode: typeof aiNode;
+  crons: typeof crons;
   feedback: typeof feedback;
   generations: typeof generations;
   http: typeof http;

@@ -77,7 +77,6 @@ DESIGN_WIZARD_SELECTION_BLUE_SOFT,
 import {DiamondCreditPill} from "../../components/diamond-credit-pill";
 import {HdLockOverlay} from "../../components/HdLockOverlay";
 import {useDiamondStore} from "../../components/diamond-store-context";
-import {useElitePassModal} from "../../components/elite-pass-context";
 import {ExteriorRedesignStepFour} from "../../components/exterior-redesign-step-four";
 import {ExteriorRedesignStepThree} from "../../components/exterior-redesign-step-three";
 import {ExteriorRedesignStepTwo} from "../../components/exterior-redesign-step-two";
@@ -120,6 +119,7 @@ import {requestPermissionsGracefully} from "../../lib/notifications";
 import {uploadLocalFileToCloud} from "../../lib/native-upload";
 import {getRewardStatus} from "../../lib/rewards";
 import {SERVICE_WIZARD_THEME} from "../../lib/service-wizard-theme";
+import {requestStoreReview} from "../../lib/store-review";
 import {getFloorWizardExamplePhotos, getPaintWizardExamplePhotos} from "../../lib/wizard-example-photos";
 import {spacing} from "../../styles/spacing";
 import {fonts} from "../../styles/typography";
@@ -345,7 +345,7 @@ type RoomCardMeta = {
   image: number;
 };
 
-type StyleCardBadgeTone = "amber" | "green" | "violet";
+type StyleCardBadgeTone = "blue" | "green" | "violet";
 
 type StyleCardBadge = {
   label: string;
@@ -492,7 +492,7 @@ const BoardGridCard = memo(function BoardGridCard({
               paddingVertical: 5,
             }}
           >
-            <Text style={{ color: "#A4161A", fontSize: 10, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase" }}>
+            <Text style={{ color: "#A4161A", fontSize: 10, fontWeight: "800", letterSpacing: 0.3, textTransform: "uppercase" }}>
               {t("workspace.board.new")}
             </Text>
           </View>
@@ -1228,7 +1228,7 @@ const STYLE_PREVIEW_OUTPUTS: Record<string, number> = {
 
 function getStyleCardBadge(style: Pick<DisplayStyleCard, "id" | "title" | "isCustom">): StyleCardBadge | null {
   if (style.title === SMART_SUGGEST_STYLE_LABEL) {
-    return { label: "AI Pick", tone: "amber" };
+    return { label: "AI Pick", tone: "blue" };
   }
 
   if (style.isCustom) {
@@ -1238,7 +1238,7 @@ function getStyleCardBadge(style: Pick<DisplayStyleCard, "id" | "title" | "isCus
   const normalizedId = style.id.toLowerCase();
   const normalizedTitle = style.title.toLowerCase();
   if (normalizedId === "modern" || normalizedId === "japandi" || normalizedTitle === "modern" || normalizedTitle === "japandi") {
-    return { label: "Trending", tone: "amber" };
+    return { label: "Trending", tone: "blue" };
   }
 
   if (normalizedId === "luxury" || normalizedTitle === "luxury") {
@@ -1250,11 +1250,11 @@ function getStyleCardBadge(style: Pick<DisplayStyleCard, "id" | "title" | "isCus
 
 function getStyleCardBadgeColors(tone: StyleCardBadgeTone) {
   switch (tone) {
-    case "amber":
+    case "blue":
       return {
-        borderColor: "rgba(251,191,36,0.42)",
-        backgroundColor: "rgba(120,53,15,0.84)",
-        textColor: "#FEF3C7",
+        borderColor: "rgba(0,122,255,0.42)",
+        backgroundColor: "rgba(0,86,214,0.84)",
+        textColor: "#EAF6FF",
       };
     case "green":
       return {
@@ -1661,7 +1661,7 @@ function ModeDifferencePreview({ mode, active }: { mode: ModeOption; active: boo
   const wallColor = isSubtleMode ? "#B58D72" : "#6D28D9";
   const floorColor = isSubtleMode ? "#6F5548" : "#2A1A42";
   const sofaColor = isSubtleMode ? "#D9C1A8" : "#EC4899";
-  const accentColor = isSubtleMode ? "#F59E0B" : "#F472B6";
+  const accentColor = isSubtleMode ? "#007AFF" : "#2DD4BF";
 
   const RoomPanel = ({
     variant,
@@ -1796,11 +1796,11 @@ function ModeDifferencePreview({ mode, active }: { mode: ModeOption; active: boo
   return (
     <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <Text style={{ color: "#d4d4d8", fontSize: 11, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" }}>
+        <Text style={{ color: "#d4d4d8", fontSize: 11, fontWeight: "700", letterSpacing: 0.3, textTransform: "uppercase" }}>
           Before
         </Text>
         <MoveHorizontal color={active ? "#ffffff" : "#a1a1aa"} size={15} strokeWidth={2} />
-        <Text style={{ color: active ? "#ffffff" : "#d4d4d8", fontSize: 11, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" }}>
+        <Text style={{ color: active ? "#ffffff" : "#d4d4d8", fontSize: 11, fontWeight: "700", letterSpacing: 0.3, textTransform: "uppercase" }}>
           {mode.previewLabel}
         </Text>
       </View>
@@ -2109,7 +2109,6 @@ export default function WorkspaceScreen() {
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const { credits: sharedCreditBalance, clearOptimisticCredits, notificationsDeclined, setOptimisticCredits, streakCount } = useViewerCredits();
   const { openStore } = useDiamondStore();
-  const { openElitePass } = useElitePassModal();
   const guestWizardTestingSession = isGuestWizardTestingSession(isSignedIn);
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const diagnostic = DIAGNOSTIC_BYPASS;
@@ -2150,6 +2149,7 @@ export default function WorkspaceScreen() {
   const suggestDesignOptions = useAction("ai:suggestDesignOptions" as any);
   const submitGenerationFeedback = useMutation("generations:submitFeedback" as any);
   const submitGenerationReview = useMutation("feedback:submitGenerationReview" as any);
+  const markFirstDiamondRatingPrompted = useMutation("users:markFirstDiamondRatingPrompted" as any);
 
   const requestNotificationsAfterReveal = useCallback(() => {
     void requestPermissionsGracefully({
@@ -2200,7 +2200,11 @@ export default function WorkspaceScreen() {
   const [showResumeToast, setShowResumeToast] = useState(false);
   const [awaitingAuth, setAwaitingAuth] = useState(false);
   const [pendingRegenerateConfirm, setPendingRegenerateConfirm] = useState(false);
-  const [pendingReviewState, setPendingReviewState] = useState<{ count: number; shouldPrompt: boolean } | null>(null);
+  const [pendingReviewState, setPendingReviewState] = useState<{
+    count: number;
+    shouldPrompt: boolean;
+    shouldPromptFirstDiamondRating?: boolean;
+  } | null>(null);
   const [wizardNavDirection, setWizardNavDirection] = useState<1 | -1>(1);
   const [processingStatusIndex, setProcessingStatusIndex] = useState(0);
   const [processingProgress, setProcessingProgress] = useState(0);
@@ -2240,6 +2244,7 @@ export default function WorkspaceScreen() {
   const processingGateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const generationAlertedFailureRef = useRef<string | null>(null);
   const handledGenerationTransitionRef = useRef<string | null>(null);
+  const firstDiamondRatingHandledRef = useRef(false);
   const paintCurrentStrokeRef = useRef<PaintStroke | null>(null);
   const lastFlowIdRef = useRef<string | null>(null);
   const hydratedDraftFlowIdRef = useRef<string | null>(null);
@@ -3516,7 +3521,15 @@ export default function WorkspaceScreen() {
 
       if (pendingReviewState) {
         setLastGenerationCount(pendingReviewState.count);
-        if (pendingReviewState.shouldPrompt) {
+        if (pendingReviewState.shouldPromptFirstDiamondRating && !firstDiamondRatingHandledRef.current) {
+          firstDiamondRatingHandledRef.current = true;
+          requestAnimationFrame(() => {
+            void (async () => {
+              await requestStoreReview();
+              await markFirstDiamondRatingPrompted({ anonymousId: viewerId ?? undefined });
+            })().catch(() => undefined);
+          });
+        } else if (pendingReviewState.shouldPrompt) {
           reviewHandledRef.current = false;
           setReviewPromptOpen(true);
           requestAnimationFrame(() => reviewSheetRef.current?.present());
@@ -3557,6 +3570,7 @@ export default function WorkspaceScreen() {
     generationId,
     isGenerating,
     isProcessingGateActive,
+    markFirstDiamondRatingPrompted,
     pendingReviewState,
     posthog,
     processingGateUntil,
@@ -3564,6 +3578,7 @@ export default function WorkspaceScreen() {
     router,
     serviceType,
     showToast,
+    viewerId,
   ]);
 
   const canContinue = useMemo(() => {
@@ -4500,7 +4515,11 @@ export default function WorkspaceScreen() {
         speedTier: generationSpeedTier,
       })) as {
         generationId: string;
-        reviewState?: { count: number; shouldPrompt: boolean };
+        reviewState?: {
+          count: number;
+          shouldPrompt: boolean;
+          shouldPromptFirstDiamondRating?: boolean;
+        };
         creditsRemaining?: number;
         isWatermarked?: boolean;
         quality?: "medium" | "high";
@@ -5822,7 +5841,7 @@ export default function WorkspaceScreen() {
                   paddingVertical: spacing.sm,
                 }}
               >
-                <Text style={{ color: "rgba(255,255,255,0.54)", fontSize: 12, fontWeight: "700", letterSpacing: 0.5 }}>
+                <Text style={{ color: "rgba(255,255,255,0.54)", fontSize: 12, fontWeight: "700", letterSpacing: 0.3 }}>
                   {t("workspace.localization.stepFourSticky")}
                 </Text>
               </View>
@@ -6324,7 +6343,7 @@ export default function WorkspaceScreen() {
                                   </View>
 
                                   <View style={{ flex: 1, gap: spacing.sm, paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.md, alignItems: "flex-start" }}>
-                                    <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", letterSpacing: -0.4, textAlign: "left" }}>
+                                    <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", letterSpacing: 0.3, textAlign: "left" }}>
                                       {item.title}
                                     </Text>
                                     <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: "left", maxWidth: isFullWidthRoomCard ? 320 : undefined }}>
@@ -6364,7 +6383,7 @@ export default function WorkspaceScreen() {
                             gap: spacing.md,
                           }}
                         >
-                          <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700", letterSpacing: -0.2 }}>
+                          <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700", letterSpacing: 0.3 }}>
                             Wall Color
                           </Text>
                           <View
@@ -6480,7 +6499,7 @@ export default function WorkspaceScreen() {
                               <Sparkles color={smartSuggestEnabled ? "#60A5FA" : "#F3F4F6"} size={34} strokeWidth={2.1} />
                             </View>
                             <View style={{ gap: spacing.sm }}>
-                              <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.35 }}>
+                              <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: 0.3 }}>
                                 Surprise Me
                               </Text>
                               <Text style={{ color: smartSuggestEnabled ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
@@ -6516,7 +6535,7 @@ export default function WorkspaceScreen() {
                               >
                                 <FloorMaterialPreview material={material} active={active} />
                                 <View style={{ gap: spacing.sm, alignItems: "flex-start" }}>
-                                  <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: -0.35, textAlign: "left" }}>
+                                  <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: 0.3, textAlign: "left" }}>
                                     {material.title}
                                   </Text>
                                   <Text style={{ color: active ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: "left", maxWidth: isFullWidthMaterialCard ? 360 : undefined }}>
@@ -6551,7 +6570,7 @@ export default function WorkspaceScreen() {
                           transition={{ duration: 1800, loop: true }}
                           style={{ alignItems: "center", gap: spacing.xs }}
                         >
-                          <Text style={{ color: "rgba(255,255,255,0.58)", fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" }}>
+                          <Text style={{ color: "rgba(255,255,255,0.58)", fontSize: 11, fontWeight: "700", letterSpacing: 0.3, textTransform: "uppercase" }}>
                             Scroll for more
                           </Text>
                           <Text style={{ color: "#d946ef", fontSize: 16, lineHeight: 18 }}>v</Text>
@@ -6712,7 +6731,7 @@ export default function WorkspaceScreen() {
                                             fontSize: 10,
                                             fontFamily: fonts.regular.fontFamily,
                                             fontWeight: "800",
-                                            letterSpacing: 0.9,
+                                            letterSpacing: 0.3,
                                             textTransform: "uppercase",
                                           }}
                                           numberOfLines={1}
@@ -6767,14 +6786,14 @@ export default function WorkspaceScreen() {
                                       <StyleIcon color={aiActive || active ? "#dbeafe" : "#ffffff"} size={20} strokeWidth={2} />
                                     </View>
                                   ) : null}
-                                  <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700", lineHeight: 22, letterSpacing: -0.28, textAlign: "left" }} numberOfLines={2}>
+                                  <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700", lineHeight: 22, letterSpacing: 0.3, textAlign: "left" }} numberOfLines={2}>
                                     {style.title}
                                   </Text>
                                   <Text style={{ color: active || aiActive ? "#dbeafe" : wizardMutedTextColor, fontSize: 12, lineHeight: 17.5, textAlign: "left", maxWidth: isFullWidthStyleCard ? 360 : undefined }} numberOfLines={3}>
                                     {style.description}
                                   </Text>
                                   {isFullWidthStyleCard ? (
-                                    <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: "600", letterSpacing: 0.5, textTransform: "uppercase" }}>
+                                    <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: "600", letterSpacing: 0.3, textTransform: "uppercase" }}>
                                       Final option
                                     </Text>
                                   ) : null}
@@ -6825,7 +6844,7 @@ export default function WorkspaceScreen() {
                             gap: spacing.sm,
                           }}
                         >
-                          <Text style={{ color: "#ffffff", fontSize: 23, fontWeight: "700", letterSpacing: -0.45 }}>
+                          <Text style={{ color: "#ffffff", fontSize: 23, fontWeight: "700", letterSpacing: 0.3 }}>
                             {isPaintService
                               ? selectedWallColorOption?.title ?? selectedStyleDisplayName ?? "Select a wall color"
                               : selectedFloorMaterialOption?.title ?? selectedStyleDisplayName ?? "Select a floor material"}
@@ -6861,7 +6880,7 @@ export default function WorkspaceScreen() {
                         </View>
 
                         <View style={{ gap: spacing.sm }}>
-                          <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Finish Type</Text>
+                          <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: 0.3 }}>Finish Type</Text>
                           <View style={{ gap: spacing.sm }}>
                             {FINISH_OPTIONS.map((finish, index) => {
                               const active = selectedFinishId === finish.id;
@@ -6955,7 +6974,7 @@ export default function WorkspaceScreen() {
 
                         <View style={{ paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.md, gap: spacing.md }}>
                           <View style={{ gap: spacing.sm }}>
-                            <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.45 }}>
+                            <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: 0.3 }}>
                               {selectedRoom ?? (isGardenService ? "Select a garden zone" : "Select a building type")}
                             </Text>
                             <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
@@ -7004,7 +7023,7 @@ export default function WorkspaceScreen() {
                       >
                         <View style={{ flexDirection: "row", gap: spacing.md, alignItems: "center" }}>
                           <View style={{ flex: 1, gap: spacing.xs }}>
-                            <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>
+                            <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: 0.3 }}>
                               Your masterpiece will be ready in ~15 seconds
                             </Text>
                             <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
@@ -7030,7 +7049,7 @@ export default function WorkspaceScreen() {
                             />
                             <View style={{ position: "absolute", left: 10, right: 10, bottom: 10 }}>
                               <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: "rgba(255,255,255,0.14)", paddingHorizontal: spacing.sm, paddingVertical: spacing.xs }}>
-                                <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" }}>
+                                <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "700", letterSpacing: 0.3, textTransform: "uppercase" }}>
                                   Preview
                                 </Text>
                               </View>
@@ -7100,7 +7119,7 @@ export default function WorkspaceScreen() {
                       </MotiView>
 
                       <View style={{ gap: spacing.sm, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}>
-                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>{t("wizard.interior.stepFourMode")}</Text>
+                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: 0.3 }}>{t("wizard.interior.stepFourMode")}</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
                           {t("wizard.interior.stepThreeSubtitle")}
                         </Text>
@@ -7148,7 +7167,7 @@ export default function WorkspaceScreen() {
                         }}
                         style={{ gap: spacing.sm, width: "100%", maxWidth: wizardGridMaxWidth, alignSelf: "center" }}
                       >
-                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>{t("wizard.interior.stepFourPalette")}</Text>
+                        <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: 0.3 }}>{t("wizard.interior.stepFourPalette")}</Text>
                         <Text style={{ color: wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
                           {selectedPalette ? `Selected Palette: ${selectedPalette.label}` : "Applied to: walls, furniture, and accent pieces"}
                         </Text>
@@ -7188,7 +7207,7 @@ export default function WorkspaceScreen() {
                                         paddingVertical: spacing.xs,
                                       }}
                                     >
-                                      <Text style={{ color: "#DCFCE7", fontSize: 10, fontWeight: "800", letterSpacing: 0.8 }}>
+                                      <Text style={{ color: "#DCFCE7", fontSize: 10, fontWeight: "800", letterSpacing: 0.3 }}>
                                         POPULAR
                                       </Text>
                                     </View>
@@ -7238,7 +7257,7 @@ export default function WorkspaceScreen() {
 
                             <View style={{ paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.md, gap: spacing.md }}>
                               <View style={{ gap: spacing.sm }}>
-                                <Text style={{ color: "#ffffff", fontSize: 23, fontWeight: "700", letterSpacing: -0.45 }}>
+                                <Text style={{ color: "#ffffff", fontSize: 23, fontWeight: "700", letterSpacing: 0.3 }}>
                                   Ready for the payoff
                                 </Text>
                                 <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
@@ -7284,7 +7303,7 @@ export default function WorkspaceScreen() {
                           >
                             <View style={{ flexDirection: "row", gap: spacing.md, alignItems: "center" }}>
                               <View style={{ flex: 1, gap: spacing.xs }}>
-                                <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>
+                                <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: 0.3 }}>
                                   Your masterpiece will be ready in ~15 seconds
                                 </Text>
                                 <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
@@ -7310,7 +7329,7 @@ export default function WorkspaceScreen() {
                                 />
                                 <View style={{ position: "absolute", left: 10, right: 10, bottom: 10 }}>
                                   <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: "rgba(0,0,0,0.44)", borderWidth: 1, borderColor: "rgba(217,70,239,0.24)", paddingHorizontal: spacing.sm, paddingVertical: spacing.xs }}>
-                                    <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "700", letterSpacing: 0.4 }} numberOfLines={2}>
+                                    <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "700", letterSpacing: 0.3 }} numberOfLines={2}>
                                       {previewThumbnailLabel}
                                     </Text>
                                   </View>
@@ -7354,7 +7373,7 @@ export default function WorkspaceScreen() {
               }}
             >
               <View style={{ gap: spacing.xs }}>
-                <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Paint Tutorial</Text>
+                <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: 0.3 }}>Paint Tutorial</Text>
                 <Text style={{ color: "#a1a1aa", fontSize: 14, lineHeight: 21 }}>
                   Draw directly over the wall or surface you want to recolor. Use the eraser if you overshoot before continuing.
                 </Text>
@@ -7452,7 +7471,7 @@ export default function WorkspaceScreen() {
             >
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                 <View>
-                  <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Color Picker</Text>
+                  <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: 0.3 }}>Color Picker</Text>
                   <Text style={{ color: "#a1a1aa", fontSize: 13, marginTop: spacing.xs }}>Choose the new paint tone for the masked surface.</Text>
                 </View>
                 <LuxPressable onPress={handleClosePaintColorPicker} className="cursor-pointer" style={{ height: 44, width: 44, alignItems: "center", justifyContent: "center", borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)" }}>
@@ -7489,7 +7508,7 @@ export default function WorkspaceScreen() {
               </View>
 
               <View style={{ gap: spacing.sm }}>
-                <Text style={{ color: "#d4d4d8", fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 }}>Custom Hex</Text>
+                <Text style={{ color: "#d4d4d8", fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.3 }}>Custom Hex</Text>
                 <TextInput
                   value={paintColorDraft}
                   onChangeText={setPaintColorDraft}
@@ -7547,7 +7566,7 @@ export default function WorkspaceScreen() {
               }}
             >
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.4 }}>Surface Type</Text>
+                <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: 0.3 }}>Surface Type</Text>
                 <LuxPressable onPress={() => setPaintSurfacePickerOpen(false)} className="cursor-pointer" style={{ height: 44, width: 44, alignItems: "center", justifyContent: "center", borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)" }}>
                   <Close color="#ffffff" size={18} strokeWidth={2.1} />
                 </LuxPressable>
@@ -7850,7 +7869,7 @@ export default function WorkspaceScreen() {
           ListHeaderComponent={
             <View style={{ marginBottom: spacing.lg }} className="flex-row items-center justify-between">
               <View style={{ width: 42 }} />
-                  <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>My Design Portfolio</Text>
+                  <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: 0.3 }}>My Design Portfolio</Text>
               <LuxPressable
                 onPress={handleResetWizard}
                 className="cursor-pointer h-11 w-11 items-center justify-center"
@@ -7927,7 +7946,7 @@ export default function WorkspaceScreen() {
             ListHeaderComponent={
               <View style={{ marginBottom: spacing.lg }} className="flex-row items-center justify-between">
                 <View style={{ width: 42 }} />
-                  <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: -0.5 }}>My Design Portfolio</Text>
+                  <Text style={{ color: "#ffffff", fontSize: 22, fontWeight: "700", letterSpacing: 0.3 }}>My Design Portfolio</Text>
                 <LuxPressable
                   onPress={handleResetWizard}
                   className="cursor-pointer h-11 w-11 items-center justify-center"
@@ -7968,7 +7987,7 @@ export default function WorkspaceScreen() {
 
           <View className="px-5" style={{ paddingTop: Math.max(insets.top + 14, 22), zIndex: 2 }}>
             <View style={{ minHeight: 46, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ color: "#111111", fontSize: 19, lineHeight: 25, letterSpacing: -0.45, textAlign: "center", ...fonts.bold }}>
+              <Text style={{ color: "#111111", fontSize: 19, lineHeight: 25, letterSpacing: 0.3, textAlign: "center", ...fonts.bold }}>
                 {t("processing.title")}
               </Text>
             </View>
@@ -8015,7 +8034,7 @@ export default function WorkspaceScreen() {
                     paddingVertical: 8,
                   }}
                 >
-                  <Text style={{ color: "#4A5562", fontSize: 11, lineHeight: 14, letterSpacing: 1.1, textTransform: "uppercase", ...fonts.bold }}>
+                  <Text style={{ color: "#4A5562", fontSize: 11, lineHeight: 14, letterSpacing: 0.3, textTransform: "uppercase", ...fonts.bold }}>
                     NEURAL RENDER PIPELINE
                   </Text>
                 </View>
@@ -8041,7 +8060,7 @@ export default function WorkspaceScreen() {
                   elevation: 3,
                 }}
               >
-                <Text style={{ color: "#9CA3AF", fontSize: 11, lineHeight: 14, letterSpacing: 1, textTransform: "uppercase", textAlign: "center", ...fonts.medium }}>
+                <Text style={{ color: "#9CA3AF", fontSize: 11, lineHeight: 14, letterSpacing: 0.3, textTransform: "uppercase", textAlign: "center", ...fonts.medium }}>
                   HomeDecor AI
                 </Text>
 
@@ -8103,12 +8122,12 @@ export default function WorkspaceScreen() {
 
                   <View style={{ position: "absolute", left: 16, right: 16, top: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                     <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "#111111", backgroundColor: "#FFFFFF", paddingHorizontal: spacing.sm, paddingVertical: spacing.sm }}>
-                      <Text style={{ color: "#000000", fontSize: 11, lineHeight: 14, letterSpacing: 0.9, textTransform: "uppercase", ...fonts.semibold }}>
+                      <Text style={{ color: "#000000", fontSize: 11, lineHeight: 14, letterSpacing: 0.3, textTransform: "uppercase", ...fonts.semibold }}>
                         {t("workspace.editor.sourcePhoto")}
                       </Text>
                     </View>
                     <View style={{ borderRadius: 999, borderWidth: 1, borderColor: "#111111", backgroundColor: "#FFFFFF", paddingHorizontal: spacing.sm, paddingVertical: spacing.sm }}>
-                      <Text style={{ color: "#000000", fontSize: 11, lineHeight: 14, letterSpacing: 0.9, textTransform: "uppercase", ...fonts.semibold }}>
+                      <Text style={{ color: "#000000", fontSize: 11, lineHeight: 14, letterSpacing: 0.3, textTransform: "uppercase", ...fonts.semibold }}>
                         {processingBadgeLabel}
                       </Text>
                     </View>
@@ -8203,7 +8222,7 @@ export default function WorkspaceScreen() {
                   color: DS.colors.textPrimary,
                   fontSize: 22,
                   lineHeight: 28,
-                  letterSpacing: -0.4,
+                  letterSpacing: 0.3,
                   textAlign: "center",
                   ...fonts.bold,
                 }}
@@ -8216,7 +8235,7 @@ export default function WorkspaceScreen() {
               <View style={{ minWidth: 88, alignItems: "flex-start" }}>
                 <DiamondCreditPill
                   count={creditBalance}
-                  onElitePassPress={openElitePass}
+                  iconOnly
                   onPress={handleUpgrade}
                   streakCount={streakCount}
                   style={{ height: 42, minHeight: 42 }}
@@ -8552,7 +8571,7 @@ export default function WorkspaceScreen() {
                 marginTop: -2,
               }}
             >
-              <Text style={{ color: "#687076", fontSize: 12, lineHeight: 16, letterSpacing: 0.4, textAlign: "center", ...fonts.medium }}>
+              <Text style={{ color: "#687076", fontSize: 12, lineHeight: 16, letterSpacing: 0.3, textAlign: "center", ...fonts.medium }}>
                 Rate this result
               </Text>
               <View

@@ -5,22 +5,30 @@ import Svg, {Defs, LinearGradient, Line, Stop} from "react-native-svg";
 type ProgressPathProps = {
   currentDay: number;
   nodeOffsets: number[];
+  slotHeights?: number[];
   slotHeight: number;
   width: number;
 };
 
-const BLUE = "#00B4FF";
-const PINK = "#FF4FD8";
-const LOCKED_LINE = "rgba(255,255,255,0.2)";
+const BLUE = "#2F80FF";
+const BLUE_DEEP = "#0A4FD7";
+const LOCKED_LINE = "rgba(255,255,255,0.12)";
 const LINE_X = 34;
 
 export const ProgressPath = memo(function ProgressPath({
   currentDay,
   nodeOffsets,
+  slotHeights,
   slotHeight,
   width,
 }: ProgressPathProps) {
-  const height = nodeOffsets.length * slotHeight;
+  const resolvedSlotHeights = slotHeights ?? nodeOffsets.map(() => slotHeight);
+  const height = resolvedSlotHeights.reduce((total, next) => total + next, 0);
+  const centers = resolvedSlotHeights.reduce<number[]>((acc, nextHeight, index) => {
+    const previousTop = index === 0 ? 0 : resolvedSlotHeights.slice(0, index).reduce((total, next) => total + next, 0);
+    acc.push(previousTop + nextHeight / 2);
+    return acc;
+  }, []);
   const currentSegmentIndex = currentDay - 1;
 
   return (
@@ -28,25 +36,25 @@ export const ProgressPath = memo(function ProgressPath({
       <Svg height={height} width={width} viewBox={`0 0 ${width} ${height}`}>
         <Defs>
           <LinearGradient id="elitePassUnlockedLine" x1="0" y1="0" x2="0" y2={height}>
-            <Stop offset="0" stopColor={BLUE} />
-            <Stop offset="0.5" stopColor={PINK} />
-            <Stop offset="1" stopColor={BLUE} />
+            <Stop offset="0" stopColor="#7BC7FF" />
+            <Stop offset="0.52" stopColor={BLUE} />
+            <Stop offset="1" stopColor={BLUE_DEEP} />
           </LinearGradient>
         </Defs>
 
         {nodeOffsets.slice(0, -1).map((_, index) => {
-          const y1 = slotHeight / 2 + index * slotHeight + 34;
-          const y2 = slotHeight / 2 + (index + 1) * slotHeight - 34;
+          const y1 = centers[index] + 25;
+          const y2 = centers[index + 1] - 25;
           const isUnlocked = index < currentSegmentIndex;
 
           return (
             <Line
               key={`segment-${index}`}
-              opacity={isUnlocked ? 1 : 0.82}
+              opacity={isUnlocked ? 0.72 : 0.58}
               stroke={isUnlocked ? "url(#elitePassUnlockedLine)" : LOCKED_LINE}
-              strokeDasharray={isUnlocked ? undefined : "7 9"}
+              strokeDasharray={isUnlocked ? undefined : "5 10"}
               strokeLinecap="round"
-              strokeWidth={isUnlocked ? 6 : 4}
+              strokeWidth={isUnlocked ? 3 : 2}
               x1={LINE_X}
               x2={LINE_X}
               y1={y1}

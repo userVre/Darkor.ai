@@ -22,6 +22,7 @@ import {useDiamondStore} from "./diamond-store-context";
 import {DiamondCreditPill, ProBadge} from "./diamond-credit-pill";
 import {useElitePassModal} from "./elite-pass-context";
 import {HomeToolCard, type HomeToolCardItem} from "./home-tool-card";
+import {PostPaywallRewardBar} from "./post-paywall-reward-bar";
 import {useViewerCredits} from "./viewer-credits-context";
 import {useWorkspaceDraft} from "./workspace-context";
 
@@ -34,9 +35,17 @@ export function CreateOptionsScreen() {
   const insets = useSafeAreaInsets();
   const { isSignedIn } = useAuth();
   const { clearDraft } = useWorkspaceDraft();
-  const { credits: creditBalance, hasPaidAccess, hasProAccess, streakCount } = useViewerCredits();
+  const {
+    canClaimDiamond,
+    credits: creditBalance,
+    diamondBalance,
+    hasPaidAccess,
+    hasProAccess,
+    isReady: creditsReady,
+    streakCount,
+  } = useViewerCredits();
   const { openStore } = useDiamondStore();
-  const { openElitePass } = useElitePassModal();
+  const { openRewardBar } = useElitePassModal();
   const isRTL = I18nManager.isRTL;
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const sidePadding = 20;
@@ -121,6 +130,12 @@ export function CreateOptionsScreen() {
   useEffect(() => {
     void Asset.loadAsync(toolCards.map((card) => card.image as number));
   }, [toolCards]);
+
+  useEffect(() => {
+    if (creditsReady && canClaimDiamond && creditBalance <= 0 && diamondBalance <= 0) {
+      openRewardBar();
+    }
+  }, [canClaimDiamond, creditBalance, creditsReady, diamondBalance, openRewardBar]);
 
   useEffect(() => {
     let active = true;
@@ -226,7 +241,7 @@ export function CreateOptionsScreen() {
               <DiamondCreditPill
                 accessibilityLabel={t("home.accessibility.openCredits")}
                 count={creditBalance}
-                onElitePassPress={openElitePass}
+                iconOnly
                 onPress={handleCreditsPress}
                 streakCount={streakCount}
                 style={styles.creditPill}
@@ -263,8 +278,11 @@ export function CreateOptionsScreen() {
         ]}
       >
         <View style={styles.toolList}>
-          {toolCards.map((card) => (
-            <HomeToolCard key={card.id} item={card} onPress={handleToolPress} />
+          {toolCards.map((card, index) => (
+            <View key={card.id} style={styles.toolListItem}>
+              <HomeToolCard item={card} onPress={handleToolPress} />
+              {index === 1 ? <PostPaywallRewardBar /> : null}
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -336,7 +354,7 @@ const styles = StyleSheet.create({
     ...DS.typography.button,
     fontSize: 19,
     lineHeight: 24,
-    letterSpacing: 0,
+    letterSpacing: 0.3,
     flexShrink: 0,
     textAlign: "center",
   },
@@ -366,6 +384,9 @@ const styles = StyleSheet.create({
     gap: 0,
   },
   toolList: {
+    gap: 18,
+  },
+  toolListItem: {
     gap: 18,
   },
   disclosureOverlay: {

@@ -291,7 +291,7 @@
     "sections": {
       "overview": {
         "title": "Översikt",
-        "body": "HomeDecor AI (\"HomeDecor\", \"vi\", \"vår\", \"oss\") tillhandahåller AI-drivna interiör- och exteriörredesigntjänster. Denna integritetspolicy förklarar vilken data vi samlar in, hur vi använder den och vilka val du har."
+        "body": "HomeDecor AI ('HomeDecor', 'vi', 'vår', 'oss') tillhandahåller AI-drivna interiör- och exteriörredesigntjänster. Denna integritetspolicy förklarar vilken data vi samlar in, hur vi använder den och vilka val du har."
       },
       "informationWeCollect": {
         "title": "Information vi samlar in",
@@ -355,7 +355,7 @@
       },
       "disclaimer": {
         "title": "Ansvarsfriskrivning",
-        "body": "Tjänsten tillhandahålls \"i befintligt skick\" utan garantier av något slag. Vi garanterar inte specifika designresultat eller noggrannheten hos AI-genererade utdata."
+        "body": "Tjänsten tillhandahålls 'i befintligt skick' utan garantier av något slag. Vi garanterar inte specifika designresultat eller noggrannheten hos AI-genererade utdata."
       },
       "limitationOfLiability": {
         "title": "Ansvarsbegränsning",
@@ -578,7 +578,7 @@
         "pink": "Rosa",
         "blue": "Blå",
         "green": "Grönt",
-        "yellow": "Gul",
+        "aqua": "Aqua",
         "gray": "Grå",
         "red": "Röd"
       },

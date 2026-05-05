@@ -3,13 +3,17 @@ import {createContext, useCallback, useContext, useMemo, useState, type ReactNod
 type ElitePassContextValue = {
   closeElitePass: () => void;
   openElitePass: () => void;
+  openRewardBar: () => void;
+  closeRewardBar: () => void;
   visible: boolean;
+  rewardBarVisible: boolean;
 };
 
 const ElitePassContext = createContext<ElitePassContextValue | null>(null);
 
 export function ElitePassProvider({ children }: { children: ReactNode }) {
   const [visible, setVisible] = useState(false);
+  const [rewardBarVisible, setRewardBarVisible] = useState(false);
 
   const openElitePass = useCallback(() => {
     setVisible(true);
@@ -19,13 +23,24 @@ export function ElitePassProvider({ children }: { children: ReactNode }) {
     setVisible(false);
   }, []);
 
+  const openRewardBar = useCallback(() => {
+    setRewardBarVisible(true);
+  }, []);
+
+  const closeRewardBar = useCallback(() => {
+    setRewardBarVisible(false);
+  }, []);
+
   const value = useMemo(
     () => ({
       closeElitePass,
       openElitePass,
+      openRewardBar,
+      closeRewardBar,
       visible,
+      rewardBarVisible,
     }),
-    [closeElitePass, openElitePass, visible],
+    [closeElitePass, openElitePass, openRewardBar, closeRewardBar, visible, rewardBarVisible],
   );
 
   return <ElitePassContext.Provider value={value}>{children}</ElitePassContext.Provider>;

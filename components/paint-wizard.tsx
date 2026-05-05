@@ -136,7 +136,7 @@ const COLOR_PICKER_PRESET_SWATCHES = [
   { id: "pink", value: "#FF69B4" },
   { id: "blue", value: "#007AFF" },
   { id: "green", value: "#34C759" },
-  { id: "yellow", value: "#FACC15" },
+  { id: "aqua", value: "#2DD4BF" },
   { id: "gray", value: "#9CA3AF" },
   { id: "red", value: "#CC3333" },
 ] as const;
@@ -392,7 +392,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       pink: t("wizard.paintFlow.colorFamilies.pink"),
       blue: t("wizard.paintFlow.colorFamilies.blue"),
       green: t("wizard.paintFlow.colorFamilies.green"),
-      yellow: t("wizard.paintFlow.colorFamilies.yellow"),
+      aqua: "Aqua",
       gray: t("wizard.paintFlow.colorFamilies.gray"),
       red: t("wizard.paintFlow.colorFamilies.red"),
     }),
@@ -2726,7 +2726,7 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
-    letterSpacing: -0.4,
+    letterSpacing: 0.3,
   },
   topSubtitle: {
     color: "#a1a1aa",
@@ -3261,7 +3261,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: -0.2,
+    letterSpacing: 0.3,
     textAlign: "left",
   },
   disabledButtonText: {
@@ -3269,7 +3269,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: -0.2,
+    letterSpacing: 0.3,
     textAlign: "left",
   },
   roomReferenceFrame: {
@@ -3298,7 +3298,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
   selectionGrid: {
     flexDirection: "row",
@@ -3477,7 +3477,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: -0.6,
+    letterSpacing: 0.3,
   },
   summaryText: {
     color: "#a1a1aa",
@@ -3663,7 +3663,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: -0.7,
+    letterSpacing: 0.3,
     textAlign: "left",
     maxWidth: 340,
   },
@@ -3683,7 +3683,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: -0.8,
+    letterSpacing: 0.3,
     textAlign: "left",
   },
   resultSubheading: {

@@ -17,6 +17,7 @@ export default defineSchema({
     generationCount: numberLike,
     reviewPrompted: v.boolean(),
     lastReviewPromptAt: optionalNumberLike,
+    firstDiamondRatingPromptedAt: optionalNumberLike,
     lastRewardDate: optionalNumberLike,
     streakCount: optionalNumberLike,
     lastLoginDate: optionalNumberLike,

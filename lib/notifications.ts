@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
+import * as Device from "expo-device";
 import {Platform} from "react-native";
 
 import type * as ExpoNotifications from "expo-notifications";
@@ -81,6 +82,10 @@ let unavailableWarningShown = false;
 
 function shouldUseNativeNotifications() {
   return Platform.OS !== "web" && Constants.appOwnership !== "expo";
+}
+
+function canFetchNativePushTokens() {
+  return Platform.OS !== "web" && Device.isDevice === true;
 }
 
 function warnNotificationsUnavailable(error?: unknown) {
@@ -345,7 +350,7 @@ async function saveGrantedPushToken(
     let expoPushToken: string | undefined;
     let devicePushToken: string | undefined;
 
-    if (Platform.OS === "web") {
+    if (!canFetchNativePushTokens()) {
       await savePreferences({
         anonymousId: anonymousId ?? undefined,
         expoPushToken,
@@ -363,14 +368,14 @@ async function saveGrantedPushToken(
       const token = await Notifications.getExpoPushTokenAsync(projectId ? {projectId} : undefined);
       expoPushToken = token.data;
     } catch (error) {
-      console.warn("[Notifications] Unable to fetch Expo push token", error);
+      console.warn("[Notifications] Unable to fetch Expo push token; continuing without it", error);
     }
 
     try {
       const token = await Notifications.getDevicePushTokenAsync();
       devicePushToken = typeof token.data === "string" ? token.data : JSON.stringify(token.data);
     } catch (error) {
-      console.warn("[Notifications] Unable to fetch device push token", error);
+      console.warn("[Notifications] Unable to fetch device push token; continuing without it", error);
     }
 
     await savePreferences({

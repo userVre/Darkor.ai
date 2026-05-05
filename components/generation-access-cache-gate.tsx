@@ -26,6 +26,7 @@ type CachedViewerState = {
   nextDiamondClaimAt?: number;
   canClaimDiamond?: boolean;
   eliteProUntil?: number;
+  onboardingDiamondClaimedAt?: number;
   pricingTier?: string | null;
 } | null;
 

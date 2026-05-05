@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "HomeDecor AI",
-    "slug": "home-decor-ai",
+    "slug": "homedecor-ai",
     "scheme": "homedecorai",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -29,7 +29,7 @@
       "icon": "./assets/logo.png"
     },
     "android": {
-      "package": "com.darkor.ai",
+      "package": "com.ismail.homedecorai",
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#121212"
@@ -82,6 +82,8 @@
         }
       ],
       "./plugins/with-kotlin-resolution",
+      "expo-image",
+      "expo-localization",
       "expo-sharing",
       "expo-video",
       "expo-web-browser"
@@ -89,12 +91,17 @@
     "experiments": {
       "typedRoutes": true
     },
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/c18000f7-d1c7-461d-b1eb-66d713f40cf4"
+    },
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "9470d384-ff08-4425-bd05-fe33e0c631b6"
+        "projectId": "c18000f7-d1c7-461d-b1eb-66d713f40cf4"
       }
     },
+    "owner": "ismail-app",
     "userInterfaceStyle": "light"
   }
 }

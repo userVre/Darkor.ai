@@ -279,7 +279,7 @@
     "sections": {
       "overview": {
         "title": "Visão geral",
-        "body": "HomeDecor AI (\"HomeDecor\", \"nós\", \"nosso\", \"nos\") fornece serviços de redesenho de interiores e exteriores alimentados por AI. Esta Política de Privacidade explica quais dados coletamos, como os utilizamos e as opções que você tem."
+        "body": "HomeDecor AI ('HomeDecor', 'nós', 'nosso', 'nos') fornece serviços de redesenho de interiores e exteriores alimentados por AI. Esta Política de Privacidade explica quais dados coletamos, como os utilizamos e as opções que você tem."
       },
       "informationWeCollect": {
         "title": "Informações que coletamos",
@@ -343,7 +343,7 @@
       },
       "disclaimer": {
         "title": "Isenção de responsabilidade",
-        "body": "O serviço é fornecido \"como está\", sem garantias de qualquer tipo. Não garantimos resultados de projeto específicos ou a precisão das saídas geradas por AI."
+        "body": "O serviço é fornecido 'como está', sem garantias de qualquer tipo. Não garantimos resultados de projeto específicos ou a precisão das saídas geradas por AI."
       },
       "limitationOfLiability": {
         "title": "Limitação de responsabilidade",
@@ -566,7 +566,7 @@
         "pink": "Rosa",
         "blue": "Azul",
         "green": "Verde",
-        "yellow": "Amarelo",
+        "aqua": "Aqua",
         "gray": "Cinza",
         "red": "Vermelho"
       },

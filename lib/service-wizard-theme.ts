@@ -7,28 +7,28 @@ const heroTitle: TextStyle = {
   ...fonts.bold,
   fontSize: 30,
   lineHeight: 36,
-  letterSpacing: 0,
+  letterSpacing: 0.3,
 };
 
 const sectionTitle: TextStyle = {
   ...fonts.bold,
   fontSize: 28,
   lineHeight: 34,
-  letterSpacing: 0,
+  letterSpacing: 0.3,
 };
 
 const headerTitle: TextStyle = {
   ...fonts.bold,
   fontSize: 18,
   lineHeight: 22,
-  letterSpacing: 0,
+  letterSpacing: 0.3,
 };
 
 const headerSubtitle: TextStyle = {
   ...fonts.medium,
   fontSize: 12,
   lineHeight: 16,
-  letterSpacing: 0.1,
+  letterSpacing: 0.3,
 };
 
 const bodyText: TextStyle = {

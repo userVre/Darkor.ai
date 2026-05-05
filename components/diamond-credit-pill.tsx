@@ -19,26 +19,30 @@ type DiamondCreditPillProps = {
   variant?: "dark" | "light";
   accessibilityLabel?: string;
   accessibilityRole?: AccessibilityRole;
+  iconOnly?: boolean;
   onPress?: () => void;
   onElitePassPress?: () => void;
   style?: StyleProp<ViewStyle>;
 };
 
-export const DIAMOND_PILL_BLUE = "#007AFF";
-export const RADIX_BLUE_9 = "#0090FF";
+const PREMIUM_ELECTRIC_BLUE = "#007AFF";
+const PREMIUM_AQUA = "#2DD4BF";
+const PREMIUM_BLUE_DEEP = "#0056D6";
+export const DIAMOND_PILL_BLUE = PREMIUM_ELECTRIC_BLUE;
+export const RADIX_BLUE_9 = PREMIUM_ELECTRIC_BLUE;
 
 const VARIANT_STYLES = {
   dark: {
     backgroundColor: "#09090B",
     borderColor: "rgba(255,255,255,0.08)",
     textColor: "#FFFFFF",
-    prismPrimary: DIAMOND_PILL_BLUE,
+    prismPrimary: PREMIUM_ELECTRIC_BLUE,
   },
   light: {
     backgroundColor: "#FFFFFF",
-    borderColor: "rgba(0,122,255,0.12)",
-    textColor: DIAMOND_PILL_BLUE,
-    prismPrimary: DIAMOND_PILL_BLUE,
+    borderColor: "rgba(17, 19, 24, 0.1)",
+    textColor: "#111318",
+    prismPrimary: PREMIUM_ELECTRIC_BLUE,
   },
 } as const;
 
@@ -63,20 +67,20 @@ export function DiamondCreditIcon({
         />
         <Path
           d="M5.108 2.25 9 6.32l3.892-4.07"
-          stroke={monochrome ? primaryColor : "#7DCBFF"}
+          stroke={monochrome ? primaryColor : PREMIUM_AQUA}
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={1}
         />
         <Path
           d="M1.999 6.32h14.001"
-          stroke={monochrome ? primaryColor : "#005BBB"}
+          stroke={monochrome ? primaryColor : PREMIUM_BLUE_DEEP}
           strokeLinecap="round"
           strokeWidth={1}
         />
         <Path
           d="M5.108 2.25 9 15.75 12.892 2.25"
-          stroke={monochrome ? primaryColor : "#D8EEFF"}
+          stroke={monochrome ? primaryColor : "#FFFFFF"}
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={0.9}
@@ -88,7 +92,7 @@ export function DiamondCreditIcon({
 }
 
 export function ElitePassFlameIcon({
-  color = RADIX_BLUE_9,
+  color = PREMIUM_ELECTRIC_BLUE,
   size = 18,
 }: {
   color?: string;
@@ -115,6 +119,7 @@ export function DiamondCreditPill({
   variant = "dark",
   accessibilityLabel = "Credits",
   accessibilityRole = "button",
+  iconOnly = false,
   onPress,
   onElitePassPress,
   style,
@@ -124,9 +129,9 @@ export function DiamondCreditPill({
   const normalizedStreakCount = typeof streakCount === "number" && streakCount > 0 ? Math.floor(streakCount) : 0;
   const content = (
     <>
-      <DiamondCreditIcon primaryColor={palette.prismPrimary} />
-      <Text style={[styles.countText, { color: palette.textColor }]}>{count}</Text>
-      {normalizedStreakCount > 0 && !onElitePassPress ? (
+      <DiamondCreditIcon primaryColor={palette.prismPrimary} size={iconOnly ? 22 : 18} />
+      {iconOnly ? null : <Text style={[styles.countText, { color: palette.textColor }]}>{count}</Text>}
+      {!iconOnly && normalizedStreakCount > 0 && !onElitePassPress ? (
         <View style={styles.streakWrap}>
           <Text accessibilityElementsHidden style={styles.flameIcon}>
             🔥
@@ -139,7 +144,9 @@ export function DiamondCreditPill({
 
   const pillStyle = [
     styles.pill,
+    iconOnly ? styles.iconOnlyPill : null,
     isRTL ? styles.pillRtl : null,
+    onElitePassPress ? styles.pillWithElitePass : null,
     {
       backgroundColor: palette.backgroundColor,
       borderColor: palette.borderColor,
@@ -161,6 +168,8 @@ export function DiamondCreditPill({
           {content}
         </Pressable>
 
+        <View pointerEvents="none" style={styles.headerDivider} />
+
         <Pressable
           accessibilityLabel="Open Elite Pass"
           accessibilityRole="button"
@@ -171,7 +180,7 @@ export function DiamondCreditPill({
             pressed ? styles.elitePassButtonPressed : null,
           ]}
         >
-          <ElitePassFlameIcon color={RADIX_BLUE_9} size={18} />
+          <ElitePassFlameIcon color={PREMIUM_ELECTRIC_BLUE} size={18} />
         </Pressable>
       </View>
     );
@@ -221,8 +230,20 @@ const styles = StyleSheet.create({
     ...organicRadii(20, 14),
     ...ambientShadow(0.06, 12, 8),
   },
+  iconOnlyPill: {
+    minWidth: 44,
+    width: 44,
+    minHeight: 44,
+    height: 44,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    gap: 0,
+  },
   pillRtl: {
     flexDirection: "row-reverse",
+  },
+  pillWithElitePass: {
+    gap: 0,
   },
   creditAction: {
     minHeight: 38,
@@ -234,14 +255,18 @@ const styles = StyleSheet.create({
   elitePassButton: {
     width: 32,
     height: 32,
-    marginLeft: 2,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: RADIX_BLUE_9,
-    backgroundColor: "#FFFFFF",
-    boxShadow: `0px 0px 16px ${RADIX_BLUE_9}40`,
+    borderColor: "rgba(0, 122, 255, 0.34)",
+    backgroundColor: "#111318",
+  },
+  headerDivider: {
+    width: StyleSheet.hairlineWidth,
+    height: 24,
+    marginHorizontal: 15,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   elitePassButtonPressed: {
     opacity: 0.78,
@@ -290,21 +315,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: "rgba(56, 189, 248, 0.45)",
-    backgroundColor: "#082F49",
+    borderColor: "rgba(0, 122, 255, 0.45)",
+    backgroundColor: "#111318",
     ...organicRadii(20, 14),
-    ...ambientShadow(0.16, 16, 12),
+    ...ambientShadow(0.08, 14, 10),
     overflow: "hidden",
   },
   proGlow: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(34, 211, 238, 0.16)",
+    backgroundColor: "rgba(0, 122, 255, 0.1)",
   },
   proText: {
-    color: "#BAE6FD",
+    color: PREMIUM_AQUA,
     fontSize: 14,
     lineHeight: 16,
-    letterSpacing: 1.2,
+    letterSpacing: 0.3,
     ...fonts.bold,
   },
 });

@@ -34,6 +34,7 @@ import {SettingsRow} from "../components/settings-row";
 import {useViewerCredits} from "../components/viewer-credits-context";
 import {useWorkspaceDraft} from "../components/workspace-context";
 import {GENERATION_ACCESS_CACHE_KEY} from "../lib/generation-access";
+import {PAYWALL_DISMISSED_STORAGE_KEY, resetLaunchPaywall} from "../lib/launch-paywall";
 import {LEGACY_ONBOARDING_STORAGE_KEY, ONBOARDING_STORAGE_KEY, PREVIOUS_ONBOARDING_STORAGE_KEY} from "../lib/analytics";
 import {useAppLanguagePreference, useLocalizedAppFonts} from "../lib/i18n";
 import {getLanguageNativeLabel} from "../lib/i18n/language";
@@ -187,12 +188,16 @@ export default function SettingsScreen() {
         "diamond_count",
         "streak_count",
         GENERATION_ACCESS_CACHE_KEY,
+        PAYWALL_DISMISSED_STORAGE_KEY,
       ]);
+      resetLaunchPaywall();
       setOptimisticCredits(0);
       setOptimisticRewardState({
         canClaimDiamond: false,
         credits: 0,
+        diamondBalance: 0,
         nextDiamondClaimAt: 0,
+        onboardingDiamondClaimedAt: 0,
         streakCount: 1,
       });
       showToast(t("settings.messages.onboardingReset"));

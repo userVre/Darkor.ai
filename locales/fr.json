@@ -291,7 +291,7 @@
     "sections": {
       "overview": {
         "title": "Aperçu",
-        "body": "HomeDecor AI (\"HomeDecor\", \"nous\", \"notre\", \"notre\") fournit des services de refonte intérieure et extérieure alimentés par AI. Cette politique de confidentialité explique quelles données nous collectons, comment nous les utilisons et les choix qui s'offrent à vous."
+        "body": "HomeDecor AI ('HomeDecor', 'nous', 'notre', 'notre') fournit des services de refonte intérieure et extérieure alimentés par AI. Cette politique de confidentialité explique quelles données nous collectons, comment nous les utilisons et les choix qui s'offrent à vous."
       },
       "informationWeCollect": {
         "title": "Informations que nous collectons",
@@ -578,7 +578,7 @@
         "pink": "Rose",
         "blue": "Bleu",
         "green": "Vert",
-        "yellow": "Jaune",
+        "aqua": "Aqua",
         "gray": "Gris",
         "red": "Rouge"
       },

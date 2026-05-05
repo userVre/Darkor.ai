@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     ...fonts.bold,
     fontSize: 26,
     lineHeight: 30,
-    letterSpacing: -0.5,
+    letterSpacing: 0.3,
     fontVariant: ["tabular-nums"],
   },
   balanceHint: {
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
     ...fonts.bold,
     fontSize: 20,
     lineHeight: 24,
-    letterSpacing: -0.3,
+    letterSpacing: 0.3,
   },
   cardsStack: {
     gap: 12,
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     ...fonts.bold,
     fontSize: 17,
     lineHeight: 22,
-    letterSpacing: -0.2,
+    letterSpacing: 0.3,
   },
   offerCount: {
     color: DIAMOND_PILL_BLUE,
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
   badgeText: {
     color: BUY_NOW_RUBY,
     ...DS.typography.label,
-    letterSpacing: 1.2,
+    letterSpacing: 0.3,
   },
   errorText: {
     color: BUY_NOW_RUBY,

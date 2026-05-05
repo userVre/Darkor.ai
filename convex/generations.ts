@@ -38,6 +38,7 @@ type GenerationUser = {
   generationCount: number;
   reviewPrompted: boolean;
   lastReviewPromptAt?: number;
+  firstDiamondRatingPromptedAt?: number;
   lastRewardDate?: number;
   referralCode?: string;
   referralCount?: number;
@@ -349,6 +350,13 @@ async function reserveGenerationAllowance(
       })
     : [];
   const diamondSource = usesDiamondAllowance ? selectDiamondSourceForRender(availableDiamondSources) : undefined;
+  const shouldPromptFirstDiamondRating =
+    usesDiamondAllowance
+    && diamondSource === "daily_free"
+    && currentCount === 0
+    && state.credits === 1
+    && state.diamondBalance === 1
+    && toFiniteNumber(user.firstDiamondRatingPromptedAt) <= 0;
   const renderConfig = await getRenderConfig(ctx, ownerId, diamondSource);
   const generationPolicy = buildGenerationPolicyFromRenderConfig(renderConfig, state.subscriptionType);
 
@@ -379,6 +387,7 @@ async function reserveGenerationAllowance(
     generationPolicy,
     renderConfig,
     diamondSource,
+    shouldPromptFirstDiamondRating,
   };
 }
 
@@ -669,30 +678,10 @@ export const startGeneration = mutationGeneric({
     speedTier: v.optional(v.union(v.literal("standard"), v.literal("pro"), v.literal("ultra"))),
   },
   handler: async (ctx, args) => {
-    const azureConfig = validateAzureGenerationEnv();
+    validateAzureGenerationEnv();
     const requestedServiceType = inferRequestedServiceType(args as typeof args & { serviceType: RequestedServiceType });
     const canonicalServiceType = canonicalizeServiceType(requestedServiceType);
     const storedServiceType = resolveStoredServiceType(requestedServiceType, canonicalServiceType);
-    console.log("startGeneration: received request", {
-      azureRequestUrl: azureConfig.requestUrl,
-      anonymousIdPresent: Boolean(args.anonymousId),
-      hasMask: Boolean(args.maskStorageId),
-      hasReferenceImages: Boolean(args.referenceImageStorageIds?.length),
-      roomType: args.roomType,
-      selection: args.selection,
-      requestedServiceType,
-      serviceType: canonicalServiceType,
-      speedTier: args.speedTier ?? "standard",
-    });
-    console.log("startGeneration: incoming payload debug", {
-      keys: Object.keys(args).sort(),
-      imageStorageIdPresent: Boolean(args.imageStorageId),
-      referenceImageStorageIdCount: args.referenceImageStorageIds?.length ?? 0,
-      maskStorageIdPresent: Boolean(args.maskStorageId),
-      requestedServiceType,
-      canonicalServiceType,
-      storedServiceType,
-    });
     const viewer = await ensureGenerationViewer(ctx, args.anonymousId);
 
     const sourceMetadata = await ctx.db.system.get("_storage", args.imageStorageId);
@@ -792,13 +781,6 @@ export const startGeneration = mutationGeneric({
       projectId: undefined,
     });
 
-    console.log("startGeneration: scheduling generateDesign", {
-      generationId,
-      ownerId: viewer.userId,
-      planUsed: allowance.planUsed,
-      requestedServiceType,
-      serviceType: canonicalServiceType,
-    });
     try {
       await ctx.scheduler.runAfter(0, (internal as any).aiNode.generateDesign, {
         generationId,
@@ -849,17 +831,13 @@ export const startGeneration = mutationGeneric({
       throw new ConvexError(normalizeGenerationSchedulerError(rawMessage));
     }
 
-    console.log("startGeneration: scheduled successfully", {
-      generationId,
-      requestedServiceType,
-      serviceType: canonicalServiceType,
-    });
     return {
       generationId,
       prompt,
       reviewState: {
         count: allowance.count,
         shouldPrompt: allowance.shouldPrompt,
+        shouldPromptFirstDiamondRating: allowance.shouldPromptFirstDiamondRating,
       },
       creditsRemaining: allowance.creditsRemaining,
       planUsed: allowance.planUsed,

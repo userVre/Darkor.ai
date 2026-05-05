@@ -279,7 +279,7 @@
     "sections": {
       "overview": {
         "title": "Tổng quan",
-        "body": "HomeDecor AI (\"HomeDecor\", \"chúng tôi\", \"của chúng tôi\") cung cấp các dịch vụ thiết kế lại nội thất và ngoại thất dựa trên AI. Chính sách quyền riêng tư này giải thích những dữ liệu chúng tôi thu thập, cách chúng tôi sử dụng dữ liệu đó và những lựa chọn mà bạn có."
+        "body": "HomeDecor AI ('HomeDecor', 'chúng tôi', 'của chúng tôi') cung cấp các dịch vụ thiết kế lại nội thất và ngoại thất dựa trên AI. Chính sách quyền riêng tư này giải thích những dữ liệu chúng tôi thu thập, cách chúng tôi sử dụng dữ liệu đó và những lựa chọn mà bạn có."
       },
       "informationWeCollect": {
         "title": "Thông tin chúng tôi thu thập",
@@ -343,7 +343,7 @@
       },
       "disclaimer": {
         "title": "Tuyên bố từ chối trách nhiệm",
-        "body": "Dịch vụ được cung cấp \"nguyên trạng\" mà không có bất kỳ hình thức bảo đảm nào. Chúng tôi không đảm bảo kết quả thiết kế cụ thể hoặc độ chính xác của kết quả đầu ra do AI tạo ra."
+        "body": "Dịch vụ được cung cấp 'nguyên trạng' mà không có bất kỳ hình thức bảo đảm nào. Chúng tôi không đảm bảo kết quả thiết kế cụ thể hoặc độ chính xác của kết quả đầu ra do AI tạo ra."
       },
       "limitationOfLiability": {
         "title": "Giới hạn trách nhiệm pháp lý",
@@ -566,7 +566,7 @@
         "pink": "Hồng",
         "blue": "Màu xanh",
         "green": "màu xanh lá cây",
-        "yellow": "màu vàng",
+        "aqua": "Aqua",
         "gray": "Màu xám",
         "red": "màu đỏ"
       },

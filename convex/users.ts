@@ -125,7 +125,7 @@ function isDiamondSource(value: unknown): value is DiamondSource {
 }
 
 function normalizeDiamondSourcesForBalance(user: any, creditsOverride?: number) {
-  const credits = Math.max(toFiniteNumber(creditsOverride ?? user?.credits, FREE_IMAGE_LIMIT), 0);
+  const credits = Math.max(toFiniteNumber(creditsOverride ?? user?.credits, INITIAL_FREE_DIAMONDS), 0);
   const existing = Array.isArray(user?.diamondSources)
     ? user.diamondSources.filter(isDiamondSource)
     : [];
@@ -290,7 +290,7 @@ async function ensureUserReferralCode(ctx: any, user: any, seed: string) {
 }
 
 async function grantReferralDiamonds(ctx: any, user: any, diamonds: number, patch?: Record<string, unknown>) {
-  const currentCredits = Math.max(toFiniteNumber(user?.credits, FREE_IMAGE_LIMIT), 0);
+  const currentCredits = Math.max(toFiniteNumber(user?.credits, INITIAL_FREE_DIAMONDS), 0);
   const nextCredits = currentCredits + diamonds;
   await ctx.db.patch(user._id, omitUndefined({
     credits: nextCredits,
@@ -358,6 +358,8 @@ function buildViewerResponse(user: any) {
     notificationsPermissionRequestedAt: toFiniteNumber(user.notificationsPermissionRequestedAt),
     notificationsPermissionGrantedAt: toFiniteNumber(user.notificationsPermissionGrantedAt),
     proTipNotificationIndex: toFiniteNumber(user.proTipNotificationIndex),
+    firstDiamondRatingPromptedAt: toFiniteNumber(user.firstDiamondRatingPromptedAt),
+    onboardingDiamondClaimedAt: toFiniteNumber(user.onboardingDiamondClaimedAt),
     isGuest: !user.clerkId,
   };
 }
@@ -537,12 +539,17 @@ export const claimOnboardingDiamond = mutationGeneric({
     const now = Date.now();
     const alreadyClaimedAt = toFiniteNumber(user.onboardingDiamondClaimedAt);
     const currentCredits = Math.max(toFiniteNumber(user.credits), 0);
+    const currentDiamondBalance = getDailyDiamondBalance(user);
 
     if (alreadyClaimedAt > 0) {
       return {
         granted: false,
+        creditsAdded: 0,
         credits: currentCredits,
+        diamondBalance: currentDiamondBalance,
+        canClaimDiamond: false,
         claimedAt: alreadyClaimedAt,
+        onboardingDiamondClaimedAt: alreadyClaimedAt,
       };
     }
 
@@ -567,8 +574,12 @@ export const claimOnboardingDiamond = mutationGeneric({
 
     return {
       granted: nextCredits > currentCredits,
+      creditsAdded,
       credits: nextCredits,
+      diamondBalance: nextDiamondBalance,
+      canClaimDiamond: false,
       claimedAt: now,
+      onboardingDiamondClaimedAt: now,
     };
   },
 });
@@ -699,6 +710,10 @@ async function mergeAnonymousUserIntoClerkUser(ctx: any, clerkId: string, anonym
     proTrialEndedPaywallPending: Boolean(accountUser.proTrialEndedPaywallPending || guestUser.proTrialEndedPaywallPending),
     lastRewardDate: Math.max(toFiniteNumber(accountUser.lastRewardDate), toFiniteNumber(guestUser.lastRewardDate)),
     lastReviewPromptAt: Math.max(toFiniteNumber(accountUser.lastReviewPromptAt), toFiniteNumber(guestUser.lastReviewPromptAt)),
+    firstDiamondRatingPromptedAt: Math.max(
+      toFiniteNumber(accountUser.firstDiamondRatingPromptedAt),
+      toFiniteNumber(guestUser.firstDiamondRatingPromptedAt),
+    ),
     expoPushToken: accountUser.expoPushToken ?? guestUser.expoPushToken,
     devicePushToken: accountUser.devicePushToken ?? guestUser.devicePushToken,
     notificationPlatform: accountUser.notificationPlatform ?? guestUser.notificationPlatform,
@@ -721,6 +736,7 @@ async function mergeAnonymousUserIntoClerkUser(ctx: any, clerkId: string, anonym
     proTrialExpiresAt: null,
     proTrialEndedPaywallPending: false,
     reviewPrompted: false,
+    firstDiamondRatingPromptedAt: 0,
     notificationsDeclined: false,
     notificationsPermissionRequestedAt: 0,
     notificationsPermissionGrantedAt: 0,
@@ -1008,13 +1024,13 @@ export const fulfillDiamondPurchase = mutationGeneric({
       return {
         ok: true,
         duplicated: true,
-        credits: Math.max(toFiniteNumber(refreshedUser?.credits, FREE_IMAGE_LIMIT), 0),
+        credits: Math.max(toFiniteNumber(refreshedUser?.credits, INITIAL_FREE_DIAMONDS), 0),
         diamondsAdded: 0,
       };
     }
 
     const diamondsAdded = DIAMOND_PACK_COUNTS[args.packId];
-    const nextCredits = Math.max(toFiniteNumber(viewer.user.credits, FREE_IMAGE_LIMIT), 0) + diamondsAdded;
+    const nextCredits = Math.max(toFiniteNumber(viewer.user.credits, INITIAL_FREE_DIAMONDS), 0) + diamondsAdded;
     const nextPremiumCredits = Math.max(toFiniteNumber(viewer.user.premiumCredits), 0) + diamondsAdded;
 
     await ctx.db.patch(viewer.user._id, {
@@ -1326,6 +1342,29 @@ export const markReviewPrompted = mutationGeneric({
     });
 
     return { ok: true };
+  },
+});
+
+export const markFirstDiamondRatingPrompted = mutationGeneric({
+  args: {
+    anonymousId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await ensureViewerUser(ctx, args.anonymousId);
+    const user = viewer.user;
+    const existingPromptedAt = toFiniteNumber(user.firstDiamondRatingPromptedAt);
+    if (existingPromptedAt > 0) {
+      return { ok: true, promptedAt: existingPromptedAt, alreadyPrompted: true };
+    }
+
+    const promptedAt = Date.now();
+    await ctx.db.patch(user._id, {
+      firstDiamondRatingPromptedAt: promptedAt,
+      reviewPrompted: true,
+      lastReviewPromptAt: promptedAt,
+    });
+
+    return { ok: true, promptedAt, alreadyPrompted: false };
   },
 });
 

@@ -28,30 +28,30 @@ type ViewStyle,
 } from "react-native";
 import Animated, {
 Easing,
+useAnimatedProps,
 useAnimatedStyle,
 useSharedValue,
 withTiming,
 } from "react-native-reanimated";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
+import Svg, {Circle} from "react-native-svg";
 import {createLocalizedPrice, usePricingContext, type LocalizedPrice} from "../lib/dynamic-pricing";
 import {ANALYTICS_EVENTS, captureAnalytics} from "../lib/analytics";
 
 import {useProSuccess} from "../components/pro-success-context";
 import {useDiamondStore} from "../components/diamond-store-context";
-import {NeonArrowDown} from "../components/paywall/AnimatedArrow";
 import {useElitePassModal} from "../components/elite-pass-context";
 import {useViewerCredits} from "../components/viewer-credits-context";
 import {useViewerSession} from "../components/viewer-session-context";
 import {getGenerationLimit} from "../convex/subscriptions";
 import {triggerHaptic} from "../lib/haptics";
-import {useLocalizedAppFonts} from "../lib/i18n";
 import {scheduleOrUpdateProTip} from "../lib/notifications";
 import {
 getDirectionalAlignment,
 getDirectionalRow,
 getDirectionalTextAlign,
 } from "../lib/i18n/rtl";
-import {dismissLaunchPaywall} from "../lib/launch-paywall";
+import {dismissLaunchPaywall, persistHasDismissedPaywall} from "../lib/launch-paywall";
 import {resolveSafeRoute, TOOLS_ROUTE} from "../lib/routes";
 import {
 configureRevenueCat,
@@ -88,6 +88,11 @@ const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 3000;
 const CLOSE_DELAY_MS = 5000;
 const CLOSE_VISUAL_SIZE = 40;
+const CLOSE_FADE_IN_MS = 500;
+const COUNTDOWN_RING_SIZE = 34;
+const COUNTDOWN_RING_STROKE = 2.5;
+const COUNTDOWN_RING_RADIUS = (COUNTDOWN_RING_SIZE - COUNTDOWN_RING_STROKE) / 2;
+const COUNTDOWN_RING_CIRCUMFERENCE = 2 * Math.PI * COUNTDOWN_RING_RADIUS;
 const HERO_CENTER_SIZE = 196;
 const HERO_SIDE_WIDTH = 184;
 const HERO_SIDE_HEIGHT = 188;
@@ -98,6 +103,7 @@ const HERO_ACTIVE_SCALE = 1.05;
 const HERO_SIDE_TRANSLATE_Y = 12;
 const HERO_SNAP_INTERVAL = HERO_CENTER_SIZE / 2 + HERO_IMAGE_GAP + HERO_SIDE_RENDERED_WIDTH / 2;
 const HERO_CAROUSEL_REPEAT_MULTIPLIER = 7;
+const RIGHT_ARROW = String.fromCharCode(8594);
 const HERO_IMAGES = [
   require("../assets/media/paywall/carousel-gaming-led.png"),
   require("../assets/media/paywall/carousel-luxury-marble.png"),
@@ -113,6 +119,7 @@ const FORCED_LTR_TEXT_STYLE = {
   textAlign: "left" as const,
   writingDirection: "ltr" as const,
 };
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 function FadeSwap({
   children,
@@ -140,7 +147,7 @@ function FadeSwap({
 }
 
 function FeatureRow({ label, isLast }: { label: string; isLast: boolean }) {
-  const localizedFonts = useLocalizedAppFonts();
+  const localizedFonts = fonts;
   const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   return (
     <View style={[styles.featureRow, !isLast ? styles.featureRowGap : null, { flexDirection: getDirectionalRow(isRTL) }]}>
@@ -171,7 +178,7 @@ function LegalLink({
   label: string;
   onPress: () => void;
 }) {
-  const localizedFonts = useLocalizedAppFonts();
+  const localizedFonts = fonts;
   return (
     <Pressable
       accessibilityRole="link"
@@ -254,58 +261,65 @@ function YearlyPlanCard({
   selected: boolean;
   onPress: () => void;
 }) {
-  const localizedFonts = useLocalizedAppFonts();
+  const localizedFonts = fonts;
   const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   return (
-    <LinearGradient
-      colors={[BRAND_RED, BRAND_RED_ACTIVE]}
-      end={{ x: 1, y: 1 }}
-      start={{ x: 0, y: 0 }}
-      style={[styles.planGradientBorder, selected ? styles.planCardGlow : null]}
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={[
+        styles.planCard,
+        styles.yearlyCard,
+        selected ? styles.planCardSelected : styles.planCardIdle,
+      ]}
     >
-      <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, styles.planCardSurface, styles.yearlyCard]}>
-        <View style={styles.bestOfferBadge}>
-          <Text style={[styles.bestOfferText, localizedFonts.bold]}>BEST OFFER</Text>
-        </View>
+      <View style={styles.bestOfferBadge}>
+        <Text style={[styles.bestOfferText, localizedFonts.bold]}>BEST OFFER</Text>
+      </View>
 
-        <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-          <View style={styles.planCopy}>
-            <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>YEARLY ACCESS</Text>
-            <Text style={[styles.planPriceText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{priceText}</Text>
-          </View>
+      <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+        <View style={styles.planCopy}>
+          <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>YEARLY ACCESS</Text>
+          <Text style={[styles.planPriceText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{priceText}</Text>
         </View>
-      </Pressable>
-    </LinearGradient>
+      </View>
+    </Pressable>
   );
 }
 
 function WeeklyPlanCard({
   priceText,
   selected,
+  showTrialBadge,
   onPress,
 }: {
   priceText: string;
   selected: boolean;
+  showTrialBadge: boolean;
   onPress: () => void;
 }) {
-  const localizedFonts = useLocalizedAppFonts();
+  const localizedFonts = fonts;
   const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   return (
-    <LinearGradient
-      colors={selected ? [BRAND_RED, BRAND_RED_ACTIVE] : ["rgba(232, 58, 90, 0.62)", "rgba(0, 180, 255, 0.32)"]}
-      end={{ x: 1, y: 1 }}
-      start={{ x: 0, y: 0 }}
-      style={[styles.planGradientBorder, selected ? styles.planCardGlow : styles.planCardQuietGlow]}
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={[
+        styles.planCard,
+        styles.weeklyCard,
+        selected ? styles.planCardSelected : styles.planCardIdle,
+      ]}
     >
-      <Pressable accessibilityRole="button" onPress={onPress} style={[styles.planCard, styles.planCardSurface, styles.weeklyCard]}>
-        <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-          <View style={styles.planCopy}>
-            <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>WEEKLY ACCESS</Text>
-            <Text style={[styles.planPriceText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{priceText}</Text>
-          </View>
+      <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+        <View style={styles.planCopy}>
+          <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>WEEKLY ACCESS</Text>
+          <Text style={[styles.planPriceText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{priceText}</Text>
+          {showTrialBadge ? (
+            <Text style={[styles.weeklyTrialText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>3 Days Free Trial</Text>
+          ) : null}
         </View>
-      </Pressable>
-    </LinearGradient>
+      </View>
+    </Pressable>
   );
 }
 
@@ -317,24 +331,96 @@ function CountdownCloseButton({
   onPress: () => void;
 }) {
   const { t } = useTranslation();
+  const [remainingSeconds, setRemainingSeconds] = useState(5);
+  const countdownProgress = useSharedValue(0);
+  const closeOpacity = useSharedValue(canClose ? 1 : 0);
+
+  useEffect(() => {
+    if (canClose) {
+      return;
+    }
+
+    setRemainingSeconds(5);
+    const startedAt = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startedAt;
+      const nextRemaining = Math.max(1, Math.ceil((CLOSE_DELAY_MS - elapsed) / 1000));
+      setRemainingSeconds(nextRemaining);
+    }, 250);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [canClose]);
+
+  useEffect(() => {
+    if (canClose) {
+      countdownProgress.value = 1;
+      closeOpacity.value = withTiming(1, {
+        duration: CLOSE_FADE_IN_MS,
+        easing: Easing.out(Easing.cubic),
+      });
+      return;
+    }
+
+    closeOpacity.value = 0;
+    countdownProgress.value = 0;
+    countdownProgress.value = withTiming(1, {
+      duration: CLOSE_DELAY_MS,
+      easing: Easing.linear,
+    });
+  }, [canClose, closeOpacity, countdownProgress]);
+
+  const countdownCircleProps = useAnimatedProps(() => ({
+    strokeDashoffset: countdownProgress.value * COUNTDOWN_RING_CIRCUMFERENCE,
+  }));
+
+  const closeAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: closeOpacity.value,
+  }));
 
   return (
     <View pointerEvents="box-none" style={styles.closeSlot}>
-      <AnimatePresence>
-        {canClose ? (
-          <MotiView
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            from={{ opacity: 0 }}
-            style={styles.closeBubble}
-            transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
-          >
-            <Pressable accessibilityLabel={t("paywall.closeA11y")} accessibilityRole="button" hitSlop={10} onPress={onPress} style={styles.closeButtonInner}>
-              <X color={TEXT_PRIMARY} size={20} strokeWidth={2.4} />
-            </Pressable>
-          </MotiView>
-        ) : null}
-      </AnimatePresence>
+      {canClose ? null : (
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          pointerEvents="none"
+          style={styles.countdownWrap}
+        >
+          <Svg height={COUNTDOWN_RING_SIZE} style={styles.countdownRing} width={COUNTDOWN_RING_SIZE}>
+            <Circle
+              cx={COUNTDOWN_RING_SIZE / 2}
+              cy={COUNTDOWN_RING_SIZE / 2}
+              fill="transparent"
+              r={COUNTDOWN_RING_RADIUS}
+              stroke="rgba(255, 255, 255, 0.16)"
+              strokeWidth={COUNTDOWN_RING_STROKE}
+            />
+            <AnimatedCircle
+              animatedProps={countdownCircleProps}
+              cx={COUNTDOWN_RING_SIZE / 2}
+              cy={COUNTDOWN_RING_SIZE / 2}
+              fill="transparent"
+              r={COUNTDOWN_RING_RADIUS}
+              stroke={TEXT_PRIMARY}
+              strokeDasharray={COUNTDOWN_RING_CIRCUMFERENCE}
+              strokeLinecap="round"
+              strokeWidth={COUNTDOWN_RING_STROKE}
+              transform={`rotate(-90 ${COUNTDOWN_RING_SIZE / 2} ${COUNTDOWN_RING_SIZE / 2})`}
+            />
+          </Svg>
+          <Text style={styles.countdownText}>{remainingSeconds}</Text>
+        </View>
+      )}
+
+      {canClose ? (
+        <Animated.View pointerEvents="auto" style={[styles.closeBubble, closeAnimatedStyle]}>
+          <Pressable accessibilityLabel={t("paywall.closeA11y")} accessibilityRole="button" hitSlop={10} onPress={onPress} style={styles.closeButtonInner}>
+            <X color={TEXT_PRIMARY} size={20} strokeWidth={2.4} />
+          </Pressable>
+        </Animated.View>
+      ) : null}
     </View>
   );
 }
@@ -428,7 +514,7 @@ export default function PaywallScreen() {
   const navigation = useNavigation();
   const posthog = usePostHog();
   const { t, i18n } = useTranslation();
-  const localizedFonts = useLocalizedAppFonts();
+  const localizedFonts = fonts;
   const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   const pricingContext = usePricingContext();
   const { width, height } = useWindowDimensions();
@@ -444,7 +530,7 @@ export default function PaywallScreen() {
   const { anonymousId } = useViewerSession();
   const { credits, hasPaidAccess, notificationsDeclined, proTipNotificationIndex, setOptimisticAccess } = useViewerCredits();
   const { openStore } = useDiamondStore();
-  const { openElitePass } = useElitePassModal();
+  const { openRewardBar } = useElitePassModal();
   const setPlan = useMutation("users:setViewerPlanFromRevenueCat" as any);
   const setProTipNotificationIndex = useMutation("users:setProTipNotificationIndex" as any);
   const { showSuccess } = useProSuccess();
@@ -456,7 +542,7 @@ export default function PaywallScreen() {
   const carouselScrollX = useRef(new NativeAnimated.Value(0)).current;
 
   const [canClose, setCanClose] = useState(false);
-  const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("yearly");
+  const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("weekly");
   const [freeTrialEnabled, setFreeTrialEnabled] = useState(true);
   const [packages, setPackages] = useState<RevenueCatPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -535,8 +621,8 @@ export default function PaywallScreen() {
   }, [freeTrialEnabled, isSoftPaywall, packages, selectedDuration, weeklyPackage, yearlyPackage]);
 
   const ctaDisabled = isLoading || !selectedPackage;
-  const isYearlySelected = !freeTrialEnabled && selectedDuration === "yearly";
-  const isWeeklySelected = freeTrialEnabled || selectedDuration === "weekly";
+  const isYearlySelected = selectedDuration === "yearly";
+  const isWeeklySelected = selectedDuration === "weekly";
   const sheetHeight = Math.max(height - 12, 0);
 
   useEffect(() => {
@@ -583,13 +669,20 @@ export default function PaywallScreen() {
         return;
       }
 
-      const nextIndex = carouselIndexRef.current - 1;
+      if (carouselIndexRef.current >= HERO_CAROUSEL_DATA.length - HERO_IMAGES.length - 1) {
+        const normalizedIndex = normalizeCarouselIndex(carouselIndexRef.current);
+        carouselIndexRef.current = normalizedIndex;
+        carouselRef.current?.scrollTo({ x: normalizedIndex * heroSnapInterval, animated: false });
+        carouselScrollX.setValue(normalizedIndex * heroSnapInterval);
+      }
+
+      const nextIndex = carouselIndexRef.current + 1;
       carouselIndexRef.current = nextIndex;
       carouselRef.current?.scrollTo({ x: nextIndex * heroSnapInterval, animated: true });
     }, CAROUSEL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [heroSnapInterval]);
+  }, [carouselScrollX, heroSnapInterval]);
 
   useEffect(() => {
     let active = true;
@@ -680,19 +773,25 @@ export default function PaywallScreen() {
   const closePaywall = useCallback(() => {
     if (source === "launch") {
       dismissLaunchPaywall();
+    } else {
+      void persistHasDismissedPaywall();
     }
 
     router.replace(TOOLS_ROUTE as any);
   }, [router, source]);
 
   const completePaywall = useCallback(() => {
+    void persistHasDismissedPaywall();
+
     if (typeof redirectTo === "string" && redirectTo.length > 0) {
       router.replace(resolveSafeRoute(redirectTo, TOOLS_ROUTE) as any);
+      setTimeout(() => openRewardBar(), 250);
       return;
     }
 
     router.replace(TOOLS_ROUTE as any);
-  }, [redirectTo, router]);
+    setTimeout(() => openRewardBar(), 250);
+  }, [openRewardBar, redirectTo, router]);
 
   const handleClose = useCallback(() => {
     if (!canClose || isLoading) {
@@ -700,6 +799,7 @@ export default function PaywallScreen() {
     }
 
     triggerHaptic();
+    void persistHasDismissedPaywall();
     if (source === "post_wow") {
       captureAnalytics(posthog, "paywall_declined", {
         paywall_source: "post_wow",
@@ -708,16 +808,22 @@ export default function PaywallScreen() {
         index: 0,
         routes: [{name: "(tabs)"}],
       }));
-      setTimeout(() => openElitePass(), 250);
+      setTimeout(() => {
+        openRewardBar();
+      }, 250);
       return;
     }
 
-    const shouldOpenDownsell = source === "launch" && !hasPaidAccess && credits <= 0;
     closePaywall();
-    if (shouldOpenDownsell) {
+    if (!hasPaidAccess) {
+      setTimeout(() => openRewardBar(), 250);
+      return;
+    }
+
+    if (source === "launch" && credits <= 0) {
       setTimeout(() => openStore("empty_balance"), 250);
     }
-  }, [canClose, closePaywall, credits, hasPaidAccess, isLoading, navigation, openElitePass, openStore, posthog, source]);
+  }, [canClose, closePaywall, credits, hasPaidAccess, isLoading, navigation, openRewardBar, openStore, posthog, source]);
 
   const handleRestore = useCallback(async () => {
     triggerHaptic();
@@ -776,6 +882,7 @@ export default function PaywallScreen() {
     durationOverride?: BillingDuration,
   ) => {
     triggerHaptic();
+    void persistHasDismissedPaywall();
     setErrorMessage(null);
 
     const packageToPurchase = packageOverride ?? selectedPackage;
@@ -846,11 +953,14 @@ export default function PaywallScreen() {
         setSelectedDuration("yearly");
         captureAnalytics(posthog, ANALYTICS_EVENTS.planSelected, { type: "yearly" });
       } else {
+        if (selectedDuration !== "weekly") {
+          setSelectedDuration("weekly");
+        }
         captureAnalytics(posthog, ANALYTICS_EVENTS.planSelected, { type: "weekly_trial" });
       }
       return next;
     });
-  }, [isLoading, posthog]);
+  }, [isLoading, posthog, selectedDuration]);
 
   const handleSelectYearly = useCallback(() => {
     if (isLoading) {
@@ -859,6 +969,7 @@ export default function PaywallScreen() {
 
     triggerHaptic();
     setSelectedDuration("yearly");
+    setFreeTrialEnabled(false);
     captureAnalytics(posthog, ANALYTICS_EVENTS.planSelected, {
       type: "yearly",
       paywall_source: isPostWowPaywall ? "post_wow" : source ?? "unknown",
@@ -875,23 +986,28 @@ export default function PaywallScreen() {
 
     triggerHaptic();
     setSelectedDuration("weekly");
+    setFreeTrialEnabled(true);
     captureAnalytics(posthog, ANALYTICS_EVENTS.planSelected, {
-      type: freeTrialEnabled && !isPostWowPaywall ? "weekly_trial" : "weekly",
+      type: !isPostWowPaywall ? "weekly_trial" : "weekly",
       paywall_source: isPostWowPaywall ? "post_wow" : source ?? "unknown",
     });
     if (isSoftPaywall) {
       void handlePurchase(weeklyPackage ?? selectedPackage, "weekly");
     }
-  }, [freeTrialEnabled, handlePurchase, isLoading, isPostWowPaywall, isSoftPaywall, posthog, selectedPackage, source, weeklyPackage]);
+  }, [handlePurchase, isLoading, isPostWowPaywall, isSoftPaywall, posthog, selectedPackage, source, weeklyPackage]);
+
+  const showFreeTrialPricing = isWeeklySelected && freeTrialEnabled;
+  const ctaButtonText = `${showFreeTrialPricing ? "Try for $0" : "Subscribe Now"} ${RIGHT_ARROW}`;
 
   const handleSkipPostWowPaywall = useCallback(() => {
     triggerHaptic();
+    void persistHasDismissedPaywall();
     captureAnalytics(posthog, "paywall_skipped", {
       paywall_source: "post_wow",
     });
     router.replace("/(tabs)" as any);
-    setTimeout(() => openElitePass(), 250);
-  }, [openElitePass, posthog, router]);
+    setTimeout(() => openRewardBar(), 250);
+  }, [openRewardBar, posthog, router]);
 
   const handleOpenTerms = useCallback(() => {
     triggerHaptic();
@@ -968,6 +1084,7 @@ export default function PaywallScreen() {
               onPress={handleSelectWeekly}
               priceText={weeklyPriceText}
               selected={selectedDuration === "weekly"}
+              showTrialBadge={selectedDuration === "weekly" && freeTrialEnabled}
             />
           </View>
 
@@ -1092,7 +1209,7 @@ export default function PaywallScreen() {
             style={[styles.trialBar, { flexDirection: getDirectionalRow(isRTL) }]}
           >
             <Text style={[styles.trialLabel, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>
-              Free trial activated
+              {freeTrialEnabled ? "Free trial activated" : "Free trial off"}
             </Text>
             <ToggleSwitch value={freeTrialEnabled} />
           </Pressable>
@@ -1110,6 +1227,7 @@ export default function PaywallScreen() {
               onPress={handleSelectWeekly}
               priceText={weeklyPriceText}
               selected={isWeeklySelected}
+              showTrialBadge={showFreeTrialPricing}
             />
           </View>
 
@@ -1130,9 +1248,9 @@ export default function PaywallScreen() {
                 <Text style={[styles.ctaText, localizedFonts.bold]}>{t("paywall.processing")}</Text>
               </View>
             ) : (
-              <FadeSwap swapKey={freeTrialEnabled ? "cta-trial" : "cta-continue"} style={styles.ctaContent}>
+              <FadeSwap swapKey={ctaButtonText} style={styles.ctaContent}>
                 <View style={[styles.ctaLabelRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{freeTrialEnabled ? "Try for $0" : "Subscribe Now"}</Text>
+                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{ctaButtonText}</Text>
                   <Text
                     style={[
                       styles.ctaArrow,
@@ -1143,23 +1261,6 @@ export default function PaywallScreen() {
                   >
                     {"→"}
                   </Text>
-                  <Text
-                    style={[
-                      styles.ctaArrowVisual,
-                      localizedFonts.bold,
-                      FORCED_LTR_TEXT_STYLE,
-                      { transform: [{ scaleX: 1 }] },
-                    ]}
-                  >
-                    {String.fromCharCode(8594)}
-                  </Text>
-                  <NeonArrowDown
-                    style={[
-                      styles.ctaAnimatedArrow,
-                      localizedFonts.bold,
-                      FORCED_LTR_TEXT_STYLE,
-                    ]}
-                  />
                 </View>
               </FadeSwap>
             )}
@@ -1218,14 +1319,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     textTransform: "uppercase",
-    letterSpacing: 0,
+    letterSpacing: 0.3,
   },
   softTitle: {
     color: TEXT_PRIMARY,
     fontSize: 26,
     lineHeight: 31,
     textAlign: "center",
-    letterSpacing: 0,
+    letterSpacing: 0.3,
   },
   softSubtitle: {
     color: TEXT_MUTED,
@@ -1308,6 +1409,10 @@ const styles = StyleSheet.create({
     height: CLOSE_VISUAL_SIZE,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: CLOSE_VISUAL_SIZE / 2,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.14)",
   },
   closeButtonInner: {
     width: CLOSE_VISUAL_SIZE,
@@ -1321,14 +1426,16 @@ const styles = StyleSheet.create({
     height: CLOSE_VISUAL_SIZE,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: CLOSE_VISUAL_SIZE / 2,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
   },
   countdownRing: {
     position: "absolute",
   },
   countdownText: {
     color: TEXT_PRIMARY,
-    fontSize: 11,
-    lineHeight: 11,
+    fontSize: 13,
+    lineHeight: 16,
     ...fonts.bold,
   },
   scrollContent: {
@@ -1376,7 +1483,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 21,
     textAlign: "left",
-    letterSpacing: 0,
+    letterSpacing: 0.3,
     ...fonts.regular,
   },
   personalizedSubtitleText: {
@@ -1391,7 +1498,7 @@ const styles = StyleSheet.create({
     lineHeight: 36,
     textAlign: "left",
     flexShrink: 1,
-    letterSpacing: 0,
+    letterSpacing: 0.3,
     ...fonts.bold,
   },
   featureRow: {
@@ -1472,8 +1579,6 @@ const styles = StyleSheet.create({
     backgroundColor: PANEL_BG_ALT,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: PANEL_BORDER,
     justifyContent: "center",
   },
   planGradientBorder: {
@@ -1490,34 +1595,18 @@ const styles = StyleSheet.create({
     minHeight: 72,
   },
   planCardIdle: {
-    borderWidth: 1,
-    borderColor: PANEL_BORDER,
+    borderWidth: 0,
+    borderColor: "transparent",
   },
   planCardSelected: {
     borderWidth: 2,
-    borderColor: BRAND_RED_ACTIVE,
-    shadowColor: BRAND_RED,
-    shadowOpacity: 0.42,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
-    boxShadow: "0px 10px 24px rgba(232,58,90,0.36)",
+    borderColor: BRAND_RED,
+    boxShadow: "0px 4px 12px rgba(232,58,90,0.18)",
   },
   planCardGlow: {
-    shadowColor: BRAND_RED,
-    shadowOpacity: 0.58,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 7,
-    boxShadow: "0px 14px 34px rgba(232,58,90,0.48)",
+    boxShadow: "0px 4px 12px rgba(232,58,90,0.18)",
   },
   planCardQuietGlow: {
-    shadowColor: "#00B4FF",
-    shadowOpacity: 0.16,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-    boxShadow: "0px 8px 18px rgba(0,180,255,0.14)",
   },
   bestOfferBadge: {
     position: "absolute",
@@ -1619,6 +1708,14 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     ...fonts.bold,
   },
+  weeklyTrialText: {
+    marginTop: 7,
+    alignSelf: "flex-start",
+    color: BRAND_RED_ACTIVE,
+    fontSize: 12,
+    lineHeight: 15,
+    ...fonts.bold,
+  },
   noPaymentRow: {
     marginTop: 8,
     marginBottom: 16,
@@ -1663,12 +1760,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: BRAND_RED,
-    shadowOpacity: 0.34,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 8,
-    boxShadow: "0px 14px 28px rgba(232,58,90,0.28)",
+    boxShadow: "0px 5px 14px rgba(232,58,90,0.22)",
     overflow: "visible",
   },
   ctaGradient: {
@@ -1732,6 +1824,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     includeFontPadding: false,
     textAlignVertical: "center",
+    display: "none",
     ...fonts.bold,
   },
   legalFooter: {

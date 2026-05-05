@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontSize: 34,
     lineHeight: 40,
-    letterSpacing: -0.8,
+    letterSpacing: 0.3,
   },
   cursor: {
     color: "#C86B33",
@@ -104,6 +104,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 11,
     lineHeight: 12,
-    letterSpacing: 2.4,
+    letterSpacing: 0.3,
   },
 });

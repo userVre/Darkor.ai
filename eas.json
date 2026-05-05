@@ -7,6 +7,7 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "channel": "development",
       "environment": "development",
       "env": {
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
@@ -14,11 +15,16 @@
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
       "environment": "preview"
     },
     "production": {
       "autoIncrement": true,
-      "environment": "production"
+      "channel": "production",
+      "environment": "production",
+      "env": {
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+      }
     }
   },
   "submit": {

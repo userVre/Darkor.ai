@@ -47,6 +47,7 @@ export function buildDefaultUserFields(args: {
     generationCount: args.generationCount ?? 0,
     reviewPrompted: false,
     lastReviewPromptAt: 0,
+    firstDiamondRatingPromptedAt: 0,
     lastRewardDate: now,
     streakCount: 1,
     lastLoginDate: now,

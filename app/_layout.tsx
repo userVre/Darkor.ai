@@ -47,7 +47,6 @@ import {consumeReferralCode, setReferralCode} from "../lib/referral";
 import {
   configureRevenueCat,
   fetchTieredPackage,
-  getLatestRevenueCatTransaction,
   hasActiveSubscription,
   inferRevenueCatDiamondPackId,
   resolveRevenueCatSubscription,
@@ -84,12 +83,12 @@ function applyGlobalTypographyDefaults(
 
   TextWithDefaults.defaultProps = {
     ...TextWithDefaults.defaultProps,
-    style: [localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }],
+    style: [localizedFonts.regular, { letterSpacing: 0.3, textAlign: getDirectionalTextAlign(isRTL) }],
   };
 
   TextInputWithDefaults.defaultProps = {
     ...TextInputWithDefaults.defaultProps,
-    style: [localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }],
+    style: [localizedFonts.regular, { letterSpacing: 0.3, textAlign: getDirectionalTextAlign(isRTL) }],
   };
 
   lastAppliedTypographyKey = nextTypographyKey;
@@ -101,13 +100,13 @@ function RevenueCatGate() {
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
   const fulfillDiamondPurchase = useMutation("users:fulfillDiamondPurchase" as any);
   const setProTipNotificationIndex = useMutation("users:setProTipNotificationIndex" as any);
-  const { showSuccess, showToast } = useProSuccess();
+  const { showSuccess } = useProSuccess();
   const { notificationsDeclined, proTipNotificationIndex, setOptimisticAccess, setOptimisticCredits } = useViewerCredits();
   const { anonymousId } = useViewerSession();
   const pricingContext = usePricingContext();
 
   const configuredRef = useRef(false);
-  const listenerAddedRef = useRef(false);
+  const mountedRef = useRef(true);
   const hasSubscriptionRef = useRef<boolean | null>(null);
   const processedDiamondTransactionIdsRef = useRef(new Set<string>());
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
@@ -115,10 +114,21 @@ function RevenueCatGate() {
   const syncRef = useRef<(info?: RevenueCatCustomerInfo) => void>(() => undefined);
 
   useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isLoaded || configuredRef.current) return;
+    let cancelled = false;
+
     const run = async () => {
       try {
         const purchases = await configureRevenueCat(isSignedIn ? user?.id ?? null : null);
+        if (cancelled || !mountedRef.current) {
+          return;
+        }
         if (!purchases) {
           console.warn("[Boot] RevenueCat unavailable - skipping");
           return;
@@ -131,6 +141,10 @@ function RevenueCatGate() {
       }
     };
     void run();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isLoaded, isSignedIn, user?.id]);
 
   useEffect(() => {
@@ -182,9 +196,13 @@ function RevenueCatGate() {
   useEffect(() => {
     syncRef.current = async (info?: RevenueCatCustomerInfo) => {
       const purchases = purchasesRef.current;
-      if (!revenueCatReady || !configuredRef.current || !isLoaded || !purchases) return;
+      if (!mountedRef.current || !revenueCatReady || !configuredRef.current || !isLoaded || !purchases) return;
       try {
         const customerInfo = info ?? (await purchases.getCustomerInfo());
+        if (!mountedRef.current) {
+          return;
+        }
+
         const subscriptionState = resolveRevenueCatSubscription(customerInfo);
         const hasSubscription = hasActiveSubscription(customerInfo);
         setOptimisticAccess({
@@ -222,7 +240,6 @@ function RevenueCatGate() {
             continue;
           }
 
-          const latestTransaction = getLatestRevenueCatTransaction(customerInfo, productIdentifier);
           const transactionTimestamp = Number.isFinite(purchasedAt) ? purchasedAt : Date.now();
           const priceSnapshot = pricingContext.diamondPacks[packId]?.price;
           const fulfillment = await fulfillDiamondPurchase({
@@ -237,19 +254,14 @@ function RevenueCatGate() {
             pricingTier: pricingContext.tierId,
             countryCode: pricingContext.countryCode,
           }) as { credits?: number };
+          if (!mountedRef.current) {
+            return;
+          }
 
           processedDiamondTransactionIdsRef.current.add(transactionId);
 
           if (typeof fulfillment?.credits === "number") {
             setOptimisticCredits(fulfillment.credits);
-          }
-
-          if (latestTransaction?.transactionIdentifier === transaction.transactionIdentifier) {
-            console.log("[RevenueCat] Diamond pack fulfilled", {
-              packId,
-              productIdentifier,
-              transactionId,
-            });
           }
         }
 
@@ -288,16 +300,13 @@ function RevenueCatGate() {
     setPlan,
     setProTipNotificationIndex,
     showSuccess,
-    showToast,
   ]);
 
   useEffect(() => {
     const purchases = purchasesRef.current;
     if (!revenueCatReady || !configuredRef.current || !isLoaded || !purchases) return;
     void syncRef.current();
-    if (listenerAddedRef.current) return;
 
-    listenerAddedRef.current = true;
     const listener = (info: RevenueCatCustomerInfo) => {
       void syncRef.current(info);
     };
@@ -477,7 +486,13 @@ function NotificationResponseGate() {
     };
 
     void (async () => {
-      subscription = await safeNotifications.addNotificationResponseReceivedListener(handleRoute);
+      const nextSubscription = await safeNotifications.addNotificationResponseReceivedListener(handleRoute);
+      if (!mounted) {
+        nextSubscription?.remove();
+        return;
+      }
+
+      subscription = nextSubscription;
       const lastResponse = await safeNotifications.getLastNotificationResponseAsync();
       if (mounted && lastResponse) {
         handleRoute(lastResponse);
@@ -692,12 +707,12 @@ export default function RootLayout() {
                           <FlowUIProvider>
                             <WorkspaceDraftProvider>
                               <BottomSheetModalProvider>
-                                {DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
-                              <LocalizationSyncGate />
-                              <GenerationAccessCacheGate />
-                              <NotificationScheduleGate />
-                              <NotificationResponseGate />
-                              <CreateAccessGate>
+{DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
+                                <LocalizationSyncGate />
+                                <GenerationAccessCacheGate />
+                                <NotificationScheduleGate />
+                                <NotificationResponseGate />
+                                <CreateAccessGate>
                                   <OnboardingBootGate>
                                     <AppShell />
                                   </OnboardingBootGate>

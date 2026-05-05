@@ -23,6 +23,11 @@ import {useOnboardingDemoRender} from "./onboarding-demo-render-context";
 import {useViewerSession} from "./viewer-session-context";
 
 const STEP_COUNT = 3;
+const PURE_WHITE = "#FFFFFF";
+const BLACK = "#000000";
+const DARK_GRAY = "#3A3A3A";
+const LIGHT_GRAY = "#F4F4F4";
+const MID_GRAY = "#D8D8D8";
 
 type SegmentId = "renovating_home" | "interior_designer";
 
@@ -289,8 +294,8 @@ export function PremiumOnboarding({forceVisible = false}: PremiumOnboardingProps
     if (stepIndex === 0) {
       return (
         <StepShell>
-          <Text style={styles.headline}>Design in seconds.</Text>
-          <Text style={styles.subtext}>Turn ideas into 4K renders.</Text>
+          <Text style={styles.headline}>Design in seconds</Text>
+          <Text style={styles.subtext}>Upload. Choose. Render.</Text>
         </StepShell>
       );
     }
@@ -298,7 +303,7 @@ export function PremiumOnboarding({forceVisible = false}: PremiumOnboardingProps
     if (stepIndex === 1) {
       return (
         <StepShell>
-          <Text style={styles.headline}>Who are you?</Text>
+          <Text style={styles.headline}>Select your role</Text>
           <View style={styles.optionStack}>
             {ROLE_OPTIONS.map((option) => (
               <RoleOptionCard
@@ -315,7 +320,7 @@ export function PremiumOnboarding({forceVisible = false}: PremiumOnboardingProps
 
     return (
       <StepShell>
-        <Text style={styles.headline}>Ready.</Text>
+        <Text style={styles.headline}>Start creating</Text>
         <DiamondProgress />
         <Pressable
           accessibilityRole="button"
@@ -323,7 +328,7 @@ export function PremiumOnboarding({forceVisible = false}: PremiumOnboardingProps
           onPress={handleStartDesign}
           style={[styles.finalButton, isExiting || !isDemoReady ? styles.primaryButtonDisabled : null]}
         >
-          <Text style={styles.finalButtonText}>{isDemoReady ? "Start your first design" : "Preparing your demo..."}</Text>
+          <Text style={styles.finalButtonText}>{isDemoReady ? "Start designing" : "Preparing"}</Text>
         </Pressable>
       </StepShell>
     );
@@ -379,12 +384,12 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1000,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: PURE_WHITE,
   },
   screen: {
     flex: 1,
     paddingHorizontal: 24,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: PURE_WHITE,
   },
   skipButton: {
     position: "absolute",
@@ -399,12 +404,12 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   skipButtonText: {
-    color: "#111111",
+    color: DARK_GRAY,
     fontSize: 14,
     lineHeight: 18,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "400",
-    letterSpacing: 0,
+    letterSpacing: 0.3,
   },
   dots: {
     alignSelf: "center",
@@ -416,10 +421,10 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#D8D8D8",
+    backgroundColor: MID_GRAY,
   },
   dotActive: {
-    backgroundColor: "#000000",
+    backgroundColor: BLACK,
   },
   content: {
     flex: 1,
@@ -433,21 +438,21 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   headline: {
-    color: "#000000",
-    fontSize: 44,
-    lineHeight: 50,
+    color: BLACK,
+    fontSize: 42,
+    lineHeight: 48,
     fontFamily: fonts.bold.fontFamily,
     fontWeight: "700",
-    letterSpacing: 0,
+    letterSpacing: 0.3,
     textAlign: "left",
   },
   subtext: {
-    color: "#111111",
+    color: DARK_GRAY,
     fontSize: 18,
     lineHeight: 26,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "400",
-    letterSpacing: 0,
+    letterSpacing: 0.3,
     textAlign: "left",
   },
   optionStack: {
@@ -456,28 +461,26 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   optionCard: {
-    minHeight: 76,
+    minHeight: 64,
     justifyContent: "center",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#D9D9D9",
-    backgroundColor: "#FFFFFF",
+    borderRadius: 999,
+    borderCurve: "continuous",
+    backgroundColor: LIGHT_GRAY,
     paddingHorizontal: 20,
   },
   optionCardSelected: {
-    borderColor: "#000000",
-    backgroundColor: "#F7F7F7",
+    backgroundColor: BLACK,
   },
   optionTitle: {
-    color: "#111111",
+    color: DARK_GRAY,
     fontSize: 18,
     lineHeight: 24,
     fontFamily: fonts.semibold.fontFamily,
     fontWeight: "600",
-    letterSpacing: 0,
+    letterSpacing: 0.3,
   },
   optionTitleSelected: {
-    color: "#000000",
+    color: PURE_WHITE,
   },
   diamondProgressWrap: {
     width: "100%",
@@ -492,68 +495,70 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   diamondProgressLabel: {
-    color: "#000000",
+    color: BLACK,
     fontSize: 17,
     lineHeight: 24,
     fontFamily: fonts.semibold.fontFamily,
     fontWeight: "600",
-    letterSpacing: 0,
+    letterSpacing: 0.3,
   },
   diamondProgressValue: {
-    color: "#111111",
+    color: DARK_GRAY,
     fontSize: 14,
     lineHeight: 20,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "400",
-    letterSpacing: 0,
+    letterSpacing: 0.3,
   },
   diamondProgressTrack: {
     width: "100%",
     height: 8,
     borderRadius: 4,
     overflow: "hidden",
-    backgroundColor: "#E8E8E8",
+    backgroundColor: LIGHT_GRAY,
   },
   diamondProgressFill: {
     width: "100%",
     height: "100%",
-    backgroundColor: "#000000",
+    backgroundColor: BLACK,
   },
   primaryButton: {
     width: "100%",
     minHeight: 56,
-    borderRadius: 8,
+    borderRadius: 999,
+    borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#000000",
+    backgroundColor: BLACK,
   },
   primaryButtonDisabled: {
     opacity: 0.3,
   },
   primaryButtonText: {
-    color: "#FFFFFF",
+    color: PURE_WHITE,
     fontSize: 16,
     lineHeight: 22,
     fontFamily: fonts.semibold.fontFamily,
     fontWeight: "600",
-    letterSpacing: 0,
+    letterSpacing: 0.3,
   },
   finalButton: {
     width: "100%",
     minHeight: 56,
-    borderRadius: 8,
+    borderRadius: 999,
+    borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#000000",
+    backgroundColor: BLACK,
     marginTop: 6,
   },
   finalButtonText: {
-    color: "#FFFFFF",
+    color: PURE_WHITE,
     fontSize: 16,
     lineHeight: 22,
     fontFamily: fonts.semibold.fontFamily,
     fontWeight: "600",
-    letterSpacing: 0,
+    letterSpacing: 0.3,
   },
   footerSpacer: {
     minHeight: 56,

@@ -20,7 +20,7 @@ type ParticleConfig = {
 
 const PARTICLE_COUNT = 12;
 const PARTICLE_SIZE = 6;
-const GOLD = "#F4C430";
+const PREMIUM_BLUE = "#007AFF";
 
 function createParticles() {
   return Array.from({length: PARTICLE_COUNT}, (_, index) => {
@@ -114,6 +114,6 @@ const styles = StyleSheet.create({
     marginLeft: -PARTICLE_SIZE / 2,
     marginTop: -PARTICLE_SIZE / 2,
     borderRadius: PARTICLE_SIZE / 2,
-    backgroundColor: GOLD,
+    backgroundColor: PREMIUM_BLUE,
   },
 });

@@ -4,7 +4,7 @@ export const theme = {
     primaryDark: "#0066FF",
     accent: "#E83A5A",
     accentDark: "#C0254A",
-    gold: "#FFD700",
+    premiumBlue: "#007AFF",
     success: "#2ECC71",
     background: "#0A0A0F",
     surface: "rgba(255,255,255,0.08)",
@@ -32,25 +32,25 @@ export const theme = {
     hero: {
       fontSize: 32,
       fontWeight: "800",
-      letterSpacing: -0.5,
+      letterSpacing: 0.3,
       lineHeight: 38,
     },
     title: {
       fontSize: 22,
       fontWeight: "700",
-      letterSpacing: -0.3,
+      letterSpacing: 0.3,
       lineHeight: 28,
     },
     subtitle: {
       fontSize: 15,
       fontWeight: "400",
-      letterSpacing: 0.1,
+      letterSpacing: 0.3,
       lineHeight: 22,
     },
     label: {
       fontSize: 11,
       fontWeight: "600",
-      letterSpacing: 1.5,
+      letterSpacing: 0.3,
       textTransform: "uppercase",
     },
     body: {
@@ -72,8 +72,8 @@ export const theme = {
       shadowOpacity: 0.6,
       elevation: 8,
     },
-    gold: {
-      shadowColor: "#FFD700",
+    premiumBlue: {
+      shadowColor: "#007AFF",
       shadowOffset: { width: 0, height: 0 },
       shadowRadius: 12,
       shadowOpacity: 0.6,

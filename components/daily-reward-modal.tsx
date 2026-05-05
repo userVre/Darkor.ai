@@ -1,7 +1,7 @@
 import {useMutation} from "convex/react";
-import {Check} from "@/components/material-icons";
+import {X} from "@/components/material-icons";
 import * as Haptics from "expo-haptics";
-import {useEffect, useMemo, useRef, useState} from "react";
+import {type ReactNode, useEffect, useMemo, useRef, useState} from "react";
 import {Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions} from "react-native";
 import Animated, {
   Easing,
@@ -12,7 +12,6 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
-import Svg, {Circle, Defs, RadialGradient, Stop} from "react-native-svg";
 
 import {scheduleOrUpdateDiamondReminder} from "../lib/notifications";
 import {fonts} from "../styles/typography";
@@ -24,14 +23,14 @@ import {useViewerCredits} from "./viewer-credits-context";
 import {useViewerSession} from "./viewer-session-context";
 
 const ELITE_PASS_DAYS = 7;
-const STANDARD_REWARD_DIAMONDS = 1;
-const DAY_SEVEN_REWARD_DIAMONDS = 3;
-const BLUE = "#00B4FF";
-const GOLD = "#FFD700";
-const PATH_SLOT_HEIGHT = 124;
+const BLUE = "#2F80FF";
+const BLUE_LIGHT = "#8FD3FF";
+const RED = "#FF4D5E";
+const STANDARD_SLOT_HEIGHT = 64;
+const JACKPOT_SLOT_HEIGHT = 118;
 const NODE_OFFSETS = [0, 0, 0, 0, 0, 0, 0];
-const CLAIM_CONFETTI_COLORS = [BLUE, GOLD, "#2ECC71", "#FFFFFF"];
-const REVEAL_CONFETTI_COLORS = [GOLD, "#FFF4A3", BLUE, "#FFFFFF"];
+const CLAIM_CONFETTI_COLORS = [BLUE_LIGHT, BLUE, "#2ECC71", "#FFFFFF"];
+const REVEAL_CONFETTI_COLORS = [RED, BLUE, BLUE_LIGHT, "#FFFFFF"];
 
 const CLAIM_CONFETTI_PIECES = Array.from({length: 76}, (_, index) => {
   const angle = (index / 76) * Math.PI * 2;
@@ -93,38 +92,19 @@ function getCycleProgress(streakCount: number) {
   return ((Math.max(1, streakCount) - 1) % ELITE_PASS_DAYS) + 1;
 }
 
-function getDayReward(day: number) {
-  if (day === ELITE_PASS_DAYS) {
-    return {
-      diamonds: DAY_SEVEN_REWARD_DIAMONDS,
-      label: "3 Diamonds + Pro Access Trial",
-    };
-  }
-
-  return {
-    diamonds: STANDARD_REWARD_DIAMONDS,
-    label: "1 Diamond",
-  };
-}
-
-function CosmicGlow({width}: {width: number}) {
-  const glowSize = Math.max(260, width * 0.6);
-
+function BattlePassBackdrop() {
   return (
-    <Svg
+    <View
       pointerEvents="none"
-      style={[styles.cosmicGlow, {height: glowSize, width: glowSize, left: (width - glowSize) / 2}]}
-      viewBox={`0 0 ${glowSize} ${glowSize}`}
+      style={styles.backdrop}
     >
-      <Defs>
-        <RadialGradient id="elitePassGlow" cx="50%" cy="35%" r="60%">
-          <Stop offset="0" stopColor="#1A1040" stopOpacity="0.95" />
-          <Stop offset="0.55" stopColor="#1A1040" stopOpacity="0.34" />
-          <Stop offset="1" stopColor="#0A0A0F" stopOpacity="0" />
-        </RadialGradient>
-      </Defs>
-      <Circle cx={glowSize / 2} cy={glowSize / 2} fill="url(#elitePassGlow)" r={glowSize / 2} />
-    </Svg>
+      <View style={[styles.archPanel, styles.archPanelTop]} />
+      <View style={[styles.archPanel, styles.archPanelMid]} />
+      <View style={[styles.archPanel, styles.archPanelBottom]} />
+      <View style={styles.blueWash} />
+      <View style={styles.gridLineA} />
+      <View style={styles.gridLineB} />
+    </View>
   );
 }
 
@@ -166,12 +146,12 @@ function ClaimParticle({
   }, [burstKey, delay, opacity, rotate, rotation, scale, translateX, translateY, x, y]);
 
   const particleStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
+    opacity: typeof opacity.value === "number" ? opacity.value : 0,
     transform: [
-      {translateX: translateX.value},
-      {translateY: translateY.value},
-      {rotate: `${rotation.value}deg`},
-      {scale: scale.value},
+      {translateX: typeof translateX.value === "number" ? translateX.value : 0},
+      {translateY: typeof translateY.value === "number" ? translateY.value : 0},
+      {rotate: `${typeof rotation.value === "number" ? rotation.value : 0}deg`},
+      {scale: typeof scale.value === "number" ? scale.value : 1},
     ],
   }));
 
@@ -218,8 +198,8 @@ function ClaimSuccessAnimation({burstKey, isJackpot, visible}: {burstKey: number
 
   const messageStyle = useAnimatedStyle(() => ({
     transform: [
-      {translateY: messageY.value},
-      {scale: messageScale.value},
+      {translateY: typeof messageY.value === "number" ? messageY.value : 0},
+      {scale: typeof messageScale.value === "number" ? messageScale.value : 1},
     ],
   }));
 
@@ -256,31 +236,48 @@ function DaySevenRevealBurst({burstKey}: {burstKey: number}) {
   );
 }
 
-function getNodeState(day: number, currentDay: number): DayNodeState {
+function getNodeState(day: number, currentDay: number, currentDayClaimed: boolean): DayNodeState {
   if (day < currentDay) {
     return "completed";
   }
 
   if (day === currentDay) {
+    if (currentDayClaimed) {
+      return "completed";
+    }
+
     return "current";
   }
 
   return "locked";
 }
 
+function AnimatedDaySlot({children, height, isFocused}: {children: ReactNode; height: number; isFocused: boolean}) {
+  const slotStyle = useAnimatedStyle(() => ({
+    opacity: withTiming(isFocused ? 1 : 0.68, {duration: 240}),
+    transform: [{scale: withTiming(isFocused ? 1 : 0.94, {duration: 240})}],
+  }), [isFocused]);
+
+  return (
+    <Animated.View style={[styles.nodeSlot, {height}, slotStyle]}>
+      {children}
+    </Animated.View>
+  );
+}
+
 export function DailyRewardModal() {
   const insets = useSafeAreaInsets();
   const {width} = useWindowDimensions();
-  const {anonymousId, isReady: viewerReady} = useViewerSession();
+  const {anonymousId} = useViewerSession();
   const {
     canClaimDiamond,
     credits,
     eliteProUntil,
-    isReady,
+    lastClaimAt,
     setOptimisticRewardState,
     streakCount,
   } = useViewerCredits();
-  const {closeElitePass, openElitePass, visible} = useElitePassModal();
+  const {closeElitePass, visible} = useElitePassModal();
   const claimDailyDiamond = useMutation("users:claimDailyDiamond" as any);
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimResult, setClaimResult] = useState<ClaimRewardResult | null>(null);
@@ -296,25 +293,21 @@ export function DailyRewardModal() {
 
   const resolvedStreakCount = claimResult?.streakCount ?? claimResult?.streak_count ?? streakCount;
   const currentDay = getCycleProgress(resolvedStreakCount);
-  const rewardDiamonds = claimResult?.creditsAdded ?? getDayReward(currentDay).diamonds;
   const displayedCredits = claimResult?.credits ?? credits;
   const hasVerifiedClaim = claimResult?.granted === true;
   const canClaimNow = canClaimDiamond && !hasVerifiedClaim;
-  const currentProgress = canClaimNow || hasVerifiedClaim ? 100 : 38;
+  const hasClaimedCurrentDay = hasVerifiedClaim || (!canClaimDiamond && lastClaimAt > 0);
 
   const days = useMemo(
     () => Array.from({length: ELITE_PASS_DAYS}, (_, index) => index + 1),
     [],
   );
+  const slotHeights = useMemo(
+    () => days.map((day) => day === ELITE_PASS_DAYS ? JACKPOT_SLOT_HEIGHT : STANDARD_SLOT_HEIGHT),
+    [days],
+  );
+  const pathHeight = slotHeights.reduce((total, next) => total + next, 0);
   const pathWidth = Math.min(Math.max(width - 32, 288), 430);
-
-  useEffect(() => {
-    if (viewerReady && isReady && canClaimDiamond) {
-      setClaimResult(null);
-      setErrorMessage(null);
-      openElitePass();
-    }
-  }, [canClaimDiamond, isReady, openElitePass, viewerReady]);
 
   useEffect(() => {
     if (!visible) {
@@ -337,10 +330,10 @@ export function DailyRewardModal() {
   }, [currentDay, visible]);
 
   const sheetStyle = useAnimatedStyle(() => ({
-    opacity: sheetOpacity.value,
+    opacity: typeof sheetOpacity.value === "number" ? sheetOpacity.value : 0,
     transform: [
-      {translateY: sheetY.value},
-      {scale: sheetScale.value},
+      {translateY: typeof sheetY.value === "number" ? sheetY.value : 0},
+      {scale: typeof sheetScale.value === "number" ? sheetScale.value : 1},
     ],
   }));
 
@@ -391,7 +384,6 @@ export function DailyRewardModal() {
         setIsClaiming(false);
         setTimeout(() => {
           setSuccessVisible(false);
-          closeElitePass();
         }, 1900);
         return;
       }
@@ -407,12 +399,12 @@ export function DailyRewardModal() {
   return (
     <Modal animationType="fade" onRequestClose={handleClose} visible={visible}>
       <View style={styles.screen}>
-        <CosmicGlow width={width} />
+        <BattlePassBackdrop />
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
             {
-              paddingBottom: insets.bottom + 24,
+              paddingBottom: insets.bottom + 14,
               paddingTop: insets.top + 18,
             },
           ]}
@@ -423,11 +415,11 @@ export function DailyRewardModal() {
             <View style={styles.headerRow}>
               <View style={styles.titleLockup}>
                 <View style={styles.flameBadge}>
-                  <ElitePassFlameIcon color="#FF7A00" size={23} />
+                  <ElitePassFlameIcon color={BLUE_LIGHT} size={23} />
                 </View>
                 <View style={styles.titleCopy}>
-                  <Text style={styles.title}>ELITE PASS</Text>
-                  <Text style={styles.subtitle}>Daily rewards</Text>
+                  <Text style={styles.title}>BATTLE PASS</Text>
+                  <Text style={styles.subtitle}>Elite daily track</Text>
                 </View>
               </View>
 
@@ -437,70 +429,36 @@ export function DailyRewardModal() {
                   <Text style={styles.balanceText}>{displayedCredits} Diamonds</Text>
                 </View>
                 <Pressable accessibilityLabel="Close Elite Pass" accessibilityRole="button" onPress={handleClose} style={styles.closeButton}>
-                  <Text style={styles.closeText}>x</Text>
+                  <X color="#FFFFFF" size={17} strokeWidth={2.2} />
                 </Pressable>
               </View>
             </View>
 
-            <View style={[styles.pathWrap, {height: PATH_SLOT_HEIGHT * days.length, width: pathWidth}]}>
-              <ProgressPath currentDay={currentDay} nodeOffsets={NODE_OFFSETS} slotHeight={PATH_SLOT_HEIGHT} width={pathWidth} />
+            <View style={[styles.pathWrap, {height: pathHeight, width: pathWidth}]}>
+              <ProgressPath currentDay={currentDay} nodeOffsets={NODE_OFFSETS} slotHeight={STANDARD_SLOT_HEIGHT} slotHeights={slotHeights} width={pathWidth} />
               {days.map((day) => {
-                const state = getNodeState(day, currentDay);
+                const state = getNodeState(day, currentDay, hasClaimedCurrentDay);
+                const isFocused = day === currentDay || day === ELITE_PASS_DAYS;
 
                 return (
-                  <View
+                  <AnimatedDaySlot
+                    height={slotHeights[day - 1]}
                     key={day}
-                    style={[
-                      styles.nodeSlot,
-                      {
-                        height: PATH_SLOT_HEIGHT,
-                      },
-                    ]}
+                    isFocused={isFocused}
                   >
                     <DayNode
                       day={day}
                       isJackpot={day === ELITE_PASS_DAYS}
                       onPress={state === "current" && canClaimNow ? () => void handleClaim() : undefined}
-                      progress={state === "current" ? currentProgress : 100}
                       state={state}
                     />
                     {day === ELITE_PASS_DAYS && state === "current" ? <DaySevenRevealBurst burstKey={daySevenRevealKey} /> : null}
-                  </View>
+                  </AnimatedDaySlot>
                 );
               })}
             </View>
 
-            <View style={styles.claimSummary}>
-              <DiamondRewardIcon size={20} />
-              <Text style={styles.claimSummaryText}>
-                {canClaimNow
-                  ? `+${rewardDiamonds} Diamond${rewardDiamonds === 1 ? "" : "s"} today`
-                  : hasVerifiedClaim
-                    ? "Claimed today"
-                    : "Come back tomorrow"}
-              </Text>
-            </View>
-
             {errorMessage ? <Text selectable style={styles.errorText}>{errorMessage}</Text> : null}
-
-            <Pressable
-              accessibilityRole="button"
-              disabled={isClaiming || !canClaimNow || hasVerifiedClaim}
-              onPress={() => void handleClaim()}
-              style={({pressed}) => [
-                styles.claimButton,
-                hasVerifiedClaim ? styles.claimButtonVerified : null,
-                !canClaimNow && !hasVerifiedClaim ? styles.claimButtonDisabled : null,
-                pressed || isClaiming ? styles.claimButtonPressed : null,
-              ]}
-            >
-              <View style={styles.claimButtonContent}>
-                {hasVerifiedClaim ? <Check color="#FFFFFF" size={18} strokeWidth={2.5} /> : null}
-                <Text style={styles.claimButtonText}>
-                  {hasVerifiedClaim ? "Claimed" : isClaiming ? "Claiming..." : "Claim"}
-                </Text>
-              </View>
-            </Pressable>
           </Animated.View>
         </ScrollView>
 
@@ -513,22 +471,76 @@ export function DailyRewardModal() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#0A0A0F",
+    backgroundColor: "#05070B",
   },
-  cosmicGlow: {
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+    backgroundColor: "#05070B",
+  },
+  archPanel: {
     position: "absolute",
-    top: -56,
+    height: 220,
+    borderRadius: 8,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.05)",
+    backgroundColor: "rgba(255, 255, 255, 0.035)",
+    transform: [{rotate: "-14deg"}],
+  },
+  archPanelTop: {
+    top: -66,
+    left: -72,
+    right: 80,
+  },
+  archPanelMid: {
+    top: 184,
+    left: 78,
+    right: -120,
+    opacity: 0.82,
+  },
+  archPanelBottom: {
+    bottom: -88,
+    left: -42,
+    right: 36,
+    opacity: 0.55,
+  },
+  blueWash: {
+    position: "absolute",
+    top: -40,
+    left: 0,
+    right: 0,
+    height: 280,
+    backgroundColor: "rgba(47, 128, 255, 0.1)",
+    opacity: 0.68,
+  },
+  gridLineA: {
+    position: "absolute",
+    top: 118,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: "rgba(143, 211, 255, 0.08)",
+  },
+  gridLineB: {
+    position: "absolute",
+    bottom: 138,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
   },
   scrollContent: {
     minHeight: "100%",
     alignItems: "center",
-    paddingHorizontal: 16,
+    justifyContent: "center",
+    paddingHorizontal: 14,
   },
   content: {
     width: "100%",
     maxWidth: 430,
     alignItems: "center",
-    gap: 18,
+    gap: 12,
   },
   headerRow: {
     width: "100%",
@@ -552,9 +564,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(255, 122, 0, 0.56)",
-    backgroundColor: "rgba(255, 122, 0, 0.13)",
-    boxShadow: "0px 0px 20px rgba(255, 122, 0, 0.34)",
+    borderColor: "rgba(47, 128, 255, 0.44)",
+    backgroundColor: "rgba(47, 128, 255, 0.12)",
+    boxShadow: "0px 0px 18px rgba(47, 128, 255, 0.18)",
   },
   titleCopy: {
     flex: 1,
@@ -563,12 +575,12 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#FFFFFF",
-    fontSize: 25,
-    lineHeight: 30,
+    fontSize: 24,
+    lineHeight: 29,
     ...fonts.bold,
   },
   subtitle: {
-    color: "#AEB7D8",
+    color: "rgba(143, 211, 255, 0.78)",
     fontSize: 12,
     lineHeight: 15,
     ...fonts.medium,
@@ -586,9 +598,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: BLUE,
-    backgroundColor: "rgba(0, 180, 255, 0.1)",
-    boxShadow: `0px 0px 18px ${BLUE}30`,
+    borderColor: "rgba(47, 128, 255, 0.3)",
+    backgroundColor: "rgba(10, 18, 31, 0.86)",
+    boxShadow: "0px 8px 18px rgba(0, 0, 0, 0.18)",
   },
   balanceText: {
     color: "#FFFFFF",
@@ -605,13 +617,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.16)",
-    backgroundColor: "rgba(255, 255, 255, 0.06)",
-  },
-  closeText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    lineHeight: 20,
-    ...fonts.bold,
+    backgroundColor: "rgba(255, 255, 255, 0.07)",
   },
   pathWrap: {
     alignSelf: "center",
@@ -622,25 +628,6 @@ const styles = StyleSheet.create({
     alignItems: "stretch",
     justifyContent: "center",
   },
-  claimSummary: {
-    width: "100%",
-    minHeight: 46,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 14,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(0, 180, 255, 0.42)",
-    backgroundColor: "rgba(13, 31, 60, 0.64)",
-  },
-  claimSummaryText: {
-    flex: 1,
-    color: "#DCEEFF",
-    fontSize: 13,
-    lineHeight: 17,
-    ...fonts.bold,
-  },
   errorText: {
     color: "#FF9AA5",
     fontSize: 13,
@@ -648,46 +635,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     ...fonts.medium,
   },
-  claimButton: {
-    width: "100%",
-    minHeight: 56,
-    borderRadius: 20,
-    borderCurve: "continuous",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: BLUE,
-    boxShadow: `0px 14px 30px ${BLUE}45`,
-  },
-  claimButtonDisabled: {
-    backgroundColor: "#1A1A2E",
-    borderWidth: 1,
-    borderColor: "#2A2A4A",
-    boxShadow: "0px 0px 0px rgba(0, 0, 0, 0)",
-  },
-  claimButtonVerified: {
-    backgroundColor: "#2ECC71",
-    boxShadow: "0px 12px 24px rgba(46, 204, 113, 0.3)",
-  },
-  claimButtonPressed: {
-    opacity: 0.82,
-    transform: [{scale: 0.99}],
-  },
-  claimButtonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  claimButtonText: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    lineHeight: 22,
-    ...fonts.bold,
-  },
   successOverlay: {
     ...StyleSheet.absoluteFillObject,
     overflow: "hidden",
-    backgroundColor: "rgba(10, 10, 15, 0.26)",
+    backgroundColor: "rgba(5, 7, 11, 0.32)",
   },
   successMessageWrap: {
     ...StyleSheet.absoluteFillObject,
@@ -702,9 +653,9 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderCurve: "continuous",
     borderWidth: 2,
-    borderColor: BLUE,
-    backgroundColor: "#0D1F3C",
-    boxShadow: `0px 0px 28px ${BLUE}60`,
+    borderColor: "rgba(47, 128, 255, 0.56)",
+    backgroundColor: "rgba(8, 12, 20, 0.96)",
+    boxShadow: "0px 16px 28px rgba(0, 0, 0, 0.34)",
   },
   successTitle: {
     color: "#FFFFFF",

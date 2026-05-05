@@ -13,7 +13,6 @@ getDirectionalRow,
 import {triggerHaptic} from "../lib/haptics";
 import {useDiamondStore} from "./diamond-store-context";
 import {DiamondCreditPill, ProBadge} from "./diamond-credit-pill";
-import {useElitePassModal} from "./elite-pass-context";
 import {StepProgressSegments} from "./step-progress-segments";
 import {useViewerCredits} from "./viewer-credits-context";
 
@@ -79,9 +78,8 @@ export function DesignStepHeader({
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
-  const { credits = 0, hasPaidAccess, streakCount } = useViewerCredits();
+  const { hasPaidAccess, streakCount } = useViewerCredits();
   const { openStore } = useDiamondStore();
-  const { openElitePass } = useElitePassModal();
   const resolvedTitle = title ?? t("app.name");
 
   const handleCreditsTap = () => {
@@ -133,7 +131,7 @@ export function DesignStepHeader({
                   accessibilityLabel="Credits remaining"
                   accessibilityRole="button"
                   count={creditCount ?? 0}
-                  onElitePassPress={openElitePass}
+                  iconOnly
                   onPress={handleCreditsTap}
                   streakCount={streakCount}
                   style={styles.creditPill}
@@ -250,7 +248,7 @@ const styles = StyleSheet.create({
     ...DS.typography.button,
     fontSize: 19,
     lineHeight: 24,
-    letterSpacing: 0,
+    letterSpacing: 0.3,
     textAlign: "center",
   },
 });

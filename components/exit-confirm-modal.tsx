@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     color: DS.colors.textPrimary,
     ...DS.typography.button,
     fontSize: 14,
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
   primaryButton: {
     flex: 1,
@@ -100,6 +100,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     ...DS.typography.button,
     fontSize: 14,
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
 });
