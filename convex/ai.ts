@@ -2,6 +2,7 @@ import { actionGeneric, internalMutationGeneric } from "convex/server";
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
+import { ensureAzureEndpointPrefix } from "./azureOpenAI";
 import {
   ARCHITECTURAL_MATERIAL_REFLECTION_INSTRUCTION,
   buildDesignPrompt,
@@ -483,11 +484,6 @@ function buildFallbackOrchestration(args: {
     reason: "Fallback style direction selected for a cohesive redesign.",
     source: "fallback" as const,
   };
-}
-
-function ensureAzureEndpointPrefix(endpoint: string) {
-  const trimmed = endpoint.trim();
-  return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
 }
 
 function getAzureBrainConfig() {

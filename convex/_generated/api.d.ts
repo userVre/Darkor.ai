@@ -10,6 +10,7 @@
 
 import type * as ai from "../ai.js";
 import type * as aiNode from "../aiNode.js";
+import type * as azureOpenAI from "../azureOpenAI.js";
 import type * as crons from "../crons.js";
 import type * as diamonds from "../diamonds.js";
 import type * as feedback from "../feedback.js";
@@ -29,6 +30,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   aiNode: typeof aiNode;
+  azureOpenAI: typeof azureOpenAI;
   crons: typeof crons;
   diamonds: typeof diamonds;
   feedback: typeof feedback;

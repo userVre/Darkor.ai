@@ -6,6 +6,7 @@ import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { action, internalAction } from "./_generated/server";
+import { buildAzureOpenAIBaseUrl, ensureAzureEndpointPrefix } from "./azureOpenAI";
 import {
   compactPromptSegments,
   dedupeSuggestions,
@@ -95,15 +96,6 @@ function canonicalizeServiceType(serviceType: RequestedServiceType | IncomingSer
   }
 
   return serviceType;
-}
-
-function ensureAzureEndpointPrefix(endpoint: string) {
-  const trimmed = endpoint.trim();
-  return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
-}
-
-function buildAzureBaseUrl(endpoint: string) {
-  return `${ensureAzureEndpointPrefix(endpoint)}openai`;
 }
 
 function shouldRetryStatus(status: number) {
@@ -396,7 +388,7 @@ function createAzureImageProvider(args: { apiKey: string; endpoint: string }) {
   return createAzure({
     apiKey: args.apiKey,
     apiVersion: AZURE_IMAGE_API_VERSION,
-    baseURL: buildAzureBaseUrl(args.endpoint),
+    baseURL: buildAzureOpenAIBaseUrl(args.endpoint),
     useDeploymentBasedUrls: true,
     fetch: async (input, init) => {
       const requestUrl = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
@@ -566,6 +558,7 @@ async function runAzureImageGeneration(args: {
   if (usesImageEditFlow) {
     const requestUrl = `${ensureAzureEndpointPrefix(args.endpoint)}openai/deployments/${args.renderProfile.deploymentName}/images/edits?api-version=${AZURE_IMAGE_API_VERSION}`;
     const formData = new FormData();
+    formData.append("model", args.renderProfile.deploymentName);
     formData.append("prompt", composedPrompt);
     formData.append("size", args.renderProfile.size);
     formData.append("quality", args.renderProfile.quality);
@@ -579,7 +572,7 @@ async function runAzureImageGeneration(args: {
     safeSourceImages.forEach((blob, index) => {
       const normalizedBlob = normalizeAzureImageBlob(blob);
       const filename = getAzureImageFilename(normalizedBlob, index, "image");
-      formData.append("image", createAzureMultipartFile(normalizedBlob, filename), filename);
+      formData.append("image[]", createAzureMultipartFile(normalizedBlob, filename), filename);
       imageFieldCount += 1;
     });
 

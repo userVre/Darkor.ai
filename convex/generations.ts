@@ -6,6 +6,7 @@ import {
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
+import { ensureAzureEndpointPrefix } from "./azureOpenAI";
 import { buildDesignPrompt as buildAIDesignPrompt, normalizeAspectRatio as normalizeAIAspectRatio } from "../lib/design-prompt-builder";
 import {
   canUserGenerateState,
@@ -537,7 +538,7 @@ function validateAzureGenerationEnv() {
     endpoint,
     deploymentName,
     apiKey,
-    requestUrl: `${endpoint.endsWith("/") ? endpoint : `${endpoint}/`}openai/deployments/${deploymentName}/images/generations?api-version=2025-04-01-preview`,
+    requestUrl: `${ensureAzureEndpointPrefix(endpoint)}openai/deployments/${deploymentName}/images/generations?api-version=2025-04-01-preview`,
   };
 }
 
