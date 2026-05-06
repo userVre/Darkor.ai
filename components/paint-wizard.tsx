@@ -127,7 +127,7 @@ const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 const CANCEL_SUCCESS_TOAST = "wizard.paintFlow.cancelSuccess";
 const SELECTION_REFERENCE_WIDTH = 456;
 const SELECTION_REFERENCE_HEIGHT = 932;
-const COLOR_PICKER_DEFAULT_HEX = "#FF69B4";
+const COLOR_PICKER_DEFAULT_HEX = "#111111";
 
 const DEFAULT_FINISH_ID = "satin";
 const DEFAULT_FINISH_LABEL = "Satin";
@@ -2372,7 +2372,7 @@ const styles = StyleSheet.create({
   colorPickerSquare: {
     overflow: "hidden",
     borderRadius: 24,
-    backgroundColor: "#FF69B4",
+    backgroundColor: "#111111",
   },
   colorPickerHandle: {
     position: "absolute",
@@ -2767,8 +2767,8 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.07)",
   },
   stepPillActive: {
-    backgroundColor: "rgba(217,70,239,0.22)",
-    borderColor: "rgba(217,70,239,0.42)",
+    backgroundColor: "rgba(17,24,39,0.22)",
+    borderColor: "rgba(17,24,39,0.42)",
   },
   stepPillText: {
     color: "#d4d4d8",
@@ -3596,7 +3596,7 @@ const styles = StyleSheet.create({
     width: 280,
     height: 280,
     borderRadius: 999,
-    backgroundColor: "rgba(217,70,239,0.18)",
+    backgroundColor: "rgba(17,24,39,0.18)",
   },
   processingFrame: {
     width: 220,

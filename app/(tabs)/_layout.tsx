@@ -15,6 +15,9 @@ import {ENABLE_GUEST_WIZARD_TEST_MODE} from "../../lib/guest-testing";
 import {triggerHaptic} from "../../lib/haptics";
 import {withWorkspaceFlowId} from "../../lib/try-it-flow";
 
+const ACTIVE_TAB_COLOR = "#111111";
+const ACTIVE_TAB_INDICATOR = "rgba(17, 17, 17, 0.10)";
+
 export const DEFAULT_TAB_BAR_STYLE = {
   position: "absolute" as const,
   left: 0,
@@ -74,7 +77,7 @@ function TabIcon({
             width: 46,
             height: 46,
             borderRadius: 23,
-            backgroundColor: DS.colors.surfaceHigh,
+            backgroundColor: ACTIVE_TAB_INDICATOR,
           }}
         />
       ) : null}
@@ -87,7 +90,7 @@ function TabIcon({
           alignItems: "center",
           justifyContent: "center",
           paddingHorizontal: 10,
-          backgroundColor: focused ? DS.colors.surfaceHigh : "transparent",
+          backgroundColor: focused ? ACTIVE_TAB_INDICATOR : "transparent",
         }}
       >
         <Icon color={color} size={size} strokeWidth={focused ? 1.7 : 1.5} />
@@ -103,8 +106,15 @@ export default function TabsLayout() {
   const { clearDraft } = useWorkspaceDraft();
   const { isFlowActive } = useFlowUI();
   const { isSignedIn } = useAuth();
+  const theme = useTheme();
   const canOpenCreateTab = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const shouldHideTabBar = pathname === "/workspace" && isFlowActive;
+  const tabBarStyle = {
+    ...DEFAULT_TAB_BAR_STYLE,
+    backgroundColor: theme.surface,
+    borderTopColor: theme.border,
+    boxShadow: `0px -8px 24px ${theme.shadow}`,
+  };
 
   return (
     <Tabs
@@ -112,8 +122,8 @@ export default function TabsLayout() {
         headerShown: false,
         lazy: true,
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: DS.colors.accent,
-        tabBarInactiveTintColor: DS.colors.textSecondary,
+        tabBarActiveTintColor: ACTIVE_TAB_COLOR,
+        tabBarInactiveTintColor: "rgba(0,0,0,0.35)",
         tabBarButton: (props) => <TabBarButton {...props} />,
         tabBarItemStyle: {
           alignItems: "center",
@@ -123,11 +133,11 @@ export default function TabsLayout() {
         tabBarLabelStyle: {
           fontSize: 11,
           lineHeight: 14,
-          ...fonts.medium,
+          ...fonts.semibold,
         },
-        tabBarStyle: shouldHideTabBar ? { display: "none" } : DEFAULT_TAB_BAR_STYLE,
+        tabBarStyle: shouldHideTabBar ? { display: "none" } : tabBarStyle,
         sceneStyle: {
-          backgroundColor: DS.colors.background,
+          backgroundColor: theme.bg,
         },
       }}
     >

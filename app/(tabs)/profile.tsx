@@ -1,5 +1,7 @@
 import {LayoutPanelTop, Settings} from "@/components/material-icons";
+import {useUser} from "@clerk/expo";
 import {useMutation, useQuery} from "convex/react";
+import {Image} from "expo-image";
 import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
 import {useRouter} from "expo-router";
@@ -15,9 +17,10 @@ import {BoardPreviewModal} from "../../components/board-preview-modal";
 import {useProSuccess} from "../../components/pro-success-context";
 import {useViewerSession} from "../../components/viewer-session-context";
 import {mapArchiveToBoardItems, type BoardItem, type BoardItemStatus} from "../../lib/board";
-import {DS} from "../../lib/design-system";
 import {hasGenerationImage, resolveGenerationStatus} from "../../lib/generation-status";
 import {loadLocalBoardItems, persistLocalBoardItems, type LocalBoardItem} from "../../lib/local-board-cache";
+import {TOOLS_ROUTE} from "../../lib/routes";
+import {useTheme, type Theme} from "../../styles/theme";
 import {fonts} from "../../styles/typography";
 
 type ArchiveGeneration = {
@@ -41,14 +44,35 @@ type ArchiveGeneration = {
 const GRID_HORIZONTAL_PADDING = 24;
 const GRID_GAP = 12;
 const GRID_MAX_CARD_WIDTH = 190;
+const DARK_ACTION = "#111111";
 
 function getBoardItemKey(item: BoardItem) {
   return `${item.generationId ?? item.id}:${item.createdAt}`;
 }
 
+function getInitials(name?: string | null, email?: string | null) {
+  const source = name?.trim() || email?.trim() || "";
+  const parts = source
+    .replace(/@.*/, "")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length === 0) {
+    return "D";
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 export default function ProfileScreen() {
   const router = useRouter();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const { t } = useTranslation();
+  const { user } = useUser();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
@@ -202,6 +226,9 @@ export default function ProfileScreen() {
   const topContentInset = Math.max(insets.top + 28, 48);
   const bottomContentInset = Math.max(insets.bottom + 112, 128);
   const boardBodyMinHeight = Math.max(height - topContentInset - bottomContentInset - 64, 240);
+  const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
+  const userName = user?.fullName || [user?.firstName, user?.lastName].filter(Boolean).join(" ") || null;
+  const avatarInitials = getInitials(userName, userEmail);
 
   const handleImagePress = (item: BoardItem) => {
     const itemStatus = resolveGenerationStatus(item.status, item.imageUri);
@@ -265,6 +292,10 @@ export default function ProfileScreen() {
     router.push("/settings" as any);
   };
 
+  const handleCreateFirstDesign = () => {
+    router.push(TOOLS_ROUTE as any);
+  };
+
   const handleSaveToGallery = async () => {
     if (!actionItem?.imageUri) {
       closeActions();
@@ -318,7 +349,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.screen}>
-      <StatusBar style="dark" />
+      <StatusBar style={theme.isDark ? "light" : "dark"} />
 
       <FlatList
         data={boardItems}
@@ -337,27 +368,48 @@ export default function ProfileScreen() {
         ]}
         ListHeaderComponent={(
           <View style={styles.header}>
-            <View style={styles.profileActionsRow}>
+            {user ? (
+              <View style={styles.profileUserHeader}>
+                <View style={styles.avatar}>
+                  {user.imageUrl ? (
+                    <Image source={{ uri: user.imageUrl }} style={styles.avatarImage} contentFit="cover" />
+                  ) : (
+                    <Text style={styles.avatarInitials}>{avatarInitials}</Text>
+                  )}
+                </View>
+                <View style={styles.userCopy}>
+                  {userName ? <Text numberOfLines={1} style={styles.userName}>{userName}</Text> : null}
+                  {userEmail ? <Text numberOfLines={1} style={styles.userEmail}>{userEmail}</Text> : null}
+                </View>
+              </View>
+            ) : null}
+
+            <View style={styles.headerRow}>
+              <View style={styles.portfolioTitleGroup}>
+                <View style={styles.portfolioIconFrame}>
+                  <LayoutPanelTop color={theme.textPrimary} size={16} strokeWidth={1.8} />
+                </View>
+                <Text numberOfLines={1} style={styles.title}>{t("profile.title")}</Text>
+              </View>
+
               <Pressable accessibilityRole="button" onPress={handleSettingsPress} style={styles.settingsLink}>
-                <Settings color={DS.colors.textPrimary} size={16} strokeWidth={1.9} />
+                <Settings color={theme.textPrimary} size={15} strokeWidth={1.9} />
                 <Text numberOfLines={1} style={styles.settingsLinkText}>{t("settings.title")}</Text>
               </Pressable>
-            </View>
-
-            <View style={styles.portfolioTitleRow}>
-              <View style={styles.portfolioIconFrame}>
-                <LayoutPanelTop color={DS.colors.textPrimary} size={17} strokeWidth={1.8} />
-              </View>
-              <Text style={styles.title}>{t("profile.title")}</Text>
             </View>
           </View>
         )}
         ListEmptyComponent={(
           <View style={[styles.boardBody, { minHeight: boardBodyMinHeight }]}>
             <View style={styles.emptyState}>
-              <LayoutPanelTop color={DS.colors.borderStrong} size={56} strokeWidth={1.9} />
+              <View style={styles.emptyIconShell}>
+                <Text style={styles.emptyIcon}>💎</Text>
+              </View>
               <Text style={styles.emptyTitle}>{t("profile.emptyTitle")}</Text>
               {t("profile.emptySubtitle") ? <Text style={styles.emptySubtitle}>{t("profile.emptySubtitle")}</Text> : null}
+              <Pressable accessibilityRole="button" onPress={handleCreateFirstDesign} style={styles.emptyCta}>
+                <Text style={styles.emptyCtaText}>{t("profile.emptyCta")}</Text>
+              </Pressable>
             </View>
           </View>
         )}
@@ -376,14 +428,15 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: Theme) {
+  return StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: DS.colors.background,
+    backgroundColor: theme.bg,
   },
   scrollView: {
     flex: 1,
-    backgroundColor: DS.colors.background,
+    backgroundColor: theme.bg,
   },
   scrollContent: {
     paddingHorizontal: GRID_HORIZONTAL_PADDING,
@@ -397,49 +450,97 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 26,
   },
-  profileActionsRow: {
+  profileUserHeader: {
     width: "100%",
-    alignItems: "flex-end",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
     marginBottom: 22,
+  },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderCurve: "continuous",
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: DARK_ACTION,
+  },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+  },
+  avatarInitials: {
+    color: theme.textInverse,
+    fontSize: 20,
+    lineHeight: 24,
+    letterSpacing: 0,
+    ...fonts.bold,
+  },
+  userCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+  },
+  userName: {
+    color: theme.textPrimary,
+    fontSize: 17,
+    lineHeight: 22,
+    letterSpacing: 0,
+    ...fonts.bold,
+  },
+  userEmail: {
+    color: theme.textSecondary,
+    fontSize: 13,
+    lineHeight: 17,
+    letterSpacing: 0,
+    ...fonts.regular,
+  },
+  headerRow: {
+    width: "100%",
+    minHeight: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
   },
   settingsLink: {
     minHeight: 40,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 14,
-    borderRadius: 999,
+    flexShrink: 0,
+    gap: 7,
+    paddingHorizontal: 13,
+    borderRadius: 20,
     borderCurve: "continuous",
-    backgroundColor: DS.colors.surfaceHigh,
-    borderWidth: 1,
-    borderColor: DS.colors.border,
-    boxShadow: `0px 10px 24px ${DS.colors.shadow}`,
+    backgroundColor: theme.surfaceMuted,
   },
   settingsLinkText: {
-    color: DS.colors.textPrimary,
+    color: theme.textPrimary,
     fontSize: 13,
     lineHeight: 16,
     letterSpacing: 0,
     ...fonts.medium,
   },
-  portfolioTitleRow: {
-    width: "100%",
+  portfolioTitleGroup: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
-    gap: 10,
+    gap: 9,
   },
   portfolioIconFrame: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: DS.colors.surfaceHigh,
-    borderWidth: 1,
-    borderColor: DS.colors.border,
+    backgroundColor: theme.surfaceMuted,
+    borderWidth: 0.5,
+    borderColor: theme.border,
   },
   boardBody: {
     width: "100%",
@@ -448,39 +549,73 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    color: DS.colors.textPrimary,
-    fontSize: 22,
-    lineHeight: 27,
+    minWidth: 0,
+    color: theme.textPrimary,
+    fontSize: 18,
+    lineHeight: 23,
     letterSpacing: 0,
     textAlign: "left",
     ...fonts.bold,
   },
   emptyState: {
     width: "100%",
-    maxWidth: 320,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 8,
+    paddingHorizontal: 0,
+  },
+  emptyIconShell: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(17,24,39,0.08)",
+    boxShadow: "0px 0px 34px rgba(17,24,39,0.18)",
+  },
+  emptyIcon: {
+    fontSize: 48,
+    lineHeight: 58,
   },
   emptyTitle: {
     marginTop: 16,
-    color: DS.colors.textSecondary,
+    color: theme.textPrimary,
     fontSize: 16,
-    lineHeight: 24,
+    lineHeight: 22,
     textAlign: "center",
-    ...fonts.medium,
+    ...fonts.semibold,
   },
   emptySubtitle: {
     marginTop: 8,
-    color: DS.colors.textMuted,
+    color: theme.textSecondary,
     fontSize: 13,
-    lineHeight: 16,
+    lineHeight: 18,
     textAlign: "center",
+    maxWidth: 310,
     ...fonts.regular,
+  },
+  emptyCta: {
+    alignSelf: "stretch",
+    minHeight: 48,
+    marginTop: 24,
+    marginHorizontal: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+    borderCurve: "continuous",
+    backgroundColor: DARK_ACTION,
+  },
+  emptyCtaText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    lineHeight: 18,
+    letterSpacing: 0,
+    ...fonts.semibold,
   },
   gridRow: {
     justifyContent: "space-between",
     marginBottom: GRID_GAP,
   },
-});
+  });
+}
 

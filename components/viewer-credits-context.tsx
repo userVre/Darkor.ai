@@ -96,8 +96,8 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
     ?? cachedState?.hasPaidAccess
     ?? false;
   const subscriptionType = optimisticState?.subscriptionType ?? me?.subscriptionType ?? cachedState?.subscriptionType;
-  const serverStreakCount = me?.streakCount ?? me?.streak_count ?? cachedState?.streakCount ?? cachedState?.streak_count ?? 1;
-  const streakCount = Math.max(1, Math.floor(optimisticState?.streakCount ?? serverStreakCount));
+  const serverStreakCount = me?.streakCount ?? me?.streak_count ?? cachedState?.streakCount ?? cachedState?.streak_count ?? 0;
+  const streakCount = Math.max(0, Math.floor(optimisticState?.streakCount ?? serverStreakCount));
   const canClaimDiamond = optimisticState?.canClaimDiamond ?? me?.canClaimDiamond ?? cachedState?.canClaimDiamond ?? false;
   const nextDiamondClaimAt =
     optimisticState?.nextDiamondClaimAt

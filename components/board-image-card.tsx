@@ -1,4 +1,5 @@
 import {Image} from "expo-image";
+import {useTranslation} from "react-i18next";
 import {ActivityIndicator, Pressable, StyleSheet, Text, View} from "react-native";
 
 import type {BoardItem} from "../lib/board";
@@ -12,13 +13,18 @@ type BoardImageCardProps = {
   onLongPress: (item: BoardItem) => void;
 };
 
-function formatPortfolioLabel(item: BoardItem, isProcessing: boolean, isFailed: boolean) {
+function formatPortfolioLabel(
+  item: BoardItem,
+  isProcessing: boolean,
+  isFailed: boolean,
+  labels: { processing: string; failed: string; preview: string },
+) {
   if (isProcessing) {
-    return "AI is Designing...";
+    return labels.processing;
   }
 
   if (isFailed) {
-    return "Generation Failed";
+    return labels.failed;
   }
 
   const style = item.styleName?.trim();
@@ -28,16 +34,21 @@ function formatPortfolioLabel(item: BoardItem, isProcessing: boolean, isFailed: 
     return `${style} ${room}`;
   }
 
-  return style || room || "Design Preview";
+  return style || room || labels.preview;
 }
 
 export function BoardImageCard({ item, width, onPress, onLongPress }: BoardImageCardProps) {
+  const { t } = useTranslation();
   const previewImage = item.imageUri ?? item.originalImageUri ?? null;
   const resolvedStatus = resolveGenerationStatus(item.status, item.imageUri);
   const isProcessing = resolvedStatus === "processing";
   const isFailed = resolvedStatus === "failed";
   const showNewBadge = item.isNew && resolvedStatus === "ready";
-  const portfolioLabel = formatPortfolioLabel(item, isProcessing, isFailed);
+  const portfolioLabel = formatPortfolioLabel(item, isProcessing, isFailed, {
+    processing: t("profile.cardDesigning"),
+    failed: t("profile.cardFailed"),
+    preview: t("profile.cardPreview"),
+  });
 
   return (
     <Pressable
@@ -55,7 +66,7 @@ export function BoardImageCard({ item, width, onPress, onLongPress }: BoardImage
 
       {showNewBadge ? (
         <View pointerEvents="none" style={styles.badge}>
-          <Text style={styles.badgeText}>New</Text>
+          <Text style={styles.badgeText}>{t("profile.cardNew")}</Text>
         </View>
       ) : null}
 
@@ -64,7 +75,7 @@ export function BoardImageCard({ item, width, onPress, onLongPress }: BoardImage
           <View style={styles.processingOrb}>
             <ActivityIndicator size="small" color="#FFFFFF" />
           </View>
-          <Text style={styles.processingText}>Processing...</Text>
+          <Text style={styles.processingText}>{t("profile.cardProcessing")}</Text>
         </View>
       ) : null}
 

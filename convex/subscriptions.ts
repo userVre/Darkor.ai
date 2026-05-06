@@ -31,7 +31,7 @@ type SubscriptionLikeUser = {
   streakCount?: number | bigint;
   lastLoginDate?: number | bigint;
   lastClaimDate?: number | bigint;
-  lastClaimAt?: number | bigint;
+  lastClaimAt?: number | bigint | null;
   nextDiamondClaimAt?: number | bigint;
   canClaimDiamond?: boolean;
   eliteProUntil?: number | bigint;
@@ -250,21 +250,18 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
   let subscriptionStartedAt = getSubscriptionAnchor(user, now);
   let subscriptionEnd = toFiniteNumber(user.subscriptionEnd);
   let credits = Math.max(toFiniteNumber(user.credits, INITIAL_FREE_DIAMONDS), 0);
-  let diamondBalance = Math.min(
-    Math.max(
-      toFiniteNumber(
-        user.diamondBalance,
-        Math.min(credits, FREE_DAILY_DIAMOND_CAP),
-      ),
-      0,
+  let diamondBalance = Math.max(
+    toFiniteNumber(
+      user.diamondBalance,
+      Math.min(credits, FREE_DAILY_DIAMOND_CAP),
     ),
-    FREE_DAILY_DIAMOND_CAP,
+    0,
   );
   let premiumCredits = Math.min(Math.max(toFiniteNumber(user.premiumCredits), 0), credits);
   let imageLimit = toFiniteNumber(user.imageLimit, getGenerationLimit(subscriptionType));
   let imageGenerationCount = toFiniteNumber(user.imageGenerationCount);
   let lastResetDate = toFiniteNumber(user.lastResetDate);
-  let streakCount = Math.max(toFiniteNumber(user.streakCount, 1), 1);
+  let streakCount = Math.max(toFiniteNumber(user.streakCount), 0);
   let lastLoginDate = toFiniteNumber(user.lastLoginDate, now);
   let lastClaimDate = toFiniteNumber(user.lastClaimDate);
   let lastClaimAt = toFiniteNumber(user.lastClaimAt, lastClaimDate);
@@ -314,7 +311,7 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
   if (typeof user.lastClaimDate !== "number") {
     patch.lastClaimDate = lastClaimDate;
   }
-  if (typeof user.lastClaimAt !== "number") {
+  if (typeof user.lastClaimAt !== "number" && user.lastClaimAt !== null) {
     patch.lastClaimAt = lastClaimAt;
   }
   if (typeof user.nextDiamondClaimAt !== "number") {

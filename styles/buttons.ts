@@ -1,9 +1,11 @@
 import { dark, type Theme } from "./theme";
 
+const DARK_ACTION = "#111111";
+
 export function createButtonStyles(colors: Theme) {
   return {
     primary: {
-      backgroundColor: colors.brand,
+      backgroundColor: DARK_ACTION,
       borderRadius: 14,
       height: 56,
       paddingHorizontal: 24,

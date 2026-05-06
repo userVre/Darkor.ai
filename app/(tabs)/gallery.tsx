@@ -6,11 +6,9 @@ import {useTranslation} from "react-i18next";
 import {Pressable, StyleSheet, Text, View, useWindowDimensions} from "react-native";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
-import {DiamondCreditPill, ProBadge} from "../../components/diamond-credit-pill";
-import {useDiamondStore} from "../../components/diamond-store-context";
 import {DiscoverImageCard} from "../../components/discover-image-card";
 import {DiscoverPreviewModal} from "../../components/discover-preview-modal";
-import {useViewerCredits} from "../../components/viewer-credits-context";
+import {HomeHeaderPills} from "../../components/home-header-pills";
 import {DS} from "../../lib/design-system";
 import {
 type DiscoverCluster,
@@ -88,8 +86,6 @@ export default function GalleryScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { credits, hasPaidAccess } = useViewerCredits();
-  const { openStore } = useDiamondStore();
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
   const [selectedClusterId, setSelectedClusterId] = useState<DiscoverClusterId>("interiors");
   const clusters = useDiscoverClusters();
@@ -132,11 +128,6 @@ export default function GalleryScreen() {
     });
   }, [router]);
 
-  const handleCreditsPress = useCallback(() => {
-    triggerHaptic();
-    openStore();
-  }, [openStore]);
-
   const keyExtractor = useCallback((item: DiscoverGroup) => item.renderKey, []);
 
   const renderSection = useCallback(
@@ -148,7 +139,7 @@ export default function GalleryScreen() {
           cardHeight={cardHeight}
           onPreview={handlePreviewOpen}
           onExploreGroup={handleExploreGroup}
-          seeAllLabel={t("seeAll")}
+          seeAllLabel={t("common.actions.seeAll")}
         />
       );
     },
@@ -157,31 +148,13 @@ export default function GalleryScreen() {
 
   const listHeader = useMemo(
     () => (
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 16 }]}>
-        <View style={styles.topRow}>
-          <View style={styles.creditSlot}>
-            {hasPaidAccess ? (
-              <ProBadge style={styles.creditPill} />
-            ) : (
-              <DiamondCreditPill
-                accessibilityLabel={t("home.accessibility.openCredits")}
-                accessibilityRole="button"
-                count={credits}
-                iconOnly
-                onPress={handleCreditsPress}
-                style={styles.creditPill}
-                variant="dark"
-              />
-            )}
-          </View>
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 10 }]}>
+        <HomeHeaderPills />
 
-          <View pointerEvents="none" style={styles.titleSlot}>
-            <Text adjustsFontSizeToFit minimumFontScale={0.86} numberOfLines={1} style={styles.headerTitle}>
-              {t("tabs.discover")}
-            </Text>
-          </View>
-
-          <View style={styles.rightSpacer} />
+        <View pointerEvents="none" style={styles.titleRow}>
+          <Text adjustsFontSizeToFit minimumFontScale={0.86} numberOfLines={1} style={styles.headerTitle}>
+            {t("tabs.discover")}
+          </Text>
         </View>
 
         <View style={styles.categoryTabs}>
@@ -204,7 +177,7 @@ export default function GalleryScreen() {
         </View>
       </View>
     ),
-    [clusters, credits, handleClusterPress, handleCreditsPress, hasPaidAccess, insets.top, selectedCluster?.id, selectedClusterId, t],
+    [clusters, handleClusterPress, insets.top, selectedCluster?.id, selectedClusterId, t],
   );
 
   return (
@@ -240,33 +213,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: DS.colors.surface,
   },
-  topRow: {
-    position: "relative",
-    minHeight: 48,
+  titleRow: {
+    marginTop: 18,
     marginBottom: 18,
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  creditSlot: {
-    width: 92,
-    alignItems: "flex-start",
-    justifyContent: "center",
-    zIndex: 1,
-  },
-  creditPill: {
-    minHeight: 42,
-  },
-  titleSlot: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 104,
   },
   headerTitle: {
     color: DS.colors.textPrimary,
@@ -275,9 +227,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
     textAlign: "center",
     ...fonts.bold,
-  },
-  rightSpacer: {
-    width: 92,
   },
   categoryTabs: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,

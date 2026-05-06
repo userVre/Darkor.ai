@@ -1,8 +1,8 @@
 import { ConvexError } from "convex/values";
 
-import { FREE_DAILY_DIAMOND_CAP, FREE_IMAGE_LIMIT, INITIAL_FREE_DIAMONDS } from "./subscriptions";
+import { FREE_DAILY_DIAMOND_CAP, FREE_IMAGE_LIMIT } from "./subscriptions";
 
-export const GUEST_STARTER_CREDITS = INITIAL_FREE_DIAMONDS;
+export const GUEST_STARTER_CREDITS = 1;
 export const ACCOUNT_STARTER_CREDITS = 1;
 
 export function normalizeAnonymousId(value?: string | null) {
@@ -34,14 +34,14 @@ export function buildDefaultUserFields(args: {
   const now = Date.now();
   const guestId = args.anonymousId ? toGuestUserId(args.anonymousId) : undefined;
   const referralSeed = args.clerkId ?? args.anonymousId ?? guestId ?? String(now);
-  const startingCredits = Math.max(args.credits ?? GUEST_STARTER_CREDITS, 0);
+  const startingCredits = Math.max(args.credits ?? GUEST_STARTER_CREDITS, 1);
 
   return {
     clerkId: args.clerkId,
     anonymousId: args.anonymousId,
     mergedIntoClerkId: undefined,
     credits: startingCredits,
-    diamondBalance: Math.min(startingCredits, FREE_DAILY_DIAMOND_CAP),
+    diamondBalance: Math.max(1, Math.min(startingCredits, FREE_DAILY_DIAMOND_CAP)),
     diamondSources: Array.from({ length: startingCredits }, () => "daily_free" as const),
     premiumCredits: 0,
     plan: "free",
@@ -50,14 +50,15 @@ export function buildDefaultUserFields(args: {
     lastReviewPromptAt: 0,
     firstDiamondRatingPromptedAt: 0,
     lastRewardDate: now,
-    streakCount: 1,
+    streakCount: 0,
     lastLoginDate: now,
     lastClaimDate: 0,
-    lastClaimAt: 0,
+    lastClaimAt: null,
     nextDiamondClaimAt: 0,
     canClaimDiamond: false,
     eliteProUntil: 0,
     proTrialExpiresAt: null,
+    welcomeDiamondGiven: true,
     proTrialEndedPaywallPending: false,
     proTrialEndedPaywallShownAt: 0,
     onboardingDiamondClaimedAt: 0,

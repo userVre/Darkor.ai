@@ -2,9 +2,9 @@ import {ChevronRight} from "@/components/material-icons";
 import type {ComponentType, ReactNode} from "react";
 import {ActivityIndicator, I18nManager, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle} from "react-native";
 
-import {DS} from "../lib/design-system";
 import {useLocalizedAppFonts} from "../lib/i18n";
 import {getDirectionalArrowScale, getDirectionalRow, getDirectionalTextAlign} from "../lib/i18n/rtl";
+import {useTheme} from "../styles/theme";
 import {fonts} from "../styles/typography";
 
 type SettingsRowProps = {
@@ -24,19 +24,23 @@ type SettingsRowProps = {
 export function SettingsRow({
   label,
   icon: Icon,
-  iconColor = DS.colors.textPrimary,
-  textColor = DS.colors.textPrimary,
+  iconColor,
+  textColor,
   onPress,
   showChevron = true,
   rightAccessory,
   loading = false,
-  loadingColor = DS.colors.textPrimary,
+  loadingColor,
   disabled = false,
   style,
 }: SettingsRowProps) {
+  const theme = useTheme();
   const localizedFonts = useLocalizedAppFonts();
   const isRTL = I18nManager.isRTL;
   const isInteractive = Boolean(onPress) && !disabled;
+  const resolvedIconColor = iconColor ?? theme.textPrimary;
+  const resolvedTextColor = textColor ?? theme.textPrimary;
+  const resolvedLoadingColor = loadingColor ?? theme.textPrimary;
 
   return (
     <Pressable
@@ -45,16 +49,24 @@ export function SettingsRow({
       onPress={() => {
         void onPress?.();
       }}
-      style={[styles.row, { flexDirection: getDirectionalRow(isRTL) }, style]}
+      style={[
+        styles.row,
+        {
+          backgroundColor: theme.surfaceHigh,
+          borderColor: theme.border,
+          flexDirection: getDirectionalRow(isRTL),
+        },
+        style,
+      ]}
     >
       <View style={[styles.leftSide, { flexDirection: getDirectionalRow(isRTL) }]}>
-        <Icon color={iconColor} size={20} strokeWidth={2.1} />
+        <Icon color={resolvedIconColor} size={20} strokeWidth={2.1} />
         <Text
           numberOfLines={2}
           style={[
             styles.label,
             localizedFonts.medium,
-            { color: textColor, textAlign: getDirectionalTextAlign(isRTL) },
+            { color: resolvedTextColor, textAlign: getDirectionalTextAlign(isRTL) },
           ]}
         >
           {label}
@@ -62,11 +74,11 @@ export function SettingsRow({
       </View>
 
       <View style={[styles.rightSide, { flexDirection: getDirectionalRow(isRTL) }]}>
-        {loading ? <ActivityIndicator color={loadingColor} /> : null}
+        {loading ? <ActivityIndicator color={resolvedLoadingColor} /> : null}
         {!loading ? rightAccessory : null}
         {!loading && showChevron ? (
           <ChevronRight
-            color={DS.colors.textMuted}
+          color={theme.textMuted}
             size={18}
             strokeWidth={1.9}
             style={{ transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] }}
@@ -84,8 +96,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: DS.colors.border,
-    backgroundColor: DS.colors.surfaceHigh,
     paddingHorizontal: 18,
     paddingVertical: 18,
     flexDirection: "row",

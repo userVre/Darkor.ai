@@ -17,28 +17,43 @@ import {
 } from "react-native";
 import Svg, {Path} from "react-native-svg";
 
+import {useTheme, type Theme} from "../../styles/theme";
 import {AuthInput} from "./AuthInput";
 import {clearAuthSkipped, markAuthSkipped} from "./auth-skip";
 
+const DARK_ACTION = "#111111";
+const DARK_ACTION_SURFACE = "rgba(17,24,39,0.10)";
+
 type AuthMode = "sign-in" | "sign-up";
 type ErrorMap = Partial<Record<"name" | "email" | "password" | "confirmPassword" | "form" | "otp", string>>;
+type ClerkError = {
+  errors?: Array<{code?: string; message?: string; longMessage?: string}>;
+};
 
 type AuthScreenProps = {
   mode: AuthMode;
 };
 
-const AUTH_COLORS = {
-  background: "#0A0A0F",
-  surfaceCard: "rgba(255,255,255,0.06)",
-  border: "rgba(255,255,255,0.12)",
-  textPrimary: "#FFFFFF",
-  textSecondary: "rgba(255,255,255,0.60)",
-  accent: "#E83A5A",
-  googleText: "#1A1A1A",
-  appleBackground: "rgba(255,255,255,0.10)",
-  appleBorder: "rgba(255,255,255,0.20)",
-  divider: "rgba(255,255,255,0.12)",
-};
+function getAuthColors(theme: Theme) {
+  return {
+    background: theme.bg,
+    surfaceCard: theme.surfaceCard,
+    border: theme.border,
+    textPrimary: theme.textPrimary,
+    textSecondary: theme.textSecondary,
+    accent: DARK_ACTION,
+    accentText: "#FFFFFF",
+    googleText: "#1A1A1A",
+    appleBackground: theme.surfaceMuted,
+    appleBorder: theme.borderLight,
+    divider: theme.border,
+    otpSheet: theme.surface,
+    modalOverlay: theme.isDark ? "rgba(0,0,0,0.55)" : "rgba(17,24,39,0.28)",
+    controlSurface: theme.surfaceMuted,
+  };
+}
+
+type AuthColors = ReturnType<typeof getAuthColors>;
 
 function GoogleIcon() {
   return (
@@ -75,14 +90,20 @@ function AppleIcon() {
   );
 }
 
-function friendlyClerkError(error: unknown, fallback: string) {
-  const clerkError = error as { errors?: Array<{ code?: string; message?: string; longMessage?: string }> };
+function getClerkErrorDetails(error: unknown) {
+  const clerkError = error as ClerkError;
   const firstError = clerkError?.errors?.[0];
   const code = firstError?.code?.toLowerCase() ?? "";
   const message = `${firstError?.message ?? ""} ${firstError?.longMessage ?? ""}`.toLowerCase();
 
+  return {code, message};
+}
+
+function friendlySignInError(error: unknown) {
+  const {code, message} = getClerkErrorDetails(error);
+
   if (code.includes("identifier") || message.includes("not found") || message.includes("couldn't find")) {
-    return "No account found with this email. Sign up instead?";
+    return "Adresse e-mail ou mot de passe incorrect. Réessayez.";
   }
   if (
     code.includes("password") ||
@@ -90,15 +111,30 @@ function friendlyClerkError(error: unknown, fallback: string) {
     message.includes("password") ||
     message.includes("incorrect")
   ) {
-    return "Incorrect email or password. Please try again.";
+    return "Adresse e-mail ou mot de passe incorrect. Réessayez.";
   }
-  if (code.includes("verification") || message.includes("code")) {
-    return "That code is not valid. Please try again.";
-  }
+  return "Connexion impossible. Vérifiez vos informations et réessayez.";
+}
+
+function friendlySignUpError(error: unknown) {
+  const {code, message} = getClerkErrorDetails(error);
+
   if (code.includes("exists") || message.includes("already")) {
-    return "An account already exists with this email. Sign in instead?";
+    return "Un compte existe déjà avec cette adresse e-mail. Connectez-vous plutôt.";
   }
-  return fallback;
+  if (code.includes("password") || message.includes("password")) {
+    return "Ce mot de passe ne peut pas être utilisé. Essayez-en un autre.";
+  }
+  return "Impossible de créer votre compte. Réessayez.";
+}
+
+function friendlyVerificationError(error: unknown) {
+  const {code, message} = getClerkErrorDetails(error);
+
+  if (code.includes("verification") || message.includes("code") || message.includes("invalid")) {
+    return "Ce code n'est pas valide. Réessayez.";
+  }
+  return "Vérification impossible. Réessayez.";
 }
 
 function isValidEmail(value: string) {
@@ -106,11 +142,14 @@ function isValidEmail(value: string) {
 }
 
 export function AuthScreen({mode}: AuthScreenProps) {
+  const theme = useTheme();
+  const AUTH_COLORS = useMemo(() => getAuthColors(theme), [theme]);
+  const styles = useMemo(() => createStyles(AUTH_COLORS), [AUTH_COLORS]);
   const router = useRouter();
   const {signIn, setActive: setSignInActive, isLoaded: signInLoaded} = useSignIn();
   const {signUp, setActive: setSignUpActive, isLoaded: signUpLoaded} = useSignUp();
-  const {startOAuthFlow: startGoogleFlow} = useOAuth({strategy: "oauth_google"});
-  const {startOAuthFlow: startAppleFlow} = useOAuth({strategy: "oauth_apple"});
+  const {startOAuthFlow: googleOAuth} = useOAuth({strategy: "oauth_google"});
+  const {startOAuthFlow: appleOAuth} = useOAuth({strategy: "oauth_apple"});
 
   const [currentMode, setCurrentMode] = useState<AuthMode>(mode);
   const [name, setName] = useState("");
@@ -151,39 +190,50 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const validateEmailAndPassword = () => {
     const nextErrors: ErrorMap = {};
     if (!isSignIn && !name.trim()) {
-      nextErrors.name = "Please enter your full name";
+      nextErrors.name = "Entrez votre nom complet.";
     }
     if (!isValidEmail(email.trim())) {
-      nextErrors.email = "Please enter a valid email address";
+      nextErrors.email = "Entrez une adresse e-mail valide.";
     }
     if (password.length < 8) {
-      nextErrors.password = "Password must be at least 8 characters";
+      nextErrors.password = "Le mot de passe doit contenir au moins 8 caractères.";
     }
     if (!isSignIn && confirmPassword !== password) {
-      nextErrors.confirmPassword = "Passwords do not match";
+      nextErrors.confirmPassword = "Les mots de passe ne correspondent pas.";
     }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 
-  const completeOAuth = async (provider: "google" | "apple") => {
-    setLoading(provider);
+  const handleGoogle = async () => {
+    setLoading("google");
     setErrors({});
     try {
-      const startFlow = provider === "google" ? startGoogleFlow : startAppleFlow;
-      const {createdSessionId, setActive} = await startFlow();
-      if (createdSessionId && setActive) {
+      const {createdSessionId, setActive} = await googleOAuth();
+      if (createdSessionId) {
         await clearAuthSkipped();
-        await setActive({session: createdSessionId});
+        await setActive!({session: createdSessionId});
         router.replace("/(tabs)" as never);
       }
     } catch (error) {
-      setErrors({
-        form:
-          provider === "google"
-            ? "Google sign-in could not be completed. Please try again."
-            : "Apple sign-in could not be completed. Please try again.",
-      });
+      setErrors({form: "Connexion Google impossible. Réessayez."});
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleApple = async () => {
+    setLoading("apple");
+    setErrors({});
+    try {
+      const {createdSessionId, setActive} = await appleOAuth();
+      if (createdSessionId) {
+        await clearAuthSkipped();
+        await setActive!({session: createdSessionId});
+        router.replace("/(tabs)" as never);
+      }
+    } catch (error) {
+      setErrors({form: "Connexion Apple impossible. Réessayez."});
     } finally {
       setLoading(null);
     }
@@ -200,9 +250,9 @@ export function AuthScreen({mode}: AuthScreenProps) {
         router.replace("/(tabs)" as never);
         return;
       }
-      setErrors({form: "We need one more verification step before signing you in."});
+      setErrors({form: "Une étape de vérification supplémentaire est nécessaire."});
     } catch (error) {
-      setErrors({form: friendlyClerkError(error, "We could not sign you in. Please try again.")});
+      setErrors({form: friendlySignInError(error)});
     } finally {
       setLoading(null);
     }
@@ -225,7 +275,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
       setOtpVisible(true);
       requestAnimationFrame(() => otpRefs.current[0]?.focus());
     } catch (error) {
-      setErrors({form: friendlyClerkError(error, "We could not create your account. Please try again.")});
+      setErrors({form: friendlySignUpError(error)});
     } finally {
       setLoading(null);
     }
@@ -233,29 +283,29 @@ export function AuthScreen({mode}: AuthScreenProps) {
 
   const submitOtp = async (digits = otpDigits) => {
     if (!signUpLoaded || !signUp || !setSignUpActive) {
-      setErrors((current) => ({...current, otp: "Verification is not ready yet. Please try again."}));
+      setErrors((current) => ({...current, otp: "La vérification n'est pas encore prête. Réessayez."}));
       return;
     }
     const code = digits.join("");
     if (code.length !== 6) {
-      setErrors((current) => ({...current, otp: "Enter the 6-digit code from your email"}));
+      setErrors((current) => ({...current, otp: "Entrez le code à 6 chiffres reçu par e-mail."}));
       return;
     }
     setLoading("otp");
     try {
       const result = await signUp.attemptEmailAddressVerification({code});
-      if (result.status === "complete" && signUp.createdSessionId) {
+      if (result.status === "complete" && result.createdSessionId) {
         await clearAuthSkipped();
-        await setSignUpActive({session: signUp.createdSessionId});
+        await setSignUpActive({session: result.createdSessionId});
         setOtpVisible(false);
         router.replace("/(tabs)" as never);
         return;
       }
-      setErrors((current) => ({...current, otp: "We could not verify that code. Please try again."}));
+      setErrors((current) => ({...current, otp: "Impossible de vérifier ce code. Réessayez."}));
     } catch (error) {
       setErrors((current) => ({
         ...current,
-        otp: friendlyClerkError(error, "That code is not valid. Please try again."),
+        otp: friendlyVerificationError(error),
       }));
     } finally {
       setLoading(null);
@@ -264,7 +314,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
 
   const resendOtp = async () => {
     if (!signUpLoaded || !signUp) {
-      setErrors((current) => ({...current, otp: "Verification is not ready yet. Please try again."}));
+      setErrors((current) => ({...current, otp: "La vérification n'est pas encore prête. Réessayez."}));
       return;
     }
     setLoading("resend");
@@ -274,7 +324,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
     } catch (error) {
       setErrors((current) => ({
         ...current,
-        otp: "We could not resend the code. Please try again.",
+        otp: "Impossible de renvoyer le code. Réessayez.",
       }));
     } finally {
       setLoading(null);
@@ -335,7 +385,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
       await markAuthSkipped();
       router.replace("/(tabs)" as never);
     } catch (error) {
-      setErrors({form: "We could not continue as guest. Please try again."});
+      setErrors({form: "Impossible de continuer en invité. Réessayez."});
     }
   };
 
@@ -378,32 +428,36 @@ export function AuthScreen({mode}: AuthScreenProps) {
           <View style={styles.socialStack}>
             <Pressable
               accessibilityRole="button"
-              onPress={() => void completeOAuth("google")}
+              onPress={() => void handleGoogle()}
               disabled={loading !== null}
               style={({pressed}) => [styles.socialButton, styles.googleButton, pressed ? styles.pressed : null]}
             >
               {loading === "google" ? (
                 <ActivityIndicator color={AUTH_COLORS.googleText} />
               ) : (
-                <>
-                  <GoogleIcon />
-                  <Text style={styles.googleText}>Continue with Google</Text>
-                </>
+                <View style={styles.socialButtonContent}>
+                  <View style={styles.socialIconSlot}>
+                    <GoogleIcon />
+                  </View>
+                  <Text style={styles.googleText}>Continuer avec Google</Text>
+                </View>
               )}
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              onPress={() => void completeOAuth("apple")}
+              onPress={() => void handleApple()}
               disabled={loading !== null}
               style={({pressed}) => [styles.socialButton, styles.appleButton, pressed ? styles.pressed : null]}
             >
               {loading === "apple" ? (
-                <ActivityIndicator color={AUTH_COLORS.textPrimary} />
+                <ActivityIndicator color={AUTH_COLORS.accentText} />
               ) : (
-                <>
-                  <AppleIcon />
-                  <Text style={styles.appleText}>Continue with Apple</Text>
-                </>
+                <View style={styles.socialButtonContent}>
+                  <View style={styles.socialIconSlot}>
+                    <AppleIcon />
+                  </View>
+                  <Text style={styles.appleText}>Continuer avec Apple</Text>
+                </View>
               )}
             </Pressable>
           </View>
@@ -568,7 +622,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
               style={({pressed}) => [styles.verifyButton, pressed ? styles.pressed : null]}
             >
               {loading === "otp" ? (
-                <ActivityIndicator color={AUTH_COLORS.textPrimary} />
+                <ActivityIndicator color={AUTH_COLORS.accentText} />
               ) : (
                 <Text style={styles.primaryButtonText}>Verify Email</Text>
               )}
@@ -590,7 +644,8 @@ export function AuthScreen({mode}: AuthScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(AUTH_COLORS: AuthColors) {
+  return StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: AUTH_COLORS.background,
@@ -612,7 +667,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: AUTH_COLORS.controlSurface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -624,7 +679,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: AUTH_COLORS.controlSurface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -644,7 +699,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "rgba(232,58,90,0.18)",
+    backgroundColor: DARK_ACTION_SURFACE,
     shadowColor: AUTH_COLORS.accent,
     shadowRadius: 20,
     shadowOpacity: 0.4,
@@ -652,7 +707,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   title: {
-    color: AUTH_COLORS.textPrimary,
+    color: AUTH_COLORS.accentText,
     fontSize: 28,
     fontWeight: "700",
     letterSpacing: -0.5,
@@ -678,21 +733,38 @@ const styles = StyleSheet.create({
   },
   socialStack: {
     gap: 10,
+    alignItems: "center",
   },
   socialButton: {
+    width: "100%",
     height: 52,
     borderRadius: 14,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    overflow: "hidden",
+  },
+  socialButtonContent: {
+    width: "100%",
+    height: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+  },
+  socialIconSlot: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
   googleButton: {
     backgroundColor: "#FFFFFF",
+    borderColor: "#FFFFFF",
   },
   appleButton: {
     backgroundColor: AUTH_COLORS.appleBackground,
-    borderWidth: 0.5,
     borderColor: AUTH_COLORS.appleBorder,
   },
   googleText: {
@@ -700,12 +772,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     letterSpacing: 0,
+    flexShrink: 1,
+    textAlign: "center",
+    includeFontPadding: false,
   },
   appleText: {
     color: AUTH_COLORS.textPrimary,
     fontSize: 15,
     fontWeight: "600",
     letterSpacing: 0,
+    flexShrink: 1,
+    textAlign: "center",
+    includeFontPadding: false,
   },
   dividerRow: {
     flexDirection: "row",
@@ -744,25 +822,30 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   primaryButton: {
-    height: 54,
+    width: "100%",
+    height: 52,
     borderRadius: 14,
     backgroundColor: AUTH_COLORS.accent,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 16,
   },
   verifyButton: {
     width: "100%",
-    height: 54,
+    height: 52,
     borderRadius: 14,
     backgroundColor: AUTH_COLORS.accent,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 16,
   },
   primaryButtonText: {
     color: AUTH_COLORS.textPrimary,
     fontSize: 15,
     fontWeight: "600",
     letterSpacing: 0,
+    textAlign: "center",
+    includeFontPadding: false,
   },
   disabled: {
     opacity: 0.5,
@@ -799,7 +882,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.55)",
+    backgroundColor: AUTH_COLORS.modalOverlay,
   },
   otpSheet: {
     width: "100%",
@@ -810,7 +893,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     borderWidth: 1,
     borderColor: AUTH_COLORS.border,
-    backgroundColor: "#111119",
+    backgroundColor: AUTH_COLORS.otpSheet,
     alignItems: "center",
     gap: 16,
   },
@@ -818,7 +901,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.20)",
+    backgroundColor: AUTH_COLORS.border,
     marginBottom: 6,
   },
   otpTitle: {
@@ -847,7 +930,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: AUTH_COLORS.border,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: AUTH_COLORS.controlSurface,
     color: AUTH_COLORS.textPrimary,
     fontSize: 20,
     fontWeight: "700",
@@ -870,4 +953,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 0,
   },
-});
+  });
+}

@@ -4,6 +4,10 @@ import {spacing} from "../styles/spacing";
 import {fonts} from "../styles/typography";
 
 const SPACING_UNIT = spacing.sm;
+const DARK_ACTION = "#111111";
+const DARK_ACTION_STRONG = "#050505";
+const DARK_ACTION_SURFACE = "rgba(17, 24, 39, 0.08)";
+const DARK_ACTION_GLOW = "rgba(17, 24, 39, 0.14)";
 
 export const DS = {
   colors: {
@@ -22,14 +26,14 @@ export const DS = {
     textTertiary: light.textMuted,
     textMuted: light.textMuted,
     textInverse: light.textInverse,
-    accent: light.brand,
-    accentStrong: light.brandDark,
+    accent: DARK_ACTION,
+    accentStrong: DARK_ACTION_STRONG,
     accentSecondary: "#5AC8FA",
-    accentGlow: light.brandSoft,
-    accentGlowStrong: light.brand,
-    accentSurface: light.brandSurface,
-    actionPrimary: light.brand,
-    actionPrimarySoft: light.brandDark,
+    accentGlow: DARK_ACTION_GLOW,
+    accentGlowStrong: DARK_ACTION,
+    accentSurface: DARK_ACTION_SURFACE,
+    actionPrimary: DARK_ACTION,
+    actionPrimarySoft: DARK_ACTION_STRONG,
     creditPillBackground: light.surfaceHigh,
     creditPillBorder: light.borderLight,
     badgePro: light.success,

@@ -16,6 +16,8 @@ const AZURE_BRAIN_API_VERSION = "2024-10-21";
 const AZURE_BRAIN_DEFAULT_ENDPOINT = "https://abism-moec40fn-eastus2.cognitiveservices.azure.com/";
 const AZURE_BRAIN_DEFAULT_DEPLOYMENT_NAME = "gpt-image-2";
 const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
+export const IMAGE_PROCESSING_REJECTION_MESSAGE =
+  "Cette image ne peut pas être traitée. Essayez avec une photo d'intérieur ou une autre image.";
 
 type ServiceType = "paint" | "floor" | "redesign" | "layout" | "replace";
 
@@ -115,10 +117,17 @@ export function normalizeGenerationError(message?: string | null) {
     normalized.includes("content policy") ||
     normalized.includes("responsible ai policy") ||
     normalized.includes("image was filtered") ||
+    normalized.includes("policy_violation") ||
+    normalized.includes("moderation_blocked") ||
+    normalized.includes("safety system") ||
     normalized.includes("safety") ||
     normalized.includes("moderation")
   ) {
-    return "Design could not be generated due to content safety guidelines. Please try a different photo.";
+    return IMAGE_PROCESSING_REJECTION_MESSAGE;
+  }
+
+  if (normalized.includes("unable to prepare free-tier image safely")) {
+    return IMAGE_PROCESSING_REJECTION_MESSAGE;
   }
 
   if (

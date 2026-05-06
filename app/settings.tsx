@@ -15,7 +15,7 @@ UserRound,
 } from "@/components/material-icons";
 import {useAuth, useUser} from "@clerk/expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {useMutation} from "convex/react";
+import {useConvexAuth, useMutation} from "convex/react";
 import {BlurView} from "expo-blur";
 import * as Clipboard from "expo-clipboard";
 import {Image} from "expo-image";
@@ -24,9 +24,9 @@ import * as Linking from "expo-linking";
 import {useRouter} from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import {StatusBar} from "expo-status-bar";
-import {useState} from "react";
+import {useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {Alert, I18nManager, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View} from "react-native";
+import {Alert, I18nManager, Platform, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View} from "react-native";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {useProSuccess} from "../components/pro-success-context";
@@ -45,7 +45,7 @@ resolveRevenueCatSubscription,
 type RevenueCatEntitlement,
 } from "../lib/revenuecat";
 import {requestStoreReview} from "../lib/store-review";
-import {radix} from "../styles/theme";
+import {radix, useTheme, type Theme} from "../styles/theme";
 import {fonts} from "../styles/typography";
 
 const SUPPORT_EMAIL = "support@homedecor.ai";
@@ -53,14 +53,7 @@ const APP_URL = Constants.expoConfig?.extra?.publicEnv?.EXPO_PUBLIC_APP_URL ?? "
 const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
 const ANDROID_PACKAGE = Constants.expoConfig?.android?.package ?? "com.homedecor.ai";
 const SETTINGS_HERO_IMAGE = require("../assets/media/settings/professional-workspace.webp");
-const SCREEN_BG = radix.light.slate.slate1;
-const SURFACE_BG = radix.light.slate.slate2;
-const TEXT_PRIMARY = radix.light.slate.slate12;
-const TEXT_SECONDARY = radix.light.slate.slate11;
-const RUBY_ACCENT = radix.light.ruby.ruby9;
-const RADIX_BLUE_3 = "#E6F4FE";
-const RADIX_BLUE_7 = "#8EC8F6";
-const RADIX_BLUE_11 = "#006ADC";
+const DARK_ACTION = "#111111";
 
 function truncateUserId(value: string) {
   if (value.length <= 18) {
@@ -72,11 +65,14 @@ function truncateUserId(value: string) {
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const { t } = useTranslation();
   const localizedFonts = useLocalizedAppFonts();
   const languagePreference = useAppLanguagePreference();
   const insets = useSafeAreaInsets();
-  const { isSignedIn, signOut } = useAuth();
+  const { isLoaded, isSignedIn, signOut } = useAuth();
+  const convexAuth = useConvexAuth();
   const { user } = useUser();
   const { clearDraft } = useWorkspaceDraft();
   const { showSuccess, showToast } = useProSuccess();
@@ -183,6 +179,10 @@ export default function SettingsScreen() {
     purchasedAt?: number | null,
     subscriptionEnd?: number | null,
   ) => {
+    if (!isLoaded || !isSignedIn || !user?.id || convexAuth.isLoading || !convexAuth.isAuthenticated) {
+      return;
+    }
+
     await setPlan({
       plan,
       subscriptionType,
@@ -325,7 +325,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.screen}>
-      <StatusBar style="dark" />
+      <StatusBar style={theme.isDark ? "light" : "dark"} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -360,7 +360,7 @@ export default function SettingsScreen() {
                 <View key={item} style={[styles.featureRow, { flexDirection: getDirectionalRow(isRTL) }]}>
                   <View style={styles.featureIconBox}>
                     <ChevronRight
-                      color={TEXT_PRIMARY}
+                      color={theme.textPrimary}
                       size={14}
                       strokeWidth={2.4}
                       style={{ transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] }}
@@ -373,7 +373,7 @@ export default function SettingsScreen() {
 
             <Pressable accessibilityRole="button" onPress={handleUpgrade} style={styles.upgradeButton}>
               <View style={[styles.upgradeButtonContent, { flexDirection: getDirectionalRow(isRTL) }]}>
-                <Diamond color={radix.light.slate.slate1} size={16} strokeWidth={2.2} />
+                <Diamond color={theme.textInverse} size={16} strokeWidth={2.2} />
                 <Text style={[styles.upgradeButtonText, localizedFonts.semibold]}>{t("settings.upgradePro")}</Text>
               </View>
             </Pressable>
@@ -390,6 +390,22 @@ export default function SettingsScreen() {
               rightAccessory={row.rightAccessory}
             />
           ))}
+
+          <SettingsRow
+            label="Mode sombre"
+            icon={((props: any) => <MaterialIcon name="wb-sunny" {...props} />) as any}
+            onPress={theme.toggleThemeMode}
+            showChevron={false}
+            rightAccessory={
+              <Switch
+                accessibilityLabel="Mode sombre"
+                onValueChange={(value) => theme.setThemeMode(value ? "dark" : "light")}
+                thumbColor={theme.isDark ? theme.textInverse : theme.surfaceOverlayHigh}
+                trackColor={{false: theme.borderLight, true: DARK_ACTION}}
+                value={theme.isDark}
+              />
+            }
+          />
 
           <SettingsRow
             label={t("settings.rows.restorePurchase")}
@@ -412,7 +428,7 @@ export default function SettingsScreen() {
                 </Text>
                 {shouldShowCopy ? (
                   <Pressable accessibilityRole="button" onPress={handleCopyUserId} style={styles.copyButton}>
-                    <Copy color={TEXT_SECONDARY} size={16} strokeWidth={2.2} />
+                    <Copy color={theme.textSecondary} size={16} strokeWidth={2.2} />
                   </Pressable>
                 ) : null}
               </View>
@@ -422,12 +438,12 @@ export default function SettingsScreen() {
           <SettingsRow
             label={t("settings.rows.deleteInformation")}
             icon={Trash2}
-            iconColor={RUBY_ACCENT}
-            textColor={RUBY_ACCENT}
+            iconColor={DARK_ACTION}
+            textColor={DARK_ACTION}
             showChevron={false}
             onPress={handleDeleteInformation}
             loading={isDeleting}
-            loadingColor={RUBY_ACCENT}
+            loadingColor={DARK_ACTION}
           />
         </View>
 
@@ -437,14 +453,15 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: Theme) {
+  return StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: SCREEN_BG,
+    backgroundColor: theme.bg,
   },
   scrollView: {
     flex: 1,
-    backgroundColor: SCREEN_BG,
+    backgroundColor: theme.bg,
   },
   scrollContent: {
     paddingBottom: 32,
@@ -461,7 +478,7 @@ const styles = StyleSheet.create({
     zIndex: 3,
   },
   backArrowText: {
-    color: TEXT_PRIMARY,
+    color: theme.textPrimary,
     fontSize: 34,
     lineHeight: 34,
     ...fonts.medium,
@@ -471,7 +488,7 @@ const styles = StyleSheet.create({
     width: "100%",
     minHeight: 320,
     overflow: "hidden",
-    backgroundColor: SURFACE_BG,
+    backgroundColor: theme.surface,
   },
   heroImage: {
     ...StyleSheet.absoluteFillObject,
@@ -505,13 +522,13 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     marginBottom: 8,
-    color: TEXT_SECONDARY,
+    color: theme.textSecondary,
     fontSize: 16,
     lineHeight: 18,
     ...fonts.semibold,
   },
   heroTitle: {
-    color: TEXT_PRIMARY,
+    color: theme.textPrimary,
     fontSize: 28,
     lineHeight: 32,
     ...fonts.bold,
@@ -522,7 +539,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderWidth: 1,
     borderColor: radix.light.slate.slate6,
-    backgroundColor: SURFACE_BG,
+    backgroundColor: theme.surface,
     padding: 18,
   },
   featureList: {
@@ -545,7 +562,7 @@ const styles = StyleSheet.create({
   featureText: {
     flex: 1,
     flexShrink: 1,
-    color: TEXT_PRIMARY,
+    color: theme.textPrimary,
     fontSize: 15,
     lineHeight: 18,
     ...fonts.medium,
@@ -554,7 +571,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     minHeight: 48,
     borderRadius: 999,
-    backgroundColor: RUBY_ACCENT,
+    backgroundColor: DARK_ACTION,
     justifyContent: "center",
     paddingHorizontal: 18,
     paddingVertical: 12,
@@ -566,7 +583,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   upgradeButtonText: {
-    color: radix.light.slate.slate1,
+    color: "#FFFFFF",
     fontSize: 15,
     lineHeight: 18,
     ...fonts.semibold,
@@ -585,14 +602,14 @@ const styles = StyleSheet.create({
   },
   userIdText: {
     flexShrink: 1,
-    color: TEXT_SECONDARY,
+    color: theme.textSecondary,
     fontSize: 12,
     lineHeight: 14,
     ...fonts.regular,
   },
   languageValue: {
     maxWidth: 150,
-    color: TEXT_SECONDARY,
+    color: theme.textSecondary,
     fontSize: 12,
     lineHeight: 16,
     textAlign: "auto",
@@ -604,18 +621,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 14,
-    backgroundColor: SURFACE_BG,
+    backgroundColor: theme.surface,
   },
   versionLabel: {
     marginTop: 20,
     marginBottom: 32,
-    color: TEXT_SECONDARY,
+    color: theme.textSecondary,
     textAlign: "auto",
     marginHorizontal: 24,
     fontSize: 12,
     lineHeight: 16,
     ...fonts.regular,
   },
-});
+  });
+}
 
 

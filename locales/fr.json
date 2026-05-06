@@ -8,7 +8,7 @@
       "cancel": "Annuler",
       "close": "Fermer",
       "delete": "Supprimer",
-      "save": "Enregistrer",
+      "save": "Sauvegarder",
       "share": "Partager",
       "restore": "Restaurer",
       "upgrade": "Mise à niveau",
@@ -20,7 +20,7 @@
       "addPhoto": "Ajouter une photo",
       "chooseMediaSource": "Sélectionner la source du média",
       "examplePhotos": "Photos d'exemple",
-      "seeAll": "Tout explorer",
+      "seeAll": "Voir tout",
       "uploadPlus": "Importer +",
       "exit": "Quitter",
       "connect": "Connexion...",
@@ -114,7 +114,7 @@
     "tools": {
       "interior": {
         "title": "Design d'intérieur",
-        "description": "Reimagine your space with AI precision."
+        "description": "Redéfinissez votre espace avec l'IA"
       },
       "exterior": {
         "title": "Conception extérieure",
@@ -261,7 +261,7 @@
       "fastProcessing": "Traitement rapide",
       "removeAds": "Supprimer toutes les annonces"
     },
-    "upgradePro": "Passer à PRO",
+    "upgradePro": "Passer à Pro",
     "rows": {
       "language": "Langue",
       "feedback": "Commentaires",
@@ -305,8 +305,14 @@
   },
   "profile": {
     "title": "Mon portfolio de conception",
-    "emptyTitle": "Votre portefeuille est vide. Démarrez un projet pour voir vos visions prendre vie.",
-    "emptySubtitle": "",
+    "emptyTitle": "Votre portfolio est vide",
+    "emptySubtitle": "Générez votre premier design pour commencer votre collection.",
+    "emptyCta": "Créer mon premier design",
+    "cardDesigning": "L'IA conçoit...",
+    "cardFailed": "Génération échouée",
+    "cardPreview": "Aperçu du design",
+    "cardNew": "Nouveau",
+    "cardProcessing": "Traitement...",
     "compareHint": "Faites glisser pour comparer. Appuyez deux fois pour réinitialiser.",
     "deleteFromBoardTitle": "Supprimer du portefeuille ?",
     "deleteFromBoardBody": "Ce design sera supprimé de votre portfolio.",
@@ -784,13 +790,17 @@
     },
     "editor": {
       "title": "Votre concept professionnel",
+      "yourDesign": "Votre design",
       "sourcePhoto": "Photo source",
       "comparison": "Comparaison",
       "deleteA11y": "Supprimer ce design de Mon portfolio de designs",
       "showComparison": "Afficher la comparaison avant et après",
       "hideComparison": "Masquer avant et après la comparaison",
       "removeWatermark": "Supprimer le filigrane",
+      "room": "Pièce",
+      "style": "Style",
       "regenerate": "Régénérer",
+      "rateThisResult": "Évaluez ce résultat",
       "saving": "Sauvegarde...",
       "sharing": "Partage...",
       "renderUnavailable": "Rendu indisponible. Veuillez réessayer.",
@@ -850,7 +860,7 @@
     },
     "resumeDraft": "Reprise de votre brouillon d'assistant enregistré.",
     "feedback": {
-      "like": "Comme",
+      "like": "J'aime",
       "dislike": "Je n'aime pas",
       "liked": "Merci pour les commentaires.",
       "disliked": "Commentaires envoyés à l’équipe de conception.",

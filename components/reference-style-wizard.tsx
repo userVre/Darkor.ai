@@ -959,7 +959,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.xs,
-    backgroundColor: colors.brandSurface,
+    backgroundColor: SERVICE_WIZARD_THEME.colors.accentSurface,
     ...ambientShadow(0.04, 8, 8),
   },
   readyBadgeText: {

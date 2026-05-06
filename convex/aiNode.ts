@@ -9,6 +9,7 @@ import { action, internalAction } from "./_generated/server";
 import {
   compactPromptSegments,
   dedupeSuggestions,
+  IMAGE_PROCESSING_REJECTION_MESSAGE,
   normalizeGenerationError,
   requestAzureDesignOrchestration,
   trimOptional,
@@ -297,6 +298,22 @@ async function parseAzureError(response: Response) {
   }
 }
 
+function isOpenAIImagePolicyRejection(message?: string | null) {
+  const normalized = trimOptional(message)?.toLowerCase() ?? "";
+  return (
+    normalized.includes("content filtered") ||
+    normalized.includes("content_filter") ||
+    normalized.includes("content policy") ||
+    normalized.includes("responsible ai policy") ||
+    normalized.includes("image was filtered") ||
+    normalized.includes("policy_violation") ||
+    normalized.includes("moderation_blocked") ||
+    normalized.includes("safety system") ||
+    normalized.includes("safety") ||
+    normalized.includes("moderation")
+  );
+}
+
 function getAzureImageMimeType(blob: Blob) {
   const mimeType = trimOptional(blob.type)?.toLowerCase();
   if (mimeType === "image/png" || mimeType === "image/jpeg" || mimeType === "image/jpg" || mimeType === "image/webp") {
@@ -444,7 +461,12 @@ async function runAzureImageGeneration(args: {
     });
 
     if (!response.ok) {
-      throw new ConvexError(await parseAzureError(response));
+      const reason = await parseAzureError(response);
+      throw new ConvexError(
+        isOpenAIImagePolicyRejection(reason)
+          ? IMAGE_PROCESSING_REJECTION_MESSAGE
+          : reason,
+      );
     }
 
     const payload = (await response.json()) as {
@@ -984,10 +1006,10 @@ export const generateDesign: any = internalAction({
       await ctx.runMutation((internal as any).generations.markGenerationFailed, {
         generationId: args.generationId,
         ownerId: args.ownerId,
-        errorMessage: rawMessage,
+        errorMessage: friendlyMessage,
       });
 
-      throw new ConvexError(rawMessage);
+      throw new ConvexError(friendlyMessage);
     }
   },
 });

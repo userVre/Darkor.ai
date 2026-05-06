@@ -818,7 +818,7 @@ const FINISH_OPTIONS: FinishOption[] = [
     title: "Satin",
     description: "Balanced sheen that keeps texture visible and refined.",
     promptLabel: "satin",
-    accentColor: "#d946ef",
+    accentColor: "#111111",
   },
 ];
 
@@ -1654,12 +1654,12 @@ function ModeDifferencePreview({ mode, active }: { mode: ModeOption; active: boo
       ? "rgba(251,146,60,0.42)"
       : "rgba(251,146,60,0.24)"
     : active
-      ? "rgba(217,70,239,0.44)"
-      : "rgba(217,70,239,0.28)";
-  const afterSurfaceColor = isSubtleMode ? "rgba(251,146,60,0.09)" : "rgba(217,70,239,0.12)";
+      ? "rgba(17,24,39,0.44)"
+      : "rgba(17,24,39,0.28)";
+  const afterSurfaceColor = isSubtleMode ? "rgba(251,146,60,0.09)" : "rgba(17,24,39,0.14)";
   const wallColor = isSubtleMode ? "#B58D72" : "#6D28D9";
   const floorColor = isSubtleMode ? "#6F5548" : "#2A1A42";
-  const sofaColor = isSubtleMode ? "#D9C1A8" : "#EC4899";
+  const sofaColor = isSubtleMode ? "#D9C1A8" : "#111111";
   const accentColor = isSubtleMode ? "#007AFF" : "#2DD4BF";
 
   const RoomPanel = ({
@@ -1813,7 +1813,7 @@ function ModeDifferencePreview({ mode, active }: { mode: ModeOption; active: boo
         />
       </View>
 
-      <Text style={{ color: active ? "#f5d0fe" : "#d4d4d8", fontSize: 12.5, lineHeight: 18 }}>
+      <Text style={{ color: active ? "#e5e7eb" : "#d4d4d8", fontSize: 12.5, lineHeight: 18 }}>
         {mode.previewCaption}
       </Text>
     </View>
@@ -2214,8 +2214,8 @@ export default function WorkspaceScreen() {
   const [, setIsServiceStepFlowActive] = useState(false);
   const [, setPaintTool] = useState<PaintTool>("brush");
   const [, setPaintBrushWidth] = useState(28);
-  const [paintColor, setPaintColor] = useState("#D946EF");
-  const [paintColorDraft, setPaintColorDraft] = useState("#D946EF");
+  const [paintColor, setPaintColor] = useState("#111111");
+  const [paintColorDraft, setPaintColorDraft] = useState("#111111");
   const [paintSurface, setPaintSurface] = useState<PaintSurfaceOption["value"]>("Auto");
   const [, setPaintStrokes] = useState<PaintStroke[]>([]);
   const [, setPaintRedoStrokes] = useState<PaintStroke[]>([]);
@@ -2409,8 +2409,8 @@ export default function WorkspaceScreen() {
       setIsServiceStepFlowActive(false);
       setPaintTool("brush");
       setPaintBrushWidth(28);
-      setPaintColor("#D946EF");
-      setPaintColorDraft("#D946EF");
+      setPaintColor("#111111");
+      setPaintColorDraft("#111111");
       setPaintSurface("Auto");
       setPaintStrokes([]);
       setPaintRedoStrokes([]);
@@ -2523,8 +2523,8 @@ export default function WorkspaceScreen() {
     setPaintSurface("Auto");
     setPaintTool("brush");
     setPaintBrushWidth(28);
-    setPaintColor("#D946EF");
-    setPaintColorDraft("#D946EF");
+    setPaintColor("#111111");
+    setPaintColorDraft("#111111");
   }, [isPaintService, selectedImage?.uri]);
 
   const selectedPalette = useMemo(
@@ -4067,8 +4067,8 @@ export default function WorkspaceScreen() {
       setLastGenerationCount(null);
       setPaintTool("brush");
       setPaintBrushWidth(28);
-      setPaintColor("#D946EF");
-      setPaintColorDraft("#D946EF");
+    setPaintColor("#111111");
+    setPaintColorDraft("#111111");
       setPaintSurface("Auto");
       setPaintStrokes([]);
       setPaintRedoStrokes([]);
@@ -5921,7 +5921,7 @@ export default function WorkspaceScreen() {
                           height: uploadTileHeight,
                           borderRadius: isFloorService ? DS.radius.xl : 34,
                           borderWidth: hasVisiblePhoto ? HAIRLINE : 1.5,
-                          borderColor: hasVisiblePhoto ? DS.colors.borderStrong : "rgba(255,107,242,0.72)",
+                          borderColor: hasVisiblePhoto ? DS.colors.borderStrong : "rgba(17,24,39,0.52)",
                           borderStyle: hasVisiblePhoto ? "solid" : "dashed",
                           overflow: "hidden",
                           alignSelf: "center",
@@ -6054,7 +6054,7 @@ export default function WorkspaceScreen() {
                                 width: "76%",
                                 height: "76%",
                                 borderRadius: 999,
-                                backgroundColor: "rgba(217,70,239,0.12)",
+                                backgroundColor: "rgba(17,24,39,0.14)",
                               }}
                             />
                             <View
@@ -6064,7 +6064,7 @@ export default function WorkspaceScreen() {
                                 borderRadius: isFloorService ? 26 : 30,
                                 borderWidth: 1.5,
                                 borderStyle: "dashed",
-                                borderColor: "rgba(255,107,242,0.72)",
+                                borderColor: "rgba(17,24,39,0.52)",
                                 backgroundColor: "rgba(255,255,255,0.02)",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -6085,7 +6085,7 @@ export default function WorkspaceScreen() {
                                   backgroundColor: "rgba(255,255,255,0.05)",
                                   alignItems: "center",
                                   justifyContent: "center",
-                                  ...glowShadow("rgba(217,70,239,0.18)", 22),
+                                  ...glowShadow("rgba(17,24,39,0.18)", 22),
                                 }}
                               >
                                 <Camera color="#ffffff" size={isFloorService ? 34 : 30} strokeWidth={2.05} />
@@ -6275,7 +6275,7 @@ export default function WorkspaceScreen() {
                                   width: "100%",
                                   minHeight: 224,
                                   borderWidth: active ? 1.5 : 1,
-                                  borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
+                                  borderColor: active ? "#111111" : wizardSurfaceBorderColor,
                                   backgroundColor: wizardSurfaceColor,
                                   ...glowShadow(active ? DS.colors.accentGlowStrong : "rgba(0,0,0,0.1)", active ? 28 : 14),
                                 }}
@@ -6305,7 +6305,7 @@ export default function WorkspaceScreen() {
                                         justifyContent: "center",
                                         borderRadius: 16,
                                         borderWidth: 1,
-                                        borderColor: active ? "rgba(255,107,242,0.55)" : "rgba(255,255,255,0.16)",
+                                        borderColor: active ? "rgba(17,24,39,0.55)" : "rgba(255,255,255,0.16)",
                                         backgroundColor: "rgba(8,8,10,0.58)",
                                       }}
                                     >
@@ -6324,7 +6324,7 @@ export default function WorkspaceScreen() {
                                           borderRadius: 999,
                                           borderWidth: 1,
                                           borderColor: "rgba(255,255,255,0.22)",
-                                          backgroundColor: "#d946ef",
+                                          backgroundColor: "#111111",
                                         }}
                                       >
                                         <Check color="#ffffff" size={16} strokeWidth={2.5} />
@@ -6336,7 +6336,7 @@ export default function WorkspaceScreen() {
                                     <Text style={{ color: "#ffffff", fontSize: 20, fontWeight: "700", letterSpacing: 0.3, textAlign: "left" }}>
                                       {item.title}
                                     </Text>
-                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: "left", maxWidth: isFullWidthRoomCard ? 320 : undefined }}>
+                                    <Text style={{ color: active ? "#e5e7eb" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, textAlign: "left", maxWidth: isFullWidthRoomCard ? 320 : undefined }}>
                                       {item.description}
                                     </Text>
                                   </View>
@@ -6563,7 +6563,7 @@ export default function WorkspaceScreen() {
                           <Text style={{ color: "rgba(255,255,255,0.58)", fontSize: 11, fontWeight: "700", letterSpacing: 0.3, textTransform: "uppercase" }}>
                             Scroll for more
                           </Text>
-                          <Text style={{ color: "#d946ef", fontSize: 16, lineHeight: 18 }}>v</Text>
+                                      <Text style={{ color: "#111111", fontSize: 16, lineHeight: 18 }}>v</Text>
                         </MotiView>
                       ) : null}
 
@@ -6634,7 +6634,7 @@ export default function WorkspaceScreen() {
                                   </View>
                                 ) : (
                                   <LinearGradient
-                                    colors={["rgba(217,70,239,0.22)", "rgba(255,255,255,0.04)"]}
+                                    colors={["rgba(17,24,39,0.22)", "rgba(255,255,255,0.04)"]}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 1 }}
                                     style={{ height: 136, padding: spacing.sm }}
@@ -6664,7 +6664,7 @@ export default function WorkspaceScreen() {
                                       }}
                                     >
                                       <LinearGradient
-                                        colors={["rgba(217,70,239,0.88)", "rgba(124,58,237,0.92)"]}
+                                        colors={["#111111", "#2A2A2A"]}
                                         start={{ x: 0, y: 0 }}
                                         end={{ x: 1, y: 1 }}
                                         style={{
@@ -6675,7 +6675,7 @@ export default function WorkspaceScreen() {
                                           borderRadius: 20,
                                           borderWidth: 1,
                                           borderColor: "rgba(255,255,255,0.26)",
-                                          ...glowShadow("rgba(217,70,239,0.24)", 18),
+                                          ...glowShadow("rgba(17,24,39,0.24)", 18),
                                         }}
                                       >
                                         <Sparkles color="#ffffff" size={24} strokeWidth={2.1} />
@@ -6857,13 +6857,13 @@ export default function WorkspaceScreen() {
                                 style={{
                                   borderRadius: 999,
                                   borderWidth: 1,
-                                  borderColor: item.active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
-                                  backgroundColor: item.active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
+                                  borderColor: item.active ? "rgba(17,24,39,0.28)" : "rgba(255,255,255,0.08)",
+                                  backgroundColor: item.active ? "rgba(17,24,39,0.16)" : "rgba(255,255,255,0.03)",
                                   paddingHorizontal: spacing.sm,
                                   paddingVertical: spacing.sm,
                                 }}
                               >
-                                <Text style={{ color: item.active ? "#f5d0fe" : "#d4d4d8", fontSize: 12, fontWeight: "600" }}>{item.label}</Text>
+                                <Text style={{ color: item.active ? "#e5e7eb" : "#d4d4d8", fontSize: 12, fontWeight: "600" }}>{item.label}</Text>
                               </View>
                             ))}
                           </View>
@@ -6881,7 +6881,7 @@ export default function WorkspaceScreen() {
                                     className="cursor-pointer rounded-[32px] border"
                                     style={{
                                       borderWidth: active ? 1.5 : 1,
-                                      borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
+                                      borderColor: active ? "#111111" : wizardSurfaceBorderColor,
                                       backgroundColor: active ? wizardActiveSurfaceColor : "rgba(255,255,255,0.03)",
                                       paddingHorizontal: spacing.md,
                                       paddingVertical: spacing.md,
@@ -6904,11 +6904,11 @@ export default function WorkspaceScreen() {
                                       </LinearGradient>
                                       <View style={{ flex: 1, gap: spacing.xs }}>
                                         <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700" }}>{finish.title}</Text>
-                                        <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
+                                        <Text style={{ color: active ? "#e5e7eb" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
                                           {finish.description}
                                         </Text>
                                       </View>
-                                      {active ? <BadgeCheck color="#d946ef" size={18} strokeWidth={2} /> : null}
+                                      {active ? <BadgeCheck color="#111111" size={18} strokeWidth={2} /> : null}
                                     </View>
                                   </LuxPressable>
                                 </MotiView>
@@ -6984,13 +6984,13 @@ export default function WorkspaceScreen() {
                                 style={{
                                   borderRadius: 999,
                                   borderWidth: 1,
-                                  borderColor: item.active ? "rgba(217,70,239,0.24)" : "rgba(255,255,255,0.08)",
-                                  backgroundColor: item.active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
+                                  borderColor: item.active ? "rgba(17,24,39,0.28)" : "rgba(255,255,255,0.08)",
+                                  backgroundColor: item.active ? "rgba(17,24,39,0.16)" : "rgba(255,255,255,0.03)",
                                   paddingHorizontal: spacing.sm,
                                   paddingVertical: spacing.sm,
                                 }}
                               >
-                                <Text style={{ color: item.active ? "#f5d0fe" : "#d4d4d8", fontSize: 13, fontWeight: "600" }}>{item.label}</Text>
+                                <Text style={{ color: item.active ? "#e5e7eb" : "#d4d4d8", fontSize: 13, fontWeight: "600" }}>{item.label}</Text>
                               </View>
                             ))}
                           </View>
@@ -7126,15 +7126,15 @@ export default function WorkspaceScreen() {
                                   style={{
                                     minHeight: 284,
                                     borderWidth: active ? 1.5 : 1,
-                                    borderColor: active ? "#d946ef" : wizardSurfaceBorderColor,
+                                    borderColor: active ? "#111111" : wizardSurfaceBorderColor,
                                     backgroundColor: active ? wizardActiveSurfaceColor : wizardSurfaceColor,
                                   }}
                                 >
                                   <View className="flex-row items-start justify-between">
-                                    <View className="h-14 w-14 items-center justify-center rounded-[18px]" style={{ borderWidth: 1, borderColor: active ? "rgba(217,70,239,0.22)" : "rgba(255,255,255,0.08)", backgroundColor: active ? "rgba(217,70,239,0.14)" : "rgba(255,255,255,0.03)" }}>
-                                      <ModeIcon color={active ? "#d946ef" : "#ffffff"} size={24} strokeWidth={2} />
+                                    <View className="h-14 w-14 items-center justify-center rounded-[18px]" style={{ borderWidth: 1, borderColor: active ? "rgba(17,24,39,0.30)" : "rgba(255,255,255,0.08)", backgroundColor: active ? "rgba(17,24,39,0.18)" : "rgba(255,255,255,0.03)" }}>
+                                      <ModeIcon color={active ? "#111111" : "#ffffff"} size={24} strokeWidth={2} />
                                     </View>
-                                    {active ? <BadgeCheck color="#d946ef" size={19} strokeWidth={2.1} /> : null}
+                                    {active ? <BadgeCheck color="#111111" size={19} strokeWidth={2.1} /> : null}
                                   </View>
                                   <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
                                     <Text style={{ color: "#ffffff", fontSize: 21, fontWeight: "700", lineHeight: 28 }}>{mode.title}</Text>
@@ -7174,7 +7174,7 @@ export default function WorkspaceScreen() {
                                   className="cursor-pointer overflow-hidden rounded-[22px] border"
                                   style={{
                                     borderWidth: active ? 1.5 : 1,
-                                    borderColor: aiActive ? "#2563eb" : active ? "#d946ef" : wizardSurfaceBorderColor,
+                                    borderColor: aiActive ? "#2563eb" : active ? "#111111" : wizardSurfaceBorderColor,
                                     backgroundColor: aiActive ? "rgba(37,99,235,0.16)" : active ? wizardActiveSurfaceColor : wizardSurfaceColor,
                                   }}
                                 >
@@ -7204,13 +7204,13 @@ export default function WorkspaceScreen() {
                                   ) : null}
                                   <View style={{ paddingHorizontal: spacing.sm, paddingVertical: spacing.sm, alignItems: "flex-start" }}>
                                     <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700", textAlign: "left" }} numberOfLines={2}>{palette.label}</Text>
-                                    <Text style={{ color: active ? "#f5d0fe" : wizardMutedTextColor, fontSize: 12, lineHeight: 18, marginTop: spacing.xs, textAlign: "left", maxWidth: isFullWidthPaletteCard ? 320 : undefined }} numberOfLines={2}>
+                                    <Text style={{ color: active ? "#e5e7eb" : wizardMutedTextColor, fontSize: 12, lineHeight: 18, marginTop: spacing.xs, textAlign: "left", maxWidth: isFullWidthPaletteCard ? 320 : undefined }} numberOfLines={2}>
                                       {palette.description}
                                     </Text>
                                   </View>
                                   {active || aiActive ? (
-                                    <View className="absolute right-2 top-2 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: aiActive ? "rgba(37,99,235,0.28)" : "rgba(217,70,239,0.22)", backgroundColor: "#0f0f10" }}>
-                                      <BadgeCheck color={aiActive ? "#2563eb" : "#d946ef"} size={16} strokeWidth={2} />
+                                    <View className="absolute right-2 top-2 rounded-full p-1.5" style={{ borderWidth: 1, borderColor: aiActive ? "rgba(37,99,235,0.28)" : "rgba(17,24,39,0.30)", backgroundColor: "#0f0f10" }}>
+                                      <BadgeCheck color={aiActive ? "#2563eb" : "#111111"} size={16} strokeWidth={2} />
                                     </View>
                                   ) : null}
                                 </LuxPressable>
@@ -7262,13 +7262,13 @@ export default function WorkspaceScreen() {
                                     style={{
                                       borderRadius: 999,
                                       borderWidth: 1,
-                                      borderColor: item.missing ? "rgba(248,113,113,0.5)" : "rgba(217,70,239,0.3)",
-                                      backgroundColor: item.missing ? "rgba(127,29,29,0.34)" : "rgba(11,11,15,0.94)",
+                                      borderColor: item.missing ? "rgba(17,24,39,0.38)" : "rgba(17,24,39,0.34)",
+                                      backgroundColor: item.missing ? "rgba(17,24,39,0.28)" : "rgba(11,11,15,0.94)",
                                       paddingHorizontal: spacing.md,
                                       paddingVertical: spacing.sm,
                                     }}
                                   >
-                                    <Text style={{ color: item.missing ? "#FECACA" : "#ffffff", fontSize: 13, fontWeight: "700" }}>
+                                    <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "700" }}>
                                       {`${item.title} · ${item.value}`}
                                     </Text>
                                   </View>
@@ -7318,7 +7318,7 @@ export default function WorkspaceScreen() {
                                   style={{ position: "absolute", inset: 0 }}
                                 />
                                 <View style={{ position: "absolute", left: 10, right: 10, bottom: 10 }}>
-                                  <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: "rgba(0,0,0,0.44)", borderWidth: 1, borderColor: "rgba(217,70,239,0.24)", paddingHorizontal: spacing.sm, paddingVertical: spacing.xs }}>
+                                  <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: "rgba(0,0,0,0.44)", borderWidth: 1, borderColor: "rgba(17,24,39,0.30)", paddingHorizontal: spacing.sm, paddingVertical: spacing.xs }}>
                                     <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "700", letterSpacing: 0.3 }} numberOfLines={2}>
                                       {previewThumbnailLabel}
                                     </Text>
@@ -7395,7 +7395,7 @@ export default function WorkspaceScreen() {
                     height: 14,
                     width: 88,
                     borderRadius: 999,
-                    backgroundColor: "#ff000066",
+                    backgroundColor: "rgba(17,17,17,0.40)",
                   }}
                 />
                 <MotiView
@@ -7417,7 +7417,7 @@ export default function WorkspaceScreen() {
 
               <LuxPressable onPress={handleDismissPaintTutorial} className="cursor-pointer" style={{ width: "100%" }}>
                 <LinearGradient
-                  colors={["#d946ef", "#4f46e5"]}
+                  colors={["#111111", "#2A2A2A"]}
                   start={{ x: 0, y: 0.5 }}
                   end={{ x: 1, y: 0.5 }}
                   style={{
@@ -7482,8 +7482,8 @@ export default function WorkspaceScreen() {
                         minWidth: 68,
                         borderRadius: 18,
                         borderWidth: 1,
-                        borderColor: active ? "rgba(217,70,239,0.32)" : "rgba(255,255,255,0.08)",
-                        backgroundColor: active ? "rgba(217,70,239,0.1)" : "rgba(255,255,255,0.03)",
+                        borderColor: active ? "rgba(17,24,39,0.34)" : "rgba(255,255,255,0.08)",
+                        backgroundColor: active ? "rgba(17,24,39,0.16)" : "rgba(255,255,255,0.03)",
                         paddingHorizontal: spacing.sm,
                         paddingVertical: spacing.sm,
                         alignItems: "center",
@@ -7504,7 +7504,7 @@ export default function WorkspaceScreen() {
                   onChangeText={setPaintColorDraft}
                   autoCapitalize="characters"
                   autoCorrect={false}
-                  placeholder="#D946EF"
+                  placeholder="#111111"
                   placeholderTextColor="#71717a"
                   style={{
                     borderRadius: 18,
@@ -7522,7 +7522,7 @@ export default function WorkspaceScreen() {
               </View>
 
               <LuxPressable onPress={handleApplyPaintColor} className="cursor-pointer" style={{ width: "100%" }}>
-                <LinearGradient colors={["#d946ef", "#4f46e5"]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ minHeight: 54, borderRadius: 20, alignItems: "center", justifyContent: "center" }}>
+                <LinearGradient colors={["#111111", "#2A2A2A"]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ minHeight: 54, borderRadius: 20, alignItems: "center", justifyContent: "center" }}>
                   <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700" }}>Apply Color</Text>
                 </LinearGradient>
               </LuxPressable>
@@ -7572,8 +7572,8 @@ export default function WorkspaceScreen() {
                     style={{
                       borderRadius: 18,
                       borderWidth: 1,
-                      borderColor: active ? "rgba(217,70,239,0.32)" : "rgba(255,255,255,0.08)",
-                      backgroundColor: active ? "rgba(217,70,239,0.1)" : "rgba(255,255,255,0.03)",
+                      borderColor: active ? "rgba(17,24,39,0.34)" : "rgba(255,255,255,0.08)",
+                      backgroundColor: active ? "rgba(17,24,39,0.16)" : "rgba(255,255,255,0.03)",
                       paddingHorizontal: spacing.md,
                       paddingVertical: spacing.md,
                       flexDirection: "row",
@@ -7582,7 +7582,7 @@ export default function WorkspaceScreen() {
                     }}
                   >
                     <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "600" }}>{option.label}</Text>
-                    {active ? <Check color="#d946ef" size={16} strokeWidth={2.2} /> : null}
+                    {active ? <Check color="#111111" size={16} strokeWidth={2.2} /> : null}
                   </LuxPressable>
                 );
               })}
@@ -7778,11 +7778,11 @@ export default function WorkspaceScreen() {
                             className="cursor-pointer rounded-[22px] border px-4 py-4"
                             style={{
                               borderWidth: 1,
-                              borderColor: active ? "rgba(217,70,239,0.4)" : "rgba(255,255,255,0.1)",
-                              backgroundColor: active ? "rgba(217,70,239,0.12)" : "rgba(255,255,255,0.03)",
+                              borderColor: active ? "rgba(17,24,39,0.40)" : "rgba(255,255,255,0.1)",
+                              backgroundColor: active ? "rgba(17,24,39,0.16)" : "rgba(255,255,255,0.03)",
                             }}
                           >
-                            <Text style={{ color: active ? "#f5d0fe" : "#e4e4e7", fontSize: 14, lineHeight: 22 }}>
+                            <Text style={{ color: active ? "#e5e7eb" : "#e4e4e7", fontSize: 14, lineHeight: 22 }}>
                               {prompt}
                             </Text>
                           </LuxPressable>
@@ -7808,7 +7808,7 @@ export default function WorkspaceScreen() {
                 >
                   <LuxPressable onPress={handleApplyCustomPrompt} className="cursor-pointer" style={{ width: "100%" }}>
                     <LinearGradient
-                      colors={["#d946ef", "#4f46e5"]}
+                      colors={["#111111", "#2A2A2A"]}
                       start={{ x: 0, y: 0.5 }}
                       end={{ x: 1, y: 0.5 }}
                       style={{
@@ -8217,7 +8217,7 @@ export default function WorkspaceScreen() {
                   ...fonts.bold,
                 }}
               >
-                Your Design
+                {t("workspace.editor.yourDesign")}
               </Text>
             </View>
 
@@ -8462,7 +8462,7 @@ export default function WorkspaceScreen() {
                   }}
                 >
                   <Text style={{ color: DS.colors.textMuted, fontSize: 11, lineHeight: 14, ...fonts.medium }}>
-                    Room
+                    {t("workspace.editor.room")}
                   </Text>
                   <Text
                     numberOfLines={1}
@@ -8489,7 +8489,7 @@ export default function WorkspaceScreen() {
                   }}
                 >
                   <Text style={{ color: DS.colors.textMuted, fontSize: 11, lineHeight: 14, ...fonts.medium }}>
-                    Style
+                    {t("workspace.editor.style")}
                   </Text>
                   <Text
                     numberOfLines={1}
@@ -8530,7 +8530,7 @@ export default function WorkspaceScreen() {
             >
               <EditorActionButton
                 icon={Redo2}
-                label="Regenerate"
+                label={t("workspace.editor.regenerate")}
                 onPress={handleOpenRegenerateStep}
                 disabled={isEditorActionDisabled || isGenerating}
                 loading={false}
@@ -8538,7 +8538,7 @@ export default function WorkspaceScreen() {
               />
               <EditorActionButton
                 icon={Download}
-                label="Save"
+                label={t("common.actions.save")}
                 onPress={handleSaveToGallery}
                 disabled={isEditorActionDisabled || isSaveBusy}
                 loading={isSaveBusy}
@@ -8546,7 +8546,7 @@ export default function WorkspaceScreen() {
               />
               <EditorActionButton
                 icon={Share2}
-                label="Share"
+                label={t("common.actions.share")}
                 onPress={() => {
                   void handleShare();
                 }}
@@ -8565,7 +8565,7 @@ export default function WorkspaceScreen() {
               }}
             >
               <Text style={{ color: "#687076", fontSize: 12, lineHeight: 16, letterSpacing: 0.3, textAlign: "center", ...fonts.medium }}>
-                Rate this result
+                {t("workspace.editor.rateThisResult")}
               </Text>
               <View
                 style={{

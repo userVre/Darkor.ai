@@ -3,7 +3,7 @@ import "react-native-reanimated";
 
 import {ClerkProvider, useAuth, useUser} from "@clerk/expo";
 import {BottomSheetModalProvider} from "@gorhom/bottom-sheet";
-import {useMutation} from "convex/react";
+import {useConvexAuth, useMutation} from "convex/react";
 import {ConvexProviderWithClerk} from "convex/react-clerk";
 import {useFonts} from "expo-font";
 import * as Linking from "expo-linking";
@@ -52,6 +52,7 @@ import {
 type RevenueCatPurchases,
 } from "../lib/revenuecat";
 import {tokenCache} from "../lib/token-cache";
+import {AppThemeProvider, useTheme} from "../styles/theme";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -93,6 +94,7 @@ function applyGlobalTypographyDefaults(
 
 function RevenueCatGate() {
   const { isLoaded, isSignedIn } = useAuth();
+  const convexAuth = useConvexAuth();
   const { user } = useUser();
   const setPlan = useMutation("users:setPlanFromRevenueCat" as any);
   const fulfillDiamondPurchase = useMutation("users:fulfillDiamondPurchase" as any);
@@ -211,7 +213,14 @@ function RevenueCatGate() {
               : "free",
         });
 
-        if (isSignedIn) {
+        const canSyncAuthenticatedPlan =
+          isLoaded &&
+          isSignedIn &&
+          Boolean(user?.id) &&
+          !convexAuth.isLoading &&
+          convexAuth.isAuthenticated;
+
+        if (canSyncAuthenticatedPlan) {
           await setPlan({
             plan: subscriptionState.plan,
             subscriptionType: subscriptionState.subscriptionType,
@@ -283,7 +292,10 @@ function RevenueCatGate() {
     };
   }, [
     anonymousId,
+    convexAuth.isAuthenticated,
+    convexAuth.isLoading,
     fulfillDiamondPurchase,
+    isLoaded,
     isSignedIn,
     pricingContext.countryCode,
     pricingContext.currencyCode,
@@ -602,13 +614,14 @@ function AuthRedirectGate({ children }: { children: React.ReactNode }) {
 
 function AppShell() {
   const languagePreference = useAppLanguagePreference();
+  const theme = useTheme();
 
   return (
     <Stack
       initialRouteName="index"
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: "#FFFFFF" },
+        contentStyle: { backgroundColor: theme.bg },
         animation: languagePreference.isRTL ? "slide_from_left" : "slide_from_right",
         animationDuration: 260,
       }}
@@ -618,7 +631,7 @@ function AppShell() {
         name="(auth)"
         options={{
           presentation: "modal",
-          contentStyle: { backgroundColor: "#0A0A0F" },
+          contentStyle: { backgroundColor: theme.bg },
         }}
       />
       <Stack.Screen name="(tabs)" />
@@ -627,7 +640,7 @@ function AppShell() {
         options={{
           presentation: "fullScreenModal",
           animation: "fade_from_bottom",
-          contentStyle: { backgroundColor: "#000000" },
+          contentStyle: { backgroundColor: theme.bg },
           gestureEnabled: false,
         }}
       />
@@ -698,9 +711,10 @@ export default function RootLayout() {
       key={languagePreference.isRTL ? "rtl" : "ltr"}
       style={{ flex: 1, direction: languagePreference.isRTL ? "rtl" : "ltr" }}
     >
-      <AppErrorBoundary>
-        <SafeAreaProvider>
-          <ClerkProvider publishableKey={clerkKey ?? ""} tokenCache={tokenCache}>
+      <AppThemeProvider>
+        <AppErrorBoundary>
+          <SafeAreaProvider>
+            <ClerkProvider publishableKey={clerkKey ?? ""} tokenCache={tokenCache}>
             <AuthGate>
               <Providers>
                 <ViewerSessionProvider>
@@ -729,9 +743,10 @@ export default function RootLayout() {
                 </ViewerSessionProvider>
               </Providers>
             </AuthGate>
-          </ClerkProvider>
-        </SafeAreaProvider>
-      </AppErrorBoundary>
+            </ClerkProvider>
+          </SafeAreaProvider>
+        </AppErrorBoundary>
+      </AppThemeProvider>
     </GestureHandlerRootView>
   );
 

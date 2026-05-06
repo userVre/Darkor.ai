@@ -1,11 +1,13 @@
 import {Image} from "expo-image";
-import {Lock} from "lucide-react-native";
+import {useMemo} from "react";
 import {useTranslation} from "react-i18next";
 import {StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle} from "react-native";
 
-import {DS, ambientShadow} from "../lib/design-system";
-import {DIAMOND_PILL_BLUE} from "./diamond-credit-pill";
+import {DS} from "../lib/design-system";
+import {useTheme, type Theme} from "../styles/theme";
 import {LuxPressable} from "./lux-pressable";
+
+const DARK_ACTION = "#111111";
 
 export type HomeToolCardItem = {
   id: string;
@@ -27,12 +29,14 @@ type HomeToolCardProps = {
 
 export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
   const { t } = useTranslation();
-  const topLeftRadius = item.topLeftRadius ?? 40;
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const topLeftRadius = item.topLeftRadius ?? 16;
   const isLocked = item.locked === true;
 
   return (
     <LuxPressable
-      accessibilityLabel={`${item.title}. ${item.description}${isLocked ? ". Locked" : ""}`}
+      accessibilityLabel={`${item.title}. ${item.description}${isLocked ? ". Verrouillé" : ""}`}
       accessibilityRole="button"
       onPress={() => onPress(item)}
       style={[styles.card, { borderTopLeftRadius: topLeftRadius }, style]}
@@ -40,11 +44,6 @@ export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
     >
       <View style={[styles.imageWrap, { borderTopLeftRadius: topLeftRadius }]}>
         <Image source={item.image} style={styles.image} contentFit="cover" transition={0} cachePolicy="memory-disk" />
-        {isLocked ? (
-          <View pointerEvents="none" style={styles.lockBadge}>
-            <Lock color="#111318" size={16} strokeWidth={2.2} />
-          </View>
-        ) : null}
       </View>
 
       <View style={styles.copyBlock}>
@@ -65,21 +64,16 @@ export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: Theme) {
+  return StyleSheet.create({
   card: {
     overflow: "hidden",
-    backgroundColor: DS.colors.surfaceRaised,
-    borderRadius: 24,
+    backgroundColor: theme.surfaceCard,
+    borderRadius: 16,
     borderCurve: "continuous",
-    ...ambientShadow(0.04, 16, 10),
-    shadowColor: DIAMOND_PILL_BLUE,
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
-    boxShadow: "0px 10px 24px rgba(0,122,255,0.12), 0px 0px 18px rgba(0,122,255,0.1)",
-    borderWidth: 1,
-    borderColor: DS.colors.border,
+    boxShadow: `0px 12px 28px ${theme.shadow}`,
+    borderWidth: 0.5,
+    borderColor: theme.border,
   },
   imageWrap: {
     height: 312,
@@ -87,22 +81,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderCurve: "continuous",
-    backgroundColor: DS.colors.surfaceMuted,
-  },
-  lockBadge: {
-    position: "absolute",
-    top: 14,
-    right: 14,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderCurve: "continuous",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(248, 250, 252, 0.86)",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(100, 116, 139, 0.28)",
-    boxShadow: "0px 10px 22px rgba(15, 23, 42, 0.14)",
+    backgroundColor: theme.surfaceMuted,
   },
   image: {
     width: "100%",
@@ -124,14 +103,19 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
   },
   title: {
-    color: DS.colors.textPrimary,
     ...DS.typography.cardTitle,
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: 18,
+    lineHeight: 23,
+    fontWeight: "700",
+    color: theme.textPrimary,
+    letterSpacing: 0,
   },
   description: {
-    color: DS.colors.textSecondary,
     ...DS.typography.bodySm,
+    color: theme.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
+    letterSpacing: 0,
   },
   buttonWrap: {
     justifyContent: "flex-end",
@@ -140,15 +124,16 @@ const styles = StyleSheet.create({
   },
   button: {
     borderRadius: 999,
-    paddingHorizontal: 18,
-    paddingVertical: 11,
-    backgroundColor: "#111318",
-    borderWidth: 1,
-    borderColor: "#111318",
-    boxShadow: "0px 10px 24px rgba(17, 19, 24, 0.12)",
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    backgroundColor: DARK_ACTION,
   },
   buttonText: {
-    color: "#FFFFFF",
     ...DS.typography.button,
+    color: "#FFFFFF",
+    fontSize: 13,
+    lineHeight: 17,
+    letterSpacing: 0,
   },
-});
+  });
+}

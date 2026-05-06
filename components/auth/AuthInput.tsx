@@ -8,14 +8,9 @@ import {
   View,
   type TextInputProps,
 } from "react-native";
+import {useTheme} from "../../styles/theme";
 
-const AUTH_COLORS = {
-  accent: "#E83A5A",
-  inputBackground: "rgba(255,255,255,0.08)",
-  inputBorder: "rgba(255,255,255,0.12)",
-  textPrimary: "#FFFFFF",
-  textSecondary: "rgba(255,255,255,0.60)",
-};
+const DARK_ACTION = "#111111";
 
 type AuthInputProps = {
   label: string;
@@ -44,26 +39,28 @@ export function AuthInput({
   autoCapitalize = "none",
   returnKeyType,
 }: AuthInputProps) {
+  const theme = useTheme();
   const [focused, setFocused] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const isPassword = Boolean(secureTextEntry);
 
   return (
     <View style={styles.field}>
-      <Text selectable style={styles.label}>
+      <Text selectable style={[styles.label, {color: theme.textSecondary}]}>
         {label}
       </Text>
       <View
         style={[
           styles.inputWrap,
-          focused ? styles.inputWrapFocused : null,
-          error ? styles.inputWrapError : null,
+          {backgroundColor: theme.surfaceMuted, borderColor: theme.border},
+          focused ? {borderColor: DARK_ACTION} : null,
+          error ? {borderColor: theme.error} : null,
         ]}
       >
         <TextInput
-          style={[styles.input, isPassword ? styles.passwordInput : null]}
+          style={[styles.input, {color: theme.textPrimary}, isPassword ? styles.passwordInput : null]}
           placeholder={placeholder}
-          placeholderTextColor="rgba(255,255,255,0.35)"
+          placeholderTextColor={theme.textMuted}
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={isPassword && !passwordVisible}
@@ -74,7 +71,7 @@ export function AuthInput({
           returnKeyType={returnKeyType}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          selectionColor={AUTH_COLORS.accent}
+          selectionColor={DARK_ACTION}
         />
         {isPassword ? (
           <Pressable
@@ -85,15 +82,15 @@ export function AuthInput({
             style={styles.eyeButton}
           >
             {passwordVisible ? (
-              <EyeOff color={AUTH_COLORS.textSecondary} size={20} strokeWidth={1.8} />
+              <EyeOff color={theme.textSecondary} size={20} strokeWidth={1.8} />
             ) : (
-              <Eye color={AUTH_COLORS.textSecondary} size={20} strokeWidth={1.8} />
+              <Eye color={theme.textSecondary} size={20} strokeWidth={1.8} />
             )}
           </Pressable>
         ) : null}
       </View>
       {error ? (
-        <Text selectable style={styles.error}>
+        <Text selectable style={[styles.error, {color: theme.error}]}>
           {error}
         </Text>
       ) : null}
@@ -106,7 +103,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   label: {
-    color: AUTH_COLORS.textSecondary,
     fontSize: 11,
     fontWeight: "600",
     letterSpacing: 1.2,
@@ -116,22 +112,13 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: AUTH_COLORS.inputBorder,
-    backgroundColor: AUTH_COLORS.inputBackground,
     flexDirection: "row",
     alignItems: "center",
-  },
-  inputWrapFocused: {
-    borderColor: AUTH_COLORS.accent,
-  },
-  inputWrapError: {
-    borderColor: AUTH_COLORS.accent,
   },
   input: {
     flex: 1,
     minHeight: 52,
     paddingHorizontal: 16,
-    color: AUTH_COLORS.textPrimary,
     fontSize: 15,
     fontWeight: "400",
     letterSpacing: 0,
@@ -146,7 +133,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   error: {
-    color: AUTH_COLORS.accent,
     fontSize: 11,
     fontWeight: "400",
     letterSpacing: 0,

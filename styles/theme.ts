@@ -1,5 +1,11 @@
-import { indigo, indigoDark, ruby, rubyDark, slate, slateDark } from "@radix-ui/colors";
-import { useColorScheme } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {indigo, indigoDark, ruby, rubyDark, slate, slateDark} from "@radix-ui/colors";
+import React from "react";
+import {createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode} from "react";
+
+export type ThemeMode = "light" | "dark";
+
+const THEME_STORAGE_KEY = "homedecor:theme-mode";
 
 const lightPalette = {
   slate,
@@ -13,70 +19,58 @@ const darkPalette = {
   indigo: indigoDark,
 } as const;
 
-const appPalette = {
-  background: "#FFFFFF",
-  surface: "#F9F9F9",
-  surfaceHigh: "#F3F4F6",
-  purple: "#7B61FF",
-  purpleDark: "#5B46E8",
-  purpleSoft: "rgba(123, 97, 255, 0.12)",
-  purpleSurface: "rgba(123, 97, 255, 0.08)",
-  textPrimary: "#111827",
-  textSecondary: "#4B5563",
-  textMuted: "#9CA3AF",
-  border: "rgba(17, 24, 39, 0.1)",
-  borderStrong: "rgba(123, 97, 255, 0.26)",
-  shadow: "rgba(17, 24, 39, 0.12)",
-} as const;
+function createTheme(mode: ThemeMode) {
+  const isDark = mode === "dark";
 
-function createTheme(palette: typeof lightPalette) {
   return {
-    bg: appPalette.background,
-    surface: appPalette.surface,
-    surfaceHigh: appPalette.surfaceHigh,
-    surfaceMuted: "rgba(17, 24, 39, 0.04)",
-    surfaceOverlay: "rgba(255, 255, 255, 0.96)",
-    surfaceOverlayHigh: "#FFFFFF",
-    surfaceCard: appPalette.background,
-    surfaceCardHigh: appPalette.surface,
-    surfaceSelected: appPalette.purpleSurface,
-    surfaceDisabled: "rgba(17, 24, 39, 0.05)",
+    mode,
+    isDark,
+    bg: isDark ? "#0A0A0F" : "#FFFFFF",
+    surface: isDark ? "#111119" : "#F9FAFB",
+    surfaceHigh: isDark ? "#181820" : "#F3F4F6",
+    surfaceMuted: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(17, 24, 39, 0.04)",
+    surfaceOverlay: isDark ? "rgba(10, 10, 15, 0.96)" : "rgba(255, 255, 255, 0.96)",
+    surfaceOverlayHigh: isDark ? "#181820" : "#FFFFFF",
+    surfaceCard: isDark ? "rgba(255, 255, 255, 0.06)" : "#FFFFFF",
+    surfaceCardHigh: isDark ? "rgba(255, 255, 255, 0.08)" : "#F9FAFB",
+    surfaceSelected: isDark ? "rgba(255, 255, 255, 0.10)" : "rgba(17, 24, 39, 0.08)",
+    surfaceDisabled: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(17, 24, 39, 0.05)",
 
-    textPrimary: appPalette.textPrimary,
-    textSecondary: appPalette.textSecondary,
-    textMuted: appPalette.textMuted,
-    textInverse: "#FFFFFF",
-    textBrand: appPalette.purple,
-    textSuccess: "#16A34A",
-    textWarning: palette.ruby.ruby11,
-    textError: palette.ruby.ruby11,
+    textPrimary: isDark ? "#FFFFFF" : "#111827",
+    textSecondary: isDark ? "rgba(255, 255, 255, 0.68)" : "#4B5563",
+    textMuted: isDark ? "rgba(255, 255, 255, 0.45)" : "#6B7280",
+    textInverse: isDark ? "#111827" : "#FFFFFF",
+    textBrand: "#111111",
+    textSuccess: isDark ? "#4ADE80" : "#16A34A",
+    textWarning: isDark ? rubyDark.ruby11 : ruby.ruby11,
+    textError: isDark ? "#FF6B66" : ruby.ruby11,
 
-    brand: appPalette.purple,
-    brandDark: appPalette.purpleDark,
-    brandSoft: appPalette.purpleSoft,
-    brandSurface: appPalette.purpleSurface,
-    brandSurfaceHigh: "rgba(123, 97, 255, 0.16)",
-    brandBorder: "rgba(123, 97, 255, 0.18)",
-    brandBorderStrong: appPalette.borderStrong,
+    brand: "#111111",
+    brandDark: "#050505",
+    brandSoft: isDark ? "rgba(255, 255, 255, 0.10)" : "rgba(17, 24, 39, 0.10)",
+    brandSurface: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(17, 24, 39, 0.08)",
+    brandSurfaceHigh: isDark ? "rgba(255, 255, 255, 0.14)" : "rgba(17, 24, 39, 0.14)",
+    brandBorder: isDark ? "rgba(255, 255, 255, 0.18)" : "rgba(17, 24, 39, 0.18)",
+    brandBorderStrong: isDark ? "rgba(255, 255, 255, 0.32)" : "rgba(17, 24, 39, 0.32)",
 
     success: "#22C55E",
-    warning: palette.ruby.ruby9,
-    error: palette.ruby.ruby11,
-    successSurface: "rgba(34, 197, 94, 0.1)",
-    successSurfaceHigh: "rgba(34, 197, 94, 0.16)",
-    warningSurface: palette.ruby.ruby3,
-    warningSurfaceHigh: palette.ruby.ruby4,
-    errorSurface: palette.ruby.ruby3,
-    errorSurfaceHigh: palette.ruby.ruby4,
+    warning: isDark ? rubyDark.ruby9 : ruby.ruby9,
+    error: isDark ? "#FF6B66" : ruby.ruby11,
+    successSurface: isDark ? "rgba(34, 197, 94, 0.14)" : "rgba(34, 197, 94, 0.10)",
+    successSurfaceHigh: isDark ? "rgba(34, 197, 94, 0.22)" : "rgba(34, 197, 94, 0.16)",
+    warningSurface: isDark ? rubyDark.ruby3 : ruby.ruby3,
+    warningSurfaceHigh: isDark ? rubyDark.ruby4 : ruby.ruby4,
+    errorSurface: isDark ? "rgba(255, 107, 102, 0.12)" : ruby.ruby3,
+    errorSurfaceHigh: isDark ? "rgba(255, 107, 102, 0.18)" : ruby.ruby4,
 
-    border: appPalette.border,
-    borderLight: appPalette.borderStrong,
-    shadow: appPalette.shadow,
+    border: isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(17, 24, 39, 0.10)",
+    borderLight: isDark ? "rgba(255, 255, 255, 0.20)" : "rgba(17, 24, 39, 0.16)",
+    shadow: isDark ? "rgba(0, 0, 0, 0.38)" : "rgba(17, 24, 39, 0.12)",
   } as const;
 }
 
-export const dark = createTheme(darkPalette);
-export const light = createTheme(lightPalette);
+export const light = createTheme("light");
+export const dark = createTheme("dark");
 
 export const palette = {
   sageGreen: slate.slate8,
@@ -132,9 +126,62 @@ export const radix = {
   dark: darkPalette,
 } as const;
 
-export type Theme = typeof dark;
+export type Theme = ReturnType<typeof createTheme>;
 
-export function useTheme(): Theme {
-  useColorScheme();
-  return light as Theme;
+type ThemeContextValue = Theme & {
+  setThemeMode: (mode: ThemeMode) => void;
+  toggleThemeMode: () => void;
+};
+
+const ThemeContext = createContext<ThemeContextValue>({
+  ...light,
+  setThemeMode: () => undefined,
+  toggleThemeMode: () => undefined,
+});
+
+export function AppThemeProvider({children}: {children: ReactNode}) {
+  const [mode, setMode] = useState<ThemeMode>("light");
+
+  useEffect(() => {
+    let mounted = true;
+
+    void AsyncStorage.getItem(THEME_STORAGE_KEY).then((storedMode) => {
+      if (!mounted) return;
+      if (storedMode === "dark" || storedMode === "light") {
+        setMode(storedMode);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const setThemeMode = useCallback((nextMode: ThemeMode) => {
+    setMode(nextMode);
+    void AsyncStorage.setItem(THEME_STORAGE_KEY, nextMode);
+  }, []);
+
+  const toggleThemeMode = useCallback(() => {
+    setMode((current) => {
+      const nextMode = current === "dark" ? "light" : "dark";
+      void AsyncStorage.setItem(THEME_STORAGE_KEY, nextMode);
+      return nextMode;
+    });
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      ...(mode === "dark" ? dark : light),
+      setThemeMode,
+      toggleThemeMode,
+    }),
+    [mode, setThemeMode, toggleThemeMode],
+  );
+
+  return React.createElement(ThemeContext.Provider, {value}, children);
+}
+
+export function useTheme(): ThemeContextValue {
+  return useContext(ThemeContext);
 }

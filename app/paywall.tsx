@@ -13,15 +13,12 @@ import {
 ActivityIndicator,
 Alert,
 I18nManager,
-Animated as NativeAnimated,
 Pressable,
 ScrollView,
 StyleSheet,
 Text,
 View,
 useWindowDimensions,
-type NativeScrollEvent,
-type NativeSyntheticEvent,
 type StyleProp,
 type ViewStyle,
 } from "react-native";
@@ -32,12 +29,11 @@ useSharedValue,
 withTiming,
 } from "react-native-reanimated";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
-import {createLocalizedPrice, usePricingContext, type LocalizedPrice} from "../lib/dynamic-pricing";
+import {usePricingContext} from "../lib/dynamic-pricing";
 import {ANALYTICS_EVENTS, captureAnalytics} from "../lib/analytics";
 
 import {useProSuccess} from "../components/pro-success-context";
 import {useDiamondStore} from "../components/diamond-store-context";
-import {DiamondCreditIcon} from "../components/diamond-credit-pill";
 import {useViewerCredits} from "../components/viewer-credits-context";
 import {useViewerSession} from "../components/viewer-session-context";
 import {getGenerationLimit} from "../convex/subscriptions";
@@ -45,7 +41,6 @@ import {triggerHaptic} from "../lib/haptics";
 import {scheduleOrUpdateProTip} from "../lib/notifications";
 import {
 getDirectionalAlignment,
-getDirectionalRow,
 getDirectionalTextAlign,
 } from "../lib/i18n/rtl";
 import {dismissLaunchPaywall, persistHasDismissedPaywall} from "../lib/launch-paywall";
@@ -64,49 +59,30 @@ type RevenueCatEntitlement,
 type RevenueCatPackage,
 type RevenueCatPurchases,
 } from "../lib/revenuecat";
+import {useTheme, type Theme} from "../styles/theme";
 import {fonts} from "../styles/typography";
 
-const SCREEN_BG = "#0D0D0D";
-const PANEL_BG_ALT = "#1C1C1C";
-const PANEL_BORDER = "#323232";
-const BRAND_RED = "#E83A5A";
-const BRAND_RED_ACTIVE = "#FF6B9D";
-const CTA_DEEP_RED = "#C0254A";
-const TEXT_PRIMARY = "#FFFFFF";
-const TEXT_MUTED = "rgba(255,255,255,0.72)";
-const TEXT_RESTORE = "rgba(255,255,255,0.88)";
-const CTA_TEXT = "#FFFFFF";
-const ERROR_TEXT = "#FF6B66";
-const RUBY_BADGE = "#E83A5A";
-const RUBY_BADGE_BORDER = "#FF6B9D";
 const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 3000;
-const CLOSE_VISUAL_SIZE = 40;
-const HERO_CENTER_SIZE = 196;
-const HERO_SIDE_WIDTH = 184;
-const HERO_SIDE_HEIGHT = 188;
-const HERO_SIDE_RENDERED_WIDTH = 174;
-const HERO_IMAGE_GAP = 10;
-const HERO_SIDE_SCALE = 0.92;
-const HERO_ACTIVE_SCALE = 1.05;
-const HERO_SIDE_TRANSLATE_Y = 12;
-const HERO_SNAP_INTERVAL = HERO_CENTER_SIZE / 2 + HERO_IMAGE_GAP + HERO_SIDE_RENDERED_WIDTH / 2;
-const HERO_CAROUSEL_REPEAT_MULTIPLIER = 7;
+const CLOSE_VISUAL_SIZE = 36;
+const HERO_HEIGHT = 146;
+const HERO_SIDE_HEIGHT = 112;
+const PAYWALL_BLACK = "#000000";
+const PAYWALL_ACCENT = "#E83A5A";
+const PAYWALL_ACCENT_DARK = "#C0254A";
+const PAYWALL_ACCENT_SHADOW = "rgba(232,58,90,0.22)";
+const PAYWALL_CARD_BG = "rgba(255,255,255,0.06)";
+const PAYWALL_CARD_BG_ALT = "rgba(255,255,255,0.04)";
+const PAYWALL_BORDER = "rgba(255,255,255,0.12)";
+const PAYWALL_TEXT_PRIMARY = "#FFFFFF";
+const PAYWALL_TEXT_SECONDARY = "rgba(255,255,255,0.76)";
+const PAYWALL_TEXT_MUTED = "rgba(255,255,255,0.58)";
 const HERO_IMAGES = [
   require("../assets/media/paywall/carousel-japandi-bedroom.webp"),
   require("../assets/media/paywall/carousel-luxury-marble.webp"),
   require("../assets/media/paywall/paint-intro-black-marble-salon.webp"),
 ] as const;
-const HERO_CAROUSEL_DATA = Array.from({ length: HERO_IMAGES.length * HERO_CAROUSEL_REPEAT_MULTIPLIER }, (_, index) => ({
-  id: `hero-${index}`,
-  image: HERO_IMAGES[index % HERO_IMAGES.length],
-}));
-const HERO_CAROUSEL_INITIAL_INDEX = HERO_IMAGES.length * Math.floor(HERO_CAROUSEL_REPEAT_MULTIPLIER / 2);
 const PAYWALL_FORCE_LTR = true;
-const FORCED_LTR_TEXT_STYLE = {
-  textAlign: "left" as const,
-  writingDirection: "ltr" as const,
-};
 
 function FadeSwap({
   children,
@@ -134,48 +110,73 @@ function FadeSwap({
 }
 
 function TrialIncludedText() {
-  const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const localizedFonts = fonts;
   return (
     <View style={styles.trialIncludedRow}>
-      <Text style={[styles.trialIncludedText, localizedFonts.bold]}>{t("paywall.trialIncluded")}</Text>
+      <Text style={[styles.trialIncludedCheck, localizedFonts.bold]}>{"✓"}</Text>
+      <Text style={[styles.trialIncludedText, localizedFonts.medium]}>
+        {"3 jours d'essai gratuit inclus"}
+      </Text>
     </View>
   );
 }
 
 function FeatureComparisonTable() {
-  const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const localizedFonts = fonts;
   const rows = [
     {
-      feature: t("paywall.featureTable.rows.renders"),
-      free: t("paywall.featureTable.freeRenders"),
-      pro: t("paywall.featureTable.unlimited"),
+      feature: "Rendus par jour",
+      free: "1 💎",
+      pro: "Illimité",
     },
     {
-      feature: t("paywall.featureTable.rows.quality"),
-      free: t("paywall.featureTable.hd"),
-      pro: t("paywall.featureTable.ultraHd"),
+      feature: "Qualité d'image",
+      free: "HD Standard",
+      pro: "Ultra 4K",
     },
     {
-      feature: t("paywall.featureTable.rows.watermark"),
-      free: t("paywall.featureTable.yes"),
-      pro: t("paywall.featureTable.none"),
+      feature: "Filigrane",
+      free: "Oui",
+      pro: "Non",
+    },
+    {
+      feature: "Styles de design",
+      free: "5 styles",
+      pro: "20+ styles",
+    },
+    {
+      feature: "Priorité de rendu",
+      free: "✕",
+      pro: "✓",
+    },
+    {
+      feature: "Sauvegarde portfolio",
+      free: "3 max",
+      pro: "Illimité",
+    },
+    {
+      feature: "Partage sans filigrane",
+      free: "✕",
+      pro: "✓ Export propre",
     },
   ];
 
   return (
     <View style={styles.featureTable}>
       <View style={styles.featureTableHeader}>
-        <Text style={[styles.featureTableHeaderText, styles.featureTableFeatureCell, localizedFonts.bold]}>{t("paywall.featureTable.feature")}</Text>
-        <Text style={[styles.featureTableHeaderText, styles.featureTablePlanCell, localizedFonts.bold]}>{t("paywall.featureTable.free")}</Text>
-        <Text style={[styles.featureTableHeaderText, styles.featureTablePlanCell, styles.featureTableProHeader, localizedFonts.bold]}>{t("paywall.featureTable.pro")}</Text>
+        <Text style={[styles.featureTableHeaderText, styles.featureTableFeatureCell, localizedFonts.bold]}>{"FONCTIONNALITÉ"}</Text>
+        <Text style={[styles.featureTableHeaderText, styles.featureTablePlanCell, localizedFonts.bold]}>{"GRATUIT"}</Text>
+        <Text style={[styles.featureTableHeaderText, styles.featureTablePlanCell, styles.featureTableProHeader, localizedFonts.bold]}>{"PRO"}</Text>
       </View>
-      {rows.map((row) => (
-        <View key={row.feature} style={styles.featureTableRow}>
+      {rows.map((row, index) => (
+        <View key={row.feature} style={[styles.featureTableRow, index % 2 === 0 ? styles.featureTableRowAlt : null]}>
           <Text style={[styles.featureTableFeatureText, styles.featureTableFeatureCell, localizedFonts.medium]}>{row.feature}</Text>
-          <Text style={[styles.featureTableValueText, styles.featureTablePlanCell, localizedFonts.medium]}>{row.free}</Text>
-          <Text style={[styles.featureTableProText, styles.featureTablePlanCell, localizedFonts.bold]}>{row.pro}</Text>
+          <Text style={[styles.featureTableValueText, row.free === "✕" ? styles.featureTableNoText : null, styles.featureTablePlanCell, localizedFonts.medium]}>{row.free}</Text>
+          <Text style={[styles.featureTableProText, row.pro === "✓" ? styles.featureTableYesText : null, styles.featureTablePlanCell, localizedFonts.bold]}>{row.pro}</Text>
         </View>
       ))}
     </View>
@@ -189,6 +190,8 @@ function LegalLink({
   label: string;
   onPress: () => void;
 }) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const localizedFonts = fonts;
   return (
     <Pressable
@@ -202,82 +205,83 @@ function LegalLink({
   );
 }
 
-function HeroCarouselItem({
-  image,
-  index,
-  scrollX,
-  sideScale,
-  snapInterval,
+function getHeroImageIndex(index: number) {
+  return ((index % HERO_IMAGES.length) + HERO_IMAGES.length) % HERO_IMAGES.length;
+}
+
+function HeroFanCarousel({
+  activeIndex,
+  centerWidth,
+  sideWidth,
 }: {
-  image: (typeof HERO_IMAGES)[number];
-  index: number;
-  scrollX: NativeAnimated.Value;
-  sideScale: number;
-  snapInterval: number;
+  activeIndex: number;
+  centerWidth: number;
+  sideWidth: number;
 }) {
-  const inputRange = [
-    (index - 1) * snapInterval,
-    index * snapInterval,
-    (index + 1) * snapInterval,
-  ];
-  const animatedStyle = {
-    width: scrollX.interpolate({
-      inputRange,
-      outputRange: [HERO_SIDE_WIDTH, HERO_CENTER_SIZE, HERO_SIDE_WIDTH],
-      extrapolate: "clamp",
-    }),
-    height: scrollX.interpolate({
-      inputRange,
-      outputRange: [HERO_SIDE_HEIGHT, HERO_CENTER_SIZE, HERO_SIDE_HEIGHT],
-      extrapolate: "clamp",
-    }),
-    opacity: scrollX.interpolate({
-      inputRange,
-      outputRange: [0.68, 1, 0.68],
-      extrapolate: "clamp",
-    }),
-    transform: [
-      {
-        translateY: scrollX.interpolate({
-          inputRange,
-          outputRange: [HERO_SIDE_TRANSLATE_Y, 0, HERO_SIDE_TRANSLATE_Y],
-          extrapolate: "clamp",
-        }),
-      },
-      {
-        scale: scrollX.interpolate({
-          inputRange,
-          outputRange: [sideScale, HERO_ACTIVE_SCALE, sideScale],
-          extrapolate: "clamp",
-        }),
-      },
-    ],
-  };
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const leftIndex = getHeroImageIndex(activeIndex - 1);
+  const centerIndex = getHeroImageIndex(activeIndex);
+  const rightIndex = getHeroImageIndex(activeIndex + 1);
+  const sideOffset = -Math.round(sideWidth * 0.28);
 
   return (
-    <View style={[styles.heroItemSlot, { width: snapInterval, height: HERO_SIDE_HEIGHT + HERO_SIDE_TRANSLATE_Y }]}>
-      <NativeAnimated.View style={[styles.heroImageWrap, animatedStyle]}>
-        <Image contentFit="cover" source={image} style={styles.heroImage} transition={0} />
-      </NativeAnimated.View>
+    <View style={styles.heroFan}>
+      <MotiView
+        key={`left-${leftIndex}-${activeIndex}`}
+        animate={{ opacity: 0.74, scale: 1, translateX: 0 }}
+        from={{ opacity: 0.45, scale: 0.96, translateX: -8 }}
+        style={[
+          styles.heroImageWrap,
+          styles.heroFanSideCard,
+          styles.heroFanLeftCard,
+          { height: HERO_SIDE_HEIGHT, left: sideOffset, width: sideWidth },
+        ]}
+        transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
+      >
+        <Image contentFit="cover" source={HERO_IMAGES[leftIndex]} style={styles.heroImage} transition={0} />
+      </MotiView>
+
+      <MotiView
+        key={`right-${rightIndex}-${activeIndex}`}
+        animate={{ opacity: 0.74, scale: 1, translateX: 0 }}
+        from={{ opacity: 0.45, scale: 0.96, translateX: 8 }}
+        style={[
+          styles.heroImageWrap,
+          styles.heroFanSideCard,
+          styles.heroFanRightCard,
+          { height: HERO_SIDE_HEIGHT, right: sideOffset, width: sideWidth },
+        ]}
+        transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
+      >
+        <Image contentFit="cover" source={HERO_IMAGES[rightIndex]} style={styles.heroImage} transition={0} />
+      </MotiView>
+
+      <MotiView
+        key={`center-${centerIndex}`}
+        animate={{ opacity: 1, scale: 1, translateY: 0 }}
+        from={{ opacity: 0.82, scale: 0.96, translateY: 6 }}
+        style={[
+          styles.heroImageWrap,
+          styles.heroFanCenterCard,
+          { height: HERO_HEIGHT, width: centerWidth },
+        ]}
+        transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
+      >
+        <Image contentFit="cover" source={HERO_IMAGES[centerIndex]} style={styles.heroImage} transition={0} />
+      </MotiView>
     </View>
   );
 }
 
 function YearlyPlanCard({
-  badgeText,
-  label,
-  perWeekPriceText,
-  totalPriceText,
   onPress,
 }: {
-  badgeText: string;
-  label: string;
-  perWeekPriceText: string;
-  totalPriceText: string;
   onPress: () => void;
 }) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const localizedFonts = fonts;
-  const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   return (
     <Pressable
       accessibilityRole="button"
@@ -289,14 +293,15 @@ function YearlyPlanCard({
       ]}
     >
       <View style={styles.bestOfferBadge}>
-        <Text style={[styles.bestOfferText, localizedFonts.bold]}>{badgeText}</Text>
+        <Text style={[styles.bestOfferText, localizedFonts.bold]}>{"MEILLEURE OFFRE"}</Text>
       </View>
 
-      <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+      <View style={styles.planRow}>
         <View style={styles.planCopy}>
-          <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{label}</Text>
-          <Text style={[styles.yearlyPerWeekPriceText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{perWeekPriceText}</Text>
-          <Text style={[styles.yearlyTotalText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{totalPriceText}</Text>
+          <Text style={[styles.planLabel, localizedFonts.bold]}>{"ACCÈS ANNUEL"}</Text>
+          <Text style={[styles.yearlyPerWeekPriceText, localizedFonts.bold]}>{"4,78 MAD par semaine"}</Text>
+          <Text style={[styles.yearlyTotalText, localizedFonts.medium]}>{"248,65 MAD facturé annuellement"}</Text>
+          <Text style={[styles.yearlySavingsText, localizedFonts.medium]}>{"Économisez 90% vs hebdomadaire"}</Text>
         </View>
       </View>
     </Pressable>
@@ -304,19 +309,13 @@ function YearlyPlanCard({
 }
 
 function WeeklyPlanCard({
-  label,
-  priceText,
-  trialBadgeText,
   onPress,
 }: {
-  label: string;
-  priceText: string;
-  selected?: boolean;
-  trialBadgeText?: string | null;
   onPress: () => void;
 }) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const localizedFonts = fonts;
-  const isRTL = PAYWALL_FORCE_LTR ? false : I18nManager.isRTL;
   return (
     <Pressable
       accessibilityRole="button"
@@ -327,13 +326,11 @@ function WeeklyPlanCard({
         styles.weeklyCardSecondary,
       ]}
     >
-      <View style={[styles.planRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
+      <View style={styles.planRow}>
         <View style={styles.planCopy}>
-          <Text style={[styles.planLabel, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{label}</Text>
-          <Text style={[styles.planPriceText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{priceText}</Text>
-          {trialBadgeText ? (
-            <Text style={[styles.weeklyTrialText, localizedFonts.bold, { textAlign: getDirectionalTextAlign(isRTL) }]}>{trialBadgeText}</Text>
-          ) : null}
+          <Text style={[styles.weeklyPlanLabel, localizedFonts.bold]}>{"ACCÈS HEBDOMADAIRE"}</Text>
+          <Text style={[styles.planPriceText, localizedFonts.bold]}>{"44,68 MAD par semaine"}</Text>
+          <Text style={[styles.weeklyTrialText, localizedFonts.medium]}>{"3 jours d'essai gratuit"}</Text>
         </View>
       </View>
     </Pressable>
@@ -346,93 +343,17 @@ function PaywallCloseButton({
   canClose: boolean;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
-
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View pointerEvents="box-none" style={styles.closeSlot}>
       <View pointerEvents="auto" style={styles.closeBubble}>
-        <Pressable accessibilityLabel={t("paywall.closeA11y")} accessibilityRole="button" hitSlop={10} onPress={onPress} style={styles.closeButtonInner}>
-          <X color={TEXT_PRIMARY} size={20} strokeWidth={2.4} />
+        <Pressable accessibilityLabel="Fermer" accessibilityRole="button" hitSlop={10} onPress={onPress} style={styles.closeButtonInner}>
+          <X color={PAYWALL_TEXT_PRIMARY} size={20} strokeWidth={2.4} />
         </Pressable>
       </View>
     </View>
   );
-}
-
-function normalizeCarouselIndex(index: number) {
-  const cycleIndex = ((index % HERO_IMAGES.length) + HERO_IMAGES.length) % HERO_IMAGES.length;
-  return HERO_CAROUSEL_INITIAL_INDEX + cycleIndex;
-}
-
-function getDisplayedPrice(
-  fallbackPrice: LocalizedPrice,
-  locale: string,
-  preferredCurrencyCode?: string,
-  pkg?: RevenueCatPackage | null,
-) {
-  const productPrice = pkg?.product?.price;
-  const productCurrencyCode = pkg?.product?.currencyCode;
-  const localizedPriceString = String((pkg?.product as { localizedPriceString?: string } | undefined)?.localizedPriceString ?? "").trim();
-  const forcePreferredCurrencyFormatting = preferredCurrencyCode === "MAD";
-  const storeCurrencyMatches = !preferredCurrencyCode || productCurrencyCode === preferredCurrencyCode;
-
-  if (localizedPriceString.length > 0 && storeCurrencyMatches && !forcePreferredCurrencyFormatting) {
-    return {
-      amount:
-        typeof productPrice === "number" && Number.isFinite(productPrice)
-          ? Number(productPrice.toFixed(fallbackPrice.fractionDigits))
-          : fallbackPrice.amount,
-      currencyCode: productCurrencyCode || fallbackPrice.currencyCode,
-      formatted: localizedPriceString.replace(/\s+/g, " ").trim(),
-      fractionDigits: fallbackPrice.fractionDigits,
-      source: "store" as const,
-    };
-  }
-
-  if (
-    typeof productPrice !== "number"
-    || !Number.isFinite(productPrice)
-    || !productCurrencyCode
-    || (preferredCurrencyCode != null && productCurrencyCode !== preferredCurrencyCode)
-  ) {
-    return fallbackPrice;
-  }
-
-  return createLocalizedPrice({
-    amount: productPrice,
-    currencyCode: productCurrencyCode,
-    locale,
-    source: "store",
-  });
-}
-
-function getDisplayedYearlyPerWeekPrice(
-  locale: string,
-  yearlyPrice: LocalizedPrice,
-  preferredCurrencyCode?: string,
-  pkg?: RevenueCatPackage | null,
-) {
-  const productPricePerWeek = pkg?.product?.pricePerWeek;
-  const productCurrencyCode = pkg?.product?.currencyCode ?? yearlyPrice.currencyCode;
-  const shouldPreferFallback =
-    (preferredCurrencyCode != null && yearlyPrice.currencyCode === preferredCurrencyCode)
-    || preferredCurrencyCode === "MAD";
-
-  if (!shouldPreferFallback && typeof productPricePerWeek === "number" && Number.isFinite(productPricePerWeek) && productCurrencyCode) {
-    return createLocalizedPrice({
-      amount: productPricePerWeek,
-      currencyCode: productCurrencyCode,
-      locale,
-      source: "store",
-    });
-  }
-
-  return createLocalizedPrice({
-    amount: yearlyPrice.amount / 52,
-    currencyCode: yearlyPrice.currencyCode,
-    locale,
-    source: yearlyPrice.source,
-  });
 }
 
 function filterPackagesByCurrency(
@@ -444,6 +365,8 @@ function filterPackagesByCurrency(
 }
 
 export default function PaywallScreen() {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const router = useRouter();
   const posthog = usePostHog();
   const { t } = useTranslation();
@@ -472,50 +395,26 @@ export default function PaywallScreen() {
   const setProTipNotificationIndex = useMutation("users:setProTipNotificationIndex" as any);
   const { showSuccess } = useProSuccess();
   const purchasesRef = useRef<RevenueCatPurchases | null>(null);
-  const carouselRef = useRef<ScrollView | null>(null);
-  const carouselIndexRef = useRef(HERO_CAROUSEL_INITIAL_INDEX);
-  const isCarouselDraggingRef = useRef(false);
   const entranceProgress = useSharedValue(0);
-  const carouselScrollX = useRef(new NativeAnimated.Value(0)).current;
 
   const canClose = true;
   const [selectedDuration, setSelectedDuration] = useState<BillingDuration>("yearly");
   const [packages, setPackages] = useState<RevenueCatPackage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [heroIndex, setHeroIndex] = useState(0);
   const personalizedImageUrl = typeof lastImageUrl === "string" && lastImageUrl.length > 0 ? lastImageUrl : null;
   const hasPersonalizedBackground = Boolean(personalizedImageUrl);
   const isPostWowPaywall = source === "post_wow";
   const isSoftPaywall = variant === "soft" && !isPostWowPaywall;
   const isHardPaywall = source === "generate" || source === "second-design";
-  const paywallTitle = t("paywall.title");
-  const paywallSubtitle = hasPersonalizedBackground
-    ? t("paywall.personalizedSubtitle")
-    : t("paywall.subtitle");
-  const heroSnapInterval = HERO_SNAP_INTERVAL;
-  const heroTrackPadding = Math.max((width - heroSnapInterval) / 2, 0);
-  const heroRowHeight = 220;
+  const paywallTitle = "Concevez comme un pro. Liberté de création illimitée.";
+  const paywallSubtitle = "Découvrez toute la puissance de l'IA architecturale avec des rendus illimités et une précision 4K.";
+  const heroSideWidth = Math.min(Math.max(width * 0.3, 90), 118);
+  const heroCenterWidth = Math.min(Math.max(width * 0.56, 196), 226);
+  const heroRowHeight = HERO_HEIGHT;
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
   const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
-  const displayedYearlyPrice = useMemo(
-    () => getDisplayedPrice(pricingContext.prices.yearly, pricingContext.locale, pricingContext.currencyCode, yearlyPackage),
-    [pricingContext.currencyCode, pricingContext.locale, pricingContext.prices.yearly, yearlyPackage],
-  );
-  const displayedWeeklyPrice = useMemo(
-    () => getDisplayedPrice(pricingContext.prices.weekly, pricingContext.locale, pricingContext.currencyCode, weeklyPackage),
-    [pricingContext.currencyCode, pricingContext.locale, pricingContext.prices.weekly, weeklyPackage],
-  );
-  const displayedYearlyPerWeekPrice = useMemo(
-    () =>
-      getDisplayedYearlyPerWeekPrice(
-        pricingContext.locale,
-        displayedYearlyPrice,
-        pricingContext.currencyCode,
-        yearlyPackage,
-      ),
-    [displayedYearlyPrice, pricingContext.currencyCode, pricingContext.derived.yearlyPerWeek, pricingContext.locale, yearlyPackage],
-  );
-  const weeklyPriceText = t("paywall.pricePerWeek", {price: displayedWeeklyPrice.formatted});
   const cachedOfferingPackages = useMemo(
     () =>
       filterPackagesByCurrency(
@@ -541,7 +440,6 @@ export default function PaywallScreen() {
   }, [isSoftPaywall, packages, selectedDuration, weeklyPackage, yearlyPackage]);
 
   const ctaDisabled = isLoading || !selectedPackage;
-  const isWeeklySelected = selectedDuration === "weekly";
   const sheetHeight = Math.max(height - 12, 0);
 
   useEffect(() => {
@@ -560,37 +458,12 @@ export default function PaywallScreen() {
   }, [entranceProgress]);
 
   useEffect(() => {
-    const initialOffset = HERO_CAROUSEL_INITIAL_INDEX * heroSnapInterval;
-    carouselIndexRef.current = HERO_CAROUSEL_INITIAL_INDEX;
-    carouselScrollX.setValue(initialOffset);
-
-    const frame = requestAnimationFrame(() => {
-      carouselRef.current?.scrollTo({ x: initialOffset, animated: false });
-    });
-
-    return () => cancelAnimationFrame(frame);
-  }, [carouselScrollX, heroSnapInterval]);
-
-  useEffect(() => {
     const interval = setInterval(() => {
-      if (isCarouselDraggingRef.current) {
-        return;
-      }
-
-      if (carouselIndexRef.current >= HERO_CAROUSEL_DATA.length - HERO_IMAGES.length - 1) {
-        const normalizedIndex = normalizeCarouselIndex(carouselIndexRef.current);
-        carouselIndexRef.current = normalizedIndex;
-        carouselRef.current?.scrollTo({ x: normalizedIndex * heroSnapInterval, animated: false });
-        carouselScrollX.setValue(normalizedIndex * heroSnapInterval);
-      }
-
-      const nextIndex = carouselIndexRef.current + 1;
-      carouselIndexRef.current = nextIndex;
-      carouselRef.current?.scrollTo({ x: nextIndex * heroSnapInterval, animated: true });
+      setHeroIndex((currentIndex) => getHeroImageIndex(currentIndex + 1));
     }, CAROUSEL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [carouselScrollX, heroSnapInterval]);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -728,11 +601,6 @@ export default function PaywallScreen() {
       setTimeout(() => openStore("empty_balance"), 250);
     }
   }, [canClose, closePaywall, credits, isHardPaywall, isLoading, openStore, posthog, prepareSkippedPaywallClaim, router, source]);
-
-  const handleOpenDiamondStore = useCallback(() => {
-    triggerHaptic();
-    openStore("empty_balance");
-  }, [openStore]);
 
   const handleRestore = useCallback(async () => {
     triggerHaptic();
@@ -884,9 +752,7 @@ export default function PaywallScreen() {
     }
   }, [handlePurchase, isLoading, isPostWowPaywall, isSoftPaywall, posthog, selectedPackage, source, weeklyPackage]);
 
-  const yearlyPerWeekText = t("paywall.yearlyPerWeekPrice", {price: displayedYearlyPerWeekPrice.formatted});
-  const yearlyTotalText = t("paywall.yearlyTotal", {price: displayedYearlyPrice.formatted});
-  const ctaButtonText = t("paywall.ctaTrial");
+  const ctaButtonText = "Commencer — 3 jours gratuits →";
 
   const handleSkipPostWowPaywall = useCallback(async () => {
     triggerHaptic();
@@ -921,27 +787,6 @@ export default function PaywallScreen() {
     ],
   }));
 
-  const handleCarouselMomentumEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    isCarouselDraggingRef.current = false;
-    const snappedIndex = Math.round(event.nativeEvent.contentOffset.x / heroSnapInterval);
-    const normalizedIndex = normalizeCarouselIndex(snappedIndex);
-    carouselIndexRef.current = normalizedIndex;
-
-    if (normalizedIndex !== snappedIndex) {
-      carouselRef.current?.scrollTo({ x: normalizedIndex * heroSnapInterval, animated: false });
-      carouselScrollX.setValue(normalizedIndex * heroSnapInterval);
-    }
-  }, [carouselScrollX, heroSnapInterval]);
-
-  const handleCarouselScroll = useMemo(
-    () =>
-      NativeAnimated.event(
-        [{ nativeEvent: { contentOffset: { x: carouselScrollX } } }],
-        { useNativeDriver: false },
-      ),
-    [carouselScrollX],
-  );
-
   if (isSoftPaywall) {
     return (
       <View style={styles.softScreen}>
@@ -953,37 +798,29 @@ export default function PaywallScreen() {
             gestureEnabled: true,
           }}
         />
-        <StatusBar style="light" />
+        <StatusBar style={theme.isDark ? "light" : "dark"} />
         <View style={styles.softBackdrop} />
         <Animated.View style={[styles.softSheet, { paddingBottom: Math.max(insets.bottom + 12, 20) }, sheetAnimatedStyle]}>
           <View style={styles.softHandle} />
-          <Text style={[styles.softEyebrow, localizedFonts.bold]}>{t("paywall.bestOffer")}</Text>
-          <Text style={[styles.softTitle, localizedFonts.bold]}>{t("paywall.softTitle")}</Text>
+          <Text style={[styles.softEyebrow, localizedFonts.bold]}>{"MEILLEURE OFFRE"}</Text>
+          <Text style={[styles.softTitle, localizedFonts.bold]}>{"Débloquez Darkor Pro"}</Text>
           <Text style={[styles.softSubtitle, localizedFonts.medium]}>
-            {t("paywall.softSubtitle")}
+            {"Créez des rendus illimités en qualité 4K avec 3 jours d'essai gratuit."}
           </Text>
 
           <View style={styles.softPlanStack}>
             <YearlyPlanCard
-              badgeText={t("paywall.bestOffer")}
-              label={t("paywall.yearlyAccess")}
               onPress={handleSelectYearly}
-              perWeekPriceText={yearlyPerWeekText}
-              totalPriceText={yearlyTotalText}
             />
             <WeeklyPlanCard
-              label={t("paywall.weeklyAccess")}
               onPress={handleSelectWeekly}
-              priceText={weeklyPriceText}
-              selected={selectedDuration === "weekly"}
-              trialBadgeText={selectedDuration === "weekly" ? t("paywall.freeTrial") : null}
             />
           </View>
 
           {isLoading ? (
             <View style={styles.softLoadingRow}>
-              <ActivityIndicator color={TEXT_PRIMARY} />
-              <Text style={[styles.softLoadingText, localizedFonts.medium]}>{t("paywall.processing")}</Text>
+              <ActivityIndicator color={theme.textPrimary} />
+              <Text style={[styles.softLoadingText, localizedFonts.medium]}>{"Traitement..."}</Text>
             </View>
           ) : null}
 
@@ -998,7 +835,7 @@ export default function PaywallScreen() {
             onPress={handleSkipPostWowPaywall}
             style={styles.softSkipLink}
           >
-            <Text style={[styles.softSkipText, localizedFonts.medium]}>{t("paywall.skipClaimFreeDiamond")}</Text>
+            <Text style={[styles.softSkipText, localizedFonts.medium]}>{"Continuer sans Pro"}</Text>
           </Pressable>
         </Animated.View>
       </View>
@@ -1011,7 +848,7 @@ export default function PaywallScreen() {
         options={{
           presentation: "fullScreenModal",
           animation: "fade_from_bottom",
-          contentStyle: { backgroundColor: SCREEN_BG },
+          contentStyle: { backgroundColor: PAYWALL_BLACK },
           gestureEnabled: false,
         }}
       />
@@ -1026,48 +863,32 @@ export default function PaywallScreen() {
           canClose={canClose}
           onPress={handleClose}
         />
+        <Pressable
+          accessibilityRole="button"
+          disabled={isLoading}
+          hitSlop={12}
+          onPress={() => void handleRestore()}
+          style={[styles.restoreTopButton, { top: Math.max(insets.top + 10, 40) }]}
+        >
+          <Text style={[styles.restoreText, localizedFonts.medium]}>{"Restaurer"}</Text>
+        </Pressable>
 
         <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 24, 24) }]}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 0 }]}
           contentInsetAdjustmentBehavior="never"
           showsVerticalScrollIndicator={false}
         >
           <View style={[styles.heroClip, { height: heroRowHeight }]}>
-            <NativeAnimated.ScrollView
-              ref={carouselRef}
-              contentContainerStyle={[
-                styles.heroTrack,
-                { paddingHorizontal: heroTrackPadding },
-              ]}
-              contentOffset={{ x: HERO_CAROUSEL_INITIAL_INDEX * heroSnapInterval, y: 0 }}
-              decelerationRate="fast"
-              horizontal
-              onScrollBeginDrag={() => {
-                isCarouselDraggingRef.current = true;
-              }}
-              onScrollEndDrag={(event) => {
-                if (!event.nativeEvent.velocity?.x) {
-                  isCarouselDraggingRef.current = false;
-                }
-              }}
-              onMomentumScrollEnd={handleCarouselMomentumEnd}
-              onScroll={handleCarouselScroll}
-              scrollEventThrottle={16}
-              showsHorizontalScrollIndicator={false}
-              snapToAlignment="start"
-              snapToInterval={heroSnapInterval}
-            >
-              {HERO_CAROUSEL_DATA.map((item, index) => (
-                <HeroCarouselItem
-                  key={item.id}
-                  image={item.image}
-                  index={index}
-                  scrollX={carouselScrollX}
-                  sideScale={HERO_SIDE_SCALE}
-                  snapInterval={heroSnapInterval}
-                />
-              ))}
-            </NativeAnimated.ScrollView>
+            <HeroFanCarousel
+              activeIndex={heroIndex}
+              centerWidth={heroCenterWidth}
+              sideWidth={heroSideWidth}
+            />
+            <LinearGradient
+              colors={["rgba(0,0,0,0)", PAYWALL_BLACK]}
+              pointerEvents="none"
+              style={styles.heroBottomFade}
+            />
           </View>
 
           <View style={[styles.titleSection, { alignItems: getDirectionalAlignment(isRTL) }]}>
@@ -1077,89 +898,53 @@ export default function PaywallScreen() {
 
           <FeatureComparisonTable />
 
+          <TrialIncludedText />
+
           <View style={styles.yearlyWrapper}>
             <YearlyPlanCard
-              badgeText={t("paywall.bestOffer")}
-              label={t("paywall.yearlyAccess")}
               onPress={handleSelectYearly}
-              perWeekPriceText={yearlyPerWeekText}
-              totalPriceText={yearlyTotalText}
             />
           </View>
 
           <View style={styles.weeklyWrapper}>
             <WeeklyPlanCard
-              label={t("paywall.weeklyAccess")}
               onPress={handleSelectWeekly}
-              priceText={weeklyPriceText}
-              selected={isWeeklySelected}
-              trialBadgeText={null}
             />
           </View>
-
-          {isHardPaywall ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={handleOpenDiamondStore}
-              style={[styles.diamondStoreButton, { flexDirection: getDirectionalRow(isRTL) }]}
-            >
-              <DiamondCreditIcon monochrome primaryColor="#FFFFFF" size={18} />
-              <Text style={[styles.diamondStoreText, localizedFonts.bold]}>Buy Diamond Pack</Text>
-            </Pressable>
-          ) : null}
 
           {errorMessage ? (
             <Text style={[styles.errorText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{errorMessage}</Text>
           ) : null}
 
-          <TrialIncludedText />
-
           <Pressable accessibilityRole="button" disabled={ctaDisabled} onPress={() => void handlePurchase()} style={[styles.ctaButton, ctaDisabled ? styles.ctaButtonDisabled : null]}>
             <LinearGradient
-              colors={[BRAND_RED, CTA_DEEP_RED]}
+              colors={[PAYWALL_ACCENT, PAYWALL_ACCENT_DARK]}
               end={{ x: 1, y: 0.5 }}
               start={{ x: 0, y: 0.5 }}
               style={styles.ctaGradient}
             >
             {isLoading ? (
               <View style={styles.ctaLoadingRow}>
-                <ActivityIndicator color={CTA_TEXT} />
-                <Text style={[styles.ctaText, localizedFonts.bold]}>{t("paywall.processing")}</Text>
+                <ActivityIndicator color={theme.textInverse} />
               </View>
             ) : (
               <FadeSwap swapKey={ctaButtonText} style={styles.ctaContent}>
-                <View style={[styles.ctaLabelRow, styles.forcedLtrRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-                  <Text style={[styles.ctaText, localizedFonts.bold, FORCED_LTR_TEXT_STYLE]}>{ctaButtonText}</Text>
-                  <Text
-                    style={[
-                      styles.ctaArrow,
-                      localizedFonts.bold,
-                      FORCED_LTR_TEXT_STYLE,
-                      { transform: [{ scaleX: 1 }] },
-                    ]}
-                  >
-                    {"→"}
-                  </Text>
+                <View style={styles.ctaLabelRow}>
+                  <Text style={[styles.ctaText, localizedFonts.bold]}>{ctaButtonText}</Text>
                 </View>
               </FadeSwap>
             )}
             </LinearGradient>
           </Pressable>
+          <Text style={[styles.ctaFinePrintText, localizedFonts.regular]}>
+            {"Aucun frais pendant 3 jours · Annulez à tout moment"}
+          </Text>
 
-          <View style={[styles.legalFooter, { paddingBottom: Math.max(insets.bottom + 12, 12) }]}>
-            <View style={[styles.legalLinksRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-              <LegalLink label={t("paywall.terms")} onPress={handleOpenTerms} />
-              <LegalLink label={t("paywall.privacy")} onPress={handleOpenPrivacy} />
+          <View style={[styles.legalFooter, { paddingBottom: Math.max(insets.bottom, 4) }]}>
+            <View style={styles.legalLinksRow}>
+              <LegalLink label="Conditions" onPress={handleOpenTerms} />
+              <LegalLink label="Confidentialité" onPress={handleOpenPrivacy} />
             </View>
-            <Pressable
-              accessibilityRole="button"
-              disabled={isLoading}
-              hitSlop={12}
-              onPress={() => void handleRestore()}
-              style={styles.restoreFooterButton}
-            >
-              <Text style={[styles.restoreText, localizedFonts.medium]}>{t("paywall.restore")}</Text>
-            </Pressable>
           </View>
         </ScrollView>
       </Animated.View>
@@ -1167,10 +952,11 @@ export default function PaywallScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: Theme) {
+  return StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: SCREEN_BG,
+    backgroundColor: PAYWALL_BLACK,
   },
   softScreen: {
     flex: 1,
@@ -1187,8 +973,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     borderCurve: "continuous",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.13)",
-    backgroundColor: SCREEN_BG,
+    borderColor: theme.border,
+    backgroundColor: theme.bg,
     paddingTop: 10,
     paddingHorizontal: 18,
     gap: 12,
@@ -1203,21 +989,21 @@ const styles = StyleSheet.create({
   },
   softEyebrow: {
     alignSelf: "center",
-    color: "#FFFFFF",
+    color: theme.textPrimary,
     fontSize: 12,
     lineHeight: 16,
     textTransform: "uppercase",
     letterSpacing: 0.3,
   },
   softTitle: {
-    color: TEXT_PRIMARY,
+    color: theme.textPrimary,
     fontSize: 26,
     lineHeight: 31,
     textAlign: "center",
     letterSpacing: 0.3,
   },
   softSubtitle: {
-    color: TEXT_MUTED,
+    color: theme.textSecondary,
     fontSize: 15,
     lineHeight: 21,
     textAlign: "center",
@@ -1234,7 +1020,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   softLoadingText: {
-    color: TEXT_PRIMARY,
+    color: theme.textPrimary,
     fontSize: 14,
     lineHeight: 18,
   },
@@ -1244,7 +1030,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   softSkipText: {
-    color: "rgba(255, 255, 255, 0.54)",
+    color: theme.textMuted,
     fontSize: 12,
     lineHeight: 16,
     textAlign: "center",
@@ -1254,41 +1040,44 @@ const styles = StyleSheet.create({
   },
   personalizedBackgroundOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: SCREEN_BG,
+    backgroundColor: PAYWALL_BLACK,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: SCREEN_BG,
+    backgroundColor: PAYWALL_BLACK,
   },
   personalizedAnimatedOverlay: {
-    backgroundColor: SCREEN_BG,
+    backgroundColor: PAYWALL_BLACK,
   },
   sheet: {
     flex: 1,
     position: "relative",
-    backgroundColor: SCREEN_BG,
+    backgroundColor: PAYWALL_BLACK,
   },
   personalizedSheet: {
-    backgroundColor: SCREEN_BG,
+    backgroundColor: PAYWALL_BLACK,
   },
-  restoreButton: {
+  restoreTopButton: {
     position: "absolute",
     top: 40,
+    left: 20,
     zIndex: 10,
+    minHeight: 30,
+    justifyContent: "center",
   },
   restoreText: {
-    color: TEXT_RESTORE,
-    fontSize: 14,
-    lineHeight: 18,
+    color: PAYWALL_TEXT_SECONDARY,
+    fontSize: 12,
+    lineHeight: 16,
     ...fonts.medium,
   },
   closeSlot: {
     position: "absolute",
-    top: 40,
-    right: 25,
+    top: 44,
+    right: 20,
     zIndex: 10,
-    width: 44,
-    height: 44,
+    width: CLOSE_VISUAL_SIZE,
+    height: CLOSE_VISUAL_SIZE,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1298,9 +1087,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: CLOSE_VISUAL_SIZE / 2,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.14)",
+    backgroundColor: "rgba(0, 0, 0, 0.50)",
   },
   closeButtonInner: {
     width: CLOSE_VISUAL_SIZE,
@@ -1311,88 +1098,110 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingTop: 8,
+    paddingTop: 0,
+    backgroundColor: PAYWALL_BLACK,
   },
   heroClip: {
     width: "100%",
     overflow: "hidden",
-    backgroundColor: SCREEN_BG,
+    position: "relative",
+    backgroundColor: PAYWALL_BLACK,
   },
-  heroTrack: {
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  heroItemSlot: {
+  heroFan: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
   heroImageWrap: {
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: PANEL_BG_ALT,
+    backgroundColor: PAYWALL_CARD_BG,
+    boxShadow: `0px 8px 18px ${theme.shadow}`,
+  },
+  heroFanSideCard: {
+    position: "absolute",
+    top: 18,
+    zIndex: 1,
+  },
+  heroFanLeftCard: {
+    transform: [{ rotate: "-5deg" }],
+  },
+  heroFanRightCard: {
+    transform: [{ rotate: "5deg" }],
+  },
+  heroFanCenterCard: {
+    zIndex: 2,
   },
   heroImage: {
     width: "100%",
     height: "100%",
   },
+  heroBottomFade: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 56,
+  },
   titleSection: {
     marginHorizontal: 20,
     alignItems: "flex-start",
-    marginTop: 10,
-    marginBottom: 18,
-    gap: 8,
+    marginTop: 12,
+    marginBottom: 12,
+    gap: 6,
   },
   subtitleText: {
     maxWidth: 390,
-    color: TEXT_MUTED,
-    fontSize: 15,
-    lineHeight: 21,
+    color: PAYWALL_TEXT_SECONDARY,
+    fontSize: 12,
+    lineHeight: 17,
     textAlign: "left",
-    letterSpacing: 0.3,
+    letterSpacing: 0,
     ...fonts.regular,
   },
   personalizedSubtitleText: {
     maxWidth: 390,
-    color: TEXT_PRIMARY,
+    color: PAYWALL_TEXT_PRIMARY,
     fontSize: 14,
     lineHeight: 20,
   },
   titleText: {
-    color: TEXT_PRIMARY,
-    fontSize: 30,
-    lineHeight: 36,
+    color: PAYWALL_TEXT_PRIMARY,
+    fontSize: 23,
+    lineHeight: 27,
     textAlign: "left",
     flexShrink: 1,
-    letterSpacing: 0.3,
+    letterSpacing: 0,
     ...fonts.bold,
+    fontWeight: "800",
   },
   featureTable: {
     marginHorizontal: 20,
-    marginTop: 2,
-    marginBottom: 20,
+    marginTop: 0,
+    marginBottom: 12,
     borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.11)",
-    backgroundColor: "rgba(255, 255, 255, 0.045)",
+    borderWidth: 0.5,
+    borderColor: PAYWALL_BORDER,
+    backgroundColor: PAYWALL_CARD_BG,
     overflow: "hidden",
   },
   featureTableHeader: {
-    minHeight: 34,
+    minHeight: 26,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.07)",
     paddingHorizontal: 12,
   },
   featureTableRow: {
-    minHeight: 38,
+    minHeight: 30,
     flexDirection: "row",
     alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.08)",
     paddingHorizontal: 12,
   },
+  featureTableRowAlt: {
+    backgroundColor: PAYWALL_CARD_BG_ALT,
+  },
   featureTableFeatureCell: {
-    flex: 1.35,
+    flex: 1.42,
     minWidth: 0,
     paddingRight: 8,
   },
@@ -1402,35 +1211,44 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   featureTableHeaderText: {
-    color: "rgba(255, 255, 255, 0.72)",
+    color: PAYWALL_TEXT_SECONDARY,
     fontSize: 11,
     lineHeight: 14,
     textTransform: "uppercase",
   },
   featureTableProHeader: {
-    color: TEXT_PRIMARY,
+    color: PAYWALL_ACCENT,
+    fontWeight: "700",
   },
   featureTableFeatureText: {
-    color: TEXT_PRIMARY,
+    color: PAYWALL_TEXT_PRIMARY,
     fontSize: 12,
     lineHeight: 16,
   },
   featureTableValueText: {
-    color: "rgba(255, 255, 255, 0.54)",
+    color: PAYWALL_TEXT_MUTED,
     fontSize: 12,
     lineHeight: 16,
   },
   featureTableProText: {
-    color: TEXT_PRIMARY,
+    color: PAYWALL_TEXT_PRIMARY,
     fontSize: 12,
     lineHeight: 16,
+    fontWeight: "700",
+  },
+  featureTableNoText: {
+    color: PAYWALL_TEXT_MUTED,
+  },
+  featureTableYesText: {
+    color: PAYWALL_ACCENT,
   },
   yearlyWrapper: {
     marginHorizontal: 20,
+    marginBottom: 12,
   },
   weeklyWrapper: {
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: 0,
+    marginBottom: 12,
     marginHorizontal: 20,
   },
   diamondStoreButton: {
@@ -1442,20 +1260,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.22)",
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    borderColor: theme.borderLight,
+    backgroundColor: theme.surfaceMuted,
   },
   diamondStoreText: {
-    color: "#FFFFFF",
+    color: theme.textPrimary,
     fontSize: 15,
     lineHeight: 18,
   },
   planCard: {
-    minHeight: 78,
-    borderRadius: 16,
-    backgroundColor: PANEL_BG_ALT,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    minHeight: 70,
+    borderRadius: 14,
+    borderCurve: "continuous",
+    backgroundColor: PAYWALL_CARD_BG,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     justifyContent: "center",
   },
   planGradientBorder: {
@@ -1466,42 +1285,39 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   yearlyCard: {
-    minHeight: 112,
-    paddingTop: 28,
-    paddingBottom: 18,
+    minHeight: 90,
+    paddingTop: 18,
+    paddingBottom: 10,
   },
   weeklyCard: {
-    minHeight: 68,
+    minHeight: 66,
   },
   yearlyCardHighlighted: {
-    borderWidth: 2,
-    borderColor: BRAND_RED,
-    backgroundColor: "#241217",
-    boxShadow: "0px 0px 22px rgba(232,58,90,0.34)",
+    borderWidth: 1.5,
+    borderColor: PAYWALL_ACCENT,
+    backgroundColor: PAYWALL_CARD_BG,
   },
   weeklyCardSecondary: {
-    opacity: 0.68,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    backgroundColor: "rgba(255, 255, 255, 0.055)",
+    borderWidth: 0.5,
+    borderColor: PAYWALL_BORDER,
+    backgroundColor: PAYWALL_CARD_BG,
   },
   bestOfferBadge: {
     position: "absolute",
-    top: -8,
-    right: 12,
-    borderRadius: 14,
-    backgroundColor: RUBY_BADGE,
-    borderWidth: 1,
-    borderColor: RUBY_BADGE_BORDER,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
+    top: 8,
+    right: 14,
+    borderRadius: 999,
+    backgroundColor: PAYWALL_ACCENT,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   bestOfferText: {
-    color: TEXT_PRIMARY,
-    fontSize: 11,
-    lineHeight: 13,
+    color: theme.textInverse,
+    fontSize: 10,
+    lineHeight: 12,
     textTransform: "uppercase",
     ...fonts.bold,
+    fontWeight: "700",
   },
   planRow: {
     flexDirection: "row",
@@ -1530,55 +1346,73 @@ const styles = StyleSheet.create({
     width: 132,
   },
   planLabel: {
-    color: TEXT_PRIMARY,
-    fontSize: 13,
-    lineHeight: 16,
+    color: PAYWALL_TEXT_SECONDARY,
+    fontSize: 11,
+    lineHeight: 14,
     textTransform: "uppercase",
     ...fonts.bold,
+    fontWeight: "700",
+  },
+  weeklyPlanLabel: {
+    color: PAYWALL_TEXT_MUTED,
+    fontSize: 11,
+    lineHeight: 14,
+    textTransform: "uppercase",
+    ...fonts.bold,
+    fontWeight: "700",
   },
   planSubtext: {
     marginTop: 4,
-    color: TEXT_MUTED,
+    color: theme.textSecondary,
     fontSize: 11,
     lineHeight: 15,
     ...fonts.regular,
   },
   planPriceText: {
-    marginTop: 6,
-    color: TEXT_PRIMARY,
+    marginTop: 5,
+    color: PAYWALL_TEXT_PRIMARY,
     fontSize: 17,
-    lineHeight: 22,
+    lineHeight: 21,
     ...fonts.bold,
+    fontWeight: "700",
   },
   yearlyPerWeekPriceText: {
-    marginTop: 9,
-    color: TEXT_PRIMARY,
-    fontSize: 30,
-    lineHeight: 35,
+    marginTop: 6,
+    color: PAYWALL_TEXT_PRIMARY,
+    fontSize: 20,
+    lineHeight: 24,
     ...fonts.bold,
+    fontWeight: "800",
   },
   yearlyTotalText: {
     marginTop: 3,
-    color: "rgba(255, 255, 255, 0.62)",
+    color: PAYWALL_TEXT_MUTED,
     fontSize: 12,
     lineHeight: 16,
     ...fonts.medium,
   },
+  yearlySavingsText: {
+    marginTop: 3,
+    color: "#4CAF50",
+    fontSize: 11,
+    lineHeight: 14,
+    ...fonts.medium,
+  },
   yearlyPrice: {
-    color: TEXT_PRIMARY,
+    color: theme.textPrimary,
     fontSize: 17,
     lineHeight: 21,
     ...fonts.bold,
   },
   weeklyTrialPrice: {
-    color: TEXT_PRIMARY,
+    color: theme.textPrimary,
     fontSize: 14,
     lineHeight: 17,
     flexShrink: 1,
     ...fonts.bold,
   },
   weeklyPrice: {
-    color: TEXT_PRIMARY,
+    color: theme.textPrimary,
     fontSize: 15,
     lineHeight: 18,
     ...fonts.bold,
@@ -1590,22 +1424,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 10,
     borderRadius: 999,
-    backgroundColor: BRAND_RED,
+    backgroundColor: PAYWALL_ACCENT,
   },
   trialBadgeText: {
-    color: TEXT_PRIMARY,
+    color: theme.textInverse,
     fontSize: 12,
     lineHeight: 14,
     textTransform: "uppercase",
     ...fonts.bold,
   },
   weeklyTrialText: {
-    marginTop: 7,
+    marginTop: 4,
     alignSelf: "flex-start",
-    color: BRAND_RED_ACTIVE,
-    fontSize: 12,
-    lineHeight: 15,
-    ...fonts.bold,
+    color: PAYWALL_TEXT_MUTED,
+    fontSize: 11,
+    lineHeight: 14,
+    ...fonts.medium,
   },
   noPaymentRow: {
     marginTop: 8,
@@ -1628,7 +1462,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   noticeText: {
-    color: TEXT_MUTED,
+    color: theme.textSecondary,
     fontSize: 12,
     lineHeight: 16,
     ...fonts.medium,
@@ -1638,41 +1472,49 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 14,
     textAlign: "left",
-    color: ERROR_TEXT,
+    color: theme.error,
     fontSize: 12,
     lineHeight: 16,
     ...fonts.medium,
   },
   trialIncludedRow: {
-    minHeight: 24,
-    marginTop: 2,
+    minHeight: 18,
+    marginTop: 0,
+    marginBottom: 12,
     marginHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
   },
-  trialIncludedText: {
-    color: "#26D07C",
-    fontSize: 14,
-    lineHeight: 18,
+  trialIncludedCheck: {
+    color: "#4CAF50",
+    fontSize: 12,
+    lineHeight: 16,
     ...fonts.bold,
   },
+  trialIncludedText: {
+    color: "#4CAF50",
+    fontSize: 12,
+    lineHeight: 16,
+    ...fonts.medium,
+    fontWeight: "500",
+  },
   ctaButton: {
-    height: 60,
-    marginTop: 12,
+    height: 46,
+    marginTop: 0,
     marginHorizontal: 20,
-    marginBottom: 14,
-    borderRadius: 30,
+    marginBottom: 6,
+    borderRadius: 23,
     justifyContent: "center",
     alignItems: "center",
-    boxShadow: "0px 5px 14px rgba(232,58,90,0.22)",
+    boxShadow: `0px 5px 14px ${PAYWALL_ACCENT_SHADOW}`,
     overflow: "visible",
   },
   ctaGradient: {
     width: "100%",
     height: "100%",
-    borderRadius: 30,
+    borderRadius: 23,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 18,
@@ -1699,10 +1541,20 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   ctaText: {
-    color: CTA_TEXT,
-    fontSize: 19,
-    lineHeight: 24,
+    color: theme.textInverse,
+    fontSize: 15,
+    lineHeight: 19,
     ...fonts.bold,
+    fontWeight: "700",
+  },
+  ctaFinePrintText: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+    color: PAYWALL_TEXT_MUTED,
+    fontSize: 11,
+    lineHeight: 15,
+    textAlign: "center",
+    ...fonts.regular,
   },
   ctaArrow: {
     marginHorizontal: 8,
@@ -1717,7 +1569,7 @@ const styles = StyleSheet.create({
   },
   ctaArrowVisual: {
     marginLeft: 8,
-    color: CTA_TEXT,
+    color: theme.textInverse,
     fontSize: 18,
     lineHeight: 20,
     includeFontPadding: false,
@@ -1735,36 +1587,31 @@ const styles = StyleSheet.create({
     ...fonts.bold,
   },
   legalFooter: {
-    marginTop: "auto",
+    marginTop: 0,
     marginHorizontal: 20,
-    paddingTop: 4,
+    paddingTop: 0,
     alignItems: "center",
   },
   legalLinksRow: {
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
-    justifyContent: "flex-start",
-    gap: 18,
-  },
-  restoreFooterButton: {
-    minHeight: 34,
-    alignItems: "center",
     justifyContent: "center",
-    marginTop: 2,
+    gap: 16,
   },
   legalLinkButton: {
-    minHeight: 34,
+    minHeight: 24,
     justifyContent: "center",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
   legalLinkText: {
-    color: TEXT_PRIMARY,
-    fontSize: 13,
-    lineHeight: 17,
+    color: PAYWALL_TEXT_MUTED,
+    fontSize: 12,
+    lineHeight: 16,
     textDecorationLine: "underline",
     ...fonts.medium,
   },
-});
+  });
+}
 
 

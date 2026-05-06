@@ -1,17 +1,20 @@
 import {AuthScreen} from "@/components/auth/AuthScreen";
 import {KeyboardAvoidingView, Platform, ScrollView, StyleSheet} from "react-native";
+import {useTheme} from "../../styles/theme";
 
 export default function SignInRoute() {
+  const theme = useTheme();
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.screen}
+      style={[styles.screen, {backgroundColor: theme.bg}]}
     >
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        style={styles.scroll}
+        style={[styles.scroll, {backgroundColor: theme.bg}]}
         contentContainerStyle={styles.scrollContent}
       >
         <AuthScreen mode="sign-in" />
@@ -23,11 +26,9 @@ export default function SignInRoute() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#0A0A0F",
   },
   scroll: {
     flex: 1,
-    backgroundColor: "#0A0A0F",
   },
   scrollContent: {
     flexGrow: 1,

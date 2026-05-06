@@ -3,6 +3,11 @@ import type {TextStyle} from "react-native";
 import {fonts} from "../styles/typography";
 import {DS} from "./design-system";
 
+const DARK_ACTION_SURFACE = "rgba(17, 24, 39, 0.08)";
+const DARK_ACTION_SURFACE_STRONG = "rgba(17, 24, 39, 0.14)";
+const DARK_ACTION_BORDER = "rgba(17, 24, 39, 0.18)";
+const DARK_ACTION_BORDER_STRONG = "rgba(17, 24, 39, 0.32)";
+
 const heroTitle: TextStyle = {
   ...fonts.bold,
   fontSize: 30,
@@ -58,22 +63,22 @@ export const SERVICE_WIZARD_THEME = {
     accent: DS.colors.accent,
     accentStrong: DS.colors.accentStrong,
     accentSecondary: DS.colors.accentSecondary,
-    accentSurface: light.brandSurface,
-    accentSurfaceStrong: light.brandSurfaceHigh,
-    accentBorder: light.brandBorder,
-    accentBorderStrong: light.brandBorderStrong,
-    accentGlow: light.brandBorderStrong,
-    accentGlowSoft: light.brandSurfaceHigh,
+    accentSurface: DARK_ACTION_SURFACE,
+    accentSurfaceStrong: DARK_ACTION_SURFACE_STRONG,
+    accentBorder: DARK_ACTION_BORDER,
+    accentBorderStrong: DARK_ACTION_BORDER_STRONG,
+    accentGlow: DARK_ACTION_BORDER_STRONG,
+    accentGlowSoft: DARK_ACTION_SURFACE_STRONG,
     accentText: light.textInverse,
     progressTrack: light.border,
     disabledSurface: light.surfaceDisabled,
   },
   surfaces: {
-    accent: light.brand,
-    accentButton: light.brand,
-    maskAction: light.brandDark,
+    accent: DS.colors.accent,
+    accentButton: DS.colors.accent,
+    maskAction: DS.colors.accentStrong,
     hero: light.surfaceCardHigh,
-    accentWash: light.brandSurface,
+    accentWash: DARK_ACTION_SURFACE,
   },
   typography: {
     heroTitle,

@@ -147,7 +147,7 @@ function createStyles(colors: Theme) {
       top: 6,
       bottom: 0,
       borderRadius: 14,
-      backgroundColor: colors.brandSurface,
+      backgroundColor: DS.colors.accentSurface,
     },
     pressable: {
       width: "100%",
