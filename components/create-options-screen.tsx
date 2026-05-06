@@ -1,4 +1,4 @@
-import {Settings} from "@/components/material-icons";
+import {Diamond} from "@/components/material-icons";
 import {useAuth} from "@clerk/expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {Asset} from "expo-asset";
@@ -19,15 +19,13 @@ getDirectionalRow,
 } from "../lib/i18n/rtl";
 import {withWorkspaceFlowId} from "../lib/try-it-flow";
 import {useDiamondStore} from "./diamond-store-context";
-import {DiamondCreditPill} from "./diamond-credit-pill";
-import {useElitePassModal} from "./elite-pass-context";
-import {FirstEntryRewardModal} from "./first-entry-reward-modal";
+import {DiamondCreditPill, ProBadge} from "./diamond-credit-pill";
 import {HomeToolCard, type HomeToolCardItem} from "./home-tool-card";
 import {useViewerCredits} from "./viewer-credits-context";
 import {useWorkspaceDraft} from "./workspace-context";
 
 const FIRST_LAUNCH_DISCLOSURE_KEY = "homedecor:first-launch-disclosure-accepted";
-const PRO_TOOL_LOCK_MESSAGE = "Unlock this with PRO or reach Day 7 of your Streak! 🔥";
+const PRO_TOOL_LOCK_MESSAGE = "Unlock this with PRO.";
 
 export function CreateOptionsScreen() {
   const router = useRouter();
@@ -37,16 +35,10 @@ export function CreateOptionsScreen() {
   const { clearDraft } = useWorkspaceDraft();
   const {
     credits: creditBalance,
-    diamondBalance,
     hasPaidAccess,
     hasProAccess,
-    isReady: creditsReady,
-    lastClaimAt,
-    onboardingDiamondClaimedAt,
-    streakCount,
   } = useViewerCredits();
   const { openStore } = useDiamondStore();
-  const { openElitePass } = useElitePassModal();
   const isRTL = I18nManager.isRTL;
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const sidePadding = 20;
@@ -149,17 +141,9 @@ export function CreateOptionsScreen() {
 
   const routeToToolFlow = useCallback(
     (redirectTo: string) => {
-      if (hasPaidAccess || creditBalance > 0) {
-        router.push(redirectTo as any);
-        return;
-      }
-
-      router.push({
-        pathname: "/paywall",
-        params: { source: "second-design", redirectTo },
-      } as any);
+      router.push(redirectTo as any);
     },
-    [creditBalance, hasPaidAccess, router],
+    [router],
   );
 
   const handleTryIt = useCallback((item: HomeToolCardItem) => {
@@ -197,19 +181,14 @@ export function CreateOptionsScreen() {
     }
   };
 
-  const handleSettingsPress = () => {
+  const handleUpgradeProPress = () => {
     triggerHaptic();
-    router.push("/settings" as any);
+    router.push({ pathname: "/paywall", params: { source: "tools-upgrade" } } as any);
   };
 
   const handleCreditsPress = () => {
     triggerHaptic();
     openStore();
-  };
-
-  const handleElitePassPress = () => {
-    triggerHaptic();
-    openElitePass();
   };
 
   const handleAcceptDisclosure = useCallback(async () => {
@@ -228,12 +207,6 @@ export function CreateOptionsScreen() {
     router.push({ pathname: "/legal-viewer", params: { document: "terms" } } as never);
   }, [router]);
 
-  const shouldShowFirstEntryReward =
-    creditsReady
-    && diamondBalance <= 0
-    && onboardingDiamondClaimedAt <= 0
-    && lastClaimAt <= 0;
-
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
@@ -241,26 +214,28 @@ export function CreateOptionsScreen() {
       <View style={[styles.headerShell, { paddingTop: insets.top + 10 }]}>
         <View style={[styles.headerRow, { flexDirection: getDirectionalRow(isRTL) }]}>
           <View style={[styles.sideSlot, { alignItems: getDirectionalAlignment(isRTL) }]}>
-            <DiamondCreditPill
-              accessibilityLabel={t("home.accessibility.openCredits")}
-              count={creditBalance}
-              onElitePassPress={handleElitePassPress}
-              onPress={handleCreditsPress}
-              streakCount={streakCount}
-              style={styles.creditPill}
-              variant="light"
-            />
-          </View>
-
-          <View pointerEvents="none" style={styles.centerBrand}>
-            <Text adjustsFontSizeToFit minimumFontScale={0.78} numberOfLines={1} style={styles.brandTitle}>
-              {t("app.name")}
-            </Text>
+            {hasPaidAccess ? (
+              <ProBadge style={styles.creditPill} />
+            ) : (
+              <DiamondCreditPill
+                accessibilityLabel={t("home.accessibility.openCredits")}
+                count={creditBalance}
+                onPress={handleCreditsPress}
+                style={styles.creditPill}
+                variant="light"
+              />
+            )}
           </View>
 
           <View style={[styles.sideSlot, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
-            <Pressable accessibilityRole="button" onPress={handleSettingsPress} style={styles.settingsButton}>
-              <Settings color={DS.colors.textPrimary} size={20} strokeWidth={2} />
+            <Pressable
+              accessibilityLabel={t("settings.upgradePro")}
+              accessibilityRole="button"
+              onPress={handleUpgradeProPress}
+              style={[styles.upgradeProButton, { flexDirection: getDirectionalRow(isRTL) }]}
+            >
+              <Diamond color="#FFFFFF" size={15} strokeWidth={2.15} />
+              <Text numberOfLines={1} style={styles.upgradeProText}>{t("settings.upgradePro")}</Text>
             </Pressable>
           </View>
         </View>
@@ -310,8 +285,6 @@ export function CreateOptionsScreen() {
           </View>
         </View>
       </Modal>
-
-      <FirstEntryRewardModal visible={shouldShowFirstEntryReward} />
     </View>
   );
 }
@@ -346,36 +319,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "flex-start",
   },
-  centerBrand: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 48,
-  },
-  brandTitle: {
-    color: DS.colors.textPrimary,
-    ...DS.typography.button,
-    fontSize: 19,
-    lineHeight: 24,
-    letterSpacing: 0.3,
-    flexShrink: 0,
-    textAlign: "center",
-  },
   creditPill: {
     minHeight: 42,
     paddingHorizontal: 10,
   },
-  settingsButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderCurve: "continuous",
-    backgroundColor: DS.colors.surfaceHigh,
-    borderWidth: 1,
-    borderColor: DS.colors.border,
-    boxShadow: `0px 10px 24px ${DS.colors.shadow}`,
+  upgradeProButton: {
+    minHeight: 42,
+    maxWidth: 132,
     alignItems: "center",
     justifyContent: "center",
+    gap: 7,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderCurve: "continuous",
+    backgroundColor: "#111318",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    boxShadow: "0px 12px 28px rgba(17, 19, 24, 0.18), inset 0px 0px 0px 1px rgba(255,255,255,0.08)",
+  },
+  upgradeProText: {
+    color: "#FFFFFF",
+    ...DS.typography.button,
+    fontSize: 13,
+    lineHeight: 16,
+    letterSpacing: 0,
+    flexShrink: 1,
   },
   scrollView: {
     flex: 1,

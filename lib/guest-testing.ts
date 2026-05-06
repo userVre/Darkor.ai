@@ -1,5 +1,5 @@
-// Guests start empty; the dashboard claim bar grants the first daily diamond.
-export const ENABLE_GUEST_WIZARD_TEST_MODE = true;
+// Guests stay empty. The free trial diamond is tied to the Clerk account row.
+export const ENABLE_GUEST_WIZARD_TEST_MODE = false;
 export const GUEST_TESTING_STARTER_CREDITS = 0;
 export const GUEST_TESTING_TEMP_ID = "temp_guest_id";
 

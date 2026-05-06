@@ -3,6 +3,7 @@ import { ConvexError } from "convex/values";
 import { FREE_DAILY_DIAMOND_CAP, FREE_IMAGE_LIMIT, INITIAL_FREE_DIAMONDS } from "./subscriptions";
 
 export const GUEST_STARTER_CREDITS = INITIAL_FREE_DIAMONDS;
+export const ACCOUNT_STARTER_CREDITS = 1;
 
 export function normalizeAnonymousId(value?: string | null) {
   const normalized = value?.trim();

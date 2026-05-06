@@ -10,7 +10,6 @@ import { buildDesignPrompt as buildAIDesignPrompt, normalizeAspectRatio as norma
 import {
   canUserGenerateState,
   deriveSubscriptionState,
-  FREE_REFILL_INTERVAL_MS,
   toFiniteNumber,
 } from "./subscriptions";
 import {
@@ -62,7 +61,7 @@ type GenerationUser = {
   lastClaimAt?: number;
 };
 
-const PRO_TOOL_LOCK_MESSAGE = "This tool is reserved for PRO members or Day 7 Streak winners.";
+const PRO_TOOL_LOCK_MESSAGE = "This tool is reserved for PRO members.";
 type DiamondSource = "daily_free" | "purchased_pack" | "referral";
 type RenderQuality = "medium" | "high";
 type RenderUserTier = "free" | "paid";
@@ -471,7 +470,7 @@ async function finalizeGenerationAllowance(ctx: any, ownerId: string, generation
   const nextDiamondSources = spentDiamondSources.length > nextCredits
     ? spentDiamondSources.slice(spentDiamondSources.length - nextCredits)
     : spentDiamondSources;
-  const nextDiamondClaimAt = nextCredits <= 0 ? now + FREE_REFILL_INTERVAL_MS : 0;
+  const nextDiamondClaimAt = 0;
   await ctx.db.patch(user._id as any, {
     credits: nextCredits,
     diamondBalance: nextDiamondBalance,

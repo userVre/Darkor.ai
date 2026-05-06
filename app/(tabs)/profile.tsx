@@ -1,4 +1,4 @@
-import {LayoutPanelTop} from "@/components/material-icons";
+import {LayoutPanelTop, Settings} from "@/components/material-icons";
 import {useMutation, useQuery} from "convex/react";
 import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
@@ -6,7 +6,7 @@ import {useRouter} from "expo-router";
 import {StatusBar} from "expo-status-bar";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {Alert, FlatList, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {Alert, FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions} from "react-native";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {BoardActionsModal} from "../../components/board-actions-modal";
@@ -199,7 +199,7 @@ export default function ProfileScreen() {
   }, [width]);
 
   const gridWidth = columnWidth * 2 + GRID_GAP;
-  const topContentInset = Math.max(insets.top + 16, 32);
+  const topContentInset = Math.max(insets.top + 28, 48);
   const bottomContentInset = Math.max(insets.bottom + 112, 128);
   const boardBodyMinHeight = Math.max(height - topContentInset - bottomContentInset - 64, 240);
 
@@ -260,6 +260,10 @@ export default function ProfileScreen() {
   );
 
   const keyExtractor = (item: BoardItem) => getBoardItemKey(item);
+
+  const handleSettingsPress = () => {
+    router.push("/settings" as any);
+  };
 
   const handleSaveToGallery = async () => {
     if (!actionItem?.imageUri) {
@@ -333,7 +337,19 @@ export default function ProfileScreen() {
         ]}
         ListHeaderComponent={(
           <View style={styles.header}>
-            <Text style={styles.title}>{t("profile.title")}</Text>
+            <View style={styles.profileActionsRow}>
+              <Pressable accessibilityRole="button" onPress={handleSettingsPress} style={styles.settingsLink}>
+                <Settings color={DS.colors.textPrimary} size={16} strokeWidth={1.9} />
+                <Text numberOfLines={1} style={styles.settingsLinkText}>{t("settings.title")}</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.portfolioTitleRow}>
+              <View style={styles.portfolioIconFrame}>
+                <LayoutPanelTop color={DS.colors.textPrimary} size={17} strokeWidth={1.8} />
+              </View>
+              <Text style={styles.title}>{t("profile.title")}</Text>
+            </View>
           </View>
         )}
         ListEmptyComponent={(
@@ -376,9 +392,54 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   header: {
+    width: "100%",
+    alignItems: "stretch",
+    justifyContent: "center",
+    marginBottom: 26,
+  },
+  profileActionsRow: {
+    width: "100%",
+    alignItems: "flex-end",
+    marginBottom: 22,
+  },
+  settingsLink: {
+    minHeight: 40,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 32,
+    gap: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderCurve: "continuous",
+    backgroundColor: DS.colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: DS.colors.border,
+    boxShadow: `0px 10px 24px ${DS.colors.shadow}`,
+  },
+  settingsLinkText: {
+    color: DS.colors.textPrimary,
+    fontSize: 13,
+    lineHeight: 16,
+    letterSpacing: 0,
+    ...fonts.medium,
+  },
+  portfolioTitleRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: 10,
+  },
+  portfolioIconFrame: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: DS.colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: DS.colors.border,
   },
   boardBody: {
     width: "100%",
@@ -386,10 +447,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
+    flex: 1,
     color: DS.colors.textPrimary,
-    fontSize: 20,
-    lineHeight: 24,
-    textAlign: "center",
+    fontSize: 22,
+    lineHeight: 27,
+    letterSpacing: 0,
+    textAlign: "left",
     ...fonts.bold,
   },
   emptyState: {

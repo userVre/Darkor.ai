@@ -74,7 +74,7 @@ DESIGN_WIZARD_SELECTION_BLUE,
 DESIGN_WIZARD_SELECTION_BLUE_GLOW,
 DESIGN_WIZARD_SELECTION_BLUE_SOFT,
 } from "../../components/design-wizard-primitives";
-import {DiamondCreditPill} from "../../components/diamond-credit-pill";
+import {DiamondCreditPill, ProBadge} from "../../components/diamond-credit-pill";
 import {HdLockOverlay} from "../../components/HdLockOverlay";
 import {useDiamondStore} from "../../components/diamond-store-context";
 import {ExteriorRedesignStepFour} from "../../components/exterior-redesign-step-four";
@@ -117,7 +117,6 @@ import {loadLocalBoardItems, persistLocalBoardItems, type LocalBoardItem} from "
 import {LUX_SPRING, staggerFadeUp} from "../../lib/motion";
 import {requestPermissionsGracefully} from "../../lib/notifications";
 import {uploadLocalFileToCloud} from "../../lib/native-upload";
-import {getRewardStatus} from "../../lib/rewards";
 import {SERVICE_WIZARD_THEME} from "../../lib/service-wizard-theme";
 import {requestStoreReview} from "../../lib/store-review";
 import {getFloorWizardExamplePhotos, getPaintWizardExamplePhotos} from "../../lib/wizard-example-photos";
@@ -125,7 +124,7 @@ import {spacing} from "../../styles/spacing";
 import {fonts} from "../../styles/typography";
 
 const TABS_HOME_ROUTE = "/(tabs)/index";
-const PRO_TOOL_LOCK_MESSAGE = "Unlock this with PRO or reach Day 7 of your Streak! 🔥";
+const PRO_TOOL_LOCK_MESSAGE = "Unlock this with PRO.";
 
 function breakLongWizardDescription(description: string) {
   const sentences = description.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((part) => part.trim()).filter(Boolean) ?? [description];
@@ -2107,7 +2106,7 @@ export default function WorkspaceScreen() {
   }>();
   const { isSignedIn } = useAuth();
   const { anonymousId, isReady: viewerReady } = useViewerSession();
-  const { credits: sharedCreditBalance, clearOptimisticCredits, notificationsDeclined, setOptimisticCredits, streakCount } = useViewerCredits();
+  const { credits: sharedCreditBalance, clearOptimisticCredits, notificationsDeclined, setOptimisticCredits } = useViewerCredits();
   const { openStore } = useDiamondStore();
   const guestWizardTestingSession = isGuestWizardTestingSession(isSignedIn);
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
@@ -3258,35 +3257,24 @@ export default function WorkspaceScreen() {
   const generationAccess = diagnostic
     ? { allowed: true, reason: "ok" as const, remaining: creditBalance, hasPaidAccess: true, message: "" }
     : canUserGenerateNow(effectiveGenerationState);
+  const shouldHardPaywallGeneration = !diagnostic && !hasPaidAccess && creditBalance <= 0;
   const hasGenerationCredits = generationAccess.allowed;
   const remainingCreditsAfterGenerate = Math.max(creditBalance - 1, 0);
   const generationCreditLabel = hasPaidAccess
     ? `Unlimited generations \u00b7 ${me?.generationOutputResolution === "4096x4096" ? "4K Ultra-HD" : "HD"}`
     : `Uses 1 Diamond \u00b7 ${remainingCreditsAfterGenerate} remaining`;
-  const [refillCountdownNow, setRefillCountdownNow] = useState(() => Date.now());
-  const refillStatus = useMemo(
-    () => me?.canClaimDiamond
-      ? getRewardStatus(undefined, refillCountdownNow)
-      : getRewardStatus(me?.nextDiamondClaimAt ?? me?.nextRefillTimestamp ?? me?.lastRefillTimestamp, refillCountdownNow),
-    [me?.canClaimDiamond, me?.lastRefillTimestamp, me?.nextDiamondClaimAt, me?.nextRefillTimestamp, refillCountdownNow],
-  );
-  const refillHoursRemaining = Math.max(1, Math.ceil(refillStatus.remainingMs / (60 * 60 * 1000)));
-  const shouldShowRefillCountdown = !hasPaidAccess && creditBalance <= 0 && !refillStatus.isEligible;
   const usageBadgeLabel = hasPaidAccess
     ? me?.plan === "trial"
       ? t("workspace.localization.usageBadge.trialUnlimited")
       : t("workspace.localization.usageBadge.proUnlimited")
-    : shouldShowRefillCountdown
-      ? t("workspace.localization.usageBadge.refillInHours", {
-          hours: refillHoursRemaining,
-          defaultValue: `Refill in: ${refillHoursRemaining}h`,
-        })
-      : t("workspace.localization.usageBadge.diamonds", { count: creditBalance });
+    : t("workspace.localization.usageBadge.diamonds", { count: creditBalance });
   const usageBadgeDetail = hasPaidAccess
     ? me?.priorityProcessing
       ? t("workspace.localization.usageBadge.priorityNoWatermark")
       : t("workspace.localization.usageBadge.noWatermark")
-    : t("workspace.localization.usageBadge.refills");
+    : t("workspace.localization.usageBadge.noFreeRefills", {
+        defaultValue: "Buy more Diamonds to continue",
+      });
   const ignoreReviewCooldown = __DEV__ || process.env.EXPO_PUBLIC_REVIEW_FORCE === "1";
   const showStyleScrollCue = !isPaintService && !isFloorService && displayedStyleCards.length > 6;
   const isDownloadingStandard = isDownloading === "standard";
@@ -3297,20 +3285,6 @@ export default function WorkspaceScreen() {
       clearOptimisticCredits();
     }
   }, [clearOptimisticCredits, diagnostic]);
-
-  useEffect(() => {
-    if (!shouldShowRefillCountdown) {
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setRefillCountdownNow(Date.now());
-    }, 60 * 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [shouldShowRefillCountdown]);
 
   useEffect(() => {
     if (!(workflowStep === 3 && !isPaintService && !isFloorService && !isLeanGenerationService)) {
@@ -4230,7 +4204,7 @@ export default function WorkspaceScreen() {
   const openGenerationPaywall = useCallback(() => {
     router.push({
       pathname: "/paywall",
-      params: { source: "second-design", ...(activeEditorImageUrl ? { lastImageUrl: activeEditorImageUrl } : {}) },
+      params: { source: "generate", ...(activeEditorImageUrl ? { lastImageUrl: activeEditorImageUrl } : {}) },
     } as any);
   }, [activeEditorImageUrl, router]);
 
@@ -4392,6 +4366,11 @@ export default function WorkspaceScreen() {
       }
     } else if (!activeSelectedImage || !activeRoomLabel || !activeStyleLabel || (!activeSmartSuggest && !activePaletteOption) || !activeModeOption) {
       Alert.alert(t("workspace.generation.completeStepsTitle"), t("workspace.generation.completePreviousSteps"));
+      return;
+    }
+
+    if (shouldHardPaywallGeneration) {
+      openGenerationPaywall();
       return;
     }
 
@@ -4628,6 +4607,7 @@ export default function WorkspaceScreen() {
     openAuthWall,
     openGenerationPaywall,
     posthog,
+    shouldHardPaywallGeneration,
     ratioSpec.ratioLabel,
     ensureWorkspaceSelectionsComplete,
     selectedFinishOption,
@@ -4677,6 +4657,11 @@ export default function WorkspaceScreen() {
   const handleRegenerate = useCallback(async () => {
     if (!activeBoardItem) {
       showToast(t("workspace.download.generateFirst"));
+      return;
+    }
+
+    if (shouldHardPaywallGeneration) {
+      openGenerationPaywall();
       return;
     }
 
@@ -4741,6 +4726,7 @@ export default function WorkspaceScreen() {
     selectedStyle,
     selectedFinishId,
     serviceType,
+    shouldHardPaywallGeneration,
     showToast,
     t,
   ]);
@@ -4858,6 +4844,10 @@ export default function WorkspaceScreen() {
         void handleRegenerate();
         return;
       }
+      if (shouldHardPaywallGeneration) {
+        openGenerationPaywall();
+        return;
+      }
       if (!diagnostic && !generationAccess.allowed) {
         if (generationAccess.reason === "paywall" && !effectiveSignedIn) {
           openAuthWall("/workspace", true);
@@ -4876,7 +4866,7 @@ export default function WorkspaceScreen() {
 
     setWizardNavDirection(1);
     setWorkflowStep((prev) => Math.min(prev + 1, 3));
-  }, [canContinue, diagnostic, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, handleGenerate, handleRegenerate, openAuthWall, openGenerationPaywall, pendingRegenerateConfirm, showToast, workflowStep, t]);
+  }, [canContinue, diagnostic, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, handleGenerate, handleRegenerate, openAuthWall, openGenerationPaywall, pendingRegenerateConfirm, shouldHardPaywallGeneration, showToast, workflowStep, t]);
 
   const handleContinueFromGardenPhotoStep = useCallback(() => {
     if (!selectedImage) {
@@ -8233,14 +8223,17 @@ export default function WorkspaceScreen() {
 
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <View style={{ minWidth: 88, alignItems: "flex-start" }}>
-                <DiamondCreditPill
-                  count={creditBalance}
-                  iconOnly
-                  onPress={handleUpgrade}
-                  streakCount={streakCount}
-                  style={{ height: 42, minHeight: 42 }}
-                  variant="light"
-                />
+                {hasPaidAccess ? (
+                  <ProBadge style={{ height: 42, minHeight: 42 }} />
+                ) : (
+                  <DiamondCreditPill
+                    count={creditBalance}
+                    iconOnly
+                    onPress={handleUpgrade}
+                    style={{ height: 42, minHeight: 42 }}
+                    variant="light"
+                  />
+                )}
               </View>
 
               <View style={{ width: 88, alignItems: "flex-end" }}>

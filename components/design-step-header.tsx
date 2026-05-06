@@ -78,7 +78,7 @@ export function DesignStepHeader({
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
-  const { hasPaidAccess, streakCount } = useViewerCredits();
+  const { hasPaidAccess } = useViewerCredits();
   const { openStore } = useDiamondStore();
   const resolvedTitle = title ?? t("app.name");
 
@@ -133,7 +133,6 @@ export function DesignStepHeader({
                   count={creditCount ?? 0}
                   iconOnly
                   onPress={handleCreditsTap}
-                  streakCount={streakCount}
                   style={styles.creditPill}
                   variant="light"
                 />

@@ -185,6 +185,26 @@
     "justPerYear": "Just {{price}} per year",
     "pricePerYear": "Just {{price}} per year",
     "pricePerWeek": "{{price}} per week",
+    "yearlyPerWeekPrice": "{{price}} per week",
+    "yearlyTotal": "{{price}} per year",
+    "trialIncluded": "✓ 3 free trial days included",
+    "ctaTrial": "Start - 3 free days →",
+    "featureTable": {
+      "feature": "Feature",
+      "free": "Free",
+      "pro": "Pro",
+      "freeRenders": "3",
+      "unlimited": "Unlimited",
+      "hd": "HD",
+      "ultraHd": "4K",
+      "yes": "Yes",
+      "none": "No",
+      "rows": {
+        "renders": "Renders per day",
+        "quality": "Export quality",
+        "watermark": "Watermark"
+      }
+    },
     "perWeek": "per week",
     "thenWeekly": "Then {{price}}",
     "thenPricePerWeek": "Then {{price}} per week",
@@ -214,7 +234,7 @@
     "title": "Design Like a Pro. Unrestricted Creative Freedom.",
     "beginTrial": "Begin Your Pro Trial",
     "subscribeNow": "Subscribe Now",
-    "skipClaimFreeDiamond": "Skip - claim my free Diamond instead"
+    "skipClaimFreeDiamond": "Not now"
   },
   "elitePass": {
     "title": "PASS ELITE",
@@ -1083,7 +1103,8 @@
         "refillInHours": "Refill in: {{hours}}h",
         "priorityNoWatermark": "Priority queue · No watermark",
         "noWatermark": "No watermark",
-        "refills": "Refills to 3 every 72h"
+        "refills": "Refills to 3 every 72h",
+        "noFreeRefills": "Buy more Diamonds to continue"
       },
       "stepFourSticky": "Step 4: Refine Direction",
       "exteriorEmptyStateSubtitle": "Reimagine your home's facade with professional styling."

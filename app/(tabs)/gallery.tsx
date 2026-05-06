@@ -6,7 +6,7 @@ import {useTranslation} from "react-i18next";
 import {Pressable, StyleSheet, Text, View, useWindowDimensions} from "react-native";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
-import {DiamondCreditPill} from "../../components/diamond-credit-pill";
+import {DiamondCreditPill, ProBadge} from "../../components/diamond-credit-pill";
 import {useDiamondStore} from "../../components/diamond-store-context";
 import {DiscoverImageCard} from "../../components/discover-image-card";
 import {DiscoverPreviewModal} from "../../components/discover-preview-modal";
@@ -88,7 +88,7 @@ export default function GalleryScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { credits, streakCount } = useViewerCredits();
+  const { credits, hasPaidAccess } = useViewerCredits();
   const { openStore } = useDiamondStore();
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
   const [selectedClusterId, setSelectedClusterId] = useState<DiscoverClusterId>("interiors");
@@ -160,16 +160,19 @@ export default function GalleryScreen() {
       <View style={[styles.headerWrap, { paddingTop: insets.top + 16 }]}>
         <View style={styles.topRow}>
           <View style={styles.creditSlot}>
-            <DiamondCreditPill
-              accessibilityLabel={t("home.accessibility.openCredits")}
-              accessibilityRole="button"
-              count={credits}
-              iconOnly
-              onPress={handleCreditsPress}
-              streakCount={streakCount}
-              style={styles.creditPill}
-              variant="dark"
-            />
+            {hasPaidAccess ? (
+              <ProBadge style={styles.creditPill} />
+            ) : (
+              <DiamondCreditPill
+                accessibilityLabel={t("home.accessibility.openCredits")}
+                accessibilityRole="button"
+                count={credits}
+                iconOnly
+                onPress={handleCreditsPress}
+                style={styles.creditPill}
+                variant="dark"
+              />
+            )}
           </View>
 
           <View pointerEvents="none" style={styles.titleSlot}>
@@ -201,7 +204,7 @@ export default function GalleryScreen() {
         </View>
       </View>
     ),
-    [clusters, credits, handleClusterPress, handleCreditsPress, insets.top, selectedCluster?.id, selectedClusterId, streakCount, t],
+    [clusters, credits, handleClusterPress, handleCreditsPress, hasPaidAccess, insets.top, selectedCluster?.id, selectedClusterId, t],
   );
 
   return (

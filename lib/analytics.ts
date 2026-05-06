@@ -1,10 +1,4 @@
-export const ONBOARDING_STORAGE_KEY = "hasFinishedOnboarding";
-export const PREVIOUS_ONBOARDING_STORAGE_KEY = "hasCompletedOnboarding";
-export const LEGACY_ONBOARDING_STORAGE_KEY = "HAS_FINISHED_ONBOARDING";
-
 export const ANALYTICS_EVENTS = {
-  onboardingStarted: "onboarding_started",
-  onboardingCompleted: "onboarding_completed",
   step1UploadSuccess: "step_1_upload_success",
   generateClicked: "generate_clicked",
   paywallViewed: "paywall_viewed",

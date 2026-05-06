@@ -17,14 +17,11 @@ import {SafeAreaProvider} from "react-native-safe-area-context";
 import {PostHogProvider} from "posthog-react-native";
 
 import {AppErrorBoundary} from "../components/app-error-boundary";
-import {BrandLaunchScreen} from "../components/brand-launch-screen";
-import {DailyRewardModal} from "../components/daily-reward-modal";
+import {readAuthSkipped, subscribeAuthSkipped} from "../components/auth/auth-skip";
 import {DiamondStoreProvider} from "../components/diamond-store-context";
-import {ElitePassProvider} from "../components/elite-pass-context";
 import {FlowUIProvider} from "../components/flow-ui-context";
 import {GenerationAccessCacheGate} from "../components/generation-access-cache-gate";
 import {OfflineOverlay} from "../components/offline-overlay";
-import {OnboardingDemoRenderProvider} from "../components/onboarding-demo-render-context";
 import {ProSuccessProvider, useProSuccess} from "../components/pro-success-context";
 import {ViewerCreditsProvider, useViewerCredits} from "../components/viewer-credits-context";
 import {useViewerSession} from "../components/viewer-session-context";
@@ -528,23 +525,8 @@ function MissingEnv({ missing }: { missing: string[] }) {
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isLoaded } = useAuth();
-  const [allowGuestShell, setAllowGuestShell] = useState(DIAGNOSTIC_BYPASS);
 
-  useEffect(() => {
-    if (isLoaded) {
-      setAllowGuestShell(true);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      console.warn("[Boot] AuthGate timeout - rendering the guest-safe shell before Clerk finished loading");
-      setAllowGuestShell(true);
-    }, 900);
-
-    return () => clearTimeout(timer);
-  }, [isLoaded]);
-
-  if (!isLoaded && !allowGuestShell) {
+  if (!isLoaded && !DIAGNOSTIC_BYPASS) {
     return <BootScreen message={i18n.t("boot.loadingAccount")} />;
   }
 
@@ -555,29 +537,65 @@ function CreateAccessGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function OnboardingBootGate({ children }: { children: React.ReactNode }) {
+const PUBLIC_AUTH_ROUTES = new Set([
+  "/sign-in",
+  "/sign-up",
+  "/forgot-password",
+  "/legal-viewer",
+  "/privacy-policy",
+  "/terms-of-service",
+  "/language-settings",
+]);
+
+function AuthRedirectGate({ children }: { children: React.ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const hasPresentedOnboardingRef = useRef(false);
-  const isRedirectingToOnboardingRef = useRef(false);
+  const [authSkipped, setAuthSkipped] = useState(false);
 
   useEffect(() => {
-    if (hasPresentedOnboardingRef.current) {
+    let mounted = true;
+    const unsubscribe = subscribeAuthSkipped((skipped) => {
+      if (mounted) {
+        setAuthSkipped(skipped);
+      }
+    });
+
+    void readAuthSkipped().then((skipped) => {
+      if (mounted) {
+        setAuthSkipped(skipped);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isLoaded || DIAGNOSTIC_BYPASS) {
       return;
     }
 
-    const isOnboardingRoute = pathname === "/onboarding";
-    if (isOnboardingRoute) {
-      hasPresentedOnboardingRef.current = true;
-      isRedirectingToOnboardingRef.current = false;
+    const isPublicAuthRoute = PUBLIC_AUTH_ROUTES.has(pathname);
+    if (!isSignedIn) {
+      if (authSkipped) {
+        return;
+      }
+      if (!isPublicAuthRoute) {
+        router.replace({
+          pathname: "/(auth)/sign-in",
+          params: pathname && pathname !== "/" ? { returnTo: pathname } : undefined,
+        } as any);
+      }
       return;
     }
 
-    if (!isRedirectingToOnboardingRef.current) {
-      isRedirectingToOnboardingRef.current = true;
-      router.replace("/onboarding" as any);
+    if (pathname === "/" || pathname === "/sign-in" || pathname === "/sign-up" || pathname === "/forgot-password") {
+      router.replace("/(tabs)" as any);
     }
-  }, [pathname, router]);
+  }, [authSkipped, isLoaded, isSignedIn, pathname, router]);
 
   return <>{children}</>;
 }
@@ -587,7 +605,7 @@ function AppShell() {
 
   return (
     <Stack
-      initialRouteName="onboarding"
+      initialRouteName="index"
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: "#FFFFFF" },
@@ -596,8 +614,13 @@ function AppShell() {
       }}
     >
       <Stack.Screen name="index" />
-      <Stack.Screen name="onboarding" />
-      <Stack.Screen name="(onboarding)/wow-reveal" />
+      <Stack.Screen
+        name="(auth)"
+        options={{
+          presentation: "modal",
+          contentStyle: { backgroundColor: "#0A0A0F" },
+        }}
+      />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen
         name="paywall"
@@ -626,7 +649,6 @@ export default function RootLayout() {
     Inter: require("../assets/Fonts/InterVariable.ttf"),
   });
   const [i18nReady, setI18nReady] = useState(i18n.isInitialized);
-  const [showBrandLaunch, setShowBrandLaunch] = useState(true);
   const envReport = useMemo(() => getEnvReport(), []);
   const clerkKey = envReport.values.clerkPublishableKey;
 
@@ -663,24 +685,8 @@ export default function RootLayout() {
     return () => cancelAnimationFrame(frame);
   }, [fontsLoaded, i18nReady]);
 
-  useEffect(() => {
-    if (!fontsLoaded || !i18nReady) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setShowBrandLaunch(false);
-    }, 1700);
-
-    return () => clearTimeout(timer);
-  }, [fontsLoaded, i18nReady]);
-
   if (!fontsLoaded || !i18nReady) {
     return null;
-  }
-
-  if (showBrandLaunch) {
-    return <BrandLaunchScreen onFinish={() => setShowBrandLaunch(false)} />;
   }
 
   if (!DIAGNOSTIC_BYPASS && !envReport.ok) {
@@ -699,32 +705,27 @@ export default function RootLayout() {
               <Providers>
                 <ViewerSessionProvider>
                   {DIAGNOSTIC_BYPASS ? null : <ReferralGate />}
-                  <OnboardingDemoRenderProvider>
-                    <ViewerCreditsProvider>
-                      <ElitePassProvider>
-                        <DiamondStoreProvider>
-                          <FlowUIProvider>
-                            <WorkspaceDraftProvider>
-                              <BottomSheetModalProvider>
+                  <ViewerCreditsProvider>
+                    <DiamondStoreProvider>
+                      <FlowUIProvider>
+                        <WorkspaceDraftProvider>
+                          <BottomSheetModalProvider>
 {DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
-                                <LocalizationSyncGate />
-                                <GenerationAccessCacheGate />
-                                <NotificationScheduleGate />
-                                <NotificationResponseGate />
-                                <CreateAccessGate>
-                                  <OnboardingBootGate>
-                                    <AppShell />
-                                  </OnboardingBootGate>
-                                </CreateAccessGate>
-                                <DailyRewardModal />
-                                <OfflineOverlay />
-                              </BottomSheetModalProvider>
-                            </WorkspaceDraftProvider>
-                          </FlowUIProvider>
-                        </DiamondStoreProvider>
-                      </ElitePassProvider>
-                    </ViewerCreditsProvider>
-                  </OnboardingDemoRenderProvider>
+                            <LocalizationSyncGate />
+                            <GenerationAccessCacheGate />
+                            <NotificationScheduleGate />
+                            <NotificationResponseGate />
+                            <CreateAccessGate>
+                              <AuthRedirectGate>
+                                <AppShell />
+                              </AuthRedirectGate>
+                            </CreateAccessGate>
+                            <OfflineOverlay />
+                          </BottomSheetModalProvider>
+                        </WorkspaceDraftProvider>
+                      </FlowUIProvider>
+                    </DiamondStoreProvider>
+                  </ViewerCreditsProvider>
                 </ViewerSessionProvider>
               </Providers>
             </AuthGate>

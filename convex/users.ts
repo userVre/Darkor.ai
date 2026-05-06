@@ -7,19 +7,15 @@ import {
   buildSubscriptionPatch,
   canUserGenerateState,
   deriveSubscriptionState,
-  ELITE_PASS_GRACE_MS,
-  ELITE_PASS_MILESTONE_DAY,
-  ELITE_PASS_PRO_MS,
-  ELITE_PASS_REWARD_DIAMONDS,
   FREE_DAILY_DIAMOND_CAP,
   FREE_IMAGE_LIMIT,
-  FREE_REFILL_INTERVAL_MS,
   INITIAL_FREE_DIAMONDS,
   SubscriptionEntitlement,
   SubscriptionType,
   toFiniteNumber,
 } from "./subscriptions";
 import {
+  ACCOUNT_STARTER_CREDITS,
   buildDefaultUserFields,
   createReferralCode,
   ensureGuestUser,
@@ -59,9 +55,7 @@ async function syncDailyStreakState(ctx: any, user: any, now: number) {
   const lastLoginDate = toFiniteNumber(user?.lastLoginDate);
   const lastClaimAt = getLastClaimAt(user);
   const nextStreakCount = resolveDisplayStreakCount(currentStreak, lastClaimAt, now);
-  const canClaimDiamond = resolveClaimFlag(user, now);
-  const nextEliteProUntil = Math.max(toFiniteNumber(user?.eliteProUntil), 0);
-  const normalizedEliteProUntil = nextEliteProUntil > 0 && nextEliteProUntil <= now ? 0 : nextEliteProUntil;
+  const canClaimDiamond = false;
   const nextProTrialExpiresAt = Math.max(toFiniteNumber(user?.proTrialExpiresAt), 0);
   const normalizedProTrialExpiresAt = nextProTrialExpiresAt > 0 && nextProTrialExpiresAt <= now ? null : nextProTrialExpiresAt || null;
   const hasActivePaidSubscription =
@@ -75,11 +69,9 @@ async function syncDailyStreakState(ctx: any, user: any, now: number) {
     lastClaimDate: typeof user?.lastClaimDate === "number" ? undefined : 0,
     lastClaimAt: typeof user?.lastClaimAt === "number" ? undefined : lastClaimAt,
     diamondBalance: typeof user?.diamondBalance === "number" && user.diamondBalance === diamondBalance ? undefined : diamondBalance,
-    nextDiamondClaimAt: typeof user?.nextDiamondClaimAt === "number" ? undefined : 0,
+    nextDiamondClaimAt: toFiniteNumber(user?.nextDiamondClaimAt) !== 0 ? 0 : undefined,
     canClaimDiamond,
-    eliteProUntil: normalizedEliteProUntil !== nextEliteProUntil || typeof user?.eliteProUntil !== "number"
-      ? normalizedEliteProUntil
-      : undefined,
+    eliteProUntil: toFiniteNumber(user?.eliteProUntil) !== 0 ? 0 : undefined,
     proTrialExpiresAt: user?.proTrialExpiresAt !== normalizedProTrialExpiresAt ? normalizedProTrialExpiresAt : undefined,
     proTrialEndedPaywallPending: normalizedProTrialExpiresAt === null && nextProTrialExpiresAt > 0
       ? !hasActivePaidSubscription
@@ -115,9 +107,6 @@ const DIAMOND_PACK_COUNTS = {
 } as const;
 const REFERRAL_INSTALL_REWARD_DIAMONDS = 1;
 const REFERRAL_PRO_REWARD_DIAMONDS = 5;
-const ELITE_MILESTONE_REWARDS: Record<number, number> = {
-  [ELITE_PASS_MILESTONE_DAY]: ELITE_PASS_REWARD_DIAMONDS,
-};
 type DiamondSource = "daily_free" | "purchased_pack" | "referral";
 const DIAMOND_SOURCES = new Set<DiamondSource>(["daily_free", "purchased_pack", "referral"]);
 
@@ -180,22 +169,7 @@ function resolveDisplayStreakCount(currentStreak: number, lastClaimDate: number,
     return 1;
   }
 
-  return now - lastClaimDate > ELITE_PASS_GRACE_MS ? 1 : Math.max(currentStreak, 1);
-}
-
-function isEliteMilestoneDay(streakCount: number) {
-  return Object.prototype.hasOwnProperty.call(ELITE_MILESTONE_REWARDS, streakCount);
-}
-
-function resolveClaimFlag(user: any, now: number) {
-  const diamondBalance = getDailyDiamondBalance(user);
-  const lastClaimDate = getLastClaimAt(user);
-  const nextDiamondClaimAt = toFiniteNumber(user?.nextDiamondClaimAt);
-  const effectiveNextClaimAt = Math.max(
-    lastClaimDate > 0 ? lastClaimDate + FREE_REFILL_INTERVAL_MS : 0,
-    nextDiamondClaimAt,
-  );
-  return diamondBalance < FREE_DAILY_DIAMOND_CAP && (effectiveNextClaimAt <= 0 || now >= effectiveNextClaimAt);
+  return Math.max(currentStreak, 1);
 }
 
 function getLastClaimAt(user: any) {
@@ -205,22 +179,6 @@ function getLastClaimAt(user: any) {
 function getDailyDiamondBalance(user: any) {
   const fallback = Math.min(Math.max(toFiniteNumber(user?.credits, INITIAL_FREE_DIAMONDS), 0), FREE_DAILY_DIAMOND_CAP);
   return Math.min(Math.max(toFiniteNumber(user?.diamondBalance, fallback), 0), FREE_DAILY_DIAMOND_CAP);
-}
-
-function resolveClaimStreakCount(currentStreak: number, lastClaimDate: number, now: number) {
-  if (lastClaimDate <= 0) {
-    return 1;
-  }
-
-  const elapsedSinceClaim = now - lastClaimDate;
-  if (elapsedSinceClaim < FREE_REFILL_INTERVAL_MS) {
-    return Math.max(currentStreak, 1);
-  }
-  if (elapsedSinceClaim <= ELITE_PASS_GRACE_MS) {
-    return Math.max(currentStreak, 1) + 1;
-  }
-
-  return 1;
 }
 
 function normalizeReferralCode(value?: string | null) {
@@ -375,10 +333,8 @@ function buildDiamondStateResponse(user: any) {
   const state = deriveSubscriptionState(user, now);
   const diamondBalance = getDailyDiamondBalance({ ...user, diamondBalance: state.diamondBalance });
   const lastClaimAt = Math.max(state.lastClaimAt, state.lastClaimDate);
-  const nextEligibleAt = lastClaimAt > 0 ? lastClaimAt + FREE_REFILL_INTERVAL_MS : now;
-  const canClaimDiamond =
-    diamondBalance < FREE_DAILY_DIAMOND_CAP
-    && (lastClaimAt <= 0 || now - lastClaimAt >= FREE_REFILL_INTERVAL_MS);
+  const nextEligibleAt = 0;
+  const canClaimDiamond = false;
 
   return {
     userId: user.clerkId ?? (user.anonymousId ? toGuestUserId(user.anonymousId) : String(user._id)),
@@ -391,13 +347,11 @@ function buildDiamondStateResponse(user: any) {
     lastClaimAt,
     lastClaimDate: state.lastClaimDate,
     nextEligibleAt,
-    nextDiamondClaimAt: state.nextDiamondClaimAt || nextEligibleAt,
+    nextDiamondClaimAt: 0,
     canClaimDiamond,
     claimStatus: diamondBalance >= FREE_DAILY_DIAMOND_CAP
       ? "already_at_cap"
-      : !canClaimDiamond && lastClaimAt > 0
-        ? "already_claimed_today"
-        : "claimed",
+      : "disabled",
     dailyClaimLockedMessage: diamondBalance >= FREE_DAILY_DIAMOND_CAP
       ? "Come back after you design!"
       : null,
@@ -420,96 +374,24 @@ async function claimDailyDiamondHandler(ctx: any, args: { anonymousId?: string }
   const now = Date.now();
   const user = await syncDailyStreakState(ctx, viewer.user, now);
   const state = deriveSubscriptionState(user, now);
-  const lastClaimAt = getLastClaimAt(user);
-  const elapsedSinceClaim = lastClaimAt > 0 ? now - lastClaimAt : Number.POSITIVE_INFINITY;
   const currentDiamondBalance = getDailyDiamondBalance(user);
   const currentCredits = Math.max(toFiniteNumber(user.credits, state.credits), 0);
-  const nextEligibleAt = lastClaimAt > 0 ? lastClaimAt + FREE_REFILL_INTERVAL_MS : now;
-
-  if (currentDiamondBalance >= FREE_DAILY_DIAMOND_CAP) {
-    return {
-      status: "already_at_cap" as const,
-      granted: false,
-      creditsAdded: 0,
-      credits: currentCredits,
-      diamondBalance: currentDiamondBalance,
-      canClaimDiamond: false,
-      streakCount: state.streakCount,
-      streak_count: state.streakCount,
-      nextEligibleAt,
-      nextDiamondClaimAt: state.nextDiamondClaimAt,
-      message: "Come back after you design!",
-      elitePassActivated: false,
-      eliteProUntil: state.eliteProUntil,
-      proTrialExpiresAt: state.proTrialExpiresAt,
-      hasProAccess: state.hasProAccess,
-    };
-  }
-
-  if (lastClaimAt > 0 && elapsedSinceClaim < FREE_REFILL_INTERVAL_MS) {
-    return {
-      status: "already_claimed_today" as const,
-      granted: false,
-      creditsAdded: 0,
-      credits: currentCredits,
-      diamondBalance: currentDiamondBalance,
-      canClaimDiamond: false,
-      streakCount: state.streakCount,
-      streak_count: state.streakCount,
-      nextEligibleAt,
-      nextDiamondClaimAt: nextEligibleAt,
-      elitePassActivated: false,
-      eliteProUntil: state.eliteProUntil,
-      proTrialExpiresAt: state.proTrialExpiresAt,
-      hasProAccess: state.hasProAccess,
-    };
-  }
-
-  const streakWasBroken = lastClaimAt > 0 && elapsedSinceClaim > ELITE_PASS_GRACE_MS;
-  const nextStreakCount = resolveClaimStreakCount(state.streakCount, lastClaimAt, now);
-  const elitePassActivated = isEliteMilestoneDay(nextStreakCount);
-  const rewardDiamonds = ELITE_MILESTONE_REWARDS[nextStreakCount] ?? 1;
-  const creditsAdded = Math.min(rewardDiamonds, FREE_DAILY_DIAMOND_CAP - currentDiamondBalance);
-  const nextDiamondBalance = Math.min(currentDiamondBalance + creditsAdded, FREE_DAILY_DIAMOND_CAP);
-  const nextCredits = currentCredits + creditsAdded;
-  const proTrialExpiresAt = elitePassActivated
-    ? Math.max(toFiniteNumber(state.proTrialExpiresAt), now + ELITE_PASS_PRO_MS)
-    : toFiniteNumber(state.proTrialExpiresAt);
-  const eliteProUntil = elitePassActivated
-    ? Math.max(state.eliteProUntil, proTrialExpiresAt)
-    : state.eliteProUntil;
-  const nextDiamondClaimAt = now + FREE_REFILL_INTERVAL_MS;
-
-  await ctx.db.patch(user._id, {
-    credits: nextCredits,
-    diamondBalance: nextDiamondBalance,
-    diamondSources: appendDiamondSources(user, nextCredits, "daily_free", creditsAdded),
-    streakCount: nextStreakCount,
-    lastClaimDate: now,
-    lastClaimAt: now,
-    lastRewardDate: now,
-    nextDiamondClaimAt,
-    canClaimDiamond: false,
-    eliteProUntil,
-    proTrialExpiresAt: proTrialExpiresAt > 0 ? proTrialExpiresAt : null,
-    ...(elitePassActivated ? { proTrialEndedPaywallPending: false, proTrialEndedPaywallShownAt: 0 } : {}),
-  });
 
   return {
-    status: streakWasBroken ? ("streak_broken" as const) : ("claimed" as const),
-    granted: true,
-    creditsAdded,
-    credits: nextCredits,
-    diamondBalance: nextDiamondBalance,
+    status: "disabled" as const,
+    granted: false,
+    creditsAdded: 0,
+    credits: currentCredits,
+    diamondBalance: currentDiamondBalance,
     canClaimDiamond: false,
-    streakCount: nextStreakCount,
-    streak_count: nextStreakCount,
-    nextEligibleAt: nextDiamondClaimAt,
-    nextDiamondClaimAt,
-    elitePassActivated,
-    eliteProUntil,
-    proTrialExpiresAt: proTrialExpiresAt > 0 ? proTrialExpiresAt : null,
-    hasProAccess: eliteProUntil > now || state.hasProAccess,
+    streakCount: state.streakCount,
+    streak_count: state.streakCount,
+    nextEligibleAt: 0,
+    nextDiamondClaimAt: 0,
+    message: "Daily diamond rewards are no longer available.",
+    eliteProUntil: state.eliteProUntil,
+    proTrialExpiresAt: state.proTrialExpiresAt,
+    hasProAccess: state.hasProAccess,
   };
 }
 
@@ -540,35 +422,14 @@ export const preparePostPaywallDiamondClaim = mutation({
     const user = viewer.user;
     const now = Date.now();
     const state = deriveSubscriptionState(user, now);
-    const alreadyClaimedAt = Math.max(
-      toFiniteNumber(user.onboardingDiamondClaimedAt),
-      getLastClaimAt(user),
-    );
-    const sources = normalizeDiamondSourcesForBalance(user, state.credits);
-    const hasPurchasedDiamonds = state.premiumCredits > 0 || sources.includes("purchased_pack");
-
-    const shouldResetForFirstClaim = !state.hasPaidAccess && alreadyClaimedAt <= 0 && !hasPurchasedDiamonds;
-
-    if (shouldResetForFirstClaim) {
-      await ctx.db.patch(user._id, {
-        credits: 0,
-        diamondBalance: 0,
-        diamondSources: [],
-        premiumCredits: 0,
-        imageLimit: FREE_IMAGE_LIMIT,
-        imageGenerationCount: 0,
-        canClaimDiamond: true,
-        nextDiamondClaimAt: 0,
-      });
-    }
 
     const streakCount = Math.max(toFiniteNumber(user.streakCount, 1), 1);
 
     return {
-      credits: shouldResetForFirstClaim ? 0 : state.credits,
-      diamondBalance: shouldResetForFirstClaim ? 0 : state.diamondBalance,
-      canClaimDiamond: !state.hasPaidAccess && alreadyClaimedAt <= 0,
-      nextDiamondClaimAt: shouldResetForFirstClaim ? 0 : state.nextDiamondClaimAt,
+      credits: state.credits,
+      diamondBalance: state.diamondBalance,
+      canClaimDiamond: false,
+      nextDiamondClaimAt: 0,
       onboardingDiamondClaimedAt: toFiniteNumber(user.onboardingDiamondClaimedAt),
       streakCount,
       streak_count: streakCount,
@@ -583,7 +444,6 @@ export const claimOnboardingDiamond = mutationGeneric({
   handler: async (ctx, args) => {
     const viewer = await ensureViewerUser(ctx, args.anonymousId);
     const user = viewer.user;
-    const now = Date.now();
     const alreadyClaimedAt = Math.max(
       toFiniteNumber(user.onboardingDiamondClaimedAt),
       getLastClaimAt(user),
@@ -591,53 +451,16 @@ export const claimOnboardingDiamond = mutationGeneric({
     const currentCredits = Math.max(toFiniteNumber(user.credits), 0);
     const currentDiamondBalance = getDailyDiamondBalance(user);
 
-    if (alreadyClaimedAt > 0) {
-      return {
-        granted: false,
-        creditsAdded: 0,
-        credits: currentCredits,
-        diamondBalance: currentDiamondBalance,
-        canClaimDiamond: false,
-        nextDiamondClaimAt: toFiniteNumber(user.nextDiamondClaimAt),
-        claimedAt: alreadyClaimedAt,
-        onboardingDiamondClaimedAt: alreadyClaimedAt,
-        firstEntryRewardDismissedAt: toFiniteNumber(user.firstEntryRewardDismissedAt) || alreadyClaimedAt,
-        streakCount: Math.max(toFiniteNumber(user.streakCount, 1), 1),
-        streak_count: Math.max(toFiniteNumber(user.streakCount, 1), 1),
-      };
-    }
-
-    const nextCredits = Math.max(currentCredits, FREE_IMAGE_LIMIT);
-    const creditsAdded = Math.max(nextCredits - currentCredits, 0);
-    const nextDiamondBalance = Math.min(
-      Math.max(getDailyDiamondBalance(user), FREE_IMAGE_LIMIT),
-      FREE_DAILY_DIAMOND_CAP,
-    );
-    await ctx.db.patch(user._id, {
-      credits: nextCredits,
-      diamondBalance: nextDiamondBalance,
-      diamondSources: creditsAdded > 0
-        ? appendDiamondSources(user, nextCredits, "daily_free", creditsAdded)
-        : normalizeDiamondSourcesForBalance(user, nextCredits),
-      onboardingDiamondClaimedAt: now,
-      firstEntryRewardDismissedAt: now,
-      canClaimDiamond: false,
-      nextDiamondClaimAt: 0,
-      lastClaimDate: now,
-      lastClaimAt: now,
-      streakCount: Math.max(toFiniteNumber(user.streakCount, 1), 1),
-    });
-
     return {
-      granted: nextCredits > currentCredits,
-      creditsAdded,
-      credits: nextCredits,
-      diamondBalance: nextDiamondBalance,
+      granted: false,
+      creditsAdded: 0,
+      credits: currentCredits,
+      diamondBalance: currentDiamondBalance,
       canClaimDiamond: false,
       nextDiamondClaimAt: 0,
-      claimedAt: now,
-      onboardingDiamondClaimedAt: now,
-      firstEntryRewardDismissedAt: now,
+      claimedAt: alreadyClaimedAt,
+      onboardingDiamondClaimedAt: alreadyClaimedAt,
+      firstEntryRewardDismissedAt: toFiniteNumber(user.firstEntryRewardDismissedAt),
       streakCount: Math.max(toFiniteNumber(user.streakCount, 1), 1),
       streak_count: Math.max(toFiniteNumber(user.streakCount, 1), 1),
     };
@@ -694,6 +517,7 @@ async function getOrCreateClerkUser(ctx: any, clerkId: string) {
     "users",
     buildDefaultUserFields({
       clerkId,
+      credits: ACCOUNT_STARTER_CREDITS,
       referralCode: await createUniqueReferralCode(ctx, clerkId),
     }),
   );
@@ -741,15 +565,12 @@ async function mergeAnonymousUserIntoClerkUser(ctx: any, clerkId: string, anonym
   }
 
   const guestOwnerId = toGuestUserId(normalizedAnonymousId);
-  const guestCredits = toFiniteNumber(guestUser.credits);
   const guestPremiumCredits = toFiniteNumber(guestUser.premiumCredits);
   const accountCredits = toFiniteNumber(accountUser.credits);
   const accountPremiumCredits = toFiniteNumber(accountUser.premiumCredits);
-  const mergedCredits = accountCredits + guestCredits;
-  const mergedDiamondBalance = Math.min(
-    getDailyDiamondBalance(accountUser) + getDailyDiamondBalance(guestUser),
-    FREE_DAILY_DIAMOND_CAP,
-  );
+  const transferableGuestCredits = guestPremiumCredits;
+  const mergedCredits = accountCredits + transferableGuestCredits;
+  const mergedDiamondBalance = getDailyDiamondBalance(accountUser);
   const guestGenerationCount = toFiniteNumber(guestUser.generationCount);
   const guestImageGenerationCount = toFiniteNumber(guestUser.imageGenerationCount);
   const guestReferralCount = toFiniteNumber(guestUser.referralCount);
@@ -758,11 +579,6 @@ async function mergeAnonymousUserIntoClerkUser(ctx: any, clerkId: string, anonym
     toFiniteNumber(accountUser.streakCount, 1),
     toFiniteNumber(guestUser.streakCount, 1),
   );
-  const nextClaimCandidates = [
-    toFiniteNumber(accountUser.nextDiamondClaimAt),
-    toFiniteNumber(guestUser.nextDiamondClaimAt),
-  ].filter((value) => value > 0);
-
   await transferOwnedDocuments(ctx, guestOwnerId, clerkId);
 
   await ctx.db.patch(accountUser._id, omitUndefined({
@@ -770,7 +586,7 @@ async function mergeAnonymousUserIntoClerkUser(ctx: any, clerkId: string, anonym
     diamondBalance: mergedDiamondBalance,
     diamondSources: [
       ...normalizeDiamondSourcesForBalance(accountUser, accountCredits),
-      ...normalizeDiamondSourcesForBalance(guestUser, guestCredits),
+      ...Array.from({ length: transferableGuestCredits }, () => "purchased_pack" as const),
     ],
     premiumCredits: accountPremiumCredits + guestPremiumCredits,
     generationCount: toFiniteNumber(accountUser.generationCount) + guestGenerationCount,
@@ -787,9 +603,9 @@ async function mergeAnonymousUserIntoClerkUser(ctx: any, clerkId: string, anonym
     lastLoginDate: Math.max(toFiniteNumber(accountUser.lastLoginDate), toFiniteNumber(guestUser.lastLoginDate)),
     lastClaimDate: Math.max(toFiniteNumber(accountUser.lastClaimDate), toFiniteNumber(guestUser.lastClaimDate)),
     lastClaimAt: Math.max(getLastClaimAt(accountUser), getLastClaimAt(guestUser)),
-    nextDiamondClaimAt: nextClaimCandidates.length > 0 ? Math.min(...nextClaimCandidates) : 0,
-    canClaimDiamond: Boolean(accountUser.canClaimDiamond || guestUser.canClaimDiamond),
-    eliteProUntil: Math.max(toFiniteNumber(accountUser.eliteProUntil), toFiniteNumber(guestUser.eliteProUntil)),
+    nextDiamondClaimAt: 0,
+    canClaimDiamond: false,
+    eliteProUntil: 0,
     proTrialExpiresAt: Math.max(toFiniteNumber(accountUser.proTrialExpiresAt), toFiniteNumber(guestUser.proTrialExpiresAt)) || null,
     proTrialEndedPaywallPending: Boolean(accountUser.proTrialEndedPaywallPending || guestUser.proTrialEndedPaywallPending),
     lastRewardDate: Math.max(toFiniteNumber(accountUser.lastRewardDate), toFiniteNumber(guestUser.lastRewardDate)),
@@ -959,11 +775,9 @@ export const checkProTrialExpiry = internalMutationGeneric({
       const hasPaidSubscription =
         (user.subscriptionType === "weekly" || user.subscriptionType === "yearly")
         && subscriptionEnd > now;
-      const eliteProUntil = toFiniteNumber(user.eliteProUntil);
-
       await ctx.db.patch(user._id, omitUndefined({
         proTrialExpiresAt: null,
-        eliteProUntil: eliteProUntil <= now ? 0 : eliteProUntil,
+        eliteProUntil: 0,
         plan: !hasPaidSubscription && user.plan === "trial" ? "free" : undefined,
         subscriptionType: !hasPaidSubscription && user.subscriptionType === "free" ? "free" : undefined,
         subscriptionEntitlement: !hasPaidSubscription && user.subscriptionEntitlement === "free" ? "free" : undefined,
@@ -1188,6 +1002,7 @@ export const syncRevenueCatSubscriptionInternal = mutationGeneric({
       await ctx.db.insert("users", {
         ...buildDefaultUserFields({
           clerkId: args.clerkId,
+          credits: ACCOUNT_STARTER_CREDITS,
           referralCode: await createUniqueReferralCode(ctx, args.clerkId),
         }),
         plan: initialSubscription.plan,
@@ -1293,12 +1108,7 @@ async function consumeAllowance(ctx: any, anonymousId?: string, ignoreCooldown?:
     ? nextDiamondSources.slice(nextDiamondSources.length - nextCredits)
     : nextDiamondSources;
   const nextLastResetDate = usesDiamondAllowance ? now : state.lastResetDate;
-  const nextDiamondClaimAt =
-    usesDiamondAllowance && nextCredits <= 0
-      ? now + FREE_REFILL_INTERVAL_MS
-      : usesDiamondAllowance && nextCredits > 0
-        ? 0
-        : state.nextDiamondClaimAt;
+  const nextDiamondClaimAt = usesDiamondAllowance ? 0 : state.nextDiamondClaimAt;
 
   await ctx.db.patch(user._id, {
     generationCount: nextGenerationCount,
