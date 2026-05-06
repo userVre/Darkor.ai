@@ -448,7 +448,6 @@ export function LayoutOptimizationWizard({
       });
 
       setGenerationId(response.generationId);
-      setOptimisticCredits(response.creditsRemaining ?? Math.max(credits - 1, 0));
     } catch (error) {
       setHasActivatedProgress(false);
       setIsGenerating(false);
@@ -472,7 +471,6 @@ export function LayoutOptimizationWizard({
     posthog,
     router,
     selectedImages,
-    setOptimisticCredits,
     sourceImage,
     startGeneration,
     viewerReady,

@@ -13,6 +13,8 @@ import {
 ActivityIndicator,
 Alert,
 I18nManager,
+NativeScrollEvent,
+NativeSyntheticEvent,
 Pressable,
 ScrollView,
 StyleSheet,
@@ -29,6 +31,7 @@ useSharedValue,
 withTiming,
 } from "react-native-reanimated";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
+import Svg, {Path} from "react-native-svg";
 import {usePricingContext} from "../lib/dynamic-pricing";
 import {ANALYTICS_EVENTS, captureAnalytics} from "../lib/analytics";
 
@@ -65,12 +68,12 @@ import {fonts} from "../styles/typography";
 const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 3000;
 const CLOSE_VISUAL_SIZE = 36;
-const HERO_HEIGHT = 146;
-const HERO_SIDE_HEIGHT = 112;
-const PAYWALL_BLACK = "#000000";
+const HERO_HEIGHT = 188;
+const PAYWALL_BG = "#000000";
 const PAYWALL_ACCENT = "#E83A5A";
 const PAYWALL_ACCENT_DARK = "#C0254A";
 const PAYWALL_ACCENT_SHADOW = "rgba(232,58,90,0.22)";
+const PAYWALL_PREMIUM_GOLD = "#C99A2E";
 const PAYWALL_CARD_BG = "rgba(255,255,255,0.06)";
 const PAYWALL_CARD_BG_ALT = "rgba(255,255,255,0.04)";
 const PAYWALL_BORDER = "rgba(255,255,255,0.12)";
@@ -123,11 +126,47 @@ function TrialIncludedText() {
   );
 }
 
+type FeatureValue = string | {
+  label?: string;
+  status: "yes" | "no";
+};
+
+function FeatureStatusIcon({
+  status,
+}: {
+  status: "yes" | "no";
+}) {
+  const stroke = status === "yes" ? PAYWALL_ACCENT : PAYWALL_TEXT_MUTED;
+
+  return (
+    <Svg height={15} viewBox="0 0 16 16" width={15}>
+      {status === "yes" ? (
+        <Path
+          d="M3.4 8.2 6.6 11.2 12.8 4.8"
+          fill="none"
+          stroke={stroke}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.45}
+        />
+      ) : (
+        <Path
+          d="M4.7 4.7 11.3 11.3M11.3 4.7 4.7 11.3"
+          fill="none"
+          stroke={stroke}
+          strokeLinecap="round"
+          strokeWidth={1.35}
+        />
+      )}
+    </Svg>
+  );
+}
+
 function FeatureComparisonTable() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const localizedFonts = fonts;
-  const rows = [
+  const rows: Array<{ feature: string; free: FeatureValue; pro: FeatureValue }> = [
     {
       feature: "Rendus par jour",
       free: "1 💎",
@@ -150,8 +189,8 @@ function FeatureComparisonTable() {
     },
     {
       feature: "Priorité de rendu",
-      free: "✕",
-      pro: "✓",
+      free: { status: "no" },
+      pro: { status: "yes" },
     },
     {
       feature: "Sauvegarde portfolio",
@@ -160,23 +199,49 @@ function FeatureComparisonTable() {
     },
     {
       feature: "Partage sans filigrane",
-      free: "✕",
-      pro: "✓ Export propre",
+      free: { status: "no" },
+      pro: { label: "Export propre", status: "yes" },
     },
   ];
+  const renderValue = (value: FeatureValue, pro = false) => {
+    if (typeof value === "string") {
+      return (
+        <Text
+          style={[
+            pro ? styles.featureTableProText : styles.featureTableValueText,
+            styles.featureTableValueLabel,
+            localizedFonts.medium,
+          ]}
+        >
+          {value}
+        </Text>
+      );
+    }
+
+    return (
+      <View style={styles.featureTableIconValue}>
+        <FeatureStatusIcon status={value.status} />
+        {value.label ? (
+          <Text style={[styles.featureTableIconLabel, pro ? styles.featureTableProText : styles.featureTableValueText, localizedFonts.medium]}>
+            {value.label}
+          </Text>
+        ) : null}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.featureTable}>
       <View style={styles.featureTableHeader}>
         <Text style={[styles.featureTableHeaderText, styles.featureTableFeatureCell, localizedFonts.bold]}>{"FONCTIONNALITÉ"}</Text>
-        <Text style={[styles.featureTableHeaderText, styles.featureTablePlanCell, localizedFonts.bold]}>{"GRATUIT"}</Text>
-        <Text style={[styles.featureTableHeaderText, styles.featureTablePlanCell, styles.featureTableProHeader, localizedFonts.bold]}>{"PRO"}</Text>
+        <Text style={[styles.featureTableHeaderText, styles.featureTablePlanHeaderCell, localizedFonts.bold]}>{"GRATUIT"}</Text>
+        <Text style={[styles.featureTableHeaderText, styles.featureTablePlanHeaderCell, styles.featureTableProHeader, localizedFonts.bold]}>{"PRO"}</Text>
       </View>
       {rows.map((row, index) => (
         <View key={row.feature} style={[styles.featureTableRow, index % 2 === 0 ? styles.featureTableRowAlt : null]}>
           <Text style={[styles.featureTableFeatureText, styles.featureTableFeatureCell, localizedFonts.medium]}>{row.feature}</Text>
-          <Text style={[styles.featureTableValueText, row.free === "✕" ? styles.featureTableNoText : null, styles.featureTablePlanCell, localizedFonts.medium]}>{row.free}</Text>
-          <Text style={[styles.featureTableProText, row.pro === "✓" ? styles.featureTableYesText : null, styles.featureTablePlanCell, localizedFonts.bold]}>{row.pro}</Text>
+          <View style={styles.featureTablePlanCell}>{renderValue(row.free)}</View>
+          <View style={styles.featureTablePlanCell}>{renderValue(row.pro, true)}</View>
         </View>
       ))}
     </View>
@@ -209,75 +274,70 @@ function getHeroImageIndex(index: number) {
   return ((index % HERO_IMAGES.length) + HERO_IMAGES.length) % HERO_IMAGES.length;
 }
 
-function HeroFanCarousel({
+function HeroImageCarousel({
   activeIndex,
-  centerWidth,
-  sideWidth,
+  onIndexChange,
+  pageWidth,
 }: {
   activeIndex: number;
-  centerWidth: number;
-  sideWidth: number;
+  onIndexChange: (index: number) => void;
+  pageWidth: number;
 }) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const leftIndex = getHeroImageIndex(activeIndex - 1);
-  const centerIndex = getHeroImageIndex(activeIndex);
-  const rightIndex = getHeroImageIndex(activeIndex + 1);
-  const sideOffset = -Math.round(sideWidth * 0.28);
+  const carouselRef = useRef<ScrollView>(null);
+  const safePageWidth = Math.max(pageWidth, 1);
+
+  useEffect(() => {
+    carouselRef.current?.scrollTo({
+      animated: true,
+      x: getHeroImageIndex(activeIndex) * safePageWidth,
+      y: 0,
+    });
+  }, [activeIndex, safePageWidth]);
+
+  const handleMomentumEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / safePageWidth);
+    onIndexChange(getHeroImageIndex(nextIndex));
+  }, [onIndexChange, safePageWidth]);
 
   return (
-    <View style={styles.heroFan}>
-      <MotiView
-        key={`left-${leftIndex}-${activeIndex}`}
-        animate={{ opacity: 0.74, scale: 1, translateX: 0 }}
-        from={{ opacity: 0.45, scale: 0.96, translateX: -8 }}
-        style={[
-          styles.heroImageWrap,
-          styles.heroFanSideCard,
-          styles.heroFanLeftCard,
-          { height: HERO_SIDE_HEIGHT, left: sideOffset, width: sideWidth },
-        ]}
-        transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
+    <View style={styles.heroCarousel}>
+      <ScrollView
+        ref={carouselRef}
+        bounces={false}
+        contentContainerStyle={styles.heroCarouselContent}
+        decelerationRate="fast"
+        horizontal
+        onMomentumScrollEnd={handleMomentumEnd}
+        pagingEnabled
+        scrollEventThrottle={16}
+        showsHorizontalScrollIndicator={false}
       >
-        <Image contentFit="cover" source={HERO_IMAGES[leftIndex]} style={styles.heroImage} transition={0} />
-      </MotiView>
-
-      <MotiView
-        key={`right-${rightIndex}-${activeIndex}`}
-        animate={{ opacity: 0.74, scale: 1, translateX: 0 }}
-        from={{ opacity: 0.45, scale: 0.96, translateX: 8 }}
-        style={[
-          styles.heroImageWrap,
-          styles.heroFanSideCard,
-          styles.heroFanRightCard,
-          { height: HERO_SIDE_HEIGHT, right: sideOffset, width: sideWidth },
-        ]}
-        transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
-      >
-        <Image contentFit="cover" source={HERO_IMAGES[rightIndex]} style={styles.heroImage} transition={0} />
-      </MotiView>
-
-      <MotiView
-        key={`center-${centerIndex}`}
-        animate={{ opacity: 1, scale: 1, translateY: 0 }}
-        from={{ opacity: 0.82, scale: 0.96, translateY: 6 }}
-        style={[
-          styles.heroImageWrap,
-          styles.heroFanCenterCard,
-          { height: HERO_HEIGHT, width: centerWidth },
-        ]}
-        transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
-      >
-        <Image contentFit="cover" source={HERO_IMAGES[centerIndex]} style={styles.heroImage} transition={0} />
-      </MotiView>
+        {HERO_IMAGES.map((source, index) => (
+          <View key={index} style={[styles.heroCarouselPage, { width: safePageWidth }]}>
+            <View style={[styles.heroImageWrap, styles.heroCarouselCard]}>
+              <Image
+                contentFit="cover"
+                resizeMode="cover"
+                source={source}
+                style={styles.heroImage}
+                transition={120}
+              />
+            </View>
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 }
 
 function YearlyPlanCard({
   onPress,
+  selected,
 }: {
   onPress: () => void;
+  selected: boolean;
 }) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -289,7 +349,7 @@ function YearlyPlanCard({
       style={[
         styles.planCard,
         styles.yearlyCard,
-        styles.yearlyCardHighlighted,
+        selected ? styles.planCardSelected : styles.planCardUnselected,
       ]}
     >
       <View style={styles.bestOfferBadge}>
@@ -310,8 +370,10 @@ function YearlyPlanCard({
 
 function WeeklyPlanCard({
   onPress,
+  selected,
 }: {
   onPress: () => void;
+  selected: boolean;
 }) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -323,7 +385,7 @@ function WeeklyPlanCard({
       style={[
         styles.planCard,
         styles.weeklyCard,
-        styles.weeklyCardSecondary,
+        selected ? styles.planCardSelected : styles.planCardUnselected,
       ]}
     >
       <View style={styles.planRow}>
@@ -341,14 +403,14 @@ function PaywallCloseButton({
   onPress,
 }: {
   canClose: boolean;
-  onPress: () => void;
+  onPress: () => void | Promise<void>;
 }) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View pointerEvents="box-none" style={styles.closeSlot}>
       <View pointerEvents="auto" style={styles.closeBubble}>
-        <Pressable accessibilityLabel="Fermer" accessibilityRole="button" hitSlop={10} onPress={onPress} style={styles.closeButtonInner}>
+        <Pressable accessibilityLabel="Fermer" accessibilityRole="button" hitSlop={10} onPress={() => void Promise.resolve(onPress()).catch(() => undefined)} style={styles.closeButtonInner}>
           <X color={PAYWALL_TEXT_PRIMARY} size={20} strokeWidth={2.4} />
         </Pressable>
       </View>
@@ -409,10 +471,8 @@ export default function PaywallScreen() {
   const isSoftPaywall = variant === "soft" && !isPostWowPaywall;
   const isHardPaywall = source === "generate" || source === "second-design";
   const paywallTitle = "Concevez comme un pro. Liberté de création illimitée.";
-  const paywallSubtitle = "Découvrez toute la puissance de l'IA architecturale avec des rendus illimités et une précision 4K.";
-  const heroSideWidth = Math.min(Math.max(width * 0.3, 90), 118);
-  const heroCenterWidth = Math.min(Math.max(width * 0.56, 196), 226);
-  const heroRowHeight = HERO_HEIGHT;
+  const paywallSubtitle = "Débloquez des rendus 4K illimités pour vos projets d'intérieur.";
+  const heroRowHeight = HERO_HEIGHT + Math.max(insets.top, 12);
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
   const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
   const cachedOfferingPackages = useMemo(
@@ -798,7 +858,7 @@ export default function PaywallScreen() {
             gestureEnabled: true,
           }}
         />
-        <StatusBar style={theme.isDark ? "light" : "dark"} />
+        <StatusBar style="light" />
         <View style={styles.softBackdrop} />
         <Animated.View style={[styles.softSheet, { paddingBottom: Math.max(insets.bottom + 12, 20) }, sheetAnimatedStyle]}>
           <View style={styles.softHandle} />
@@ -811,9 +871,11 @@ export default function PaywallScreen() {
           <View style={styles.softPlanStack}>
             <YearlyPlanCard
               onPress={handleSelectYearly}
+              selected={selectedDuration === "yearly"}
             />
             <WeeklyPlanCard
               onPress={handleSelectWeekly}
+              selected={selectedDuration === "weekly"}
             />
           </View>
 
@@ -832,7 +894,7 @@ export default function PaywallScreen() {
             accessibilityRole="button"
             disabled={isLoading}
             hitSlop={12}
-            onPress={handleSkipPostWowPaywall}
+            onPress={() => void handleSkipPostWowPaywall().catch(() => undefined)}
             style={styles.softSkipLink}
           >
             <Text style={[styles.softSkipText, localizedFonts.medium]}>{"Continuer sans Pro"}</Text>
@@ -848,7 +910,7 @@ export default function PaywallScreen() {
         options={{
           presentation: "fullScreenModal",
           animation: "fade_from_bottom",
-          contentStyle: { backgroundColor: PAYWALL_BLACK },
+          contentStyle: { backgroundColor: PAYWALL_BG },
           gestureEnabled: false,
         }}
       />
@@ -863,29 +925,20 @@ export default function PaywallScreen() {
           canClose={canClose}
           onPress={handleClose}
         />
-        <Pressable
-          accessibilityRole="button"
-          disabled={isLoading}
-          hitSlop={12}
-          onPress={() => void handleRestore()}
-          style={[styles.restoreTopButton, { top: Math.max(insets.top + 10, 40) }]}
-        >
-          <Text style={[styles.restoreText, localizedFonts.medium]}>{"Restaurer"}</Text>
-        </Pressable>
 
         <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: 0 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 80, 80) }]}
           contentInsetAdjustmentBehavior="never"
           showsVerticalScrollIndicator={false}
         >
           <View style={[styles.heroClip, { height: heroRowHeight }]}>
-            <HeroFanCarousel
+            <HeroImageCarousel
               activeIndex={heroIndex}
-              centerWidth={heroCenterWidth}
-              sideWidth={heroSideWidth}
+              onIndexChange={setHeroIndex}
+              pageWidth={width}
             />
             <LinearGradient
-              colors={["rgba(0,0,0,0)", PAYWALL_BLACK]}
+              colors={["rgba(0,0,0,0)", PAYWALL_BG]}
               pointerEvents="none"
               style={styles.heroBottomFade}
             />
@@ -903,12 +956,14 @@ export default function PaywallScreen() {
           <View style={styles.yearlyWrapper}>
             <YearlyPlanCard
               onPress={handleSelectYearly}
+              selected={selectedDuration === "yearly"}
             />
           </View>
 
           <View style={styles.weeklyWrapper}>
             <WeeklyPlanCard
               onPress={handleSelectWeekly}
+              selected={selectedDuration === "weekly"}
             />
           </View>
 
@@ -923,17 +978,17 @@ export default function PaywallScreen() {
               start={{ x: 0, y: 0.5 }}
               style={styles.ctaGradient}
             >
-            {isLoading ? (
-              <View style={styles.ctaLoadingRow}>
-                <ActivityIndicator color={theme.textInverse} />
-              </View>
-            ) : (
-              <FadeSwap swapKey={ctaButtonText} style={styles.ctaContent}>
-                <View style={styles.ctaLabelRow}>
-                  <Text style={[styles.ctaText, localizedFonts.bold]}>{ctaButtonText}</Text>
+              {isLoading ? (
+                <View style={styles.ctaLoadingRow}>
+                  <ActivityIndicator color="#FFFFFF" />
                 </View>
-              </FadeSwap>
-            )}
+              ) : (
+                <FadeSwap swapKey={ctaButtonText} style={styles.ctaContent}>
+                  <View style={styles.ctaLabelRow}>
+                    <Text style={[styles.ctaText, localizedFonts.bold]}>{ctaButtonText}</Text>
+                  </View>
+                </FadeSwap>
+              )}
             </LinearGradient>
           </Pressable>
           <Text style={[styles.ctaFinePrintText, localizedFonts.regular]}>
@@ -945,6 +1000,15 @@ export default function PaywallScreen() {
               <LegalLink label="Conditions" onPress={handleOpenTerms} />
               <LegalLink label="Confidentialité" onPress={handleOpenPrivacy} />
             </View>
+            <Pressable
+              accessibilityRole="button"
+              disabled={isLoading}
+              hitSlop={12}
+              onPress={() => void handleRestore()}
+              style={styles.restoreBottomButton}
+            >
+              <Text style={[styles.restoreText, localizedFonts.medium]}>{"Restaurer"}</Text>
+            </Pressable>
           </View>
         </ScrollView>
       </Animated.View>
@@ -956,7 +1020,7 @@ function createStyles(theme: Theme) {
   return StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: PAYWALL_BLACK,
+    backgroundColor: PAYWALL_BG,
   },
   softScreen: {
     flex: 1,
@@ -973,8 +1037,8 @@ function createStyles(theme: Theme) {
     borderTopRightRadius: 28,
     borderCurve: "continuous",
     borderWidth: 1,
-    borderColor: theme.border,
-    backgroundColor: theme.bg,
+    borderColor: PAYWALL_BORDER,
+    backgroundColor: PAYWALL_BG,
     paddingTop: 10,
     paddingHorizontal: 18,
     gap: 12,
@@ -989,21 +1053,21 @@ function createStyles(theme: Theme) {
   },
   softEyebrow: {
     alignSelf: "center",
-    color: theme.textPrimary,
+    color: PAYWALL_TEXT_PRIMARY,
     fontSize: 12,
     lineHeight: 16,
     textTransform: "uppercase",
     letterSpacing: 0.3,
   },
   softTitle: {
-    color: theme.textPrimary,
+    color: PAYWALL_TEXT_PRIMARY,
     fontSize: 26,
     lineHeight: 31,
     textAlign: "center",
     letterSpacing: 0.3,
   },
   softSubtitle: {
-    color: theme.textSecondary,
+    color: PAYWALL_TEXT_SECONDARY,
     fontSize: 15,
     lineHeight: 21,
     textAlign: "center",
@@ -1020,7 +1084,7 @@ function createStyles(theme: Theme) {
     gap: 8,
   },
   softLoadingText: {
-    color: theme.textPrimary,
+    color: PAYWALL_TEXT_PRIMARY,
     fontSize: 14,
     lineHeight: 18,
   },
@@ -1030,7 +1094,7 @@ function createStyles(theme: Theme) {
     justifyContent: "center",
   },
   softSkipText: {
-    color: theme.textMuted,
+    color: PAYWALL_TEXT_MUTED,
     fontSize: 12,
     lineHeight: 16,
     textAlign: "center",
@@ -1040,33 +1104,25 @@ function createStyles(theme: Theme) {
   },
   personalizedBackgroundOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: PAYWALL_BLACK,
+    backgroundColor: PAYWALL_BG,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: PAYWALL_BLACK,
+    backgroundColor: PAYWALL_BG,
   },
   personalizedAnimatedOverlay: {
-    backgroundColor: PAYWALL_BLACK,
+    backgroundColor: PAYWALL_BG,
   },
   sheet: {
     flex: 1,
     position: "relative",
-    backgroundColor: PAYWALL_BLACK,
+    backgroundColor: PAYWALL_BG,
   },
   personalizedSheet: {
-    backgroundColor: PAYWALL_BLACK,
-  },
-  restoreTopButton: {
-    position: "absolute",
-    top: 40,
-    left: 20,
-    zIndex: 10,
-    minHeight: 30,
-    justifyContent: "center",
+    backgroundColor: PAYWALL_BG,
   },
   restoreText: {
-    color: PAYWALL_TEXT_SECONDARY,
+    color: PAYWALL_TEXT_MUTED,
     fontSize: 12,
     lineHeight: 16,
     ...fonts.medium,
@@ -1099,38 +1155,38 @@ function createStyles(theme: Theme) {
   scrollContent: {
     flexGrow: 1,
     paddingTop: 0,
-    backgroundColor: PAYWALL_BLACK,
+    backgroundColor: PAYWALL_BG,
   },
   heroClip: {
     width: "100%",
     overflow: "hidden",
     position: "relative",
-    backgroundColor: PAYWALL_BLACK,
+    backgroundColor: PAYWALL_BG,
   },
-  heroFan: {
+  heroCarousel: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-end",
+    paddingBottom: 10,
   },
   heroImageWrap: {
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: "hidden",
     backgroundColor: PAYWALL_CARD_BG,
-    boxShadow: `0px 8px 18px ${theme.shadow}`,
+    borderWidth: 0.5,
+    borderColor: PAYWALL_BORDER,
+    boxShadow: "0px 8px 18px rgba(0, 0, 0, 0.32)",
   },
-  heroFanSideCard: {
-    position: "absolute",
-    top: 18,
-    zIndex: 1,
+  heroCarouselContent: {
+    alignItems: "flex-end",
   },
-  heroFanLeftCard: {
-    transform: [{ rotate: "-5deg" }],
+  heroCarouselPage: {
+    alignItems: "center",
+    justifyContent: "flex-end",
+    paddingHorizontal: 20,
   },
-  heroFanRightCard: {
-    transform: [{ rotate: "5deg" }],
-  },
-  heroFanCenterCard: {
-    zIndex: 2,
+  heroCarouselCard: {
+    width: "100%",
+    height: HERO_HEIGHT,
   },
   heroImage: {
     width: "100%",
@@ -1146,9 +1202,9 @@ function createStyles(theme: Theme) {
   titleSection: {
     marginHorizontal: 20,
     alignItems: "flex-start",
-    marginTop: 12,
-    marginBottom: 12,
-    gap: 6,
+    marginTop: 10,
+    marginBottom: 8,
+    gap: 4,
   },
   subtitleText: {
     maxWidth: 390,
@@ -1178,27 +1234,31 @@ function createStyles(theme: Theme) {
   featureTable: {
     marginHorizontal: 20,
     marginTop: 0,
-    marginBottom: 12,
-    borderRadius: 14,
+    marginBottom: 8,
+    borderRadius: 12,
     borderWidth: 0.5,
     borderColor: PAYWALL_BORDER,
     backgroundColor: PAYWALL_CARD_BG,
     overflow: "hidden",
   },
   featureTableHeader: {
-    minHeight: 26,
+    minHeight: 28,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: PAYWALL_BORDER,
   },
   featureTableRow: {
     minHeight: 30,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255,255,255,0.08)",
   },
   featureTableRowAlt: {
-    backgroundColor: PAYWALL_CARD_BG_ALT,
+    backgroundColor: PAYWALL_BG,
   },
   featureTableFeatureCell: {
     flex: 1.42,
@@ -1206,6 +1266,12 @@ function createStyles(theme: Theme) {
     paddingRight: 8,
   },
   featureTablePlanCell: {
+    flex: 0.72,
+    minWidth: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  featureTablePlanHeaderCell: {
     flex: 0.72,
     minWidth: 0,
     textAlign: "center",
@@ -1229,26 +1295,35 @@ function createStyles(theme: Theme) {
     color: PAYWALL_TEXT_MUTED,
     fontSize: 12,
     lineHeight: 16,
+    textAlign: "center",
   },
   featureTableProText: {
     color: PAYWALL_TEXT_PRIMARY,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: "700",
+    textAlign: "center",
   },
-  featureTableNoText: {
-    color: PAYWALL_TEXT_MUTED,
+  featureTableValueLabel: {
+    width: "100%",
   },
-  featureTableYesText: {
-    color: PAYWALL_ACCENT,
+  featureTableIconValue: {
+    minHeight: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  featureTableIconLabel: {
+    flexShrink: 1,
   },
   yearlyWrapper: {
     marginHorizontal: 20,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   weeklyWrapper: {
     marginTop: 0,
-    marginBottom: 12,
+    marginBottom: 8,
     marginHorizontal: 20,
   },
   diamondStoreButton: {
@@ -1260,22 +1335,23 @@ function createStyles(theme: Theme) {
     marginBottom: 8,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.borderLight,
-    backgroundColor: theme.surfaceMuted,
+    borderColor: PAYWALL_BORDER,
+    backgroundColor: PAYWALL_CARD_BG_ALT,
   },
   diamondStoreText: {
-    color: theme.textPrimary,
+    color: PAYWALL_TEXT_PRIMARY,
     fontSize: 15,
     lineHeight: 18,
   },
   planCard: {
-    minHeight: 70,
+    minHeight: 64,
     borderRadius: 14,
     borderCurve: "continuous",
     backgroundColor: PAYWALL_CARD_BG,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     justifyContent: "center",
+    boxShadow: "0px 6px 16px rgba(0, 0, 0, 0.22)",
   },
   planGradientBorder: {
     borderRadius: 18,
@@ -1285,19 +1361,19 @@ function createStyles(theme: Theme) {
     borderWidth: 0,
   },
   yearlyCard: {
-    minHeight: 90,
-    paddingTop: 18,
-    paddingBottom: 10,
+    minHeight: 82,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   weeklyCard: {
-    minHeight: 66,
+    minHeight: 60,
   },
-  yearlyCardHighlighted: {
+  planCardSelected: {
     borderWidth: 1.5,
     borderColor: PAYWALL_ACCENT,
     backgroundColor: PAYWALL_CARD_BG,
   },
-  weeklyCardSecondary: {
+  planCardUnselected: {
     borderWidth: 0.5,
     borderColor: PAYWALL_BORDER,
     backgroundColor: PAYWALL_CARD_BG,
@@ -1307,12 +1383,12 @@ function createStyles(theme: Theme) {
     top: 8,
     right: 14,
     borderRadius: 999,
-    backgroundColor: PAYWALL_ACCENT,
+    backgroundColor: PAYWALL_PREMIUM_GOLD,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   bestOfferText: {
-    color: theme.textInverse,
+    color: "#FFFFFF",
     fontSize: 10,
     lineHeight: 12,
     textTransform: "uppercase",
@@ -1363,7 +1439,7 @@ function createStyles(theme: Theme) {
   },
   planSubtext: {
     marginTop: 4,
-    color: theme.textSecondary,
+    color: PAYWALL_TEXT_SECONDARY,
     fontSize: 11,
     lineHeight: 15,
     ...fonts.regular,
@@ -1399,20 +1475,20 @@ function createStyles(theme: Theme) {
     ...fonts.medium,
   },
   yearlyPrice: {
-    color: theme.textPrimary,
+    color: PAYWALL_TEXT_PRIMARY,
     fontSize: 17,
     lineHeight: 21,
     ...fonts.bold,
   },
   weeklyTrialPrice: {
-    color: theme.textPrimary,
+    color: PAYWALL_TEXT_PRIMARY,
     fontSize: 14,
     lineHeight: 17,
     flexShrink: 1,
     ...fonts.bold,
   },
   weeklyPrice: {
-    color: theme.textPrimary,
+    color: PAYWALL_TEXT_PRIMARY,
     fontSize: 15,
     lineHeight: 18,
     ...fonts.bold,
@@ -1427,7 +1503,7 @@ function createStyles(theme: Theme) {
     backgroundColor: PAYWALL_ACCENT,
   },
   trialBadgeText: {
-    color: theme.textInverse,
+    color: "#FFFFFF",
     fontSize: 12,
     lineHeight: 14,
     textTransform: "uppercase",
@@ -1462,7 +1538,7 @@ function createStyles(theme: Theme) {
     gap: 6,
   },
   noticeText: {
-    color: theme.textSecondary,
+    color: PAYWALL_TEXT_SECONDARY,
     fontSize: 12,
     lineHeight: 16,
     ...fonts.medium,
@@ -1480,7 +1556,7 @@ function createStyles(theme: Theme) {
   trialIncludedRow: {
     minHeight: 18,
     marginTop: 0,
-    marginBottom: 12,
+    marginBottom: 8,
     marginHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
@@ -1541,7 +1617,7 @@ function createStyles(theme: Theme) {
     width: "100%",
   },
   ctaText: {
-    color: theme.textInverse,
+    color: "#FFFFFF",
     fontSize: 15,
     lineHeight: 19,
     ...fonts.bold,
@@ -1569,7 +1645,7 @@ function createStyles(theme: Theme) {
   },
   ctaArrowVisual: {
     marginLeft: 8,
-    color: theme.textInverse,
+    color: "#FFFFFF",
     fontSize: 18,
     lineHeight: 20,
     includeFontPadding: false,
@@ -1587,10 +1663,11 @@ function createStyles(theme: Theme) {
     ...fonts.bold,
   },
   legalFooter: {
-    marginTop: 0,
+    marginTop: 2,
     marginHorizontal: 20,
     paddingTop: 0,
     alignItems: "center",
+    gap: 8,
   },
   legalLinksRow: {
     flexDirection: "row",
@@ -1610,6 +1687,12 @@ function createStyles(theme: Theme) {
     lineHeight: 16,
     textDecorationLine: "underline",
     ...fonts.medium,
+  },
+  restoreBottomButton: {
+    minHeight: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
   },
   });
 }

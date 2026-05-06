@@ -57,7 +57,8 @@ const GARDEN_ROOM_TYPE_KEYWORDS = [
 ] as const;
 
 type ServiceType = "paint" | "floor" | "redesign" | "layout" | "replace";
-type RequestedServiceType = ServiceType | "wall" | "transfer" | "reference";
+type IncomingServiceType = ServiceType | "interior" | "exterior" | "garden";
+type RequestedServiceType = IncomingServiceType | "wall" | "transfer" | "reference";
 type SpeedTier = "standard" | "pro" | "ultra";
 type AzureRenderSize = "1024x1024" | "1024x1536" | "1536x1024";
 type AzureRenderQuality = "medium" | "high";
@@ -71,7 +72,30 @@ type AzureRenderProfile = {
 };
 
 const FREE_MAX_IMAGE_DIMENSION = 1080;
+const SAFE_INPUT_MAX_IMAGE_DIMENSION = 1536;
 const WATERMARK_TEXT = "HomeDecor AI";
+
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === "AbortError";
+}
+
+function canonicalizeServiceType(serviceType: RequestedServiceType | IncomingServiceType): ServiceType {
+  if (serviceType === "wall") {
+    return "paint";
+  }
+
+  if (
+    serviceType === "interior" ||
+    serviceType === "exterior" ||
+    serviceType === "garden" ||
+    serviceType === "transfer" ||
+    serviceType === "reference"
+  ) {
+    return "redesign";
+  }
+
+  return serviceType;
+}
 
 function ensureAzureEndpointPrefix(endpoint: string) {
   const trimmed = endpoint.trim();
@@ -322,6 +346,32 @@ function getAzureImageMimeType(blob: Blob) {
   return "image/png";
 }
 
+function inferImageMimeTypeFromBytes(bytes?: Uint8Array | Buffer | null) {
+  if (!bytes || bytes.byteLength < 4) {
+    return null;
+  }
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return "image/jpeg";
+  }
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) {
+    return "image/png";
+  }
+  if (
+    bytes.byteLength >= 12 &&
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50
+  ) {
+    return "image/webp";
+  }
+  return null;
+}
+
 function getAzureImageFilename(blob: Blob, index: number, prefix: string) {
   const mimeType = getAzureImageMimeType(blob);
   const extension = mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
@@ -376,8 +426,8 @@ function createAzureImageProvider(args: { apiKey: string; endpoint: string }) {
         return response;
       } catch (error) {
         const message =
-          error instanceof Error && error.name === "AbortError"
-            ? "Azure image generation request timed out."
+          isAbortError(error)
+            ? "Azure API Timeout"
             : error instanceof Error
               ? error.message
               : "Azure image generation request failed.";
@@ -386,12 +436,99 @@ function createAzureImageProvider(args: { apiKey: string; endpoint: string }) {
           endpoint: requestUrl,
           message,
         });
-        throw error instanceof Error && error.name === "AbortError" ? new Error(message) : error;
+        throw isAbortError(error) ? new Error(message) : error;
       } finally {
         clearTimeout(timeout);
       }
     },
   });
+}
+
+async function optimizeJpegWithSharp(imageBuffer: Buffer, args: { maxDimension: number; quality: number }) {
+  const sharpModule = (await import("sharp")) as any;
+  const sharp = sharpModule.default ?? sharpModule;
+  return await sharp(imageBuffer, { failOn: "none" })
+    .rotate()
+    .resize({
+      width: args.maxDimension,
+      height: args.maxDimension,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .jpeg({ quality: args.quality, mozjpeg: true })
+    .toBuffer();
+}
+
+async function optimizeJpegWithJimp(imageBuffer: Buffer, args: { maxDimension: number; quality: number }) {
+  const jimpModule = (await import("jimp-compact")) as any;
+  const Jimp = jimpModule.default ?? jimpModule;
+  const image = await Jimp.read(imageBuffer);
+  image.scaleToFit(args.maxDimension, args.maxDimension);
+  image.quality(args.quality);
+  return Buffer.from(await image.getBufferAsync(Jimp.MIME_JPEG ?? "image/jpeg"));
+}
+
+async function applyHomeDecorWatermarkWithJimp(imageBuffer: Buffer) {
+  const jimpModule = (await import("jimp-compact")) as any;
+  const Jimp = jimpModule.default ?? jimpModule;
+  const image = await Jimp.read(imageBuffer);
+  const width = Math.max(Math.round(image.bitmap?.width ?? FREE_MAX_IMAGE_DIMENSION), 1);
+  const height = Math.max(Math.round(image.bitmap?.height ?? FREE_MAX_IMAGE_DIMENSION), 1);
+  const font = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE);
+  const paddingX = 12;
+  const paddingY = 8;
+  const textWidth = Math.max(Jimp.measureText(font, WATERMARK_TEXT), 1);
+  const textHeight = Math.max(Jimp.measureTextHeight(font, WATERMARK_TEXT, textWidth), 16);
+  const badgeWidth = textWidth + paddingX * 2;
+  const badgeHeight = textHeight + paddingY * 2;
+  const margin = 16;
+  const x = Math.max(margin, width - badgeWidth - margin);
+  const y = Math.max(margin, height - badgeHeight - margin);
+  const badge = await Jimp.create(badgeWidth, badgeHeight, Jimp.rgbaToInt(5, 7, 10, 184));
+
+  image.composite(badge, x, y);
+  image.print(font, x + paddingX, y + paddingY, WATERMARK_TEXT);
+  image.quality(90);
+
+  return Buffer.from(await image.getBufferAsync(Jimp.MIME_JPEG ?? "image/jpeg"));
+}
+
+async function optimizeJpegImage(imageBuffer: Buffer, args: { maxDimension: number; quality: number; caller: string }) {
+  try {
+    return await optimizeJpegWithSharp(imageBuffer, args);
+  } catch (sharpError) {
+    console.warn(`${args.caller}: sharp JPEG optimization failed, trying Jimp fallback`, {
+      message: sharpError instanceof Error ? sharpError.message : "Unknown sharp error",
+    });
+  }
+
+  return await optimizeJpegWithJimp(imageBuffer, args);
+}
+
+async function prepareSafeOpenAIInputImage(blob: Blob, caller: string) {
+  let imageBuffer: Buffer | null = null;
+  try {
+    imageBuffer = await blobToImageBuffer(blob, caller);
+    if (!imageBuffer) {
+      throw new ConvexError("Unable to read source image bytes.");
+    }
+
+    const optimized = await optimizeJpegImage(imageBuffer, {
+      maxDimension: SAFE_INPUT_MAX_IMAGE_DIMENSION,
+      quality: 88,
+      caller,
+    });
+
+    return new Blob([optimized], { type: "image/jpeg" });
+  } catch (error) {
+    console.warn(`${caller}: failed to optimize OpenAI input image; sending original image`, {
+      message: error instanceof Error ? error.message : "Unknown image preparation error",
+    });
+    const inferredMimeType = inferImageMimeTypeFromBytes(imageBuffer);
+    return inferredMimeType && imageBuffer
+      ? new Blob([imageBuffer], { type: inferredMimeType })
+      : normalizeAzureImageBlob(blob);
+  }
 }
 
 async function runAzureImageGeneration(args: {
@@ -434,8 +571,12 @@ async function runAzureImageGeneration(args: {
     formData.append("quality", args.renderProfile.quality);
     formData.append("n", "1");
 
+    const safeSourceImages = await Promise.all(
+      sourceImages.map((blob, index) => prepareSafeOpenAIInputImage(blob, `prepareOpenAIInputImage:${index}`)),
+    );
+
     let imageFieldCount = 0;
-    sourceImages.forEach((blob, index) => {
+    safeSourceImages.forEach((blob, index) => {
       const normalizedBlob = normalizeAzureImageBlob(blob);
       const filename = getAzureImageFilename(normalizedBlob, index, "image");
       formData.append("image", createAzureMultipartFile(normalizedBlob, filename), filename);
@@ -452,13 +593,23 @@ async function runAzureImageGeneration(args: {
       formData.append("mask", createAzureMultipartFile(normalizedMaskBlob, maskFilename), maskFilename);
     }
 
-    const response = await fetch(requestUrl, {
-      method: "POST",
-      headers: {
-        "api-key": args.apiKey,
-      },
-      body: formData,
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), AZURE_IMAGE_REQUEST_TIMEOUT_MS);
+    let response: Response;
+    try {
+      response = await fetch(requestUrl, {
+        method: "POST",
+        headers: {
+          "api-key": args.apiKey,
+        },
+        body: formData,
+        signal: controller.signal,
+      });
+    } catch (error) {
+      throw isAbortError(error) ? new ConvexError("Azure API Timeout") : error;
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       const reason = await parseAzureError(response);
@@ -512,28 +663,22 @@ async function limitFreeImageResolution(blob: Blob) {
   try {
     const imageBuffer = await blobToImageBuffer(blob, "limitFreeImageResolution");
     if (!imageBuffer) {
-      throw new ConvexError("Unable to read generated image bytes for free-tier processing.");
+      console.warn("limitFreeImageResolution: generated image bytes were empty; storing original image");
+      return blob;
     }
 
-    const sharpModule = (await import("sharp")) as any;
-    const sharp = sharpModule.default ?? sharpModule;
-    const resized = await sharp(imageBuffer, { failOn: "none" })
-      .rotate()
-      .resize({
-        width: FREE_MAX_IMAGE_DIMENSION,
-        height: FREE_MAX_IMAGE_DIMENSION,
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .jpeg({ quality: 92, mozjpeg: true })
-      .toBuffer();
+    const resized = await optimizeJpegImage(imageBuffer, {
+      maxDimension: FREE_MAX_IMAGE_DIMENSION,
+      quality: 92,
+      caller: "limitFreeImageResolution",
+    });
 
     return new Blob([resized], { type: "image/jpeg" });
   } catch (error) {
     console.error("limitFreeImageResolution: failed", {
       message: error instanceof Error ? error.message : "Unknown resize error",
     });
-    throw new ConvexError("Unable to prepare free-tier image safely.");
+    return blob;
   }
 }
 
@@ -544,23 +689,31 @@ async function applyHomeDecorWatermark(blob: Blob) {
       throw new ConvexError("Unable to read generated image bytes for watermarking.");
     }
 
-    const sharpModule = (await import("sharp")) as any;
-    const sharp = sharpModule.default ?? sharpModule;
-    const metadata = await sharp(imageBuffer, { failOn: "none" }).metadata();
-    const width = Math.max(Math.round(metadata.width ?? FREE_MAX_IMAGE_DIMENSION), 1);
-    const height = Math.max(Math.round(metadata.height ?? FREE_MAX_IMAGE_DIMENSION), 1);
-    const watermarkSvg = buildCornerWatermarkBadgeSvg(width, height);
-    const watermarked = await sharp(imageBuffer, { failOn: "none" })
-      .composite([{ input: Buffer.from(watermarkSvg), blend: "over" }])
-      .jpeg({ quality: 90, mozjpeg: true })
-      .toBuffer();
+    let watermarked: Buffer;
+    try {
+      const sharpModule = (await import("sharp")) as any;
+      const sharp = sharpModule.default ?? sharpModule;
+      const metadata = await sharp(imageBuffer, { failOn: "none" }).metadata();
+      const width = Math.max(Math.round(metadata.width ?? FREE_MAX_IMAGE_DIMENSION), 1);
+      const height = Math.max(Math.round(metadata.height ?? FREE_MAX_IMAGE_DIMENSION), 1);
+      const watermarkSvg = buildCornerWatermarkBadgeSvg(width, height);
+      watermarked = await sharp(imageBuffer, { failOn: "none" })
+        .composite([{ input: Buffer.from(watermarkSvg), blend: "over" }])
+        .jpeg({ quality: 90, mozjpeg: true })
+        .toBuffer();
+    } catch (sharpError) {
+      console.warn("applyHomeDecorWatermark: sharp watermark failed, trying Jimp fallback", {
+        message: sharpError instanceof Error ? sharpError.message : "Unknown sharp error",
+      });
+      watermarked = await applyHomeDecorWatermarkWithJimp(imageBuffer);
+    }
 
     return new Blob([watermarked], { type: "image/jpeg" });
   } catch (error) {
     console.error("applyHomeDecorWatermark: failed", {
       message: error instanceof Error ? error.message : "Unknown watermark error",
     });
-    throw new ConvexError("Unable to watermark free-tier image safely.");
+    return blob;
   }
 }
 
@@ -781,8 +934,8 @@ export const generateDesign: any = internalAction({
     imageStorageId: v.id("_storage"),
     referenceImageStorageIds: v.optional(v.array(v.id("_storage"))),
     maskStorageId: v.optional(v.id("_storage")),
-    requestedServiceType: v.optional(v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"), v.literal("replace"), v.literal("wall"), v.literal("transfer"), v.literal("reference"))),
-    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"), v.literal("replace")),
+    requestedServiceType: v.optional(v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"), v.literal("replace"), v.literal("interior"), v.literal("exterior"), v.literal("garden"), v.literal("wall"), v.literal("transfer"), v.literal("reference"))),
+    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"), v.literal("replace"), v.literal("interior"), v.literal("exterior"), v.literal("garden")),
     roomType: v.string(),
     style: v.string(),
     styleSelections: v.optional(v.array(v.string())),
@@ -834,17 +987,22 @@ export const generateDesign: any = internalAction({
     let generatedStorageId: string | null = null;
 
     try {
-      const sourceBlob = await ctx.storage.get(args.imageStorageId);
-      if (!sourceBlob) {
+      const serviceType = canonicalizeServiceType(args.serviceType as IncomingServiceType);
+      const requestedServiceType = args.requestedServiceType
+        ? args.requestedServiceType as RequestedServiceType
+        : undefined;
+      const originalSourceBlob = await ctx.storage.get(args.imageStorageId);
+      if (!originalSourceBlob) {
         throw new ConvexError("The source image could not be loaded from storage.");
       }
+      const sourceBlob = await prepareSafeOpenAIInputImage(originalSourceBlob, "generateDesign:sourceImage");
       const referenceBlobs = await Promise.all(
         (args.referenceImageStorageIds ?? []).map(async (storageId) => {
           const blob = await ctx.storage.get(storageId);
           if (!blob) {
             throw new ConvexError("One of the reference images could not be loaded from storage.");
           }
-          return blob;
+          return await prepareSafeOpenAIInputImage(blob, `generateDesign:referenceImage:${storageId}`);
         }),
       );
       const maskBlob = args.maskStorageId ? await ctx.storage.get(args.maskStorageId) : null;
@@ -870,7 +1028,7 @@ export const generateDesign: any = internalAction({
 
       const orchestratedDirection = await requestAzureDesignOrchestration({
         sourceBlob,
-        serviceType: args.serviceType as ServiceType,
+        serviceType,
         roomType: args.roomType,
         style: args.style,
         styleSelections: args.styleSelections,
@@ -883,23 +1041,23 @@ export const generateDesign: any = internalAction({
       const orchestrationReason = trimOptional(orchestratedDirection?.reason);
       const resolvedCustomPrompt = compactPromptSegments([
         args.customPrompt,
-        args.serviceType === "paint" && orchestratedDirection?.wallColor
+        serviceType === "paint" && orchestratedDirection?.wallColor
           ? `Primary wall color recommendation: ${orchestratedDirection.wallColor}.`
           : undefined,
-        args.serviceType === "floor" && orchestratedDirection?.floorMaterial
+        serviceType === "floor" && orchestratedDirection?.floorMaterial
           ? `Primary flooring recommendation: ${orchestratedDirection.floorMaterial}.`
           : undefined,
-        args.serviceType === "redesign" && orchestratedDirection?.fusionPrompt
+        serviceType === "redesign" && orchestratedDirection?.fusionPrompt
           ? `Fusion design brief: ${orchestratedDirection.fusionPrompt}.`
           : undefined,
-        args.serviceType === "redesign" && orchestrationReason
+        serviceType === "redesign" && orchestrationReason
           ? `Design direction rationale: ${orchestrationReason}.`
           : undefined,
         orchestrationPrompt,
       ]);
 
       const resolvedStyleSelections =
-        args.serviceType === "redesign"
+        serviceType === "redesign"
           ? dedupeSuggestions(
               [resolvedStyle, ...(orchestratedDirection?.styles ?? args.styleSelections ?? [])],
               resolvedStyle,
@@ -907,14 +1065,14 @@ export const generateDesign: any = internalAction({
           : args.styleSelections;
 
       const optimizedPrompt = buildPrompt({
-        serviceType: args.serviceType as ServiceType,
+        serviceType,
         roomType: args.roomType,
         style: resolvedStyle,
         styleSelections: resolvedStyleSelections,
         colorPalette: resolvedPalette,
         customPrompt: compactPromptSegments([
           buildModeSpecificInstruction({
-            serviceType: args.serviceType as ServiceType,
+            serviceType,
             modeId: trimOptional(args.modeId),
           }),
           resolvedCustomPrompt,
@@ -927,7 +1085,7 @@ export const generateDesign: any = internalAction({
         smartSuggest: args.smartSuggest,
       });
       const negativePrompt = buildDesignNegativePrompt({
-        serviceType: args.serviceType as ServiceType,
+        serviceType,
         roomType: args.roomType,
       });
 
@@ -948,7 +1106,7 @@ export const generateDesign: any = internalAction({
         endpoint,
         prompt: optimizedPrompt,
         negativePrompt,
-        serviceType: args.serviceType as ServiceType,
+        serviceType,
         roomType: args.roomType,
         sourceBlob,
         referenceBlobs,
@@ -957,7 +1115,7 @@ export const generateDesign: any = internalAction({
         targetColor: args.targetColor,
         targetColorHex: args.targetColorHex,
         customPrompt: args.customPrompt,
-        requestedServiceType: args.requestedServiceType,
+        requestedServiceType,
       });
 
       const imageBytes = generatedImage.uint8Array;

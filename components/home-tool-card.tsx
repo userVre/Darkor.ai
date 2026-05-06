@@ -23,7 +23,7 @@ export type HomeToolCardItem = {
 
 type HomeToolCardProps = {
   item: HomeToolCardItem;
-  onPress: (item: HomeToolCardItem) => void;
+  onPress: (item: HomeToolCardItem) => void | Promise<void>;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -38,7 +38,9 @@ export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
     <LuxPressable
       accessibilityLabel={`${item.title}. ${item.description}${isLocked ? ". Verrouillé" : ""}`}
       accessibilityRole="button"
-      onPress={() => onPress(item)}
+      onPress={() => {
+        return onPress(item);
+      }}
       style={[styles.card, { borderTopLeftRadius: topLeftRadius }, style]}
       scale={0.97}
     >

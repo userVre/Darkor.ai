@@ -106,6 +106,7 @@ const DIAMOND_PACK_COUNTS = {
   architect: 100,
   estate: 300,
 } as const;
+const TEST_DIAMOND_GRANT_COUNT = 10;
 const REFERRAL_INSTALL_REWARD_DIAMONDS = 1;
 const REFERRAL_PRO_REWARD_DIAMONDS = 5;
 const DAILY_CLAIM_BALANCE_CAP = 2;
@@ -160,6 +161,41 @@ function removeOneDiamondSource(sources: DiamondSource[], source: DiamondSource)
     next.splice(index, 1);
   }
   return next;
+}
+
+function splitEnvList(value?: string | null) {
+  return (value ?? "")
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isTruthyEnv(value?: string | null) {
+  return value === "1" || value?.toLowerCase() === "true";
+}
+
+function isDevDiamondGrantAllowed(identity: any) {
+  const deployment = process.env.CONVEX_DEPLOYMENT ?? "";
+  if (deployment.startsWith("dev:") || isTruthyEnv(process.env.DEV_DIAMOND_CHEAT_ENABLED)) {
+    return true;
+  }
+
+  const allowedIds = splitEnvList(
+    process.env.DEV_OWNER_CLERK_IDS ??
+    process.env.DEV_OWNER_CLERK_ID ??
+    process.env.OWNER_CLERK_IDS ??
+    process.env.OWNER_CLERK_ID,
+  );
+  const allowedEmails = splitEnvList(
+    process.env.DEV_OWNER_EMAILS ??
+    process.env.DEV_OWNER_EMAIL ??
+    process.env.OWNER_EMAILS ??
+    process.env.OWNER_EMAIL,
+  );
+  const subject = String(identity?.subject ?? "").trim().toLowerCase();
+  const email = String(identity?.email ?? "").trim().toLowerCase();
+
+  return (subject.length > 0 && allowedIds.includes(subject)) || (email.length > 0 && allowedEmails.includes(email));
 }
 
 function startOfUtcDay(timestamp: number) {
@@ -522,6 +558,64 @@ export const claimDailyDiamondReward = mutationGeneric({
   },
   handler: async (ctx, args) => {
     return await claimDailyDiamondHandler(ctx, args);
+  },
+});
+
+export const addTestDiamonds = mutationGeneric({
+  args: {},
+  handler: async (ctx) => {
+    const { identity, user: existingUser } = await getCurrentUser(ctx);
+    if (!isDevDiamondGrantAllowed(identity)) {
+      throw new ConvexError("Test diamond grants are restricted to dev deployments or the configured owner account.");
+    }
+
+    let user = existingUser;
+    if (!user) {
+      const id = await ctx.db.insert(
+        "users",
+        buildDefaultUserFields({
+          clerkId: identity.subject,
+          credits: ACCOUNT_STARTER_CREDITS,
+          referralCode: await createUniqueReferralCode(ctx, identity.subject),
+        }),
+      );
+      user = await ctx.db.get(id);
+    }
+
+    if (!user) {
+      throw new ConvexError("Unable to create a billing profile for this account.");
+    }
+
+    const state = await syncDerivedSubscriptionState(ctx, user, Date.now());
+    const diamondsAdded = TEST_DIAMOND_GRANT_COUNT;
+    const nextCredits = Math.max(state.credits, 0) + diamondsAdded;
+    const nextPremiumCredits = Math.max(state.premiumCredits, 0) + diamondsAdded;
+
+    await ctx.db.patch(user._id, {
+      credits: nextCredits,
+      premiumCredits: nextPremiumCredits,
+      diamondBalance: state.diamondBalance,
+      diamondSources: appendDiamondSources(user, nextCredits, "purchased_pack", diamondsAdded),
+      imageLimit: state.limit,
+      imageGenerationCount: state.imageGenerationCount,
+      lastResetDate: state.lastResetDate,
+      nextDiamondClaimAt: state.nextDiamondClaimAt,
+      canClaimDiamond: false,
+      ...(state.patch.plan ? { plan: state.patch.plan } : {}),
+      ...(state.patch.subscriptionType ? { subscriptionType: state.patch.subscriptionType } : {}),
+      ...(state.patch.subscriptionEntitlement ? { subscriptionEntitlement: state.patch.subscriptionEntitlement } : {}),
+      ...(typeof state.patch.subscriptionStartedAt === "number" ? { subscriptionStartedAt: state.patch.subscriptionStartedAt } : {}),
+      ...(typeof state.patch.subscriptionEnd === "number" ? { subscriptionEnd: state.patch.subscriptionEnd } : {}),
+      ...(typeof state.patch.imageLimit === "number" ? { imageLimit: state.patch.imageLimit } : {}),
+    });
+
+    return {
+      ok: true,
+      diamondsAdded,
+      credits: nextCredits,
+      premiumCredits: nextPremiumCredits,
+      diamondBalance: state.diamondBalance,
+    };
   },
 });
 

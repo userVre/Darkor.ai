@@ -257,7 +257,12 @@ export function deriveSubscriptionState(user: SubscriptionLikeUser, now: number)
     ),
     0,
   );
-  let premiumCredits = Math.min(Math.max(toFiniteNumber(user.premiumCredits), 0), credits);
+  let premiumCredits = Math.max(toFiniteNumber(user.premiumCredits), 0);
+  const creditsFromDiamondBalances = diamondBalance + premiumCredits;
+  if (credits < creditsFromDiamondBalances) {
+    credits = creditsFromDiamondBalances;
+  }
+  premiumCredits = Math.min(premiumCredits, credits);
   let imageLimit = toFiniteNumber(user.imageLimit, getGenerationLimit(subscriptionType));
   let imageGenerationCount = toFiniteNumber(user.imageGenerationCount);
   let lastResetDate = toFiniteNumber(user.lastResetDate);

@@ -23,8 +23,9 @@ import { resolveGenerationStatus } from "../lib/generation-status";
 
 type GenerationStatus = "processing" | "ready" | "failed";
 type CanonicalServiceType = "paint" | "floor" | "redesign" | "layout" | "replace";
-type RequestedServiceType = CanonicalServiceType | "wall" | "transfer" | "reference";
-type StoredServiceType = CanonicalServiceType | "reference";
+type RedesignSurfaceType = "interior" | "exterior" | "garden";
+type RequestedServiceType = CanonicalServiceType | RedesignSurfaceType | "wall" | "transfer" | "reference";
+type StoredServiceType = CanonicalServiceType | RedesignSurfaceType | "reference";
 
 type GenerationUser = {
   _id: string;
@@ -549,7 +550,13 @@ function canonicalizeServiceType(serviceType: RequestedServiceType): CanonicalSe
     return "paint";
   }
 
-  if (serviceType === "transfer" || serviceType === "reference") {
+  if (
+    serviceType === "transfer" ||
+    serviceType === "reference" ||
+    serviceType === "interior" ||
+    serviceType === "exterior" ||
+    serviceType === "garden"
+  ) {
     return "redesign";
   }
 
@@ -582,7 +589,16 @@ function resolveStoredServiceType(
   requestedServiceType: RequestedServiceType,
   canonicalServiceType: CanonicalServiceType,
 ): StoredServiceType {
-  return requestedServiceType === "reference" ? "reference" : canonicalServiceType;
+  if (
+    requestedServiceType === "reference" ||
+    requestedServiceType === "interior" ||
+    requestedServiceType === "exterior" ||
+    requestedServiceType === "garden"
+  ) {
+    return requestedServiceType;
+  }
+
+  return canonicalServiceType;
 }
 
 export const getUserArchive = queryGeneric({
@@ -652,6 +668,9 @@ export const startGeneration = mutationGeneric({
       v.literal("redesign"),
       v.literal("layout"),
       v.literal("replace"),
+      v.literal("interior"),
+      v.literal("exterior"),
+      v.literal("garden"),
       v.literal("wall"),
       v.literal("transfer"),
       v.literal("reference"),
@@ -821,12 +840,12 @@ export const startGeneration = mutationGeneric({
         requestedServiceType,
         serviceType: canonicalServiceType,
       });
+      await releaseGenerationAllowance(ctx, viewer.userId);
       await ctx.db.patch(generationId, {
         status: "failed",
         errorMessage: rawMessage,
         completedAt: Date.now(),
       });
-      await releaseGenerationAllowance(ctx, viewer.userId);
       throw new ConvexError(normalizeGenerationSchedulerError(rawMessage));
     }
 
@@ -866,13 +885,12 @@ export const markGenerationFailed = internalMutationGeneric({
       return { ok: true, skipped: true };
     }
 
+    await releaseGenerationAllowance(ctx, args.ownerId);
     await ctx.db.patch(args.generationId, {
       status: "failed",
       errorMessage: args.errorMessage,
       completedAt: Date.now(),
     });
-
-    await releaseGenerationAllowance(ctx, args.ownerId);
     return { ok: true };
   },
 });
@@ -924,12 +942,12 @@ export const cancelGeneration = mutationGeneric({
       return { ok: true, cancelled: false };
     }
 
+    await releaseGenerationAllowance(ctx, viewer.userId);
     await ctx.db.patch(args.id, {
       status: "failed",
       errorMessage: "Cancelled by user.",
       completedAt: Date.now(),
     });
-    await releaseGenerationAllowance(ctx, viewer.userId);
     return { ok: true, cancelled: true };
   },
 });

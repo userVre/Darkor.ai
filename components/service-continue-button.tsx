@@ -87,7 +87,7 @@ export function ServiceContinueButton({
           >
             <LuxPressable
               onPress={() => {
-                void onPress();
+                return onPress();
               }}
               disabled={isBlocked}
               className={pointerClassName}
@@ -112,7 +112,7 @@ export function ServiceContinueButton({
           {secondaryActionLabel && onSecondaryAction ? (
             <LuxPressable
               onPress={() => {
-                void onSecondaryAction();
+                return onSecondaryAction();
               }}
               disabled={isBlocked}
               className={pointerClassName}

@@ -38,7 +38,7 @@ const DESIGN_HEADER_ACTION_SIZE = 44;
 const DESIGN_HEADER_CONTENT_GAP = 0;
 const DESIGN_HEADER_PROGRESS_GAP = 12;
 const DESIGN_HEADER_PROGRESS_HEIGHT = 12;
-const DESIGN_HEADER_SIDE_WIDTH = 116;
+const DESIGN_HEADER_SIDE_WIDTH = DESIGN_HEADER_ACTION_SIZE;
 
 export function getDesignStepHeaderMetrics(topInset: number) {
   const safeTop = Platform.OS === "android" ? Math.max(topInset, 12) : Math.max(topInset, 16);
@@ -182,6 +182,12 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 40,
     backgroundColor: DS.colors.background,
+    shadowColor: "#111827",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    boxShadow: "0px 2px 10px rgba(17, 24, 39, 0.05)",
   },
   inner: {
     gap: DESIGN_HEADER_PROGRESS_GAP,
@@ -237,10 +243,14 @@ const styles = StyleSheet.create({
     minHeight: DESIGN_HEADER_ACTION_SIZE,
   },
   titleWrap: {
-    flex: 1,
+    position: "absolute",
+    left: DESIGN_HEADER_ACTION_SIZE + 12,
+    right: DESIGN_HEADER_ACTION_SIZE + 12,
+    top: 0,
+    bottom: 0,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
   },
   titleText: {
     color: DS.colors.textPrimary,

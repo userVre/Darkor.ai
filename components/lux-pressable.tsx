@@ -22,6 +22,7 @@ export function LuxPressable({
   glowColor,
   scale = 0.95,
   disabled,
+  onPress,
   ...props
 }: LuxPressableProps) {
   const [pressed, setPressed] = useState(false);
@@ -37,6 +38,14 @@ export function LuxPressable({
       disabled={disabled}
       className={pressableClassName ?? "cursor-pointer"}
       style={{ cursor: "pointer" as any }}
+      onPress={(event) => {
+        try {
+          const result = onPress?.(event);
+          void Promise.resolve(result).catch(() => undefined);
+        } catch {
+          // Press handlers should not tear down the UI.
+        }
+      }}
       onPressIn={(event) => {
         setPressed(true);
         props.onPressIn?.(event);

@@ -373,7 +373,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const effectiveSignedIn = isSignedIn || guestWizardTestingSession;
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const { showToast } = useProSuccess();
-  const { credits: sharedCredits, notificationsDeclined, setOptimisticCredits } = useViewerCredits();
+  const { credits: sharedCredits, notificationsDeclined } = useViewerCredits();
   const { openStore } = useDiamondStore();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
   const localizedSurfaceOptions = useMemo<PaintSurfaceOption[]>(
@@ -1261,9 +1261,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
         showToast,
       )) as { generationId: string; creditsRemaining?: number };
 
-      if (typeof result.creditsRemaining === "number") {
-        setOptimisticCredits(result.creditsRemaining);
-      }
       handledGenerationCompletionRef.current = null;
       setGenerationId(result.generationId);
     } catch (error) {
@@ -1302,7 +1299,6 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     selectedImage,
     selectedSurface,
     selectedSurfacePromptLabel,
-    setOptimisticCredits,
     showToast,
     startGeneration,
     t,

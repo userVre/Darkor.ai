@@ -150,7 +150,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const effectiveSignedIn = isSignedIn || guestWizardTestingSession;
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const { showToast } = useProSuccess();
-  const { credits: sharedCredits, notificationsDeclined, setOptimisticCredits } = useViewerCredits();
+  const { credits: sharedCredits, notificationsDeclined } = useViewerCredits();
   const { openStore } = useDiamondStore();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
   const localizedFloorMaterials = useMemo(
@@ -261,7 +261,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   }, [selectedImage]);
   const materialCardWidth = Math.max((width - 46) / 2, 154);
   const resultFrameWidth = Math.max(width - 32, 320);
-  const canContinueFromMaterials = Boolean(selectedImage && hasMask && (selectedMaterial || isAiMaterialSuggestionEnabled) && !isGenerating);
+  const canContinueFromMaterials = Boolean((selectedMaterial || isAiMaterialSuggestionEnabled) && !isGenerating);
   const maskLayoutScale = Math.min(width / MASK_SCREEN_REFERENCE_WIDTH, height / MASK_SCREEN_REFERENCE_HEIGHT, 1);
   const maskTitleTop = stickyHeaderMetrics.contentOffset;
   const maskImageTop = maskTitleTop + scaleMaskValue(60, maskLayoutScale);
@@ -870,9 +870,6 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
         },
         showToast,
       )) as { generationId: string; creditsRemaining?: number };
-      if (typeof result.creditsRemaining === "number") {
-        setOptimisticCredits(result.creditsRemaining);
-      }
       handledGenerationCompletionRef.current = null;
       setGenerationId(result.generationId);
     } catch (error) {
@@ -895,7 +892,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       }
       showToast(getFriendlyGenerationError(rawMessage));
     }
-  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isAiMaterialSuggestionEnabled, isGenerating, posthog, router, selectedImage, selectedMaterial, setOptimisticCredits, showToast, startGeneration, t, uploadBlobToStorage, viewerId, viewerReady, cleanupTempFile]);
+  }, [customPrompt, effectiveSignedIn, generationAccess.allowed, generationAccess.message, generationAccess.reason, hasMask, isAiMaterialSuggestionEnabled, isGenerating, posthog, router, selectedImage, selectedMaterial, showToast, startGeneration, t, uploadBlobToStorage, viewerId, viewerReady, cleanupTempFile]);
 
   const handleCancelGeneration = useCallback(async () => {
     if (!generationId || isCancellingGeneration) {
@@ -1229,6 +1226,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
           footer={
             <ServiceContinueButton
               active={canContinueFromMaterials}
+              activeColor="#007AFF"
               label={selectedMaterial || isAiMaterialSuggestionEnabled ? t("wizard.floorFlow.generateCta") : t("wizard.floorFlow.selectMaterialCta")}
               loading={loadingContinueStep === "materials"}
               onPress={async () => {

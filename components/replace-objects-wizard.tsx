@@ -140,7 +140,7 @@ export function ReplaceObjectsWizard({
   const effectiveSignedIn = isSignedIn || guestWizardTestingSession;
   const viewerId = useMemo(() => resolveGuestWizardViewerId(anonymousId, isSignedIn), [anonymousId, isSignedIn]);
   const {showToast} = useProSuccess();
-  const {credits: sharedCredits, notificationsDeclined, setOptimisticCredits} = useViewerCredits();
+  const {credits: sharedCredits, notificationsDeclined} = useViewerCredits();
   const {openStore} = useDiamondStore();
   const viewerArgs = useMemo(() => (viewerId ? {anonymousId: viewerId} : {}), [viewerId]);
 
@@ -633,10 +633,6 @@ export function ReplaceObjectsWizard({
         showToast,
       )) as {generationId: string; creditsRemaining?: number};
 
-      if (typeof result.creditsRemaining === "number") {
-        setOptimisticCredits(result.creditsRemaining);
-      }
-
       handledGenerationCompletionRef.current = null;
       setGenerationId(result.generationId);
     } catch (error) {
@@ -672,7 +668,6 @@ export function ReplaceObjectsWizard({
     prompt,
     router,
     selectedImage,
-    setOptimisticCredits,
     showToast,
     startGeneration,
     t,

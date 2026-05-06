@@ -5,33 +5,35 @@ import {Compass, House, Sparkles, UserRound, type LucideIcon} from "lucide-react
 import type {ReactNode} from "react";
 import {useTranslation} from "react-i18next";
 import {Pressable, View, type PressableProps} from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {spacing} from "../../styles/spacing";
 import {fonts} from "../../styles/typography";
 
 import {useFlowUI} from "../../components/flow-ui-context";
 import {useWorkspaceDraft} from "../../components/workspace-context";
-import {DS} from "../../lib/design-system";
 import {ENABLE_GUEST_WIZARD_TEST_MODE} from "../../lib/guest-testing";
 import {triggerHaptic} from "../../lib/haptics";
 import {withWorkspaceFlowId} from "../../lib/try-it-flow";
 
 const ACTIVE_TAB_COLOR = "#111111";
 const ACTIVE_TAB_INDICATOR = "rgba(17, 17, 17, 0.10)";
+const PURE_WHITE = "#FFFFFF";
 
 export const DEFAULT_TAB_BAR_STYLE = {
   position: "absolute" as const,
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: DS.colors.surface,
+  backgroundColor: PURE_WHITE,
   height: 74,
-  paddingTop: 8,
+  paddingTop: 7,
   paddingBottom: 8,
   paddingHorizontal: spacing.sm,
-  borderTopWidth: 1,
-  borderTopColor: DS.colors.border,
+  borderTopWidth: 0,
+  borderTopColor: "transparent",
   borderRadius: 0,
-  boxShadow: `0px -8px 24px ${DS.colors.shadow}`,
+  boxShadow: "0px -4px 18px rgba(0, 0, 0, 0.05)",
+  elevation: 5,
 };
 
 type TabButtonProps = PressableProps & {
@@ -106,14 +108,18 @@ export default function TabsLayout() {
   const { clearDraft } = useWorkspaceDraft();
   const { isFlowActive } = useFlowUI();
   const { isSignedIn } = useAuth();
-  const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const canOpenCreateTab = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const shouldHideTabBar = pathname === "/workspace" && isFlowActive;
+  const tabBarBottomPadding = Math.max(insets.bottom, 20);
   const tabBarStyle = {
     ...DEFAULT_TAB_BAR_STYLE,
-    backgroundColor: theme.surface,
-    borderTopColor: theme.border,
-    boxShadow: `0px -8px 24px ${theme.shadow}`,
+    backgroundColor: PURE_WHITE,
+    borderTopWidth: 0,
+    borderTopColor: "transparent",
+    height: 66 + tabBarBottomPadding,
+    paddingBottom: tabBarBottomPadding,
+    boxShadow: "0px -4px 18px rgba(0, 0, 0, 0.05)",
   };
 
   return (
@@ -137,7 +143,7 @@ export default function TabsLayout() {
         },
         tabBarStyle: shouldHideTabBar ? { display: "none" } : tabBarStyle,
         sceneStyle: {
-          backgroundColor: theme.bg,
+          backgroundColor: PURE_WHITE,
         },
       }}
     >

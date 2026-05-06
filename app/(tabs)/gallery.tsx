@@ -22,6 +22,7 @@ import {fonts} from "../../styles/typography";
 
 const SCREEN_SIDE_MARGIN = 26;
 const CARD_GAP = 14;
+const PURE_WHITE = "#FFFFFF";
 
 function getDiscoverTileKey(group: DiscoverGroup, item: DiscoverTile) {
   return `${group.renderKey}:${item.id}`;
@@ -207,11 +208,11 @@ export default function GalleryScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: DS.colors.background,
+    backgroundColor: PURE_WHITE,
   },
   headerWrap: {
     paddingBottom: 20,
-    backgroundColor: DS.colors.surface,
+    backgroundColor: PURE_WHITE,
   },
   titleRow: {
     marginTop: 18,
@@ -241,18 +242,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: DS.colors.borderSubtle,
-    backgroundColor: DS.colors.surfaceRaised,
+    backgroundColor: "#F3F4F6",
     paddingHorizontal: 10,
   },
   categoryTabActive: {
-    backgroundColor: DS.colors.accentSurface,
-    borderColor: DS.colors.accent,
-    boxShadow: `0px 8px 22px ${DS.colors.accentGlow}`,
+    backgroundColor: "#F3F4F6",
   },
   categoryTabText: {
-    color: DS.colors.textSecondary,
+    color: "#111111",
     fontSize: 13,
     lineHeight: 18,
     letterSpacing: 0,
@@ -260,7 +257,7 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
   categoryTabTextActive: {
-    color: DS.colors.accentStrong,
+    color: "#111111",
   },
   section: {
     marginBottom: 32,

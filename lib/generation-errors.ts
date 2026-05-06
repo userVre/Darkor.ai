@@ -2,7 +2,7 @@ export const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
 export const AI_BUSY_TOAST = "AI is busy, please try again in a moment.";
 export const GENERATION_FAILED_TOAST = "Generation failed. Please check your connection and try again.";
 export const IMAGE_PROCESSING_REJECTION_MESSAGE =
-  "Cette image ne peut pas être traitée. Essayez avec une photo d'intérieur ou une autre image.";
+  "Cette image n'a pas pu \u00eatre trait\u00e9e. Votre cr\u00e9dit a \u00e9t\u00e9 rembours\u00e9. Essayez avec une autre photo.";
 
 export function getFriendlyGenerationError(message?: string | null) {
   if (!message) {
@@ -12,7 +12,6 @@ export function getFriendlyGenerationError(message?: string | null) {
   const normalized = message.toLowerCase();
   if (
     message.includes("content safety guidelines") ||
-    normalized.includes("unable to prepare free-tier image safely") ||
     normalized.includes("content policy") ||
     normalized.includes("responsible ai policy") ||
     normalized.includes("content_filter") ||
@@ -28,6 +27,10 @@ export function getFriendlyGenerationError(message?: string | null) {
 
   if (message === AI_BUSY_TOAST) {
     return AI_BUSY_TOAST;
+  }
+
+  if (normalized.includes("azure api timeout") || normalized.includes("timed out")) {
+    return "Azure API Timeout";
   }
 
   return message;

@@ -670,7 +670,6 @@ export function ReferenceStyleWizard({
       });
 
       setGenerationId(response.generationId);
-      setOptimisticCredits(response.creditsRemaining ?? Math.max(credits - 1, 0));
     } catch (error) {
       setIsGenerating(false);
       setProcessingStartedAt(null);
@@ -697,7 +696,6 @@ export function ReferenceStyleWizard({
     posthog,
     roomImage,
     router,
-    setOptimisticCredits,
     startGeneration,
     viewerReady,
   ]);

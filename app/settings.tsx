@@ -245,8 +245,12 @@ export default function SettingsScreen() {
       return;
     }
 
-    await Clipboard.setStringAsync(fullUserId);
-    showToast(t("settings.messages.userIdCopied"));
+    try {
+      await Clipboard.setStringAsync(fullUserId);
+      showToast(t("settings.messages.userIdCopied"));
+    } catch {
+      showToast(t("common.actions.tryAgain"));
+    }
   };
 
   const clearLocalAppState = async () => {
@@ -427,7 +431,7 @@ export default function SettingsScreen() {
                   {truncatedUserId}
                 </Text>
                 {shouldShowCopy ? (
-                  <Pressable accessibilityRole="button" onPress={handleCopyUserId} style={styles.copyButton}>
+                  <Pressable accessibilityRole="button" onPress={() => void handleCopyUserId()} style={styles.copyButton}>
                     <Copy color={theme.textSecondary} size={16} strokeWidth={2.2} />
                   </Pressable>
                 ) : null}

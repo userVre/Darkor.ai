@@ -23,7 +23,7 @@ const HEADER_TOP_PADDING = 8;
 const HEADER_BOTTOM_PADDING = 12;
 const HEADER_ROW_HEIGHT = 44;
 const HEADER_ACTION_SIZE = 44;
-const HEADER_SIDE_WIDTH = 116;
+const HEADER_SIDE_WIDTH = HEADER_ACTION_SIZE;
 const HEADER_PROGRESS_GAP = 12;
 const HEADER_PROGRESS_HEIGHT = 12;
 
@@ -196,6 +196,12 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 40,
     backgroundColor: DS.colors.background,
+    shadowColor: "#111827",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    boxShadow: "0px 2px 10px rgba(17, 24, 39, 0.05)",
   },
   inner: {
     gap: HEADER_PROGRESS_GAP,
@@ -247,10 +253,14 @@ const styles = StyleSheet.create({
     height: HEADER_ACTION_SIZE,
   },
   titleWrap: {
-    flex: 1,
+    position: "absolute",
+    left: HEADER_ACTION_SIZE + 12,
+    right: HEADER_ACTION_SIZE + 12,
+    top: 0,
+    bottom: 0,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
   },
   titleText: {
     color: DS.colors.textPrimary,

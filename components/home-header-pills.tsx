@@ -17,6 +17,8 @@ import {ElitePassModal} from "./elitepass/ElitePassModal";
 import {useViewerCredits} from "./viewer-credits-context";
 
 const HEADER_PILL_HEIGHT = 36;
+const HEADER_PILL_SURFACE = "#F3F4F6";
+const HEADER_PILL_TEXT = "#111111";
 const DIAMOND_EMOJI = "\u{1F48E}";
 const FIRE_EMOJI = "\u{1F525}";
 
@@ -123,7 +125,7 @@ function createStyles(theme: Theme) {
       paddingVertical: 6,
       borderRadius: 20,
       borderCurve: "continuous",
-      backgroundColor: theme.surfaceMuted,
+      backgroundColor: HEADER_PILL_SURFACE,
     },
     creditPillText: {
       ...DS.typography.button,
@@ -143,31 +145,36 @@ function createStyles(theme: Theme) {
       paddingVertical: 6,
       borderRadius: 20,
       borderCurve: "continuous",
-      backgroundColor: "#111111",
+      borderWidth: 1,
+      borderColor: HEADER_PILL_SURFACE,
+      backgroundColor: HEADER_PILL_SURFACE,
     },
     upgradeProText: {
       ...DS.typography.button,
-      color: "#FFFFFF",
+      color: HEADER_PILL_TEXT,
       fontSize: 12,
       lineHeight: 16,
       fontWeight: "600",
       letterSpacing: 0,
     },
     elitePassButton: {
+      minWidth: 118,
       height: HEADER_PILL_HEIGHT,
       alignItems: "center",
       justifyContent: "center",
-      paddingHorizontal: 10,
+      paddingHorizontal: 14,
       paddingVertical: 6,
       borderRadius: 20,
-      borderWidth: 0.5,
-      borderColor: "rgba(255,180,0,0.40)",
-      backgroundColor: "rgba(255,180,0,0.15)",
+      borderCurve: "continuous",
+      borderWidth: 1,
+      borderColor: HEADER_PILL_SURFACE,
+      backgroundColor: HEADER_PILL_SURFACE,
     },
     elitePassText: {
-      color: "#FFB400",
-      fontSize: 11,
-      lineHeight: 14,
+      ...DS.typography.button,
+      color: HEADER_PILL_TEXT,
+      fontSize: 12,
+      lineHeight: 16,
       fontWeight: "600",
       letterSpacing: 0,
     },

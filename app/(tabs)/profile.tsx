@@ -1,5 +1,6 @@
-import {LayoutPanelTop, Settings} from "@/components/material-icons";
+import {LayoutPanelTop} from "@/components/material-icons";
 import {useUser} from "@clerk/expo";
+import {Ionicons} from "@expo/vector-icons";
 import {useMutation, useQuery} from "convex/react";
 import {Image} from "expo-image";
 import * as FileSystem from "expo-file-system/legacy";
@@ -45,6 +46,7 @@ const GRID_HORIZONTAL_PADDING = 24;
 const GRID_GAP = 12;
 const GRID_MAX_CARD_WIDTH = 190;
 const DARK_ACTION = "#111111";
+const PURE_WHITE = "#FFFFFF";
 
 function getBoardItemKey(item: BoardItem) {
   return `${item.generationId ?? item.id}:${item.createdAt}`;
@@ -368,21 +370,35 @@ export default function ProfileScreen() {
         ]}
         ListHeaderComponent={(
           <View style={styles.header}>
-            {user ? (
-              <View style={styles.profileUserHeader}>
-                <View style={styles.avatar}>
-                  {user.imageUrl ? (
-                    <Image source={{ uri: user.imageUrl }} style={styles.avatarImage} contentFit="cover" />
-                  ) : (
-                    <Text style={styles.avatarInitials}>{avatarInitials}</Text>
-                  )}
-                </View>
-                <View style={styles.userCopy}>
-                  {userName ? <Text numberOfLines={1} style={styles.userName}>{userName}</Text> : null}
-                  {userEmail ? <Text numberOfLines={1} style={styles.userEmail}>{userEmail}</Text> : null}
-                </View>
-              </View>
-            ) : null}
+            <View style={styles.profileUserHeader}>
+              {user ? (
+                <>
+                  <View style={styles.avatar}>
+                    {user.imageUrl ? (
+                      <Image source={{ uri: user.imageUrl }} style={styles.avatarImage} contentFit="cover" />
+                    ) : (
+                      <Text style={styles.avatarInitials}>{avatarInitials}</Text>
+                    )}
+                  </View>
+                  <View style={styles.userCopy}>
+                    {userName ? <Text numberOfLines={1} style={styles.userName}>{userName}</Text> : null}
+                    {userEmail ? <Text numberOfLines={1} style={styles.userEmail}>{userEmail}</Text> : null}
+                  </View>
+                </>
+              ) : (
+                <View style={styles.userCopy} />
+              )}
+
+              <Pressable
+                accessibilityLabel={t("settings.title")}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={handleSettingsPress}
+                style={styles.settingsIconButton}
+              >
+                <Ionicons name="settings-outline" color={theme.textPrimary} size={24} />
+              </Pressable>
+            </View>
 
             <View style={styles.headerRow}>
               <View style={styles.portfolioTitleGroup}>
@@ -391,11 +407,6 @@ export default function ProfileScreen() {
                 </View>
                 <Text numberOfLines={1} style={styles.title}>{t("profile.title")}</Text>
               </View>
-
-              <Pressable accessibilityRole="button" onPress={handleSettingsPress} style={styles.settingsLink}>
-                <Settings color={theme.textPrimary} size={15} strokeWidth={1.9} />
-                <Text numberOfLines={1} style={styles.settingsLinkText}>{t("settings.title")}</Text>
-              </Pressable>
             </View>
           </View>
         )}
@@ -432,11 +443,11 @@ function createStyles(theme: Theme) {
   return StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: theme.bg,
+    backgroundColor: PURE_WHITE,
   },
   scrollView: {
     flex: 1,
-    backgroundColor: theme.bg,
+    backgroundColor: PURE_WHITE,
   },
   scrollContent: {
     paddingHorizontal: GRID_HORIZONTAL_PADDING,
@@ -497,6 +508,15 @@ function createStyles(theme: Theme) {
     letterSpacing: 0,
     ...fonts.regular,
   },
+  settingsIconButton: {
+    width: 40,
+    height: 40,
+    flexShrink: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 20,
+    borderCurve: "continuous",
+  },
   headerRow: {
     width: "100%",
     minHeight: 42,
@@ -504,25 +524,6 @@ function createStyles(theme: Theme) {
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
-  },
-  settingsLink: {
-    minHeight: 40,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    gap: 7,
-    paddingHorizontal: 13,
-    borderRadius: 20,
-    borderCurve: "continuous",
-    backgroundColor: theme.surfaceMuted,
-  },
-  settingsLinkText: {
-    color: theme.textPrimary,
-    fontSize: 13,
-    lineHeight: 16,
-    letterSpacing: 0,
-    ...fonts.medium,
   },
   portfolioTitleGroup: {
     flex: 1,

@@ -47,7 +47,12 @@ export function SettingsRow({
       accessibilityRole={isInteractive ? "button" : undefined}
       disabled={!isInteractive}
       onPress={() => {
-        void onPress?.();
+        try {
+          const result = onPress?.();
+          void Promise.resolve(result).catch(() => undefined);
+        } catch {
+          // Keep settings rows from crashing the current screen on tap.
+        }
       }}
       style={[
         styles.row,

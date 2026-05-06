@@ -76,7 +76,7 @@ export default defineSchema({
     customPrompt: v.optional(v.string()),
     colorPalette: v.optional(v.string()),
     aspectRatio: v.optional(v.string()),
-    serviceType: v.optional(v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"), v.literal("reference"), v.literal("replace"), v.literal("wall"), v.literal("transfer"))),
+    serviceType: v.optional(v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"), v.literal("reference"), v.literal("replace"), v.literal("interior"), v.literal("exterior"), v.literal("garden"), v.literal("wall"), v.literal("transfer"))),
     modeId: v.optional(v.string()),
     paletteId: v.optional(v.string()),
     finishId: v.optional(v.string()),

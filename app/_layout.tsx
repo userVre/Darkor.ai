@@ -338,11 +338,11 @@ function ReferralGate() {
       const parsed = Linking.parse(url);
       const code = typeof parsed.queryParams?.code === "string" ? parsed.queryParams.code : null;
       if (code) {
-        void setReferralCode(code);
+        void setReferralCode(code).catch(() => undefined);
       }
     };
 
-    void Linking.getInitialURL().then(handleUrl);
+    void Linking.getInitialURL().then(handleUrl).catch(() => undefined);
     const subscription = Linking.addEventListener("url", (event) => handleUrl(event.url));
     return () => subscription.remove();
   }, []);
@@ -355,7 +355,7 @@ function ReferralGate() {
         await applyReferral({ referralCode: code, anonymousId: anonymousId ?? undefined });
       }
     };
-    void run();
+    void run().catch(() => undefined);
   }, [anonymousId, applyReferral, viewerReady]);
 
   return null;
@@ -396,9 +396,9 @@ function LocalizationSyncGate() {
   useEffect(() => {
     void syncAppLanguageWithSystem(locales, calendars).then((result) => {
       if (result.layoutDirectionChanged) {
-        void reloadAppForLayoutDirection();
+        void reloadAppForLayoutDirection().catch(() => undefined);
       }
-    });
+    }).catch(() => undefined);
   }, [calendarSignature, localeSignature]);
 
   return null;
@@ -577,7 +577,7 @@ function AuthRedirectGate({ children }: { children: React.ReactNode }) {
       if (mounted) {
         setAuthSkipped(skipped);
       }
-    });
+    }).catch(() => undefined);
 
     return () => {
       mounted = false;
@@ -680,7 +680,7 @@ export default function RootLayout() {
       if (mounted) {
         setI18nReady(true);
       }
-    });
+    }).catch(() => undefined);
 
     return () => {
       mounted = false;

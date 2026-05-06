@@ -38,6 +38,7 @@ import {useIsFocused} from "@react-navigation/native";
 import {FlashList} from "@shopify/flash-list";
 import {useAction, useMutation, useQuery} from "convex/react";
 import {Asset} from "expo-asset";
+import {BlurView} from "expo-blur";
 import * as FileSystem from "expo-file-system/legacy";
 import {Image} from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -116,6 +117,7 @@ import {triggerHaptic} from "../../lib/haptics";
 import {loadLocalBoardItems, persistLocalBoardItems, type LocalBoardItem} from "../../lib/local-board-cache";
 import {LUX_SPRING, staggerFadeUp} from "../../lib/motion";
 import {requestPermissionsGracefully} from "../../lib/notifications";
+import {OFFLINE_GENERATION_TOAST, useIsOffline} from "../../lib/offline";
 import {uploadLocalFileToCloud} from "../../lib/native-upload";
 import {SERVICE_WIZARD_THEME} from "../../lib/service-wizard-theme";
 import {requestStoreReview} from "../../lib/store-review";
@@ -125,6 +127,21 @@ import {fonts} from "../../styles/typography";
 
 const TABS_HOME_ROUTE = "/(tabs)/index";
 const PRO_TOOL_LOCK_MESSAGE = "Unlock this with PRO.";
+const RESULT_ACTION_BLUE = "#2563EB";
+const RESULT_ROOM_LABELS_FR: Record<string, string> = {
+  "Bathroom": "Salle de bain",
+  "Bedroom": "Chambre",
+  "Dining Room": "Salle à manger",
+  "Gaming Room": "Salle de jeux",
+  "Home Office": "Bureau",
+  "Home Theater": "Cinéma maison",
+  "Kitchen": "Cuisine",
+  "Laundry": "Buanderie",
+  "Library": "Bibliothèque",
+  "Living Room": "Salon",
+  "Nursery": "Chambre d'enfant",
+  "Room": "Pièce",
+};
 
 function breakLongWizardDescription(description: string) {
   const sentences = description.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((part) => part.trim()).filter(Boolean) ?? [description];
@@ -580,6 +597,14 @@ function resolveBoardStyleSelection(styleLabel: string | null | undefined, servi
   return normalizedStyle;
 }
 
+function localizeResultRoomLabel(label: string | null | undefined) {
+  if (!label?.trim()) {
+    return "Pièce";
+  }
+
+  return RESULT_ROOM_LABELS_FR[label.trim()] ?? label;
+}
+
 const EditorActionButton = memo(function EditorActionButton({
   icon: Icon,
   label,
@@ -595,31 +620,34 @@ const EditorActionButton = memo(function EditorActionButton({
   loading?: boolean;
   tone?: "dark" | "light" | "accent";
 }) {
-  const backgroundColor = tone === "accent" ? DS.colors.accent : tone === "light" ? "#F4F5F7" : "#111827";
+  const backgroundColor = tone === "accent" ? RESULT_ACTION_BLUE : tone === "light" ? "#F4F5F7" : "#111827";
   const borderColor =
-    tone === "accent" ? "rgba(37,99,235,0.28)" : tone === "light" ? "rgba(17,24,39,0.08)" : "rgba(17,24,39,0.14)";
+    tone === "accent" ? "rgba(37,99,235,0.42)" : tone === "light" ? "rgba(17,24,39,0.08)" : "rgba(17,24,39,0.14)";
   const iconColor = tone === "light" ? "#05070A" : "#FFFFFF";
-  const textColor = tone === "accent" ? DS.colors.accent : "#111827";
+  const textColor = tone === "light" ? "#111827" : "#FFFFFF";
 
   return (
     <LuxPressable onPress={onPress} disabled={disabled || loading} className="cursor-pointer" style={{ flex: 1 }}>
-      <View style={{ alignItems: "center", gap: 12, opacity: disabled ? 0.55 : 1 }}>
-        <View
-          style={{
-            width: 76,
-            height: 58,
-            borderRadius: 18,
-            borderWidth: 1,
-            borderColor,
-            backgroundColor,
-            alignItems: "center",
-            justifyContent: "center",
-            ...ambientShadow(0.06, 10, 8),
-          }}
-        >
-          {loading ? <ActivityIndicator color={iconColor} /> : <Icon color={iconColor} size={24} strokeWidth={2.1} />}
-        </View>
-        <Text style={{ color: textColor, fontSize: 13, lineHeight: 16, textAlign: "center", ...fonts.semibold }}>{label}</Text>
+      <View
+        style={{
+          minHeight: 64,
+          borderRadius: 18,
+          borderWidth: 1,
+          borderColor,
+          backgroundColor,
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          opacity: disabled ? 0.55 : 1,
+          paddingHorizontal: 8,
+          paddingVertical: 9,
+          ...ambientShadow(0.08, 12, 8),
+        }}
+      >
+        {loading ? <ActivityIndicator color={iconColor} /> : <Icon color={iconColor} size={21} strokeWidth={2.25} />}
+        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82} style={{ color: textColor, fontSize: 12, lineHeight: 15, textAlign: "center", ...fonts.semibold }}>
+          {label}
+        </Text>
       </View>
     </LuxPressable>
   );
@@ -2131,6 +2159,7 @@ export default function WorkspaceScreen() {
     useWorkspaceDraft();
   const { setIsFlowActive } = useFlowUI();
   const { showToast } = useProSuccess();
+  const isOffline = useIsOffline();
   const viewerArgs = useMemo(() => (viewerId ? { anonymousId: viewerId } : {}), [viewerId]);
 
   const me = useQuery(
@@ -3530,6 +3559,7 @@ export default function WorkspaceScreen() {
       generationAlertedFailureRef.current = currentGeneration.id;
       handledGenerationTransitionRef.current = currentGeneration.id;
       setPendingReviewState(null);
+      clearOptimisticCredits();
       captureAnalytics(posthog, ANALYTICS_EVENTS.generationFailed, {
         error: currentGeneration.errorMessage ?? GENERATION_FAILED_TOAST,
         generation_id: currentGeneration.id,
@@ -3539,6 +3569,7 @@ export default function WorkspaceScreen() {
     }
   }, [
     boardItems,
+    clearOptimisticCredits,
     effectiveSignedIn,
     generatedImageUrl,
     generationId,
@@ -4309,6 +4340,11 @@ export default function WorkspaceScreen() {
       return;
     }
 
+    if (isOffline) {
+      showToast(OFFLINE_GENERATION_TOAST);
+      return;
+    }
+
     captureAnalytics(posthog, ANALYTICS_EVENTS.generateClicked, {
       service_type: serviceType,
       regenerate: options?.regenerate === true,
@@ -4603,6 +4639,7 @@ export default function WorkspaceScreen() {
     generationAccess.reason,
     hasGenerationCredits,
     ignoreReviewCooldown,
+    isOffline,
     isPaintService,
     openAuthWall,
     openGenerationPaywall,
@@ -4655,6 +4692,11 @@ export default function WorkspaceScreen() {
   }, [activeBoardItem?.originalImageUrl, draft.image?.uri, draft.images, selectedImage?.uri, selectedImages]);
 
   const handleRegenerate = useCallback(async () => {
+    if (isOffline) {
+      showToast(OFFLINE_GENERATION_TOAST);
+      return;
+    }
+
     if (!activeBoardItem) {
       showToast(t("workspace.download.generateFirst"));
       return;
@@ -4716,6 +4758,7 @@ export default function WorkspaceScreen() {
     generationAccess.message,
     generationAccess.reason,
     handleGenerate,
+    isOffline,
     openAuthWall,
     openGenerationPaywall,
     prepareRegenerateSourceImage,
@@ -5308,20 +5351,26 @@ export default function WorkspaceScreen() {
 
   const handleCloseBoardEditor = useCallback(() => {
     triggerHaptic();
-    if (entrySource === "gallery") {
-      router.replace("/gallery");
-      return;
-    }
-    if (entrySource === "profile") {
-      router.replace("/profile");
-      return;
-    }
+    setIsFlowActive(false);
     setWizardNavDirection(-1);
-    setWorkflowStep(effectiveSignedIn ? (isFloorService ? 2 : 4) : 3);
     setActiveBoardItemId(null);
     setShowComparisonSlider(false);
     setPendingRegenerateConfirm(false);
-  }, [effectiveSignedIn, entrySource, isFloorService, router]);
+    setWorkflowStep(0);
+    setGeneratedImageUrl(null);
+    setGenerationId(null);
+    setIsGenerating(false);
+    setIsProcessingGateActive(false);
+    if (entrySource === "gallery") {
+      router.replace("/(tabs)/gallery" as any);
+      return;
+    }
+    if (entrySource === "profile") {
+      router.replace("/(tabs)/profile" as any);
+      return;
+    }
+    router.replace(TABS_HOME_ROUTE as any);
+  }, [entrySource, router, setIsFlowActive]);
 
   const handleDeleteBoardItem = useCallback(() => {
     const currentItem = activeBoardItem;
@@ -7896,7 +7945,7 @@ export default function WorkspaceScreen() {
         ? processingPreviewUri ?? activeBoardItem.originalImageUrl ?? rawEditorImageUrl
         : processingPreviewUri ?? rawEditorImageUrl;
     const editorStyleLabel = normalizeStyleDisplayName(activeBoardItem?.styleLabel ?? selectedStyle) ?? "Custom";
-    const editorRoomLabel = activeBoardItem?.roomLabel ?? selectedRoom ?? serviceLabel;
+    const editorRoomLabel = localizeResultRoomLabel(activeBoardItem?.roomLabel ?? selectedRoom ?? serviceLabel);
     const hasComparisonImages = Boolean(editorImageUrl && beforeImageUrl);
     const showSliderComparison = hasComparisonImages && showComparisonSlider;
     const editorResolvedStatus = resolveGenerationStatus(activeBoardItem?.status, rawEditorImageUrl);
@@ -8203,6 +8252,13 @@ export default function WorkspaceScreen() {
             backgroundColor: DS.colors.background,
             borderBottomWidth: StyleSheet.hairlineWidth,
             borderBottomColor: DS.colors.border,
+            shadowColor: "#111827",
+            shadowOpacity: 0.05,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 },
+            elevation: 2,
+            boxShadow: "0px 2px 10px rgba(17, 24, 39, 0.05)",
+            zIndex: 5,
           }}
         >
           <View style={{ minHeight: 48, justifyContent: "center" }}>
@@ -8217,7 +8273,7 @@ export default function WorkspaceScreen() {
                   ...fonts.bold,
                 }}
               >
-                {t("workspace.editor.yourDesign")}
+                Votre Design
               </Text>
             </View>
 
@@ -8383,13 +8439,27 @@ export default function WorkspaceScreen() {
                         alignItems: "center",
                         justifyContent: "center",
                         borderRadius: 999,
-                        borderWidth: 1,
-                        borderColor: "rgba(255,255,255,0.82)",
-                        backgroundColor: showSliderComparison ? "rgba(17,24,39,0.92)" : "rgba(255,255,255,0.94)",
+                        overflow: "hidden",
                         opacity: hasComparisonImages ? 1 : 0.45,
+                        boxShadow: "0px 10px 24px rgba(0, 0, 0, 0.18)",
                       }}
                     >
-                      <LayoutPanelTop color={showSliderComparison ? "#FFFFFF" : "#111827"} size={18} strokeWidth={1.9} />
+                      <BlurView
+                        intensity={34}
+                        tint="light"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: "rgba(255,255,255,0.64)",
+                          backgroundColor: showSliderComparison ? "rgba(37,99,235,0.72)" : "rgba(255,255,255,0.24)",
+                        }}
+                      >
+                        <LayoutPanelTop color={showSliderComparison ? "#FFFFFF" : "#111827"} size={18} strokeWidth={2} />
+                      </BlurView>
                     </View>
                   </LuxPressable>
 
@@ -8406,12 +8476,26 @@ export default function WorkspaceScreen() {
                         alignItems: "center",
                         justifyContent: "center",
                         borderRadius: 999,
-                        borderWidth: 1,
-                        borderColor: "rgba(255,255,255,0.82)",
-                        backgroundColor: "rgba(255,255,255,0.94)",
+                        overflow: "hidden",
+                        boxShadow: "0px 10px 24px rgba(0, 0, 0, 0.18)",
                       }}
                     >
-                      <Trash2 color="#000000" size={18} strokeWidth={2} />
+                      <BlurView
+                        intensity={34}
+                        tint="light"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: "rgba(255,255,255,0.64)",
+                          backgroundColor: "rgba(255,255,255,0.24)",
+                        }}
+                      >
+                        <Trash2 color="#111827" size={18} strokeWidth={2.1} />
+                      </BlurView>
                     </View>
                   </LuxPressable>
                 </View>
@@ -8462,7 +8546,7 @@ export default function WorkspaceScreen() {
                   }}
                 >
                   <Text style={{ color: DS.colors.textMuted, fontSize: 11, lineHeight: 14, ...fonts.medium }}>
-                    {t("workspace.editor.room")}
+                    Pièce
                   </Text>
                   <Text
                     numberOfLines={1}
@@ -8530,7 +8614,7 @@ export default function WorkspaceScreen() {
             >
               <EditorActionButton
                 icon={Redo2}
-                label={t("workspace.editor.regenerate")}
+                label="Régénérer"
                 onPress={handleOpenRegenerateStep}
                 disabled={isEditorActionDisabled || isGenerating}
                 loading={false}
@@ -8538,7 +8622,7 @@ export default function WorkspaceScreen() {
               />
               <EditorActionButton
                 icon={Download}
-                label={t("common.actions.save")}
+                label="Sauvegarder"
                 onPress={handleSaveToGallery}
                 disabled={isEditorActionDisabled || isSaveBusy}
                 loading={isSaveBusy}
@@ -8546,7 +8630,7 @@ export default function WorkspaceScreen() {
               />
               <EditorActionButton
                 icon={Share2}
-                label={t("common.actions.share")}
+                label="Partager"
                 onPress={() => {
                   void handleShare();
                 }}
@@ -8565,7 +8649,7 @@ export default function WorkspaceScreen() {
               }}
             >
               <Text style={{ color: "#687076", fontSize: 12, lineHeight: 16, letterSpacing: 0.3, textAlign: "center", ...fonts.medium }}>
-                {t("workspace.editor.rateThisResult")}
+                Évaluez ce résultat
               </Text>
               <View
                 style={{

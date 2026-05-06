@@ -17,9 +17,10 @@ const AZURE_BRAIN_DEFAULT_ENDPOINT = "https://abism-moec40fn-eastus2.cognitivese
 const AZURE_BRAIN_DEFAULT_DEPLOYMENT_NAME = "gpt-image-2";
 const AI_PROVIDER_DOWN = "AI_PROVIDER_DOWN";
 export const IMAGE_PROCESSING_REJECTION_MESSAGE =
-  "Cette image ne peut pas être traitée. Essayez avec une photo d'intérieur ou une autre image.";
+  "Cette image n'a pas pu \u00eatre trait\u00e9e. Votre cr\u00e9dit a \u00e9t\u00e9 rembours\u00e9. Essayez avec une autre photo.";
 
 type ServiceType = "paint" | "floor" | "redesign" | "layout" | "replace";
+type IncomingServiceType = ServiceType | "interior" | "exterior" | "garden" | "wall" | "transfer" | "reference";
 
 type DetectionPoint = {
   x: number;
@@ -126,10 +127,6 @@ export function normalizeGenerationError(message?: string | null) {
     return IMAGE_PROCESSING_REJECTION_MESSAGE;
   }
 
-  if (normalized.includes("unable to prepare free-tier image safely")) {
-    return IMAGE_PROCESSING_REJECTION_MESSAGE;
-  }
-
   if (
     normalized.includes("credit") ||
     normalized.includes("quota") ||
@@ -152,8 +149,8 @@ export function normalizeGenerationError(message?: string | null) {
     return "The selected image could not be processed. Please try a different photo.";
   }
 
-  if (normalized.includes("timed out")) {
-    return "AI is busy, please try again in a moment.";
+  if (normalized.includes("azure api timeout") || normalized.includes("timed out")) {
+    return "Azure API Timeout";
   }
 
   return raw;
@@ -207,6 +204,24 @@ export function compactPromptSegments(parts: Array<string | undefined>) {
     .map((part) => trimOptional(part))
     .filter((part): part is string => Boolean(part))
     .join(" ");
+}
+
+function canonicalizeServiceType(serviceType: IncomingServiceType): ServiceType {
+  if (serviceType === "wall") {
+    return "paint";
+  }
+
+  if (
+    serviceType === "interior" ||
+    serviceType === "exterior" ||
+    serviceType === "garden" ||
+    serviceType === "transfer" ||
+    serviceType === "reference"
+  ) {
+    return "redesign";
+  }
+
+  return serviceType;
 }
 
 function buildPrompt(args: {
@@ -727,13 +742,14 @@ export async function requestAzureDesignOrchestration(args: {
 export const suggestDesignOptions: any = actionGeneric({
   args: {
     imageStorageId: v.id("_storage"),
-    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"), v.literal("replace")),
+    serviceType: v.union(v.literal("paint"), v.literal("floor"), v.literal("redesign"), v.literal("layout"), v.literal("replace"), v.literal("interior"), v.literal("exterior"), v.literal("garden"), v.literal("wall"), v.literal("transfer"), v.literal("reference")),
     roomType: v.string(),
     availableStyles: v.array(v.string()),
     availablePalettes: v.array(v.string()),
   },
   handler: async (ctx, args) => {
     const fallback = buildFallbackSuggestion(args);
+    const serviceType = canonicalizeServiceType(args.serviceType as IncomingServiceType);
     const sourceBlob = await ctx.storage.get(args.imageStorageId);
     if (!sourceBlob) {
       return fallback;
@@ -742,7 +758,7 @@ export const suggestDesignOptions: any = actionGeneric({
     try {
       const parsed = await requestAzureDesignOrchestration({
         sourceBlob,
-        serviceType: args.serviceType,
+        serviceType,
         roomType: args.roomType,
         style: fallback.style,
         colorPalette: fallback.paletteId,

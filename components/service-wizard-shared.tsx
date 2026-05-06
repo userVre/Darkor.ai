@@ -2,8 +2,8 @@ import {Check, ImagePlus, X} from "@/components/material-icons";
 import {light as colors} from "@/styles/theme";
 import {Image} from "expo-image";
 import {MotiView} from "moti";
-import {Children, cloneElement, isValidElement, useState, type ComponentProps, type ReactElement, type ReactNode} from "react";
-import {ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageSourcePropType} from "react-native";
+import {Children, cloneElement, isValidElement, useEffect, useState, type ComponentProps, type ReactElement, type ReactNode} from "react";
+import {ActivityIndicator, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageSourcePropType} from "react-native";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {spacing} from "../styles/spacing";
 import {fonts} from "../styles/typography";
@@ -169,6 +169,12 @@ export function ServiceSelectionCard({
   fullWidth = false,
   recommended = false,
 }: ServiceSelectionCardProps) {
+  const [imageState, setImageState] = useState<"loading" | "loaded" | "error">("loading");
+
+  useEffect(() => {
+    setImageState("loading");
+  }, [image]);
+
   return (
     <LuxPressable
       onPress={onPress}
@@ -180,7 +186,28 @@ export function ServiceSelectionCard({
     >
       <View style={[styles.selectionCard, active ? styles.selectionCardActive : null]}>
         <View style={styles.selectionImageWrap}>
-          <Image source={image} style={styles.selectionImage} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+          {imageState === "error" ? (
+            <View style={styles.selectionImageFallback}>
+              <View style={[styles.selectionFallbackBand, styles.selectionFallbackBandWarm]} />
+              <View style={[styles.selectionFallbackBand, styles.selectionFallbackBandCool]} />
+              <View style={[styles.selectionFallbackBand, styles.selectionFallbackBandLight]} />
+            </View>
+          ) : null}
+          <Image
+            source={image}
+            style={[styles.selectionImage, imageState === "error" ? styles.selectionImageHidden : null]}
+            contentFit="cover"
+            transition={120}
+            cachePolicy="memory-disk"
+            onLoadStart={() => setImageState((current) => (current === "loaded" ? current : "loading"))}
+            onLoad={() => setImageState("loaded")}
+            onError={() => setImageState("error")}
+          />
+          {imageState === "loading" ? (
+            <View pointerEvents="none" style={styles.selectionImageLoading}>
+              <ActivityIndicator color={DESIGN_WIZARD_SELECTION_BLUE} />
+            </View>
+          ) : null}
           <View pointerEvents="none" style={styles.selectionGradient} />
           {active ? (
             <View style={[styles.selectionBadge, recommended ? styles.selectionBadgeOffset : null]}>
@@ -189,7 +216,7 @@ export function ServiceSelectionCard({
           ) : null}
           {recommended ? (
             <View style={styles.selectionRecommendedBadge}>
-              <Text style={styles.selectionRecommendedText}>Recommended</Text>
+              <Text style={styles.selectionRecommendedText}>Recommandé</Text>
             </View>
           ) : null}
           <View style={[styles.selectionCopy, fullWidth ? styles.selectionCopyCentered : null]}>
@@ -466,9 +493,47 @@ const styles = StyleSheet.create({
   selectionImage: {
     ...StyleSheet.absoluteFillObject,
   },
-  selectionGradient: {
+  selectionImageHidden: {
+    opacity: 0,
+  },
+  selectionImageLoading: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.surfaceOverlay,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surfaceHigh,
+  },
+  selectionImageFallback: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+    backgroundColor: "#F8FAFC",
+  },
+  selectionFallbackBand: {
+    position: "absolute",
+    left: -40,
+    right: -40,
+    height: 82,
+    opacity: 0.88,
+    transform: [{ rotate: "-8deg" }],
+  },
+  selectionFallbackBandWarm: {
+    top: 20,
+    backgroundColor: "#D8C1A3",
+  },
+  selectionFallbackBandCool: {
+    top: 96,
+    backgroundColor: "#AAB7C4",
+  },
+  selectionFallbackBandLight: {
+    top: 172,
+    backgroundColor: "#ECE7DD",
+  },
+  selectionGradient: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 72,
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
   },
   selectionBadge: {
     position: "absolute",
