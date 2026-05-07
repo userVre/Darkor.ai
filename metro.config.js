@@ -18,6 +18,7 @@ config.resolver.blockList = [
 ];
 config.resolver.extraNodeModules = {
   ...(config.resolver.extraNodeModules ?? {}),
+  "@": __dirname,
   "expo-keep-awake": path.resolve(__dirname, "lib/expo-keep-awake-safe.ts"),
 };
 

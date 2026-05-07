@@ -70,15 +70,15 @@ function TabIcon({
   focused: boolean;
 }) {
   return (
-    <View style={{ width: 50, height: 38, alignItems: "center", justifyContent: "center" }}>
+    <View style={{ width: 48, height: 30, alignItems: "center", justifyContent: "center" }}>
       {focused ? (
         <View
           pointerEvents="none"
           style={{
             position: "absolute",
-            width: 46,
-            height: 46,
-            borderRadius: 23,
+            width: 34,
+            height: 34,
+            borderRadius: 17,
             backgroundColor: ACTIVE_TAB_INDICATOR,
           }}
         />
@@ -86,13 +86,13 @@ function TabIcon({
 
       <View
         style={{
-          minWidth: 46,
-          height: 36,
-          borderRadius: 18,
+          minWidth: 34,
+          height: 30,
+          borderRadius: 15,
           alignItems: "center",
           justifyContent: "center",
-          paddingHorizontal: 10,
-          backgroundColor: focused ? ACTIVE_TAB_INDICATOR : "transparent",
+          paddingHorizontal: 6,
+          backgroundColor: "transparent",
         }}
       >
         <Icon color={color} size={size} strokeWidth={focused ? 1.7 : 1.5} />
@@ -110,7 +110,7 @@ export default function TabsLayout() {
   const { isSignedIn } = useAuth();
   const insets = useSafeAreaInsets();
   const canOpenCreateTab = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
-  const shouldHideTabBar = pathname === "/workspace" && isFlowActive;
+  const shouldHideTabBar = (pathname === "/workspace" || pathname === "/create") && isFlowActive;
   const tabBarBottomPadding = Math.max(insets.bottom, 20);
   const tabBarStyle = {
     ...DEFAULT_TAB_BAR_STYLE,

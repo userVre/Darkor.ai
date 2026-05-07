@@ -200,7 +200,7 @@ function FeatureComparisonTable() {
     {
       feature: "Partage sans filigrane",
       free: { status: "no" },
-      pro: { label: "Export propre", status: "yes" },
+      pro: { status: "yes" },
     },
   ];
   const renderValue = (value: FeatureValue, pro = false) => {
@@ -927,7 +927,7 @@ export default function PaywallScreen() {
         />
 
         <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 80, 80) }]}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 128, 132) }]}
           contentInsetAdjustmentBehavior="never"
           showsVerticalScrollIndicator={false}
         >
@@ -995,7 +995,7 @@ export default function PaywallScreen() {
             {"Aucun frais pendant 3 jours · Annulez à tout moment"}
           </Text>
 
-          <View style={[styles.legalFooter, { paddingBottom: Math.max(insets.bottom, 4) }]}>
+          <View style={[styles.legalFooter, { paddingBottom: Math.max(insets.bottom + 24, 32) }]}>
             <View style={styles.legalLinksRow}>
               <LegalLink label="Conditions" onPress={handleOpenTerms} />
               <LegalLink label="Confidentialité" onPress={handleOpenPrivacy} />
@@ -1242,7 +1242,7 @@ function createStyles(theme: Theme) {
     overflow: "hidden",
   },
   featureTableHeader: {
-    minHeight: 28,
+    minHeight: 32,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
@@ -1250,7 +1250,7 @@ function createStyles(theme: Theme) {
     borderBottomColor: PAYWALL_BORDER,
   },
   featureTableRow: {
-    minHeight: 30,
+    minHeight: 36,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
@@ -1261,18 +1261,18 @@ function createStyles(theme: Theme) {
     backgroundColor: PAYWALL_BG,
   },
   featureTableFeatureCell: {
-    flex: 1.42,
+    flex: 1.5,
     minWidth: 0,
     paddingRight: 8,
   },
   featureTablePlanCell: {
-    flex: 0.72,
+    flex: 0.68,
     minWidth: 0,
     alignItems: "center",
     justifyContent: "center",
   },
   featureTablePlanHeaderCell: {
-    flex: 0.72,
+    flex: 0.68,
     minWidth: 0,
     textAlign: "center",
   },
@@ -1288,18 +1288,18 @@ function createStyles(theme: Theme) {
   },
   featureTableFeatureText: {
     color: PAYWALL_TEXT_PRIMARY,
-    fontSize: 12,
+    fontSize: 11.5,
     lineHeight: 16,
   },
   featureTableValueText: {
     color: PAYWALL_TEXT_MUTED,
-    fontSize: 12,
+    fontSize: 11.5,
     lineHeight: 16,
     textAlign: "center",
   },
   featureTableProText: {
     color: PAYWALL_TEXT_PRIMARY,
-    fontSize: 12,
+    fontSize: 11.5,
     lineHeight: 16,
     fontWeight: "700",
     textAlign: "center",
@@ -1689,7 +1689,7 @@ function createStyles(theme: Theme) {
     ...fonts.medium,
   },
   restoreBottomButton: {
-    minHeight: 24,
+    minHeight: 34,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 8,

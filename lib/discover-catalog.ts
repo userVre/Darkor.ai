@@ -78,10 +78,10 @@ const DISCOVER_GROUP_DEFINITIONS: DiscoverGroupDefinition[] = [
   { id: "garden", titleKey: "gallery.groups.garden", clusterId: "landscapes", service: "garden" },
 ];
 
-const DISCOVER_CLUSTER_TITLES: Record<DiscoverClusterId, string> = {
-  interiors: "Interior",
-  architecture: "Exterior",
-  landscapes: "Garden",
+const DISCOVER_CLUSTER_TITLE_KEYS: Record<DiscoverClusterId, string> = {
+  interiors: "discover.tabs.home",
+  architecture: "discover.tabs.exterior",
+  landscapes: "discover.tabs.garden",
 };
 
 function createDiscoverTileId(groupId: GeneratedDiscoverAssetId, clusterId: DiscoverClusterId, index: number) {
@@ -118,21 +118,21 @@ function buildDiscoverGroups(t: ReturnType<typeof useTranslation>["t"]) {
   });
 }
 
-function buildDiscoverClusters(groups: DiscoverGroup[]) {
+function buildDiscoverClusters(groups: DiscoverGroup[], t: ReturnType<typeof useTranslation>["t"]) {
   return [
     {
       id: "interiors" as const,
-      title: DISCOVER_CLUSTER_TITLES.interiors,
+      title: t(DISCOVER_CLUSTER_TITLE_KEYS.interiors),
       groups: groups.filter((group) => group.clusterId === "interiors"),
     },
     {
       id: "architecture" as const,
-      title: DISCOVER_CLUSTER_TITLES.architecture,
+      title: t(DISCOVER_CLUSTER_TITLE_KEYS.architecture),
       groups: groups.filter((group) => group.clusterId === "architecture"),
     },
     {
       id: "landscapes" as const,
-      title: DISCOVER_CLUSTER_TITLES.landscapes,
+      title: t(DISCOVER_CLUSTER_TITLE_KEYS.landscapes),
       groups: groups.filter(
         (group) =>
           group.clusterId === "landscapes"
@@ -173,7 +173,7 @@ export function useDiscoverClusters(_tabId: DiscoverTabId = "discover") {
 
   return useMemo(() => {
     const groups = buildDiscoverGroups(t);
-    return buildDiscoverClusters(groups);
+    return buildDiscoverClusters(groups, t);
   }, [i18n.language, t]);
 }
 
@@ -182,7 +182,7 @@ export function useDiscoverFeedRows(_tabId: DiscoverTabId = "discover") {
 
   return useMemo(() => {
     const groups = buildDiscoverGroups(t);
-    const clusters = buildDiscoverClusters(groups);
+    const clusters = buildDiscoverClusters(groups, t);
     return buildDiscoverFeedRows(clusters);
   }, [i18n.language, t]);
 }

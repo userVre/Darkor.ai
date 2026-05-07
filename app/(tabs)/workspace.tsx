@@ -2636,7 +2636,7 @@ export default function WorkspaceScreen() {
     && Boolean(activeBoardItem)
     && activeBoardItem?.status !== "processing"
     && !isProcessingGateActive;
-  const shouldHideNativeTabBar = pathname === "/workspace" && !isWorkspaceResultScreen;
+  const shouldHideNativeTabBar = (pathname === "/workspace" || pathname === "/create") && !isWorkspaceResultScreen;
 
   useEffect(() => {
     setIsFlowActive(shouldHideNativeTabBar);
@@ -5467,7 +5467,7 @@ export default function WorkspaceScreen() {
     return (
       <InteriorRedesignStepOne
         creditCount={creditBalance}
-        headerTitle="Interior"
+        headerTitle={t("discoverCatalog.sections.home.title")}
         selectedPhotos={selectedImages}
         currentDisplayIndex={currentDisplayIndex}
         examplePhotos={interiorExamplePhotos}
@@ -5490,7 +5490,7 @@ export default function WorkspaceScreen() {
     return (
       <InteriorRedesignStepOne
         creditCount={creditBalance}
-        headerTitle="Exterior"
+        headerTitle={t("discoverCatalog.sections.exterior.title")}
         selectedPhotos={selectedImages}
         currentDisplayIndex={currentDisplayIndex}
         examplePhotos={exteriorExamplePhotos}
@@ -5514,7 +5514,7 @@ export default function WorkspaceScreen() {
     return (
       <GardenRedesignStepOne
         creditCount={creditBalance}
-        headerTitle="Garden"
+        headerTitle={t("discoverCatalog.sections.garden.title")}
         selectedPhotos={selectedImages}
         currentDisplayIndex={currentDisplayIndex}
         examplePhotos={gardenExamplePhotos}

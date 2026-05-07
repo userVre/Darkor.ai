@@ -78,7 +78,7 @@ export function InteriorRedesignStepOne({
   totalSteps = 4,
   progress,
   progressVariant = "segmented",
-  emptyStateSubtitle = "Redesign and Beautify your home.",
+  emptyStateSubtitle,
   loadingExampleId,
   onTakePhoto,
   onChooseFromGallery,
@@ -112,10 +112,11 @@ export function InteriorRedesignStepOne({
   const rowThumbnailSize = isSmartSpaceVariant ? 68 : 64;
   const examplesTitleTopSpacing = isSmartSpaceVariant ? scaleValue(18, layoutScale) : scaleValue(32, layoutScale);
   const examplesRailTopSpacing = isSmartSpaceVariant ? scaleValue(12, layoutScale) : scaleValue(24, layoutScale);
-  const continueBottom = 64 + scaleValue(24, layoutScale);
+  const continueBottom = Math.max(insets.bottom + scaleValue(24, layoutScale), scaleValue(36, layoutScale));
   const canContinue = selectedPhotos.length > 0;
   const canAddMore = selectedPhotos.length < maxPhotos;
   const resolvedBodyTitle = bodyTitle ?? headerTitle;
+  const resolvedEmptyStateSubtitle = emptyStateSubtitle ?? t("wizard.stepOne.emptySubtitle");
   const focusedPhoto = useMemo(
     () => selectedPhotos[currentDisplayIndex] ?? selectedPhotos[0] ?? null,
     [currentDisplayIndex, selectedPhotos],
@@ -395,7 +396,9 @@ export function InteriorRedesignStepOne({
               {showPhotoCount ? (
                 <View style={styles.photoMetaRow}>
                   <View style={styles.photoCountPill}>
-                    <Text style={styles.photoCountText}>{`${selectedPhotos.length}/${maxPhotos} photos`}</Text>
+                    <Text style={styles.photoCountText}>
+                      {t("wizard.stepOne.photoCount", { current: selectedPhotos.length, max: maxPhotos })}
+                    </Text>
                   </View>
                 </View>
               ) : null}
@@ -404,7 +407,7 @@ export function InteriorRedesignStepOne({
             <>
               <Text style={[styles.emptyTitle, { marginTop: scaleValue(148, innerScale) }]}>{t("wizard.stepOne.emptyTitle")}</Text>
               <Text style={[styles.emptySubtitle, { marginTop: scaleValue(24, innerScale) }]}>
-                {emptyStateSubtitle}
+                {resolvedEmptyStateSubtitle}
               </Text>
               <Pressable
                 accessibilityRole="button"
@@ -646,16 +649,19 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   photoMetaRow: {
+    position: "absolute",
+    left: 24,
+    bottom: 24,
     flexDirection: "row",
     alignItems: "center",
   },
   photoCountPill: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: slateA.slateA6,
-    backgroundColor: slate.slate12,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderColor: "rgba(255,255,255,0.42)",
+    backgroundColor: "rgba(10,10,10,0.78)",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
   },
   photoCountText: {
     color: slate.slate1,

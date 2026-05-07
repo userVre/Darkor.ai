@@ -111,6 +111,7 @@ export function GardenRedesignStepThree({
       <StatusBar style="dark" />
 
       <DesignStepHeader
+        title={t("discoverCatalog.sections.garden.title")}
         backAccessibilityLabel={t("wizard.headers.previousStep")}
         closeAccessibilityLabel={t("wizard.headers.close")}
         horizontalInset={sideInset}

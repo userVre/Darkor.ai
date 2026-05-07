@@ -538,6 +538,7 @@
       "title": "Upload Your Vision",
       "emptyTitle": "Upload Your Vision",
       "emptySubtitle": "Redesign and Beautify your home.",
+      "photoCount": "{{current}}/{{max}} photos",
       "removePhoto": "Remove selected photo",
       "cta": "Upload +"
     },

@@ -257,7 +257,7 @@
     "title": "Réglages",
     "heroTitle": "Forfait gratuit",
     "featureItems": {
-      "advancedAi": "Modèle AI avancé",
+      "advancedAi": "Modèle IA avancé",
       "fastProcessing": "Traitement rapide",
       "removeAds": "Supprimer toutes les annonces"
     },
@@ -327,9 +327,9 @@
     "title": "Découvrez",
     "subtitle": "Références d'intérieurs, d'architecture et de paysage organisées en collections à défilement rapide.",
     "tabs": {
-      "home": "Interior",
-      "garden": "Garden",
-      "exterior": "Exterior "
+      "home": "Intérieur",
+      "garden": "Jardin",
+      "exterior": "Extérieur"
     },
     "tryThisStyle": "Essayez ce style"
   },
@@ -500,28 +500,29 @@
       "title": "Téléchargez votre vision",
       "emptyTitle": "Téléchargez votre vision",
       "emptySubtitle": "Repensez et sublimez votre pièce",
+      "photoCount": "{{current}}/{{max}} photos",
       "removePhoto": "Supprimer la photo sélectionnée",
       "cta": "Importer une photo de r?f?rence"
     },
     "interior": {
-      "stepTwoTitle": "Choose Your Space",
+      "stepTwoTitle": "Choisissez votre espace",
       "stepTwoSubtitle": "Sélectionnez le type de pièce afin que la refonte reste architecturalement ancrée.",
-      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeTitle": "Choisissez votre style",
       "stepThreeSubtitle": "Choisissez un style signature pour façonner votre vision du design.",
-      "stepFourMode": "Design Mode",
+      "stepFourMode": "Mode de design",
       "stepFourPalette": "Harmonie des couleurs"
     },
     "exterior": {
-      "stepTwoTitle": "Select Building Type",
+      "stepTwoTitle": "Choisissez le type de bâtiment",
       "stepTwoSubtitle": "Sélectionnez la forme architecturale que vous souhaitez repenser.",
-      "stepThreeTitle": "Curate Your Aesthetic",
+      "stepThreeTitle": "Choisissez votre style",
       "stepThreeSubtitle": "Choisissez un style signature pour façonner votre vision du design.",
       "stepFourTitle": "Harmonie des couleurs"
     },
     "garden": {
       "stepOneEmptyTitle": "Téléchargez votre vision",
       "stepOneEmptySubtitle": "Redessinez et embellissez votre maison.",
-      "stepTwoTitle": "Curate Your Aesthetic",
+      "stepTwoTitle": "Choisissez votre style",
       "stepTwoSubtitle": "Choisissez un style signature pour façonner votre vision du design.",
       "stepThreeTitle": "Harmonie des couleurs"
     },
@@ -885,10 +886,10 @@
         "bathroom": "Salle de bain",
         "homeOffice": "Bureau à domicile",
         "diningRoom": "Salle à manger",
-        "nursery": "Pépinière",
+        "nursery": "Chambre d'enfant",
         "homeTheater": "Cinéma maison",
         "gamingRoom": "Salle de jeux",
-        "hall": "Salle",
+        "hall": "Entrée / couloir",
         "library": "Bibliothèque",
         "laundry": "Blanchisserie"
       },

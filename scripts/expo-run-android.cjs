@@ -17,7 +17,7 @@ function run(command, args, options = {}) {
 }
 
 function startMetroInBackground({ projectRoot, env, hostMode, portString }) {
-  const args = ["expo", "start", "--dev-client", "--host", hostMode, "--port", portString, "--non-interactive"];
+  const args = ["expo", "start", "--dev-client", "--host", hostMode, "--port", portString];
 
   if (process.platform === "win32") {
     const child = spawn(process.env.ComSpec || "cmd.exe", ["/d", "/s", "/c", `npx ${args.join(" ")}`], {
@@ -58,6 +58,7 @@ async function main() {
   process.env.EXPO_OVERRIDE_METRO_CONFIG = metroConfig;
   process.env.EXPO_DEV_PORT = process.env.EXPO_DEV_PORT || "8081";
   process.env.NODE_ENV = process.env.NODE_ENV || "development";
+  process.env.CI = process.env.CI || "1";
   process.env.NODE_OPTIONS = [process.env.NODE_OPTIONS, "--dns-result-order=ipv4first"].filter(Boolean).join(" ");
 
   const preferredPort = Number(process.env.EXPO_DEV_PORT || "8081");

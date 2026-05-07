@@ -6,8 +6,11 @@ import {useMemo, useRef, useState} from "react";
 import {
   ActivityIndicator,
   Keyboard,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -165,16 +168,16 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const isSignIn = currentMode === "sign-in";
   const copy = useMemo(
     () => ({
-      title: isSignIn ? "Welcome back." : "Start designing.",
+      title: isSignIn ? "Bon retour." : "Commencez a creer.",
       subtitle: isSignIn
-        ? "Sign in to access your designs, credits, and project history."
-        : "Create your account and get your first free AI render today.",
-      cta: isSignIn ? "Sign In" : "Create Account",
+        ? "Connectez-vous pour retrouver vos designs, vos credits et votre historique."
+        : "Creez votre compte et lancez votre premier rendu IA gratuitement.",
+      cta: isSignIn ? "Se connecter" : "Creer un compte",
       reassurance: isSignIn
-        ? "Your data is encrypted and never shared."
-        : "Free to start - no credit card required.",
-      togglePrefix: isSignIn ? "Don't have an account? " : "Already have an account? ",
-      toggleLink: isSignIn ? "Sign up" : "Sign in",
+        ? "Vos donnees sont protegees et ne sont jamais partagees."
+        : "Gratuit pour commencer, sans carte bancaire.",
+      togglePrefix: isSignIn ? "Pas encore de compte ? " : "Vous avez deja un compte ? ",
+      toggleLink: isSignIn ? "S'inscrire" : "Se connecter",
     }),
     [isSignIn],
   );
@@ -390,11 +393,11 @@ export function AuthScreen({mode}: AuthScreenProps) {
   };
 
   return (
-    <Pressable onPress={Keyboard.dismiss} style={styles.screen}>
+    <View style={styles.screen}>
       {router.canGoBack() ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Go back"
+          accessibilityLabel="Retour"
           onPress={() => router.back()}
           style={styles.backButton}
         >
@@ -403,14 +406,22 @@ export function AuthScreen({mode}: AuthScreenProps) {
       ) : null}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Skip sign in"
+        accessibilityLabel="Continuer sans compte"
         onPress={() => void handleSkip()}
         style={styles.skipButton}
       >
         <X color={AUTH_COLORS.textPrimary} size={18} strokeWidth={2} />
       </Pressable>
 
-      <View style={styles.content}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.keyboardAvoider}
+      >
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
         <View style={styles.header}>
           <View style={styles.logoWrap}>
             <View style={styles.logoGlow} />
@@ -465,7 +476,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
             <Text selectable style={styles.dividerText}>
-              or
+              ou
             </Text>
             <View style={styles.dividerLine} />
           </View>
@@ -473,8 +484,8 @@ export function AuthScreen({mode}: AuthScreenProps) {
           <View style={styles.form}>
             {!isSignIn ? (
               <AuthInput
-                label="Full name"
-                placeholder="Jane Designer"
+                label="Nom complet"
+                placeholder="Votre nom"
                 value={name}
                 onChangeText={(value) => {
                   setName(value);
@@ -488,7 +499,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
             ) : null}
             <AuthInput
               label="Email"
-              placeholder="you@example.com"
+              placeholder="vous@example.com"
               value={email}
               onChangeText={(value) => {
                 setEmail(value);
@@ -500,8 +511,8 @@ export function AuthScreen({mode}: AuthScreenProps) {
               error={errors.email}
             />
             <AuthInput
-              label="Password"
-              placeholder={isSignIn ? "Enter your password" : "Create a password"}
+              label="Mot de passe"
+              placeholder={isSignIn ? "Entrez votre mot de passe" : "Creez un mot de passe"}
               value={password}
               onChangeText={(value) => {
                 setPassword(value);
@@ -514,8 +525,8 @@ export function AuthScreen({mode}: AuthScreenProps) {
             />
             {!isSignIn ? (
               <AuthInput
-                label="Confirm password"
-                placeholder="Confirm your password"
+                label="Confirmer le mot de passe"
+                placeholder="Confirmez votre mot de passe"
                 value={confirmPassword}
                 onChangeText={(value) => {
                   setConfirmPassword(value);
@@ -535,7 +546,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
               onPress={() => router.push("/(auth)/forgot-password" as never)}
               style={styles.forgotButton}
             >
-              <Text style={styles.forgotText}>Forgot password?</Text>
+              <Text style={styles.forgotText}>Mot de passe oublie ?</Text>
             </Pressable>
           ) : null}
 
@@ -556,7 +567,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
             ]}
           >
             {loading === "email" ? (
-              <ActivityIndicator color={AUTH_COLORS.textPrimary} />
+              <ActivityIndicator color={AUTH_COLORS.accentText} />
             ) : (
               <Text style={styles.primaryButtonText}>{copy.cta}</Text>
             )}
@@ -574,7 +585,8 @@ export function AuthScreen({mode}: AuthScreenProps) {
             <Text style={styles.toggleLink}>{copy.toggleLink}</Text>
           </Pressable>
         </View>
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal
         animationType="slide"
@@ -586,10 +598,10 @@ export function AuthScreen({mode}: AuthScreenProps) {
           <View style={styles.otpSheet}>
             <View style={styles.sheetHandle} />
             <Text selectable style={styles.otpTitle}>
-              Check your email
+              Verifiez votre e-mail
             </Text>
             <Text selectable style={styles.otpSubtitle}>
-              We sent a 6-digit code to {email.trim()}
+              Nous avons envoye un code a 6 chiffres a {email.trim()}
             </Text>
             <View style={styles.otpRow}>
               {otpDigits.map((digit, index) => (
@@ -624,7 +636,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
               {loading === "otp" ? (
                 <ActivityIndicator color={AUTH_COLORS.accentText} />
               ) : (
-                <Text style={styles.primaryButtonText}>Verify Email</Text>
+                <Text style={styles.primaryButtonText}>Verifier l'e-mail</Text>
               )}
             </Pressable>
             <Pressable
@@ -634,13 +646,13 @@ export function AuthScreen({mode}: AuthScreenProps) {
               style={styles.resendButton}
             >
               <Text style={styles.resendText}>
-                {loading === "resend" ? "Sending..." : "Resend code"}
+                {loading === "resend" ? "Envoi..." : "Renvoyer le code"}
               </Text>
             </Pressable>
           </View>
         </Pressable>
       </Modal>
-    </Pressable>
+    </View>
   );
 }
 
@@ -650,14 +662,18 @@ function createStyles(AUTH_COLORS: AuthColors) {
     flex: 1,
     backgroundColor: AUTH_COLORS.background,
   },
+  keyboardAvoider: {
+    flex: 1,
+  },
   content: {
+    flexGrow: 1,
     width: "100%",
     maxWidth: 440,
     alignSelf: "center",
     paddingHorizontal: 24,
-    paddingTop: 18,
-    paddingBottom: 28,
-    gap: 24,
+    paddingTop: 84,
+    paddingBottom: 36,
+    gap: 20,
   },
   backButton: {
     position: "absolute",
@@ -686,7 +702,6 @@ function createStyles(AUTH_COLORS: AuthColors) {
   header: {
     alignItems: "center",
     gap: 10,
-    paddingTop: 24,
   },
   logoWrap: {
     width: 64,
@@ -707,10 +722,10 @@ function createStyles(AUTH_COLORS: AuthColors) {
     elevation: 10,
   },
   title: {
-    color: AUTH_COLORS.accentText,
+    color: AUTH_COLORS.textPrimary,
     fontSize: 28,
     fontWeight: "700",
-    letterSpacing: -0.5,
+    letterSpacing: 0,
     textAlign: "center",
   },
   subtitle: {
@@ -730,6 +745,11 @@ function createStyles(AUTH_COLORS: AuthColors) {
     borderColor: AUTH_COLORS.border,
     backgroundColor: AUTH_COLORS.surfaceCard,
     gap: 18,
+    shadowColor: "#111827",
+    shadowOpacity: 0.05,
+    shadowRadius: 18,
+    shadowOffset: {width: 0, height: 8},
+    elevation: 2,
   },
   socialStack: {
     gap: 10,
@@ -761,7 +781,7 @@ function createStyles(AUTH_COLORS: AuthColors) {
   },
   googleButton: {
     backgroundColor: "#FFFFFF",
-    borderColor: "#FFFFFF",
+    borderColor: AUTH_COLORS.appleBorder,
   },
   appleButton: {
     backgroundColor: AUTH_COLORS.appleBackground,
@@ -840,7 +860,7 @@ function createStyles(AUTH_COLORS: AuthColors) {
     paddingHorizontal: 16,
   },
   primaryButtonText: {
-    color: AUTH_COLORS.textPrimary,
+    color: AUTH_COLORS.accentText,
     fontSize: 15,
     fontWeight: "600",
     letterSpacing: 0,

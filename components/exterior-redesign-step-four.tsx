@@ -108,6 +108,7 @@ export function ExteriorRedesignStepFour({
       <StatusBar style="dark" />
 
       <DesignStepHeader
+        title={t("discoverCatalog.sections.exterior.title")}
         backAccessibilityLabel={t("wizard.headers.previousStep")}
         closeAccessibilityLabel={t("wizard.headers.close")}
         creditCount={creditCount}

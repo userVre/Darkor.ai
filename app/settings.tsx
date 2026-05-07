@@ -1,5 +1,4 @@
 import {
-ChevronRight,
 Copy,
 Diamond,
 FileQuestion,
@@ -335,7 +334,7 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 40, 56) }]}
       >
         <View style={styles.heroSection}>
           <Image contentFit="cover" source={SETTINGS_HERO_IMAGE} style={styles.heroImage} transition={250} />
@@ -363,11 +362,10 @@ export default function SettingsScreen() {
               {featureItems.map((item) => (
                 <View key={item} style={[styles.featureRow, { flexDirection: getDirectionalRow(isRTL) }]}>
                   <View style={styles.featureIconBox}>
-                    <ChevronRight
+                    <Star
                       color={theme.textPrimary}
-                      size={14}
-                      strokeWidth={2.4}
-                      style={{ transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] }}
+                      size={12}
+                      strokeWidth={2.2}
                     />
                   </View>
                   <Text style={[styles.featureText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{item}</Text>
@@ -468,7 +466,7 @@ function createStyles(theme: Theme) {
     backgroundColor: theme.bg,
   },
   scrollContent: {
-    paddingBottom: 32,
+    paddingBottom: 56,
   },
   backArrow: {
     position: "absolute",
@@ -490,7 +488,7 @@ function createStyles(theme: Theme) {
   heroSection: {
     position: "relative",
     width: "100%",
-    minHeight: 320,
+    minHeight: 272,
     overflow: "hidden",
     backgroundColor: theme.surface,
   },

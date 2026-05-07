@@ -99,6 +99,7 @@ export function InteriorRedesignStepTwo({
       <StatusBar style="dark" />
 
       <DesignStepHeader
+        title={t("discoverCatalog.sections.home.title")}
         backAccessibilityLabel={t("wizard.headers.previousStep")}
         closeAccessibilityLabel={t("wizard.headers.close")}
         creditCount={creditCount}

@@ -150,7 +150,7 @@ export default function GalleryScreen() {
   const listHeader = useMemo(
     () => (
       <View style={[styles.headerWrap, { paddingTop: insets.top + 10 }]}>
-        <HomeHeaderPills />
+        <HomeHeaderPills style={styles.headerPills} />
 
         <View pointerEvents="none" style={styles.titleRow}>
           <Text adjustsFontSizeToFit minimumFontScale={0.86} numberOfLines={1} style={styles.headerTitle}>
@@ -214,6 +214,9 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: PURE_WHITE,
   },
+  headerPills: {
+    paddingHorizontal: SCREEN_SIDE_MARGIN,
+  },
   titleRow: {
     marginTop: 18,
     marginBottom: 18,
@@ -244,9 +247,12 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: "#F3F4F6",
     paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "transparent",
   },
   categoryTabActive: {
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#111111",
+    borderColor: "#111111",
   },
   categoryTabText: {
     color: "#111111",
@@ -257,7 +263,7 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
   categoryTabTextActive: {
-    color: "#111111",
+    color: "#FFFFFF",
   },
   section: {
     marginBottom: 32,
