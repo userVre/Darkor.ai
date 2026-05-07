@@ -21,7 +21,7 @@ import {useWorkspaceDraft} from "./workspace-context";
 const FIRST_LAUNCH_DISCLOSURE_KEY = "homedecor:first-launch-disclosure-accepted";
 const DARK_ACTION = "#111111";
 const PURE_WHITE = "#FFFFFF";
-const PRO_TOOL_LOCK_MESSAGE = "DÃ©bloquez ceci avec Pro.";
+const PRO_TOOL_LOCK_MESSAGE = "Débloquez ceci avec Pro.";
 
 export function CreateOptionsScreen() {
   const router = useRouter();

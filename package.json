@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "main": "expo-router/entry",
+  "expo": {
+    "doctor": {
+      "appConfigFieldsNotSyncedCheck": {
+        "enabled": false
+      }
+    }
+  },
   "scripts": {
     "start": "node scripts/expo-start.cjs",
     "android": "node scripts/expo-run-android.cjs",
@@ -13,7 +20,7 @@
   },
   "dependencies": {
     "@ai-sdk/azure": "^3.0.54",
-    "@clerk/expo": "^3.1.0",
+    "@clerk/expo": "^3.2.2",
     "@gorhom/bottom-sheet": "^5.2.8",
     "@radix-ui/colors": "^3.0.0",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -21,36 +28,35 @@
     "@shopify/flash-list": "2.0.2",
     "ai": "^6.0.168",
     "convex": "^1.32.0",
-    "expo": "~55.0.20",
+    "expo": "~55.0.23",
     "expo-auth-session": "~55.0.15",
     "expo-blur": "~55.0.14",
     "expo-build-properties": "~55.0.13",
-    "expo-camera": "~55.0.17",
+    "expo-camera": "~55.0.18",
     "expo-clipboard": "~55.0.13",
-    "expo-constants": "~55.0.9",
+    "expo-constants": "~55.0.16",
     "expo-crypto": "~55.0.14",
     "expo-dev-client": "~55.0.32",
-    "expo-device": "~55.0.10",
-    "expo-font": "~55.0.4",
+    "expo-device": "~55.0.16",
+    "expo-font": "~55.0.7",
     "expo-haptics": "~55.0.14",
-    "expo-image": "~55.0.9",
-    "expo-image-picker": "~55.0.19",
+    "expo-image": "~55.0.10",
+    "expo-image-picker": "~55.0.20",
     "expo-linear-gradient": "~55.0.13",
-    "expo-linking": "~55.0.14",
+    "expo-linking": "~55.0.15",
     "expo-localization": "~55.0.13",
-    "expo-media-library": "~55.0.15",
-    "expo-modules-core": "~55.0.24",
+    "expo-media-library": "~55.0.16",
     "expo-notifications": "^55.0.22",
-    "expo-router": "~55.0.13",
+    "expo-router": "~55.0.14",
     "expo-secure-store": "~55.0.13",
     "expo-sharing": "~55.0.18",
-    "expo-splash-screen": "~55.0.19",
-    "expo-status-bar": "~55.0.5",
+    "expo-splash-screen": "~55.0.20",
+    "expo-status-bar": "~55.0.6",
     "expo-store-review": "~55.0.13",
-    "expo-system-ui": "~55.0.16",
+    "expo-system-ui": "~55.0.17",
     "expo-updates": "~55.0.21",
-    "expo-video": "~55.0.15",
-    "expo-web-browser": "~55.0.14",
+    "expo-video": "~55.0.16",
+    "expo-web-browser": "~55.0.15",
     "i18next": "^26.0.3",
     "jimp-compact": "0.16.1",
     "lucide-react-native": "^0.577.0",
@@ -78,5 +84,8 @@
     "eslint": "^9.16.0",
     "tailwindcss": "^3.4.10",
     "typescript": "~5.9.2"
+  },
+  "overrides": {
+    "postcss": "8.5.14"
   }
 }

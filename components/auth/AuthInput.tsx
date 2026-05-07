@@ -1,5 +1,5 @@
 import {Eye, EyeOff} from "lucide-react-native";
-import {useState} from "react";
+import {useState, type ComponentType} from "react";
 import {
   Pressable,
   StyleSheet,
@@ -11,12 +11,14 @@ import {
 import {useTheme} from "../../styles/theme";
 
 const DARK_ACTION = "#111111";
+type IconComponent = ComponentType<{color: string; size: number; strokeWidth?: number}>;
 
 type AuthInputProps = {
   label: string;
   placeholder: string;
   value: string;
   onChangeText: (value: string) => void;
+  icon?: IconComponent;
   secureTextEntry?: boolean;
   error?: string;
   autoComplete?: TextInputProps["autoComplete"];
@@ -31,6 +33,7 @@ export function AuthInput({
   placeholder,
   value,
   onChangeText,
+  icon: Icon,
   secureTextEntry,
   error,
   autoComplete,
@@ -57,8 +60,18 @@ export function AuthInput({
           error ? {borderColor: theme.error} : null,
         ]}
       >
+        {Icon ? (
+          <View style={styles.inputIcon}>
+            <Icon color={focused ? DARK_ACTION : theme.textMuted} size={18} strokeWidth={1.9} />
+          </View>
+        ) : null}
         <TextInput
-          style={[styles.input, {color: theme.textPrimary}, isPassword ? styles.passwordInput : null]}
+          style={[
+            styles.input,
+            {color: theme.textPrimary},
+            Icon ? styles.inputWithIcon : null,
+            isPassword ? styles.passwordInput : null,
+          ]}
           placeholder={placeholder}
           placeholderTextColor={theme.textMuted}
           value={value}
@@ -72,11 +85,12 @@ export function AuthInput({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           selectionColor={DARK_ACTION}
+          autoCorrect={false}
         />
         {isPassword ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={passwordVisible ? "Hide password" : "Show password"}
+            accessibilityLabel={passwordVisible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
             hitSlop={10}
             onPress={() => setPasswordVisible((current) => !current)}
             style={styles.eyeButton}
@@ -101,6 +115,8 @@ export function AuthInput({
 const styles = StyleSheet.create({
   field: {
     gap: 8,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   label: {
     fontSize: 11,
@@ -109,19 +125,32 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   inputWrap: {
+    height: 52,
     minHeight: 52,
+    maxHeight: 52,
     borderRadius: 12,
     borderWidth: 1,
     flexDirection: "row",
     alignItems: "center",
   },
+  inputIcon: {
+    width: 42,
+    height: 52,
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
   input: {
     flex: 1,
+    height: 52,
     minHeight: 52,
+    maxHeight: 52,
     paddingHorizontal: 16,
     fontSize: 15,
     fontWeight: "400",
     letterSpacing: 0,
+  },
+  inputWithIcon: {
+    paddingLeft: 10,
   },
   passwordInput: {
     paddingRight: 4,

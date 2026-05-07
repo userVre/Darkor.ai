@@ -34,7 +34,6 @@ Wand2
 } from "@/components/material-icons";
 import {useAuth} from "@clerk/expo";
 import {BottomSheetModal} from "@gorhom/bottom-sheet";
-import {useIsFocused} from "@react-navigation/native";
 import {FlashList} from "@shopify/flash-list";
 import {useAction, useMutation, useQuery} from "convex/react";
 import {Asset} from "expo-asset";
@@ -2286,7 +2285,6 @@ export default function WorkspaceScreen() {
 
   const serviceKey = String(service ?? "interior").toLowerCase();
   const serviceType = getServiceType(serviceKey);
-  const isFocused = useIsFocused();
   const serviceLabel = getServiceLabel(t, serviceType);
   const isInteriorService = serviceType === "interior";
   const isExteriorService = serviceType === "exterior";

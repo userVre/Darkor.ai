@@ -1,6 +1,7 @@
 import {useOAuth} from "@clerk/expo";
 import {useSignIn, useSignUp} from "@clerk/expo/legacy";
-import {ChevronLeft, Gem, X} from "lucide-react-native";
+import {LinearGradient} from "expo-linear-gradient";
+import {ChevronLeft, Gem, LockKeyhole, Mail, UserRound, X} from "lucide-react-native";
 import {useRouter} from "expo-router";
 import {useMemo, useRef, useState} from "react";
 import {
@@ -14,10 +15,13 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
   View,
   type NativeSyntheticEvent,
   type TextInputKeyPressEventData,
 } from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 import Svg, {Path} from "react-native-svg";
 
 import {useTheme, type Theme} from "../../styles/theme";
@@ -53,6 +57,8 @@ function getAuthColors(theme: Theme) {
     otpSheet: theme.surface,
     modalOverlay: theme.isDark ? "rgba(0,0,0,0.55)" : "rgba(17,24,39,0.28)",
     controlSurface: theme.surfaceMuted,
+    heroTint: theme.isDark ? "rgba(255,255,255,0.07)" : "rgba(17,24,39,0.045)",
+    panelShadow: theme.isDark ? "rgba(0, 0, 0, 0.36)" : "rgba(17, 24, 39, 0.10)",
   };
 }
 
@@ -82,11 +88,11 @@ function GoogleIcon() {
   );
 }
 
-function AppleIcon() {
+function AppleIcon({color}: {color: string}) {
   return (
     <Svg width={20} height={20} viewBox="0 0 24 24">
       <Path
-        fill="#FFFFFF"
+        fill={color}
         d="M17.05 12.54c-.03-3.03 2.47-4.49 2.58-4.56-1.42-2.07-3.62-2.35-4.39-2.38-1.85-.19-3.65 1.11-4.58 1.11-.95 0-2.38-1.09-3.93-1.06-1.99.03-3.86 1.18-4.88 3-2.11 3.65-.54 9.02 1.49 11.97 1.01 1.45 2.19 3.06 3.74 3 1.51-.06 2.07-.96 3.89-.96 1.8 0 2.33.96 3.91.93 1.63-.03 2.65-1.45 3.62-2.91 1.17-1.66 1.64-3.3 1.66-3.39-.04-.01-3.08-1.17-3.11-4.75zM14.03 3.64c.81-.99 1.37-2.33 1.21-3.68-1.17.05-2.63.81-3.47 1.78-.74.85-1.4 2.25-1.22 3.55 1.32.1 2.64-.66 3.48-1.65z"
       />
     </Svg>
@@ -149,6 +155,8 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const AUTH_COLORS = useMemo(() => getAuthColors(theme), [theme]);
   const styles = useMemo(() => createStyles(AUTH_COLORS), [AUTH_COLORS]);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const {height, width} = useWindowDimensions();
   const {signIn, setActive: setSignInActive, isLoaded: signInLoaded} = useSignIn();
   const {signUp, setActive: setSignUpActive, isLoaded: signUpLoaded} = useSignUp();
   const {startOAuthFlow: googleOAuth} = useOAuth({strategy: "oauth_google"});
@@ -164,19 +172,24 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const [otpVisible, setOtpVisible] = useState(false);
   const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
   const otpRefs = useRef<Array<TextInput | null>>([]);
+  const compact = height < 760;
+  const sidePadding = width < 360 ? 18 : 24;
+  const contentTop = Math.max(insets.top + (compact ? 32 : 48), compact ? 58 : 78);
+  const contentBottom = Math.max(insets.bottom + 22, 34);
+  const topButtonOffset = insets.top + 12;
 
   const isSignIn = currentMode === "sign-in";
   const copy = useMemo(
     () => ({
-      title: isSignIn ? "Bon retour." : "Commencez a creer.",
+      title: isSignIn ? "Bon retour." : "Commencez à créer.",
       subtitle: isSignIn
-        ? "Connectez-vous pour retrouver vos designs, vos credits et votre historique."
-        : "Creez votre compte et lancez votre premier rendu IA gratuitement.",
-      cta: isSignIn ? "Se connecter" : "Creer un compte",
+        ? "Connectez-vous pour retrouver vos designs, vos crédits et votre historique."
+        : "Créez votre compte et lancez votre premier rendu IA gratuitement.",
+      cta: isSignIn ? "Se connecter" : "Créer un compte",
       reassurance: isSignIn
-        ? "Vos donnees sont protegees et ne sont jamais partagees."
+        ? "Vos données sont protégées et ne sont jamais partagées."
         : "Gratuit pour commencer, sans carte bancaire.",
-      togglePrefix: isSignIn ? "Pas encore de compte ? " : "Vous avez deja un compte ? ",
+      togglePrefix: isSignIn ? "Pas encore de compte ? " : "Vous avez déjà un compte ? ",
       toggleLink: isSignIn ? "S'inscrire" : "Se connecter",
     }),
     [isSignIn],
@@ -394,12 +407,21 @@ export function AuthScreen({mode}: AuthScreenProps) {
 
   return (
     <View style={styles.screen}>
+      <LinearGradient
+        colors={
+          theme.isDark
+            ? ["rgba(255,255,255,0.08)", "rgba(255,255,255,0.02)", "rgba(255,255,255,0)"]
+            : ["rgba(17,24,39,0.06)", "rgba(17,24,39,0.025)", "rgba(255,255,255,0)"]
+        }
+        pointerEvents="none"
+        style={styles.topGlow}
+      />
       {router.canGoBack() ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Retour"
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={[styles.navButton, styles.backButton, {top: topButtonOffset}]}
         >
           <ChevronLeft color={AUTH_COLORS.textPrimary} size={20} strokeWidth={2} />
         </Pressable>
@@ -408,7 +430,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
         accessibilityRole="button"
         accessibilityLabel="Continuer sans compte"
         onPress={() => void handleSkip()}
-        style={styles.skipButton}
+        style={[styles.navButton, styles.skipButton, {top: topButtonOffset}]}
       >
         <X color={AUTH_COLORS.textPrimary} size={18} strokeWidth={2} />
       </Pressable>
@@ -418,16 +440,31 @@ export function AuthScreen({mode}: AuthScreenProps) {
         style={styles.keyboardAvoider}
       >
         <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          style={styles.scroll}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-        <View style={styles.header}>
-          <View style={styles.logoWrap}>
+        <View
+          style={[
+            styles.contentInner,
+            {
+              paddingHorizontal: sidePadding,
+              paddingTop: contentTop,
+              paddingBottom: contentBottom,
+              gap: compact ? 16 : 20,
+            },
+          ]}
+        >
+        <View style={[styles.header, {gap: compact ? 8 : 10}]}>
+          <View style={[styles.logoWrap, compact ? styles.logoWrapCompact : null]}>
             <View style={styles.logoGlow} />
-            <Gem color={AUTH_COLORS.textPrimary} size={34} strokeWidth={1.8} />
+            <View style={styles.logoPlate}>
+              <Gem color={AUTH_COLORS.textPrimary} size={compact ? 28 : 32} strokeWidth={1.8} />
+            </View>
           </View>
-          <Text selectable style={styles.title}>
+          <Text selectable style={[styles.title, compact ? styles.titleCompact : null]}>
             {copy.title}
           </Text>
           <Text selectable style={styles.subtitle}>
@@ -436,12 +473,14 @@ export function AuthScreen({mode}: AuthScreenProps) {
         </View>
 
         <View style={styles.panel}>
+          <View style={styles.panelBody}>
           <View style={styles.socialStack}>
-            <Pressable
+            <TouchableOpacity
               accessibilityRole="button"
               onPress={() => void handleGoogle()}
               disabled={loading !== null}
-              style={({pressed}) => [styles.socialButton, styles.googleButton, pressed ? styles.pressed : null]}
+              activeOpacity={0.82}
+              style={[styles.socialButton, styles.googleButton]}
             >
               {loading === "google" ? (
                 <ActivityIndicator color={AUTH_COLORS.googleText} />
@@ -453,24 +492,25 @@ export function AuthScreen({mode}: AuthScreenProps) {
                   <Text style={styles.googleText}>Continuer avec Google</Text>
                 </View>
               )}
-            </Pressable>
-            <Pressable
+            </TouchableOpacity>
+            <TouchableOpacity
               accessibilityRole="button"
               onPress={() => void handleApple()}
               disabled={loading !== null}
-              style={({pressed}) => [styles.socialButton, styles.appleButton, pressed ? styles.pressed : null]}
+              activeOpacity={0.82}
+              style={[styles.socialButton, styles.appleButton]}
             >
               {loading === "apple" ? (
                 <ActivityIndicator color={AUTH_COLORS.accentText} />
               ) : (
                 <View style={styles.socialButtonContent}>
                   <View style={styles.socialIconSlot}>
-                    <AppleIcon />
+                    <AppleIcon color={AUTH_COLORS.textPrimary} />
                   </View>
                   <Text style={styles.appleText}>Continuer avec Apple</Text>
                 </View>
               )}
-            </Pressable>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.dividerRow}>
@@ -487,6 +527,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
                 label="Nom complet"
                 placeholder="Votre nom"
                 value={name}
+                icon={UserRound}
                 onChangeText={(value) => {
                   setName(value);
                   resetFormErrors();
@@ -501,6 +542,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
               label="Email"
               placeholder="vous@example.com"
               value={email}
+              icon={Mail}
               onChangeText={(value) => {
                 setEmail(value);
                 resetFormErrors();
@@ -512,8 +554,9 @@ export function AuthScreen({mode}: AuthScreenProps) {
             />
             <AuthInput
               label="Mot de passe"
-              placeholder={isSignIn ? "Entrez votre mot de passe" : "Creez un mot de passe"}
+              placeholder={isSignIn ? "Entrez votre mot de passe" : "Créez un mot de passe"}
               value={password}
+              icon={LockKeyhole}
               onChangeText={(value) => {
                 setPassword(value);
                 resetFormErrors();
@@ -528,6 +571,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
                 label="Confirmer le mot de passe"
                 placeholder="Confirmez votre mot de passe"
                 value={confirmPassword}
+                icon={LockKeyhole}
                 onChangeText={(value) => {
                   setConfirmPassword(value);
                   resetFormErrors();
@@ -546,7 +590,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
               onPress={() => router.push("/(auth)/forgot-password" as never)}
               style={styles.forgotButton}
             >
-              <Text style={styles.forgotText}>Mot de passe oublie ?</Text>
+              <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
             </Pressable>
           ) : null}
 
@@ -556,14 +600,14 @@ export function AuthScreen({mode}: AuthScreenProps) {
             </Text>
           ) : null}
 
-          <Pressable
+          <TouchableOpacity
             accessibilityRole="button"
             disabled={disabled}
             onPress={() => void (isSignIn ? handleSignIn() : handleSignUp())}
-            style={({pressed}) => [
+            activeOpacity={0.84}
+            style={[
               styles.primaryButton,
               disabled ? styles.disabled : null,
-              pressed ? styles.pressed : null,
             ]}
           >
             {loading === "email" ? (
@@ -571,10 +615,11 @@ export function AuthScreen({mode}: AuthScreenProps) {
             ) : (
               <Text style={styles.primaryButtonText}>{copy.cta}</Text>
             )}
-          </Pressable>
+          </TouchableOpacity>
           <Text selectable style={styles.reassurance}>
             {copy.reassurance}
           </Text>
+          </View>
         </View>
 
         <View style={styles.toggleRow}>
@@ -584,6 +629,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
           <Pressable accessibilityRole="button" onPress={toggleMode}>
             <Text style={styles.toggleLink}>{copy.toggleLink}</Text>
           </Pressable>
+        </View>
         </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -598,10 +644,10 @@ export function AuthScreen({mode}: AuthScreenProps) {
           <View style={styles.otpSheet}>
             <View style={styles.sheetHandle} />
             <Text selectable style={styles.otpTitle}>
-              Verifiez votre e-mail
+              Vérifiez votre e-mail
             </Text>
             <Text selectable style={styles.otpSubtitle}>
-              Nous avons envoye un code a 6 chiffres a {email.trim()}
+              Nous avons envoyé un code à 6 chiffres à {email.trim()}
             </Text>
             <View style={styles.otpRow}>
               {otpDigits.map((digit, index) => (
@@ -627,18 +673,19 @@ export function AuthScreen({mode}: AuthScreenProps) {
                 {errors.otp}
               </Text>
             ) : null}
-            <Pressable
+            <TouchableOpacity
               accessibilityRole="button"
               onPress={() => void submitOtp()}
               disabled={loading === "otp"}
-              style={({pressed}) => [styles.verifyButton, pressed ? styles.pressed : null]}
+              activeOpacity={0.84}
+              style={styles.verifyButton}
             >
               {loading === "otp" ? (
                 <ActivityIndicator color={AUTH_COLORS.accentText} />
               ) : (
-                <Text style={styles.primaryButtonText}>Verifier l'e-mail</Text>
+                <Text style={styles.primaryButtonText}>Vérifier l'e-mail</Text>
               )}
-            </Pressable>
+            </TouchableOpacity>
             <Pressable
               accessibilityRole="button"
               onPress={() => void resendOtp()}
@@ -662,46 +709,47 @@ function createStyles(AUTH_COLORS: AuthColors) {
     flex: 1,
     backgroundColor: AUTH_COLORS.background,
   },
+  topGlow: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 230,
+  },
   keyboardAvoider: {
     flex: 1,
   },
+  scroll: {
+    flex: 1,
+  },
   content: {
-    flexGrow: 1,
+    width: "100%",
+  },
+  contentInner: {
     width: "100%",
     maxWidth: 440,
     alignSelf: "center",
-    paddingHorizontal: 24,
-    paddingTop: 84,
-    paddingBottom: 36,
-    gap: 20,
+  },
+  navButton: {
+    position: "absolute",
+    zIndex: 2,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: AUTH_COLORS.controlSurface,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: AUTH_COLORS.border,
   },
   backButton: {
-    position: "absolute",
-    top: 14,
     left: 18,
-    zIndex: 2,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: AUTH_COLORS.controlSurface,
-    alignItems: "center",
-    justifyContent: "center",
   },
   skipButton: {
-    position: "absolute",
-    top: 14,
     right: 18,
-    zIndex: 2,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: AUTH_COLORS.controlSurface,
-    alignItems: "center",
-    justifyContent: "center",
   },
   header: {
     alignItems: "center",
-    gap: 10,
   },
   logoWrap: {
     width: 64,
@@ -709,17 +757,31 @@ function createStyles(AUTH_COLORS: AuthColors) {
     alignItems: "center",
     justifyContent: "center",
   },
+  logoWrapCompact: {
+    width: 58,
+    height: 58,
+  },
   logoGlow: {
     position: "absolute",
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: DARK_ACTION_SURFACE,
+    shadowColor: AUTH_COLORS.accent,
+    shadowRadius: 22,
+    shadowOpacity: 0.22,
+    shadowOffset: {width: 0, height: 0},
+    elevation: 10,
+  },
+  logoPlate: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: DARK_ACTION_SURFACE,
-    shadowColor: AUTH_COLORS.accent,
-    shadowRadius: 20,
-    shadowOpacity: 0.4,
-    shadowOffset: {width: 0, height: 0},
-    elevation: 10,
+    borderWidth: 1,
+    borderColor: AUTH_COLORS.border,
+    backgroundColor: AUTH_COLORS.heroTint,
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     color: AUTH_COLORS.textPrimary,
@@ -727,6 +789,9 @@ function createStyles(AUTH_COLORS: AuthColors) {
     fontWeight: "700",
     letterSpacing: 0,
     textAlign: "center",
+  },
+  titleCompact: {
+    fontSize: 26,
   },
   subtitle: {
     maxWidth: 340,
@@ -739,25 +804,36 @@ function createStyles(AUTH_COLORS: AuthColors) {
   },
   panel: {
     width: "100%",
-    padding: 18,
-    borderRadius: 18,
+    alignSelf: "stretch",
+    position: "relative",
+    padding: 16,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: AUTH_COLORS.border,
     backgroundColor: AUTH_COLORS.surfaceCard,
-    gap: 18,
+    gap: 16,
     shadowColor: "#111827",
     shadowOpacity: 0.05,
     shadowRadius: 18,
     shadowOffset: {width: 0, height: 8},
     elevation: 2,
   },
+  panelBody: {
+    gap: 16,
+  },
   socialStack: {
     gap: 10,
-    alignItems: "center",
+    alignSelf: "stretch",
+    flexGrow: 0,
+    flexShrink: 0,
   },
   socialButton: {
-    width: "100%",
+    alignSelf: "stretch",
+    flexGrow: 0,
+    flexShrink: 0,
     height: 52,
+    minHeight: 52,
+    maxHeight: 52,
     borderRadius: 14,
     borderWidth: 1,
     alignItems: "center",
@@ -766,11 +842,12 @@ function createStyles(AUTH_COLORS: AuthColors) {
     overflow: "hidden",
   },
   socialButtonContent: {
-    width: "100%",
-    height: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    height: 24,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   socialIconSlot: {
     width: 24,
@@ -808,6 +885,8 @@ function createStyles(AUTH_COLORS: AuthColors) {
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",
+    flexGrow: 0,
+    flexShrink: 0,
   },
   dividerLine: {
     flex: 1,
@@ -823,6 +902,8 @@ function createStyles(AUTH_COLORS: AuthColors) {
   },
   form: {
     gap: 14,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   forgotButton: {
     alignSelf: "flex-end",
@@ -843,7 +924,11 @@ function createStyles(AUTH_COLORS: AuthColors) {
   },
   primaryButton: {
     width: "100%",
+    flexGrow: 0,
+    flexShrink: 0,
     height: 52,
+    minHeight: 52,
+    maxHeight: 52,
     borderRadius: 14,
     backgroundColor: AUTH_COLORS.accent,
     alignItems: "center",

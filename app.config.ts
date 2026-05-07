@@ -1,11 +1,9 @@
-const appJson = require("./app.json");
+import type {ConfigContext, ExpoConfig} from "expo/config";
 
-const expoConfig = appJson.expo;
-
-module.exports = () => ({
-  ...expoConfig,
+export default ({config}: ConfigContext): ExpoConfig => ({
+  ...config,
   extra: {
-    ...expoConfig.extra,
+    ...config.extra,
     publicEnv: {
       EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
       EXPO_PUBLIC_CONVEX_URL: process.env.EXPO_PUBLIC_CONVEX_URL,

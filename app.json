@@ -5,9 +5,9 @@
     "scheme": "homedecorai",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo.webp",
+    "icon": "./assets/logo.png",
     "splash": {
-      "image": "./assets/logo.webp",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
@@ -26,12 +26,12 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.homedecor.ai",
-      "icon": "./assets/logo.webp"
+      "icon": "./assets/logo.png"
     },
     "android": {
       "package": "com.ismail.homedecorai",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo.webp",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
       "permissions": [
@@ -92,7 +92,8 @@
     },
     "runtimeVersion": "1.0.0",
     "updates": {
-      "url": "https://u.expo.dev/c18000f7-d1c7-461d-b1eb-66d713f40cf4"
+      "url": "https://u.expo.dev/c18000f7-d1c7-461d-b1eb-66d713f40cf4",
+      "checkAutomatically": "ON_ERROR_RECOVERY"
     },
     "extra": {
       "router": {},

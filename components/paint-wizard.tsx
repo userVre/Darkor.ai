@@ -119,7 +119,6 @@ const CARD_BLACK = SERVICE_WIZARD_THEME.colors.surfaceRaised;
 const CARD_BLACK_SOFT = SERVICE_WIZARD_THEME.colors.surfaceSoft;
 const MASK_COLOR = "rgba(0,122,255,0.42)";
 const MASK_ACCENT = DIAMOND_PILL_BLUE;
-const MASK_CAPTURE_COLOR = "#FFFFFF";
 const BRUSH_MIN = 14;
 const BRUSH_MAX = 64;
 const DETECT_DURATION_MS = 1700;

@@ -363,12 +363,22 @@ export function getRevenueCatApiKey() {
   return process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? getEnvValue("revenueCatKey");
 }
 
+function isRevenueCatTestApiKey(apiKey: string) {
+  return apiKey.trim().toLowerCase().startsWith("test_");
+}
+
 export async function configureRevenueCat(appUserId?: string | null) {
   if (purchasesClient) return purchasesClient;
 
   const apiKey = getRevenueCatApiKey();
   if (!apiKey) {
-    throw new Error("Missing RevenueCat API key");
+    console.warn("[RevenueCat] Missing API key. Subscriptions are unavailable.");
+    return null;
+  }
+
+  if (!__DEV__ && isRevenueCatTestApiKey(apiKey)) {
+    console.warn("[RevenueCat] Test API key detected in release runtime. Skipping configuration.");
+    return null;
   }
 
   const module = await loadPurchasesModule();

@@ -14,7 +14,11 @@
 # build output
 /build
 /dist
+/.tmp
+/.codex-temp
 /.gradle
+/homedecor-ai
+/android.backup
 
 # Expo / native
 .expo
