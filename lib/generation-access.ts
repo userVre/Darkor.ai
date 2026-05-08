@@ -22,6 +22,7 @@ export type GenerationAccessState = {
   lastLoginDate?: number | null;
   lastClaimDate?: number | null;
   lastClaimAt?: number | null;
+  proTrialExpiresAt?: number | null;
   nextDiamondClaimAt?: number | null;
   diamondBalance?: number | null;
   canClaimDiamond?: boolean | null;
@@ -113,6 +114,7 @@ export async function persistGenerationAccessSnapshot(snapshot: GenerationAccess
       lastLoginDate: snapshot.lastLoginDate ?? 0,
       lastClaimDate: snapshot.lastClaimDate ?? 0,
       lastClaimAt: snapshot.lastClaimAt ?? 0,
+      proTrialExpiresAt: snapshot.proTrialExpiresAt ?? 0,
       nextDiamondClaimAt: snapshot.nextDiamondClaimAt ?? snapshot.nextRefillTimestamp ?? 0,
       diamondBalance: snapshot.diamondBalance ?? snapshot.credits ?? 0,
       canClaimDiamond: Boolean(snapshot.canClaimDiamond),

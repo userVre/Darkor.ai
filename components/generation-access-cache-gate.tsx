@@ -23,7 +23,10 @@ type CachedViewerState = {
   streakCount?: number;
   lastLoginDate?: number;
   lastClaimDate?: number;
+  lastClaimAt?: number;
+  proTrialExpiresAt?: number;
   nextDiamondClaimAt?: number;
+  diamondBalance?: number;
   canClaimDiamond?: boolean;
   eliteProUntil?: number;
   onboardingDiamondClaimedAt?: number;

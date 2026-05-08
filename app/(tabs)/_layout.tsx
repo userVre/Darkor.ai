@@ -104,7 +104,7 @@ export default function TabsLayout() {
   const tabBarBottomPadding = Math.max(insets.bottom, 20);
   const colors = useTheme();
   const activeTabColor = colors.isDark ? "#FFFFFF" : ACTIVE_TAB_COLOR;
-  const inactiveTabColor = colors.isDark ? "rgba(255,255,255,0.50)" : "rgba(0,0,0,0.35)";
+  const inactiveTabColor = colors.isDark ? "rgba(255,255,255,0.60)" : "rgba(17,24,39,0.58)";
   const tabBarStyle = {
     ...DEFAULT_TAB_BAR_STYLE,
     backgroundColor: colors.surfaceOverlay,

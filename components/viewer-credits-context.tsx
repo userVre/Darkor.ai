@@ -16,6 +16,7 @@ type ViewerCreditsSnapshot = {
   nextDiamondClaimAt?: number;
   diamondBalance?: number;
   lastClaimAt?: number;
+  proTrialExpiresAt?: number;
   notificationsDeclined?: boolean;
   proTipNotificationIndex?: number;
   nextRefillTimestamp?: number;
@@ -34,6 +35,7 @@ type OptimisticViewerCreditsState = {
   nextDiamondClaimAt?: number;
   diamondBalance?: number;
   lastClaimAt?: number;
+  proTrialExpiresAt?: number;
   notificationsDeclined?: boolean;
   proTipNotificationIndex?: number;
   eliteProUntil?: number;
@@ -52,6 +54,7 @@ type ViewerCreditsContextValue = {
   nextDiamondClaimAt: number;
   diamondBalance: number;
   lastClaimAt: number;
+  proTrialExpiresAt: number;
   notificationsDeclined: boolean;
   proTipNotificationIndex: number;
   eliteProUntil: number;
@@ -113,6 +116,11 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
     ?? credits,
   ));
   const lastClaimAt = optimisticState?.lastClaimAt ?? me?.lastClaimAt ?? cachedState?.lastClaimAt ?? 0;
+  const proTrialExpiresAt =
+    optimisticState?.proTrialExpiresAt
+    ?? me?.proTrialExpiresAt
+    ?? cachedState?.proTrialExpiresAt
+    ?? 0;
   const notificationsDeclined =
     optimisticState?.notificationsDeclined
     ?? me?.notificationsDeclined
@@ -186,6 +194,7 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
                     : undefined,
               diamondBalance: typeof cached.diamondBalance === "number" ? cached.diamondBalance : undefined,
               lastClaimAt: typeof cached.lastClaimAt === "number" ? cached.lastClaimAt : undefined,
+              proTrialExpiresAt: typeof cached.proTrialExpiresAt === "number" ? cached.proTrialExpiresAt : undefined,
               notificationsDeclined: typeof cached.notificationsDeclined === "boolean" ? cached.notificationsDeclined : undefined,
               proTipNotificationIndex: typeof cached.proTipNotificationIndex === "number" ? cached.proTipNotificationIndex : undefined,
               streakCount: typeof cached.streakCount === "number" ? cached.streakCount : undefined,
@@ -216,6 +225,7 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
     me?.onboardingDiamondClaimedAt,
     me?.firstEntryRewardDismissedAt,
     me?.proTipNotificationIndex,
+    me?.proTrialExpiresAt,
     me?.streakCount,
     me?.streak_count,
     me?.subscriptionType,
@@ -233,6 +243,7 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
       nextDiamondClaimAt,
       diamondBalance,
       lastClaimAt,
+      proTrialExpiresAt,
       notificationsDeclined,
       proTipNotificationIndex,
       eliteProUntil,
@@ -240,7 +251,7 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
       firstEntryRewardDismissedAt,
     };
     void persistGenerationAccessSnapshot(snapshot);
-  }, [canClaimDiamond, credits, diamondBalance, eliteProUntil, firstEntryRewardDismissedAt, hasPaidAccess, hasProAccess, lastClaimAt, nextDiamondClaimAt, notificationsDeclined, onboardingDiamondClaimedAt, proTipNotificationIndex, streakCount, subscriptionType]);
+  }, [canClaimDiamond, credits, diamondBalance, eliteProUntil, firstEntryRewardDismissedAt, hasPaidAccess, hasProAccess, lastClaimAt, nextDiamondClaimAt, notificationsDeclined, onboardingDiamondClaimedAt, proTipNotificationIndex, proTrialExpiresAt, streakCount, subscriptionType]);
 
   const setOptimisticRewardState = useCallback((nextState: OptimisticViewerCreditsState) => {
     setOptimisticState((current) => {
@@ -267,6 +278,7 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
       nextDiamondClaimAt,
       diamondBalance,
       lastClaimAt,
+      proTrialExpiresAt,
       notificationsDeclined,
       proTipNotificationIndex,
       eliteProUntil,
@@ -291,6 +303,7 @@ export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
       notificationsDeclined,
       onboardingDiamondClaimedAt,
       proTipNotificationIndex,
+      proTrialExpiresAt,
       setOptimisticAccess,
       setOptimisticCredits,
       setOptimisticRewardState,
