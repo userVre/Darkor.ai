@@ -1,12 +1,14 @@
 import {useAuth} from "@clerk/expo";
 import {Redirect} from "expo-router";
 
+import {AuthScreen} from "@/components/auth/AuthScreen";
+
 export default function Index() {
   const {isLoaded, isSignedIn} = useAuth();
 
-  if (!isLoaded) {
-    return null;
+  if (isLoaded && isSignedIn) {
+    return <Redirect href="/(tabs)" />;
   }
 
-  return <Redirect href={isSignedIn ? "/(tabs)" : "/sign-in"} />;
+  return <AuthScreen mode="sign-in" />;
 }

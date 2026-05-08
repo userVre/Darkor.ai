@@ -62,7 +62,8 @@
     "tools": "도구",
     "create": "만들기",
     "discover": "탐색",
-    "profile": "프로필"
+    "profile": "프로필",
+    "elitePass": "엘리트 패스"
   },
   "home": {
     "title": "__토큰_0__",
@@ -250,6 +251,70 @@
       "appleErrorFallback": "Apple 가입에 실패했습니다.",
       "haveAccount": "이미 계정이 있나요?",
       "signInLink": "로그인"
+    },
+    "screen": {
+      "backA11y": "뒤로",
+      "skipA11y": "계정 없이 계속",
+      "googleCta": "Google로 계속",
+      "appleCta": "Apple로 계속",
+      "divider": "또는",
+      "forgotPassword": "비밀번호를 잊으셨나요?",
+      "signIn": {
+        "title": "다시 오신 것을 환영합니다.",
+        "subtitle": "로그인해 디자인, 크레딧, 기록을 확인하세요.",
+        "cta": "로그인",
+        "reassurance": "데이터는 보호되며 공유되지 않습니다.",
+        "togglePrefix": "아직 계정이 없나요? ",
+        "toggleLink": "가입"
+      },
+      "signUp": {
+        "title": "디자인을 시작하세요.",
+        "subtitle": "계정을 만들고 첫 AI 렌더를 무료로 시작하세요.",
+        "cta": "계정 만들기",
+        "reassurance": "무료로 시작, 카드 필요 없음.",
+        "togglePrefix": "이미 계정이 있나요? ",
+        "toggleLink": "로그인"
+      },
+      "fields": {
+        "fullName": "전체 이름",
+        "fullNamePlaceholder": "이름",
+        "emailPlaceholder": "you@example.com",
+        "passwordPlaceholderSignIn": "비밀번호 입력",
+        "passwordPlaceholderSignUp": "비밀번호 만들기",
+        "confirmPassword": "비밀번호 확인",
+        "confirmPasswordPlaceholder": "비밀번호 확인",
+        "showPassword": "비밀번호 표시",
+        "hidePassword": "비밀번호 숨기기"
+      },
+      "validation": {
+        "nameRequired": "전체 이름을 입력하세요.",
+        "invalidEmail": "유효한 이메일을 입력하세요.",
+        "passwordLength": "비밀번호는 8자 이상이어야 합니다.",
+        "passwordMismatch": "비밀번호가 일치하지 않습니다."
+      },
+      "errors": {
+        "signInInvalid": "이메일 또는 비밀번호가 올바르지 않습니다.",
+        "signInFallback": "로그인할 수 없습니다. 정보를 확인하세요.",
+        "signUpExists": "이 이메일로 이미 계정이 있습니다. 로그인하세요.",
+        "signUpPassword": "이 비밀번호는 사용할 수 없습니다. 다른 비밀번호를 시도하세요.",
+        "signUpFallback": "계정을 만들 수 없습니다. 다시 시도하세요.",
+        "verificationInvalid": "코드가 올바르지 않습니다.",
+        "verificationFallback": "코드를 확인할 수 없습니다. 다시 시도하세요.",
+        "googleUnavailable": "Google 로그인을 사용할 수 없습니다.",
+        "appleUnavailable": "Apple 로그인을 사용할 수 없습니다.",
+        "additionalVerificationRequired": "추가 인증 단계가 필요합니다.",
+        "guestUnavailable": "게스트로 계속할 수 없습니다."
+      },
+      "otp": {
+        "notReady": "인증이 아직 준비되지 않았습니다.",
+        "incomplete": "이메일로 받은 6자리 코드를 입력하세요.",
+        "title": "이메일 확인",
+        "subtitle": "{{email}}로 6자리 코드를 보냈습니다",
+        "verifyCta": "이메일 확인",
+        "resend": "코드 다시 보내기",
+        "sending": "보내는 중...",
+        "resendError": "코드를 다시 보낼 수 없습니다."
+      }
     }
   },
   "faq": {
@@ -1411,6 +1476,33 @@
         "share": "공유",
         "tryAgain": "다시 시도"
       }
+    }
+  },
+  "elitePass": {
+    "title": "엘리트 패스",
+    "progressCount": "{{current}}/{{total}}",
+    "errors": {
+      "claimUnavailable": "지금 보상을 받을 수 없습니다."
+    },
+    "fullPage": {
+      "eyebrow": "일일 보상",
+      "title": "엘리트 패스",
+      "subtitle": "24시간마다 무료 다이아몬드 1개를 받으세요. 연속 기록을 유지하면 7일차에 24시간 Pro가 열립니다.",
+      "balance": "다이아몬드 {{count}}개",
+      "day7Promise": "7일차 보상: 24시간 Pro와 보너스 다이아몬드.",
+      "proActive": "Pro 액세스 약 {{hours}}시간 남음",
+      "streakTitle": "7일 연속",
+      "dayShort": "{{day}}일",
+      "day7Short": "7일 Pro",
+      "claimDaily": "오늘의 다이아몬드 받기",
+      "claimDay7": "다이아몬드 3개 + 24시간 Pro 받기",
+      "claimedToday": "오늘 받았습니다. {{hours}}시간 후 돌아오세요",
+      "capReached": "다이아몬드 한도에 도달했습니다. 하나를 사용하면 다시 받을 수 있습니다.",
+      "dailyDiamondTitle": "일일 다이아몬드",
+      "dailyDiamondBody": "잔액이 한도보다 낮으면 24시간마다 무료 보상이 열립니다.",
+      "capTitle": "잔액 한도",
+      "capBody": "무료 보상은 {{count}}개에서 일시 중지됩니다.",
+      "proToolLocked": "Pro로 잠금 해제하세요."
     }
   }
 }

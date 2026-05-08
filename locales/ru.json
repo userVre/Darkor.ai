@@ -62,7 +62,8 @@
     "tools": "Инструменты",
     "create": "Создать",
     "discover": "Открыть",
-    "profile": "Профиль"
+    "profile": "Профиль",
+    "elitePass": "Elite Pass"
   },
   "home": {
     "title": "__ТОКЕН_0__",
@@ -250,6 +251,70 @@
       "appleErrorFallback": "Регистрация Apple не удалась.",
       "haveAccount": "У вас уже есть аккаунт?",
       "signInLink": "Войти"
+    },
+    "screen": {
+      "backA11y": "Назад",
+      "skipA11y": "Продолжить без аккаунта",
+      "googleCta": "Продолжить с Google",
+      "appleCta": "Продолжить с Apple",
+      "divider": "или",
+      "forgotPassword": "Забыли пароль?",
+      "signIn": {
+        "title": "С возвращением.",
+        "subtitle": "Войдите, чтобы вернуть дизайны, кредиты и историю.",
+        "cta": "Войти",
+        "reassurance": "Ваши данные защищены и никогда не передаются.",
+        "togglePrefix": "Еще нет аккаунта? ",
+        "toggleLink": "Зарегистрироваться"
+      },
+      "signUp": {
+        "title": "Начните создавать.",
+        "subtitle": "Создайте аккаунт и бесплатно запустите первый AI-рендер.",
+        "cta": "Создать аккаунт",
+        "reassurance": "Начать можно бесплатно, карта не нужна.",
+        "togglePrefix": "Уже есть аккаунт? ",
+        "toggleLink": "Войти"
+      },
+      "fields": {
+        "fullName": "Полное имя",
+        "fullNamePlaceholder": "Ваше имя",
+        "emailPlaceholder": "you@example.com",
+        "passwordPlaceholderSignIn": "Введите пароль",
+        "passwordPlaceholderSignUp": "Создайте пароль",
+        "confirmPassword": "Подтвердите пароль",
+        "confirmPasswordPlaceholder": "Повторите пароль",
+        "showPassword": "Показать пароль",
+        "hidePassword": "Скрыть пароль"
+      },
+      "validation": {
+        "nameRequired": "Введите полное имя.",
+        "invalidEmail": "Введите действительный e-mail.",
+        "passwordLength": "Пароль должен содержать минимум 8 символов.",
+        "passwordMismatch": "Пароли не совпадают."
+      },
+      "errors": {
+        "signInInvalid": "E-mail или пароль неверны. Попробуйте снова.",
+        "signInFallback": "Не удалось войти. Проверьте данные и попробуйте снова.",
+        "signUpExists": "Аккаунт с этим e-mail уже существует. Войдите.",
+        "signUpPassword": "Этот пароль нельзя использовать. Попробуйте другой.",
+        "signUpFallback": "Не удалось создать аккаунт. Попробуйте снова.",
+        "verificationInvalid": "Этот код недействителен. Попробуйте снова.",
+        "verificationFallback": "Не удалось проверить код. Попробуйте снова.",
+        "googleUnavailable": "Вход через Google недоступен. Попробуйте снова.",
+        "appleUnavailable": "Вход через Apple недоступен. Попробуйте снова.",
+        "additionalVerificationRequired": "Требуется дополнительная проверка.",
+        "guestUnavailable": "Не удалось продолжить как гость. Попробуйте снова."
+      },
+      "otp": {
+        "notReady": "Проверка еще не готова. Попробуйте снова.",
+        "incomplete": "Введите 6-значный код из письма.",
+        "title": "Подтвердите e-mail",
+        "subtitle": "Мы отправили 6-значный код на {{email}}",
+        "verifyCta": "Подтвердить e-mail",
+        "resend": "Отправить код снова",
+        "sending": "Отправка...",
+        "resendError": "Не удалось отправить код повторно. Попробуйте снова."
+      }
     }
   },
   "faq": {
@@ -1411,6 +1476,33 @@
         "share": "Поделиться",
         "tryAgain": "Попробуйте еще раз"
       }
+    }
+  },
+  "elitePass": {
+    "title": "Elite Pass",
+    "progressCount": "{{current}}/{{total}}",
+    "errors": {
+      "claimUnavailable": "Не удалось получить награду сейчас."
+    },
+    "fullPage": {
+      "eyebrow": "Ежедневные награды",
+      "title": "Elite Pass",
+      "subtitle": "Получайте 1 бесплатный Алмаз каждые 24 часа. Сохраняйте серию, и на 7-й день откроется Pro на 24 часа.",
+      "balance": "{{count}} Алмазов",
+      "day7Promise": "Награда 7-го дня: 24ч Pro плюс бонусные Алмазы.",
+      "proActive": "Pro активен примерно {{hours}}ч",
+      "streakTitle": "Серия 7 дней",
+      "dayShort": "День {{day}}",
+      "day7Short": "День 7 Pro",
+      "claimDaily": "Забрать Алмаз дня",
+      "claimDay7": "Забрать 3 Алмаза + 24ч Pro",
+      "claimedToday": "Сегодня уже получено. Вернитесь через {{hours}}ч",
+      "capReached": "Достигнут лимит Алмазов. Используйте один, чтобы получить снова.",
+      "dailyDiamondTitle": "Ежедневный Алмаз",
+      "dailyDiamondBody": "Бесплатная награда открывается каждые 24ч, если баланс ниже лимита.",
+      "capTitle": "Лимит баланса",
+      "capBody": "Ежедневные награды останавливаются на {{count}} Алмазах.",
+      "proToolLocked": "Откройте это с Pro."
     }
   }
 }

@@ -1,5 +1,6 @@
 import {Eye, EyeOff} from "lucide-react-native";
 import {useState, type ComponentType} from "react";
+import {useTranslation} from "react-i18next";
 import {
   Pressable,
   StyleSheet,
@@ -43,6 +44,7 @@ export function AuthInput({
   returnKeyType,
 }: AuthInputProps) {
   const theme = useTheme();
+  const {t} = useTranslation();
   const [focused, setFocused] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const isPassword = Boolean(secureTextEntry);
@@ -90,7 +92,7 @@ export function AuthInput({
         {isPassword ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={passwordVisible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            accessibilityLabel={passwordVisible ? t("auth.screen.fields.hidePassword") : t("auth.screen.fields.showPassword")}
             hitSlop={10}
             onPress={() => setPasswordVisible((current) => !current)}
             style={styles.eyeButton}

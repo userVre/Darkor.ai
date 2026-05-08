@@ -20,8 +20,6 @@ import {useWorkspaceDraft} from "./workspace-context";
 
 const FIRST_LAUNCH_DISCLOSURE_KEY = "homedecor:first-launch-disclosure-accepted";
 const DARK_ACTION = "#111111";
-const PURE_WHITE = "#FFFFFF";
-const PRO_TOOL_LOCK_MESSAGE = "Débloquez ceci avec Pro.";
 
 export function CreateOptionsScreen() {
   const router = useRouter();
@@ -163,7 +161,7 @@ export function CreateOptionsScreen() {
       }
 
       if (item.requiresPro && !hasProAccess) {
-        Alert.alert(PRO_TOOL_LOCK_MESSAGE);
+        Alert.alert(t("elitePass.fullPage.proToolLocked"));
         return;
       }
 
@@ -247,10 +245,10 @@ export function CreateOptionsScreen() {
 
 function createStyles(theme: Theme) {
   return StyleSheet.create({
-    screen: {
-      flex: 1,
-      backgroundColor: PURE_WHITE,
-    },
+  screen: {
+    flex: 1,
+    backgroundColor: theme.bg,
+  },
     headerShell: {
       position: "absolute",
       top: 0,
@@ -259,11 +257,11 @@ function createStyles(theme: Theme) {
       zIndex: 10,
       paddingHorizontal: 20,
       paddingBottom: 12,
-      backgroundColor: PURE_WHITE,
+      backgroundColor: theme.bg,
     },
     scrollView: {
       flex: 1,
-      backgroundColor: PURE_WHITE,
+      backgroundColor: theme.bg,
     },
     scrollContent: {
       gap: 0,

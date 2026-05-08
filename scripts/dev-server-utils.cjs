@@ -42,7 +42,7 @@ function requestExpoDevServerStatus(port, host) {
         host,
         port,
         path: "/status",
-        timeout: 800,
+        timeout: 5000,
       },
       (response) => {
         const chunks = [];

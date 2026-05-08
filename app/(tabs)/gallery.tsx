@@ -9,7 +9,6 @@ import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {DiscoverImageCard} from "../../components/discover-image-card";
 import {DiscoverPreviewModal} from "../../components/discover-preview-modal";
 import {HomeHeaderPills} from "../../components/home-header-pills";
-import {DS} from "../../lib/design-system";
 import {
 type DiscoverCluster,
 type DiscoverClusterId,
@@ -18,11 +17,11 @@ type DiscoverTile,
 useDiscoverClusters,
 } from "../../lib/discover-catalog";
 import {triggerHaptic} from "../../lib/haptics";
+import {useTheme, type Theme} from "../../styles/theme";
 import {fonts} from "../../styles/typography";
 
 const SCREEN_SIDE_MARGIN = 26;
 const CARD_GAP = 14;
-const PURE_WHITE = "#FFFFFF";
 
 function getDiscoverTileKey(group: DiscoverGroup, item: DiscoverTile) {
   return `${group.renderKey}:${item.id}`;
@@ -35,6 +34,7 @@ const DiscoverSection = memo(function DiscoverSection({
   onPreview,
   onExploreGroup,
   seeAllLabel,
+  styles,
 }: {
   group: DiscoverGroup;
   cardWidth: number;
@@ -42,6 +42,7 @@ const DiscoverSection = memo(function DiscoverSection({
   onPreview: (item: DiscoverTile) => void;
   onExploreGroup: (group: DiscoverGroup) => void;
   seeAllLabel: string;
+  styles: ReturnType<typeof createStyles>;
 }) {
   const snapOffsets = useMemo(
     () => group.items.map((_, index) => index * (cardWidth + CARD_GAP)),
@@ -85,6 +86,8 @@ const DiscoverSection = memo(function DiscoverSection({
 export default function GalleryScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [previewItem, setPreviewItem] = useState<DiscoverTile | null>(null);
@@ -141,10 +144,11 @@ export default function GalleryScreen() {
           onPreview={handlePreviewOpen}
           onExploreGroup={handleExploreGroup}
           seeAllLabel={t("common.actions.seeAll")}
+          styles={styles}
         />
       );
     },
-    [cardHeight, cardWidth, handleExploreGroup, handlePreviewOpen, t],
+    [cardHeight, cardWidth, handleExploreGroup, handlePreviewOpen, styles, t],
   );
 
   const listHeader = useMemo(
@@ -183,7 +187,7 @@ export default function GalleryScreen() {
 
   return (
     <View style={styles.screen}>
-      <StatusBar style="dark" />
+      <StatusBar style={theme.isDark ? "light" : "dark"} />
 
       <FlashList
         data={selectedCluster?.groups ?? []}
@@ -205,14 +209,15 @@ export default function GalleryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: Theme) {
+return StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: PURE_WHITE,
+    backgroundColor: theme.bg,
   },
   headerWrap: {
     paddingBottom: 20,
-    backgroundColor: PURE_WHITE,
+    backgroundColor: theme.bg,
   },
   headerPills: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
@@ -225,7 +230,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerTitle: {
-    color: DS.colors.textPrimary,
+    color: theme.textPrimary,
     fontSize: 24,
     lineHeight: 30,
     letterSpacing: 0,
@@ -245,17 +250,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: theme.surfaceHigh,
     paddingHorizontal: 10,
     borderWidth: 1,
     borderColor: "transparent",
   },
   categoryTabActive: {
-    backgroundColor: "#111111",
-    borderColor: "#111111",
+    backgroundColor: theme.textPrimary,
+    borderColor: theme.textPrimary,
   },
   categoryTabText: {
-    color: "#111111",
+    color: theme.textPrimary,
     fontSize: 13,
     lineHeight: 18,
     letterSpacing: 0,
@@ -263,7 +268,7 @@ const styles = StyleSheet.create({
     ...fonts.semibold,
   },
   categoryTabTextActive: {
-    color: "#FFFFFF",
+    color: theme.bg,
   },
   section: {
     marginBottom: 32,
@@ -278,7 +283,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     flex: 1,
-    color: DS.colors.textPrimary,
+    color: theme.textPrimary,
     fontSize: 18,
     lineHeight: 24,
     letterSpacing: 0,
@@ -290,7 +295,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   sectionActionText: {
-    color: DS.colors.textSecondary,
+    color: theme.textSecondary,
     fontSize: 13,
     lineHeight: 18,
     ...fonts.semibold,
@@ -302,3 +307,4 @@ const styles = StyleSheet.create({
     marginRight: CARD_GAP,
   },
 });
+}

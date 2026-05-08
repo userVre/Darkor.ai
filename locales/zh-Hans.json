@@ -62,7 +62,8 @@
     "tools": "工具",
     "create": "创作",
     "discover": "发现",
-    "profile": "个人资料"
+    "profile": "个人资料",
+    "elitePass": "精英通行证"
   },
   "home": {
     "title": "HomeDecor AI",
@@ -250,6 +251,70 @@
       "appleErrorFallback": "Apple 注册失败。",
       "haveAccount": "已经有帐户？",
       "signInLink": "登入"
+    },
+    "screen": {
+      "backA11y": "返回",
+      "skipA11y": "不登录继续",
+      "googleCta": "使用 Google 继续",
+      "appleCta": "使用 Apple 继续",
+      "divider": "或",
+      "forgotPassword": "忘记密码？",
+      "signIn": {
+        "title": "欢迎回来。",
+        "subtitle": "登录以找回你的设计、钻石和历史记录。",
+        "cta": "登录",
+        "reassurance": "你的数据会受到保护，绝不会被分享。",
+        "togglePrefix": "还没有账号？",
+        "toggleLink": "注册"
+      },
+      "signUp": {
+        "title": "开始创作。",
+        "subtitle": "创建账号，免费生成你的第一个 AI 效果图。",
+        "cta": "创建账号",
+        "reassurance": "免费开始，无需银行卡。",
+        "togglePrefix": "已有账号？",
+        "toggleLink": "登录"
+      },
+      "fields": {
+        "fullName": "姓名",
+        "fullNamePlaceholder": "你的名字",
+        "emailPlaceholder": "you@example.com",
+        "passwordPlaceholderSignIn": "输入密码",
+        "passwordPlaceholderSignUp": "创建密码",
+        "confirmPassword": "确认密码",
+        "confirmPasswordPlaceholder": "再次输入密码",
+        "showPassword": "显示密码",
+        "hidePassword": "隐藏密码"
+      },
+      "validation": {
+        "nameRequired": "请输入姓名。",
+        "invalidEmail": "请输入有效邮箱。",
+        "passwordLength": "密码至少需要 8 个字符。",
+        "passwordMismatch": "两次密码不一致。"
+      },
+      "errors": {
+        "signInInvalid": "邮箱或密码不正确。请重试。",
+        "signInFallback": "无法登录。请检查信息后重试。",
+        "signUpExists": "此邮箱已存在账号。请直接登录。",
+        "signUpPassword": "此密码不可用。请换一个。",
+        "signUpFallback": "无法创建账号。请重试。",
+        "verificationInvalid": "验证码无效。请重试。",
+        "verificationFallback": "无法验证此代码。请重试。",
+        "googleUnavailable": "无法使用 Google 登录。请重试。",
+        "appleUnavailable": "无法使用 Apple 登录。请重试。",
+        "additionalVerificationRequired": "需要额外验证步骤。",
+        "guestUnavailable": "无法以游客继续。请重试。"
+      },
+      "otp": {
+        "notReady": "验证尚未准备好。请重试。",
+        "incomplete": "请输入邮件中的 6 位验证码。",
+        "title": "验证邮箱",
+        "subtitle": "我们已向 {{email}} 发送 6 位验证码",
+        "verifyCta": "验证邮箱",
+        "resend": "重新发送代码",
+        "sending": "发送中...",
+        "resendError": "无法重新发送代码。"
+      }
     }
   },
   "faq": {
@@ -1411,6 +1476,33 @@
         "share": "分享",
         "tryAgain": "再试一次"
       }
+    }
+  },
+  "elitePass": {
+    "title": "精英通行证",
+    "progressCount": "{{current}}/{{total}}",
+    "errors": {
+      "claimUnavailable": "当前无法领取奖励。"
+    },
+    "fullPage": {
+      "eyebrow": "每日奖励",
+      "title": "精英通行证",
+      "subtitle": "每 24 小时领取 1 颗免费钻石。保持连续签到，第 7 天解锁 24 小时 Pro。",
+      "balance": "{{count}} 颗钻石",
+      "day7Promise": "第 7 天奖励：24 小时 Pro + 额外钻石。",
+      "proActive": "Pro 访问约剩 {{hours}} 小时",
+      "streakTitle": "7 天连续",
+      "dayShort": "第 {{day}} 天",
+      "day7Short": "第 7 天 Pro",
+      "claimDaily": "领取今日钻石",
+      "claimDay7": "领取 3 颗钻石 + 24 小时 Pro",
+      "claimedToday": "今日已领取。{{hours}} 小时后回来",
+      "capReached": "钻石余额已达上限。使用一颗后可再次领取。",
+      "dailyDiamondTitle": "每日钻石",
+      "dailyDiamondBody": "余额低于上限时，每 24 小时解锁一次免费奖励。",
+      "capTitle": "余额上限",
+      "capBody": "免费每日奖励会在 {{count}} 颗钻石时暂停。",
+      "proToolLocked": "使用 Pro 解锁。"
     }
   }
 }

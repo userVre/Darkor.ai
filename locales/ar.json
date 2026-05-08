@@ -62,7 +62,8 @@
     "tools": "الأدوات",
     "create": "إنشاء",
     "discover": "استكشاف",
-    "profile": "ملفي"
+    "profile": "ملفي",
+    "elitePass": "بطاقة النخبة"
   },
   "home": {
     "title": "هوم ديكور AI",
@@ -253,6 +254,70 @@
       "appleErrorFallback": "فشل إنشاء الحساب عبر Apple.",
       "haveAccount": "هل لديك حساب بالفعل؟",
       "signInLink": "تسجيل الدخول"
+    },
+    "screen": {
+      "backA11y": "رجوع",
+      "skipA11y": "المتابعة بدون حساب",
+      "googleCta": "المتابعة عبر Google",
+      "appleCta": "المتابعة عبر Apple",
+      "divider": "أو",
+      "forgotPassword": "هل نسيت كلمة المرور؟",
+      "signIn": {
+        "title": "مرحباً بعودتك.",
+        "subtitle": "سجّل الدخول لاستعادة تصاميمك وأرصدةك وسجلك.",
+        "cta": "تسجيل الدخول",
+        "reassurance": "بياناتك محمية ولا تتم مشاركتها أبداً.",
+        "togglePrefix": "ليس لديك حساب؟ ",
+        "toggleLink": "إنشاء حساب"
+      },
+      "signUp": {
+        "title": "ابدأ التصميم.",
+        "subtitle": "أنشئ حسابك وابدأ أول تصميم بالذكاء الاصطناعي مجاناً.",
+        "cta": "إنشاء حساب",
+        "reassurance": "البدء مجاني ولا تحتاج إلى بطاقة.",
+        "togglePrefix": "لديك حساب بالفعل؟ ",
+        "toggleLink": "تسجيل الدخول"
+      },
+      "fields": {
+        "fullName": "الاسم الكامل",
+        "fullNamePlaceholder": "اسمك",
+        "emailPlaceholder": "you@example.com",
+        "passwordPlaceholderSignIn": "أدخل كلمة المرور",
+        "passwordPlaceholderSignUp": "أنشئ كلمة مرور",
+        "confirmPassword": "تأكيد كلمة المرور",
+        "confirmPasswordPlaceholder": "أعد إدخال كلمة المرور",
+        "showPassword": "إظهار كلمة المرور",
+        "hidePassword": "إخفاء كلمة المرور"
+      },
+      "validation": {
+        "nameRequired": "أدخل اسمك الكامل.",
+        "invalidEmail": "أدخل بريداً إلكترونياً صالحاً.",
+        "passwordLength": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
+        "passwordMismatch": "كلمتا المرور غير متطابقتين."
+      },
+      "errors": {
+        "signInInvalid": "البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.",
+        "signInFallback": "تعذر تسجيل الدخول. تحقق من بياناتك وحاول مرة أخرى.",
+        "signUpExists": "يوجد حساب بهذا البريد الإلكتروني. سجّل الدخول بدلاً من ذلك.",
+        "signUpPassword": "لا يمكن استخدام كلمة المرور هذه. جرّب كلمة أخرى.",
+        "signUpFallback": "تعذر إنشاء حسابك. حاول مرة أخرى.",
+        "verificationInvalid": "هذا الرمز غير صالح. حاول مرة أخرى.",
+        "verificationFallback": "تعذر التحقق من الرمز. حاول مرة أخرى.",
+        "googleUnavailable": "تعذر تسجيل الدخول عبر Google. حاول مرة أخرى.",
+        "appleUnavailable": "تعذر تسجيل الدخول عبر Apple. حاول مرة أخرى.",
+        "additionalVerificationRequired": "يلزم إجراء تحقق إضافي.",
+        "guestUnavailable": "تعذرت المتابعة كضيف. حاول مرة أخرى."
+      },
+      "otp": {
+        "notReady": "التحقق غير جاهز بعد. حاول مرة أخرى.",
+        "incomplete": "أدخل الرمز المكون من 6 أرقام المرسل إلى بريدك.",
+        "title": "تحقق من بريدك الإلكتروني",
+        "subtitle": "أرسلنا رمزاً من 6 أرقام إلى {{email}}",
+        "verifyCta": "تحقق من البريد",
+        "resend": "إعادة إرسال الرمز",
+        "sending": "جارٍ الإرسال...",
+        "resendError": "تعذرت إعادة إرسال الرمز. حاول مرة أخرى."
+      }
     }
   },
   "faq": {
@@ -1423,6 +1488,33 @@
         "share": "مشاركة",
         "tryAgain": "أعد المحاولة"
       }
+    }
+  },
+  "elitePass": {
+    "title": "بطاقة النخبة",
+    "progressCount": "{{current}}/{{total}}",
+    "errors": {
+      "claimUnavailable": "تعذر استلام المكافأة الآن."
+    },
+    "fullPage": {
+      "eyebrow": "مكافآت يومية",
+      "title": "بطاقة النخبة",
+      "subtitle": "استلم ألماسة مجانية كل 24 ساعة. حافظ على السلسلة وفي اليوم السابع تحصل على وصول Pro لمدة 24 ساعة.",
+      "balance": "{{count}} ألماسة",
+      "day7Promise": "مكافأة اليوم السابع: Pro لمدة 24 ساعة مع ألماسات إضافية.",
+      "proActive": "وصول Pro نشط لحوالي {{hours}} ساعة",
+      "streakTitle": "سلسلة 7 أيام",
+      "dayShort": "يوم {{day}}",
+      "day7Short": "يوم 7 Pro",
+      "claimDaily": "استلام ألماسة اليوم",
+      "claimDay7": "استلام 3 ألماسات + 24 ساعة Pro",
+      "claimedToday": "تم الاستلام اليوم. عد بعد {{hours}} ساعة",
+      "capReached": "وصلت إلى الحد الأقصى. استخدم ألماسة لتستلم من جديد.",
+      "dailyDiamondTitle": "ألماسة يومية",
+      "dailyDiamondBody": "تتوفر مكافأة مجانية كل 24 ساعة عندما يكون رصيدك أقل من الحد.",
+      "capTitle": "حد الرصيد",
+      "capBody": "تتوقف المكافآت اليومية عند {{count}} ألماسات حتى تبقى مفيدة.",
+      "proToolLocked": "افتح هذا باستخدام Pro."
     }
   }
 }

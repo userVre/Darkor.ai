@@ -1,5 +1,5 @@
 import {useRouter} from "expo-router";
-import {useMemo, useState} from "react";
+import {useMemo} from "react";
 import {useTranslation} from "react-i18next";
 import {I18nManager, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle} from "react-native";
 
@@ -13,14 +13,10 @@ getDirectionalRow,
 import {useTheme, type Theme} from "../styles/theme";
 import {useDiamondStore} from "./diamond-store-context";
 import {ProBadge} from "./diamond-credit-pill";
-import {ElitePassModal} from "./elitepass/ElitePassModal";
 import {useViewerCredits} from "./viewer-credits-context";
 
 const HEADER_PILL_HEIGHT = 36;
-const HEADER_PILL_SURFACE = "#F3F4F6";
-const HEADER_PILL_TEXT = "#111111";
 const DIAMOND_EMOJI = "\u{1F48E}";
-const FIRE_EMOJI = "\u{1F525}";
 
 export function HomeHeaderPills({
   style,
@@ -34,16 +30,10 @@ export function HomeHeaderPills({
   const {credits, hasPaidAccess} = useViewerCredits();
   const {openStore} = useDiamondStore();
   const isRTL = I18nManager.isRTL;
-  const [isElitePassVisible, setIsElitePassVisible] = useState(false);
 
   const handleCreditsPress = () => {
     triggerHaptic();
     openStore();
-  };
-
-  const handleElitePassPress = () => {
-    triggerHaptic();
-    setIsElitePassVisible(true);
   };
 
   const handleUpgradeProPress = () => {
@@ -52,7 +42,6 @@ export function HomeHeaderPills({
   };
 
   return (
-    <>
       <View style={[styles.headerRow, {flexDirection: getDirectionalRow(isRTL)}, style]}>
         <View style={[styles.sideSlot, {alignItems: getDirectionalAlignment(isRTL)}]}>
           {hasPaidAccess ? (
@@ -70,15 +59,6 @@ export function HomeHeaderPills({
           )}
         </View>
 
-        <Pressable
-          accessibilityLabel="Elite Pass"
-          accessibilityRole="button"
-          onPress={handleElitePassPress}
-          style={styles.elitePassButton}
-        >
-          <Text numberOfLines={1} style={styles.elitePassText}>{`${FIRE_EMOJI} Elite Pass`}</Text>
-        </Pressable>
-
         <View style={[styles.sideSlot, {alignItems: getDirectionalOppositeAlignment(isRTL)}]}>
           <Pressable
             accessibilityLabel={t("settings.upgradePro")}
@@ -92,12 +72,6 @@ export function HomeHeaderPills({
           </Pressable>
         </View>
       </View>
-
-      <ElitePassModal
-        visible={isElitePassVisible}
-        onClose={() => setIsElitePassVisible(false)}
-      />
-    </>
   );
 }
 
@@ -125,7 +99,7 @@ function createStyles(theme: Theme) {
       paddingVertical: 6,
       borderRadius: 20,
       borderCurve: "continuous",
-      backgroundColor: HEADER_PILL_SURFACE,
+      backgroundColor: theme.surfaceHigh,
     },
     creditPillText: {
       ...DS.typography.button,
@@ -146,33 +120,12 @@ function createStyles(theme: Theme) {
       borderRadius: 20,
       borderCurve: "continuous",
       borderWidth: 1,
-      borderColor: HEADER_PILL_SURFACE,
-      backgroundColor: HEADER_PILL_SURFACE,
+      borderColor: theme.border,
+      backgroundColor: theme.surfaceHigh,
     },
     upgradeProText: {
       ...DS.typography.button,
-      color: HEADER_PILL_TEXT,
-      fontSize: 12,
-      lineHeight: 16,
-      fontWeight: "600",
-      letterSpacing: 0,
-    },
-    elitePassButton: {
-      minWidth: 118,
-      height: HEADER_PILL_HEIGHT,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: 14,
-      paddingVertical: 6,
-      borderRadius: 20,
-      borderCurve: "continuous",
-      borderWidth: 1,
-      borderColor: HEADER_PILL_SURFACE,
-      backgroundColor: HEADER_PILL_SURFACE,
-    },
-    elitePassText: {
-      ...DS.typography.button,
-      color: HEADER_PILL_TEXT,
+      color: theme.textPrimary,
       fontSize: 12,
       lineHeight: 16,
       fontWeight: "600",

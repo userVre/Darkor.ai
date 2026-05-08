@@ -62,7 +62,8 @@
     "tools": "Công cụ",
     "create": "Tạo",
     "discover": "Khám phá",
-    "profile": "Hồ sơ"
+    "profile": "Hồ sơ",
+    "elitePass": "Thẻ Elite"
   },
   "home": {
     "title": "HomeDecor AI",
@@ -246,6 +247,70 @@
       "appleErrorFallback": "Apple đăng ký không thành công.",
       "haveAccount": "Đã có tài khoản?",
       "signInLink": "Đăng nhập"
+    },
+    "screen": {
+      "backA11y": "Quay lại",
+      "skipA11y": "Tiếp tục không cần tài khoản",
+      "googleCta": "Tiếp tục với Google",
+      "appleCta": "Tiếp tục với Apple",
+      "divider": "hoặc",
+      "forgotPassword": "Quên mật khẩu?",
+      "signIn": {
+        "title": "Chào mừng trở lại.",
+        "subtitle": "Đăng nhập để xem lại thiết kế, kim cương và lịch sử.",
+        "cta": "Đăng nhập",
+        "reassurance": "Dữ liệu của bạn được bảo vệ và không bao giờ chia sẻ.",
+        "togglePrefix": "Chưa có tài khoản? ",
+        "toggleLink": "Đăng ký"
+      },
+      "signUp": {
+        "title": "Bắt đầu sáng tạo.",
+        "subtitle": "Tạo tài khoản và chạy bản render AI đầu tiên miễn phí.",
+        "cta": "Tạo tài khoản",
+        "reassurance": "Bắt đầu miễn phí, không cần thẻ.",
+        "togglePrefix": "Đã có tài khoản? ",
+        "toggleLink": "Đăng nhập"
+      },
+      "fields": {
+        "fullName": "Họ và tên",
+        "fullNamePlaceholder": "Tên của bạn",
+        "emailPlaceholder": "you@example.com",
+        "passwordPlaceholderSignIn": "Nhập mật khẩu",
+        "passwordPlaceholderSignUp": "Tạo mật khẩu",
+        "confirmPassword": "Xác nhận mật khẩu",
+        "confirmPasswordPlaceholder": "Xác nhận mật khẩu",
+        "showPassword": "Hiện mật khẩu",
+        "hidePassword": "Ẩn mật khẩu"
+      },
+      "validation": {
+        "nameRequired": "Nhập họ và tên.",
+        "invalidEmail": "Nhập email hợp lệ.",
+        "passwordLength": "Mật khẩu phải có ít nhất 8 ký tự.",
+        "passwordMismatch": "Mật khẩu không khớp."
+      },
+      "errors": {
+        "signInInvalid": "Email hoặc mật khẩu không đúng. Thử lại.",
+        "signInFallback": "Không thể đăng nhập. Kiểm tra thông tin và thử lại.",
+        "signUpExists": "Email này đã có tài khoản. Hãy đăng nhập.",
+        "signUpPassword": "Không thể dùng mật khẩu này. Hãy thử mật khẩu khác.",
+        "signUpFallback": "Không thể tạo tài khoản. Thử lại.",
+        "verificationInvalid": "Mã này không hợp lệ. Thử lại.",
+        "verificationFallback": "Không thể xác minh mã. Thử lại.",
+        "googleUnavailable": "Không thể đăng nhập Google. Thử lại.",
+        "appleUnavailable": "Không thể đăng nhập Apple. Thử lại.",
+        "additionalVerificationRequired": "Cần thêm bước xác minh.",
+        "guestUnavailable": "Không thể tiếp tục dưới dạng khách. Thử lại."
+      },
+      "otp": {
+        "notReady": "Xác minh chưa sẵn sàng. Thử lại.",
+        "incomplete": "Nhập mã 6 chữ số được gửi qua email.",
+        "title": "Xác minh email",
+        "subtitle": "Chúng tôi đã gửi mã 6 chữ số đến {{email}}",
+        "verifyCta": "Xác minh email",
+        "resend": "Gửi lại mã",
+        "sending": "Đang gửi...",
+        "resendError": "Không thể gửi lại mã. Thử lại."
+      }
     }
   },
   "faq": {
@@ -1400,6 +1465,33 @@
         "share": "Chia sẻ",
         "tryAgain": "Thử lại"
       }
+    }
+  },
+  "elitePass": {
+    "title": "Thẻ Elite",
+    "progressCount": "{{current}}/{{total}}",
+    "errors": {
+      "claimUnavailable": "Hiện không thể nhận phần thưởng."
+    },
+    "fullPage": {
+      "eyebrow": "Phần thưởng hằng ngày",
+      "title": "Thẻ Elite",
+      "subtitle": "Nhận 1 Kim cương miễn phí mỗi 24 giờ. Giữ chuỗi điểm danh và ngày 7 mở khóa 24 giờ Pro.",
+      "balance": "{{count}} Kim cương",
+      "day7Promise": "Thưởng ngày 7: 24h Pro và Kim cương thưởng.",
+      "proActive": "Quyền Pro còn khoảng {{hours}}h",
+      "streakTitle": "Chuỗi 7 ngày",
+      "dayShort": "Ngày {{day}}",
+      "day7Short": "Ngày 7 Pro",
+      "claimDaily": "Nhận Kim cương hôm nay",
+      "claimDay7": "Nhận 3 Kim cương + 24h Pro",
+      "claimedToday": "Đã nhận hôm nay. Quay lại sau {{hours}}h",
+      "capReached": "Đã đạt giới hạn Kim cương. Dùng một viên để nhận tiếp.",
+      "dailyDiamondTitle": "Kim cương hằng ngày",
+      "dailyDiamondBody": "Phần thưởng miễn phí mở khóa mỗi 24h nếu số dư dưới giới hạn.",
+      "capTitle": "Giới hạn số dư",
+      "capBody": "Thưởng hằng ngày tạm dừng ở {{count}} Kim cương.",
+      "proToolLocked": "Mở khóa bằng Pro."
     }
   }
 }

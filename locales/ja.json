@@ -62,7 +62,8 @@
     "tools": "ツール",
     "create": "作成",
     "discover": "発見",
-    "profile": "プロフィール"
+    "profile": "プロフィール",
+    "elitePass": "エリートパス"
   },
   "home": {
     "title": "__トークン_0__",
@@ -250,6 +251,70 @@
       "appleErrorFallback": "Apple のサインアップに失敗しました。",
       "haveAccount": "すでにアカウントをお持ちですか?",
       "signInLink": "サインイン"
+    },
+    "screen": {
+      "backA11y": "戻る",
+      "skipA11y": "アカウントなしで続行",
+      "googleCta": "Googleで続ける",
+      "appleCta": "Appleで続ける",
+      "divider": "または",
+      "forgotPassword": "パスワードをお忘れですか？",
+      "signIn": {
+        "title": "おかえりなさい。",
+        "subtitle": "サインインしてデザイン、クレジット、履歴を確認できます。",
+        "cta": "サインイン",
+        "reassurance": "データは保護され、共有されません。",
+        "togglePrefix": "アカウントがありませんか？ ",
+        "toggleLink": "登録"
+      },
+      "signUp": {
+        "title": "作成を始めましょう。",
+        "subtitle": "アカウントを作成して、最初のAIレンダーを無料で始めましょう。",
+        "cta": "アカウント作成",
+        "reassurance": "無料で開始、カード不要。",
+        "togglePrefix": "すでにアカウントがありますか？ ",
+        "toggleLink": "サインイン"
+      },
+      "fields": {
+        "fullName": "氏名",
+        "fullNamePlaceholder": "お名前",
+        "emailPlaceholder": "you@example.com",
+        "passwordPlaceholderSignIn": "パスワードを入力",
+        "passwordPlaceholderSignUp": "パスワードを作成",
+        "confirmPassword": "パスワード確認",
+        "confirmPasswordPlaceholder": "パスワードを再入力",
+        "showPassword": "パスワードを表示",
+        "hidePassword": "パスワードを非表示"
+      },
+      "validation": {
+        "nameRequired": "氏名を入力してください。",
+        "invalidEmail": "有効なメールアドレスを入力してください。",
+        "passwordLength": "パスワードは8文字以上必要です。",
+        "passwordMismatch": "パスワードが一致しません。"
+      },
+      "errors": {
+        "signInInvalid": "メールまたはパスワードが正しくありません。",
+        "signInFallback": "サインインできません。入力内容を確認してください。",
+        "signUpExists": "このメールのアカウントは既にあります。サインインしてください。",
+        "signUpPassword": "このパスワードは使用できません。別のものをお試しください。",
+        "signUpFallback": "アカウントを作成できません。もう一度お試しください。",
+        "verificationInvalid": "このコードは無効です。",
+        "verificationFallback": "コードを確認できません。もう一度お試しください。",
+        "googleUnavailable": "Googleサインインを利用できません。",
+        "appleUnavailable": "Appleサインインを利用できません。",
+        "additionalVerificationRequired": "追加の確認が必要です。",
+        "guestUnavailable": "ゲストとして続行できません。"
+      },
+      "otp": {
+        "notReady": "確認はまだ準備できていません。",
+        "incomplete": "メールで届いた6桁のコードを入力してください。",
+        "title": "メールを確認",
+        "subtitle": "{{email}} に6桁のコードを送信しました",
+        "verifyCta": "メールを確認",
+        "resend": "コードを再送",
+        "sending": "送信中...",
+        "resendError": "コードを再送できません。"
+      }
     }
   },
   "faq": {
@@ -1411,6 +1476,33 @@
         "share": "シェアする",
         "tryAgain": "もう一度やり直してください"
       }
+    }
+  },
+  "elitePass": {
+    "title": "エリートパス",
+    "progressCount": "{{current}}/{{total}}",
+    "errors": {
+      "claimUnavailable": "現在報酬を獲得できません。"
+    },
+    "fullPage": {
+      "eyebrow": "デイリー報酬",
+      "title": "エリートパス",
+      "subtitle": "24時間ごとに無料ダイヤを1個獲得。連続記録を維持すると7日目に24時間Proが解放されます。",
+      "balance": "ダイヤ {{count}}",
+      "day7Promise": "7日目報酬: 24時間Pro + ボーナスダイヤ。",
+      "proActive": "Proアクセスは約{{hours}}時間有効",
+      "streakTitle": "7日連続",
+      "dayShort": "{{day}}日目",
+      "day7Short": "7日目 Pro",
+      "claimDaily": "今日のダイヤを獲得",
+      "claimDay7": "ダイヤ3個 + 24時間Proを獲得",
+      "claimedToday": "本日は獲得済み。{{hours}}時間後に戻ってください",
+      "capReached": "ダイヤ上限に達しました。1個使うと再度獲得できます。",
+      "dailyDiamondTitle": "デイリーダイヤ",
+      "dailyDiamondBody": "残高が上限未満なら24時間ごとに無料報酬が解放されます。",
+      "capTitle": "残高上限",
+      "capBody": "無料報酬は{{count}}ダイヤで一時停止します。",
+      "proToolLocked": "Proでロック解除。"
     }
   }
 }

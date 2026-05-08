@@ -140,7 +140,40 @@ const patches = [
     ].join("\n"),
     replace: [
       "  override var showFab: Boolean",
-      "    by preferences(sharedPreferences, false)"
+      "    by preferences(sharedPreferences, fabDefault)"
+    ].join("\n")
+  },
+  {
+    file: path.join(
+      __dirname,
+      "..",
+      "node_modules",
+      "react-native",
+      "Libraries",
+      "Core",
+      "setUpReactDevTools.js"
+    ),
+    find: [
+      "      const WebSocket = require('../WebSocket/WebSocket').default;",
+      "      ws = new WebSocket(wsScheme + '://' + host + ':' + port);",
+      "      ws.addEventListener('close', event => {",
+      "        isWebSocketOpen = false;",
+      "      });"
+    ].join("\n"),
+    replace: [
+      "      const WebSocket = require('../WebSocket/WebSocket').default;",
+      "      try {",
+      "        ws = new WebSocket(wsScheme + '://' + host + ':' + port);",
+      "      } catch (error) {",
+      "        console.warn(",
+      "          'Skipping WS-based React DevTools connection:',",
+      "          error?.message ?? error,",
+      "        );",
+      "        return;",
+      "      }",
+      "      ws.addEventListener('close', event => {",
+      "        isWebSocketOpen = false;",
+      "      });"
     ].join("\n")
   }
 ];

@@ -125,7 +125,8 @@
     "tools": "Tools",
     "create": "Create",
     "discover": "Discover",
-    "profile": "My Profile"
+    "profile": "My Profile",
+    "elitePass": "Elite Pass"
   },
   "home": {
     "title": "HomeDecor AI",
@@ -147,24 +148,24 @@
       "garden": {
         "title": "Garden Design",
         "description": "Design stunning gardens and outdoor spaces effortlessly."
-        },
-        "paint": {
-          "title": "Smart Wall Paint",
-          "description": "Refine your walls with bespoke color palettes and designer textures."
-        },
+      },
+      "paint": {
+        "title": "Smart Wall Paint",
+        "description": "Refine your walls with bespoke color palettes and designer textures."
+      },
       "floor": {
         "title": "Floor Restyle",
         "description": "Elevate your room's foundation with premium materials and finishes."
       },
-        "replace": {
-          "title": "Replace Objects",
-          "description": "Mask any object in your photo and swap it for something new with precise AI edits."
-        },
-        "referenceStyle": {
-          "title": "Reference Style Transfer",
-          "description": "Upload a style reference and apply its look to your own room."
-        },
-        "cta": "Try This",
+      "replace": {
+        "title": "Replace Objects",
+        "description": "Mask any object in your photo and swap it for something new with precise AI edits."
+      },
+      "referenceStyle": {
+        "title": "Reference Style Transfer",
+        "description": "Upload a style reference and apply its look to your own room."
+      },
+      "cta": "Try This",
       "smartSpacePlanning": {
         "title": "Smart Space Planning",
         "description": "Gain more space and optimize your room's flow."
@@ -237,7 +238,7 @@
     "skipClaimFreeDiamond": "Not now"
   },
   "elitePass": {
-    "title": "PASS ELITE",
+    "title": "Elite Pass",
     "subtitle": "DAILY REWARD",
     "closeA11y": "Close Elite Pass",
     "balance": "{{count}} Diamonds",
@@ -245,8 +246,8 @@
     "progressCount": "{{current}}/{{total}}",
     "progressA11y": "Elite Pass progress {{current}} of {{total}}",
     "rewardBar": {
-      "headline": "C'est parti ! R\u00e9clamez votre 1er diamant gratuit \u2728",
-      "cta": "R\u00c9CUP\u00c9RER"
+      "headline": "C'est parti ! Réclamez votre 1er diamant gratuit ✨",
+      "cta": "RÉCUPÉRER"
     },
     "success": {
       "unlocked": "Pro Access Unlocked!",
@@ -271,6 +272,26 @@
       "elite": "ELITE",
       "day": "Day {{day}}",
       "claimA11y": "Claim Day {{day}} Elite Pass reward"
+    },
+    "fullPage": {
+      "eyebrow": "Daily rewards",
+      "title": "Elite Pass",
+      "subtitle": "Claim one free Diamond every 24 hours. Keep your streak alive and Day 7 unlocks 24 hours of Pro access.",
+      "balance": "{{count}} Diamonds",
+      "day7Promise": "Day 7 reward: 24h Pro access plus bonus Diamonds.",
+      "proActive": "Pro access active for about {{hours}}h",
+      "streakTitle": "7-day streak",
+      "dayShort": "Day {{day}}",
+      "day7Short": "Day 7 Pro",
+      "claimDaily": "Claim today’s Diamond",
+      "claimDay7": "Claim 3 Diamonds + 24h Pro",
+      "claimedToday": "Claimed today. Come back in {{hours}}h",
+      "capReached": "Max Diamond balance reached. Use one to claim again.",
+      "dailyDiamondTitle": "Daily Diamond",
+      "dailyDiamondBody": "One free claim unlocks every 24 hours, as long as your Diamond balance is below the cap.",
+      "capTitle": "Balance cap",
+      "capBody": "Free daily claims pause at {{count}} Diamonds so rewards stay useful.",
+      "proToolLocked": "Unlock this with Pro."
     }
   },
   "creditLimit": {
@@ -292,11 +313,11 @@
     "rows": {
       "language": "Language",
       "feedback": "Feedback",
-        "faq": "FAQ",
-        "rateUs": "Rate Us",
-        "shareWithFriends": "Share with Friends",
-        "resetOnboarding": "Reset Onboarding",
-        "termsOfUse": "Terms of Use",
+      "faq": "FAQ",
+      "rateUs": "Rate Us",
+      "shareWithFriends": "Share with Friends",
+      "resetOnboarding": "Reset Onboarding",
+      "termsOfUse": "Terms of Use",
       "privacyPolicy": "Privacy Policy",
       "restorePurchase": "Restore Purchase",
       "userId": "User ID",
@@ -320,9 +341,9 @@
       "shareUnavailable": "Unable to open the share sheet.",
       "subscriptionsUnavailable": "Subscriptions are unavailable right now.",
       "noActiveSubscriptions": "No active subscriptions were found.",
-        "restoreFailed": "Restore failed. Please try again.",
-        "onboardingReset": "Onboarding reset. Launching the flow...",
-        "noUserId": "No authenticated user ID is available.",
+      "restoreFailed": "Restore failed. Please try again.",
+      "onboardingReset": "Onboarding reset. Launching the flow...",
+      "noUserId": "No authenticated user ID is available.",
       "userIdCopied": "User ID copied",
       "deleteFailed": "Unable to delete your account right now."
     },
@@ -394,6 +415,70 @@
       "appleErrorFallback": "Apple sign-up failed.",
       "haveAccount": "Already have an account?",
       "signInLink": "Sign in"
+    },
+    "screen": {
+      "backA11y": "Go back",
+      "skipA11y": "Continue without account",
+      "googleCta": "Continue with Google",
+      "appleCta": "Continue with Apple",
+      "divider": "or",
+      "forgotPassword": "Forgot password?",
+      "signIn": {
+        "title": "Welcome back.",
+        "subtitle": "Sign in to recover your designs, credits, and history.",
+        "cta": "Sign in",
+        "reassurance": "Your data is protected and never shared.",
+        "togglePrefix": "No account yet? ",
+        "toggleLink": "Sign up"
+      },
+      "signUp": {
+        "title": "Start creating.",
+        "subtitle": "Create your account and launch your first AI render for free.",
+        "cta": "Create account",
+        "reassurance": "Free to start, no card required.",
+        "togglePrefix": "Already have an account? ",
+        "toggleLink": "Sign in"
+      },
+      "fields": {
+        "fullName": "Full name",
+        "fullNamePlaceholder": "Your name",
+        "emailPlaceholder": "you@example.com",
+        "passwordPlaceholderSignIn": "Enter your password",
+        "passwordPlaceholderSignUp": "Create a password",
+        "confirmPassword": "Confirm password",
+        "confirmPasswordPlaceholder": "Confirm your password",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password"
+      },
+      "validation": {
+        "nameRequired": "Enter your full name.",
+        "invalidEmail": "Enter a valid email address.",
+        "passwordLength": "Password must be at least 8 characters.",
+        "passwordMismatch": "Passwords do not match."
+      },
+      "errors": {
+        "signInInvalid": "Email or password is incorrect. Try again.",
+        "signInFallback": "Unable to sign in. Check your details and try again.",
+        "signUpExists": "An account already exists with this email. Sign in instead.",
+        "signUpPassword": "This password cannot be used. Try another one.",
+        "signUpFallback": "Unable to create your account. Try again.",
+        "verificationInvalid": "This code is not valid. Try again.",
+        "verificationFallback": "Unable to verify this code. Try again.",
+        "googleUnavailable": "Google sign-in is unavailable. Try again.",
+        "appleUnavailable": "Apple sign-in is unavailable. Try again.",
+        "additionalVerificationRequired": "An additional verification step is required.",
+        "guestUnavailable": "Unable to continue as guest. Try again."
+      },
+      "otp": {
+        "notReady": "Verification is not ready yet. Try again.",
+        "incomplete": "Enter the 6-digit code sent by email.",
+        "title": "Verify your email",
+        "subtitle": "We sent a 6-digit code to {{email}}",
+        "verifyCta": "Verify email",
+        "resend": "Resend code",
+        "sending": "Sending...",
+        "resendError": "Unable to resend the code. Try again."
+      }
     }
   },
   "faq": {

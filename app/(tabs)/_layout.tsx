@@ -1,7 +1,6 @@
 import {useTheme} from "@/styles/theme";
-import {useAuth} from "@clerk/expo";
-import {Tabs, usePathname, useRouter} from "expo-router";
-import {Compass, House, Sparkles, UserRound, type LucideIcon} from "lucide-react-native";
+import {Tabs, usePathname} from "expo-router";
+import {Compass, Flame, House, UserRound, type LucideIcon} from "lucide-react-native";
 import type {ReactNode} from "react";
 import {useTranslation} from "react-i18next";
 import {Pressable, View, type PressableProps} from "react-native";
@@ -10,21 +9,14 @@ import {spacing} from "../../styles/spacing";
 import {fonts} from "../../styles/typography";
 
 import {useFlowUI} from "../../components/flow-ui-context";
-import {useWorkspaceDraft} from "../../components/workspace-context";
-import {ENABLE_GUEST_WIZARD_TEST_MODE} from "../../lib/guest-testing";
-import {triggerHaptic} from "../../lib/haptics";
-import {withWorkspaceFlowId} from "../../lib/try-it-flow";
-
 const ACTIVE_TAB_COLOR = "#111111";
-const ACTIVE_TAB_INDICATOR = "rgba(17, 17, 17, 0.10)";
-const PURE_WHITE = "#FFFFFF";
 
 export const DEFAULT_TAB_BAR_STYLE = {
   position: "absolute" as const,
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: PURE_WHITE,
+  backgroundColor: "#FFFFFF",
   height: 74,
   paddingTop: 7,
   paddingBottom: 8,
@@ -69,6 +61,8 @@ function TabIcon({
   size: number;
   focused: boolean;
 }) {
+  const colors = useTheme();
+
   return (
     <View style={{ width: 48, height: 30, alignItems: "center", justifyContent: "center" }}>
       {focused ? (
@@ -79,7 +73,7 @@ function TabIcon({
             width: 34,
             height: 34,
             borderRadius: 17,
-            backgroundColor: ACTIVE_TAB_INDICATOR,
+            backgroundColor: colors.brandSurfaceHigh,
           }}
         />
       ) : null}
@@ -102,24 +96,23 @@ function TabIcon({
 }
 
 export default function TabsLayout() {
-  const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
-  const { clearDraft } = useWorkspaceDraft();
   const { isFlowActive } = useFlowUI();
-  const { isSignedIn } = useAuth();
   const insets = useSafeAreaInsets();
-  const canOpenCreateTab = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
   const shouldHideTabBar = (pathname === "/workspace" || pathname === "/create") && isFlowActive;
   const tabBarBottomPadding = Math.max(insets.bottom, 20);
+  const colors = useTheme();
+  const activeTabColor = colors.isDark ? "#FFFFFF" : ACTIVE_TAB_COLOR;
+  const inactiveTabColor = colors.isDark ? "rgba(255,255,255,0.50)" : "rgba(0,0,0,0.35)";
   const tabBarStyle = {
     ...DEFAULT_TAB_BAR_STYLE,
-    backgroundColor: PURE_WHITE,
+    backgroundColor: colors.surfaceOverlay,
     borderTopWidth: 0,
     borderTopColor: "transparent",
     height: 66 + tabBarBottomPadding,
     paddingBottom: tabBarBottomPadding,
-    boxShadow: "0px -4px 18px rgba(0, 0, 0, 0.05)",
+    boxShadow: colors.isDark ? "0px -4px 22px rgba(0, 0, 0, 0.30)" : "0px -4px 18px rgba(0, 0, 0, 0.05)",
   };
 
   return (
@@ -128,8 +121,8 @@ export default function TabsLayout() {
         headerShown: false,
         lazy: true,
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: ACTIVE_TAB_COLOR,
-        tabBarInactiveTintColor: "rgba(0,0,0,0.35)",
+        tabBarActiveTintColor: activeTabColor,
+        tabBarInactiveTintColor: inactiveTabColor,
         tabBarButton: (props) => <TabBarButton {...props} />,
         tabBarItemStyle: {
           alignItems: "center",
@@ -143,7 +136,7 @@ export default function TabsLayout() {
         },
         tabBarStyle: shouldHideTabBar ? { display: "none" } : tabBarStyle,
         sceneStyle: {
-          backgroundColor: PURE_WHITE,
+          backgroundColor: colors.bg,
         },
       }}
     >
@@ -163,27 +156,14 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="create"
         options={{
-          title: t("tabs.create"),
-          tabBarIcon: ({ color, focused }) => <TabIcon Icon={Sparkles} color={color} size={21} focused={focused} />,
-          tabBarButton: (props) => (
-            <TabBarButton
-              {...props}
-              onPress={(event) => {
-                triggerHaptic();
-                const nextCreateRoute = withWorkspaceFlowId("/create?service=interior&startStep=1&entrySource=create-tab");
-
-                if (!canOpenCreateTab) {
-                  event.preventDefault();
-                  router.push({ pathname: "/sign-in", params: { returnTo: nextCreateRoute } });
-                  return;
-                }
-
-                event.preventDefault();
-                clearDraft();
-                router.navigate(nextCreateRoute as any);
-              }}
-            />
-          ),
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="elite-pass"
+        options={{
+          title: t("tabs.elitePass"),
+          tabBarIcon: ({ color, focused }) => <TabIcon Icon={Flame} color={color} size={21} focused={focused} />,
         }}
       />
       <Tabs.Screen

@@ -658,14 +658,15 @@ function AppShell() {
 export default function RootLayout() {
   const languagePreference = useAppLanguagePreference();
   const localizedFonts = useLocalizedAppFonts();
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Inter: require("../assets/Fonts/InterVariable.ttf"),
   });
   const [i18nReady, setI18nReady] = useState(i18n.isInitialized);
   const envReport = useMemo(() => getEnvReport(), []);
   const clerkKey = envReport.values.clerkPublishableKey;
+  const bootReady = (fontsLoaded || Boolean(fontError)) && i18nReady;
 
-  if (fontsLoaded) {
+  if (fontsLoaded && !fontError) {
     applyGlobalTypographyDefaults(localizedFonts, languagePreference.isRTL);
   }
 
@@ -675,20 +676,34 @@ export default function RootLayout() {
 
   useEffect(() => {
     let mounted = true;
+    const timeout = setTimeout(() => {
+      if (mounted) {
+        console.warn("[Boot] i18n initialization timed out - continuing with fallback language");
+        setI18nReady(true);
+      }
+    }, 4000);
 
     void initializeI18n().then(() => {
       if (mounted) {
+        clearTimeout(timeout);
         setI18nReady(true);
       }
-    }).catch(() => undefined);
+    }).catch((error) => {
+      clearTimeout(timeout);
+      console.warn("[Boot] i18n initialization failed - continuing with fallback language", error);
+      if (mounted) {
+        setI18nReady(true);
+      }
+    });
 
     return () => {
       mounted = false;
+      clearTimeout(timeout);
     };
   }, []);
 
   useEffect(() => {
-    if (!fontsLoaded || !i18nReady) {
+    if (!bootReady) {
       return;
     }
 
@@ -696,10 +711,10 @@ export default function RootLayout() {
       SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
     });
     return () => cancelAnimationFrame(frame);
-  }, [fontsLoaded, i18nReady]);
+  }, [bootReady]);
 
-  if (!fontsLoaded || !i18nReady) {
-    return null;
+  if (!bootReady) {
+    return <BootScreen message="Preparing your workspace" />;
   }
 
   if (!DIAGNOSTIC_BYPASS && !envReport.ok) {

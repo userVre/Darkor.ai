@@ -4,6 +4,7 @@ import {LinearGradient} from "expo-linear-gradient";
 import {ChevronLeft, Gem, LockKeyhole, Mail, UserRound, X} from "lucide-react-native";
 import {useRouter} from "expo-router";
 import {useMemo, useRef, useState} from "react";
+import {useTranslation} from "react-i18next";
 import {
   ActivityIndicator,
   Keyboard,
@@ -108,11 +109,11 @@ function getClerkErrorDetails(error: unknown) {
   return {code, message};
 }
 
-function friendlySignInError(error: unknown) {
+function friendlySignInError(error: unknown, t: ReturnType<typeof useTranslation>["t"]) {
   const {code, message} = getClerkErrorDetails(error);
 
   if (code.includes("identifier") || message.includes("not found") || message.includes("couldn't find")) {
-    return "Adresse e-mail ou mot de passe incorrect. Réessayez.";
+    return t("auth.screen.errors.signInInvalid");
   }
   if (
     code.includes("password") ||
@@ -120,30 +121,30 @@ function friendlySignInError(error: unknown) {
     message.includes("password") ||
     message.includes("incorrect")
   ) {
-    return "Adresse e-mail ou mot de passe incorrect. Réessayez.";
+    return t("auth.screen.errors.signInInvalid");
   }
-  return "Connexion impossible. Vérifiez vos informations et réessayez.";
+  return t("auth.screen.errors.signInFallback");
 }
 
-function friendlySignUpError(error: unknown) {
+function friendlySignUpError(error: unknown, t: ReturnType<typeof useTranslation>["t"]) {
   const {code, message} = getClerkErrorDetails(error);
 
   if (code.includes("exists") || message.includes("already")) {
-    return "Un compte existe déjà avec cette adresse e-mail. Connectez-vous plutôt.";
+    return t("auth.screen.errors.signUpExists");
   }
   if (code.includes("password") || message.includes("password")) {
-    return "Ce mot de passe ne peut pas être utilisé. Essayez-en un autre.";
+    return t("auth.screen.errors.signUpPassword");
   }
-  return "Impossible de créer votre compte. Réessayez.";
+  return t("auth.screen.errors.signUpFallback");
 }
 
-function friendlyVerificationError(error: unknown) {
+function friendlyVerificationError(error: unknown, t: ReturnType<typeof useTranslation>["t"]) {
   const {code, message} = getClerkErrorDetails(error);
 
   if (code.includes("verification") || message.includes("code") || message.includes("invalid")) {
-    return "Ce code n'est pas valide. Réessayez.";
+    return t("auth.screen.errors.verificationInvalid");
   }
-  return "Vérification impossible. Réessayez.";
+  return t("auth.screen.errors.verificationFallback");
 }
 
 function isValidEmail(value: string) {
@@ -155,6 +156,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const AUTH_COLORS = useMemo(() => getAuthColors(theme), [theme]);
   const styles = useMemo(() => createStyles(AUTH_COLORS), [AUTH_COLORS]);
   const router = useRouter();
+  const {t} = useTranslation();
   const insets = useSafeAreaInsets();
   const {height, width} = useWindowDimensions();
   const {signIn, setActive: setSignInActive, isLoaded: signInLoaded} = useSignIn();
@@ -181,18 +183,18 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const isSignIn = currentMode === "sign-in";
   const copy = useMemo(
     () => ({
-      title: isSignIn ? "Bon retour." : "Commencez à créer.",
+      title: isSignIn ? t("auth.screen.signIn.title") : t("auth.screen.signUp.title"),
       subtitle: isSignIn
-        ? "Connectez-vous pour retrouver vos designs, vos crédits et votre historique."
-        : "Créez votre compte et lancez votre premier rendu IA gratuitement.",
-      cta: isSignIn ? "Se connecter" : "Créer un compte",
+        ? t("auth.screen.signIn.subtitle")
+        : t("auth.screen.signUp.subtitle"),
+      cta: isSignIn ? t("auth.screen.signIn.cta") : t("auth.screen.signUp.cta"),
       reassurance: isSignIn
-        ? "Vos données sont protégées et ne sont jamais partagées."
-        : "Gratuit pour commencer, sans carte bancaire.",
-      togglePrefix: isSignIn ? "Pas encore de compte ? " : "Vous avez déjà un compte ? ",
-      toggleLink: isSignIn ? "S'inscrire" : "Se connecter",
+        ? t("auth.screen.signIn.reassurance")
+        : t("auth.screen.signUp.reassurance"),
+      togglePrefix: isSignIn ? t("auth.screen.signIn.togglePrefix") : t("auth.screen.signUp.togglePrefix"),
+      toggleLink: isSignIn ? t("auth.screen.signIn.toggleLink") : t("auth.screen.signUp.toggleLink"),
     }),
-    [isSignIn],
+    [isSignIn, t],
   );
 
   const emailReady = email.trim().length > 0;
@@ -206,16 +208,16 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const validateEmailAndPassword = () => {
     const nextErrors: ErrorMap = {};
     if (!isSignIn && !name.trim()) {
-      nextErrors.name = "Entrez votre nom complet.";
+      nextErrors.name = t("auth.screen.validation.nameRequired");
     }
     if (!isValidEmail(email.trim())) {
-      nextErrors.email = "Entrez une adresse e-mail valide.";
+      nextErrors.email = t("auth.screen.validation.invalidEmail");
     }
     if (password.length < 8) {
-      nextErrors.password = "Le mot de passe doit contenir au moins 8 caractères.";
+      nextErrors.password = t("auth.screen.validation.passwordLength");
     }
     if (!isSignIn && confirmPassword !== password) {
-      nextErrors.confirmPassword = "Les mots de passe ne correspondent pas.";
+      nextErrors.confirmPassword = t("auth.screen.validation.passwordMismatch");
     }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -232,7 +234,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
         router.replace("/(tabs)" as never);
       }
     } catch (error) {
-      setErrors({form: "Connexion Google impossible. Réessayez."});
+      setErrors({form: t("auth.screen.errors.googleUnavailable")});
     } finally {
       setLoading(null);
     }
@@ -249,7 +251,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
         router.replace("/(tabs)" as never);
       }
     } catch (error) {
-      setErrors({form: "Connexion Apple impossible. Réessayez."});
+      setErrors({form: t("auth.screen.errors.appleUnavailable")});
     } finally {
       setLoading(null);
     }
@@ -266,9 +268,9 @@ export function AuthScreen({mode}: AuthScreenProps) {
         router.replace("/(tabs)" as never);
         return;
       }
-      setErrors({form: "Une étape de vérification supplémentaire est nécessaire."});
+      setErrors({form: t("auth.screen.errors.additionalVerificationRequired")});
     } catch (error) {
-      setErrors({form: friendlySignInError(error)});
+      setErrors({form: friendlySignInError(error, t)});
     } finally {
       setLoading(null);
     }
@@ -291,7 +293,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
       setOtpVisible(true);
       requestAnimationFrame(() => otpRefs.current[0]?.focus());
     } catch (error) {
-      setErrors({form: friendlySignUpError(error)});
+      setErrors({form: friendlySignUpError(error, t)});
     } finally {
       setLoading(null);
     }
@@ -299,12 +301,12 @@ export function AuthScreen({mode}: AuthScreenProps) {
 
   const submitOtp = async (digits = otpDigits) => {
     if (!signUpLoaded || !signUp || !setSignUpActive) {
-      setErrors((current) => ({...current, otp: "La vérification n'est pas encore prête. Réessayez."}));
+      setErrors((current) => ({...current, otp: t("auth.screen.otp.notReady")}));
       return;
     }
     const code = digits.join("");
     if (code.length !== 6) {
-      setErrors((current) => ({...current, otp: "Entrez le code à 6 chiffres reçu par e-mail."}));
+      setErrors((current) => ({...current, otp: t("auth.screen.otp.incomplete")}));
       return;
     }
     setLoading("otp");
@@ -317,11 +319,11 @@ export function AuthScreen({mode}: AuthScreenProps) {
         router.replace("/(tabs)" as never);
         return;
       }
-      setErrors((current) => ({...current, otp: "Impossible de vérifier ce code. Réessayez."}));
+      setErrors((current) => ({...current, otp: t("auth.screen.errors.verificationFallback")}));
     } catch (error) {
       setErrors((current) => ({
         ...current,
-        otp: friendlyVerificationError(error),
+        otp: friendlyVerificationError(error, t),
       }));
     } finally {
       setLoading(null);
@@ -330,7 +332,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
 
   const resendOtp = async () => {
     if (!signUpLoaded || !signUp) {
-      setErrors((current) => ({...current, otp: "La vérification n'est pas encore prête. Réessayez."}));
+      setErrors((current) => ({...current, otp: t("auth.screen.otp.notReady")}));
       return;
     }
     setLoading("resend");
@@ -340,7 +342,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
     } catch (error) {
       setErrors((current) => ({
         ...current,
-        otp: "Impossible de renvoyer le code. Réessayez.",
+        otp: t("auth.screen.otp.resendError"),
       }));
     } finally {
       setLoading(null);
@@ -401,7 +403,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
       await markAuthSkipped();
       router.replace("/(tabs)" as never);
     } catch (error) {
-      setErrors({form: "Impossible de continuer en invité. Réessayez."});
+      setErrors({form: t("auth.screen.errors.guestUnavailable")});
     }
   };
 
@@ -419,7 +421,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
       {router.canGoBack() ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Retour"
+          accessibilityLabel={t("auth.screen.backA11y")}
           onPress={() => router.back()}
           style={[styles.navButton, styles.backButton, {top: topButtonOffset}]}
         >
@@ -428,7 +430,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
       ) : null}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Continuer sans compte"
+        accessibilityLabel={t("auth.screen.skipA11y")}
         onPress={() => void handleSkip()}
         style={[styles.navButton, styles.skipButton, {top: topButtonOffset}]}
       >
@@ -489,7 +491,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
                   <View style={styles.socialIconSlot}>
                     <GoogleIcon />
                   </View>
-                  <Text style={styles.googleText}>Continuer avec Google</Text>
+                  <Text style={styles.googleText}>{t("auth.screen.googleCta")}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -507,7 +509,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
                   <View style={styles.socialIconSlot}>
                     <AppleIcon color={AUTH_COLORS.textPrimary} />
                   </View>
-                  <Text style={styles.appleText}>Continuer avec Apple</Text>
+                  <Text style={styles.appleText}>{t("auth.screen.appleCta")}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -516,7 +518,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
             <Text selectable style={styles.dividerText}>
-              ou
+              {t("auth.screen.divider")}
             </Text>
             <View style={styles.dividerLine} />
           </View>
@@ -524,8 +526,8 @@ export function AuthScreen({mode}: AuthScreenProps) {
           <View style={styles.form}>
             {!isSignIn ? (
               <AuthInput
-                label="Nom complet"
-                placeholder="Votre nom"
+                label={t("auth.screen.fields.fullName")}
+                placeholder={t("auth.screen.fields.fullNamePlaceholder")}
                 value={name}
                 icon={UserRound}
                 onChangeText={(value) => {
@@ -539,8 +541,8 @@ export function AuthScreen({mode}: AuthScreenProps) {
               />
             ) : null}
             <AuthInput
-              label="Email"
-              placeholder="vous@example.com"
+              label={t("common.labels.email")}
+              placeholder={t("auth.screen.fields.emailPlaceholder")}
               value={email}
               icon={Mail}
               onChangeText={(value) => {
@@ -553,8 +555,8 @@ export function AuthScreen({mode}: AuthScreenProps) {
               error={errors.email}
             />
             <AuthInput
-              label="Mot de passe"
-              placeholder={isSignIn ? "Entrez votre mot de passe" : "Créez un mot de passe"}
+              label={t("common.labels.password")}
+              placeholder={isSignIn ? t("auth.screen.fields.passwordPlaceholderSignIn") : t("auth.screen.fields.passwordPlaceholderSignUp")}
               value={password}
               icon={LockKeyhole}
               onChangeText={(value) => {
@@ -568,8 +570,8 @@ export function AuthScreen({mode}: AuthScreenProps) {
             />
             {!isSignIn ? (
               <AuthInput
-                label="Confirmer le mot de passe"
-                placeholder="Confirmez votre mot de passe"
+                label={t("auth.screen.fields.confirmPassword")}
+                placeholder={t("auth.screen.fields.confirmPasswordPlaceholder")}
                 value={confirmPassword}
                 icon={LockKeyhole}
                 onChangeText={(value) => {
@@ -590,7 +592,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
               onPress={() => router.push("/(auth)/forgot-password" as never)}
               style={styles.forgotButton}
             >
-              <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
+              <Text style={styles.forgotText}>{t("auth.screen.forgotPassword")}</Text>
             </Pressable>
           ) : null}
 
@@ -644,10 +646,10 @@ export function AuthScreen({mode}: AuthScreenProps) {
           <View style={styles.otpSheet}>
             <View style={styles.sheetHandle} />
             <Text selectable style={styles.otpTitle}>
-              Vérifiez votre e-mail
+              {t("auth.screen.otp.title")}
             </Text>
             <Text selectable style={styles.otpSubtitle}>
-              Nous avons envoyé un code à 6 chiffres à {email.trim()}
+              {t("auth.screen.otp.subtitle", {email: email.trim()})}
             </Text>
             <View style={styles.otpRow}>
               {otpDigits.map((digit, index) => (
@@ -683,7 +685,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
               {loading === "otp" ? (
                 <ActivityIndicator color={AUTH_COLORS.accentText} />
               ) : (
-                <Text style={styles.primaryButtonText}>Vérifier l'e-mail</Text>
+                <Text style={styles.primaryButtonText}>{t("auth.screen.otp.verifyCta")}</Text>
               )}
             </TouchableOpacity>
             <Pressable
@@ -693,7 +695,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
               style={styles.resendButton}
             >
               <Text style={styles.resendText}>
-                {loading === "resend" ? "Envoi..." : "Renvoyer le code"}
+                {loading === "resend" ? t("auth.screen.otp.sending") : t("auth.screen.otp.resend")}
               </Text>
             </Pressable>
           </View>

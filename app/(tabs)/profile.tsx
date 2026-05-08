@@ -46,7 +46,6 @@ const GRID_HORIZONTAL_PADDING = 24;
 const GRID_GAP = 12;
 const GRID_MAX_CARD_WIDTH = 190;
 const DARK_ACTION = "#111111";
-const PURE_WHITE = "#FFFFFF";
 
 function getBoardItemKey(item: BoardItem) {
   return `${item.generationId ?? item.id}:${item.createdAt}`;
@@ -443,11 +442,11 @@ function createStyles(theme: Theme) {
   return StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: PURE_WHITE,
+    backgroundColor: theme.bg,
   },
   scrollView: {
     flex: 1,
-    backgroundColor: PURE_WHITE,
+    backgroundColor: theme.bg,
   },
   scrollContent: {
     paddingHorizontal: GRID_HORIZONTAL_PADDING,

@@ -62,7 +62,8 @@
     "tools": "Verktyg",
     "create": "Skapa",
     "discover": "Upptäck",
-    "profile": "Min profil"
+    "profile": "Min profil",
+    "elitePass": "Elite Pass"
   },
   "home": {
     "title": "HomeDecor AI",
@@ -93,15 +94,15 @@
         "title": "Golv Restyle",
         "description": "Lyft ditt rums grund med förstklassiga material och finish."
       },
-        "replace": {
-          "title": "Byt ut objekt",
-          "description": "Maskera ett objekt i bilden och byt ut det med precisa AI-redigeringar."
-        },
-        "referenceStyle": {
-          "title": "Referensstilöverföring",
-          "description": "Ladda upp en stilreferens och applicera uttrycket på ditt eget rum."
-        },
-        "cta": "Prova detta",
+      "replace": {
+        "title": "Byt ut objekt",
+        "description": "Maskera ett objekt i bilden och byt ut det med precisa AI-redigeringar."
+      },
+      "referenceStyle": {
+        "title": "Referensstilöverföring",
+        "description": "Ladda upp en stilreferens och applicera uttrycket på ditt eget rum."
+      },
+      "cta": "Prova detta",
       "smartSpacePlanning": {
         "title": "Smart Rumsplanering",
         "description": "Optimera rummets planl?sning f?r maximal komfort och smidiga g?nglinjer."
@@ -258,6 +259,70 @@
       "appleErrorFallback": "Apple registrering misslyckades.",
       "haveAccount": "Har du redan ett konto?",
       "signInLink": "Logga in"
+    },
+    "screen": {
+      "backA11y": "Tillbaka",
+      "skipA11y": "Fortsätt utan konto",
+      "googleCta": "Fortsätt med Google",
+      "appleCta": "Fortsätt med Apple",
+      "divider": "eller",
+      "forgotPassword": "Glömt lösenord?",
+      "signIn": {
+        "title": "Välkommen tillbaka.",
+        "subtitle": "Logga in för att hitta dina designer, krediter och historik.",
+        "cta": "Logga in",
+        "reassurance": "Dina data skyddas och delas aldrig.",
+        "togglePrefix": "Inget konto än? ",
+        "toggleLink": "Registrera dig"
+      },
+      "signUp": {
+        "title": "Börja skapa.",
+        "subtitle": "Skapa ditt konto och starta din första AI-rendering gratis.",
+        "cta": "Skapa konto",
+        "reassurance": "Gratis att börja, inget kort krävs.",
+        "togglePrefix": "Har du redan konto? ",
+        "toggleLink": "Logga in"
+      },
+      "fields": {
+        "fullName": "Fullständigt namn",
+        "fullNamePlaceholder": "Ditt namn",
+        "emailPlaceholder": "du@example.com",
+        "passwordPlaceholderSignIn": "Ange lösenord",
+        "passwordPlaceholderSignUp": "Skapa lösenord",
+        "confirmPassword": "Bekräfta lösenord",
+        "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
+        "showPassword": "Visa lösenord",
+        "hidePassword": "Dölj lösenord"
+      },
+      "validation": {
+        "nameRequired": "Ange ditt fullständiga namn.",
+        "invalidEmail": "Ange en giltig e-postadress.",
+        "passwordLength": "Lösenordet måste vara minst 8 tecken.",
+        "passwordMismatch": "Lösenorden matchar inte."
+      },
+      "errors": {
+        "signInInvalid": "E-post eller lösenord är fel. Försök igen.",
+        "signInFallback": "Det gick inte att logga in. Kontrollera uppgifterna och försök igen.",
+        "signUpExists": "Ett konto finns redan med denna e-post. Logga in istället.",
+        "signUpPassword": "Detta lösenord kan inte användas. Prova ett annat.",
+        "signUpFallback": "Det gick inte att skapa kontot. Försök igen.",
+        "verificationInvalid": "Koden är ogiltig. Försök igen.",
+        "verificationFallback": "Det gick inte att verifiera koden. Försök igen.",
+        "googleUnavailable": "Google-inloggning är inte tillgänglig. Försök igen.",
+        "appleUnavailable": "Apple-inloggning är inte tillgänglig. Försök igen.",
+        "additionalVerificationRequired": "Ett extra verifieringssteg krävs.",
+        "guestUnavailable": "Det gick inte att fortsätta som gäst. Försök igen."
+      },
+      "otp": {
+        "notReady": "Verifieringen är inte redo än. Försök igen.",
+        "incomplete": "Ange den 6-siffriga koden från e-postmeddelandet.",
+        "title": "Verifiera din e-post",
+        "subtitle": "Vi skickade en 6-siffrig kod till {{email}}",
+        "verifyCta": "Verifiera e-post",
+        "resend": "Skicka kod igen",
+        "sending": "Skickar...",
+        "resendError": "Det gick inte att skicka koden igen. Försök igen."
+      }
     }
   },
   "faq": {
@@ -1419,6 +1484,33 @@
         "share": "Dela",
         "tryAgain": "Försök igen"
       }
+    }
+  },
+  "elitePass": {
+    "title": "Elite Pass",
+    "progressCount": "{{current}}/{{total}}",
+    "errors": {
+      "claimUnavailable": "Det går inte att hämta belöningen just nu."
+    },
+    "fullPage": {
+      "eyebrow": "Dagliga belöningar",
+      "title": "Elite Pass",
+      "subtitle": "Hämta 1 gratis Diamant var 24:e timme. Håll sviten vid liv och dag 7 låser upp 24h Pro.",
+      "balance": "{{count}} Diamanter",
+      "day7Promise": "Dag 7-belöning: 24h Pro plus bonusdiamanter.",
+      "proActive": "Pro-åtkomst aktiv i cirka {{hours}}h",
+      "streakTitle": "7-dagars svit",
+      "dayShort": "Dag {{day}}",
+      "day7Short": "Dag 7 Pro",
+      "claimDaily": "Hämta dagens Diamant",
+      "claimDay7": "Hämta 3 Diamanter + 24h Pro",
+      "claimedToday": "Hämtad idag. Kom tillbaka om {{hours}}h",
+      "capReached": "Maxsaldo nått. Använd en Diamant för att hämta igen.",
+      "dailyDiamondTitle": "Daglig Diamant",
+      "dailyDiamondBody": "En gratis belöning låses upp var 24:e timme när saldot är under gränsen.",
+      "capTitle": "Saldogräns",
+      "capBody": "Gratis dagliga belöningar pausas vid {{count}} Diamanter.",
+      "proToolLocked": "Lås upp med Pro."
     }
   }
 }

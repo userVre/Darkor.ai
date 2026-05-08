@@ -2,7 +2,7 @@ import {Compass, House, Sparkles, UserRound, type LucideIcon} from "lucide-react
 import {useTranslation} from "react-i18next";
 import {Pressable, StyleSheet, Text, View} from "react-native";
 
-import {DS} from "../lib/design-system";
+import {useTheme} from "../styles/theme";
 import {fonts} from "../styles/typography";
 
 type HomeToolsBottomNavProps = {
@@ -21,17 +21,18 @@ type NavItemProps = {
 };
 
 function NavItem({ icon: Icon, label, active, onPress }: NavItemProps) {
-  const color = active ? DS.colors.textPrimary : DS.colors.textSecondary;
+  const theme = useTheme();
+  const color = active ? theme.textPrimary : theme.textSecondary;
 
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.item}>
       <View style={styles.iconFrame}>
-        {active ? <View pointerEvents="none" style={styles.iconGlow} /> : null}
-        <View style={[styles.iconPill, active ? styles.iconPillActive : styles.iconPillIdle]}>
+        {active ? <View pointerEvents="none" style={[styles.iconGlow, {backgroundColor: theme.surfaceHigh}]} /> : null}
+        <View style={[styles.iconPill, active ? {backgroundColor: theme.surfaceHigh} : styles.iconPillIdle]}>
           <Icon color={color} size={21} strokeWidth={active ? 1.7 : 1.5} />
         </View>
       </View>
-      <Text style={[styles.label, active ? styles.labelActive : styles.labelInactive]}>{label}</Text>
+      <Text style={[styles.label, {color: active ? theme.textPrimary : theme.textSecondary}]}>{label}</Text>
     </Pressable>
   );
 }
@@ -44,10 +45,11 @@ export function HomeToolsBottomNav({
   onProfilePress,
 }: HomeToolsBottomNavProps) {
   const { t } = useTranslation();
+  const theme = useTheme();
   return (
-    <View style={styles.bar}>
+    <View style={[styles.bar, {backgroundColor: theme.surfaceOverlay}]}>
       <NavItem icon={House} label={t("tabs.tools")} active={activeTab === "tools"} onPress={onToolsPress} />
-      <NavItem icon={Sparkles} label={t("tabs.create")} active={activeTab === "create"} onPress={onCreatePress} />
+      <NavItem icon={Sparkles} label={t("tabs.elitePass")} active={activeTab === "create"} onPress={onCreatePress} />
       <NavItem icon={Compass} label={t("tabs.discover")} active={activeTab === "discover"} onPress={onDiscoverPress} />
       <NavItem icon={UserRound} label={t("tabs.profile")} active={activeTab === "profile"} onPress={onProfilePress} />
     </View>
@@ -83,7 +85,6 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: DS.colors.surfaceHigh,
   },
   iconPill: {
     minWidth: 46,
@@ -93,9 +94,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 10,
   },
-  iconPillActive: {
-    backgroundColor: DS.colors.surfaceHigh,
-  },
   iconPillIdle: {
     backgroundColor: "transparent",
   },
@@ -103,12 +101,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 10,
     ...fonts.medium,
-  },
-  labelActive: {
-    color: DS.colors.textPrimary,
-  },
-  labelInactive: {
-    color: DS.colors.textSecondary,
   },
 });
 

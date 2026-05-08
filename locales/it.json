@@ -62,7 +62,8 @@
     "tools": "Strumenti",
     "create": "Crea",
     "discover": "Scopri",
-    "profile": "Il mio profilo"
+    "profile": "Il mio profilo",
+    "elitePass": "Pass Elite"
   },
   "home": {
     "title": "__GETTONE_0__",
@@ -246,6 +247,70 @@
       "appleErrorFallback": "Registrazione a Apple non riuscita.",
       "haveAccount": "Hai già un account?",
       "signInLink": "Accedi"
+    },
+    "screen": {
+      "backA11y": "Indietro",
+      "skipA11y": "Continua senza account",
+      "googleCta": "Continua con Google",
+      "appleCta": "Continua con Apple",
+      "divider": "oppure",
+      "forgotPassword": "Password dimenticata?",
+      "signIn": {
+        "title": "Bentornato.",
+        "subtitle": "Accedi per ritrovare design, crediti e cronologia.",
+        "cta": "Accedi",
+        "reassurance": "I tuoi dati sono protetti e non vengono mai condivisi.",
+        "togglePrefix": "Non hai un account? ",
+        "toggleLink": "Registrati"
+      },
+      "signUp": {
+        "title": "Inizia a creare.",
+        "subtitle": "Crea il tuo account e avvia gratis il primo render IA.",
+        "cta": "Crea account",
+        "reassurance": "Gratis per iniziare, senza carta.",
+        "togglePrefix": "Hai già un account? ",
+        "toggleLink": "Accedi"
+      },
+      "fields": {
+        "fullName": "Nome completo",
+        "fullNamePlaceholder": "Il tuo nome",
+        "emailPlaceholder": "tu@example.com",
+        "passwordPlaceholderSignIn": "Inserisci la password",
+        "passwordPlaceholderSignUp": "Crea una password",
+        "confirmPassword": "Conferma password",
+        "confirmPasswordPlaceholder": "Conferma la password",
+        "showPassword": "Mostra password",
+        "hidePassword": "Nascondi password"
+      },
+      "validation": {
+        "nameRequired": "Inserisci il nome completo.",
+        "invalidEmail": "Inserisci un indirizzo e-mail valido.",
+        "passwordLength": "La password deve avere almeno 8 caratteri.",
+        "passwordMismatch": "Le password non corrispondono."
+      },
+      "errors": {
+        "signInInvalid": "E-mail o password non corretti. Riprova.",
+        "signInFallback": "Accesso non riuscito. Controlla i dati e riprova.",
+        "signUpExists": "Esiste già un account con questa e-mail. Accedi invece.",
+        "signUpPassword": "Questa password non può essere usata. Provane un'altra.",
+        "signUpFallback": "Impossibile creare l'account. Riprova.",
+        "verificationInvalid": "Questo codice non è valido. Riprova.",
+        "verificationFallback": "Impossibile verificare il codice. Riprova.",
+        "googleUnavailable": "Accesso Google non disponibile. Riprova.",
+        "appleUnavailable": "Accesso Apple non disponibile. Riprova.",
+        "additionalVerificationRequired": "È richiesto un passaggio di verifica aggiuntivo.",
+        "guestUnavailable": "Impossibile continuare come ospite. Riprova."
+      },
+      "otp": {
+        "notReady": "La verifica non è ancora pronta. Riprova.",
+        "incomplete": "Inserisci il codice di 6 cifre ricevuto via e-mail.",
+        "title": "Verifica la tua e-mail",
+        "subtitle": "Abbiamo inviato un codice di 6 cifre a {{email}}",
+        "verifyCta": "Verifica e-mail",
+        "resend": "Reinvia codice",
+        "sending": "Invio...",
+        "resendError": "Impossibile reinviare il codice. Riprova."
+      }
     }
   },
   "faq": {
@@ -1400,6 +1465,33 @@
         "share": "Condividi",
         "tryAgain": "Riprova"
       }
+    }
+  },
+  "elitePass": {
+    "title": "Pass Elite",
+    "progressCount": "{{current}}/{{total}}",
+    "errors": {
+      "claimUnavailable": "Impossibile riscattare la ricompensa ora."
+    },
+    "fullPage": {
+      "eyebrow": "Ricompense giornaliere",
+      "title": "Pass Elite",
+      "subtitle": "Riscatta 1 Diamante gratuito ogni 24 ore. Mantieni la serie e al giorno 7 sblocchi 24h di Pro.",
+      "balance": "{{count}} Diamanti",
+      "day7Promise": "Ricompensa giorno 7: 24h Pro più Diamanti bonus.",
+      "proActive": "Accesso Pro attivo per circa {{hours}}h",
+      "streakTitle": "Serie di 7 giorni",
+      "dayShort": "Giorno {{day}}",
+      "day7Short": "Giorno 7 Pro",
+      "claimDaily": "Riscatta il Diamante di oggi",
+      "claimDay7": "Riscatta 3 Diamanti + 24h Pro",
+      "claimedToday": "Riscattato oggi. Torna tra {{hours}}h",
+      "capReached": "Saldo massimo raggiunto. Usa un Diamante per riscattare ancora.",
+      "dailyDiamondTitle": "Diamante giornaliero",
+      "dailyDiamondBody": "Una ricompensa gratuita si sblocca ogni 24h se il saldo è sotto il limite.",
+      "capTitle": "Limite saldo",
+      "capBody": "Le ricompense gratuite si fermano a {{count}} Diamanti.",
+      "proToolLocked": "Sblocca con Pro."
     }
   }
 }

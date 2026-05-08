@@ -8,13 +8,14 @@ import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {DiscoverImageCard} from "../../../components/discover-image-card";
 import {DiscoverPreviewModal} from "../../../components/discover-preview-modal";
-import {DS, SCREEN_SECTION_GAP, floatingButton} from "../../../lib/design-system";
+import {DS, SCREEN_SECTION_GAP} from "../../../lib/design-system";
 import {
 type DiscoverTabId,
 type DiscoverTile,
 useDiscoverGroup,
 } from "../../../lib/discover-catalog";
 import {triggerHaptic} from "../../../lib/haptics";
+import {useTheme, type Theme} from "../../../styles/theme";
 import {fonts} from "../../../styles/typography";
 
 const SCREEN_SIDE_MARGIN = 26;
@@ -35,6 +36,8 @@ function readRouteParam(value: string | string[] | undefined) {
 export default function DiscoverSeeAllScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const params = useLocalSearchParams<{ tab?: string | string[]; group?: string | string[] }>();
@@ -71,11 +74,11 @@ export default function DiscoverSeeAllScreen() {
 
   return (
     <View style={styles.screen}>
-      <StatusBar style="dark" />
+      <StatusBar style={theme.isDark ? "light" : "dark"} />
 
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable accessibilityRole="button" hitSlop={10} onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft color={DS.colors.textPrimary} size={22} strokeWidth={2.25} />
+          <ArrowLeft color={theme.textPrimary} size={22} strokeWidth={2.25} />
         </Pressable>
 
         <Text adjustsFontSizeToFit minimumFontScale={0.9} numberOfLines={1} style={styles.headerTitle}>
@@ -125,10 +128,11 @@ export default function DiscoverSeeAllScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: Theme) {
+return StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: DS.colors.background,
+    backgroundColor: theme.bg,
   },
   header: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
@@ -139,7 +143,11 @@ const styles = StyleSheet.create({
   backButton: {
     width: 48,
     height: 48,
-    ...floatingButton(false),
+    backgroundColor: theme.surfaceHigh,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: 14,
+    borderCurve: "continuous",
     paddingHorizontal: 0,
     paddingVertical: 0,
     alignItems: "center",
@@ -147,7 +155,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    color: DS.colors.textPrimary,
+    color: theme.textPrimary,
     fontSize: 18,
     lineHeight: 24,
     letterSpacing: 0,
@@ -174,12 +182,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   emptyTitle: {
-    color: DS.colors.textPrimary,
+    color: theme.textPrimary,
     ...DS.typography.cardTitle,
   },
   emptyBody: {
-    color: DS.colors.textSecondary,
+    color: theme.textSecondary,
     ...DS.typography.body,
     textAlign: "left",
   },
 });
+}
