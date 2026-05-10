@@ -1,8 +1,6 @@
 import {Component, type ErrorInfo, type ReactNode} from "react";
-import {Text, View} from "react-native";
+import {Pressable, Text, View} from "react-native";
 import {spacing} from "../styles/spacing";
-
-import {LuxPressable} from "./lux-pressable";
 
 type Props = {
   children: ReactNode;
@@ -30,18 +28,20 @@ export class AppErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.error) {
       return (
-        <View style={{ flex: 1, backgroundColor: "#000000", justifyContent: "center", paddingHorizontal: spacing.lg }}>
-          <View style={{ borderRadius: 28, borderWidth: 0.5, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "#09090b", padding: spacing.lg }}>
-            <Text style={{ color: "#ffffff", fontSize: 24, fontWeight: "600" }}>We hit a render issue.</Text>
-            <Text style={{ color: "#a1a1aa", fontSize: 14, marginTop: spacing.sm, lineHeight: 22 }}>
-              HomeDecor AI caught the error before it turned into a blank screen. Retry the interface and keep going.
+        <View style={{ flex: 1, backgroundColor: "#ffffff", justifyContent: "center", paddingHorizontal: spacing.lg }}>
+          <View style={{ borderRadius: 24, borderWidth: 1, borderColor: "#e5e7eb", backgroundColor: "#ffffff", padding: spacing.lg }}>
+            <Text selectable style={{ color: "#111827", fontSize: 24, fontWeight: "700" }}>Something went wrong</Text>
+            <Text selectable style={{ color: "#4b5563", fontSize: 14, marginTop: spacing.sm, lineHeight: 22 }}>
+              HomeDecor AI caught a startup problem. Please try again.
             </Text>
-            <Text style={{ color: "#71717a", fontSize: 12, marginTop: spacing.md }}>{this.state.error.message}</Text>
-            <LuxPressable onPress={this.handleRetry} className="mt-6 overflow-hidden rounded-2xl">
-              <View style={{ backgroundColor: "#ffffff", borderRadius: 18, paddingVertical: spacing.md, alignItems: "center" }}>
-                <Text style={{ color: "#09090b", fontSize: 14, fontWeight: "700" }}>Retry</Text>
-              </View>
-            </LuxPressable>
+            <Text selectable style={{ color: "#6b7280", fontSize: 12, marginTop: spacing.md }}>{this.state.error.message}</Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={this.handleRetry}
+              style={{ marginTop: spacing.lg, borderRadius: 18, backgroundColor: "#111827", paddingVertical: spacing.md, alignItems: "center" }}
+            >
+              <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>Retry</Text>
+            </Pressable>
           </View>
         </View>
       );

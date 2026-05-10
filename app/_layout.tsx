@@ -3,8 +3,9 @@ import "react-native-reanimated";
 
 import {ClerkProvider, useAuth, useUser} from "@clerk/expo";
 import {BottomSheetModalProvider} from "@gorhom/bottom-sheet";
-import {useConvexAuth, useMutation} from "convex/react";
+import {type ConvexReactClient, useConvexAuth, useMutation} from "convex/react";
 import {ConvexProviderWithClerk} from "convex/react-clerk";
+import {Asset} from "expo-asset";
 import {useFonts} from "expo-font";
 import * as Linking from "expo-linking";
 import {useCalendars, useLocales} from "expo-localization";
@@ -27,7 +28,7 @@ import {ViewerCreditsProvider, useViewerCredits} from "../components/viewer-cred
 import {useViewerSession} from "../components/viewer-session-context";
 import {ViewerSessionProvider} from "../components/viewer-session-context";
 import {WorkspaceDraftProvider} from "../components/workspace-context";
-import {convex} from "../lib/convex";
+import {getConvexClient} from "../lib/convex";
 import {DS, SCREEN_SIDE_PADDING, glowShadow, surfaceCard} from "../lib/design-system";
 import {DIAGNOSTIC_BYPASS} from "../lib/diagnostics";
 import {usePricingContext} from "../lib/dynamic-pricing";
@@ -58,6 +59,11 @@ void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 const POSTHOG_API_KEY = process.env.EXPO_PUBLIC_POSTHOG_API_KEY;
 const POSTHOG_HOST = process.env.EXPO_PUBLIC_POSTHOG_HOST;
+const ROOT_BOOT_ASSETS = [
+  require("../assets/logo.png"),
+  require("../assets/splash.png"),
+  require("../assets/adaptive-icon.png"),
+];
 
 const TextWithDefaults = Text as typeof Text & { defaultProps?: TextProps };
 const TextInputWithDefaults = TextInput as typeof TextInput & { defaultProps?: TextInputProps };
@@ -361,14 +367,26 @@ function ReferralGate() {
   return null;
 }
 
-function Providers({ children }: { children: React.ReactNode }) {
+function Providers({ children, convexClient }: { children: React.ReactNode; convexClient: ConvexReactClient }) {
   return (
-    <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+    <ConvexProviderWithClerk client={convexClient} useAuth={useAuth}>
       <ProSuccessProvider>
         {children}
       </ProSuccessProvider>
     </ConvexProviderWithClerk>
   );
+}
+
+function StartupError({ error }: { error: Error }) {
+  throw error;
+  return null;
+}
+
+function toStartupError(error: unknown, fallback: string) {
+  if (error instanceof Error) {
+    return error;
+  }
+  return new Error(fallback);
 }
 
 function BootScreen({ message }: { message: string }) {
@@ -661,10 +679,13 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Inter: require("../assets/Fonts/InterVariable.ttf"),
   });
+  const [assetsReady, setAssetsReady] = useState(false);
+  const [startupError, setStartupError] = useState<Error | null>(null);
   const [i18nReady, setI18nReady] = useState(i18n.isInitialized);
   const envReport = useMemo(() => getEnvReport(), []);
+  const convexClient = useMemo(() => (envReport.ok ? getConvexClient() : null), [envReport]);
   const clerkKey = envReport.values.clerkPublishableKey;
-  const bootReady = (fontsLoaded || Boolean(fontError)) && i18nReady;
+  const bootReady = (fontsLoaded || Boolean(fontError)) && assetsReady && i18nReady;
 
   if (fontsLoaded && !fontError) {
     applyGlobalTypographyDefaults(localizedFonts, languagePreference.isRTL);
@@ -673,6 +694,25 @@ export default function RootLayout() {
   useEffect(() => {
     logEnvDiagnostics(envReport);
   }, [envReport]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    void Asset.loadAsync(ROOT_BOOT_ASSETS).then(() => {
+      if (mounted) {
+        setAssetsReady(true);
+      }
+    }).catch((error) => {
+      console.warn("[Boot] Startup assets failed to load", error);
+      if (mounted) {
+        setStartupError(toStartupError(error, "Startup assets failed to load"));
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -703,7 +743,7 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (!bootReady) {
+    if (!bootReady && !startupError) {
       return;
     }
 
@@ -711,14 +751,38 @@ export default function RootLayout() {
       SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
     });
     return () => cancelAnimationFrame(frame);
-  }, [bootReady]);
+  }, [bootReady, startupError]);
+
+  if (startupError) {
+    return (
+      <AppErrorBoundary>
+        <StartupError error={startupError} />
+      </AppErrorBoundary>
+    );
+  }
 
   if (!bootReady) {
-    return <BootScreen message="Preparing your workspace" />;
+    return (
+      <AppErrorBoundary>
+        <BootScreen message="Preparing your workspace" />
+      </AppErrorBoundary>
+    );
   }
 
   if (!DIAGNOSTIC_BYPASS && !envReport.ok) {
-    return <MissingEnv missing={envReport.missing} />;
+    return (
+      <AppErrorBoundary>
+        <MissingEnv missing={envReport.missing} />
+      </AppErrorBoundary>
+    );
+  }
+
+  if (!convexClient) {
+    return (
+      <AppErrorBoundary>
+        <MissingEnv missing={["EXPO_PUBLIC_CONVEX_URL"]} />
+      </AppErrorBoundary>
+    );
   }
 
   const appTree = (
@@ -727,11 +791,10 @@ export default function RootLayout() {
       style={{ flex: 1, direction: languagePreference.isRTL ? "rtl" : "ltr" }}
     >
       <AppThemeProvider>
-        <AppErrorBoundary>
           <SafeAreaProvider>
             <ClerkProvider publishableKey={clerkKey ?? ""} tokenCache={tokenCache}>
             <AuthGate>
-              <Providers>
+              <Providers convexClient={convexClient}>
                 <ViewerSessionProvider>
                   {DIAGNOSTIC_BYPASS ? null : <ReferralGate />}
                   <ViewerCreditsProvider>
@@ -760,16 +823,11 @@ export default function RootLayout() {
             </AuthGate>
             </ClerkProvider>
           </SafeAreaProvider>
-        </AppErrorBoundary>
       </AppThemeProvider>
     </GestureHandlerRootView>
   );
 
-  if (!POSTHOG_API_KEY) {
-    return appTree;
-  }
-
-  return (
+  const trackedTree = POSTHOG_API_KEY ? (
     <PostHogProvider
       apiKey={POSTHOG_API_KEY}
       autocapture={{
@@ -786,6 +844,12 @@ export default function RootLayout() {
     >
       {appTree}
     </PostHogProvider>
+  ) : appTree;
+
+  return (
+    <AppErrorBoundary>
+      {trackedTree}
+    </AppErrorBoundary>
   );
 }
 
