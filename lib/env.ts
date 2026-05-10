@@ -16,6 +16,7 @@ type EnvSnapshot = {
 type EnvReport = {
   ok: boolean;
   missing: string[];
+  hasCriticalConfig: boolean;
   values: EnvSnapshot;
 };
 
@@ -34,27 +35,55 @@ type PublicEnvKey =
   | "EXPO_PUBLIC_API_BASE_URL";
 
 type RuntimeOnlyEnvKey = "NEXT_PUBLIC_APP_URL";
+type RuntimeEnvKey = PublicEnvKey | RuntimeOnlyEnvKey;
+type ExpoExtraEnv = Partial<Record<RuntimeEnvKey, string>> & {
+  publicEnv?: Partial<Record<RuntimeEnvKey, string>>;
+};
 
 let didLog = false;
 
-const runtimePublicEnv = (
-  (Constants.expoConfig?.extra as { publicEnv?: Partial<Record<PublicEnvKey, string>> } | undefined)?.publicEnv ??
-  ((Constants as unknown as {
-    manifest2?: { extra?: { expoClient?: { extra?: { publicEnv?: Partial<Record<PublicEnvKey, string>> } } } };
-    manifest?: { extra?: { publicEnv?: Partial<Record<PublicEnvKey, string>> } };
-  }).manifest2?.extra?.expoClient?.extra?.publicEnv) ??
-  ((Constants as unknown as {
-    manifest?: { extra?: { publicEnv?: Partial<Record<PublicEnvKey, string>> } };
-  }).manifest?.extra?.publicEnv) ??
-  {}
-) as Partial<Record<PublicEnvKey, string>>;
+function normalizeEnvValue(value?: string | null) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function readExtraEnvValue(extra: ExpoExtraEnv | undefined, key: RuntimeEnvKey) {
+  return normalizeEnvValue(extra?.publicEnv?.[key]) ?? normalizeEnvValue(extra?.[key]);
+}
+
+function resolveRuntimeExtraEnv(key: RuntimeEnvKey) {
+  const constants = Constants as unknown as {
+    expoConfig?: { extra?: ExpoExtraEnv };
+    manifest2?: { extra?: ExpoExtraEnv & { expoClient?: { extra?: ExpoExtraEnv } } };
+    manifest?: { extra?: ExpoExtraEnv };
+  };
+  const extras = [
+    constants.expoConfig?.extra,
+    constants.manifest2?.extra?.expoClient?.extra,
+    constants.manifest2?.extra,
+    constants.manifest?.extra,
+  ];
+
+  for (const extra of extras) {
+    const value = readExtraEnvValue(extra, key);
+    if (value) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
 
 function resolveEnv(key: PublicEnvKey) {
-  return runtimePublicEnv[key] ?? expoEnv[key] ?? process.env[key];
+  return (
+    normalizeEnvValue(process.env[key]) ??
+    normalizeEnvValue(expoEnv[key]) ??
+    resolveRuntimeExtraEnv(key)
+  );
 }
 
 function resolveRuntimeOnlyEnv(key: RuntimeOnlyEnvKey) {
-  return process.env[key];
+  return normalizeEnvValue(process.env[key]) ?? resolveRuntimeExtraEnv(key);
 }
 
 export function getEnvReport(): EnvReport {
@@ -115,6 +144,7 @@ export function getEnvReport(): EnvReport {
   return {
     ok: missing.length === 0,
     missing,
+    hasCriticalConfig: Boolean(values.clerkPublishableKey && values.convexUrl),
     values,
   };
 }
@@ -125,7 +155,10 @@ export function logEnvDiagnostics(report: EnvReport) {
   const missing = report.missing;
 
   if (missing.length) {
-    console.warn("[Env] Missing required environment variables:", missing);
+    console.warn(
+      "[Env] Missing required environment variables at startup; boot will continue and retry env fallbacks:",
+      missing,
+    );
   }
 }
 

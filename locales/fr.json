@@ -56,7 +56,9 @@
     "checkingPlan": "Vérification de votre abonnement...",
     "secureAccount": "Sécurisez votre compte pour commencer à créer...",
     "missingEnvTitle": "Variables d'environnement manquantes",
-    "missingEnvBody": "Les valeurs suivantes sont requises avant que HomeDecor AI puisse être lancé :"
+    "missingEnvBody": "Les valeurs suivantes sont requises avant que HomeDecor AI puisse être lancé :",
+    "serviceMaintenanceTitle": "Maintenance du service",
+    "serviceMaintenanceBody": "Nous préparons la configuration du service. Veuillez réessayer dans un instant."
   },
   "onboarding": {
     "stepLabel": "Étape {{current}} sur 4",

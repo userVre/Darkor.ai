@@ -58,7 +58,9 @@
     "preparingStudio": "Preparing your onboarding...",
     "secureAccount": "Secure your account to begin designing...",
     "missingEnvTitle": "Missing Environment Variables",
-    "missingEnvBody": "The following values are required before HomeDecor AI can launch:"
+    "missingEnvBody": "The following values are required before HomeDecor AI can launch:",
+    "serviceMaintenanceTitle": "Service Maintenance",
+    "serviceMaintenanceBody": "We are preparing the service configuration. Please try again shortly."
   },
   "onboarding": {
     "stepLabel": "Step {{current}} of 4",

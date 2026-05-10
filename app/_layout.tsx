@@ -535,24 +535,6 @@ function NotificationResponseGate() {
   return null;
 }
 
-function MissingEnv({ missing }: { missing: string[] }) {
-  return (
-    <View style={bootStyles.screen}>
-      <View style={bootStyles.card}>
-        <Text style={bootStyles.title}>{i18n.t("boot.missingEnvTitle")}</Text>
-        <Text style={bootStyles.body}>{i18n.t("boot.missingEnvBody")}</Text>
-        <View style={bootStyles.list}>
-        {missing.map((item) => (
-            <Text key={item} style={bootStyles.listItem}>
-            {item}
-          </Text>
-        ))}
-        </View>
-      </View>
-    </View>
-  );
-}
-
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isLoaded } = useAuth();
 
@@ -682,9 +664,12 @@ export default function RootLayout() {
   const [assetsReady, setAssetsReady] = useState(false);
   const [startupError, setStartupError] = useState<Error | null>(null);
   const [i18nReady, setI18nReady] = useState(i18n.isInitialized);
-  const envReport = useMemo(() => getEnvReport(), []);
-  const convexClient = useMemo(() => (envReport.ok ? getConvexClient() : null), [envReport]);
+  const [envReport, setEnvReport] = useState(() => getEnvReport());
   const clerkKey = envReport.values.clerkPublishableKey;
+  const convexClient = useMemo(
+    () => (envReport.values.convexUrl ? getConvexClient() : null),
+    [envReport.values.convexUrl],
+  );
   const bootReady = (fontsLoaded || Boolean(fontError)) && assetsReady && i18nReady;
 
   if (fontsLoaded && !fontError) {
@@ -694,6 +679,23 @@ export default function RootLayout() {
   useEffect(() => {
     logEnvDiagnostics(envReport);
   }, [envReport]);
+
+  useEffect(() => {
+    if (!bootReady || envReport.hasCriticalConfig) {
+      return;
+    }
+
+    setEnvReport(getEnvReport());
+    let attempts = 0;
+    const retry = setInterval(() => {
+      attempts += 1;
+      setEnvReport(getEnvReport());
+      if (attempts >= 20) {
+        clearInterval(retry);
+      }
+    }, 250);
+    return () => clearInterval(retry);
+  }, [bootReady, envReport.hasCriticalConfig]);
 
   useEffect(() => {
     let mounted = true;
@@ -769,18 +771,12 @@ export default function RootLayout() {
     );
   }
 
-  if (!DIAGNOSTIC_BYPASS && !envReport.ok) {
+  if (!clerkKey || !convexClient) {
     return (
       <AppErrorBoundary>
-        <MissingEnv missing={envReport.missing} />
-      </AppErrorBoundary>
-    );
-  }
-
-  if (!convexClient) {
-    return (
-      <AppErrorBoundary>
-        <MissingEnv missing={["EXPO_PUBLIC_CONVEX_URL"]} />
+        <BootScreen
+          message={i18n.t("boot.loadingConfiguration", { defaultValue: "Loading service configuration" })}
+        />
       </AppErrorBoundary>
     );
   }
