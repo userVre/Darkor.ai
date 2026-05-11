@@ -64,6 +64,10 @@ const ROOT_BOOT_ASSETS = [
   require("../assets/splash.png"),
   require("../assets/adaptive-icon.png"),
 ];
+const REQUIRED_SERVICE_CONFIG_LABELS = [
+  "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
+  "EXPO_PUBLIC_CONVEX_URL",
+];
 
 const TextWithDefaults = Text as typeof Text & { defaultProps?: TextProps };
 const TextInputWithDefaults = TextInput as typeof TextInput & { defaultProps?: TextInputProps };
@@ -401,6 +405,32 @@ function BootScreen({ message }: { message: string }) {
   );
 }
 
+function ServiceConfigurationError({ missing }: { missing: string[] }) {
+  const missingItems = missing.length ? missing : REQUIRED_SERVICE_CONFIG_LABELS;
+
+  return (
+    <View style={bootStyles.screen}>
+      <View style={bootStyles.card}>
+        <Text style={bootStyles.title}>
+          {i18n.t("boot.missingEnvTitle", { defaultValue: "Missing Environment Variables" })}
+        </Text>
+        <Text style={bootStyles.body}>
+          {i18n.t("boot.missingEnvBody", {
+            defaultValue: "The following values are required before HomeDecor AI can launch:",
+          })}
+        </Text>
+        <View style={bootStyles.list}>
+          {missingItems.map((key) => (
+            <Text key={key} style={bootStyles.listItem}>
+              {key}
+            </Text>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function LocalizationSyncGate() {
   const locales = useLocales();
   const calendars = useCalendars();
@@ -665,6 +695,7 @@ export default function RootLayout() {
   const [startupError, setStartupError] = useState<Error | null>(null);
   const [i18nReady, setI18nReady] = useState(i18n.isInitialized);
   const [envReport, setEnvReport] = useState(() => getEnvReport());
+  const [envRetryExhausted, setEnvRetryExhausted] = useState(false);
   const clerkKey = envReport.values.clerkPublishableKey;
   const convexClient = useMemo(
     () => (envReport.values.convexUrl ? getConvexClient() : null),
@@ -681,20 +712,33 @@ export default function RootLayout() {
   }, [envReport]);
 
   useEffect(() => {
-    if (!bootReady || envReport.hasCriticalConfig) {
+    if (!bootReady) {
       return;
     }
 
+    if (envReport.hasCriticalConfig) {
+      setEnvRetryExhausted(false);
+      return;
+    }
+
+    setEnvRetryExhausted(false);
     setEnvReport(getEnvReport());
+    let mounted = true;
     let attempts = 0;
     const retry = setInterval(() => {
       attempts += 1;
       setEnvReport(getEnvReport());
       if (attempts >= 20) {
         clearInterval(retry);
+        if (mounted) {
+          setEnvRetryExhausted(true);
+        }
       }
     }, 250);
-    return () => clearInterval(retry);
+    return () => {
+      mounted = false;
+      clearInterval(retry);
+    };
   }, [bootReady, envReport.hasCriticalConfig]);
 
   useEffect(() => {
@@ -767,6 +811,14 @@ export default function RootLayout() {
     return (
       <AppErrorBoundary>
         <BootScreen message="Preparing your workspace" />
+      </AppErrorBoundary>
+    );
+  }
+
+  if ((!clerkKey || !convexClient) && envRetryExhausted) {
+    return (
+      <AppErrorBoundary>
+        <ServiceConfigurationError missing={envReport.missing} />
       </AppErrorBoundary>
     );
   }
