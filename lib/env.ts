@@ -6,6 +6,7 @@ import {resolvePublicEndpoint} from "./public-endpoints";
 type EnvSnapshot = {
   clerkPublishableKey?: string;
   convexUrl?: string;
+  convexSiteUrl?: string;
   revenueCatIosKey?: string;
   revenueCatAndroidKey?: string;
   revenueCatKey?: string;
@@ -28,14 +29,18 @@ const requiredKeys = [
 type PublicEnvKey =
   | "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"
   | "EXPO_PUBLIC_CONVEX_URL"
+  | "EXPO_PUBLIC_CONVEX_SITE_URL"
   | "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"
   | "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY"
   | "EXPO_PUBLIC_REVENUECAT_API_KEY"
   | "EXPO_PUBLIC_APP_URL"
-  | "EXPO_PUBLIC_API_BASE_URL";
+  | "EXPO_PUBLIC_API_BASE_URL"
+  | "EXPO_PUBLIC_POSTHOG_API_KEY"
+  | "EXPO_PUBLIC_POSTHOG_HOST"
+  | "EXPO_PUBLIC_DISABLE_VIDEO"
+  | "EXPO_PUBLIC_REVIEW_FORCE";
 
-type RuntimeOnlyEnvKey = "NEXT_PUBLIC_APP_URL";
-type RuntimeEnvKey = PublicEnvKey | RuntimeOnlyEnvKey;
+type RuntimeEnvKey = PublicEnvKey;
 type ExpoExtraEnv = Partial<Record<RuntimeEnvKey, string>> & {
   publicEnv?: Partial<Record<RuntimeEnvKey, string>>;
 };
@@ -117,19 +122,20 @@ function resolvePublicEndpointFromEnv(key: RuntimeEnvKey, label = key) {
 export function getEnvReport(): EnvReport {
   let appUrl: string | undefined;
   let convexUrl: string | undefined;
+  let convexSiteUrl: string | undefined;
   let apiBaseUrl: string | undefined;
 
   convexUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_CONVEX_URL");
+  convexSiteUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_CONVEX_SITE_URL");
 
-  appUrl =
-    resolvePublicEndpointFromEnv("EXPO_PUBLIC_APP_URL")
-    ?? resolvePublicEndpointFromEnv("NEXT_PUBLIC_APP_URL", "EXPO_PUBLIC_APP_URL");
+  appUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_APP_URL");
 
   apiBaseUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_API_BASE_URL");
 
   const values: EnvSnapshot = {
     clerkPublishableKey: resolveEnv("EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"),
     convexUrl,
+    convexSiteUrl,
     revenueCatIosKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"),
     revenueCatAndroidKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY"),
     revenueCatKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_API_KEY"),
@@ -166,7 +172,7 @@ export function logEnvDiagnostics(report: EnvReport) {
 
   if (missing.length) {
     console.warn(
-      "[Env] Missing required environment variables at startup; boot will continue and retry env fallbacks:",
+      "[Env] Missing required environment variables at startup; boot will keep retrying:",
       missing,
     );
   }

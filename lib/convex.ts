@@ -14,8 +14,17 @@ export function getConvexClient() {
   }
 
   if (!convexClient || convexClientUrl !== convexUrl) {
-    convexClient = new ConvexReactClient(convexUrl);
-    convexClientUrl = convexUrl;
+    console.log("[Boot] Convex client initialization started");
+    try {
+      convexClient = new ConvexReactClient(convexUrl);
+      convexClientUrl = convexUrl;
+      console.log("[Boot] Convex client initialization finished");
+    } catch (error) {
+      console.warn("[Boot] Convex client initialization failed", error);
+      convexClient = null;
+      convexClientUrl = null;
+      return null;
+    }
   }
 
   return convexClient;

@@ -53,6 +53,10 @@
   "boot": {
     "loadingApp": "Chargement de HomeDecor AI",
     "loadingAccount": "Chargement de votre compte...",
+    "loadingConfiguration": "Chargement de la configuration...",
+    "connectionProblemTitle": "Problème de connexion",
+    "connectionProblemMessage": "Impossible de se connecter. Vérifiez votre connexion et réessayez.",
+    "retry": "Réessayer",
     "checkingPlan": "Vérification de votre abonnement...",
     "secureAccount": "Sécurisez votre compte pour commencer à créer...",
     "missingEnvTitle": "Variables d'environnement manquantes",

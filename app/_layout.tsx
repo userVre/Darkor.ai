@@ -12,7 +12,7 @@ import {useCalendars, useLocales} from "expo-localization";
 import {Stack, usePathname, useRouter} from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import {useEffect, useMemo, useRef, useState} from "react";
-import {ActivityIndicator, AppState, StyleSheet, Text, TextInput, View, type TextInputProps, type TextProps} from "react-native";
+import {ActivityIndicator, AppState, Pressable, StyleSheet, Text, TextInput, View, type TextInputProps, type TextProps} from "react-native";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
 import {SafeAreaProvider} from "react-native-safe-area-context";
 import {PostHogProvider} from "posthog-react-native";
@@ -66,6 +66,8 @@ const ROOT_BOOT_ASSETS = [
 ];
 const SERVICE_CONFIG_RETRY_INTERVAL_MS = 250;
 const SERVICE_CONFIG_WARNING_ATTEMPTS = 20;
+const BOOT_SCREEN_TIMEOUT_MS = 15000;
+const STARTUP_OPERATION_TIMEOUT_MS = 10000;
 // Well-formed dummy values let providers mount when EAS Update config is briefly absent.
 const FALLBACK_CLERK_PUBLISHABLE_KEY = "pk_test_ZHVtbXkuY2xlcmsuYWNjb3VudHMuZGV2JA";
 const FALLBACK_CONVEX_URL = "https://homedecor-ai-missing-config.invalid";
@@ -74,6 +76,27 @@ const TextWithDefaults = Text as typeof Text & { defaultProps?: TextProps };
 const TextInputWithDefaults = TextInput as typeof TextInput & { defaultProps?: TextInputProps };
 
 let lastAppliedTypographyKey = "";
+
+async function withStartupTimeout<T>(
+  promise: Promise<T>,
+  label: string,
+  timeoutMs = STARTUP_OPERATION_TIMEOUT_MS,
+) {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeout = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+  }
+}
 
 function applyGlobalTypographyDefaults(
   localizedFonts: ReturnType<typeof useLocalizedAppFonts>,
@@ -135,10 +158,15 @@ function RevenueCatGate() {
 
     const run = async () => {
       try {
-        const purchases = await configureRevenueCat(isSignedIn ? user?.id ?? null : null);
+        console.log("[Boot] RevenueCat initialization started");
+        const purchases = await withStartupTimeout(
+          configureRevenueCat(isSignedIn ? user?.id ?? null : null),
+          "RevenueCat initialization",
+        );
         if (cancelled || !mountedRef.current) {
           return;
         }
+        console.log("[Boot] RevenueCat initialization finished", { configured: Boolean(purchases) });
         if (!purchases) {
           console.warn("[Boot] RevenueCat unavailable - skipping");
           return;
@@ -147,7 +175,7 @@ function RevenueCatGate() {
         configuredRef.current = true;
         setRevenueCatReady(true);
       } catch (error) {
-        console.warn("RevenueCat not configured", error);
+        console.warn("[Boot] RevenueCat initialization failed", error);
       }
     };
     void run();
@@ -375,11 +403,51 @@ function ReferralGate() {
 function Providers({ children, convexClient }: { children: React.ReactNode; convexClient: ConvexReactClient }) {
   return (
     <ConvexProviderWithClerk client={convexClient} useAuth={useAuth}>
+      <ConvexBootDiagnostics>
       <ProSuccessProvider>
         {children}
       </ProSuccessProvider>
+      </ConvexBootDiagnostics>
     </ConvexProviderWithClerk>
   );
+}
+
+function ConvexBootDiagnostics({ children }: { children: React.ReactNode }) {
+  const convexAuth = useConvexAuth();
+  const didLogReadyRef = useRef(false);
+
+  useEffect(() => {
+    console.log("[Boot] Convex provider initialization started");
+  }, []);
+
+  useEffect(() => {
+    if (!convexAuth.isLoading && !didLogReadyRef.current) {
+      didLogReadyRef.current = true;
+      console.log("[Boot] Convex provider initialization finished", {
+        authenticated: convexAuth.isAuthenticated,
+      });
+    }
+  }, [convexAuth.isAuthenticated, convexAuth.isLoading]);
+
+  return <>{children}</>;
+}
+
+function ClerkBootDiagnostics({ children }: { children: React.ReactNode }) {
+  const { isLoaded } = useAuth();
+  const didLogReadyRef = useRef(false);
+
+  useEffect(() => {
+    console.log("[Boot] Clerk initialization started");
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded && !didLogReadyRef.current) {
+      didLogReadyRef.current = true;
+      console.log("[Boot] Clerk initialization finished");
+    }
+  }, [isLoaded]);
+
+  return <>{children}</>;
 }
 
 function StartupError({ error }: { error: Error }) {
@@ -394,7 +462,59 @@ function toStartupError(error: unknown, fallback: string) {
   return new Error(fallback);
 }
 
-function BootScreen({ message }: { message: string }) {
+function BootScreen({
+  message,
+  onRetry,
+  timeoutMs = BOOT_SCREEN_TIMEOUT_MS,
+}: {
+  message: string;
+  onRetry?: () => void;
+  timeoutMs?: number;
+}) {
+  const [timedOut, setTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (!onRetry) {
+      return;
+    }
+
+    setTimedOut(false);
+    const timeout = setTimeout(() => {
+      setTimedOut(true);
+    }, timeoutMs);
+
+    return () => clearTimeout(timeout);
+  }, [message, onRetry, timeoutMs]);
+
+  if (timedOut) {
+    return (
+      <View style={bootStyles.screen}>
+        <View style={bootStyles.card}>
+          <Text style={bootStyles.title}>
+            {i18n.t("boot.connectionProblemTitle", { defaultValue: "Problème de connexion" })}
+          </Text>
+          <Text style={bootStyles.body}>
+            {i18n.t("boot.connectionProblemMessage", {
+              defaultValue: "Impossible de se connecter. Vérifiez votre connexion et réessayez.",
+            })}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onRetry}
+            style={({ pressed }) => [
+              bootStyles.button,
+              pressed ? bootStyles.buttonPressed : null,
+            ]}
+          >
+            <Text style={bootStyles.buttonText}>
+              {i18n.t("boot.retry", { defaultValue: "Réessayer" })}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={bootStyles.screen}>
       <View style={bootStyles.card}>
@@ -543,14 +663,16 @@ function NotificationResponseGate() {
 function AuthGate({
   children,
   allowDegradedBoot = false,
+  onRetry,
 }: {
   children: React.ReactNode;
   allowDegradedBoot?: boolean;
+  onRetry?: () => void;
 }) {
   const { isLoaded } = useAuth();
 
   if (!allowDegradedBoot && !isLoaded && !DIAGNOSTIC_BYPASS) {
-    return <BootScreen message={i18n.t("boot.loadingAccount")} />;
+    return <BootScreen message={i18n.t("boot.loadingAccount")} onRetry={onRetry} />;
   }
 
   return <>{children}</>;
@@ -677,9 +799,21 @@ export default function RootLayout() {
   const [i18nReady, setI18nReady] = useState(i18n.isInitialized);
   const [envReport, setEnvReport] = useState(() => getEnvReport());
   const [allowServiceConfigBypass, setAllowServiceConfigBypass] = useState(false);
+  const [bootRetryKey, setBootRetryKey] = useState(0);
   const clerkKey = envReport.values.clerkPublishableKey;
   const convexClient = useMemo(
-    () => (envReport.values.convexUrl ? getConvexClient() : null),
+    () => {
+      if (!envReport.values.convexUrl) {
+        return null;
+      }
+
+      try {
+        return getConvexClient();
+      } catch (error) {
+        console.warn("[Boot] Convex client initialization failed", error);
+        return null;
+      }
+    },
     [envReport.values.convexUrl],
   );
   const fallbackConvexClient = useMemo(
@@ -691,6 +825,12 @@ export default function RootLayout() {
   const effectiveClerkKey = clerkKey ?? (degradedServiceConfig ? FALLBACK_CLERK_PUBLISHABLE_KEY : undefined);
   const effectiveConvexClient = convexClient ?? (degradedServiceConfig ? fallbackConvexClient : null);
   const bootReady = (fontsLoaded || Boolean(fontError)) && assetsReady && i18nReady;
+  const retryBoot = useMemo(() => () => {
+    console.log("[Boot] Retry requested");
+    setAllowServiceConfigBypass(false);
+    setEnvReport(getEnvReport());
+    setBootRetryKey((current) => current + 1);
+  }, []);
 
   if (fontsLoaded && !fontError) {
     applyGlobalTypographyDefaults(localizedFonts, languagePreference.isRTL);
@@ -722,22 +862,23 @@ export default function RootLayout() {
       }
       if (mounted && attempts === SERVICE_CONFIG_WARNING_ATTEMPTS) {
         console.warn(
-          "[Boot] Service configuration is still unavailable after startup; booting in degraded non-fatal mode while retrying.",
+          "[Boot] Service configuration is still unavailable after startup.",
           nextReport.missing,
         );
-        setAllowServiceConfigBypass(true);
       }
     }, SERVICE_CONFIG_RETRY_INTERVAL_MS);
     return () => {
       mounted = false;
       clearInterval(retry);
     };
-  }, [bootReady, envReport.hasCriticalConfig]);
+  }, [bootReady, bootRetryKey, envReport.hasCriticalConfig]);
 
   useEffect(() => {
     let mounted = true;
 
-    void Asset.loadAsync(ROOT_BOOT_ASSETS).then(() => {
+    console.log("[Boot] Startup assets loading started");
+    void withStartupTimeout(Asset.loadAsync(ROOT_BOOT_ASSETS), "Startup asset load").then(() => {
+      console.log("[Boot] Startup assets loaded");
       if (mounted) {
         setAssetsReady(true);
       }
@@ -762,7 +903,9 @@ export default function RootLayout() {
       }
     }, 4000);
 
+    console.log("[Boot] i18n initialization started");
     void initializeI18n().then(() => {
+      console.log("[Boot] i18n initialization finished");
       if (mounted) {
         clearTimeout(timeout);
         setI18nReady(true);
@@ -812,7 +955,9 @@ export default function RootLayout() {
     return (
       <AppErrorBoundary>
         <BootScreen
-          message={i18n.t("boot.loadingConfiguration", { defaultValue: "Loading service configuration" })}
+          key={`service-config-${bootRetryKey}`}
+          message={i18n.t("boot.loadingConfiguration", { defaultValue: "Chargement de la configuration..." })}
+          onRetry={retryBoot}
         />
       </AppErrorBoundary>
     );
@@ -825,8 +970,13 @@ export default function RootLayout() {
     >
       <AppThemeProvider>
           <SafeAreaProvider>
-            <ClerkProvider publishableKey={effectiveClerkKey} tokenCache={tokenCache}>
-            <AuthGate allowDegradedBoot={degradedServiceConfig}>
+            <ClerkProvider
+              key={`clerk-${bootRetryKey}-${effectiveClerkKey}`}
+              publishableKey={effectiveClerkKey}
+              tokenCache={tokenCache}
+            >
+            <ClerkBootDiagnostics>
+            <AuthGate allowDegradedBoot={degradedServiceConfig} onRetry={retryBoot}>
               <Providers convexClient={effectiveConvexClient}>
                 <ViewerSessionProvider remoteSyncEnabled={!degradedServiceConfig}>
                   {DIAGNOSTIC_BYPASS || degradedServiceConfig ? null : <ReferralGate />}
@@ -854,6 +1004,7 @@ export default function RootLayout() {
                 </ViewerSessionProvider>
               </Providers>
             </AuthGate>
+            </ClerkBootDiagnostics>
             </ClerkProvider>
           </SafeAreaProvider>
       </AppThemeProvider>
@@ -936,6 +1087,9 @@ const bootStyles = {
     justifyContent: "center" as const,
     paddingHorizontal: DS.spacing[3],
     paddingVertical: DS.spacing[1.5],
+  },
+  buttonPressed: {
+    opacity: 0.78,
   },
   buttonText: {
     color: DS.colors.textPrimary,
