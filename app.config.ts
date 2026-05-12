@@ -1,4 +1,4 @@
-import type {ConfigContext, ExpoConfig} from "expo/config";
+import type {ConfigContext} from "expo/config";
 
 const PUBLIC_ENV_KEYS = [
   "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
@@ -53,7 +53,7 @@ function assertRequiredEnv(values: Record<string, string | undefined>) {
   );
 }
 
-export default ({config}: ConfigContext): ExpoConfig => {
+export default ({config}: ConfigContext) => {
   const existingPublicEnv = (config.extra?.publicEnv ?? {}) as Record<string, string | undefined>;
   const publicEnv = PUBLIC_ENV_KEYS.reduce<Record<string, string | undefined>>((values, key) => {
     values[key] = readEnv(key) ?? existingPublicEnv[key];

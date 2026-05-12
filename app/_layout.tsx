@@ -3,7 +3,7 @@ import "react-native-reanimated";
 
 import {ClerkProvider, useAuth, useUser} from "@clerk/expo";
 import {BottomSheetModalProvider} from "@gorhom/bottom-sheet";
-import {ConvexReactClient, useConvexAuth, useMutation} from "convex/react";
+import {useConvexAuth, useMutation, type ConvexReactClient} from "convex/react";
 import {ConvexProviderWithClerk} from "convex/react-clerk";
 import {Asset} from "expo-asset";
 import {useFonts} from "expo-font";
@@ -68,10 +68,6 @@ const SERVICE_CONFIG_RETRY_INTERVAL_MS = 250;
 const SERVICE_CONFIG_WARNING_ATTEMPTS = 20;
 const BOOT_SCREEN_TIMEOUT_MS = 15000;
 const STARTUP_OPERATION_TIMEOUT_MS = 10000;
-// Well-formed dummy values let providers mount when EAS Update config is briefly absent.
-const FALLBACK_CLERK_PUBLISHABLE_KEY = "pk_test_ZHVtbXkuY2xlcmsuYWNjb3VudHMuZGV2JA";
-const FALLBACK_CONVEX_URL = "https://homedecor-ai-missing-config.invalid";
-
 const TextWithDefaults = Text as typeof Text & { defaultProps?: TextProps };
 const TextInputWithDefaults = TextInput as typeof TextInput & { defaultProps?: TextInputProps };
 
@@ -662,16 +658,14 @@ function NotificationResponseGate() {
 
 function AuthGate({
   children,
-  allowDegradedBoot = false,
   onRetry,
 }: {
   children: React.ReactNode;
-  allowDegradedBoot?: boolean;
   onRetry?: () => void;
 }) {
   const { isLoaded } = useAuth();
 
-  if (!allowDegradedBoot && !isLoaded && !DIAGNOSTIC_BYPASS) {
+  if (!isLoaded && !DIAGNOSTIC_BYPASS) {
     return <BootScreen message={i18n.t("boot.loadingAccount")} onRetry={onRetry} />;
   }
 
@@ -798,9 +792,9 @@ export default function RootLayout() {
   const [startupError, setStartupError] = useState<Error | null>(null);
   const [i18nReady, setI18nReady] = useState(i18n.isInitialized);
   const [envReport, setEnvReport] = useState(() => getEnvReport());
-  const [allowServiceConfigBypass, setAllowServiceConfigBypass] = useState(false);
   const [bootRetryKey, setBootRetryKey] = useState(0);
   const clerkKey = envReport.values.clerkPublishableKey;
+  const missingEnvSignature = envReport.missing.join("|");
   const convexClient = useMemo(
     () => {
       if (!envReport.values.convexUrl) {
@@ -816,18 +810,10 @@ export default function RootLayout() {
     },
     [envReport.values.convexUrl],
   );
-  const fallbackConvexClient = useMemo(
-    () => new ConvexReactClient(FALLBACK_CONVEX_URL, { logger: false }),
-    [],
-  );
   const serviceConfigReady = Boolean(clerkKey && convexClient);
-  const degradedServiceConfig = !serviceConfigReady && allowServiceConfigBypass;
-  const effectiveClerkKey = clerkKey ?? (degradedServiceConfig ? FALLBACK_CLERK_PUBLISHABLE_KEY : undefined);
-  const effectiveConvexClient = convexClient ?? (degradedServiceConfig ? fallbackConvexClient : null);
   const bootReady = (fontsLoaded || Boolean(fontError)) && assetsReady && i18nReady;
   const retryBoot = useMemo(() => () => {
     console.log("[Boot] Retry requested");
-    setAllowServiceConfigBypass(false);
     setEnvReport(getEnvReport());
     setBootRetryKey((current) => current + 1);
   }, []);
@@ -841,12 +827,26 @@ export default function RootLayout() {
   }, [envReport]);
 
   useEffect(() => {
+    console.log("[Boot] Service configuration status", {
+      bootReady,
+      hasClerkKey: Boolean(clerkKey),
+      hasConvexUrl: Boolean(envReport.values.convexUrl),
+      hasConvexClient: Boolean(convexClient),
+      missing: envReport.missing,
+    });
+  }, [bootReady, clerkKey, convexClient, missingEnvSignature, envReport.values.convexUrl]);
+
+  useEffect(() => {
+    console.log("[Boot] PostHog initialization started", { enabled: Boolean(POSTHOG_API_KEY) });
+    console.log("[Boot] PostHog initialization finished", { configured: Boolean(POSTHOG_API_KEY) });
+  }, []);
+
+  useEffect(() => {
     if (!bootReady) {
       return;
     }
 
     if (envReport.hasCriticalConfig) {
-      setAllowServiceConfigBypass(false);
       return;
     }
 
@@ -951,7 +951,7 @@ export default function RootLayout() {
     );
   }
 
-  if (!effectiveClerkKey || !effectiveConvexClient) {
+  if (!clerkKey || !convexClient) {
     return (
       <AppErrorBoundary>
         <BootScreen
@@ -971,25 +971,25 @@ export default function RootLayout() {
       <AppThemeProvider>
           <SafeAreaProvider>
             <ClerkProvider
-              key={`clerk-${bootRetryKey}-${effectiveClerkKey}`}
-              publishableKey={effectiveClerkKey}
+              key={`clerk-${bootRetryKey}-${clerkKey}`}
+              publishableKey={clerkKey}
               tokenCache={tokenCache}
             >
             <ClerkBootDiagnostics>
-            <AuthGate allowDegradedBoot={degradedServiceConfig} onRetry={retryBoot}>
-              <Providers convexClient={effectiveConvexClient}>
-                <ViewerSessionProvider remoteSyncEnabled={!degradedServiceConfig}>
-                  {DIAGNOSTIC_BYPASS || degradedServiceConfig ? null : <ReferralGate />}
-                  <ViewerCreditsProvider remoteSyncEnabled={!degradedServiceConfig}>
+            <AuthGate onRetry={retryBoot}>
+              <Providers convexClient={convexClient}>
+                <ViewerSessionProvider>
+                  {DIAGNOSTIC_BYPASS ? null : <ReferralGate />}
+                  <ViewerCreditsProvider>
                     <DiamondStoreProvider>
                       <FlowUIProvider>
                         <WorkspaceDraftProvider>
                           <BottomSheetModalProvider>
-{DIAGNOSTIC_BYPASS || degradedServiceConfig ? null : <RevenueCatGate />}
+{DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
                             <LocalizationSyncGate />
-                            {degradedServiceConfig ? null : <GenerationAccessCacheGate />}
-                            {degradedServiceConfig ? null : <NotificationScheduleGate />}
-                            {degradedServiceConfig ? null : <NotificationResponseGate />}
+                            <GenerationAccessCacheGate />
+                            <NotificationScheduleGate />
+                            <NotificationResponseGate />
                             <CreateAccessGate>
                               <AuthRedirectGate>
                                 <AppShell />
