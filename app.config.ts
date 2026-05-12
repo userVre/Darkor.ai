@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 import type {ConfigContext} from "expo/config";
 
 const PUBLIC_ENV_KEYS = [
