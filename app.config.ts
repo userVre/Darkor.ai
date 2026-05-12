@@ -14,6 +14,7 @@ const PUBLIC_ENV_KEYS = [
 const REQUIRED_PUBLIC_ENV_KEYS = [
   "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
   "EXPO_PUBLIC_CONVEX_URL",
+  "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY",
 ] as const;
 
 function readEnv(key: (typeof PUBLIC_ENV_KEYS)[number]) {
@@ -43,6 +44,7 @@ function assertRequiredEnv(values: Record<string, string | undefined>) {
       "Add them to the matching EAS environment before building, for example:",
       "eas env:create --environment production --visibility plaintext --name EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY --value <your-clerk-publishable-key>",
       "eas env:create --environment production --visibility plaintext --name EXPO_PUBLIC_CONVEX_URL --value <your-convex-url>",
+      "eas env:create --environment production --visibility plaintext --name EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY --value <your-revenuecat-android-key>",
     ].join("\n"),
   );
 }

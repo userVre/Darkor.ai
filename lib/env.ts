@@ -47,43 +47,71 @@ function normalizeEnvValue(value?: string | null) {
   return trimmed ? trimmed : undefined;
 }
 
-function readExtraEnvValue(extra: ExpoExtraEnv | undefined, key: RuntimeEnvKey) {
-  return normalizeEnvValue(extra?.publicEnv?.[key]) ?? normalizeEnvValue(extra?.[key]);
+function readExtraEnvValues(extra: ExpoExtraEnv | undefined, key: RuntimeEnvKey) {
+  return [
+    normalizeEnvValue(extra?.publicEnv?.[key]),
+    normalizeEnvValue(extra?.[key]),
+  ];
 }
 
-function resolveRuntimeExtraEnv(key: RuntimeEnvKey) {
+function uniqueValues(values: Array<string | undefined>) {
+  return values.filter((value, index): value is string => Boolean(value) && values.indexOf(value) === index);
+}
+
+function readInlineEnvValues(key: RuntimeEnvKey) {
+  return [
+    normalizeEnvValue(process.env[key]),
+    normalizeEnvValue(expoEnv?.[key]),
+  ];
+}
+
+function resolveRuntimeExtraEnvCandidates(key: RuntimeEnvKey) {
   const constants = Constants as unknown as {
     expoConfig?: { extra?: ExpoExtraEnv };
     manifest2?: { extra?: ExpoExtraEnv & { expoClient?: { extra?: ExpoExtraEnv } } };
-    manifest?: { extra?: ExpoExtraEnv };
+    manifest?: { extra?: ExpoExtraEnv & { expoClient?: { extra?: ExpoExtraEnv } } };
+    __unsafeNoWarnManifest?: { extra?: ExpoExtraEnv & { expoClient?: { extra?: ExpoExtraEnv } } };
+    __unsafeNoWarnManifest2?: { extra?: ExpoExtraEnv & { expoClient?: { extra?: ExpoExtraEnv } } };
   };
   const extras = [
     constants.expoConfig?.extra,
     constants.manifest2?.extra?.expoClient?.extra,
     constants.manifest2?.extra,
+    constants.manifest?.extra?.expoClient?.extra,
     constants.manifest?.extra,
+    constants.__unsafeNoWarnManifest2?.extra?.expoClient?.extra,
+    constants.__unsafeNoWarnManifest2?.extra,
+    constants.__unsafeNoWarnManifest?.extra?.expoClient?.extra,
+    constants.__unsafeNoWarnManifest?.extra,
   ];
 
-  for (const extra of extras) {
-    const value = readExtraEnvValue(extra, key);
-    if (value) {
-      return value;
+  return uniqueValues(extras.flatMap((extra) => readExtraEnvValues(extra, key)));
+}
+
+function resolveEnvCandidates(key: RuntimeEnvKey) {
+  return uniqueValues([
+    ...readInlineEnvValues(key),
+    ...resolveRuntimeExtraEnvCandidates(key),
+  ]);
+}
+
+function resolveEnv(key: PublicEnvKey) {
+  return resolveEnvCandidates(key)[0];
+}
+
+function resolvePublicEndpointFromEnv(key: RuntimeEnvKey, label = key) {
+  for (const candidate of resolveEnvCandidates(key)) {
+    try {
+      const endpoint = resolvePublicEndpoint(candidate, label);
+      if (endpoint) {
+        return endpoint;
+      }
+    } catch {
+      // A stale EAS Update value should not block a valid value from Constants extras.
     }
   }
 
   return undefined;
-}
-
-function resolveEnv(key: PublicEnvKey) {
-  return (
-    normalizeEnvValue(process.env[key]) ??
-    normalizeEnvValue(expoEnv[key]) ??
-    resolveRuntimeExtraEnv(key)
-  );
-}
-
-function resolveRuntimeOnlyEnv(key: RuntimeOnlyEnvKey) {
-  return normalizeEnvValue(process.env[key]) ?? resolveRuntimeExtraEnv(key);
 }
 
 export function getEnvReport(): EnvReport {
@@ -91,26 +119,13 @@ export function getEnvReport(): EnvReport {
   let convexUrl: string | undefined;
   let apiBaseUrl: string | undefined;
 
-  try {
-    convexUrl = resolvePublicEndpoint(resolveEnv("EXPO_PUBLIC_CONVEX_URL"), "EXPO_PUBLIC_CONVEX_URL");
-  } catch {
-    convexUrl = undefined;
-  }
+  convexUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_CONVEX_URL");
 
-  try {
-    appUrl = resolvePublicEndpoint(
-      resolveEnv("EXPO_PUBLIC_APP_URL") ?? resolveRuntimeOnlyEnv("NEXT_PUBLIC_APP_URL"),
-      "EXPO_PUBLIC_APP_URL",
-    );
-  } catch {
-    appUrl = undefined;
-  }
+  appUrl =
+    resolvePublicEndpointFromEnv("EXPO_PUBLIC_APP_URL")
+    ?? resolvePublicEndpointFromEnv("NEXT_PUBLIC_APP_URL", "EXPO_PUBLIC_APP_URL");
 
-  try {
-    apiBaseUrl = resolvePublicEndpoint(resolveEnv("EXPO_PUBLIC_API_BASE_URL"), "EXPO_PUBLIC_API_BASE_URL");
-  } catch {
-    apiBaseUrl = undefined;
-  }
+  apiBaseUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_API_BASE_URL");
 
   const values: EnvSnapshot = {
     clerkPublishableKey: resolveEnv("EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"),
@@ -124,19 +139,14 @@ export function getEnvReport(): EnvReport {
 
   const missing: string[] = [];
   for (const key of requiredKeys) {
-    try {
-      const value = resolveEnv(key);
-      if (key === "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY") {
-        if (!value?.trim()) {
-          missing.push(key);
-        }
-        continue;
-      }
-
-      if (!resolvePublicEndpoint(value, key)) {
+    if (key === "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY") {
+      if (!resolveEnv(key)?.trim()) {
         missing.push(key);
       }
-    } catch {
+      continue;
+    }
+
+    if (!resolvePublicEndpointFromEnv(key)) {
       missing.push(key);
     }
   }

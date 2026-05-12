@@ -33,7 +33,13 @@ async function readOrCreateAnonymousId() {
   return nextAnonymousId;
 }
 
-export function ViewerSessionProvider({ children }: { children: ReactNode }) {
+export function ViewerSessionProvider({
+  children,
+  remoteSyncEnabled = true,
+}: {
+  children: ReactNode;
+  remoteSyncEnabled?: boolean;
+}) {
   const { isLoaded, isSignedIn } = useAuth();
   const ensureViewer = useMutation("users:getOrCreateCurrentUser" as any);
   const [anonymousId, setAnonymousId] = useState<string | null>(null);
@@ -81,7 +87,7 @@ export function ViewerSessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!storageReady || !isLoaded || !anonymousId) {
+    if (!remoteSyncEnabled || !storageReady || !isLoaded || !anonymousId) {
       return;
     }
 
@@ -116,7 +122,7 @@ export function ViewerSessionProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [anonymousId, ensureViewer, isLoaded, isSignedIn, storageReady, syncRetryNonce]);
+  }, [anonymousId, ensureViewer, isLoaded, isSignedIn, remoteSyncEnabled, storageReady, syncRetryNonce]);
 
   const value = useMemo<ViewerSessionContextValue>(
     () => ({

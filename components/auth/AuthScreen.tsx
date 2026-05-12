@@ -2,7 +2,7 @@ import {useOAuth} from "@clerk/expo";
 import {useSignIn, useSignUp} from "@clerk/expo/legacy";
 import {LinearGradient} from "expo-linear-gradient";
 import {ChevronLeft, Gem, LockKeyhole, Mail, UserRound, X} from "lucide-react-native";
-import {useRouter} from "expo-router";
+import {useLocalSearchParams, useRouter} from "expo-router";
 import {useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {
@@ -28,6 +28,7 @@ import Svg, {Path} from "react-native-svg";
 import {useTheme, type Theme} from "../../styles/theme";
 import {AuthInput} from "./AuthInput";
 import {clearAuthSkipped, markAuthSkipped} from "./auth-skip";
+import {resolveSafeRoute} from "../../lib/routes";
 
 const DARK_ACTION = "#111111";
 const DARK_ACTION_SURFACE = "rgba(17,24,39,0.10)";
@@ -156,6 +157,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const AUTH_COLORS = useMemo(() => getAuthColors(theme), [theme]);
   const styles = useMemo(() => createStyles(AUTH_COLORS), [AUTH_COLORS]);
   const router = useRouter();
+  const params = useLocalSearchParams<{returnTo?: string | string[]}>();
   const {t} = useTranslation();
   const insets = useSafeAreaInsets();
   const {height, width} = useWindowDimensions();
@@ -202,6 +204,10 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const nameReady = isSignIn || name.trim().length > 0;
   const confirmReady = isSignIn || confirmPassword.length > 0;
   const disabled = !emailReady || !passwordReady || !nameReady || !confirmReady || loading !== null;
+  const postAuthRoute = useMemo(() => {
+    const returnTo = Array.isArray(params.returnTo) ? params.returnTo[0] : params.returnTo;
+    return resolveSafeRoute(returnTo, "/(tabs)");
+  }, [params.returnTo]);
 
   const resetFormErrors = () => setErrors({});
 
@@ -231,7 +237,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
       if (createdSessionId) {
         await clearAuthSkipped();
         await setActive!({session: createdSessionId});
-        router.replace("/(tabs)" as never);
+        router.replace(postAuthRoute as never);
       }
     } catch (error) {
       setErrors({form: t("auth.screen.errors.googleUnavailable")});
@@ -248,7 +254,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
       if (createdSessionId) {
         await clearAuthSkipped();
         await setActive!({session: createdSessionId});
-        router.replace("/(tabs)" as never);
+        router.replace(postAuthRoute as never);
       }
     } catch (error) {
       setErrors({form: t("auth.screen.errors.appleUnavailable")});
@@ -265,7 +271,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
       if (result.status === "complete") {
         await clearAuthSkipped();
         await setSignInActive({session: result.createdSessionId});
-        router.replace("/(tabs)" as never);
+        router.replace(postAuthRoute as never);
         return;
       }
       setErrors({form: t("auth.screen.errors.additionalVerificationRequired")});
@@ -316,7 +322,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
         await clearAuthSkipped();
         await setSignUpActive({session: result.createdSessionId});
         setOtpVisible(false);
-        router.replace("/(tabs)" as never);
+        router.replace(postAuthRoute as never);
         return;
       }
       setErrors((current) => ({...current, otp: t("auth.screen.errors.verificationFallback")}));

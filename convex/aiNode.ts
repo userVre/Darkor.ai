@@ -364,6 +364,14 @@ function inferImageMimeTypeFromBytes(bytes?: Uint8Array | Buffer | null) {
   return null;
 }
 
+async function loadSharp() {
+  const importRuntimeModule = new Function("specifier", "return import(specifier)") as (
+    specifier: string,
+  ) => Promise<any>;
+  const sharpModule = await importRuntimeModule("sharp");
+  return sharpModule.default ?? sharpModule;
+}
+
 function getAzureImageFilename(blob: Blob, index: number, prefix: string) {
   const mimeType = getAzureImageMimeType(blob);
   const extension = mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
@@ -437,8 +445,7 @@ function createAzureImageProvider(args: { apiKey: string; endpoint: string }) {
 }
 
 async function optimizeJpegWithSharp(imageBuffer: Buffer, args: { maxDimension: number; quality: number }) {
-  const sharpModule = (await import("sharp")) as any;
-  const sharp = sharpModule.default ?? sharpModule;
+  const sharp = await loadSharp();
   return await sharp(imageBuffer, { failOn: "none" })
     .rotate()
     .resize({
@@ -684,8 +691,7 @@ async function applyHomeDecorWatermark(blob: Blob) {
 
     let watermarked: Buffer;
     try {
-      const sharpModule = (await import("sharp")) as any;
-      const sharp = sharpModule.default ?? sharpModule;
+      const sharp = await loadSharp();
       const metadata = await sharp(imageBuffer, { failOn: "none" }).metadata();
       const width = Math.max(Math.round(metadata.width ?? FREE_MAX_IMAGE_DIMENSION), 1);
       const height = Math.max(Math.round(metadata.height ?? FREE_MAX_IMAGE_DIMENSION), 1);

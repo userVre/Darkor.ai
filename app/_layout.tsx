@@ -3,7 +3,7 @@ import "react-native-reanimated";
 
 import {ClerkProvider, useAuth, useUser} from "@clerk/expo";
 import {BottomSheetModalProvider} from "@gorhom/bottom-sheet";
-import {type ConvexReactClient, useConvexAuth, useMutation} from "convex/react";
+import {ConvexReactClient, useConvexAuth, useMutation} from "convex/react";
 import {ConvexProviderWithClerk} from "convex/react-clerk";
 import {Asset} from "expo-asset";
 import {useFonts} from "expo-font";
@@ -64,10 +64,11 @@ const ROOT_BOOT_ASSETS = [
   require("../assets/splash.png"),
   require("../assets/adaptive-icon.png"),
 ];
-const REQUIRED_SERVICE_CONFIG_LABELS = [
-  "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
-  "EXPO_PUBLIC_CONVEX_URL",
-];
+const SERVICE_CONFIG_RETRY_INTERVAL_MS = 250;
+const SERVICE_CONFIG_WARNING_ATTEMPTS = 20;
+// Well-formed dummy values let providers mount when EAS Update config is briefly absent.
+const FALLBACK_CLERK_PUBLISHABLE_KEY = "pk_test_ZHVtbXkuY2xlcmsuYWNjb3VudHMuZGV2JA";
+const FALLBACK_CONVEX_URL = "https://homedecor-ai-missing-config.invalid";
 
 const TextWithDefaults = Text as typeof Text & { defaultProps?: TextProps };
 const TextInputWithDefaults = TextInput as typeof TextInput & { defaultProps?: TextInputProps };
@@ -405,32 +406,6 @@ function BootScreen({ message }: { message: string }) {
   );
 }
 
-function ServiceConfigurationError({ missing }: { missing: string[] }) {
-  const missingItems = missing.length ? missing : REQUIRED_SERVICE_CONFIG_LABELS;
-
-  return (
-    <View style={bootStyles.screen}>
-      <View style={bootStyles.card}>
-        <Text style={bootStyles.title}>
-          {i18n.t("boot.missingEnvTitle", { defaultValue: "Missing Environment Variables" })}
-        </Text>
-        <Text style={bootStyles.body}>
-          {i18n.t("boot.missingEnvBody", {
-            defaultValue: "The following values are required before HomeDecor AI can launch:",
-          })}
-        </Text>
-        <View style={bootStyles.list}>
-          {missingItems.map((key) => (
-            <Text key={key} style={bootStyles.listItem}>
-              {key}
-            </Text>
-          ))}
-        </View>
-      </View>
-    </View>
-  );
-}
-
 function LocalizationSyncGate() {
   const locales = useLocales();
   const calendars = useCalendars();
@@ -565,10 +540,16 @@ function NotificationResponseGate() {
   return null;
 }
 
-function AuthGate({ children }: { children: React.ReactNode }) {
+function AuthGate({
+  children,
+  allowDegradedBoot = false,
+}: {
+  children: React.ReactNode;
+  allowDegradedBoot?: boolean;
+}) {
   const { isLoaded } = useAuth();
 
-  if (!isLoaded && !DIAGNOSTIC_BYPASS) {
+  if (!allowDegradedBoot && !isLoaded && !DIAGNOSTIC_BYPASS) {
     return <BootScreen message={i18n.t("boot.loadingAccount")} />;
   }
 
@@ -695,12 +676,20 @@ export default function RootLayout() {
   const [startupError, setStartupError] = useState<Error | null>(null);
   const [i18nReady, setI18nReady] = useState(i18n.isInitialized);
   const [envReport, setEnvReport] = useState(() => getEnvReport());
-  const [envRetryExhausted, setEnvRetryExhausted] = useState(false);
+  const [allowServiceConfigBypass, setAllowServiceConfigBypass] = useState(false);
   const clerkKey = envReport.values.clerkPublishableKey;
   const convexClient = useMemo(
     () => (envReport.values.convexUrl ? getConvexClient() : null),
     [envReport.values.convexUrl],
   );
+  const fallbackConvexClient = useMemo(
+    () => new ConvexReactClient(FALLBACK_CONVEX_URL, { logger: false }),
+    [],
+  );
+  const serviceConfigReady = Boolean(clerkKey && convexClient);
+  const degradedServiceConfig = !serviceConfigReady && allowServiceConfigBypass;
+  const effectiveClerkKey = clerkKey ?? (degradedServiceConfig ? FALLBACK_CLERK_PUBLISHABLE_KEY : undefined);
+  const effectiveConvexClient = convexClient ?? (degradedServiceConfig ? fallbackConvexClient : null);
   const bootReady = (fontsLoaded || Boolean(fontError)) && assetsReady && i18nReady;
 
   if (fontsLoaded && !fontError) {
@@ -717,24 +706,28 @@ export default function RootLayout() {
     }
 
     if (envReport.hasCriticalConfig) {
-      setEnvRetryExhausted(false);
+      setAllowServiceConfigBypass(false);
       return;
     }
 
-    setEnvRetryExhausted(false);
-    setEnvReport(getEnvReport());
     let mounted = true;
     let attempts = 0;
     const retry = setInterval(() => {
       attempts += 1;
-      setEnvReport(getEnvReport());
-      if (attempts >= 20) {
+      const nextReport = getEnvReport();
+      setEnvReport(nextReport);
+      if (nextReport.hasCriticalConfig) {
         clearInterval(retry);
-        if (mounted) {
-          setEnvRetryExhausted(true);
-        }
+        return;
       }
-    }, 250);
+      if (mounted && attempts === SERVICE_CONFIG_WARNING_ATTEMPTS) {
+        console.warn(
+          "[Boot] Service configuration is still unavailable after startup; booting in degraded non-fatal mode while retrying.",
+          nextReport.missing,
+        );
+        setAllowServiceConfigBypass(true);
+      }
+    }, SERVICE_CONFIG_RETRY_INTERVAL_MS);
     return () => {
       mounted = false;
       clearInterval(retry);
@@ -815,15 +808,7 @@ export default function RootLayout() {
     );
   }
 
-  if ((!clerkKey || !convexClient) && envRetryExhausted) {
-    return (
-      <AppErrorBoundary>
-        <ServiceConfigurationError missing={envReport.missing} />
-      </AppErrorBoundary>
-    );
-  }
-
-  if (!clerkKey || !convexClient) {
+  if (!effectiveClerkKey || !effectiveConvexClient) {
     return (
       <AppErrorBoundary>
         <BootScreen
@@ -840,21 +825,21 @@ export default function RootLayout() {
     >
       <AppThemeProvider>
           <SafeAreaProvider>
-            <ClerkProvider publishableKey={clerkKey ?? ""} tokenCache={tokenCache}>
-            <AuthGate>
-              <Providers convexClient={convexClient}>
-                <ViewerSessionProvider>
-                  {DIAGNOSTIC_BYPASS ? null : <ReferralGate />}
-                  <ViewerCreditsProvider>
+            <ClerkProvider publishableKey={effectiveClerkKey} tokenCache={tokenCache}>
+            <AuthGate allowDegradedBoot={degradedServiceConfig}>
+              <Providers convexClient={effectiveConvexClient}>
+                <ViewerSessionProvider remoteSyncEnabled={!degradedServiceConfig}>
+                  {DIAGNOSTIC_BYPASS || degradedServiceConfig ? null : <ReferralGate />}
+                  <ViewerCreditsProvider remoteSyncEnabled={!degradedServiceConfig}>
                     <DiamondStoreProvider>
                       <FlowUIProvider>
                         <WorkspaceDraftProvider>
                           <BottomSheetModalProvider>
-{DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
+{DIAGNOSTIC_BYPASS || degradedServiceConfig ? null : <RevenueCatGate />}
                             <LocalizationSyncGate />
-                            <GenerationAccessCacheGate />
-                            <NotificationScheduleGate />
-                            <NotificationResponseGate />
+                            {degradedServiceConfig ? null : <GenerationAccessCacheGate />}
+                            {degradedServiceConfig ? null : <NotificationScheduleGate />}
+                            {degradedServiceConfig ? null : <NotificationResponseGate />}
                             <CreateAccessGate>
                               <AuthRedirectGate>
                                 <AppShell />

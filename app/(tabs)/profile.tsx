@@ -227,9 +227,8 @@ export default function ProfileScreen() {
   const topContentInset = Math.max(insets.top + 28, 48);
   const bottomContentInset = Math.max(insets.bottom + 112, 128);
   const boardBodyMinHeight = Math.max(height - topContentInset - bottomContentInset - 64, 240);
-  const userEmail = user?.primaryEmailAddress?.emailAddress ?? null;
-  const userName = user?.fullName || [user?.firstName, user?.lastName].filter(Boolean).join(" ") || null;
-  const avatarInitials = getInitials(userName, userEmail);
+  const userEmail = user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? null;
+  const avatarInitials = getInitials(null, userEmail);
 
   const handleImagePress = (item: BoardItem) => {
     const itemStatus = resolveGenerationStatus(item.status, item.imageUri);
@@ -380,8 +379,7 @@ export default function ProfileScreen() {
                     )}
                   </View>
                   <View style={styles.userCopy}>
-                    {userName ? <Text numberOfLines={1} style={styles.userName}>{userName}</Text> : null}
-                    {userEmail ? <Text numberOfLines={1} style={styles.userEmail}>{userEmail}</Text> : null}
+                    {userEmail ? <Text numberOfLines={1} selectable style={styles.userEmail}>{userEmail}</Text> : null}
                   </View>
                 </>
               ) : (
@@ -493,19 +491,12 @@ function createStyles(theme: Theme) {
     minWidth: 0,
     gap: 4,
   },
-  userName: {
-    color: theme.textPrimary,
-    fontSize: 17,
-    lineHeight: 22,
-    letterSpacing: 0,
-    ...fonts.bold,
-  },
   userEmail: {
-    color: theme.textSecondary,
-    fontSize: 13,
-    lineHeight: 17,
+    color: theme.textPrimary,
+    fontSize: 15,
+    lineHeight: 20,
     letterSpacing: 0,
-    ...fonts.regular,
+    ...fonts.semibold,
   },
   settingsIconButton: {
     width: 40,

@@ -30,7 +30,8 @@ ThumbUp,
 Trash2,
 Trees,
 UtensilsCrossed,
-Wand2
+Wand2,
+Zap
 } from "@/components/material-icons";
 import {useAuth} from "@clerk/expo";
 import {BottomSheetModal} from "@gorhom/bottom-sheet";
@@ -127,6 +128,7 @@ import {fonts} from "../../styles/typography";
 const TABS_HOME_ROUTE = "/(tabs)/index";
 const PRO_TOOL_LOCK_MESSAGE = "Unlock this with PRO.";
 const RESULT_ACTION_BLUE = "#2563EB";
+const SPEED_UP_PAYWALL_SOURCE = "generation-speed-up";
 const RESULT_ROOM_LABELS_FR: Record<string, string> = {
   "Bathroom": "Salle de bain",
   "Bedroom": "Chambre",
@@ -141,6 +143,68 @@ const RESULT_ROOM_LABELS_FR: Record<string, string> = {
   "Nursery": "Chambre d'enfant",
   "Room": "Pièce",
 };
+
+function SpeedUpGenerationButton({
+  label,
+  hint,
+  onPress,
+}: {
+  label: string;
+  hint: string;
+  onPress: () => void;
+}) {
+  return (
+    <LuxPressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      className="cursor-pointer"
+      style={{
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.24)",
+        backgroundColor: "rgba(9,9,11,0.92)",
+        overflow: "hidden",
+      }}
+    >
+      <LinearGradient
+        colors={["#111111", "#2563EB"]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={{
+          minHeight: 56,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: spacing.sm,
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.sm,
+        }}
+      >
+        <View
+          style={{
+            height: 34,
+            width: 34,
+            borderRadius: 999,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(255,255,255,0.16)",
+          }}
+        >
+          <Zap color="#FFFFFF" size={17} strokeWidth={2.4} />
+        </View>
+        <View style={{ gap: 2, minWidth: 0 }}>
+          <Text style={{ color: "#FFFFFF", fontSize: 15, lineHeight: 18, ...fonts.bold }} numberOfLines={1}>
+            {label}
+          </Text>
+          <Text style={{ color: "rgba(255,255,255,0.72)", fontSize: 11, lineHeight: 14, ...fonts.medium }} numberOfLines={1}>
+            {hint}
+          </Text>
+        </View>
+      </LinearGradient>
+    </LuxPressable>
+  );
+}
 
 function breakLongWizardDescription(description: string) {
   const sentences = description.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((part) => part.trim()).filter(Boolean) ?? [description];
@@ -4237,6 +4301,19 @@ export default function WorkspaceScreen() {
     } as any);
   }, [activeEditorImageUrl, router]);
 
+  const openSpeedUpPaywall = useCallback(() => {
+    triggerHaptic();
+    captureAnalytics(posthog, "generation_speed_up_clicked", {
+      service_type: activeBoardItem?.serviceType ?? serviceType,
+      workflow_step: workflowStep,
+      generation_id: activeBoardItem?.generationId ?? generationId,
+    });
+    router.push({
+      pathname: "/paywall",
+      params: { source: SPEED_UP_PAYWALL_SOURCE, ...(activeEditorImageUrl ? { lastImageUrl: activeEditorImageUrl } : {}) },
+    } as any);
+  }, [activeBoardItem?.generationId, activeBoardItem?.serviceType, activeEditorImageUrl, generationId, posthog, router, serviceType, workflowStep]);
+
   const handleDownloadStandard = useCallback(async () => {
     triggerHaptic();
     if (!activeEditorImageUrl) {
@@ -5822,6 +5899,9 @@ export default function WorkspaceScreen() {
           ? (isPaintService || isFloorService || isReplaceService ? Boolean(selectedStyle) : selectedStyles.length > 0)
           : false;
     const stepButtonSupportingText = isGenerationReviewStep ? generationCreditLabel : null;
+    const showSpeedUpOverlay = isGenerationReviewStep && !hasPaidAccess && !diagnostic;
+    const speedUpLabel = t("processing.speedUpCta", { defaultValue: "Speed Up Generation" });
+    const speedUpHint = t("processing.speedUpHint", { defaultValue: "Get instant results with PRO." });
 
     return (
       <View className="flex-1" style={{ backgroundColor: wizardBackgroundColor }}>
@@ -7384,6 +7464,28 @@ export default function WorkspaceScreen() {
           </View>
         </ScrollView>
 
+        {showSpeedUpOverlay ? (
+          <MotiView
+            from={{ opacity: 0, translateY: 12, scale: 0.98 }}
+            animate={{ opacity: 1, translateY: 0, scale: 1 }}
+            exit={{ opacity: 0, translateY: 10, scale: 0.98 }}
+            transition={LUX_SPRING}
+            pointerEvents="box-none"
+            style={{
+              position: "absolute",
+              left: spacing.md,
+              right: spacing.md,
+              bottom: Math.max(insets.bottom + continueBarOffset + 86, 118),
+              zIndex: 34,
+              alignItems: "center",
+            }}
+          >
+            <View pointerEvents="auto" style={{ width: "100%", maxWidth: 360 }}>
+              <SpeedUpGenerationButton label={speedUpLabel} hint={speedUpHint} onPress={openSpeedUpPaywall} />
+            </View>
+          </MotiView>
+        ) : null}
+
         {isPaintService && paintTutorialOpen ? (
           <View
             style={{
@@ -7958,6 +8060,9 @@ export default function WorkspaceScreen() {
     const processingBadgeLabel = isLayoutOptimizationActive
       ? t("workspace.localization.modes.preserve.title")
       : editorStyleLabel;
+    const showProcessingSpeedUp = !hasPaidAccess && !diagnostic;
+    const speedUpLabel = t("processing.speedUpCta", { defaultValue: "Speed Up Generation" });
+    const speedUpHint = t("processing.speedUpHint", { defaultValue: "Get instant results with PRO." });
 
     if (!activeBoardItem) {
       return (
@@ -8078,6 +8183,11 @@ export default function WorkspaceScreen() {
                 <Text style={{ color: "#687076", fontSize: 16, lineHeight: 24, textAlign: "center", maxWidth: 360, ...fonts.medium }}>
                   {processingEtaLabel}
                 </Text>
+                {showProcessingSpeedUp ? (
+                  <View style={{ width: "100%", maxWidth: 340, marginTop: 8 }}>
+                    <SpeedUpGenerationButton label={speedUpLabel} hint={speedUpHint} onPress={openSpeedUpPaywall} />
+                  </View>
+                ) : null}
               </View>
 
               <View

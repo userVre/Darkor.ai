@@ -68,12 +68,18 @@ type ViewerCreditsContextValue = {
 
 const ViewerCreditsContext = createContext<ViewerCreditsContextValue | null>(null);
 
-export function ViewerCreditsProvider({ children }: { children: ReactNode }) {
+export function ViewerCreditsProvider({
+  children,
+  remoteSyncEnabled = true,
+}: {
+  children: ReactNode;
+  remoteSyncEnabled?: boolean;
+}) {
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const viewerArgs = useMemo(() => (anonymousId ? { anonymousId } : {}), [anonymousId]);
   const me = useQuery(
     "users:me" as any,
-    viewerReady ? viewerArgs : "skip",
+    viewerReady && remoteSyncEnabled ? viewerArgs : "skip",
   ) as ViewerCreditsSnapshot;
   const [optimisticState, setOptimisticState] = useState<OptimisticViewerCreditsState>(null);
   const [cachedState, setCachedState] = useState<ViewerCreditsSnapshot>(null);

@@ -1,6 +1,7 @@
 import {
 Copy,
 Diamond,
+DoorOpen,
 FileQuestion,
 FileText,
 Mail,
@@ -81,6 +82,7 @@ export default function SettingsScreen() {
 
   const [isRestoring, setIsRestoring] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const fullUserId = user?.id ?? "";
   const truncatedUserId = fullUserId ? truncateUserId(fullUserId) : t("settings.states.notSignedIn");
@@ -305,6 +307,25 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleSignOut = async () => {
+    if (!isLoaded || isSigningOut) {
+      return;
+    }
+
+    try {
+      setIsSigningOut(true);
+      const purchases = getRevenueCatClient() ?? (await configureRevenueCat(user?.id ?? null));
+      await purchases?.logOut?.().catch(() => undefined);
+      clearDraft();
+      await signOut();
+      router.replace("/sign-in" as any);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : t("settings.messages.signOutFailed", { defaultValue: "Impossible de vous déconnecter pour le moment." }));
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
   const firstGroupRows = [
     {
       id: "language",
@@ -447,6 +468,21 @@ export default function SettingsScreen() {
             loading={isDeleting}
             loadingColor={DARK_ACTION}
           />
+
+          {isSignedIn ? (
+            <SettingsRow
+              label={t("settings.rows.logout", { defaultValue: "Se déconnecter" })}
+              icon={DoorOpen}
+              iconColor={DARK_ACTION}
+              textColor={DARK_ACTION}
+              showChevron={false}
+              onPress={handleSignOut}
+              loading={isSigningOut}
+              loadingColor={DARK_ACTION}
+              disabled={!isLoaded || isSigningOut}
+              style={styles.logoutRow}
+            />
+          ) : null}
         </View>
 
         <Text style={[styles.versionLabel, localizedFonts.regular]}>{t("common.labels.version", { version: APP_VERSION })}</Text>
@@ -595,6 +631,9 @@ function createStyles(theme: Theme) {
   },
   restoreRow: {
     marginTop: 20,
+  },
+  logoutRow: {
+    marginTop: 8,
   },
   userIdAccessory: {
     flexDirection: "row",
