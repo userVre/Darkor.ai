@@ -3,7 +3,7 @@ import "react-native-reanimated";
 
 import {ClerkProvider, useAuth, useUser} from "@clerk/expo";
 import {BottomSheetModalProvider} from "@gorhom/bottom-sheet";
-import {useConvexAuth, useMutation, type ConvexReactClient} from "convex/react";
+import {ConvexReactClient, useConvexAuth, useMutation} from "convex/react";
 import {ConvexProviderWithClerk} from "convex/react-clerk";
 import {Asset} from "expo-asset";
 import {useFonts} from "expo-font";
@@ -57,8 +57,9 @@ import {AppThemeProvider, useTheme} from "../styles/theme";
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
-const POSTHOG_API_KEY = process.env.EXPO_PUBLIC_POSTHOG_API_KEY;
-const POSTHOG_HOST = process.env.EXPO_PUBLIC_POSTHOG_HOST;
+const POSTHOG_API_KEY = process.env.EXPO_PUBLIC_POSTHOG_API_KEY?.trim() || undefined;
+const POSTHOG_HOST = process.env.EXPO_PUBLIC_POSTHOG_HOST?.trim() || undefined;
+const POSTHOG_DISABLED_API_KEY = "phc_disabled";
 const ROOT_BOOT_ASSETS = [
   require("../assets/logo.png"),
   require("../assets/splash.png"),
@@ -67,7 +68,10 @@ const ROOT_BOOT_ASSETS = [
 const SERVICE_CONFIG_RETRY_INTERVAL_MS = 250;
 const SERVICE_CONFIG_WARNING_ATTEMPTS = 20;
 const BOOT_SCREEN_TIMEOUT_MS = 15000;
+const SERVICE_CONFIG_BYPASS_TIMEOUT_MS = BOOT_SCREEN_TIMEOUT_MS;
 const STARTUP_OPERATION_TIMEOUT_MS = 10000;
+const FALLBACK_CLERK_PUBLISHABLE_KEY = "pk_test_ZHVtbXkuY2xlcmsuYWNjb3VudHMuZGV2JA";
+const FALLBACK_CONVEX_URL = "https://homedecor-ai-missing-config.invalid";
 const TextWithDefaults = Text as typeof Text & { defaultProps?: TextProps };
 const TextInputWithDefaults = TextInput as typeof TextInput & { defaultProps?: TextInputProps };
 
@@ -658,14 +662,16 @@ function NotificationResponseGate() {
 
 function AuthGate({
   children,
+  allowDegradedBoot = false,
   onRetry,
 }: {
   children: React.ReactNode;
+  allowDegradedBoot?: boolean;
   onRetry?: () => void;
 }) {
   const { isLoaded } = useAuth();
 
-  if (!isLoaded && !DIAGNOSTIC_BYPASS) {
+  if (!isLoaded && !allowDegradedBoot && !DIAGNOSTIC_BYPASS) {
     return <BootScreen message={i18n.t("boot.loadingAccount")} onRetry={onRetry} />;
   }
 
@@ -790,11 +796,17 @@ export default function RootLayout() {
   });
   const [assetsReady, setAssetsReady] = useState(false);
   const [startupError, setStartupError] = useState<Error | null>(null);
+  const [fontsTimedOut, setFontsTimedOut] = useState(false);
   const [i18nReady, setI18nReady] = useState(i18n.isInitialized);
   const [envReport, setEnvReport] = useState(() => getEnvReport());
   const [bootRetryKey, setBootRetryKey] = useState(0);
+  const [allowServiceConfigBypass, setAllowServiceConfigBypass] = useState(false);
   const clerkKey = envReport.values.clerkPublishableKey;
   const missingEnvSignature = envReport.missing.join("|");
+  const fallbackConvexClient = useMemo(
+    () => new ConvexReactClient(FALLBACK_CONVEX_URL, { logger: false }),
+    [],
+  );
   const convexClient = useMemo(
     () => {
       if (!envReport.values.convexUrl) {
@@ -811,9 +823,15 @@ export default function RootLayout() {
     [envReport.values.convexUrl],
   );
   const serviceConfigReady = Boolean(clerkKey && convexClient);
-  const bootReady = (fontsLoaded || Boolean(fontError)) && assetsReady && i18nReady;
+  const degradedServiceConfig = !serviceConfigReady && allowServiceConfigBypass;
+  const effectiveClerkKey = clerkKey ?? (degradedServiceConfig ? FALLBACK_CLERK_PUBLISHABLE_KEY : undefined);
+  const effectiveConvexClient = convexClient ?? (degradedServiceConfig ? fallbackConvexClient : null);
+  const postHogApiKey = envReport.values.posthogApiKey ?? POSTHOG_API_KEY;
+  const postHogHost = envReport.values.posthogHost ?? POSTHOG_HOST;
+  const bootReady = (fontsLoaded || Boolean(fontError) || fontsTimedOut) && assetsReady && i18nReady;
   const retryBoot = useMemo(() => () => {
     console.log("[Boot] Retry requested");
+    setAllowServiceConfigBypass(false);
     setEnvReport(getEnvReport());
     setBootRetryKey((current) => current + 1);
   }, []);
@@ -827,19 +845,34 @@ export default function RootLayout() {
   }, [envReport]);
 
   useEffect(() => {
+    if (fontsLoaded || fontError) {
+      setFontsTimedOut(false);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      console.warn("[Boot] Font loading timed out - continuing with system fonts");
+      setFontsTimedOut(true);
+    }, STARTUP_OPERATION_TIMEOUT_MS);
+
+    return () => clearTimeout(timeout);
+  }, [fontError, fontsLoaded]);
+
+  useEffect(() => {
     console.log("[Boot] Service configuration status", {
       bootReady,
       hasClerkKey: Boolean(clerkKey),
       hasConvexUrl: Boolean(envReport.values.convexUrl),
       hasConvexClient: Boolean(convexClient),
+      degradedServiceConfig,
       missing: envReport.missing,
     });
-  }, [bootReady, clerkKey, convexClient, missingEnvSignature, envReport.values.convexUrl]);
+  }, [bootReady, clerkKey, convexClient, degradedServiceConfig, missingEnvSignature, envReport.values.convexUrl]);
 
   useEffect(() => {
-    console.log("[Boot] PostHog initialization started", { enabled: Boolean(POSTHOG_API_KEY) });
-    console.log("[Boot] PostHog initialization finished", { configured: Boolean(POSTHOG_API_KEY) });
-  }, []);
+    console.log("[Boot] PostHog initialization started", { enabled: Boolean(postHogApiKey) });
+    console.log("[Boot] PostHog initialization finished", { configured: Boolean(postHogApiKey) });
+  }, [postHogApiKey]);
 
   useEffect(() => {
     if (!bootReady) {
@@ -857,6 +890,7 @@ export default function RootLayout() {
       const nextReport = getEnvReport();
       setEnvReport(nextReport);
       if (nextReport.hasCriticalConfig) {
+        setAllowServiceConfigBypass(false);
         clearInterval(retry);
         return;
       }
@@ -872,6 +906,27 @@ export default function RootLayout() {
       clearInterval(retry);
     };
   }, [bootReady, bootRetryKey, envReport.hasCriticalConfig]);
+
+  useEffect(() => {
+    if (!bootReady || serviceConfigReady) {
+      setAllowServiceConfigBypass(false);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      const nextReport = getEnvReport();
+      setEnvReport(nextReport);
+      if (!nextReport.hasCriticalConfig) {
+        console.warn(
+          "[Boot] Service configuration timed out. Opening the app in offline/degraded mode.",
+          nextReport.missing,
+        );
+        setAllowServiceConfigBypass(true);
+      }
+    }, SERVICE_CONFIG_BYPASS_TIMEOUT_MS);
+
+    return () => clearTimeout(timeout);
+  }, [bootReady, bootRetryKey, serviceConfigReady]);
 
   useEffect(() => {
     let mounted = true;
@@ -946,12 +1001,12 @@ export default function RootLayout() {
   if (!bootReady) {
     return (
       <AppErrorBoundary>
-        <BootScreen message="Preparing your workspace" />
+        <BootScreen message={i18n.t("boot.preparingWorkspace", { defaultValue: "Préparation de votre espace..." })} />
       </AppErrorBoundary>
     );
   }
 
-  if (!clerkKey || !convexClient) {
+  if (!effectiveClerkKey || !effectiveConvexClient) {
     return (
       <AppErrorBoundary>
         <BootScreen
@@ -971,25 +1026,25 @@ export default function RootLayout() {
       <AppThemeProvider>
           <SafeAreaProvider>
             <ClerkProvider
-              key={`clerk-${bootRetryKey}-${clerkKey}`}
-              publishableKey={clerkKey}
+              key={`clerk-${bootRetryKey}-${effectiveClerkKey}`}
+              publishableKey={effectiveClerkKey}
               tokenCache={tokenCache}
             >
             <ClerkBootDiagnostics>
-            <AuthGate onRetry={retryBoot}>
-              <Providers convexClient={convexClient}>
-                <ViewerSessionProvider>
-                  {DIAGNOSTIC_BYPASS ? null : <ReferralGate />}
-                  <ViewerCreditsProvider>
+            <AuthGate allowDegradedBoot={degradedServiceConfig} onRetry={retryBoot}>
+              <Providers convexClient={effectiveConvexClient}>
+                <ViewerSessionProvider remoteSyncEnabled={!degradedServiceConfig}>
+                  {DIAGNOSTIC_BYPASS || degradedServiceConfig ? null : <ReferralGate />}
+                  <ViewerCreditsProvider remoteSyncEnabled={!degradedServiceConfig}>
                     <DiamondStoreProvider>
                       <FlowUIProvider>
                         <WorkspaceDraftProvider>
                           <BottomSheetModalProvider>
-{DIAGNOSTIC_BYPASS ? null : <RevenueCatGate />}
+                            {DIAGNOSTIC_BYPASS || degradedServiceConfig ? null : <RevenueCatGate />}
                             <LocalizationSyncGate />
-                            <GenerationAccessCacheGate />
-                            <NotificationScheduleGate />
-                            <NotificationResponseGate />
+                            <GenerationAccessCacheGate remoteSyncEnabled={!degradedServiceConfig} />
+                            {DIAGNOSTIC_BYPASS || degradedServiceConfig ? null : <NotificationScheduleGate />}
+                            {DIAGNOSTIC_BYPASS || degradedServiceConfig ? null : <NotificationResponseGate />}
                             <CreateAccessGate>
                               <AuthRedirectGate>
                                 <AppShell />
@@ -1011,16 +1066,18 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 
-  const trackedTree = POSTHOG_API_KEY ? (
+  const postHogDisabled = !postHogApiKey;
+  const trackedTree = (
     <PostHogProvider
-      apiKey={POSTHOG_API_KEY}
-      autocapture={{
+      apiKey={postHogApiKey ?? POSTHOG_DISABLED_API_KEY}
+      autocapture={postHogDisabled ? false : {
         captureScreens: true,
         captureTouches: false,
       }}
       options={{
-        host: POSTHOG_HOST,
-        enableSessionReplay: true,
+        disabled: postHogDisabled,
+        host: postHogHost,
+        enableSessionReplay: !postHogDisabled,
         sessionReplayConfig: {
           maskAllTextInputs: true,
         },
@@ -1028,7 +1085,7 @@ export default function RootLayout() {
     >
       {appTree}
     </PostHogProvider>
-  ) : appTree;
+  );
 
   return (
     <AppErrorBoundary>

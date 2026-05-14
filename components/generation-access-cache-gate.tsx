@@ -33,18 +33,18 @@ type CachedViewerState = {
   pricingTier?: string | null;
 } | null;
 
-export function GenerationAccessCacheGate() {
+export function GenerationAccessCacheGate({ remoteSyncEnabled = true }: { remoteSyncEnabled?: boolean }) {
   const { anonymousId, isReady: viewerReady } = useViewerSession();
   const viewerArgs = anonymousId ? { anonymousId } : {};
-  const me = useQuery("users:me" as any, viewerReady ? viewerArgs : "skip") as CachedViewerState | undefined;
+  const me = useQuery("users:me" as any, viewerReady && remoteSyncEnabled ? viewerArgs : "skip") as CachedViewerState | undefined;
 
   useEffect(() => {
-    if (!viewerReady || me === undefined) {
+    if (!remoteSyncEnabled || !viewerReady || me === undefined) {
       return;
     }
 
     void persistGenerationAccessSnapshot(me ?? null);
-  }, [me, viewerReady]);
+  }, [me, remoteSyncEnabled, viewerReady]);
 
   return null;
 }

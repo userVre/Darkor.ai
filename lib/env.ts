@@ -12,6 +12,8 @@ type EnvSnapshot = {
   revenueCatKey?: string;
   appUrl?: string;
   apiBaseUrl?: string;
+  posthogApiKey?: string;
+  posthogHost?: string;
 };
 
 type EnvReport = {
@@ -141,6 +143,8 @@ export function getEnvReport(): EnvReport {
     revenueCatKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_API_KEY"),
     appUrl,
     apiBaseUrl,
+    posthogApiKey: resolveEnv("EXPO_PUBLIC_POSTHOG_API_KEY"),
+    posthogHost: resolveEnv("EXPO_PUBLIC_POSTHOG_HOST"),
   };
 
   const missing: string[] = [];
