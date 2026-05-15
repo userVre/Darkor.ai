@@ -4,6 +4,26 @@ apply plugin: "com.facebook.react"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
+def readReleaseSigningProperty = { name ->
+    def value = findProperty(name) ?: System.getenv(name)
+    return value != null && value.toString().trim().length() > 0 ? value.toString().trim() : null
+}
+
+def releaseStoreFile = readReleaseSigningProperty("HOMED_UPLOAD_STORE_FILE")
+def releaseStorePassword = readReleaseSigningProperty("HOMED_UPLOAD_STORE_PASSWORD")
+def releaseKeyAlias = readReleaseSigningProperty("HOMED_UPLOAD_KEY_ALIAS")
+def releaseKeyPassword = readReleaseSigningProperty("HOMED_UPLOAD_KEY_PASSWORD")
+def hasReleaseSigning =
+    releaseStoreFile != null &&
+    releaseStorePassword != null &&
+    releaseKeyAlias != null &&
+    releaseKeyPassword != null
+def resolvedVersionCode = (
+    project.findProperty("android.versionCode")
+        ?: System.getenv("ANDROID_VERSION_CODE")
+        ?: "23"
+).toString().trim().toInteger()
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -93,7 +113,7 @@ android {
         applicationId 'com.ismail.homedecorai'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
+        versionCode resolvedVersionCode
         versionName "1.0.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
@@ -105,15 +125,24 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            if (hasReleaseSigning) {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            if (!hasReleaseSigning) {
+                throw new GradleException("Missing local release signing. Add HOMED_UPLOAD_STORE_FILE, HOMED_UPLOAD_STORE_PASSWORD, HOMED_UPLOAD_KEY_ALIAS, and HOMED_UPLOAD_KEY_PASSWORD to android/gradle.properties, or build with EAS.")
+            }
+            signingConfig signingConfigs.release
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()
             minifyEnabled enableMinifyInReleaseBuilds

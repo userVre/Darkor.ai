@@ -25,6 +25,8 @@
 .expo-shared
 expo-env.d.ts
 /android/app/src/main/assets/index.android.bundle
+*.jks
+*.keystore
 
 # environment
 .env*

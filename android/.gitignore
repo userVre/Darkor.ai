@@ -7,10 +7,13 @@
 build/
 .idea
 .gradle
+.kotlin
 local.properties
 *.iml
 *.hprof
 .cxx/
+*.jks
+*.keystore
 
 # Bundle artifacts
 *.jsbundle
