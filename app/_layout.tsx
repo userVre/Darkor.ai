@@ -5,7 +5,6 @@ import {ClerkProvider, useAuth, useUser} from "@clerk/expo";
 import {BottomSheetModalProvider} from "@gorhom/bottom-sheet";
 import {ConvexReactClient, useConvexAuth, useMutation} from "convex/react";
 import {ConvexProviderWithClerk} from "convex/react-clerk";
-import {Asset} from "expo-asset";
 import {useFonts} from "expo-font";
 import * as Linking from "expo-linking";
 import {useCalendars, useLocales} from "expo-localization";
@@ -60,11 +59,6 @@ void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 const POSTHOG_API_KEY = process.env.EXPO_PUBLIC_POSTHOG_API_KEY?.trim() || undefined;
 const POSTHOG_HOST = process.env.EXPO_PUBLIC_POSTHOG_HOST?.trim() || undefined;
 const POSTHOG_DISABLED_API_KEY = "phc_disabled";
-const ROOT_BOOT_ASSETS = [
-  require("../assets/logo.png"),
-  require("../assets/splash.png"),
-  require("../assets/adaptive-icon.png"),
-];
 const SERVICE_CONFIG_RETRY_INTERVAL_MS = 250;
 const SERVICE_CONFIG_WARNING_ATTEMPTS = 20;
 const BOOT_SCREEN_TIMEOUT_MS = 15000;
@@ -450,18 +444,6 @@ function ClerkBootDiagnostics({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function StartupError({ error }: { error: Error }) {
-  throw error;
-  return null;
-}
-
-function toStartupError(error: unknown, fallback: string) {
-  if (error instanceof Error) {
-    return error;
-  }
-  return new Error(fallback);
-}
-
 function BootScreen({
   message,
   onRetry,
@@ -794,8 +776,6 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Inter: require("../assets/Fonts/InterVariable.ttf"),
   });
-  const [assetsReady, setAssetsReady] = useState(false);
-  const [startupError, setStartupError] = useState<Error | null>(null);
   const [fontsTimedOut, setFontsTimedOut] = useState(false);
   const [i18nReady, setI18nReady] = useState(i18n.isInitialized);
   const [envReport, setEnvReport] = useState(() => getEnvReport());
@@ -828,7 +808,7 @@ export default function RootLayout() {
   const effectiveConvexClient = convexClient ?? (degradedServiceConfig ? fallbackConvexClient : null);
   const postHogApiKey = envReport.values.posthogApiKey ?? POSTHOG_API_KEY;
   const postHogHost = envReport.values.posthogHost ?? POSTHOG_HOST;
-  const bootReady = (fontsLoaded || Boolean(fontError) || fontsTimedOut) && assetsReady && i18nReady;
+  const bootReady = (fontsLoaded || Boolean(fontError) || fontsTimedOut) && i18nReady;
   const retryBoot = useMemo(() => () => {
     console.log("[Boot] Retry requested");
     setAllowServiceConfigBypass(false);
@@ -930,27 +910,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     let mounted = true;
-
-    console.log("[Boot] Startup assets loading started");
-    void withStartupTimeout(Asset.loadAsync(ROOT_BOOT_ASSETS), "Startup asset load").then(() => {
-      console.log("[Boot] Startup assets loaded");
-      if (mounted) {
-        setAssetsReady(true);
-      }
-    }).catch((error) => {
-      console.warn("[Boot] Startup assets failed to load", error);
-      if (mounted) {
-        setStartupError(toStartupError(error, "Startup assets failed to load"));
-      }
-    });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
     const timeout = setTimeout(() => {
       if (mounted) {
         console.warn("[Boot] i18n initialization timed out - continuing with fallback language");
@@ -980,7 +939,7 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (!bootReady && !startupError) {
+    if (!bootReady) {
       return;
     }
 
@@ -988,15 +947,7 @@ export default function RootLayout() {
       SplashScreen.hideAsync().catch((error) => console.warn("[Boot] Splash hide failed", error));
     });
     return () => cancelAnimationFrame(frame);
-  }, [bootReady, startupError]);
-
-  if (startupError) {
-    return (
-      <AppErrorBoundary>
-        <StartupError error={startupError} />
-      </AppErrorBoundary>
-    );
-  }
+  }, [bootReady]);
 
   if (!bootReady) {
     return (

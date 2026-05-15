@@ -111,7 +111,9 @@ export function CreateOptionsScreen() {
   );
 
   useEffect(() => {
-    void Asset.loadAsync(toolCards.map((card) => card.image as number));
+    void Asset.loadAsync(toolCards.map((card) => card.image as number)).catch((error) => {
+      console.warn("[Assets] Tool card image preload failed - continuing", error);
+    });
   }, [toolCards]);
 
   useEffect(() => {
