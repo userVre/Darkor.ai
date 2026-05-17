@@ -1,9 +1,9 @@
-import {useOAuth} from "@clerk/expo";
+import {useSSO} from "@clerk/expo";
 import {useSignIn, useSignUp} from "@clerk/expo/legacy";
 import {LinearGradient} from "expo-linear-gradient";
 import {ChevronLeft, Gem, LockKeyhole, Mail, UserRound, X} from "lucide-react-native";
 import {useLocalSearchParams, useRouter} from "expo-router";
-import {useMemo, useRef, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {
   ActivityIndicator,
@@ -163,8 +163,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const {height, width} = useWindowDimensions();
   const {signIn, setActive: setSignInActive, isLoaded: signInLoaded} = useSignIn();
   const {signUp, setActive: setSignUpActive, isLoaded: signUpLoaded} = useSignUp();
-  const {startOAuthFlow: googleOAuth} = useOAuth({strategy: "oauth_google"});
-  const {startOAuthFlow: appleOAuth} = useOAuth({strategy: "oauth_apple"});
+  const {startSSOFlow} = useSSO();
 
   const [currentMode, setCurrentMode] = useState<AuthMode>(mode);
   const [name, setName] = useState("");
@@ -173,6 +172,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState<"email" | "google" | "apple" | "otp" | "resend" | null>(null);
   const [errors, setErrors] = useState<ErrorMap>({});
+  const [authServiceSlow, setAuthServiceSlow] = useState(false);
   const [otpVisible, setOtpVisible] = useState(false);
   const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
   const otpRefs = useRef<Array<TextInput | null>>([]);
@@ -183,6 +183,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const topButtonOffset = insets.top + 12;
 
   const isSignIn = currentMode === "sign-in";
+  const activeAuthLoaded = isSignIn ? signInLoaded : signUpLoaded;
   const copy = useMemo(
     () => ({
       title: isSignIn ? t("auth.screen.signIn.title") : t("auth.screen.signUp.title"),
@@ -211,6 +212,19 @@ export function AuthScreen({mode}: AuthScreenProps) {
 
   const resetFormErrors = () => setErrors({});
 
+  useEffect(() => {
+    if (activeAuthLoaded) {
+      setAuthServiceSlow(false);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setAuthServiceSlow(true);
+    }, 8000);
+
+    return () => clearTimeout(timeout);
+  }, [activeAuthLoaded]);
+
   const validateEmailAndPassword = () => {
     const nextErrors: ErrorMap = {};
     if (!isSignIn && !name.trim()) {
@@ -229,42 +243,51 @@ export function AuthScreen({mode}: AuthScreenProps) {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleGoogle = async () => {
-    setLoading("google");
+  const handleSocialAuth = async (strategy: "oauth_google" | "oauth_apple", provider: "google" | "apple") => {
+    if (!signInLoaded || !signUpLoaded) {
+      setErrors({form: t("auth.screen.errors.notReady")});
+      return;
+    }
+
+    setLoading(provider);
     setErrors({});
     try {
-      const {createdSessionId, setActive} = await googleOAuth();
-      if (createdSessionId) {
+      const {createdSessionId, setActive, authSessionResult} = await startSSOFlow({strategy});
+      if (createdSessionId && setActive) {
         await clearAuthSkipped();
-        await setActive!({session: createdSessionId});
+        await setActive({session: createdSessionId});
         router.replace(postAuthRoute as never);
+        return;
+      }
+
+      if (authSessionResult?.type !== "cancel" && authSessionResult?.type !== "dismiss") {
+        setErrors({
+          form: provider === "google" ? t("auth.screen.errors.googleUnavailable") : t("auth.screen.errors.appleUnavailable"),
+        });
       }
     } catch (error) {
-      setErrors({form: t("auth.screen.errors.googleUnavailable")});
+      setErrors({
+        form: provider === "google" ? t("auth.screen.errors.googleUnavailable") : t("auth.screen.errors.appleUnavailable"),
+      });
     } finally {
       setLoading(null);
     }
+  };
+
+  const handleGoogle = async () => {
+    await handleSocialAuth("oauth_google", "google");
   };
 
   const handleApple = async () => {
-    setLoading("apple");
-    setErrors({});
-    try {
-      const {createdSessionId, setActive} = await appleOAuth();
-      if (createdSessionId) {
-        await clearAuthSkipped();
-        await setActive!({session: createdSessionId});
-        router.replace(postAuthRoute as never);
-      }
-    } catch (error) {
-      setErrors({form: t("auth.screen.errors.appleUnavailable")});
-    } finally {
-      setLoading(null);
-    }
+    await handleSocialAuth("oauth_apple", "apple");
   };
 
   const handleSignIn = async () => {
-    if (!signInLoaded || !validateEmailAndPassword()) return;
+    if (!signInLoaded) {
+      setErrors({form: "Le service de connexion charge encore. Réessayez dans un instant."});
+      return;
+    }
+    if (!validateEmailAndPassword()) return;
     setLoading("email");
     try {
       const result = await signIn.create({identifier: email.trim(), password});
@@ -283,7 +306,11 @@ export function AuthScreen({mode}: AuthScreenProps) {
   };
 
   const handleSignUp = async () => {
-    if (!signUpLoaded || !validateEmailAndPassword()) return;
+    if (!signUpLoaded) {
+      setErrors({form: "Le service de connexion charge encore. Réessayez dans un instant."});
+      return;
+    }
+    if (!validateEmailAndPassword()) return;
     const parts = name.trim().split(/\s+/);
     setLoading("email");
     try {
@@ -605,6 +632,10 @@ export function AuthScreen({mode}: AuthScreenProps) {
           {errors.form ? (
             <Text selectable style={styles.formError}>
               {errors.form}
+            </Text>
+          ) : authServiceSlow ? (
+            <Text selectable style={styles.formError}>
+              Le service de connexion prend plus de temps que prévu. Vous pouvez patienter ou continuer sans compte avec le bouton en haut.
             </Text>
           ) : null}
 

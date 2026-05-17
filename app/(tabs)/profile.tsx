@@ -1,5 +1,5 @@
 import {LayoutPanelTop} from "@/components/material-icons";
-import {useUser} from "@clerk/expo";
+import {useAuth, useUser} from "@clerk/expo";
 import {Ionicons} from "@expo/vector-icons";
 import {useMutation, useQuery} from "convex/react";
 import {Image} from "expo-image";
@@ -73,6 +73,7 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { t } = useTranslation();
+  const { isSignedIn } = useAuth();
   const { user } = useUser();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -228,7 +229,8 @@ export default function ProfileScreen() {
   const bottomContentInset = Math.max(insets.bottom + 112, 128);
   const boardBodyMinHeight = Math.max(height - topContentInset - bottomContentInset - 64, 240);
   const userEmail = user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? null;
-  const avatarInitials = getInitials(null, userEmail);
+  const userName = user?.fullName ?? user?.firstName ?? null;
+  const avatarInitials = getInitials(userName, userEmail);
 
   const handleImagePress = (item: BoardItem) => {
     const itemStatus = resolveGenerationStatus(item.status, item.imageUri);
@@ -290,6 +292,10 @@ export default function ProfileScreen() {
 
   const handleSettingsPress = () => {
     router.push("/settings" as any);
+  };
+
+  const handleSignInPress = () => {
+    router.push({ pathname: "/sign-in", params: { returnTo: "/profile" } } as any);
   };
 
   const handleCreateFirstDesign = () => {
@@ -369,7 +375,7 @@ export default function ProfileScreen() {
         ListHeaderComponent={(
           <View style={styles.header}>
             <View style={styles.profileUserHeader}>
-              {user ? (
+              {isSignedIn && user ? (
                 <>
                   <View style={styles.avatar}>
                     {user.imageUrl ? (
@@ -379,11 +385,14 @@ export default function ProfileScreen() {
                     )}
                   </View>
                   <View style={styles.userCopy}>
+                    {userName ? <Text numberOfLines={1} selectable style={styles.userName}>{userName}</Text> : null}
                     {userEmail ? <Text numberOfLines={1} selectable style={styles.userEmail}>{userEmail}</Text> : null}
                   </View>
                 </>
               ) : (
-                <View style={styles.userCopy} />
+                <Pressable accessibilityRole="button" onPress={handleSignInPress} style={styles.guestSignInButton}>
+                  <Text style={styles.guestSignInText}>{t("auth.screen.signIn.cta")}</Text>
+                </Pressable>
               )}
 
               <Pressable
@@ -491,10 +500,33 @@ function createStyles(theme: Theme) {
     minWidth: 0,
     gap: 4,
   },
+  userName: {
+    color: theme.textPrimary,
+    fontSize: 16,
+    lineHeight: 20,
+    letterSpacing: 0,
+    ...fonts.bold,
+  },
   userEmail: {
     color: theme.textPrimary,
     fontSize: 15,
     lineHeight: 20,
+    letterSpacing: 0,
+    ...fonts.semibold,
+  },
+  guestSignInButton: {
+    minHeight: 44,
+    paddingHorizontal: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 999,
+    borderCurve: "continuous",
+    backgroundColor: DARK_ACTION,
+  },
+  guestSignInText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    lineHeight: 18,
     letterSpacing: 0,
     ...fonts.semibold,
   },

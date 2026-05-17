@@ -11,7 +11,7 @@ import {useCalendars, useLocales} from "expo-localization";
 import {Stack, usePathname, useRouter} from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import {useEffect, useMemo, useRef, useState} from "react";
-import {ActivityIndicator, AppState, Pressable, StyleSheet, Text, TextInput, View, type TextInputProps, type TextProps} from "react-native";
+import {ActivityIndicator, AppState, InteractionManager, Pressable, StyleSheet, Text, TextInput, View, type TextInputProps, type TextProps} from "react-native";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
 import {SafeAreaProvider} from "react-native-safe-area-context";
 import {PostHogProvider} from "posthog-react-native";
@@ -644,20 +644,50 @@ function NotificationResponseGate() {
 
 function AuthGate({
   children,
-  allowDegradedBoot = false,
-  onRetry,
 }: {
   children: React.ReactNode;
-  allowDegradedBoot?: boolean;
-  onRetry?: () => void;
 }) {
-  const { isLoaded } = useAuth();
+  return <>{children}</>;
+}
 
-  if (!isLoaded && !allowDegradedBoot && !DIAGNOSTIC_BYPASS) {
-    return <BootScreen message={i18n.t("boot.loadingAccount")} onRetry={onRetry} />;
+function DeferredStartupGates({ remoteSyncEnabled }: { remoteSyncEnabled: boolean }) {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const fallback = setTimeout(() => {
+      if (mounted) {
+        setReady(true);
+      }
+    }, 1200);
+    const task = InteractionManager.runAfterInteractions(() => {
+      if (mounted) {
+        clearTimeout(fallback);
+        setReady(true);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      clearTimeout(fallback);
+      task.cancel?.();
+    };
+  }, []);
+
+  if (!ready) {
+    return null;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {DIAGNOSTIC_BYPASS || !remoteSyncEnabled ? null : <ReferralGate />}
+      {DIAGNOSTIC_BYPASS || !remoteSyncEnabled ? null : <RevenueCatGate />}
+      <LocalizationSyncGate />
+      <GenerationAccessCacheGate remoteSyncEnabled={remoteSyncEnabled} />
+      {DIAGNOSTIC_BYPASS || !remoteSyncEnabled ? null : <NotificationScheduleGate />}
+      {DIAGNOSTIC_BYPASS || !remoteSyncEnabled ? null : <NotificationResponseGate />}
+    </>
+  );
 }
 
 function CreateAccessGate({ children }: { children: React.ReactNode }) {
@@ -982,20 +1012,15 @@ export default function RootLayout() {
               tokenCache={tokenCache}
             >
             <ClerkBootDiagnostics>
-            <AuthGate allowDegradedBoot={degradedServiceConfig} onRetry={retryBoot}>
+            <AuthGate>
               <Providers convexClient={effectiveConvexClient}>
                 <ViewerSessionProvider remoteSyncEnabled={!degradedServiceConfig}>
-                  {DIAGNOSTIC_BYPASS || degradedServiceConfig ? null : <ReferralGate />}
                   <ViewerCreditsProvider remoteSyncEnabled={!degradedServiceConfig}>
                     <DiamondStoreProvider>
                       <FlowUIProvider>
                         <WorkspaceDraftProvider>
                           <BottomSheetModalProvider>
-                            {DIAGNOSTIC_BYPASS || degradedServiceConfig ? null : <RevenueCatGate />}
-                            <LocalizationSyncGate />
-                            <GenerationAccessCacheGate remoteSyncEnabled={!degradedServiceConfig} />
-                            {DIAGNOSTIC_BYPASS || degradedServiceConfig ? null : <NotificationScheduleGate />}
-                            {DIAGNOSTIC_BYPASS || degradedServiceConfig ? null : <NotificationResponseGate />}
+                            <DeferredStartupGates remoteSyncEnabled={!degradedServiceConfig} />
                             <CreateAccessGate>
                               <AuthRedirectGate>
                                 <AppShell />

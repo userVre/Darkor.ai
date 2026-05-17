@@ -21,7 +21,7 @@ def hasReleaseSigning =
 def resolvedVersionCode = (
     project.findProperty("android.versionCode")
         ?: System.getenv("ANDROID_VERSION_CODE")
-        ?: "25"
+        ?: "27"
 ).toString().trim().toInteger()
 
 /**
@@ -114,7 +114,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode resolvedVersionCode
-        versionName "1.0.1"
+        versionName "1.0.3"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
