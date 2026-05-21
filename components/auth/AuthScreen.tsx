@@ -1,6 +1,8 @@
-import {useSSO} from "@clerk/expo";
+import {useClerk, useSSO} from "@clerk/expo";
 import {useSignIn, useSignUp} from "@clerk/expo/legacy";
+import * as AuthSession from "expo-auth-session";
 import {LinearGradient} from "expo-linear-gradient";
+import * as WebBrowser from "expo-web-browser";
 import {ChevronLeft, Gem, LockKeyhole, Mail, UserRound, X} from "lucide-react-native";
 import {useLocalSearchParams, useRouter} from "expo-router";
 import {useEffect, useMemo, useRef, useState} from "react";
@@ -29,6 +31,8 @@ import {useTheme, type Theme} from "../../styles/theme";
 import {AuthInput} from "./AuthInput";
 import {clearAuthSkipped, markAuthSkipped} from "./auth-skip";
 import {resolveSafeRoute} from "../../lib/routes";
+
+void WebBrowser.maybeCompleteAuthSession();
 
 const DARK_ACTION = "#111111";
 const DARK_ACTION_SURFACE = "rgba(17,24,39,0.10)";
@@ -152,6 +156,45 @@ function isValidEmail(value: string) {
   return value.includes("@") && value.includes(".");
 }
 
+function createAuthRedirectUrl() {
+  return AuthSession.makeRedirectUri({
+    scheme: "homedecorai",
+    path: "sso-callback",
+  });
+}
+
+function authNotReadyMessage(t: ReturnType<typeof useTranslation>["t"]) {
+  return t("auth.screen.errors.notReady", {
+    defaultValue: t("auth.screen.otp.notReady", {
+      defaultValue: "Authentication is still loading. Try again.",
+    }),
+  });
+}
+
+function friendlySocialError(
+  provider: "google" | "apple",
+  error: unknown,
+  t: ReturnType<typeof useTranslation>["t"],
+) {
+  const {code, message} = getClerkErrorDetails(error);
+  if (
+    code.includes("native_api_disabled") ||
+    code.includes("environment") ||
+    code.includes("client") ||
+    message.includes("native api") ||
+    message.includes("environment") ||
+    message.includes("client")
+  ) {
+    return t("auth.screen.errors.notReady", {
+      defaultValue: "Authentication is not ready. Check the Clerk mobile configuration and try again.",
+    });
+  }
+
+  return provider === "google"
+    ? t("auth.screen.errors.googleUnavailable")
+    : t("auth.screen.errors.appleUnavailable");
+}
+
 export function AuthScreen({mode}: AuthScreenProps) {
   const theme = useTheme();
   const AUTH_COLORS = useMemo(() => getAuthColors(theme), [theme]);
@@ -161,6 +204,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const {t} = useTranslation();
   const insets = useSafeAreaInsets();
   const {height, width} = useWindowDimensions();
+  const clerk = useClerk();
   const {signIn, setActive: setSignInActive, isLoaded: signInLoaded} = useSignIn();
   const {signUp, setActive: setSignUpActive, isLoaded: signUpLoaded} = useSignUp();
   const {startSSOFlow} = useSSO();
@@ -183,6 +227,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const topButtonOffset = insets.top + 12;
 
   const isSignIn = currentMode === "sign-in";
+  const clerkLoaded = signInLoaded && signUpLoaded;
   const activeAuthLoaded = isSignIn ? signInLoaded : signUpLoaded;
   const copy = useMemo(
     () => ({
@@ -244,30 +289,39 @@ export function AuthScreen({mode}: AuthScreenProps) {
   };
 
   const handleSocialAuth = async (strategy: "oauth_google" | "oauth_apple", provider: "google" | "apple") => {
-    if (!signInLoaded || !signUpLoaded) {
-      setErrors({form: t("auth.screen.errors.notReady")});
+    if (!clerkLoaded || !signInLoaded || !signUpLoaded) {
+      setErrors({form: authNotReadyMessage(t)});
       return;
     }
 
     setLoading(provider);
     setErrors({});
     try {
-      const {createdSessionId, setActive, authSessionResult} = await startSSOFlow({strategy});
-      if (createdSessionId && setActive) {
+      const result = await startSSOFlow({
+        strategy,
+        redirectUrl: createAuthRedirectUrl(),
+        authSessionOptions: {showInRecents: true},
+      });
+      const createdSessionId =
+        result.createdSessionId ??
+        result.signIn?.createdSessionId ??
+        result.signUp?.createdSessionId;
+
+      if (createdSessionId && result.setActive) {
         await clearAuthSkipped();
-        await setActive({session: createdSessionId});
+        await result.setActive({session: createdSessionId});
         router.replace(postAuthRoute as never);
         return;
       }
 
-      if (authSessionResult?.type !== "cancel" && authSessionResult?.type !== "dismiss") {
+      if (result.authSessionResult?.type !== "cancel" && result.authSessionResult?.type !== "dismiss") {
         setErrors({
           form: provider === "google" ? t("auth.screen.errors.googleUnavailable") : t("auth.screen.errors.appleUnavailable"),
         });
       }
     } catch (error) {
       setErrors({
-        form: provider === "google" ? t("auth.screen.errors.googleUnavailable") : t("auth.screen.errors.appleUnavailable"),
+        form: friendlySocialError(provider, error, t),
       });
     } finally {
       setLoading(null);
@@ -283,8 +337,8 @@ export function AuthScreen({mode}: AuthScreenProps) {
   };
 
   const handleSignIn = async () => {
-    if (!signInLoaded) {
-      setErrors({form: "Le service de connexion charge encore. Réessayez dans un instant."});
+    if (!clerkLoaded || !signInLoaded) {
+      setErrors({form: authNotReadyMessage(t)});
       return;
     }
     if (!validateEmailAndPassword()) return;
@@ -306,8 +360,8 @@ export function AuthScreen({mode}: AuthScreenProps) {
   };
 
   const handleSignUp = async () => {
-    if (!signUpLoaded) {
-      setErrors({form: "Le service de connexion charge encore. Réessayez dans un instant."});
+    if (!clerkLoaded || !signUpLoaded) {
+      setErrors({form: authNotReadyMessage(t)});
       return;
     }
     if (!validateEmailAndPassword()) return;

@@ -40,7 +40,10 @@ type PublicEnvKey =
   | "EXPO_PUBLIC_POSTHOG_API_KEY"
   | "EXPO_PUBLIC_POSTHOG_HOST"
   | "EXPO_PUBLIC_DISABLE_VIDEO"
-  | "EXPO_PUBLIC_REVIEW_FORCE";
+  | "EXPO_PUBLIC_REVIEW_FORCE"
+  | "EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID"
+  | "EXPO_PUBLIC_CLERK_GOOGLE_IOS_CLIENT_ID"
+  | "EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME";
 
 type RuntimeEnvKey = PublicEnvKey;
 type ExpoExtraEnv = Partial<Record<RuntimeEnvKey, string>> & {
@@ -50,7 +53,7 @@ type ExpoExtraEnv = Partial<Record<RuntimeEnvKey, string>> & {
 let didLog = false;
 
 function normalizeEnvValue(value?: string | null) {
-  const trimmed = value?.trim();
+  const trimmed = value?.trim().replace(/^(['"])(.*)\1$/, "$2").trim();
   return trimmed ? trimmed : undefined;
 }
 

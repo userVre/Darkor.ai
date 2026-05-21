@@ -30,6 +30,7 @@
     },
     "android": {
       "package": "com.ismail.homedecorai",
+      "versionCode": 28,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
@@ -43,6 +44,7 @@
     },
     "plugins": [
       "expo-router",
+      "@clerk/expo",
       "expo-secure-store",
       [
         "expo-font",
@@ -50,13 +52,6 @@
           "fonts": [
             "./assets/Fonts/InterVariable.ttf"
           ]
-        }
-      ],
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "We need camera access so you can snap a photo of your room to redesign it.",
-          "microphonePermission": false
         }
       ],
       [
@@ -87,7 +82,6 @@
       "expo-image",
       "expo-localization",
       "expo-sharing",
-      "expo-video",
       "expo-web-browser"
     ],
     "experiments": {

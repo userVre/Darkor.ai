@@ -15,6 +15,9 @@ const PUBLIC_ENV_KEYS = [
   "EXPO_PUBLIC_POSTHOG_HOST",
   "EXPO_PUBLIC_DISABLE_VIDEO",
   "EXPO_PUBLIC_REVIEW_FORCE",
+  "EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID",
+  "EXPO_PUBLIC_CLERK_GOOGLE_IOS_CLIENT_ID",
+  "EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME",
 ] as const;
 
 const REQUIRED_PUBLIC_ENV_KEYS = [
@@ -24,7 +27,8 @@ const REQUIRED_PUBLIC_ENV_KEYS = [
 ] as const;
 
 function readEnv(key: (typeof PUBLIC_ENV_KEYS)[number]) {
-  const value = process.env[key]?.trim();
+  const rawValue = process.env[key]?.trim();
+  const value = rawValue?.replace(/^(['"])(.*)\1$/, "$2").trim();
   return value ? value : undefined;
 }
 

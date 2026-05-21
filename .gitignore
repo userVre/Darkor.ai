@@ -19,6 +19,9 @@
 /.gradle
 /homedecor-ai
 /android.backup
+/website-screenshots
+*.apk
+*.aab
 
 # Expo / native
 .expo

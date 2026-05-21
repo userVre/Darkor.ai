@@ -11,6 +11,8 @@ node_modules/
 dist/
 build
 coverage
+android.backup/
+website-screenshots/
 android/app/src/main/assets/index.android.bundle
 
 # accidental nested starter app
@@ -21,3 +23,7 @@ homedecor-ai
 .env.*
 *.log
 *.mp4
+*.apk
+*.aab
+*.jks
+*.keystore

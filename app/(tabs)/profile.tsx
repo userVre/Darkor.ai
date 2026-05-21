@@ -1,6 +1,5 @@
-import {LayoutPanelTop} from "@/components/material-icons";
+import {LayoutPanelTop, Settings} from "@/components/material-icons";
 import {useAuth, useUser} from "@clerk/expo";
-import {Ionicons} from "@expo/vector-icons";
 import {useMutation, useQuery} from "convex/react";
 import {Image} from "expo-image";
 import * as FileSystem from "expo-file-system/legacy";
@@ -402,7 +401,7 @@ export default function ProfileScreen() {
                 onPress={handleSettingsPress}
                 style={styles.settingsIconButton}
               >
-                <Ionicons name="settings-outline" color={theme.textPrimary} size={24} />
+                <Settings color={theme.textPrimary} size={24} strokeWidth={1.9} />
               </Pressable>
             </View>
 

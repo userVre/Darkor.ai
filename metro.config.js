@@ -10,7 +10,6 @@ const ignoredWorkspaceDirs = ["homedecor-ai", "android.backup", ".codex-temp", "
   (dir) => new RegExp(`${escapePathForRegex(path.resolve(__dirname, dir))}[/\\\\].*`),
 );
 
-config.resolver.assetExts.push("mp4");
 config.resolver.sourceExts.push("css");
 config.resolver.blockList = [
   ...(Array.isArray(config.resolver.blockList) ? config.resolver.blockList : [config.resolver.blockList].filter(Boolean)),
@@ -20,6 +19,21 @@ config.resolver.extraNodeModules = {
   ...(config.resolver.extraNodeModules ?? {}),
   "@": __dirname,
   "expo-keep-awake": path.resolve(__dirname, "lib/expo-keep-awake-safe.ts"),
+  "expo-symbols": path.resolve(__dirname, "lib/expo-symbols-shim.tsx"),
+};
+const defaultResolveRequest = config.resolver.resolveRequest;
+
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === "expo-symbols") {
+    return {
+      type: "sourceFile",
+      filePath: path.resolve(__dirname, "lib/expo-symbols-shim.tsx"),
+    };
+  }
+
+  return defaultResolveRequest
+    ? defaultResolveRequest(context, moduleName, platform)
+    : context.resolveRequest(context, moduleName, platform);
 };
 
 module.exports = withNativeWind(config, { input: "./global.css" });
