@@ -602,6 +602,25 @@ function resolveStoredServiceType(
   return canonicalServiceType;
 }
 
+function getPromptRoomType(args: {
+  requestedServiceType: RequestedServiceType;
+  roomType: string;
+}) {
+  const roomType = trimOptional(args.roomType) ?? "space";
+
+  if (args.requestedServiceType === "interior") {
+    return `Interior ${roomType}`;
+  }
+  if (args.requestedServiceType === "exterior") {
+    return `Exterior ${roomType}`;
+  }
+  if (args.requestedServiceType === "garden") {
+    return `Garden ${roomType}`;
+  }
+
+  return roomType;
+}
+
 export const getUserArchive = queryGeneric({
   args: {
     anonymousId: v.optional(v.string()),
@@ -725,6 +744,10 @@ export const startGeneration = mutationGeneric({
     const watermarkRequired = enforcedGenerationPolicy.watermarkRequired;
     const normalizedSelection = trimOptional(args.selection) ?? "Premium";
     const normalizedAspectRatio = normalizeAIAspectRatio(args.aspectRatio);
+    const promptRoomType = getPromptRoomType({
+      requestedServiceType,
+      roomType: args.roomType,
+    });
     const resolvedStyle =
       trimOptional(args.displayStyle) ??
       (canonicalServiceType === "paint"
@@ -738,7 +761,7 @@ export const startGeneration = mutationGeneric({
           : normalizedSelection);
     const prompt = buildAIDesignPrompt({
       serviceType: canonicalServiceType,
-      roomType: args.roomType,
+      roomType: promptRoomType,
       style: resolvedStyle,
       customPrompt: args.customPrompt,
       targetColor: trimOptional(args.targetColor),

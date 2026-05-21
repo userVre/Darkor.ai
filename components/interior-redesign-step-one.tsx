@@ -277,7 +277,7 @@ export function InteriorRedesignStepOne({
                     const active = index === currentDisplayIndex;
 
                     return (
-                      <View key={`image-${index}`} style={styles.thumbnailItem}>
+                      <View key={`image-${photo.uri}-${index}`} style={styles.thumbnailItem}>
                         <Pressable
                           accessibilityRole="button"
                           accessibilityState={{ selected: active }}
@@ -338,7 +338,7 @@ export function InteriorRedesignStepOne({
                     const active = index === currentDisplayIndex;
 
                     return (
-                      <View key={`image-${index}`} style={styles.thumbnailItem}>
+                      <View key={`image-${photo.uri}-${index}`} style={styles.thumbnailItem}>
                         <Pressable
                           accessibilityRole="button"
                           accessibilityState={{ selected: active }}
@@ -638,6 +638,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     flexWrap: "wrap",
+    zIndex: 2,
   },
   thumbnailRailContent: {
     flexDirection: "row",
@@ -647,6 +648,7 @@ const styles = StyleSheet.create({
   },
   thumbnailItem: {
     position: "relative",
+    flexShrink: 0,
   },
   photoMetaRow: {
     position: "absolute",
@@ -733,7 +735,7 @@ const styles = StyleSheet.create({
     backgroundColor: slate.slate3,
   },
   selectedThumbnailFrame: {
-    flex: 1,
+    flexShrink: 0,
     overflow: "hidden",
     borderRadius: 12,
     borderWidth: 1.5,
@@ -751,6 +753,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -6,
     right: -6,
+    zIndex: 3,
     width: 22,
     height: 22,
     borderRadius: 11,

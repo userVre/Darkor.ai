@@ -68,18 +68,18 @@ import {fonts} from "../styles/typography";
 const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 3000;
 const CLOSE_VISUAL_SIZE = 36;
-const HERO_HEIGHT = 188;
-const PAYWALL_BG = "#000000";
-const PAYWALL_ACCENT = "#E83A5A";
-const PAYWALL_ACCENT_DARK = "#C0254A";
-const PAYWALL_ACCENT_SHADOW = "rgba(232,58,90,0.22)";
-const PAYWALL_PREMIUM_GOLD = "#C99A2E";
-const PAYWALL_CARD_BG = "rgba(255,255,255,0.06)";
-const PAYWALL_CARD_BG_ALT = "rgba(255,255,255,0.04)";
-const PAYWALL_BORDER = "rgba(255,255,255,0.12)";
+const HERO_HEIGHT = 230;
+const PAYWALL_BG = "#070706";
+const PAYWALL_ACCENT = "#B88A3A";
+const PAYWALL_ACCENT_DARK = "#76511F";
+const PAYWALL_ACCENT_SHADOW = "rgba(184,138,58,0.28)";
+const PAYWALL_PREMIUM_GOLD = "#D2AA5A";
+const PAYWALL_CARD_BG = "rgba(255,250,238,0.075)";
+const PAYWALL_CARD_BG_ALT = "rgba(255,250,238,0.045)";
+const PAYWALL_BORDER = "rgba(239,220,184,0.16)";
 const PAYWALL_TEXT_PRIMARY = "#FFFFFF";
-const PAYWALL_TEXT_SECONDARY = "rgba(255,255,255,0.76)";
-const PAYWALL_TEXT_MUTED = "rgba(255,255,255,0.58)";
+const PAYWALL_TEXT_SECONDARY = "rgba(246,239,224,0.78)";
+const PAYWALL_TEXT_MUTED = "rgba(246,239,224,0.56)";
 const HERO_IMAGES = [
   require("../assets/media/paywall/carousel-japandi-bedroom.webp"),
   require("../assets/media/paywall/carousel-luxury-marble.webp"),
@@ -166,6 +166,20 @@ function FeatureComparisonTable() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const localizedFonts = fonts;
+  const outcomes = [
+    {
+      title: "Rendus 4K illimités",
+      body: "Itérez sans compteur pendant vos sessions de conception.",
+    },
+    {
+      title: "Images sans filigrane",
+      body: "Exportez des visuels propres pour portfolio, client ou partage.",
+    },
+    {
+      title: "Priorité de rendu",
+      body: "Passez devant la file avec une génération plus fluide.",
+    },
+  ];
   const rows: Array<{ feature: string; free: FeatureValue; pro: FeatureValue }> = [
     {
       feature: "Rendus par jour",
@@ -231,19 +245,31 @@ function FeatureComparisonTable() {
   };
 
   return (
-    <View style={styles.featureTable}>
-      <View style={styles.featureTableHeader}>
-        <Text style={[styles.featureTableHeaderText, styles.featureTableFeatureCell, localizedFonts.bold]}>{"FONCTIONNALITÉ"}</Text>
-        <Text style={[styles.featureTableHeaderText, styles.featureTablePlanHeaderCell, localizedFonts.bold]}>{"GRATUIT"}</Text>
-        <Text style={[styles.featureTableHeaderText, styles.featureTablePlanHeaderCell, styles.featureTableProHeader, localizedFonts.bold]}>{"PRO"}</Text>
+    <View style={styles.valueSection}>
+      <View style={styles.outcomeGrid}>
+        {outcomes.map((item) => (
+          <View key={item.title} style={styles.outcomeCard}>
+            <View style={styles.outcomeRule} />
+            <Text style={[styles.outcomeTitle, localizedFonts.bold]}>{item.title}</Text>
+            <Text style={[styles.outcomeBody, localizedFonts.medium]}>{item.body}</Text>
+          </View>
+        ))}
       </View>
-      {rows.map((row, index) => (
-        <View key={row.feature} style={[styles.featureTableRow, index % 2 === 0 ? styles.featureTableRowAlt : null]}>
-          <Text style={[styles.featureTableFeatureText, styles.featureTableFeatureCell, localizedFonts.medium]}>{row.feature}</Text>
-          <View style={styles.featureTablePlanCell}>{renderValue(row.free)}</View>
-          <View style={styles.featureTablePlanCell}>{renderValue(row.pro, true)}</View>
+
+      <View style={styles.featureTable}>
+        <View style={styles.featureTableHeader}>
+          <Text style={[styles.featureTableHeaderText, styles.featureTableFeatureCell, localizedFonts.bold]}>{"INCLUS"}</Text>
+          <Text style={[styles.featureTableHeaderText, styles.featureTablePlanHeaderCell, localizedFonts.bold]}>{"GRATUIT"}</Text>
+          <Text style={[styles.featureTableHeaderText, styles.featureTablePlanHeaderCell, styles.featureTableProHeader, localizedFonts.bold]}>{"PRO"}</Text>
         </View>
-      ))}
+        {rows.map((row, index) => (
+          <View key={row.feature} style={[styles.featureTableRow, index % 2 === 0 ? styles.featureTableRowAlt : null]}>
+            <Text style={[styles.featureTableFeatureText, styles.featureTableFeatureCell, localizedFonts.medium]}>{row.feature}</Text>
+            <View style={styles.featureTablePlanCell}>{renderValue(row.free)}</View>
+            <View style={styles.featureTablePlanCell}>{renderValue(row.pro, true)}</View>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -470,8 +496,8 @@ export default function PaywallScreen() {
   const isPostWowPaywall = source === "post_wow";
   const isSoftPaywall = variant === "soft" && !isPostWowPaywall;
   const isHardPaywall = source === "generate" || source === "second-design";
-  const paywallTitle = "Concevez comme un pro. Liberté de création illimitée.";
-  const paywallSubtitle = "Débloquez des rendus 4K illimités pour vos projets d'intérieur.";
+  const paywallTitle = "L'atelier Pro pour vos projets d'intérieur.";
+  const paywallSubtitle = "Créez des rendus 4K illimités, sans filigrane, avec la finition d'un portfolio professionnel.";
   const heroRowHeight = HERO_HEIGHT + Math.max(insets.top, 12);
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
   const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
@@ -499,7 +525,9 @@ export default function PaywallScreen() {
     return nextPackage ?? yearlyPackage ?? weeklyPackage ?? packages[0] ?? null;
   }, [isSoftPaywall, packages, selectedDuration, weeklyPackage, yearlyPackage]);
 
-  const ctaDisabled = isLoading || !selectedPackage;
+  const subscriptionsUnavailable = errorMessage === t("paywall.subscriptionsUnavailable") || (packages.length > 0 && !selectedPackage);
+  const offerLoading = !subscriptionsUnavailable && !selectedPackage;
+  const ctaDisabled = isLoading || offerLoading || subscriptionsUnavailable;
   const sheetHeight = Math.max(height - 12, 0);
 
   useEffect(() => {
@@ -555,10 +583,11 @@ export default function PaywallScreen() {
         );
         setPackages(nextPackages);
 
-        setErrorMessage(null);
-      } catch {
+        setErrorMessage(nextPackages.length > 0 ? null : t("paywall.subscriptionsUnavailable"));
+      } catch (error) {
+        console.warn("[Paywall] RevenueCat offerings failed", error);
         if (active) {
-          setErrorMessage(t("paywall.subscriptionsUnavailable"));
+          setErrorMessage(cachedOfferingPackages.length > 0 ? null : t("paywall.subscriptionsUnavailable"));
         }
       }
     };
@@ -573,6 +602,7 @@ export default function PaywallScreen() {
     isSignedIn,
     pricingContext.revenueCat.countryCode,
     pricingContext.revenueCat.currencyCode,
+    pricingContext.revenueCat.offeringHint,
     pricingContext.revenueCat.tierId,
     t,
     user?.id,
@@ -812,7 +842,11 @@ export default function PaywallScreen() {
     }
   }, [handlePurchase, isLoading, isPostWowPaywall, isSoftPaywall, posthog, selectedPackage, source, weeklyPackage]);
 
-  const ctaButtonText = "Commencer — 3 jours gratuits →";
+  const ctaButtonText = subscriptionsUnavailable
+    ? "Abonnements indisponibles"
+    : offerLoading
+      ? "Chargement de l'offre"
+      : "Commencer — 3 jours gratuits";
 
   const handleSkipPostWowPaywall = useCallback(async () => {
     triggerHaptic();
@@ -862,10 +896,10 @@ export default function PaywallScreen() {
         <View style={styles.softBackdrop} />
         <Animated.View style={[styles.softSheet, { paddingBottom: Math.max(insets.bottom + 12, 20) }, sheetAnimatedStyle]}>
           <View style={styles.softHandle} />
-          <Text style={[styles.softEyebrow, localizedFonts.bold]}>{"MEILLEURE OFFRE"}</Text>
-          <Text style={[styles.softTitle, localizedFonts.bold]}>{"Débloquez Darkor Pro"}</Text>
+          <Text style={[styles.softEyebrow, localizedFonts.bold]}>{"ATELIER PRO"}</Text>
+          <Text style={[styles.softTitle, localizedFonts.bold]}>{"Passez en mode portfolio"}</Text>
           <Text style={[styles.softSubtitle, localizedFonts.medium]}>
-            {"Créez des rendus illimités en qualité 4K avec 3 jours d'essai gratuit."}
+            {"Rendus 4K illimités, sans filigrane, avec 3 jours d'essai gratuit."}
           </Text>
 
           <View style={styles.softPlanStack}>
@@ -951,7 +985,7 @@ export default function PaywallScreen() {
 
           <FeatureComparisonTable />
 
-          <TrialIncludedText />
+          {subscriptionsUnavailable ? null : <TrialIncludedText />}
 
           <View style={styles.yearlyWrapper}>
             <YearlyPlanCard
@@ -973,7 +1007,7 @@ export default function PaywallScreen() {
 
           <Pressable accessibilityRole="button" disabled={ctaDisabled} onPress={() => void handlePurchase()} style={[styles.ctaButton, ctaDisabled ? styles.ctaButtonDisabled : null]}>
             <LinearGradient
-              colors={[PAYWALL_ACCENT, PAYWALL_ACCENT_DARK]}
+              colors={subscriptionsUnavailable || offerLoading ? ["rgba(255,250,238,0.10)", "rgba(255,250,238,0.08)"] : [PAYWALL_ACCENT, PAYWALL_ACCENT_DARK]}
               end={{ x: 1, y: 0.5 }}
               start={{ x: 0, y: 0.5 }}
               style={styles.ctaGradient}
@@ -992,7 +1026,11 @@ export default function PaywallScreen() {
             </LinearGradient>
           </Pressable>
           <Text style={[styles.ctaFinePrintText, localizedFonts.regular]}>
-            {"Aucun frais pendant 3 jours · Annulez à tout moment"}
+            {subscriptionsUnavailable
+              ? "Réessayez dans un instant ou restaurez un abonnement existant."
+              : offerLoading
+                ? "Préparation des offres disponibles."
+                : "Aucun frais pendant 3 jours · Annulez à tout moment"}
           </Text>
 
           <View style={[styles.legalFooter, { paddingBottom: Math.max(insets.bottom + 24, 32) }]}>
@@ -1169,12 +1207,9 @@ function createStyles(theme: Theme) {
     paddingBottom: 10,
   },
   heroImageWrap: {
-    borderRadius: 18,
+    borderRadius: 0,
     overflow: "hidden",
-    backgroundColor: PAYWALL_CARD_BG,
-    borderWidth: 0.5,
-    borderColor: PAYWALL_BORDER,
-    boxShadow: "0px 8px 18px rgba(0, 0, 0, 0.32)",
+    backgroundColor: PAYWALL_BG,
   },
   heroCarouselContent: {
     alignItems: "flex-end",
@@ -1182,7 +1217,7 @@ function createStyles(theme: Theme) {
   heroCarouselPage: {
     alignItems: "center",
     justifyContent: "flex-end",
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
   },
   heroCarouselCard: {
     width: "100%",
@@ -1202,15 +1237,15 @@ function createStyles(theme: Theme) {
   titleSection: {
     marginHorizontal: 20,
     alignItems: "flex-start",
-    marginTop: 10,
-    marginBottom: 8,
-    gap: 4,
+    marginTop: 12,
+    marginBottom: 12,
+    gap: 7,
   },
   subtitleText: {
     maxWidth: 390,
     color: PAYWALL_TEXT_SECONDARY,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: "left",
     letterSpacing: 0,
     ...fonts.regular,
@@ -1223,26 +1258,65 @@ function createStyles(theme: Theme) {
   },
   titleText: {
     color: PAYWALL_TEXT_PRIMARY,
-    fontSize: 23,
-    lineHeight: 27,
+    fontSize: 30,
+    lineHeight: 35,
     textAlign: "left",
     flexShrink: 1,
     letterSpacing: 0,
     ...fonts.bold,
     fontWeight: "800",
   },
-  featureTable: {
+  valueSection: {
+    gap: 10,
     marginHorizontal: 20,
+    marginBottom: 10,
+  },
+  outcomeGrid: {
+    gap: 8,
+  },
+  outcomeCard: {
+    minHeight: 72,
+    overflow: "hidden",
+    borderRadius: 8,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: PAYWALL_BORDER,
+    backgroundColor: PAYWALL_CARD_BG_ALT,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 4,
+  },
+  outcomeRule: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    backgroundColor: PAYWALL_PREMIUM_GOLD,
+  },
+  outcomeTitle: {
+    color: PAYWALL_TEXT_PRIMARY,
+    fontSize: 14,
+    lineHeight: 18,
+    letterSpacing: 0,
+  },
+  outcomeBody: {
+    color: PAYWALL_TEXT_SECONDARY,
+    fontSize: 12,
+    lineHeight: 17,
+    letterSpacing: 0,
+  },
+  featureTable: {
     marginTop: 0,
-    marginBottom: 8,
-    borderRadius: 12,
+    marginBottom: 0,
+    borderRadius: 8,
     borderWidth: 0.5,
     borderColor: PAYWALL_BORDER,
     backgroundColor: PAYWALL_CARD_BG,
     overflow: "hidden",
   },
   featureTableHeader: {
-    minHeight: 32,
+    minHeight: 34,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
@@ -1250,7 +1324,7 @@ function createStyles(theme: Theme) {
     borderBottomColor: PAYWALL_BORDER,
   },
   featureTableRow: {
-    minHeight: 36,
+    minHeight: 38,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
@@ -1258,7 +1332,7 @@ function createStyles(theme: Theme) {
     borderBottomColor: "rgba(255,255,255,0.08)",
   },
   featureTableRowAlt: {
-    backgroundColor: PAYWALL_BG,
+    backgroundColor: "rgba(0,0,0,0.16)",
   },
   featureTableFeatureCell: {
     flex: 1.5,
@@ -1283,7 +1357,7 @@ function createStyles(theme: Theme) {
     textTransform: "uppercase",
   },
   featureTableProHeader: {
-    color: PAYWALL_ACCENT,
+    color: PAYWALL_PREMIUM_GOLD,
     fontWeight: "700",
   },
   featureTableFeatureText: {
@@ -1345,33 +1419,33 @@ function createStyles(theme: Theme) {
   },
   planCard: {
     minHeight: 64,
-    borderRadius: 14,
+    borderRadius: 8,
     borderCurve: "continuous",
-    backgroundColor: PAYWALL_CARD_BG,
+    backgroundColor: PAYWALL_CARD_BG_ALT,
     paddingHorizontal: 18,
     paddingVertical: 10,
     justifyContent: "center",
     boxShadow: "0px 6px 16px rgba(0, 0, 0, 0.22)",
   },
   planGradientBorder: {
-    borderRadius: 18,
+    borderRadius: 10,
     padding: 1.5,
   },
   planCardSurface: {
     borderWidth: 0,
   },
   yearlyCard: {
-    minHeight: 82,
+    minHeight: 96,
     paddingTop: 16,
-    paddingBottom: 8,
+    paddingBottom: 12,
   },
   weeklyCard: {
     minHeight: 60,
   },
   planCardSelected: {
-    borderWidth: 1.5,
-    borderColor: PAYWALL_ACCENT,
-    backgroundColor: PAYWALL_CARD_BG,
+    borderWidth: 1,
+    borderColor: "rgba(210, 170, 90, 0.85)",
+    backgroundColor: "rgba(210, 170, 90, 0.10)",
   },
   planCardUnselected: {
     borderWidth: 0.5,
@@ -1380,15 +1454,17 @@ function createStyles(theme: Theme) {
   },
   bestOfferBadge: {
     position: "absolute",
-    top: 8,
+    top: 10,
     right: 14,
-    borderRadius: 999,
-    backgroundColor: PAYWALL_PREMIUM_GOLD,
-    paddingHorizontal: 10,
+    borderRadius: 6,
+    backgroundColor: "rgba(210, 170, 90, 0.20)",
+    borderWidth: 1,
+    borderColor: "rgba(210, 170, 90, 0.45)",
+    paddingHorizontal: 9,
     paddingVertical: 4,
   },
   bestOfferText: {
-    color: "#FFFFFF",
+    color: PAYWALL_PREMIUM_GOLD,
     fontSize: 10,
     lineHeight: 12,
     textTransform: "uppercase",
@@ -1469,7 +1545,7 @@ function createStyles(theme: Theme) {
   },
   yearlySavingsText: {
     marginTop: 3,
-    color: "#4CAF50",
+    color: "#9BC489",
     fontSize: 11,
     lineHeight: 14,
     ...fonts.medium,
@@ -1564,24 +1640,24 @@ function createStyles(theme: Theme) {
     gap: 6,
   },
   trialIncludedCheck: {
-    color: "#4CAF50",
+    color: "#9BC489",
     fontSize: 12,
     lineHeight: 16,
     ...fonts.bold,
   },
   trialIncludedText: {
-    color: "#4CAF50",
+    color: "#9BC489",
     fontSize: 12,
     lineHeight: 16,
     ...fonts.medium,
     fontWeight: "500",
   },
   ctaButton: {
-    height: 46,
+    height: 50,
     marginTop: 0,
     marginHorizontal: 20,
     marginBottom: 6,
-    borderRadius: 23,
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
     boxShadow: `0px 5px 14px ${PAYWALL_ACCENT_SHADOW}`,
@@ -1590,13 +1666,13 @@ function createStyles(theme: Theme) {
   ctaGradient: {
     width: "100%",
     height: "100%",
-    borderRadius: 23,
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 18,
   },
   ctaButtonDisabled: {
-    opacity: 0.7,
+    opacity: 1,
   },
   ctaContent: {
     alignItems: "center",
@@ -1619,7 +1695,7 @@ function createStyles(theme: Theme) {
   ctaText: {
     color: "#FFFFFF",
     fontSize: 15,
-    lineHeight: 19,
+    lineHeight: 20,
     ...fonts.bold,
     fontWeight: "700",
   },

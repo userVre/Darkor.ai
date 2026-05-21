@@ -10,10 +10,11 @@ import * as Linking from "expo-linking";
 import {useCalendars, useLocales} from "expo-localization";
 import {Stack, usePathname, useRouter} from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import * as SystemUI from "expo-system-ui";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {ActivityIndicator, AppState, InteractionManager, Pressable, StyleSheet, Text, TextInput, View, type TextInputProps, type TextProps} from "react-native";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
-import {SafeAreaProvider} from "react-native-safe-area-context";
+import {SafeAreaProvider, SafeAreaView} from "react-native-safe-area-context";
 import {PostHogProvider} from "posthog-react-native";
 
 import {AppErrorBoundary} from "../components/app-error-boundary";
@@ -221,6 +222,7 @@ function RevenueCatGate() {
     isLoaded,
     pricingContext.revenueCat.countryCode,
     pricingContext.revenueCat.currencyCode,
+    pricingContext.revenueCat.offeringHint,
     pricingContext.revenueCat.tierId,
     revenueCatReady,
   ]);
@@ -761,42 +763,51 @@ function AppShell() {
   const languagePreference = useAppLanguagePreference();
   const theme = useTheme();
 
+  useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(theme.bg).catch(() => undefined);
+  }, [theme.bg]);
+
   return (
-    <Stack
-      initialRouteName="index"
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: theme.bg },
-        animation: languagePreference.isRTL ? "slide_from_left" : "slide_from_right",
-        animationDuration: 260,
-      }}
+    <SafeAreaView
+      edges={["left", "right"]}
+      style={[rootLayoutStyles.screen, { backgroundColor: theme.bg }]}
     >
-      <Stack.Screen name="index" />
-      <Stack.Screen
-        name="(auth)"
-        options={{
-          presentation: "modal",
+      <Stack
+        initialRouteName="index"
+        screenOptions={{
+          headerShown: false,
           contentStyle: { backgroundColor: theme.bg },
+          animation: languagePreference.isRTL ? "slide_from_left" : "slide_from_right",
+          animationDuration: 260,
         }}
-      />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen
-        name="paywall"
-        options={{
-          presentation: "fullScreenModal",
-          animation: "fade_from_bottom",
-          contentStyle: { backgroundColor: theme.bg },
-          gestureEnabled: false,
-        }}
-      />
-      <Stack.Screen name="settings" />
-      <Stack.Screen name="language-settings" options={{ presentation: "modal" }} />
-      <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
-      <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
-      <Stack.Screen name="legal-viewer" options={{ presentation: "modal" }} />
-      <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
-      <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
-    </Stack>
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen
+          name="(auth)"
+          options={{
+            presentation: "modal",
+            contentStyle: { backgroundColor: theme.bg },
+          }}
+        />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="paywall"
+          options={{
+            presentation: "fullScreenModal",
+            animation: "fade_from_bottom",
+            contentStyle: { backgroundColor: theme.bg },
+            gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen name="settings" />
+        <Stack.Screen name="language-settings" options={{ presentation: "modal" }} />
+        <Stack.Screen name="sign-in" options={{ presentation: "modal" }} />
+        <Stack.Screen name="sign-up" options={{ presentation: "modal" }} />
+        <Stack.Screen name="legal-viewer" options={{ presentation: "modal" }} />
+        <Stack.Screen name="privacy-policy" options={{ presentation: "modal" }} />
+        <Stack.Screen name="terms-of-service" options={{ presentation: "modal" }} />
+      </Stack>
+    </SafeAreaView>
   );
 }
 
@@ -1005,7 +1016,7 @@ export default function RootLayout() {
       style={{ flex: 1, direction: languagePreference.isRTL ? "rtl" : "ltr" }}
     >
       <AppThemeProvider>
-          <SafeAreaProvider>
+          <SafeAreaProvider style={rootLayoutStyles.screen}>
             <ClerkProvider
               key={`clerk-${bootRetryKey}-${effectiveClerkKey}`}
               publishableKey={effectiveClerkKey}
@@ -1127,5 +1138,11 @@ const bootStyles = {
   buttonText: {
     color: DS.colors.textPrimary,
     ...DS.typography.button,
+  },
+};
+
+const rootLayoutStyles = {
+  screen: {
+    flex: 1,
   },
 };

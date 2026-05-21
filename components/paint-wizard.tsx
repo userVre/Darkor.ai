@@ -27,7 +27,7 @@ import {AnimatePresence, MotiView} from "moti";
 import {usePostHog} from "posthog-react-native";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {ActivityIndicator, Alert, Linking, Image as NativeImage, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View, useWindowDimensions} from "react-native";
+import {ActivityIndicator, Alert, Linking, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View, useWindowDimensions} from "react-native";
 import {Gesture, GestureDetector} from "react-native-gesture-handler";
 import Animated, {runOnJS, useAnimatedStyle, useSharedValue} from "react-native-reanimated";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
@@ -38,6 +38,7 @@ import {fonts} from "../styles/typography";
 
 import {WALL_COLOR_OPTIONS} from "../lib/data";
 import {ANALYTICS_EVENTS, captureAnalytics, captureGenerationFailure} from "../lib/analytics";
+import {resolveBundledImageSource} from "../lib/bundled-assets";
 import {canUserGenerate as canUserGenerateNow} from "../lib/generation-access";
 import {GENERATION_FAILED_TOAST, getFriendlyGenerationError} from "../lib/generation-errors";
 import {runWithFriendlyRetry} from "../lib/generation-retry";
@@ -604,6 +605,11 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const selectedColorButtonTextColor = isAiColorSuggestionEnabled
     ? "#2F2415"
     : (previewColorButtonValue ? resolveContrastTextColor(previewColorButtonValue) : "#FFFFFF");
+  const aiSuggestionButtonBackground = isAiColorSuggestionEnabled ? "#F4E6B8" : (previewColorButtonValue ?? "#FFFFFF");
+  const aiSuggestionButtonTextColor = isAiColorSuggestionEnabled
+    ? "#2F2415"
+    : (previewColorButtonValue ? resolveContrastTextColor(previewColorButtonValue) : "#0A0A0A");
+  const aiSuggestionButtonBorderColor = isAiColorSuggestionEnabled ? "#E0C66B" : (previewColorButtonValue ?? "#E2E2E2");
   const selectedSurfaceButtonText = isSurfaceConfirmed ? selectedSurfaceOption.label : t("wizard.paintFlow.choose");
   const selectedSurfaceIconColor = isSurfaceConfirmed ? "#FFFFFF" : "#0A0A0A";
 
@@ -655,7 +661,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
         triggerHaptic();
         requestNotificationsAfterReveal();
         if (effectiveSignedIn) {
-          router.replace({ pathname: "/workspace", params: { boardView: "board" } });
+          router.replace(`/workspace?boardView=editor&boardItemId=${encodeURIComponent(generation._id)}&entrySource=generation` as any);
           return;
         }
         setStep("result");
@@ -863,11 +869,12 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
       return detectedSourceStorageId;
     }
 
-    if (!selectedImage.photoUri) {
+    const sourceUri = selectedImage.photoUri ?? selectedImage.uri;
+    if (!sourceUri) {
       throw new Error("No uploaded room photo is available for auto-detect.");
     }
 
-    const storageId = await uploadBlobToStorage(selectedImage.photoUri);
+    const storageId = await uploadBlobToStorage(sourceUri);
     setDetectedSourceStorageId(storageId);
     return storageId;
   }, [detectedSourceStorageId, selectedImage, uploadBlobToStorage]);
@@ -1153,20 +1160,19 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   );
 
   const handleSelectExample = useCallback(
-    (example: PaintIntroExamplePhoto) => {
-      const resolved = NativeImage.resolveAssetSource(example.source);
-      if (!resolved?.uri) {
+    async (example: PaintIntroExamplePhoto) => {
+      try {
+        const resolved = await resolveBundledImageSource(example.source);
+        applySelectedImage({
+          uri: resolved.uri,
+          photoUri: null,
+          width: resolved.width,
+          height: resolved.height,
+        });
+        advanceToSelectionStep();
+      } catch {
         Alert.alert(t("workspace.media.exampleUnavailableTitle"), t("wizard.paintFlow.exampleUnavailableBody"));
-        return;
       }
-
-      applySelectedImage({
-        uri: resolved.uri,
-        photoUri: null,
-        width: resolved.width ?? 1080,
-        height: resolved.height ?? 1440,
-      });
-      advanceToSelectionStep();
     },
     [advanceToSelectionStep, applySelectedImage, t],
   );
@@ -1524,9 +1530,15 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                     accessibilityRole="button"
                     accessibilityLabel="AI suggest wall color"
                     onPress={handleAiColorSuggestionPress}
-                    style={[styles.aiSuggestionButton, isAiColorSuggestionEnabled ? styles.aiSuggestionButtonActive : null]}
+                    style={[
+                      styles.aiSuggestionButton,
+                      {
+                        backgroundColor: aiSuggestionButtonBackground,
+                        borderColor: aiSuggestionButtonBorderColor,
+                      },
+                    ]}
                   >
-                    <Wand2 color={isAiColorSuggestionEnabled ? "#2F2415" : "#FFFFFF"} size={18} strokeWidth={2.1} />
+                    <Wand2 color={aiSuggestionButtonTextColor} size={16} strokeWidth={2.1} />
                   </Pressable>
                 </View>
               </View>
@@ -1678,25 +1690,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                     </View>
                   </GestureDetector>
 
-                  <View style={[styles.colorPickerPresetRow, { marginTop: scaleSelectionValue(40, selectionLayoutScale), paddingLeft: scaleSelectionValue(32, selectionLayoutScale), gap: scaleSelectionValue(40, selectionLayoutScale) }]}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="AI suggest wall color"
-                      onPress={handleAiColorSuggestionPress}
-                      style={[
-                        styles.colorPickerPresetSwatch,
-                        styles.colorPickerPresetAiSwatch,
-                        {
-                          width: colorPickerSwatchSize,
-                          height: colorPickerSwatchSize,
-                          borderRadius: colorPickerSwatchSize / 2,
-                        },
-                        isAiColorSuggestionEnabled ? styles.colorPickerPresetSwatchActive : null,
-                        isAiColorSuggestionEnabled ? styles.colorPickerPresetAiSwatchActive : null,
-                      ]}
-                    >
-                      <Wand2 color={isAiColorSuggestionEnabled ? "#0A0A0A" : "#FFFFFF"} size={Math.max(colorPickerSwatchSize * 0.56, 14)} strokeWidth={2.1} />
-                    </Pressable>
+                  <View style={[styles.colorPickerPresetRow, { marginTop: scaleSelectionValue(40, selectionLayoutScale), gap: scaleSelectionValue(40, selectionLayoutScale) }]}>
                     {COLOR_PICKER_PRESET_SWATCHES.map((swatch) => {
                       const isActive = colorPickerDraft.hex === swatch.value;
                       return (
@@ -2228,7 +2222,6 @@ const styles = StyleSheet.create({
     marginLeft: 50,
   },
   selectionColorButton: {
-    marginTop: 24,
     width: 164,
     height: 52,
     borderRadius: 26,
@@ -2398,19 +2391,13 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
   },
   colorPickerPresetSwatch: {
     borderWidth: 1,
     borderColor: "rgba(10,10,10,0.12)",
     alignItems: "center",
     justifyContent: "center",
-  },
-  colorPickerPresetAiSwatch: {
-    backgroundColor: "#111113",
-  },
-  colorPickerPresetAiSwatchActive: {
-    backgroundColor: "#F4E6B8",
-    borderColor: "#0A0A0A",
   },
   colorPickerPresetSwatchActive: {
     borderWidth: 3,
@@ -3347,6 +3334,7 @@ const styles = StyleSheet.create({
     color: SERVICE_WIZARD_THEME.colors.accentText,
   },
   selectionColorActions: {
+    marginTop: 24,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
@@ -3355,18 +3343,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   aiSuggestionButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 13,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.14)",
-    backgroundColor: "#111113",
     alignItems: "center",
     justifyContent: "center",
-  },
-  aiSuggestionButtonActive: {
-    borderColor: "#F4E6B8",
-    backgroundColor: "#F4E6B8",
   },
   paletteCard: {
     borderRadius: 12,

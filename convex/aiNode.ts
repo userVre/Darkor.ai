@@ -60,6 +60,7 @@ const GARDEN_ROOM_TYPE_KEYWORDS = [
 type ServiceType = "paint" | "floor" | "redesign" | "layout" | "replace";
 type IncomingServiceType = ServiceType | "interior" | "exterior" | "garden";
 type RequestedServiceType = IncomingServiceType | "wall" | "transfer" | "reference";
+type RedesignSurfaceType = "interior" | "exterior" | "garden";
 type SpeedTier = "standard" | "pro" | "ultra";
 type AzureRenderSize = "1024x1024" | "1024x1536" | "1536x1024";
 type AzureRenderQuality = "medium" | "high";
@@ -96,6 +97,12 @@ function canonicalizeServiceType(serviceType: RequestedServiceType | IncomingSer
   }
 
   return serviceType;
+}
+
+function getRequestedRedesignSurface(serviceType?: RequestedServiceType | IncomingServiceType | null): RedesignSurfaceType | null {
+  return serviceType === "interior" || serviceType === "exterior" || serviceType === "garden"
+    ? serviceType
+    : null;
 }
 
 function shouldRetryStatus(status: number) {
@@ -144,14 +151,36 @@ function isExteriorRedesignContext(args: { serviceType: ServiceType; roomType: s
   );
 }
 
+function getPromptRoomType(args: {
+  requestedServiceType?: RequestedServiceType | IncomingServiceType | null;
+  roomType: string;
+}) {
+  const roomType = trimOptional(args.roomType) ?? "space";
+  const surface = getRequestedRedesignSurface(args.requestedServiceType);
+
+  if (surface === "interior") {
+    return `Interior ${roomType}`;
+  }
+  if (surface === "exterior") {
+    return `Exterior ${roomType}`;
+  }
+  if (surface === "garden") {
+    return `Garden ${roomType}`;
+  }
+
+  return roomType;
+}
+
 function buildAzurePrompt(args: {
   prompt: string;
   negativePrompt: string;
   serviceType: ServiceType;
+  requestedServiceType?: RequestedServiceType;
   roomType: string;
   flowInstruction?: string;
 }) {
-  const exteriorPerspectiveLock = isExteriorRedesignContext({
+  const requestedSurface = getRequestedRedesignSurface(args.requestedServiceType);
+  const exteriorPerspectiveLock = requestedSurface === "exterior" || requestedSurface === "garden" || isExteriorRedesignContext({
     serviceType: args.serviceType,
     roomType: args.roomType,
   })
@@ -189,6 +218,18 @@ function buildAzureFlowInstruction(args: {
   if (args.serviceType === "replace") {
     const requestedReplacement = trimOptional(args.customPrompt) ?? "a refined replacement object";
     return `Identify the object within the marked mask and replace it with ${requestedReplacement}. The new object must inherit the original shadows, contact grounding, ambient occlusion, light reflections, scale, and perspective for a seamless blend.`;
+  }
+
+  if (args.requestedServiceType === "interior") {
+    return "Interior redesign flow: treat the uploaded image as an indoor room. Preserve walls, windows, doors, ceiling height, camera angle, and natural light direction while redesigning furniture, materials, palette, decor, and styling.";
+  }
+
+  if (args.requestedServiceType === "exterior") {
+    return "Exterior redesign flow: treat the uploaded image as a building facade or property exterior. Redesign the facade, entry, driveway, immediate landscaping, exterior lighting, and curb appeal as one polished architectural scene while preserving building massing, rooflines, openings, horizon, and site placement.";
+  }
+
+  if (args.requestedServiceType === "garden") {
+    return "Garden redesign flow: treat the uploaded image as an outdoor landscape. Redesign planting, hardscape, patio or pool zones, garden lighting, outdoor furniture, and circulation as one resort-level landscape while preserving boundaries, facade positions, grade changes, steps, doors, windows, and camera perspective.";
   }
 
   if (
@@ -332,10 +373,15 @@ function isOpenAIImagePolicyRejection(message?: string | null) {
 
 function getAzureImageMimeType(blob: Blob) {
   const mimeType = trimOptional(blob.type)?.toLowerCase();
-  if (mimeType === "image/png" || mimeType === "image/jpeg" || mimeType === "image/jpg" || mimeType === "image/webp") {
+  if (mimeType === "image/png" || mimeType === "image/jpeg" || mimeType === "image/jpg") {
     return mimeType === "image/jpg" ? "image/jpeg" : mimeType;
   }
-  return "image/png";
+  return "image/jpeg";
+}
+
+function isAzureEditSupportedMimeType(mimeType?: string | null) {
+  const normalized = trimOptional(mimeType)?.toLowerCase();
+  return normalized === "image/png" || normalized === "image/jpeg" || normalized === "image/jpg";
 }
 
 function inferImageMimeTypeFromBytes(bytes?: Uint8Array | Buffer | null) {
@@ -374,7 +420,7 @@ async function loadSharp() {
 
 function getAzureImageFilename(blob: Blob, index: number, prefix: string) {
   const mimeType = getAzureImageMimeType(blob);
-  const extension = mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
+  const extension = mimeType === "image/png" ? "png" : "jpg";
   return `${prefix}-${index}.${extension}`;
 }
 
@@ -520,13 +566,15 @@ async function prepareSafeOpenAIInputImage(blob: Blob, caller: string) {
 
     return new Blob([optimized], { type: "image/jpeg" });
   } catch (error) {
-    console.warn(`${caller}: failed to optimize OpenAI input image; sending original image`, {
+    console.warn(`${caller}: failed to optimize OpenAI input image`, {
       message: error instanceof Error ? error.message : "Unknown image preparation error",
     });
     const inferredMimeType = inferImageMimeTypeFromBytes(imageBuffer);
-    return inferredMimeType && imageBuffer
-      ? new Blob([imageBuffer], { type: inferredMimeType })
-      : normalizeAzureImageBlob(blob);
+    if (inferredMimeType && imageBuffer && isAzureEditSupportedMimeType(inferredMimeType)) {
+      return new Blob([imageBuffer], { type: inferredMimeType });
+    }
+
+    throw new ConvexError("The selected image could not be converted to a JPG or PNG for generation.");
   }
 }
 
@@ -556,6 +604,7 @@ async function runAzureImageGeneration(args: {
     prompt: args.prompt,
     negativePrompt: args.negativePrompt,
     serviceType: args.serviceType,
+    requestedServiceType: args.requestedServiceType,
     roomType: args.roomType,
     flowInstruction,
   });
@@ -990,6 +1039,10 @@ export const generateDesign: any = internalAction({
       const requestedServiceType = args.requestedServiceType
         ? args.requestedServiceType as RequestedServiceType
         : undefined;
+      const promptRoomType = getPromptRoomType({
+        requestedServiceType,
+        roomType: args.roomType,
+      });
       const originalSourceBlob = await ctx.storage.get(args.imageStorageId);
       if (!originalSourceBlob) {
         throw new ConvexError("The source image could not be loaded from storage.");
@@ -1028,7 +1081,7 @@ export const generateDesign: any = internalAction({
       const orchestratedDirection = await requestAzureDesignOrchestration({
         sourceBlob,
         serviceType,
-        roomType: args.roomType,
+        roomType: promptRoomType,
         style: args.style,
         styleSelections: args.styleSelections,
         colorPalette: args.colorPalette,
@@ -1065,7 +1118,7 @@ export const generateDesign: any = internalAction({
 
       const optimizedPrompt = buildPrompt({
         serviceType,
-        roomType: args.roomType,
+        roomType: promptRoomType,
         style: resolvedStyle,
         styleSelections: resolvedStyleSelections,
         colorPalette: resolvedPalette,
@@ -1085,7 +1138,7 @@ export const generateDesign: any = internalAction({
       });
       const negativePrompt = buildDesignNegativePrompt({
         serviceType,
-        roomType: args.roomType,
+        roomType: promptRoomType,
       });
 
       await ctx.runMutation((internal as any).ai.saveOptimizedPrompt, {
@@ -1106,7 +1159,7 @@ export const generateDesign: any = internalAction({
         prompt: optimizedPrompt,
         negativePrompt,
         serviceType,
-        roomType: args.roomType,
+        roomType: promptRoomType,
         sourceBlob,
         referenceBlobs,
         maskBlob,

@@ -1,5 +1,6 @@
 import {Check, Wand2} from "@/components/material-icons";
 import {Image} from "expo-image";
+import {LinearGradient} from "expo-linear-gradient";
 import {StatusBar} from "expo-status-bar";
 import {type ComponentType, useMemo} from "react";
 import {useTranslation} from "react-i18next";
@@ -149,7 +150,7 @@ export function ExteriorRedesignStepThree({
               {row.map((styleCard, columnIndex) => {
                 const isAiSuggestCard = styleCard.title === "AI Suggest";
                 const active = isAiSuggestCard ? smartSuggestEnabled : selectedStyles.includes(styleCard.title);
-                const CardIcon = styleCard.icon ?? Wand2;
+                const CardIcon = isAiSuggestCard ? Wand2 : styleCard.icon ?? Wand2;
                 const isIconCard = styleCard.image === null;
 
                 return (
@@ -169,7 +170,7 @@ export function ExteriorRedesignStepThree({
                       getWizardSelectionCardStyle(active, DESIGN_WIZARD_SURFACE),
                     ]}
                     >
-                    {active ? (
+                    {active && !isAiSuggestCard ? (
                         <View style={stylesSheet.selectionBadge}>
                           <View style={[stylesSheet.selectionBadgeInner, getWizardSelectedIconContainerStyle(true)]}>
                           <Check color={DESIGN_WIZARD_SELECTION_BLUE} size={16} strokeWidth={2.4} />
@@ -177,6 +178,28 @@ export function ExteriorRedesignStepThree({
                         </View>
                     ) : null}
                     {isIconCard ? (
+                      isAiSuggestCard ? (
+                        <LinearGradient
+                          colors={active ? ["#F8FBFF", "#EAF3FF", "#FFFFFF"] : ["#FFFFFF", "#F3F6FA", "#FFFFFF"]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={[
+                            stylesSheet.iconCardMedia,
+                            stylesSheet.aiSuggestMedia,
+                            {
+                              height: cardImageHeight,
+                            },
+                          ]}
+                        >
+                          <View style={stylesSheet.aiSuggestLineTop} />
+                          <View style={stylesSheet.aiSuggestLineBottom} />
+                          <View style={[stylesSheet.aiSuggestIconHalo, active ? stylesSheet.aiSuggestIconHaloActive : null]}>
+                            <View style={[stylesSheet.aiSuggestIconBadge, active ? stylesSheet.aiSuggestIconBadgeActive : null]}>
+                              <CardIcon color={active ? "#FFFFFF" : "#172033"} size={34} strokeWidth={1.9} />
+                            </View>
+                          </View>
+                        </LinearGradient>
+                      ) : (
                       <View
                         style={[
                           stylesSheet.iconCardMedia,
@@ -205,6 +228,7 @@ export function ExteriorRedesignStepThree({
                           </Text>
                         ) : null}
                       </View>
+                      )
                     ) : (
                       <View style={{ width: "100%", height: cardImageHeight, overflow: "hidden" }}>
                         <Image
@@ -227,6 +251,7 @@ export function ExteriorRedesignStepThree({
                           height: cardLabelHeight,
                           backgroundColor: "#FFFFFF",
                         },
+                        isAiSuggestCard ? stylesSheet.aiSuggestLabelBar : null,
                       ]}
                     >
                       <Text
@@ -238,6 +263,7 @@ export function ExteriorRedesignStepThree({
                             left: labelTextLeft,
                           },
                           getWizardSelectedLabelTextStyle(active),
+                          isAiSuggestCard ? stylesSheet.aiSuggestLabelText : null,
                           active ? stylesSheet.labelTextActive : null,
                         ]}
                       >
@@ -374,6 +400,62 @@ const stylesSheet = StyleSheet.create({
     paddingVertical: 14,
     gap: 10,
   },
+  aiSuggestMedia: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(148,163,184,0.16)",
+  },
+  aiSuggestLineTop: {
+    position: "absolute",
+    top: 20,
+    left: 18,
+    right: 18,
+    height: 1,
+    backgroundColor: "rgba(23,32,51,0.08)",
+  },
+  aiSuggestLineBottom: {
+    position: "absolute",
+    left: 28,
+    right: 28,
+    bottom: 22,
+    height: 1,
+    backgroundColor: "rgba(23,32,51,0.06)",
+  },
+  aiSuggestIconHalo: {
+    width: 64,
+    height: 64,
+    borderRadius: 24,
+    borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.82)",
+    backgroundColor: "rgba(255,255,255,0.54)",
+    boxShadow: "0px 12px 28px rgba(15,23,42,0.08)",
+  },
+  aiSuggestIconHaloActive: {
+    borderColor: "rgba(0,122,255,0.24)",
+    backgroundColor: "rgba(255,255,255,0.68)",
+  },
+  aiSuggestIconBadge: {
+    width: 46,
+    height: 46,
+    borderRadius: 17,
+    borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.92)",
+    borderWidth: 1,
+    borderColor: "rgba(23,32,51,0.08)",
+  },
+  aiSuggestIconBadgeActive: {
+    backgroundColor: DESIGN_WIZARD_SELECTION_BLUE,
+    borderColor: DESIGN_WIZARD_SELECTION_BLUE,
+  },
   iconCardBadge: {
     width: 48,
     height: 48,
@@ -403,6 +485,9 @@ const stylesSheet = StyleSheet.create({
     position: "relative",
     backgroundColor: "#FFFFFF",
   },
+  aiSuggestLabelBar: {
+    backgroundColor: "#FFFFFF",
+  },
   labelText: {
     position: "absolute",
     left: 20,
@@ -412,6 +497,12 @@ const stylesSheet = StyleSheet.create({
     textAlign: "left",
     ...fonts.semibold,
   },
+  aiSuggestLabelText: {
+    left: 0,
+    right: 0,
+    textAlign: "center",
+    fontSize: 12,
+  },
   labelTextActive: {
     ...fonts.bold,
   },
@@ -420,11 +511,13 @@ const stylesSheet = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "transparent",
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(17,24,39,0.08)",
   },
   bottomContainerInner: {
     alignItems: "center",
-    backgroundColor: "transparent",
+    backgroundColor: "#FFFFFF",
   },
   continueButton: {
     alignSelf: "center",

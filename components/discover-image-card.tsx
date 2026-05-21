@@ -38,6 +38,8 @@ export const DiscoverImageCard = memo(function DiscoverImageCard({
           recyclingKey={item.id}
           style={styles.image}
           contentFit="cover"
+          contentPosition="center"
+          resizeMode="cover"
         />
       </View>
     </LuxPressable>

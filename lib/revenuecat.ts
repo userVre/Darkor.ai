@@ -9,6 +9,7 @@ export const REVENUECAT_ANNUAL_PRO_ENTITLEMENT = "annual_pro";
 export const REVENUECAT_ENTITLEMENTS = [
   REVENUECAT_ANNUAL_PRO_ENTITLEMENT,
   REVENUECAT_WEEKLY_PRO_ENTITLEMENT,
+  REVENUECAT_ENTITLEMENT,
 ] as const;
 export const REVENUECAT_PAYWALL_PLACEMENT = "paywall";
 
@@ -19,6 +20,9 @@ export type RevenueCatPurchaseResult = Awaited<ReturnType<RevenueCatPurchases["p
 export type BillingPlan = "pro" | "trial";
 export type BillingDuration = "weekly" | "yearly";
 export type RevenueCatEntitlement = (typeof REVENUECAT_ENTITLEMENTS)[number] | "free";
+type StoredRevenueCatEntitlement =
+  | typeof REVENUECAT_WEEKLY_PRO_ENTITLEMENT
+  | typeof REVENUECAT_ANNUAL_PRO_ENTITLEMENT;
 export type RevenueCatTierContext = {
   tierId: PricingTierId;
   countryCode: string;
@@ -186,10 +190,20 @@ function getAllPackagesFromOfferings(
   const uniquePackages = new Map<string, RevenueCatPackage>();
 
   for (const pkg of [...allPackages, ...currentPackages]) {
-    uniquePackages.set(pkg.identifier, pkg);
+    uniquePackages.set(`${pkg.identifier}:${pkg.product.identifier}`, pkg);
   }
 
   return Array.from(uniquePackages.values());
+}
+
+function getOfferingPackages(offering?: { availablePackages?: RevenueCatPackage[] | null } | null) {
+  return Array.isArray(offering?.availablePackages) ? offering.availablePackages : [];
+}
+
+function pickOfferingWithPackages(
+  offerings: Array<Awaited<ReturnType<RevenueCatPurchases["getCurrentOfferingForPlacement"]>> | null | undefined>,
+) {
+  return offerings.find((offering) => getOfferingPackages(offering).length > 0) ?? offerings.find(Boolean) ?? null;
 }
 
 function getOfferingAliases(tierContext?: RevenueCatTierContext | null) {
@@ -248,6 +262,26 @@ function inferDurationFromHaystack(haystack: string): BillingDuration {
   return "weekly";
 }
 
+function inferStoredEntitlementFromRecord(input: {
+  sourceEntitlement?: string | null;
+  record?: any;
+  info?: RevenueCatCustomerInfo | null;
+}): StoredRevenueCatEntitlement {
+  const haystack = normalizeHaystack([
+    input.sourceEntitlement,
+    input.record?.productIdentifier,
+    input.record?.productId,
+    input.record?.storeProductIdentifier,
+    input.record?.storeProductId,
+    input.record?.latestPurchaseDate,
+    ...(input.info?.activeSubscriptions ?? []),
+  ]);
+
+  return inferDurationFromHaystack(haystack) === "yearly"
+    ? REVENUECAT_ANNUAL_PRO_ENTITLEMENT
+    : REVENUECAT_WEEKLY_PRO_ENTITLEMENT;
+}
+
 function getHomeDecorEntitlementRecord(info?: RevenueCatCustomerInfo | null) {
   const active = (info?.entitlements?.active ?? {}) as Record<string, any>;
   const activeEntries = Object.entries(active);
@@ -259,7 +293,10 @@ function getHomeDecorEntitlementRecord(info?: RevenueCatCustomerInfo | null) {
     const exact = active[entitlement];
     if (exact) {
       return {
-        entitlement,
+        entitlement:
+          entitlement === REVENUECAT_ENTITLEMENT
+            ? inferStoredEntitlementFromRecord({ sourceEntitlement: entitlement, record: exact, info })
+            : entitlement,
         record: exact,
       } as const;
     }
@@ -270,6 +307,13 @@ function getHomeDecorEntitlementRecord(info?: RevenueCatCustomerInfo | null) {
     if (normalizedKey === REVENUECAT_ANNUAL_PRO_ENTITLEMENT || normalizedKey === REVENUECAT_WEEKLY_PRO_ENTITLEMENT) {
       return {
         entitlement: normalizedKey as Exclude<RevenueCatEntitlement, "free">,
+        record: value,
+      } as const;
+    }
+
+    if (normalizedKey === REVENUECAT_ENTITLEMENT) {
+      return {
+        entitlement: inferStoredEntitlementFromRecord({ sourceEntitlement: normalizedKey, record: value, info }),
         record: value,
       } as const;
     }
@@ -431,11 +475,18 @@ export async function fetchTieredPackage(
     .catch(() => null);
 
   const hintedOffering = resolveOfferingFromHints(offerings, tierContext);
-  const offering = hintedOffering ?? placementOffering ?? offerings.current ?? null;
+  const offering = pickOfferingWithPackages([
+    placementOffering,
+    hintedOffering,
+    offerings.current ?? null,
+    ...Object.values(offerings.all ?? {}),
+  ]);
+  const offeringPackages = getOfferingPackages(offering);
+  const allPackages = getAllPackagesFromOfferings(offerings);
 
   const result = {
     offering,
-    packages: offering?.availablePackages ?? offerings.current?.availablePackages ?? [],
+    packages: offeringPackages.length > 0 ? offeringPackages : allPackages,
   };
 
   tieredOfferingsCache.set(getTierContextCacheKey(tierContext), result);

@@ -287,11 +287,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "transparent",
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(17,24,39,0.08)",
   },
   bottomContainerInner: {
     alignItems: "center",
-    backgroundColor: "transparent",
+    backgroundColor: "#FFFFFF",
   },
   continueButton: {
     alignSelf: "center",

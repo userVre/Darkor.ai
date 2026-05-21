@@ -207,13 +207,15 @@ export const GENERATED_DISCOVER_ASSETS = {
     require("../assets/media/discover/floor-scenes/modern-slate-tile.webp"),
   ],
   garden: [
-    require("../assets/media/discover/generated/garden/garden-1.webp"),
-    require("../assets/media/discover/generated/garden/garden-2.webp"),
-    require("../assets/media/discover/generated/garden/garden-3.webp"),
-    require("../assets/media/discover/generated/garden/garden-4.webp"),
-    require("../assets/media/discover/generated/garden/garden-5.webp"),
-    require("../assets/media/discover/generated/garden/garden-6.webp"),
-    require("../assets/media/discover/generated/garden/garden-7.webp"),
+    require("../assets/media/discover/garden/garden-backyard.webp"),
+    require("../assets/media/discover/garden/garden-swimming-pool.webp"),
+    require("../assets/media/discover/garden/garden-fireside-patio.webp"),
+    require("../assets/media/discover/garden/garden-terrace.webp"),
+    require("../assets/media/discover/garden/garden-deck.webp"),
+    require("../assets/media/discover/garden/garden-patio.webp"),
+    require("../assets/media/discover/garden/garden-pool-courtyard.webp"),
+    require("../assets/media/discover/garden/garden-front-yard.webp"),
+    require("../assets/media/discover/garden/garden-villa-entry.webp"),
   ],
 } as const;
 

@@ -20,6 +20,8 @@ import {fonts} from "../../../styles/typography";
 
 const SCREEN_SIDE_MARGIN = 26;
 const GRID_GAP = 14;
+const DEFAULT_CARD_HEIGHT_RATIO = 1.28;
+const GARDEN_CARD_HEIGHT_RATIO = 1;
 
 function getDiscoverGridKey(item: DiscoverTile) {
   return `${item.categoryId}:${item.id}`;
@@ -51,7 +53,10 @@ export default function DiscoverSeeAllScreen() {
     const availableWidth = width - SCREEN_SIDE_MARGIN * 2 - GRID_GAP;
     return Math.floor(availableWidth / 2);
   }, [width]);
-  const cardHeight = useMemo(() => Math.round(cardWidth * 1.28), [cardWidth]);
+  const cardHeight = useMemo(
+    () => Math.round(cardWidth * (group?.service === "garden" ? GARDEN_CARD_HEIGHT_RATIO : DEFAULT_CARD_HEIGHT_RATIO)),
+    [cardWidth, group?.service],
+  );
 
   const handlePreviewOpen = useCallback((item: DiscoverTile) => {
     triggerHaptic();

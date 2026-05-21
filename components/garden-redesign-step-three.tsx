@@ -70,9 +70,9 @@ export function GardenRedesignStepThree({
   const paletteScale = Math.min(width / PALETTE_REFERENCE_WIDTH, 1);
   const sideInset = scaleValue(20, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const titleTop = headerMetrics.contentOffset;
+  const titleTop = Math.max(headerMetrics.contentOffset - scaleValue(10, layoutScale), 0);
   const titleLeft = 24;
-  const paletteTitleTopGap = scaleValue(20, paletteScale);
+  const paletteTitleTopGap = scaleValue(12, paletteScale);
   const paletteMargin = scaleValue(24, paletteScale);
   const paletteCardWidth = scaleValue(124, paletteScale);
   const paletteCardHeight = scaleValue(164, paletteScale);
@@ -80,8 +80,6 @@ export function GardenRedesignStepThree({
   const paletteLabelHeight = scaleValue(56, paletteScale);
   const paletteHorizontalGap = scaleValue(40, paletteScale);
   const paletteVerticalGap = scaleValue(8, paletteScale);
-  const paletteLabelTop = scaleValue(28, paletteScale);
-  const paletteLabelLeft = scaleValue(16, paletteScale);
   const bottomContainerHeight = scaleValue(116, layoutScale);
   const buttonHeight = scaleValue(60, layoutScale);
   const buttonTop = scaleValue(24, layoutScale);
@@ -172,7 +170,7 @@ export function GardenRedesignStepThree({
                       {palette.aiCard ? (
                         <View style={[styles.aiPaletteMedia, { height: paletteCardTopHeight, backgroundColor: active ? "#DBEAFE" : "#F4F7FB" }]}>
                           <View style={[styles.aiPaletteIconWrap, { backgroundColor: active ? "#2563EB" : "#0F172A" }]}>
-                            <Wand2 color="#FFFFFF" size={26} strokeWidth={2.1} />
+                            <Wand2 color="#FFFFFF" size={20} strokeWidth={2.1} />
                           </View>
                         </View>
                       ) : (
@@ -187,21 +185,17 @@ export function GardenRedesignStepThree({
                           styles.paletteLabelBar,
                           {
                             height: paletteLabelHeight,
-                              backgroundColor: "#EFEFEF",
+                            backgroundColor: "#EFEFEF",
                           },
                         ]}
                       >
                         <Text
-                          numberOfLines={2}
+                          numberOfLines={3}
                           style={[
                             styles.paletteLabelText,
-                            {
-                              top: paletteLabelTop,
-                              left: paletteLabelLeft,
-                              },
-                              getWizardSelectedLabelTextStyle(active),
-                            ]}
-                          >
+                            getWizardSelectedLabelTextStyle(active),
+                          ]}
+                        >
                           {palette.label}
                         </Text>
                       </View>
@@ -297,8 +291,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   aiPaletteIconWrap: {
-    width: 54,
-    height: 54,
+    width: 44,
+    height: 44,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
@@ -316,14 +310,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   paletteLabelBar: {
-    position: "relative",
     backgroundColor: "#EFEFEF",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
   },
   paletteLabelText: {
-    position: "absolute",
-    right: 8,
-    fontSize: 10,
-    lineHeight: 12,
+    color: DESIGN_WIZARD_TEXT,
+    fontSize: 11,
+    lineHeight: 13,
     ...fonts.semibold,
   },
   bottomContainer: {
@@ -331,11 +326,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "transparent",
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(17,24,39,0.08)",
   },
   bottomContainerInner: {
     alignItems: "center",
-    backgroundColor: "transparent",
+    backgroundColor: "#FFFFFF",
   },
   continueButton: {
     alignSelf: "center",

@@ -365,11 +365,7 @@ export default function ElitePassScreen() {
                     </Text>
                   </View>
 
-                  {claimed ? null : locked && !isDay7 ? (
-                    <View style={styles.lockHint}>
-                      <LockKeyhole color={theme.textMuted} size={15} strokeWidth={2} />
-                    </View>
-                  ) : (
+                  {claimed || (locked && !isDay7) ? null : (
                     <View
                       style={[
                         styles.rewardPill,
@@ -383,7 +379,7 @@ export default function ElitePassScreen() {
                         <CreditCard color={locked ? theme.textMuted : "#48617A"} size={14} strokeWidth={2} />
                       )}
                       <Text style={[styles.rewardText, locked ? styles.rewardTextLocked : null]}>
-                        {isDay7 ? "+3 Pro" : "+1"}
+                        {isDay7 ? "+3 + Pro" : "+1"}
                       </Text>
                     </View>
                   )}
@@ -404,38 +400,38 @@ export default function ElitePassScreen() {
 }
 
 function createStyles(theme: Theme, isCompact: boolean) {
-  const cardBackground = theme.isDark ? "#111827" : theme.surfaceOverlayHigh;
-  const cardBorder = theme.isDark ? "rgba(255, 255, 255, 0.12)" : theme.border;
-  const primaryText = theme.isDark ? "#FFFFFF" : theme.textPrimary;
-  const secondaryText = theme.isDark ? "rgba(255, 255, 255, 0.68)" : theme.textSecondary;
-  const mutedText = theme.isDark ? "rgba(255, 255, 255, 0.50)" : theme.textMuted;
-  const charcoal = theme.isDark ? "#F8FAFC" : "#111827";
-  const gold = theme.isDark ? "#F5D38A" : "#9A6A24";
-  const goldSoft = theme.isDark ? "rgba(245, 211, 138, 0.15)" : "rgba(154, 106, 36, 0.09)";
-  const goldBorder = theme.isDark ? "rgba(245, 211, 138, 0.28)" : "rgba(154, 106, 36, 0.18)";
-  const creditBlueSoft = theme.isDark ? "rgba(199, 210, 232, 0.13)" : "rgba(72, 97, 122, 0.08)";
-  const creditBlueBorder = theme.isDark ? "rgba(199, 210, 232, 0.24)" : "rgba(72, 97, 122, 0.16)";
+  const cardBackground = theme.isDark ? "#090908" : "#11100E";
+  const cardBorder = "rgba(226, 199, 145, 0.24)";
+  const primaryText = "#FFF9EC";
+  const secondaryText = "rgba(255, 249, 236, 0.72)";
+  const mutedText = "rgba(255, 249, 236, 0.48)";
+  const charcoal = "#C49A4A";
+  const gold = "#C49A4A";
+  const goldSoft = "rgba(196, 154, 74, 0.13)";
+  const goldBorder = "rgba(196, 154, 74, 0.32)";
+  const creditBlueSoft = "rgba(255, 249, 236, 0.07)";
+  const creditBlueBorder = "rgba(255, 249, 236, 0.14)";
 
   return StyleSheet.create({
     screen: {
       flex: 1,
-      backgroundColor: theme.bg,
+      backgroundColor: theme.isDark ? "#050505" : "#F5F2EB",
     },
     content: {
       gap: 16,
       paddingHorizontal: isCompact ? 14 : 20,
     },
     passCard: {
-      gap: 18,
+      gap: 20,
       paddingHorizontal: isCompact ? 16 : 20,
-      paddingVertical: 22,
+      paddingVertical: 24,
       borderRadius: 8,
       borderCurve: "continuous",
       borderWidth: 1,
       borderColor: cardBorder,
       backgroundColor: cardBackground,
       overflow: "hidden",
-      boxShadow: theme.isDark ? "0px 20px 44px rgba(0,0,0,0.42)" : "0px 12px 30px rgba(17,24,39,0.10)",
+      boxShadow: theme.isDark ? "0px 22px 48px rgba(0,0,0,0.46)" : "0px 18px 44px rgba(17, 16, 14, 0.18)",
     },
     passTopRule: {
       position: "absolute",
@@ -443,7 +439,7 @@ function createStyles(theme: Theme, isCompact: boolean) {
       right: 0,
       top: 0,
       height: 3,
-      backgroundColor: gold,
+      backgroundColor: "rgba(196, 154, 74, 0.92)",
     },
     passTopRow: {
       flexDirection: "row",
@@ -479,8 +475,8 @@ function createStyles(theme: Theme, isCompact: boolean) {
       alignItems: "center",
       gap: 7,
       paddingHorizontal: 11,
-      borderRadius: 17,
-      backgroundColor: theme.isDark ? "rgba(255, 255, 255, 0.10)" : theme.surfaceHigh,
+      borderRadius: 8,
+      backgroundColor: "rgba(255, 249, 236, 0.08)",
       borderWidth: 1,
       borderColor: cardBorder,
     },
@@ -509,22 +505,22 @@ function createStyles(theme: Theme, isCompact: boolean) {
     },
     subtitle: {
       color: secondaryText,
-      fontSize: 15,
-      lineHeight: 22,
+      fontSize: 14,
+      lineHeight: 21,
       letterSpacing: 0,
       ...fonts.regular,
     },
     eliteBanner: {
-      minHeight: 76,
+      minHeight: 92,
       flexDirection: "row",
       alignItems: "center",
       gap: 13,
-      padding: 14,
+      padding: 15,
       borderRadius: 8,
       borderCurve: "continuous",
-      backgroundColor: theme.isDark ? "rgba(255, 255, 255, 0.08)" : "#111827",
+      backgroundColor: "rgba(255, 249, 236, 0.07)",
       borderWidth: 1,
-      borderColor: theme.isDark ? "rgba(253, 230, 138, 0.22)" : "rgba(17, 24, 39, 0.10)",
+      borderColor: "rgba(226, 199, 145, 0.22)",
     },
     heroBadge: {
       width: 46,
@@ -542,7 +538,7 @@ function createStyles(theme: Theme, isCompact: boolean) {
       gap: 3,
     },
     heroKicker: {
-      color: theme.isDark ? "#F5D38A" : "rgba(245, 211, 138, 0.86)",
+      color: "#D8B868",
       fontSize: 11,
       lineHeight: 14,
       letterSpacing: 0,
@@ -551,20 +547,20 @@ function createStyles(theme: Theme, isCompact: boolean) {
     },
     heroTitle: {
       color: "#FFFFFF",
-      fontSize: 13,
-      lineHeight: 18,
+      fontSize: 14,
+      lineHeight: 20,
       letterSpacing: 0,
       ...fonts.semibold,
     },
     bannerAction: {
       minHeight: 36,
-      maxWidth: isCompact ? 104 : 128,
+      maxWidth: isCompact ? 112 : 142,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       gap: 6,
       paddingHorizontal: 11,
-      borderRadius: 8,
+      borderRadius: 7,
       borderCurve: "continuous",
       backgroundColor: gold,
     },
@@ -578,17 +574,17 @@ function createStyles(theme: Theme, isCompact: boolean) {
     },
     bannerStatus: {
       minHeight: 34,
-      maxWidth: isCompact ? 110 : 132,
+      maxWidth: isCompact ? 118 : 146,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       gap: 6,
       paddingHorizontal: 10,
-      borderRadius: 8,
+      borderRadius: 7,
       borderCurve: "continuous",
-      backgroundColor: theme.isDark ? "rgba(245, 211, 138, 0.12)" : "rgba(255, 255, 255, 0.10)",
+      backgroundColor: "rgba(196, 154, 74, 0.12)",
       borderWidth: 1,
-      borderColor: theme.isDark ? "rgba(245, 211, 138, 0.22)" : "rgba(255, 255, 255, 0.18)",
+      borderColor: "rgba(196, 154, 74, 0.26)",
     },
     bannerStatusText: {
       flexShrink: 1,
@@ -621,9 +617,9 @@ function createStyles(theme: Theme, isCompact: boolean) {
       ...fonts.semibold,
     },
     progressTrack: {
-      height: 4,
+      height: 6,
       borderRadius: 2,
-      backgroundColor: theme.isDark ? "rgba(255, 255, 255, 0.10)" : "rgba(17, 24, 39, 0.08)",
+      backgroundColor: "rgba(255, 249, 236, 0.10)",
       overflow: "hidden",
     },
     progressFill: {
@@ -635,7 +631,7 @@ function createStyles(theme: Theme, isCompact: boolean) {
       gap: 8,
     },
     timelineItem: {
-      minHeight: isCompact ? 58 : 64,
+      minHeight: isCompact ? 58 : 66,
       flexDirection: "row",
       alignItems: "center",
       gap: 12,
@@ -644,18 +640,18 @@ function createStyles(theme: Theme, isCompact: boolean) {
       borderCurve: "continuous",
     },
     timelineItemAvailable: {
-      backgroundColor: goldSoft,
+      backgroundColor: "rgba(196, 154, 74, 0.16)",
       borderWidth: 1,
       borderColor: goldBorder,
     },
     timelineItemLocked: {
-      backgroundColor: theme.isDark ? "rgba(255, 255, 255, 0.025)" : "rgba(17, 24, 39, 0.018)",
+      backgroundColor: "rgba(255, 249, 236, 0.035)",
       borderWidth: 1,
-      borderColor: theme.isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(17, 24, 39, 0.045)",
+      borderColor: "rgba(255, 249, 236, 0.075)",
     },
     timelineItemFinal: {
-      minHeight: 74,
-      backgroundColor: goldSoft,
+      minHeight: 78,
+      backgroundColor: "rgba(196, 154, 74, 0.18)",
       borderWidth: 1,
       borderColor: goldBorder,
     },
@@ -672,7 +668,7 @@ function createStyles(theme: Theme, isCompact: boolean) {
       left: 20,
       width: 2,
       borderRadius: 1,
-      backgroundColor: theme.isDark ? "rgba(255, 255, 255, 0.14)" : "rgba(17, 24, 39, 0.10)",
+      backgroundColor: "rgba(255, 249, 236, 0.14)",
     },
     railLineFirst: {
       top: 32,
@@ -691,7 +687,7 @@ function createStyles(theme: Theme, isCompact: boolean) {
       justifyContent: "center",
       borderWidth: 1,
       borderColor: cardBorder,
-      backgroundColor: theme.surfaceHigh,
+      backgroundColor: "rgba(255, 249, 236, 0.08)",
     },
     dayNodeNearFinal: {
       backgroundColor: goldSoft,
@@ -711,7 +707,7 @@ function createStyles(theme: Theme, isCompact: boolean) {
       borderColor: gold,
     },
     dayNodeLocked: {
-      backgroundColor: theme.surfaceDisabled,
+      backgroundColor: "rgba(255, 249, 236, 0.07)",
     },
     dayCopy: {
       flex: 1,
@@ -729,7 +725,7 @@ function createStyles(theme: Theme, isCompact: boolean) {
       color: gold,
     },
     dayTitleLocked: {
-      color: theme.isDark ? "rgba(255, 255, 255, 0.72)" : "#374151",
+      color: "rgba(255, 249, 236, 0.64)",
     },
     dayBody: {
       color: secondaryText,
@@ -743,7 +739,7 @@ function createStyles(theme: Theme, isCompact: boolean) {
       ...fonts.semibold,
     },
     rewardPill: {
-      minWidth: isCompact ? 56 : 64,
+      minWidth: isCompact ? 64 : 78,
       minHeight: 32,
       flexDirection: "row",
       alignItems: "center",
@@ -761,7 +757,7 @@ function createStyles(theme: Theme, isCompact: boolean) {
     },
     rewardPillLocked: {
       backgroundColor: "transparent",
-      borderColor: theme.isDark ? "rgba(255, 255, 255, 0.10)" : "rgba(17, 24, 39, 0.08)",
+      borderColor: "rgba(255, 249, 236, 0.12)",
     },
     rewardText: {
       color: primaryText,
@@ -772,14 +768,6 @@ function createStyles(theme: Theme, isCompact: boolean) {
     },
     rewardTextLocked: {
       color: mutedText,
-    },
-    lockHint: {
-      width: 32,
-      height: 32,
-      alignItems: "center",
-      justifyContent: "center",
-      borderRadius: 8,
-      backgroundColor: "transparent",
     },
     footerHint: {
       color: secondaryText,

@@ -1,5 +1,4 @@
 import {useMutation, useQuery} from "convex/react";
-import {Asset} from "expo-asset";
 import * as ImagePicker from "expo-image-picker";
 import {useRouter} from "expo-router";
 import {usePostHog} from "posthog-react-native";
@@ -8,6 +7,7 @@ import {useTranslation} from "react-i18next";
 import {Alert} from "react-native";
 
 import {ANALYTICS_EVENTS, captureAnalytics, captureGenerationFailure} from "../lib/analytics";
+import {resolveBundledImageSource} from "../lib/bundled-assets";
 import {uploadLocalFileToCloud} from "../lib/native-upload";
 import {getLayoutWizardExamplePhotos, type WizardExamplePhoto} from "../lib/wizard-example-photos";
 import {InteriorRedesignStepOne} from "./interior-redesign-step-one";
@@ -70,20 +70,11 @@ const SMART_SPACE_PROCESSING_STATUSES = [
 ] as const;
 
 async function resolveExampleAsset(example: WizardExamplePhoto) {
-  const asset = Asset.fromModule(example.source);
-  if (!asset.localUri) {
-    await asset.downloadAsync();
-  }
-
-  const uri = asset.localUri ?? asset.uri;
-  if (!uri) {
-    throw new Error("Example photo is unavailable.");
-  }
-
+  const resolved = await resolveBundledImageSource(example.source, {width: 1200, height: 1200});
   return {
-    uri,
-    width: asset.width ?? 1200,
-    height: asset.height ?? 1200,
+    uri: resolved.uri,
+    width: resolved.width,
+    height: resolved.height,
     label: example.label,
   } satisfies SelectedImage;
 }

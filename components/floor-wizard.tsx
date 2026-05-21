@@ -12,7 +12,7 @@ import {AnimatePresence, MotiView} from "moti";
 import {usePostHog} from "posthog-react-native";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {ActivityIndicator, Alert, Linking, Image as NativeImage, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View, useWindowDimensions} from "react-native";
+import {ActivityIndicator, Alert, Linking, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View, useWindowDimensions} from "react-native";
 import {Gesture, GestureDetector} from "react-native-gesture-handler";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import Svg, {Rect, Path as SvgPath} from "react-native-svg";
@@ -20,6 +20,7 @@ import {captureRef} from "react-native-view-shot";
 
 import {FLOOR_MATERIAL_OPTIONS} from "../lib/data";
 import {ANALYTICS_EVENTS, captureAnalytics, captureGenerationFailure} from "../lib/analytics";
+import {resolveBundledImageSource} from "../lib/bundled-assets";
 import {canUserGenerate as canUserGenerateNow} from "../lib/generation-access";
 import {GENERATION_FAILED_TOAST, getFriendlyGenerationError} from "../lib/generation-errors";
 import {runWithFriendlyRetry} from "../lib/generation-retry";
@@ -344,7 +345,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
         triggerHaptic();
         requestNotificationsAfterReveal();
         if (effectiveSignedIn) {
-          router.replace({ pathname: "/workspace", params: { boardView: "board" } });
+          router.replace(`/workspace?boardView=editor&boardItemId=${encodeURIComponent(generation._id)}&entrySource=generation` as any);
           return;
         }
         setStep("result");
@@ -755,20 +756,19 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     [advanceToMaskStep, applySelectedImage, t],
   );
 
-  const handleSelectExample = useCallback((example: FloorIntroExamplePhoto) => {
-    const resolved = NativeImage.resolveAssetSource(example.source);
-    if (!resolved?.uri) {
+  const handleSelectExample = useCallback(async (example: FloorIntroExamplePhoto) => {
+    try {
+      const resolved = await resolveBundledImageSource(example.source);
+      applySelectedImage({
+        uri: resolved.uri,
+        photoUri: null,
+        width: resolved.width,
+        height: resolved.height,
+      });
+      advanceToMaskStep();
+    } catch {
       Alert.alert(t("workspace.media.exampleUnavailableTitle"), t("wizard.floorFlow.exampleUnavailableBody"));
-      return;
     }
-
-    applySelectedImage({
-      uri: resolved.uri,
-      photoUri: null,
-      width: resolved.width ?? 1080,
-      height: resolved.height ?? 1440,
-    });
-    advanceToMaskStep();
   }, [advanceToMaskStep, applySelectedImage, t]);
 
   const updateComparisonSlider = useCallback((x: number) => {

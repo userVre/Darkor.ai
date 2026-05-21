@@ -6,6 +6,7 @@
     "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/app-icon.png",
+    "backgroundColor": "#FFFFFF",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -13,11 +14,13 @@
     },
     "androidStatusBar": {
       "backgroundColor": "#FFFFFF",
-      "barStyle": "dark-content"
+      "barStyle": "dark-content",
+      "translucent": false
     },
     "androidNavigationBar": {
       "backgroundColor": "#FFFFFF",
-      "barStyle": "dark-content"
+      "barStyle": "dark-content",
+      "enforceContrast": false
     },
     "platforms": [
       "ios",
@@ -30,7 +33,7 @@
     },
     "android": {
       "package": "com.ismail.homedecorai",
-      "versionCode": 28,
+      "versionCode": 29,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"

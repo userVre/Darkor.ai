@@ -22,6 +22,12 @@ import {fonts} from "../../styles/typography";
 
 const SCREEN_SIDE_MARGIN = 26;
 const CARD_GAP = 14;
+const DEFAULT_CARD_HEIGHT_RATIO = 1.28;
+const GARDEN_CARD_HEIGHT_RATIO = 1;
+
+function getDiscoverCardHeight(group: DiscoverGroup, cardWidth: number) {
+  return Math.round(cardWidth * (group.service === "garden" ? GARDEN_CARD_HEIGHT_RATIO : DEFAULT_CARD_HEIGHT_RATIO));
+}
 
 function getDiscoverTileKey(group: DiscoverGroup, item: DiscoverTile) {
   return `${group.renderKey}:${item.id}`;
@@ -94,7 +100,6 @@ export default function GalleryScreen() {
   const [selectedClusterId, setSelectedClusterId] = useState<DiscoverClusterId>("interiors");
   const clusters = useDiscoverClusters();
   const cardWidth = useMemo(() => Math.min(Math.round(width * 0.46), 224), [width]);
-  const cardHeight = useMemo(() => Math.round(cardWidth * 1.28), [cardWidth]);
   const contentContainerStyle = useMemo(
     () => ({
       paddingBottom: Math.max(insets.bottom + 120, 132),
@@ -136,6 +141,8 @@ export default function GalleryScreen() {
 
   const renderSection = useCallback(
     ({ item }: { item: DiscoverGroup }) => {
+      const cardHeight = getDiscoverCardHeight(item, cardWidth);
+
       return (
         <DiscoverSection
           group={item}
@@ -148,7 +155,7 @@ export default function GalleryScreen() {
         />
       );
     },
-    [cardHeight, cardWidth, handleExploreGroup, handlePreviewOpen, styles, t],
+    [cardWidth, handleExploreGroup, handlePreviewOpen, styles, t],
   );
 
   const listHeader = useMemo(

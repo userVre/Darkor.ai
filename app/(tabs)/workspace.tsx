@@ -37,7 +37,6 @@ import {useAuth} from "@clerk/expo";
 import {BottomSheetModal} from "@gorhom/bottom-sheet";
 import {FlashList} from "@shopify/flash-list";
 import {useAction, useMutation, useQuery} from "convex/react";
-import {Asset} from "expo-asset";
 import {BlurView} from "expo-blur";
 import * as FileSystem from "expo-file-system/legacy";
 import {Image} from "expo-image";
@@ -105,6 +104,7 @@ import {useViewerSession} from "../../components/viewer-session-context";
 import {useWorkspaceDraft} from "../../components/workspace-context";
 import {DS, HAIRLINE, ambientShadow, floatingButton, glowShadow, organicRadii, surfaceCard} from "../../lib/design-system";
 import {ANALYTICS_EVENTS, captureAnalytics} from "../../lib/analytics";
+import {resolveBundledImageSource} from "../../lib/bundled-assets";
 import {DIAGNOSTIC_BYPASS} from "../../lib/diagnostics";
 import {canUserGenerate as canUserGenerateNow} from "../../lib/generation-access";
 import {GENERATION_FAILED_TOAST, getFriendlyGenerationError} from "../../lib/generation-errors";
@@ -1479,6 +1479,25 @@ const PALETTE_OPTIONS: PaletteOption[] = [
   },
 ];
 
+const EXTERIOR_PALETTE_ORDER = [
+  "surprise",
+  "gray",
+  "terracotta",
+  "sunset",
+  "forest",
+  "peach",
+  "fuchsia",
+  "emerald",
+  "pastel",
+  "ocean",
+  "velvet",
+  "amethyst",
+];
+
+const EXTERIOR_PALETTE_OPTIONS = EXTERIOR_PALETTE_ORDER.map((id) => PALETTE_OPTIONS.find((palette) => palette.id === id)).filter(
+  (palette): palette is PaletteOption => Boolean(palette),
+);
+
 const GARDEN_PALETTE_OPTIONS: PaletteOption[] = [
   {
     id: "garden-surprise",
@@ -2255,6 +2274,8 @@ export default function WorkspaceScreen() {
   const [workflowStep, setWorkflowStep] = useState(0);
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
   const [currentDisplayIndex, setCurrentDisplayIndex] = useState(0);
+  const selectedImagesRef = useRef<SelectedImage[]>([]);
+  const currentDisplayIndexRef = useRef(0);
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
@@ -2386,6 +2407,14 @@ export default function WorkspaceScreen() {
   }, [isFloorService, isLayoutService, isPaintService, isReferenceStyleWizard, isReplaceService]);
 
   useEffect(() => {
+    selectedImagesRef.current = selectedImages;
+  }, [selectedImages]);
+
+  useEffect(() => {
+    currentDisplayIndexRef.current = currentDisplayIndex;
+  }, [currentDisplayIndex]);
+
+  useEffect(() => {
     setDraftImage(selectedImage ?? null);
     setDraftImages(selectedImages);
   }, [selectedImage, selectedImages, setDraftImage, setDraftImages]);
@@ -2471,7 +2500,9 @@ export default function WorkspaceScreen() {
       const hydratedImages = draft.images ?? (draft.image ? [draft.image] : []);
       const hydratedStyles = draft.styles ?? (draft.style ? [draft.style] : []);
       setSelectedImages(hydratedImages);
+      selectedImagesRef.current = hydratedImages;
       setCurrentDisplayIndex(0);
+      currentDisplayIndexRef.current = 0;
       setSelectedRooms(draft.room ? [draft.room] : []);
       setSelectedStyle(hydratedStyles[0] ?? null);
       setSelectedStyles(hydratedStyles);
@@ -2693,12 +2724,7 @@ export default function WorkspaceScreen() {
     sliderInteractionStartedAtRef.current = null;
     sliderIntensityTrackedRef.current = false;
   }, [activeBoardItemId]);
-  const isWorkspaceResultScreen =
-    workflowStep === 5
-    && Boolean(activeBoardItem)
-    && activeBoardItem?.status !== "processing"
-    && !isProcessingGateActive;
-  const shouldHideNativeTabBar = (pathname === "/workspace" || pathname === "/create") && !isWorkspaceResultScreen;
+  const shouldHideNativeTabBar = pathname === "/workspace" || pathname === "/create";
 
   useEffect(() => {
     setIsFlowActive(shouldHideNativeTabBar);
@@ -3151,17 +3177,12 @@ export default function WorkspaceScreen() {
     [exteriorStyleGalleryCards, selectedStyles],
   );
   const exteriorPaletteCards = useMemo(
-    () => [
-      { id: "surprise", label: t("workspace.localization.palettes.surprise"), colors: ["#f7f7f5", "#f4d7a6", "#fd5d82", "#6b8afd", "#111827"] },
-      { id: "gray", label: t("workspace.localization.palettes.gray"), colors: ["#f5f5f4", "#d6d3d1", "#a8a29e", "#78716c", "#44403c"] },
-      { id: "terracotta", label: t("workspace.localization.palettes.terracotta"), colors: ["#fff7ed", "#fed7aa", "#fdba74", "#fb923c", "#ea580c"] },
-      { id: "sunset", label: t("workspace.localization.palettes.sunset"), colors: ["#16081f", "#4c1d95", "#7c3aed", "#d946ef", "#f5d0fe"] },
-      { id: "forest", label: t("workspace.localization.palettes.forest"), colors: ["#ecfccb", "#cbd5b1", "#9caf88", "#6f8f72", "#334d36"] },
-      { id: "peach", label: t("workspace.localization.palettes.peach"), colors: ["#fff7ed", "#fde1d3", "#fac9b8", "#f3b49f", "#e68a73"] },
-      { id: "fuchsia", label: t("workspace.localization.palettes.fuchsia"), colors: ["#fdf2f8", "#fbcfe8", "#f9a8d4", "#ec4899", "#be185d"] },
-      { id: "emerald", label: t("workspace.localization.palettes.emerald"), colors: ["#e8f5ec", "#bfd8c2", "#7aa182", "#425a41", "#1f2f23"] },
-      { id: "pastel", label: t("workspace.localization.palettes.pastel"), colors: ["#e0f2fe", "#fffbea", "#eef6f0", "#f5f4f7", "#e9d5ff"] },
-    ],
+    () =>
+      EXTERIOR_PALETTE_OPTIONS.map((palette) => ({
+        id: palette.id,
+        label: t(`workspace.localization.palettes.${palette.id}`),
+        colors: palette.colors,
+      })),
     [i18n.language, t],
   );
   const gardenPaletteCards = useMemo(
@@ -3765,7 +3786,9 @@ export default function WorkspaceScreen() {
       return;
     }
 
-    const merged = [...selectedImages];
+    const currentImages = selectedImagesRef.current;
+    const currentIndex = currentDisplayIndexRef.current;
+    const merged = [...currentImages];
     let preferredUri: string | null = null;
     for (const image of images) {
       const existingIndex = merged.findIndex((item) => item.uri === image.uri);
@@ -3784,42 +3807,49 @@ export default function WorkspaceScreen() {
     const nextDisplay =
       preferredIndex >= 0
         ? preferredIndex
-        : selectedImages.length === 0
+        : currentImages.length === 0
           ? 0
-          : Math.max(0, Math.min(currentDisplayIndex, merged.length - 1));
+          : Math.max(0, Math.min(currentIndex, merged.length - 1));
 
     setSelectedImages(merged);
+    selectedImagesRef.current = merged;
     setCurrentDisplayIndex(nextDisplay);
+    currentDisplayIndexRef.current = nextDisplay;
     setGeneratedImageUrl(null);
     setGenerationId(null);
-  }, [currentDisplayIndex, selectedImages]);
+  }, []);
 
   const focusSelectedImage = useCallback((index: number) => {
-    if (index < 0 || index >= selectedImages.length) {
+    if (index < 0 || index >= selectedImagesRef.current.length) {
       return;
     }
 
     triggerHaptic();
     setCurrentDisplayIndex(index);
-  }, [selectedImages]);
+    currentDisplayIndexRef.current = index;
+  }, []);
 
   const removeSelectedImage = useCallback((index: number) => {
     triggerHaptic();
-    const nextImages = selectedImages.filter((_, currentIndex) => currentIndex !== index);
+    const currentImages = selectedImagesRef.current;
+    const currentIndex = currentDisplayIndexRef.current;
+    const nextImages = currentImages.filter((_, currentImageIndex) => currentImageIndex !== index);
     const nextDisplay =
       nextImages.length === 0
         ? 0
-        : index < currentDisplayIndex
-          ? currentDisplayIndex - 1
-          : index === currentDisplayIndex
-            ? Math.min(currentDisplayIndex, nextImages.length - 1)
-            : currentDisplayIndex;
+        : index < currentIndex
+          ? currentIndex - 1
+          : index === currentIndex
+            ? Math.min(currentIndex, nextImages.length - 1)
+            : currentIndex;
 
     setSelectedImages(nextImages);
+    selectedImagesRef.current = nextImages;
     setCurrentDisplayIndex(nextDisplay);
+    currentDisplayIndexRef.current = nextDisplay;
     setGeneratedImageUrl(null);
     setGenerationId(null);
-  }, [currentDisplayIndex, selectedImages]);
+  }, []);
 
   const applyPickedAsset = useCallback(
     (asset: ImagePicker.ImagePickerAsset, label: string) => {
@@ -3828,6 +3858,23 @@ export default function WorkspaceScreen() {
         source_label: label,
         service_type: serviceType,
       });
+    },
+    [appendSelectedImages, posthog, serviceType],
+  );
+
+  const applyPickedAssets = useCallback(
+    (assets: ImagePicker.ImagePickerAsset[], label: string) => {
+      if (assets.length === 0) {
+        return;
+      }
+
+      appendSelectedImages(assets.map((asset) => ({ uri: asset.uri, label })));
+      for (let index = 0; index < assets.length; index += 1) {
+        captureAnalytics(posthog, ANALYTICS_EVENTS.step1UploadSuccess, {
+          source_label: label,
+          service_type: serviceType,
+        });
+      }
     },
     [appendSelectedImages, posthog, serviceType],
   );
@@ -3926,9 +3973,7 @@ export default function WorkspaceScreen() {
       }
 
       const label = t("workspace.media.uploadedPhoto");
-      for (const asset of result.assets.slice(0, remainingSlots)) {
-        applyPickedAsset(asset, label);
-      }
+      applyPickedAssets(result.assets.slice(0, remainingSlots), label);
       return true;
     } catch (error) {
       Alert.alert(
@@ -3939,7 +3984,7 @@ export default function WorkspaceScreen() {
     } finally {
       setIsSelectingPhoto(false);
     }
-  }, [applyPickedAsset, isSelectingPhoto, selectedImages.length, showSettingsPermissionAlert, t]);
+  }, [applyPickedAssets, isSelectingPhoto, selectedImages.length, showSettingsPermissionAlert, t]);
 
   const launchPhotoSource = useCallback(
     async (source: PhotoSource) => {
@@ -3977,9 +4022,7 @@ export default function WorkspaceScreen() {
 
         const assets = result.assets.slice(0, Math.max(1, 3 - selectedImages.length));
         const label = source === "camera" ? t("workspace.media.capturedPhoto") : t("workspace.media.uploadedPhoto");
-        for (const asset of assets) {
-          applyPickedAsset(asset, label);
-        }
+        applyPickedAssets(assets, label);
       } catch (error) {
         Alert.alert(
           t("workspace.media.photoIntakeUnavailableTitle"),
@@ -3989,7 +4032,7 @@ export default function WorkspaceScreen() {
         setIsSelectingPhoto(false);
       }
     },
-    [applyPickedAsset, ensureCameraPermission, ensureMediaLibraryPermission, selectedImages.length, t],
+    [applyPickedAssets, ensureCameraPermission, ensureMediaLibraryPermission, selectedImages.length, t],
   );
 
   const presentPhotoSourceMenu = useCallback(() => {
@@ -4042,13 +4085,8 @@ export default function WorkspaceScreen() {
     try {
       triggerHaptic();
       setIsLoadingExample(example.id);
-      const asset = Asset.fromModule(example.source);
-      await asset.downloadAsync();
-      const uri = asset.localUri ?? asset.uri;
-      if (!uri) {
-        throw new Error(t("workspace.media.exampleImageUnavailable"));
-      }
-      appendSelectedImages([{ uri, label: example.label }]);
+      const resolved = await resolveBundledImageSource(example.source);
+      appendSelectedImages([{ uri: resolved.uri, label: example.label }]);
     } catch (error) {
       Alert.alert(t("workspace.media.exampleUnavailableTitle"), error instanceof Error ? error.message : t("workspace.media.tryAnotherImage"));
     } finally {
@@ -4134,7 +4172,9 @@ export default function WorkspaceScreen() {
     startTransition(() => {
       setWorkflowStep(0);
       setSelectedImages([]);
+      selectedImagesRef.current = [];
       setCurrentDisplayIndex(0);
+      currentDisplayIndexRef.current = 0;
       setSelectedRooms([]);
       setSelectedStyle(null);
       setSelectedStyles([]);
@@ -4535,7 +4575,7 @@ export default function WorkspaceScreen() {
           : activeStyleLabel === "Custom" && customPrompt.trim().length > 0
             ? customPrompt.trim()
             : undefined;
-    const backendServiceType = isFloorService || isPaintService ? serviceType : "redesign";
+    const backendServiceType = isReferenceStyleWizard ? "reference" : serviceType;
     const watermarkRequired = watermarkRequiredForViewer;
     const processingBoardItem: BoardRenderItem = {
       id: temporaryBoardId,
@@ -4716,6 +4756,7 @@ export default function WorkspaceScreen() {
     ignoreReviewCooldown,
     isOffline,
     isPaintService,
+    isReferenceStyleWizard,
     openAuthWall,
     openGenerationPaywall,
     posthog,
@@ -4890,7 +4931,19 @@ export default function WorkspaceScreen() {
       return;
     }
 
+    const previousFeedbackState = editorFeedbackState;
+
     triggerHaptic();
+    setFeedbackState(sentiment);
+    setFeedbackSubmitted(true);
+
+    if (sentiment === "liked") {
+      showToast(t("workspace.feedback.liked"));
+      requestAnimationFrame(() => {
+        void requestStoreReview();
+      });
+    }
+
     setIsSubmittingFeedback(sentiment);
     try {
       await submitGenerationFeedback({
@@ -4914,10 +4967,12 @@ export default function WorkspaceScreen() {
         source: "workspace_editor",
       });
 
-      setFeedbackState(sentiment);
-      setFeedbackSubmitted(true);
-      showToast(sentiment === "liked" ? t("workspace.feedback.liked") : t("workspace.feedback.disliked"));
+      if (sentiment === "disliked") {
+        showToast(t("workspace.feedback.disliked"));
+      }
     } catch (error) {
+      setFeedbackState(previousFeedbackState);
+      setFeedbackSubmitted(Boolean(previousFeedbackState));
       showToast(error instanceof Error ? error.message : t("workspace.feedback.failed"));
     } finally {
       setIsSubmittingFeedback(null);
@@ -4927,6 +4982,7 @@ export default function WorkspaceScreen() {
     activeBoardItem?.serviceType,
     activeBoardItem?.styleLabel,
     activeGenerationRecordId,
+    editorFeedbackState,
     selectedRoom,
     selectedStyle,
     serviceType,
@@ -8773,6 +8829,7 @@ export default function WorkspaceScreen() {
                 ] as const).map((item) => {
                   const active = editorFeedbackState === item.key;
                   const busy = isSubmittingFeedback === item.key;
+                  const FeedbackIcon = item.key === "liked" && active ? Check : item.icon;
 
                   return (
                     <LuxPressable
@@ -8792,18 +8849,18 @@ export default function WorkspaceScreen() {
                           gap: 10,
                           borderRadius: 999,
                           borderWidth: 1,
-                          borderColor: active ? DS.colors.accent : "#E5E7EB",
-                          backgroundColor: active ? DS.colors.accentSurface : "#FFFFFF",
+                          borderColor: active ? RESULT_ACTION_BLUE : "#E5E7EB",
+                          backgroundColor: active ? RESULT_ACTION_BLUE : "#FFFFFF",
                           paddingHorizontal: 18,
                           paddingVertical: 12,
                         }}
                       >
                         {busy ? (
-                          <ActivityIndicator size="small" color={DS.colors.accent} />
+                          <ActivityIndicator size="small" color={active ? "#FFFFFF" : DS.colors.accent} />
                         ) : (
-                          <item.icon color={active ? DS.colors.accent : DS.colors.textPrimary} size={18} strokeWidth={1.9} />
+                          <FeedbackIcon color={active ? "#FFFFFF" : DS.colors.textPrimary} size={18} strokeWidth={2} />
                         )}
-                        <Text style={{ color: active ? DS.colors.accent : DS.colors.textPrimary, fontSize: 13, lineHeight: 16, ...fonts.semibold }}>
+                        <Text style={{ color: active ? "#FFFFFF" : DS.colors.textPrimary, fontSize: 13, lineHeight: 16, ...fonts.semibold }}>
                           {item.label}
                         </Text>
                       </View>

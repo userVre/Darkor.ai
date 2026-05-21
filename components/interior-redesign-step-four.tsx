@@ -165,13 +165,13 @@ export function InteriorRedesignStepFour({
   const sideInset = scaleValue(20, layoutScale);
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
   const sectionTitleLeft = 24;
-  const modeTitleTop = headerMetrics.contentOffset;
+  const modeTitleTop = Math.max(headerMetrics.contentOffset - scaleValue(8, layoutScale), 0);
   const modeCardsTopGap = scaleValue(32, layoutScale);
   const modeCardWidth = scaleValue(196, layoutScale);
   const modeCardHeight = scaleValue(252, layoutScale);
   const modeCardGap = scaleValue(16, layoutScale);
-  const modeSectionToPaletteGap = scaleValue(32, layoutScale);
-  const paletteTitleTopGap = scaleValue(32, layoutScale);
+  const modeSectionToPaletteGap = scaleValue(24, layoutScale);
+  const paletteTitleTopGap = scaleValue(20, layoutScale);
   const paletteMargin = scaleValue(24, paletteScale);
   const paletteCardWidth = scaleValue(124, paletteScale);
   const paletteCardHeight = scaleValue(164, paletteScale);
@@ -179,8 +179,6 @@ export function InteriorRedesignStepFour({
   const paletteLabelHeight = scaleValue(56, paletteScale);
   const paletteHorizontalGap = scaleValue(40, paletteScale);
   const paletteVerticalGap = scaleValue(8, paletteScale);
-  const paletteLabelTop = scaleValue(28, paletteScale);
-  const paletteLabelLeft = scaleValue(16, paletteScale);
   const bottomContainerHeight = scaleValue(116, layoutScale);
   const buttonHeight = scaleValue(60, layoutScale);
   const buttonTop = scaleValue(24, layoutScale);
@@ -321,15 +319,11 @@ export function InteriorRedesignStepFour({
                         ]}
                       >
                         <Text
-                          numberOfLines={2}
+                          numberOfLines={3}
                           style={[
                             styles.paletteLabelText,
-                            {
-                              top: paletteLabelTop,
-                              left: paletteLabelLeft,
-                              },
-                              getWizardSelectedLabelTextStyle(active),
-                            ]}
+                            getWizardSelectedLabelTextStyle(active),
+                          ]}
                           >
                           {palette.displayLabel ?? palette.label}
                         </Text>
@@ -513,14 +507,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   paletteLabelBar: {
-    position: "relative",
     backgroundColor: "#EFEFEF",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
   },
   paletteLabelText: {
-    position: "absolute",
-    right: 8,
-    fontSize: 10,
-    lineHeight: 12,
+    color: DESIGN_WIZARD_TEXT,
+    fontSize: 11,
+    lineHeight: 13,
     ...fonts.semibold,
   },
   bottomContainer: {
@@ -528,11 +523,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "transparent",
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(17,24,39,0.08)",
   },
   bottomContainerInner: {
     alignItems: "center",
-    backgroundColor: "transparent",
+    backgroundColor: "#FFFFFF",
   },
   continueButton: {
     alignSelf: "center",

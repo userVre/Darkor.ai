@@ -1,5 +1,6 @@
 import {Check, Wand2} from "@/components/material-icons";
 import {Image} from "expo-image";
+import {LinearGradient} from "expo-linear-gradient";
 import {StatusBar} from "expo-status-bar";
 import {type ComponentType, useMemo} from "react";
 import {useTranslation} from "react-i18next";
@@ -43,9 +44,6 @@ type GardenRedesignStepTwoProps = {
 const REFERENCE_WIDTH = 456;
 const REFERENCE_HEIGHT = 932;
 const GRID_GAP = 16;
-const THUMBNAIL_CROP_OVERFLOW = 52;
-const THUMBNAIL_CROP_SHIFT = -24;
-
 function scaleValue(value: number, scale: number) {
   return value * scale;
 }
@@ -144,7 +142,7 @@ export function GardenRedesignStepTwo({
               {row.map((styleCard, columnIndex) => {
                 const isAiSuggestCard = styleCard.title === "AI Suggest";
                 const active = isAiSuggestCard ? smartSuggestEnabled : selectedStyles.includes(styleCard.title);
-                const CardIcon = styleCard.icon ?? Wand2;
+                const CardIcon = isAiSuggestCard ? Wand2 : styleCard.icon ?? Wand2;
                 const isIconCard = styleCard.image === null;
 
                 return (
@@ -164,7 +162,7 @@ export function GardenRedesignStepTwo({
                         getWizardSelectionCardStyle(active, DESIGN_WIZARD_SURFACE),
                       ]}
                     >
-                      {active ? (
+                      {active && !isAiSuggestCard ? (
                         <View style={stylesSheet.selectionBadge}>
                           <View style={[stylesSheet.selectionBadgeInner, getWizardSelectedIconContainerStyle(true)]}>
                             <Check color={DESIGN_WIZARD_SELECTION_BLUE} size={16} strokeWidth={2.4} />
@@ -172,44 +170,68 @@ export function GardenRedesignStepTwo({
                         </View>
                       ) : null}
                       {isIconCard ? (
-                        <View
-                          style={[
-                            stylesSheet.iconCardMedia,
-                            {
-                              height: cardImageHeight,
-                              backgroundColor: active ? "#DBEAFE" : "#F4F7FB",
-                            },
-                          ]}
-                        >
-                          <View
+                        isAiSuggestCard ? (
+                          <LinearGradient
+                            colors={active ? ["#F8FBFF", "#EAF3FF", "#FFFFFF"] : ["#FFFFFF", "#F3F6FA", "#FFFFFF"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
                             style={[
-                              stylesSheet.iconCardBadge,
-                              { backgroundColor: active ? "#2563EB" : "#0F172A" },
+                              stylesSheet.iconCardMedia,
+                              stylesSheet.aiSuggestMedia,
+                              {
+                                height: cardImageHeight,
+                              },
                             ]}
                           >
-                            <CardIcon color="#FFFFFF" size={28} strokeWidth={2.1} />
-                          </View>
-                          <Text style={[stylesSheet.iconCardTitle, active ? stylesSheet.iconCardTitleActive : null]}>
-                            {styleCard.label ?? styleCard.title}
-                          </Text>
-                          {styleCard.description ? (
-                            <Text style={[stylesSheet.iconCardDescription, active ? stylesSheet.iconCardDescriptionActive : null]}>
-                              {isAiSuggestCard && isAiSuggesting
-                                ? "Analyzing the garden structure and choosing the strongest aesthetic."
-                                : styleCard.description}
+                            <View style={stylesSheet.aiSuggestLineTop} />
+                            <View style={stylesSheet.aiSuggestLineBottom} />
+                            <View style={[stylesSheet.aiSuggestIconHalo, active ? stylesSheet.aiSuggestIconHaloActive : null]}>
+                              <View style={[stylesSheet.aiSuggestIconBadge, active ? stylesSheet.aiSuggestIconBadgeActive : null]}>
+                                <CardIcon color={active ? "#FFFFFF" : "#172033"} size={36} strokeWidth={1.9} />
+                              </View>
+                            </View>
+                          </LinearGradient>
+                        ) : (
+                          <View
+                            style={[
+                              stylesSheet.iconCardMedia,
+                              {
+                                height: cardImageHeight,
+                                backgroundColor: active ? "#DBEAFE" : "#F4F7FB",
+                              },
+                            ]}
+                          >
+                            <View
+                              style={[
+                                stylesSheet.iconCardBadge,
+                                { backgroundColor: active ? "#2563EB" : "#0F172A" },
+                              ]}
+                            >
+                              <CardIcon color="#FFFFFF" size={28} strokeWidth={2.1} />
+                            </View>
+                            <Text style={[stylesSheet.iconCardTitle, active ? stylesSheet.iconCardTitleActive : null]}>
+                              {styleCard.label ?? styleCard.title}
                             </Text>
-                          ) : null}
-                        </View>
+                            {styleCard.description ? (
+                              <Text style={[stylesSheet.iconCardDescription, active ? stylesSheet.iconCardDescriptionActive : null]}>
+                                {isAiSuggestCard && isAiSuggesting
+                                  ? "Analyzing the garden structure and choosing the strongest aesthetic."
+                                  : styleCard.description}
+                              </Text>
+                            ) : null}
+                          </View>
+                        )
                       ) : (
                         <View style={[stylesSheet.cardImageWrap, { height: cardImageHeight }]}>
                           <Image
                             source={styleCard.image}
                             style={{
                               width: "100%",
-                              height: cardImageHeight + THUMBNAIL_CROP_OVERFLOW,
-                              transform: [{ translateY: THUMBNAIL_CROP_SHIFT }],
+                              height: cardImageHeight,
                             }}
                             contentFit="cover"
+                            contentPosition="center"
+                            resizeMode="cover"
                             transition={120}
                             cachePolicy="memory-disk"
                           />
@@ -223,22 +245,22 @@ export function GardenRedesignStepTwo({
                             height: cardLabelHeight,
                             backgroundColor: "#FFFFFF",
                           },
+                          isAiSuggestCard ? stylesSheet.aiSuggestLabelBar : null,
                         ]}
                       >
                         <Text
                           numberOfLines={2}
-                        style={[
-                          stylesSheet.labelText,
-                          {
-                          },
-                          getWizardSelectedLabelTextStyle(active),
-                          active ? stylesSheet.labelTextActive : null,
-                        ]}
-                      >
+                          style={[
+                            stylesSheet.labelText,
+                            getWizardSelectedLabelTextStyle(active),
+                            isAiSuggestCard ? stylesSheet.aiSuggestLabelText : null,
+                            active ? stylesSheet.labelTextActive : null,
+                          ]}
+                        >
                           {styleCard.label ?? styleCard.title}
                         </Text>
                       </View>
-                  </Pressable>
+                    </Pressable>
                 );
               })}
               {row.length === 1 ? <View style={{ width: cardWidth }} /> : null}
@@ -325,6 +347,62 @@ const stylesSheet = StyleSheet.create({
     paddingVertical: 14,
     gap: 10,
   },
+  aiSuggestMedia: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(148,163,184,0.16)",
+  },
+  aiSuggestLineTop: {
+    position: "absolute",
+    top: 24,
+    left: 24,
+    right: 24,
+    height: 1,
+    backgroundColor: "rgba(23,32,51,0.08)",
+  },
+  aiSuggestLineBottom: {
+    position: "absolute",
+    left: 36,
+    right: 36,
+    bottom: 26,
+    height: 1,
+    backgroundColor: "rgba(23,32,51,0.06)",
+  },
+  aiSuggestIconHalo: {
+    width: 72,
+    height: 72,
+    borderRadius: 26,
+    borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.82)",
+    backgroundColor: "rgba(255,255,255,0.54)",
+    boxShadow: "0px 12px 28px rgba(15,23,42,0.08)",
+  },
+  aiSuggestIconHaloActive: {
+    borderColor: "rgba(0,122,255,0.24)",
+    backgroundColor: "rgba(255,255,255,0.68)",
+  },
+  aiSuggestIconBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: 19,
+    borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.92)",
+    borderWidth: 1,
+    borderColor: "rgba(23,32,51,0.08)",
+  },
+  aiSuggestIconBadgeActive: {
+    backgroundColor: DESIGN_WIZARD_SELECTION_BLUE,
+    borderColor: DESIGN_WIZARD_SELECTION_BLUE,
+  },
   iconCardBadge: {
     width: 48,
     height: 48,
@@ -356,11 +434,18 @@ const stylesSheet = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 14,
   },
+  aiSuggestLabelBar: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
   labelText: {
     fontSize: 15,
     lineHeight: 19,
     textAlign: "left",
     ...fonts.semibold,
+  },
+  aiSuggestLabelText: {
+    textAlign: "center",
   },
   labelTextActive: {
     ...fonts.bold,
@@ -370,11 +455,13 @@ const stylesSheet = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "transparent",
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(17,24,39,0.08)",
   },
   bottomContainerInner: {
     alignItems: "center",
-    backgroundColor: "transparent",
+    backgroundColor: "#FFFFFF",
   },
   continueButton: {
     alignSelf: "center",

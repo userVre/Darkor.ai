@@ -19,7 +19,6 @@ import {useTranslation} from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
-  Image as NativeImage,
   Linking,
   Pressable,
   ScrollView,
@@ -43,6 +42,7 @@ import Svg, {
 import {captureRef} from "react-native-view-shot";
 
 import {ANALYTICS_EVENTS, captureAnalytics, captureGenerationFailure} from "../lib/analytics";
+import {resolveBundledImageSource} from "../lib/bundled-assets";
 import {canUserGenerate as canUserGenerateNow} from "../lib/generation-access";
 import {GENERATION_FAILED_TOAST, getFriendlyGenerationError} from "../lib/generation-errors";
 import {runWithFriendlyRetry} from "../lib/generation-retry";
@@ -267,7 +267,7 @@ export function ReplaceObjectsWizard({
         triggerHaptic();
         requestNotificationsAfterReveal();
         if (effectiveSignedIn) {
-          router.replace({pathname: "/workspace", params: {boardView: "board"}});
+          router.replace(`/workspace?boardView=editor&boardItemId=${encodeURIComponent(generation._id)}&entrySource=generation` as any);
           return;
         }
         setStep("result");
@@ -434,20 +434,19 @@ export function ReplaceObjectsWizard({
     }
   }, [advanceToMaskStep, applySelectedImage, t]);
 
-  const handleSelectExample = useCallback((example: {source: number}) => {
-    const resolved = NativeImage.resolveAssetSource(example.source);
-    if (!resolved?.uri) {
+  const handleSelectExample = useCallback(async (example: {source: number}) => {
+    try {
+      const resolved = await resolveBundledImageSource(example.source);
+      applySelectedImage({
+        uri: resolved.uri,
+        photoUri: null,
+        width: resolved.width,
+        height: resolved.height,
+      });
+      advanceToMaskStep();
+    } catch {
       Alert.alert(t("workspace.media.exampleUnavailableTitle"), t("wizard.replaceFlow.exampleUnavailableBody"));
-      return;
     }
-
-    applySelectedImage({
-      uri: resolved.uri,
-      photoUri: null,
-      width: resolved.width ?? 1080,
-      height: resolved.height ?? 1440,
-    });
-    advanceToMaskStep();
   }, [advanceToMaskStep, applySelectedImage, t]);
 
   const handleBack = useCallback(() => {
