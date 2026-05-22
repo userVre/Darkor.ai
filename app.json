@@ -3,7 +3,7 @@
     "name": "HomeDecor AI",
     "slug": "homedecor-ai",
     "scheme": "homedecorai",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/app-icon.png",
     "backgroundColor": "#FFFFFF",
@@ -33,7 +33,7 @@
     },
     "android": {
       "package": "com.ismail.homedecorai",
-      "versionCode": 29,
+      "versionCode": 30,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
@@ -90,7 +90,7 @@
     "experiments": {
       "typedRoutes": true
     },
-    "runtimeVersion": "1.0.3",
+    "runtimeVersion": "1.0.4",
     "updates": {
       "enabled": false,
       "url": "https://u.expo.dev/c18000f7-d1c7-461d-b1eb-66d713f40cf4",
