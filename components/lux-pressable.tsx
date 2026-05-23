@@ -1,6 +1,7 @@
 import {MotiView} from "moti";
 import {PropsWithChildren, useMemo, useState} from "react";
 import {Pressable, PressableProps, StyleProp, ViewStyle} from "react-native";
+import {useTheme as usePaperTheme} from "react-native-paper";
 
 import {DS, glowShadow} from "../lib/design-system";
 import {LUX_SPRING} from "../lib/motion";
@@ -25,6 +26,7 @@ export function LuxPressable({
   onPress,
   ...props
 }: LuxPressableProps) {
+  const paperTheme = usePaperTheme();
   const [pressed, setPressed] = useState(false);
 
   const glowStyle = useMemo(() => {
@@ -35,6 +37,7 @@ export function LuxPressable({
   return (
     <Pressable
       {...props}
+      android_ripple={props.android_ripple ?? {borderless: false, color: paperTheme.colors.onSurfaceVariant}}
       disabled={disabled}
       className={pressableClassName ?? "cursor-pointer"}
       style={{ cursor: "pointer" as any }}

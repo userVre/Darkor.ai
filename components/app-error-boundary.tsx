@@ -1,6 +1,8 @@
 import {Component, type ErrorInfo, type ReactNode} from "react";
-import {Pressable, Text, View} from "react-native";
-import {spacing} from "../styles/spacing";
+import {View} from "react-native";
+import {Button, Surface, Text} from "react-native-paper";
+
+import {md3Shapes, md3Spacing, getMd3Theme} from "../constants/md3Theme";
 
 type Props = {
   children: ReactNode;
@@ -10,11 +12,13 @@ type State = {
   error: Error | null;
 };
 
+const fallbackTheme = getMd3Theme("light");
+
 export class AppErrorBoundary extends Component<Props, State> {
-  state: State = { error: null };
+  state: State = {error: null};
 
   static getDerivedStateFromError(error: Error): State {
-    return { error };
+    return {error};
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
@@ -22,27 +26,27 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   private handleRetry = () => {
-    this.setState({ error: null });
+    this.setState({error: null});
   };
 
   render() {
     if (this.state.error) {
       return (
-        <View style={{ flex: 1, backgroundColor: "#ffffff", justifyContent: "center", paddingHorizontal: spacing.lg }}>
-          <View style={{ borderRadius: 24, borderWidth: 1, borderColor: "#e5e7eb", backgroundColor: "#ffffff", padding: spacing.lg }}>
-            <Text selectable style={{ color: "#111827", fontSize: 24, fontWeight: "700" }}>Something went wrong</Text>
-            <Text selectable style={{ color: "#4b5563", fontSize: 14, marginTop: spacing.sm, lineHeight: 22 }}>
+        <View style={{flex: 1, backgroundColor: fallbackTheme.colors.background, justifyContent: "center", paddingHorizontal: md3Spacing.extraLarge}}>
+          <Surface elevation={1} style={{borderRadius: md3Shapes.large, backgroundColor: fallbackTheme.colors.surface, padding: md3Spacing.extraLarge}}>
+            <Text selectable variant="headlineSmall" style={{color: fallbackTheme.colors.onSurface}}>
+              Something went wrong
+            </Text>
+            <Text selectable variant="bodyMedium" style={{color: fallbackTheme.colors.onSurfaceVariant, marginTop: md3Spacing.small}}>
               HomeDecor AI caught a startup problem. Please try again.
             </Text>
-            <Text selectable style={{ color: "#6b7280", fontSize: 12, marginTop: spacing.md }}>{this.state.error.message}</Text>
-            <Pressable
-              accessibilityRole="button"
-              onPress={this.handleRetry}
-              style={{ marginTop: spacing.lg, borderRadius: 18, backgroundColor: "#111827", paddingVertical: spacing.md, alignItems: "center" }}
-            >
-              <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>Retry</Text>
-            </Pressable>
-          </View>
+            <Text selectable variant="bodySmall" style={{color: fallbackTheme.colors.error, marginTop: md3Spacing.medium}}>
+              {this.state.error.message}
+            </Text>
+            <Button mode="contained" onPress={this.handleRetry} style={{marginTop: md3Spacing.large}}>
+              Retry
+            </Button>
+          </Surface>
         </View>
       );
     }

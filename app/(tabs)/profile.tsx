@@ -1,14 +1,14 @@
-import {LayoutPanelTop, Settings} from "@/components/material-icons";
+import {LayoutPanelTop} from "@/components/material-icons";
 import {useAuth, useUser} from "@clerk/expo";
 import {useMutation, useQuery} from "convex/react";
-import {Image} from "expo-image";
 import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
 import {useRouter} from "expo-router";
 import {StatusBar} from "expo-status-bar";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {Alert, FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {Alert, FlatList, StyleSheet, View, useWindowDimensions} from "react-native";
+import {Avatar, Button, IconButton, Text} from "react-native-paper";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {BoardActionsModal} from "../../components/board-actions-modal";
@@ -16,12 +16,12 @@ import {BoardImageCard} from "../../components/board-image-card";
 import {BoardPreviewModal} from "../../components/board-preview-modal";
 import {useProSuccess} from "../../components/pro-success-context";
 import {useViewerSession} from "../../components/viewer-session-context";
+import {md3Shapes, md3Spacing} from "../../constants/md3Theme";
 import {mapArchiveToBoardItems, type BoardItem, type BoardItemStatus} from "../../lib/board";
 import {hasGenerationImage, resolveGenerationStatus} from "../../lib/generation-status";
 import {loadLocalBoardItems, persistLocalBoardItems, type LocalBoardItem} from "../../lib/local-board-cache";
 import {TOOLS_ROUTE} from "../../lib/routes";
 import {useTheme, type Theme} from "../../styles/theme";
-import {fonts} from "../../styles/typography";
 
 type ArchiveGeneration = {
   _id: string;
@@ -44,8 +44,6 @@ type ArchiveGeneration = {
 const GRID_HORIZONTAL_PADDING = 24;
 const GRID_GAP = 12;
 const GRID_MAX_CARD_WIDTH = 190;
-const DARK_ACTION = "#111111";
-
 function getBoardItemKey(item: BoardItem) {
   return `${item.generationId ?? item.id}:${item.createdAt}`;
 }
@@ -378,31 +376,29 @@ export default function ProfileScreen() {
                 <>
                   <View style={styles.avatar}>
                     {user.imageUrl ? (
-                      <Image source={{ uri: user.imageUrl }} style={styles.avatarImage} contentFit="cover" />
+                      <Avatar.Image size={56} source={{ uri: user.imageUrl }} />
                     ) : (
-                      <Text style={styles.avatarInitials}>{avatarInitials}</Text>
+                      <Avatar.Text size={56} label={avatarInitials} labelStyle={styles.avatarInitials} />
                     )}
                   </View>
                   <View style={styles.userCopy}>
-                    {userName ? <Text numberOfLines={1} selectable style={styles.userName}>{userName}</Text> : null}
-                    {userEmail ? <Text numberOfLines={1} selectable style={styles.userEmail}>{userEmail}</Text> : null}
+                    {userName ? <Text numberOfLines={1} selectable variant="titleMedium" style={styles.userName}>{userName}</Text> : null}
+                    {userEmail ? <Text numberOfLines={1} selectable variant="bodyMedium" style={styles.userEmail}>{userEmail}</Text> : null}
                   </View>
                 </>
               ) : (
-                <Pressable accessibilityRole="button" onPress={handleSignInPress} style={styles.guestSignInButton}>
-                  <Text style={styles.guestSignInText}>{t("auth.screen.signIn.cta")}</Text>
-                </Pressable>
+                <Button mode="contained" onPress={handleSignInPress} style={styles.guestSignInButton} labelStyle={styles.guestSignInText}>
+                  {t("auth.screen.signIn.cta")}
+                </Button>
               )}
 
-              <Pressable
+              <IconButton
                 accessibilityLabel={t("settings.title")}
-                accessibilityRole="button"
-                hitSlop={8}
+                icon="cog"
+                mode="contained-tonal"
                 onPress={handleSettingsPress}
                 style={styles.settingsIconButton}
-              >
-                <Settings color={theme.textPrimary} size={24} strokeWidth={1.9} />
-              </Pressable>
+              />
             </View>
 
             <View style={styles.headerRow}>
@@ -410,7 +406,7 @@ export default function ProfileScreen() {
                 <View style={styles.portfolioIconFrame}>
                   <LayoutPanelTop color={theme.textPrimary} size={16} strokeWidth={1.8} />
                 </View>
-                <Text numberOfLines={1} style={styles.title}>{t("profile.title")}</Text>
+                <Text numberOfLines={1} variant="titleMedium" style={styles.title}>{t("profile.title")}</Text>
               </View>
             </View>
           </View>
@@ -421,11 +417,11 @@ export default function ProfileScreen() {
               <View style={styles.emptyIconShell}>
                 <Text style={styles.emptyIcon}>💎</Text>
               </View>
-              <Text style={styles.emptyTitle}>{t("profile.emptyTitle")}</Text>
-              {t("profile.emptySubtitle") ? <Text style={styles.emptySubtitle}>{t("profile.emptySubtitle")}</Text> : null}
-              <Pressable accessibilityRole="button" onPress={handleCreateFirstDesign} style={styles.emptyCta}>
-                <Text style={styles.emptyCtaText}>{t("profile.emptyCta")}</Text>
-              </Pressable>
+              <Text variant="titleMedium" style={styles.emptyTitle}>{t("profile.emptyTitle")}</Text>
+              {t("profile.emptySubtitle") ? <Text variant="bodyMedium" style={styles.emptySubtitle}>{t("profile.emptySubtitle")}</Text> : null}
+              <Button mode="contained" onPress={handleCreateFirstDesign} style={styles.emptyCta} labelStyle={styles.emptyCtaText}>
+                {t("profile.emptyCta")}
+              </Button>
             </View>
           </View>
         )}
@@ -455,7 +451,7 @@ function createStyles(theme: Theme) {
     backgroundColor: theme.bg,
   },
   scrollContent: {
-    paddingHorizontal: GRID_HORIZONTAL_PADDING,
+    paddingHorizontal: md3Spacing.extraLarge,
   },
   gridContent: {
     alignItems: "center",
@@ -470,8 +466,8 @@ function createStyles(theme: Theme) {
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    marginBottom: 22,
+    gap: md3Spacing.large,
+    marginBottom: md3Spacing.extraLarge,
   },
   avatar: {
     width: 56,
@@ -481,62 +477,34 @@ function createStyles(theme: Theme) {
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: DARK_ACTION,
-  },
-  avatarImage: {
-    width: "100%",
-    height: "100%",
+    backgroundColor: theme.paperTheme.colors.primaryContainer,
   },
   avatarInitials: {
-    color: theme.textInverse,
-    fontSize: 20,
-    lineHeight: 24,
+    color: theme.paperTheme.colors.onPrimaryContainer,
     letterSpacing: 0,
-    ...fonts.bold,
   },
   userCopy: {
     flex: 1,
     minWidth: 0,
-    gap: 4,
+    gap: md3Spacing.extraSmall,
   },
   userName: {
-    color: theme.textPrimary,
-    fontSize: 16,
-    lineHeight: 20,
+    color: theme.paperTheme.colors.onSurface,
     letterSpacing: 0,
-    ...fonts.bold,
   },
   userEmail: {
-    color: theme.textPrimary,
-    fontSize: 15,
-    lineHeight: 20,
+    color: theme.paperTheme.colors.onSurfaceVariant,
     letterSpacing: 0,
-    ...fonts.semibold,
   },
   guestSignInButton: {
-    minHeight: 44,
-    paddingHorizontal: 18,
-    alignItems: "center",
-    justifyContent: "center",
     borderRadius: 999,
-    borderCurve: "continuous",
-    backgroundColor: DARK_ACTION,
   },
   guestSignInText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    lineHeight: 18,
     letterSpacing: 0,
-    ...fonts.semibold,
   },
   settingsIconButton: {
-    width: 40,
-    height: 40,
+    margin: 0,
     flexShrink: 0,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 20,
-    borderCurve: "continuous",
   },
   headerRow: {
     width: "100%",
@@ -544,14 +512,14 @@ function createStyles(theme: Theme) {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: md3Spacing.medium,
   },
   portfolioTitleGroup: {
     flex: 1,
     minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
-    gap: 9,
+    gap: md3Spacing.small,
   },
   portfolioIconFrame: {
     width: 32,
@@ -560,9 +528,7 @@ function createStyles(theme: Theme) {
     borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: theme.surfaceMuted,
-    borderWidth: 0.5,
-    borderColor: theme.border,
+    backgroundColor: theme.paperTheme.colors.secondaryContainer,
   },
   boardBody: {
     width: "100%",
@@ -572,12 +538,9 @@ function createStyles(theme: Theme) {
   title: {
     flex: 1,
     minWidth: 0,
-    color: theme.textPrimary,
-    fontSize: 18,
-    lineHeight: 23,
+    color: theme.paperTheme.colors.onSurface,
     letterSpacing: 0,
     textAlign: "left",
-    ...fonts.bold,
   },
   emptyState: {
     width: "100%",
@@ -588,51 +551,34 @@ function createStyles(theme: Theme) {
   emptyIconShell: {
     width: 88,
     height: 88,
-    borderRadius: 44,
+    borderRadius: md3Shapes.full,
     borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(17,24,39,0.08)",
-    boxShadow: "0px 0px 34px rgba(17,24,39,0.18)",
+    backgroundColor: theme.paperTheme.colors.primaryContainer,
   },
   emptyIcon: {
-    fontSize: 48,
-    lineHeight: 58,
+    ...theme.paperTheme.fonts.displayMedium,
   },
   emptyTitle: {
-    marginTop: 16,
-    color: theme.textPrimary,
-    fontSize: 16,
-    lineHeight: 22,
+    marginTop: md3Spacing.large,
+    color: theme.paperTheme.colors.onSurface,
     textAlign: "center",
-    ...fonts.semibold,
   },
   emptySubtitle: {
-    marginTop: 8,
-    color: theme.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
+    marginTop: md3Spacing.small,
+    color: theme.paperTheme.colors.onSurfaceVariant,
     textAlign: "center",
     maxWidth: 310,
-    ...fonts.regular,
   },
   emptyCta: {
     alignSelf: "stretch",
-    minHeight: 48,
-    marginTop: 24,
-    marginHorizontal: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 14,
-    borderCurve: "continuous",
-    backgroundColor: DARK_ACTION,
+    marginTop: md3Spacing.extraLarge,
+    marginHorizontal: md3Spacing.small,
+    borderRadius: md3Shapes.extraLarge,
   },
   emptyCtaText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    lineHeight: 18,
     letterSpacing: 0,
-    ...fonts.semibold,
   },
   gridRow: {
     justifyContent: "space-between",

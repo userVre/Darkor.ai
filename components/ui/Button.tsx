@@ -1,210 +1,94 @@
-import { LinearGradient } from "expo-linear-gradient";
-import { ReactNode, useCallback } from "react";
-import {
-  ActivityIndicator,
-  GestureResponderEvent,
-  Pressable,
-  PressableProps,
-  StyleProp,
-  StyleSheet,
-  TextStyle,
-  View,
-  ViewStyle,
-} from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
+import type {ReactNode} from "react";
+import {StyleSheet, type StyleProp, type ViewStyle} from "react-native";
+import {Button as PaperButton, type ButtonProps as PaperButtonProps} from "react-native-paper";
 
-import theme from "../../constants/theme";
+export type MD3ButtonType = "filled" | "filled-tonal" | "outlined" | "text" | "elevated";
+export type ButtonVariant = MD3ButtonType | "primary" | "secondary" | "ghost";
 
-import Typography from "./Typography";
-
-const AnimatedView = Animated.createAnimatedComponent(View);
-
-export type ButtonVariant = "primary" | "secondary" | "ghost";
-export type ButtonSize = "sm" | "md" | "lg";
-
-export type ButtonProps = Omit<PressableProps, "style" | "children"> & {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  loading?: boolean;
-  disabled?: boolean;
-  title?: string;
+export type MD3ButtonProps = Omit<PaperButtonProps, "children" | "mode"> & {
   children?: ReactNode;
-  leftIcon?: ReactNode;
-  rightIcon?: ReactNode;
-  style?: StyleProp<ViewStyle>;
+  title?: string;
+  type?: MD3ButtonType;
+  variant?: ButtonVariant;
   contentStyle?: StyleProp<ViewStyle>;
-  textStyle?: StyleProp<TextStyle>;
 };
 
-const sizeStyles: Record<ButtonSize, ViewStyle> = {
-  sm: {
-    minHeight: 40,
-    paddingHorizontal: theme.spacing.md,
-  },
-  md: {
-    minHeight: 52,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  lg: {
-    minHeight: 56,
-    paddingHorizontal: theme.spacing.xl,
-  },
+const variantToType: Record<ButtonVariant, MD3ButtonType> = {
+  filled: "filled",
+  "filled-tonal": "filled-tonal",
+  outlined: "outlined",
+  text: "text",
+  elevated: "elevated",
+  primary: "filled",
+  secondary: "outlined",
+  ghost: "text",
 };
 
-const labelVariants: Record<ButtonSize, "caption" | "body" | "subtitle"> = {
-  sm: "caption",
-  md: "body",
-  lg: "subtitle",
+const typeToMode: Record<MD3ButtonType, PaperButtonProps["mode"]> = {
+  filled: "contained",
+  "filled-tonal": "contained-tonal",
+  outlined: "outlined",
+  text: "text",
+  elevated: "elevated",
 };
 
-export function Button({
-  variant = "primary",
-  size = "md",
-  loading = false,
-  disabled = false,
-  title,
+function MD3Button({
   children,
-  leftIcon,
-  rightIcon,
-  style,
+  title,
+  type,
+  variant = "filled",
   contentStyle,
-  textStyle,
-  onPressIn,
-  onPressOut,
+  style,
   ...props
-}: ButtonProps) {
-  const pressScale = useSharedValue(1);
-  const isDisabled = disabled || loading;
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pressScale.value }],
-  }));
-
-  const handlePressIn = useCallback(
-    (event: GestureResponderEvent) => {
-      if (!isDisabled) {
-        pressScale.value = withTiming(0.97, { duration: 90 });
-      }
-      onPressIn?.(event);
-    },
-    [isDisabled, onPressIn, pressScale],
-  );
-
-  const handlePressOut = useCallback(
-    (event: GestureResponderEvent) => {
-      pressScale.value = withTiming(1, { duration: 120 });
-      onPressOut?.(event);
-    },
-    [onPressOut, pressScale],
-  );
-
-  const textColor =
-    variant === "primary"
-      ? "textPrimary"
-      : variant === "secondary"
-        ? "primary"
-        : "textSecondary";
-  const label = typeof children === "string" ? children : title;
-  const customChildren = children != null && typeof children !== "string" ? children : null;
-
-  const content = (
-    <View style={[styles.content, contentStyle]}>
-      {loading ? (
-        <ActivityIndicator color={theme.colors[textColor]} />
-      ) : (
-        <>
-          {leftIcon}
-          {typeof label === "string" ? (
-            <Typography
-              color={textColor}
-              variant={labelVariants[size]}
-              style={[styles.label, textStyle]}
-            >
-              {label}
-            </Typography>
-          ) : (
-            customChildren
-          )}
-          {rightIcon}
-        </>
-      )}
-    </View>
-  );
+}: MD3ButtonProps) {
+  const resolvedType = type ?? variantToType[variant];
 
   return (
-    <Pressable
+    <PaperButton
       {...props}
-      disabled={isDisabled}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
+      mode={typeToMode[resolvedType]}
+      contentStyle={[styles.content, contentStyle]}
+      labelStyle={styles.label}
+      style={[styles.button, style]}
     >
-      <AnimatedView
-        style={[
-          styles.base,
-          sizeStyles[size],
-          variantStyles[variant],
-          isDisabled ? styles.disabled : null,
-          animatedStyle,
-          style,
-        ]}
-      >
-        {variant === "primary" ? (
-          <LinearGradient
-            colors={[theme.colors.accent, theme.colors.accentDark]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-        ) : null}
-        {content}
-      </AnimatedView>
-    </Pressable>
+      {children ?? title}
+    </PaperButton>
   );
 }
 
+export function FilledButton(props: Omit<MD3ButtonProps, "type" | "variant">) {
+  return <MD3Button {...props} type="filled" />;
+}
+
+export function FilledTonalButton(props: Omit<MD3ButtonProps, "type" | "variant">) {
+  return <MD3Button {...props} type="filled-tonal" />;
+}
+
+export function OutlinedButton(props: Omit<MD3ButtonProps, "type" | "variant">) {
+  return <MD3Button {...props} type="outlined" />;
+}
+
+export function TextButton(props: Omit<MD3ButtonProps, "type" | "variant">) {
+  return <MD3Button {...props} type="text" />;
+}
+
+export function ElevatedButton(props: Omit<MD3ButtonProps, "type" | "variant">) {
+  return <MD3Button {...props} type="elevated" />;
+}
+
+export const MD3_MAX_BUTTON_TYPES_PER_SCREEN = 2;
+export {MD3Button as Button};
+export default MD3Button;
+
 const styles = StyleSheet.create({
-  base: {
-    alignItems: "center",
-    borderCurve: "continuous",
-    borderRadius: theme.borderRadius.pill,
-    justifyContent: "center",
-    overflow: "hidden",
+  button: {
+    borderRadius: 20,
   },
   content: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: theme.spacing.sm,
-    justifyContent: "center",
-  },
-  disabled: {
-    opacity: 0.4,
+    minHeight: 40,
+    paddingHorizontal: 8,
   },
   label: {
-    fontWeight: "700",
-    textAlign: "center",
+    letterSpacing: 0,
   },
 });
-
-const variantStyles = StyleSheet.create({
-  primary: {
-    backgroundColor: theme.colors.accent,
-    borderColor: "transparent",
-    borderWidth: 0,
-  },
-  secondary: {
-    backgroundColor: "transparent",
-    borderColor: theme.colors.primary,
-    borderWidth: 1.5,
-  },
-  ghost: {
-    backgroundColor: "transparent",
-    borderColor: "transparent",
-    borderWidth: 0,
-  },
-});
-
-export default Button;

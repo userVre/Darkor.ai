@@ -1,11 +1,11 @@
 import {ChevronRight} from "@/components/material-icons";
 import type {ComponentType, ReactNode} from "react";
-import {ActivityIndicator, I18nManager, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle} from "react-native";
+import {I18nManager, StyleSheet, View, type StyleProp, type ViewStyle} from "react-native";
+import {ActivityIndicator, List, TouchableRipple, useTheme as usePaperTheme} from "react-native-paper";
 
-import {useLocalizedAppFonts} from "../lib/i18n";
-import {getDirectionalArrowScale, getDirectionalRow, getDirectionalTextAlign} from "../lib/i18n/rtl";
+import {md3Shapes, md3Spacing} from "../constants/md3Theme";
+import {getDirectionalArrowScale} from "../lib/i18n/rtl";
 import {useTheme} from "../styles/theme";
-import {fonts} from "../styles/typography";
 
 type SettingsRowProps = {
   label: string;
@@ -35,16 +35,16 @@ export function SettingsRow({
   style,
 }: SettingsRowProps) {
   const theme = useTheme();
-  const localizedFonts = useLocalizedAppFonts();
+  const paperTheme = usePaperTheme();
   const isRTL = I18nManager.isRTL;
   const isInteractive = Boolean(onPress) && !disabled;
-  const resolvedIconColor = iconColor ?? theme.textPrimary;
-  const resolvedTextColor = textColor ?? theme.textPrimary;
-  const resolvedLoadingColor = loadingColor ?? theme.textPrimary;
+  const resolvedIconColor = iconColor ?? paperTheme.colors.onSurfaceVariant;
+  const resolvedTextColor = textColor ?? paperTheme.colors.onSurface;
+  const resolvedLoadingColor = loadingColor ?? paperTheme.colors.primary;
 
   return (
-    <Pressable
-      accessibilityRole={isInteractive ? "button" : undefined}
+    <TouchableRipple
+      borderless={false}
       disabled={!isInteractive}
       onPress={() => {
         try {
@@ -57,76 +57,58 @@ export function SettingsRow({
       style={[
         styles.row,
         {
-          backgroundColor: theme.surfaceHigh,
-          borderColor: theme.border,
-          flexDirection: getDirectionalRow(isRTL),
+          backgroundColor: theme.paperTheme.colors.elevation.level1,
+          borderColor: theme.paperTheme.colors.outlineVariant,
         },
         style,
       ]}
     >
-      <View style={[styles.leftSide, { flexDirection: getDirectionalRow(isRTL) }]}>
-        <Icon color={resolvedIconColor} size={20} strokeWidth={2.1} />
-        <Text
-          numberOfLines={2}
-          style={[
-            styles.label,
-            localizedFonts.medium,
-            { color: resolvedTextColor, textAlign: getDirectionalTextAlign(isRTL) },
-          ]}
-        >
-          {label}
-        </Text>
-      </View>
-
-      <View style={[styles.rightSide, { flexDirection: getDirectionalRow(isRTL) }]}>
-        {loading ? <ActivityIndicator color={resolvedLoadingColor} /> : null}
-        {!loading ? rightAccessory : null}
-        {!loading && showChevron ? (
-          <ChevronRight
-          color={theme.textMuted}
-            size={18}
-            strokeWidth={1.9}
-            style={{ transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] }}
-          />
-        ) : null}
-      </View>
-    </Pressable>
+      <List.Item
+        title={label}
+        titleNumberOfLines={2}
+        titleStyle={[styles.label, {color: resolvedTextColor}]}
+        left={() => <Icon color={resolvedIconColor} size={24} strokeWidth={2} />}
+        right={() => (
+          <View style={styles.rightSide}>
+            {loading ? <ActivityIndicator color={resolvedLoadingColor} /> : null}
+            {!loading ? rightAccessory : null}
+            {!loading && showChevron ? (
+              <ChevronRight
+                color={paperTheme.colors.onSurfaceVariant}
+                size={20}
+                strokeWidth={1.9}
+                style={{transform: [{scaleX: getDirectionalArrowScale(isRTL)}]}}
+              />
+            ) : null}
+          </View>
+        )}
+        style={styles.listItem}
+      />
+    </TouchableRipple>
   );
 }
 
 const styles = StyleSheet.create({
   row: {
-    minHeight: 68,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 18,
-    borderWidth: 1,
-    paddingHorizontal: 18,
-    paddingVertical: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    marginHorizontal: md3Spacing.large,
+    marginBottom: md3Spacing.medium,
+    borderRadius: md3Shapes.large,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
   },
-  leftSide: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
+  listItem: {
+    minHeight: 72,
+    paddingHorizontal: md3Spacing.large,
+    paddingVertical: md3Spacing.small,
   },
   label: {
-    flex: 1,
-    flexShrink: 1,
-    fontSize: 15,
-    lineHeight: 18,
-    ...fonts.medium,
+    letterSpacing: 0,
   },
   rightSide: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: md3Spacing.small,
     flexShrink: 1,
     minWidth: 0,
   },
 });
-

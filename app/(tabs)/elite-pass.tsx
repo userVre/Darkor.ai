@@ -5,21 +5,20 @@ import {Check, CreditCard, Crown, Landmark, LockKeyhole} from "lucide-react-nati
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   Easing,
-  Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
   useWindowDimensions,
 } from "react-native";
+import {ActivityIndicator, Badge, Button, ProgressBar, Text} from "react-native-paper";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {useViewerCredits} from "../../components/viewer-credits-context";
 import {useViewerSession} from "../../components/viewer-session-context";
+import {md3Spacing} from "../../constants/md3Theme";
 import {triggerHaptic} from "../../lib/haptics";
 import {useTheme, type Theme} from "../../styles/theme";
 import {fonts} from "../../styles/typography";
@@ -91,7 +90,6 @@ export default function ElitePassScreen() {
   const hasClaimAction = !alreadyClaimed && !atCap;
   const canClaim = !alreadyClaimed && !atCap && !isClaiming;
   const progress = Math.max(0, Math.min(alreadyClaimed ? displayStreakCount : currentDay - 1, PASS_DAYS));
-  const progressPercent = `${(progress / PASS_DAYS) * 100}%` as `${number}%`;
   const nextClaimHours = formatHoursUntil(nextDiamondClaimAt || lastClaimAt + DAY_MS, now);
   const proHours = formatHoursUntil(proRewardUntil, now);
 
@@ -250,25 +248,23 @@ export default function ElitePassScreen() {
             </View>
             {hasClaimAction ? (
               <Animated.View style={{transform: [{scale: canClaim ? pulseScale : 1}]}}>
-                <Pressable
+                <Button
                   accessibilityLabel={claimLabel}
-                  accessibilityRole="button"
                   accessibilityState={{busy: isClaiming, disabled: !canClaim}}
                   disabled={!canClaim}
+                  icon="credit-card"
+                  mode={isDay7Available ? "contained" : "contained"}
                   onPress={() => void handleClaim()}
                   style={styles.bannerAction}
+                  contentStyle={styles.bannerActionContent}
+                  labelStyle={styles.bannerActionText}
                 >
                   {isClaiming ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
+                    <ActivityIndicator color={theme.paperTheme.colors.onPrimary} size="small" />
                   ) : (
-                    <>
-                      <CreditCard color="#FFFFFF" size={15} strokeWidth={2} />
-                      <Text numberOfLines={1} style={styles.bannerActionText}>
-                        {isDay7Available ? t("elitePass.fullPage.claimDay7Short") : t("elitePass.fullPage.claimDailyShort")}
-                      </Text>
-                    </>
+                    isDay7Available ? t("elitePass.fullPage.claimDay7Short") : t("elitePass.fullPage.claimDailyShort")
                   )}
-                </Pressable>
+                </Button>
               </Animated.View>
             ) : (
               <View accessibilityLabel={claimLabel} accessible style={styles.bannerStatus}>
@@ -285,12 +281,15 @@ export default function ElitePassScreen() {
           </View>
 
           <View style={styles.streakHeader}>
-            <Text style={styles.sectionTitle}>{t("elitePass.fullPage.streakTitle")}</Text>
-            <Text style={styles.progressCount}>{t("elitePass.progressCount", {current: progress, total: PASS_DAYS})}</Text>
+            <Text variant="titleMedium" style={styles.sectionTitle}>{t("elitePass.fullPage.streakTitle")}</Text>
+            <Badge style={styles.progressBadge}>{t("elitePass.progressCount", {current: progress, total: PASS_DAYS})}</Badge>
           </View>
-          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.progressTrack}>
-            <View style={[styles.progressFill, {width: progressPercent}]} />
-          </View>
+          <ProgressBar
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            progress={progress / PASS_DAYS}
+            style={styles.progressTrack}
+          />
 
           <View
             accessibilityLabel={t("elitePass.progressA11y", {current: progress, total: PASS_DAYS})}
@@ -551,24 +550,17 @@ function createStyles(theme: Theme, isCompact: boolean) {
       ...fonts.semibold,
     },
     bannerAction: {
-      minHeight: 36,
       maxWidth: isCompact ? 112 : 142,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 6,
-      paddingHorizontal: 11,
-      borderRadius: 7,
-      borderCurve: "continuous",
+      borderRadius: 20,
       backgroundColor: gold,
     },
+    bannerActionContent: {
+      minHeight: 40,
+      paddingHorizontal: md3Spacing.small,
+    },
     bannerActionText: {
-      flexShrink: 1,
-      color: "#FFFFFF",
-      fontSize: 12,
-      lineHeight: 15,
+      color: "#291800",
       letterSpacing: 0,
-      ...fonts.bold,
     },
     bannerStatus: {
       minHeight: 34,
@@ -596,34 +588,22 @@ function createStyles(theme: Theme, isCompact: boolean) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      gap: 12,
-      paddingTop: 2,
+      gap: md3Spacing.medium,
+      paddingTop: md3Spacing.extraSmall,
     },
     sectionTitle: {
       color: primaryText,
-      fontSize: 17,
-      lineHeight: 22,
       letterSpacing: 0,
-      ...fonts.bold,
     },
-    progressCount: {
-      color: secondaryText,
-      fontSize: 13,
-      lineHeight: 18,
-      letterSpacing: 0,
-      fontVariant: ["tabular-nums"],
-      ...fonts.semibold,
+    progressBadge: {
+      backgroundColor: theme.paperTheme.colors.secondaryContainer,
+      color: theme.paperTheme.colors.onSecondaryContainer,
     },
     progressTrack: {
-      height: 6,
-      borderRadius: 2,
-      backgroundColor: "rgba(255, 249, 236, 0.10)",
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: theme.paperTheme.colors.surfaceVariant,
       overflow: "hidden",
-    },
-    progressFill: {
-      height: "100%",
-      borderRadius: 2,
-      backgroundColor: gold,
     },
     timeline: {
       gap: 8,

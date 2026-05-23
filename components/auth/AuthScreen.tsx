@@ -8,22 +8,18 @@ import {useLocalSearchParams, useRouter} from "expo-router";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {
-  ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
   useWindowDimensions,
   View,
   type NativeSyntheticEvent,
   type TextInputKeyPressEventData,
 } from "react-native";
+import {Button, IconButton, Text, TextInput as PaperTextInput} from "react-native-paper";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import Svg, {Path} from "react-native-svg";
 
@@ -31,6 +27,7 @@ import {useTheme, type Theme} from "../../styles/theme";
 import {AuthInput} from "./AuthInput";
 import {clearAuthSkipped, markAuthSkipped} from "./auth-skip";
 import {resolveSafeRoute} from "../../lib/routes";
+import {md3Shapes, md3Spacing} from "../../constants/md3Theme";
 
 void WebBrowser.maybeCompleteAuthSession();
 
@@ -219,7 +216,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const [authServiceSlow, setAuthServiceSlow] = useState(false);
   const [otpVisible, setOtpVisible] = useState(false);
   const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
-  const otpRefs = useRef<Array<TextInput | null>>([]);
+  const otpRefs = useRef<Array<any | null>>([]);
   const compact = height < 760;
   const sidePadding = width < 360 ? 18 : 24;
   const contentTop = Math.max(insets.top + (compact ? 32 : 48), compact ? 58 : 78);
@@ -506,23 +503,21 @@ export function AuthScreen({mode}: AuthScreenProps) {
         style={styles.topGlow}
       />
       {router.canGoBack() ? (
-        <Pressable
-          accessibilityRole="button"
+        <IconButton
           accessibilityLabel={t("auth.screen.backA11y")}
+          icon={({color, size}) => <ChevronLeft color={color} size={size} strokeWidth={2} />}
+          mode="contained-tonal"
           onPress={() => router.back()}
           style={[styles.navButton, styles.backButton, {top: topButtonOffset}]}
-        >
-          <ChevronLeft color={AUTH_COLORS.textPrimary} size={20} strokeWidth={2} />
-        </Pressable>
+        />
       ) : null}
-      <Pressable
-        accessibilityRole="button"
+      <IconButton
         accessibilityLabel={t("auth.screen.skipA11y")}
+        icon={({color, size}) => <X color={color} size={size} strokeWidth={2} />}
+        mode="contained-tonal"
         onPress={() => void handleSkip()}
         style={[styles.navButton, styles.skipButton, {top: topButtonOffset}]}
-      >
-        <X color={AUTH_COLORS.textPrimary} size={18} strokeWidth={2} />
-      </Pressable>
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -564,42 +559,30 @@ export function AuthScreen({mode}: AuthScreenProps) {
         <View style={styles.panel}>
           <View style={styles.panelBody}>
           <View style={styles.socialStack}>
-            <TouchableOpacity
-              accessibilityRole="button"
+            <Button
+              mode="outlined"
+              icon={() => <GoogleIcon />}
               onPress={() => void handleGoogle()}
               disabled={loading !== null}
-              activeOpacity={0.82}
-              style={[styles.socialButton, styles.googleButton]}
+              loading={loading === "google"}
+              style={styles.socialButton}
+              contentStyle={styles.socialButtonContent}
+              labelStyle={styles.socialButtonLabel}
             >
-              {loading === "google" ? (
-                <ActivityIndicator color={AUTH_COLORS.googleText} />
-              ) : (
-                <View style={styles.socialButtonContent}>
-                  <View style={styles.socialIconSlot}>
-                    <GoogleIcon />
-                  </View>
-                  <Text style={styles.googleText}>{t("auth.screen.googleCta")}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              accessibilityRole="button"
+              {t("auth.screen.googleCta")}
+            </Button>
+            <Button
+              mode="outlined"
+              icon={() => <AppleIcon color={AUTH_COLORS.textPrimary} />}
               onPress={() => void handleApple()}
               disabled={loading !== null}
-              activeOpacity={0.82}
-              style={[styles.socialButton, styles.appleButton]}
+              loading={loading === "apple"}
+              style={styles.socialButton}
+              contentStyle={styles.socialButtonContent}
+              labelStyle={styles.socialButtonLabel}
             >
-              {loading === "apple" ? (
-                <ActivityIndicator color={AUTH_COLORS.accentText} />
-              ) : (
-                <View style={styles.socialButtonContent}>
-                  <View style={styles.socialIconSlot}>
-                    <AppleIcon color={AUTH_COLORS.textPrimary} />
-                  </View>
-                  <Text style={styles.appleText}>{t("auth.screen.appleCta")}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+              {t("auth.screen.appleCta")}
+            </Button>
           </View>
 
           <View style={styles.dividerRow}>
@@ -674,13 +657,15 @@ export function AuthScreen({mode}: AuthScreenProps) {
           </View>
 
           {isSignIn ? (
-            <Pressable
-              accessibilityRole="link"
+            <Button
+              compact
+              mode="text"
               onPress={() => router.push("/(auth)/forgot-password" as never)}
               style={styles.forgotButton}
+              labelStyle={styles.forgotText}
             >
-              <Text style={styles.forgotText}>{t("auth.screen.forgotPassword")}</Text>
-            </Pressable>
+              {t("auth.screen.forgotPassword")}
+            </Button>
           ) : null}
 
           {errors.form ? (
@@ -693,22 +678,17 @@ export function AuthScreen({mode}: AuthScreenProps) {
             </Text>
           ) : null}
 
-          <TouchableOpacity
-            accessibilityRole="button"
+          <Button
+            mode="contained"
             disabled={disabled}
             onPress={() => void (isSignIn ? handleSignIn() : handleSignUp())}
-            activeOpacity={0.84}
-            style={[
-              styles.primaryButton,
-              disabled ? styles.disabled : null,
-            ]}
+            loading={loading === "email"}
+            style={styles.primaryButton}
+            contentStyle={styles.primaryButtonContent}
+            labelStyle={styles.primaryButtonText}
           >
-            {loading === "email" ? (
-              <ActivityIndicator color={AUTH_COLORS.accentText} />
-            ) : (
-              <Text style={styles.primaryButtonText}>{copy.cta}</Text>
-            )}
-          </TouchableOpacity>
+            {copy.cta}
+          </Button>
           <Text selectable style={styles.reassurance}>
             {copy.reassurance}
           </Text>
@@ -719,9 +699,9 @@ export function AuthScreen({mode}: AuthScreenProps) {
           <Text selectable style={styles.toggleText}>
             {copy.togglePrefix}
           </Text>
-          <Pressable accessibilityRole="button" onPress={toggleMode}>
-            <Text style={styles.toggleLink}>{copy.toggleLink}</Text>
-          </Pressable>
+          <Button compact mode="text" onPress={toggleMode} labelStyle={styles.toggleLink}>
+            {copy.toggleLink}
+          </Button>
         </View>
         </View>
         </ScrollView>
@@ -733,7 +713,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
         visible={otpVisible}
         onRequestClose={() => setOtpVisible(false)}
       >
-        <Pressable onPress={Keyboard.dismiss} style={styles.modalOverlay}>
+        <View style={styles.modalOverlay}>
           <View style={styles.otpSheet}>
             <View style={styles.sheetHandle} />
             <Text selectable style={styles.otpTitle}>
@@ -744,16 +724,19 @@ export function AuthScreen({mode}: AuthScreenProps) {
             </Text>
             <View style={styles.otpRow}>
               {otpDigits.map((digit, index) => (
-                <TextInput
+                <PaperTextInput
                   key={`otp-${index}`}
-                  ref={(ref) => {
+                  ref={(ref: any | null) => {
                     otpRefs.current[index] = ref;
                   }}
                   value={digit}
                   onChangeText={(value) => handleOtpChange(value, index)}
                   onKeyPress={(event) => handleOtpKeyPress(event, index)}
-                  style={styles.otpInput}
+                  contentStyle={styles.otpInputContent}
                   keyboardType="number-pad"
+                  mode="outlined"
+                  outlineStyle={styles.otpInputOutline}
+                  style={styles.otpInput}
                   textContentType="oneTimeCode"
                   maxLength={index === 0 ? 6 : 1}
                   selectionColor={AUTH_COLORS.accent}
@@ -766,31 +749,29 @@ export function AuthScreen({mode}: AuthScreenProps) {
                 {errors.otp}
               </Text>
             ) : null}
-            <TouchableOpacity
-              accessibilityRole="button"
+            <Button
+              mode="contained"
               onPress={() => void submitOtp()}
               disabled={loading === "otp"}
-              activeOpacity={0.84}
               style={styles.verifyButton}
+              contentStyle={styles.primaryButtonContent}
+              labelStyle={styles.primaryButtonText}
+              loading={loading === "otp"}
             >
-              {loading === "otp" ? (
-                <ActivityIndicator color={AUTH_COLORS.accentText} />
-              ) : (
-                <Text style={styles.primaryButtonText}>{t("auth.screen.otp.verifyCta")}</Text>
-              )}
-            </TouchableOpacity>
-            <Pressable
-              accessibilityRole="button"
+              {t("auth.screen.otp.verifyCta")}
+            </Button>
+            <Button
+              compact
+              mode="text"
               onPress={() => void resendOtp()}
               disabled={loading === "resend"}
               style={styles.resendButton}
+              labelStyle={styles.resendText}
             >
-              <Text style={styles.resendText}>
-                {loading === "resend" ? t("auth.screen.otp.sending") : t("auth.screen.otp.resend")}
-              </Text>
-            </Pressable>
+              {loading === "resend" ? t("auth.screen.otp.sending") : t("auth.screen.otp.resend")}
+            </Button>
           </View>
-        </Pressable>
+        </View>
       </Modal>
     </View>
   );
@@ -826,14 +807,7 @@ function createStyles(AUTH_COLORS: AuthColors) {
   navButton: {
     position: "absolute",
     zIndex: 2,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: AUTH_COLORS.controlSurface,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: AUTH_COLORS.border,
+    margin: 0,
   },
   backButton: {
     left: 18,
@@ -924,23 +898,19 @@ function createStyles(AUTH_COLORS: AuthColors) {
     alignSelf: "stretch",
     flexGrow: 0,
     flexShrink: 0,
-    height: 52,
-    minHeight: 52,
-    maxHeight: 52,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    overflow: "hidden",
+    borderRadius: md3Shapes.extraLarge,
   },
   socialButtonContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    height: 24,
+    minHeight: 52,
     flexGrow: 0,
     flexShrink: 0,
+    paddingHorizontal: md3Spacing.large,
+  },
+  socialButtonLabel: {
+    letterSpacing: 0,
   },
   socialIconSlot: {
     width: 24,
@@ -1000,12 +970,8 @@ function createStyles(AUTH_COLORS: AuthColors) {
   },
   forgotButton: {
     alignSelf: "flex-end",
-    paddingVertical: 2,
   },
   forgotText: {
-    color: AUTH_COLORS.accent,
-    fontSize: 12,
-    fontWeight: "600",
     letterSpacing: 0,
   },
   formError: {
@@ -1019,37 +985,19 @@ function createStyles(AUTH_COLORS: AuthColors) {
     width: "100%",
     flexGrow: 0,
     flexShrink: 0,
-    height: 52,
-    minHeight: 52,
-    maxHeight: 52,
-    borderRadius: 14,
-    backgroundColor: AUTH_COLORS.accent,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
+    borderRadius: md3Shapes.extraLarge,
   },
   verifyButton: {
     width: "100%",
-    height: 52,
-    borderRadius: 14,
-    backgroundColor: AUTH_COLORS.accent,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
+    borderRadius: md3Shapes.extraLarge,
+  },
+  primaryButtonContent: {
+    minHeight: 56,
+    paddingHorizontal: md3Spacing.extraLarge,
   },
   primaryButtonText: {
-    color: AUTH_COLORS.accentText,
-    fontSize: 15,
-    fontWeight: "600",
     letterSpacing: 0,
     textAlign: "center",
-    includeFontPadding: false,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  pressed: {
-    opacity: 0.82,
   },
   reassurance: {
     marginTop: -6,
@@ -1124,16 +1072,15 @@ function createStyles(AUTH_COLORS: AuthColors) {
   },
   otpInput: {
     width: 40,
-    height: 52,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: AUTH_COLORS.border,
-    backgroundColor: AUTH_COLORS.controlSurface,
-    color: AUTH_COLORS.textPrimary,
-    fontSize: 20,
-    fontWeight: "700",
+    height: 56,
+    backgroundColor: "transparent",
+  },
+  otpInputContent: {
     textAlign: "center",
     letterSpacing: 0,
+  },
+  otpInputOutline: {
+    borderRadius: md3Shapes.small,
   },
   otpError: {
     color: AUTH_COLORS.accent,
@@ -1143,12 +1090,9 @@ function createStyles(AUTH_COLORS: AuthColors) {
     textAlign: "center",
   },
   resendButton: {
-    paddingVertical: 2,
+    alignSelf: "center",
   },
   resendText: {
-    color: AUTH_COLORS.accent,
-    fontSize: 13,
-    fontWeight: "600",
     letterSpacing: 0,
   },
   });

@@ -77,6 +77,7 @@ DESIGN_WIZARD_SELECTION_BLUE_SOFT,
 import {DiamondCreditPill, ProBadge} from "../../components/diamond-credit-pill";
 import {HdLockOverlay} from "../../components/HdLockOverlay";
 import {useDiamondStore} from "../../components/diamond-store-context";
+import {FilledCard, FilledTonalButton, IconButton as MD3IconButton} from "../../components/ui";
 import {ExteriorRedesignStepFour} from "../../components/exterior-redesign-step-four";
 import {ExteriorRedesignStepThree} from "../../components/exterior-redesign-step-three";
 import {ExteriorRedesignStepTwo} from "../../components/exterior-redesign-step-two";
@@ -122,12 +123,13 @@ import {uploadLocalFileToCloud} from "../../lib/native-upload";
 import {SERVICE_WIZARD_THEME} from "../../lib/service-wizard-theme";
 import {requestStoreReview} from "../../lib/store-review";
 import {getFloorWizardExamplePhotos, getPaintWizardExamplePhotos} from "../../lib/wizard-example-photos";
+import {md3Spacing} from "../../constants/md3Theme";
 import {spacing} from "../../styles/spacing";
+import {useTheme} from "../../styles/theme";
 import {fonts} from "../../styles/typography";
 
 const TABS_HOME_ROUTE = "/(tabs)/index";
 const PRO_TOOL_LOCK_MESSAGE = "Unlock this with PRO.";
-const RESULT_ACTION_BLUE = "#2563EB";
 const SPEED_UP_PAYWALL_SOURCE = "generation-speed-up";
 const RESULT_ROOM_LABELS_FR: Record<string, string> = {
   "Bathroom": "Salle de bain",
@@ -674,7 +676,6 @@ const EditorActionButton = memo(function EditorActionButton({
   onPress,
   disabled,
   loading = false,
-  tone = "dark",
 }: {
   icon: ComponentType<{ color?: string; size?: number; strokeWidth?: number }>;
   label: string;
@@ -683,36 +684,26 @@ const EditorActionButton = memo(function EditorActionButton({
   loading?: boolean;
   tone?: "dark" | "light" | "accent";
 }) {
-  const backgroundColor = tone === "accent" ? RESULT_ACTION_BLUE : tone === "light" ? "#F4F5F7" : "#111827";
-  const borderColor =
-    tone === "accent" ? "rgba(37,99,235,0.42)" : tone === "light" ? "rgba(17,24,39,0.08)" : "rgba(17,24,39,0.14)";
-  const iconColor = tone === "light" ? "#05070A" : "#FFFFFF";
-  const textColor = tone === "light" ? "#111827" : "#FFFFFF";
+  const theme = useTheme();
 
   return (
-    <LuxPressable onPress={onPress} disabled={disabled || loading} className="cursor-pointer" style={{ flex: 1 }}>
-      <View
-        style={{
-          minHeight: 64,
-          borderRadius: 18,
-          borderWidth: 1,
-          borderColor,
-          backgroundColor,
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 6,
-          opacity: disabled ? 0.55 : 1,
-          paddingHorizontal: 8,
-          paddingVertical: 9,
-          ...ambientShadow(0.08, 12, 8),
-        }}
-      >
-        {loading ? <ActivityIndicator color={iconColor} /> : <Icon color={iconColor} size={21} strokeWidth={2.25} />}
-        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82} style={{ color: textColor, fontSize: 12, lineHeight: 15, textAlign: "center", ...fonts.semibold }}>
-          {label}
-        </Text>
-      </View>
-    </LuxPressable>
+    <FilledTonalButton
+      compact
+      icon={loading ? undefined : ({color, size}: {color: string; size: number}) => <Icon color={color} size={size} strokeWidth={2.25} />}
+      loading={loading}
+      onPress={onPress}
+      disabled={disabled || loading}
+      style={{ flex: 1, borderRadius: 20 }}
+      buttonColor={theme.paperTheme.colors.secondaryContainer}
+      textColor={theme.paperTheme.colors.onSecondaryContainer}
+      contentStyle={{
+        minHeight: 56,
+        paddingHorizontal: md3Spacing.small,
+        paddingVertical: md3Spacing.extraSmall,
+      }}
+    >
+      {label}
+    </FilledTonalButton>
   );
 });
 
@@ -2199,6 +2190,7 @@ const CANCELLED_GENERATION_MESSAGE = "Cancelled by user.";
 export default function WorkspaceScreen() {
   const posthog = usePostHog();
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
   const generationStatusMessages = useGenerationStatusMessages();
   const floorExamplePhotos = useMemo(() => getFloorWizardExamplePhotos(t), [i18n.language, t]);
   const paintExamplePhotos = useMemo(() => getPaintWizardExamplePhotos(t), [i18n.language, t]);
@@ -8679,25 +8671,26 @@ export default function WorkspaceScreen() {
                 </View>
 
                 {isEditorFailed ? (
-                  <View
+                  <FilledCard
                     style={{
                       position: "absolute",
-                      left: 16,
-                      right: 16,
-                      bottom: 16,
-                      borderRadius: 22,
-                      backgroundColor: "rgba(255,255,255,0.94)",
-                      paddingHorizontal: 16,
-                      paddingVertical: 14,
+                      left: md3Spacing.large,
+                      right: md3Spacing.large,
+                      bottom: md3Spacing.large,
+                      backgroundColor: theme.paperTheme.colors.errorContainer,
+                    }}
+                    contentStyle={{
+                      paddingHorizontal: md3Spacing.large,
+                      paddingVertical: md3Spacing.medium,
                     }}
                   >
-                    <Text style={{ color: DS.colors.textPrimary, ...DS.typography.bodySm, ...fonts.bold }}>
+                    <Text style={{ color: theme.paperTheme.colors.onErrorContainer, ...theme.paperTheme.fonts.titleSmall }}>
                       {t("workspace.board.generationFailedTitle")}
                     </Text>
-                    <Text style={{ marginTop: 4, color: DS.colors.textMuted, ...DS.typography.bodySm }}>
+                    <Text style={{ marginTop: md3Spacing.extraSmall, color: theme.paperTheme.colors.onErrorContainer, ...theme.paperTheme.fonts.bodySmall }}>
                       {activeBoardItem?.errorMessage ?? t("workspace.board.tryAnotherPrompt")}
                     </Text>
-                  </View>
+                  </FilledCard>
                 ) : null}
 
                 <HdLockOverlay visible={!isEditorProcessing && !isEditorFailed && currentImageHasWatermark} />
@@ -8826,7 +8819,7 @@ export default function WorkspaceScreen() {
                 marginTop: -2,
               }}
             >
-              <Text style={{ color: "#687076", fontSize: 12, lineHeight: 16, letterSpacing: 0.3, textAlign: "center", ...fonts.medium }}>
+              <Text style={{ color: theme.paperTheme.colors.onSurfaceVariant, ...theme.paperTheme.fonts.labelMedium, textAlign: "center" }}>
                 Évaluez ce résultat
               </Text>
               <View
@@ -8846,39 +8839,24 @@ export default function WorkspaceScreen() {
                   const FeedbackIcon = item.key === "liked" && active ? Check : item.icon;
 
                   return (
-                    <LuxPressable
+                    <MD3IconButton
                       key={item.key}
+                      accessibilityLabel={item.label}
                       onPress={() => {
                         void handleSubmitEditorFeedback(item.key);
                       }}
                       disabled={isEditorActionDisabled || busy || isFeedbackBusy}
-                      className="cursor-pointer"
-                    >
-                      <View
-                        style={{
-                          minWidth: 108,
-                          flexDirection: "row",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 10,
-                          borderRadius: 999,
-                          borderWidth: 1,
-                          borderColor: active ? RESULT_ACTION_BLUE : "#E5E7EB",
-                          backgroundColor: active ? RESULT_ACTION_BLUE : "#FFFFFF",
-                          paddingHorizontal: 18,
-                          paddingVertical: 12,
-                        }}
-                      >
-                        {busy ? (
-                          <ActivityIndicator size="small" color={active ? "#FFFFFF" : DS.colors.accent} />
+                      mode={active ? "contained" : "contained-tonal"}
+                      selected={active}
+                      size={24}
+                      icon={({color, size}: {color: string; size: number}) =>
+                        busy ? (
+                          <ActivityIndicator size="small" color={color} />
                         ) : (
-                          <FeedbackIcon color={active ? "#FFFFFF" : DS.colors.textPrimary} size={18} strokeWidth={2} />
-                        )}
-                        <Text style={{ color: active ? "#FFFFFF" : DS.colors.textPrimary, fontSize: 13, lineHeight: 16, ...fonts.semibold }}>
-                          {item.label}
-                        </Text>
-                      </View>
-                    </LuxPressable>
+                          <FeedbackIcon color={color} size={size} strokeWidth={2} />
+                        )
+                      }
+                    />
                   );
                 })}
               </View>

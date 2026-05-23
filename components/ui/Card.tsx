@@ -1,53 +1,70 @@
-import { BlurView, BlurViewProps } from "expo-blur";
-import { PropsWithChildren } from "react";
-import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import React, {type PropsWithChildren} from "react";
+import {StyleSheet, type StyleProp, type ViewStyle} from "react-native";
+import {Card as PaperCard, type CardProps as PaperCardProps} from "react-native-paper";
 
-import theme, { ThemeShadow } from "../../constants/theme";
+import {md3Shapes} from "../../constants/md3Theme";
 
-export type CardGlow = ThemeShadow | "none";
+const PaperCardAny = PaperCard as React.ComponentType<any>;
 
-export type CardProps = PropsWithChildren<
-  Omit<BlurViewProps, "style"> & {
-    glow?: CardGlow;
-    style?: StyleProp<ViewStyle>;
+export type MD3CardType = "elevated" | "filled" | "outlined";
+
+export type MD3CardProps = PropsWithChildren<
+  Omit<PaperCardProps, "mode" | "children"> & {
+    type?: MD3CardType;
     contentStyle?: StyleProp<ViewStyle>;
   }
 >;
 
-export function Card({
-  glow = "none",
-  style,
-  contentStyle,
-  children,
-  intensity = 28,
-  tint = "dark",
-  ...props
-}: CardProps) {
-  const glowStyle = glow === "none" ? null : theme.shadows[glow];
+const typeToMode: Record<MD3CardType, PaperCardProps["mode"]> = {
+  elevated: "elevated",
+  filled: "contained",
+  outlined: "outlined",
+};
+
+function MD3Card({children, type = "elevated", style, contentStyle, ...props}: MD3CardProps) {
+  const cardContent = <PaperCard.Content style={contentStyle}>{children}</PaperCard.Content>;
+
+  if (type === "filled") {
+    return (
+      <PaperCardAny {...props} mode="contained" style={[styles.card, style]}>
+        {cardContent}
+      </PaperCardAny>
+    );
+  }
+
+  if (type === "outlined") {
+    return (
+      <PaperCardAny {...props} mode="outlined" style={[styles.card, style]}>
+        {cardContent}
+      </PaperCardAny>
+    );
+  }
 
   return (
-    <View style={[styles.shell, glowStyle, style]}>
-      <BlurView {...props} intensity={intensity} tint={tint} style={[styles.blur, contentStyle]}>
-        {children}
-      </BlurView>
-    </View>
+    <PaperCardAny {...props} mode={typeToMode[type]} style={[styles.card, style]}>
+      {cardContent}
+    </PaperCardAny>
   );
 }
 
+export function ElevatedCard(props: Omit<MD3CardProps, "type">) {
+  return <MD3Card {...props} type="elevated" />;
+}
+
+export function FilledCard(props: Omit<MD3CardProps, "type">) {
+  return <MD3Card {...props} type="filled" />;
+}
+
+export function OutlinedCard(props: Omit<MD3CardProps, "type">) {
+  return <MD3Card {...props} type="outlined" />;
+}
+
+export {MD3Card as Card};
+export default MD3Card;
+
 const styles = StyleSheet.create({
-  blur: {
-    backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.surfaceBorder,
-    borderCurve: "continuous",
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
+  card: {
+    borderRadius: md3Shapes.large,
     overflow: "hidden",
-    padding: theme.spacing.md,
-  },
-  shell: {
-    borderCurve: "continuous",
-    borderRadius: theme.borderRadius.lg,
   },
 });
-
-export default Card;

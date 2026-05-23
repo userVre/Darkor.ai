@@ -2,6 +2,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import {indigo, indigoDark, ruby, rubyDark, slate, slateDark} from "@radix-ui/colors";
 import React from "react";
 import {createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode} from "react";
+import {PaperProvider, type MD3Theme} from "react-native-paper";
+
+import {getMd3Theme} from "../constants/md3Theme";
 
 export type ThemeMode = "light" | "dark";
 
@@ -21,51 +24,54 @@ const darkPalette = {
 
 function createTheme(mode: ThemeMode) {
   const isDark = mode === "dark";
+  const paperTheme = getMd3Theme(mode);
+  const md3 = paperTheme.colors;
 
   return {
     mode,
     isDark,
-    bg: isDark ? "#0A0A0F" : "#FFFFFF",
-    surface: isDark ? "#111119" : "#F9FAFB",
-    surfaceHigh: isDark ? "#181820" : "#F3F4F6",
-    surfaceMuted: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(17, 24, 39, 0.04)",
-    surfaceOverlay: isDark ? "rgba(10, 10, 15, 0.96)" : "rgba(255, 255, 255, 0.96)",
-    surfaceOverlayHigh: isDark ? "#181820" : "#FFFFFF",
-    surfaceCard: isDark ? "rgba(255, 255, 255, 0.06)" : "#FFFFFF",
-    surfaceCardHigh: isDark ? "rgba(255, 255, 255, 0.08)" : "#F9FAFB",
-    surfaceSelected: isDark ? "rgba(255, 255, 255, 0.10)" : "rgba(17, 24, 39, 0.08)",
-    surfaceDisabled: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(17, 24, 39, 0.05)",
+    paperTheme,
+    bg: md3.background,
+    surface: md3.surface,
+    surfaceHigh: md3.elevation.level1,
+    surfaceMuted: md3.surfaceVariant,
+    surfaceOverlay: md3.elevation.level2,
+    surfaceOverlayHigh: md3.elevation.level3,
+    surfaceCard: md3.elevation.level1,
+    surfaceCardHigh: md3.elevation.level2,
+    surfaceSelected: md3.secondaryContainer,
+    surfaceDisabled: md3.surfaceDisabled,
 
-    textPrimary: isDark ? "#FFFFFF" : "#111827",
-    textSecondary: isDark ? "rgba(255, 255, 255, 0.68)" : "#4B5563",
-    textMuted: isDark ? "rgba(255, 255, 255, 0.45)" : "#6B7280",
-    textInverse: isDark ? "#111827" : "#FFFFFF",
-    textBrand: "#111111",
-    textSuccess: isDark ? "#4ADE80" : "#16A34A",
-    textWarning: isDark ? rubyDark.ruby11 : ruby.ruby11,
-    textError: isDark ? "#FF6B66" : ruby.ruby11,
+    textPrimary: md3.onBackground,
+    textSecondary: md3.onSurfaceVariant,
+    textMuted: md3.outline,
+    textInverse: md3.inverseOnSurface,
+    textBrand: md3.primary,
+    textSuccess: isDark ? "#7fdc8a" : "#246b35",
+    textWarning: md3.tertiary,
+    textError: md3.error,
 
-    brand: "#111111",
-    brandDark: "#050505",
-    brandSoft: isDark ? "rgba(255, 255, 255, 0.10)" : "rgba(17, 24, 39, 0.10)",
-    brandSurface: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(17, 24, 39, 0.08)",
-    brandSurfaceHigh: isDark ? "rgba(255, 255, 255, 0.14)" : "rgba(17, 24, 39, 0.14)",
-    brandBorder: isDark ? "rgba(255, 255, 255, 0.18)" : "rgba(17, 24, 39, 0.18)",
-    brandBorderStrong: isDark ? "rgba(255, 255, 255, 0.32)" : "rgba(17, 24, 39, 0.32)",
+    brand: md3.primary,
+    brandDark: md3.primaryContainer,
+    brandSoft: md3.primaryContainer,
+    brandSurface: md3.secondaryContainer,
+    brandSurfaceHigh: md3.tertiaryContainer,
+    brandBorder: md3.outlineVariant,
+    brandBorderStrong: md3.outline,
 
-    success: "#22C55E",
-    warning: isDark ? rubyDark.ruby9 : ruby.ruby9,
-    error: isDark ? "#FF6B66" : ruby.ruby11,
-    successSurface: isDark ? "rgba(34, 197, 94, 0.14)" : "rgba(34, 197, 94, 0.10)",
-    successSurfaceHigh: isDark ? "rgba(34, 197, 94, 0.22)" : "rgba(34, 197, 94, 0.16)",
-    warningSurface: isDark ? rubyDark.ruby3 : ruby.ruby3,
-    warningSurfaceHigh: isDark ? rubyDark.ruby4 : ruby.ruby4,
-    errorSurface: isDark ? "rgba(255, 107, 102, 0.12)" : ruby.ruby3,
-    errorSurfaceHigh: isDark ? "rgba(255, 107, 102, 0.18)" : ruby.ruby4,
+    success: isDark ? "#7fdc8a" : "#246b35",
+    warning: md3.tertiary,
+    error: md3.error,
+    successSurface: isDark ? "#16371e" : "#d7f8d6",
+    successSurfaceHigh: isDark ? "#214b2a" : "#bfedbf",
+    warningSurface: md3.tertiaryContainer,
+    warningSurfaceHigh: md3.tertiaryContainer,
+    errorSurface: md3.errorContainer,
+    errorSurfaceHigh: md3.errorContainer,
 
-    border: isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(17, 24, 39, 0.10)",
-    borderLight: isDark ? "rgba(255, 255, 255, 0.20)" : "rgba(17, 24, 39, 0.16)",
-    shadow: isDark ? "rgba(0, 0, 0, 0.38)" : "rgba(17, 24, 39, 0.12)",
+    border: md3.outlineVariant,
+    borderLight: md3.outline,
+    shadow: isDark ? "rgba(0, 0, 0, 0.50)" : "rgba(0, 0, 0, 0.18)",
   } as const;
 }
 
@@ -129,12 +135,14 @@ export const radix = {
 export type Theme = ReturnType<typeof createTheme>;
 
 type ThemeContextValue = Theme & {
+  paperTheme: MD3Theme;
   setThemeMode: (mode: ThemeMode) => void;
   toggleThemeMode: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue>({
   ...light,
+  paperTheme: getMd3Theme("light"),
   setThemeMode: () => undefined,
   toggleThemeMode: () => undefined,
 });
@@ -173,13 +181,18 @@ export function AppThemeProvider({children}: {children: ReactNode}) {
   const value = useMemo(
     () => ({
       ...(mode === "dark" ? dark : light),
+      paperTheme: getMd3Theme(mode),
       setThemeMode,
       toggleThemeMode,
     }),
     [mode, setThemeMode, toggleThemeMode],
   );
 
-  return React.createElement(ThemeContext.Provider, {value}, children);
+  return React.createElement(
+    ThemeContext.Provider,
+    {value},
+    React.createElement(PaperProvider, {theme: value.paperTheme, children}),
+  );
 }
 
 export function useTheme(): ThemeContextValue {

@@ -3,12 +3,14 @@ import {useRouter} from "expo-router";
 import {StatusBar} from "expo-status-bar";
 import {memo, useCallback, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {Pressable, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {StyleSheet, View, useWindowDimensions} from "react-native";
+import {Button, Chip, Text} from "react-native-paper";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {DiscoverImageCard} from "../../components/discover-image-card";
 import {DiscoverPreviewModal} from "../../components/discover-preview-modal";
 import {HomeHeaderPills} from "../../components/home-header-pills";
+import {md3Spacing} from "../../constants/md3Theme";
 import {
 type DiscoverCluster,
 type DiscoverClusterId,
@@ -18,10 +20,9 @@ useDiscoverClusters,
 } from "../../lib/discover-catalog";
 import {triggerHaptic} from "../../lib/haptics";
 import {useTheme, type Theme} from "../../styles/theme";
-import {fonts} from "../../styles/typography";
 
-const SCREEN_SIDE_MARGIN = 26;
-const CARD_GAP = 14;
+const SCREEN_SIDE_MARGIN = 24;
+const CARD_GAP = 16;
 const DEFAULT_CARD_HEIGHT_RATIO = 1.28;
 const GARDEN_CARD_HEIGHT_RATIO = 1;
 
@@ -58,12 +59,12 @@ const DiscoverSection = memo(function DiscoverSection({
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text ellipsizeMode="tail" numberOfLines={1} style={styles.sectionTitle}>
+        <Text ellipsizeMode="tail" numberOfLines={1} variant="titleMedium" style={styles.sectionTitle}>
           {group.title}
         </Text>
-        <Pressable accessibilityRole="button" hitSlop={8} onPress={() => onExploreGroup(group)} style={styles.sectionAction}>
-          <Text style={styles.sectionActionText}>{seeAllLabel}</Text>
-        </Pressable>
+        <Button compact mode="text" onPress={() => onExploreGroup(group)} labelStyle={styles.sectionActionText}>
+          {seeAllLabel}
+        </Button>
       </View>
 
       <FlashList
@@ -160,30 +161,26 @@ export default function GalleryScreen() {
 
   const listHeader = useMemo(
     () => (
-      <View style={[styles.headerWrap, { paddingTop: insets.top + 10 }]}>
-        <HomeHeaderPills style={styles.headerPills} />
-
-        <View pointerEvents="none" style={styles.titleRow}>
-          <Text adjustsFontSizeToFit minimumFontScale={0.86} numberOfLines={1} style={styles.headerTitle}>
-            {t("tabs.discover")}
-          </Text>
-        </View>
+      <View style={[styles.headerWrap, { paddingTop: insets.top }]}>
+        <HomeHeaderPills title={t("tabs.discover")} style={styles.headerPills} />
 
         <View style={styles.categoryTabs}>
           {clusters.map((cluster: DiscoverCluster) => {
             const active = cluster.id === (selectedCluster?.id ?? selectedClusterId);
 
             return (
-              <Pressable
+              <Chip
                 key={cluster.id}
-                accessibilityRole="button"
+                accessibilityRole="tab"
+                mode="flat"
                 onPress={() => handleClusterPress(cluster.id)}
-                style={[styles.categoryTab, active ? styles.categoryTabActive : null]}
+                selected={active}
+                showSelectedOverlay
+                style={styles.categoryTab}
+                textStyle={styles.categoryTabText}
               >
-                <Text numberOfLines={1} style={[styles.categoryTabText, active ? styles.categoryTabTextActive : null]}>
-                  {cluster.title}
-                </Text>
-              </Pressable>
+                {cluster.title}
+              </Chip>
             );
           })}
         </View>
@@ -223,89 +220,45 @@ return StyleSheet.create({
     backgroundColor: theme.bg,
   },
   headerWrap: {
-    paddingBottom: 20,
+    paddingBottom: md3Spacing.extraLarge,
     backgroundColor: theme.bg,
   },
   headerPills: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
   },
-  titleRow: {
-    marginTop: 18,
-    marginBottom: 18,
-    paddingHorizontal: SCREEN_SIDE_MARGIN,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    color: theme.textPrimary,
-    fontSize: 24,
-    lineHeight: 30,
-    letterSpacing: 0,
-    textAlign: "center",
-    ...fonts.bold,
-  },
   categoryTabs: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
+    justifyContent: "flex-start",
+    flexWrap: "wrap",
+    gap: md3Spacing.small,
   },
   categoryTab: {
-    flex: 1,
-    minHeight: 42,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 999,
-    backgroundColor: theme.surfaceHigh,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  categoryTabActive: {
-    backgroundColor: theme.textPrimary,
-    borderColor: theme.textPrimary,
+    backgroundColor: theme.paperTheme.colors.surface,
   },
   categoryTabText: {
-    color: theme.textPrimary,
-    fontSize: 13,
-    lineHeight: 18,
     letterSpacing: 0,
-    textAlign: "center",
-    ...fonts.semibold,
-  },
-  categoryTabTextActive: {
-    color: theme.bg,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: md3Spacing.doubleExtraLarge,
   },
   sectionHeader: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    marginBottom: 16,
+    marginBottom: md3Spacing.large,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: md3Spacing.medium,
   },
   sectionTitle: {
     flex: 1,
-    color: theme.textPrimary,
-    fontSize: 18,
-    lineHeight: 24,
+    color: theme.paperTheme.colors.onSurface,
     letterSpacing: 0,
-    ...fonts.bold,
-  },
-  sectionAction: {
-    minHeight: 32,
-    alignItems: "center",
-    justifyContent: "center",
   },
   sectionActionText: {
-    color: theme.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
-    ...fonts.semibold,
+    color: theme.paperTheme.colors.primary,
+    letterSpacing: 0,
   },
   sectionContent: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,

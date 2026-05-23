@@ -1,13 +1,11 @@
+import {md3Shapes, md3Spacing} from "@/constants/md3Theme";
 import {Image} from "expo-image";
 import {useMemo} from "react";
 import {useTranslation} from "react-i18next";
-import {StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle} from "react-native";
+import {StyleSheet, View, type ImageSourcePropType, type StyleProp, type ViewStyle} from "react-native";
+import {Button, Card, Text} from "react-native-paper";
 
-import {DS} from "../lib/design-system";
 import {useTheme, type Theme} from "../styles/theme";
-import {LuxPressable} from "./lux-pressable";
-
-const DARK_ACTION = "#111111";
 
 export type HomeToolCardItem = {
   id: string;
@@ -27,115 +25,101 @@ type HomeToolCardProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-export function HomeToolCard({ item, onPress, style }: HomeToolCardProps) {
-  const { t } = useTranslation();
+export function HomeToolCard({item, onPress, style}: HomeToolCardProps) {
+  const {t} = useTranslation();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const topLeftRadius = item.topLeftRadius ?? 16;
   const isLocked = item.locked === true;
 
   return (
-    <LuxPressable
-      accessibilityLabel={`${item.title}. ${item.description}${isLocked ? ". Verrouillé" : ""}`}
+    <Card
+      accessibilityLabel={`${item.title}. ${item.description}${isLocked ? ". Locked" : ""}`}
       accessibilityRole="button"
-      onPress={() => {
-        return onPress(item);
-      }}
-      style={[styles.card, { borderTopLeftRadius: topLeftRadius }, style]}
-      scale={0.97}
+      mode="elevated"
+      onPress={() => onPress(item)}
+      style={[styles.card, style]}
     >
-      <View style={[styles.imageWrap, { borderTopLeftRadius: topLeftRadius }]}>
+      <View style={styles.imageWrap}>
         <Image source={item.image} style={styles.image} contentFit="cover" transition={0} cachePolicy="memory-disk" />
       </View>
 
-      <View style={styles.copyBlock}>
+      <Card.Content style={styles.copyBlock}>
         <View style={styles.copyText}>
-          <Text numberOfLines={2} style={styles.title}>
+          <Text numberOfLines={2} variant="titleMedium" style={styles.title}>
             {item.title}
           </Text>
-          <Text style={styles.description}>{item.description}</Text>
+          <Text variant="bodyMedium" style={styles.description}>
+            {item.description}
+          </Text>
         </View>
 
         <View style={styles.buttonWrap}>
-          <View style={styles.button}>
-            <Text style={styles.buttonText}>{t("common.actions.tryThis")}</Text>
-          </View>
+          <Button
+            compact
+            mode="contained-tonal"
+            onPress={() => onPress(item)}
+            style={styles.button}
+            labelStyle={styles.buttonText}
+          >
+            {t("common.actions.tryThis")}
+          </Button>
         </View>
-      </View>
-    </LuxPressable>
+      </Card.Content>
+    </Card>
   );
 }
 
 function createStyles(theme: Theme) {
   return StyleSheet.create({
-  card: {
-    overflow: "hidden",
-    backgroundColor: theme.surfaceCard,
-    borderRadius: 16,
-    borderCurve: "continuous",
-    boxShadow: `0px 12px 28px ${theme.shadow}`,
-    borderWidth: 0.5,
-    borderColor: theme.border,
-  },
-  imageWrap: {
-    height: 312,
-    overflow: "hidden",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderCurve: "continuous",
-    backgroundColor: theme.surfaceMuted,
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-  },
-  copyBlock: {
-    minHeight: 136,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-  },
-  copyText: {
-    flex: 1,
-    maxWidth: "60%",
-    gap: 8,
-    alignSelf: "stretch",
-  },
-  title: {
-    ...DS.typography.cardTitle,
-    fontSize: 18,
-    lineHeight: 23,
-    fontWeight: "700",
-    color: theme.textPrimary,
-    letterSpacing: 0,
-  },
-  description: {
-    ...DS.typography.bodySm,
-    color: theme.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
-    letterSpacing: 0,
-  },
-  buttonWrap: {
-    justifyContent: "flex-end",
-    alignItems: "flex-end",
-    paddingBottom: 2,
-  },
-  button: {
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    backgroundColor: DARK_ACTION,
-  },
-  buttonText: {
-    ...DS.typography.button,
-    color: "#FFFFFF",
-    fontSize: 13,
-    lineHeight: 17,
-    letterSpacing: 0,
-  },
+    card: {
+      overflow: "hidden",
+      backgroundColor: theme.paperTheme.colors.elevation.level1,
+      borderRadius: md3Shapes.large,
+    },
+    imageWrap: {
+      height: 312,
+      overflow: "hidden",
+      borderTopLeftRadius: md3Shapes.large,
+      borderTopRightRadius: md3Shapes.large,
+      backgroundColor: theme.paperTheme.colors.surfaceVariant,
+    },
+    image: {
+      width: "100%",
+      height: "100%",
+    },
+    copyBlock: {
+      minHeight: 136,
+      flexDirection: "row",
+      alignItems: "flex-end",
+      justifyContent: "space-between",
+      gap: md3Spacing.large,
+      paddingHorizontal: md3Spacing.extraLarge,
+      paddingVertical: md3Spacing.extraLarge,
+    },
+    copyText: {
+      flex: 1,
+      maxWidth: "60%",
+      gap: md3Spacing.small,
+      alignSelf: "stretch",
+    },
+    title: {
+      color: theme.paperTheme.colors.onSurface,
+      letterSpacing: 0,
+    },
+    description: {
+      color: theme.paperTheme.colors.onSurfaceVariant,
+      letterSpacing: 0,
+    },
+    buttonWrap: {
+      justifyContent: "flex-end",
+      alignItems: "flex-end",
+      paddingBottom: md3Spacing.extraSmall,
+    },
+    button: {
+      borderRadius: 20,
+    },
+    buttonText: {
+      letterSpacing: 0,
+    },
   });
 }

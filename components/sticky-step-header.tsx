@@ -1,10 +1,11 @@
 import {ArrowLeft, X} from "@/components/material-icons";
 import {type ReactNode} from "react";
 import {useTranslation} from "react-i18next";
-import {I18nManager, Platform, Pressable, StyleSheet, Text, View} from "react-native";
+import {I18nManager, Platform, StyleSheet, View} from "react-native";
+import {IconButton, Surface, Text, useTheme as usePaperTheme} from "react-native-paper";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
-import {DS, floatingButton} from "../lib/design-system";
+import {md3Spacing} from "../constants/md3Theme";
 import {
 getDirectionalAlignment,
 getDirectionalArrowScale,
@@ -80,15 +81,16 @@ export function StickyStepHeader({
   backAccessibilityLabel = "Go back",
   closeAccessibilityLabel = "Close",
 }: StickyStepHeaderProps) {
-  const { t } = useTranslation();
+  const {t} = useTranslation();
+  const paperTheme = usePaperTheme();
   const insets = useSafeAreaInsets();
   const isRTL = I18nManager.isRTL;
   const metrics = getStickyStepHeaderMetricsWithProgress(insets.top, showProgress);
   const safeStep = Math.max(1, Math.min(step, totalSteps));
   const showCredits = safeStep === 1;
   const showBack = safeStep > 1 && Boolean(onBack);
-  const { hasPaidAccess } = useViewerCredits();
-  const { openStore } = useDiamondStore();
+  const {hasPaidAccess} = useViewerCredits();
+  const {openStore} = useDiamondStore();
   const resolvedTitle = title ?? t("app.name");
 
   const handleCreditsTap = () => {
@@ -97,42 +99,40 @@ export function StickyStepHeader({
   };
 
   return (
-    <View
+    <Surface
+      elevation={2}
       pointerEvents="box-none"
       style={[
         styles.shell,
         {
+          backgroundColor: paperTheme.colors.surface,
           height: metrics.height,
           paddingTop: metrics.safeTop + HEADER_TOP_PADDING,
         },
       ]}
     >
-      <View style={[styles.inner, { marginHorizontal: horizontalInset }]}>
-        <View style={[styles.topRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-          <View style={[styles.sideSlot, { alignItems: getDirectionalAlignment(isRTL) }]}>
+      <View style={[styles.inner, {marginHorizontal: horizontalInset}]}>
+        <View style={[styles.topRow, {flexDirection: getDirectionalRow(isRTL)}]}>
+          <View style={[styles.sideSlot, {alignItems: getDirectionalAlignment(isRTL)}]}>
             {showBack ? (
-              <Pressable
+              <IconButton
                 accessibilityLabel={backAccessibilityLabel}
-                accessibilityRole="button"
-                hitSlop={10}
+                icon={({color, size}) => (
+                  <ArrowLeft
+                    color={color}
+                    size={size}
+                    strokeWidth={1.9}
+                    style={[
+                      styles.backIcon,
+                      {transform: [{scaleX: getDirectionalArrowScale(isRTL)}, {translateX: isRTL ? 1 : -1}]},
+                    ]}
+                  />
+                )}
+                mode="contained-tonal"
                 onPress={onBack}
+                size={18}
                 style={styles.iconButton}
-              >
-                <ArrowLeft
-                  color="#000000"
-                  size={18}
-                  strokeWidth={1.9}
-                  style={[
-                    styles.backIcon,
-                    {
-                      transform: [
-                        { scaleX: getDirectionalArrowScale(isRTL) },
-                        { translateX: isRTL ? 1 : -1 },
-                      ],
-                    },
-                  ]}
-                />
-              </Pressable>
+              />
             ) : leftAccessory ? (
               leftAccessory
             ) : showCredits ? (
@@ -153,28 +153,27 @@ export function StickyStepHeader({
           </View>
 
           <View pointerEvents="none" style={styles.titleWrap}>
-            <Text numberOfLines={1} style={styles.titleText}>
+            <Text numberOfLines={1} variant="titleMedium" style={[styles.titleText, {color: paperTheme.colors.onSurface}]}>
               {resolvedTitle}
             </Text>
           </View>
 
-          <View style={[styles.sideSlot, { alignItems: getDirectionalOppositeAlignment(isRTL) }]}>
-            <Pressable
+          <View style={[styles.sideSlot, {alignItems: getDirectionalOppositeAlignment(isRTL)}]}>
+            <IconButton
               accessibilityLabel={closeAccessibilityLabel}
-              accessibilityRole="button"
-              hitSlop={10}
+              icon={({color, size}) => <X color={color} size={size} strokeWidth={2} />}
+              mode="contained-tonal"
               onPress={onClose}
+              size={18}
               style={styles.iconButton}
-            >
-              <X color={DS.colors.textPrimary} size={18} strokeWidth={2} />
-            </Pressable>
+            />
           </View>
         </View>
 
         {showProgress ? (
           <View style={styles.progressWrap}>
-            <Text style={styles.stepMetaText}>
-              {t("wizard.headers.stepProgress", { current: safeStep, total: totalSteps })}
+            <Text variant="labelLarge" style={[styles.stepMetaText, {color: paperTheme.colors.onSurfaceVariant}]}>
+              {t("wizard.headers.stepProgress", {current: safeStep, total: totalSteps})}
             </Text>
             <StepProgressSegments
               key={`sticky-step-progress-${safeStep}-${totalSteps}`}
@@ -187,7 +186,7 @@ export function StickyStepHeader({
           </View>
         ) : null}
       </View>
-    </View>
+    </Surface>
   );
 }
 
@@ -198,13 +197,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 40,
-    backgroundColor: DS.colors.background,
-    shadowColor: "#111827",
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-    boxShadow: "0px 2px 10px rgba(17, 24, 39, 0.05)",
   },
   inner: {
     gap: HEADER_PROGRESS_GAP,
@@ -222,63 +214,46 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "flex-start",
   },
-  sideSlotRight: {
-    alignItems: "flex-end",
-  },
   progressWrap: {
     flexDirection: "row",
-    gap: 10,
+    gap: md3Spacing.small,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 12,
+    paddingHorizontal: md3Spacing.medium,
   },
   progressRail: {
     flex: 1,
     maxWidth: 168,
   },
   stepMetaText: {
-    color: DS.colors.textMuted,
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: "700",
+    letterSpacing: 0,
   },
   iconButton: {
-    width: HEADER_ACTION_SIZE,
-    height: HEADER_ACTION_SIZE,
-    ...floatingButton(false),
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: DS.colors.surfaceHigh,
+    margin: 0,
   },
   backIcon: {
-    transform: [{ translateX: -1 }],
+    transform: [{translateX: -1}],
   },
   creditPill: {
     height: HEADER_ACTION_SIZE,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: md3Spacing.medium,
+    paddingVertical: md3Spacing.small,
   },
   proBadge: {
     height: HEADER_ACTION_SIZE,
   },
   titleWrap: {
     position: "absolute",
-    left: HEADER_ACTION_SIZE + 12,
-    right: HEADER_ACTION_SIZE + 12,
+    left: HEADER_ACTION_SIZE + md3Spacing.medium,
+    right: HEADER_ACTION_SIZE + md3Spacing.medium,
     top: 0,
     bottom: 0,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 8,
+    paddingHorizontal: md3Spacing.small,
   },
   titleText: {
-    color: DS.colors.textPrimary,
-    ...DS.typography.button,
-    fontSize: 19,
-    lineHeight: 24,
-    letterSpacing: 0.3,
+    letterSpacing: 0,
     textAlign: "center",
   },
 });

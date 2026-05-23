@@ -1,13 +1,14 @@
-import {ArrowLeft} from "@/components/material-icons";
 import {useLocalSearchParams, useRouter} from "expo-router";
 import {StatusBar} from "expo-status-bar";
 import {useCallback, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {FlatList, StyleSheet, View, useWindowDimensions} from "react-native";
+import {Appbar, Text} from "react-native-paper";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {DiscoverImageCard} from "../../../components/discover-image-card";
 import {DiscoverPreviewModal} from "../../../components/discover-preview-modal";
+import {md3Spacing} from "../../../constants/md3Theme";
 import {DS, SCREEN_SECTION_GAP} from "../../../lib/design-system";
 import {
 type DiscoverTabId,
@@ -16,10 +17,9 @@ useDiscoverGroup,
 } from "../../../lib/discover-catalog";
 import {triggerHaptic} from "../../../lib/haptics";
 import {useTheme, type Theme} from "../../../styles/theme";
-import {fonts} from "../../../styles/typography";
 
-const SCREEN_SIDE_MARGIN = 26;
-const GRID_GAP = 14;
+const SCREEN_SIDE_MARGIN = 24;
+const GRID_GAP = 16;
 const DEFAULT_CARD_HEIGHT_RATIO = 1.28;
 const GARDEN_CARD_HEIGHT_RATIO = 1;
 
@@ -81,17 +81,11 @@ export default function DiscoverSeeAllScreen() {
     <View style={styles.screen}>
       <StatusBar style={theme.isDark ? "light" : "dark"} />
 
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable accessibilityRole="button" hitSlop={10} onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft color={theme.textPrimary} size={22} strokeWidth={2.25} />
-        </Pressable>
-
-        <Text adjustsFontSizeToFit minimumFontScale={0.9} numberOfLines={1} style={styles.headerTitle}>
-          {group?.title ?? t("discover.title")}
-        </Text>
-
+      <Appbar.Header elevated mode="center-aligned" style={[styles.header, { paddingTop: insets.top }]}>
+        <Appbar.BackAction onPress={handleBack} />
+        <Appbar.Content title={group?.title ?? t("discover.title")} titleStyle={styles.headerTitle} />
         <View style={styles.headerSpacer} />
-      </View>
+      </Appbar.Header>
 
       {group ? (
         <FlatList
@@ -141,31 +135,13 @@ return StyleSheet.create({
   },
   header: {
     paddingHorizontal: SCREEN_SIDE_MARGIN,
-    minHeight: 72,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  backButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: theme.surfaceHigh,
-    borderWidth: 1,
-    borderColor: theme.border,
-    borderRadius: 14,
-    borderCurve: "continuous",
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    alignItems: "center",
-    justifyContent: "center",
+    minHeight: 64,
+    backgroundColor: theme.paperTheme.colors.surface,
   },
   headerTitle: {
-    flex: 1,
-    color: theme.textPrimary,
-    fontSize: 18,
-    lineHeight: 24,
+    color: theme.paperTheme.colors.onSurface,
     letterSpacing: 0,
     textAlign: "center",
-    ...fonts.bold,
   },
   headerSpacer: {
     width: 48,
@@ -184,7 +160,7 @@ return StyleSheet.create({
     paddingHorizontal: SCREEN_SIDE_MARGIN,
     alignItems: "flex-start",
     justifyContent: "center",
-    gap: 8,
+    gap: md3Spacing.small,
   },
   emptyTitle: {
     color: theme.textPrimary,

@@ -1,11 +1,12 @@
+import {md3Shapes} from "@/constants/md3Theme";
 import {Image} from "expo-image";
 import {memo} from "react";
 import type {StyleProp, ViewStyle} from "react-native";
 import {StyleSheet, View} from "react-native";
+import {Card} from "react-native-paper";
 
-import {DS, ambientShadow} from "../lib/design-system";
 import type {DiscoverTile} from "../lib/discover-catalog";
-import {LuxPressable} from "./lux-pressable";
+import {useTheme} from "../styles/theme";
 
 type DiscoverImageCardProps = {
   item: DiscoverTile;
@@ -22,15 +23,17 @@ export const DiscoverImageCard = memo(function DiscoverImageCard({
   onPress,
   style,
 }: DiscoverImageCardProps) {
+  const theme = useTheme();
+
   return (
-    <LuxPressable
+    <Card
       accessibilityLabel={item.title}
       accessibilityRole="imagebutton"
+      mode="elevated"
       onPress={() => onPress(item)}
-      style={[styles.card, { width, height }, style]}
-      scale={0.95}
+      style={[styles.card, {width, height, backgroundColor: theme.paperTheme.colors.elevation.level1}, style]}
     >
-      <View style={styles.innerFrame}>
+      <View style={[styles.innerFrame, {backgroundColor: theme.paperTheme.colors.surfaceVariant}]}>
         <Image
           source={item.image}
           transition={280}
@@ -42,24 +45,19 @@ export const DiscoverImageCard = memo(function DiscoverImageCard({
           resizeMode="cover"
         />
       </View>
-    </LuxPressable>
+    </Card>
   );
 });
 
 const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
-    backgroundColor: DS.colors.surfaceRaised,
-    borderRadius: 20,
-    borderCurve: "continuous",
-    ...ambientShadow(0.06, 16, 12),
+    borderRadius: md3Shapes.large,
   },
   innerFrame: {
     flex: 1,
     overflow: "hidden",
-    borderRadius: 20,
-    borderCurve: "continuous",
-    backgroundColor: DS.colors.surfaceMuted,
+    borderRadius: md3Shapes.large,
   },
   image: {
     width: "100%",

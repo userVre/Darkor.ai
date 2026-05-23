@@ -3,22 +3,21 @@ import {useRouter} from "expo-router";
 import {ChevronLeft} from "lucide-react-native";
 import {useRef, useState} from "react";
 import {
-  ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   View,
   type NativeSyntheticEvent,
   type TextInputKeyPressEventData,
 } from "react-native";
+import {Button, IconButton, Text, TextInput as PaperTextInput, useTheme as usePaperTheme} from "react-native-paper";
 
 import {AuthInput} from "@/components/auth/AuthInput";
 import {clearAuthSkipped} from "@/components/auth/auth-skip";
+import {md3Shapes, md3Spacing} from "@/constants/md3Theme";
 
 const AUTH_COLORS = {
   background: "#0A0A0F",
@@ -89,7 +88,8 @@ export default function ForgotPasswordRoute() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState<LoadingState>(null);
   const [error, setError] = useState("");
-  const codeRefs = useRef<Array<TextInput | null>>([]);
+  const codeRefs = useRef<Array<any | null>>([]);
+  const paperTheme = usePaperTheme();
 
   const trimmedEmail = email.trim();
   const code = codeDigits.join("");
@@ -281,22 +281,17 @@ export default function ForgotPasswordRoute() {
           keyboardType="email-address"
           error={step === "email" ? error : undefined}
         />
-        <Pressable
-          accessibilityRole="button"
+        <Button
+          mode="contained"
           disabled={loading !== null || !trimmedEmail}
           onPress={() => void sendResetCode()}
-          style={({pressed}) => [
-            styles.button,
-            loading !== null || !trimmedEmail ? styles.disabled : null,
-            pressed ? styles.pressed : null,
-          ]}
+          loading={loading === "email"}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonText}
         >
-          {loading === "email" ? (
-            <ActivityIndicator color={AUTH_COLORS.textPrimary} />
-          ) : (
-            <Text style={styles.buttonText}>Envoyer le code</Text>
-          )}
-        </Pressable>
+          Envoyer le code
+        </Button>
       </View>
     </>
   );
@@ -315,16 +310,19 @@ export default function ForgotPasswordRoute() {
       <View style={styles.panel}>
         <View style={styles.codeRow}>
           {codeDigits.map((digit, index) => (
-            <TextInput
+            <PaperTextInput
               key={`reset-code-${index}`}
-              ref={(ref) => {
+              ref={(ref: any | null) => {
                 codeRefs.current[index] = ref;
               }}
               value={digit}
               onChangeText={(value) => handleCodeChange(value, index)}
               onKeyPress={(event) => handleCodeKeyPress(event, index)}
-              style={styles.codeInput}
+              contentStyle={styles.codeInputContent}
               keyboardType="number-pad"
+              mode="outlined"
+              outlineStyle={styles.codeInputOutline}
+              style={styles.codeInput}
               textContentType="oneTimeCode"
               maxLength={index === 0 ? 6 : 1}
               selectionColor={AUTH_COLORS.accent}
@@ -337,32 +335,27 @@ export default function ForgotPasswordRoute() {
             {error}
           </Text>
         ) : null}
-        <Pressable
-          accessibilityRole="button"
+        <Button
+          mode="contained"
           disabled={loading !== null || !codeReady}
           onPress={() => void verifyCode()}
-          style={({pressed}) => [
-            styles.button,
-            loading !== null || !codeReady ? styles.disabled : null,
-            pressed ? styles.pressed : null,
-          ]}
+          loading={loading === "code"}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonText}
         >
-          {loading === "code" ? (
-            <ActivityIndicator color={AUTH_COLORS.textPrimary} />
-          ) : (
-            <Text style={styles.buttonText}>V\u00e9rifier le code</Text>
-          )}
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
+          V\u00e9rifier le code
+        </Button>
+        <Button
+          compact
+          mode="text"
           disabled={loading !== null}
           onPress={() => void resendResetCode()}
           style={styles.linkButton}
+          labelStyle={styles.linkText}
         >
-          <Text style={styles.linkText}>
-            {loading === "resend" ? "Envoi en cours..." : "Renvoyer le code"}
-          </Text>
-        </Pressable>
+          {loading === "resend" ? "Envoi en cours..." : "Renvoyer le code"}
+        </Button>
       </View>
     </>
   );
@@ -408,22 +401,17 @@ export default function ForgotPasswordRoute() {
             {error}
           </Text>
         ) : null}
-        <Pressable
-          accessibilityRole="button"
+        <Button
+          mode="contained"
           disabled={loading !== null || !passwordReady}
           onPress={() => void resetPassword()}
-          style={({pressed}) => [
-            styles.button,
-            loading !== null || !passwordReady ? styles.disabled : null,
-            pressed ? styles.pressed : null,
-          ]}
+          loading={loading === "password"}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonText}
         >
-          {loading === "password" ? (
-            <ActivityIndicator color={AUTH_COLORS.textPrimary} />
-          ) : (
-            <Text style={styles.buttonText}>R\u00e9initialiser le mot de passe</Text>
-          )}
-        </Pressable>
+          R\u00e9initialiser le mot de passe
+        </Button>
       </View>
     </>
   );
@@ -442,14 +430,13 @@ export default function ForgotPasswordRoute() {
       >
         <Pressable onPress={Keyboard.dismiss} style={styles.dismissArea}>
           {router.canGoBack() ? (
-            <Pressable
-              accessibilityRole="button"
+            <IconButton
               accessibilityLabel="Retour"
+              icon={({size}) => <ChevronLeft color={paperTheme.colors.onSurface} size={size} strokeWidth={2} />}
+              mode="contained-tonal"
               onPress={() => router.back()}
               style={styles.backButton}
-            >
-              <ChevronLeft color={AUTH_COLORS.textPrimary} size={20} strokeWidth={2} />
-            </Pressable>
+            />
           ) : null}
 
           <View style={styles.content}>
@@ -484,12 +471,7 @@ const styles = StyleSheet.create({
     top: 14,
     left: 18,
     zIndex: 2,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    alignItems: "center",
-    justifyContent: "center",
+    margin: 0,
   },
   content: {
     width: "100%",
@@ -532,14 +514,19 @@ const styles = StyleSheet.create({
   },
   codeInput: {
     width: 40,
-    height: 52,
-    borderRadius: 12,
-    borderWidth: 1,
+    height: 56,
+    backgroundColor: "transparent",
+  },
+  codeInputContent: {
+    textAlign: "center",
+    letterSpacing: 0,
+  },
+  codeInputOutline: {
+    borderRadius: md3Shapes.small,
     borderColor: AUTH_COLORS.border,
     backgroundColor: "rgba(255,255,255,0.08)",
-    color: AUTH_COLORS.textPrimary,
-    fontSize: 20,
-    fontWeight: "700",
+  },
+  codeInputText: {
     textAlign: "center",
     letterSpacing: 0,
   },
@@ -551,33 +538,21 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   button: {
-    height: 54,
-    borderRadius: 14,
+    borderRadius: md3Shapes.extraLarge,
     backgroundColor: AUTH_COLORS.accent,
-    alignItems: "center",
-    justifyContent: "center",
+  },
+  buttonContent: {
+    minHeight: 56,
+    paddingHorizontal: md3Spacing.extraLarge,
   },
   buttonText: {
-    color: AUTH_COLORS.textPrimary,
-    fontSize: 15,
-    fontWeight: "600",
     letterSpacing: 0,
-    textAlign: "center",
   },
   linkButton: {
     alignSelf: "center",
     paddingVertical: 2,
   },
   linkText: {
-    color: AUTH_COLORS.accent,
-    fontSize: 13,
-    fontWeight: "600",
     letterSpacing: 0,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  pressed: {
-    opacity: 0.82,
   },
 });

@@ -6,7 +6,8 @@ import {Rocket} from "lucide-react-native";
 import {AnimatePresence, MotiView} from "moti";
 import {memo, useEffect, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {LayoutChangeEvent, StyleSheet, Text, View, useWindowDimensions} from "react-native";
+import {LayoutChangeEvent, StyleSheet, View, useWindowDimensions} from "react-native";
+import {Button, ProgressBar, Text} from "react-native-paper";
 import Animated, {
   Easing,
   cancelAnimation,
@@ -18,14 +19,13 @@ import Animated, {
 } from "react-native-reanimated";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {DS, GLOBAL_VERTICAL_GAP} from "../lib/design-system";
+import {md3Shapes, md3Spacing} from "../constants/md3Theme";
 import {spacing} from "../styles/spacing";
 import {fonts} from "../styles/typography";
 
-import {LuxPressable} from "./lux-pressable";
 import {StepProgressSegments} from "./step-progress-segments";
 import {useWorkspaceDraft} from "./workspace-context";
 
-const pointerClassName = "cursor-pointer";
 const PROGRESS_INTERVAL_MS = 500;
 const PROGRESS_MAX = 0.94;
 const PROGRESS_EASING = 0.08;
@@ -98,7 +98,6 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   const scanOpacity = useSharedValue(1);
   const beforeOpacity = useSharedValue(1);
   const afterOpacity = useSharedValue(0);
-  const liquidProgress = useSharedValue(0.02);
   const hasRevealedResult = Boolean(revealedImageUri);
 
   const subtitleSignature = activeSubtitlePhrases.join("|");
@@ -159,13 +158,6 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
   }, [hasRevealedResult]);
 
   useEffect(() => {
-    liquidProgress.value = withTiming(Math.max(progress, 0.02), {
-      duration: 520,
-      easing: Easing.bezier(0.25, 0.46, 0.45, 0.94),
-    });
-  }, [liquidProgress, progress]);
-
-  useEffect(() => {
     if (!hasRevealedResult) {
       scanOpacity.value = withTiming(1, { duration: 180 });
       beforeOpacity.value = withTiming(1, { duration: 180 });
@@ -221,9 +213,7 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
     opacity: afterOpacity.value,
   }));
 
-  const liquidProgressStyle = useAnimatedStyle(() => ({
-    width: `${liquidProgress.value * 100}%`,
-  }));
+  const animatedProgress = Math.max(0, Math.min(progress, 1));
 
   return (
     <View style={styles.screen}>
@@ -296,54 +286,36 @@ export const ServiceProcessingScreen = memo(function ServiceProcessingScreen({
         </View>
 
         <View style={styles.bottomContent}>
-          <View style={styles.progressTrack}>
-            <Animated.View style={[styles.progressFill, liquidProgressStyle]} />
-          </View>
+          <ProgressBar color={colors.paperTheme.colors.primary} progress={animatedProgress} style={styles.progressTrack} />
 
           <View style={styles.copyBlock}>
             <Text style={styles.eta}>{etaLabel?.trim() || t("processing.eta")}</Text>
           </View>
 
           {!hasRevealedResult ? (
-            <LuxPressable
+            <Button
+              icon={({color, size}) => <Rocket color={color} size={size} strokeWidth={2.4} />}
+              mode="contained-tonal"
               onPress={handleSpeedUp}
-              className={pointerClassName}
-              pressableClassName={pointerClassName}
               style={styles.speedUpCta}
-              glowColor="#3B82F6"
-              scale={0.985}
+              contentStyle={styles.speedUpContent}
+              labelStyle={styles.speedUpTitle}
             >
-              <LinearGradient
-                colors={["#0F172A", "#1D4ED8"]}
-                start={{ x: 0, y: 0.2 }}
-                end={{ x: 1, y: 0.8 }}
-                style={styles.speedUpGradient}
-              >
-                <View style={styles.speedUpIconWrap}>
-                  <Rocket color="#FFFFFF" size={18} strokeWidth={2.4} />
-                </View>
-                <View style={styles.speedUpCopy}>
-                  <Text style={styles.speedUpTitle}>Speed Up</Text>
-                  <Text style={styles.speedUpSubtitle}>Upgrade now for faster future renders</Text>
-                </View>
-              </LinearGradient>
-            </LuxPressable>
+              Speed Up
+            </Button>
           ) : null}
         </View>
 
-        <LuxPressable
+        <Button
+          compact
+          mode="text"
           onPress={onCancel}
           disabled={cancelDisabled}
-          className={pointerClassName}
-          pressableClassName={pointerClassName}
           style={[styles.cancelWrap, { paddingBottom: Math.max(insets.bottom + 8, 14) }]}
-          glowColor={colors.surfaceHigh}
-          scale={0.98}
+          labelStyle={[styles.cancelText, cancelDisabled ? styles.cancelTextDisabled : null]}
         >
-          <Text style={[styles.cancelText, cancelDisabled ? styles.cancelTextDisabled : null]}>
-            {t("processing.cancelKeepCredit")}
-          </Text>
-        </LuxPressable>
+          {t("processing.cancelKeepCredit")}
+        </Button>
       </View>
     </View>
   );
@@ -455,66 +427,24 @@ function createStyles(colors: Theme) {
       gap: spacing.md,
     },
     progressTrack: {
-      height: 3,
+      height: 4,
       width: "100%",
       borderRadius: 2,
-      backgroundColor: "rgba(37, 99, 235, 0.12)",
+      backgroundColor: colors.paperTheme.colors.surfaceVariant,
       overflow: "hidden",
-    },
-    progressFill: {
-      height: "100%",
-      borderRadius: 2,
-      backgroundColor: GENERATION_PROGRESS_COLOR,
     },
     copyBlock: {
       alignItems: "flex-start",
     },
     speedUpCta: {
-      borderRadius: 999,
-      shadowColor: "#2563EB",
-      shadowOpacity: 0.36,
-      shadowRadius: 22,
-      shadowOffset: { width: 0, height: 8 },
-      elevation: 10,
+      borderRadius: md3Shapes.extraLarge,
     },
-    speedUpGradient: {
-      minHeight: 70,
-      borderRadius: 999,
-      paddingHorizontal: 18,
-      paddingVertical: 14,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
-      borderWidth: 1,
-      borderColor: "rgba(191, 219, 254, 0.28)",
-    },
-    speedUpIconWrap: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "rgba(255,255,255,0.16)",
-    },
-    speedUpCopy: {
-      flex: 1,
-      gap: 2,
+    speedUpContent: {
+      minHeight: 56,
+      paddingHorizontal: md3Spacing.extraLarge,
     },
     speedUpTitle: {
-      color: "#FFFFFF",
-      fontSize: 15,
-      fontFamily: fonts.bold.fontFamily,
-      fontWeight: fonts.bold.fontWeight,
-      lineHeight: 20,
-      textAlign: "left",
-    },
-    speedUpSubtitle: {
-      color: "rgba(255,255,255,0.82)",
-      fontSize: 12,
-      fontFamily: fonts.bold.fontFamily,
-      fontWeight: fonts.bold.fontWeight,
-      lineHeight: 17,
-      textAlign: "left",
+      letterSpacing: 0,
     },
     title: {
       color: "#0F172A",
@@ -553,10 +483,8 @@ function createStyles(colors: Theme) {
       paddingTop: spacing.xs,
     },
     cancelText: {
-      color: "#64748B",
-      fontSize: 12,
-      fontFamily: fonts.bold.fontFamily,
-      fontWeight: fonts.bold.fontWeight,
+      color: colors.paperTheme.colors.onSurfaceVariant,
+      letterSpacing: 0,
     },
     cancelTextDisabled: {
       color: colors.borderLight,

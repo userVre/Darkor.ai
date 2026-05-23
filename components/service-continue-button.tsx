@@ -1,20 +1,13 @@
-import {createButtonStyles} from "@/styles/buttons";
-import {type Theme, useTheme} from "@/styles/theme";
 import {AnimatePresence, MotiView} from "moti";
-import {useMemo} from "react";
 import {useTranslation} from "react-i18next";
-import {ActivityIndicator, StyleSheet, Text, View} from "react-native";
-import {DS} from "../lib/design-system";
-import {spacing} from "../styles/spacing";
-import {fonts} from "../styles/typography";
-import {DIAMOND_PILL_BLUE} from "./diamond-credit-pill";
+import {StyleSheet, View} from "react-native";
+import {Easing} from "react-native-reanimated";
+import {Button, Text, useTheme as usePaperTheme} from "react-native-paper";
 
-import {LuxPressable} from "./lux-pressable";
+import {md3Shapes, md3Spacing} from "../constants/md3Theme";
 
-const pointerClassName = "cursor-pointer";
-const ACTIVE_BUTTON_COLOR = DIAMOND_PILL_BLUE;
-const INACTIVE_BUTTON_COLOR = DS.colors.surfaceMuted;
-const ACTIVE_BUTTON_GLOW = DS.colors.accentGlowStrong;
+const MD3_EMPHASIZED_DECELERATE = Easing.bezier(0.05, 0.7, 0.1, 1);
+const MD3_EMPHASIZED_ACCELERATE = Easing.bezier(0.3, 0, 0.8, 0.15);
 
 type ServiceContinueButtonProps = {
   active?: boolean;
@@ -32,7 +25,7 @@ type ServiceContinueButtonProps = {
 
 export function ServiceContinueButton({
   active = true,
-  activeColor = ACTIVE_BUTTON_COLOR,
+  activeColor,
   label,
   loading = false,
   onPress,
@@ -43,160 +36,120 @@ export function ServiceContinueButton({
   attention = false,
   visible = true,
 }: ServiceContinueButtonProps) {
-  const { t } = useTranslation();
-  const colors = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const {t} = useTranslation();
+  const paperTheme = usePaperTheme();
   const isBlocked = loading || !active;
   const resolvedLabel = label ?? t("common.actions.continue");
+  const buttonColor = active ? activeColor ?? paperTheme.colors.primary : paperTheme.colors.surfaceDisabled;
+  const textColor = active ? paperTheme.colors.onPrimary : paperTheme.colors.onSurfaceDisabled;
 
   return (
     <AnimatePresence>
       {visible ? (
         <MotiView
           key={`service-continue-${resolvedLabel}-${active ? "active" : "idle"}-${pulse ? "pulse" : "static"}`}
-          from={{ opacity: 0, translateY: 20 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          exit={{ opacity: 0, translateY: 12 }}
-          transition={{ type: "timing", duration: 300 }}
+          from={{opacity: 0, translateY: 20}}
+          animate={{opacity: 1, translateY: 0}}
+          exit={{opacity: 0, translateY: 12}}
+          transition={{type: "timing", duration: 300, easing: MD3_EMPHASIZED_DECELERATE}}
           style={styles.wrap}
         >
           {pulse && active && !isBlocked ? (
             <MotiView
               pointerEvents="none"
-              animate={{ opacity: [0.16, 0.32, 0.16], scale: [0.985, 1.018, 0.985] }}
-              transition={{ duration: 2000, loop: true, type: "timing" }}
-              style={styles.pulseGlow}
+              animate={{opacity: [0.12, 0.24, 0.12], scale: [0.985, 1.018, 0.985]}}
+              transition={{duration: 2000, loop: true, type: "timing"}}
+              style={[styles.pulseGlow, {backgroundColor: paperTheme.colors.primaryContainer}]}
             />
           ) : null}
 
           <MotiView
             animate={
               attention && active && !isBlocked
-                ? { scale: [1, 1.035, 1], translateY: [0, -1, 0] }
+                ? {scale: [1, 1.035, 1], translateY: [0, -1, 0]}
                 : pulse && active && !isBlocked
-                  ? { scale: [1, 1.01, 1], translateY: [0, -1, 0] }
-                  : { scale: 1, translateY: 0 }
+                  ? {scale: [1, 1.01, 1], translateY: [0, -1, 0]}
+                  : {scale: 1, translateY: 0}
             }
             transition={
               attention && active && !isBlocked
-                ? { duration: 400, type: "timing" }
+                ? {duration: 400, type: "timing", easing: MD3_EMPHASIZED_DECELERATE}
                 : pulse && active && !isBlocked
-                  ? { duration: 2000, loop: true, type: "timing" }
-                  : { duration: 180, type: "timing" }
+                  ? {duration: 2000, loop: true, type: "timing"}
+                  : {duration: 180, type: "timing", easing: MD3_EMPHASIZED_ACCELERATE}
             }
           >
-            <LuxPressable
-              onPress={() => {
-                return onPress();
-              }}
+            <Button
+              mode="contained"
+              buttonColor={buttonColor}
+              textColor={textColor}
+              loading={loading}
               disabled={isBlocked}
-              className={pointerClassName}
-              pressableClassName={pointerClassName}
-              style={styles.pressable}
-              glowColor={ACTIVE_BUTTON_GLOW}
-              scale={0.99}
+              onPress={() => {
+                void onPress();
+              }}
+              style={styles.button}
+              contentStyle={styles.buttonContent}
+              labelStyle={styles.buttonLabel}
             >
-              <View style={[styles.button, active ? [styles.buttonActive, { backgroundColor: activeColor }] : styles.buttonInactive]}>
-                {loading ? (
-                  <View style={styles.loadingRow}>
-                    <ActivityIndicator size="small" color={DS.colors.textInverse} />
-                    <Text style={styles.buttonText}>{t("common.states.loading")}</Text>
-                  </View>
-                ) : (
-                  <Text style={[styles.buttonText, active ? null : styles.buttonTextInactive]}>{resolvedLabel}</Text>
-                )}
-              </View>
-            </LuxPressable>
+              {loading ? t("common.states.loading") : resolvedLabel}
+            </Button>
           </MotiView>
 
           {secondaryActionLabel && onSecondaryAction ? (
-            <LuxPressable
-              onPress={() => {
-                return onSecondaryAction();
-              }}
+            <Button
+              compact
+              mode="text"
               disabled={isBlocked}
-              className={pointerClassName}
-              pressableClassName={pointerClassName}
-              style={styles.secondaryActionWrap}
-              glowColor={colors.surfaceHigh}
-              scale={0.98}
+              onPress={() => {
+                void onSecondaryAction();
+              }}
+              labelStyle={styles.secondaryActionText}
             >
-              <Text style={styles.secondaryActionText}>{secondaryActionLabel}</Text>
-            </LuxPressable>
+              {secondaryActionLabel}
+            </Button>
           ) : null}
 
-          {supportingText ? <Text style={styles.supportingText}>{supportingText}</Text> : null}
+          {supportingText ? (
+            <Text variant="bodySmall" style={[styles.supportingText, {color: paperTheme.colors.onSurfaceVariant}]}>
+              {supportingText}
+            </Text>
+          ) : null}
         </MotiView>
       ) : null}
     </AnimatePresence>
   );
 }
 
-function createStyles(colors: Theme) {
-  const buttonStyles = createButtonStyles(colors);
-
-  return StyleSheet.create({
-    wrap: {
-      width: "100%",
-      gap: spacing.sm,
-    },
-    pulseGlow: {
-      position: "absolute",
-      left: 4,
-      right: 4,
-      top: 6,
-      bottom: 0,
-      borderRadius: 14,
-      backgroundColor: DS.colors.accentSurface,
-    },
-    pressable: {
-      width: "100%",
-    },
-    button: {
-      ...buttonStyles.primary,
-      width: "100%",
-    },
-    buttonActive: {
-      backgroundColor: ACTIVE_BUTTON_COLOR,
-    },
-    buttonInactive: {
-      backgroundColor: INACTIVE_BUTTON_COLOR,
-      boxShadow: `0px 10px 24px ${colors.shadow}`,
-    },
-    buttonText: {
-      color: DS.colors.textInverse,
-      fontSize: 16,
-      fontFamily: fonts.regular.fontFamily,
-      fontWeight: "800",
-      textAlign: "center",
-      letterSpacing: 0.3,
-    },
-    buttonTextInactive: {
-      color: DS.colors.textMuted,
-    },
-    loadingRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: spacing.sm,
-    },
-    secondaryActionWrap: {
-      alignSelf: "center",
-    },
-    secondaryActionText: {
-      color: colors.textSecondary,
-      fontSize: 12,
-      fontFamily: fonts.regular.fontFamily,
-      fontWeight: "600",
-      textAlign: "center",
-    },
-    supportingText: {
-      color: colors.textMuted,
-      fontSize: 12,
-      fontFamily: fonts.regular.fontFamily,
-      fontWeight: "600",
-      lineHeight: 18,
-      textAlign: "center",
-    },
-  });
-}
+const styles = StyleSheet.create({
+  wrap: {
+    width: "100%",
+    gap: md3Spacing.small,
+  },
+  pulseGlow: {
+    position: "absolute",
+    left: md3Spacing.extraSmall,
+    right: md3Spacing.extraSmall,
+    top: md3Spacing.small,
+    bottom: 0,
+    borderRadius: md3Shapes.extraLarge,
+  },
+  button: {
+    width: "100%",
+    borderRadius: md3Shapes.extraLarge,
+  },
+  buttonContent: {
+    minHeight: 56,
+    paddingHorizontal: md3Spacing.extraLarge,
+  },
+  buttonLabel: {
+    letterSpacing: 0,
+  },
+  secondaryActionText: {
+    letterSpacing: 0,
+  },
+  supportingText: {
+    textAlign: "center",
+    letterSpacing: 0,
+  },
+});

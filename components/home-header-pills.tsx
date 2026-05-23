@@ -1,9 +1,10 @@
 import {useRouter} from "expo-router";
 import {useMemo} from "react";
 import {useTranslation} from "react-i18next";
-import {I18nManager, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle} from "react-native";
+import {I18nManager, StyleSheet, View, type StyleProp, type ViewStyle} from "react-native";
+import {Appbar, Badge, Button, Chip, IconButton, Text} from "react-native-paper";
 
-import {DS} from "../lib/design-system";
+import {md3Spacing} from "../constants/md3Theme";
 import {triggerHaptic} from "../lib/haptics";
 import {
 getDirectionalAlignment,
@@ -12,16 +13,14 @@ getDirectionalRow,
 } from "../lib/i18n/rtl";
 import {useTheme, type Theme} from "../styles/theme";
 import {useDiamondStore} from "./diamond-store-context";
-import {ProBadge} from "./diamond-credit-pill";
 import {useViewerCredits} from "./viewer-credits-context";
-
-const HEADER_PILL_HEIGHT = 36;
-const DIAMOND_EMOJI = "\u{1F48E}";
 
 export function HomeHeaderPills({
   style,
+  title,
 }: {
   style?: StyleProp<ViewStyle>;
+  title?: string;
 }) {
   const router = useRouter();
   const theme = useTheme();
@@ -42,36 +41,42 @@ export function HomeHeaderPills({
   };
 
   return (
-      <View style={[styles.headerRow, {flexDirection: getDirectionalRow(isRTL)}, style]}>
+      <Appbar.Header elevated mode="center-aligned" style={[styles.appbar, style]}>
+        {title ? <Appbar.Content title={title} titleStyle={styles.appbarTitle} /> : null}
         <View style={[styles.sideSlot, {alignItems: getDirectionalAlignment(isRTL)}]}>
           {hasPaidAccess ? (
-            <ProBadge style={styles.creditPill} />
+            <Chip compact icon="fire" mode="flat" style={styles.eliteChip} textStyle={styles.chipText}>
+              Elite Pass
+            </Chip>
           ) : (
-            <Pressable
+            <View style={styles.iconBadgeWrap}>
+              <IconButton
               accessibilityLabel={t("home.accessibility.openCredits")}
-              accessibilityRole="button"
-              hitSlop={10}
+              icon="diamond-stone"
+              mode="contained-tonal"
               onPress={handleCreditsPress}
-              style={styles.creditPill}
-            >
-              <Text style={styles.creditPillText}>{`${DIAMOND_EMOJI} ${credits}`}</Text>
-            </Pressable>
+              size={20}
+              style={styles.iconButton}
+            />
+              <Badge style={styles.badge}>{credits}</Badge>
+            </View>
           )}
         </View>
 
         <View style={[styles.sideSlot, {alignItems: getDirectionalOppositeAlignment(isRTL)}]}>
-          <Pressable
+          <Button
             accessibilityLabel={t("settings.upgradePro")}
-            accessibilityRole="button"
+            icon="diamond-stone"
+            mode="contained-tonal"
             onPress={handleUpgradeProPress}
-            style={[styles.upgradeProButton, {flexDirection: getDirectionalRow(isRTL)}]}
+            style={styles.upgradeProButton}
+            contentStyle={[styles.upgradeProContent, {flexDirection: getDirectionalRow(isRTL)}]}
+            labelStyle={styles.upgradeProText}
           >
-            <Text numberOfLines={1} style={styles.upgradeProText}>
-              {`${DIAMOND_EMOJI} ${t("settings.upgradePro")}`}
-            </Text>
-          </Pressable>
+            {t("settings.upgradePro")}
+          </Button>
         </View>
-      </View>
+      </Appbar.Header>
   );
 }
 
@@ -84,51 +89,55 @@ function createStyles(theme: Theme) {
       minHeight: 48,
       gap: 8,
     },
+    appbar: {
+      minHeight: 64,
+      paddingHorizontal: 0,
+      backgroundColor: theme.paperTheme.colors.surface,
+    },
+    appbarTitle: {
+      color: theme.paperTheme.colors.onSurface,
+      ...theme.paperTheme.fonts.titleLarge,
+      textAlign: "center",
+    },
     sideSlot: {
-      minWidth: 64,
+      minWidth: 56,
       flexShrink: 0,
-      minHeight: 44,
+      minHeight: 48,
       justifyContent: "center",
       alignItems: "flex-start",
     },
-    creditPill: {
-      height: HEADER_PILL_HEIGHT,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 20,
-      borderCurve: "continuous",
-      backgroundColor: theme.surfaceHigh,
+    eliteChip: {
+      backgroundColor: theme.paperTheme.colors.secondaryContainer,
     },
-    creditPillText: {
-      ...DS.typography.button,
-      color: theme.textPrimary,
-      fontSize: 13,
-      lineHeight: 16,
-      fontVariant: ["tabular-nums"],
-      fontWeight: "700",
+    chipText: {
+      color: theme.paperTheme.colors.onSecondaryContainer,
       letterSpacing: 0,
     },
-    upgradeProButton: {
-      minWidth: 138,
-      height: HEADER_PILL_HEIGHT,
+    iconBadgeWrap: {
+      width: 48,
+      height: 48,
       alignItems: "center",
       justifyContent: "center",
-      paddingHorizontal: 14,
-      paddingVertical: 6,
+    },
+    iconButton: {
+      margin: 0,
+    },
+    badge: {
+      position: "absolute",
+      top: md3Spacing.extraSmall,
+      right: md3Spacing.extraSmall,
+      backgroundColor: theme.paperTheme.colors.error,
+      color: theme.paperTheme.colors.onError,
+    },
+    upgradeProButton: {
       borderRadius: 20,
-      borderCurve: "continuous",
-      borderWidth: 1,
-      borderColor: theme.border,
-      backgroundColor: theme.surfaceHigh,
+    },
+    upgradeProContent: {
+      minHeight: 40,
+      paddingHorizontal: md3Spacing.small,
     },
     upgradeProText: {
-      ...DS.typography.button,
-      color: theme.textPrimary,
-      fontSize: 12,
-      lineHeight: 16,
-      fontWeight: "600",
+      color: theme.paperTheme.colors.onSecondaryContainer,
       letterSpacing: 0,
     },
   });

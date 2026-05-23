@@ -4,7 +4,8 @@ import {Image} from "expo-image";
 import {MotiView} from "moti";
 import {Children, cloneElement, isValidElement, useEffect, useState, type ComponentProps, type ReactElement, type ReactNode} from "react";
 import {useTranslation} from "react-i18next";
-import {ActivityIndicator, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageSourcePropType} from "react-native";
+import {ScrollView, StyleSheet, View, useWindowDimensions, type ImageSourcePropType} from "react-native";
+import {ActivityIndicator, Card, Text} from "react-native-paper";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {spacing} from "../styles/spacing";
 import {fonts} from "../styles/typography";
@@ -178,15 +179,12 @@ export function ServiceSelectionCard({
   }, [image]);
 
   return (
-    <LuxPressable
+    <Card
       onPress={onPress}
-      className={pointerClassName}
-      pressableClassName={pointerClassName}
+      mode="elevated"
       style={{ width: fullWidth ? "100%" : width }}
-      glowColor={active ? "rgba(37,99,235,0.2)" : colors.surfaceHigh}
-      scale={0.99}
     >
-      <View style={[styles.selectionCard, active ? styles.selectionCardActive : null]}>
+      <Card.Content style={[styles.selectionCard, active ? styles.selectionCardActive : null]}>
         <View style={styles.selectionImageWrap}>
           {imageState === "error" ? (
             <View style={styles.selectionImageFallback}>
@@ -227,8 +225,8 @@ export function ServiceSelectionCard({
             </Text>
           </View>
         </View>
-      </View>
-    </LuxPressable>
+      </Card.Content>
+    </Card>
   );
 }
 
@@ -470,6 +468,8 @@ const styles = StyleSheet.create({
   selectionCard: {
     width: "100%",
     minHeight: 252,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
     borderRadius: DS.radius.lg,
     overflow: "hidden",
     backgroundColor: colors.surfaceHigh,

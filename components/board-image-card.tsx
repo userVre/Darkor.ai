@@ -1,10 +1,12 @@
+import {md3Shapes, md3Spacing} from "@/constants/md3Theme";
 import {Image} from "expo-image";
 import {useTranslation} from "react-i18next";
-import {ActivityIndicator, Pressable, StyleSheet, Text, View} from "react-native";
+import {StyleSheet, View} from "react-native";
+import {ActivityIndicator, Badge, Card, Text} from "react-native-paper";
 
 import type {BoardItem} from "../lib/board";
 import {resolveGenerationStatus} from "../lib/generation-status";
-import {fonts} from "../styles/typography";
+import {useTheme} from "../styles/theme";
 
 type BoardImageCardProps = {
   item: BoardItem;
@@ -17,7 +19,7 @@ function formatPortfolioLabel(
   item: BoardItem,
   isProcessing: boolean,
   isFailed: boolean,
-  labels: { processing: string; failed: string; preview: string },
+  labels: {processing: string; failed: string; preview: string},
 ) {
   if (isProcessing) {
     return labels.processing;
@@ -37,8 +39,9 @@ function formatPortfolioLabel(
   return style || room || labels.preview;
 }
 
-export function BoardImageCard({ item, width, onPress, onLongPress }: BoardImageCardProps) {
-  const { t } = useTranslation();
+export function BoardImageCard({item, width, onPress, onLongPress}: BoardImageCardProps) {
+  const {t} = useTranslation();
+  const theme = useTheme();
   const previewImage = item.imageUri ?? item.originalImageUri ?? null;
   const resolvedStatus = resolveGenerationStatus(item.status, item.imageUri);
   const isProcessing = resolvedStatus === "processing";
@@ -51,47 +54,48 @@ export function BoardImageCard({ item, width, onPress, onLongPress }: BoardImage
   });
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={() => onPress(item)}
+    <Card
+      mode={isFailed ? "contained" : "elevated"}
       onLongPress={() => onLongPress(item)}
-      delayLongPress={240}
-      style={[styles.card, { width }]}
+      onPress={() => onPress(item)}
+      style={[styles.card, {width, backgroundColor: isFailed ? theme.paperTheme.colors.errorContainer : theme.paperTheme.colors.elevation.level1}]}
     >
       {previewImage ? (
-        <Image source={{ uri: previewImage }} style={styles.image} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+        <Image source={{uri: previewImage}} style={styles.image} contentFit="cover" transition={120} cachePolicy="memory-disk" />
       ) : (
-        <View style={styles.fallback} />
+        <View style={[styles.fallback, {backgroundColor: theme.paperTheme.colors.surfaceVariant}]} />
       )}
 
-      {showNewBadge ? (
-        <View pointerEvents="none" style={styles.badge}>
-          <Text style={styles.badgeText}>{t("profile.cardNew")}</Text>
-        </View>
-      ) : null}
+      {showNewBadge ? <Badge style={styles.badge}>{t("profile.cardNew")}</Badge> : null}
 
       {isProcessing ? (
         <View pointerEvents="none" style={styles.processingOverlay}>
-          <View style={styles.processingOrb}>
-            <ActivityIndicator size="small" color="#FFFFFF" />
+          <View style={[styles.processingOrb, {backgroundColor: theme.paperTheme.colors.elevation.level3}]}>
+            <ActivityIndicator size="small" />
           </View>
-          <Text style={styles.processingText}>{t("profile.cardProcessing")}</Text>
+          <Text variant="labelLarge" style={[styles.processingText, {color: theme.paperTheme.colors.onSurface}]}>
+            {t("profile.cardProcessing")}
+          </Text>
         </View>
       ) : null}
 
-      <View style={styles.copy}>
-        <Text numberOfLines={2} style={[styles.portfolioLabel, isFailed ? styles.failedText : null]}>
+      <View style={[styles.copy, {backgroundColor: theme.paperTheme.colors.elevation.level3}]}>
+        <Text
+          numberOfLines={2}
+          variant="labelLarge"
+          style={[styles.portfolioLabel, {color: isFailed ? theme.paperTheme.colors.onErrorContainer : theme.paperTheme.colors.onSurface}]}
+        >
           {portfolioLabel}
         </Text>
       </View>
-    </Pressable>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     height: 200,
-    borderRadius: 16,
+    borderRadius: md3Shapes.large,
     overflow: "hidden",
   },
   image: {
@@ -101,68 +105,40 @@ const styles = StyleSheet.create({
   fallback: {
     width: "100%",
     height: "100%",
-    backgroundColor: "#141414",
   },
   badge: {
     position: "absolute",
-    top: 12,
-    right: 12,
-    borderRadius: 999,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  badgeText: {
-    color: "#A4161A",
-    fontSize: 10,
-    lineHeight: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.3,
-    ...fonts.bold,
+    top: md3Spacing.medium,
+    right: md3Spacing.medium,
   },
   processingOverlay: {
     position: "absolute",
     inset: 0,
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
-    paddingHorizontal: 24,
+    gap: md3Spacing.medium,
+    paddingHorizontal: md3Spacing.extraLarge,
   },
   processingOrb: {
-    width: 46,
-    height: 46,
-    borderRadius: 999,
+    width: 48,
+    height: 48,
+    borderRadius: md3Shapes.full,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#3A3A3A",
-    backgroundColor: "#1C1C1C",
   },
   processingText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    lineHeight: 16,
     textAlign: "center",
-    ...fonts.semibold,
   },
   copy: {
     position: "absolute",
-    left: 10,
-    right: 10,
-    bottom: 10,
-    borderRadius: 16,
-    backgroundColor: "rgba(17, 17, 17, 0.82)",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    left: md3Spacing.medium,
+    right: md3Spacing.medium,
+    bottom: md3Spacing.medium,
+    borderRadius: md3Shapes.large,
+    paddingHorizontal: md3Spacing.medium,
+    paddingVertical: md3Spacing.small,
   },
   portfolioLabel: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    lineHeight: 16,
     textAlign: "left",
-    ...fonts.semibold,
-  },
-  failedText: {
-    color: "#F3B3BE",
   },
 });

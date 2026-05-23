@@ -5,10 +5,11 @@ import {useRouter} from "expo-router";
 import {StatusBar} from "expo-status-bar";
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View} from "react-native";
+import {Alert, ScrollView, StyleSheet, View} from "react-native";
+import {Button as PaperButton, Dialog, Portal, Text} from "react-native-paper";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
-import {DS, organicRadii, surfaceCard} from "../lib/design-system";
+import {md3Spacing} from "../constants/md3Theme";
 import {ENABLE_GUEST_WIZARD_TEST_MODE} from "../lib/guest-testing";
 import {triggerHaptic} from "../lib/haptics";
 import {withWorkspaceFlowId} from "../lib/try-it-flow";
@@ -19,7 +20,6 @@ import {useViewerCredits} from "./viewer-credits-context";
 import {useWorkspaceDraft} from "./workspace-context";
 
 const FIRST_LAUNCH_DISCLOSURE_KEY = "homedecor:first-launch-disclosure-accepted";
-const DARK_ACTION = "#111111";
 
 export function CreateOptionsScreen() {
   const router = useRouter();
@@ -31,8 +31,8 @@ export function CreateOptionsScreen() {
   const {clearDraft} = useWorkspaceDraft();
   const {hasProAccess} = useViewerCredits();
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
-  const sidePadding = 20;
-  const headerHeight = insets.top + 70;
+  const sidePadding = md3Spacing.extraLarge;
+  const headerHeight = insets.top + 64;
   const [isDisclosureVisible, setIsDisclosureVisible] = useState(false);
   const toolCards = useMemo<HomeToolCardItem[]>(
     () => [
@@ -193,8 +193,8 @@ export function CreateOptionsScreen() {
     <View style={styles.screen}>
       <StatusBar style={theme.isDark ? "light" : "dark"} />
 
-      <View style={[styles.headerShell, {paddingTop: insets.top + 10}]}>
-        <HomeHeaderPills />
+      <View style={[styles.headerShell, {paddingTop: insets.top}]}>
+        <HomeHeaderPills title={t("tabs.tools")} />
       </View>
 
       <ScrollView
@@ -204,7 +204,7 @@ export function CreateOptionsScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: headerHeight + 32,
+            paddingTop: headerHeight + md3Spacing.doubleExtraLarge,
             paddingHorizontal: sidePadding,
             paddingBottom: Math.max(insets.bottom + 120, 148),
           },
@@ -219,28 +219,28 @@ export function CreateOptionsScreen() {
         </View>
       </ScrollView>
 
-      <Modal animationType="fade" onRequestClose={() => undefined} transparent visible={isDisclosureVisible}>
-        <View style={styles.disclosureOverlay}>
-          <View style={[styles.disclosureCard, {marginTop: Math.max(insets.top + 24, 40)}]}>
-            <Text style={styles.disclosureEyebrow}>{t("firstLaunchDisclosure.eyebrow")}</Text>
-            <Text style={styles.disclosureTitle}>{t("firstLaunchDisclosure.title")}</Text>
-            <Text style={styles.disclosureBody}>{t("firstLaunchDisclosure.body")}</Text>
-
-            <View style={styles.disclosureLinkRow}>
-              <Pressable accessibilityRole="button" onPress={handleOpenPrivacy} style={styles.disclosureLinkButton}>
-                <Text style={styles.disclosureLinkText}>{t("settings.rows.privacyPolicy")}</Text>
-              </Pressable>
-              <Pressable accessibilityRole="button" onPress={handleOpenTerms} style={styles.disclosureLinkButton}>
-                <Text style={styles.disclosureLinkText}>{t("settings.rows.termsOfUse")}</Text>
-              </Pressable>
-            </View>
-
-            <Pressable accessibilityRole="button" onPress={() => void handleAcceptDisclosure()} style={styles.disclosurePrimaryButton}>
-              <Text style={styles.disclosurePrimaryButtonText}>{t("firstLaunchDisclosure.cta")}</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+      <Portal>
+        <Dialog dismissable={false} visible={isDisclosureVisible}>
+          <Dialog.Title>{t("firstLaunchDisclosure.title")}</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="labelLarge">{t("firstLaunchDisclosure.eyebrow")}</Text>
+            <Text style={styles.disclosureBody} variant="bodyMedium">
+              {t("firstLaunchDisclosure.body")}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions style={styles.disclosureActions}>
+            <PaperButton mode="text" onPress={handleOpenPrivacy}>
+              {t("settings.rows.privacyPolicy")}
+            </PaperButton>
+            <PaperButton mode="text" onPress={handleOpenTerms}>
+              {t("settings.rows.termsOfUse")}
+            </PaperButton>
+            <PaperButton mode="contained" onPress={() => void handleAcceptDisclosure()}>
+              {t("firstLaunchDisclosure.cta")}
+            </PaperButton>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 }
@@ -257,8 +257,8 @@ function createStyles(theme: Theme) {
       left: 0,
       right: 0,
       zIndex: 10,
-      paddingHorizontal: 20,
-      paddingBottom: 12,
+      paddingHorizontal: md3Spacing.large,
+      paddingBottom: md3Spacing.small,
       backgroundColor: theme.bg,
     },
     scrollView: {
@@ -269,67 +269,19 @@ function createStyles(theme: Theme) {
       gap: 0,
     },
     toolList: {
-      gap: 18,
+      gap: md3Spacing.extraLarge,
     },
     toolListItem: {
-      gap: 18,
-    },
-    disclosureOverlay: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.64)",
-      justifyContent: "center",
-      paddingHorizontal: 20,
-    },
-    disclosureCard: {
-      ...surfaceCard(theme.surfaceCard),
-      ...organicRadii(44, 18),
-      paddingHorizontal: 24,
-      paddingVertical: 24,
-      gap: 14,
-      borderWidth: 0.5,
-      borderColor: theme.border,
-    },
-    disclosureEyebrow: {
-      color: theme.textSecondary,
-      ...DS.typography.label,
-    },
-    disclosureTitle: {
-      color: theme.textPrimary,
-      ...DS.typography.cardTitle,
+      gap: md3Spacing.extraLarge,
     },
     disclosureBody: {
       color: theme.textSecondary,
-      ...DS.typography.body,
+      marginTop: md3Spacing.small,
     },
-    disclosureLinkRow: {
+    disclosureActions: {
       flexDirection: "row",
-      gap: 12,
       flexWrap: "wrap",
-    },
-    disclosureLinkButton: {
-      minHeight: 40,
-      paddingHorizontal: 16,
-      justifyContent: "center",
-      borderRadius: 999,
-      borderWidth: 0.5,
-      borderColor: theme.border,
-      backgroundColor: theme.surfaceMuted,
-    },
-    disclosureLinkText: {
-      color: theme.textPrimary,
-      ...DS.typography.bodySm,
-    },
-    disclosurePrimaryButton: {
-      minHeight: 52,
-      marginTop: 4,
-      alignItems: "center",
-      justifyContent: "center",
-      borderRadius: 18,
-      backgroundColor: DARK_ACTION,
-    },
-    disclosurePrimaryButtonText: {
-      color: "#FFFFFF",
-      ...DS.typography.button,
+      gap: md3Spacing.small,
     },
   });
 }

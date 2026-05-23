@@ -1,6 +1,5 @@
 import {
 Copy,
-Diamond,
 DoorOpen,
 FileQuestion,
 FileText,
@@ -26,16 +25,18 @@ import * as SecureStore from "expo-secure-store";
 import {StatusBar} from "expo-status-bar";
 import {useMemo, useState} from "react";
 import {useTranslation} from "react-i18next";
-import {Alert, I18nManager, Platform, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View} from "react-native";
+import {Alert, I18nManager, Platform, ScrollView, Share, StyleSheet, Text, View} from "react-native";
+import {Button, Divider, IconButton, List, Switch as PaperSwitch} from "react-native-paper";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 import {useProSuccess} from "../components/pro-success-context";
 import {SettingsRow} from "../components/settings-row";
 import {useViewerCredits} from "../components/viewer-credits-context";
 import {useWorkspaceDraft} from "../components/workspace-context";
+import {md3Spacing} from "../constants/md3Theme";
 import {useAppLanguagePreference, useLocalizedAppFonts} from "../lib/i18n";
 import {getLanguageNativeLabel} from "../lib/i18n/language";
-import {getDirectionalArrowScale, getDirectionalRow, getDirectionalTextAlign} from "../lib/i18n/rtl";
+import {getDirectionalTextAlign} from "../lib/i18n/rtl";
 import {TOOLS_ROUTE} from "../lib/routes";
 import {
 configureRevenueCat,
@@ -45,7 +46,7 @@ resolveRevenueCatSubscription,
 type RevenueCatEntitlement,
 } from "../lib/revenuecat";
 import {requestStoreReview} from "../lib/store-review";
-import {radix, useTheme, type Theme} from "../styles/theme";
+import {useTheme, type Theme} from "../styles/theme";
 import {fonts} from "../styles/typography";
 
 const SUPPORT_EMAIL = "support@homedecor.ai";
@@ -53,7 +54,6 @@ const APP_URL = Constants.expoConfig?.extra?.publicEnv?.EXPO_PUBLIC_APP_URL ?? "
 const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
 const ANDROID_PACKAGE = Constants.expoConfig?.android?.package ?? "com.homedecor.ai";
 const SETTINGS_HERO_IMAGE = require("../assets/media/settings/professional-workspace.webp");
-const DARK_ACTION = "#111111";
 
 function truncateUserId(value: string) {
   if (value.length <= 18) {
@@ -361,13 +361,13 @@ export default function SettingsScreen() {
           <Image contentFit="cover" source={SETTINGS_HERO_IMAGE} style={styles.heroImage} transition={250} />
           <View style={styles.heroImageOverlay} />
 
-          <Pressable
-            accessibilityRole="button"
+          <IconButton
+            accessibilityLabel={t("common.actions.back", { defaultValue: "Back" })}
+            icon={isRTL ? "chevron-right" : "chevron-left"}
+            mode="contained-tonal"
             onPress={handleBack}
             style={[styles.backArrow, { top: heroTopInset, [isRTL ? "right" : "left"]: 16 }]}
-          >
-            <Text style={[styles.backArrowText, { transform: [{ scaleX: getDirectionalArrowScale(isRTL) }] }]}>{"\u2039"}</Text>
-          </Pressable>
+          />
 
           <View style={[styles.heroContent, { paddingTop: heroTopInset }]}>
             <BlurView intensity={28} tint="light" style={styles.heroGlassPanel}>
@@ -381,25 +381,32 @@ export default function SettingsScreen() {
           <View style={styles.planSection}>
             <View style={styles.featureList}>
               {featureItems.map((item) => (
-                <View key={item} style={[styles.featureRow, { flexDirection: getDirectionalRow(isRTL) }]}>
-                  <View style={styles.featureIconBox}>
-                    <Star
-                      color={theme.textPrimary}
-                      size={12}
-                      strokeWidth={2.2}
+                <List.Item
+                  key={item}
+                  title={item}
+                  titleNumberOfLines={2}
+                  titleStyle={[styles.featureText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}
+                  left={() => (
+                    <List.Icon
+                      color={theme.paperTheme.colors.onSecondaryContainer}
+                      icon="star-four-points"
                     />
-                  </View>
-                  <Text style={[styles.featureText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{item}</Text>
-                </View>
+                  )}
+                  style={styles.featureRow}
+                />
               ))}
             </View>
 
-            <Pressable accessibilityRole="button" onPress={handleUpgrade} style={styles.upgradeButton}>
-              <View style={[styles.upgradeButtonContent, { flexDirection: getDirectionalRow(isRTL) }]}>
-                <Diamond color={theme.textInverse} size={16} strokeWidth={2.2} />
-                <Text style={[styles.upgradeButtonText, localizedFonts.semibold]}>{t("settings.upgradePro")}</Text>
-              </View>
-            </Pressable>
+            <Button
+              icon="diamond-stone"
+              mode="contained"
+              onPress={handleUpgrade}
+              style={styles.upgradeButton}
+              contentStyle={styles.upgradeButtonContent}
+              labelStyle={[styles.upgradeButtonText, localizedFonts.semibold]}
+            >
+              {t("settings.upgradePro")}
+            </Button>
           </View>
         )}
 
@@ -414,21 +421,23 @@ export default function SettingsScreen() {
             />
           ))}
 
+          <Divider style={styles.sectionDivider} />
+
           <SettingsRow
             label="Mode sombre"
             icon={((props: any) => <MaterialIcon name="wb-sunny" {...props} />) as any}
             onPress={theme.toggleThemeMode}
             showChevron={false}
             rightAccessory={
-              <Switch
+              <PaperSwitch
                 accessibilityLabel="Mode sombre"
                 onValueChange={(value) => theme.setThemeMode(value ? "dark" : "light")}
-                thumbColor={theme.isDark ? theme.textInverse : theme.surfaceOverlayHigh}
-                trackColor={{false: theme.borderLight, true: DARK_ACTION}}
                 value={theme.isDark}
               />
             }
           />
+
+          <Divider style={styles.sectionDivider} />
 
           <SettingsRow
             label={t("settings.rows.restorePurchase")}
@@ -450,9 +459,14 @@ export default function SettingsScreen() {
                   {truncatedUserId}
                 </Text>
                 {shouldShowCopy ? (
-                  <Pressable accessibilityRole="button" onPress={() => void handleCopyUserId()} style={styles.copyButton}>
-                    <Copy color={theme.textSecondary} size={16} strokeWidth={2.2} />
-                  </Pressable>
+                  <IconButton
+                    accessibilityLabel={t("common.actions.copy", {defaultValue: "Copy"})}
+                    icon={({color, size}) => <Copy color={color} size={size} strokeWidth={2.2} />}
+                    iconColor={theme.paperTheme.colors.onSurfaceVariant}
+                    onPress={() => void handleCopyUserId()}
+                    size={16}
+                    style={styles.copyButton}
+                  />
                 ) : null}
               </View>
             }
@@ -461,24 +475,24 @@ export default function SettingsScreen() {
           <SettingsRow
             label={t("settings.rows.deleteInformation")}
             icon={Trash2}
-            iconColor={DARK_ACTION}
-            textColor={DARK_ACTION}
+            iconColor={theme.paperTheme.colors.error}
+            textColor={theme.paperTheme.colors.error}
             showChevron={false}
             onPress={handleDeleteInformation}
             loading={isDeleting}
-            loadingColor={DARK_ACTION}
+            loadingColor={theme.paperTheme.colors.error}
           />
 
           {isSignedIn ? (
             <SettingsRow
               label={t("settings.rows.logout", { defaultValue: "Se déconnecter" })}
               icon={DoorOpen}
-              iconColor={DARK_ACTION}
-              textColor={DARK_ACTION}
+              iconColor={theme.paperTheme.colors.error}
+              textColor={theme.paperTheme.colors.error}
               showChevron={false}
               onPress={handleSignOut}
               loading={isSigningOut}
-              loadingColor={DARK_ACTION}
+              loadingColor={theme.paperTheme.colors.error}
               disabled={!isLoaded || isSigningOut}
               style={styles.logoutRow}
             />
@@ -502,24 +516,11 @@ function createStyles(theme: Theme) {
     backgroundColor: theme.bg,
   },
   scrollContent: {
-    paddingBottom: 56,
+    paddingBottom: md3Spacing.quadrupleExtraLarge,
   },
   backArrow: {
     position: "absolute",
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 22,
-    overflow: "hidden",
-    backgroundColor: "rgba(248, 249, 250, 0.72)",
     zIndex: 3,
-  },
-  backArrowText: {
-    color: theme.textPrimary,
-    fontSize: 34,
-    lineHeight: 34,
-    ...fonts.medium,
   },
   heroSection: {
     position: "relative",
@@ -539,8 +540,8 @@ function createStyles(theme: Theme) {
   },
   heroContent: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 18,
+    paddingHorizontal: md3Spacing.extraLarge,
+    paddingBottom: md3Spacing.large,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -553,126 +554,98 @@ function createStyles(theme: Theme) {
     borderRadius: 24,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(248, 249, 250, 0.7)",
-    backgroundColor: "rgba(248, 249, 250, 0.56)",
-    paddingHorizontal: 28,
-    paddingVertical: 22,
+    borderColor: theme.paperTheme.colors.outlineVariant,
+    backgroundColor: theme.paperTheme.colors.surfaceVariant,
+    paddingHorizontal: md3Spacing.extraLarge,
+    paddingVertical: md3Spacing.large,
   },
   headerTitle: {
-    marginBottom: 8,
+    marginBottom: md3Spacing.small,
     color: theme.textSecondary,
-    fontSize: 16,
-    lineHeight: 18,
-    ...fonts.semibold,
+    ...theme.paperTheme.fonts.titleMedium,
   },
   heroTitle: {
     color: theme.textPrimary,
-    fontSize: 28,
-    lineHeight: 32,
-    ...fonts.bold,
+    ...theme.paperTheme.fonts.headlineMedium,
   },
   planSection: {
-    marginTop: 16,
-    marginHorizontal: 16,
-    borderRadius: 22,
+    marginTop: md3Spacing.large,
+    marginHorizontal: md3Spacing.large,
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: radix.light.slate.slate6,
-    backgroundColor: theme.surface,
-    padding: 18,
+    borderColor: theme.paperTheme.colors.outlineVariant,
+    backgroundColor: theme.paperTheme.colors.secondaryContainer,
+    padding: md3Spacing.large,
   },
   featureList: {
-    marginBottom: 18,
-    gap: 16,
+    marginBottom: md3Spacing.large,
+    gap: md3Spacing.small,
   },
   featureRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  featureIconBox: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-    backgroundColor: radix.light.slate.slate1,
-    alignItems: "center",
-    justifyContent: "center",
+    paddingHorizontal: 0,
+    paddingVertical: 0,
   },
   featureText: {
     flex: 1,
     flexShrink: 1,
-    color: theme.textPrimary,
-    fontSize: 15,
-    lineHeight: 18,
-    ...fonts.medium,
+    color: theme.paperTheme.colors.onSecondaryContainer,
   },
   upgradeButton: {
     alignSelf: "flex-start",
-    minHeight: 48,
     borderRadius: 999,
-    backgroundColor: DARK_ACTION,
-    justifyContent: "center",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
   },
   upgradeButtonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+    minHeight: 48,
+    paddingHorizontal: md3Spacing.large,
   },
   upgradeButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    lineHeight: 18,
-    ...fonts.semibold,
+    letterSpacing: 0,
   },
   rowsSection: {
-    marginTop: 20,
+    marginTop: md3Spacing.extraLarge,
   },
   restoreRow: {
-    marginTop: 20,
+    marginTop: md3Spacing.extraLarge,
   },
   logoutRow: {
-    marginTop: 8,
+    marginTop: md3Spacing.small,
+  },
+  sectionDivider: {
+    marginHorizontal: md3Spacing.large,
+    marginVertical: md3Spacing.small,
   },
   userIdAccessory: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: md3Spacing.small,
     maxWidth: 190,
   },
   userIdText: {
     flexShrink: 1,
     color: theme.textSecondary,
-    fontSize: 12,
-    lineHeight: 14,
-    ...fonts.regular,
+    ...theme.paperTheme.fonts.labelSmall,
   },
   languageValue: {
     maxWidth: 150,
     color: theme.textSecondary,
-    fontSize: 12,
-    lineHeight: 16,
     textAlign: "auto",
-    ...fonts.regular,
+    ...theme.paperTheme.fonts.labelSmall,
   },
   copyButton: {
-    width: 28,
-    height: 28,
+    width: md3Spacing.doubleExtraLarge,
+    height: md3Spacing.doubleExtraLarge,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 14,
+    borderRadius: md3Spacing.large,
     backgroundColor: theme.surface,
   },
   versionLabel: {
-    marginTop: 20,
-    marginBottom: 32,
+    marginTop: md3Spacing.extraLarge,
+    marginBottom: md3Spacing.doubleExtraLarge,
     color: theme.textSecondary,
     textAlign: "auto",
-    marginHorizontal: 24,
-    fontSize: 12,
-    lineHeight: 16,
-    ...fonts.regular,
+    marginHorizontal: md3Spacing.extraLarge,
+    ...theme.paperTheme.fonts.labelSmall,
   },
   });
 }

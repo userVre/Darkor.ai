@@ -10,7 +10,6 @@ import {usePostHog} from "posthog-react-native";
 import {useCallback, useEffect, useMemo, useRef, useState, type ReactNode} from "react";
 import {useTranslation} from "react-i18next";
 import {
-ActivityIndicator,
 Alert,
 I18nManager,
 NativeScrollEvent,
@@ -18,12 +17,12 @@ NativeSyntheticEvent,
 Pressable,
 ScrollView,
 StyleSheet,
-Text,
 View,
 useWindowDimensions,
 type StyleProp,
 type ViewStyle,
 } from "react-native";
+import {ActivityIndicator, Badge, Button, Card, Chip, DataTable, IconButton, Text} from "react-native-paper";
 import Animated, {
 Easing,
 useAnimatedStyle,
@@ -64,6 +63,7 @@ type RevenueCatPurchases,
 } from "../lib/revenuecat";
 import {useTheme, type Theme} from "../styles/theme";
 import {fonts} from "../styles/typography";
+import {md3Shapes, md3Spacing} from "../constants/md3Theme";
 
 const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 3000;
@@ -115,14 +115,10 @@ function FadeSwap({
 function TrialIncludedText() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const localizedFonts = fonts;
   return (
-    <View style={styles.trialIncludedRow}>
-      <Text style={[styles.trialIncludedCheck, localizedFonts.bold]}>{"✓"}</Text>
-      <Text style={[styles.trialIncludedText, localizedFonts.medium]}>
-        {"3 jours d'essai gratuit inclus"}
-      </Text>
-    </View>
+    <Chip icon="check" mode="flat" style={styles.trialIncludedChip} textStyle={styles.trialIncludedText}>
+      {"3 jours d'essai gratuit inclus"}
+    </Chip>
   );
 }
 
@@ -256,20 +252,20 @@ function FeatureComparisonTable() {
         ))}
       </View>
 
-      <View style={styles.featureTable}>
-        <View style={styles.featureTableHeader}>
-          <Text style={[styles.featureTableHeaderText, styles.featureTableFeatureCell, localizedFonts.bold]}>{"INCLUS"}</Text>
-          <Text style={[styles.featureTableHeaderText, styles.featureTablePlanHeaderCell, localizedFonts.bold]}>{"GRATUIT"}</Text>
-          <Text style={[styles.featureTableHeaderText, styles.featureTablePlanHeaderCell, styles.featureTableProHeader, localizedFonts.bold]}>{"PRO"}</Text>
-        </View>
+      <DataTable style={styles.featureTable}>
+        <DataTable.Header style={styles.featureTableHeader}>
+          <DataTable.Title style={styles.featureTableFeatureCell} textStyle={[styles.featureTableHeaderText, localizedFonts.bold]}>{"INCLUS"}</DataTable.Title>
+          <DataTable.Title numeric style={styles.featureTablePlanHeaderCell} textStyle={[styles.featureTableHeaderText, localizedFonts.bold]}>{"GRATUIT"}</DataTable.Title>
+          <DataTable.Title numeric style={styles.featureTablePlanHeaderCell} textStyle={[styles.featureTableHeaderText, styles.featureTableProHeader, localizedFonts.bold]}>{"PRO"}</DataTable.Title>
+        </DataTable.Header>
         {rows.map((row, index) => (
-          <View key={row.feature} style={[styles.featureTableRow, index % 2 === 0 ? styles.featureTableRowAlt : null]}>
-            <Text style={[styles.featureTableFeatureText, styles.featureTableFeatureCell, localizedFonts.medium]}>{row.feature}</Text>
-            <View style={styles.featureTablePlanCell}>{renderValue(row.free)}</View>
-            <View style={styles.featureTablePlanCell}>{renderValue(row.pro, true)}</View>
-          </View>
+          <DataTable.Row key={row.feature} style={[styles.featureTableRow, index % 2 === 0 ? styles.featureTableRowAlt : null]}>
+            <DataTable.Cell style={styles.featureTableFeatureCell} textStyle={[styles.featureTableFeatureText, localizedFonts.medium]}>{row.feature}</DataTable.Cell>
+            <DataTable.Cell numeric style={styles.featureTablePlanCell}>{renderValue(row.free)}</DataTable.Cell>
+            <DataTable.Cell numeric style={styles.featureTablePlanCell}>{renderValue(row.pro, true)}</DataTable.Cell>
+          </DataTable.Row>
         ))}
-      </View>
+      </DataTable>
     </View>
   );
 }
@@ -283,16 +279,16 @@ function LegalLink({
 }) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const localizedFonts = fonts;
   return (
-    <Pressable
-      accessibilityRole="link"
-      hitSlop={10}
+    <Button
+      compact
+      mode="text"
       onPress={onPress}
       style={styles.legalLinkButton}
+      labelStyle={styles.legalLinkText}
     >
-      <Text style={[styles.legalLinkText, localizedFonts.regular]}>{label}</Text>
-    </Pressable>
+      {label}
+    </Button>
   );
 }
 
@@ -369,8 +365,9 @@ function YearlyPlanCard({
   const styles = useMemo(() => createStyles(theme), [theme]);
   const localizedFonts = fonts;
   return (
-    <Pressable
+    <Card
       accessibilityRole="button"
+      mode="elevated"
       onPress={onPress}
       style={[
         styles.planCard,
@@ -378,19 +375,17 @@ function YearlyPlanCard({
         selected ? styles.planCardSelected : styles.planCardUnselected,
       ]}
     >
-      <View style={styles.bestOfferBadge}>
-        <Text style={[styles.bestOfferText, localizedFonts.bold]}>{"MEILLEURE OFFRE"}</Text>
-      </View>
+      <Badge style={styles.bestOfferBadge}>{"MEILLEURE OFFRE"}</Badge>
 
-      <View style={styles.planRow}>
+      <Card.Content style={styles.planRow}>
         <View style={styles.planCopy}>
           <Text style={[styles.planLabel, localizedFonts.bold]}>{"ACCÈS ANNUEL"}</Text>
           <Text style={[styles.yearlyPerWeekPriceText, localizedFonts.bold]}>{"4,78 MAD par semaine"}</Text>
           <Text style={[styles.yearlyTotalText, localizedFonts.medium]}>{"248,65 MAD facturé annuellement"}</Text>
           <Text style={[styles.yearlySavingsText, localizedFonts.medium]}>{"Économisez 90% vs hebdomadaire"}</Text>
         </View>
-      </View>
-    </Pressable>
+      </Card.Content>
+    </Card>
   );
 }
 
@@ -405,8 +400,9 @@ function WeeklyPlanCard({
   const styles = useMemo(() => createStyles(theme), [theme]);
   const localizedFonts = fonts;
   return (
-    <Pressable
+    <Card
       accessibilityRole="button"
+      mode="outlined"
       onPress={onPress}
       style={[
         styles.planCard,
@@ -414,14 +410,14 @@ function WeeklyPlanCard({
         selected ? styles.planCardSelected : styles.planCardUnselected,
       ]}
     >
-      <View style={styles.planRow}>
+      <Card.Content style={styles.planRow}>
         <View style={styles.planCopy}>
           <Text style={[styles.weeklyPlanLabel, localizedFonts.bold]}>{"ACCÈS HEBDOMADAIRE"}</Text>
           <Text style={[styles.planPriceText, localizedFonts.bold]}>{"44,68 MAD par semaine"}</Text>
           <Text style={[styles.weeklyTrialText, localizedFonts.medium]}>{"3 jours d'essai gratuit"}</Text>
         </View>
-      </View>
-    </Pressable>
+      </Card.Content>
+    </Card>
   );
 }
 
@@ -436,9 +432,13 @@ function PaywallCloseButton({
   return (
     <View pointerEvents="box-none" style={styles.closeSlot}>
       <View pointerEvents="auto" style={styles.closeBubble}>
-        <Pressable accessibilityLabel="Fermer" accessibilityRole="button" hitSlop={10} onPress={() => void Promise.resolve(onPress()).catch(() => undefined)} style={styles.closeButtonInner}>
-          <X color={PAYWALL_TEXT_PRIMARY} size={20} strokeWidth={2.4} />
-        </Pressable>
+        <IconButton
+          accessibilityLabel="Fermer"
+          icon={({color, size}) => <X color={color} size={size} strokeWidth={2.4} />}
+          iconColor={PAYWALL_TEXT_PRIMARY}
+          onPress={() => void Promise.resolve(onPress()).catch(() => undefined)}
+          style={styles.closeButtonInner}
+        />
       </View>
     </View>
   );
@@ -939,15 +939,16 @@ export default function PaywallScreen() {
             <Text style={[styles.errorText, localizedFonts.medium, { textAlign: "center" }]}>{errorMessage}</Text>
           ) : null}
 
-          <Pressable
-            accessibilityRole="button"
+          <Button
+            compact
+            mode="text"
             disabled={isLoading}
-            hitSlop={12}
             onPress={() => void handleSkipPostWowPaywall().catch(() => undefined)}
             style={styles.softSkipLink}
+            labelStyle={styles.softSkipText}
           >
-            <Text style={[styles.softSkipText, localizedFonts.medium]}>{"Continuer sans Pro"}</Text>
-          </Pressable>
+            {"Continuer sans Pro"}
+          </Button>
         </Animated.View>
       </View>
     );
@@ -1033,26 +1034,20 @@ export default function PaywallScreen() {
             <Text style={[styles.errorText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{errorMessage}</Text>
           ) : null}
 
-          <Pressable accessibilityRole="button" disabled={ctaDisabled} onPress={() => void handlePurchase()} style={[styles.ctaButton, ctaDisabled ? styles.ctaButtonDisabled : null]}>
-            <LinearGradient
-              colors={subscriptionsUnavailable || offerLoading ? ["rgba(255,250,238,0.10)", "rgba(255,250,238,0.08)"] : [PAYWALL_ACCENT, PAYWALL_ACCENT_DARK]}
-              end={{ x: 1, y: 0.5 }}
-              start={{ x: 0, y: 0.5 }}
-              style={styles.ctaGradient}
-            >
-              {isLoading ? (
-                <View style={styles.ctaLoadingRow}>
-                  <ActivityIndicator color="#FFFFFF" />
-                </View>
-              ) : (
-                <FadeSwap swapKey={ctaButtonText} style={styles.ctaContent}>
-                  <View style={styles.ctaLabelRow}>
-                    <Text style={[styles.ctaText, localizedFonts.bold]}>{ctaButtonText}</Text>
-                  </View>
-                </FadeSwap>
-              )}
-            </LinearGradient>
-          </Pressable>
+          <Button
+            accessibilityRole="button"
+            buttonColor={subscriptionsUnavailable || offerLoading ? theme.paperTheme.colors.surfaceVariant : theme.paperTheme.colors.tertiary}
+            contentStyle={styles.ctaButtonContent}
+            disabled={ctaDisabled}
+            labelStyle={styles.ctaText}
+            loading={isLoading}
+            mode="contained"
+            onPress={() => void handlePurchase()}
+            style={[styles.ctaButton, ctaDisabled ? styles.ctaButtonDisabled : null]}
+            textColor={subscriptionsUnavailable || offerLoading ? theme.paperTheme.colors.onSurfaceVariant : theme.paperTheme.colors.onTertiary}
+          >
+            {ctaButtonText}
+          </Button>
           <Text style={[styles.ctaFinePrintText, localizedFonts.regular]}>
             {subscriptionsUnavailable
               ? "Réessayez dans un instant ou restaurez un abonnement existant."
@@ -1066,15 +1061,16 @@ export default function PaywallScreen() {
               <LegalLink label="Conditions" onPress={handleOpenTerms} />
               <LegalLink label="Confidentialité" onPress={handleOpenPrivacy} />
             </View>
-            <Pressable
-              accessibilityRole="button"
+            <Button
+              compact
+              mode="text"
               disabled={isLoading}
-              hitSlop={12}
               onPress={() => void handleRestore()}
               style={styles.restoreBottomButton}
+              labelStyle={styles.restoreText}
             >
-              <Text style={[styles.restoreText, localizedFonts.medium]}>{"Restaurer"}</Text>
-            </Pressable>
+              {"Restaurer"}
+            </Button>
           </View>
         </ScrollView>
       </Animated.View>
@@ -1161,9 +1157,8 @@ function createStyles(theme: Theme) {
   },
   softSkipText: {
     color: PAYWALL_TEXT_MUTED,
-    fontSize: 12,
-    lineHeight: 16,
     textAlign: "center",
+    letterSpacing: 0,
   },
   personalizedBackgroundImage: {
     ...StyleSheet.absoluteFillObject,
@@ -1189,9 +1184,7 @@ function createStyles(theme: Theme) {
   },
   restoreText: {
     color: PAYWALL_TEXT_MUTED,
-    fontSize: 12,
-    lineHeight: 16,
-    ...fonts.medium,
+    letterSpacing: 0,
   },
   closeSlot: {
     position: "absolute",
@@ -1212,11 +1205,7 @@ function createStyles(theme: Theme) {
     backgroundColor: "rgba(0, 0, 0, 0.50)",
   },
   closeButtonInner: {
-    width: CLOSE_VISUAL_SIZE,
-    height: CLOSE_VISUAL_SIZE,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: CLOSE_VISUAL_SIZE / 2,
+    margin: 0,
   },
   scrollContent: {
     flexGrow: 1,
@@ -1345,16 +1334,12 @@ function createStyles(theme: Theme) {
   },
   featureTableHeader: {
     minHeight: 34,
-    flexDirection: "row",
-    alignItems: "center",
     paddingHorizontal: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: PAYWALL_BORDER,
   },
   featureTableRow: {
     minHeight: 38,
-    flexDirection: "row",
-    alignItems: "center",
     paddingHorizontal: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "rgba(255,255,255,0.08)",
@@ -1469,13 +1454,9 @@ function createStyles(theme: Theme) {
   },
   planCard: {
     minHeight: 64,
-    borderRadius: 8,
-    borderCurve: "continuous",
+    borderRadius: md3Shapes.large,
     backgroundColor: PAYWALL_CARD_BG_ALT,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
     justifyContent: "center",
-    boxShadow: "0px 6px 16px rgba(0, 0, 0, 0.22)",
   },
   planGradientBorder: {
     borderRadius: 10,
@@ -1525,7 +1506,9 @@ function createStyles(theme: Theme) {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 14,
+    gap: md3Spacing.large,
+    paddingHorizontal: md3Spacing.large,
+    paddingVertical: md3Spacing.medium,
   },
   forcedLtrRow: {
     direction: "ltr",
@@ -1679,39 +1662,26 @@ function createStyles(theme: Theme) {
     lineHeight: 16,
     ...fonts.medium,
   },
-  trialIncludedRow: {
+  trialIncludedChip: {
     minHeight: 18,
     marginTop: 0,
     marginBottom: 8,
-    marginHorizontal: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-  },
-  trialIncludedCheck: {
-    color: "#9BC489",
-    fontSize: 12,
-    lineHeight: 16,
-    ...fonts.bold,
+    alignSelf: "center",
+    backgroundColor: theme.paperTheme.colors.secondaryContainer,
   },
   trialIncludedText: {
-    color: "#9BC489",
-    fontSize: 12,
-    lineHeight: 16,
-    ...fonts.medium,
-    fontWeight: "500",
+    color: theme.paperTheme.colors.onSecondaryContainer,
+    letterSpacing: 0,
   },
   ctaButton: {
-    height: 50,
     marginTop: 0,
     marginHorizontal: 20,
     marginBottom: 6,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    boxShadow: `0px 5px 14px ${PAYWALL_ACCENT_SHADOW}`,
-    overflow: "visible",
+    borderRadius: md3Shapes.extraLarge,
+  },
+  ctaButtonContent: {
+    minHeight: 56,
+    paddingHorizontal: md3Spacing.extraLarge,
   },
   ctaGradient: {
     width: "100%",
@@ -1743,11 +1713,7 @@ function createStyles(theme: Theme) {
     width: "100%",
   },
   ctaText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    lineHeight: 20,
-    ...fonts.bold,
-    fontWeight: "700",
+    letterSpacing: 0,
   },
   ctaFinePrintText: {
     marginHorizontal: 20,
@@ -1809,16 +1775,10 @@ function createStyles(theme: Theme) {
   },
   legalLinkText: {
     color: PAYWALL_TEXT_MUTED,
-    fontSize: 12,
-    lineHeight: 16,
-    textDecorationLine: "underline",
-    ...fonts.medium,
+    letterSpacing: 0,
   },
   restoreBottomButton: {
-    minHeight: 34,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 8,
+    alignSelf: "center",
   },
   });
 }
