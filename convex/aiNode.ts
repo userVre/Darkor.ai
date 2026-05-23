@@ -25,7 +25,7 @@ import {
 
 const AZURE_IMAGE_API_VERSION = "2025-04-01-preview";
 const AZURE_IMAGE_REQUEST_TIMEOUT_MS = 90_000;
-const AZURE_IMAGE_DEPLOYMENT_NAME = "gpt-image-1";
+const AZURE_IMAGE_DEPLOYMENT_NAME = "gpt-image-2";
 const AZURE_GEOMETRIC_ADHERENCE_SYSTEM_PROMPT =
   `${GLOBAL_PERSPECTIVE_LOCK_INSTRUCTION} STRICT PERSPECTIVE LOCK: You are an AI Architect. The output image MUST align pixel-for-pixel with the source image's structural boundaries. Do not change the horizon line, the floor level, the ceiling height, the camera angle, or the focal length. Redesign furniture, textures, lighting, landscaping, and decor only inside the existing pixel-grid boundaries. Generate one clean full-frame design image only: no text overlays, no captions, no labels, no watermarks, no comparison layout. ${GLOBAL_MASTERPIECE_QUALITY_INSTRUCTION}`;
 const AZURE_EXTERIOR_PERSPECTIVE_LOCK_PROMPT =

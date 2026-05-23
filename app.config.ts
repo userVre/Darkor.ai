@@ -67,6 +67,9 @@ export default ({config}: ConfigContext) => {
 
   return {
     ...config,
+    runtimeVersion: typeof config.version === "string" && config.version.trim()
+      ? config.version.trim()
+      : config.runtimeVersion,
     extra: {
       ...config.extra,
       publicEnv,

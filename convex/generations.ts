@@ -72,7 +72,7 @@ type RenderConfig = {
   estimatedCostUsd: number;
   userTier: RenderUserTier;
   diamondSource?: DiamondSource;
-  apiModel: "gpt-image-1";
+  apiModel: "gpt-image-2";
   label: "Standard HD" | "Premium 4K";
 };
 const DIAMOND_SOURCE_SET = new Set<DiamondSource>(["daily_free", "purchased_pack", "referral"]);
@@ -185,7 +185,7 @@ async function getRenderConfig(
       estimatedCostUsd: PAID_RENDER_COST_USD,
       userTier: "paid",
       diamondSource,
-      apiModel: "gpt-image-1",
+      apiModel: "gpt-image-2",
       label: "Premium 4K",
     };
   }
@@ -197,7 +197,7 @@ async function getRenderConfig(
     estimatedCostUsd: FREE_RENDER_COST_USD,
     userTier: "free",
     diamondSource,
-    apiModel: "gpt-image-1",
+    apiModel: "gpt-image-2",
     label: "Standard HD",
   };
 }
