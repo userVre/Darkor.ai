@@ -3,6 +3,7 @@ import {light as colors} from "@/styles/theme";
 import {Image} from "expo-image";
 import {MotiView} from "moti";
 import {Children, cloneElement, isValidElement, useEffect, useState, type ComponentProps, type ReactElement, type ReactNode} from "react";
+import {useTranslation} from "react-i18next";
 import {ActivityIndicator, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageSourcePropType} from "react-native";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {spacing} from "../styles/spacing";
@@ -63,6 +64,7 @@ export function ServiceIntakeStep({
   onUploadPress,
   onExamplePress,
 }: ServiceIntakeStepProps) {
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const hasSelectedImage = Boolean(selectedImageUri);
   const exampleCardWidth = Math.max(Math.min(width * 0.42, 176), 136);
@@ -89,7 +91,7 @@ export function ServiceIntakeStep({
               <Image source={{ uri: selectedImageUri }} style={styles.selectedImagePreview} contentFit="cover" transition={140} cachePolicy="memory-disk" />
               <View style={styles.selectedImageBadge}>
                 <Check color={colors.textSuccess} size={14} strokeWidth={2.7} />
-                <Text style={styles.selectedImageBadgeLabel}>Photo ready</Text>
+                <Text style={styles.selectedImageBadgeLabel}>{t("wizard.stepOne.photoReadyTitle", { defaultValue: "Photo ajoutée" })}</Text>
               </View>
               {onClearSelection ? (
                 <LuxPressable
@@ -120,8 +122,8 @@ export function ServiceIntakeStep({
                 </View>
               </View>
               <View style={styles.uploadEmptyCopy}>
-                <Text style={styles.uploadEmptyTitle}>Tap to add your photo</Text>
-                <Text style={styles.uploadEmptyText}>or drag from your gallery</Text>
+                <Text style={styles.uploadEmptyTitle}>{t("wizard.stepOne.emptyTitle")}</Text>
+                <Text style={styles.uploadEmptyText}>{t("wizard.stepOne.emptySubtitle")}</Text>
               </View>
             </MotiView>
           )}
@@ -129,7 +131,7 @@ export function ServiceIntakeStep({
       </LuxPressable>
       {hasSelectedImage ? null : (
         <View style={styles.examplesSection}>
-          <Text style={styles.examplesTitle}>Example Photos</Text>
+          <Text style={styles.examplesTitle}>{t("common.actions.examplePhotos")}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}

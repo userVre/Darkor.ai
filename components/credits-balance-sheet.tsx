@@ -2,6 +2,7 @@ import {useAuth, useUser} from "@clerk/expo";
 import {useMutation} from "convex/react";
 import {ArrowRight} from "lucide-react-native";
 import {useEffect, useMemo, useState} from "react";
+import {useTranslation} from "react-i18next";
 import {ActivityIndicator, Modal, Pressable, StyleSheet, Text, View} from "react-native";
 
 import {usePricingContext, type DiamondPackId} from "../lib/dynamic-pricing";
@@ -51,6 +52,7 @@ const CREDIT_PACK_UI: Record<DiamondPackId, CreditPack> = {
 };
 
 export function CreditsBalanceSheet({ visible, onClose }: CreditsBalanceSheetProps) {
+  const { t } = useTranslation();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const pricingContext = usePricingContext();
@@ -63,6 +65,15 @@ export function CreditsBalanceSheet({ visible, onClose }: CreditsBalanceSheetPro
   const [isLoadingPackages, setIsLoadingPackages] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const formatPurchaseError = (error: unknown) => {
+    const raw = error instanceof Error ? error.message : "";
+    if (/configuration|revenuecat|offering|product|unavailable|purchases/i.test(raw)) {
+      return t("creditsStore.errors.unavailable", {
+        defaultValue: "Les achats sont temporairement indisponibles. Réessayez dans un instant ou contactez le support.",
+      });
+    }
+    return raw || t("creditsStore.errors.generic", { defaultValue: "Impossible de charger les packs pour le moment." });
+  };
 
   useEffect(() => {
     if (!visible) {
@@ -87,7 +98,7 @@ export function CreditsBalanceSheet({ visible, onClose }: CreditsBalanceSheetPro
         }
       } catch (error) {
         if (active) {
-          setErrorMessage(error instanceof Error ? error.message : "Unable to load Diamond packs right now.");
+          setErrorMessage(formatPurchaseError(error));
         }
       } finally {
         if (active) {
@@ -117,6 +128,7 @@ export function CreditsBalanceSheet({ visible, onClose }: CreditsBalanceSheetPro
     () => findRevenueCatDiamondPackage(packages, selectedPackId, pricingContext.revenueCat),
     [packages, pricingContext.revenueCat, selectedPackId],
   );
+  const storeUnavailable = Boolean(errorMessage) && !isLoadingPackages && packages.length === 0;
 
   useEffect(() => {
     if (!visible || selectedPack) {
@@ -134,14 +146,14 @@ export function CreditsBalanceSheet({ visible, onClose }: CreditsBalanceSheetPro
     setErrorMessage(null);
 
     if (!selectedPack) {
-      const message = "This Diamond pack is not available in your region.";
+      const message = t("creditsStore.errors.regionUnavailable", { defaultValue: "Ce pack de diamants n'est pas disponible dans votre région." });
       setErrorMessage(message);
       showToast(message);
       return;
     }
 
     if (!selectedRevenueCatPackage) {
-      const message = "This Diamond pack is not available in RevenueCat yet.";
+      const message = t("creditsStore.errors.packUnavailable", { defaultValue: "Ce pack de diamants est temporairement indisponible." });
       setErrorMessage(message);
       showToast(message);
       return;
@@ -149,7 +161,7 @@ export function CreditsBalanceSheet({ visible, onClose }: CreditsBalanceSheetPro
 
     const purchases = getRevenueCatClient() ?? await configureRevenueCat(isSignedIn ? user?.id ?? null : null);
     if (!purchases) {
-      const message = "Purchases are unavailable right now.";
+      const message = t("creditsStore.errors.unavailable", { defaultValue: "Les achats sont temporairement indisponibles. Réessayez dans un instant ou contactez le support." });
       setErrorMessage(message);
       showToast(message);
       return;
@@ -179,7 +191,7 @@ export function CreditsBalanceSheet({ visible, onClose }: CreditsBalanceSheetPro
       }) as { credits: number; diamondsAdded: number };
 
       setOptimisticCredits(fulfillment.credits);
-      showCelebration(`Success! ${selectedPack.diamonds} Diamonds added to your account.`);
+      showCelebration(t("creditsStore.success", { defaultValue: "{{count}} diamants ajoutés à votre compte.", count: selectedPack.diamonds }));
       onClose();
     } catch (error: any) {
       const wasCancelled = Boolean(error?.userCancelled);
@@ -187,7 +199,7 @@ export function CreditsBalanceSheet({ visible, onClose }: CreditsBalanceSheetPro
         return;
       }
 
-      const message = error instanceof Error ? error.message : "Purchase failed. Please try again.";
+      const message = formatPurchaseError(error) || t("creditsStore.errors.purchaseFailed", { defaultValue: "L'achat a échoué. Veuillez réessayer." });
       setErrorMessage(message);
       showToast(message);
     } finally {
@@ -202,83 +214,98 @@ export function CreditsBalanceSheet({ visible, onClose }: CreditsBalanceSheetPro
           <View style={styles.handle} />
 
           <View style={styles.balanceCard}>
-            <Text style={styles.eyebrow}>Credits</Text>
-            <Text style={styles.title}>Current balance</Text>
+            <Text style={styles.eyebrow}>{t("creditsStore.eyebrow", { defaultValue: "Crédits" })}</Text>
+            <Text style={styles.title}>{t("creditsStore.currentBalance", { defaultValue: "Solde actuel" })}</Text>
             <View style={styles.balanceRow}>
               <View style={styles.balanceIconWrap}>
                 <DiamondCreditIcon primaryColor={DIAMOND_PILL_BLUE} size={24} />
               </View>
               <View style={styles.balanceTextWrap}>
-                <Text style={styles.balanceText}>{credits} Diamonds</Text>
+                <Text style={styles.balanceText}>{t("creditsStore.balance", { defaultValue: "{{count}} diamants", count: credits })}</Text>
                 <Text style={styles.balanceHint}>
                   {hasPaidAccess
-                    ? "PRO is active. Diamonds stay available for store purchases and future balance-based flows."
-                    : "Every successful image generation uses 1 Diamond. Refill below anytime."}
+                    ? t("creditsStore.proHint", { defaultValue: "PRO est actif. Vos diamants restent disponibles pour les achats et les futurs outils." })
+                    : t("creditsStore.freeHint", { defaultValue: "Chaque génération réussie utilise 1 diamant. Rechargez votre solde quand vous voulez." })}
                 </Text>
               </View>
             </View>
           </View>
 
-          <Text style={styles.sectionTitle}>Get More Credits</Text>
+          <Text style={styles.sectionTitle}>{t("creditsStore.getMore", { defaultValue: "Obtenir plus de crédits" })}</Text>
 
-          <View style={styles.cardsStack}>
-            {pricingContext.visibleDiamondPacks.map((packPricing) => {
-              const pack = CREDIT_PACK_UI[packPricing.id];
-              const isSelected = packPricing.id === selectedPackId;
+          {storeUnavailable ? (
+            <View style={styles.maintenanceCard}>
+              <Text style={styles.maintenanceTitle}>{t("creditsStore.unavailableTitle", { defaultValue: "Achats temporairement indisponibles" })}</Text>
+              <Text style={styles.maintenanceText}>{errorMessage}</Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.cardsStack}>
+                {pricingContext.visibleDiamondPacks.map((packPricing) => {
+                  const pack = CREDIT_PACK_UI[packPricing.id];
+                  const isSelected = packPricing.id === selectedPackId;
 
-              return (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: isSelected }}
-                  key={packPricing.id}
-                  onPress={() => {
-                    triggerHaptic();
-                    setSelectedPackId(packPricing.id);
-                  }}
-                  style={[styles.offerCard, isSelected ? styles.offerCardSelected : null]}
-                >
-                  <DiamondPile pile={pack.pile} />
+                  return (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isSelected }}
+                      key={packPricing.id}
+                      onPress={() => {
+                        triggerHaptic();
+                        setSelectedPackId(packPricing.id);
+                      }}
+                      style={[styles.offerCard, isSelected ? styles.offerCardSelected : null]}
+                    >
+                      <DiamondPile pile={pack.pile} />
 
-                  <View style={styles.offerCopy}>
-                    <View style={styles.offerTopRow}>
-                      <Text style={styles.offerTitle}>{packPricing.title}</Text>
-                      {pack.badge ? (
-                        <View style={styles.badge}>
-                          <Text style={styles.badgeText}>{pack.badge}</Text>
+                      <View style={styles.offerCopy}>
+                        <View style={styles.offerTopRow}>
+                          <Text style={styles.offerTitle}>{t(`creditsStore.packs.${packPricing.id}`, { defaultValue: packPricing.title })}</Text>
+                          {pack.badge ? (
+                            <View style={styles.badge}>
+                              <Text style={styles.badgeText}>
+                                {pack.badge === "MOST POPULAR"
+                                  ? t("creditsStore.badges.mostPopular", { defaultValue: "Populaire" })
+                                  : t("creditsStore.badges.bestValue", { defaultValue: "Meilleure offre" })}
+                              </Text>
+                            </View>
+                          ) : null}
                         </View>
-                      ) : null}
-                    </View>
 
-                    <Text style={styles.offerCount}>{packPricing.diamonds} Diamonds</Text>
-                    <Text style={styles.offerPrice}>{packPricing.price.formatted}</Text>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
+                        <Text style={styles.offerCount}>{t("creditsStore.packDiamonds", { defaultValue: "{{count}} diamants", count: packPricing.diamonds })}</Text>
+                        <Text style={styles.offerPrice}>{packPricing.price.formatted}</Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
 
-          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+              {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
-          <Pressable
-            accessibilityRole="button"
-            disabled={isLoadingPackages || isPurchasing}
-            onPress={() => void handlePurchase()}
-            style={[styles.primaryButton, isLoadingPackages || isPurchasing ? styles.primaryButtonDisabled : null]}
-          >
-            {isPurchasing ? (
-              <>
-                <ActivityIndicator color="#FFFFFF" />
-                <Text style={styles.primaryButtonText}>Processing...</Text>
-              </>
-            ) : (
-              <>
-                <Text style={styles.primaryButtonText}>
-                  {isLoadingPackages ? "Loading..." : `Buy Now${selectedPack ? ` - ${selectedPack.price.formatted}` : ""}`}
-                </Text>
-                <ArrowRight color="#FFFFFF" size={18} strokeWidth={2.4} />
-              </>
-            )}
-          </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                disabled={isLoadingPackages || isPurchasing}
+                onPress={() => void handlePurchase()}
+                style={[styles.primaryButton, isLoadingPackages || isPurchasing ? styles.primaryButtonDisabled : null]}
+              >
+                {isPurchasing ? (
+                  <>
+                    <ActivityIndicator color="#FFFFFF" />
+                    <Text style={styles.primaryButtonText}>{t("common.states.loading", { defaultValue: "Chargement..." })}</Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.primaryButtonText}>
+                      {isLoadingPackages
+                        ? t("common.states.loading", { defaultValue: "Chargement..." })
+                        : t("creditsStore.buyNow", { defaultValue: "Acheter maintenant{{price}}", price: selectedPack ? ` - ${selectedPack.price.formatted}` : "" })}
+                    </Text>
+                    <ArrowRight color="#FFFFFF" size={18} strokeWidth={2.4} />
+                  </>
+                )}
+              </Pressable>
+            </>
+          )}
         </Pressable>
       </Pressable>
     </Modal>
@@ -485,6 +512,26 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: BUY_NOW_RUBY,
+    ...DS.typography.bodySm,
+  },
+  maintenanceCard: {
+    borderRadius: 20,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.08)",
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    gap: 8,
+  },
+  maintenanceTitle: {
+    color: DS.colors.textPrimary,
+    ...fonts.bold,
+    fontSize: 17,
+    lineHeight: 22,
+  },
+  maintenanceText: {
+    color: DS.colors.textSecondary,
     ...DS.typography.bodySm,
   },
   primaryButton: {

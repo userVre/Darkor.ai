@@ -174,10 +174,10 @@ const TIER_DEFINITIONS: readonly PricingTierDefinition[] = [
 ] as const;
 
 const DIAMOND_PACK_METADATA: Record<DiamondPackId, { diamonds: number; title: string }> = {
-  starter: { diamonds: 10, title: "Starter Pack" },
-  designer: { diamonds: 30, title: "Designer Pack" },
-  architect: { diamonds: 100, title: "Architect Pack" },
-  estate: { diamonds: 300, title: "Estate Pack" },
+  starter: { diamonds: 10, title: "Pack Découverte" },
+  designer: { diamonds: 30, title: "Pack Designer" },
+  architect: { diamonds: 100, title: "Pack Architecte" },
+  estate: { diamonds: 300, title: "Pack Studio" },
 };
 
 const SUBSCRIPTION_QUALITY = {

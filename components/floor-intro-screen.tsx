@@ -181,14 +181,14 @@ export function FloorIntroScreen({
       <StatusBar style="dark" />
 
       <StickyStepHeader
-        closeAccessibilityLabel="Close floor restyle flow"
+        closeAccessibilityLabel={t("wizard.headers.close")}
         creditCount={creditCount}
         horizontalInset={sideInset}
         onCreditsPress={onCreditsPress}
         onClose={onExit}
         step={1}
         totalSteps={4}
-        title="Floor"
+        title={t("wizard.floorFlow.shortTitle", { defaultValue: "Sol" })}
       />
 
       <ScrollView
@@ -262,6 +262,9 @@ export function FloorIntroScreen({
               >
                 <View style={styles.exampleCard}>
                   <Image source={example.source} style={styles.exampleImage} contentFit="cover" transition={120} cachePolicy="memory-disk" />
+                  <View style={styles.exampleLabelPill}>
+                    <Text numberOfLines={1} style={styles.exampleLabelText}>{example.label}</Text>
+                  </View>
                 </View>
               </Pressable>
             ))}
@@ -416,6 +419,23 @@ const styles = StyleSheet.create({
   exampleImage: {
     width: "100%",
     height: "100%",
+  },
+  exampleLabelPill: {
+    position: "absolute",
+    left: 8,
+    right: 8,
+    bottom: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(10,10,10,0.62)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  exampleLabelText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    lineHeight: 12,
+    textAlign: "center",
+    ...fonts.semibold,
   },
   sheetOverlay: {
     ...StyleSheet.absoluteFillObject,

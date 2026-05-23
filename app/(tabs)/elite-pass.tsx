@@ -171,8 +171,6 @@ export default function ElitePassScreen() {
 
   const rewardDays = useMemo<RewardDay[]>(
     () => {
-      const waitAnchorDay = alreadyClaimed ? progress : currentDay;
-
       return Array.from({length: PASS_DAYS}, (_, index) => {
         const day = index + 1;
         const claimed = alreadyClaimed ? day <= displayStreakCount : day < currentDay && day <= displayStreakCount;
@@ -184,7 +182,7 @@ export default function ElitePassScreen() {
           isDay7: day === PASS_DAYS,
           railActive: day <= progress,
           status,
-          waitDays: status === "locked" ? Math.max(1, day - waitAnchorDay) : 0,
+          waitDays: status === "locked" ? Math.max(1, day - progress) : 0,
         };
       });
     },

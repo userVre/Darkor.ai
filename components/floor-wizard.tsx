@@ -1,6 +1,6 @@
 import {spacing} from "../styles/spacing";
 
-import {ChevronLeft, MoveHorizontal, X} from "@/components/material-icons";
+import {BrushCleaning, Eraser, Redo2, Undo2, ChevronLeft, MoveHorizontal, X} from "@/components/material-icons";
 import {useAuth} from "@clerk/expo";
 import {useAction, useMutation, useQuery} from "convex/react";
 import * as FileSystem from "expo-file-system/legacy";
@@ -88,8 +88,6 @@ const MASK_SCREEN_REFERENCE_WIDTH = 456;
 const MASK_SCREEN_REFERENCE_HEIGHT = 932;
 const FLOOR_PROMPT_OFFSET = 30;
 const AI_CHOICE_PROMPT = "AI's Choice";
-const FLOOR_MAGIC_LABEL = "Magic";
-const AI_GENERATED_FLOOR_LABEL = "AI Generated Material";
 const DEFAULT_FINISH_ID = "satin";
 const DEFAULT_FINISH_LABEL = "Satin";
 const absoluteFill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
@@ -192,6 +190,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const [customPrompt, setCustomPrompt] = useState("");
   const [customPromptDraft, setCustomPromptDraft] = useState("");
   const [isCustomPromptOpen, setIsCustomPromptOpen] = useState(false);
+  const [autoMaskNeedsManual, setAutoMaskNeedsManual] = useState(false);
   const initialSelectionAppliedRef = useRef(false);
   const handledGenerationCompletionRef = useRef<string | null>(null);
   const autoMaskAttemptKeyRef = useRef<string | null>(null);
@@ -203,9 +202,19 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
 
   const {
     renderedStrokes,
+    activePoint,
+    brushWidth,
+    brushProgress,
     canvasSize,
     hasMask,
     handleCanvasLayout,
+    setSliderWidth,
+    clearMask,
+    undoLastStroke,
+    redoLastStroke,
+    canRedo,
+    drawGesture,
+    sliderGesture,
     replaceMaskWithRegions,
     resetMaskDrawing,
   } = useMaskDrawing({
@@ -232,16 +241,18 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const generationAccess = canUserGenerateNow(me);
   const currentStepNumber = FLOOR_WIZARD_STEP_ORDER[step];
   const floorWizardExamplePhotos = useMemo(() => getFloorWizardExamplePhotos(t), [i18n.language, t]);
+  const aiChoiceLabel = t("wizard.floorFlow.aiChoiceLabel", { defaultValue: "Choix de l'IA" });
+  const aiGeneratedMaterialLabel = t("wizard.floorFlow.aiGeneratedMaterial", { defaultValue: "Matériau choisi par l'IA" });
   const floorPromptExamples = useMemo(
     () => [
-      AI_CHOICE_PROMPT,
+      aiChoiceLabel,
       t("wizard.floorFlow.promptExamples.frenchOak"),
       t("wizard.floorFlow.promptExamples.carraraMarble"),
       t("wizard.floorFlow.promptExamples.microcement"),
       t("wizard.floorFlow.promptExamples.herringboneWalnut"),
       t("wizard.floorFlow.promptExamples.walnut"),
     ],
-    [i18n.language, t],
+    [aiChoiceLabel, i18n.language, t],
   );
   const generationStatusMessages = useGenerationStatusMessages();
   const requestNotificationsAfterReveal = useCallback(() => {
@@ -254,7 +265,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     });
   }, [anonymousId, notificationsDeclined, updateNotificationPreferences]);
   const stickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);
-  const canContinueFromMask = isAiMaterialSuggestionEnabled || customPrompt.trim().length > 0;
+  const canContinueFromMask = hasMask;
   const aspectRatio = useMemo(() => {
     if (!selectedImage) return 1.15;
     const r = selectedImage.width / Math.max(selectedImage.height, 1);
@@ -274,12 +285,12 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const promptModalTitleTop = Math.max(insets.top + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(92, maskLayoutScale));
   const promptModalSaveBottom = Math.max(insets.bottom + scaleMaskValue(12, maskLayoutScale), scaleMaskValue(12, maskLayoutScale));
   const canSaveCustomPrompt = isAiMaterialSuggestionEnabled || customPromptDraft.trim().length > 0;
-  const effectiveFloorMaterialTitle = isAiMaterialSuggestionEnabled ? FLOOR_MAGIC_LABEL : (selectedMaterial?.title ?? t("wizard.floorFlow.noMaterialSelected"));
+  const effectiveFloorMaterialTitle = isAiMaterialSuggestionEnabled ? aiChoiceLabel : (selectedMaterial?.title ?? t("wizard.floorFlow.noMaterialSelected"));
   const effectiveFloorMaterialDescription = isAiMaterialSuggestionEnabled
-    ? "The AI will choose the most fitting floor material and finish for this room based on lighting, furniture, and overall design balance."
+    ? t("wizard.floorFlow.aiChoiceDescription", { defaultValue: "L'IA choisira le matériau le plus adapté à la lumière, au mobilier et à l'équilibre de la pièce." })
     : (selectedMaterial?.description ?? t("wizard.floorFlow.unlockMaterialBody"));
   const resultFloorMaterialTitle = isAiMaterialSuggestionEnabled
-    ? AI_GENERATED_FLOOR_LABEL
+    ? aiGeneratedMaterialLabel
     : (selectedMaterial?.title ?? t("wizard.floorFlow.result.materialFallback"));
   const creditsRemainingLabel = t("wizard.floorFlow.creditsRemaining", {
     count: Math.max(availableCredits - 1, 0),
@@ -389,6 +400,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     setCustomPromptDraft("");
     setIsAiMaterialSuggestionEnabled(false);
     setIsCustomPromptOpen(false);
+    setAutoMaskNeedsManual(false);
     autoMaskAttemptKeyRef.current = null;
     resetMaskDrawing({ resetBrush: true });
     if (typeof presetStyle === "string") {
@@ -505,8 +517,15 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
 
   const handleClose = useCallback(() => {
     triggerHaptic();
+    if (selectedImage && step !== "intake" && step !== "result") {
+      Alert.alert(t("common.alerts.exitTitle"), t("common.alerts.progressLost"), [
+        { text: t("common.actions.cancel"), style: "cancel" },
+        { text: t("common.actions.exit"), style: "destructive", onPress: () => router.replace(TABS_HOME_ROUTE as any) },
+      ]);
+      return;
+    }
     router.replace(TABS_HOME_ROUTE as any);
-  }, [router]);
+  }, [router, selectedImage, step, t]);
 
   const handleOpenPaywall = useCallback(() => {
     triggerHaptic();
@@ -553,6 +572,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     setCustomPromptDraft("");
     setIsAiMaterialSuggestionEnabled(false);
     setIsCustomPromptOpen(false);
+    setAutoMaskNeedsManual(false);
     autoMaskAttemptKeyRef.current = null;
     resetMaskDrawing({ resetBrush: true });
   }, [clearContinueTimer, clearDetectTimer, resetMaskDrawing]);
@@ -560,6 +580,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
   const advanceToMaskStep = useCallback(() => {
     triggerHaptic();
     autoMaskAttemptKeyRef.current = null;
+    setAutoMaskNeedsManual(false);
     setStep("mask");
     resetDetection();
   }, [resetDetection]);
@@ -622,10 +643,10 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
 
   const handleSelectCustomPromptExample = useCallback((value: string) => {
     triggerHaptic();
-    const isAiChoice = value === AI_CHOICE_PROMPT;
+    const isAiChoice = value === AI_CHOICE_PROMPT || value === aiChoiceLabel;
     setIsAiMaterialSuggestionEnabled(isAiChoice);
-    setCustomPromptDraft(isAiChoice ? AI_CHOICE_PROMPT : value);
-  }, []);
+    setCustomPromptDraft(isAiChoice ? aiChoiceLabel : value);
+  }, [aiChoiceLabel]);
 
   const handleApplyCustomPrompt = useCallback(() => {
     const trimmed = customPromptDraft.trim();
@@ -635,7 +656,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
     }
 
     triggerHaptic();
-    const isAiChoice = trimmed === AI_CHOICE_PROMPT;
+    const isAiChoice = trimmed === AI_CHOICE_PROMPT || trimmed === aiChoiceLabel;
     setIsAiMaterialSuggestionEnabled(isAiChoice);
     setCustomPrompt(trimmed);
     setCustomPromptDraft(trimmed);
@@ -643,7 +664,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       setSelectedMaterialId(FLOOR_MATERIAL_OPTIONS[0]?.id ?? null);
     }
     setIsCustomPromptOpen(false);
-  }, [customPromptDraft, selectedMaterialId, t]);
+  }, [aiChoiceLabel, customPromptDraft, selectedMaterialId, t]);
 
   const handleAutoDetectMask = useCallback(async () => {
     try {
@@ -670,6 +691,7 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       const confidence = typeof detection.confidence === "number" ? detection.confidence : 0;
 
       if (confidence < 70 || polygons.length === 0) {
+        setAutoMaskNeedsManual(true);
         showToast(t(AUTO_DETECT_FAILURE_MESSAGE));
         return;
       }
@@ -683,15 +705,18 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
         .filter((polygon) => polygon.length >= 3);
 
       if (!mappedRegions.length) {
+        setAutoMaskNeedsManual(true);
         showToast(t(AUTO_DETECT_FAILURE_MESSAGE));
         return;
       }
 
       replaceMaskWithRegions(mappedRegions);
+      setAutoMaskNeedsManual(false);
       triggerHaptic();
       showToast(t(AUTO_DETECT_SUCCESS_MESSAGE));
     } catch (error) {
       logAutoDetectFailure(error);
+      setAutoMaskNeedsManual(true);
       showToast(t(AUTO_DETECT_FAILURE_MESSAGE));
     } finally {
       setIsAutoDetecting(false);
@@ -804,10 +829,6 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
       Alert.alert(t("wizard.floorFlow.markFloorTitle"), t("wizard.floorFlow.markFloorBody"));
       return;
     }
-    if (!customPrompt.trim() && !isAiMaterialSuggestionEnabled) {
-      Alert.alert(t("wizard.floorFlow.addPromptTitle"), t("wizard.floorFlow.generatePromptBody"));
-      return;
-    }
     if (!selectedMaterial && !isAiMaterialSuggestionEnabled) {
       Alert.alert(t("wizard.floorFlow.pickMaterialTitle"), t("wizard.floorFlow.pickMaterialBody"));
       return;
@@ -852,10 +873,10 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
               serviceType: "floor",
               selection: isAiMaterialSuggestionEnabled ? `AI suggested floor material with a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish` : `${selectedMaterial!.promptLabel} with a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`,
               roomType: "Room",
-              displayStyle: isAiMaterialSuggestionEnabled ? "AI's Choice Floor" : `${selectedMaterial!.title} Floor`,
+              displayStyle: isAiMaterialSuggestionEnabled ? "Choix IA - Sol" : `${selectedMaterial!.title} - Sol`,
               customPrompt: isAiMaterialSuggestionEnabled
                 ? `Identify the room's lighting, furniture, and overall style, then choose the best complementary floor material for a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish. Generate the floor redesign without requiring any user-entered prompt. Preserve perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`
-                : `${customPrompt.trim()}\n\nApply a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish while preserving perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`,
+                : `${customPrompt.trim() ? `${customPrompt.trim()}\n\n` : ""}Apply ${selectedMaterial!.promptLabel} with a ${DEFAULT_FINISH_LABEL.toLowerCase()} finish while preserving perspective, lighting, furniture placement, baseboards, wall lines, reflections, and every unmasked detail exactly.`,
               aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
               finishId: DEFAULT_FINISH_ID,
               speedTier: generationSpeedTier,
@@ -1031,22 +1052,84 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
             {selectedImage ? (
               <>
                 <Image source={{ uri: selectedImage.uri }} style={styles.photoImage} contentFit="cover" transition={160} />
-                <View pointerEvents="none" style={absoluteFill}>
-                  <Svg width="100%" height="100%">
-                    {renderedStrokes.map((stroke) => (
-                      <SvgPath
-                        key={stroke.id}
-                        d={stroke.path}
-                        stroke={stroke.kind === "region" ? "none" : "rgba(255,59,48,0.58)"}
-                        strokeWidth={stroke.kind === "region" ? 0 : stroke.width}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        fill={stroke.kind === "region" ? "rgba(255,59,48,0.58)" : "none"}
-                      />
-                    ))}
-                  </Svg>
-                </View>
+                <GestureDetector gesture={drawGesture}>
+                  <View style={absoluteFill}>
+                    <Svg width="100%" height="100%">
+                      {renderedStrokes.map((stroke) => (
+                        <SvgPath
+                          key={stroke.id}
+                          d={stroke.path}
+                          stroke={stroke.kind === "region" ? "none" : "rgba(0,122,255,0.62)"}
+                          strokeWidth={stroke.kind === "region" ? 0 : stroke.width}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill={stroke.kind === "region" ? "rgba(0,122,255,0.42)" : "none"}
+                        />
+                      ))}
+                    </Svg>
+                  </View>
+                </GestureDetector>
+                {activePoint ? (
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      styles.maskCursor,
+                      {
+                        left: Math.max(12, Math.min(activePoint.x - brushWidth / 2, Math.max(canvasSize.width - brushWidth - 12, 12))),
+                        top: Math.max(12, Math.min(activePoint.y - brushWidth / 2, Math.max(canvasSize.height - brushWidth - 12, 12))),
+                        width: brushWidth,
+                        height: brushWidth,
+                      },
+                    ]}
+                  />
+                ) : null}
               </>
+            ) : null}
+          </View>
+
+          <View
+            style={[
+              styles.floorMaskTools,
+              {
+                top: maskImageTop + maskPreviewHeight + scaleMaskValue(16, maskLayoutScale),
+                left: scaleMaskValue(24, maskLayoutScale),
+                right: scaleMaskValue(24, maskLayoutScale),
+              },
+            ]}
+          >
+            <View style={styles.floorMaskToolRow}>
+              <View style={styles.floorMaskToolPill}>
+                <BrushCleaning color={DIAMOND_PILL_BLUE} size={18} strokeWidth={2.2} />
+                <Text style={styles.floorMaskToolText}>{t("wizard.floorFlow.brushFloorHint", { defaultValue: "Brossez le sol à transformer" })}</Text>
+              </View>
+
+              <View style={styles.floorMaskHistoryGroup}>
+                <Pressable accessibilityRole="button" disabled={!hasMask} onPress={undoLastStroke} style={[styles.floorMaskIconButton, !hasMask ? styles.floorMaskIconButtonDisabled : null]}>
+                  <Undo2 color={!hasMask ? "#B8B8B8" : "#0A0A0A"} size={18} strokeWidth={2.1} />
+                </Pressable>
+                <Pressable accessibilityRole="button" disabled={!canRedo} onPress={redoLastStroke} style={[styles.floorMaskIconButton, !canRedo ? styles.floorMaskIconButtonDisabled : null]}>
+                  <Redo2 color={!canRedo ? "#B8B8B8" : "#0A0A0A"} size={18} strokeWidth={2.1} />
+                </Pressable>
+                <Pressable accessibilityRole="button" disabled={!hasMask} onPress={clearMask} style={[styles.floorMaskIconButton, !hasMask ? styles.floorMaskIconButtonDisabled : null]}>
+                  <Eraser color={!hasMask ? "#B8B8B8" : "#0A0A0A"} size={18} strokeWidth={2.1} />
+                </Pressable>
+              </View>
+            </View>
+
+            <GestureDetector gesture={sliderGesture}>
+              <View onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)} style={styles.floorBrushSliderWrap}>
+                <View style={styles.floorBrushSliderTrack} />
+                <View style={[styles.floorBrushSliderFill, { width: `${Math.max(0.08, Math.min(brushProgress, 1)) * 100}%` }]} />
+                <View style={[styles.floorBrushSliderThumb, { left: `${Math.max(0, Math.min(brushProgress, 1)) * 100}%` }]} />
+              </View>
+            </GestureDetector>
+
+            {autoMaskNeedsManual || !hasMask ? (
+              <Text style={styles.floorMaskHint}>
+                {autoMaskNeedsManual
+                  ? t("wizard.floorFlow.manualMaskHint", { defaultValue: "La détection automatique n'a pas trouvé le sol. Peignez simplement la zone à relooker." })
+                  : t("wizard.floorFlow.maskRequiredHint", { defaultValue: "Peignez la zone du sol pour activer Continuer." })}
+              </Text>
             ) : null}
           </View>
 
@@ -1093,7 +1176,9 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
               },
             ]}
           >
-            <Text style={[styles.maskContinueText, { color: canContinueFromMask ? "#FFFFFF" : "#9CA3AF" }]}>{t("common.actions.continue")}</Text>
+            <Text style={[styles.maskContinueText, { color: canContinueFromMask ? "#FFFFFF" : "#9CA3AF" }]}>
+              {canContinueFromMask ? t("common.actions.continue") : t("wizard.floorFlow.maskRequiredCta", { defaultValue: "Marquez le sol pour continuer" })}
+            </Text>
           </Pressable>
 
           <AnimatePresence>
@@ -1190,6 +1275,21 @@ export function FloorWizard({ onFlowActiveChange, onProcessingStateChange }: Flo
                     })}
                   </View>
                 </ScrollView>
+
+                {!canSaveCustomPrompt ? (
+                  <Text
+                    style={[
+                      styles.promptModalSaveHint,
+                      {
+                        left: scaleMaskValue(20, maskLayoutScale),
+                        right: scaleMaskValue(20, maskLayoutScale),
+                        bottom: promptModalSaveBottom + scaleMaskValue(68, maskLayoutScale),
+                      },
+                    ]}
+                  >
+                    {t("wizard.floorFlow.promptRequiredHint", { defaultValue: "Ajoutez une description ou choisissez Choix de l'IA pour sauvegarder." })}
+                  </Text>
+                ) : null}
 
                 <Pressable
                   accessibilityRole="button"
@@ -1327,6 +1427,19 @@ const styles = StyleSheet.create({
   maskScreenTitle: { position: "absolute", left: 0, right: 0, textAlign: "center", color: "#0A0A0A", fontSize: 20, lineHeight: 24, fontWeight: "700", zIndex: 2 },
   maskNavButton: { position: "absolute", zIndex: 2, width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   maskPreviewFrame: { position: "absolute", borderRadius: 12, overflow: "hidden", backgroundColor: "#0F0F10" },
+  maskCursor: { position: "absolute", borderRadius: 999, borderWidth: 1.5, borderColor: "rgba(255,255,255,0.88)", backgroundColor: "rgba(0,122,255,0.34)" },
+  floorMaskTools: { position: "absolute", gap: 10 },
+  floorMaskToolRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
+  floorMaskToolPill: { minHeight: 40, flex: 1, borderRadius: 14, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#FFFFFF", paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 8 },
+  floorMaskToolText: { color: "#111827", fontSize: 13, lineHeight: 17, fontWeight: "700", flexShrink: 1 },
+  floorMaskHistoryGroup: { flexDirection: "row", alignItems: "center", gap: 8 },
+  floorMaskIconButton: { width: 40, height: 40, borderRadius: 14, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
+  floorMaskIconButtonDisabled: { backgroundColor: "#F4F4F5", borderColor: "#ECECEC" },
+  floorBrushSliderWrap: { height: 28, justifyContent: "center" },
+  floorBrushSliderTrack: { height: 6, borderRadius: 999, backgroundColor: "#E5E7EB" },
+  floorBrushSliderFill: { position: "absolute", left: 0, height: 6, borderRadius: 999, backgroundColor: DIAMOND_PILL_BLUE },
+  floorBrushSliderThumb: { position: "absolute", top: 3, marginLeft: -11, width: 22, height: 22, borderRadius: 999, backgroundColor: DIAMOND_PILL_BLUE, borderWidth: 3, borderColor: "#FFFFFF" },
+  floorMaskHint: { color: "#64748B", fontSize: 12, lineHeight: 16, fontWeight: "600" },
   maskDetectOverlay: { ...absoluteFill, alignItems: "center", justifyContent: "center", gap: spacing.sm, backgroundColor: "rgba(8,8,8,0.28)" },
   maskDetectTitle: { color: "#FFFFFF", fontSize: 16, lineHeight: 20, fontWeight: "600" },
   maskPromptLabel: { position: "absolute", color: "#0A0A0A", fontSize: 16, lineHeight: 20, fontWeight: "600" },
@@ -1355,6 +1468,7 @@ const styles = StyleSheet.create({
   promptExampleTextActive: { color: DIAMOND_PILL_BLUE, fontWeight: "600" },
   promptModalSaveButton: { position: "absolute", borderRadius: 14, alignItems: "center", justifyContent: "center" },
   promptModalSaveText: { fontSize: 16, lineHeight: 20, fontWeight: "700" },
+  promptModalSaveHint: { position: "absolute", color: "#64748B", fontSize: 12, lineHeight: 16, textAlign: "center", fontWeight: "600" },
   topBar: { paddingHorizontal: spacing.md, paddingBottom: spacing.sm, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
   topButton: { height: 44, width: 44, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.06)", borderWidth: 1, borderColor: SERVICE_WIZARD_THEME.colors.border },
   topCopy: { flex: 1, alignItems: "center", gap: spacing.xs },

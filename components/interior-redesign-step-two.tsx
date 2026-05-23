@@ -76,7 +76,7 @@ export function InteriorRedesignStepTwo({
   const buttonWidth = mainWidth;
   const buttonHeight = scaleValue(60, layoutScale);
   const buttonTop = scaleValue(24, layoutScale);
-  const cardWidth = CARD_WIDTH;
+  const cardWidth = Math.min(CARD_WIDTH, Math.floor((mainWidth - GRID_GAP) / 2));
   const cardHeight = CARD_HEIGHT;
   const roomRows = useMemo(() => chunkIntoRows(roomOptions, 2), [roomOptions]);
   const canContinue = selectedRooms.length > 0;
@@ -154,7 +154,12 @@ export function InteriorRedesignStepTwo({
                           <View style={[styles.roomIconWrap, getWizardSelectedIconContainerStyle(active)]}>
                             <RoomIcon {...getArchitecturalIconProps(iconColor, ROOM_ICON_SIZE)} />
                           </View>
-                          <Text style={[styles.roomCardTitle, getWizardSelectedLabelTextStyle(active), active ? styles.roomCardTitleActive : null]} numberOfLines={2}>
+                          <Text
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.86}
+                            style={[styles.roomCardTitle, getWizardSelectedLabelTextStyle(active), active ? styles.roomCardTitleActive : null]}
+                            numberOfLines={2}
+                          >
                             {room.label}
                           </Text>
                         </View>
@@ -188,6 +193,11 @@ export function InteriorRedesignStepTwo({
           >
             <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#7E7E7E" }]}>{t("common.actions.continue")}</Text>
           </Pressable>
+          {!canContinue ? (
+            <Text style={styles.bottomHint}>
+              {t("wizard.interior.stepTwoRequired", { defaultValue: "Choisissez au moins une pièce pour continuer." })}
+            </Text>
+          ) : null}
         </View>
       </View>
     </View>
@@ -271,5 +281,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
     ...fonts.semibold,
+  },
+  bottomHint: {
+    marginTop: 8,
+    color: DESIGN_WIZARD_TEXT_MUTED,
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: "center",
+    ...fonts.regular,
   },
 });

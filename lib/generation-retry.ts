@@ -18,7 +18,7 @@ export function shouldRetryGenerationError(error: unknown) {
 export async function runWithFriendlyRetry<T>(
   task: () => Promise<T>,
   onRetry: (message: string) => void,
-  retryMessage = "Magic is taking a bit longer, retrying...",
+  retryMessage = "La génération prend un peu plus de temps, nouvelle tentative...",
 ) {
   let lastError: unknown;
 

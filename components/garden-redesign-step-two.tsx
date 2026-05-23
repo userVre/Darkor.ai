@@ -140,10 +140,11 @@ export function GardenRedesignStepTwo({
               }}
             >
               {row.map((styleCard, columnIndex) => {
-                const isAiSuggestCard = styleCard.title === "AI Suggest";
+                const isAiSuggestCard = styleCard.id === "ai-suggest" || styleCard.title === "AI Suggest" || styleCard.title === "Suggestion IA";
                 const active = isAiSuggestCard ? smartSuggestEnabled : selectedStyles.includes(styleCard.title);
                 const CardIcon = isAiSuggestCard ? Wand2 : styleCard.icon ?? Wand2;
                 const isIconCard = styleCard.image === null;
+                const displayLabel = isAiSuggestCard ? t("wizard.paintFlow.aiSuggest", { defaultValue: "Suggestion IA" }) : styleCard.label ?? styleCard.title;
 
                 return (
                   <Pressable
@@ -210,12 +211,12 @@ export function GardenRedesignStepTwo({
                               <CardIcon color="#FFFFFF" size={28} strokeWidth={2.1} />
                             </View>
                             <Text style={[stylesSheet.iconCardTitle, active ? stylesSheet.iconCardTitleActive : null]}>
-                              {styleCard.label ?? styleCard.title}
+                              {displayLabel}
                             </Text>
                             {styleCard.description ? (
                               <Text style={[stylesSheet.iconCardDescription, active ? stylesSheet.iconCardDescriptionActive : null]}>
                                 {isAiSuggestCard && isAiSuggesting
-                                  ? "Analyzing the garden structure and choosing the strongest aesthetic."
+                                  ? t("wizard.garden.aiSuggesting", { defaultValue: "Analyse du jardin et choix de l'esthétique la plus adaptée." })
                                   : styleCard.description}
                               </Text>
                             ) : null}
@@ -257,7 +258,7 @@ export function GardenRedesignStepTwo({
                             active ? stylesSheet.labelTextActive : null,
                           ]}
                         >
-                          {styleCard.label ?? styleCard.title}
+                          {displayLabel}
                         </Text>
                       </View>
                     </Pressable>

@@ -496,8 +496,6 @@ export default function PaywallScreen() {
   const isPostWowPaywall = source === "post_wow";
   const isSoftPaywall = variant === "soft" && !isPostWowPaywall;
   const isHardPaywall = source === "generate" || source === "second-design";
-  const paywallTitle = "L'atelier Pro pour vos projets d'intérieur.";
-  const paywallSubtitle = "Créez des rendus 4K illimités, sans filigrane, avec la finition d'un portfolio professionnel.";
   const heroRowHeight = HERO_HEIGHT + Math.max(insets.top, 12);
   const yearlyPackage = useMemo(() => findRevenueCatPackage(packages, "yearly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
   const weeklyPackage = useMemo(() => findRevenueCatPackage(packages, "weekly", pricingContext.revenueCat), [packages, pricingContext.revenueCat]);
@@ -528,6 +526,10 @@ export default function PaywallScreen() {
   const subscriptionsUnavailable = errorMessage === t("paywall.subscriptionsUnavailable") || (packages.length > 0 && !selectedPackage);
   const offerLoading = !subscriptionsUnavailable && !selectedPackage;
   const ctaDisabled = isLoading || offerLoading || subscriptionsUnavailable;
+  const paywallTitle = subscriptionsUnavailable ? "Pro est bientôt disponible." : "L'atelier Pro pour vos projets d'intérieur.";
+  const paywallSubtitle = subscriptionsUnavailable
+    ? "Vous pouvez continuer à créer avec vos diamants pendant que nous préparons les abonnements."
+    : "Créez des rendus 4K illimités, sans filigrane, avec la finition d'un portfolio professionnel.";
   const sheetHeight = Math.max(height - 12, 0);
 
   useEffect(() => {
@@ -897,21 +899,34 @@ export default function PaywallScreen() {
         <Animated.View style={[styles.softSheet, { paddingBottom: Math.max(insets.bottom + 12, 20) }, sheetAnimatedStyle]}>
           <View style={styles.softHandle} />
           <Text style={[styles.softEyebrow, localizedFonts.bold]}>{"ATELIER PRO"}</Text>
-          <Text style={[styles.softTitle, localizedFonts.bold]}>{"Passez en mode portfolio"}</Text>
+          <Text style={[styles.softTitle, localizedFonts.bold]}>
+            {subscriptionsUnavailable ? "Pro bientôt disponible" : "Passez en mode portfolio"}
+          </Text>
           <Text style={[styles.softSubtitle, localizedFonts.medium]}>
-            {"Rendus 4K illimités, sans filigrane, avec 3 jours d'essai gratuit."}
+            {subscriptionsUnavailable
+              ? "Les abonnements sont temporairement indisponibles. Vous pouvez continuer avec vos diamants."
+              : "Rendus 4K illimités, sans filigrane, avec 3 jours d'essai gratuit."}
           </Text>
 
-          <View style={styles.softPlanStack}>
-            <YearlyPlanCard
-              onPress={handleSelectYearly}
-              selected={selectedDuration === "yearly"}
-            />
-            <WeeklyPlanCard
-              onPress={handleSelectWeekly}
-              selected={selectedDuration === "weekly"}
-            />
-          </View>
+          {subscriptionsUnavailable ? (
+            <View style={styles.unavailableCard}>
+              <Text style={[styles.unavailableTitle, localizedFonts.bold]}>{"Abonnements indisponibles"}</Text>
+              <Text style={[styles.unavailableText, localizedFonts.regular]}>
+                {"Réessayez dans un instant ou restaurez un abonnement existant depuis l'écran Pro."}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.softPlanStack}>
+              <YearlyPlanCard
+                onPress={handleSelectYearly}
+                selected={selectedDuration === "yearly"}
+              />
+              <WeeklyPlanCard
+                onPress={handleSelectWeekly}
+                selected={selectedDuration === "weekly"}
+              />
+            </View>
+          )}
 
           {isLoading ? (
             <View style={styles.softLoadingRow}>
@@ -920,7 +935,7 @@ export default function PaywallScreen() {
             </View>
           ) : null}
 
-          {errorMessage ? (
+          {errorMessage && !subscriptionsUnavailable ? (
             <Text style={[styles.errorText, localizedFonts.medium, { textAlign: "center" }]}>{errorMessage}</Text>
           ) : null}
 
@@ -983,25 +998,38 @@ export default function PaywallScreen() {
             <Text style={[styles.subtitleText, hasPersonalizedBackground ? styles.personalizedSubtitleText : null, localizedFonts.regular, { textAlign: getDirectionalTextAlign(isRTL) }]}>{paywallSubtitle}</Text>
           </View>
 
-          <FeatureComparisonTable />
+          {subscriptionsUnavailable ? null : <FeatureComparisonTable />}
 
           {subscriptionsUnavailable ? null : <TrialIncludedText />}
 
-          <View style={styles.yearlyWrapper}>
-            <YearlyPlanCard
-              onPress={handleSelectYearly}
-              selected={selectedDuration === "yearly"}
-            />
-          </View>
+          {subscriptionsUnavailable ? (
+            <View style={styles.unavailableCard}>
+              <Text style={[styles.unavailableTitle, localizedFonts.bold]}>
+                {"Abonnements temporairement indisponibles"}
+              </Text>
+              <Text style={[styles.unavailableText, localizedFonts.regular]}>
+                {"Vous pouvez continuer avec vos diamants. Les offres Pro reviendront automatiquement dès que la boutique sera disponible."}
+              </Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.yearlyWrapper}>
+                <YearlyPlanCard
+                  onPress={handleSelectYearly}
+                  selected={selectedDuration === "yearly"}
+                />
+              </View>
 
-          <View style={styles.weeklyWrapper}>
-            <WeeklyPlanCard
-              onPress={handleSelectWeekly}
-              selected={selectedDuration === "weekly"}
-            />
-          </View>
+              <View style={styles.weeklyWrapper}>
+                <WeeklyPlanCard
+                  onPress={handleSelectWeekly}
+                  selected={selectedDuration === "weekly"}
+                />
+              </View>
+            </>
+          )}
 
-          {errorMessage ? (
+          {errorMessage && !subscriptionsUnavailable ? (
             <Text style={[styles.errorText, localizedFonts.medium, { textAlign: getDirectionalTextAlign(isRTL) }]}>{errorMessage}</Text>
           ) : null}
 
@@ -1399,6 +1427,28 @@ function createStyles(theme: Theme) {
     marginTop: 0,
     marginBottom: 8,
     marginHorizontal: 20,
+  },
+  unavailableCard: {
+    marginHorizontal: 20,
+    marginBottom: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderCurve: "continuous",
+    borderColor: PAYWALL_BORDER,
+    backgroundColor: PAYWALL_CARD_BG_ALT,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    gap: 8,
+  },
+  unavailableTitle: {
+    color: PAYWALL_TEXT_PRIMARY,
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  unavailableText: {
+    color: PAYWALL_TEXT_SECONDARY,
+    fontSize: 13,
+    lineHeight: 19,
   },
   diamondStoreButton: {
     minHeight: 54,

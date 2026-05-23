@@ -267,7 +267,9 @@ export function InteriorRedesignStepFour({
             >
               <Wand2 color={useAISelection ? DESIGN_WIZARD_SELECTION_BLUE : "#111111"} size={22} strokeWidth={2.1} />
             </Pressable>
-            <Text style={[styles.aiPaletteLabel, useAISelection ? styles.aiPaletteLabelActive : null]}>Random AI Pick</Text>
+            <Text style={[styles.aiPaletteLabel, useAISelection ? styles.aiPaletteLabelActive : null]}>
+              {t("wizard.paintFlow.aiSuggest", { defaultValue: "Suggestion IA" })}
+            </Text>
           </View>
           <View style={{ width: paletteGridWidth, alignSelf: "center" }}>
             {paletteRows.map((row, rowIndex) => (
@@ -356,6 +358,11 @@ export function InteriorRedesignStepFour({
           >
             <Text style={[styles.continueText, { color: canContinue ? "#FFFFFF" : "#7E7E7E" }]}>{t("common.actions.continue")}</Text>
           </Pressable>
+          {!canContinue ? (
+            <Text style={styles.bottomHint}>
+              {t("wizard.interior.stepFourRequired", { defaultValue: "Choisissez un mode et une harmonie de couleurs pour continuer." })}
+            </Text>
+          ) : null}
         </View>
       </View>
     </View>
@@ -540,6 +547,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
     ...fonts.semibold,
+  },
+  bottomHint: {
+    marginTop: 8,
+    color: DESIGN_WIZARD_TEXT_MUTED,
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: "center",
+    ...fonts.regular,
   },
 });
 

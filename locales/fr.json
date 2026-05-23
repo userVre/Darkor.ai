@@ -64,6 +64,35 @@
     "serviceMaintenanceTitle": "Maintenance du service",
     "serviceMaintenanceBody": "Nous préparons la configuration du service. Veuillez réessayer dans un instant."
   },
+  "creditsStore": {
+    "eyebrow": "Crédits",
+    "currentBalance": "Solde actuel",
+    "balance": "{{count}} diamants",
+    "proHint": "PRO est actif. Vos diamants restent disponibles pour les achats et les futurs outils.",
+    "freeHint": "Chaque génération réussie utilise 1 diamant. Rechargez votre solde quand vous voulez.",
+    "getMore": "Obtenir plus de crédits",
+    "packDiamonds": "{{count}} diamants",
+    "buyNow": "Acheter maintenant{{price}}",
+    "unavailableTitle": "Achats temporairement indisponibles",
+    "success": "{{count}} diamants ajoutés à votre compte.",
+    "packs": {
+      "starter": "Pack Découverte",
+      "designer": "Pack Designer",
+      "architect": "Pack Architecte",
+      "estate": "Pack Studio"
+    },
+    "badges": {
+      "mostPopular": "Populaire",
+      "bestValue": "Meilleure offre"
+    },
+    "errors": {
+      "generic": "Impossible de charger les packs pour le moment.",
+      "unavailable": "Les achats sont temporairement indisponibles. Réessayez dans un instant ou contactez le support.",
+      "regionUnavailable": "Ce pack de diamants n'est pas disponible dans votre région.",
+      "packUnavailable": "Ce pack de diamants est temporairement indisponible.",
+      "purchaseFailed": "L'achat a échoué. Veuillez réessayer."
+    }
+  },
   "onboarding": {
     "stepLabel": "Étape {{current}} sur 4",
     "actions": {
@@ -581,6 +610,8 @@
     "title": "L'IA compose votre chef-d'oeuvre architectural...",
     "eta": "Votre vision sera prête dans ~15 secondes.",
     "cancelKeepCredit": "Annuler et conserver mon crédit",
+    "speedUpCta": "Accélérer la génération",
+    "speedUpHint": "Obtenez un rendu plus rapide avec PRO.",
     "status": {
       "analyzingGeometry": "Analyser la géométrie architecturale...",
       "identifyingSurfaces": "Identifier les surfaces et les lignes structurelles...",
@@ -600,20 +631,23 @@
       "creditsRemaining": "Crédits restants"
     },
     "stepOne": {
-      "title": "Téléchargez votre vision",
-      "emptyTitle": "Téléchargez votre vision",
-      "emptySubtitle": "Repensez et sublimez votre pièce",
+      "title": "Importez une photo de votre pièce",
+      "emptyTitle": "Importez une photo de votre pièce",
+      "emptySubtitle": "Utilisez une photo nette, bien éclairée et prise assez large.",
+      "photoReadyTitle": "Photo ajoutée",
       "photoCount": "{{current}}/{{max}} photos",
       "removePhoto": "Supprimer la photo sélectionnée",
       "cta": "Importer une photo de r?f?rence"
     },
     "interior": {
       "stepTwoTitle": "Choisissez votre espace",
-      "stepTwoSubtitle": "Sélectionnez le type de pièce afin que la refonte reste architecturalement ancrée.",
+      "stepTwoSubtitle": "Sélectionnez le type de pièce pour adapter le rendu à l'espace.",
       "stepThreeTitle": "Choisissez votre style",
-      "stepThreeSubtitle": "Choisissez un style signature pour façonner votre vision du design.",
+      "stepThreeSubtitle": "Choisissez l'ambiance que vous voulez appliquer à la pièce.",
       "stepFourMode": "Mode de design",
-      "stepFourPalette": "Harmonie des couleurs"
+      "stepFourPalette": "Harmonie des couleurs",
+      "stepTwoRequired": "Choisissez au moins une pièce pour continuer.",
+      "stepFourRequired": "Choisissez un mode et une harmonie de couleurs pour continuer."
     },
     "exterior": {
       "stepTwoTitle": "Choisissez le type de bâtiment",
@@ -623,7 +657,7 @@
       "stepFourTitle": "Harmonie des couleurs"
     },
     "garden": {
-      "stepOneEmptyTitle": "Téléchargez votre vision",
+      "stepOneEmptyTitle": "Importez une photo extérieure",
       "stepOneEmptySubtitle": "Redessinez et embellissez votre maison.",
       "stepTwoTitle": "Choisissez votre style",
       "stepTwoSubtitle": "Choisissez un style signature pour façonner votre vision du design.",
@@ -637,17 +671,26 @@
     },
     "floorFlow": {
       "title": "Relooking du sol",
+      "shortTitle": "Sol",
       "masking": "Masquage du sol...",
       "promptLabel": "Décrivez votre vision",
-      "promptPlaceholder": "Describe your dream vision?from lighting vibes to specific materials.",
+      "promptPlaceholder": "Décrivez le sol souhaité : matière, teinte, finition et ambiance.",
       "promptExamplesTitle": "Exemples rapides",
       "generateCta": "Générer mon design →",
       "selectMaterialCta": "Sélectionnez un matériau",
       "selectMaterialTitle": "Choisir le matériau",
-      "selectMaterialBody": "Sélectionnez un matériel haut de gamme conçu pour être lu de manière photoréaliste, prenant en compte la perspective et prêt à être répertorié.",
+      "selectMaterialBody": "Choisissez un matériau. L'IA l'appliquera en respectant la perspective, la lumière et les meubles.",
       "selectedMaterial": "Matériau sélectionné",
       "noMaterialSelected": "Aucun matériau sélectionné",
-      "unlockMaterialBody": "Sélectionnez un matériau de revêtement de sol pour débloquer le restyle AI.",
+      "unlockMaterialBody": "Sélectionnez un matériau de sol pour continuer.",
+      "aiChoiceLabel": "Choix de l'IA",
+      "aiGeneratedMaterial": "Matériau choisi par l'IA",
+      "aiChoiceDescription": "L'IA choisira le matériau le plus adapté à la lumière, au mobilier et à l'équilibre de la pièce.",
+      "brushFloorHint": "Brossez le sol à transformer",
+      "manualMaskHint": "La détection automatique n'a pas trouvé le sol. Peignez simplement la zone à relooker.",
+      "maskRequiredHint": "Peignez la zone du sol pour activer Continuer.",
+      "maskRequiredCta": "Marquez le sol pour continuer",
+      "promptRequiredHint": "Ajoutez une description ou choisissez Choix de l'IA pour sauvegarder.",
       "addPromptTitle": "Ajouter une invite",
       "addPromptBody": "Décrivez la transformation exacte du sol que vous souhaitez avant de continuer.",
       "generatePromptBody": "Choisissez une invite d'étage personnalisée avant de générer.",
@@ -731,6 +774,7 @@
     },
     "paintFlow": {
       "title": "Peinture",
+      "shortTitle": "Mur",
       "selectionTitle": "Sélectionnez les surfaces à transformer",
       "maskTitle": "Sélectionnez les surfaces à transformer",
       "colorLabel": "Couleur",
@@ -773,8 +817,15 @@
       "cancelUnavailable": "Impossible d'annuler pour le moment.",
       "supportingText": "Utilise 1 crédit · {{creditsRemaining}}",
       "creditsRemaining": "{{count}} restant",
-      "intakeTitle": "Téléchargez votre vision",
-      "intakeBody": "Téléchargez une photo de la pièce pour une recoloration précise des murs.",
+      "aiSuggest": "Suggestion IA",
+      "aiSuggestColorA11y": "Suggestion IA pour la couleur du mur",
+      "chooseColorToContinue": "Choisissez une couleur ou une suggestion IA pour continuer.",
+      "chooseSurfaceToContinue": "Choisissez la surface à transformer pour continuer.",
+      "visionLabel": "Décrivez votre vision",
+      "visionHelper": "Optionnel : texture, matière ou ambiance du mur",
+      "visionPlaceholder": "Mur blanc texturé, finition mate et lumineuse",
+      "intakeTitle": "Importez une photo de votre pièce",
+      "intakeBody": "Utilisez une photo nette et bien éclairée pour recolorer les murs avec précision.",
       "intakeReadyTitle": "Photo ajoutée. Marquez ensuite la zone du mur.",
       "intakeReadyBody": "Votre photo est verrouillée. Ensuite, brossez les surfaces murales pour que la recoloration reste précise autour des boiseries, des meubles et de la décoration.",
       "surfaces": {
@@ -1068,12 +1119,12 @@
       },
       "modes": {
         "preserve": {
-          "title": "Préservation structurelle",
-          "description": "Préservez l’ADN architectural de votre pièce tout en rafraîchissant parfaitement son esthétique."
+          "title": "Conserver la structure",
+          "description": "Gardez les murs, ouvertures et volumes en place tout en modernisant le style."
         },
         "renovate": {
-          "title": "Conception de rénovation",
-          "description": "Liberté créative totale pour redéfinir la disposition des meubles et les limites structurelles pour un remodelage complet."
+          "title": "Rénover librement",
+          "description": "Autorisez l'IA à proposer une transformation plus créative de l'aménagement."
         }
       },
       "palettes": {

@@ -1318,21 +1318,21 @@ const STYLE_PREVIEW_OUTPUTS: Record<string, number> = {
 
 function getStyleCardBadge(style: Pick<DisplayStyleCard, "id" | "title" | "isCustom">): StyleCardBadge | null {
   if (style.title === SMART_SUGGEST_STYLE_LABEL) {
-    return { label: "AI Pick", tone: "blue" };
+    return { label: "Choix IA", tone: "blue" };
   }
 
   if (style.isCustom) {
-    return { label: "Bespoke", tone: "violet" };
+    return { label: "Sur mesure", tone: "violet" };
   }
 
   const normalizedId = style.id.toLowerCase();
   const normalizedTitle = style.title.toLowerCase();
   if (normalizedId === "modern" || normalizedId === "japandi" || normalizedTitle === "modern" || normalizedTitle === "japandi") {
-    return { label: "Trending", tone: "blue" };
+    return { label: "Tendance", tone: "blue" };
   }
 
   if (normalizedId === "luxury" || normalizedTitle === "luxury") {
-    return { label: "Popular", tone: "green" };
+    return { label: "Populaire", tone: "green" };
   }
 
   return null;
@@ -1501,7 +1501,7 @@ const EXTERIOR_PALETTE_OPTIONS = EXTERIOR_PALETTE_ORDER.map((id) => PALETTE_OPTI
 const GARDEN_PALETTE_OPTIONS: PaletteOption[] = [
   {
     id: "garden-surprise",
-    label: "Surprise Me",
+    label: "Choix de l'IA",
     colors: ["#F7F5EE", "#DCC9A3", "#6F8B4E", "#2B3A1F"],
     description: "An elegant outdoor mix with warm stone and planted depth.",
   },
@@ -1574,10 +1574,10 @@ const GARDEN_PALETTE_OPTIONS: PaletteOption[] = [
 ];
 
 const POPULAR_PALETTE_IDS = new Set(["surprise", "gray"]);
-const SMART_SUGGEST_STYLE_LABEL = "AI Suggest";
+const SMART_SUGGEST_STYLE_LABEL = "Suggestion IA";
 const SMART_SUGGEST_PALETTE_ID = "smart-suggest";
-const SMART_SUGGEST_WALL_LABEL = "AI Pick";
-const SMART_SUGGEST_FLOOR_LABEL = "AI Pick / Random";
+const SMART_SUGGEST_WALL_LABEL = "Choix IA";
+const SMART_SUGGEST_FLOOR_LABEL = "Choix IA";
 
 const ASPECT_RATIO_OPTIONS: AspectRatioOption[] = [
   {
@@ -2997,8 +2997,8 @@ export default function WorkspaceScreen() {
       {
         id: "ai-suggest",
         title: SMART_SUGGEST_STYLE_LABEL,
-        label: "AI Suggest",
-        description: "Let AI pick the best aesthetic.",
+        label: t("wizard.common.aiSuggest", { defaultValue: "Suggestion IA" }),
+        description: t("wizard.common.aiSuggestDescription", { defaultValue: "Laissez l'IA choisir le style le plus adapté." }),
         image: null,
         icon: Wand2,
       },
@@ -3110,8 +3110,8 @@ export default function WorkspaceScreen() {
       {
         id: "ai-suggest",
         title: SMART_SUGGEST_STYLE_LABEL,
-        label: "AI Suggest",
-        description: "Let AI pick the best aesthetic.",
+        label: t("wizard.common.aiSuggest", { defaultValue: "Suggestion IA" }),
+        description: t("wizard.common.aiSuggestDescription", { defaultValue: "Laissez l'IA choisir le style le plus adapté." }),
         image: null,
         icon: Wand2,
       },
@@ -3199,8 +3199,8 @@ export default function WorkspaceScreen() {
       {
         id: "ai-suggest",
         title: SMART_SUGGEST_STYLE_LABEL,
-        label: "AI Suggest",
-        description: "Let AI pick the best aesthetic.",
+        label: t("wizard.common.aiSuggest", { defaultValue: "Suggestion IA" }),
+        description: t("wizard.common.aiSuggestDescription", { defaultValue: "Laissez l'IA choisir le style le plus adapté." }),
         image: null,
         icon: Wand2,
       },
@@ -4235,9 +4235,23 @@ export default function WorkspaceScreen() {
   ]);
 
   const handleCloseWizard = useCallback(() => {
+    if (workflowStep > 0 || selectedImages.length > 0) {
+      Alert.alert(t("common.alerts.exitTitle"), t("common.alerts.progressLost"), [
+        { text: t("common.actions.cancel"), style: "cancel" },
+        {
+          text: t("common.actions.exit"),
+          style: "destructive",
+          onPress: () => {
+            handleResetWizard();
+            router.replace(TABS_HOME_ROUTE as any);
+          },
+        },
+      ]);
+      return;
+    }
     handleResetWizard();
     router.replace(TABS_HOME_ROUTE as any);
-  }, [handleResetWizard, router]);
+  }, [handleResetWizard, router, selectedImages.length, t, workflowStep]);
 
   const cleanupTempFile = useCallback(async (uri: string | null | undefined) => {
     if (!uri) {
@@ -4551,11 +4565,11 @@ export default function WorkspaceScreen() {
       ? SMART_SUGGEST_WALL_LABEL
       : activeWallColorOption?.title ?? normalizeStyleDisplayName(activeStyleLabel) ?? "Sage Green";
     const paintColorValue = activeSmartSuggest ? "" : activeWallColorOption?.value ?? "#7C9174";
-    const paintStyleLabel = activeSmartSuggest ? "AI Suggested Paint" : `${paintColorLabel} Paint`;
+    const paintStyleLabel = activeSmartSuggest ? "Choix IA - Peinture" : `${paintColorLabel} - Peinture`;
     const floorMaterialLabel = activeSmartSuggest
       ? SMART_SUGGEST_FLOOR_LABEL
       : activeFloorMaterialOption?.title ?? normalizeStyleDisplayName(activeStyleLabel) ?? "Hardwood";
-    const floorStyleLabel = activeSmartSuggest ? "AI Suggested Flooring" : `${floorMaterialLabel} Flooring`;
+    const floorStyleLabel = activeSmartSuggest ? "Choix IA - Sol" : `${floorMaterialLabel} - Sol`;
     const generationSelection = isFloorService
       ? activeSmartSuggest
         ? `AI-selected floor material with a ${finishLabel.toLowerCase()} finish`
@@ -5838,64 +5852,64 @@ export default function WorkspaceScreen() {
     const shouldPulseContinue = isGenerationReviewStep && isContinueActive && hasGenerationCredits;
     const continueHint =
       isGenerationReviewStep && hasBrokenGenerateSummary
-        ? "Complete your style selections to generate."
+        ? "Terminez vos choix de style pour générer."
         : isGenerationReviewStep && !isContinueActive
-          ? "Please select a mode and palette to continue."
+          ? "Choisissez un mode et une palette pour continuer."
           : null;
     const selectedCustomPromptBlocks = new Set(getPromptBlocks(customPromptDraft));
     const expectationPreviewCopy = isLeanGenerationService
-      ? "A polished exterior concept with premium detailing, realistic materials, and architectural coherence."
-      : "A polished, photoreal interior concept with elevated materials, refined lighting, and editorial-level realism.";
+      ? "Un concept extérieur soigné avec des détails premium, des matériaux réalistes et une cohérence architecturale."
+      : "Un concept intérieur photoréaliste avec des matériaux raffinés, une lumière travaillée et un rendu éditorial.";
     const stepOneTitle = isFloorService ? getServiceLabel(t, "floor") : isPaintService ? t("common.actions.addPhoto") : isGardenService ? t("workspace.stepOne.gardenPhotoTitle") : isExteriorService ? t("workspace.stepOne.exteriorPhotoTitle") : t("common.actions.addPhoto");
     const emptyUploadTitle = isFloorService ? t("workspace.stepOne.floorPhotoTitle") : isPaintService ? t("common.actions.addPhoto") : isGardenService ? t("workspace.stepOne.gardenEmptyTitle") : isExteriorService ? t("workspace.stepOne.exteriorEmptyTitle") : t("wizard.stepOne.emptyTitle");
     const stepOneDescription = isGardenService
-      ? "Transform your outdoors into a luxury retreat."
+      ? "Transformez votre extérieur en espace élégant et accueillant."
       : isFloorService
-        ? "Upload a room image so HomeDecor AI can read the floor plane and stage a premium material transformation."
+        ? "Importez une photo nette pour que HomeDecor AI repère le sol et prépare le relooking."
       : isPaintService
-        ? "Upload a room photo and HomeDecor AI will prepare it for a precise, designer-led wall recoloring."
+        ? "Importez une photo nette pour recolorer les murs avec précision."
       : isExteriorService
-        ? "Reimagine your home's facade with professional styling."
-        : "Upload a room photo so HomeDecor AI can compose a coherent, elevated redesign.";
-    const stepTwoTitle = "Select your space type";
+        ? "Réimaginez votre façade avec un style professionnel."
+        : "Importez une photo de votre pièce pour créer un redesign cohérent.";
+    const stepTwoTitle = "Choisissez votre espace";
     const stepTwoDescription = isExteriorService
       ? "Choose the architectural envelope that best matches the facade you want to reimagine."
       : isGardenService
       ? "Choose the outdoor zone you want HomeDecor AI to elevate first."
-        : "Tell HomeDecor AI which room typology it should redesign so the proposal stays architecturally grounded.";
+        : "Sélectionnez le type de pièce pour garder un résultat cohérent.";
     const stepThreeTitle = isPaintService
-      ? "Curate the wall color"
+      ? "Choisir la couleur du mur"
       : isFloorService
-        ? "Curate the floor material"
-        : "Curate the style direction";
+        ? "Choisir le matériau du sol"
+        : "Choisir le style";
     const stepThreeDescription = isPaintService
-      ? "Select the wall tone HomeDecor AI should introduce once the masked surfaces are refined."
+      ? "Sélectionnez la couleur à appliquer sur les surfaces marquées."
       : isFloorService
-        ? "Select the flooring material HomeDecor AI should compose into the visible floor plane."
+        ? "Sélectionnez le matériau à appliquer sur la zone de sol marquée."
         : isExteriorService
       ? "Choose the architectural language that should guide the exterior transformation."
       : isGardenService
         ? "Choose the landscape expression HomeDecor AI should use for the garden redesign."
-        : "Choose a curated design direction, or write a custom architectural brief.";
-    const stepFourTitle = isPaintService ? "Refine the finish" : isFloorService ? "Refine the finish" : "Refine Direction";
+        : "Choisissez une direction de design ou rédigez une courte vision.";
+    const stepFourTitle = isPaintService ? "Affiner la finition" : isFloorService ? "Affiner la finition" : "Affiner la direction";
     const stepFourDescription = isPaintService
-      ? "Choose how the selected wall color should catch light so the render feels tailored, realistic, and high-end."
+      ? "Choisissez comment la couleur doit capter la lumière."
       : isFloorService
-        ? "Choose how the selected flooring material should read under light once HomeDecor AI maps it into the space."
-        : "Choose how bold the redesign should feel, then pick the palette family HomeDecor AI should weave through the space.";
+        ? "Choisissez comment le matériau doit réagir à la lumière."
+        : "Choisissez l'intensité du redesign et la palette générale.";
     const stepOneHeading = hasVisiblePhoto
       ? isPaintService
-        ? "Photo added — mark the wall area next."
+        ? "Photo ajoutée. Marquez ensuite la zone du mur."
         : isFloorService
-          ? "Photo added — mark the floor area next."
-          : "Photo added — choose your space type next."
+          ? "Photo ajoutée. Marquez ensuite la zone du sol."
+          : "Photo ajoutée. Choisissez maintenant l'espace."
       : stepOneTitle;
     const stepOneBody = hasVisiblePhoto
       ? isPaintService
-        ? "Your photo is locked in. Next, brush the wall surfaces so the recolor stays crisp around trim, furniture, and decor."
+        ? "Votre photo est prête. Brossez les murs pour garder des bords propres autour des meubles et boiseries."
         : isFloorService
-          ? "Your photo is locked in. Next, brush the floor plane so the material restyle lands cleanly around furniture and walls."
-          : "Your photo is locked in. Next, choose the space type so HomeDecor AI can keep the redesign architecturally grounded."
+          ? "Votre photo est prête. Brossez le sol pour appliquer le matériau sans toucher aux meubles."
+          : "Votre photo est prête. Choisissez l'espace pour guider le redesign."
       : stepOneDescription;
     const wizardSectionHeaderStyle = { gap: DS.spacing[1.5], alignItems: "center" as const };
     const wizardSectionBodyStyle = {
@@ -5956,8 +5970,8 @@ export default function WorkspaceScreen() {
           : false;
     const stepButtonSupportingText = isGenerationReviewStep ? generationCreditLabel : null;
     const showSpeedUpOverlay = isGenerationReviewStep && !hasPaidAccess && !diagnostic;
-    const speedUpLabel = t("processing.speedUpCta", { defaultValue: "Speed Up Generation" });
-    const speedUpHint = t("processing.speedUpHint", { defaultValue: "Get instant results with PRO." });
+    const speedUpLabel = t("processing.speedUpCta", { defaultValue: "Accélérer la génération" });
+    const speedUpHint = t("processing.speedUpHint", { defaultValue: "Obtenez un rendu plus rapide avec PRO." });
 
     return (
       <View className="flex-1" style={{ backgroundColor: wizardBackgroundColor }}>
@@ -6366,7 +6380,7 @@ export default function WorkspaceScreen() {
                           ...DS.typography.cardTitle,
                         }}
                       >
-                        {isFloorService ? "Floor-focused Examples" : "Example Photos"}
+                        {isFloorService ? "Exemples centrés sur le sol" : t("common.actions.examplePhotos")}
                       </Text>
 
                       <MotiView
@@ -6557,7 +6571,7 @@ export default function WorkspaceScreen() {
                           }}
                         >
                           <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "700", letterSpacing: 0.3 }}>
-                            Wall Color
+                            Couleur du mur
                           </Text>
                           <View
                             style={{
@@ -6588,7 +6602,7 @@ export default function WorkspaceScreen() {
                                 <Wand2 color={smartSuggestEnabled ? "#60A5FA" : "#E5E7EB"} size={24} strokeWidth={2.1} />
                               </View>
                               <Text style={{ marginTop: 10, color: smartSuggestEnabled ? "#dbeafe" : "#ffffff", fontSize: 12, fontWeight: "700", textAlign: "center" }}>
-                                Random / AI Pick
+                                Choix IA
                               </Text>
                             </LuxPressable>
 
@@ -6633,9 +6647,9 @@ export default function WorkspaceScreen() {
                             paddingVertical: spacing.md,
                           }}
                         >
-                          <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>AI Pick</Text>
+                          <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "700" }}>Choix de l'IA</Text>
                           <Text style={{ color: smartSuggestEnabled ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19, marginTop: 6 }}>
-                            Lets AI decide the best color harmony for the room.
+                            L'IA choisit l'harmonie de couleur la plus adaptée à la pièce.
                           </Text>
                         </View>
                       </View>
@@ -6673,10 +6687,10 @@ export default function WorkspaceScreen() {
                             </View>
                             <View style={{ gap: spacing.sm }}>
                               <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "700", letterSpacing: 0.3 }}>
-                                Surprise Me
+                                Choix de l'IA
                               </Text>
                               <Text style={{ color: smartSuggestEnabled ? "#dbeafe" : wizardMutedTextColor, fontSize: 13, lineHeight: 19 }}>
-                                AI will choose marble, wood, or stone based on the room's vibe.
+                                L'IA choisit bois, pierre ou béton selon la lumière et l'ambiance.
                               </Text>
                             </View>
                             {smartSuggestEnabled ? (
@@ -7019,8 +7033,8 @@ export default function WorkspaceScreen() {
                         >
                           <Text style={{ color: "#ffffff", fontSize: 23, fontWeight: "700", letterSpacing: 0.3 }}>
                             {isPaintService
-                              ? selectedWallColorOption?.title ?? selectedStyleDisplayName ?? "Select a wall color"
-                              : selectedFloorMaterialOption?.title ?? selectedStyleDisplayName ?? "Select a floor material"}
+                              ? selectedWallColorOption?.title ?? selectedStyleDisplayName ?? "Choisir une couleur de mur"
+                              : selectedFloorMaterialOption?.title ?? selectedStyleDisplayName ?? "Choisir un matériau de sol"}
                           </Text>
                           <Text style={{ color: wizardMutedTextColor, fontSize: 14, lineHeight: 22 }}>
                             {selectedRoom
@@ -7031,7 +7045,7 @@ export default function WorkspaceScreen() {
                             {[
                               { label: selectedRoom ?? "Space type not selected", active: Boolean(selectedRoom) },
                               {
-                                label: selectedStyleDisplayName ?? (isPaintService ? "Wall color not selected" : "Material not selected"),
+                                label: selectedStyleDisplayName ?? (isPaintService ? "Couleur non sélectionnée" : "Matériau non sélectionné"),
                                 active: Boolean(selectedStyleDisplayName),
                               },
                             ].map((item) => (
@@ -7278,11 +7292,11 @@ export default function WorkspaceScreen() {
                                 <Wand2 color="#dbeafe" size={22} strokeWidth={2.2} />
                               </MotiView>
                               <View style={{ flex: 1, gap: spacing.xs }}>
-                                <Text style={{ color: "#eff6ff", fontSize: 17, fontWeight: "700" }}>AI Suggest</Text>
+                                <Text style={{ color: "#eff6ff", fontSize: 17, fontWeight: "700" }}>{t("wizard.common.aiSuggest", { defaultValue: "Suggestion IA" })}</Text>
                                 <Text style={{ color: "#bfdbfe", fontSize: 13, lineHeight: 19 }}>
                                   {isAiSuggesting
-                                    ? "Reading the room architecture and composing the best palette."
-                                    : "Let GPT-4o read the room and pick the strongest style and palette pairing."}
+                                    ? t("wizard.common.aiSuggesting", { defaultValue: "Analyse de la pièce et composition de la meilleure palette." })
+                                    : t("wizard.common.aiSuggestLongDescription", { defaultValue: "Laissez l'IA analyser la pièce et choisir la meilleure association style-couleurs." })}
                                 </Text>
                               </View>
                             </View>
@@ -8117,8 +8131,8 @@ export default function WorkspaceScreen() {
       ? t("workspace.localization.modes.preserve.title")
       : editorStyleLabel;
     const showProcessingSpeedUp = !hasPaidAccess && !diagnostic;
-    const speedUpLabel = t("processing.speedUpCta", { defaultValue: "Speed Up Generation" });
-    const speedUpHint = t("processing.speedUpHint", { defaultValue: "Get instant results with PRO." });
+    const speedUpLabel = t("processing.speedUpCta", { defaultValue: "Accélérer la génération" });
+    const speedUpHint = t("processing.speedUpHint", { defaultValue: "Obtenez un rendu plus rapide avec PRO." });
 
     if (!activeBoardItem) {
       return (

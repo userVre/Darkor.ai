@@ -160,6 +160,9 @@ export function DesignStepHeader({
         </View>
 
         <View style={styles.progressWrap}>
+          <Text style={styles.stepMetaText}>
+            {t("wizard.headers.stepProgress", { current: safeStep, total: totalSteps })}
+          </Text>
           <StepProgressSegments
             key={`design-step-progress-${safeStep}-${totalSteps}`}
             progress={progress}
@@ -209,17 +212,25 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   progressWrap: {
+    flexDirection: "row",
+    gap: 10,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 12,
   },
   progressRail: {
-    width: "100%",
+    flex: 1,
     maxWidth: 168,
   },
   progressRailContinuous: {
-    width: "100%",
+    flex: 1,
     maxWidth: "100%",
+  },
+  stepMetaText: {
+    color: DS.colors.textMuted,
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: "700",
   },
   iconButton: {
     width: DESIGN_HEADER_ACTION_SIZE,

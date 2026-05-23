@@ -115,12 +115,12 @@ export function InteriorRedesignStepOne({
   const continueBottom = Math.max(insets.bottom + scaleValue(24, layoutScale), scaleValue(36, layoutScale));
   const canContinue = selectedPhotos.length > 0;
   const canAddMore = selectedPhotos.length < maxPhotos;
-  const resolvedBodyTitle = bodyTitle ?? headerTitle;
   const resolvedEmptyStateSubtitle = emptyStateSubtitle ?? t("wizard.stepOne.emptySubtitle");
   const focusedPhoto = useMemo(
     () => selectedPhotos[currentDisplayIndex] ?? selectedPhotos[0] ?? null,
     [currentDisplayIndex, selectedPhotos],
   );
+  const resolvedBodyTitle = bodyTitle ?? (focusedPhoto ? t("wizard.stepOne.photoReadyTitle", { defaultValue: "Photo ajoutée" }) : headerTitle);
 
   const [isSheetMounted, setIsSheetMounted] = useState(false);
   const [pendingSource, setPendingSource] = useState<MediaSourceOption | null>(null);
@@ -281,7 +281,7 @@ export function InteriorRedesignStepOne({
                         <Pressable
                           accessibilityRole="button"
                           accessibilityState={{ selected: active }}
-                          accessibilityLabel={photo.label ? `Show ${photo.label}` : `Show photo ${index + 1}`}
+                          accessibilityLabel={photo.label ? t("wizard.stepOne.showPhotoNamed", { defaultValue: "Afficher {{label}}", label: photo.label }) : t("wizard.stepOne.showPhoto", { defaultValue: "Afficher la photo {{index}}", index: index + 1 })}
                           onPress={() => onFocusPhoto(index)}
                           style={[
                             styles.selectedThumbnailFrame,
@@ -303,7 +303,7 @@ export function InteriorRedesignStepOne({
                         </Pressable>
                         <Pressable
                           accessibilityRole="button"
-                          accessibilityLabel={photo.label ? `Remove ${photo.label}` : `Remove photo ${index + 1}`}
+                          accessibilityLabel={photo.label ? t("wizard.stepOne.removePhotoNamed", { defaultValue: "Supprimer {{label}}", label: photo.label }) : t("wizard.stepOne.removePhotoNumber", { defaultValue: "Supprimer la photo {{index}}", index: index + 1 })}
                           onPress={() => onRemovePhoto(index)}
                           hitSlop={10}
                           style={styles.thumbnailRemoveButton}
@@ -317,7 +317,7 @@ export function InteriorRedesignStepOne({
                   {canAddMore ? (
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel="Add more photos"
+                      accessibilityLabel={t("wizard.stepOne.addMorePhotos", { defaultValue: "Ajouter une autre photo" })}
                       onPress={openMediaSheet}
                       style={[
                         styles.addTile,
@@ -342,7 +342,7 @@ export function InteriorRedesignStepOne({
                         <Pressable
                           accessibilityRole="button"
                           accessibilityState={{ selected: active }}
-                          accessibilityLabel={photo.label ? `Show ${photo.label}` : `Show photo ${index + 1}`}
+                          accessibilityLabel={photo.label ? t("wizard.stepOne.showPhotoNamed", { defaultValue: "Afficher {{label}}", label: photo.label }) : t("wizard.stepOne.showPhoto", { defaultValue: "Afficher la photo {{index}}", index: index + 1 })}
                           onPress={() => onFocusPhoto(index)}
                           style={[
                             styles.selectedThumbnailFrame,
@@ -363,7 +363,7 @@ export function InteriorRedesignStepOne({
                         </Pressable>
                         <Pressable
                           accessibilityRole="button"
-                          accessibilityLabel={photo.label ? `Remove ${photo.label}` : `Remove photo ${index + 1}`}
+                          accessibilityLabel={photo.label ? t("wizard.stepOne.removePhotoNamed", { defaultValue: "Supprimer {{label}}", label: photo.label }) : t("wizard.stepOne.removePhotoNumber", { defaultValue: "Supprimer la photo {{index}}", index: index + 1 })}
                           onPress={() => onRemovePhoto(index)}
                           hitSlop={10}
                           style={styles.thumbnailRemoveButton}
@@ -377,7 +377,7 @@ export function InteriorRedesignStepOne({
                   {canAddMore ? (
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel="Add more photos"
+                      accessibilityLabel={t("wizard.stepOne.addMorePhotos", { defaultValue: "Ajouter une autre photo" })}
                       onPress={openMediaSheet}
                       style={[
                         styles.addTile,
@@ -461,6 +461,9 @@ export function InteriorRedesignStepOne({
                   transition={120}
                   cachePolicy="memory-disk"
                 />
+                <View style={styles.exampleLabelPill}>
+                  <Text numberOfLines={1} style={styles.exampleLabelText}>{example.label}</Text>
+                </View>
                 {loadingExampleId === example.id ? <View style={styles.thumbnailOverlay} /> : null}
               </View>
             </Pressable>
@@ -734,6 +737,23 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: slate.slate3,
   },
+  exampleLabelPill: {
+    position: "absolute",
+    left: 8,
+    right: 8,
+    bottom: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(10,10,10,0.62)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  exampleLabelText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    lineHeight: 12,
+    textAlign: "center",
+    ...fonts.semibold,
+  },
   selectedThumbnailFrame: {
     flexShrink: 0,
     overflow: "hidden",
@@ -751,16 +771,16 @@ const styles = StyleSheet.create({
   },
   thumbnailRemoveButton: {
     position: "absolute",
-    top: -6,
-    right: -6,
+    top: -9,
+    right: -9,
     zIndex: 3,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: slateA.slateA5,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
     backgroundColor: slateA.slateA11,
   },
   addTile: {

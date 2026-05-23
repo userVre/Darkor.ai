@@ -148,10 +148,11 @@ export function InteriorRedesignStepThree({
               }}
             >
               {row.map((styleCard, columnIndex) => {
-                const isAiSuggestCard = styleCard.title === "AI Suggest";
+                const isAiSuggestCard = styleCard.id === "ai-suggest" || styleCard.title === "AI Suggest" || styleCard.title === "Suggestion IA";
                 const active = isAiSuggestCard ? smartSuggestEnabled : selectedStyles.includes(styleCard.title);
                 const CardIcon = isAiSuggestCard ? Wand2 : styleCard.icon ?? Sparkles;
                 const isIconCard = styleCard.image === null;
+                const displayLabel = isAiSuggestCard ? t("wizard.paintFlow.aiSuggest", { defaultValue: "Suggestion IA" }) : styleCard.label ?? styleCard.title;
 
                 return (
                   <Pressable
@@ -218,12 +219,12 @@ export function InteriorRedesignStepThree({
                           <CardIcon color="#FFFFFF" size={28} strokeWidth={2.1} />
                         </View>
                         <Text style={[stylesSheet.iconCardTitle, active ? stylesSheet.iconCardTitleActive : null]}>
-                          {styleCard.label ?? styleCard.title}
+                          {displayLabel}
                         </Text>
                         {styleCard.description ? (
                           <Text style={[stylesSheet.iconCardDescription, active ? stylesSheet.iconCardDescriptionActive : null]}>
                             {isAiSuggestCard && isAiSuggesting
-                              ? "Reading the room and selecting the best matching styles."
+                              ? t("wizard.interior.aiSuggesting", { defaultValue: "Analyse de la pièce et choix du style le plus adapté." })
                               : styleCard.description}
                           </Text>
                         ) : null}
@@ -267,7 +268,7 @@ export function InteriorRedesignStepThree({
                           active ? stylesSheet.labelTextActive : null,
                         ]}
                       >
-                          {styleCard.label ?? styleCard.title}
+                        {displayLabel}
                       </Text>
                     </View>
                   </Pressable>

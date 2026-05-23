@@ -531,7 +531,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   }, [anonymousId, notificationsDeclined, updateNotificationPreferences]);
   const stickyHeaderMetrics = getStickyStepHeaderMetrics(insets.top);
   const selectionLayoutScale = Math.min(width / SELECTION_REFERENCE_WIDTH, height / SELECTION_REFERENCE_HEIGHT, 1);
-  const selectionTitleTop = stickyHeaderMetrics.contentOffset;
+  const selectionTitleTop = stickyHeaderMetrics.contentOffset + scaleSelectionValue(8, selectionLayoutScale);
   const selectionPreviewWidth = Math.min(width - scaleSelectionValue(48, selectionLayoutScale), scaleSelectionValue(408, selectionLayoutScale));
   const selectionPreviewHeight = scaleSelectionValue(416, selectionLayoutScale);
   const selectionCardGap = scaleSelectionValue(12, selectionLayoutScale);
@@ -573,10 +573,12 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const colorPickerHueSliderHeight = scaleSelectionValue(32, selectionLayoutScale);
   const colorPickerHandleSize = scaleSelectionValue(24, selectionLayoutScale);
   const colorPickerSwatchSize = scaleSelectionValue(24, selectionLayoutScale);
-  const intakeHeading = selectedImage ? "Photo added. Mark the wall area next." : "Upload Your Vision";
+  const intakeHeading = selectedImage
+    ? t("wizard.paintFlow.intakeReadyTitle", { defaultValue: "Photo ajoutée. Marquez ensuite la zone du mur." })
+    : t("wizard.paintFlow.intakeTitle", { defaultValue: "Importez une photo de votre pièce" });
   const intakeSubtext = selectedImage
-    ? "Your photo is locked in. Next, brush the wall surfaces so the recolor stays precise around trim, furniture, and decor."
-    : "Upload a room photo for precise wall recoloring.";
+    ? t("wizard.paintFlow.intakeReadyBody", { defaultValue: "Votre photo est prête. Brossez les murs pour garder des bords propres autour des meubles et boiseries." })
+    : t("wizard.paintFlow.intakeBody", { defaultValue: "Utilisez une photo nette et bien éclairée pour recolorer les murs avec précision." });
   void intakeHeading;
   void intakeSubtext;
   const canContinueFromSelection = Boolean((isAiColorSuggestionEnabled || (selectedColorValue && isColorConfirmed)) && isSurfaceConfirmed);
@@ -596,7 +598,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
     [localizedColorLabels, previewColorButtonValue],
   );
   const selectedColorButtonText = isAiColorSuggestionEnabled
-    ? "AI Suggest"
+    ? t("wizard.paintFlow.aiSuggest", { defaultValue: "Suggestion IA" })
     : (previewColorOption?.title
     ?? previewColorCategory
     ?? previewColorButtonValue
@@ -612,6 +614,11 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
   const aiSuggestionButtonBorderColor = isAiColorSuggestionEnabled ? "#E0C66B" : (previewColorButtonValue ?? "#E2E2E2");
   const selectedSurfaceButtonText = isSurfaceConfirmed ? selectedSurfaceOption.label : t("wizard.paintFlow.choose");
   const selectedSurfaceIconColor = isSurfaceConfirmed ? "#FFFFFF" : "#0A0A0A";
+  const selectionBlockerText = !isAiColorSuggestionEnabled && !selectedColorValue
+    ? t("wizard.paintFlow.chooseColorToContinue", { defaultValue: "Choisissez une couleur ou une suggestion IA pour continuer." })
+    : !isSurfaceConfirmed
+      ? t("wizard.paintFlow.chooseSurfaceToContinue", { defaultValue: "Choisissez la surface à transformer pour continuer." })
+      : null;
 
   useEffect(() => {
     return () => {
@@ -841,8 +848,15 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
 
   const handleClose = useCallback(() => {
     triggerHaptic();
+    if (selectedImage && step !== "intake" && step !== "result") {
+      Alert.alert(t("common.alerts.exitTitle"), t("common.alerts.progressLost"), [
+        { text: t("common.actions.cancel"), style: "cancel" },
+        { text: t("common.actions.exit"), style: "destructive", onPress: () => router.replace(TABS_HOME_ROUTE as any) },
+      ]);
+      return;
+    }
     router.replace(TABS_HOME_ROUTE as any);
-  }, [router]);
+  }, [router, selectedImage, step, t]);
 
   const handleOpenPaywall = useCallback(() => {
     triggerHaptic();
@@ -1246,13 +1260,13 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                 ? `AI suggested professional wall color on the ${selectedSurfacePromptLabel} with a realistic ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`
                 : `${selectedColorTitle} (${selectedColorRgbLabel}) on the ${selectedSurfacePromptLabel} with a realistic ${DEFAULT_FINISH_LABEL.toLowerCase()} finish`,
               roomType: "Room",
-              displayStyle: isAiColorSuggestionEnabled ? "AI Suggested Paint" : `${selectedColorTitle} Paint`,
+              displayStyle: isAiColorSuggestionEnabled ? "Choix IA - Peinture" : `${selectedColorTitle} - Peinture`,
               customPrompt: isAiColorSuggestionEnabled
                 ? `Identify the room's current lighting and furniture, then choose the most complementary professional wall color for the selected ${selectedSurfacePromptLabel}.${visionDirection} Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`
                 : `Redesign only the selected ${selectedSurfacePromptLabel} using ${selectedColorTitle} in ${selectedColorRgbLabel}.${visionDirection} Preserve trim, ceilings, furniture, windows, doors, floors, artwork, reflections, and the original lighting exactly.`,
               targetColor: isAiColorSuggestionEnabled ? undefined : selectedColorRgbLabel,
               targetColorHex: isAiColorSuggestionEnabled ? undefined : selectedColorValue ?? undefined,
-              targetColorCategory: isAiColorSuggestionEnabled ? "AI Suggested Color" : (selectedColorCategory ?? selectedColorTitle),
+              targetColorCategory: isAiColorSuggestionEnabled ? "Couleur choisie par l'IA" : (selectedColorCategory ?? selectedColorTitle),
               targetSurface: selectedSurface,
               aspectRatio: simplifyRatio(selectedImage.width, selectedImage.height),
               finishId: DEFAULT_FINISH_ID,
@@ -1449,7 +1463,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
 
       {step !== "processing" && step !== "result" && step !== "intake" ? (
         <ServiceWizardHeader
-          title="Wall"
+          title={t("wizard.paintFlow.shortTitle", { defaultValue: "Mur" })}
           step={currentStepNumber}
           totalSteps={3}
           creditCount={availableCredits}
@@ -1528,7 +1542,7 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="AI suggest wall color"
+                    accessibilityLabel={t("wizard.paintFlow.aiSuggestColorA11y", { defaultValue: "Suggestion IA pour la couleur du mur" })}
                     onPress={handleAiColorSuggestionPress}
                     style={[
                       styles.aiSuggestionButton,
@@ -1570,12 +1584,12 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
             </View>
 
             <View style={[styles.selectionVisionCard, { width: selectionPreviewWidth, marginTop: scaleSelectionValue(18, selectionLayoutScale) }]}>
-              <Text style={styles.selectionVisionLabel}>Describe Vision</Text>
-              <Text style={styles.selectionVisionHelper}>Optional texture or wall treatment</Text>
+              <Text style={styles.selectionVisionLabel}>{t("wizard.paintFlow.visionLabel", { defaultValue: "Décrivez votre vision" })}</Text>
+              <Text style={styles.selectionVisionHelper}>{t("wizard.paintFlow.visionHelper", { defaultValue: "Optionnel : texture, matière ou ambiance du mur" })}</Text>
               <TextInput
                 value={visionPrompt}
                 onChangeText={setVisionPrompt}
-                placeholder="White brick wall"
+                placeholder={t("wizard.paintFlow.visionPlaceholder", { defaultValue: "Mur blanc texturé, finition mate et lumineuse" })}
                 placeholderTextColor="#94A3B8"
                 style={styles.selectionVisionInput}
                 maxLength={160}
@@ -1624,6 +1638,9 @@ export function PaintWizard({ onFlowActiveChange, onProcessingStateChange }: Pai
                 </Text>
               )}
             </Pressable>
+            {!canContinueFromSelection && selectionBlockerText ? (
+              <Text style={styles.selectionFooterHint}>{selectionBlockerText}</Text>
+            ) : null}
           </View>
 
           <AnimatePresence>
@@ -2299,6 +2316,14 @@ const styles = StyleSheet.create({
   },
   selectionContinueButtonTextDisabled: {
     color: "#A0A0A0",
+  },
+  selectionFooterHint: {
+    marginTop: 8,
+    color: "#64748B",
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: "center",
+    ...fonts.medium,
   },
   selectionVisionCard: {
     borderRadius: 28,

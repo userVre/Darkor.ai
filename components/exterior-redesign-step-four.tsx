@@ -139,7 +139,9 @@ export function ExteriorRedesignStepFour({
             >
               <Wand2 color={useAISelection ? DESIGN_WIZARD_SELECTION_BLUE : "#111111"} size={22} strokeWidth={2.1} />
             </Pressable>
-            <Text style={[styles.aiPaletteLabel, useAISelection ? styles.aiPaletteLabelActive : null]}>Random AI Pick</Text>
+            <Text style={[styles.aiPaletteLabel, useAISelection ? styles.aiPaletteLabelActive : null]}>
+              {t("wizard.paintFlow.aiSuggest", { defaultValue: "Suggestion IA" })}
+            </Text>
           </View>
           <View style={{ width: paletteGridWidth, alignSelf: "center" }}>
             {paletteRows.map((row, rowIndex) => (
