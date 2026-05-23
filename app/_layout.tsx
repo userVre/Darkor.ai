@@ -110,12 +110,12 @@ function applyGlobalTypographyDefaults(
 
   TextWithDefaults.defaultProps = {
     ...TextWithDefaults.defaultProps,
-    style: [localizedFonts.regular, { letterSpacing: 0.3, textAlign: getDirectionalTextAlign(isRTL) }],
+    style: [localizedFonts.regular, { letterSpacing: 0, textAlign: getDirectionalTextAlign(isRTL) }],
   };
 
   TextInputWithDefaults.defaultProps = {
     ...TextInputWithDefaults.defaultProps,
-    style: [localizedFonts.regular, { letterSpacing: 0.3, textAlign: getDirectionalTextAlign(isRTL) }],
+    style: [localizedFonts.regular, { letterSpacing: 0, textAlign: getDirectionalTextAlign(isRTL) }],
   };
 
   lastAppliedTypographyKey = nextTypographyKey;

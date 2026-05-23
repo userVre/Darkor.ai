@@ -1,4 +1,4 @@
-import {NativeModules, Platform} from "react-native";
+import {NativeModules} from "react-native";
 
 import type {DiamondPackId, PricingTierId} from "./dynamic-pricing";
 import {getEnvValue} from "./env";
@@ -388,23 +388,12 @@ export function resolveRevenueCatSubscription(info?: RevenueCatCustomerInfo | nu
 }
 
 export function getRevenueCatApiKey() {
-  if (Platform.OS === "ios") {
-    return (
-      process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY
-      ?? process.env.EXPO_PUBLIC_REVENUECAT_API_KEY
-      ?? getEnvValue("revenueCatIosKey")
-      ?? getEnvValue("revenueCatKey")
-    );
-  }
-  if (Platform.OS === "android") {
-    return (
-      process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY
-      ?? process.env.EXPO_PUBLIC_REVENUECAT_API_KEY
-      ?? getEnvValue("revenueCatAndroidKey")
-      ?? getEnvValue("revenueCatKey")
-    );
-  }
-  return process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? getEnvValue("revenueCatKey");
+  return (
+    process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY
+    ?? process.env.EXPO_PUBLIC_REVENUECAT_API_KEY
+    ?? getEnvValue("revenueCatAndroidKey")
+    ?? getEnvValue("revenueCatKey")
+  );
 }
 
 function isRevenueCatTestApiKey(apiKey: string) {

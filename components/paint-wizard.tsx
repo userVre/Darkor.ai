@@ -2733,7 +2733,7 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
-    letterSpacing: 0.3,
+    letterSpacing: 0,
   },
   topSubtitle: {
     color: "#a1a1aa",
@@ -3268,7 +3268,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: 0.3,
+    letterSpacing: 0,
     textAlign: "left",
   },
   disabledButtonText: {
@@ -3276,7 +3276,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: 0.3,
+    letterSpacing: 0,
     textAlign: "left",
   },
   roomReferenceFrame: {
@@ -3305,7 +3305,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
-    letterSpacing: 0.3,
+    letterSpacing: 0,
   },
   selectionGrid: {
     flexDirection: "row",
@@ -3471,7 +3471,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "700",
-    letterSpacing: 0.3,
+    letterSpacing: 0,
     textTransform: "uppercase",
   },
   summaryTitle: {
@@ -3479,7 +3479,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: 0.3,
+    letterSpacing: 0,
   },
   summaryText: {
     color: "#a1a1aa",
@@ -3665,7 +3665,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: 0.3,
+    letterSpacing: 0,
     textAlign: "left",
     maxWidth: 340,
   },
@@ -3685,7 +3685,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontFamily: fonts.regular.fontFamily,
     fontWeight: "800",
-    letterSpacing: 0.3,
+    letterSpacing: 0,
     textAlign: "left",
   },
   resultSubheading: {

@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 9,
     lineHeight: 11,
-    letterSpacing: 0.3,
+    letterSpacing: 0,
     textTransform: "uppercase",
     fontFamily: fonts.semibold.fontFamily,
     fontWeight: fonts.semibold.fontWeight,

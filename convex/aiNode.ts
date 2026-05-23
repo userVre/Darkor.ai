@@ -276,10 +276,14 @@ function resolveAzureImageSize(args: {
   outputResolution?: string;
   aspectRatio?: string;
 }) {
-  if (args.quality === "high") {
+  const ratio = parseAspectRatio(args.aspectRatio);
+  if (ratio && ratio >= 1.2) {
+    return "1536x1024";
+  }
+  if (ratio && ratio <= 0.83) {
     return "1024x1536";
   }
-  if (args.quality === "medium") {
+  if (ratio) {
     return "1024x1024";
   }
 
@@ -287,14 +291,6 @@ function resolveAzureImageSize(args: {
 
   if (requestedSize === "1024x1024" || requestedSize === "1024x1536" || requestedSize === "1536x1024") {
     return requestedSize as AzureRenderSize;
-  }
-
-  const ratio = parseAspectRatio(args.aspectRatio);
-  if (ratio && ratio >= 1.2) {
-    return "1536x1024";
-  }
-  if (ratio && ratio <= 0.83) {
-    return "1024x1536";
   }
 
   return "1024x1024";
@@ -427,6 +423,60 @@ function getAzureImageFilename(blob: Blob, index: number, prefix: string) {
 function normalizeAzureImageBlob(blob: Blob) {
   const mimeType = getAzureImageMimeType(blob);
   return blob.type === mimeType ? blob : new Blob([blob], { type: mimeType });
+}
+
+async function prepareAzureEditMaskBlob(maskBlob: Blob, sourceBlob: Blob) {
+  try {
+    const [maskBuffer, sourceBuffer] = await Promise.all([
+      blobToImageBuffer(maskBlob, "prepareAzureEditMask:mask"),
+      blobToImageBuffer(sourceBlob, "prepareAzureEditMask:source"),
+    ]);
+
+    if (!maskBuffer || !sourceBuffer) {
+      throw new ConvexError("Unable to read mask or source image bytes.");
+    }
+
+    const sharp = await loadSharp();
+    const sourceMetadata = await sharp(sourceBuffer, { failOn: "none" }).metadata();
+    const width = Math.max(1, Math.round(sourceMetadata.width ?? SAFE_INPUT_MAX_IMAGE_DIMENSION));
+    const height = Math.max(1, Math.round(sourceMetadata.height ?? SAFE_INPUT_MAX_IMAGE_DIMENSION));
+    const { data, info } = await sharp(maskBuffer, { failOn: "none" })
+      .rotate()
+      .resize({ width, height, fit: "fill" })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    for (let offset = 0; offset < data.length; offset += info.channels) {
+      const red = data[offset] ?? 0;
+      const green = data[offset + 1] ?? red;
+      const blue = data[offset + 2] ?? red;
+      const alpha = data[offset + 3] ?? 255;
+      const luma = (red + green + blue) / 3;
+      const selectedForEdit = alpha > 0 && luma > 24;
+      data[offset] = 0;
+      data[offset + 1] = 0;
+      data[offset + 2] = 0;
+      data[offset + 3] = selectedForEdit ? 0 : 255;
+    }
+
+    const png = await sharp(data, {
+      raw: {
+        width: info.width,
+        height: info.height,
+        channels: info.channels,
+      },
+    })
+      .png()
+      .toBuffer();
+
+    return new Blob([png], { type: "image/png" });
+  } catch (error) {
+    console.warn("prepareAzureEditMask: failed to convert mask to transparent PNG; sending original mask", {
+      message: error instanceof Error ? error.message : "Unknown mask conversion error",
+    });
+    return normalizeAzureImageBlob(maskBlob);
+  }
 }
 
 function createAzureMultipartFile(blob: Blob, filename: string) {
@@ -618,6 +668,7 @@ async function runAzureImageGeneration(args: {
     formData.append("prompt", composedPrompt);
     formData.append("size", args.renderProfile.size);
     formData.append("quality", args.renderProfile.quality);
+    formData.append("input_fidelity", "high");
     formData.append("n", "1");
 
     const safeSourceImages = await Promise.all(
@@ -637,7 +688,7 @@ async function runAzureImageGeneration(args: {
     }
 
     if (args.maskBlob) {
-      const normalizedMaskBlob = normalizeAzureImageBlob(args.maskBlob);
+      const normalizedMaskBlob = await prepareAzureEditMaskBlob(args.maskBlob, safeSourceImages[0] ?? args.sourceBlob);
       const maskFilename = getAzureImageFilename(normalizedMaskBlob, 0, "mask");
       formData.append("mask", createAzureMultipartFile(normalizedMaskBlob, maskFilename), maskFilename);
     }

@@ -1,7 +1,7 @@
 import {ArrowLeft, X} from "@/components/material-icons";
 import {type ReactNode} from "react";
 import {useTranslation} from "react-i18next";
-import {I18nManager, Platform, StyleSheet, View} from "react-native";
+import {I18nManager, StyleSheet, View} from "react-native";
 import {IconButton, Surface, Text, useTheme as usePaperTheme} from "react-native-paper";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
@@ -50,7 +50,7 @@ export function getStickyStepHeaderMetrics(topInset: number) {
 }
 
 export function getStickyStepHeaderMetricsWithProgress(topInset: number, showProgress: boolean) {
-  const safeTop = Platform.OS === "android" ? Math.max(topInset, 12) : Math.max(topInset, 16);
+  const safeTop = Math.max(topInset, 12);
   const height =
     safeTop +
     HEADER_TOP_PADDING +

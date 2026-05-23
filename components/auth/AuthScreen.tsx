@@ -9,9 +9,7 @@ import {useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {
   Keyboard,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   ScrollView,
   StyleSheet,
   useWindowDimensions,
@@ -54,8 +52,8 @@ function getAuthColors(theme: Theme) {
     accent: DARK_ACTION,
     accentText: "#FFFFFF",
     googleText: "#1A1A1A",
-    appleBackground: theme.surfaceMuted,
-    appleBorder: theme.borderLight,
+    socialBackground: theme.surfaceMuted,
+    socialBorder: theme.borderLight,
     divider: theme.border,
     otpSheet: theme.surface,
     modalOverlay: theme.isDark ? "rgba(0,0,0,0.55)" : "rgba(17,24,39,0.28)",
@@ -87,17 +85,6 @@ function GoogleIcon() {
         d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
       />
       <Path fill="none" d="M0 0h48v48H0z" />
-    </Svg>
-  );
-}
-
-function AppleIcon({color}: {color: string}) {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 24 24">
-      <Path
-        fill={color}
-        d="M17.05 12.54c-.03-3.03 2.47-4.49 2.58-4.56-1.42-2.07-3.62-2.35-4.39-2.38-1.85-.19-3.65 1.11-4.58 1.11-.95 0-2.38-1.09-3.93-1.06-1.99.03-3.86 1.18-4.88 3-2.11 3.65-.54 9.02 1.49 11.97 1.01 1.45 2.19 3.06 3.74 3 1.51-.06 2.07-.96 3.89-.96 1.8 0 2.33.96 3.91.93 1.63-.03 2.65-1.45 3.62-2.91 1.17-1.66 1.64-3.3 1.66-3.39-.04-.01-3.08-1.17-3.11-4.75zM14.03 3.64c.81-.99 1.37-2.33 1.21-3.68-1.17.05-2.63.81-3.47 1.78-.74.85-1.4 2.25-1.22 3.55 1.32.1 2.64-.66 3.48-1.65z"
-      />
     </Svg>
   );
 }
@@ -169,7 +156,6 @@ function authNotReadyMessage(t: ReturnType<typeof useTranslation>["t"]) {
 }
 
 function friendlySocialError(
-  provider: "google" | "apple",
   error: unknown,
   t: ReturnType<typeof useTranslation>["t"],
 ) {
@@ -187,9 +173,7 @@ function friendlySocialError(
     });
   }
 
-  return provider === "google"
-    ? t("auth.screen.errors.googleUnavailable")
-    : t("auth.screen.errors.appleUnavailable");
+  return t("auth.screen.errors.googleUnavailable");
 }
 
 export function AuthScreen({mode}: AuthScreenProps) {
@@ -211,7 +195,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState<"email" | "google" | "apple" | "otp" | "resend" | null>(null);
+  const [loading, setLoading] = useState<"email" | "google" | "otp" | "resend" | null>(null);
   const [errors, setErrors] = useState<ErrorMap>({});
   const [authServiceSlow, setAuthServiceSlow] = useState(false);
   const [otpVisible, setOtpVisible] = useState(false);
@@ -285,13 +269,13 @@ export function AuthScreen({mode}: AuthScreenProps) {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSocialAuth = async (strategy: "oauth_google" | "oauth_apple", provider: "google" | "apple") => {
+  const handleSocialAuth = async (strategy: "oauth_google") => {
     if (!clerkLoaded || !signInLoaded || !signUpLoaded) {
       setErrors({form: authNotReadyMessage(t)});
       return;
     }
 
-    setLoading(provider);
+    setLoading("google");
     setErrors({});
     try {
       const result = await startSSOFlow({
@@ -313,12 +297,12 @@ export function AuthScreen({mode}: AuthScreenProps) {
 
       if (result.authSessionResult?.type !== "cancel" && result.authSessionResult?.type !== "dismiss") {
         setErrors({
-          form: provider === "google" ? t("auth.screen.errors.googleUnavailable") : t("auth.screen.errors.appleUnavailable"),
+          form: t("auth.screen.errors.googleUnavailable"),
         });
       }
     } catch (error) {
       setErrors({
-        form: friendlySocialError(provider, error, t),
+        form: friendlySocialError(error, t),
       });
     } finally {
       setLoading(null);
@@ -326,11 +310,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
   };
 
   const handleGoogle = async () => {
-    await handleSocialAuth("oauth_google", "google");
-  };
-
-  const handleApple = async () => {
-    await handleSocialAuth("oauth_apple", "apple");
+    await handleSocialAuth("oauth_google");
   };
 
   const handleSignIn = async () => {
@@ -519,10 +499,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
         style={[styles.navButton, styles.skipButton, {top: topButtonOffset}]}
       />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.keyboardAvoider}
-      >
+      <View style={styles.keyboardAvoider}>
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
           style={styles.scroll}
@@ -570,18 +547,6 @@ export function AuthScreen({mode}: AuthScreenProps) {
               labelStyle={styles.socialButtonLabel}
             >
               {t("auth.screen.googleCta")}
-            </Button>
-            <Button
-              mode="outlined"
-              icon={() => <AppleIcon color={AUTH_COLORS.textPrimary} />}
-              onPress={() => void handleApple()}
-              disabled={loading !== null}
-              loading={loading === "apple"}
-              style={styles.socialButton}
-              contentStyle={styles.socialButtonContent}
-              labelStyle={styles.socialButtonLabel}
-            >
-              {t("auth.screen.appleCta")}
             </Button>
           </View>
 
@@ -705,7 +670,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
         </View>
         </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </View>
 
       <Modal
         animationType="slide"
@@ -921,23 +886,10 @@ function createStyles(AUTH_COLORS: AuthColors) {
   },
   googleButton: {
     backgroundColor: "#FFFFFF",
-    borderColor: AUTH_COLORS.appleBorder,
-  },
-  appleButton: {
-    backgroundColor: AUTH_COLORS.appleBackground,
-    borderColor: AUTH_COLORS.appleBorder,
+    borderColor: AUTH_COLORS.socialBorder,
   },
   googleText: {
     color: AUTH_COLORS.googleText,
-    fontSize: 15,
-    fontWeight: "600",
-    letterSpacing: 0,
-    flexShrink: 1,
-    textAlign: "center",
-    includeFontPadding: false,
-  },
-  appleText: {
-    color: AUTH_COLORS.textPrimary,
     fontSize: 15,
     fontWeight: "600",
     letterSpacing: 0,

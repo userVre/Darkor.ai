@@ -8,7 +8,6 @@ import type * as ExpoNotifications from "expo-notifications";
 const CHANNEL_ID = "tiered-engagement";
 const STATE_KEY = "homedecor:tiered-notifications:v2";
 const DECLINED_KEY = "homedecor:notifications-declined:v1";
-const IOS_PROVISIONAL_KEY = "homedecor:ios-provisional-notifications-at:v1";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 const FREE_DAILY_DIAMOND_CAP = 3;
@@ -137,20 +136,11 @@ function configureNotificationHandler(Notifications: typeof ExpoNotifications) {
   notificationHandlerConfigured = true;
 }
 
-function isPermissionGranted(status: ExpoNotifications.NotificationPermissionsStatus, Notifications: typeof ExpoNotifications) {
-  return (
-    status.granted ||
-    status.status === "granted" ||
-    status.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL ||
-    status.ios?.status === Notifications.IosAuthorizationStatus.EPHEMERAL
-  );
+function isPermissionGranted(status: ExpoNotifications.NotificationPermissionsStatus) {
+  return status.granted || status.status === "granted";
 }
 
-function isFullPermissionGranted(status: ExpoNotifications.NotificationPermissionsStatus, Notifications: typeof ExpoNotifications) {
-  if (Platform.OS === "ios" && status.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL) {
-    return false;
-  }
-
+function isFullPermissionGranted(status: ExpoNotifications.NotificationPermissionsStatus) {
   return status.granted || status.status === "granted";
 }
 
@@ -207,7 +197,7 @@ export const safeNotifications = {
       }
 
       const result = await Notifications.requestPermissionsAsync(options);
-      return {granted: isPermissionGranted(result, Notifications), status: result.status};
+      return {granted: isPermissionGranted(result), status: result.status};
     } catch (error) {
       console.warn("[Notifications] Unable to request notification permissions", error);
       return {granted: false};
@@ -301,7 +291,7 @@ async function canScheduleWithoutPrompt(notificationsDeclined?: boolean | null) 
 
     await setupNotificationChannel(Notifications);
     const current = await Notifications.getPermissionsAsync();
-    return isPermissionGranted(current, Notifications);
+    return isPermissionGranted(current);
   } catch (error) {
     console.warn("[Notifications] Unable to inspect notification permission", error);
     return false;
@@ -544,24 +534,9 @@ export async function requestPermissionsGracefully(args: RequestPermissionArgs =
     await setupNotificationChannel(Notifications);
 
     const current = await Notifications.getPermissionsAsync();
-    if (isFullPermissionGranted(current, Notifications)) {
+    if (isFullPermissionGranted(current)) {
       await saveGrantedPushToken(Notifications, args.savePreferences, args.anonymousId);
       return {granted: true, status: current.status};
-    }
-
-    if (Platform.OS === "ios" && current.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL) {
-      const provisionalAtRaw = await AsyncStorage.getItem(IOS_PROVISIONAL_KEY).catch(() => null);
-      const provisionalAt = Number(provisionalAtRaw ?? 0);
-      if (!Number.isFinite(provisionalAt) || provisionalAt <= 0) {
-        await AsyncStorage.setItem(IOS_PROVISIONAL_KEY, String(Date.now())).catch(() => undefined);
-        await saveGrantedPushToken(Notifications, args.savePreferences, args.anonymousId);
-        return {granted: true, status: current.status};
-      }
-
-      if (Date.now() - provisionalAt < 3 * DAY_MS) {
-        await saveGrantedPushToken(Notifications, args.savePreferences, args.anonymousId);
-        return {granted: true, status: current.status};
-      }
     }
 
     if (!current.canAskAgain) {
@@ -569,19 +544,9 @@ export async function requestPermissionsGracefully(args: RequestPermissionArgs =
       return {granted: false, reason: "cannot-ask-again" as const};
     }
 
-    const requested = await Notifications.requestPermissionsAsync({
-      ios: {
-        allowAlert: true,
-        allowBadge: false,
-        allowSound: true,
-        allowProvisional: Platform.OS === "ios" && current.status === "undetermined",
-      },
-    });
+    const requested = await Notifications.requestPermissionsAsync();
 
-    if (isPermissionGranted(requested, Notifications)) {
-      if (Platform.OS === "ios" && requested.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL) {
-        await AsyncStorage.setItem(IOS_PROVISIONAL_KEY, String(Date.now())).catch(() => undefined);
-      }
+    if (isPermissionGranted(requested)) {
       await saveGrantedPushToken(Notifications, args.savePreferences, args.anonymousId);
       return {granted: true, status: requested.status};
     }

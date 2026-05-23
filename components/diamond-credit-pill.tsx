@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     color: PRIMARY_PURPLE,
     fontSize: 14,
     lineHeight: 16,
-    letterSpacing: 0.3,
+    letterSpacing: 0,
     ...fonts.bold,
   },
 });

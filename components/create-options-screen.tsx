@@ -16,7 +16,6 @@ import {withWorkspaceFlowId} from "../lib/try-it-flow";
 import {useTheme, type Theme} from "../styles/theme";
 import {HomeHeaderPills} from "./home-header-pills";
 import {HomeToolCard, type HomeToolCardItem} from "./home-tool-card";
-import {useViewerCredits} from "./viewer-credits-context";
 import {useWorkspaceDraft} from "./workspace-context";
 
 const FIRST_LAUNCH_DISCLOSURE_KEY = "homedecor:first-launch-disclosure-accepted";
@@ -29,10 +28,9 @@ export function CreateOptionsScreen() {
   const insets = useSafeAreaInsets();
   const {isSignedIn} = useAuth();
   const {clearDraft} = useWorkspaceDraft();
-  const {hasProAccess} = useViewerCredits();
   const canCreateAsGuest = isSignedIn || ENABLE_GUEST_WIZARD_TEST_MODE;
-  const sidePadding = md3Spacing.extraLarge;
-  const headerHeight = insets.top + 64;
+  const sidePadding = md3Spacing.screen;
+  const headerHeight = insets.top + 56;
   const [isDisclosureVisible, setIsDisclosureVisible] = useState(false);
   const toolCards = useMemo<HomeToolCardItem[]>(
     () => [
@@ -83,8 +81,6 @@ export function CreateOptionsScreen() {
         description: t("home.tools.smartSpacePlanning.description"),
         serviceParam: "layout",
         topLeftRadius: 16,
-        requiresPro: true,
-        locked: !hasProAccess,
       },
       {
         id: "replace-objects",
@@ -93,8 +89,6 @@ export function CreateOptionsScreen() {
         description: t("home.tools.replace.description"),
         serviceParam: "replace",
         topLeftRadius: 16,
-        requiresPro: true,
-        locked: !hasProAccess,
       },
       {
         id: "reference-style",
@@ -103,11 +97,9 @@ export function CreateOptionsScreen() {
         description: t("home.tools.referenceStyle.description"),
         href: "/workspace?service=interior&entrySource=reference-style",
         topLeftRadius: 16,
-        requiresPro: true,
-        locked: !hasProAccess,
       },
     ],
-    [hasProAccess, i18n.language, t],
+    [i18n.language, t],
   );
 
   useEffect(() => {
@@ -162,11 +154,6 @@ export function CreateOptionsScreen() {
         return;
       }
 
-      if (item.requiresPro && !hasProAccess) {
-        Alert.alert(t("elitePass.fullPage.proToolLocked"));
-        return;
-      }
-
       routeToToolFlow(redirectTo);
     } catch (error) {
       Alert.alert(t("home.errors.tryItUnavailableTitle"), error instanceof Error ? error.message : t("common.actions.tryAgain"));
@@ -204,7 +191,7 @@ export function CreateOptionsScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: headerHeight + md3Spacing.doubleExtraLarge,
+            paddingTop: headerHeight + md3Spacing.large,
             paddingHorizontal: sidePadding,
             paddingBottom: Math.max(insets.bottom + 120, 148),
           },
@@ -258,7 +245,7 @@ function createStyles(theme: Theme) {
       right: 0,
       zIndex: 10,
       paddingHorizontal: md3Spacing.large,
-      paddingBottom: md3Spacing.small,
+      paddingBottom: 0,
       backgroundColor: theme.bg,
     },
     scrollView: {
@@ -269,10 +256,10 @@ function createStyles(theme: Theme) {
       gap: 0,
     },
     toolList: {
-      gap: md3Spacing.extraLarge,
+      gap: md3Spacing.section,
     },
     toolListItem: {
-      gap: md3Spacing.extraLarge,
+      gap: md3Spacing.section,
     },
     disclosureBody: {
       color: theme.textSecondary,

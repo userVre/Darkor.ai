@@ -90,7 +90,7 @@ function createStyles(theme: Theme) {
       gap: 8,
     },
     appbar: {
-      minHeight: 64,
+      minHeight: 56,
       paddingHorizontal: 0,
       backgroundColor: theme.paperTheme.colors.surface,
     },
@@ -100,9 +100,9 @@ function createStyles(theme: Theme) {
       textAlign: "center",
     },
     sideSlot: {
-      minWidth: 56,
+      minWidth: 48,
       flexShrink: 0,
-      minHeight: 48,
+      minHeight: 44,
       justifyContent: "center",
       alignItems: "flex-start",
     },
@@ -114,8 +114,8 @@ function createStyles(theme: Theme) {
       letterSpacing: 0,
     },
     iconBadgeWrap: {
-      width: 48,
-      height: 48,
+      width: 44,
+      height: 44,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -130,11 +130,11 @@ function createStyles(theme: Theme) {
       color: theme.paperTheme.colors.onError,
     },
     upgradeProButton: {
-      borderRadius: 20,
+      borderRadius: 22,
     },
     upgradeProContent: {
       minHeight: 40,
-      paddingHorizontal: md3Spacing.small,
+      paddingHorizontal: md3Spacing.medium,
     },
     upgradeProText: {
       color: theme.paperTheme.colors.onSecondaryContainer,

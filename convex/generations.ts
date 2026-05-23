@@ -6,7 +6,6 @@ import {
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
-import { ensureAzureEndpointPrefix } from "./azureOpenAI";
 import { buildDesignPrompt as buildAIDesignPrompt, normalizeAspectRatio as normalizeAIAspectRatio } from "../lib/design-prompt-builder";
 import {
   canUserGenerateState,
@@ -63,7 +62,6 @@ type GenerationUser = {
   lastClaimAt?: number;
 };
 
-const PRO_TOOL_LOCK_MESSAGE = "This tool is reserved for PRO members.";
 type DiamondSource = "daily_free" | "purchased_pack" | "referral";
 type RenderQuality = "medium" | "high";
 type RenderUserTier = "free" | "paid";
@@ -294,10 +292,6 @@ function computeReviewPrompt(nextCount: number, lastPromptAt: number, ignoreCool
   return ignoreCooldown ? nextCount >= 2 : !cooldownActive && (nextCount === 2 || nextCount === 3);
 }
 
-function isRestrictedServiceType(serviceType: RequestedServiceType | StoredServiceType) {
-  return serviceType === "layout" || serviceType === "replace" || serviceType === "reference";
-}
-
 async function reserveGenerationAllowance(
   ctx: any,
   ownerId: string,
@@ -312,9 +306,6 @@ async function reserveGenerationAllowance(
   const now = Date.now();
   const state = await syncDerivedSubscriptionState(ctx, user, now);
   const hasPaidRenderAccess = hasActivePaidRenderAccess(user, state, now);
-  if (isRestrictedServiceType(requestedServiceType) && !state.hasProAccess) {
-    throw new ConvexError(PRO_TOOL_LOCK_MESSAGE);
-  }
   if (state.blocked) {
     throw new ConvexError(getLimitExceededMessage(state));
   }
@@ -527,18 +518,15 @@ function normalizeGenerationSchedulerError(message?: string | null) {
 
 function validateAzureGenerationEnv() {
   const endpoint = trimOptional(process.env.AZURE_OPENAI_ENDPOINT);
-  const deploymentName = trimOptional(process.env.AZURE_OPENAI_DEPLOYMENT_NAME);
   const apiKey = trimOptional(process.env.AZURE_OPENAI_API_KEY);
 
-  if (!endpoint || !deploymentName || !apiKey) {
+  if (!endpoint || !apiKey) {
     throw new ConvexError("Missing Azure Environment Variables in Convex Dashboard");
   }
 
   return {
     endpoint,
-    deploymentName,
     apiKey,
-    requestUrl: `${ensureAzureEndpointPrefix(endpoint)}openai/deployments/${deploymentName}/images/generations?api-version=2025-04-01-preview`,
   };
 }
 

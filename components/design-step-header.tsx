@@ -1,6 +1,6 @@
 import {ArrowLeft, X} from "@/components/material-icons";
 import {useTranslation} from "react-i18next";
-import {I18nManager, Platform, StyleSheet, View} from "react-native";
+import {I18nManager, StyleSheet, View} from "react-native";
 import {IconButton, Surface, Text, useTheme as usePaperTheme} from "react-native-paper";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
@@ -42,7 +42,7 @@ const DESIGN_HEADER_PROGRESS_HEIGHT = 12;
 const DESIGN_HEADER_SIDE_WIDTH = DESIGN_HEADER_ACTION_SIZE;
 
 export function getDesignStepHeaderMetrics(topInset: number) {
-  const safeTop = Platform.OS === "android" ? Math.max(topInset, 12) : Math.max(topInset, 16);
+  const safeTop = Math.max(topInset, 12);
   const height =
     safeTop +
     DESIGN_HEADER_TOP_PADDING +

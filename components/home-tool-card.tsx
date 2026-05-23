@@ -15,8 +15,6 @@ export type HomeToolCardItem = {
   serviceParam?: "interior" | "facade" | "garden" | "paint" | "floor" | "layout" | "replace";
   href?: string;
   topLeftRadius?: number;
-  requiresPro?: boolean;
-  locked?: boolean;
 };
 
 type HomeToolCardProps = {
@@ -29,11 +27,9 @@ export function HomeToolCard({item, onPress, style}: HomeToolCardProps) {
   const {t} = useTranslation();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const isLocked = item.locked === true;
-
   return (
     <Card
-      accessibilityLabel={`${item.title}. ${item.description}${isLocked ? ". Locked" : ""}`}
+      accessibilityLabel={`${item.title}. ${item.description}`}
       accessibilityRole="button"
       mode="elevated"
       onPress={() => onPress(item)}

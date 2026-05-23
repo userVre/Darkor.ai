@@ -101,8 +101,8 @@ export function InteriorRedesignStepOne({
   const sideInset = scaleValue(20, layoutScale);
   const contentInset = 24;
   const mainWidth = Math.min(width - sideInset * 2, scaleValue(416, layoutScale));
-  const contentTop = headerMetrics.contentOffset + (isSmartSpaceVariant ? 32 : 0);
-  const uploadTopSpacing = scaleValue(isSmartSpaceVariant ? 14 : 16, layoutScale);
+  const contentTop = headerMetrics.contentOffset + (isSmartSpaceVariant ? 16 : 0);
+  const uploadTopSpacing = scaleValue(isSmartSpaceVariant ? 24 : 24, layoutScale);
   const containerSize = mainWidth;
   const innerScale = containerSize / 416;
   const exampleThumbnailSize = scaleValue(124, layoutScale);
@@ -110,8 +110,8 @@ export function InteriorRedesignStepOne({
     ? Math.max(scaleValue(264, layoutScale), Math.min(containerSize - scaleValue(108, layoutScale), scaleValue(340, layoutScale)))
     : Math.max(scaleValue(252, layoutScale), Math.min(containerSize - scaleValue(112, layoutScale), scaleValue(324, layoutScale)));
   const rowThumbnailSize = isSmartSpaceVariant ? 68 : 64;
-  const examplesTitleTopSpacing = isSmartSpaceVariant ? scaleValue(18, layoutScale) : scaleValue(32, layoutScale);
-  const examplesRailTopSpacing = isSmartSpaceVariant ? scaleValue(12, layoutScale) : scaleValue(24, layoutScale);
+  const examplesTitleTopSpacing = isSmartSpaceVariant ? scaleValue(24, layoutScale) : scaleValue(32, layoutScale);
+  const examplesRailTopSpacing = isSmartSpaceVariant ? scaleValue(16, layoutScale) : scaleValue(24, layoutScale);
   const continueBottom = Math.max(insets.bottom + scaleValue(24, layoutScale), scaleValue(36, layoutScale));
   const canContinue = selectedPhotos.length > 0;
   const canAddMore = selectedPhotos.length < maxPhotos;

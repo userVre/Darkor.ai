@@ -44,13 +44,13 @@ export const theme = {
     subtitle: {
       fontSize: 15,
       fontWeight: "400",
-      letterSpacing: 0.3,
+      letterSpacing: 0,
       lineHeight: 22,
     },
     label: {
       fontSize: 11,
       fontWeight: "600",
-      letterSpacing: 0.3,
+      letterSpacing: 0,
       textTransform: "uppercase",
     },
     body: {

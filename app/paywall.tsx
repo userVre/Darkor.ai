@@ -1119,14 +1119,14 @@ function createStyles(theme: Theme) {
     fontSize: 12,
     lineHeight: 16,
     textTransform: "uppercase",
-    letterSpacing: 0.3,
+    letterSpacing: 0,
   },
   softTitle: {
     color: PAYWALL_TEXT_PRIMARY,
     fontSize: 26,
     lineHeight: 31,
     textAlign: "center",
-    letterSpacing: 0.3,
+    letterSpacing: 0,
   },
   softSubtitle: {
     color: PAYWALL_TEXT_SECONDARY,

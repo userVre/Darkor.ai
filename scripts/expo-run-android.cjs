@@ -121,7 +121,6 @@ async function main() {
     "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
     "EXPO_PUBLIC_CONVEX_URL",
     "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY",
-    "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY",
   ];
   const present = envKeys.filter((key) => !!process.env[key]);
   console.log(`env: verified ${present.length ? present.join(" ") : "none"}`);

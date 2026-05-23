@@ -3,37 +3,37 @@ import type {TextStyle} from "react-native";
 import {fonts} from "../styles/typography";
 import {DS} from "./design-system";
 
-const DARK_ACTION_SURFACE = "rgba(17, 24, 39, 0.08)";
-const DARK_ACTION_SURFACE_STRONG = "rgba(17, 24, 39, 0.14)";
-const DARK_ACTION_BORDER = "rgba(17, 24, 39, 0.18)";
-const DARK_ACTION_BORDER_STRONG = "rgba(17, 24, 39, 0.32)";
+const EXPRESSIVE_ACTION_SURFACE = light.paperTheme.colors.primaryContainer;
+const EXPRESSIVE_ACTION_SURFACE_STRONG = light.paperTheme.colors.secondaryContainer;
+const EXPRESSIVE_ACTION_BORDER = light.paperTheme.colors.outlineVariant;
+const EXPRESSIVE_ACTION_BORDER_STRONG = "rgba(63, 94, 251, 0.32)";
 
 const heroTitle: TextStyle = {
   ...fonts.bold,
   fontSize: 30,
   lineHeight: 36,
-  letterSpacing: 0.3,
+  letterSpacing: 0,
 };
 
 const sectionTitle: TextStyle = {
   ...fonts.bold,
   fontSize: 28,
   lineHeight: 34,
-  letterSpacing: 0.3,
+  letterSpacing: 0,
 };
 
 const headerTitle: TextStyle = {
   ...fonts.bold,
   fontSize: 18,
   lineHeight: 22,
-  letterSpacing: 0.3,
+  letterSpacing: 0,
 };
 
 const headerSubtitle: TextStyle = {
   ...fonts.medium,
   fontSize: 12,
   lineHeight: 16,
-  letterSpacing: 0.3,
+  letterSpacing: 0,
 };
 
 const bodyText: TextStyle = {
@@ -63,12 +63,12 @@ export const SERVICE_WIZARD_THEME = {
     accent: DS.colors.accent,
     accentStrong: DS.colors.accentStrong,
     accentSecondary: DS.colors.accentSecondary,
-    accentSurface: DARK_ACTION_SURFACE,
-    accentSurfaceStrong: DARK_ACTION_SURFACE_STRONG,
-    accentBorder: DARK_ACTION_BORDER,
-    accentBorderStrong: DARK_ACTION_BORDER_STRONG,
-    accentGlow: DARK_ACTION_BORDER_STRONG,
-    accentGlowSoft: DARK_ACTION_SURFACE_STRONG,
+    accentSurface: EXPRESSIVE_ACTION_SURFACE,
+    accentSurfaceStrong: EXPRESSIVE_ACTION_SURFACE_STRONG,
+    accentBorder: EXPRESSIVE_ACTION_BORDER,
+    accentBorderStrong: EXPRESSIVE_ACTION_BORDER_STRONG,
+    accentGlow: EXPRESSIVE_ACTION_BORDER_STRONG,
+    accentGlowSoft: EXPRESSIVE_ACTION_SURFACE_STRONG,
     accentText: light.textInverse,
     progressTrack: light.border,
     disabledSurface: light.surfaceDisabled,
@@ -78,7 +78,7 @@ export const SERVICE_WIZARD_THEME = {
     accentButton: DS.colors.accent,
     maskAction: DS.colors.accentStrong,
     hero: light.surfaceCardHigh,
-    accentWash: DARK_ACTION_SURFACE,
+    accentWash: EXPRESSIVE_ACTION_SURFACE,
   },
   typography: {
     heroTitle,

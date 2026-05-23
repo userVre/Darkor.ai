@@ -1,5 +1,4 @@
 import {getLocales, type Locale} from "expo-localization";
-import {Platform} from "react-native";
 
 export const SUPPORTED_LANGUAGES = [
   "en-US",
@@ -319,12 +318,6 @@ export function isRtlLanguage(language?: string | null) {
 }
 
 function getCjkFallbackFontFamily(language: AppLanguage) {
-  if (Platform.OS === "ios") {
-    if (language === "ja") return "Hiragino Sans";
-    if (language === "ko") return "Apple SD Gothic Neo";
-    return "PingFang SC";
-  }
-
   return "sans-serif";
 }
 
@@ -340,11 +333,7 @@ export function getLocalizedFonts(language?: string | null) {
   const fontFamily = isCjkLanguage(resolvedLanguage)
     ? getCjkFallbackFontFamily(resolvedLanguage)
     : isRtlLanguage(resolvedLanguage)
-      ? Platform.select({
-          ios: "Geeza Pro",
-          android: "sans-serif",
-          default: "sans-serif",
-        }) ?? "sans-serif"
+      ? "sans-serif"
     : "Inter";
   return {
     regular: {

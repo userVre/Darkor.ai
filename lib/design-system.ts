@@ -4,10 +4,10 @@ import {spacing} from "../styles/spacing";
 import {fonts} from "../styles/typography";
 
 const SPACING_UNIT = spacing.sm;
-const DARK_ACTION = "#111111";
-const DARK_ACTION_STRONG = "#050505";
-const DARK_ACTION_SURFACE = "rgba(17, 24, 39, 0.08)";
-const DARK_ACTION_GLOW = "rgba(17, 24, 39, 0.14)";
+const EXPRESSIVE_ACTION = light.paperTheme.colors.primary;
+const EXPRESSIVE_ACTION_STRONG = light.paperTheme.colors.onPrimaryContainer;
+const EXPRESSIVE_ACTION_SURFACE = light.paperTheme.colors.primaryContainer;
+const EXPRESSIVE_ACTION_GLOW = "rgba(63, 94, 251, 0.22)";
 
 export const DS = {
   colors: {
@@ -26,14 +26,14 @@ export const DS = {
     textTertiary: light.textMuted,
     textMuted: light.textMuted,
     textInverse: light.textInverse,
-    accent: DARK_ACTION,
-    accentStrong: DARK_ACTION_STRONG,
-    accentSecondary: "#5AC8FA",
-    accentGlow: DARK_ACTION_GLOW,
-    accentGlowStrong: DARK_ACTION,
-    accentSurface: DARK_ACTION_SURFACE,
-    actionPrimary: DARK_ACTION,
-    actionPrimarySoft: DARK_ACTION_STRONG,
+    accent: EXPRESSIVE_ACTION,
+    accentStrong: EXPRESSIVE_ACTION_STRONG,
+    accentSecondary: light.paperTheme.colors.secondary,
+    accentGlow: EXPRESSIVE_ACTION_GLOW,
+    accentGlowStrong: EXPRESSIVE_ACTION,
+    accentSurface: EXPRESSIVE_ACTION_SURFACE,
+    actionPrimary: EXPRESSIVE_ACTION,
+    actionPrimarySoft: EXPRESSIVE_ACTION_STRONG,
     creditPillBackground: light.surfaceHigh,
     creditPillBorder: light.borderLight,
     badgePro: light.success,
@@ -56,11 +56,11 @@ export const DS = {
     8: SPACING_UNIT * 8,
   },
   radius: {
-    sm: 14,
-    md: 14,
-    lg: 16,
-    xl: 16,
-    xxl: 40,
+    sm: 12,
+    md: 16,
+    lg: 24,
+    xl: 28,
+    xxl: 32,
     pill: 999,
   },
   typography: {
@@ -68,25 +68,25 @@ export const DS = {
       ...fonts.bold,
       fontSize: 44,
       lineHeight: 50,
-      letterSpacing: 0.3,
+      letterSpacing: 0,
     } as TextStyle,
     title: {
       ...fonts.bold,
       fontSize: 32,
       lineHeight: 38,
-      letterSpacing: 0.3,
+      letterSpacing: 0,
     } as TextStyle,
     sectionTitle: {
       ...fonts.bold,
       fontSize: 28,
       lineHeight: 34,
-      letterSpacing: 0.3,
+      letterSpacing: 0,
     } as TextStyle,
     cardTitle: {
       ...fonts.bold,
       fontSize: 22,
       lineHeight: 28,
-      letterSpacing: 0.3,
+      letterSpacing: 0,
     } as TextStyle,
     body: {
       ...fonts.regular,
@@ -102,14 +102,14 @@ export const DS = {
       ...fonts.semibold,
       fontSize: 11,
       lineHeight: 16,
-      letterSpacing: 0.3,
+      letterSpacing: 0,
       textTransform: "uppercase",
     } as TextStyle,
     button: {
       ...fonts.semibold,
       fontSize: 15,
       lineHeight: 20,
-      letterSpacing: 0.3,
+      letterSpacing: 0,
     } as TextStyle,
   },
 } as const;

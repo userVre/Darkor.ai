@@ -849,7 +849,7 @@ const styles = StyleSheet.create({
     color: SERVICE_WIZARD_THEME.colors.accentStrong,
     fontSize: 12,
     lineHeight: 16,
-    letterSpacing: 0.3,
+    letterSpacing: 0,
     textTransform: "uppercase",
     ...fonts.semibold,
   },
@@ -857,7 +857,7 @@ const styles = StyleSheet.create({
     color: SERVICE_WIZARD_THEME.colors.textPrimary,
     fontSize: 32,
     lineHeight: 38,
-    letterSpacing: 0.3,
+    letterSpacing: 0,
     ...fonts.bold,
   },
   uploadStack: {
@@ -881,7 +881,7 @@ const styles = StyleSheet.create({
     color: SERVICE_WIZARD_THEME.colors.textPrimary,
     fontSize: 24,
     lineHeight: 30,
-    letterSpacing: 0.3,
+    letterSpacing: 0,
     ...fonts.bold,
   },
   uploadCardSubtitle: {

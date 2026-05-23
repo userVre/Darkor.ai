@@ -4,8 +4,6 @@ import {ChevronLeft} from "lucide-react-native";
 import {useRef, useState} from "react";
 import {
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -417,10 +415,7 @@ export default function ForgotPasswordRoute() {
   );
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.screen}
-    >
+    <View style={styles.screen}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
@@ -446,7 +441,7 @@ export default function ForgotPasswordRoute() {
           </View>
         </Pressable>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

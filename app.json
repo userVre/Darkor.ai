@@ -3,7 +3,7 @@
     "name": "HomeDecor AI",
     "slug": "homedecor-ai",
     "scheme": "homedecorai",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/app-icon.png",
     "backgroundColor": "#FFFFFF",
@@ -23,17 +23,11 @@
       "enforceContrast": false
     },
     "platforms": [
-      "ios",
       "android"
     ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.homedecor.ai",
-      "icon": "./assets/app-icon.png"
-    },
     "android": {
       "package": "com.ismail.homedecorai",
-      "versionCode": 31,
+      "versionCode": 32,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"

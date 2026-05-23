@@ -7,7 +7,6 @@ type EnvSnapshot = {
   clerkPublishableKey?: string;
   convexUrl?: string;
   convexSiteUrl?: string;
-  revenueCatIosKey?: string;
   revenueCatAndroidKey?: string;
   revenueCatKey?: string;
   appUrl?: string;
@@ -32,7 +31,6 @@ type PublicEnvKey =
   | "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"
   | "EXPO_PUBLIC_CONVEX_URL"
   | "EXPO_PUBLIC_CONVEX_SITE_URL"
-  | "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"
   | "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY"
   | "EXPO_PUBLIC_REVENUECAT_API_KEY"
   | "EXPO_PUBLIC_APP_URL"
@@ -41,9 +39,7 @@ type PublicEnvKey =
   | "EXPO_PUBLIC_POSTHOG_HOST"
   | "EXPO_PUBLIC_DISABLE_VIDEO"
   | "EXPO_PUBLIC_REVIEW_FORCE"
-  | "EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID"
-  | "EXPO_PUBLIC_CLERK_GOOGLE_IOS_CLIENT_ID"
-  | "EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME";
+  | "EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID";
 
 type RuntimeEnvKey = PublicEnvKey;
 type ExpoExtraEnv = Partial<Record<RuntimeEnvKey, string>> & {
@@ -141,7 +137,6 @@ export function getEnvReport(): EnvReport {
     clerkPublishableKey: resolveEnv("EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"),
     convexUrl,
     convexSiteUrl,
-    revenueCatIosKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"),
     revenueCatAndroidKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY"),
     revenueCatKey: resolveEnv("EXPO_PUBLIC_REVENUECAT_API_KEY"),
     appUrl,

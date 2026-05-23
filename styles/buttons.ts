@@ -1,12 +1,10 @@
 import { dark, type Theme } from "./theme";
 
-const DARK_ACTION = "#111111";
-
 export function createButtonStyles(colors: Theme) {
   return {
     primary: {
-      backgroundColor: DARK_ACTION,
-      borderRadius: 14,
+      backgroundColor: colors.paperTheme.colors.primary,
+      borderRadius: 16,
       height: 56,
       paddingHorizontal: 24,
       alignItems: "center" as const,
@@ -15,7 +13,7 @@ export function createButtonStyles(colors: Theme) {
     },
     secondary: {
       backgroundColor: colors.surfaceHigh,
-      borderRadius: 14,
+      borderRadius: 16,
       height: 48,
       alignItems: "center" as const,
       justifyContent: "center" as const,

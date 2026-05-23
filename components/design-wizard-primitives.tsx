@@ -19,19 +19,19 @@ WashingMachineIcon,
 } from "phosphor-react-native";
 import type {TextStyle, ViewStyle} from "react-native";
 
-export const DESIGN_WIZARD_ACCENT = "#007AFF";
-export const DESIGN_WIZARD_ACCENT_STRONG = "#0062CC";
-export const DESIGN_WIZARD_DEPTH_SHADOW = "rgba(0,122,255,0.22)";
+export const DESIGN_WIZARD_ACCENT = "#3F5EFB";
+export const DESIGN_WIZARD_ACCENT_STRONG = "#143DDB";
+export const DESIGN_WIZARD_DEPTH_SHADOW = "rgba(63,94,251,0.22)";
 export const DESIGN_WIZARD_SURFACE = "#FFFFFF";
-export const DESIGN_WIZARD_SURFACE_MUTED = "#F5F5F5";
-export const DESIGN_WIZARD_BORDER = "#E3E3E3";
-export const DESIGN_WIZARD_TEXT = "#0A0A0A";
-export const DESIGN_WIZARD_TEXT_MUTED = "#686868";
+export const DESIGN_WIZARD_SURFACE_MUTED = "#F2F3FF";
+export const DESIGN_WIZARD_BORDER = "#C6C6D0";
+export const DESIGN_WIZARD_TEXT = "#1A1B20";
+export const DESIGN_WIZARD_TEXT_MUTED = "#5F6368";
 export const DESIGN_WIZARD_TEXT_ON_DARK = "#FFFFFF";
-export const DESIGN_WIZARD_RUBY = "#3B5BDB";
-export const DESIGN_WIZARD_SELECTION_BLUE = "#007AFF";
-export const DESIGN_WIZARD_SELECTION_BLUE_SOFT = "rgba(0,122,255,0.14)";
-export const DESIGN_WIZARD_SELECTION_BLUE_GLOW = "rgba(0,122,255,0.2)";
+export const DESIGN_WIZARD_RUBY = "#984061";
+export const DESIGN_WIZARD_SELECTION_BLUE = "#3F5EFB";
+export const DESIGN_WIZARD_SELECTION_BLUE_SOFT = "rgba(63,94,251,0.14)";
+export const DESIGN_WIZARD_SELECTION_BLUE_GLOW = "rgba(63,94,251,0.2)";
 
 type RoomIconName =
   | "Bathroom"
