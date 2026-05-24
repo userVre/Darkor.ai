@@ -700,7 +700,6 @@ export function AuthScreen({mode}: AuthScreenProps) {
                   contentStyle={styles.otpInputContent}
                   keyboardType="number-pad"
                   mode="outlined"
-                  outlineStyle={styles.otpInputOutline}
                   style={styles.otpInput}
                   textContentType="oneTimeCode"
                   maxLength={index === 0 ? 6 : 1}
@@ -1030,9 +1029,6 @@ function createStyles(AUTH_COLORS: AuthColors) {
   otpInputContent: {
     textAlign: "center",
     letterSpacing: 0,
-  },
-  otpInputOutline: {
-    borderRadius: md3Shapes.small,
   },
   otpError: {
     color: AUTH_COLORS.accent,

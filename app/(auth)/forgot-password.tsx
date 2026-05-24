@@ -319,7 +319,6 @@ export default function ForgotPasswordRoute() {
               contentStyle={styles.codeInputContent}
               keyboardType="number-pad"
               mode="outlined"
-              outlineStyle={styles.codeInputOutline}
               style={styles.codeInput}
               textContentType="oneTimeCode"
               maxLength={index === 0 ? 6 : 1}
@@ -515,11 +514,6 @@ const styles = StyleSheet.create({
   codeInputContent: {
     textAlign: "center",
     letterSpacing: 0,
-  },
-  codeInputOutline: {
-    borderRadius: md3Shapes.small,
-    borderColor: AUTH_COLORS.border,
-    backgroundColor: "rgba(255,255,255,0.08)",
   },
   codeInputText: {
     textAlign: "center",

@@ -1,17 +1,14 @@
 import {StyleSheet} from "react-native";
 import {TextInput as PaperTextInput, type TextInputProps} from "react-native-paper";
 
-import {md3Shapes} from "../../constants/md3Theme";
-
 export type MD3TextFieldProps = Omit<TextInputProps, "mode">;
 
-function MD3TextField({style, outlineStyle, contentStyle, mode, ...props}: MD3TextFieldProps & {mode: "flat" | "outlined"}) {
+function MD3TextField({style, outlineStyle: _outlineStyle, contentStyle, mode, ...props}: MD3TextFieldProps & {mode: "flat" | "outlined"}) {
   return (
     <PaperTextInput
       {...props}
       mode={mode}
       contentStyle={[styles.content, contentStyle]}
-      outlineStyle={[styles.outline, outlineStyle]}
       style={[styles.input, style]}
     />
   );
@@ -34,8 +31,5 @@ const styles = StyleSheet.create({
   },
   content: {
     letterSpacing: 0,
-  },
-  outline: {
-    borderRadius: md3Shapes.small,
   },
 });

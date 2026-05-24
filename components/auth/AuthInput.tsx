@@ -4,7 +4,7 @@ import {useTranslation} from "react-i18next";
 import {StyleSheet, View, type TextInputProps as RNTextInputProps} from "react-native";
 import {HelperText, TextInput as PaperTextInput, useTheme as usePaperTheme} from "react-native-paper";
 
-import {md3Shapes, md3Spacing} from "../../constants/md3Theme";
+import {md3Spacing} from "../../constants/md3Theme";
 
 type IconComponent = ComponentType<{color: string; size: number; strokeWidth?: number}>;
 
@@ -61,7 +61,6 @@ export function AuthInput({
         }
         mode="flat"
         onChangeText={onChangeText}
-        outlineStyle={styles.outline}
         returnKeyType={returnKeyType}
         right={
           isPassword ? (
@@ -102,8 +101,5 @@ const styles = StyleSheet.create({
     minHeight: 56,
     paddingHorizontal: md3Spacing.small,
     letterSpacing: 0,
-  },
-  outline: {
-    borderRadius: md3Shapes.small,
   },
 });
