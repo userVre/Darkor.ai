@@ -30,7 +30,6 @@ Gem as GemBase,
 House,
 Image,
 ImagePlus,
-LayoutGrid,
 LayoutPanelTop,
 Mail,
 Monitor,
@@ -147,7 +146,6 @@ function BriefcaseFallback(props: IconProps) {
   return <Box {...props} />;
 }
 
-export type {MaterialIconName};
 export type MaterialIconProps = Omit<ComponentProps<typeof ArrowLeft>, "ref"> & {
   name: MaterialIconName;
 };
@@ -172,7 +170,7 @@ function createIcon(Icon: MaterialIconComponent, displayName: string) {
 
 export {
 ArrowLeft,
-ArrowLeftRight, Baby, BadgeCheck,
+Baby, BadgeCheck,
 Bath, BedDouble,
 BookOpen,
 Box,
@@ -185,18 +183,16 @@ Check,
 ChevronLeft,
 ChevronRight,
 CircleHelp,
-Compass, CookingPot, Copy, DoorOpen,
+CookingPot, Copy, DoorOpen,
 Download,
 Eraser,
 Fence,
 FileQuestionMark as FileQuestion,
 FileText,
 Flower2,
-GemBase as Gem,
 House,
 Image,
 ImagePlus,
-LayoutGrid,
 LayoutPanelTop,
 Mail,
 Monitor,
@@ -206,7 +202,6 @@ Plus,
 Projector,
 Redo2,
 RotateCcw,
-Send,
 Share2,
 Shield,
 Sparkles,
@@ -221,14 +216,7 @@ UtensilsCrossed,
 Wallpaper, X, Zap
 };
 
-export const Diamond = createIcon(GemBase, "MaterialIcon(Diamond)");
-export const Draw = createIcon(BrushCleaning, "MaterialIcon(Draw)");
-export const GemIcon = createIcon(GemBase, "MaterialIcon(Gem)");
-export const Settings = createIcon(Settings2, "MaterialIcon(Settings)");
-export const SofaIcon = createIcon(SofaBase, "MaterialIcon(Sofa)");
 export const ThumbDown = createIcon(ThumbsDown, "MaterialIcon(ThumbDown)");
 export const ThumbUp = createIcon(ThumbsUp, "MaterialIcon(ThumbUp)");
-export const UserCircle2 = createIcon(UserRound, "MaterialIcon(UserCircle2)");
 export const Wand2 = createIcon(WandSparklesBase, "MaterialIcon(Wand2)");
-export const DiamondIcon = Diamond;
 export const Sofa = createIcon(SofaBase, "MaterialIcon(Sofa)");

@@ -1,7 +1,7 @@
 const {
   withProjectBuildGradle,
   createRunOncePlugin,
-} = require("@expo/config-plugins");
+} = require("expo/config-plugins");
 
 const SERIALIZATION_VERSION = "1.8.1";
 

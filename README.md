@@ -18,5 +18,5 @@ This repo contains the Expo React Native app for HomeDecor AI.
 ## Project notes
 - The repository is mobile-only now; the deprecated Next.js web app and its static assets were removed.
 - `npm run typecheck` validates the Expo app source.
-- `npm run lint` is scoped to the JavaScript config/tooling files that remain in the repo.
+- `npm run lint` validates JavaScript, TypeScript, and TSX source.
 - If the emulator shows `Unable to load script`, open the dev menu and set `Debug server host & port` to `10.0.2.2:8081`, then reload.

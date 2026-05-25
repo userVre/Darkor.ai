@@ -12,7 +12,7 @@ export async function requestStoreReview() {
     }
     await StoreReview.requestReview();
     return true;
-  } catch (error) {
+  } catch (_error) {
     Alert.alert(t("storeReview.title"), t("storeReview.errorBody"));
     return false;
   }

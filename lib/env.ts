@@ -121,17 +121,10 @@ function resolvePublicEndpointFromEnv(key: RuntimeEnvKey, label = key) {
 }
 
 export function getEnvReport(): EnvReport {
-  let appUrl: string | undefined;
-  let convexUrl: string | undefined;
-  let convexSiteUrl: string | undefined;
-  let apiBaseUrl: string | undefined;
-
-  convexUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_CONVEX_URL");
-  convexSiteUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_CONVEX_SITE_URL");
-
-  appUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_APP_URL");
-
-  apiBaseUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_API_BASE_URL");
+  const convexUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_CONVEX_URL");
+  const convexSiteUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_CONVEX_SITE_URL");
+  const appUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_APP_URL");
+  const apiBaseUrl = resolvePublicEndpointFromEnv("EXPO_PUBLIC_API_BASE_URL");
 
   const values: EnvSnapshot = {
     clerkPublishableKey: resolveEnv("EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"),

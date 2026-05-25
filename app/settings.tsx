@@ -47,7 +47,6 @@ type RevenueCatEntitlement,
 } from "../lib/revenuecat";
 import {requestStoreReview} from "../lib/store-review";
 import {useTheme, type Theme} from "../styles/theme";
-import {fonts} from "../styles/typography";
 
 const SUPPORT_EMAIL = "support@homedecor.ai";
 const APP_URL = Constants.expoConfig?.extra?.publicEnv?.EXPO_PUBLIC_APP_URL ?? "https://homedecor.ai";

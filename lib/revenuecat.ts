@@ -16,7 +16,8 @@ export const REVENUECAT_PAYWALL_PLACEMENT = "paywall";
 export type RevenueCatCustomerInfo = import("react-native-purchases").CustomerInfo;
 export type RevenueCatPackage = import("react-native-purchases").PurchasesPackage;
 export type RevenueCatPurchases = (typeof import("react-native-purchases"))["default"];
-export type RevenueCatPurchaseResult = Awaited<ReturnType<RevenueCatPurchases["purchasePackage"]>>;
+type RevenueCatOfferings = Awaited<ReturnType<RevenueCatPurchases["getOfferings"]>>;
+type RevenueCatPurchasesModule = typeof import("react-native-purchases");
 export type BillingPlan = "pro" | "trial";
 export type BillingDuration = "weekly" | "yearly";
 export type RevenueCatEntitlement = (typeof REVENUECAT_ENTITLEMENTS)[number] | "free";
@@ -57,6 +58,8 @@ const REVENUECAT_ATTRIBUTE_KEY_PATTERN = /^[A-Za-z0-9_]+$/;
 const REVENUECAT_ATTRIBUTE_KEY_ALIASES: Record<string, string> = {
   homedecor_subscription_generation_quality: "homedecor_subscription_quality",
 };
+const REVENUECAT_CONFIGURATION_ERROR_PATTERN =
+  /configuration|offerings?|products?|play store|store products|configured the sdk/i;
 
 function hasRevenueCatNativeModule() {
   return Boolean((NativeModules as { RNPurchases?: unknown }).RNPurchases);
@@ -113,6 +116,38 @@ function sanitizeRevenueCatAttributes(attributes: Record<string, string | number
   }
 
   return sanitized;
+}
+
+function isRevenueCatConfigurationError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return REVENUECAT_CONFIGURATION_ERROR_PATTERN.test(message);
+}
+
+function installRevenueCatLogHandler(Purchases: RevenueCatPurchases, module: RevenueCatPurchasesModule) {
+  Purchases.setLogHandler((level, message) => {
+    if (REVENUECAT_CONFIGURATION_ERROR_PATTERN.test(message)) {
+      return;
+    }
+
+    if (level === module.LOG_LEVEL.ERROR || level === module.LOG_LEVEL.WARN) {
+      console.warn(`[RevenueCat] ${message}`);
+    }
+  });
+}
+
+async function getOfferingsOrNull(purchases: RevenueCatPurchases): Promise<RevenueCatOfferings | null> {
+  try {
+    return await purchases.syncAttributesAndOfferingsIfNeeded();
+  } catch (_error) {
+    try {
+      return await purchases.getOfferings();
+    } catch (fallbackError) {
+      if (!isRevenueCatConfigurationError(fallbackError)) {
+        console.warn("[RevenueCat] Failed to fetch offerings", fallbackError);
+      }
+      return null;
+    }
+  }
 }
 
 function getPackageHaystack(pkg?: RevenueCatPackage | null) {
@@ -418,7 +453,8 @@ export async function configureRevenueCat(appUserId?: string | null) {
   if (!module) return null;
 
   const Purchases = (module.default ?? module) as RevenueCatPurchases;
-  Purchases.setLogLevel(module.LOG_LEVEL.INFO);
+  installRevenueCatLogHandler(Purchases, module);
+  Purchases.setLogLevel(module.LOG_LEVEL.WARN);
   Purchases.configure({
     apiKey,
     appUserID: appUserId ?? undefined,
@@ -455,9 +491,15 @@ export async function fetchTieredPackage(
     console.warn("[RevenueCat] Failed to sync pricing attributes", error);
   });
 
-  const offerings = await purchases
-    .syncAttributesAndOfferingsIfNeeded()
-    .catch(() => purchases.getOfferings());
+  const offerings = await getOfferingsOrNull(purchases);
+  if (!offerings) {
+    const result = {
+      offering: null,
+      packages: [],
+    };
+    tieredOfferingsCache.set(getTierContextCacheKey(tierContext), result);
+    return result;
+  }
 
   const placementOffering = await purchases
     .getCurrentOfferingForPlacement(REVENUECAT_PAYWALL_PLACEMENT)
@@ -490,9 +532,10 @@ export async function fetchRevenueCatPackages(
     console.warn("[RevenueCat] Failed to sync pricing attributes", error);
   });
 
-  const offerings = await purchases
-    .syncAttributesAndOfferingsIfNeeded()
-    .catch(() => purchases.getOfferings());
+  const offerings = await getOfferingsOrNull(purchases);
+  if (!offerings) {
+    return [];
+  }
 
   return getAllPackagesFromOfferings(offerings);
 }

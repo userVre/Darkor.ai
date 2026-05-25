@@ -1,6 +1,6 @@
 import {AnimatePresence, MotiView} from "moti";
 import {useTranslation} from "react-i18next";
-import {StyleSheet, View} from "react-native";
+import {StyleSheet} from "react-native";
 import {Easing} from "react-native-reanimated";
 import {Button, Text, useTheme as usePaperTheme} from "react-native-paper";
 

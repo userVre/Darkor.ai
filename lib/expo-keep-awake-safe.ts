@@ -1,4 +1,4 @@
-import {type EventSubscription, UnavailabilityError, requireNativeModule} from "expo-modules-core";
+import {requireNativeModule} from "expo";
 import {useEffect, useId} from "react";
 import {AppState} from "react-native";
 
@@ -22,6 +22,10 @@ type ExpoKeepAwakeModule = {
   deactivate?: (tag: string) => Promise<void>;
   isAvailableAsync?: () => Promise<boolean>;
   addListenerForTag?: (tag: string, listener?: KeepAwakeListener) => EventSubscription;
+};
+
+type EventSubscription = {
+  remove: () => void;
 };
 
 const ExpoKeepAwake = requireNativeModule<ExpoKeepAwakeModule>("ExpoKeepAwake");
@@ -141,7 +145,7 @@ export function addListener(
   listener?: KeepAwakeListener
 ): EventSubscription {
   if (!ExpoKeepAwake.addListenerForTag) {
-    throw new UnavailabilityError("ExpoKeepAwake", "addListenerForTag");
+    throw new Error("ExpoKeepAwake.addListenerForTag is not available");
   }
 
   const tag = typeof tagOrListener === "string" ? tagOrListener : ExpoKeepAwakeTag;

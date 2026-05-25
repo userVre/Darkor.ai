@@ -1,4 +1,4 @@
-import {useClerk, useSSO} from "@clerk/expo";
+import {useSSO} from "@clerk/expo";
 import {useSignIn, useSignUp} from "@clerk/expo/legacy";
 import * as AuthSession from "expo-auth-session";
 import {LinearGradient} from "expo-linear-gradient";
@@ -185,7 +185,6 @@ export function AuthScreen({mode}: AuthScreenProps) {
   const {t} = useTranslation();
   const insets = useSafeAreaInsets();
   const {height, width} = useWindowDimensions();
-  const clerk = useClerk();
   const {signIn, setActive: setSignInActive, isLoaded: signInLoaded} = useSignIn();
   const {signUp, setActive: setSignUpActive, isLoaded: signUpLoaded} = useSignUp();
   const {startSSOFlow} = useSSO();
@@ -403,7 +402,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
     try {
       await signUp.prepareEmailAddressVerification({strategy: "email_code"});
       setErrors((current) => ({...current, otp: undefined}));
-    } catch (error) {
+    } catch (_error) {
       setErrors((current) => ({
         ...current,
         otp: t("auth.screen.otp.resendError"),
@@ -466,7 +465,7 @@ export function AuthScreen({mode}: AuthScreenProps) {
     try {
       await markAuthSkipped();
       router.replace("/(tabs)" as never);
-    } catch (error) {
+    } catch (_error) {
       setErrors({form: t("auth.screen.errors.guestUnavailable")});
     }
   };

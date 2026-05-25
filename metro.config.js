@@ -6,7 +6,7 @@ const config = getDefaultConfig(__dirname);
 
 const escapeRegex = (value) => value.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&");
 const escapePathForRegex = (value) => value.split(/[/\\]+/).map(escapeRegex).join("[/\\\\]");
-const ignoredWorkspaceDirs = ["homedecor-ai", "android.backup", ".codex-temp", ".tmp", "dist"].map(
+const ignoredWorkspaceDirs = [".codex-temp", ".tmp", "dist"].map(
   (dir) => new RegExp(`${escapePathForRegex(path.resolve(__dirname, dir))}[/\\\\].*`),
 );
 

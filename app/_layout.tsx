@@ -44,7 +44,6 @@ import {getDirectionalTextAlign, reloadAppForLayoutDirection} from "../lib/i18n/
 import {consumeReferralCode, setReferralCode} from "../lib/referral";
 import {
   configureRevenueCat,
-  fetchTieredPackage,
   hasActiveSubscription,
   inferRevenueCatDiamondPackId,
   resolveRevenueCatSubscription,
@@ -213,7 +212,6 @@ function RevenueCatGate() {
     void (async () => {
       try {
         await syncRevenueCatPricingAttributes(purchases, pricingContext.revenueCat);
-        await fetchTieredPackage(purchases, pricingContext.revenueCat);
       } catch (error) {
         console.warn("[Boot] RevenueCat pricing sync failed", error);
       }

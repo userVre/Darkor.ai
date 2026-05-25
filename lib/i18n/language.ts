@@ -317,7 +317,7 @@ export function isRtlLanguage(language?: string | null) {
   return resolveSupportedLanguage(language) === "ar";
 }
 
-function getCjkFallbackFontFamily(language: AppLanguage) {
+function getCjkFallbackFontFamily(_language: AppLanguage) {
   return "sans-serif";
 }
 

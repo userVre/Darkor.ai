@@ -1,4 +1,3 @@
-const fs = require("fs");
 const { spawnSync } = require("child_process");
 const { resolve } = require("path");
 const { pathToFileURL } = require("url");

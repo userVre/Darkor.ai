@@ -46,8 +46,6 @@ export function NavigationBar({routes, activeIndex, onIndexChange, style}: Navig
   );
 }
 
-export default NavigationBar;
-
 const styles = StyleSheet.create({
   bar: {
     elevation: 0,

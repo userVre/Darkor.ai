@@ -2,7 +2,7 @@ import {useRouter} from "expo-router";
 import {useMemo} from "react";
 import {useTranslation} from "react-i18next";
 import {I18nManager, StyleSheet, View, type StyleProp, type ViewStyle} from "react-native";
-import {Appbar, Badge, Button, Chip, IconButton, Text} from "react-native-paper";
+import {Appbar, Badge, Button, Chip, IconButton} from "react-native-paper";
 
 import {md3Spacing} from "../constants/md3Theme";
 import {triggerHaptic} from "../lib/haptics";

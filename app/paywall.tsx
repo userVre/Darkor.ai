@@ -5,22 +5,18 @@ import {Image} from "expo-image";
 import {LinearGradient} from "expo-linear-gradient";
 import {Stack, useLocalSearchParams, useRouter} from "expo-router";
 import {StatusBar} from "expo-status-bar";
-import {AnimatePresence, MotiView} from "moti";
 import {usePostHog} from "posthog-react-native";
-import {useCallback, useEffect, useMemo, useRef, useState, type ReactNode} from "react";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useTranslation} from "react-i18next";
 import {
 Alert,
 I18nManager,
 NativeScrollEvent,
 NativeSyntheticEvent,
-Pressable,
 ScrollView,
 StyleSheet,
 View,
 useWindowDimensions,
-type StyleProp,
-type ViewStyle,
 } from "react-native";
 import {ActivityIndicator, Badge, Button, Card, Chip, DataTable, IconButton, Text} from "react-native-paper";
 import Animated, {
@@ -65,14 +61,11 @@ import {useTheme, type Theme} from "../styles/theme";
 import {fonts} from "../styles/typography";
 import {md3Shapes, md3Spacing} from "../constants/md3Theme";
 
-const TRANSITION_DURATION_MS = 200;
 const CAROUSEL_INTERVAL_MS = 3000;
 const CLOSE_VISUAL_SIZE = 36;
 const HERO_HEIGHT = 230;
 const PAYWALL_BG = "#070706";
 const PAYWALL_ACCENT = "#B88A3A";
-const PAYWALL_ACCENT_DARK = "#76511F";
-const PAYWALL_ACCENT_SHADOW = "rgba(184,138,58,0.28)";
 const PAYWALL_PREMIUM_GOLD = "#D2AA5A";
 const PAYWALL_CARD_BG = "rgba(255,250,238,0.075)";
 const PAYWALL_CARD_BG_ALT = "rgba(255,250,238,0.045)";
@@ -86,31 +79,6 @@ const HERO_IMAGES = [
   require("../assets/media/paywall/paint-intro-black-marble-salon.webp"),
 ] as const;
 const PAYWALL_FORCE_LTR = true;
-
-function FadeSwap({
-  children,
-  swapKey,
-  style,
-}: {
-  children: ReactNode;
-  swapKey: string;
-  style?: StyleProp<ViewStyle>;
-}) {
-  return (
-    <AnimatePresence exitBeforeEnter>
-      <MotiView
-        key={swapKey}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        from={{ opacity: 0 }}
-        style={style}
-        transition={{ type: "timing", duration: TRANSITION_DURATION_MS }}
-      >
-        {children}
-      </MotiView>
-    </AnimatePresence>
-  );
-}
 
 function TrialIncludedText() {
   const theme = useTheme();
