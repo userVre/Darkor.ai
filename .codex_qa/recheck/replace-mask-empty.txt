@@ -1,0 +1,31 @@
+View               click      [37,79][163,205]       
+View                          [69,111][132,174]      Back
+TextView                      [190,111][890,174]     Objets
+View               click      [917,79][1043,205]     
+View                          [949,111][1012,174]    Close
+TextView                      [462,216][619,269]     Ã‰tape 2/4
+View               scroll     [0,316][1080,2142]     
+TextView                      [63,337][498,421]      Marquez lâ€™objet
+TextView                      [63,442][1017,568]     Peignez uniquement lâ€™objet Ã  remplacer. Le reste de la photo sera conservÃ©.
+ImageView                     [63,615][1017,1569]    Objet Ã  remplacer
+TextView                      [142,1315][692,1378]   Masquez lâ€™objet Ã  remplacer
+TextView                      [142,1389][938,1495]   Utilisez le pinceau pour couvrir lâ€™objet, puis la gomme pour affiner les bords.
+View               click      [63,1606][527,1732]    
+View                          [95,1646][142,1693]    Ajouter au masque
+TextView                      [158,1638][320,1701]   Pinceau
+View               click      [553,1606][1017,1732]  
+View                          [585,1646][632,1693]   Retirer du masque
+TextView                      [648,1638][803,1701]   Gomme
+View               click      [63,1758][367,1889]    
+View                          [121,1801][166,1846]   Annuler
+TextView                      [182,1797][310,1850]   Annuler
+View               click      [388,1758][692,1889]   
+View                          [445,1801][490,1846]   RÃ©tablir
+TextView                      [506,1797][635,1850]   RÃ©tablir
+View               click      [713,1758][1017,1889]  
+View                          [775,1801][820,1846]   Effacer tout le masque
+TextView                      [836,1797][955,1850]   Effacer
+TextView                      [63,1926][341,1979]    Taille du pinceau
+TextView                      [926,1926][1017,1979]  28 px
+View               click      [53,2195][1027,2347]   
+TextView                      [243,2240][837,2303]   Marquez lâ€™objet pour continuer

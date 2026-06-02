@@ -1,0 +1,31 @@
+View               click      [37,79][163,205]       
+View                          [69,111][132,174]      Back
+TextView                      [190,111][890,174]     Agencement
+View               click      [917,79][1043,205]     
+View                          [949,111][1012,174]    Close
+TextView                      [462,216][619,269]     Ã‰tape 2/2
+View               scroll     [0,316][1080,2142]     
+TextView                      [63,337][699,421]      Planifier l'agencement
+TextView                      [63,442][1017,631]     Optimisez les positions, la circulation et les zones d'usage sans transformer le style de la piÃ¨ce.
+ImageView                     [95,710][321,936]      Photo de la piÃ¨ce
+TextView                      [353,723][690,786]     Photo de la piÃ¨ce
+TextView                      [353,797][895,923]     Base utilisÃ©e pour l'agencement intelligent
+TextView                      [63,1015][555,1078]    Objectifs de planification
+View               click      [63,1104][527,1309]    
+TextView                      [205,1159][501,1255]   Circulation ouverte
+View               click      [553,1104][1017,1309]  
+TextView                      [695,1159][991,1255]   Plus de rangement
+View               click      [63,1335][527,1540]    
+TextView                      [205,1406][501,1469]   Coin bureau
+View               click      [553,1335][1017,1540]  
+TextView                      [695,1414][991,1462]   Espace familial
+View               click      [63,1566][527,1771]    
+TextView                      [205,1621][501,1717]   Salon plus spacieux
+View               click      [553,1566][1017,1771]  
+TextView                      [695,1645][991,1693]   Meilleure lumiÃ¨re
+View               click      [63,1797][527,2002]    
+TextView                      [205,1852][501,1948]   RÃ©organisation complÃ¨te
+EditText           click      [63,2049][1017,2142]   
+TextView                      [105,2112][335,2142]   Contraintes
+View               click      [53,2195][1027,2347]   
+TextView                      [328,2240][753,2303]   GÃ©nÃ©rer l'agencement

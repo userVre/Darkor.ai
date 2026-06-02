@@ -1,0 +1,31 @@
+View               click      [53,96][193,189]       
+TextView                      [142,127][167,189]     1
+TextView                      [372,121][521,189]     Outils
+View               click      [699,96][1027,189]     
+TextView                      [736,127][990,189]     Passer Ã  Pro
+View               scroll     [0,252][1080,2127]     
+View               click      [53,189][1027,362]     
+View                          [53,252][1027,362]     Conception de jardin
+View               click      [111,189][485,308]     
+TextView                      [224,252][438,271]     Essayez ceci
+View               click      [53,425][1027,1459]    
+View                          [53,425][1027,1459]    Peinture intelligente
+TextView                      [111,1006][693,1090]   Peinture intelligente
+TextView                      [111,1122][969,1248]   Affinez vos murs avec des palettes de couleurs sur mesure et des textures design.
+View               click      [111,1279][485,1405]   
+TextView                      [224,1315][438,1368]   Essayez ceci
+View               click      [53,1522][1027,2127]   
+View                          [53,1522][1027,2127]   Relooking du sol
+TextView                      [111,2103][583,2127]   Relooking du sol
+View               click      [21,2145][205,2319]    
+View                          [87,2179][140,2232]    Outils
+TextView                      [73,2256][153,2298]    Outils
+View               click      [306,2145][490,2319]   
+View                          [372,2179][425,2232]   Pass Elite
+TextView                      [331,2256][466,2298]   Pass Elite
+View               click      [590,2145][774,2319]   
+View                          [656,2179][709,2232]   DÃ©couvrir
+TextView                      [616,2256][749,2298]   DÃ©couvrir
+View               click      [875,2145][1059,2319]  
+View                          [941,2179][994,2232]   Profil
+TextView                      [929,2256][1005,2298]  Profil

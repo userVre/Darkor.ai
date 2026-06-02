@@ -1,0 +1,32 @@
+View               click      [37,79][163,205]       
+View                          [69,111][132,174]      Back
+TextView                      [190,111][890,174]     Peinture
+View               click      [917,79][1043,205]     
+View                          [949,111][1012,174]    Close
+TextView                      [462,216][619,269]     Ã‰tape 2/4
+View               scroll     [0,316][1080,2142]     
+TextView                      [63,337][924,421]      Marquez les murs ou surfaces
+TextView                      [63,442][1017,568]     Peignez les murs ou surfaces Ã  repeindre. Un vrai masque est nÃ©cessaire avant de gÃ©nÃ©rer.
+ImageView                     [63,615][1017,1569]    Murs ou surfaces Ã  masquer
+TextView                      [142,1262][735,1325]   Marquez les murs ou surfaces
+TextView                      [142,1336][938,1495]   Tracez sur chaque mur ou surface Ã  repeindre. Couvrez assez de surface pour crÃ©er un vrai masque.
+TextView                      [63,1606][1017,1712]   Masque requis : marquez les murs ou surfaces avant de continuer.
+View               click      [63,1738][527,1864]    
+View                          [95,1778][142,1825]    Ajouter au masque
+TextView                      [158,1770][327,1833]   Marquer
+View               click      [553,1738][1017,1864]  
+View                          [585,1778][632,1825]   Retirer du masque
+TextView                      [648,1770][785,1833]   Retirer
+View               click      [63,1890][367,2021]    
+View                          [121,1933][166,1978]   Annuler
+TextView                      [182,1929][310,1982]   Annuler
+View               click      [388,1890][692,2021]   
+View                          [445,1933][490,1978]   RÃ©tablir
+TextView                      [506,1929][635,1982]   RÃ©tablir
+View               click      [713,1890][1017,2021]  
+View                          [775,1933][820,1978]   Effacer tout le masque
+TextView                      [836,1929][955,1982]   Effacer
+TextView                      [63,2058][341,2111]    Taille du pinceau
+TextView                      [926,2058][1017,2111]  28 px
+View               click      [53,2195][1027,2347]   
+TextView                      [116,2216][964,2326]   Peignez les murs ou surfaces pour continuer

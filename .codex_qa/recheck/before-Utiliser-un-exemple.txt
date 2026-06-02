@@ -1,0 +1,30 @@
+View               click      [42,80][194,206]       
+TextView                      [137,111][162,174]     1
+TextView                      [226,111][890,174]     Jardin
+View               click      [917,79][1043,205]     
+View                          [949,111][1012,174]    Close
+TextView                      [462,216][619,269]     Ã‰tape 1/3
+View               scroll     [0,316][1080,2142]     
+TextView                      [63,337][459,421]      Photo ajoutÃ©e
+ImageView                     [63,468][1017,1276]    Photo ajoutÃ©e
+ImageView                     [63,1323][252,1491]    Photo 1
+View               click      [159,1293][285,1419]   
+View                          [201,1335][242,1376]   Supprimer la photo
+View               click      [278,1323][467,1491]   
+View                          [341,1376][404,1439]   Ajouter une photo
+View               click      [63,1538][524,1664]    
+TextView                      [270,1575][386,1628]   Galerie
+View               click      [556,1538][1017,1664]  
+TextView                      [757,1575][884,1628]   CamÃ©ra
+View               click      [63,1711][1017,1837]   
+TextView                      [418,1748][731,1801]   Utiliser un exemple
+TextView                      [63,1884][407,1947]    Photos d'exemple
+View               scroll     [63,1973][1017,2142]   
+View               click      [63,1973][357,2142]    
+View                          [63,1973][357,2142]    Cour boueuse
+View               click      [389,1973][683,2142]   
+View                          [389,1973][683,2142]   Cour de mauvaises herbes
+View               click      [715,1973][1009,2142]  
+View                          [715,1973][1009,2142]  Parc Ã  dÃ©combres
+View               click      [53,2195][1027,2347]   
+TextView                      [444,2240][636,2303]   Continuer

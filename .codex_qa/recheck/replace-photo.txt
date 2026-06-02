@@ -1,0 +1,31 @@
+View               click      [42,80][194,206]       
+TextView                      [137,111][162,174]     1
+TextView                      [226,111][890,174]     Objets
+View               click      [917,79][1043,205]     
+View                          [949,111][1012,174]    Close
+TextView                      [462,216][619,269]     Ã‰tape 1/4
+TextView                      [63,337][615,421]      Remplacer un objet
+TextView                      [63,442][1006,505]     Importez une photo contenant lâ€™objet Ã  modifier
+TextView                      [290,733][790,807]     Remplacer un objet
+TextView                      [121,839][959,965]     Importez une photo contenant lâ€™objet Ã  modifier
+View               click      [391,1013][689,1139]   
+TextView                      [454,1049][626,1102]   Importer +
+View               click      [63,1366][524,1492]    
+TextView                      [270,1403][386,1456]   Galerie
+View               click      [556,1366][1017,1492]  
+TextView                      [757,1403][884,1456]   CamÃ©ra
+View               click      [63,1539][1017,1665]   
+TextView                      [418,1576][731,1629]   Utiliser un exemple
+TextView                      [63,1712][407,1775]    Photos d'exemple
+View               scroll     [63,1801][1017,2074]   
+View               click      [63,1801][357,2074]    
+View                          [63,1801][357,2074]    Salle vide
+TextView                      [144,2003][277,2045]   Salle vide
+View               click      [389,1801][683,2074]   
+View                          [389,1801][683,2074]   Salon en dÃ©sordre
+TextView                      [428,2003][644,2045]   Salon en dÃ©sordre
+View               click      [715,1801][1009,2074]  
+View                          [715,1801][1009,2074]  Chambre usÃ©e
+TextView                      [764,2003][960,2045]   Chambre usÃ©e
+View               click      [53,2195][1027,2347]   
+TextView                      [444,2240][636,2303]   Continuer

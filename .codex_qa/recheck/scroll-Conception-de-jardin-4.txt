@@ -1,0 +1,3 @@
+TextView                      [133,1032][947,1103]   Calendar isn't responding
+Button             click      [70,1142][1010,1268]   Close app
+Button             click      [70,1268][1010,1394]   Wait

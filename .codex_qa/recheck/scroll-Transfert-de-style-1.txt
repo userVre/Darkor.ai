@@ -1,0 +1,6 @@
+View               click      [53,96][193,189]       
+TextView                      [142,127][167,189]     1
+TextView                      [372,121][521,189]     Outils
+View               click      [699,96][1027,189]     
+TextView                      [736,127][990,189]     Passer Ã  Pro
+View               scroll     [0,252][1080,2127]     

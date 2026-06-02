@@ -1,0 +1,17 @@
+ScrollView         scroll     [0,0][1080,2400]       
+ViewPager                     [67,100][1013,373]     At a glance
+ViewGroup          click      [67,100][1013,373]     
+TextView           click      [83,206][338,268]      Fri, May 29
+TextView           click      [67,1406][272,1692]    Play Store
+TextView           click      [314,1406][519,1692]   Gmail
+TextView           click      [561,1406][766,1692]   Photos
+TextView           click      [808,1406][1013,1692]  YouTube
+View                          [0,63][1080,2337]      Home
+TextView           click      [83,1873][256,2068]    Phone
+TextView           click      [330,1873][503,2068]   Messages
+TextView           click      [577,1873][750,2068]   Chrome
+TextView           click      [824,1873][997,2068]   S-Sale
+FrameLayout        click      [90,2125][990,2290]    Google search
+ImageView          click      [101,2144][227,2270]   Google app
+ImageView          click      [727,2125][853,2290]   Voice search
+ImageButton        click      [853,2125][979,2290]   Google Lens

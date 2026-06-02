@@ -1,0 +1,30 @@
+View               click      [37,79][163,205]       
+View                          [69,111][132,174]      Back
+TextView                      [190,111][890,174]     Relooking du sol
+View               click      [917,79][1043,205]     
+View                          [949,111][1012,174]    Close
+TextView                      [462,216][619,269]     Ã‰tape 2/4
+View               scroll     [0,316][1080,2142]     
+TextView                      [63,337][479,421]      Marquez le sol
+TextView                      [63,442][1017,568]     Peignez uniquement le sol Ã  remplacer. Un vrai masque est nÃ©cessaire avant de gÃ©nÃ©rer.
+ImageView                     [63,615][1017,1569]    Sol Ã  masquer
+TextView                      [63,1606][889,1659]    Masque requis : marquez le sol avant de continuer.
+View               click      [63,1685][527,1811]    
+View                          [95,1725][142,1772]    Ajouter au masque
+TextView                      [158,1717][327,1780]   Marquer
+View               click      [553,1685][1017,1811]  
+View                          [585,1725][632,1772]   Retirer du masque
+TextView                      [648,1717][785,1780]   Retirer
+View               click      [63,1837][367,1968]    
+View                          [121,1880][166,1925]   Annuler
+TextView                      [182,1876][310,1929]   Annuler
+View               click      [388,1837][692,1968]   
+View                          [445,1880][490,1925]   RÃ©tablir
+TextView                      [506,1876][635,1929]   RÃ©tablir
+View               click      [713,1837][1017,1968]  
+View                          [775,1880][820,1925]   Effacer tout le masque
+TextView                      [836,1876][955,1929]   Effacer
+TextView                      [63,2005][341,2058]    Taille du pinceau
+TextView                      [926,2005][1017,2058]  28 px
+View               click      [53,2195][1027,2347]   
+TextView                      [444,2240][636,2303]   Continuer

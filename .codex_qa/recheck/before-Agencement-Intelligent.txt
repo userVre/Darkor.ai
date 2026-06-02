@@ -1,0 +1,28 @@
+View               click      [37,79][163,205]       
+View                          [69,111][132,174]      Back
+TextView                      [190,111][890,174]     Relooking du sol
+View               click      [917,79][1043,205]     
+View                          [949,111][1012,174]    Close
+TextView                      [462,216][619,269]     Ã‰tape 3/4
+TextView                      [63,337][707,421]      Choisissez le matÃ©riau
+TextView                      [63,442][1017,631]     Choisissez un matÃ©riau. L'IA l'appliquera en respectant la perspective, la lumiÃ¨re et les meubles.
+View               click      [63,678][527,883]      
+TextView                      [205,757][501,805]     Parquet clair
+View               click      [553,678][1017,883]    
+TextView                      [695,757][991,805]     Parquet foncÃ©
+View               click      [63,909][527,1114]     
+TextView                      [205,980][501,1043]    Marbre
+View               click      [553,909][1017,1114]   
+TextView                      [695,980][991,1043]    BÃ©ton cirÃ©
+View               click      [63,1140][527,1345]    
+TextView                      [205,1195][501,1291]   Carrelage moderne
+View               click      [553,1140][1017,1345]  
+TextView                      [695,1219][991,1267]   Pierre naturelle
+View               click      [63,1371][527,1576]    
+TextView                      [205,1450][501,1498]   Vinyle premium
+View               click      [553,1371][1017,1576]  
+TextView                      [695,1450][991,1498]   Tapis Ã©lÃ©gant
+EditText           click      [63,1618][1017,1891]   
+TextView                      [105,1660][741,1723]   DÃ©crivez le style du sol souhaitÃ©
+View               click      [53,2195][1027,2347]   
+TextView                      [462,2240][618,2303]   GÃ©nÃ©rer

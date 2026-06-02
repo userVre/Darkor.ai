@@ -1,0 +1,27 @@
+View               click      [37,79][163,205]       
+View                          [69,111][132,174]      Back
+TextView                      [190,111][890,174]     Jardin
+View               click      [917,79][1043,205]     
+View                          [949,111][1012,174]    Close
+TextView                      [462,216][619,269]     Ã‰tape 2/3
+TextView                      [63,337][688,421]      Choisissez votre style
+TextView                      [63,442][1017,568]     Choisissez un style signature pour faÃ§onner votre vision du design.
+View               click      [63,615][360,1046]     
+TextView                      [94,946][329,999]      Suggestion IA
+View               click      [392,615][689,1046]    
+View                          [392,615][689,899]     NoÃ«l
+TextView                      [502,946][579,999]     NoÃ«l
+View               click      [721,615][1017,1046]   
+View                          [721,615][1017,899]    Moderne
+TextView                      [795,946][944,999]     Moderne
+View               click      [63,1078][360,1509]    
+View                          [63,1078][360,1362]    Tropicale
+TextView                      [133,1409][290,1462]   Tropicale
+View               click      [392,1078][689,1509]   
+View                          [392,1078][689,1362]   Minimaliste
+TextView                      [443,1409][639,1462]   Minimaliste
+View               click      [721,1078][1017,1509]  
+View                          [721,1078][1017,1362]  MÃ©diterranÃ©en
+TextView                      [747,1409][992,1462]   MÃ©diterranÃ©en
+View               click      [53,2195][1027,2347]   
+TextView                      [444,2240][636,2303]   Continuer

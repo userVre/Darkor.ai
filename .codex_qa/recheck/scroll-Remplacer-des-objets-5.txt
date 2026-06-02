@@ -1,0 +1,24 @@
+View               click      [0,0][1080,2400]       
+View               scroll     [0,0][1080,2400]       
+TextView                      [325,244][755,339]     Passez Ã  Pro
+TextView                      [63,371][1017,497]     CrÃ©ez plus vite, exportez proprement et gardez vos concepts premium sans friction.
+TextView                      [121,602][208,665]     PRO
+TextView                      [121,702][632,786]     CrÃ©ation premium
+TextView                      [242,823][959,949]     GÃ©nÃ©rations illimitÃ©es ou limite mensuelle supÃ©rieure
+TextView                      [242,999][650,1062]    Rendus plus rapides
+TextView                      [242,1125][555,1188]   Styles premium
+TextView                      [242,1251][626,1314]   Historique complet
+TextView                      [242,1377][787,1440]   Sans filigrane si applicable
+TextView                      [121,1490][900,1543]   Impossible de charger les prix pour le moment.
+View               click      [121,1580][527,1727]   
+TextView                      [253,1606][396,1659]   Mensuel
+TextView                      [232,1659][417,1701]   Indisponible
+View               click      [553,1580][959,1727]   
+TextView                      [698,1606][815,1659]   Annuel
+TextView                      [664,1659][849,1701]   Indisponible
+View               click      [121,1764][959,1911]   
+TextView                      [392,1811][689,1864]   Prix indisponibles
+View               click      [121,1948][959,2079]   
+TextView                      [372,1987][708,2040]   Restaurer les achats
+View               click      [63,2184][1017,2326]   
+TextView                      [306,2229][843,2282]   Acheter des diamants seulement

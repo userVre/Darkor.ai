@@ -1,0 +1,31 @@
+View               click      [42,80][194,206]       
+TextView                      [137,111][162,174]     1
+TextView                      [226,111][890,174]     Peinture
+View               click      [917,79][1043,205]     
+View                          [949,111][1012,174]    Close
+TextView                      [462,216][619,269]     Ã‰tape 1/4
+TextView                      [63,337][545,421]      Peindre les murs
+TextView                      [63,442][740,505]      Importez une photo de votre piÃ¨ce
+TextView                      [322,765][759,839]     Peindre les murs
+TextView                      [202,871][879,934]     Importez une photo de votre piÃ¨ce
+View               click      [391,982][689,1108]    
+TextView                      [454,1018][626,1071]   Importer +
+View               click      [63,1366][524,1492]    
+TextView                      [270,1403][386,1456]   Galerie
+View               click      [556,1366][1017,1492]  
+TextView                      [757,1403][884,1456]   CamÃ©ra
+View               click      [63,1539][1017,1665]   
+TextView                      [418,1576][731,1629]   Utiliser un exemple
+TextView                      [63,1712][407,1775]    Photos d'exemple
+View               scroll     [63,1801][1017,2074]   
+View               click      [63,1801][357,2074]    
+View                          [63,1801][357,2074]    BÃ©ton brut
+TextView                      [138,2003][283,2045]   BÃ©ton brut
+View               click      [389,1801][683,2074]   
+View                          [389,1801][683,2074]   PlÃ¢tre Ã©caillÃ©
+TextView                      [446,2003][626,2045]   PlÃ¢tre Ã©caillÃ©
+View               click      [715,1801][1009,2074]  
+View                          [715,1801][1009,2074]  Porte blanc
+TextView                      [783,2003][942,2045]   Porte blanc
+View               click      [53,2195][1027,2347]   
+TextView                      [444,2240][636,2303]   Continuer

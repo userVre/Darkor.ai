@@ -1,0 +1,29 @@
+View               click      [37,79][163,205]       
+View                          [69,111][132,174]      Back
+TextView                      [190,111][890,174]     Objets
+View               click      [917,79][1043,205]     
+View                          [949,111][1012,174]    Close
+TextView                      [462,216][619,269]     Ã‰tape 3/4
+View               scroll     [0,316][1080,2142]     
+TextView                      [63,337][804,421]      DÃ©crivez le remplacement
+TextView                      [63,442][1017,568]     Choisissez une suggestion ou dÃ©crivez prÃ©cisÃ©ment le nouvel objet Ã  intÃ©grer.
+TextView                      [63,615][659,678]      Suggestions de remplacement
+View               click      [63,704][527,909]      
+TextView                      [205,759][501,855]     CanapÃ© beige moderne
+View               click      [553,704][1017,909]    
+TextView                      [695,759][991,855]     Table basse en bois clair
+View               click      [63,935][527,1140]     
+TextView                      [205,990][501,1086]    Suspension noire minimaliste
+View               click      [553,935][1017,1140]   
+TextView                      [695,990][991,1086]    Grande plante en pot
+View               click      [63,1166][527,1371]    
+TextView                      [205,1221][501,1317]   Fauteuil bouclÃ© crÃ¨me
+View               click      [553,1166][1017,1371]  
+TextView                      [695,1221][991,1317]   Meuble TV noyer Ã©purÃ©
+EditText           click      [63,1413][1017,1770]   
+TextView                      [105,1476][567,1539]   Objet de remplacement
+TextView                      [110,1859][637,1922]   RÃ©sumÃ© du remplacement
+TextView                      [110,1940][454,2003]   Masque prÃªt : oui
+TextView                      [110,2021][785,2084]   DÃ©crivez le nouvel objet Ã  gÃ©nÃ©rer.
+View               click      [53,2195][1027,2347]   
+TextView                      [462,2240][618,2303]   GÃ©nÃ©rer

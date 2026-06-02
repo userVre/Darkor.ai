@@ -1,0 +1,31 @@
+View               click      [53,96][193,189]       
+TextView                      [142,127][167,189]     1
+TextView                      [372,121][521,189]     Outils
+View               click      [699,96][1027,189]     
+TextView                      [736,127][990,189]     Passer Ã  Pro
+View               scroll     [0,252][1080,2127]     
+View               click      [53,189][1027,385]     
+View                          [53,252][1027,385]     Relooking du sol
+View               click      [111,205][485,331]     
+TextView                      [224,252][438,294]     Essayez ceci
+View               click      [53,448][1027,1482]    
+View                          [53,448][1027,1482]    Agencement Intelligent
+TextView                      [111,1029][779,1113]   Agencement Intelligent
+TextView                      [111,1145][969,1271]   Optimisez l'agencement pour un confort maximal.
+View               click      [111,1302][485,1428]   
+TextView                      [224,1338][438,1391]   Essayez ceci
+View               click      [53,1545][1027,2127]   
+View                          [53,1545][1027,2127]   Remplacer des objets
+TextView                      [111,2126][724,2127]   Remplacer des objets
+View               click      [21,2145][205,2319]    
+View                          [87,2179][140,2232]    Outils
+TextView                      [73,2256][153,2298]    Outils
+View               click      [306,2145][490,2319]   
+View                          [372,2179][425,2232]   Pass Elite
+TextView                      [331,2256][466,2298]   Pass Elite
+View               click      [590,2145][774,2319]   
+View                          [656,2179][709,2232]   DÃ©couvrir
+TextView                      [616,2256][749,2298]   DÃ©couvrir
+View               click      [875,2145][1059,2319]  
+View                          [941,2179][994,2232]   Profil
+TextView                      [929,2256][1005,2298]  Profil

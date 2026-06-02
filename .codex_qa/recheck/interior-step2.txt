@@ -1,0 +1,23 @@
+View               click      [42,80][194,206]       
+TextView                      [137,111][162,174]     1
+TextView                      [226,111][890,174]     RÃ©fÃ©rence
+View               click      [917,79][1043,205]     
+View                          [949,111][1012,174]    Close
+TextView                      [462,216][619,269]     Ã‰tape 1/2
+View               scroll     [0,316][1080,2142]     
+TextView                      [63,337][845,421]      Choisissez les deux images
+TextView                      [63,442][1017,568]     Ajoutez une photo dans "Votre piÃ¨ce" puis une dans "Image de rÃ©fÃ©rence".
+TextView                      [235,657][459,720]     Votre piÃ¨ce
+TextView                      [235,728][814,781]     La photo de la piÃ¨ce Ã  transformer.
+ImageView                     [105,818][975,1270]    Votre piÃ¨ce
+View               click      [105,1306][527,1432]   
+TextView                      [291,1342][407,1395]   Galerie
+View               click      [553,1306][975,1432]   
+TextView                      [733,1342][860,1395]   CamÃ©ra
+View               click      [105,1464][975,1590]   
+TextView                      [505,1500][644,1553]   Exemple
+TextView                      [235,1712][614,1775]   Image de rÃ©fÃ©rence
+TextView                      [235,1783][863,1836]   Le style visuel qui guidera le transfert.
+ImageView                     [105,1873][975,2142]   Image de rÃ©fÃ©rence
+View               click      [53,2195][1027,2347]   
+TextView                      [444,2240][636,2303]   Continuer

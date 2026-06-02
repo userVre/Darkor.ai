@@ -1,0 +1,32 @@
+View               click      [42,80][194,206]       
+TextView                      [137,111][162,174]     1
+TextView                      [226,111][890,174]     Agencement
+View               click      [917,79][1043,205]     
+View                          [949,111][1012,174]    Close
+TextView                      [462,216][619,269]     Ã‰tape 1/2
+View               scroll     [0,316][1080,2142]     
+TextView                      [63,316][552,379]      Photo de la piÃ¨ce
+TextView                      [63,400][1017,526]     Importez une photo large et nette pour planifier lâ€™agencement.
+TextView                      [318,754][762,828]     Photo de la piÃ¨ce
+TextView                      [121,860][959,986]     Importez une photo large et nette pour planifier lâ€™agencement.
+View               click      [336,1034][744,1160]   
+TextView                      [399,1070][681,1123]   Importer la photo
+View               click      [63,1387][524,1513]    
+TextView                      [270,1424][386,1477]   Galerie
+View               click      [556,1387][1017,1513]  
+TextView                      [757,1424][884,1477]   CamÃ©ra
+View               click      [63,1560][1017,1686]   
+TextView                      [418,1597][731,1650]   Utiliser un exemple
+TextView                      [63,1733][407,1796]    Photos d'exemple
+View               scroll     [63,1822][1017,2095]   
+View               click      [63,1822][357,2095]    
+View                          [63,1822][357,2095]    Salle vide
+TextView                      [144,2024][277,2066]   Salle vide
+View               click      [389,1822][683,2095]   
+View                          [389,1822][683,2095]   Salon en dÃ©sordre
+TextView                      [428,2024][644,2066]   Salon en dÃ©sordre
+View               click      [715,1822][1009,2095]  
+View                          [715,1822][1009,2095]  Chambre usÃ©e
+TextView                      [764,2024][960,2066]   Chambre usÃ©e
+View               click      [53,2195][1027,2347]   
+TextView                      [444,2240][636,2303]   Continuer

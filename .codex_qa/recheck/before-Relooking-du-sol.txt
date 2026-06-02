@@ -1,0 +1,26 @@
+View               click      [37,79][163,205]       
+View                          [69,111][132,174]      Back
+TextView                      [190,111][890,174]     Peinture
+View               click      [917,79][1043,205]     
+View                          [949,111][1012,174]    Close
+TextView                      [462,216][619,269]     Ã‰tape 3/4
+TextView                      [63,337][724,421]      Choisissez une couleur
+TextView                      [63,442][1017,568]     SÃ©lectionnez une couleur ou dÃ©crivez lâ€™ambiance souhaitÃ©e.
+View               click      [63,615][527,804]      
+TextView                      [221,678][461,741]     Blanc chaud
+View               click      [553,615][1017,804]    
+TextView                      [711,678][824,741]     Beige
+View               click      [63,830][527,1019]     
+TextView                      [221,893][400,956]     Gris clair
+View               click      [553,830][1017,1019]   
+TextView                      [711,893][923,956]     Vert sauge
+View               click      [63,1045][527,1234]    
+TextView                      [221,1108][417,1171]   Bleu doux
+View               click      [553,1045][1017,1234]  
+TextView                      [711,1108][915,1171]   Terracotta
+View               click      [63,1260][527,1449]    
+TextView                      [221,1323][461,1386]   Noir Ã©lÃ©gant
+EditText           click      [63,1491][1017,1764]   
+TextView                      [105,1533][972,1596]   DÃ©crivez la couleur ou lâ€™ambiance souhaitÃ©e
+View               click      [53,2195][1027,2347]   
+TextView                      [462,2240][618,2303]   GÃ©nÃ©rer

@@ -1,0 +1,32 @@
+View               click      [53,96][193,189]       
+TextView                      [142,127][167,189]     1
+TextView                      [372,121][521,189]     Outils
+View               click      [699,96][1027,189]     
+TextView                      [736,127][990,189]     Passer Ã  Pro
+View               scroll     [0,252][1080,2127]     
+View               click      [53,189][1027,674]     
+View                          [53,252][1027,674]     Conception extÃ©rieure
+TextView                      [111,252][742,305]     Conception extÃ©rieure
+TextView                      [111,337][969,463]     RÃ©inventez l'extÃ©rieur de votre maison avec un style de faÃ§ade de classe mondiale.
+View               click      [111,494][485,620]     
+TextView                      [224,530][438,583]     Essayez ceci
+View               click      [53,737][1027,1771]    
+View                          [53,737][1027,1771]    Conception de jardin
+TextView                      [111,1318][698,1402]   Conception de jardin
+TextView                      [111,1434][969,1560]   Concevez de superbes jardins et espaces extÃ©rieurs sans effort.
+View               click      [111,1591][485,1717]   
+TextView                      [224,1627][438,1680]   Essayez ceci
+View               click      [53,1834][1027,2127]   
+View                          [53,1834][1027,2127]   Peinture intelligente
+View               click      [21,2145][205,2319]    
+View                          [87,2179][140,2232]    Outils
+TextView                      [73,2256][153,2298]    Outils
+View               click      [306,2145][490,2319]   
+View                          [372,2179][425,2232]   Pass Elite
+TextView                      [331,2256][466,2298]   Pass Elite
+View               click      [590,2145][774,2319]   
+View                          [656,2179][709,2232]   DÃ©couvrir
+TextView                      [616,2256][749,2298]   DÃ©couvrir
+View               click      [875,2145][1059,2319]  
+View                          [941,2179][994,2232]   Profil
+TextView                      [929,2256][1005,2298]  Profil

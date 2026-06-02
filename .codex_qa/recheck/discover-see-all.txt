@@ -1,0 +1,44 @@
+View               click      [38,132][164,258]      
+View                          [69,163][132,226]      Retour
+TextView                      [189,89][402,173]      Cuisine
+TextView                      [189,173][832,299]     Galerie intÃ©rieurs - touchez une image pour la prÃ©visualiser
+TextView                      [890,168][1011,221]    7 idÃ©es
+View               scroll     [0,325][1080,2127]     
+View               click      [53,378][524,1034]     
+View                          [53,378][524,1034]     Cuisine 1
+TextView                      [90,892][240,955]      Cuisine
+TextView                      [90,955][231,997]      Cuisine 1
+View                          [435,425][477,467]     PrÃ©visualiser
+View               click      [556,378][1027,1034]   
+View                          [556,378][1027,1034]   Cuisine 2
+TextView                      [593,892][743,955]     Cuisine
+TextView                      [593,955][734,997]     Cuisine 2
+View                          [938,425][980,467]     PrÃ©visualiser
+View               click      [53,1066][524,1722]    
+View                          [53,1066][524,1722]    Cuisine 3
+TextView                      [90,1580][240,1643]    Cuisine
+TextView                      [90,1643][231,1685]    Cuisine 3
+View                          [435,1113][477,1155]   PrÃ©visualiser
+View               click      [556,1066][1027,1722]  
+View                          [556,1066][1027,1722]  Cuisine 4
+TextView                      [593,1580][743,1643]   Cuisine
+TextView                      [593,1643][734,1685]   Cuisine 4
+View                          [938,1113][980,1155]   PrÃ©visualiser
+View               click      [53,1754][524,2127]    
+View                          [53,1754][524,2127]    Cuisine 5
+View                          [435,1801][477,1843]   PrÃ©visualiser
+View               click      [556,1754][1027,2127]  
+View                          [556,1754][1027,2127]  Cuisine 6
+View                          [938,1801][980,1843]   PrÃ©visualiser
+View               click      [21,2145][205,2319]    
+View                          [87,2179][140,2232]    Outils
+TextView                      [73,2256][153,2298]    Outils
+View               click      [306,2145][490,2319]   
+View                          [372,2179][425,2232]   Pass Elite
+TextView                      [331,2256][466,2298]   Pass Elite
+View               click      [590,2145][774,2319]   
+View                          [656,2179][709,2232]   DÃ©couvrir
+TextView                      [616,2256][749,2298]   DÃ©couvrir
+View               click      [875,2145][1059,2319]  
+View                          [941,2179][994,2232]   Profil
+TextView                      [929,2256][1005,2298]  Profil

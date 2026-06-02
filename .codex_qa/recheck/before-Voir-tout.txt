@@ -1,0 +1,49 @@
+TextView                      [402,123][679,207]     DÃ©couvrir
+View               scroll     [0,267][1080,2127]     
+View               scroll     [53,299][1027,425]     
+View               click      [53,300][393,426]      
+TextView                      [158,331][354,394]     IntÃ©rieurs
+View               click      [419,300][813,426]     
+TextView                      [524,331][774,394]     Architecture
+View               click      [839,300][1027,426]    
+TextView                      [944,331][1027,394]    Paysages
+TextView                      [53,509][246,583]      Cuisine
+View               click      [813,484][1027,610]    
+TextView                      [850,520][990,573]     Voir tout
+View               scroll     [53,641][1027,1297]    
+View               click      [53,641][568,1297]     
+View                          [53,641][568,1297]     Cuisine 1
+TextView                      [90,1155][240,1218]    Cuisine
+TextView                      [90,1218][231,1260]    Cuisine 1
+View                          [479,688][521,730]     PrÃ©visualiser
+View               click      [600,641][1027,1297]   
+View                          [600,641][1027,1297]   Cuisine 2
+TextView                      [637,1155][787,1218]   Cuisine
+TextView                      [637,1218][778,1260]   Cuisine 2
+View                          [1026,688][1027,730]   PrÃ©visualiser
+TextView                      [53,1381][199,1455]    Salon
+View               click      [813,1356][1027,1482]  
+TextView                      [850,1392][990,1445]   Voir tout
+View               scroll     [53,1513][1027,2127]   
+View               click      [53,1513][568,2127]    
+View                          [53,1513][568,2127]    Salon 1
+TextView                      [90,2027][202,2090]    Salon
+TextView                      [90,2090][204,2127]    Salon 1
+View                          [479,1560][521,1602]   PrÃ©visualiser
+View               click      [600,1513][1027,2127]  
+View                          [600,1513][1027,2127]  Salon 2
+TextView                      [637,2027][749,2090]   Salon
+TextView                      [637,2090][751,2127]   Salon 2
+View                          [1026,1560][1027,1602] PrÃ©visualiser
+View               click      [21,2145][205,2319]    
+View                          [87,2179][140,2232]    Outils
+TextView                      [73,2256][153,2298]    Outils
+View               click      [306,2145][490,2319]   
+View                          [372,2179][425,2232]   Pass Elite
+TextView                      [331,2256][466,2298]   Pass Elite
+View               click      [590,2145][774,2319]   
+View                          [656,2179][709,2232]   DÃ©couvrir
+TextView                      [616,2256][749,2298]   DÃ©couvrir
+View               click      [875,2145][1059,2319]  
+View                          [941,2179][994,2232]   Profil
+TextView                      [929,2256][1005,2298]  Profil
