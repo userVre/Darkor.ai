@@ -27,7 +27,7 @@ const FALLBACK_EXTENSIONS: Record<string, string> = {
 };
 
 function inferMimeType(uri: string, fallbackMimeType: string) {
-  const sanitizedUri = uri.split("?")[0]?.toLowerCase() ?? "";
+  const sanitizedUri = uri.split(/[?#]/)[0]?.toLowerCase() ?? "";
   const matchedExtension = Object.keys(MIME_TYPES).find((extension) => sanitizedUri.endsWith(extension));
   return matchedExtension ? MIME_TYPES[matchedExtension] : fallbackMimeType;
 }
@@ -96,6 +96,10 @@ async function materializeUploadSource(uri: string, mimeType: string, errorLabel
 
   if (scheme === "http" || scheme === "https") {
     const download = await FileSystem.downloadAsync(sourceUri, targetUri);
+    if (download.status < 200 || download.status >= 300) {
+      await FileSystem.deleteAsync(targetUri, {idempotent: true}).catch(() => undefined);
+      throw new Error(`Unable to download the ${errorLabel}. Please choose another image.`);
+    }
     return {uri: download.uri, temporary: true};
   }
 

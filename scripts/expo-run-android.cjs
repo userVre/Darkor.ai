@@ -24,6 +24,7 @@ function startMetroInBackground({ projectRoot, env, hostMode, portString }) {
       cwd: projectRoot,
       env,
       detached: true,
+      windowsHide: true,
       stdio: "ignore",
     });
     child.unref();
@@ -90,7 +91,6 @@ async function main() {
   process.env.EXPO_DEV_CLIENT_SERVER_URL = serverUrl;
   process.env.EXPO_PACKAGER_PROXY_URL = serverUrl;
   process.env.EXPO_DEV_PORT = portString;
-  process.env.EXPO_ANDROID_ARCHITECTURES = "x86_64";
   process.env.REACT_NATIVE_DISABLE_LTO = "1";
 
   const expoHostMode = adbOk ? "localhost" : "lan";
@@ -144,7 +144,6 @@ async function main() {
     props = patchProp(props, "org.gradle.workers.max", "1");
     props = patchProp(props, "org.gradle.parallel", "false");
     props = patchProp(props, "org.gradle.daemon", "false");
-    props = patchProp(props, "reactNativeArchitectures", "x86_64");
     props = patchProp(props, "EX_DEV_CLIENT_NETWORK_INSPECTOR", "false");
     fs.writeFileSync(gradlePropsPath, props);
   }

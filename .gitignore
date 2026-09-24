@@ -48,3 +48,12 @@ yarn-error.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Local Android signing and generated QA captures
+/android/signing.properties
+/.android-user/
+/.codex_qa/**/*.txt
+/.codex_qa/**/*.xml
+/.codex_qa/**/*.png
+__pycache__/
+*.pyc

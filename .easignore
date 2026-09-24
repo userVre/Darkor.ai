@@ -27,3 +27,9 @@ homedecor-ai
 *.aab
 *.jks
 *.keystore
+android/signing.properties
+.android-user/
+.codex_qa/
+.agent/
+.agents/
+ui.xml

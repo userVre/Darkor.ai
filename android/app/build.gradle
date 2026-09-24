@@ -4,8 +4,14 @@ apply plugin: "com.facebook.react"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
+def localSigningProperties = new Properties()
+def localSigningFile = rootProject.file("signing.properties")
+if (localSigningFile.exists()) {
+    localSigningFile.withInputStream { localSigningProperties.load(it) }
+}
+
 def readReleaseSigningProperty = { name ->
-    def value = findProperty(name) ?: System.getenv(name)
+    def value = System.getenv(name) ?: localSigningProperties.getProperty(name) ?: findProperty(name)
     return value != null && value.toString().trim().length() > 0 ? value.toString().trim() : null
 }
 
@@ -139,9 +145,6 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            if (!hasReleaseSigning) {
-                throw new GradleException("Missing local release signing. Add HOMED_UPLOAD_STORE_FILE, HOMED_UPLOAD_STORE_PASSWORD, HOMED_UPLOAD_KEY_ALIAS, and HOMED_UPLOAD_KEY_PASSWORD to android/gradle.properties, or build with EAS.")
-            }
             signingConfig signingConfigs.release
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()
@@ -159,6 +162,15 @@ android {
     }
     androidResources {
         ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
+    }
+}
+
+// Validate only release tasks; debug builds do not require upload credentials.
+gradle.taskGraph.whenReady { graph ->
+    if (!hasReleaseSigning && System.getenv("EAS_BUILD") != "true" && graph.allTasks.any {
+        it.project == project && it.name.toLowerCase().contains("release")
+    }) {
+        throw new GradleException("Missing release signing. Configure HOMED_UPLOAD_* in android/signing.properties or environment variables, or build with EAS.")
     }
 }
 

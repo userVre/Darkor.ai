@@ -13,6 +13,20 @@ import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {ActivityIndicator, AppState, InteractionManager, Pressable, StyleSheet, Text, TextInput, View, type TextInputProps, type TextProps} from "react-native";
+
+// Fix for RN 0.83 Fabric + react-native-paper outlineStyle crash (AndroidTextInput)
+// Paper passes outlineStyle which Fabric rejects; strip it via StyleSheet.flatten
+const _originalFlatten = StyleSheet.flatten as unknown as (style: unknown) => Record<string, unknown> | undefined;
+(StyleSheet as unknown as {flatten: typeof _originalFlatten}).flatten = ((style: unknown) => {
+  const result = _originalFlatten(style) as Record<string, unknown> | undefined;
+  if (result && typeof result === "object") {
+    if ("outlineStyle" in result) delete result.outlineStyle;
+    if ("outlineWidth" in result) delete result.outlineWidth;
+    if ("outlineColor" in result) delete result.outlineColor;
+    if ("outlineOffset" in result) delete result.outlineOffset;
+  }
+  return result;
+}) as typeof _originalFlatten;
 import {GestureHandlerRootView} from "react-native-gesture-handler";
 import {SafeAreaProvider, SafeAreaView} from "react-native-safe-area-context";
 import {PostHogProvider} from "posthog-react-native";
